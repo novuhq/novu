@@ -1202,12 +1202,12 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark the integration connected on /start alone for the dashboard test identity (connect:)', async () => {
-      const connectPayload = { ...matchingStartPayload, subscriberId: 'connect:user-123' };
+    it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
+      const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
       const { handler, agentIntegrationRepository } = makeHandler({
         linkTelegramExecute: sinon
           .stub()
-          .resolves({ created: true, subscriberId: 'connect:user-123', agentIdentifier: 'support-agent' }),
+          .resolves({ created: true, subscriberId: 'user-123', agentIdentifier: 'support-agent' }),
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
       });
       const thread = makeTelegramThread();
@@ -1296,10 +1296,10 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard (connect:) endpoint', async () => {
+    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard endpoint', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
         startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
-        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'connect:user-123' }),
+        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'user-123' }),
       });
       const thread = makeTelegramThread();
       const message = makeStartMessage('/start reused');

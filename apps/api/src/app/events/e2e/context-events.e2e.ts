@@ -150,7 +150,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     expect(regionContext?.key).to.equal('region:us-east-1');
   });
 
-  it('should handle context find-or-create logic correctly (no updates)', async () => {
+  it('should upsert context data when provided inline with workflow trigger', async () => {
     const initialData = { name: 'Acme Corp', plan: 'basic' };
     const context1: ContextPayload = {
       tenant: {
@@ -181,7 +181,7 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
     await sendTrigger(workflow, subscriber.subscriberId, {}, {}, undefined, undefined, context2);
     await session.waitForJobCompletion(workflow._id);
 
-    // Verify existing context was retrieved without updates
+    // Verify existing context was retrieved without updates when no data is provided
     storedContext = await contextRepository.findOne({
       _environmentId: session.environment._id,
       type: 'tenant',
@@ -190,13 +190,12 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
     expect(storedContext?.data).to.deep.equal(initialData);
 
-    // Third trigger with different data - should NOT update existing context
-    // this is to prevent accidental updates and overwrites
-    const attemptedUpdateData = { name: 'Acme Corporation', plan: 'enterprise', region: 'us-west' };
+    // Third trigger with different data - should update existing context
+    const updatedData = { name: 'Acme Corporation', plan: 'enterprise', region: 'us-west' };
     const context3: ContextPayload = {
       tenant: {
         id: 'org-acme',
-        data: attemptedUpdateData,
+        data: updatedData,
       },
     };
 
@@ -204,15 +203,15 @@ describe('Context functionality - /v1/events/trigger (POST) #novu-v2', () => {
 
     await session.waitForJobCompletion(workflow._id);
 
-    // Verify context was NOT updated - original data should remain
+    // Verify context data was updated
     const contexts = await contextRepository.find({
       _environmentId: session.environment._id,
       type: 'tenant',
       id: 'org-acme',
     });
 
-    expect(contexts).to.have.length(1); // Still only one context
-    expect(contexts[0].data).to.deep.equal(initialData); // Data should NOT be updated - original data preserved
+    expect(contexts).to.have.length(1);
+    expect(contexts[0].data).to.deep.equal(updatedData);
   });
 
   it('should reject invalid context payload', async () => {

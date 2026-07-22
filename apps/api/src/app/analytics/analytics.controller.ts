@@ -22,9 +22,13 @@ export class AnalyticsController {
   @Post('/measure')
   @ExternalApiAccessible()
   @SkipPermissionsCheck()
-  async trackEvent(@Body('event') event, @Body('data') data = {}, @UserSession() user: UserSessionData): Promise<any> {
+  async trackEvent(
+    @Body('event') event: string,
+    @Body('data') data: Record<string, unknown> = {},
+    @UserSession() user: UserSessionData
+  ): Promise<any> {
     this.analyticsService.track(event, user._id, {
-      ...(data || {}),
+      ...data,
       _organization: user?.organizationId,
     });
 

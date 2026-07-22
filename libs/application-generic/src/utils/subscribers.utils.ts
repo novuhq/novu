@@ -15,6 +15,7 @@ export function mapSubscribersToJobs(
         organizationId: command.organizationId,
         userId: command.userId,
         contextKeys: command.contextKeys,
+        ...(command.context && { context: command.context }),
         transactionId: command.transactionId,
         requestId: command.requestId,
         identifier: command.identifier,

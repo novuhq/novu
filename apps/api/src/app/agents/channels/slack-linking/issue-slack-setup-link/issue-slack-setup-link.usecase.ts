@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
+import { resolveDashboardBaseUrl } from '../../../../shared/helpers';
 import { TelegramMobileLinkTokenService } from '../../../../telegram-linking/telegram-mobile-link-token.service';
 import { IssueSlackSetupLinkCommand } from './issue-slack-setup-link.command';
 
@@ -84,11 +85,6 @@ export class IssueSlackSetupLink {
   }
 
   private buildSetupUrl(token: string): string {
-    const base = (process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL || 'https://dashboard.novu.co').replace(
-      /\/$/,
-      ''
-    );
-
-    return `${base}${SLACK_SETUP_PATH}/${token}`;
+    return `${resolveDashboardBaseUrl()}${SLACK_SETUP_PATH}/${token}`;
   }
 }

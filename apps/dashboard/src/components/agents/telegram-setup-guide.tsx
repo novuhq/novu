@@ -14,7 +14,6 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
@@ -80,7 +79,7 @@ export function TelegramSetupGuide({
       return null;
     }
 
-    return buildConnectSubscriberId(currentUser._id);
+    return currentUser._id;
   }, [currentUser?._id, isUserLoaded]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes

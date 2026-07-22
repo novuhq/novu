@@ -33,6 +33,7 @@ Contexts are persistent. Unlike a payload, which exists only for a single workfl
 | **In templates** | `{{payload.field}}` | `{{context.tenant.data.name}}` |
 | **Inbox filtering** | Not used for scoping | Exact-match filtering |
 | **Auto-created** | No | Yes, on first reference |
+| **Data upsert on reuse** | No | Yes on workflow trigger when `data` is provided; no on Inbox |
 
 Use the payload for data that changes on every event. Use context for metadata that defines _where_ or _for whom_ a notification belongs.
 
@@ -59,7 +60,11 @@ context: {
 }
 ```
 
-Contexts are **auto-created** the first time Novu sees them (via a trigger or the Inbox). Existing context data is **not** auto-updated, which prevents accidental overwrites. Update context data through the [Contexts API](/api-reference/contexts/context-schema) or the Novu dashboard.
+Contexts are **auto-created** the first time Novu sees them (via a workflow trigger or the Inbox).
+
+During **workflow triggers**, existing context `data` is **upserted** when you include a `data` object inline - similar to subscriber fields. Passing only a string identifier (for example, `tenant: "acme-corp"`) references the context without changing stored `data`.
+
+**Inbox** and other subscriber-facing APIs only find or create contexts and do **not** update existing `data`. You can also manage context data through the [Contexts API](/api-reference/contexts/context-schema) or the Novu dashboard.
 
 ## What you can use contexts for
 
@@ -313,15 +318,19 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
 
 <AccordionGroup>
   <Accordion title="Should I create and update contexts ahead of time or pass context data on every trigger?">
-    Create and update contexts ahead of time. Novu auto-creates a context the first time it sees a new key, but it does **not** update existing context `data` when you pass new values on a trigger.
+    Both patterns are supported.
 
-    Recommended approach:
+    **Inline on workflow trigger (server-side):** When you trigger a workflow with a rich context object that includes `data`, Novu creates the context if it is missing or replaces stored `data` if it already exists. This works like subscriber upsert and is useful when your backend already has the latest tenant metadata at trigger time. Pass only the context `id` as a string when you want to reference existing data without changing it.
 
-    1. [Create the context](/api-reference/contexts/create-a-context) with initial `data` before you need it.
-    2. [Update context data](/api-reference/contexts/update-a-context) through the API or SDK when metadata changes (for example, tenant name or plan).
-    3. When [triggering](/platform/concepts/trigger) workflows, pass only the context key and `id` not the full `data` object.
+    **Ahead of time via API or dashboard:** Create contexts with initial `data` before you need them, then [update context data](/api-reference/contexts/update-a-context) when metadata changes (for example, tenant name or plan). Use this when you want a single source of truth outside of triggers.
 
-    This keeps tenant branding and metadata accurate in templates and the Inbox without relying on trigger-time overwrites.
+    **Inbox:** Session initialization can auto-create missing contexts but never updates existing context `data`. Do not rely on the Inbox to refresh tenant metadata.
+
+    Recommended approach for multi-tenant apps:
+
+    1. [Create the context](/api-reference/contexts/create-a-context) with initial `data` before you need it, or pass `data` on your first server-side trigger.
+    2. Keep metadata current through [workflow triggers with inline `data`](/platform/workflow/trigger-workflow#trigger-a-workflow-with-context), the Contexts API, or the dashboard.
+    3. Pass only context keys and `id` values to the Inbox unless you are creating a context for the first time.
   </Accordion>
 
   <Accordion title="Why are notifications sent but not showing in the Inbox after I added context?">

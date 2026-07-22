@@ -5,6 +5,7 @@ import {
   ResourceOriginEnum,
   SeverityLevelEnum,
   StepTypeEnum,
+  ToolProviderIdEnum,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
 import { Exclude, Type } from 'class-transformer';
@@ -24,6 +25,7 @@ import {
 } from 'class-validator';
 import { EnvironmentWithUserObjectCommand } from '../../commands';
 import { IsValidJsonSchema } from '../../decorators';
+import { ProviderOverridesDto } from '../../dtos/workflow/provider-overrides.dto';
 
 export class ChannelPreferenceData {
   @IsBoolean()
@@ -73,6 +75,12 @@ export class UpsertStepDataCommand {
 
   @IsOptional()
   controlValues?: Record<string, unknown> | null;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ProviderOverridesDto)
+  providerOverrides?: Partial<Record<ToolProviderIdEnum, Record<string, unknown>>> | null;
 
   @IsOptional()
   @IsString()

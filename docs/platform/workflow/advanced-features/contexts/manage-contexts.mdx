@@ -562,11 +562,13 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
   </Tab>
 </Tabs>
 
-If a matching context already exists, Novu reuses it as-is without modifying any stored data. This behavior ensures consistency and avoids accidental changes to shared metadata.
+If a matching context already exists and you pass only a string identifier, Novu reuses it without changing stored `data`. If you pass a rich object with a `data` field, Novu replaces the stored `data` with the values from your trigger request. This upsert behavior applies to workflow triggers only.
+
+Inbox and other subscriber-facing APIs find or create contexts but do not update existing `data`.
 
 ## Update a context
 
-You can update a context's data payload at any time. The context `type` and `id` remain immutable. However, to change an existing context's data, you must explicitly update it through the dashboard or API.
+You can update a context's data payload at any time. The context `type` and `id` remain immutable. You can update existing context `data` through the dashboard, API, or by passing inline `data` on a workflow trigger.
 
 #### Update a context via dashboard
 

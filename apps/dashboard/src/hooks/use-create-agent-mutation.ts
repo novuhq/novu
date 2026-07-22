@@ -1,4 +1,10 @@
-import { AgentRuntimeProviderIdEnum, CLAUDE_BUILTIN_TOOLS, type IIntegration, IntegrationKindEnum } from '@novu/shared';
+import {
+  type AgentAnalyticsSource,
+  AgentRuntimeProviderIdEnum,
+  CLAUDE_BUILTIN_TOOLS,
+  type IIntegration,
+  IntegrationKindEnum,
+} from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, type CreateAgentBody, createAgent } from '@/api/agents';
@@ -13,6 +19,7 @@ import { useDeleteIntegration } from './use-delete-integration';
 type SubmitOptions = {
   onSuccess?: (agent: AgentResponse) => void;
   onError?: (error: Error) => void;
+  analyticsSource?: AgentAnalyticsSource;
 };
 
 /**
@@ -29,8 +36,8 @@ export function useCreateAgentMutation() {
   const [isPending, setIsPending] = useState(false);
 
   const createAgentMutation = useMutation({
-    mutationFn: (body: CreateAgentBody) =>
-      createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
+    mutationFn: ({ body, analyticsSource }: { body: CreateAgentBody; analyticsSource?: AgentAnalyticsSource }) =>
+      createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body, { analyticsSource }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
     },
@@ -68,7 +75,10 @@ export function useCreateAgentMutation() {
           };
 
           try {
-            const created = await createAgentMutation.mutateAsync(request);
+            const created = await createAgentMutation.mutateAsync({
+              body: request,
+              analyticsSource: options?.analyticsSource,
+            });
             options?.onSuccess?.(created);
 
             return created;
@@ -157,7 +167,10 @@ export function useCreateAgentMutation() {
               };
 
           try {
-            const created = await createAgentMutation.mutateAsync(request);
+            const created = await createAgentMutation.mutateAsync({
+              body: request,
+              analyticsSource: options?.analyticsSource,
+            });
             options?.onSuccess?.(created);
 
             return created;

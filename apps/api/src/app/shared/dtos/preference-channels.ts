@@ -46,4 +46,13 @@ export class SubscriberPreferenceChannels {
   @IsBoolean()
   @IsOptional()
   push?: boolean;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Tool channel preference',
+    example: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  tool?: boolean;
 }

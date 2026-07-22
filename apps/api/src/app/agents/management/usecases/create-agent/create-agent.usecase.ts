@@ -200,6 +200,8 @@ export class CreateAgent {
       agentIdentifier: (updatedAgent ?? agent).identifier,
       active: agent.active ?? true,
       name: (updatedAgent ?? agent).name,
+      source: command.analyticsSource,
+      runtime: command.runtime,
     });
 
     const runtimeConfig = await this.loadRuntimeConfig(updatedAgent ?? agent, command);

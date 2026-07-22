@@ -12,7 +12,10 @@ import {
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  NotificationPayloadService,
   PinoLogger,
+  stitchProviderOverridesFromDocs,
+  withStitchedProviderOverrides,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -50,6 +53,7 @@ export class ExecuteBridgeJob {
   constructor(
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private notificationPayloadService: NotificationPayloadService,
     private messageRepository: MessageRepository,
     private environmentRepository: EnvironmentRepository,
     private controlValuesRepository: ControlValuesRepository,
@@ -164,12 +168,21 @@ export class ExecuteBridgeJob {
     controls: Record<string, unknown>;
     stepResolverHash?: string;
   }> {
-    const controlsEntity = await this.controlValuesRepository.findOne({
-      _organizationId: command.organizationId,
-      _workflowId: workflow._id,
-      _stepId: command.job.step._id,
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-    });
+    const [controlsEntity, providerDocs] = await Promise.all([
+      this.controlValuesRepository.findOne({
+        _organizationId: command.organizationId,
+        _workflowId: workflow._id,
+        _stepId: command.job.step._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      }),
+      this.controlValuesRepository.find({
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        _workflowId: workflow._id,
+        _stepId: command.job.step._id,
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      }),
+    ]);
 
     const rawControls = controlsEntity?.controls;
     const stepResolverHash = command.job.step.template?.stepResolverHash ?? undefined;
@@ -182,8 +195,10 @@ export class ExecuteBridgeJob {
       sanitizedControls = rawControls ?? {};
     }
 
+    const providerOverrides = stitchProviderOverridesFromDocs(providerDocs);
+
     return {
-      controls: sanitizedControls,
+      controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides),
       stepResolverHash,
     };
   }
@@ -283,10 +298,16 @@ export class ExecuteBridgeJob {
             payload: 1,
             createdAt: 1,
             _id: 1,
+            _notificationId: 1,
+            _environmentId: 1,
             transactionId: 1,
           }
         );
-        const events = [...digestJobs, job]
+        const digestEventJobs = [...digestJobs, job];
+        // Payload-dedup: resolve payloads from the parent notifications for
+        // jobs that no longer carry one before building the bridge events.
+        await this.notificationPayloadService.hydrateEntitiesPayload(digestEventJobs);
+        const events = digestEventJobs
           .map((digestJob) => ({
             id: digestJob._id,
             time: digestJob.createdAt,

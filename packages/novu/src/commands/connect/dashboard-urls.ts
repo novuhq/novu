@@ -1,6 +1,6 @@
 import type { ChannelChoice } from './types';
 
-export const DASHBOARD_ONLY_CHANNELS: ReadonlyArray<ChannelChoice> = ['whatsapp', 'teams'];
+export const DASHBOARD_ONLY_CHANNELS: ReadonlyArray<ChannelChoice> = ['teams'];
 
 export function buildConnectClaimUrl(input: { connectDashboardUrl: string; token: string }): string {
   const base = input.connectDashboardUrl.replace(/\/$/, '');
@@ -42,6 +42,8 @@ export function channelDisplayName(channel: ChannelChoice): string {
       return 'Telegram';
     case 'email':
       return 'Email';
+    case 'sendblue':
+      return 'iMessage (Sendblue)';
     default:
       return channel;
   }

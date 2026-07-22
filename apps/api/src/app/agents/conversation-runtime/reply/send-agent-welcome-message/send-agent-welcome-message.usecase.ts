@@ -7,15 +7,11 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import {
-  buildConnectSubscriberId,
-  SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS,
-  SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE,
-} from '@novu/shared';
+import { SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS, SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE } from '@novu/shared';
 import type { CardElement } from 'chat';
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
 import { isKeylessOrganization } from '../../../../keyless/keyless-organization.helpers';
-import { buildConnectClaimUrl, buildKeylessWelcomeCard, toReplyCard } from '../../../../keyless/keyless-signup.helpers';
+import { buildConnectClaimUrl, buildKeylessWelcomeCard } from '../../../../keyless/keyless-signup.helpers';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { getWelcomeText } from '../../../shared/util/agent-welcome-text';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../../shared/util/platform-endpoint-config';
@@ -104,7 +100,7 @@ export class SendAgentWelcomeMessage {
 
     try {
       const keylessWelcome = await this.resolveKeylessWelcomeCard(command, welcomeText);
-      const welcomeReplyCard = keylessWelcome ? toReplyCard(keylessWelcome.card) : undefined;
+      const welcomeReplyCard = keylessWelcome?.card;
       const welcomeContent = welcomeReplyCard ? { card: welcomeReplyCard } : { markdown: welcomeText };
       const sent = await this.outboundGateway.sendDirectMessage(
         agent._id,
@@ -201,11 +197,11 @@ export class SendAgentWelcomeMessage {
   }
 
   /**
-   * Email welcome messages are sent to the dashboard user's `connect:<userId>`
-   * subscriber — the same identity used by Telegram/WhatsApp test flows.
+   * Email welcome messages are sent to the dashboard user's subscriber
+   * (the same identity used by Telegram/WhatsApp test flows and workflow testing).
    */
   private async resolveEmailWelcomeRecipient(command: SendAgentWelcomeMessageCommand): Promise<string | undefined> {
-    const subscriberId = buildConnectSubscriberId(command.userId);
+    const subscriberId = command.userId;
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberId);
 
     if (!subscriber) {
@@ -216,7 +212,7 @@ export class SendAgentWelcomeMessage {
 
     if (!email) {
       this.logger.warn(
-        `No email on connect subscriber "${subscriberId}" — welcome email skipped for agent "${command.agentIdentifier}"`
+        `No email on dashboard subscriber "${subscriberId}" — welcome email skipped for agent "${command.agentIdentifier}"`
       );
 
       return undefined;

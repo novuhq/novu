@@ -7,6 +7,7 @@ interface IPreferenceChannelsDto {
   in_app?: boolean;
   chat?: boolean;
   push?: boolean;
+  tool?: boolean;
 }
 
 /**

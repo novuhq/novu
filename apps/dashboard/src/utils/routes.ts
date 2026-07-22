@@ -88,6 +88,8 @@ export const ROUTES = {
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
+  /** Public, tokenized Embedded Signup page opened by `npx novu connect` (keyless or authenticated). */
+  AGENT_WHATSAPP_SIGNUP: '/agents/whatsapp/connect/:token',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
   AGENT_SLACK_SETUP: '/agents/slack/connect/:token',
   INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',

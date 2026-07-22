@@ -75,6 +75,12 @@ import { LinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-requ
 import { LinkChannelEndpointResponseDto } from './dtos/link-channel-endpoint-response.dto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
+import {
+  WhatsAppEmbeddedSignupRequestDto,
+  WhatsAppEmbeddedSignupResponseDto,
+} from './dtos/whatsapp-embedded-signup.dto';
+import { WhatsAppEmbeddedSignupAvailabilityResponseDto } from './dtos/whatsapp-embedded-signup-availability.dto';
+import { IssueWhatsAppSignupLinkRequestDto, IssueWhatsAppSignupLinkResponseDto } from './dtos/whatsapp-signup-link.dto';
 import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
@@ -117,6 +123,12 @@ import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick
 import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
+import { IssueWhatsAppSignupLinkCommand } from './usecases/whatsapp/issue-whatsapp-signup-link.command';
+import { IssueWhatsAppSignupLink } from './usecases/whatsapp/issue-whatsapp-signup-link.usecase';
+import { WhatsAppEmbeddedSignupCommand } from './usecases/whatsapp/whatsapp-embedded-signup.command';
+import { WhatsAppEmbeddedSignup } from './usecases/whatsapp/whatsapp-embedded-signup.usecase';
+import { WhatsAppEmbeddedSignupAvailabilityCommand } from './usecases/whatsapp/whatsapp-embedded-signup-availability.command';
+import { WhatsAppEmbeddedSignupAvailability } from './usecases/whatsapp/whatsapp-embedded-signup-availability.usecase';
 import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
 import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
 
@@ -149,6 +161,9 @@ export class IntegrationsController {
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
+    private whatsAppEmbeddedSignupUsecase: WhatsAppEmbeddedSignup,
+    private whatsAppEmbeddedSignupAvailabilityUsecase: WhatsAppEmbeddedSignupAvailability,
+    private issueWhatsAppSignupLinkUsecase: IssueWhatsAppSignupLink,
     private issueIntegrationStoreTelegramMobileLinkUsecase: IssueIntegrationStoreTelegramMobileLink,
     private issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
@@ -327,7 +342,7 @@ export class IntegrationsController {
           name: body.name,
           identifier: body.identifier,
           environmentId: body._environmentId,
-          userEnvironmentId: user.environmentId,
+          userEnvironmentId: user.environmentId || undefined,
           organizationId: user.organizationId,
           integrationId,
           credentials: body.credentials,
@@ -841,6 +856,88 @@ export class IntegrationsController {
         accessToken: body.accessToken,
         phoneNumberIdentification: body.phoneNumberIdentification,
         businessAccountId: body.businessAccountId,
+      })
+    );
+  }
+
+  @Post('/whatsapp/embedded-signup')
+  @ApiResponse(WhatsAppEmbeddedSignupResponseDto, 200)
+  @ApiOperation({
+    summary: 'Complete WhatsApp Embedded Signup',
+    description:
+      'Exchanges a Meta Embedded Signup authorization code for a business integration token, saves WhatsApp credentials on the integration, registers the phone number when possible, and configures the agent webhook with Meta.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async completeWhatsAppEmbeddedSignup(
+    @UserSession() user: UserSessionData,
+    @Body() body: WhatsAppEmbeddedSignupRequestDto
+  ): Promise<WhatsAppEmbeddedSignupResponseDto> {
+    return this.whatsAppEmbeddedSignupUsecase.execute(
+      WhatsAppEmbeddedSignupCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        code: body.code,
+        wabaId: body.wabaId,
+        phoneNumberId: body.phoneNumberId,
+        integrationIdentifier: body.integrationIdentifier,
+        agentIdentifier: body.agentIdentifier,
+      })
+    );
+  }
+
+  @Get('/whatsapp/embedded-signup/availability')
+  @ApiResponse(WhatsAppEmbeddedSignupAvailabilityResponseDto, 200)
+  @ApiOperation({
+    summary: 'Check WhatsApp Embedded Signup availability',
+    description:
+      'Reports whether Meta Embedded Signup can be completed on this deployment for the caller organization (feature flag plus Tech Provider credentials). Used by the connect CLI to route between the embedded-signup flow and the classic dashboard handoff.',
+  })
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  async getWhatsAppEmbeddedSignupAvailability(
+    @UserSession() user: UserSessionData
+  ): Promise<WhatsAppEmbeddedSignupAvailabilityResponseDto> {
+    return this.whatsAppEmbeddedSignupAvailabilityUsecase.execute(
+      WhatsAppEmbeddedSignupAvailabilityCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Post('/whatsapp/signup-link')
+  @ApiResponse(IssueWhatsAppSignupLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a public WhatsApp Embedded Signup link',
+    description:
+      'Mints an opaque, single-use token bound to the agent + WhatsApp integration and returns the public signup page URL. ' +
+      'Used by the connect CLI (keyless or authenticated) to hand the browser off to Meta Embedded Signup.',
+  })
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async createWhatsAppSignupLink(
+    @UserSession() user: UserSessionData,
+    @Body() body: IssueWhatsAppSignupLinkRequestDto
+  ): Promise<IssueWhatsAppSignupLinkResponseDto> {
+    return this.issueWhatsAppSignupLinkUsecase.execute(
+      IssueWhatsAppSignupLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: body.agentIdentifier,
+        integrationIdentifier: body.integrationIdentifier,
       })
     );
   }

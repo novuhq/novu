@@ -1,18 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  buildDigestEvent,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
-  getNestedValue,
   Instrument,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IDigestBaseMetadata,
-  StepTypeEnum,
-} from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 
 import { PlatformException } from '../../../../shared/utils';
 
@@ -27,12 +22,9 @@ export abstract class GetDigestEvents {
 
   @Instrument()
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
-    const digestMeta = currentJob?.digest as IDigestBaseMetadata | undefined;
-    const batchValue = currentJob?.payload ? getNestedValue(currentJob.payload, digestMeta?.digestKey) : undefined;
-    const filteredJobs = jobs.filter((job) => {
-      return getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
-    });
-
+    // Candidate triggers are already narrowed to this digest value by
+    // `findDigestEventTriggers` (payload-independent match on the persisted
+    // `digest.digestValue`), so no further payload-based filtering is needed.
     const currentTrigger = (await this.jobRepository.findOne(
       {
         _environmentId: currentJob._environmentId,
@@ -60,10 +52,7 @@ export abstract class GetDigestEvents {
       throw new PlatformException(message);
     }
 
-    const events = [
-      currentJob.payload,
-      ...filteredJobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload),
-    ];
+    const events = [currentJob, ...jobs.filter((job) => job._id !== currentTrigger._id)].map(buildDigestEvent);
 
     return events;
   }

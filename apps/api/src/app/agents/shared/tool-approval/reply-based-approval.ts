@@ -5,6 +5,8 @@
  * "yes" / "no" — is consumed as the approve/ignore verdict.
  */
 
+import type { ActionsElement, CardChild, CardElement } from 'chat';
+
 export const REPLY_APPROVAL_INSTRUCTIONS = 'Reply YES to approve or NO to ignore.';
 
 /**
@@ -194,20 +196,13 @@ export function parseImessageTapback(text: string | undefined | null): ImessageT
   return null;
 }
 
-type CardChildLike = { type?: unknown; children?: unknown };
-
-function isCallbackButton(child: unknown): boolean {
-  return Boolean(child) && (child as CardChildLike).type === 'button';
-}
-
 /**
  * Removes callback buttons from an `actions` block (link buttons keep working
  * as plain URLs on text-only platforms). Returns `null` when nothing renderable
  * remains, so the caller drops the block entirely.
  */
-function stripCallbackButtons(block: Record<string, unknown>): Record<string, unknown> | null {
-  const children = Array.isArray(block.children) ? block.children : [];
-  const remaining = children.filter((child) => !isCallbackButton(child));
+function stripCallbackButtons(block: ActionsElement): ActionsElement | null {
+  const remaining = block.children.filter((child) => child.type !== 'button');
 
   if (remaining.length === 0) {
     return null;
@@ -216,18 +211,20 @@ function stripCallbackButtons(block: Record<string, unknown>): Record<string, un
   return { ...block, children: remaining };
 }
 
-function adaptCardForReplyApproval(card: Record<string, unknown>): Record<string, unknown> {
-  const children = Array.isArray(card.children) ? (card.children as Record<string, unknown>[]) : [];
+function adaptCardForReplyApproval(card: CardElement): CardElement {
+  const adaptedChildren: CardChild[] = [];
 
-  const adaptedChildren = children.flatMap((child) => {
-    if (child?.type !== 'actions') {
-      return [child];
+  for (const child of card.children) {
+    if (child.type !== 'actions') {
+      adaptedChildren.push(child);
+      continue;
     }
 
     const stripped = stripCallbackButtons(child);
-
-    return stripped ? [stripped] : [];
-  });
+    if (stripped) {
+      adaptedChildren.push(stripped);
+    }
+  }
 
   adaptedChildren.push({ type: 'text', content: REPLY_APPROVAL_INSTRUCTIONS });
 
@@ -236,7 +233,7 @@ function adaptCardForReplyApproval(card: Record<string, unknown>): Record<string
 
 type ReplyContentLike = {
   markdown?: string;
-  card?: Record<string, unknown>;
+  card?: CardElement;
 };
 
 /**

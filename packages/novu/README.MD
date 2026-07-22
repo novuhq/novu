@@ -62,7 +62,7 @@ The CLI authenticates your Novu account, creates a bridge agent, writes `NOVU_SE
 | **Slack** | Creates the Slack app, stores OAuth credentials, opens the install flow |
 | **Email** | Provisions a unique inbound address (e.g. `my-agent@agentconnect.sh`) |
 | **Telegram** | Links your @BotFather bot token |
-| **WhatsApp** | Hands off to the Novu dashboard to finish provider setup |
+| **WhatsApp** | Prints a Meta Embedded Signup link you complete in the browser (falls back to the dashboard when Embedded Signup is unavailable) |
 | **Microsoft Teams** | Hands off to the Novu dashboard to finish provider setup |
 
 One `connect` run creates one agent and connects one channel. Run it again to add more channels (each run creates a new agent unless you pick an existing one).
@@ -75,14 +75,14 @@ One `connect` run creates one agent and connects one channel. Run it again to ad
 | **Keyless** | Try Novu without signing up | Pass `--keyless` |
 | **Secret key** | CI or existing automation | Pass `--secret-key` or set `NOVU_SECRET_KEY` |
 
-WhatsApp and Microsoft Teams require dashboard OAuth — they are not supported with `--keyless` in non-interactive mode.
+Microsoft Teams requires dashboard OAuth — it is not supported with `--keyless` in non-interactive mode. WhatsApp works in both modes, keyless included.
 
 ## CLI commands
 
 | Command | Description |
 | --- | --- |
 | `connect` | Create a managed or bridge agent and connect it to a channel |
-| `init` | Scaffold a new Novu app (`notifications`, `agent`, or `chat-sdk` template) |
+| `init` | Scaffold a new Novu app (`notifications` or `chat-sdk` template) |
 | `sync` | Sync bridge workflow state with Novu Cloud |
 | `dev` | Start local Novu Studio and a tunnel to your bridge app |
 | `translations pull` | Pull translation files from Novu Cloud |
@@ -143,15 +143,13 @@ Scaffold a new Novu application.
 ```bash
 npx novu@latest init
 npx novu@latest init --template chat-sdk
-npx novu@latest init --template agent --agent-identifier my-agent
 ```
 
 | Flag | Description |
 | --- | --- |
 | `-s, --secret-key <key>` | Novu development environment secret key |
 | `-a, --api-url <url>` | Novu Cloud API URL (default: `https://api.novu.co`) |
-| `-t, --template <name>` | Template: `notifications`, `agent`, or `chat-sdk` |
-| `--agent-identifier <id>` | Agent identifier for the scaffolded template |
+| `-t, --template <name>` | Template: `notifications` or `chat-sdk` |
 
 ### `sync`
 

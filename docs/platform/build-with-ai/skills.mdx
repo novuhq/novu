@@ -6,7 +6,7 @@ description: "Use Novu Agent Skills to help AI coding assistants build multi-cha
 
 ## What are Agent Skills?
 
-Agent Skills are an open standard that gives AI agents (Claude Code, Cursor, Copilot, etc.) the context they need to work with specific tools and platforms. Novu's skills provide AI agents with everything required to build multi-channel notification systems — triggering workflows, managing subscribers, integrating the in-app inbox, and configuring preferences.
+Agent Skills are an open standard that gives AI agents (Claude Code, Cursor, Copilot, etc.) the context they need to work with specific tools and platforms. Novu's skills provide AI agents with everything required to build multi-channel notification systems - triggering workflows, managing subscribers, integrating the in-app inbox, and configuring preferences.
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ Example payload:
 }
 ```
 
-Follow the novu-trigger-notification skill. Do not create documentation files — implement the trigger in my existing codebase.
+Follow the novu-trigger-notification skill. Do not create documentation files - implement the trigger in my existing codebase.
 </Prompt>
 
 <Prompt description="Create a subscriber" icon="bot" actions={["copy", "cursor"]}>
@@ -73,7 +73,7 @@ Follow the novu-manage-subscribers skill. Store NOVU_SECRET_KEY in environment v
 <Prompt description="Add a bell icon to my app" icon="bot" actions={["copy", "cursor"]}>
 Add a notification bell (Novu Inbox) to my Next.js app navbar. Install @novu/nextjs, use applicationIdentifier YOUR_APPLICATION_IDENTIFIER and subscriberId from my auth system.
 
-Follow the novu-inbox-integration skill. Place the Inbox inline in existing UI — no new pages or wrappers.
+Follow the novu-inbox-integration skill. Place the Inbox inline in existing UI - no new pages or wrappers.
 
 Latest docs: https://docs.novu.co/platform/quickstart/nextjs
 </Prompt>
@@ -514,7 +514,7 @@ curl -X POST 'https://api.novu.co/v1/events/trigger' \
 
 ### Manage Subscribers
 
-Subscribers are the recipients of your notifications. Each subscriber has a unique `subscriberId` — typically your application's user ID.
+Subscribers are the recipients of your notifications. Each subscriber has a unique `subscriberId` - typically your application's user ID.
 
 #### Create
 

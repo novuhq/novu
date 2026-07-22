@@ -1,12 +1,13 @@
-import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
-import type { AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
@@ -79,38 +80,6 @@ export interface ThreadReplyPersistContext {
   organizationId: string;
 }
 
-function getErrorResponseBody(err: unknown): unknown {
-  if (!err || typeof err !== 'object') {
-    return undefined;
-  }
-
-  return (err as { response?: { body?: unknown } }).response?.body;
-}
-
-function getDeliveryErrorDetail(body: unknown): string | undefined {
-  if (!body || typeof body !== 'object') {
-    return undefined;
-  }
-
-  const responseBody = body as { errors?: Array<{ message?: unknown }>; message?: unknown };
-  const firstErrorMessage = responseBody.errors?.[0]?.message;
-  if (typeof firstErrorMessage === 'string') {
-    return firstErrorMessage;
-  }
-
-  return typeof responseBody.message === 'string' ? responseBody.message : undefined;
-}
-
-function toDeliveryError(err: unknown): never {
-  const base = err instanceof Error ? err.message : String(err);
-  const detail = getDeliveryErrorDetail(getErrorResponseBody(err));
-
-  throw new BadGatewayException({
-    error: 'delivery_failed',
-    message: detail ? `${base}: ${detail}` : base,
-  });
-}
-
 @Injectable()
 export class OutboundGateway {
   constructor(
@@ -175,12 +144,7 @@ export class OutboundGateway {
     return sent;
   }
 
-  /**
-   * Internal reply surface for server-built cards (capacity, plan-limit,
-   * keyless CTA). `OutboundMessage.card` is typed as the request-DTO validation
-   * shape (`Record<string, unknown>`), so the single DTO-boundary cast lives
-   * here instead of at every call site.
-   */
+  /** Internal reply surface for server-built cards (capacity, plan-limit, keyless CTA). */
   async replyOnThreadWithCard(
     thread: Thread,
     card: CardElement,
@@ -190,7 +154,7 @@ export class OutboundGateway {
       actionTokenBinding?: AgentActionTokenBinding;
     }
   ): Promise<SentMessageInfo | null> {
-    return this.replyOnThread(thread, { card: card as unknown as Record<string, unknown> }, opts);
+    return this.replyOnThread(thread, { card }, opts);
   }
 
   async replyOnThread(
@@ -364,8 +328,7 @@ export class OutboundGateway {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-
-    const dmThread = await chat.openDM(platformUserId);
+    const dmThread = await this.openDirectMessageThread(chat, config.platform, platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
     const tokenizedContent = await this.applyActionTokensForDelivery(
       deliveryContent,
@@ -472,18 +435,7 @@ export class OutboundGateway {
     // Edits re-brand so a post-then-edit delivery never strips the watermark.
     const editPayload = this.buildAdapterPostableMessage(tokenizedContent, config);
 
-    let editPromise: Promise<{ id: string; threadId: string }>;
-    if (tokenizedContent.card) {
-      editPromise = adapter.editMessage(
-        platformThreadId,
-        platformMessageId,
-        tokenizedContent.card as unknown as AdapterPostableMessage
-      );
-    } else {
-      editPromise = adapter.editMessage(platformThreadId, platformMessageId, editPayload);
-    }
-
-    const edited = await editPromise.catch(toDeliveryError);
+    const edited = await adapter.editMessage(platformThreadId, platformMessageId, editPayload).catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }
@@ -604,6 +556,18 @@ export class OutboundGateway {
     await adapter.removeReaction(platformThreadId, platformMessageId, resolved);
   }
 
+  private async openDirectMessageThread(chat: Chat, platform: string, platformUserId: string): Promise<Thread> {
+    const adapter = chat.getAdapter(platform);
+
+    if (typeof adapter.openDM === 'function') {
+      const threadId = await adapter.openDM(platformUserId);
+
+      return chat.thread(threadId);
+    }
+
+    return chat.openDM(platformUserId);
+  }
+
   private async resolveSlackBotToken(agentId: string, integrationIdentifier: string): Promise<string> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const token = config.connectionAccessToken;
@@ -645,7 +609,7 @@ export class OutboundGateway {
 
     const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
 
-    return { ...content, card: card as unknown as Record<string, unknown>, markdown: undefined };
+    return { ...content, card, markdown: undefined };
   }
 
   /**
@@ -659,21 +623,16 @@ export class OutboundGateway {
     const deliveryContent = this.applyOutboundBranding(content, branding);
 
     if (deliveryContent.card) {
-      const payload: { card: unknown; files?: ChatSdkFile[] } = {
+      return {
         card: deliveryContent.card,
-      };
-
-      if (deliveryContent.files?.length) {
-        payload.files = deliveryContent.files;
-      }
-
-      return payload as unknown as AdapterPostableMessage;
+        ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
+      } as AdapterPostableMessage;
     }
 
     return {
       markdown: deliveryContent.markdown ?? '',
       files: deliveryContent.files,
-    } as unknown as AdapterPostableMessage;
+    } as AdapterPostableMessage;
   }
 
   private async persistDelivered(
@@ -747,9 +706,7 @@ export class OutboundGateway {
       return msg.markdown;
     }
     if (msg.card) {
-      const title = (msg.card as { title?: string }).title;
-
-      return title ?? '[Card]';
+      return msg.card.title ?? '[Card]';
     }
 
     return '';

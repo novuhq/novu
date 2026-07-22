@@ -8,6 +8,7 @@ import type {
 } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import type { ScaffoldBridgeProjectResult } from '../bridge/scaffold-project';
+import type { LlmAuthChoice } from '../llm-auth/types';
 
 /**
  * Bridge-adapter connect flows (AI SDK, LangChain) share one reconcile engine.
@@ -36,6 +37,7 @@ export type BridgeAdapterScaffoldInput = {
   apiUrl: string;
   agentIdentifier: string;
   silent?: boolean;
+  llmAuth: LlmAuthChoice;
 };
 
 export type BridgeAdapterRequirementsInput = {

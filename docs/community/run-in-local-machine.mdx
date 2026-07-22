@@ -9,7 +9,7 @@ description: 'Prerequisites and steps to run Novu in local machine. Learn how to
 ## Requirements
 
 - Node.js v22.22.1 (LTS). The repo requires Node `>=22 <23` and pnpm `^11`.
-- pnpm 11.x (required — the repo enforces pnpm via `preinstall`)
+- pnpm 11.x (required - the repo enforces pnpm via `preinstall`)
 - MongoDB
 - Redis
 - Docker (recommended for running MongoDB, Redis, and LocalStack together)
@@ -77,15 +77,15 @@ After installing Node.js and pnpm, clone and set up your forked version of the p
 
 The recommended `pnpm dev:portless` command starts the Dashboard, API, Worker, and shared packages through [Portless](https://github.com/vercel-labs/portless) proxies. If you only want to run parts of the platform, use these commands from the repo root:
 
-- **start** / **jarvis** — Interactive CLI to run the full stack or test suites
-- **dev:portless** — Recommended local dev runner (Dashboard, API, Worker, shared packages)
-- **start:dashboard** — Dashboard only (Vite on port 4201 by default)
-- **start:api:dev** — API in watch mode
-- **start:ws** — WebSocket service for real-time Inbox updates
-- **start:worker** — Worker application
-- **start:webhook** — Webhook service
-- **start:dal** — Data Access Layer package in watch mode
-- **start:shared** — Shared client and API library in watch mode
+- **start** / **jarvis** - Interactive CLI to run the full stack or test suites
+- **dev:portless** - Recommended local dev runner (Dashboard, API, Worker, shared packages)
+- **start:dashboard** - Dashboard only (Vite on port 4201 by default)
+- **start:api:dev** - API in watch mode
+- **start:ws** - WebSocket service for real-time Inbox updates
+- **start:worker** - Worker application
+- **start:webhook** - Webhook service
+- **start:dal** - Data Access Layer package in watch mode
+- **start:shared** - Shared client and API library in watch mode
 
 <Note>
   The legacy Widget and `@novu/notification-center` apps have been removed. Use the [Inbox component](/platform/inbox) (`@novu/react`) instead.
@@ -97,38 +97,38 @@ If you used `npm run setup:project` or Jarvis, default `.env` files are created 
 
 <AccordionGroup>
   <Accordion title="API Backend">
-    - `NODE_ENV` (default: local) — The environment of the app. Possible values are: dev, test, production, ci, local
-    - `PORT` — The port on which the API backend listens (default: 3000)
-    - `API_ROOT_URL` — Public base URL for the API
-    - `FRONT_BASE_URL` / `DASHBOARD_URL` — Dashboard URL (default local dev: `http://127.0.0.1:4201`)
-    - `DISABLE_USER_REGISTRATION` (default: false) — If users should not be able to create new accounts
-    - `MONGO_URL` — MongoDB connection string
-    - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB_INDEX` — Redis queue connection
-    - `REDIS_CACHE_SERVICE_HOST`, `REDIS_CACHE_SERVICE_PORT` — Optional Redis cache instance
-    - `IS_IN_MEMORY_CLUSTER_MODE_ENABLED` — Enables Redis or ElastiCache cluster mode
-    - `JWT_SECRET` — Secret used to sign authentication tokens
-    - `STORE_ENCRYPTION_KEY` — Encrypts provider credentials (must be 32 characters)
-    - `NOVU_SECRET_KEY` — Server-side API secret key
-    - `S3_LOCAL_STACK`, `S3_BUCKET_NAME`, `S3_REGION` — LocalStack/S3 storage settings
-    - `SENTRY_DSN` — Optional Sentry DSN for error reporting
+    - `NODE_ENV` (default: local) - The environment of the app. Possible values are: dev, test, production, ci, local
+    - `PORT` - The port on which the API backend listens (default: 3000)
+    - `API_ROOT_URL` - Public base URL for the API
+    - `FRONT_BASE_URL` / `DASHBOARD_URL` - Dashboard URL (default local dev: `http://127.0.0.1:4201`)
+    - `DISABLE_USER_REGISTRATION` (default: false) - If users should not be able to create new accounts
+    - `MONGO_URL` - MongoDB connection string
+    - `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB_INDEX` - Redis queue connection
+    - `REDIS_CACHE_SERVICE_HOST`, `REDIS_CACHE_SERVICE_PORT` - Optional Redis cache instance
+    - `IS_IN_MEMORY_CLUSTER_MODE_ENABLED` - Enables Redis or ElastiCache cluster mode
+    - `JWT_SECRET` - Secret used to sign authentication tokens
+    - `STORE_ENCRYPTION_KEY` - Encrypts provider credentials (must be 32 characters)
+    - `NOVU_SECRET_KEY` - Server-side API secret key
+    - `S3_LOCAL_STACK`, `S3_BUCKET_NAME`, `S3_REGION` - LocalStack/S3 storage settings
+    - `SENTRY_DSN` - Optional Sentry DSN for error reporting
   </Accordion>
 
   <Accordion title="Worker">
     - `NODE_ENV` (default: local)
-    - `PORT` — Worker health-check port (default: 3004)
-    - `STORE_ENCRYPTION_KEY` — Must match the API value
-    - `MONGO_URL`, `REDIS_HOST`, `REDIS_PORT` — Same infrastructure as the API
-    - `STORAGE_SERVICE` — Storage backend: AWS, GCS, or AZURE
-    - `S3_LOCAL_STACK`, `S3_BUCKET_NAME`, `S3_REGION` — Object storage settings
-    - `NEW_RELIC_ENABLED`, `NEW_RELIC_APP_NAME`, `NEW_RELIC_LICENSE_KEY` — Optional New Relic settings
+    - `PORT` - Worker health-check port (default: 3004)
+    - `STORE_ENCRYPTION_KEY` - Must match the API value
+    - `MONGO_URL`, `REDIS_HOST`, `REDIS_PORT` - Same infrastructure as the API
+    - `STORAGE_SERVICE` - Storage backend: AWS, GCS, or AZURE
+    - `S3_LOCAL_STACK`, `S3_BUCKET_NAME`, `S3_REGION` - Object storage settings
+    - `NEW_RELIC_ENABLED`, `NEW_RELIC_APP_NAME`, `NEW_RELIC_LICENSE_KEY` - Optional New Relic settings
   </Accordion>
 
   <Accordion title="Dashboard">
-    - `VITE_API_HOSTNAME` — API base URL (default: `http://localhost:3000`)
-    - `VITE_WEBSOCKET_HOSTNAME` — WebSocket base URL (default: `http://localhost:3002`)
-    - `VITE_DASHBOARD_URL` — Dashboard URL (default local dev: `http://localhost:4201`)
-    - `VITE_SELF_HOSTED` — Set when running a self-hosted deployment
-    - `VITE_SENTRY_DSN`, `VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID` — Optional telemetry and feature-flag settings
+    - `VITE_API_HOSTNAME` - API base URL (default: `http://localhost:3000`)
+    - `VITE_WEBSOCKET_HOSTNAME` - WebSocket base URL (default: `http://localhost:3002`)
+    - `VITE_DASHBOARD_URL` - Dashboard URL (default local dev: `http://localhost:4201`)
+    - `VITE_SELF_HOSTED` - Set when running a self-hosted deployment
+    - `VITE_SENTRY_DSN`, `VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID` - Optional telemetry and feature-flag settings
 
     <Note>
       When using `pnpm dev:portless`, `scripts/portless-dev-env.mjs` resolves API, WebSocket, and Dashboard URLs at runtime. Run `PORTLESS=0 pnpm start:dashboard` to bypass Portless and use the values in your `.env` file directly.
@@ -137,11 +137,11 @@ If you used `npm run setup:project` or Jarvis, default `.env` files are created 
 
   <Accordion title="WebSocket">
     - `NODE_ENV` (default: local)
-    - `PORT` — WebSocket service port (default: 3002)
-    - `JWT_SECRET` — Must match the API value
+    - `PORT` - WebSocket service port (default: 3002)
+    - `JWT_SECRET` - Must match the API value
     - `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB_INDEX`, `REDIS_PASSWORD`
     - `MONGO_URL`
-    - `SENTRY_DSN` — Optional Sentry DSN
+    - `SENTRY_DSN` - Optional Sentry DSN
   </Accordion>
 </AccordionGroup>
 

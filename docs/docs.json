@@ -25,6 +25,10 @@
       "twitter:card": "summary_large_image"
     }
   },
+  "thumbnails": {
+    "appearance": "dark",
+    "background": "/images/og/og-background.png"
+  },
   "interaction": {
     "drilldown": true
   },
@@ -34,7 +38,7 @@
     },
     "tabs": [
       {
-        "tab": "Platform",
+        "tab": "Notify",
         "groups": [
           {
             "group": "Getting Started",
@@ -192,6 +196,7 @@
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
+                  "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/telegram",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"
@@ -282,6 +287,10 @@
                   "platform/integrations/sms/telnyx",
                   "platform/integrations/sms/termii"
                 ]
+              },
+              {
+                "group": "Tool",
+                "pages": ["platform/integrations/tool/pagerduty", "platform/integrations/tool/opsgenie"]
               },
               "platform/integrations/trigger-overrides"
             ],
@@ -403,7 +412,7 @@
         ]
       },
       {
-        "tab": "Agents",
+        "tab": "Agent Connect",
         "groups": [
           {
             "group": "Getting Started",
@@ -412,7 +421,11 @@
               "agents",
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
-              "agents/get-started/agents-and-providers"
+              "agents/get-started/agents-and-providers",
+              {
+                "group": "Quickstart",
+                "pages": ["agents/get-started/ai-sdk", "agents/get-started/langchain", "agents/get-started/mastra"]
+              }
             ]
           },
           {
@@ -903,6 +916,7 @@
                       "framework/quickstart/svelte",
                       "framework/quickstart/nuxt",
                       "framework/quickstart/h3",
+                      "framework/quickstart/hono",
                       "framework/quickstart/lambda"
                     ]
                   }
@@ -1113,11 +1127,6 @@
     }
   },
   "redirects": [
-    {
-      "source": "/",
-      "destination": "/platform",
-      "permanent": true
-    },
     {
       "source": "/content-creation-design/handlebars-helpers",
       "destination": "/platform/templates/handlebars-helpers",
@@ -1551,6 +1560,11 @@
     {
       "source": "/docs/platform/workflow/layouts",
       "destination": "/platform/workflow/add-notification-content/channels-template-editors#email-layouts",
+      "permanent": true
+    },
+    {
+      "source": "/agents/get-started/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {

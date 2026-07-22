@@ -1,6 +1,6 @@
 import { ExecutionDetailsEntity, ExecutionDetailsRepository, JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
+import { EmailEventStatusEnum, PushEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
 import { IsDate, IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../commands';
 import { DetailEnum } from './types';
@@ -64,7 +64,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsDate()
   createdAt?: Date;
 
-  webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
+  webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum | PushEventStatusEnum;
 
   static getDetailsFromJob(
     job: JobEntity

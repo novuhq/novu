@@ -22,10 +22,13 @@ Currently, we offer `serve` functions for the following frameworks:
 
 - [Next.js](/framework/quickstart/nextjs)
 - [Express.js](/framework/quickstart/express)
+- [NestJS](/framework/quickstart/nestjs)
 - [Nuxt](/framework/quickstart/nuxt)
 - [h3](/framework/quickstart/h3)
+- [Hono](/framework/quickstart/hono)
 - [Remix](/framework/quickstart/remix)
 - [Sveltekit](/framework/quickstart/svelte)
+- [AWS Lambda](/framework/quickstart/lambda)
 
 ## Retry behavior
 
@@ -43,7 +46,7 @@ Retries are triggered for these **HTTP status codes**: `408`, `429`, `500`, `503
 
 Retries are also triggered for transient **network error codes** such as `EAI_AGAIN`, `ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT`, and `ENOTFOUND`.
 
-Other responses — for example most `4xx` errors outside `408` and `429` — are not retried. Each bridge request has a **5 second** timeout.
+Other responses - for example most `4xx` errors outside `408` and `429` - are not retried. Each bridge request has a **5 second** timeout.
 
 ## Writing a custom `serve` function
 

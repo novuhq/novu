@@ -5,6 +5,8 @@ export interface UpsertSubscriberInput {
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
+  /** Persisted so the Sendblue test-message endpoint (which reads `subscriber.phone`) can reach the recipient. */
+  phone?: string | null;
 }
 
 /**
@@ -20,5 +22,27 @@ export async function upsertSubscriber(client: ConnectApiClient, input: UpsertSu
     firstName: input.firstName ?? undefined,
     lastName: input.lastName ?? undefined,
     email: input.email ?? undefined,
+    phone: input.phone ?? undefined,
   });
+}
+
+/**
+ * Best-effort read of a subscriber's saved phone so the Sendblue test-message
+ * step can pre-fill the recipient input. `GET /v2/subscribers/:id` is not
+ * keyless-accessible, so this resolves to `undefined` in keyless mode (where a
+ * freshly-seeded subscriber has no phone anyway) — never throwing.
+ */
+export async function getSubscriberPhone(client: ConnectApiClient, subscriberId: string): Promise<string | undefined> {
+  try {
+    const res = await client.axios.get<{ data?: { phone?: string } } | { phone?: string }>(
+      `/v2/subscribers/${encodeURIComponent(subscriberId)}`
+    );
+    const body = res.data;
+    const subscriber = 'data' in body && body.data ? body.data : (body as { phone?: string });
+    const phone = typeof subscriber.phone === 'string' ? subscriber.phone.trim() : '';
+
+    return phone || undefined;
+  } catch {
+    return undefined;
+  }
 }

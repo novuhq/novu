@@ -202,7 +202,7 @@ export class SendMessageEmail extends SendMessageBase {
       transactionId: command.transactionId,
       email,
       providerId: integration?.providerId,
-      payload: messagePayload,
+      payload: this.payloadToPersist(command, messagePayload),
       overrides,
       templateIdentifier: command.identifier,
       stepId: command.step.stepId,

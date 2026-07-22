@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
+import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
@@ -291,12 +292,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         };
       }
       case AgentPlatformEnum.WHATSAPP: {
-        if (
-          !credentials.apiToken ||
-          !credentials.secretKey ||
-          !credentials.token ||
-          !credentials.phoneNumberIdentification
-        ) {
+        const appSecret = resolveWhatsAppAppSecret(credentials);
+
+        if (!credentials.apiToken || !appSecret || !credentials.token || !credentials.phoneNumberIdentification) {
           throw new BadRequestException(
             'WhatsApp agent integration requires accessToken, appSecret, verifyToken, and phoneNumberId credentials'
           );
@@ -307,7 +305,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         return {
           whatsapp: createWhatsAppAdapter({
             accessToken: credentials.apiToken,
-            appSecret: credentials.secretKey,
+            appSecret,
             verifyToken: credentials.token,
             phoneNumberId: credentials.phoneNumberIdentification,
           }),

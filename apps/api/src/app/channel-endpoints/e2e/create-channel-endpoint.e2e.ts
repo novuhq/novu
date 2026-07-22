@@ -6,7 +6,7 @@ import {
   CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
 } from '@novu/api/models/components';
-import { IntegrationRepository } from '@novu/dal';
+import { ChannelConnectionRepository, ChannelEndpointRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -18,8 +18,12 @@ import {
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
+import { createPagerDutyIntegration, VALID_PAGERDUTY_ROUTING_KEY } from './helpers/pagerduty-helpers';
 
 const integrationRepository = new IntegrationRepository();
+const channelEndpointRepository = new ChannelEndpointRepository();
+const channelConnectionRepository = new ChannelConnectionRepository();
 
 async function createTelegramIntegration(session: UserSession) {
   return integrationRepository.create({
@@ -166,6 +170,62 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(error?.name).to.equal('ErrorDto');
   });
 
+  it('should fail with 404 when the subscriber does not exist and createSubscriberIfMissing is not set', async () => {
+    const integration = await createSlackIntegration(session);
+
+    // Raw HTTP: the regenerated SDK types are not required for this flag test.
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: 'ghost-subscriber-404',
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: { url: 'https://example.com/webhook' },
+    });
+
+    expect(res.status).to.equal(404);
+    expect(res.body.message).to.include('Subscriber not found: ghost-subscriber-404');
+    expect(res.body.message).to.include('createSubscriberIfMissing');
+  });
+
+  it('should create the subscriber on the fly when createSubscriberIfMissing is true', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscriberId = `jit-subscriber-${Date.now()}`;
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: { url: 'https://example.com/webhook' },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.subscriberId).to.equal(subscriberId);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.subscriberId).to.equal(subscriberId);
+  });
+
+  it('should not modify an existing subscriber when createSubscriberIfMissing is true', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber({ firstName: 'Original' });
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: { url: 'https://example.com/webhook' },
+    });
+
+    expect(res.status).to.equal(201);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriber.subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.firstName).to.equal('Original');
+  });
+
   it('should fail when subscriberId is missing', async () => {
     const integration = await createSlackIntegration(session);
 
@@ -270,10 +330,11 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
       },
     } as any;
 
-    const { error } = await expectSdkZodError(() => novuClient.channelEndpoints.create(createDto));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.channelEndpoints.create(createDto));
 
     expect(error).to.exist;
-    expect(error?.name).to.equal('SDKValidationError');
+    expect(error?.name).to.equal('ErrorDto');
+    expect(error?.message).to.equal('Channel endpoint type "webex_room" requires a connectionIdentifier');
   });
 
   it('should fail when creating a Webex endpoint for a non-Webex integration', async () => {
@@ -369,5 +430,183 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(result.type).to.equal(ENDPOINT_TYPES.LINE_USER);
     expect((result.endpoint as { userId: string }).userId).to.equal('U1234567890abcdef');
     expect(result.connectionIdentifier).to.be.null;
+  });
+
+  it('should create an opsgenie_integration endpoint with the secret persisted encrypted on the connection', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'eu' },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.type).to.equal(ENDPOINT_TYPES.OPSGENIE_INTEGRATION);
+    expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
+    expect(res.body.data.connectionIdentifier).to.be.a('string');
+    // The response is hydrated with the wire shape.
+    expect(res.body.data.endpoint.apiKey).to.equal(VALID_OPSGENIE_API_KEY);
+    expect(res.body.data.endpoint.region).to.equal('eu');
+
+    // The stored endpoint document is empty (Mongoose minimizes {} to undefined);
+    // the secret lives on the connection.
+    const storedEndpoint = await channelEndpointRepository.findOne({
+      identifier: res.body.data.identifier,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    expect(storedEndpoint).to.exist;
+    expect(storedEndpoint?.endpoint ?? {}).to.deep.equal({});
+
+    // The connection auth carries the apiKey encrypted at rest.
+    const connection = await channelConnectionRepository.findOne({
+      identifier: res.body.data.connectionIdentifier,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    expect(connection).to.exist;
+    const storedApiKey = (connection?.auth as { apiKey?: string })?.apiKey;
+    expect(storedApiKey).to.be.a('string');
+    expect(storedApiKey).to.not.equal(VALID_OPSGENIE_API_KEY);
+    expect(storedApiKey?.startsWith('nvsk.')).to.be.true;
+    expect((connection?.auth as { region?: string })?.region).to.equal('eu');
+  });
+
+  it('should reject an opsgenie endpoint when the apiKey is not a UUID', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: 'not-a-uuid', region: 'us' },
+    });
+
+    // Command-level schema validation rejects malformed wire shapes with 422,
+    // matching the pagerduty_service behavior.
+    expect(res.status).to.equal(422);
+  });
+
+  it('should fail with 409 when an opsgenie endpoint already exists for the subscriber and integration', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const payload = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'us' },
+    };
+
+    const firstRes = await session.testAgent.post('/v1/channel-endpoints').send(payload);
+    expect(firstRes.status).to.equal(201);
+
+    const duplicateRes = await session.testAgent.post('/v1/channel-endpoints').send(payload);
+    expect(duplicateRes.status).to.equal(409);
+    expect(duplicateRes.body.message).to.include(subscriber.subscriberId);
+  });
+
+  it('should fail with 404 for opsgenie when the subscriber does not exist and createSubscriberIfMissing is not set', async () => {
+    const integration = await createOpsgenieIntegration(session);
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: 'ghost-opsgenie-subscriber',
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'us' },
+    });
+
+    expect(res.status).to.equal(404);
+    expect(res.body.message).to.include('Subscriber not found: ghost-opsgenie-subscriber');
+    expect(res.body.message).to.include('createSubscriberIfMissing');
+  });
+
+  it('should create the subscriber on the fly for opsgenie when createSubscriberIfMissing is true', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscriberId = `jit-opsgenie-subscriber-${Date.now()}`;
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'us' },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.subscriberId).to.equal(subscriberId);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.subscriberId).to.equal(subscriberId);
+  });
+
+  it('should not modify an existing subscriber for opsgenie when createSubscriberIfMissing is true', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber({ firstName: 'Original' });
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'us' },
+    });
+
+    expect(res.status).to.equal(201);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriber.subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.firstName).to.equal('Original');
+  });
+
+  it('should create a pagerduty_service endpoint for a PagerDuty integration', async () => {
+    const integration = await createPagerDutyIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+      endpoint: {
+        routingKey: VALID_PAGERDUTY_ROUTING_KEY,
+        region: 'us',
+      },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.type).to.equal(ENDPOINT_TYPES.PAGERDUTY_SERVICE);
+    expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
+    expect(res.body.data.endpoint.routingKey).to.equal(VALID_PAGERDUTY_ROUTING_KEY);
+    expect(res.body.data.endpoint.region).to.equal('us');
+    expect(res.body.data.connectionIdentifier).to.be.a('string');
+  });
+
+  it('should fail when creating a pagerduty_service endpoint for a non-PagerDuty integration', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+      endpoint: {
+        routingKey: VALID_PAGERDUTY_ROUTING_KEY,
+        region: 'us',
+      },
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('requires a PagerDuty integration');
   });
 });

@@ -4,6 +4,7 @@ import {
   assertSafeOutboundUrl,
   CompileTemplate,
   createHash,
+  getEffectiveJobPayload,
   normalizeOutboundHttpUrl,
   SsrfBlockedError,
   safeOutboundJsonRequest,
@@ -74,9 +75,13 @@ export class ReplyToStrategy {
       );
     }
 
+    // Payload-dedup: the email job may not carry its own payload; fall back to
+    // the parent notification's payload for template compilation and webhook.
+    const effectivePayload = getEffectiveJobPayload(job, notification) ?? {};
+
     const compiledDomain = await this.compileTemplate.execute({
       template: currentParseWebhook as string,
-      data: job.payload,
+      data: effectivePayload,
     });
 
     const requestUrl = normalizeOutboundHttpUrl(compiledDomain);
@@ -103,7 +108,7 @@ export class ReplyToStrategy {
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
       transactionId,
-      payload: job.payload,
+      payload: effectivePayload,
       templateIdentifier: job.identifier,
       template,
       notification,

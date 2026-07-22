@@ -1,6 +1,7 @@
 import { TemplateTypeEnum } from '../../../init/templates';
 import { defaultCustomCodeScaffoldDirName } from '../bridge/agent-paths';
 import { type ScaffoldBridgeProjectResult, scaffoldBridgeProject } from '../bridge/scaffold-project';
+import type { LlmAuthChoice } from '../llm-auth/types';
 
 export async function scaffoldLangChainProject(input: {
   parentDir: string;
@@ -9,6 +10,7 @@ export async function scaffoldLangChainProject(input: {
   apiUrl: string;
   agentIdentifier: string;
   silent?: boolean;
+  llmAuth: LlmAuthChoice;
 }): Promise<ScaffoldBridgeProjectResult> {
   return scaffoldBridgeProject({
     parentDir: input.parentDir,
@@ -19,5 +21,6 @@ export async function scaffoldLangChainProject(input: {
     apiUrl: input.apiUrl,
     agentIdentifier: input.agentIdentifier,
     silent: input.silent,
+    llmAuth: input.llmAuth,
   });
 }

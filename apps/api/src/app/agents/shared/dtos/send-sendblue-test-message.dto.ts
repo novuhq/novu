@@ -6,7 +6,7 @@ export class SendSendblueTestMessageRequestDto {
     type: String,
     description:
       'Novu subscriber ID whose phone field receives the Sendblue test message. The dashboard patches subscriber.phone before calling this endpoint.',
-    example: 'connect:user-123',
+    example: 'user-123',
   })
   @IsString()
   @IsNotEmpty()

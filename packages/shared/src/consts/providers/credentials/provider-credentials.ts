@@ -1622,3 +1622,64 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
     required: false,
   },
 ];
+
+/**
+ * PagerDuty is routed per subscriber — the routing key and region live on the
+ * per-subscriber `ChannelConnection.auth`, provisioned via
+ * `POST /v1/channel-endpoints` with `type: pagerduty_service`. The env-level
+ * integration record is an anchor only (identifier + name); no fields are
+ * configured on the integration itself.
+ */
+export const pagerdutyConfig: IConfigCredential[] = [];
+
+/**
+ * Opsgenie is routed per subscriber: the API integration key and region live
+ * on the per-subscriber `ChannelConnection.auth`, provisioned via
+ * `POST /v1/channel-endpoints` with `type: opsgenie_integration`. The env-level
+ * integration record is an anchor only (identifier + name); no fields are
+ * configured on the integration itself.
+ */
+export const opsgenieConfig: IConfigCredential[] = [];
+
+export const toolWebhookConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Method,
+    displayName: 'HTTP Method',
+    type: 'dropdown',
+    required: true,
+    value: 'POST',
+    dropdown: [
+      { name: 'POST', value: 'POST' },
+      { name: 'PUT', value: 'PUT' },
+      { name: 'PATCH', value: 'PATCH' },
+    ],
+  },
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Endpoint URL',
+    type: 'string',
+    description: 'The webhook URL to call when delivering a tool payload',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Headers,
+    displayName: 'Headers',
+    type: 'textarea',
+    description: 'Request headers as JSON object',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Body,
+    displayName: 'Body Template',
+    type: 'textarea',
+    description: 'Request body template for the webhook call',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'Optional secret used to sign webhook calls',
+    required: false,
+  },
+];
