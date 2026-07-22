@@ -1,6 +1,7 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 import type { Awaitable } from '../../types/util.types';
+import type { AgentError } from './agent.errors';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 export type { TriggerRecipientsPayload };
 
@@ -59,6 +60,23 @@ export interface AgentConversation {
   createdAt: string;
   lastActivityAt: string;
 }
+
+/**
+ * A single connect-time context value: either a bare string id, or a rich object with an `id`
+ * and arbitrary `data`. Mirrors Novu's `ContextValue`.
+ */
+export type AgentContextValue = string | { id: string; data?: Record<string, unknown> };
+
+/**
+ * Connect-time context bound to the channel connection and resolved server-side for the current
+ * turn.
+ *
+ * Populated by Novu from the context an integrator passes to the Connect button (e.g. the Slack
+ * connect flow persists it on the `ChannelConnection`). It lets a single hosted agent serve many
+ * tenants: the agent reads its own tenant/org out of the context to scope writes. Keys are
+ * integrator-defined context types (e.g. `tenant`), mirroring Novu's `ContextPayload`.
+ */
+export type AgentContextPayload = Record<string, AgentContextValue>;
 
 /** The Novu subscriber who initiated or is participating in the conversation. */
 export interface AgentSubscriber {
@@ -273,6 +291,15 @@ export interface ToolApprovalConfig {
   }) => MessageContent | ToolApprovalCard;
 }
 
+/**
+ * How Novu treats unknown/unlinked senders of a distributed agent, mirrored onto
+ * the bridge wire so the framework can gate before running a handler:
+ * - `open`: anyone may talk to the agent (unknown senders are auto-provisioned).
+ * - `restricted`: only authenticated, linked subscribers proceed; unlinked authors
+ *   are shown an auth CTA and short-circuited.
+ */
+export type AgentSubscriberAccess = 'open' | 'restricted';
+
 /** Passed to `onToolApproval` when the user clicks Approve or Deny. */
 export interface ToolApprovalDecision {
   /** The tool that was awaiting approval. */
@@ -336,6 +363,12 @@ export interface AgentHandlerContext {
    * resolve a subscriber for this conversation.
    */
   readonly subscriber: AgentSubscriber | null;
+  /**
+   * Connect-time context resolved for this turn from the channel connection, or `null` when none
+   * was bound. Populated server-side (trusted) — safe to use for authorizing and scoping writes
+   * (e.g. reading the customer's tenant/organization out of it).
+   */
+  readonly context: AgentContextPayload | null;
   /**
    * Full conversation history as an ordered array of entries.
    * Map to your LLM's message format before making a model call:
@@ -528,9 +561,25 @@ export interface AgentHandlers {
    */
   onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
   /**
+   * Optional turn failure handler. Return `{ suppress: true }` to skip user notification,
+   * return message content for a custom user reply, or return nothing to auto-report
+   * `{ error: true }` to Novu (generic end-user copy delivered by the API).
+   */
+  onError?: (
+    error: AgentError,
+    ctx: AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext
+  ) => Awaitable<AgentErrorResult>;
+  /**
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
    */
   toolApproval?: ToolApprovalConfig;
+}
+
+export type AgentErrorSuppress = { suppress: true };
+export type AgentErrorResult = MessageContent | void | AgentErrorSuppress;
+
+export function isAgentErrorSuppress(result: AgentErrorResult | undefined): result is AgentErrorSuppress {
+  return typeof result === 'object' && result !== null && 'suppress' in result && result.suppress === true;
 }
 
 export interface Agent {
@@ -562,6 +611,19 @@ export interface AgentBridgeRequest {
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
+  /**
+   * Effective subscriber-access policy for this agent (`open` | `restricted`),
+   * resolved server-side. Drives the framework's built-in auth gate: on a
+   * `restricted` agent an unlinked author is short-circuited with an auth CTA
+   * before any handler runs. Optional on the wire for backward compatibility;
+   * absent is treated as `open` (no gating).
+   */
+  subscriberAccess?: AgentSubscriberAccess;
+  /**
+   * Connect-time context resolved server-side for this turn (trusted). Optional on the wire so
+   * older API versions that don't send it remain compatible; absent → `ctx.context` is `null`.
+   */
+  context?: AgentContextPayload | null;
   history: AgentHistoryEntry[];
   platform: string;
   platformContext: AgentPlatformContext;
@@ -645,6 +707,8 @@ export interface AgentReplyPayload {
   addReactions?: AddReactionPayload[];
   deleteMessages?: DeleteMessagePayload[];
   typing?: TypingOp;
+  /** Bridge reports a real turn failure; Novu delivers generic user copy. */
+  error?: true;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

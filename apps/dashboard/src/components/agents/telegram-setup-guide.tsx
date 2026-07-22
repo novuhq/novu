@@ -14,10 +14,10 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupStep,
   SetupStepperRail,
@@ -79,7 +79,7 @@ export function TelegramSetupGuide({
       return null;
     }
 
-    return buildConnectSubscriberId(currentUser._id);
+    return currentUser._id;
   }, [currentUser?._id, isUserLoaded]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
@@ -284,7 +284,7 @@ export function TelegramSetupGuide({
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
         title="Save the Bot Token in Novu"
-        description="Open the credentials form to paste the full BotFather confirmation message — or scan the QR code inside the form to finish setup from the phone where BotFather sent the token."
+        description="Open the credentials form to paste the full BotFather confirmation message, or scan the QR code inside the form to finish setup from the phone where BotFather sent the token."
         extraContent={
           <>
             {configureErrorMessage && (
@@ -347,7 +347,7 @@ export function TelegramSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
-      connectedMessage="Telegram is connected — your agent is ready to receive messages."
+      connectedMessage="Telegram is connected: your agent is ready to receive messages."
       listeningMessage="Open the link in Telegram, then reply to the bot's confirmation message to verify delivery."
     />
   );
@@ -376,7 +376,7 @@ export function TelegramSetupGuide({
 
   return (
     <>
-      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
       <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}

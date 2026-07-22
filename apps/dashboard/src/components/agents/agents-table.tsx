@@ -119,7 +119,7 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
   const integrations = agent.integrations ?? [];
 
   if (integrations.length === 0) {
-    return <span className="text-label-sm text-text-sub italic">—</span>;
+    return <span className="text-label-sm text-text-sub italic">-</span>;
   }
 
   const visible = integrations.slice(0, MAX_VISIBLE_INTEGRATION_ICONS);

@@ -1,13 +1,13 @@
 ---
 title: "Quickstart"
-description: "Build your first Novu custom code agent and connect it to Slack in under 10 minutes. Set up the bridge, define handlers, and reply to messages."
+description: "Build your first Novu custom code agent and connect it to Slack in under 10 minutes. Use the dashboard, the Novu CLI, or an AI assistant."
 boost: 3
 ---
 
 
-This guide covers creating a custom code agent in the dashboard, hooking up Slack, scaffolding the bridge app, and getting a reply in-thread.
+In about 10 minutes you can have an agent that receives Slack messages and replies from your code.
 
-By the end, you'll have a working agent that receives messages from Slack and replies based on your handler code.
+Looking for a stack-specific walkthrough? Start with the [AI SDK](/agents/get-started/ai-sdk), [LangChain](/agents/get-started/langchain), or [Mastra](/agents/get-started/mastra) quickstart. This page covers the shared onboarding paths (CLI, dashboard, and AI assistant).
 
 **Prerequisites:**
 
@@ -15,13 +15,38 @@ By the end, you'll have a working agent that receives messages from Slack and re
 - A Slack workspace where you can install apps.
 - Node.js on your machine.
 
-<Prompt description="Add a Novu agent to my app" icon="plug" actions={["copy", "cursor"]}>
-Add an agent to my app following instructions from this markdown file: https://novu.co/agents.md
+## Choose your onboarding experience
 
-Follow my project's existing framework, routing, styling, and TypeScript conventions.
+Pick the path that matches how you like to work. All three get you to the same outcome: an agent connected to Slack that runs your handler code.
 
-Reference: https://docs.novu.co/agents/custom-code-agent/quickstart
-</Prompt>
+| Path | Best if you… |
+| --- | --- |
+| **CLI** | Prefer doing everything from the terminal |
+| **Dashboard** | Want step-by-step guidance in the Novu UI |
+| **AI assistant** | Want Cursor or another AI tool to set it up in your repo |
+
+<Tabs>
+  <Tab title="CLI">
+
+Run one command and follow the prompts. The CLI signs you in, creates the agent, connects a channel, and can generate a starter project for you.
+
+```bash
+npx novu connect
+```
+
+You'll be asked to:
+
+1. Sign in to Novu (or paste your secret key).
+2. Pick a runtime - **AI SDK**, **LangChain**, **Custom code**, or a managed option like Claude.
+3. Name your agent and connect Slack (or another channel).
+4. Confirm creating a starter project, if prompted.
+
+When you're done, run `npm run dev:novu` in the project folder and message your agent on Slack.
+
+  </Tab>
+  <Tab title="Dashboard">
+
+Use the Novu dashboard to create the agent and connect Slack, then run a small local app on your machine that handles replies.
 
 <Steps>
 
@@ -32,15 +57,13 @@ Reference: https://docs.novu.co/agents/custom-code-agent/quickstart
 1. Go to the Novu dashboard.
 2. In the sidebar, click **Agents**.
 3. Click **Create agent**.
-4. Fill in the required fields:
-   - **Agent name**: Display name for your agent.
-   - **Identifier**: Unique slug used in code. Cannot be changed after creation.
-   - **Description**: Optional.
-5. Click **Set up agent**.
+4. Under **Custom code**, pick **AI SDK**, **LangChain**, or **Custom code**.
+5. Fill in **Agent name**, **Identifier**, and optional **Description**.
+6. Click **Set up agent**.
 
  ![Add agent](/images/agents/quickstart/add-agent.png)
 
-Novu opens the guided setup page after creation.
+Keep the **Identifier** - your code will use the same value.
 
 </Step>
 
@@ -53,15 +76,11 @@ Novu opens the guided setup page after creation.
 
  ![Select provider](/images/agents/quickstart/select-provider.png)
 
-The dashboard unlocks the Slack setup steps.
-
 </Step>
 
 <Step>
 
 ## Create a Slack app
-
-Novu can create the Slack app using a Slack App Configuration Token.
 
 1. Click **Slack App Configuration Token** to open [Slack API apps](https://api.slack.com/apps).
 2. Under **Your App Configuration Tokens**, click **Generate Token**.
@@ -80,7 +99,7 @@ Novu can create the Slack app using a Slack App Configuration Token.
 
 ## Install the app in your workspace
 
-1. Click **Install agent** (the label may include your agent name, for example **Install My Agent**).
+1. Click **Install agent**.
 2. Review permissions in Slack and click **Allow**.
 
  ![Install app](/images/agents/quickstart/install-app.png)
@@ -91,29 +110,30 @@ You'll receive a welcome message from the agent when installation completes.
 
 <Step>
 
-## Scaffold your agent project
+## Set up your local project
 
-Copy the scaffold command from the dashboard:
+1. On the setup page, find **Scaffold your agent project**.
+2. Copy the command shown there - it already includes your secret key, API URL, and runtime.
+3. Run it in an empty folder on your machine.
 
-```bash
-npx novu@latest init -t agent \
- --secret-key=<NOVU_SECRET_KEY> \
- --api-url=<NOVU_API_URL>
-```
+When the CLI asks which agent to use, pick the one you created above.
 
-Run it in the directory where you want the project. See [Scaffold your project](/agents/custom-code-agent/setup-your-agent/scaffold-your-project) for details.
+This creates a Next.js project with starter handler code and saves your credentials to `.env.local`. See [Connecting your app](/agents/custom-code-agent/connecting-your-app) for how the scaffold wires the bridge endpoint.
 
 </Step>
 
 <Step>
 
-## Start your agent locally
+## Run your agent locally
+
+1. On the agent page in the dashboard, set the connection mode to **Local**.
+2. In your project folder, run:
 
 ```bash
 npm run dev:novu
 ```
 
-This starts your app, opens a dev tunnel, and registers the bridge URL. When connected, you'll see another message from your agent in Slack.
+When Novu connects to your machine, you'll get another message from your agent in Slack.
 
 </Step>
 
@@ -121,29 +141,49 @@ This starts your app, opens a dev tunnel, and registers the bridge URL. When con
 
 ## Send a message
 
-Message your bot in Slack. Your `onMessage` handler runs and the reply appears in the thread.
+Message your bot in Slack. Your handler code runs and the reply appears in the thread.
 
  ![Slack message](/images/agents/quickstart/slack-message.png)
-
-Edit files in `app/novu/agents/` to customize behavior. See [Handle events](/agents/custom-code-agent/setup-your-agent/handle-events) for all event types.
 
 </Step>
 
 </Steps>
 
+  </Tab>
+  <Tab title="AI assistant">
+
+Paste this into Cursor or another AI tool. It uses Novu's agent setup guide and adapts it to your repo.
+
+<Prompt description="Add a Novu custom code agent to my app" icon="plug" actions={["copy", "cursor"]}>
+I'm signed in to the Novu dashboard, so use dashboard login (not keyless mode). Add an agent to my app following instructions from this markdown file: https://novu.co/agents.md
+
+Use AI SDK or LangChain based on what this project already uses. Follow my project's existing framework, routing, styling, and TypeScript conventions.
+
+Reference: https://docs.novu.co/agents/custom-code-agent/quickstart
+</Prompt>
+
+  </Tab>
+</Tabs>
+
 ## Next steps
 
 <Columns cols={2}>
-  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
-    Respond to actions, reactions, and resolution events.
+  <Card icon="sparkles" href="/agents/get-started/ai-sdk" title="AI SDK quickstart">
+    Minimal generateText handler for Slack.
   </Card>
-  <Card icon="layout-grid" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
-    Markdown, attachments, and interactive cards.
+  <Card icon="link" href="/agents/get-started/langchain" title="LangChain quickstart">
+    Minimal LangChain config for Slack.
   </Card>
-  <Card icon="signal" href="/agents/custom-code-agent/setup-your-agent/signals" title="Signals">
-    Metadata, workflow triggers, and conversation resolution.
+  <Card icon="boxes" href="/agents/get-started/mastra" title="Mastra quickstart">
+    Call Mastra generate() from a Novu handler.
   </Card>
-  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
-    Full support-bot walkthrough with an LLM.
+  <Card icon="book-open" href="/agents/custom-code-agent/concepts" title="Concepts">
+    How agents, handlers, and Novu fit together.
+  </Card>
+  <Card icon="blocks" href="/agents/custom-code-agent/building-blocks/handle-events" title="Building blocks">
+    Shared APIs for replies, events, signals, and more.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/agent-schema" title="Agents API reference">
+    Create agents, link providers, and send replies programmatically.
   </Card>
 </Columns>

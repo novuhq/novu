@@ -11,7 +11,7 @@ export type {
   TextInputElement,
 } from 'chat';
 export { Actions, Button, Card, CardLink, CardText, Divider, Select, SelectOption, TextInput } from 'chat';
-export { AgentDeliveryError } from './agent.errors';
+export { AgentDeliveryError, AgentError, toAgentError } from './agent.errors';
 export { agent } from './agent.resource';
 export type {
   Agent,
@@ -19,6 +19,8 @@ export type {
   AgentActionContext,
   AgentAttachment,
   AgentContext,
+  AgentContextPayload,
+  AgentContextValue,
   AgentConversation,
   AgentHandlerContext,
   AgentHandlers,
@@ -31,6 +33,7 @@ export type {
   AgentReactionContext,
   AgentResolveContext,
   AgentSubscriber,
+  AgentSubscriberAccess,
   AgentToolCall,
   FileRef,
   MessageContent,

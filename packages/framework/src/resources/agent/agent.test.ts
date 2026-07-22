@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Client } from '../../client';
 import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
-import { AgentDeliveryError } from './agent.errors';
+import { AgentDeliveryError, AgentError } from './agent.errors';
 import { agent } from './agent.resource';
 import type { AgentBridgeRequest } from './agent.types';
 import { PendingApproval } from './agent.types';
@@ -412,6 +412,46 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.platform).toBe('slack');
     expect(capturedCtx.platformContext.threadId).toBe('t1');
     expect(capturedCtx.history).toEqual([]);
+    // context defaults to null when the bridge payload omits it (backward-compatible wire)
+    expect(capturedCtx.context).toBeNull();
+  });
+
+  it('should expose ctx.context when the bridge payload includes resolved connect context', async () => {
+    let capturedCtx: any;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        capturedCtx = ctx;
+        await ctx.reply('ok');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          context: { tenant: { id: 'org-123', data: { environmentId: 'env-1', userId: 'user-1' } } },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(capturedCtx).toBeDefined());
+
+    expect(capturedCtx.context).toEqual({
+      tenant: { id: 'org-123', data: { environmentId: 'env-1', userId: 'user-1' } },
+    });
   });
 
   it('should expose platformContext.message and platformContext.email for email agents', async () => {
@@ -727,10 +767,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
       'Invalid file "sample.txt": data must be a base64 string, Buffer, Uint8Array, ArrayBuffer, or Blob.'
     );
 
-    const replyCall = fetchMock.mock.calls.find(
+    const replyCalls = fetchMock.mock.calls.filter(
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
     );
-    expect(replyCall).toBeUndefined();
+    const replyBodies = replyCalls.map((call: any[]) => JSON.parse(call[1].body));
+    expect(replyBodies.every((body) => body.reply === undefined)).toBe(true);
+    expect(replyBodies.some((body) => body.error === true)).toBe(true);
   });
 
   it('should serialize CardElement on reply', async () => {
@@ -1772,10 +1814,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(caughtError).toBeDefined());
 
     expect(caughtError).toBeInstanceOf(AgentDeliveryError);
+    expect(caughtError).toBeInstanceOf(AgentError);
     const err = caughtError as AgentDeliveryError;
     expect(err.message).toBe(message);
     expect(err.statusCode).toBe(status);
     expect(err.responseBody).toBe(body);
+    expect(err.delivery?.statusCode).toBe(status);
   });
 
   it('should include nested API delivery error details in AgentDeliveryError', async () => {
@@ -1860,7 +1904,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
 
     const logged = errorSpy.mock.calls[0].join(' ');
-    expect(logged).toBe('[agent:test-bot] Delivery failed: Bad Gateway');
+    expect(logged).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway');
+
+    const replyBodies = fetchMock.mock.calls
+      .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
+      .map((call: any[]) => JSON.parse(call[1].body));
+    expect(replyBodies.some((body) => body.error === true)).toBe(true);
 
     errorSpy.mockRestore();
   });
@@ -1907,10 +1956,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await new Promise((r) => setTimeout(r, 50));
 
-    const replyCall = fetchMock.mock.calls.find(
+    const replyCalls = fetchMock.mock.calls.filter(
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
     );
-    expect(replyCall).toBeUndefined();
+    const replyBodies = replyCalls.map((call: any[]) => JSON.parse(call[1].body));
+    expect(replyBodies.every((body) => body.reply === undefined)).toBe(true);
   });
 
   it('should send onResolve handler return value as reply', async () => {
@@ -1978,14 +2028,18 @@ describe('agent dispatch via NovuRequestHandler', () => {
     });
 
     await handler.createHandler()();
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
-    const replyCalls = fetchMock.mock.calls.filter(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    expect(replyCalls).toHaveLength(2);
-    expect(JSON.parse(replyCalls[0][1].body).reply.markdown).toBe('Thinking…');
-    expect(JSON.parse(replyCalls[1][1].body).reply.markdown).toBe('Final answer');
+    const collectReplyBodies = () =>
+      fetchMock.mock.calls
+        .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
+        .map((call: any[]) => JSON.parse(call[1].body))
+        .filter((body) => body.reply !== undefined);
+
+    await vi.waitFor(() => expect(collectReplyBodies()).toHaveLength(2));
+
+    const replyBodies = collectReplyBodies();
+    expect(replyBodies[0].reply.markdown).toBe('Thinking…');
+    expect(replyBodies[1].reply.markdown).toBe('Final answer');
   });
 
   it('should post a typing status op for ctx.typing(text)', async () => {
@@ -2086,6 +2140,96 @@ describe('agent dispatch via NovuRequestHandler', () => {
   });
 });
 
+describe('turn error handling', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubReplyFetch() {
+    const posts: Record<string, unknown>[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: { body: string }) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    return posts;
+  }
+
+  it('auto-reports turn failures when onError is not defined', async () => {
+    const posts = stubReplyFetch();
+    const testAgent = agent('a', {
+      onMessage: async () => {
+        throw new Error('handler blew up');
+      },
+    });
+
+    await dispatchAgentEvent({
+      agent: testAgent,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    expect(posts.some((body) => body.error === true)).toBe(true);
+    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+  });
+
+  it('suppresses auto-report when onError returns { suppress: true }', async () => {
+    const posts = stubReplyFetch();
+    const testAgent = agent('a', {
+      onMessage: async () => {
+        throw new Error('handler blew up');
+      },
+      onError: async () => ({ suppress: true }),
+    });
+
+    await dispatchAgentEvent({
+      agent: testAgent,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    expect(posts.some((body) => body.error === true)).toBe(false);
+    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+  });
+
+  it('delivers a custom reply from onError instead of auto-reporting', async () => {
+    const posts = stubReplyFetch();
+    const testAgent = agent('a', {
+      onMessage: async () => {
+        throw new Error('handler blew up');
+      },
+      onError: async () => 'custom failure copy',
+    });
+
+    await dispatchAgentEvent({
+      agent: testAgent,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    expect(posts.some((body) => body.error === true)).toBe(false);
+    expect(posts.some((body) => (body.reply as { markdown?: string })?.markdown === 'custom failure copy')).toBe(true);
+    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+  });
+
+  it('passes onError through from agent registration', () => {
+    const onError = async () => ({ suppress: true as const });
+    const testAgent = agent('a', {
+      onMessage: async () => undefined,
+      onError,
+    });
+
+    expect(testAgent.handlers.onError).toBe(onError);
+  });
+});
+
 function approvalBridge(overrides: Record<string, unknown> = {}) {
   return {
     version: 1,
@@ -2139,7 +2283,7 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts).toHaveLength(1);
+    expect(posts.filter((p) => p.reply !== undefined)).toHaveLength(1);
     expect(posts[0].reply.toolApprovalCard).toEqual({ type: 'tool-approval-card' });
     // The tool-call payload rides in toolApprovalRequest (persisted as toolData), not in the button id.
     expect(posts[0].toolApprovalRequest).toMatchObject({
@@ -2245,7 +2389,7 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts.find((p) => p.typing !== undefined)).toBeUndefined();
+    expect(posts.find((p) => p.typing !== undefined && p.typing !== 'stop')).toBeUndefined();
     expect(
       posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
     ).toBeUndefined();

@@ -54,7 +54,7 @@ Later resolution upgrades them to a full subscriber. Identity is provider-aware 
 
 ## Bridge surface
 
-The same handler API applies no matter which provider sent the event or which model you use.
+The same handler API applies no matter which provider sent the event or which model you use. Your app exposes a bridge endpoint where Novu calls your handlers - see [Connecting your app](/agents/custom-code-agent/connecting-your-app) for project structure, `serve()`, and environment variables.
 
 ### Event handlers
 
@@ -64,6 +64,7 @@ The same handler API applies no matter which provider sent the event or which mo
 | `onAction` | User clicks a button or selects from a card | Forms, buttons, dropdowns |
 | `onReaction` | User adds or removes a reaction | Feedback, follow-ups |
 | `onResolve` | Conversation marked resolved | Cleanup, analytics, summary |
+| `onError` | Turn fails in the handler | Log, suppress, custom reply, or generic user copy |
 
 Handlers connect Novu's delivery layer to your app. An `onMessage` handler might pass context to an LLM and return a reply through Novu.
 
@@ -125,12 +126,15 @@ ACI extends Novu's workflow system; it does not replace it. Transactional workfl
   </Step>
 
   <Step title="Handler passes context to agent logic">
+    Your handler forwards the message and `ctx.history` to your LLM or custom logic.
   </Step>
 
   <Step title="Agent logic decides next action">
+    Your agent logic decides what should happen next.
   </Step>
 
   <Step title="Handler sends reply or signals">
+    Your handler returns a reply, calls `ctx.reply()`, or emits signals.
   </Step>
 
   <Step title="Novu posts the reply">
@@ -150,7 +154,13 @@ The same handler code works on every connected provider; adding a provider does 
   <Card icon="house" href="/agents/custom-code-agent/quickstart" title="Quickstart">
     Create an agent, connect Slack, and get a reply in-thread.
   </Card>
-  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
-    Walk through a full support-bot handler file.
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Build end to end with `@novu/framework/ai-sdk`.
+  </Card>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+    Build end to end with `@novu/framework/langchain`.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/agent-schema" title="Agents API reference">
+    Create agents, link providers, and update bridge URLs programmatically.
   </Card>
 </Columns>

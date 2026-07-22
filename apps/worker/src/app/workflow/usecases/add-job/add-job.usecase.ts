@@ -8,6 +8,7 @@ import {
   DetailEnum,
   DurationUtils,
   getDigestType,
+  getEffectiveJobPayload,
   getNestedValue,
   IFilterVariables,
   InstrumentUsecase,
@@ -133,6 +134,11 @@ export class AddJob {
         _id: job._notificationId,
         _environmentId: job._environmentId,
       }));
+
+    // Payload-dedup: hydrate the trigger payload from the parent notification
+    // when the job doesn't carry one, so delay/throttle/digest key resolution
+    // below keeps working. A present job.payload is authoritative.
+    job.payload = getEffectiveJobPayload(job, notification);
 
     const topicsContext =
       notification?.topics && notification.topics.length > 0
@@ -1158,6 +1164,7 @@ const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
   [StepTypeEnum.SMS]: false,
   [StepTypeEnum.CHAT]: false,
   [StepTypeEnum.PUSH]: false,
+  [StepTypeEnum.TOOL]: false,
 };
 
 function isJobDeferredType(jobType: StepTypeEnum | undefined): boolean {

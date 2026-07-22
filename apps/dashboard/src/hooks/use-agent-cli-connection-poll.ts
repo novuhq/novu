@@ -1,4 +1,4 @@
-import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
+import { DirectionEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -9,6 +9,7 @@ import {
   listAgentIntegrations,
   listAgents,
 } from '@/api/agents';
+import { hasAgentInboundConnection } from '@/components/agents/is-agent-integration-connected';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 
 const POLL_INTERVAL_MS = 5000;
@@ -26,14 +27,9 @@ type Baseline = {
   hadConnectedChannel: boolean;
 };
 
-/**
- * A "real" connected channel is a link with `connectedAt` stamped whose provider is not the
- * auto-provisioned Novu email integration — the same exclusion used across the agent setup UI.
- */
+/** A "real" connected channel is a link whose `connectedAt` was stamped by a genuine inbound message. */
 function findConnectedChannelLink(links: AgentIntegrationLink[] | undefined): AgentIntegrationLink | undefined {
-  return links?.find(
-    (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
-  );
+  return links?.find((link) => hasAgentInboundConnection(link.connectedAt));
 }
 
 /**

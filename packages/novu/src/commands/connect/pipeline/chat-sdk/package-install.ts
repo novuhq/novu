@@ -1,9 +1,9 @@
 import path from 'node:path';
 import { installPackages } from '../../../init/helpers/install';
 import { detectPackageManager } from '../../../step/utils/package-manager';
-import { hasDependency, readProjectPackageJson } from './project-package';
+import { hasDependency, readProjectPackageJson } from '../bridge/project-package';
 
-const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
+export const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
 const CHAT_PACKAGE = 'chat';
 const CHAT_PACKAGE_SPEC = 'chat@4.31.0';
 const STATE_ADAPTER_PREFIX = '@chat-adapter/state-';

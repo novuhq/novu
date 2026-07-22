@@ -8,6 +8,11 @@ export class ChatRenderOutput extends RenderOutput {
   body: string;
 }
 
+export class ToolRenderOutput extends RenderOutput {
+  body: string;
+  providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
+}
+
 export class SmsRenderOutput extends RenderOutput {
   body: string;
 }
@@ -165,6 +170,11 @@ export class GeneratePreviewResponseDto {
     | {
         type: ChannelTypeEnum.CHAT;
         preview: ChatRenderOutput;
+        error?: PreviewError;
+      }
+    | {
+        type: ChannelTypeEnum.TOOL;
+        preview: ToolRenderOutput;
         error?: PreviewError;
       }
     | {

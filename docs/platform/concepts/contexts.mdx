@@ -1,7 +1,7 @@
 ---
 title: 'How do contexts work in Novu?'
 sidebarTitle: 'Contexts'
-description: "Learn what contexts are in Novu, how they differ from payloads, and how they help you scope, personalize, and filter notifications across workflows and the Inbox."
+description: "Learn how contexts work in Novu, how they differ from payloads, and how they scope, personalize, and filter notifications across workflows and Inbox."
 ---
 
 A _context_ is user-defined metadata you attach when triggering a workflow. Contexts let you scope, personalize, and filter notifications without duplicating subscribers, workflows, or templates.
@@ -33,6 +33,7 @@ Contexts are persistent. Unlike a payload, which exists only for a single workfl
 | **In templates** | `{{payload.field}}` | `{{context.tenant.data.name}}` |
 | **Inbox filtering** | Not used for scoping | Exact-match filtering |
 | **Auto-created** | No | Yes, on first reference |
+| **Data upsert on reuse** | No | Yes on workflow trigger when `data` is provided; no on Inbox |
 
 Use the payload for data that changes on every event. Use context for metadata that defines _where_ or _for whom_ a notification belongs.
 
@@ -42,7 +43,7 @@ Each key in the `context` object is a context type. Novu supports three formats 
 
 ```ts
 context: {
-  // Simple string — type and id only
+  // Simple string: type and id only
   tenant: "acme-corp",
 
   // Object with id
@@ -59,13 +60,17 @@ context: {
 }
 ```
 
-Contexts are **auto-created** the first time Novu sees them (via a trigger or the Inbox). Existing context data is **not** auto-updated, which prevents accidental overwrites. Update context data through the [Contexts API](/api-reference/contexts/context-schema) or the Novu dashboard.
+Contexts are **auto-created** the first time Novu sees them (via a workflow trigger or the Inbox).
+
+During **workflow triggers**, existing context `data` is **upserted** when you include a `data` object inline - similar to subscriber fields. Passing only a string identifier (for example, `tenant: "acme-corp"`) references the context without changing stored `data`.
+
+**Inbox** and other subscriber-facing APIs only find or create contexts and do **not** update existing `data`. You can also manage context data through the [Contexts API](/api-reference/contexts/context-schema) or the Novu dashboard.
 
 ## What you can use contexts for
 
 <CardGroup cols={2}>
   <Card title="Multi-tenancy" icon="building-2" href="/platform/concepts/tenants">
-    Isolate notifications per organization, workspace, or customer using a `tenant` context—without prefixing subscriber IDs or duplicating workflows.
+    Isolate notifications per organization, workspace, or customer using a `tenant` context, without prefixing subscriber IDs or duplicating workflows.
   </Card>
   <Card title="App or feature scoping" icon="layout-grid">
     Route notifications to the right Inbox by scoping with an `app` or feature key when one subscriber uses multiple products.
@@ -75,6 +80,9 @@ Contexts are **auto-created** the first time Novu sees them (via a trigger or th
   </Card>
   <Card title="Conditional workflow logic" icon="git-branch" href="/platform/workflow/add-and-configure-steps/step-conditions">
     Branch workflow steps based on context values, such as sending enterprise-only emails when `context.tenant.data.plan` is `enterprise`.
+  </Card>
+  <Card title="Topic subscriptions" icon="bell-ring" href="/platform/subscription/manage-topic-subscriptions#context-scoped-subscriptions">
+    Scope topic subscriptions per tenant or app, match them to workflow triggers using the same Context keys, and filter delivery with payload-based JSON Logic conditions.
   </Card>
 </CardGroup>
 
@@ -305,3 +313,29 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
     Filter the Inbox by context and secure it with `contextHash`.
   </Card>
 </CardGroup>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Should I create and update contexts ahead of time or pass context data on every trigger?">
+    Both patterns are supported.
+
+    **Inline on workflow trigger (server-side):** When you trigger a workflow with a rich context object that includes `data`, Novu creates the context if it is missing or replaces stored `data` if it already exists. This works like subscriber upsert and is useful when your backend already has the latest tenant metadata at trigger time. Pass only the context `id` as a string when you want to reference existing data without changing it.
+
+    **Ahead of time via API or dashboard:** Create contexts with initial `data` before you need them, then [update context data](/api-reference/contexts/update-a-context) when metadata changes (for example, tenant name or plan). Use this when you want a single source of truth outside of triggers.
+
+    **Inbox:** Session initialization can auto-create missing contexts but never updates existing context `data`. Do not rely on the Inbox to refresh tenant metadata.
+
+    Recommended approach for multi-tenant apps:
+
+    1. [Create the context](/api-reference/contexts/create-a-context) with initial `data` before you need it, or pass `data` on your first server-side trigger.
+    2. Keep metadata current through [workflow triggers with inline `data`](/platform/workflow/trigger-workflow#trigger-a-workflow-with-context), the Contexts API, or the dashboard.
+    3. Pass only context keys and `id` values to the Inbox unless you are creating a context for the first time.
+  </Accordion>
+
+  <Accordion title="Why are notifications sent but not showing in the Inbox after I added context?">
+    Inbox notifications are scoped per context. If you trigger a workflow with `context` but initialize `<Inbox />` without the same context (or vice versa), the notification will not appear in that Inbox session, even though the in-app job may report success.
+
+    Pass the same context to both your workflow trigger and the Inbox `context` prop. See [Inbox with context](/platform/inbox/configuration/inbox-with-context) for the matching rules and troubleshooting steps.
+  </Accordion>
+</AccordionGroup>

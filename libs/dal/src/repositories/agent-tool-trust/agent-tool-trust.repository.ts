@@ -112,6 +112,58 @@ export class AgentToolTrustRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Repoint tool-trust rows from `fromSubscriberId` to `toSubscriberId` (both
+   * Mongo `Subscriber._id`s). Used by the email adoption merge so a phantom's
+   * approved-tool decisions follow the surviving real subscriber.
+   *
+   * The unique index on `(_environmentId, _agentId, _subscriberId)` means a
+   * blind move would throw E11000 when the real subscriber already has a trust
+   * row for the same agent — in that case the real subscriber's decisions win
+   * and the phantom row is dropped instead of moved. The same index guarantees
+   * source rows have distinct `_agentId`s, so moves cannot collide with each
+   * other and both branches reduce to a single bulk write.
+   */
+  async repointSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<{ moved: number; dropped: number }> {
+    const { environmentId, organizationId, fromSubscriberId, toSubscriberId } = params;
+
+    const sourceRows = await this.find(
+      { _environmentId: environmentId, _organizationId: organizationId, _subscriberId: fromSubscriberId },
+      ['_id', '_agentId']
+    );
+
+    if (sourceRows.length === 0) {
+      return { moved: 0, dropped: 0 };
+    }
+
+    const destinationRows = await this.find(
+      { _environmentId: environmentId, _organizationId: organizationId, _subscriberId: toSubscriberId },
+      ['_agentId']
+    );
+
+    const claimedAgents = new Set(destinationRows.map((row) => row._agentId));
+    const droppedIds = sourceRows.filter((row) => claimedAgents.has(row._agentId)).map((row) => row._id);
+    const movedIds = sourceRows.filter((row) => !claimedAgents.has(row._agentId)).map((row) => row._id);
+
+    if (droppedIds.length > 0) {
+      await this.delete({ _id: { $in: droppedIds }, _environmentId: environmentId, _organizationId: organizationId });
+    }
+
+    if (movedIds.length > 0) {
+      await this.update(
+        { _id: { $in: movedIds }, _environmentId: environmentId, _organizationId: organizationId },
+        { $set: { _subscriberId: toSubscriberId } }
+      );
+    }
+
+    return { moved: movedIds.length, dropped: droppedIds.length };
+  }
+
   private buildTrustPath(params: {
     source: ToolTrustSource;
     scope: ToolTrustPersistScope;

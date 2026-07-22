@@ -26,7 +26,7 @@ export function DomainLimitDialog({ open, onOpenChange, limit, limitSource }: Do
             <span className="font-medium">
               {limit} {limit === 1 ? 'domain' : 'domains'}
             </span>
-            . Please reach out to the Novu team — we&apos;re happy to help raise this limit for your organization.
+            . Please reach out to the Novu team: we&apos;re happy to help raise this limit for your organization.
           </>
         }
         primaryCta="contact-support"

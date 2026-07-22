@@ -145,5 +145,121 @@ describe('Environment Variables API key environment scope - /environment-variabl
       expect(updated.values.some((value: { _environmentId: string }) => value._environmentId === prodEnvironmentId)).to
         .be.true;
     });
+
+    it('should filter list values to the API key environment', async () => {
+      await session.testAgent.post('/v1/environment-variables').send({
+        key: 'CROSS_ENV_READ_LIST',
+        values: [
+          { _environmentId: devEnvironmentId, value: 'dev-value' },
+          { _environmentId: prodEnvironmentId, value: 'prod-secret-ish' },
+        ],
+      });
+
+      const {
+        body: { data },
+      } = await session.testAgent.get('/v1/environment-variables').set('authorization', `ApiKey ${session.apiKey}`);
+
+      const variable = data.find((item: { key: string }) => item.key === 'CROSS_ENV_READ_LIST');
+
+      expect(variable).to.exist;
+      expect(variable.values).to.have.length(1);
+      expect(variable.values[0]._environmentId).to.equal(devEnvironmentId);
+      expect(variable.values[0].value).to.equal('dev-value');
+    });
+
+    it('should filter retrieve values to the API key environment', async () => {
+      await session.testAgent.post('/v1/environment-variables').send({
+        key: 'CROSS_ENV_READ_ONE',
+        values: [
+          { _environmentId: devEnvironmentId, value: 'dev-value' },
+          { _environmentId: prodEnvironmentId, value: 'prod-value' },
+        ],
+      });
+
+      const {
+        body: { data },
+      } = await session.testAgent
+        .get('/v1/environment-variables/CROSS_ENV_READ_ONE')
+        .set('authorization', `ApiKey ${session.apiKey}`);
+
+      expect(data.values).to.have.length(1);
+      expect(data.values[0]._environmentId).to.equal(devEnvironmentId);
+      expect(data.values[0].value).to.equal('dev-value');
+    });
+
+    it('should allow bearer auth to read values across environments', async () => {
+      await session.testAgent.post('/v1/environment-variables').send({
+        key: 'BEARER_CROSS_ENV_READ',
+        values: [
+          { _environmentId: devEnvironmentId, value: 'dev-value' },
+          { _environmentId: prodEnvironmentId, value: 'prod-value' },
+        ],
+      });
+
+      const {
+        body: { data },
+      } = await session.testAgent.get('/v1/environment-variables/BEARER_CROSS_ENV_READ');
+
+      expect(data.values).to.have.length(2);
+    });
+
+    it('should delete only the API key environment value and preserve sibling values', async () => {
+      await session.testAgent.post('/v1/environment-variables').send({
+        key: 'CROSS_ENV_DELETE',
+        values: [
+          { _environmentId: devEnvironmentId, value: 'dev-value' },
+          { _environmentId: prodEnvironmentId, value: 'prod-value' },
+        ],
+      });
+
+      const deleteResponse = await session.testAgent
+        .delete('/v1/environment-variables/CROSS_ENV_DELETE')
+        .set('authorization', `ApiKey ${session.apiKey}`);
+
+      expect(deleteResponse.status).to.equal(204);
+
+      const {
+        body: { data },
+      } = await session.testAgent.get('/v1/environment-variables/CROSS_ENV_DELETE');
+
+      expect(data.values).to.have.length(1);
+      expect(data.values[0]._environmentId).to.equal(prodEnvironmentId);
+      expect(data.values[0].value).to.equal('prod-value');
+    });
+
+    it('should fully remove the variable when API key deletes the last environment value', async () => {
+      await session.testAgent.post('/v1/environment-variables').send({
+        key: 'LAST_ENV_DELETE',
+        values: [{ _environmentId: devEnvironmentId, value: 'dev-only-value' }],
+      });
+
+      const deleteResponse = await session.testAgent
+        .delete('/v1/environment-variables/LAST_ENV_DELETE')
+        .set('authorization', `ApiKey ${session.apiKey}`);
+
+      expect(deleteResponse.status).to.equal(204);
+
+      const { body } = await session.testAgent.get('/v1/environment-variables/LAST_ENV_DELETE');
+
+      expect(body.statusCode).to.equal(404);
+    });
+
+    it('should allow bearer auth to delete the entire variable across environments', async () => {
+      await session.testAgent.post('/v1/environment-variables').send({
+        key: 'BEARER_FULL_DELETE',
+        values: [
+          { _environmentId: devEnvironmentId, value: 'dev-value' },
+          { _environmentId: prodEnvironmentId, value: 'prod-value' },
+        ],
+      });
+
+      const deleteResponse = await session.testAgent.delete('/v1/environment-variables/BEARER_FULL_DELETE');
+
+      expect(deleteResponse.status).to.equal(204);
+
+      const { body } = await session.testAgent.get('/v1/environment-variables/BEARER_FULL_DELETE');
+
+      expect(body.statusCode).to.equal(404);
+    });
   });
 });

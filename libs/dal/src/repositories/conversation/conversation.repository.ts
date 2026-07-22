@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DirectionEnum } from '@novu/shared';
+import { AGENT_AUTH_METADATA_KEYS, DirectionEnum } from '@novu/shared';
 import { type ClientSession, FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
@@ -145,6 +145,36 @@ export class ConversationRepository extends BaseRepositoryV2<
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       { $set: { participants } }
     );
+  }
+
+  /**
+   * Repoint every SUBSCRIBER participant from `fromSubscriberId` to
+   * `toSubscriberId` (both external `subscriberId` strings) across the whole
+   * environment. Used by the email adoption merge when an auto-provisioned
+   * "phantom" subscriber is folded into a real customer-created one so its
+   * conversation history follows the surviving identity. The positional `$`
+   * updates the single matching participant per conversation — email threads are
+   * 1:1 (one human + agent), so a conversation never carries both ids. Returns
+   * the number of conversations updated.
+   */
+  async repointSubscriberParticipant(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<number> {
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        participants: {
+          $elemMatch: { id: params.fromSubscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
+        },
+      },
+      { $set: { 'participants.$.id': params.toSubscriberId } }
+    );
+
+    return result.modified;
   }
 
   async touchActivity(
@@ -304,6 +334,37 @@ export class ConversationRepository extends BaseRepositoryV2<
         participants: { $elemMatch: { id: participantId, type: participantType } },
         pendingManagedAgentSetup: { $exists: true },
       },
+      '*'
+    );
+  }
+
+  /**
+   * Finds conversations where a platform user was shown the auth CTA card and has
+   * not yet been confirmed as linked — i.e. `metadata` still carries the auth-card
+   * tracking key written by the framework auth gate. Scoped to the integration and
+   * the platform participant so a link event only touches that user's own threads.
+   * Powers the real-time "account linked" card update on `CreateChannelEndpoint`.
+   */
+  async findPendingAuthCards(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    participantId: string;
+  }): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: {
+          $elemMatch: {
+            _integrationId: new Types.ObjectId(params.integrationId),
+          },
+        },
+        participants: {
+          $elemMatch: { id: params.participantId, type: ConversationParticipantTypeEnum.PLATFORM_USER },
+        },
+        [`metadata.${AGENT_AUTH_METADATA_KEYS.authCardMessageId}`]: { $exists: true },
+      } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds,
       '*'
     );
   }

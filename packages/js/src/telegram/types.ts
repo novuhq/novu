@@ -1,3 +1,5 @@
+import type { Context } from '../types';
+
 export type TelegramSubscriberLinkStatus = 'loading' | 'pending' | 'connected' | 'expired';
 
 export type TelegramSubscriberLinkResponse = {
@@ -25,6 +27,12 @@ export type TelegramSubscriberLinkOptions = {
 
   /** External subscriber ID to link to the Telegram chat. */
   subscriberId: string;
+
+  /**
+   * Context bound to the Telegram endpoint created when the subscriber taps
+   * `/start`.
+   */
+  context?: Context;
 
   /**
    * Polling interval in milliseconds to check for connection confirmation.

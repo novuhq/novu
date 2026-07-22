@@ -2,11 +2,11 @@ import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@
 import { type ReactNode } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { SendblueSetupGuide } from '@/components/agents/sendblue-setup-guide';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
-import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
@@ -104,11 +104,26 @@ export function ResolveAgentIntegrationGuide({
   const hasUserRolloutPhase =
     providerHasWhatsNextPhase(providerId) && (providerId !== ChatProviderIdEnum.MsTeams || isMsTeamsWhatsNextEnabled);
 
-  // The auto-provisioned Novu email integration has no distinct setup phase — render its single
-  // guide regardless of connection state.
+  // The Novu email integration has no distinct setup phase — render its single guide regardless
+  // of connection state.
   if (providerId === EmailProviderIdEnum.NovuAgent) {
     return (
       <EmailAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  // WhatsApp owns setup ↔ connected transition + Layer-2 What's Next (email-shaped), same as email.
+  if (providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+    return (
+      <WhatsAppAgentIntegrationGuide
         embedded={embedded}
         onBack={onBack}
         agent={agent}
@@ -136,9 +151,9 @@ export function ResolveAgentIntegrationGuide({
       setupGuide = <TelegramSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
       setupDisplayName = 'Telegram';
       break;
-    case ChatProviderIdEnum.WhatsAppBusiness:
-      setupGuide = <WhatsAppSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
-      setupDisplayName = 'WhatsApp Business';
+    case ChatProviderIdEnum.Sendblue:
+      setupGuide = <SendblueSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Sendblue';
       break;
     default:
       setupGuide = null;
@@ -209,10 +224,12 @@ export function ResolveAgentIntegrationGuide({
             justConnected={justConnected}
           />
         );
-      case ChatProviderIdEnum.WhatsAppBusiness:
+      // No bespoke connected details for Sendblue yet — fall back to the generic guide.
+      case ChatProviderIdEnum.Sendblue:
         return (
-          <WhatsAppAgentIntegrationGuide
+          <GenericAgentIntegrationGuide
             embedded={embedded}
+            providerId={providerId}
             onBack={onBack}
             agent={agent}
             integrationLink={integrationLink}

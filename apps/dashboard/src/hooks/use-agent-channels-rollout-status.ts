@@ -1,17 +1,19 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { type Query, useQueries } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { AgentIntegrationLink } from '@/api/agents';
-import { type ChannelEndpointsListResponse, listChannelEndpoints } from '@/api/channel-endpoints';
 import { providerHasWhatsNextPhase } from '@/components/agents/agent-integration-guides/whats-next/whats-next-config';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
-import { findFirstGenuineConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
+import {
+  channelFirstConnectedEndpointQueryOptions,
+  findFirstGenuineConnectedEndpoint,
+} from '@/hooks/use-channel-first-connected-endpoint';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 
-const POLL_INTERVAL_MS = 3000;
-const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED || IS_ENTERPRISE;
+const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED_CE;
 
 type RolloutStatus = {
   allRolledOut: boolean;
@@ -57,7 +59,9 @@ function isEmailRolloutComplete(
  * lightweight "Add another channel" nudge once nothing remains to configure for users.
  */
 export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): RolloutStatus {
+  const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
+  const dashboardSubscriberId = currentUser?._id ?? '';
   const isMsTeamsWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED);
   const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
   const { integrations, isLoading: isIntegrationsLoading } = useFetchIntegrations();
@@ -77,20 +81,14 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
   );
 
   const endpointQueries = useQueries({
-    queries: chatRolloutLinks.map((link) => ({
-      queryKey: ['agent-channel-first-connected-endpoint', currentEnvironment?._id, link.integration.identifier],
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        listChannelEndpoints({
-          // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
-          environment: currentEnvironment!,
-          integrationIdentifier: link.integration.identifier,
-          signal,
-        }),
-      enabled: CONVERSATIONS_AVAILABLE && Boolean(currentEnvironment),
-      refetchOnWindowFocus: false,
-      refetchInterval: (query: Query<ChannelEndpointsListResponse>) =>
-        findFirstGenuineConnectedEndpoint(query.state.data) ? false : POLL_INTERVAL_MS,
-    })),
+    queries: chatRolloutLinks.map((link) =>
+      channelFirstConnectedEndpointQueryOptions({
+        environment: currentEnvironment,
+        integrationIdentifier: link.integration.identifier,
+        dashboardSubscriberId,
+        enabled: CONVERSATIONS_AVAILABLE,
+      })
+    ),
   });
 
   const chatEndpointsLoading =
@@ -100,7 +98,7 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
     rolloutLinks.length === 0 || ((!hasEmailRolloutLink || !isIntegrationsLoading) && !chatEndpointsLoading);
 
   const allRolledOut = useMemo(() => {
-    if (rolloutLinks.length === 0) {
+    if (rolloutLinks.length === 0 || !dashboardSubscriberId) {
       return false;
     }
 
@@ -121,9 +119,9 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
         return false;
       }
 
-      return findFirstGenuineConnectedEndpoint(endpointQueries[queryIndex]?.data) !== null;
+      return findFirstGenuineConnectedEndpoint(endpointQueries[queryIndex]?.data, dashboardSubscriberId) !== null;
     });
-  }, [rolloutLinks, chatRolloutLinks, integrations, endpointQueries]);
+  }, [rolloutLinks, chatRolloutLinks, integrations, endpointQueries, dashboardSubscriberId]);
 
   return { allRolledOut, isSettled };
 }

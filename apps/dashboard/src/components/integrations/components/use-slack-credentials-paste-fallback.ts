@@ -79,7 +79,7 @@ export function useSlackCredentialsPasteFallback({
         const isSingular = maskedNames.length === 1;
         const headline =
           filled.length > 0
-            ? `Filled ${filled.length} of ${SLACK_FIELD_COUNT} fields — ${formatList(maskedNames)} still hidden behind dots.`
+            ? `Filled ${filled.length} of ${SLACK_FIELD_COUNT} fields: ${formatList(maskedNames)} still hidden behind dots.`
             : `${formatList(maskedNames)} ${isSingular ? 'is' : 'are'} still hidden behind dots in Slack.`;
 
         showWarningToast(

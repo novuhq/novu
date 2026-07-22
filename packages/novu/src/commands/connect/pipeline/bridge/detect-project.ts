@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { ChatSdkProjectKind } from '../../types';
-import { readProjectPackageJson } from '../chat-sdk/project-package';
+import type { BridgeProjectKind } from '../../types';
+import { readProjectPackageJson } from './project-package';
 
 export type DetectedBridgeProject = {
-  kind: ChatSdkProjectKind;
+  kind: BridgeProjectKind;
   projectDir: string;
   packageJsonPath?: string;
 };

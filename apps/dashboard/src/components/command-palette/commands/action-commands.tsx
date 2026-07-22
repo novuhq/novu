@@ -1,6 +1,8 @@
+import { PermissionsEnum } from '@novu/shared';
 import { LuBookUp2 } from 'react-icons/lu';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { Command, CommandExecutionContext } from '../command-types';
 
 const DEVELOPMENT_ENVIRONMENT = 'Development';
@@ -9,6 +11,8 @@ export function useActionCommands(_context: CommandExecutionContext): Command[] 
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
+  const has = useHasPermission();
+  const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
 
   const commands: Command[] = [];
 
@@ -16,7 +20,7 @@ export function useActionCommands(_context: CommandExecutionContext): Command[] 
   const isDevelopmentEnvironment = currentEnvironment?.name === DEVELOPMENT_ENVIRONMENT;
   const targetEnvironment = environments.find((env) => env._id !== currentEnvironment?._id);
 
-  if (isDevelopmentEnvironment && targetEnvironment) {
+  if (isDevelopmentEnvironment && targetEnvironment && canPublish) {
     commands.push({
       id: 'action-open-publish-modal',
       label: 'Open publish changes modal',

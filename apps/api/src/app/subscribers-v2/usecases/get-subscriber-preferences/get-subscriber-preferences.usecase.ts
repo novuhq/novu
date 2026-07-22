@@ -25,11 +25,11 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
-import { assertGetPreferencesEnabled } from '../../../subscribers/utils/assert-get-preferences-enabled';
 import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
+import { assertGetPreferencesEnabled } from '../../../subscribers/utils/assert-get-preferences-enabled';
 import { GetSubscriberPreferencesDto } from '../../dtos/get-subscriber-preferences.dto';
 import { SubscriberGlobalPreferenceDto } from '../../dtos/subscriber-global-preference.dto';
 import { SubscriberWorkflowPreferenceDto } from '../../dtos/subscriber-workflow-preference.dto';

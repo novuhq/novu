@@ -13,6 +13,7 @@ import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
+  ContextRepository,
   ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
@@ -37,6 +38,7 @@ import { InboundAckService } from './conversation-runtime/ack/inbound-ack.servic
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
+import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
@@ -44,13 +46,17 @@ import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway'
 import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
+import { InboundConnectionContextResolver } from './conversation-runtime/ingress/inbound-connection-context.resolver';
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
+import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
+import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
+import { NovuCopilotBridgeModule } from './copilot-bridge/novu-copilot-bridge.module';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
 import { AgentEmailSender } from './email/agent-email-sender.service';
@@ -85,6 +91,7 @@ import { USE_CASES } from './usecases';
     ConnectModule,
     KeylessModule,
     TelegramLinkingModule,
+    NovuCopilotBridgeModule,
     forwardRef(() => IntegrationModule),
   ],
   controllers: [
@@ -106,6 +113,7 @@ import { USE_CASES } from './usecases';
     ChannelConnectionRepository,
     ChannelEndpointRepository,
     CommunityOrganizationRepository,
+    ContextRepository,
     ConversationRepository,
     ConversationActivationRepository,
     ConversationActivityRepository,
@@ -116,12 +124,15 @@ import { USE_CASES } from './usecases';
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
+    AgentSubscriberAdoptionService,
     AgentConversationService,
+    ConfirmLinkedAuthCards,
     ConversationActivationService,
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
     AgentInboundHandler,
+    ReplyApprovalInterceptor,
     BridgeExecutorService,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
@@ -142,6 +153,7 @@ import { USE_CASES } from './usecases';
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
     InboundDispatcher,
+    InboundConnectionContextResolver,
     FileMaterializer,
     AgentEmailSender,
     OutboundGateway,
@@ -154,6 +166,6 @@ import { USE_CASES } from './usecases';
     AgentEntitlementsService,
     PlanLimitGateService,
   ],
-  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway],
+  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway, ConfirmLinkedAuthCards],
 })
 export class AgentsModule {}

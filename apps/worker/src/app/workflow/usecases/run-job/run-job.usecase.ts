@@ -6,14 +6,19 @@ import {
   FeatureFlagsService,
   GetSubscriberSchedule,
   GetSubscriberScheduleCommand,
+  getEffectiveJobPayload,
   getJobDigest,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  NotificationPayloadService,
   PinoLogger,
   StepRunRepository,
+  StepTemplateHydrationService,
+  StepTemplateHydrationStatus,
   StorageHelperService,
+  type WorkflowForTrace,
   WorkflowRunService,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
@@ -66,6 +71,7 @@ export class RunJob {
     private storageHelperService: StorageHelperService,
     private notificationRepository: NotificationRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private stepTemplateHydrationService: StepTemplateHydrationService,
     private processUnsnoozeJob: ProcessUnsnoozeJob,
     private stepRunRepository: StepRunRepository,
     private workflowRunService: WorkflowRunService,
@@ -75,7 +81,8 @@ export class RunJob {
     private subscriberRepository: SubscriberRepository,
     private featureFlagsService: FeatureFlagsService,
     private executeBridgeJob: ExecuteBridgeJob,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private notificationPayloadService: NotificationPayloadService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -162,16 +169,28 @@ export class RunJob {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
       }
 
-      const workflow = await this.getWorkflow(
-        job._templateId,
-        job._environmentId,
-        job._organizationId,
-        job.payload?.__source
+      const { isPayloadDedupEnabled, digestEvents } = await this.notificationPayloadService.prepareJobExecutionPayload(
+        job,
+        notification
       );
 
+      // Stateless (bridge-URL) jobs carry no persisted workflow — the bridge
+      // is the source of truth (`job.step.bridgeUrl`). Every downstream
+      // consumer accepts an undefined workflow and falls back accordingly.
+      const workflow = job._templateId
+        ? await this.getWorkflow(job._templateId, job._environmentId, job._organizationId, job.payload?.__source)
+        : undefined;
+
       nr.addCustomAttributes({
-        workflow: workflow.name,
+        workflow: workflow?.name ?? job.identifier,
       });
+
+      // Restore a lean step's full template up front (in memory only — never
+      // written back) so every downstream consumer sees it (the
+      // extend-to-schedule bridge call below and SendMessage). No-op for
+      // full-snapshot / stateless jobs; the UNRESOLVED outcome is enforced
+      // later, only for render-bound jobs.
+      const stepTemplateHydration = await this.stepTemplateHydrationService.hydrateJobStep(job, workflow);
 
       const schedule = await this.getSubscriberSchedule.execute(
         GetSubscriberScheduleCommand.create({
@@ -271,6 +290,12 @@ export class RunJob {
         return;
       }
 
+      // A render-bound job whose lean template could not be resolved anywhere
+      // cannot produce a message — fail it before dispatch.
+      if (stepTemplateHydration === StepTemplateHydrationStatus.UNRESOLVED) {
+        await this.failUnresolvedStepTemplate(job);
+      }
+
       const sendMessageResult = await this.sendMessage.execute(
         SendMessageCommand.create({
           identifier: job.identifier,
@@ -287,7 +312,8 @@ export class RunJob {
           // backward compatibility - ternary needed to be removed once the queue renewed
           _subscriberId: job._subscriberId ? job._subscriberId : job.subscriberId,
           jobId: job._id,
-          events: job.digest?.events,
+          events: digestEvents,
+          isPayloadDedupEnabled,
           job,
           tags: notification.tags || [],
           severity: notification.severity,
@@ -416,6 +442,7 @@ export class RunJob {
           _subscriberId: job._subscriberId,
           notification,
           currentJob: { type: job.type, _id: job._id },
+          workflow: this.buildStatelessWorkflowForRuns(job),
         });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
@@ -450,6 +477,34 @@ export class RunJob {
     }
 
     return workflow;
+  }
+
+  /**
+   * A lean channel step whose message template is gone everywhere (live
+   * workflow, direct lookup, and soft-deleted) cannot render — record the
+   * failure and abort, consistent with the job's other lifecycle details.
+   */
+  private async failUnresolvedStepTemplate(job: JobEntity): Promise<never> {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          error: 'Message template for the step could not be resolved for rendering',
+          messageTemplateId: job.step._templateId,
+          stepId: job.step.stepId,
+          type: job.step.template?.type,
+        }),
+      })
+    );
+
+    throw new PlatformException(
+      `Message template ${job.step._templateId} for job ${job._id} could not be resolved while hydrating the step`
+    );
   }
 
   private isUnsnoozeJob(job: JobEntity) {
@@ -631,6 +686,10 @@ export class RunJob {
         currentJob = nextJob;
       } finally {
         if (nextJob) {
+          // Payload-dedup: attachments live on the parent notification's payload
+          // when the job doesn't carry its own. nextJob shares the same
+          // notification as the current workflow execution.
+          nextJob.payload = getEffectiveJobPayload(nextJob, notification);
           await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
         }
       }
@@ -716,7 +775,14 @@ export class RunJob {
     };
 
     if (digestKey && digestValue) {
-      jobQuery[`payload.${digestKey}`] = digestValue;
+      // Payload-dedup jobs persist `digest.digestValue`; legacy digest jobs
+      // (created before it was persisted) still carry the value in the trigger
+      // payload, so fall back to matching it there. Without this, a canceled
+      // legacy delayed digest wouldn't find its follower and the chain stalls.
+      (jobQuery as Record<string, unknown>).$or = [
+        { 'digest.digestValue': digestValue },
+        { [`payload.${digestKey}`]: digestValue },
+      ];
     }
 
     return await this.jobRepository.findOne(jobQuery);
@@ -817,7 +883,9 @@ export class RunJob {
       defaultValue: false,
     });
 
-    if (isTransitionEnabled) {
+    // Stateless (bridge-URL) jobs have no persisted workflow to analyze —
+    // skip the last-step/action-step optimizations and update unconditionally.
+    if (isTransitionEnabled && job._templateId) {
       const workflowWithSteps: SelectedWorkflowFields | null =
         workflow ??
         (await this.notificationTemplateRepository.findOne(
@@ -862,7 +930,24 @@ export class RunJob {
       _subscriberId: job._subscriberId,
       notification,
       currentJob: { type: job.type, _id: job._id },
+      workflow: workflow ?? this.buildStatelessWorkflowForRuns(job),
     });
+  }
+
+  /**
+   * Stateless (bridge-URL) jobs have no notification template in Mongo, which
+   * the workflow-run analytics need for name/trigger metadata. Derive them
+   * from the job so local-mode runs still resolve in the activity feed.
+   */
+  private buildStatelessWorkflowForRuns(job: JobEntity): WorkflowForTrace | undefined {
+    if (job._templateId) {
+      return undefined;
+    }
+
+    return {
+      name: job.identifier,
+      triggers: [{ identifier: job.identifier }],
+    };
   }
 
   private shouldSkipScheduleCheck(job: JobEntity, critical: boolean | undefined): boolean {

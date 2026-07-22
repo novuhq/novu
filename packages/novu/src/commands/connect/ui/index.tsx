@@ -1,17 +1,24 @@
-import { render } from 'ink';
 import chalk from 'chalk';
+import { render } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
+import { restoreStdinForConsole } from '../restore-stdin-for-console';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
-import { promptChatSdkReconcilePlanInConsole, promptChatSdkTunnelInConsole } from './console-chat-sdk-prompts';
+import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
+import {
+  promptConfirmInstallBridgeDepsInConsole,
+  promptConfirmScaffoldInConsole,
+} from './console-bridge-scaffold-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
+import { createPendingInteractionRegistry, type PendingInteractionRegistry } from './register-pending-interaction';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
-  ChatSdkTunnelOfferResult,
+  BridgeTunnelOfferResult,
   ConnectUI,
   GeneratedAgentPreviewResult,
   PickResult,
@@ -31,10 +38,21 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   const store = createConnectStore();
   let exitInk: (() => void) | undefined;
   let terminalReleased = false;
+  let doneResolved = false;
+  const pendingInteraction = createPendingInteractionRegistry();
   let resolveDone!: (code: number) => void;
   const done = new Promise<number>((resolve) => {
     resolveDone = resolve;
   });
+
+  const resolveDoneOnce = (code: number) => {
+    if (doneResolved) {
+      return;
+    }
+
+    doneResolved = true;
+    resolveDone(code);
+  };
 
   const instance = render(
     <App
@@ -58,7 +76,12 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   );
 
   void instance.waitUntilExit().then(() => {
-    resolveDone(Number(process.exitCode ?? 0));
+    if (terminalReleased) {
+      return;
+    }
+
+    pendingInteraction.cancel();
+    resolveDoneOnce(Number(process.exitCode ?? 0));
   });
 
   const releaseTerminal = async () => {
@@ -66,12 +89,16 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     terminalReleased = true;
     exitInk?.();
     await instance.waitUntilExit();
+    restoreStdinForConsole();
     console.log('');
   };
 
   const shutdown = async () => {
     if (terminalReleased) {
-      return Number(process.exitCode ?? 0);
+      const exitCode = Number(process.exitCode ?? 0);
+      resolveDoneOnce(exitCode);
+
+      return exitCode;
     }
 
     // Hold the final frame (error or success) on screen long enough for the
@@ -83,14 +110,17 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
     exitInk?.();
     await instance.waitUntilExit();
+    const exitCode = Number(process.exitCode ?? 0);
+    resolveDoneOnce(exitCode);
 
-    return Number(process.exitCode ?? 0);
+    return exitCode;
   };
 
   const ui = createUiController(store, {
     shutdown,
     releaseTerminal,
     isTerminalReleased: () => terminalReleased,
+    pendingInteraction,
   });
 
   return { ui, done };
@@ -102,6 +132,7 @@ function createUiController(
     shutdown: () => Promise<number>;
     releaseTerminal: () => Promise<void>;
     isTerminalReleased: () => boolean;
+    pendingInteraction: PendingInteractionRegistry;
   }
 ): ConnectUI {
   return {
@@ -233,6 +264,10 @@ function createUiController(
       });
     },
     confirmScaffold({ projectDir, appName, variant }) {
+      if (ctx.isTerminalReleased()) {
+        return promptConfirmScaffoldInConsole({ projectDir, appName, variant });
+      }
+
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'confirm-scaffold',
@@ -243,57 +278,83 @@ function createUiController(
         });
       });
     },
+    pickLlmAuthKind({ connectMode }) {
+      return ctx.pendingInteraction.register<LlmAuthKind>((resolve, reject) => {
+        store.phase.set({ kind: 'pick-llm-auth', connectMode, resolve, reject });
+      });
+    },
     scaffoldingBridge({ variant }) {
       store.phase.set({ kind: 'scaffolding-bridge', variant });
     },
     bridgeScaffolded(opts) {
       printBridgeScaffolded(opts);
     },
-    confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
-      return new Promise<boolean>((resolve) => {
-        store.phase.set({
-          kind: 'chat-sdk-install-deps-confirm',
+    confirmInstallBridgeDeps({ projectDir, installCommand, packages, variant }) {
+      if (ctx.isTerminalReleased()) {
+        return promptConfirmInstallBridgeDepsInConsole({
           projectDir,
           installCommand,
           packages,
+          variant,
+        });
+      }
+
+      return new Promise<boolean>((resolve) => {
+        store.phase.set({
+          kind: 'bridge-install-deps-confirm',
+          projectDir,
+          installCommand,
+          packages,
+          variant,
           resolve,
         });
       });
     },
-    installingChatSdkDeps() {
-      store.phase.set({ kind: 'chat-sdk-install-deps' });
+    installingBridgeDeps(variant) {
+      store.phase.set({ kind: 'bridge-install-deps', variant });
     },
-    showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+    showBridgeReconcilePlan({
+      projectDir,
+      requirements,
+      envPaths,
+      wiringInstructions,
+      requirementsFile,
+      agentPrompt,
+      variant,
+    }) {
       if (ctx.isTerminalReleased()) {
-        return promptChatSdkReconcilePlanInConsole({
+        return promptBridgeReconcilePlanInConsole({
           projectDir,
           requirements,
           envPaths,
           wiringInstructions,
           requirementsFile,
+          variant,
         });
       }
 
       return new Promise<void>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-reconcile-plan',
+          kind: 'bridge-reconcile-plan',
           projectDir,
           requirements,
           envPaths,
           wiringInstructions,
           requirementsFile,
+          agentPrompt,
+          variant,
           resolve,
         });
       });
     },
-    offerChatSdkTunnel({ projectDir, devCommand }) {
+    offerBridgeTunnel({ projectDir, devCommand }) {
       if (ctx.isTerminalReleased()) {
-        return promptChatSdkTunnelInConsole({ projectDir, devCommand });
+        return promptBridgeTunnelInConsole({ projectDir, devCommand });
       }
 
-      return new Promise<ChatSdkTunnelOfferResult>((resolve) => {
+      return new Promise<BridgeTunnelOfferResult>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-tunnel-offer',
+          kind: 'bridge-tunnel-offer',
           projectDir,
           devCommand,
           resolve,
@@ -367,6 +428,87 @@ function createUiController(
     telegramConnected() {
       // Transition handled by sendingWelcome / success.
     },
+    addingSendblueIntegration() {
+      store.phase.set({ kind: 'adding-sendblue' });
+    },
+    showSendblueIntro({ dashboardUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'sendblue-intro', dashboardUrl, resolve });
+      });
+    },
+    promptForSendblueCredential({
+      field,
+      step,
+      total,
+      title,
+      hint,
+      placeholder,
+      dashboardUrl,
+      secret,
+      verificationError,
+    }) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({
+          kind: 'sendblue-credential',
+          field,
+          step,
+          total,
+          title,
+          hint,
+          placeholder,
+          dashboardUrl,
+          secret,
+          verificationError,
+          resolve,
+        });
+      });
+    },
+    configuringSendblueWebhook() {
+      store.phase.set({ kind: 'configuring-sendblue-webhook' });
+    },
+    showSendblueWebhookManualFallback({ callbackUrl, webhookSecret }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'sendblue-webhook-manual', callbackUrl, webhookSecret, resolve });
+      });
+    },
+    promptForSendblueTestPhone({ defaultPhone, fromNumber, imessageUrl, verificationError }) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({
+          kind: 'sendblue-test-phone',
+          defaultPhone,
+          fromNumber,
+          imessageUrl,
+          verificationError,
+          resolve,
+        });
+      });
+    },
+    sendingSendblueTestMessage() {
+      store.phase.set({ kind: 'sending-sendblue-test' });
+    },
+    showSendblueTestWaiting({ phone, fromNumber, imessageUrl }) {
+      store.phase.set({ kind: 'sendblue-test-waiting', phone, fromNumber, imessageUrl });
+    },
+    sendblueConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
+    addingWhatsAppIntegration() {
+      store.phase.set({ kind: 'adding-whatsapp' });
+    },
+    awaitWhatsAppSignupOpen({ signupUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'whatsapp-signup-ready', signupUrl, resolve });
+      });
+    },
+    showWhatsAppSignupWaiting({ signupUrl }) {
+      store.phase.set({ kind: 'whatsapp-signup-waiting', signupUrl });
+    },
+    showWhatsAppTest({ waMeUrl, waMeQr, displayPhoneNumber }) {
+      store.phase.set({ kind: 'whatsapp-test', waMeUrl, waMeQr, displayPhoneNumber });
+    },
+    whatsappConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
     },
@@ -428,6 +570,8 @@ function createUiController(
         claimUrl: result.claimUrl,
         connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
+        aiSdkOutcome: result.aiSdkOutcome,
+        langChainOutcome: result.langChainOutcome,
         customCodeOutcome: result.customCodeOutcome,
       });
     },

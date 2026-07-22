@@ -3,8 +3,10 @@ import { expect } from 'chai';
 import {
   buildPlatformToolsPayload,
   buildToolsPayload,
+  ensureSkillRequiredTools,
   MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
   mapToolset,
+  SKILL_REQUIRED_BUILTIN_TOOL,
 } from './anthropic-runtime.helpers';
 
 describe('mapToolset', () => {
@@ -75,5 +77,35 @@ describe('buildToolsPayload', () => {
 
   it('buildPlatformToolsPayload returns novu_tools only', () => {
     expect(buildPlatformToolsPayload()).to.deep.equal([{ type: 'custom', ...NOVU_TOOLS_SCHEMA }]);
+  });
+
+  it('force-enables read when hasSkills is true', () => {
+    const payload = buildToolsPayload(['web_search'], undefined, true);
+    const toolset = payload[0] as { configs: Array<{ name: string; enabled: boolean }> };
+    const readConfig = toolset.configs.find((c) => c.name === SKILL_REQUIRED_BUILTIN_TOOL);
+
+    expect(readConfig?.enabled).to.equal(true);
+  });
+
+  it('does not enable read when hasSkills is false', () => {
+    const payload = buildToolsPayload(['web_search'], undefined, false);
+    const toolset = payload[0] as { configs: Array<{ name: string; enabled: boolean }> };
+    const readConfig = toolset.configs.find((c) => c.name === SKILL_REQUIRED_BUILTIN_TOOL);
+
+    expect(readConfig?.enabled).to.equal(false);
+  });
+});
+
+describe('ensureSkillRequiredTools', () => {
+  it('appends read when skills are present and read is missing', () => {
+    expect(ensureSkillRequiredTools(['web_search'], true)).to.deep.equal(['web_search', 'read']);
+  });
+
+  it('is idempotent when read is already selected', () => {
+    expect(ensureSkillRequiredTools(['read', 'web_search'], true)).to.deep.equal(['read', 'web_search']);
+  });
+
+  it('returns the input unchanged when skills are absent', () => {
+    expect(ensureSkillRequiredTools(['web_search'], false)).to.deep.equal(['web_search']);
   });
 });

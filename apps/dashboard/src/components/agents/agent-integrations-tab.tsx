@@ -26,6 +26,12 @@ import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { AddChannelPicker } from './add-channel-picker';
+import {
+  clearLastSelectedChannel,
+  loadLastSelectedChannel,
+  saveLastSelectedChannel,
+} from './agent-channel-selection-storage';
+import { AgentChannelsEmptyState } from './agent-channels-empty-state';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
 import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
 import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
@@ -51,6 +57,7 @@ const CONNECTED_PROVIDER_CHANNEL_LABEL: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.EMAIL]: 'Email',
   [ChannelTypeEnum.PUSH]: 'Push',
   [ChannelTypeEnum.SMS]: 'SMS',
+  [ChannelTypeEnum.TOOL]: 'Tool',
 };
 
 type LastUpdatedParts = {
@@ -60,7 +67,7 @@ type LastUpdatedParts = {
 
 function formatLastUpdatedParts(timestamp: number | undefined): LastUpdatedParts {
   if (timestamp == null || Number.isNaN(timestamp)) {
-    return { prefix: 'Last updated ', emphasis: '—' };
+    return { prefix: 'Last updated ', emphasis: '-' };
   }
 
   const diffSec = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
@@ -111,13 +118,6 @@ function groupLinksByChannel(links: AgentIntegrationLink[]) {
   }
 
   return groups;
-}
-
-function getFirstLinkedIntegrationIdentifier(links: AgentIntegrationLink[]): string | undefined {
-  const grouped = groupLinksByChannel(links);
-  const first = grouped[0]?.items[0];
-
-  return first?.integration.identifier;
 }
 
 type IntegrationsHubPlaceholderProps = {
@@ -197,12 +197,7 @@ function IntegrationsMainPanel({
   }
 
   if (links.length > 0) {
-    return (
-      <IntegrationsHubPlaceholder
-        title="Select a channel"
-        description="Choose a connected channel on the left to open its setup guide and finish configuration."
-      />
-    );
+    return <AgentChannelsEmptyState />;
   }
 
   return (
@@ -249,7 +244,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   };
 
   const handleBackFromGuide = () => {
-    navigate(integrationsHubPath, { state: { skipIntegrationsRedirect: true } });
+    clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
+    navigate(integrationsHubPath);
   };
 
   const listQuery = useQuery({
@@ -276,21 +272,21 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       return;
     }
 
-    const skipRedirect = Boolean(
-      (location.state as { skipIntegrationsRedirect?: boolean } | null)?.skipIntegrationsRedirect
-    );
-
-    if (skipRedirect) {
-      return;
-    }
-
     if (!listQuery.isSuccess || !linkedRows?.length) {
       return;
     }
 
-    const firstIntegrationIdentifier = getFirstLinkedIntegrationIdentifier(linkedRows);
+    const storedIdentifier = loadLastSelectedChannel(currentEnvironment._id, agent.identifier);
 
-    if (!firstIntegrationIdentifier) {
+    if (!storedIdentifier) {
+      return;
+    }
+
+    const isStillLinked = linkedRows.some((row) => row.integration.identifier === storedIdentifier);
+
+    if (!isStillLinked) {
+      clearLastSelectedChannel(currentEnvironment._id, agent.identifier);
+
       return;
     }
 
@@ -298,18 +294,18 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
-        integrationIdentifier: encodeURIComponent(firstIntegrationIdentifier),
+        integrationIdentifier: encodeURIComponent(storedIdentifier),
       })}${location.search}`,
       { replace: true }
     );
   }, [
     agent.identifier,
     agentRoutes.integrationDetail,
+    currentEnvironment?._id,
     currentEnvironment?.slug,
     linkedRows,
     listQuery.isSuccess,
     location.search,
-    location.state,
     navigate,
     integrationIdentifier,
   ]);
@@ -365,11 +361,21 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
 
+  const selectedIntegrationIdentifier = selectedIntegration?.integration.identifier;
+
+  useEffect(() => {
+    if (!selectedIntegrationIdentifier) {
+      return;
+    }
+
+    saveLastSelectedChannel(currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier);
+  }, [currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier]);
+
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess
     ? formatLastUpdatedParts(selectedIntegrationUpdatedAtMs)
-    : { prefix: 'Last updated ', emphasis: '—' };
+    : { prefix: 'Last updated ', emphasis: '-' };
 
   if (listQuery.isError) {
     return (
@@ -406,7 +412,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       <aside className="w-full md:w-[300px] md:shrink-0">
         <div className="flex flex-col gap-2.5">
           {/* When the agent itself is over the agent limit it won't respond on any
-              channel — the agent-level banner above already says so, and stacking
+              channel: the agent-level banner above already says so, and stacking
               the channel-limit banner here would just be duplicate warning noise. */}
           {isOverChannelLimit && planUsage && !agent.exceedsPlanLimit && (
             <ChannelsPlanLimitBanner planUsage={planUsage} />
@@ -477,7 +483,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                           key={link._id}
                           type="button"
                           onClick={() => handleLinkedRowClick(link)}
-                          aria-label={`${channelDisplayName} — ${statusLabel}`}
+                          aria-label={`${channelDisplayName}, ${statusLabel}`}
                           className={cn(
                             'bg-bg-white border-stroke-weak hover:border-stroke-soft flex w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors',
                             isSelected && 'border-stroke-soft'

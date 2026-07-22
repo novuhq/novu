@@ -23,6 +23,7 @@ import {
 } from '../../setup-guide-primitives';
 import type { StepStatus } from '../../setup-guide-step-utils';
 import { useEmailSetupCredentials } from '../../use-email-setup-credentials';
+import { ConnectedBadge } from './connected-badge';
 
 const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
 
@@ -43,17 +44,6 @@ type GuideStep = {
   extraContent?: ReactNode;
   fullWidthContent?: ReactNode;
 };
-
-function ConnectedBadge() {
-  return (
-    <span className="bg-success-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
-      <span className="flex size-4 items-center justify-center rounded-full bg-success-lighter">
-        <span className="bg-success-base size-1.5 rounded-full" />
-      </span>
-      <span className="text-success-base text-label-xs font-medium leading-4">Connected</span>
-    </span>
-  );
-}
 
 function RecapToggleRow({ count, isExpanded, onToggle }: { count: number; isExpanded: boolean; onToggle: () => void }) {
   return (
@@ -274,7 +264,7 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
       sectionLabel: 'FOR YOUR USERS',
       title: "Share your agent's address",
       description:
-        "Your users reach the agent by emailing its address. Drop it into your product's contact or reply flows, support footer, or docs — replies thread automatically.",
+        "Your users reach the agent by emailing its address. Drop it into your product's contact or reply flows, support footer, or docs: replies thread automatically.",
       extraContent: primaryUserAddress ? <CopyableEmailAddress email={primaryUserAddress} /> : undefined,
     },
   ];

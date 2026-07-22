@@ -8,6 +8,7 @@ import { CheckIntegrationCommand } from '../check-integration/check-integration.
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ensureNovuAgentManagedCredentials } from '../novu-agent/novu-agent-credentials.utils';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
+import { maybeStampWhatsNextCompletedAt } from '../whatsapp/whatsapp-whats-next-stamp.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
 @Injectable()
@@ -188,13 +189,19 @@ export class UpdateIntegration {
         providerId: existingIntegration.providerId,
         nextCredentials: command.credentials,
         existingCredentials,
+        allowManagedFlagChange: command.allowNovuManagedWhatsAppCredentials === true,
       });
       const managedCredentials = ensureNovuAgentManagedCredentials({
         providerId: existingIntegration.providerId,
         nextCredentials: whatsAppMerged,
         existingCredentials,
       });
-      updatePayload.credentials = encryptCredentials(managedCredentials);
+      const stampedCredentials = maybeStampWhatsNextCompletedAt({
+        providerId: existingIntegration.providerId,
+        existingCredentials,
+        nextCredentials: managedCredentials,
+      });
+      updatePayload.credentials = encryptCredentials(stampedCredentials);
     }
 
     if (command.configurations) {

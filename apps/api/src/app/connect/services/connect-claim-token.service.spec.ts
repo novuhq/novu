@@ -57,7 +57,7 @@ describe('ConnectClaimTokenService', () => {
           return 'I';
         }
 
-        cacheStore.set(usedKey, '1');
+        cacheStore.set(usedKey, raw);
 
         return `M${raw}`;
       }),
@@ -103,18 +103,12 @@ describe('ConnectClaimTokenService', () => {
     const legacyToken = '0123456789ABCDEFGHIJKLMNOPQRSTU_';
     const expiresAt = Math.floor(Date.now() / 1000) + CONNECT_CLAIM_TOKEN_TTL_SECONDS;
 
-    cacheStore.set(
-      `connect_claim_link:{${legacyToken}}`,
-      JSON.stringify({ payload, expiresAt })
-    );
+    cacheStore.set(`connect_claim_link:{${legacyToken}}`, JSON.stringify({ payload, expiresAt }));
 
     const verified = await service.verify(legacyToken);
     expect(verified).to.deep.equal(payload);
 
-    cacheStore.set(
-      `connect_claim_link:{${legacyToken}}`,
-      JSON.stringify({ payload, expiresAt })
-    );
+    cacheStore.set(`connect_claim_link:{${legacyToken}}`, JSON.stringify({ payload, expiresAt }));
 
     const claimed = await service.claim(legacyToken);
     expect(claimed).to.deep.equal(payload);
@@ -146,10 +140,7 @@ describe('ConnectClaimTokenService', () => {
     const expiresAt = Math.floor(Date.now() / 1000) + CONNECT_CLAIM_TOKEN_TTL_SECONDS;
 
     cacheStore.set(`connect_claim_link_env:{${payload.env}}`, legacyToken);
-    cacheStore.set(
-      `connect_claim_link:{${legacyToken}}`,
-      JSON.stringify({ payload, expiresAt })
-    );
+    cacheStore.set(`connect_claim_link:{${legacyToken}}`, JSON.stringify({ payload, expiresAt }));
 
     const issued = await service.issueOrGetForEnvironment(payload);
 

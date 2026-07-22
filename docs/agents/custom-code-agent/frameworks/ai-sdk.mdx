@@ -1,0 +1,199 @@
+---
+title: "AI SDK"
+description: "Build custom code agents with @novu/framework/ai-sdk and the Vercel AI SDK."
+sidebarTitle: AI SDK
+---
+
+
+`@novu/framework/ai-sdk` lets you write agent handlers with the [Vercel AI SDK](https://ai-sdk.dev/). Return an AI SDK result straight from `onMessage` and Novu delivers the text - including tool loops and approval gating - to the conversation.
+
+## Before you start
+
+Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up - [jump to Minimal agent](#minimal-agent).
+
+Otherwise start with the [Quickstart](/agents/custom-code-agent/quickstart) first. All three onboarding paths (dashboard, CLI, AI assistant) walk you through creating the agent and wiring the bridge.
+
+This page covers only what's specific to the AI SDK adapter.
+
+## Prerequisites
+
+Install the framework, the AI SDK, and a model provider:
+
+<CodeGroup>
+```bash title="OpenAI"
+npm install @novu/framework ai @ai-sdk/openai
+```
+```bash title="Anthropic"
+npm install @novu/framework ai @ai-sdk/anthropic
+```
+```bash title="Google"
+npm install @novu/framework ai @ai-sdk/google
+```
+```bash title="Groq"
+npm install @novu/framework ai @ai-sdk/groq
+```
+</CodeGroup>
+
+`@novu/framework` and `ai` are required; pick one provider package. Examples on this page use OpenAI - see the [AI SDK providers list](https://ai-sdk.dev/providers/ai-sdk-providers) for others.
+
+## Minimal agent
+
+Import `agent` and `toModelMessages` from `@novu/framework/ai-sdk`, then return `generateText()` from `onMessage`:
+
+```typescript
+import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) =>
+    generateText({
+      model: openai('gpt-4o'),
+      instructions: 'You are a helpful support agent.',
+      messages: toModelMessages(ctx.history),
+    }),
+});
+```
+
+Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route - see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
+
+For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to the AI SDK adapter.
+
+## Returning from `onMessage`
+
+On the AI SDK path, `onMessage` (and `onToolApproval`) can return an AI SDK result in addition to the usual reply types:
+
+| Return | Behavior |
+| --- | --- |
+| `generateText(...)` | Novu delivers the generated text |
+| `streamText(...)` | Novu waits for the full response, then delivers the final text (same outcome as `generateText`) |
+| `string` / JSX `Card` | Delivered as a normal reply - see [Reply](/agents/custom-code-agent/building-blocks/reply) |
+| nothing | After you call `ctx.reply()` yourself |
+
+<Note>
+  Returning `streamText(...)` behaves the same as returning `generateText(...)` - Novu waits for the full response, then posts the completed text.
+</Note>
+
+To stream live updates in the thread, call `streamText()` inside the handler **without returning it**. Post a reply, then update it as chunks arrive with [`ReplyHandle.edit()`](/agents/custom-code-agent/building-blocks/edit-sent-messages):
+
+```typescript
+onMessage: async (message, ctx) => {
+  const result = streamText({
+    model: openai('gpt-4o'),
+    messages: toModelMessages(ctx.history),
+  });
+
+  const msg = await ctx.reply('');
+  let text = '';
+
+  for await (const chunk of result.textStream) {
+    text += chunk;
+    await msg.edit(text);
+  }
+},
+```
+
+This pattern requires the provider to support message edits. See [Agents and providers](/agents/get-started/agents-and-providers#provider-connections) for capability details.
+
+Shorthand when you only need `onMessage`: pass the handler directly.
+
+```typescript
+const supportAgent = agent('support-bot', async (message, ctx) =>
+  generateText({ model: openai('gpt-4o'), messages: toModelMessages(ctx.history) })
+);
+```
+
+## `toModelMessages()`
+
+Convert `ctx.history` into AI SDK `ModelMessage[]`:
+
+```typescript
+messages: toModelMessages(ctx.history);
+```
+
+- `ctx.history` already includes the current inbound message - do not append the `message` argument on top of it.
+- Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
+
+## Automatic tool approval
+
+Set `needsApproval: true` on an AI SDK `tool()`. When the model calls it, Novu posts the Approve / Deny card and pauses the turn. After the user decides, Novu re-runs `onMessage` - `toModelMessages(ctx.history)` now includes the decision, so the tool loop continues with no extra code from you.
+
+```typescript
+import { tool } from 'ai';
+import { z } from 'zod';
+
+const issueRefund = tool({
+  description: 'Issue a refund for an order',
+  inputSchema: z.object({ orderId: z.string(), amount: z.number() }),
+  needsApproval: true,
+  execute: async ({ orderId, amount }) => ({ orderId, amount, status: 'refunded' }),
+});
+```
+
+Add `onToolApproval` when you need a hook after the click. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for the full API.
+
+## Turn failures and `onError`
+
+When a returned `generateText()` / `streamText()` result rejects - for example the provider errors or stream consumption fails - the failure propagates to the same dispatch boundary as a thrown handler error. Register `onError` on the agent to log, suppress user notification, send custom copy, or fall back to Novu's generic message.
+
+```typescript
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) =>
+    generateText({ model: openai('gpt-4o'), messages: toModelMessages(ctx.history) }),
+
+  onError: async (error, ctx) => {
+    console.error(error.message, error.cause);
+    // return nothing → generic user copy from Novu
+    // return { suppress: true } → silent
+    // return 'Custom apology' → your copy
+  },
+});
+```
+
+Recoverable `tool-error` parts inside a multi-step AI SDK flow do not end the turn by themselves - only failures that reject the result or throw from your handler trigger `onError`. See [Handlers and context - onError](/agents/custom-code-agent/building-blocks/handle-events#onerror) for the full pipeline.
+
+## MCP tools
+
+Self-hosted agents do not use the dashboard [MCP server configuration](/agents/managed-agent/configure-mcp-servers) - that OAuth flow and token vault are for **managed agents** only. On the custom code path, you wire external MCP servers yourself with the [AI SDK MCP client](https://ai-sdk.dev/docs/ai-sdk-core/mcp-tools):
+
+```typescript
+import { experimental_createMCPClient as createMCPClient } from 'ai';
+
+onMessage: async (message, ctx) => {
+  const mcp = await createMCPClient({
+    transport: {
+      type: 'http',
+      url: 'https://mcp.example.com/mcp',
+      headers: { Authorization: `Bearer ${yourAccessToken}` },
+    },
+  });
+
+  return generateText({
+    model: openai('gpt-4o'),
+    messages: toModelMessages(ctx.history),
+    tools: { ...(await mcp.tools()), ...localTools },
+  });
+},
+```
+
+Novu does not inject MCP credentials into `ctx`. Resolve tokens in your handler - for example, look up a per-subscriber token you stored after your own OAuth flow using `ctx.subscriber?.subscriberId`.
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="loader" href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator">
+    Show a Thinking… or custom status while your handler runs.
+  </Card>
+  <Card icon="layout-grid" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
+    Markdown, attachments, and interactive cards.
+  </Card>
+  <Card icon="shield-check" href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval">
+    The shared Approve / Deny primitive.
+  </Card>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+    Return LangChain agent configs with automatic tool approval resume.
+  </Card>
+  <Card icon="code" href="/agents/custom-code-agent/frameworks/other" title="Other frameworks">
+    Wire handlers without a Novu runtime adapter.
+  </Card>
+</Columns>

@@ -6,6 +6,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentDemoQuota } from '@/hooks/use-agent-demo-quota';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { RecentConversationsSection } from '../agents/recent-conversations-section';
+import { AgentBehaviorSection } from './agent-behavior-section';
 import { AgentSetupGuide } from './agent-setup-guide';
 import { AgentWhatsNextSection } from './agent-whats-next-section';
 import { ConnectedProvidersSection } from './connected-providers-section';
@@ -38,10 +39,10 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
   });
 
   // A channel counts as connected once the API stamps `connectedAt` (first real
-  // inbound message). The auto-provisioned Novu email integration follows the
-  // same rule: it only counts once a real email has landed, so a freshly created
-  // managed agent (no inbound yet) still surfaces the setup guide, and a connected
-  // email swaps the guide for the "What's next" card just like other channels.
+  // inbound message). Novu email follows the same rule: it only counts once a
+  // real email has landed, so a freshly created managed agent (no inbound yet)
+  // still surfaces the setup guide, and a connected email swaps the guide for
+  // the "What's next" card just like other channels.
   const hasConnectedChannel = useMemo(() => {
     const links = integrationsQuery.data?.data;
 
@@ -78,6 +79,7 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
       ) : (
         <ConnectedProvidersSection agent={agent} />
       )}
+      <AgentBehaviorSection agent={agent} />
       <McpsSection agent={agent} />
       <SystemPromptSection agent={agent} />
       <ToolsSection agent={agent} />

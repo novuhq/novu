@@ -15,6 +15,11 @@ export const ROUTES = {
   INBOX_EMBED_SUCCESS: '/onboarding/inbox/success',
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
+  /** Handshake target opened by `novu dev` with tunnel params (see pages/local-handshake.tsx). */
+  LOCAL_HANDSHAKE: '/local',
+  LOCAL_WORKFLOWS: '/env/:environmentSlug/local/workflows',
+  LOCAL_EDIT_WORKFLOW: '/env/:environmentSlug/local/workflows/:workflowSlug',
+  LOCAL_TRIGGER_WORKFLOW: '/env/:environmentSlug/local/workflows/:workflowSlug/trigger',
   CLI_AUTH: '/cli/auth',
   CONNECT_CLAIM: '/connect/claim',
   ENV: '/env',
@@ -83,6 +88,8 @@ export const ROUTES = {
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
+  /** Public, tokenized Embedded Signup page opened by `npx novu connect` (keyless or authenticated). */
+  AGENT_WHATSAPP_SIGNUP: '/agents/whatsapp/connect/:token',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
   AGENT_SLACK_SETUP: '/agents/slack/connect/:token',
   INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',

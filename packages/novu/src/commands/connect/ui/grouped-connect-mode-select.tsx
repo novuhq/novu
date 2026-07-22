@@ -1,10 +1,7 @@
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
-import {
-  CONNECT_MODE_GROUPS,
-  flattenConnectModeOptions,
-} from '../connect-mode-options';
+import { CONNECT_MODE_GROUPS, flattenConnectModeOptions } from '../connect-mode-options';
 import type { AgentConnectMode } from '../types';
 
 export function GroupedConnectModeSelect({

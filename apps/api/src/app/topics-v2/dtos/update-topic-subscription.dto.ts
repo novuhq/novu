@@ -27,7 +27,7 @@ export class UpdateTopicSubscriptionRequestDto {
         { $ref: getSchemaPath(GroupPreferenceFilterDto) },
       ],
     },
-    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'tier' }, 'premium'] } }],
+    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'payload.tier' }, 'premium'] } }],
   })
   @IsArray()
   @ValidateNested({ each: true })

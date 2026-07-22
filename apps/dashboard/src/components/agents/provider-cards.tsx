@@ -24,16 +24,12 @@ import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizon
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
-import { hasAgentInboundConnection, isAgentIntegrationConnected } from './is-agent-integration-connected';
-import {
-  getProviderCardInteraction,
-  type ProviderSwitcherStatus,
-  resolveProviderCardDisplayState,
-  resolveProviderSwitcherStatus,
-} from './provider-card-interaction';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
+import { type ProviderSwitcherStatus, resolveProviderCardDisplayState } from './provider-card-display-state';
 
 /**
  * Estimated time to complete the setup for each provider, displayed as a hint
@@ -43,24 +39,46 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [EmailProviderIdEnum.NovuAgent]: '~ 30 seconds',
   [ChatProviderIdEnum.Slack]: '~ 1 minute',
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
-  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
-  [ChatProviderIdEnum.Telegram]: '~ 2 min',
+  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 5 minutes',
+  [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
+  [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
   linear: '~ 2 minutes',
   zoom: '~ 2 minutes',
-  imessages: '~ 2 minutes',
 };
 
+// The carousel is the only surface that brands the Sendblue channel as "iMessage" (label + icon);
+// every other surface keeps the canonical Sendblue name via getAgentChannelDisplayName.
+const CAROUSEL_IMESSAGE_LABEL = 'iMessage';
+const CAROUSEL_IMESSAGE_ICON_FILE = 'imessages';
+
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return CAROUSEL_IMESSAGE_LABEL;
+  }
+
   return getAgentChannelDisplayName(providerId, displayName);
+}
+
+function getProviderCardIconFileName(providerId: string): string {
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return CAROUSEL_IMESSAGE_ICON_FILE;
+  }
+
+  return getProviderSquareIconFileName(providerId);
 }
 
 const CARD_PROVIDER_ICON_CLASS = 'size-6 shrink-0 object-contain';
 
 function CardProviderIcon({ providerId, displayName }: { providerId: string; displayName: string }) {
   return (
-    <ProviderIcon providerId={providerId} providerDisplayName={displayName} className={CARD_PROVIDER_ICON_CLASS} />
+    <ProviderIcon
+      providerId={providerId}
+      providerDisplayName={displayName}
+      iconFileName={getProviderCardIconFileName(providerId)}
+      className={CARD_PROVIDER_ICON_CLASS}
+    />
   );
 }
 
@@ -297,13 +315,10 @@ function ProviderCard({
   switcherStatus?: ProviderSwitcherStatus;
   onClick: () => void;
 }) {
-  const interaction = getProviderCardInteraction(item.providerId);
   const { effectiveConnected, showCheck, showConnecting, showInSetup, showActiveBorder, isActive } =
     resolveProviderCardDisplayState({
-      interaction,
       isConnected,
       isSelected,
-      isLoading,
       switcherStatus,
     });
 
@@ -446,8 +461,8 @@ export function ProviderCards({
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
   const navigate = useNavigate();
 
-  // Email (NovuAgent) is auto-provisioned for every agent but still renders like a connectable
-  // channel card so the user explicitly opens the email setup guide.
+  // Email (NovuAgent) renders like every other connectable channel card; its integration + link
+  // are only provisioned when the user clicks Connect.
   const items = useMemo(() => {
     const built = buildCardItems(CONVERSATIONAL_PROVIDERS, integrations).filter(
       // Agent email is Enterprise/Cloud-only — never surface the card on Community.
@@ -497,13 +512,9 @@ export function ProviderCards({
 
   // Per-provider status for the switcher rail, built in one pass over existingLinks. A provider is
   // "connected" only once a real inbound message has landed (`connectedAt`); otherwise "in-setup"
-  // while a link exists. Providers with no link are "connectable" (absent from the map).
-  //
-  // The Novu email link is auto-provisioned at agent creation, so — unlike a chat channel's link,
-  // which is only created when the user clicks "Connect" — its mere existence does not signal that
-  // the user has engaged with the channel. An inbound-less email link is therefore treated as
-  // unlinked so it falls back to "Connect", matching how an untouched Telegram/Slack card reads.
-  // Selecting it promotes the card to "In setup" via resolveProviderCardDisplayState.
+  // while a link exists. Providers with no link are "connectable" (absent from the map). Every
+  // provider's link — including Novu email — is only created when the user clicks "Connect", so
+  // link existence uniformly signals engagement.
   const switcherStatusByProvider = useMemo(() => {
     const statuses = new Map<string, ProviderSwitcherStatus>();
 
@@ -514,15 +525,7 @@ export function ProviderCards({
         continue;
       }
 
-      const isNovuAgentEmail = providerId === EmailProviderIdEnum.NovuAgent;
-
-      statuses.set(
-        providerId,
-        resolveProviderSwitcherStatus({
-          isConnected: hasAgentInboundConnection(link.connectedAt),
-          isLinked: !isNovuAgentEmail,
-        })
-      );
+      statuses.set(providerId, hasAgentInboundConnection(link.connectedAt) ? 'connected' : 'in-setup');
     }
 
     return statuses;
@@ -553,29 +556,6 @@ export function ProviderCards({
     );
   };
 
-  const handleNovuAgentLink = (item: ProviderCardItem) => {
-    const existingNovuLink = existingLinks?.find(
-      (link) => link.integration.providerId === EmailProviderIdEnum.NovuAgent
-    );
-
-    if (existingNovuLink && isAgentIntegrationConnected(existingNovuLink)) {
-      const integration = integrations?.find((i) => i._id === existingNovuLink.integration._id);
-      if (integration) {
-        onSelect(item.providerId, integration);
-
-        return;
-      }
-    }
-
-    void linkProvider(
-      {
-        providerId: item.providerId,
-        displayName: item.displayName,
-      },
-      `${item.providerId}-novu-agent`
-    );
-  };
-
   // Re-select a channel that is already linked to the agent (connected or still in setup) without
   // re-creating it, so switching between channels never destroys in-progress setup. Returns false
   // when the provider has no existing link yet (caller then falls back to create + link).
@@ -594,17 +574,11 @@ export function ProviderCards({
     return true;
   };
 
-  // Shared activation for both the full grid and the switcher rail: route the auto-provisioned email
-  // through its dedicated flow, re-select an already-linked channel in place, and only create + link
-  // a brand-new integration otherwise.
+  // Shared activation for both the full grid and the switcher rail: re-select an already-linked
+  // channel in place, then provision on first Connect via the link hook (Novu email routes by
+  // providerId inside the hook; chat providers go through create-integration-then-link).
   const activateProvider = (item: ProviderCardItem) => {
     if (isBusy) return;
-
-    if (getProviderCardInteraction(item.providerId) === 'auto-provisioned-connectable') {
-      handleNovuAgentLink(item);
-
-      return;
-    }
 
     if (selectExistingLink(item)) {
       return;
@@ -618,7 +592,7 @@ export function ProviderCards({
       <CardScroller
         dimmed={dimmed}
         footer={
-          <p className="text-text-soft mt-2 px-1 text-label-xs leading-4">Set up multiple channels — switch anytime.</p>
+          <p className="text-text-soft mt-2 px-1 text-label-xs leading-4">Set up multiple channels: switch anytime.</p>
         }
       >
         {switcherItems.map((item) => {

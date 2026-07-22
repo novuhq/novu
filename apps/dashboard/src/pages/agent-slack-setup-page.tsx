@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { motion } from 'motion/react';
 import { useState } from 'react';
 import { RiCheckLine, RiErrorWarningLine, RiTimeLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
@@ -10,6 +9,7 @@ import {
   type SubmitSlackSetupCredentialsResult,
   submitSlackSetupCredentials,
 } from '@/api/agents';
+import { Card, PageShell } from '@/components/agents/public-token-page';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { cn } from '@/utils/ui';
@@ -40,23 +40,6 @@ export function AgentSlackSetupPage() {
       {token && statusQuery.isError && <InactiveLinkCard reason="invalid" />}
       {token && statusQuery.data?.valid && <SetupForm token={token} agentName={statusQuery.data.agentName} />}
     </PageShell>
-  );
-}
-
-function PageShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-bg-weak flex min-h-dvh flex-col items-center justify-between px-4 py-8">
-      <div className="w-full max-w-md flex-1 pt-[max(env(safe-area-inset-top),0px)]">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {children}
-        </motion.div>
-      </div>
-      <PoweredByNovu />
-    </div>
   );
 }
 
@@ -114,7 +97,7 @@ function SetupForm({ token, agentName }: SetupFormProps) {
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Paste your Slack App Configuration Token here. Novu uses it once to create the Slack app from a manifest, then
-          discards it — your terminal will continue automatically.
+          discards it: your terminal will continue automatically.
         </p>
       </div>
 
@@ -184,7 +167,7 @@ function SuccessCard({ agentName }: { agentName: string }) {
         <h1 className="text-text-strong text-paragraph-md font-semibold">Slack app created</h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Your Slack app is ready for <span className="text-text-strong font-medium">{agentName}</span>. Return to your
-          terminal — the connect command will open Slack authorization next.
+          terminal: the connect command will open Slack authorization next.
         </p>
       </div>
       <p className="text-text-soft text-label-xs mt-5 text-center">You can safely close this tab.</p>
@@ -231,32 +214,4 @@ function reasonCopy(reason: InactiveReason): { title: string; description: strin
         description: 'The link may be broken or for a different agent. Re-run `npx novu connect` to continue.',
       };
   }
-}
-
-function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div
-      className={cn(
-        'border-stroke-soft bg-bg-white shadow-regular-xs flex w-full flex-col rounded-xl border p-5',
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function PoweredByNovu() {
-  return (
-    <a
-      href="https://novu.co"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-text-soft hover:text-text-strong mt-8 inline-flex items-center gap-2 text-label-xs transition"
-      aria-label="Powered by Novu"
-    >
-      <span>Powered by</span>
-      <img src="/images/novu-logo-dark.svg" alt="Novu" className="h-3.5" />
-    </a>
-  );
 }

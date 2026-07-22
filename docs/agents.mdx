@@ -1,5 +1,5 @@
 ---
-title: "Novu Connect — Agent Communication Infrastructure (ACI)"
+title: "Novu Connect - Agent Communication Infrastructure (ACI)"
 description: "Connect AI agents to Slack, Teams, WhatsApp, and email with Novu's Agent Communication Infrastructure. Route messages, preserve context, and deliver replies."
 sidebarTitle: Overview
 ---
@@ -33,11 +33,19 @@ Delegate the agent logic entirely to a managed platform such as Claude Managed A
 
 ### Custom code
 
-Write your own agent logic. Handle events, call any LLM or API, and reply using the Novu agent SDK. Compatible with AI SDK, LangChain, OpenAI SDK, and any custom code of your choosing.
+Write your own agent logic. Handle events, call any LLM or API, and reply using the Novu agent SDK. Compatible with AI SDK, LangChain, Mastra, OpenAI SDK, and any custom code of your choosing.
 
-<Card href="/agents/custom-code-agent/quickstart" title="Custom code agent" icon="square-code">
-  Build an agent with full control over logic, tools, and event handling.
-</Card>
+<Columns cols={3}>
+  <Card href="/agents/get-started/ai-sdk" title="AI SDK" icon="sparkles">
+    Build with the Vercel AI SDK and `@novu/framework/ai-sdk`.
+  </Card>
+  <Card href="/agents/get-started/langchain" title="LangChain" icon="link">
+    Build with LangChain and `@novu/framework/langchain`.
+  </Card>
+  <Card href="/agents/get-started/mastra" title="Mastra" icon="boxes">
+    Build with Mastra and `@novu/framework`.
+  </Card>
+</Columns>
 
 ## How a conversation flows
 
@@ -52,9 +60,20 @@ ACI turns channel-specific messages into a standard communication flow between t
 
 ## Start building
 
-<Card href="/agents/managed-agent/quickstart" title="Quickstart" icon="zap">
-  Follow the quickstart to create your first agent, connect a Slack provider, and send your first message in under 5 minutes.
-</Card>
+<Columns cols={2}>
+  <Card href="/agents/get-started/ai-sdk" title="AI SDK quickstart" icon="sparkles">
+    Connect an AI SDK agent to Slack, Teams, WhatsApp, Telegram, or email.
+  </Card>
+  <Card href="/agents/get-started/langchain" title="LangChain quickstart" icon="link">
+    Connect a LangChain agent to your messaging channels.
+  </Card>
+  <Card href="/agents/get-started/mastra" title="Mastra quickstart" icon="boxes">
+    Connect a Mastra agent to your messaging channels.
+  </Card>
+  <Card href="/agents/managed-agent/quickstart" title="Managed agent quickstart" icon="sparkles">
+    Create a Claude-powered agent with the CLI and send your first message.
+  </Card>
+</Columns>
 
 ## Learn more
 
@@ -73,10 +92,13 @@ Explore the full documentation to go deeper on any part of Novu Connect.
   <Card href="/agents/managed-agent/overview" title="Managed agent" icon="sparkles">
     Configure a fully-managed agent powered by Claude.
   </Card>
-  <Card href="/agents/custom-code-agent/quickstart" title="Custom code quickstart" icon="zap">
-    Connect a Slack provider and send your first message in under five minutes.
+  <Card href="/agents/get-started/ai-sdk" title="AI SDK quickstart" icon="zap">
+    Build a custom code agent with the Vercel AI SDK.
   </Card>
   <Card href="/agents/conversations" title="Conversation observability" icon="messages-square">
     Monitor, inspect, and manage live agent conversations.
+  </Card>
+  <Card href="/api-reference/agents/agent-schema" title="Agents API reference" icon="code">
+    Create, configure, and manage agents programmatically with the REST API.
   </Card>
 </Columns>

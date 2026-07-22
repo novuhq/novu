@@ -8,6 +8,7 @@ import {
   RiArrowRightSLine,
   RiCheckLine,
   RiExpandUpDownLine,
+  RiInformationLine,
 } from 'react-icons/ri';
 import {
   DemoCredentialBadge,
@@ -24,6 +25,7 @@ import {
   CommandSeparator,
 } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import { cn } from '@/utils/ui';
 import { getClaudeManagedAgentIntegrations, partitionClaudeManagedIntegrations } from './claude-managed-integrations';
@@ -39,6 +41,33 @@ const GROUP_HEADING_CLASSNAME =
   '**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1';
 
 export type ConnectorIntegrationStatus = 'idle' | 'valid' | 'missing';
+
+type ConnectorGroupHeadingProps = {
+  label: string;
+  description: string;
+};
+
+function ConnectorGroupHeading({ label, description }: ConnectorGroupHeadingProps) {
+  return (
+    <div className="flex items-center gap-1">
+      <span>{label}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={`About ${label}`}
+            className="text-text-soft hover:text-text-sub inline-flex cursor-help items-center transition-colors"
+          >
+            <RiInformationLine className="size-3.5" aria-hidden />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="max-w-[260px]">
+          {description}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
 
 type ConnectorIntegrationDropdownProps = {
   selectedConnectorId?: ConnectorId;
@@ -268,11 +297,27 @@ export function ConnectorIntegrationDropdown({
 
   const connectorsView = (
     <>
-      <CommandGroup heading="Custom code" className={GROUP_HEADING_CLASSNAME}>
+      <CommandGroup
+        heading={
+          <ConnectorGroupHeading
+            label="Custom code"
+            description="Build and host the agent in your own application using your preferred framework or custom implementation."
+          />
+        }
+        className={GROUP_HEADING_CLASSNAME}
+      >
         {customOptions.map(renderConnectorItem)}
       </CommandGroup>
       {externalOptions.length > 0 ? (
-        <CommandGroup heading="Managed agent runtimes" className={GROUP_HEADING_CLASSNAME}>
+        <CommandGroup
+          heading={
+            <ConnectorGroupHeading
+              label="Managed agent runtimes"
+              description="Connect an agent running on a supported managed platform. The platform hosts and operates the agent runtime for you."
+            />
+          }
+          className={GROUP_HEADING_CLASSNAME}
+        >
           {externalOptions.map(renderConnectorItem)}
         </CommandGroup>
       ) : null}

@@ -11,7 +11,7 @@ const ENV_ID = 'env-id';
 const ORG_ID = 'org-id';
 const AGENT_ID = 'agent-mongo-id';
 const INTEGRATION_ID = 'integration-mongo-id';
-const SUBSCRIBER_ID = 'connect:user-123';
+const SUBSCRIBER_ID = 'user-123';
 
 function buildCommand(overrides: Partial<SendWhatsAppTestTemplateCommand> = {}) {
   return SendWhatsAppTestTemplateCommand.create({
@@ -109,5 +109,31 @@ describe('SendWhatsAppTestTemplate usecase', () => {
     expect(subscriberRepository.findBySubscriberId.calledOnceWithExactly(ENV_ID, SUBSCRIBER_ID)).to.equal(true);
     expect(sendWhatsAppTemplateStub.calledOnce).to.equal(true);
     expect(sendWhatsAppTemplateStub.firstCall.args[0].to).to.equal('14155551234');
+    expect(sendWhatsAppTemplateStub.firstCall.args[0].templateName).to.equal('hello_world');
+    expect(sendWhatsAppTemplateStub.firstCall.args[0].bodyParameters).to.equal(undefined);
+  });
+
+  it('sends the embedded signup sample template for Novu-managed credentials', async () => {
+    integrationRepository.findOne.resolves({
+      _id: INTEGRATION_ID,
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      credentials: {
+        apiToken: 'token',
+        phoneNumberIdentification: 'phone-number-id',
+        businessAccountId: 'waba-id',
+        isNovuManaged: true,
+      },
+    });
+    subscriberRepository.findBySubscriberId.resolves({
+      subscriberId: SUBSCRIBER_ID,
+      phone: '+14155551234',
+      firstName: 'Alice',
+    });
+
+    const result = await buildUsecase().execute(buildCommand());
+
+    expect(result.success).to.equal(true);
+    expect(sendWhatsAppTemplateStub.firstCall.args[0].templateName).to.equal('sample_order_confirmation');
+    expect(sendWhatsAppTemplateStub.firstCall.args[0].bodyParameters).to.deep.equal(['Alice', 'TEST-001']);
   });
 });

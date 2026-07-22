@@ -69,3 +69,36 @@ export function logTelegramDeepLinkHandoffEvents(opts: { deepLinkUrl: string; bo
 export function logTelegramDeepLinkQrPngHandoffEvent(opts: { deepLinkQrPngPath: string }): void {
   console.log(`${HANDOFF_PREFIX}TELEGRAM_DEEPLINK_QR_PNG=${opts.deepLinkQrPngPath}`);
 }
+
+export function logWhatsAppSignupHandoffEvent(opts: { signupUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}WHATSAPP_SIGNUP_URL=${opts.signupUrl}`);
+}
+
+export function logWhatsAppTestHandoffEvents(opts: { waMeUrl?: string; displayPhoneNumber?: string }): void {
+  if (opts.waMeUrl) {
+    console.log(`${HANDOFF_PREFIX}WHATSAPP_WA_ME_URL=${opts.waMeUrl}`);
+  }
+  if (opts.displayPhoneNumber) {
+    console.log(`${HANDOFF_PREFIX}WHATSAPP_PHONE_NUMBER=${opts.displayPhoneNumber}`);
+  }
+}
+
+export function logWhatsAppWaMeQrPngHandoffEvent(opts: { waMeQrPngPath: string }): void {
+  console.log(`${HANDOFF_PREFIX}WHATSAPP_WA_ME_QR_PNG=${opts.waMeQrPngPath}`);
+}
+
+export function logSendblueDashboardHandoffEvent(opts: { dashboardUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}SENDBLUE_DASHBOARD_URL=${opts.dashboardUrl}`);
+}
+
+export function logSendblueWebhookHandoffEvents(opts: { callbackUrl: string; webhookSecret?: string }): void {
+  console.log(`${HANDOFF_PREFIX}SENDBLUE_WEBHOOK_CALLBACK_URL=${opts.callbackUrl}`);
+  if (opts.webhookSecret) {
+    console.log(`${HANDOFF_PREFIX}SENDBLUE_WEBHOOK_SECRET=${opts.webhookSecret}`);
+  }
+}
+
+export function logSendblueImessageHandoffEvents(opts: { imessageUrl: string; fromNumber: string }): void {
+  console.log(`${HANDOFF_PREFIX}SENDBLUE_IMESSAGE_URL=${opts.imessageUrl}`);
+  console.log(`${HANDOFF_PREFIX}SENDBLUE_FROM_NUMBER=${opts.fromNumber}`);
+}

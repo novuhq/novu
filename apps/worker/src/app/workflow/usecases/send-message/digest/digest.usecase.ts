@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  buildDigestEvent,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -110,10 +111,10 @@ export class Digest extends SendMessageType {
         _environmentId: currentJob._environmentId,
         _subscriberId: command._subscriberId,
       },
-      'payload'
+      '_id _notificationId createdAt payload'
     );
 
-    return [currentJob.payload, ...jobs.map((job) => job.payload)];
+    return [currentJob, ...jobs].map(buildDigestEvent);
   }
 
   private async backwardCompatibleGetEvents(command: SendMessageCommand, currentJob: JobEntity) {

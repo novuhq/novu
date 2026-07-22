@@ -6,6 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
+import { Badge } from '@/components/primitives/badge';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
 import {
@@ -19,8 +20,9 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { TableCell, TableRow } from '@/components/primitives/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
-import { getSubscriberTitle } from '@/components/subscribers/utils';
+import { getSubscriberTitle, isAgentAutoProvisionedSubscriber } from '@/components/subscribers/utils';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -68,6 +70,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
   const { currentEnvironment } = useEnvironment();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const subscriberTitle = getSubscriberTitle(subscriber);
+  const isAutoCreated = isAgentAutoProvisionedSubscriber(subscriber);
   const queryClient = useQueryClient();
   const location = useLocation();
   const { navigateToSubscribersFirstPage } = useSubscribersNavigate();
@@ -145,10 +148,7 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
 
   return (
     <>
-      <TableRow
-        key={subscriber.subscriberId}
-        className="group relative isolate cursor-pointer"
-      >
+      <TableRow key={subscriber.subscriberId} className="group relative isolate cursor-pointer">
         <SubscriberTableCell to={subscriberLink}>
           <div className="flex items-center gap-3">
             <Avatar>
@@ -156,7 +156,22 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
               <AvatarFallback>{subscriberTitle[0]}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <TruncatedText className="text-text-strong max-w-[36ch] font-medium">{subscriberTitle}</TruncatedText>
+              <div className="flex items-center gap-2">
+                <TruncatedText className="text-text-strong max-w-[36ch] font-medium">{subscriberTitle}</TruncatedText>
+                {isAutoCreated ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="lighter" color="gray" size="sm" className="z-10 shrink-0">
+                        Auto-created
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      Created automatically from an inbound message to an agent (e.g. an open-access email agent). It
+                      merges into a matching subscriber if one signs up with the same email.
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
+              </div>
               <div className="flex items-center gap-1 transition-opacity duration-200">
                 <TruncatedText className="text-text-soft font-code block max-w-[40ch] text-xs">
                   {subscriber.subscriberId}

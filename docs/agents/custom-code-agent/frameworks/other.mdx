@@ -1,0 +1,130 @@
+---
+title: "Other frameworks"
+description: "Build custom code agents with @novu/framework and any LLM stack - OpenAI SDK, Anthropic SDK, or your own integration."
+sidebarTitle: Other
+---
+
+
+Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk` or `@novu/framework/langchain`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for Mastra, the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for.
+
+For a full walkthrough with Mastra, see the [Mastra quickstart](/agents/get-started/mastra).
+
+## Before you start
+
+Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up - [jump to Minimal agent](#minimal-agent).
+
+Otherwise start with the [Quickstart](/agents/custom-code-agent/quickstart) first. All three onboarding paths (dashboard, CLI, AI assistant) walk you through creating the agent and wiring the bridge.
+
+This page covers only what's specific to wiring your own LLM stack.
+
+## Prerequisites
+
+Install the framework package:
+
+```bash
+npm install @novu/framework
+```
+
+Bring your own LLM or agent library - Novu does not require a specific one.
+
+## Minimal agent
+
+Import `agent` from `@novu/framework`, call your logic in `onMessage`, and reply by returning a string or calling `ctx.reply()`:
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => {
+    const response = await yourLLM.chat({
+      messages: buildMessages(ctx.history),
+    });
+
+    return response.text;
+  },
+});
+```
+
+Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route - see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
+
+For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to wiring your own LLM stack - return types and manual tool approval.
+
+## Returning from `onMessage`
+
+On this path, `onMessage` accepts the standard reply types - not AI SDK results:
+
+| Return | Behavior |
+| --- | --- |
+| `string` / JSX `Card` | Delivered as a reply - see [Reply](/agents/custom-code-agent/building-blocks/reply) |
+| `ctx.toolApproval.request(...)` | Posts the Approve / Deny card and pauses the turn - see [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) |
+| nothing | After you call `ctx.reply()` yourself |
+
+Other handlers (`onAction`, `onReaction`, `onResolve`) accept `string`, `Card`, or nothing.
+
+Shorthand when you only need `onMessage`: pass the handler directly.
+
+```typescript
+const supportAgent = agent('support-bot', async (message, ctx) => {
+  const text = await runAgent(message, ctx);
+
+  return text;
+});
+```
+
+## Tool approval
+
+When a tool needs human approval, return `ctx.toolApproval.request()` from `onMessage`:
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => {
+    const toolCall = detectToolCall(message, ctx);
+
+    if (toolCall?.needsApproval) {
+      return ctx.toolApproval.request(toolCall);
+    }
+
+    return runToolAndReply(toolCall, ctx);
+  },
+
+  onToolApproval: async (decision, ctx) => {
+    if (!decision.approved) {
+      await decision.approvalMessage.delete();
+
+      return 'Cancelled.';
+    }
+
+    const result = await issueRefund(decision.toolCall.input);
+    await decision.approvalMessage.delete();
+
+    return `Refund issued for order ${result.orderId}.`;
+  },
+});
+```
+
+See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for the full API, card customization, and default behavior when you omit `onToolApproval`.
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="boxes" href="/agents/get-started/mastra" title="Mastra quickstart">
+    Call Mastra generate() from a Novu handler.
+  </Card>
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Return AI SDK results from handlers with automatic tool approval resume.
+  </Card>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+    Return LangChain agent configs with automatic tool approval resume.
+  </Card>
+  <Card icon="loader" href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator">
+    Show a Thinking… or custom status while your handler runs.
+  </Card>
+  <Card icon="layout-grid" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
+    Markdown, attachments, and interactive cards.
+  </Card>
+  <Card icon="shield-check" href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval">
+    The shared Approve / Deny primitive.
+  </Card>
+</Columns>

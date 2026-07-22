@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon, { restore, stub } from 'sinon';
 
@@ -35,7 +35,10 @@ describe('SendAgentWelcomeMessage usecase', () => {
     persistAgentMessage: sinon.SinonStub;
   };
   let analyticsService: { track: sinon.SinonStub };
-  let outboundGateway: { sendDirectMessage: sinon.SinonStub };
+  let outboundGateway: {
+    sendDirectMessage: sinon.SinonStub;
+    setSlackSuggestedPrompts: sinon.SinonStub;
+  };
   let connectClaimTokenService: { issueOrGetForEnvironment: sinon.SinonStub };
   let logger: { setContext: sinon.SinonStub; warn: sinon.SinonStub };
 
@@ -68,7 +71,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
     };
     subscriberRepository = {
       findBySubscriberId: stub().resolves({
-        subscriberId: `connect:${USER_ID}`,
+        subscriberId: USER_ID,
         email: 'user@example.com',
       }),
     };
@@ -86,6 +89,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
     };
     outboundGateway = {
       sendDirectMessage: stub().resolves({ messageId: 'msg-1', platformThreadId: 'email:user@example.com:hash' }),
+      setSlackSuggestedPrompts: stub().resolves(undefined),
     };
     connectClaimTokenService = {
       issueOrGetForEnvironment: stub().resolves({ token: 'claim-token' }),
@@ -100,11 +104,11 @@ describe('SendAgentWelcomeMessage usecase', () => {
     restore();
   });
 
-  it('sends a welcome email to the connect subscriber address', async () => {
+  it('sends a welcome email to the dashboard subscriber address', async () => {
     const result = await buildUsecase().execute(buildCommand());
 
-    expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id' });
-    expect(subscriberRepository.findBySubscriberId.calledOnceWith(ENV_ID, `connect:${USER_ID}`)).to.equal(true);
+    expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: undefined });
+    expect(subscriberRepository.findBySubscriberId.calledOnceWith(ENV_ID, USER_ID)).to.equal(true);
     expect(channelEndpointRepository.findOne.called).to.equal(false);
     expect(
       outboundGateway.sendDirectMessage.calledOnceWith(
@@ -135,10 +139,47 @@ describe('SendAgentWelcomeMessage usecase', () => {
     ).to.equal(true);
     expect(outboundGateway.sendDirectMessage.called).to.equal(false);
     expect(conversationService.createOrGetConversation.called).to.equal(false);
+    expect(outboundGateway.setSlackSuggestedPrompts.called).to.equal(false);
   });
 
-  it('returns sent:false when the connect subscriber has no email', async () => {
-    subscriberRepository.findBySubscriberId.resolves({ subscriberId: `connect:${USER_ID}`, email: '' });
+  it('sets Slack suggested prompts after sending a Slack welcome message', async () => {
+    integrationRepository.findOne.resolves({
+      _id: 'integration-id',
+      providerId: ChatProviderIdEnum.Slack,
+    });
+    channelEndpointRepository.findOne.resolves({
+      endpoint: { userId: 'U123456' },
+    });
+    conversationService.createOrGetConversation.resolves({
+      _id: 'conversation-id',
+      channels: [{ platform: AgentPlatformEnum.SLACK, platformThreadId: 'slack:D123:msg-1' }],
+    });
+    conversationService.getPrimaryChannel.returns({
+      platform: AgentPlatformEnum.SLACK,
+      platformThreadId: 'slack:D123:msg-1',
+    });
+    outboundGateway.sendDirectMessage.resolves({
+      messageId: 'msg-1',
+      platformThreadId: 'slack:D123:msg-1',
+    });
+
+    const result = await buildUsecase().execute(buildCommand({ integrationIdentifier: 'slack-integration' }));
+
+    expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: undefined });
+    expect(outboundGateway.setSlackSuggestedPrompts.calledOnce).to.equal(true);
+    expect(
+      outboundGateway.setSlackSuggestedPrompts.calledOnceWith(
+        AGENT_ID,
+        'slack-integration',
+        'slack:D123:msg-1',
+        sinon.match.array,
+        sinon.match.string
+      )
+    ).to.equal(true);
+  });
+
+  it('returns sent:false when the dashboard subscriber has no email', async () => {
+    subscriberRepository.findBySubscriberId.resolves({ subscriberId: USER_ID, email: '' });
 
     const result = await buildUsecase().execute(buildCommand());
 
@@ -147,7 +188,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
-  it('returns sent:false when the connect subscriber does not exist', async () => {
+  it('returns sent:false when the dashboard subscriber does not exist', async () => {
     subscriberRepository.findBySubscriberId.resolves(null);
 
     const result = await buildUsecase().execute(buildCommand());

@@ -30,7 +30,6 @@ export interface IInitCommandOptions {
   projectPath?: string;
   apiUrl: string;
   template?: string;
-  agentIdentifier?: string;
 }
 
 export async function init(program: IInitCommandOptions, anonymousId?: string): Promise<void> {
@@ -51,7 +50,7 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   }
 
   if (!projectPath) {
-    const defaultName = program.agentIdentifier || 'my-novu-app';
+    const defaultName = 'my-novu-app';
     const res = await prompts({
       onState: onPromptState,
       type: 'text',
@@ -143,7 +142,7 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     process.exit(1);
   }
 
-  const supportedTemplates = ['notifications', 'agent', 'chat-sdk'] as const;
+  const supportedTemplates = ['notifications', 'chat-sdk'] as const;
   let templateChoice = program.template;
 
   if (templateChoice && !supportedTemplates.includes(templateChoice as (typeof supportedTemplates)[number])) {
@@ -159,7 +158,6 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
       message: 'What type of Novu app do you want to create?',
       choices: [
         { title: 'Notifications', value: 'notifications', description: 'Workflows, email templates, and in-app inbox' },
-        { title: 'Agent', value: 'agent', description: 'Conversational AI agent with chat platform support' },
         {
           title: 'Chat SDK',
           value: 'chat-sdk',
@@ -209,7 +207,6 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     apiUrl: program.apiUrl,
     applicationId,
     userId,
-    agentIdentifier: program.agentIdentifier,
   });
 
   if (userId || anonymousId) {

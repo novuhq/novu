@@ -53,10 +53,12 @@ function ReadonlyCard({
   onEditInOverview: (field: OverviewField) => void;
 }) {
   const [valuesVisible, setValuesVisible] = useState(false);
-  const emptyLabel = row.overviewField === 'email' ? 'Email address not set' : 'Phone number not set';
+  const isEmail = row.overviewField === 'email';
+  const emptyLabel = isEmail ? 'Email address not set' : 'Phone number not set';
   const fieldLabel = getOverviewFieldLabel(row.overviewField);
-  const displayValue = valuesVisible || !row.value ? row.value : maskCredentialValue(row.value);
-  const actionPaddingClass = row.hideProviderHeader ? 'pr-16' : 'pr-7';
+  const displayValue = isEmail || valuesVisible || !row.value ? row.value : maskCredentialValue(row.value);
+  const showVisibilityToggle = !isEmail && !!row.value;
+  const actionPaddingClass = row.hideProviderHeader ? (showVisibilityToggle ? 'pr-16' : 'pr-12') : 'pr-7';
 
   return (
     <div className="bg-bg-weak flex w-full flex-col gap-1.5 rounded-lg p-1.5">
@@ -64,7 +66,7 @@ function ReadonlyCard({
         <div className="flex min-h-7 items-center gap-1.5 px-0.5">
           <ProviderIcon providerId={row.providerId} providerDisplayName={row.displayName} className="size-5 shrink-0" />
           <span className="text-label-xs truncate font-medium text-text-strong">{row.displayName}</span>
-          {row.value && (
+          {showVisibilityToggle && (
             <div className="ml-auto flex shrink-0 items-center gap-1">
               <CredentialVisibilityToggle
                 visible={valuesVisible}
@@ -88,7 +90,7 @@ function ReadonlyCard({
                   CREDENTIAL_HOVER_ACTIONS_CLASS
                 )}
               >
-                {row.hideProviderHeader && (
+                {row.hideProviderHeader && showVisibilityToggle && (
                   <CredentialVisibilityToggle
                     visible={valuesVisible}
                     ariaLabel={`${row.displayName} credentials`}

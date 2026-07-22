@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationRepository } from '@novu/dal';
-import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import {
-  CredentialExpiredError,
-  McpServerError,
+  AgentMcpServerRepository,
+  ConversationRepository,
+  McpConnectionRepository,
+  SubscriberRepository,
+} from '@novu/dal';
+import { McpConnectionStatusEnum, NOVU_INTERNAL_TOOLS } from '@novu/shared';
+import {
   type SessionEventContext,
   SessionExpiredError,
   type StreamCallbacks,
@@ -19,8 +22,11 @@ import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-pr
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { buildErrorMessage } from './managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from './tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from './tool-approval/handle-pending-tool-approvals.usecase';
+import { listOAuthMcps } from './tool-connect/list-oauth-mcps.helper';
+import { findOAuthMcpByServerName } from './tool-connect/oauth-mcp.types';
 
 interface BaseCommandFields {
   userId: string;
@@ -35,6 +41,9 @@ interface BaseCommandFields {
 export class ManagedAgentEventHandler {
   constructor(
     private readonly conversationRepository: ConversationRepository,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
@@ -225,6 +234,23 @@ export class ManagedAgentEventHandler {
           });
         }
       },
+
+      onMcpServerFailure: async (event: {
+        reason: 'authentication' | 'connection';
+        serverName: string;
+        message: string;
+      }) => {
+        try {
+          await this.handleMcpServerFailure(metadata, sessionId, event);
+        } catch (err) {
+          this.logger.error(err, `onMcpServerFailure failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-mcp-server-failure',
+            sessionId,
+          });
+        }
+      },
     };
   }
 
@@ -247,6 +273,104 @@ export class ManagedAgentEventHandler {
     };
   }
 
+  /**
+   * MCP init failed upstream (non-fatal). For authentication failures, flip the
+   * connection out of `connected` so `list_available` / `request_connect` can
+   * offer reconnect. Connection failures are logged only — credentials may still
+   * be valid.
+   */
+  private async handleMcpServerFailure(
+    metadata: Record<string, string>,
+    sessionId: string,
+    event: { reason: 'authentication' | 'connection'; serverName: string; message: string }
+  ): Promise<void> {
+    if (event.reason !== 'authentication') {
+      this.logger.warn(
+        { sessionId, serverName: event.serverName, reason: event.reason, message: event.message },
+        'MCP server failure (non-auth) — session continues without updating connection status'
+      );
+
+      return;
+    }
+
+    const { environmentId, organizationId, agentId, subscriberId } = metadata;
+
+    if (!environmentId || !organizationId || !agentId || !subscriberId) {
+      this.logger.warn(
+        { sessionId, serverName: event.serverName },
+        'mcp-server-failure missing webhook metadata — skipping connection update'
+      );
+
+      return;
+    }
+
+    const mcps = await listOAuthMcps(
+      {
+        subscriberRepository: this.subscriberRepository,
+        agentMcpServerRepository: this.agentMcpServerRepository,
+        mcpConnectionRepository: this.mcpConnectionRepository,
+      },
+      {
+        environmentId,
+        organizationId,
+        agentId,
+        subscriberId,
+      }
+    );
+
+    const mcp = findOAuthMcpByServerName(mcps, event.serverName);
+
+    if (!mcp) {
+      this.logger.warn(
+        { sessionId, serverName: event.serverName, agentId },
+        'mcp-server-failure for unknown OAuth MCP — skipping connection update'
+      );
+
+      return;
+    }
+
+    if (mcp.status !== McpConnectionStatusEnum.Connected) {
+      return;
+    }
+
+    const subscriber = await this.subscriberRepository.findBySubscriberId(environmentId, subscriberId);
+
+    if (!subscriber) {
+      return;
+    }
+
+    await this.mcpConnectionRepository.update(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _agentMcpServerId: mcp.agentMcpServerId,
+        _subscriberId: subscriber._id,
+        status: McpConnectionStatusEnum.Connected,
+      },
+      {
+        $set: {
+          status: McpConnectionStatusEnum.Error,
+          lastError: {
+            code: 'authentication_failed',
+            message: event.message,
+            at: new Date(),
+          },
+        },
+      }
+    );
+
+    this.logger.info(
+      {
+        sessionId,
+        serverName: event.serverName,
+        mcpId: mcp.mcpId,
+        agentId,
+        subscriberId,
+      },
+      'Marked MCP connection as error after authentication failure'
+    );
+  }
+
   private async handleErrorEvent(
     metadata: Record<string, string>,
     sessionId: string,
@@ -258,10 +382,6 @@ export class ManagedAgentEventHandler {
       await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
       await this.inboundAck.onManagedTurnComplete(metadata);
 
-      return;
-    }
-
-    if (parseMcpInitFailureServerName(error)) {
       return;
     }
 
@@ -284,56 +404,4 @@ export class ManagedAgentEventHandler {
       });
     }
   }
-}
-
-function extractErrorMessage(err: unknown): string | undefined {
-  if (err instanceof Error) {
-    return err.message;
-  }
-
-  // Errors that cross the webhook boundary are JSON-serialized and arrive as
-  // plain objects, so `instanceof Error` is false — read `message` directly.
-  if (typeof err === 'object' && err !== null && 'message' in err) {
-    const message = (err as { message?: unknown }).message;
-
-    return typeof message === 'string' ? message : undefined;
-  }
-
-  return undefined;
-}
-
-export function parseMcpInitFailureServerName(err: unknown): string | undefined {
-  const message = extractErrorMessage(err);
-
-  if (!message) {
-    return undefined;
-  }
-
-  const mcpInitMatch = message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
-
-  return mcpInitMatch?.[1];
-}
-
-export function buildErrorMessage(err: unknown): string {
-  if (err instanceof CredentialExpiredError) {
-    return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
-  }
-  if (err instanceof McpServerError) {
-    return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
-  }
-
-  const failedMcpServerName = parseMcpInitFailureServerName(err);
-
-  if (failedMcpServerName) {
-    return buildMcpInitFailureMessage(failedMcpServerName);
-  }
-
-  return 'The agent is temporarily unavailable. Please try again later.';
-}
-
-export function buildMcpInitFailureMessage(serverName: string): string {
-  return (
-    `I couldn't connect to the **${serverName}** MCP server yet. ` +
-    `Use Connect to authorize ${serverName}, then send your message again.`
-  );
 }

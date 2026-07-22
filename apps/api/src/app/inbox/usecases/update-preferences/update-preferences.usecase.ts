@@ -200,6 +200,7 @@ export class UpdatePreferences {
       ...(command.in_app !== undefined && { in_app: command.in_app }),
       ...(command.push !== undefined && { push: command.push }),
       ...(command.sms !== undefined && { sms: command.sms }),
+      ...(command.tool !== undefined && { tool: command.tool }),
     };
   }
 

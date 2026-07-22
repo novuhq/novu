@@ -1,6 +1,6 @@
 ---
 title: 'Errors'
-description: 'Understand Novu API error responses, HTTP status codes, validation error formats, and how to debug failed requests.'
+description: "Understand Novu API error responses, HTTP status codes, validation error payloads, and how to debug and recover from failed API requests."
 ---
 
 The Novu API uses conventional HTTP status codes to indicate the success or failure of a request. Codes in the `2xx` range indicate success. Codes in the `4xx` range indicate a request that failed given the information provided (for example, a required parameter was missing or validation failed). Codes in the `5xx` range indicate an error on Novu's servers and are rare.
@@ -125,9 +125,9 @@ When contacting [support](mailto:support@novu.co), include the `errorId` so the 
 
 Beyond the error body, Novu gives you several ways to trace a request:
 
-- **`errorId`** — Returned on `500` responses. Share it with support to pinpoint the failed request.
-- **`transactionId`** — Returned by [Trigger event](/api-reference/events/trigger-event), [Bulk trigger event](/api-reference/events/bulk-trigger-event), and [Broadcast event](/api-reference/events/broadcast-event-to-all). Use it to [cancel a triggered event](/api-reference/events/cancel-triggered-event) or to look up the resulting notification.
-- **Activity Feed** — The [Activity Feed](https://dashboard.novu.co/activities) in the Novu Dashboard shows every triggered workflow with per-step logs, including whether a delivery failed and why. See [Common errors](/platform/additional-resources/errors) for workflow delivery errors.
+- **`errorId`** - Returned on `500` responses. Share it with support to pinpoint the failed request.
+- **`transactionId`** - Returned by [Trigger event](/api-reference/events/trigger-event), [Bulk trigger event](/api-reference/events/bulk-trigger-event), and [Broadcast event](/api-reference/events/broadcast-event-to-all). Use it to [cancel a triggered event](/api-reference/events/cancel-triggered-event) or to look up the resulting notification.
+- **Activity Feed** - The [Activity Feed](https://dashboard.novu.co/activities) in the Novu Dashboard shows every triggered workflow with per-step logs, including whether a delivery failed and why. See [Common errors](/platform/additional-resources/errors) for workflow delivery errors.
 
 ## Handling errors
 
@@ -166,7 +166,7 @@ try {
 
 ## Related documentation
 
-- [Authentication](/api-reference/authentication) — Resolve `401` errors and credential setup
-- [Rate Limiting](/api-reference/rate-limiting) — Handle `429` responses with backoff
-- [Idempotency](/api-reference/idempotency) — Avoid `409` conflicts when retrying requests
-- [Payload Limits](/api-reference/payload-limits) — Avoid `413` errors on event triggers
+- [Authentication](/api-reference/authentication) - Resolve `401` errors and credential setup
+- [Rate Limiting](/api-reference/rate-limiting) - Handle `429` responses with backoff
+- [Idempotency](/api-reference/idempotency) - Avoid `409` conflicts when retrying requests
+- [Payload Limits](/api-reference/payload-limits) - Avoid `413` errors on event triggers

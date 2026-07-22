@@ -185,7 +185,7 @@ function Headline({
         </p>
         <p className="text-text-soft text-label-xs leading-4">
           {result.wabaId
-            ? 'Save and continue — Novu can register the webhook with Meta automatically.'
+            ? 'Save and continue: Novu can register the webhook with Meta automatically.'
             : 'Save and continue to the next step.'}
         </p>
       </>
