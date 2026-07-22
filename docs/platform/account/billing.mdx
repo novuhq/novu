@@ -44,7 +44,11 @@ Novu Cloud measures usage on a **monthly billing cycle** tied to your organizati
 
 If you exceed the workflow runs included in your plan, Novu does **not** stop or throttle your notifications. Additional usage rolls into on-demand pricing on paid plans, or is billed at your contract rate on Enterprise. See [What happens when I exceed my limit?](#what-happens-when-i-exceed-my-monthly-workflow-run-limit) below.
 
-Only **organization Owners** can view billing details, change plans, and manage payment methods.
+Only **organization Owners** can view billing details, change plans, and manage payment methods. Admins, Authors, and Viewers can use the dashboard for workflows, subscribers, and integrations, but they cannot open billing settings or complete checkout. See the [roles and permissions matrix](/platform/account/roles-and-permissions#permissions-matrix) for the full breakdown.
+
+<Note>
+  If you need billing access, ask an organization **Owner** to update your role from **Settings → Team** in the dashboard. The Billing tab remains visible for all members, but only Owners can manage subscriptions.
+</Note>
 
 ## Plans at a glance
 
@@ -79,9 +83,11 @@ For a full comparison of Novu Cloud, Community self-hosted, and Enterprise optio
 
 ## Manage billing in the dashboard
 
-Organization Owners can manage subscriptions from **Settings** > **Billing** in the Novu dashboard, or go directly to [dashboard.novu.co/settings/billing](https://dashboard.novu.co/settings/billing).
+Organization Owners can manage subscriptions from **Settings → Billing** in the Novu dashboard, or go directly to [dashboard.novu.co/settings/billing](https://dashboard.novu.co/settings/billing).
 
-From billing settings you can:
+Members without the Owner role still see the **Billing** tab, but the page explains that billing is restricted and links to [team settings](https://dashboard.novu.co/settings/team) and the [roles and permissions](/platform/account/roles-and-permissions) docs.
+
+From billing settings, Owners can:
 
 - View your current plan and usage for the billing period
 - Upgrade or change subscription tiers
@@ -90,6 +96,12 @@ From billing settings you can:
 ## Frequently asked questions
 
 <AccordionGroup>
+  <Accordion title="Which roles can access billing?">
+    Only the **Owner** role can view billing, change plans, open the billing portal, and manage payment methods. **Admin**, **Author**, and **Viewer** roles do not have billing access.
+
+    If you upgraded to a paid plan but cannot see billing options, check your role on **Settings → Team**. An Owner can promote you to Owner if you should manage subscriptions. See [Roles and permissions](/platform/account/roles-and-permissions#permissions-matrix).
+  </Accordion>
+
   <Accordion title="How to purchase a paid plan?">
     Paid plans can be purchased from billing settings in the Novu dashboard. Click on the avatar icon in the top right corner of the dashboard, then click on **Billing Plans** in the left side menu to access the billing settings. From there, you can select the desired subscription tier and complete the purchase.
 

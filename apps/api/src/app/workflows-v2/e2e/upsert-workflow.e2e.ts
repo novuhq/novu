@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Novu } from '@novu/api';
 import {
   CreateLayoutDto,
@@ -10,7 +11,7 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { StepTypeEnum } from '@novu/shared';
+import { ContentIssueEnum, StepTypeEnum, ToolProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
@@ -88,6 +89,132 @@ describe('Upsert Workflow #novu-v2', () => {
       expect(workflow.steps[0].controls).to.exist;
       expect(workflow.steps[0].controls.values).to.exist;
       expect((workflow.steps[0].controls.values as InAppControlDto).body).to.equal('Test Body');
+    });
+  });
+
+  describe('tool step providerOverrides', () => {
+    it('should persist providerOverrides as a step sibling and keep them out of controlValues', async () => {
+      // Raw HTTP — @novu/api SDK may lag behind tool / providerOverrides DTO changes.
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Provider Overrides Workflow',
+        workflowId: `tool-provider-overrides-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default alert',
+            },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: {
+                severity: 'warning',
+                summary: 'db down',
+              },
+              [ToolProviderIdEnum.Opsgenie]: {
+                priority: 'P2',
+              },
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+
+      const workflow = createResponse.body.data;
+      const step = workflow.steps[0];
+
+      expect(step.controls.values.providerOverrides).to.equal(undefined);
+      expect(step.controls.values.body).to.equal('default alert');
+      expect(step.providerOverrides).to.deep.equal({
+        [ToolProviderIdEnum.PagerDuty]: {
+          severity: 'warning',
+          summary: 'db down',
+        },
+        [ToolProviderIdEnum.Opsgenie]: {
+          priority: 'P2',
+        },
+      });
+
+      const getResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(getResponse.status).to.equal(200);
+      expect(getResponse.body.data.steps[0].providerOverrides).to.deep.equal(step.providerOverrides);
+      expect(getResponse.body.data.steps[0].controls.values.providerOverrides).to.equal(undefined);
+    });
+
+    it('should surface unsupported override keys as namespaced step issues', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Provider Override Issues Workflow',
+        workflowId: `tool-provider-override-issues-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default alert',
+            },
+            providerOverrides: {
+              [ToolProviderIdEnum.Opsgenie]: {
+                message: 'ok',
+                notARealKey: true,
+              },
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+
+      const issuePath = `providerOverrides.${ToolProviderIdEnum.Opsgenie}.notARealKey`;
+      const issues = createResponse.body.data.steps[0].issues?.controls?.[issuePath];
+      expect(issues).to.exist;
+      expect(issues[0].issueType).to.equal(ContentIssueEnum.UNSUPPORTED_PROPERTY);
+    });
+
+    it('should delete all provider override docs when providerOverrides is null', async () => {
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Provider Override Delete Workflow',
+        workflowId: `tool-provider-override-delete-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Tool Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default alert',
+            },
+            providerOverrides: {
+              [ToolProviderIdEnum.PagerDuty]: { severity: 'info' },
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+      const step = workflow.steps[0];
+      expect(step.providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({ severity: 'info' });
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [
+          {
+            _id: step._id,
+            stepId: step.stepId,
+            name: step.name,
+            type: step.type,
+            controlValues: step.controls.values,
+            providerOverrides: null,
+          },
+        ],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps[0].providerOverrides).to.not.exist;
     });
   });
 

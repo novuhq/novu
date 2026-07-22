@@ -1,4 +1,4 @@
-import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum, ToolProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ExecuteBridgeJob } from './execute-bridge-job.usecase';
@@ -16,7 +16,10 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const environmentRepository = {
       findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
     };
-    const controlValuesRepository = { findOne: sinon.stub().resolves(null) };
+    const controlValuesRepository = {
+      findOne: sinon.stub().resolves(null),
+      find: sinon.stub().resolves([]),
+    };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const executeBridgeRequest = { execute: sinon.stub().resolves({ outputs: {}, options: {} }) };
     const logger = {
@@ -44,7 +47,13 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       inMemoryLRUCacheService as never
     );
 
-    return { usecase, notificationTemplateRepository, executeBridgeRequest, environmentRepository };
+    return {
+      usecase,
+      notificationTemplateRepository,
+      executeBridgeRequest,
+      environmentRepository,
+      controlValuesRepository,
+    };
   }
 
   function buildCommand(workflow?: Record<string, unknown>) {
@@ -157,5 +166,63 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
     expect(bridgeRequest.event.actor).to.deep.equal(actor);
+  });
+
+  it('stitches STEP_PROVIDER_CONTROLS docs into controls.providerOverrides for the bridge event', async () => {
+    const { usecase, executeBridgeRequest, controlValuesRepository } = buildUsecase();
+
+    controlValuesRepository.findOne.resolves({
+      controls: { body: 'default alert' },
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+    controlValuesRepository.find.resolves([
+      {
+        providerId: ToolProviderIdEnum.PagerDuty,
+        controls: { severity: 'warning', summary: 'db down' },
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      },
+    ]);
+
+    const command = {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: {
+          stepId: 'step_1',
+          uuid: 'step_1',
+          _id: 'step_tpl_1',
+          template: { type: 'tool' },
+        },
+      },
+      variables: {
+        payload: {},
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+
+    await usecase.execute(command);
+
+    expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
+    const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
+    expect(bridgeRequest.event.controls).to.deep.equal({
+      body: 'default alert',
+      providerOverrides: {
+        [ToolProviderIdEnum.PagerDuty]: { severity: 'warning', summary: 'db down' },
+      },
+    });
   });
 });
