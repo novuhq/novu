@@ -144,6 +144,37 @@ test('static: custom data and passthrough remain above the provider override', a
   });
 });
 
+test('static: nested custom data and passthrough preserve lower-precedence override keys', async () => {
+  const provider = new ToolWebhookProvider({
+    webhookUrl: urlFor('/static'),
+  });
+
+  await provider.sendMessage(
+    {
+      content: 'tool payload',
+      customData: {
+        alert: { owner: 'custom-data', priority: 'custom-data' },
+      },
+    },
+    {
+      alert: { source: 'provider-override', owner: 'provider-override' },
+      _passthrough: {
+        body: {
+          alert: { priority: 'passthrough' },
+        },
+      },
+    }
+  );
+
+  expect(JSON.parse(lastRequest!.body)).toEqual({
+    alert: {
+      source: 'provider-override',
+      owner: 'custom-data',
+      priority: 'passthrough',
+    },
+  });
+});
+
 test('static: provider override keys retain their exact user casing', async () => {
   const provider = new ToolWebhookProvider({
     webhookUrl: urlFor('/static'),

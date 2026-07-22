@@ -15,6 +15,7 @@ import {
   isChannelDataOfType,
   ToolWebhookData,
 } from '@novu/stateless';
+import { deepMerge } from '../../../utils/deepmerge.utils';
 import { WithPassthrough } from '../../../utils/types';
 
 type ToolWebhookMethod = 'POST' | 'PUT' | 'PATCH';
@@ -47,12 +48,8 @@ export class ToolWebhookProvider implements IToolProvider {
     const { _passthrough = {}, ...providerOverride } = bridgeProviderData;
     const hasProviderOverride = Object.keys(providerOverride).length > 0;
 
-    const body: Record<string, unknown> = {
-      ...(!hasProviderOverride && { content: options.content }),
-      ...providerOverride,
-      ...(options.customData || {}),
-      ...(_passthrough.body || {}),
-    };
+    const defaultContent = hasProviderOverride ? {} : { content: options.content };
+    const body = deepMerge([defaultContent, providerOverride, options.customData || {}, _passthrough.body || {}]);
 
     const webhookUrl = normalizeOutboundHttpUrl(routing.url);
     if (!webhookUrl) {
