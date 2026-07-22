@@ -98,8 +98,18 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
 
     case 'status-change':
     case 'mcp-tools-discovered':
-    case 'mcp-server-failure':
       return [];
+
+    case 'mcp-server-failure':
+      return [
+        {
+          type: 'connection.error',
+          source: 'mcp',
+          serverName: part.serverName,
+          reason: part.reason,
+          message: part.message,
+        },
+      ];
 
     case 'provider-event':
       return [

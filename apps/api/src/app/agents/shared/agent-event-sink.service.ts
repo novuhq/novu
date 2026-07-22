@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent, NOVU_INTERNAL_TOOLS } from '@novu/shared';
+import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
+import {
+  type AgentEvent,
+  type AgentEventEnvelope,
+  isDeltaEvent,
+  McpConnectionStatusEnum,
+  NOVU_INTERNAL_TOOLS,
+} from '@novu/shared';
 import type { ActionRequired, Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
@@ -12,6 +19,8 @@ import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-poli
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
+import { listOAuthMcps } from '../managed-runtime/tool-connect/list-oauth-mcps.helper';
+import { findOAuthMcpByServerName } from '../managed-runtime/tool-connect/oauth-mcp.types';
 import { AgentPlatformEnum } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
 
@@ -36,6 +45,7 @@ const KNOWN_AGENT_EVENT_TYPES = new Set<string>([
   'tool-approval-request',
   'tool-approval-response',
   'resolve',
+  'connection.error',
   'custom',
 ]);
 
@@ -57,6 +67,8 @@ export interface AgentEventContext {
   conversationId: string;
   agentIdentifier: string;
   integrationIdentifier: string;
+  /** Mongo agent `_id` — required for MCP connection lookups (`connection.error`). */
+  agentId?: string;
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
@@ -74,6 +86,9 @@ export class AgentEventSink {
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly inboundAck: InboundAckService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -136,6 +151,11 @@ export class AgentEventSink {
 
       case 'run-error':
         await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
+
+        return;
+
+      case 'connection.error':
+        await this.handleConnectionError(event, context);
 
         return;
 
@@ -430,6 +450,118 @@ export class AgentEventSink {
     }
 
     this.clearApprovalBuffer(runId);
+  }
+
+  /**
+   * Runtime-ops: MCP (or other) connection failed during the run. Auth failures
+   * flip the OAuth MCP connection out of `connected` so reconnect UX can offer.
+   * Non-auth failures are logged only. Errors are swallowed — must not fail the
+   * webhook the way message ingest does.
+   */
+  private async handleConnectionError(
+    event: Extract<AgentEvent, { type: 'connection.error' }>,
+    context: AgentEventContext
+  ): Promise<void> {
+    try {
+      if (event.reason !== 'authentication') {
+        this.logger.warn(
+          {
+            sessionId: context.sessionId,
+            serverName: event.serverName,
+            reason: event.reason,
+            message: event.message,
+            source: event.source,
+          },
+          'MCP server failure (non-auth) — session continues without updating connection status'
+        );
+
+        return;
+      }
+
+      const { environmentId, organizationId, agentId, subscriberId, sessionId } = context;
+
+      if (!agentId || !subscriberId) {
+        this.logger.warn(
+          { sessionId, serverName: event.serverName },
+          'connection.error missing agent/subscriber context — skipping connection update'
+        );
+
+        return;
+      }
+
+      const mcps = await listOAuthMcps(
+        {
+          subscriberRepository: this.subscriberRepository,
+          agentMcpServerRepository: this.agentMcpServerRepository,
+          mcpConnectionRepository: this.mcpConnectionRepository,
+        },
+        {
+          environmentId,
+          organizationId,
+          agentId,
+          subscriberId,
+        }
+      );
+
+      const mcp = findOAuthMcpByServerName(mcps, event.serverName);
+
+      if (!mcp) {
+        this.logger.warn(
+          { sessionId, serverName: event.serverName, agentId },
+          'connection.error for unknown OAuth MCP — skipping connection update'
+        );
+
+        return;
+      }
+
+      if (mcp.status !== McpConnectionStatusEnum.Connected) {
+        return;
+      }
+
+      const subscriber = await this.subscriberRepository.findBySubscriberId(environmentId, subscriberId);
+
+      if (!subscriber) {
+        return;
+      }
+
+      await this.mcpConnectionRepository.update(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          _agentMcpServerId: mcp.agentMcpServerId,
+          _subscriberId: subscriber._id,
+          status: McpConnectionStatusEnum.Connected,
+        },
+        {
+          $set: {
+            status: McpConnectionStatusEnum.Error,
+            lastError: {
+              code: 'authentication_failed',
+              message: event.message,
+              at: new Date(),
+            },
+          },
+        }
+      );
+
+      this.logger.info(
+        {
+          sessionId,
+          serverName: event.serverName,
+          mcpId: mcp.mcpId,
+          agentId,
+          subscriberId,
+        },
+        'Marked MCP connection as error after authentication failure'
+      );
+    } catch (err) {
+      this.logger.error(err, `connection.error failed: session=${context.sessionId}`);
+      captureAgentException(err, {
+        component: 'agent-event-sink',
+        operation: 'connection-error',
+        sessionId: context.sessionId,
+      });
+    }
   }
 
   private bufferApprovalRequest(runId: string, event: ToolApprovalRequestEvent): void {

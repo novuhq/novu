@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
   ConversationRepository,
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { McpConnectionStatusEnum, NOVU_INTERNAL_TOOLS } from '@novu/shared';
+import { FeatureFlagsKeysEnum, McpConnectionStatusEnum, NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import {
   type SessionEventContext,
   SessionExpiredError,
   type StreamCallbacks,
+  type StreamPart,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
@@ -19,10 +20,12 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { formatToolInputSummary } from '../conversation-runtime/reply/handle-plan-progress/format-tool-input';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
+import { AgentEventContext, AgentEventSink } from '../shared/agent-event-sink.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { buildErrorMessage } from './managed-agent-errors';
+import { mapStreamPart, RunEventBuilder } from './stream-part-mapper';
 import { HandlePendingToolApprovalsCommand } from './tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from './tool-approval/handle-pending-tool-approvals.usecase';
 import { listOAuthMcps } from './tool-connect/list-oauth-mcps.helper';
@@ -49,6 +52,8 @@ export class ManagedAgentEventHandler {
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
+    private readonly agentEventSink: AgentEventSink,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -64,12 +69,50 @@ export class ManagedAgentEventHandler {
     }
 
     const baseFields = this.buildBaseFields(metadata);
+    const builder = new RunEventBuilder({
+      conversationId: metadata.conversationId,
+      agentId: metadata.agentIdentifier ?? metadata.agentId ?? '',
+      turnId: context.turnId,
+      runId: context.runId,
+    });
+    const agentEventContext: AgentEventContext = {
+      userId: metadata.organizationId,
+      environmentId: metadata.environmentId,
+      organizationId: metadata.organizationId,
+      conversationId: metadata.conversationId,
+      agentIdentifier: metadata.agentIdentifier ?? '',
+      integrationIdentifier: metadata.integrationIdentifier ?? '',
+      agentId: metadata.agentId,
+      subscriberId: metadata.subscriberId,
+      platform: metadata.platform as AgentPlatformEnum,
+      platformThreadId: metadata.platformThreadId,
+      sessionId,
+      suppressReply: metadata.suppressReply === 'true',
+    };
+
     return {
+      onPart: async (part: StreamPart) => {
+        if (!(await this.isProtocolEnabled(metadata))) {
+          return;
+        }
+
+        const events = mapStreamPart(part);
+        const envelopes = builder.wrap(events);
+
+        for (const envelope of envelopes) {
+          await this.agentEventSink.ingest(envelope, agentEventContext);
+        }
+      },
+
       onToolUseStart: async (event: {
         toolUseId: string;
         toolName: string;
         source?: { type: string; serverName?: string };
       }) => {
+        if (await this.isProtocolEnabled(metadata)) {
+          return;
+        }
+
         try {
           if (this.isInternalTool(event.toolName)) return;
           await this.handlePlanProgress.execute(
@@ -102,6 +145,10 @@ export class ManagedAgentEventHandler {
         input?: Record<string, unknown>;
         source?: { type: string; serverName?: string };
       }) => {
+        if (await this.isProtocolEnabled(metadata)) {
+          return;
+        }
+
         try {
           if (this.isInternalTool(event.toolName)) return;
           if (!event.input || Object.keys(event.input).length === 0) return;
@@ -133,6 +180,10 @@ export class ManagedAgentEventHandler {
       // TODO(agents): also persist a TOOL_RESULT activity once Thalamus sends the tool output
       // (today this event only has { toolUseId, isError }), so the ledger holds the full tool trail.
       onToolUseResult: async (event: { toolUseId: string; isError?: boolean }) => {
+        if (await this.isProtocolEnabled(metadata)) {
+          return;
+        }
+
         try {
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({
@@ -154,6 +205,10 @@ export class ManagedAgentEventHandler {
       },
 
       onMessage: async (event: { text: string }) => {
+        if (await this.isProtocolEnabled(metadata)) {
+          return;
+        }
+
         try {
           if (metadata.suppressReply === 'true') {
             return;
@@ -177,6 +232,10 @@ export class ManagedAgentEventHandler {
       },
 
       onFinish: async (event: { response: ThalamusResponse }) => {
+        if (await this.isProtocolEnabled(metadata)) {
+          return;
+        }
+
         try {
           if (event.response.finishReason === 'requires-action') {
             await this.handlePendingToolApprovals.execute(
@@ -223,6 +282,10 @@ export class ManagedAgentEventHandler {
       },
 
       onError: async (event: { error: Error }) => {
+        if (await this.isProtocolEnabled(metadata)) {
+          return;
+        }
+
         try {
           await this.handleErrorEvent(metadata, sessionId, event.error, baseFields);
         } catch (err) {
@@ -240,6 +303,10 @@ export class ManagedAgentEventHandler {
         serverName: string;
         message: string;
       }) => {
+        if (await this.isProtocolEnabled(metadata)) {
+          return;
+        }
+
         try {
           await this.handleMcpServerFailure(metadata, sessionId, event);
         } catch (err) {
@@ -252,6 +319,22 @@ export class ManagedAgentEventHandler {
         }
       },
     };
+  }
+
+  private async isProtocolEnabled(metadata: Record<string, string>): Promise<boolean> {
+    const organizationId = metadata.organizationId;
+    const environmentId = metadata.environmentId;
+
+    if (!organizationId || !environmentId) {
+      return false;
+    }
+
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+      environment: { _id: environmentId },
+    });
   }
 
   private mcpServerNameOf(source?: { type: string; serverName?: string }): string | undefined {

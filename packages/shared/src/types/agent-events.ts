@@ -77,6 +77,14 @@ export type AgentEvent =
     }
   // Conversation ops
   | { type: 'resolve'; summary?: string }
+  // Runtime / connection ops
+  | {
+      type: 'connection.error';
+      source: 'mcp';
+      serverName: string;
+      reason: 'authentication' | 'connection';
+      message: string;
+    }
   // Escape hatch
   | { type: 'custom'; name: string; data: unknown };
 
