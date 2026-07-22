@@ -21,17 +21,17 @@ export {
 export const TOOL_PROVIDER_OVERRIDE_SCHEMAS = {
   [ToolProviderIdEnum.PagerDuty]: pagerdutyOverrideJsonSchema,
   [ToolProviderIdEnum.Opsgenie]: opsgenieOverrideJsonSchema,
-} as const;
+} as const satisfies Partial<Record<ToolContentOverrideProviderId, JSONSchemaDto>>;
 
 /** Top-level override keys for each provider — shared by validation, UI, and send-path reservation. */
 export const TOOL_PROVIDER_OVERRIDE_KEYS = {
   [ToolProviderIdEnum.PagerDuty]: Object.keys(pagerdutyOverrideJsonSchema.properties),
   [ToolProviderIdEnum.Opsgenie]: Object.keys(opsgenieOverrideJsonSchema.properties),
-} as const satisfies Record<ToolContentOverrideProviderId, readonly string[]>;
+} as const satisfies Partial<Record<ToolContentOverrideProviderId, readonly string[]>>;
 
 export function getToolProviderOverrideSchema(providerId: string) {
   if (providerId in TOOL_PROVIDER_OVERRIDE_SCHEMAS) {
-    return TOOL_PROVIDER_OVERRIDE_SCHEMAS[providerId as ToolContentOverrideProviderId];
+    return TOOL_PROVIDER_OVERRIDE_SCHEMAS[providerId as keyof typeof TOOL_PROVIDER_OVERRIDE_SCHEMAS];
   }
 
   return undefined;
@@ -39,7 +39,7 @@ export function getToolProviderOverrideSchema(providerId: string) {
 
 export function getToolProviderOverrideKeys(providerId: string): readonly string[] | undefined {
   if (providerId in TOOL_PROVIDER_OVERRIDE_KEYS) {
-    return TOOL_PROVIDER_OVERRIDE_KEYS[providerId as ToolContentOverrideProviderId];
+    return TOOL_PROVIDER_OVERRIDE_KEYS[providerId as keyof typeof TOOL_PROVIDER_OVERRIDE_KEYS];
   }
 
   return undefined;
