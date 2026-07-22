@@ -1,19 +1,21 @@
 import { decryptApiKey, encryptApiKey } from './encrypt-provider';
 
 /**
- * Fields inside a `ChannelConnection.auth` object that must be encrypted at rest.
+ * String fields inside a `ChannelConnection.auth` object that must be encrypted at rest.
  *
  * Secret fields inside connection auth are encrypted/decrypted automatically by the
  * same helper. Unknown keys, such as token expiry timestamps, are passed through
- * unchanged.
+ * unchanged. Tool-webhook `headers` are handled separately (per-value encryption).
  */
-const SECURE_AUTH_FIELDS = [
+const SECURE_AUTH_STRING_FIELDS = [
   'accessToken',
   'refreshToken',
   'signingSecret',
   'clientSecret',
   'routingKey',
   'apiKey',
+  'url',
+  'method',
 ] as const;
 
 export interface ChannelConnectionAuth {
@@ -37,17 +39,53 @@ export interface ChannelConnectionAuth {
    * `events.pagerduty.com` vs `events.eu.pagerduty.com`).
    */
   region?: 'us' | 'eu';
+  /**
+   * Tool-webhook per-subscriber URL. Capability URLs are secrets; encrypted at rest.
+   */
+  url?: string;
+  /**
+   * Tool-webhook per-subscriber request headers. Each string value is encrypted at rest.
+   */
+  headers?: Record<string, string>;
+  /**
+   * Tool-webhook per-subscriber HTTP method override. Encrypted at rest with the other
+   * wire-shape fields on connection auth (locked product decision for this provider).
+   */
+  method?: 'POST' | 'PUT' | 'PATCH';
   [key: string]: unknown;
+}
+
+function transformHeaderValues(
+  headers: Record<string, string>,
+  transform: (value: string) => string
+): Record<string, string> {
+  const transformed: Record<string, string> = {};
+
+  for (const [headerKey, headerValue] of Object.entries(headers)) {
+    transformed[headerKey] = headerValue.length > 0 ? transform(headerValue) : headerValue;
+  }
+
+  return transformed;
 }
 
 function transformSecureFields<T extends object>(auth: T, transform: (value: string) => string): T {
   const result: Record<string, unknown> = { ...(auth as Record<string, unknown>) };
 
-  for (const key of SECURE_AUTH_FIELDS) {
+  for (const key of SECURE_AUTH_STRING_FIELDS) {
     const value = result[key];
     if (typeof value === 'string' && value.length > 0) {
       result[key] = transform(value);
     }
+  }
+
+  const headers = result.headers;
+  if (
+    headers &&
+    typeof headers === 'object' &&
+    !Array.isArray(headers) &&
+    Object.values(headers).every((entry) => typeof entry === 'string')
+  ) {
+    result.headers = transformHeaderValues(headers as Record<string, string>, transform);
   }
 
   return result as T;
