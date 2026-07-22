@@ -65,6 +65,8 @@ export enum CredentialsKeyEnum {
   Headers = 'headers',
   /** Custom webhook request body template. */
   Body = 'body',
+  /** Tool-webhook routing mode: static (integration URL) or dynamic (per-subscriber endpoints). */
+  RoutingMode = 'routingMode',
 }
 
 export type ConfigurationKey = keyof IConfigurations;

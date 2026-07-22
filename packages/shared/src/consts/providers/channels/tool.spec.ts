@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ChannelTypeEnum, ToolProviderIdEnum } from '../../../types';
+import { ChannelTypeEnum, CredentialsKeyEnum, ToolProviderIdEnum } from '../../../types';
+import { toolWebhookConfig } from '../credentials';
 import { PROVIDER_ID_TO_CHANNEL_MAP, providers } from '../providers';
 import { toolProviders } from './tool';
 
@@ -24,6 +25,27 @@ describe('toolProviders', () => {
     expect(ToolProviderIdEnum.PagerDuty).toBe('pagerduty');
     expect(ToolProviderIdEnum.Opsgenie).toBe('opsgenie');
     expect(ToolProviderIdEnum.Webhook).toBe('tool-webhook');
+  });
+
+  it('shapes toolWebhookConfig with routingMode and static/dynamic credential fields', () => {
+    expect(toolWebhookConfig.map((credential) => credential.key)).toEqual([
+      CredentialsKeyEnum.RoutingMode,
+      CredentialsKeyEnum.Method,
+      CredentialsKeyEnum.WebhookUrl,
+      CredentialsKeyEnum.Headers,
+      CredentialsKeyEnum.Body,
+      CredentialsKeyEnum.SecretKey,
+    ]);
+
+    const routingMode = toolWebhookConfig.find((credential) => credential.key === CredentialsKeyEnum.RoutingMode);
+    expect(routingMode?.value).toBe('static');
+    expect(routingMode?.dropdown).toEqual([
+      { name: 'Static', value: 'static' },
+      { name: 'Dynamic', value: 'dynamic' },
+    ]);
+
+    const webhookUrl = toolWebhookConfig.find((credential) => credential.key === CredentialsKeyEnum.WebhookUrl);
+    expect(webhookUrl?.required).toBe(false);
   });
 
   it('is included in the shared providers array', () => {

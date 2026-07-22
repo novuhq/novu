@@ -16,6 +16,7 @@ export const ENDPOINT_TYPES = {
   LINE_USER: 'line_user',
   PAGERDUTY_SERVICE: 'pagerduty_service',
   OPSGENIE_INTEGRATION: 'opsgenie_integration',
+  TOOL_WEBHOOK: 'tool_webhook',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -56,6 +57,21 @@ export type ChannelEndpointByType = {
    * path re-hydrates this shape from the decrypted connection auth.
    */
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
+  /**
+   * Tool-webhook per-subscriber routing. `url` is the destination (often a
+   * capability URL); `headers` may carry auth tokens; `method` optionally
+   * overrides the integration-level HTTP method.
+   *
+   * At the API boundary this is the wire shape on both writes and reads. Internally,
+   * url/headers/method are persisted encrypted on the linked `ChannelConnection.auth`
+   * and the stored `ChannelEndpoint.endpoint` document itself is empty — the read
+   * path re-hydrates this shape from the decrypted connection auth.
+   */
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
+    url: string;
+    headers?: Record<string, string>;
+    method?: 'POST' | 'PUT' | 'PATCH';
+  };
 };
 
 /** Opsgenie GenieKey wire shape: 8-4-4-4-12 segments; segments may include non-hex letters. */
