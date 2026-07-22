@@ -9,11 +9,11 @@ export const TOOL_CONTENT_OVERRIDE_PROVIDER_IDS = [
 export type ToolContentOverrideProviderId = (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number];
 
 /** Primary content field that falls back to the tool step default `body`. */
-export const TOOL_PROVIDER_PRIMARY_CONTENT_KEY = {
+export const TOOL_PROVIDER_PRIMARY_CONTENT_KEY: Readonly<Partial<Record<ToolContentOverrideProviderId, string>>> = {
   [ToolProviderIdEnum.PagerDuty]: 'summary',
   [ToolProviderIdEnum.Opsgenie]: 'message',
-} as const satisfies Partial<Record<ToolContentOverrideProviderId, string>>;
+};
 
 export function getToolProviderPrimaryContentKey(providerId: ToolContentOverrideProviderId): string | undefined {
-  return TOOL_PROVIDER_PRIMARY_CONTENT_KEY[providerId as keyof typeof TOOL_PROVIDER_PRIMARY_CONTENT_KEY];
+  return TOOL_PROVIDER_PRIMARY_CONTENT_KEY[providerId];
 }
