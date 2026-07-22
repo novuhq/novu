@@ -1,6 +1,7 @@
 import { CredentialsKeyEnum } from '@novu/shared';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { type Control, Controller, type UseFormSetValue, useWatch } from 'react-hook-form';
+import { RiBracesLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { InlineToast } from '@/components/primitives/inline-toast';
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import type { IntegrationFormData } from '../types';
 import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
+import { WebhookRequestSchemaEditor } from './webhook-request-schema-editor';
 
 const TOOL_WEBHOOK_DYNAMIC_DOCS_URL = 'https://docs.novu.co/platform/integrations/tool/webhook';
 
@@ -29,6 +31,35 @@ function toRoutingMode(value: unknown): RoutingMode {
   return value === 'dynamic' ? 'dynamic' : DEFAULT_ROUTING_MODE;
 }
 
+function getRequestSchemaActionLabel(isReadOnly: boolean | undefined, hasRequestSchema: boolean) {
+  if (isReadOnly) {
+    return 'View schema';
+  }
+
+  return hasRequestSchema ? 'Edit schema' : 'Add schema';
+}
+
+function hasConfiguredRequestSchema(payloadSchema?: string): boolean {
+  if (!payloadSchema?.trim()) {
+    return false;
+  }
+
+  try {
+    const schema = JSON.parse(payloadSchema);
+
+    return Boolean(
+      schema &&
+        typeof schema === 'object' &&
+        !Array.isArray(schema) &&
+        schema.properties &&
+        typeof schema.properties === 'object' &&
+        Object.keys(schema.properties).length > 0
+    );
+  } catch {
+    return false;
+  }
+}
+
 type ToolWebhookSettingsProps = {
   control: Control<IntegrationFormData>;
   setValue: UseFormSetValue<IntegrationFormData>;
@@ -36,8 +67,11 @@ type ToolWebhookSettingsProps = {
 };
 
 export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebhookSettingsProps) {
+  const [isRequestSchemaOpen, setIsRequestSchemaOpen] = useState(false);
   const routingModeValue = useWatch({ control, name: `credentials.${CredentialsKeyEnum.RoutingMode}` });
+  const payloadSchema = useWatch({ control, name: 'configurations.payloadSchema' });
   const routingMode = toRoutingMode(routingModeValue);
+  const hasRequestSchema = hasConfiguredRequestSchema(payloadSchema);
 
   // A brand-new integration has no stored routingMode yet. The segmented control still
   // displays "Static" (the sensible default), so persist it on mount — otherwise a user
@@ -73,6 +107,41 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
       ) : (
         <DynamicRoutingFields control={control} setValue={setValue} isReadOnly={isReadOnly} />
       )}
+
+      <div className="flex flex-col gap-2 border-t border-neutral-100 pt-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <Label className="inline-flex items-center gap-1">
+              Request schema
+              <LabelSub>(optional)</LabelSub>
+            </Label>
+            <p className="text-text-soft text-xs">Define the request payload shape for workflow editor autocomplete.</p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            mode="outline"
+            size="xs"
+            leadingIcon={RiBracesLine}
+            onClick={() => setIsRequestSchemaOpen(true)}
+          >
+            {getRequestSchemaActionLabel(isReadOnly, hasRequestSchema)}
+          </Button>
+        </div>
+
+        <InlineToast
+          variant="tip"
+          description="This optional schema only powers workflow editor autocomplete. Schemas from all active webhook integrations are merged, and type conflicts are flagged in the workflow editor."
+        />
+      </div>
+
+      <WebhookRequestSchemaEditor
+        isOpen={isRequestSchemaOpen}
+        onOpenChange={setIsRequestSchemaOpen}
+        payloadSchema={payloadSchema}
+        onSave={(schema) => setValue('configurations.payloadSchema', schema, { shouldDirty: true })}
+        readOnly={isReadOnly}
+      />
     </div>
   );
 }
