@@ -49,7 +49,12 @@ export class ToolWebhookProvider implements IToolProvider {
     const hasProviderOverride = Object.keys(providerOverride).length > 0;
 
     const defaultContent = hasProviderOverride ? {} : { content: options.content };
-    const body = deepMerge([defaultContent, providerOverride, options.customData || {}, _passthrough.body || {}]);
+    const body = deepMerge<Record<string, unknown>>([
+      defaultContent,
+      providerOverride,
+      options.customData || {},
+      _passthrough.body || {},
+    ]);
 
     const webhookUrl = normalizeOutboundHttpUrl(routing.url);
     if (!webhookUrl) {
