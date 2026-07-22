@@ -604,6 +604,8 @@ export interface AgentBridgeRequest {
   event: string;
   agentId: string;
   replyUrl: string;
+  /** When present, the SDK emits AgentEvents to this URL instead of using replyUrl. */
+  eventsUrl?: string;
   conversationId: string;
   integrationIdentifier: string;
   action: AgentAction | null;

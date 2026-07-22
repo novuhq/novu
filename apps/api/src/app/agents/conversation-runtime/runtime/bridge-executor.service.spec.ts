@@ -1,3 +1,6 @@
+import { FeatureFlagsService } from '@novu/application-generic';
+import { AgentEventEnum } from '@novu/framework/internal';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { BridgeExecutorService } from './bridge-executor.service';
@@ -10,6 +13,62 @@ describe('BridgeExecutorService', () => {
       debug: sinon.stub(),
       info: sinon.stub(),
       setContext: sinon.stub(),
+    };
+  }
+
+  function makeFeatureFlagsService(isEventProtocolEnabled = false) {
+    return {
+      getFlag: sinon.stub().callsFake(async ({ key }: { key: string }) => {
+        if (key === FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED) {
+          return isEventProtocolEnabled;
+        }
+
+        return false;
+      }),
+    };
+  }
+
+  function makeService(
+    overrides: { isEventProtocolEnabled?: boolean; attachmentStorage?: Record<string, unknown> } = {}
+  ) {
+    const logger = makeLogger();
+    const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
+    const conversationService = { getHistory: sinon.stub().resolves([]) };
+    const featureFlagsService = makeFeatureFlagsService(overrides.isEventProtocolEnabled);
+
+    const service = new BridgeExecutorService(
+      {} as any,
+      logger as any,
+      attachmentStorage as any,
+      conversationService as any,
+      featureFlagsService as unknown as FeatureFlagsService
+    );
+
+    return { service, logger, attachmentStorage, conversationService, featureFlagsService };
+  }
+
+  function makeExecutionParams() {
+    return {
+      event: AgentEventEnum.ON_MESSAGE,
+      config: {
+        agentIdentifier: 'agent-1',
+        organizationId: 'org-1',
+        environmentId: 'env-1',
+        integrationIdentifier: 'integration-1',
+        platform: 'slack',
+      },
+      conversation: {
+        _id: 'conv-1',
+        identifier: 'conv-identifier',
+        status: 'active',
+        metadata: {},
+        messageCount: 0,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        lastActivityAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      subscriber: null,
+      message: null,
+      platformContext: {},
     };
   }
 
@@ -39,13 +98,35 @@ describe('BridgeExecutorService', () => {
     };
   }
 
+  describe('buildPayload', () => {
+    it('should include eventsUrl when the agent event protocol flag is enabled', async () => {
+      const { service, featureFlagsService } = makeService({ isEventProtocolEnabled: true });
+
+      const payload = await (service as any).buildPayload(makeExecutionParams());
+
+      expect(payload.eventsUrl).to.match(/\/v1\/agents\/events$/);
+      expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
+      expect(payload.eventsUrl?.replace(/\/v1\/agents\/events$/, '')).to.equal(
+        payload.replyUrl.replace(/\/v1\/agents\/agent-1\/reply$/, '')
+      );
+      expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
+    });
+
+    it('should omit eventsUrl when the agent event protocol flag is disabled', async () => {
+      const { service } = makeService({ isEventProtocolEnabled: false });
+
+      const payload = await (service as any).buildPayload(makeExecutionParams());
+
+      expect(payload).to.not.have.property('eventsUrl');
+      expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
+    });
+  });
+
   describe('mapRichContentForBridge', () => {
     it('should omit an attachment when signing fails without throwing', async () => {
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().rejects(new Error('storage unavailable')),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+      const { service, logger } = makeService({
+        attachmentStorage: { signRead: sinon.stub().rejects(new Error('storage unavailable')) },
+      });
 
       const result = await (service as any).mapRichContentForBridge(
         {
@@ -67,11 +148,7 @@ describe('BridgeExecutorService', () => {
     });
 
     it('should omit an attachment when storageKey is outside the activity namespace', async () => {
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().resolves('https://signed/read'),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+      const { service, logger, attachmentStorage } = makeService();
 
       const result = await (service as any).mapRichContentForBridge(
         {
@@ -94,11 +171,7 @@ describe('BridgeExecutorService', () => {
     });
 
     it('should omit malformed attachment entries without throwing', async () => {
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().resolves('https://signed/read'),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+      const { service, logger, attachmentStorage } = makeService();
 
       const result = await (service as any).mapRichContentForBridge(
         {
@@ -115,18 +188,18 @@ describe('BridgeExecutorService', () => {
     it('should limit concurrent history attachment signing', async () => {
       let active = 0;
       let maxActive = 0;
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().callsFake(async () => {
-          active += 1;
-          maxActive = Math.max(maxActive, active);
-          await new Promise((resolve) => setTimeout(resolve, 5));
-          active -= 1;
+      const { service, attachmentStorage } = makeService({
+        attachmentStorage: {
+          signRead: sinon.stub().callsFake(async () => {
+            active += 1;
+            maxActive = Math.max(maxActive, active);
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            active -= 1;
 
-          return 'https://signed/read';
-        }),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+            return 'https://signed/read';
+          }),
+        },
+      });
 
       await (service as any).mapRichContentForBridge(
         {
@@ -145,18 +218,18 @@ describe('BridgeExecutorService', () => {
     it('should not multiply attachment signing concurrency across history entries', async () => {
       let active = 0;
       let maxActive = 0;
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().callsFake(async () => {
-          active += 1;
-          maxActive = Math.max(maxActive, active);
-          await new Promise((resolve) => setTimeout(resolve, 5));
-          active -= 1;
+      const { service, attachmentStorage } = makeService({
+        attachmentStorage: {
+          signRead: sinon.stub().callsFake(async () => {
+            active += 1;
+            maxActive = Math.max(maxActive, active);
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            active -= 1;
 
-          return 'https://signed/read';
-        }),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+            return 'https://signed/read';
+          }),
+        },
+      });
 
       await (service as any).mapHistory([
         makeActivity({
@@ -186,11 +259,9 @@ describe('BridgeExecutorService', () => {
 
   describe('mapMessage', () => {
     it('should re-sign stored attachments instead of reusing stored urls', async () => {
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().resolves('https://fresh-signed/read'),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+      const { service, attachmentStorage } = makeService({
+        attachmentStorage: { signRead: sinon.stub().resolves('https://fresh-signed/read') },
+      });
 
       const result = await (service as any).mapMessage(
         makeMessage(),
@@ -226,11 +297,9 @@ describe('BridgeExecutorService', () => {
     });
 
     it('should omit stored attachments that cannot be signed', async () => {
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().rejects(new Error('sign failed')),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+      const { service, logger } = makeService({
+        attachmentStorage: { signRead: sinon.stub().rejects(new Error('sign failed')) },
+      });
 
       const result = await (service as any).mapMessage(
         makeMessage(),
@@ -255,18 +324,18 @@ describe('BridgeExecutorService', () => {
     it('should limit concurrent stored attachment signing', async () => {
       let active = 0;
       let maxActive = 0;
-      const logger = makeLogger();
-      const attachmentStorage = {
-        signRead: sinon.stub().callsFake(async () => {
-          active += 1;
-          maxActive = Math.max(maxActive, active);
-          await new Promise((resolve) => setTimeout(resolve, 5));
-          active -= 1;
+      const { service, attachmentStorage } = makeService({
+        attachmentStorage: {
+          signRead: sinon.stub().callsFake(async () => {
+            active += 1;
+            maxActive = Math.max(maxActive, active);
+            await new Promise((resolve) => setTimeout(resolve, 5));
+            active -= 1;
 
-          return 'https://fresh-signed/read';
-        }),
-      };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
+            return 'https://fresh-signed/read';
+          }),
+        },
+      });
 
       const result = await (service as any).mapMessage(
         makeMessage(),
