@@ -2,6 +2,7 @@ import { CredentialsKeyEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { type Control, Controller, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { Button } from '@/components/primitives/button';
+import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { Label, LabelSub } from '@/components/primitives/label';
@@ -217,9 +218,10 @@ function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsPro
       name={`credentials.${CredentialsKeyEnum.SecretKey}`}
       render={({ field }) => (
         <div className="flex flex-col gap-1">
-          <Label>
+          <Label className="inline-flex items-center gap-1">
             Signing secret
             <LabelSub>(optional)</LabelSub>
+            <HelpTooltipIndicator text="Used to HMAC-sign outbound webhook requests. When set, Novu sends an X-Novu-Signature header so your endpoint can verify that the payload came from Novu." />
           </Label>
           <SecretInput
             placeholder="Enter signing secret"
