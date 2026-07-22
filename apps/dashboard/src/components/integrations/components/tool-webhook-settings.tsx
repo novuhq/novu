@@ -1,5 +1,6 @@
 import { CredentialsKeyEnum } from '@novu/shared';
-import { type Control, Controller } from 'react-hook-form';
+import { useEffect } from 'react';
+import { type Control, Controller, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
@@ -19,15 +20,18 @@ import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
 const TOOL_WEBHOOK_DYNAMIC_DOCS_URL = 'https://docs.novu.co/platform/integrations/tool/webhook';
 
 const HTTP_METHODS = ['POST', 'PUT', 'PATCH'] as const;
+const DEFAULT_METHOD = 'POST';
 
 type RoutingMode = 'static' | 'dynamic';
+const DEFAULT_ROUTING_MODE: RoutingMode = 'static';
 
 function toRoutingMode(value: unknown): RoutingMode {
-  return value === 'dynamic' ? 'dynamic' : 'static';
+  return value === 'dynamic' ? 'dynamic' : DEFAULT_ROUTING_MODE;
 }
 
 type ToolWebhookSettingsProps = {
   control: Control<IntegrationFormData>;
+  setValue: UseFormSetValue<IntegrationFormData>;
   isReadOnly?: boolean;
 };
 
@@ -37,70 +41,80 @@ type ToolWebhookSettingsProps = {
  * Request headers/body and the signing secret are shared across both modes — in dynamic
  * mode they act as fallback defaults, which is an intentional deviation from Figma.
  */
-export function ToolWebhookSettings({ control, isReadOnly }: ToolWebhookSettingsProps) {
+export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebhookSettingsProps) {
+  const routingModeValue = useWatch({ control, name: `credentials.${CredentialsKeyEnum.RoutingMode}` });
+  const routingMode = toRoutingMode(routingModeValue);
+
+  // A brand-new integration has no stored routingMode yet. The segmented control still
+  // displays "Static" (the sensible default), so persist it on mount — otherwise a user
+  // who never touches the control would save an integration with routingMode left unset.
+  useEffect(() => {
+    if (!routingModeValue) {
+      setValue(`credentials.${CredentialsKeyEnum.RoutingMode}`, DEFAULT_ROUTING_MODE);
+    }
+  }, [routingModeValue, setValue]);
+
   return (
-    <Controller
-      control={control}
-      name={`credentials.${CredentialsKeyEnum.RoutingMode}`}
-      render={({ field: routingModeField }) => {
-        const routingMode = toRoutingMode(routingModeField.value);
+    <div className="flex flex-col gap-3">
+      <SegmentedControl
+        value={routingMode}
+        onValueChange={(value) => {
+          if (value === 'static' || value === 'dynamic') {
+            setValue(`credentials.${CredentialsKeyEnum.RoutingMode}`, value);
+          }
+        }}
+      >
+        <SegmentedControlList className="w-fit min-w-[180px]">
+          <SegmentedControlTrigger value="static" disabled={isReadOnly}>
+            Static
+          </SegmentedControlTrigger>
+          <SegmentedControlTrigger value="dynamic" disabled={isReadOnly}>
+            Dynamic
+          </SegmentedControlTrigger>
+        </SegmentedControlList>
+      </SegmentedControl>
 
-        return (
-          <div className="flex flex-col gap-3">
-            <SegmentedControl
-              value={routingMode}
-              onValueChange={(value) => {
-                if (value === 'static' || value === 'dynamic') {
-                  routingModeField.onChange(value);
-                }
-              }}
-            >
-              <SegmentedControlList className="w-fit min-w-[180px]">
-                <SegmentedControlTrigger value="static" disabled={isReadOnly}>
-                  Static
-                </SegmentedControlTrigger>
-                <SegmentedControlTrigger value="dynamic" disabled={isReadOnly}>
-                  Dynamic
-                </SegmentedControlTrigger>
-              </SegmentedControlList>
-            </SegmentedControl>
-
-            {routingMode === 'static' ? (
-              <StaticRoutingFields control={control} isReadOnly={isReadOnly} />
-            ) : (
-              <DynamicRoutingFields control={control} isReadOnly={isReadOnly} />
-            )}
-          </div>
-        );
-      }}
-    />
+      {routingMode === 'static' ? (
+        <StaticRoutingFields control={control} setValue={setValue} isReadOnly={isReadOnly} />
+      ) : (
+        <DynamicRoutingFields control={control} isReadOnly={isReadOnly} />
+      )}
+    </div>
   );
 }
 
-function StaticRoutingFields({ control, isReadOnly }: ToolWebhookSettingsProps) {
+function StaticRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSettingsProps) {
+  const methodValue = useWatch({ control, name: `credentials.${CredentialsKeyEnum.Method}` });
+
+  // Same rationale as the routing-mode default above: the select displays "POST" for a
+  // fresh integration, so persist it rather than leaving the field unset until touched.
+  useEffect(() => {
+    if (!methodValue) {
+      setValue(`credentials.${CredentialsKeyEnum.Method}`, DEFAULT_METHOD);
+    }
+  }, [methodValue, setValue]);
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <Label>Endpoint URL</Label>
         <div className="flex gap-1">
-          <Controller
-            control={control}
-            name={`credentials.${CredentialsKeyEnum.Method}`}
-            render={({ field }) => (
-              <Select value={field.value || 'POST'} onValueChange={field.onChange} disabled={isReadOnly}>
-                <SelectTrigger className="w-[92px] shrink-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {HTTP_METHODS.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {method}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
+          <Select
+            value={methodValue || DEFAULT_METHOD}
+            onValueChange={(value) => setValue(`credentials.${CredentialsKeyEnum.Method}`, value)}
+            disabled={isReadOnly}
+          >
+            <SelectTrigger className="w-[92px] shrink-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {HTTP_METHODS.map((method) => (
+                <SelectItem key={method} value={method}>
+                  {method}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Controller
             control={control}
             name={`credentials.${CredentialsKeyEnum.WebhookUrl}`}
@@ -141,7 +155,9 @@ function StaticRoutingFields({ control, isReadOnly }: ToolWebhookSettingsProps) 
   );
 }
 
-function DynamicRoutingFields({ control, isReadOnly }: ToolWebhookSettingsProps) {
+type DynamicRoutingFieldsProps = Pick<ToolWebhookSettingsProps, 'control' | 'isReadOnly'>;
+
+function DynamicRoutingFields({ control, isReadOnly }: DynamicRoutingFieldsProps) {
   return (
     <div className="flex flex-col gap-3">
       <InlineToast
@@ -173,7 +189,7 @@ function DynamicRoutingFields({ control, isReadOnly }: ToolWebhookSettingsProps)
   );
 }
 
-function SigningSecretField({ control, isReadOnly }: ToolWebhookSettingsProps) {
+function SigningSecretField({ control, isReadOnly }: DynamicRoutingFieldsProps) {
   return (
     <Controller
       control={control}

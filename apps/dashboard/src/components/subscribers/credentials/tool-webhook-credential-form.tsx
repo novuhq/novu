@@ -161,6 +161,38 @@ function ToolWebhookFieldset({ draft, onChange, showError, disabled }: ToolWebho
   );
 }
 
+type ToolWebhookFormActionsProps = {
+  isSaving: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+};
+
+/** Shared check/close confirm-cancel pair for both the add editor and the row's edit mode. */
+function ToolWebhookFormActions({ isSaving, onSave, onCancel }: ToolWebhookFormActionsProps) {
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <button
+        type="button"
+        aria-label="Cancel"
+        disabled={isSaving}
+        onClick={onCancel}
+        className="text-error-base hover:bg-error-base/10 inline-flex size-6 shrink-0 cursor-pointer select-none items-center justify-center rounded-full outline-hidden transition duration-200 ease-out disabled:pointer-events-none disabled:opacity-50"
+      >
+        <RiCloseLine className="size-4" />
+      </button>
+      <button
+        type="button"
+        aria-label="Save"
+        disabled={isSaving}
+        onClick={onSave}
+        className="text-success hover:bg-success/10 inline-flex size-6 shrink-0 cursor-pointer select-none items-center justify-center rounded-full outline-hidden transition duration-200 ease-out disabled:pointer-events-none disabled:opacity-50"
+      >
+        <RiCheckLine className="size-4" />
+      </button>
+    </div>
+  );
+}
+
 type ToolWebhookCredentialFormEditorProps = {
   onSave: (payload: ChannelEndpointPayload) => Promise<boolean>;
   onCancel: () => void;
@@ -191,26 +223,7 @@ export function ToolWebhookCredentialFormEditor({ onSave, onCancel }: ToolWebhoo
   return (
     <div className={CREDENTIAL_CARD_CLASS}>
       <ToolWebhookFieldset draft={draft} onChange={setDraft} showError={showError} disabled={isSaving} />
-      <div className="flex items-center justify-end gap-1">
-        <button
-          type="button"
-          aria-label="Cancel"
-          disabled={isSaving}
-          onClick={onCancel}
-          className="text-error-base hover:bg-error-base/10 inline-flex size-6 shrink-0 cursor-pointer select-none items-center justify-center rounded-full outline-hidden transition duration-200 ease-out disabled:pointer-events-none disabled:opacity-50"
-        >
-          <RiCloseLine className="size-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Save"
-          disabled={isSaving}
-          onClick={handleSave}
-          className="text-success hover:bg-success/10 inline-flex size-6 shrink-0 cursor-pointer select-none items-center justify-center rounded-full outline-hidden transition duration-200 ease-out disabled:pointer-events-none disabled:opacity-50"
-        >
-          <RiCheckLine className="size-4" />
-        </button>
-      </div>
+      <ToolWebhookFormActions isSaving={isSaving} onSave={handleSave} onCancel={onCancel} />
     </div>
   );
 }
@@ -234,7 +247,9 @@ export function ToolWebhookCredentialFormRow({
   onDelete,
 }: ToolWebhookCredentialFormRowProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState<ToolWebhookDraft>(() => payloadToDraft(payload as Partial<ToolWebhookPayload>));
+  // Populated by handleEdit right before the fieldset is shown — the initial value here is
+  // never rendered, so it starts empty rather than eagerly recomputing payloadToDraft.
+  const [draft, setDraft] = useState<ToolWebhookDraft>({ url: '', method: '', headerRows: [] });
   const [showError, setShowError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -271,26 +286,7 @@ export function ToolWebhookCredentialFormRow({
     return (
       <div className={CREDENTIAL_CARD_CLASS}>
         <ToolWebhookFieldset draft={draft} onChange={setDraft} showError={showError} disabled={isSaving} />
-        <div className="flex items-center justify-end gap-1">
-          <button
-            type="button"
-            aria-label="Cancel"
-            disabled={isSaving}
-            onClick={handleCancel}
-            className="text-error-base hover:bg-error-base/10 inline-flex size-6 shrink-0 cursor-pointer select-none items-center justify-center rounded-full outline-hidden transition duration-200 ease-out disabled:pointer-events-none disabled:opacity-50"
-          >
-            <RiCloseLine className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Save"
-            disabled={isSaving}
-            onClick={handleSave}
-            className="text-success hover:bg-success/10 inline-flex size-6 shrink-0 cursor-pointer select-none items-center justify-center rounded-full outline-hidden transition duration-200 ease-out disabled:pointer-events-none disabled:opacity-50"
-          >
-            <RiCheckLine className="size-4" />
-          </button>
-        </div>
+        <ToolWebhookFormActions isSaving={isSaving} onSave={handleSave} onCancel={handleCancel} />
       </div>
     );
   }

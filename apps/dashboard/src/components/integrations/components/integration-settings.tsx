@@ -300,7 +300,7 @@ export function IntegrationSettings({
             </div>
           )}
 
-        {!isDemo && providerCredentials.length > 0 && (
+        {!isDemo && (isToolWebhookProvider || providerCredentials.length > 0) && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
@@ -338,7 +338,7 @@ export function IntegrationSettings({
                         />
                       )}
                       {isToolWebhookProvider ? (
-                        <ToolWebhookSettings control={control} isReadOnly={isReadOnly} />
+                        <ToolWebhookSettings control={control} setValue={setValue} isReadOnly={isReadOnly} />
                       ) : (
                         <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
                           {providerCredentials.map((credential) => (
