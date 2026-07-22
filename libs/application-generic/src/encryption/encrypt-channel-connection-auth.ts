@@ -14,6 +14,9 @@ const SECURE_AUTH_FIELDS = [
   'clientSecret',
   'routingKey',
   'apiKey',
+  'url',
+  'headers',
+  'method',
 ] as const;
 
 export interface ChannelConnectionAuth {
@@ -37,7 +40,27 @@ export interface ChannelConnectionAuth {
    * `events.pagerduty.com` vs `events.eu.pagerduty.com`).
    */
   region?: 'us' | 'eu';
+  /**
+   * Tool-webhook per-subscriber URL. Capability URLs are secrets; encrypted at rest.
+   */
+  url?: string;
+  /**
+   * Tool-webhook per-subscriber request headers. Each string value is encrypted at rest.
+   */
+  headers?: Record<string, string>;
+  /**
+   * Tool-webhook per-subscriber HTTP method override. Encrypted at rest with the other secrets.
+   */
+  method?: 'POST' | 'PUT' | 'PATCH';
   [key: string]: unknown;
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.values(value).every((entry) => typeof entry === 'string');
 }
 
 function transformSecureFields<T extends object>(auth: T, transform: (value: string) => string): T {
@@ -47,12 +70,17 @@ function transformSecureFields<T extends object>(auth: T, transform: (value: str
     const value = result[key];
     if (typeof value === 'string' && value.length > 0) {
       result[key] = transform(value);
+    } else if (isStringRecord(value)) {
+      const transformed: Record<string, string> = {};
+      for (const [headerKey, headerValue] of Object.entries(value)) {
+        transformed[headerKey] = headerValue.length > 0 ? transform(headerValue) : headerValue;
+      }
+      result[key] = transformed;
     }
   }
 
   return result as T;
 }
-
 /**
  * Encrypt every secret field inside a channel-connection `auth` object.
  *

@@ -10,7 +10,8 @@ export type ChannelData =
   | WebexPersonData
   | LineUserData
   | PagerDutyServiceData
-  | OpsgenieIntegrationData;
+  | OpsgenieIntegrationData
+  | ToolWebhookData;
 
 export const ENDPOINT_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
@@ -25,6 +26,7 @@ export const ENDPOINT_TYPES = {
   LINE_USER: 'line_user',
   PAGERDUTY_SERVICE: 'pagerduty_service',
   OPSGENIE_INTEGRATION: 'opsgenie_integration',
+  TOOL_WEBHOOK: 'tool_webhook',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -42,6 +44,11 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
+    url: string;
+    headers?: Record<string, string>;
+    method?: 'POST' | 'PUT' | 'PATCH';
+  };
 };
 
 export type SlackChannelData = {
@@ -141,6 +148,18 @@ export type OpsgenieIntegrationData = {
   identifier: string;
 };
 
+/**
+ * Per-subscriber tool-webhook routing resolved at send time. The resolver
+ * hydrates `endpoint` from the linked `ChannelConnection.auth` (which stores
+ * url/headers/method encrypted at rest); at send time the provider
+ * destructures directly off `endpoint`, matching the wire shape on write/read.
+ */
+export type ToolWebhookData = {
+  type: typeof ENDPOINT_TYPES.TOOL_WEBHOOK;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.TOOL_WEBHOOK];
+  identifier: string;
+};
+
 export function isChannelDataOfType<T extends ChannelData['type']>(
   data: ChannelData,
   type: T
@@ -157,4 +176,5 @@ export const ENDPOINT_TYPES_REQUIRING_TOKEN = [
   ENDPOINT_TYPES.WEBEX_PERSON,
   ENDPOINT_TYPES.PAGERDUTY_SERVICE,
   ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  ENDPOINT_TYPES.TOOL_WEBHOOK,
 ] as const;
