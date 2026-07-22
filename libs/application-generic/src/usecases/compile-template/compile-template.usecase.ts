@@ -117,7 +117,7 @@ function createHandlebarsInstance(i18next: any) {
 
   // based on: https://gist.github.com/DennyLoko/61882bc72176ca74a0f2
   handlebars.registerHelper(HandlebarHelpersEnum.NUMBERFORMAT, (number, options) => {
-    if (Number.isNaN(number)) {
+    if (Number.isNaN(Number(number))) {
       return number;
     }
 
