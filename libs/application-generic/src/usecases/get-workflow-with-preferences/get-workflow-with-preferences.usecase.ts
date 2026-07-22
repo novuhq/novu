@@ -58,6 +58,7 @@ export class GetWorkflowWithPreferencesUseCase {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         templateId: workflowEntity._id,
+        skipCache: command.skipPreferencesCache,
       })
     );
   }
