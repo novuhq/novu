@@ -1,6 +1,7 @@
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import { RiAddLine, RiDeleteBinLine, RiInformation2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import {
   Sheet,
   SheetContent,
@@ -29,7 +30,7 @@ const EMPTY_SCHEMA: JSONSchema7 = {
   properties: {},
 };
 
-function parsePayloadSchema(payloadSchema?: string): JSONSchema7 {
+function parsePayloadSchema(payloadSchema?: string): JSONSchema7 | undefined {
   if (!payloadSchema?.trim()) {
     return EMPTY_SCHEMA;
   }
@@ -37,10 +38,26 @@ function parsePayloadSchema(payloadSchema?: string): JSONSchema7 {
   try {
     const schema = JSON.parse(payloadSchema);
 
-    return schema && typeof schema === 'object' && !Array.isArray(schema) ? schema : EMPTY_SCHEMA;
+    return schema && typeof schema === 'object' && !Array.isArray(schema) ? schema : undefined;
   } catch {
-    return EMPTY_SCHEMA;
+    return undefined;
   }
+}
+
+function mergeEditedSchema(originalSchema: JSONSchema7, editedSchema: JSONSchema7): JSONSchema7 {
+  const mergedSchema: JSONSchema7 = {
+    ...originalSchema,
+    type: 'object',
+    properties: editedSchema.properties,
+  };
+
+  if (editedSchema.required?.length) {
+    mergedSchema.required = editedSchema.required;
+  } else {
+    delete mergedSchema.required;
+  }
+
+  return mergedSchema;
 }
 
 export function WebhookRequestSchemaEditor({
@@ -50,8 +67,10 @@ export function WebhookRequestSchemaEditor({
   onSave,
   readOnly = false,
 }: WebhookRequestSchemaEditorProps) {
+  const parsedPayloadSchema = useMemo(() => parsePayloadSchema(payloadSchema), [payloadSchema]);
+  const isPayloadSchemaInvalid = Boolean(payloadSchema?.trim()) && !parsedPayloadSchema;
   const schemaForm = useSchemaForm({
-    initialSchema: parsePayloadSchema(payloadSchema),
+    initialSchema: parsedPayloadSchema ?? EMPTY_SCHEMA,
   });
   const {
     isImportMode,
@@ -67,9 +86,9 @@ export function WebhookRequestSchemaEditor({
 
   useEffect(() => {
     if (isOpen) {
-      schemaForm.resetToSchema(parsePayloadSchema(payloadSchema));
+      schemaForm.resetToSchema(parsedPayloadSchema ?? EMPTY_SCHEMA);
     }
-  }, [isOpen, payloadSchema, schemaForm.resetToSchema]);
+  }, [isOpen, parsedPayloadSchema, schemaForm.resetToSchema]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -80,13 +99,16 @@ export function WebhookRequestSchemaEditor({
   };
 
   const handleSave = () => {
-    onSave(JSON.stringify(schemaForm.getCurrentSchema()));
-    onOpenChange(false);
+    const editedSchema = schemaForm.getCurrentSchema();
+    const schema = mergeEditedSchema(parsedPayloadSchema ?? EMPTY_SCHEMA, editedSchema);
+
+    onSave(JSON.stringify(schema));
+    handleOpenChange(false);
   };
 
   const handleClear = () => {
     onSave('');
-    onOpenChange(false);
+    handleOpenChange(false);
   };
 
   const hasProperties = schemaForm.fields.length > 0;
@@ -164,6 +186,14 @@ export function WebhookRequestSchemaEditor({
         </SheetHeader>
 
         <SheetMain className="p-3">
+          {isPayloadSchemaInvalid && (
+            <InlineToast
+              className="mb-3"
+              variant="error"
+              description="The saved request schema is not valid JSON. Clear it before creating a replacement."
+            />
+          )}
+
           {editorContent}
 
           <div className="text-text-soft mt-3 flex items-start gap-1.5 text-xs">
@@ -191,7 +221,7 @@ export function WebhookRequestSchemaEditor({
             <span />
           )}
           {readOnly ? (
-            <Button type="button" variant="secondary" mode="outline" size="xs" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="secondary" mode="outline" size="xs" onClick={() => handleOpenChange(false)}>
               Close
             </Button>
           ) : (
@@ -201,7 +231,7 @@ export function WebhookRequestSchemaEditor({
               mode="gradient"
               size="xs"
               onClick={handleSave}
-              disabled={isImportMode || (hasProperties && !schemaForm.formState.isValid)}
+              disabled={isImportMode || !hasProperties || isPayloadSchemaInvalid || !schemaForm.formState.isValid}
             >
               Save schema
             </Button>

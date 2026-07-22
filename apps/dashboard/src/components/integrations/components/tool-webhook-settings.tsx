@@ -39,6 +39,27 @@ function getRequestSchemaActionLabel(isReadOnly: boolean | undefined, hasRequest
   return hasRequestSchema ? 'Edit schema' : 'Add schema';
 }
 
+function hasConfiguredRequestSchema(payloadSchema?: string): boolean {
+  if (!payloadSchema?.trim()) {
+    return false;
+  }
+
+  try {
+    const schema = JSON.parse(payloadSchema);
+
+    return Boolean(
+      schema &&
+        typeof schema === 'object' &&
+        !Array.isArray(schema) &&
+        schema.properties &&
+        typeof schema.properties === 'object' &&
+        Object.keys(schema.properties).length > 0
+    );
+  } catch {
+    return false;
+  }
+}
+
 type ToolWebhookSettingsProps = {
   control: Control<IntegrationFormData>;
   setValue: UseFormSetValue<IntegrationFormData>;
@@ -50,7 +71,7 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
   const routingModeValue = useWatch({ control, name: `credentials.${CredentialsKeyEnum.RoutingMode}` });
   const payloadSchema = useWatch({ control, name: 'configurations.payloadSchema' });
   const routingMode = toRoutingMode(routingModeValue);
-  const hasRequestSchema = Boolean(payloadSchema?.trim());
+  const hasRequestSchema = hasConfiguredRequestSchema(payloadSchema);
 
   // A brand-new integration has no stored routingMode yet. The segmented control still
   // displays "Static" (the sensible default), so persist it on mount — otherwise a user
