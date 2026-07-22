@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
 import {
+  AgentMcpServerRepository,
+  ConversationRepository,
+  McpConnectionRepository,
+  SubscriberRepository,
+} from '@novu/dal';
+import {
+  type AgentApprovalRequest,
   type AgentEvent,
   type AgentEventEnvelope,
+  type AgentEventUsage,
   isDeltaEvent,
   McpConnectionStatusEnum,
   NOVU_INTERNAL_TOOLS,
@@ -23,33 +30,6 @@ import { listOAuthMcps } from '../managed-runtime/tool-connect/list-oauth-mcps.h
 import { findOAuthMcpByServerName } from '../managed-runtime/tool-connect/oauth-mcp.types';
 import { AgentPlatformEnum } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
-
-const KNOWN_AGENT_EVENT_TYPES = new Set<string>([
-  'run-start',
-  'run-finish',
-  'run-error',
-  'step-start',
-  'step-end',
-  'message',
-  'message-start',
-  'message-delta',
-  'message-end',
-  'thinking-start',
-  'thinking-delta',
-  'thinking-end',
-  'source',
-  'tool-use-start',
-  'tool-use-delta',
-  'tool-use-done',
-  'tool-use-result',
-  'tool-approval-request',
-  'tool-approval-response',
-  'resolve',
-  'connection.error',
-  'custom',
-]);
-
-type ToolApprovalRequestEvent = Extract<AgentEvent, { type: 'tool-approval-request' }>;
 
 interface BaseCommandFields {
   userId: string;
@@ -78,14 +58,13 @@ export interface AgentEventContext {
 
 @Injectable()
 export class AgentEventSink {
-  private readonly approvalBuffer = new Map<string, ToolApprovalRequestEvent[]>();
-
   constructor(
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly inboundAck: InboundAckService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly conversationRepository: ConversationRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
@@ -95,19 +74,56 @@ export class AgentEventSink {
   }
 
   async ingest(envelope: AgentEventEnvelope, context: AgentEventContext): Promise<void> {
-    const { event } = envelope;
+    await this.ingestMany([envelope], context);
+  }
 
-    if (isDeltaEvent(event)) {
-      return;
+  /**
+   * Ingest a batch produced from one upstream unit (e.g. one Thalamus StreamPart).
+   * `tool-approval-request` events in the same batch are paired with a following
+   * `run-finish { outcome: 'paused' }` — no process-local Map across requests.
+   */
+  async ingestMany(envelopes: AgentEventEnvelope[], context: AgentEventContext): Promise<void> {
+    const batchApprovals: AgentApprovalRequest[] = [];
+
+    for (const envelope of envelopes) {
+      const { event } = envelope;
+
+      if (isDeltaEvent(event)) {
+        continue;
+      }
+
+      if (event.type === 'tool-approval-request') {
+        batchApprovals.push({
+          approvalId: event.approvalId,
+          toolUseId: event.toolUseId,
+          toolName: event.toolName,
+          input: event.input,
+          source: event.source,
+        });
+        continue;
+      }
+
+      if (event.type === 'run-finish' && event.outcome === 'paused') {
+        await this.handlePausedRunFinish(event, context, this.buildMetadata(context), envelope.runId, batchApprovals);
+        batchApprovals.length = 0;
+        continue;
+      }
+
+      await this.dispatchEvent(envelope, context, event);
     }
 
-    if (!KNOWN_AGENT_EVENT_TYPES.has(event.type)) {
-      this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Unknown agent event type — skipping');
-
-      return;
+    if (batchApprovals.length > 0) {
+      // Legitimate for framework/compat emitters that post an approval request
+      // without a managed run-finish in the same batch. Phase-1 managed path
+      // always pairs them via mapFinishEvents → ingestMany.
+      this.logger.debug(
+        {
+          runId: envelopes[envelopes.length - 1]?.runId,
+          count: batchApprovals.length,
+        },
+        'tool-approval-request(s) without paused run-finish in batch — no managed pause dispatch'
+      );
     }
-
-    await this.dispatchEvent(envelope, context, event);
   }
 
   private async dispatchEvent(
@@ -116,7 +132,7 @@ export class AgentEventSink {
     event: AgentEvent
   ): Promise<void> {
     const baseFields = this.buildBaseFields(context);
-    const metadata = this.buildMetadata(context, envelope);
+    const metadata = this.buildMetadata(context);
 
     switch (event.type) {
       case 'message':
@@ -136,11 +152,6 @@ export class AgentEventSink {
 
       case 'tool-use-result':
         await this.handleToolUseResult(event, baseFields, context.sessionId);
-
-        return;
-
-      case 'tool-approval-request':
-        this.bufferApprovalRequest(envelope.runId, event);
 
         return;
 
@@ -170,6 +181,7 @@ export class AgentEventSink {
       case 'source':
       case 'custom':
       case 'resolve':
+      case 'tool-approval-request':
       case 'tool-approval-response':
       case 'message-start':
       case 'message-end':
@@ -180,10 +192,7 @@ export class AgentEventSink {
       default: {
         const _exhaustive: never = event;
 
-        this.logger.debug(
-          { eventType: (_exhaustive as AgentEvent).type, runId: envelope.runId },
-          'Unhandled agent event'
-        );
+        void _exhaustive;
 
         return;
       }
@@ -330,34 +339,30 @@ export class AgentEventSink {
     metadata: Record<string, string>,
     runId: string
   ): Promise<void> {
-    try {
-      if (event.outcome === 'paused') {
-        await this.handlePausedRunFinish(event, baseFields, context, metadata, runId);
+    // Paused finishes are handled in ingestMany (paired with tool-approval-request).
+    if (event.outcome === 'paused') {
+      this.logger.error({ runId }, 'run-finish paused reached dispatch without batch pairing — skipping');
 
-        return;
-      }
+      return;
+    }
+
+    try {
+      await this.inboundAck.onManagedTurnComplete(metadata);
 
       if (context.suppressReply) {
-        await this.inboundAck.onManagedTurnComplete(metadata);
-        this.clearApprovalBuffer(runId);
-
         return;
       }
-
-      await this.inboundAck.onManagedTurnComplete(metadata);
 
       await this.demoQuota.recordUsage(
         context.environmentId,
         context.organizationId,
         context.conversationId,
-        event.usage as ThalamusResponse['usage']
+        toThalamusUsage(event.usage)
       );
 
       await this.handlePlanProgress.execute(
         HandlePlanProgressCommand.create({ ...baseFields, event: { kind: 'phase', phase: 'finished' } })
       );
-
-      this.clearApprovalBuffer(runId);
     } catch (err) {
       this.logger.error(err, `run-finish failed: run=${runId}`);
       captureAgentException(err, {
@@ -371,11 +376,12 @@ export class AgentEventSink {
 
   private async handlePausedRunFinish(
     event: Extract<AgentEvent, { type: 'run-finish' }>,
-    baseFields: BaseCommandFields,
     context: AgentEventContext,
     metadata: Record<string, string>,
-    runId: string
+    runId: string,
+    approvals: AgentApprovalRequest[]
   ): Promise<void> {
+    const baseFields = this.buildBaseFields(context);
     const { platform, platformThreadId, sessionId, subscriberId } = context;
 
     if (!platform || !platformThreadId || !sessionId) {
@@ -387,27 +393,44 @@ export class AgentEventSink {
       return;
     }
 
-    const bufferedApprovals = this.getBufferedApprovals(runId);
-    const response: ThalamusResponse = {
-      messages: [],
-      finishReason: 'requires-action',
-      usage: event.usage as ThalamusResponse['usage'],
-      actionsRequired: bufferedApprovals.map(toActionRequired),
-    };
+    if (approvals.length === 0) {
+      this.logger.error(
+        { runId },
+        'run-finish paused with zero tool-approval-request events in batch — skipping tool approval dispatch'
+      );
 
-    await this.handlePendingToolApprovals.execute(
-      HandlePendingToolApprovalsCommand.create({
-        ...baseFields,
-        subscriberId,
-        platform,
-        platformThreadId,
-        sessionId,
-        response,
-      })
-    );
+      return;
+    }
 
-    await this.inboundAck.onManagedTurnComplete(metadata);
-    this.clearApprovalBuffer(runId);
+    try {
+      const response: ThalamusResponse = {
+        messages: [],
+        finishReason: 'requires-action',
+        usage: toThalamusUsage(event.usage),
+        actionsRequired: approvals.map(toActionRequired),
+      };
+
+      await this.handlePendingToolApprovals.execute(
+        HandlePendingToolApprovalsCommand.create({
+          ...baseFields,
+          subscriberId,
+          platform,
+          platformThreadId,
+          sessionId,
+          response,
+        })
+      );
+
+      await this.inboundAck.onManagedTurnComplete(metadata);
+    } catch (err) {
+      this.logger.error(err, `run-finish paused failed: run=${runId}`);
+      captureAgentException(err, {
+        component: 'agent-event-sink',
+        operation: 'run-finish-paused',
+        sessionId: context.sessionId,
+      });
+      throw err;
+    }
   }
 
   private async handleRunError(
@@ -418,10 +441,11 @@ export class AgentEventSink {
     runId: string
   ): Promise<void> {
     if (event.code === 'session_expired') {
-      this.logger.warn(
-        { runId, sessionId: context.sessionId },
-        'Session expired — SessionExpiredError handling deferred to Task 4'
-      );
+      this.logger.warn({ runId, sessionId: context.sessionId }, 'Session expired — clearing external session id');
+      await this.conversationRepository.clearExternalSessionId(context.environmentId, context.conversationId);
+      await this.inboundAck.onManagedTurnComplete(metadata);
+
+      return;
     }
 
     const error = new Error(event.message);
@@ -448,8 +472,6 @@ export class AgentEventSink {
         sessionId: context.sessionId,
       });
     }
-
-    this.clearApprovalBuffer(runId);
   }
 
   /**
@@ -564,21 +586,6 @@ export class AgentEventSink {
     }
   }
 
-  private bufferApprovalRequest(runId: string, event: ToolApprovalRequestEvent): void {
-    const existing = this.approvalBuffer.get(runId) ?? [];
-
-    existing.push(event);
-    this.approvalBuffer.set(runId, existing);
-  }
-
-  private getBufferedApprovals(runId: string): ToolApprovalRequestEvent[] {
-    return this.approvalBuffer.get(runId) ?? [];
-  }
-
-  private clearApprovalBuffer(runId: string): void {
-    this.approvalBuffer.delete(runId);
-  }
-
   private buildBaseFields(context: AgentEventContext): BaseCommandFields {
     return {
       userId: context.organizationId,
@@ -590,15 +597,18 @@ export class AgentEventSink {
     };
   }
 
-  private buildMetadata(context: AgentEventContext, envelope: AgentEventEnvelope): Record<string, string> {
+  private buildMetadata(context: AgentEventContext): Record<string, string> {
     const metadata: Record<string, string> = {
       conversationId: context.conversationId,
       environmentId: context.environmentId,
       organizationId: context.organizationId,
       agentIdentifier: context.agentIdentifier,
       integrationIdentifier: context.integrationIdentifier,
-      agentId: envelope.agentId,
     };
+
+    if (context.agentId) {
+      metadata.agentId = context.agentId;
+    }
 
     if (context.subscriberId) {
       metadata.subscriberId = context.subscriberId;
@@ -628,21 +638,33 @@ export class AgentEventSink {
   }
 }
 
-function toActionRequired(event: ToolApprovalRequestEvent): ActionRequired {
-  if (event.source?.type === 'mcp') {
+function toThalamusUsage(usage?: AgentEventUsage): ThalamusResponse['usage'] {
+  if (!usage) {
+    return undefined;
+  }
+
+  return {
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+    totalTokens: usage.totalTokens,
+  };
+}
+
+function toActionRequired(approval: AgentApprovalRequest): ActionRequired {
+  if (approval.source?.type === 'mcp') {
     return {
       type: 'mcp-approval',
-      toolUseId: event.toolUseId,
-      toolName: event.toolName,
-      serverName: event.source.serverName,
-      input: event.input,
+      toolUseId: approval.toolUseId,
+      toolName: approval.toolName,
+      serverName: approval.source.serverName,
+      input: approval.input,
     };
   }
 
   return {
     type: 'tool-confirmation',
-    toolUseId: event.toolUseId,
-    toolName: event.toolName,
-    input: event.input,
+    toolUseId: approval.toolUseId,
+    toolName: approval.toolName,
+    input: approval.input,
   };
 }

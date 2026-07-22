@@ -26,10 +26,23 @@ export interface AgentFileRef {
 export type AgentRunOutcome = 'completed' | 'paused' | 'aborted';
 export type AgentFinishReason = 'stop' | 'length' | 'refused' | 'other';
 
+export interface AgentApprovalRequest {
+  approvalId: string;
+  toolUseId: string;
+  toolName: string;
+  input?: Record<string, unknown>;
+  source?: AgentToolSource;
+}
+
 export type AgentEvent =
   // Lifecycle
   | { type: 'run-start' }
-  | { type: 'run-finish'; outcome: AgentRunOutcome; finishReason?: AgentFinishReason; usage?: AgentEventUsage }
+  | {
+      type: 'run-finish';
+      outcome: AgentRunOutcome;
+      finishReason?: AgentFinishReason;
+      usage?: AgentEventUsage;
+    }
   | { type: 'run-error'; message: string; code?: string }
   | { type: 'step-start'; name?: string; index?: number }
   | { type: 'step-end'; name?: string; index?: number; usage?: AgentEventUsage }
@@ -60,14 +73,7 @@ export type AgentEvent =
       source?: AgentToolSource;
     }
   | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
-  | {
-      type: 'tool-approval-request';
-      approvalId: string;
-      toolUseId: string;
-      toolName: string;
-      input?: Record<string, unknown>;
-      source?: AgentToolSource;
-    }
+  | ({ type: 'tool-approval-request' } & AgentApprovalRequest)
   | {
       type: 'tool-approval-response';
       approvalId: string;

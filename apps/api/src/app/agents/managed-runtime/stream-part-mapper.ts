@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import {
   AGENT_EVENT_PROTOCOL_VERSION,
+  type AgentApprovalRequest,
   type AgentEvent,
   type AgentEventEnvelope,
   type AgentFinishReason,
   type AgentToolSource,
 } from '@novu/shared';
 import type { ActionRequired, Response, StreamPart } from '@novu/thalamus';
+import { SessionExpiredError } from '@novu/thalamus';
 
 interface RunEventBuilderIds {
   conversationId: string;
@@ -164,12 +166,11 @@ function mapThinkingEvents(text: string): AgentEvent[] {
   return events;
 }
 
-function mapActionRequired(action: ActionRequired): AgentEvent {
+function mapActionRequired(action: ActionRequired): AgentApprovalRequest {
   const source: AgentToolSource =
     action.type === 'mcp-approval' ? { type: 'mcp', serverName: action.serverName } : { type: 'custom' };
 
   return {
-    type: 'tool-approval-request',
     approvalId: action.toolUseId,
     toolUseId: action.toolUseId,
     toolName: action.toolName,
@@ -199,29 +200,35 @@ function mapFinishReason(finishReason: Response['finishReason']): AgentFinishRea
   }
 }
 
+/**
+ * Thalamus only surfaces approvals on `finish.actionsRequired` (never a
+ * dedicated StreamPart). We lift each action into a first-class
+ * `tool-approval-request`, then emit `run-finish`. Callers must ingest the
+ * returned events as one batch so paused finish can pair with those requests
+ * without process-local buffering.
+ */
 function mapFinishEvents(response: Response): AgentEvent[] {
-  const events: AgentEvent[] = [];
-
-  for (const action of response.actionsRequired ?? []) {
-    events.push(mapActionRequired(action));
-  }
+  const events: AgentEvent[] = (response.actionsRequired ?? []).map((action) => ({
+    type: 'tool-approval-request' as const,
+    ...mapActionRequired(action),
+  }));
 
   const outcome = response.finishReason === 'requires-action' ? 'paused' : 'completed';
   const finishReason = mapFinishReason(response.finishReason);
-  const runFinish: AgentEvent = {
+
+  events.push({
     type: 'run-finish',
     outcome,
     ...(finishReason !== undefined ? { finishReason } : {}),
     ...(response.usage !== undefined ? { usage: response.usage } : {}),
-  };
-
-  events.push(runFinish);
+  });
 
   return events;
 }
 
 function mapErrorEvents(error: Error): AgentEvent[] {
-  const code = (error as { code?: string }).code;
+  const isSessionExpired = error instanceof SessionExpiredError || error.name === 'SessionExpiredError';
+  const code = isSessionExpired ? 'session_expired' : (error as { code?: string }).code;
 
   return [
     {
