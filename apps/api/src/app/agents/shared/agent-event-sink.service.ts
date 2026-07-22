@@ -115,7 +115,7 @@ export class AgentEventSink {
       }
 
       if (event.type === 'tool-approval-request') {
-        const autoDeliverCard = !this.hasFollowingMessageInBatch(envelopes, index);
+        const autoDeliverCard = !context.sessionId && !this.hasFollowingMessageInBatch(envelopes, index);
         const outcome = await this.handleToolApprovalRequest(event, context, batchApprovals, autoDeliverCard);
         outcomes.push(outcome);
         continue;

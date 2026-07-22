@@ -232,6 +232,35 @@ describe('AgentEventSink', () => {
     expect(handleAgentReply.execute.secondCall.args[0].reply.card).to.deep.equal({ type: 'card', elements: [] });
   });
 
+  it('persists managed tool-approval-request without auto-deliver and dispatches card on paused run-finish', async () => {
+    const { sink, handleAgentReply, handlePendingToolApprovals, inboundAck } = setup();
+
+    await sink.ingestMany(
+      [
+        envelope({
+          type: 'tool-approval-request',
+          approvalId: 'appr-1',
+          toolUseId: 'tool-1',
+          toolName: 'deleteDatabase',
+          input: { confirm: true },
+        }),
+        envelope({ type: 'run-finish', outcome: 'paused' }),
+      ],
+      baseContext({ sessionId: 'session-1', subscriberId: 'sub-1' })
+    );
+
+    expect(handleAgentReply.execute.calledOnce).to.equal(true);
+    const persistCommand = handleAgentReply.execute.firstCall.args[0];
+    expect(persistCommand.toolApprovalRequest.approvalId).to.equal('appr-1');
+    expect(persistCommand.reply).to.equal(undefined);
+
+    expect(handlePendingToolApprovals.execute.calledOnce).to.equal(true);
+    const response = handlePendingToolApprovals.execute.firstCall.args[0].response;
+    expect(response.actionsRequired).to.have.length(1);
+    expect(response.actionsRequired[0].toolUseId).to.equal('tool-1');
+    expect(inboundAck.onManagedTurnComplete.calledOnce).to.equal(true);
+  });
+
   it('falls back to unresolved approvals from history on paused run-finish with empty batch buffer', async () => {
     const { sink, handlePendingToolApprovals, conversationService } = setup();
     const pending = {
