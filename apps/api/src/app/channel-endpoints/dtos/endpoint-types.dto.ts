@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OPSGENIE_API_KEY_PATTERN } from '@novu/shared';
-import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
+import { IsIn, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 export class SlackChannelEndpointDto {
   @ApiProperty({
@@ -158,6 +158,35 @@ export class PagerDutyServiceEndpointDto {
   })
   @IsIn(['us', 'eu'])
   region: 'us' | 'eu';
+}
+
+export class ToolWebhookEndpointDto {
+  @ApiProperty({
+    description:
+      'Destination webhook URL (often a per-subscriber capability URL). Stored encrypted on the linked channel connection.',
+    example: 'https://example.com/tools/incoming',
+    type: String,
+  })
+  @IsString()
+  url: string;
+
+  @ApiPropertyOptional({
+    description: 'Optional headers (e.g. auth tokens) sent with every request to this webhook.',
+    example: { Authorization: 'Bearer <token>' },
+    type: Object,
+  })
+  @IsOptional()
+  @IsObject()
+  headers?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'Optional HTTP method override for this webhook. Defaults to the integration-level method.',
+    enum: ['POST', 'PUT', 'PATCH'],
+    example: 'POST',
+  })
+  @IsOptional()
+  @IsIn(['POST', 'PUT', 'PATCH'])
+  method?: 'POST' | 'PUT' | 'PATCH';
 }
 
 export class OpsgenieIntegrationEndpointDto {

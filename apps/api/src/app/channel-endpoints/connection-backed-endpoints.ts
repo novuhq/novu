@@ -24,6 +24,10 @@ const CONNECTION_BACKED_ENDPOINTS: Partial<Record<ChannelEndpointType, Connectio
     label: 'Opsgenie',
     workspace: { id: 'opsgenie', name: 'Opsgenie' },
   },
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
+    label: 'Tool webhook',
+    workspace: { id: 'tool-webhook', name: 'Tool webhook' },
+  },
 };
 
 export function getConnectionBackedEndpointConfig(
