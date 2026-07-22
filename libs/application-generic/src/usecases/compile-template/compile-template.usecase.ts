@@ -35,7 +35,6 @@ function createHandlebarsInstance(i18next: any) {
         options.defaultValue = fn(replace);
       }
 
-      // @ts-expect-error
       return new handlebars.SafeString(i18next.t(key, options));
     });
   }
