@@ -67,15 +67,13 @@ export class GetWorkflowUseCase {
       }
     }
 
-    const skipPreferencesCache = command.requireFreshPreferences ?? false;
-
     const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
       GetWorkflowWithPreferencesCommand.create({
         environmentId: effectiveEnvironmentId,
         organizationId: command.user.organizationId,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
         userId: command.user._id,
-        skipPreferencesCache,
+        skipPreferencesCache: command.skipPreferencesCache,
       })
     );
 

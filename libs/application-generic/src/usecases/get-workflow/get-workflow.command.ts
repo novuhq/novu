@@ -17,5 +17,5 @@ export class GetWorkflowCommand extends EnvironmentWithUserObjectCommand {
    */
   @IsBoolean()
   @IsOptional()
-  requireFreshPreferences?: boolean;
+  skipPreferencesCache?: boolean;
 }

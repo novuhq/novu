@@ -213,7 +213,7 @@ export class WorkflowController {
         user,
         environmentId,
         // Interactive dashboard reads (JWT / Bearer) must reflect the latest write.
-        requireFreshPreferences: user.scheme === ApiAuthSchemeEnum.BEARER,
+        skipPreferencesCache: user.scheme === ApiAuthSchemeEnum.BEARER,
       })
     );
   }
