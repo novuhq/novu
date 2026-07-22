@@ -5,12 +5,26 @@ import {
   normalizeOutboundHttpUrl,
   SsrfBlockedError,
 } from '@novu/shared/utils/ssrf-url-validation';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, IToolOptions, IToolProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ENDPOINT_TYPES,
+  ISendMessageSuccessResponse,
+  IToolOptions,
+  IToolProvider,
+  isChannelDataOfType,
+  ToolWebhookData,
+} from '@novu/stateless';
 import crypto from 'crypto';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 type ToolWebhookMethod = 'POST' | 'PUT' | 'PATCH';
+
+type ResolvedRouting = {
+  url: string;
+  method?: string;
+  headers?: Record<string, string>;
+};
 
 export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
@@ -19,7 +33,7 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
 
   constructor(
     private config: {
-      webhookUrl: string;
+      webhookUrl?: string;
       method?: string;
       headers?: Record<string, string>;
       bodyTemplate?: string;
@@ -33,14 +47,14 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
     options: IToolOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const routing = this.resolveRouting(options);
+
     const data = this.transform(bridgeProviderData, {
       content: options.content,
       ...(options.customData || {}),
     });
 
-    const hmacSecretKey = this.config.hmacSecretKey;
-
-    const webhookUrl = normalizeOutboundHttpUrl(this.config.webhookUrl);
+    const webhookUrl = normalizeOutboundHttpUrl(routing.url);
     if (!webhookUrl) {
       throw new Error('Tool webhook URL blocked: Invalid URL format.');
     }
@@ -54,19 +68,20 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
       throw err;
     }
 
-    const method = this.resolveMethod((data.body.method as string) || this.config.method);
+    const runtimeMethodOverride = data.body.method as string | undefined;
     if (data.body.method) {
       delete data.body.method;
     }
 
+    const method = this.resolveMethod(runtimeMethodOverride || routing.method);
     const requestBody = this.resolveBody(data.body);
     const headers: Record<string, string> = {
       'content-type': 'application/json',
-      ...this.config.headers,
+      ...routing.headers,
       ...data.headers,
     };
 
-    const hmacValue = this.computeHmac(requestBody, hmacSecretKey);
+    const hmacValue = this.computeHmac(requestBody, this.config.hmacSecretKey);
     if (hmacValue) {
       headers['X-Novu-Signature'] = hmacValue;
     }
@@ -93,6 +108,48 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
     };
   }
 
+  /**
+   * Routes dynamically whenever `channelData` is present and of type `tool_webhook`,
+   * requiring `endpoint.url`. Otherwise falls back to static routing off `config.webhookUrl`.
+   * The caller (handler/worker) is responsible for only attaching `channelData` when the
+   * integration's routing mode is dynamic, so the provider itself needs no mode flag.
+   */
+  private resolveRouting(options: IToolOptions): ResolvedRouting {
+    const { channelData } = options;
+
+    if (channelData && isChannelDataOfType(channelData, ENDPOINT_TYPES.TOOL_WEBHOOK)) {
+      return this.resolveDynamicRouting(channelData);
+    }
+
+    if (!this.config.webhookUrl) {
+      throw new Error('Tool webhook URL is not configured.');
+    }
+
+    return {
+      url: this.config.webhookUrl,
+      method: this.config.method,
+      headers: this.config.headers,
+    };
+  }
+
+  /** Endpoint values override the integration config per key; endpoints never carry a body. */
+  private resolveDynamicRouting(channelData: ToolWebhookData): ResolvedRouting {
+    const { endpoint } = channelData;
+
+    if (!endpoint?.url) {
+      throw new Error('Tool webhook channelData.endpoint is missing url');
+    }
+
+    return {
+      url: endpoint.url,
+      method: endpoint.method || this.config.method,
+      headers: {
+        ...this.config.headers,
+        ...endpoint.headers,
+      },
+    };
+  }
+
   private resolveMethod(method?: string): ToolWebhookMethod {
     const normalized = (method || 'POST').toUpperCase();
 
@@ -103,6 +160,7 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
     return 'POST';
   }
 
+  /** Parses the integration body template as a JSON object (KV base); transformed step keys win. */
   private resolveBody(transformedBody: Record<string, unknown>): string {
     if (!this.config.bodyTemplate) {
       return JSON.stringify(transformedBody);
@@ -121,7 +179,7 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
 
     return JSON.stringify({
       ...(parsed as Record<string, unknown>),
-      content: transformedBody.content,
+      ...transformedBody,
     });
   }
 
