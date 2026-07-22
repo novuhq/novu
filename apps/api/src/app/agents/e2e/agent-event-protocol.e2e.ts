@@ -5,6 +5,7 @@ import {
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
   IntegrationRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import {
   AgentRuntimeProviderIdEnum,
@@ -20,6 +21,7 @@ import sinon from 'sinon';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import { ManagedAgentService } from '../managed-runtime/managed-agent.service';
+import { AgentEventSink } from '../shared/agent-event-sink.service';
 import { activityRepository, conversationRepository, seedConversation } from './helpers/agent-test-setup';
 import { stubResolveAgentRuntime } from './helpers/stub-resolve-agent-runtime';
 
@@ -36,6 +38,7 @@ process.env.THALAMUS_CF_URL = 'http://127.0.0.1:7890';
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelConnectionRepository = new ChannelConnectionRepository();
+const subscriberRepository = new SubscriberRepository();
 
 interface ManagedProtocolContext {
   session: UserSession;
@@ -45,6 +48,7 @@ interface ManagedProtocolContext {
   integrationIdentifier: string;
   conversationId: string;
   platformThreadId: string;
+  subscriberId: string;
 }
 
 interface ThalamusWebhookPayload {
@@ -127,9 +131,14 @@ function buildMockProvider() {
   };
 }
 
+function getIngestedEventTypes(ingestSpy: sinon.SinonSpy): string[] {
+  return ingestSpy.getCalls().map((call) => call.args[0].event.type as string);
+}
+
 describe('AgentEvent protocol — managed webhook path #novu-v2', () => {
   let ctx: ManagedProtocolContext;
   let sequence = 0;
+  let ingestSpy: sinon.SinonSpy;
 
   const previousConversationalAgentsFlag = process.env.IS_CONVERSATIONAL_AGENTS_ENABLED;
   const previousManagedRuntimeFlag = process.env.IS_MANAGED_AGENT_RUNTIME_ENABLED;
@@ -184,6 +193,9 @@ describe('AgentEvent protocol — managed webhook path #novu-v2', () => {
   beforeEach(async () => {
     ctx = await setupManagedProtocolContext();
     sequence = 0;
+
+    const agentEventSink = testServer.getService(AgentEventSink);
+    ingestSpy = sinon.spy(agentEventSink, 'ingest');
 
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
     sinon.stub(bridgeExecutor, 'execute').resolves();
@@ -311,6 +323,14 @@ describe('AgentEvent protocol — managed webhook path #novu-v2', () => {
 
     const platformThreadId = conversation.channels[0].platformThreadId;
 
+    const subscriber = await subscriberRepository.create({
+      subscriberId: `sub-protocol-e2e-${Date.now()}`,
+      firstName: 'Protocol',
+      lastName: 'E2E',
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
     return {
       session,
       agentId,
@@ -319,6 +339,7 @@ describe('AgentEvent protocol — managed webhook path #novu-v2', () => {
       integrationIdentifier: slackIntegration.identifier,
       conversationId,
       platformThreadId,
+      subscriberId: subscriber.subscriberId,
     };
   }
 
@@ -330,7 +351,7 @@ describe('AgentEvent protocol — managed webhook path #novu-v2', () => {
       agentIdentifier: ctx.agentIdentifier,
       integrationIdentifier: ctx.integrationIdentifier,
       agentId: ctx.agentId,
-      subscriberId: '',
+      subscriberId: ctx.subscriberId,
       platform: 'slack',
       platformThreadId: ctx.platformThreadId,
       sessionId,
@@ -411,6 +432,11 @@ describe('AgentEvent protocol — managed webhook path #novu-v2', () => {
     }
 
     expect(agentActivity.content).to.equal(replyMarkdown);
+
+    const eventTypes = getIngestedEventTypes(ingestSpy);
+    expect(eventTypes).to.include('run-start');
+    expect(eventTypes).to.include('message');
+    expect(eventTypes).to.include('run-finish');
   });
 
   it('persists a pending approval card activity when finish requires-action with actionsRequired', async () => {
@@ -458,5 +484,29 @@ describe('AgentEvent protocol — managed webhook path #novu-v2', () => {
 
     expect(approvalActivity.toolData?.toolName).to.equal('issueRefund');
     expect(approvalActivity.toolData?.toolCallId).to.equal(toolUseId);
+
+    const eventTypes = getIngestedEventTypes(ingestSpy);
+    expect(eventTypes).to.include('tool-approval-request');
+    expect(eventTypes).to.include('run-finish');
+
+    const runFinishCall = ingestSpy.getCalls().find((call) => call.args[0].event.type === 'run-finish');
+    expect(runFinishCall?.args[0].event.outcome).to.equal('paused');
+  });
+
+  it('does not call AgentEventSink.ingest when the protocol flag is off', async () => {
+    process.env[FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED] = 'false';
+
+    const sessionId = `sess_flag_off_${Date.now()}`;
+    const runId = `run_flag_off_${Date.now()}`;
+    const turnId = `turn_flag_off_${Date.now()}`;
+
+    await deliverSignedSequence(sessionId, runId, turnId, [
+      { type: 'stream-start' },
+      { type: 'message', text: 'ignored' },
+    ]);
+
+    expect(ingestSpy.called).to.be.false;
+
+    process.env[FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED] = 'true';
   });
 });
