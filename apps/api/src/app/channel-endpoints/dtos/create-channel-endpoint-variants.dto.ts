@@ -13,6 +13,7 @@ import {
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  ToolWebhookEndpointDto,
   WebexPersonEndpointDto,
   WebexRoomEndpointDto,
   WebhookEndpointDto,
@@ -331,4 +332,25 @@ export class CreateOpsgenieIntegrationEndpointDto extends CreateChannelEndpointB
   @ValidateNested()
   @Type(() => OpsgenieIntegrationEndpointDto)
   endpoint: OpsgenieIntegrationEndpointDto;
+}
+
+export class CreateToolWebhookEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.TOOL_WEBHOOK],
+    example: ENDPOINT_TYPES.TOOL_WEBHOOK,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.TOOL_WEBHOOK])
+  type: typeof ENDPOINT_TYPES.TOOL_WEBHOOK;
+
+  @ApiProperty({
+    description:
+      'Tool webhook endpoint data. The url/headers/method are persisted encrypted on the linked ChannelConnection; the ChannelEndpoint itself carries a lightweight connection reference.',
+    type: ToolWebhookEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => ToolWebhookEndpointDto)
+  endpoint: ToolWebhookEndpointDto;
 }

@@ -59,6 +59,7 @@ function deriveLinkedPlatformUser(
     case ENDPOINT_TYPES.LINE_USER:
     case ENDPOINT_TYPES.OPSGENIE_INTEGRATION:
     case ENDPOINT_TYPES.PAGERDUTY_SERVICE:
+    case ENDPOINT_TYPES.TOOL_WEBHOOK:
       return null;
     default: {
       const exhaustiveCheck: never = type;
@@ -236,15 +237,18 @@ export class CreateChannelEndpoint {
   }
 
   /**
-   * PagerDuty / Opsgenie routing is per subscriber. The wire payload (e.g.
-   * `{ routingKey, region }` or `{ apiKey, region }`) is persisted encrypted on
-   * a fresh `ChannelConnection.auth`. The stored `ChannelEndpoint.endpoint`
-   * document is empty — the read path re-hydrates the wire shape from the
-   * decrypted auth.
+   * PagerDuty / Opsgenie / Tool webhook routing is per subscriber. The wire
+   * payload (e.g. `{ routingKey, region }`, `{ apiKey, region }`, or
+   * `{ url, headers?, method? }`) is persisted encrypted on a fresh
+   * `ChannelConnection.auth`. The stored `ChannelEndpoint.endpoint` document
+   * is empty — the read path re-hydrates the wire shape from the decrypted
+   * auth.
    *
    * Ordering: connection first, endpoint second. If the endpoint create fails
-   * (partial unique index → duplicate subscriber/integration pair), we delete
-   * the just-created connection so a retry starts from a clean slate.
+   * (partial unique index → duplicate subscriber/integration pair — PagerDuty
+   * and Opsgenie only; tool_webhook has no such index and allows multiple
+   * endpoints per subscriber/integration), we delete the just-created
+   * connection so a retry starts from a clean slate.
    */
   private async createConnectionBackedEndpoint(
     command: CreateChannelEndpointCommand,
@@ -394,6 +398,10 @@ export class CreateChannelEndpoint {
 
     if (type === ENDPOINT_TYPES.OPSGENIE_INTEGRATION && integration.providerId !== ToolProviderIdEnum.Opsgenie) {
       throw new BadRequestException(`Channel endpoint type "${type}" requires an Opsgenie integration`);
+    }
+
+    if (type === ENDPOINT_TYPES.TOOL_WEBHOOK && integration.providerId !== ToolProviderIdEnum.Webhook) {
+      throw new BadRequestException(`Channel endpoint type "${type}" requires a Tool webhook integration`);
     }
   }
 
