@@ -195,6 +195,7 @@ export class ResolveChannelEndpoints {
    * - MS Teams: Fetches Bot Framework token from Microsoft
    * - Slack: Extracts OAuth token from connection
    * - PagerDuty / Opsgenie: Decrypts the routing secret + region and hydrates endpoint wire shape
+   * - Tool Webhook (dynamic mode): Decrypts url/headers/method and hydrates endpoint wire shape
    */
   private async extractToken(
     endpoint: ChannelEndpointEntity,
@@ -207,6 +208,10 @@ export class ResolveChannelEndpoints {
 
     if (endpoint.type === ENDPOINT_TYPES.WEBEX_ROOM || endpoint.type === ENDPOINT_TYPES.WEBEX_PERSON) {
       return await this.extractWebexToken(endpoint, connectionMap);
+    }
+
+    if (endpoint.type === ENDPOINT_TYPES.TOOL_WEBHOOK) {
+      return this.extractToolWebhookAuth(endpoint, connectionMap);
     }
 
     const connectionRoutedAuthConfig = CONNECTION_ROUTED_AUTH_CONFIGS[endpoint.type];
@@ -254,6 +259,53 @@ export class ResolveChannelEndpoints {
     }
 
     return { endpoint: { [secretField]: secret, region: decrypted.region } };
+  }
+
+  /**
+   * Rehydrates the tool-webhook wire shape (`endpoint: { url, headers?, method? }`)
+   * from the linked, encrypted `ChannelConnection.auth`. Returned as an
+   * `endpoint` override so `buildChannelData`'s spread replaces the empty
+   * stored endpoint document with the routing values the provider reads.
+   * `headers`/`method` are optional per-subscriber overrides; only `url` is
+   * required.
+   */
+  private extractToolWebhookAuth(
+    endpoint: ChannelEndpointEntity,
+    connectionMap: Map<string, ChannelConnectionEntity>
+  ): Record<string, unknown> {
+    const providerLabel = 'Tool Webhook';
+
+    if (!endpoint.connectionIdentifier) {
+      throw new Error(`${providerLabel} endpoint ${endpoint.identifier} requires a linked channel connection`);
+    }
+
+    const connection = connectionMap.get(endpoint.connectionIdentifier);
+    if (!connection?.auth) {
+      throw new Error(
+        `${providerLabel} endpoint ${endpoint.identifier} references channel connection ${endpoint.connectionIdentifier} but no auth is available`
+      );
+    }
+
+    const decrypted = decryptChannelConnectionAuth(connection.auth) as ChannelConnectionAuth | null;
+    const url = decrypted?.url;
+
+    if (!url) {
+      throw new Error(`${providerLabel} channel connection ${connection.identifier} is missing url in auth`);
+    }
+
+    const hydratedEndpoint: { url: string; headers?: Record<string, string>; method?: 'POST' | 'PUT' | 'PATCH' } = {
+      url,
+    };
+
+    if (decrypted?.headers) {
+      hydratedEndpoint.headers = decrypted.headers;
+    }
+
+    if (decrypted?.method) {
+      hydratedEndpoint.method = decrypted.method;
+    }
+
+    return { endpoint: hydratedEndpoint };
   }
 
   /**

@@ -19,6 +19,7 @@ import {
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  type ICredentials,
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { ChannelData } from '@novu/stateless';
@@ -40,14 +41,31 @@ const LOG_CONTEXT = 'SendMessageTool';
  * cannot fall back to env-level integration credentials. If no endpoint is
  * resolved for the subscriber, we silently skip the integration (execution
  * detail + `SKIPPED` status) rather than attempting a credential-based send.
+ *
+ * PagerDuty and Opsgenie are unconditionally endpoint-routed. The tool
+ * webhook is endpoint-routed only when its integration credentials opt into
+ * dynamic routing (`routingMode === 'dynamic'`); otherwise (missing or
+ * `'static'`) it stays credential-routed via the env-level `webhookUrl`, and
+ * any channel endpoints that exist for the subscriber are ignored.
  */
 export const ENDPOINT_ROUTED_TOOL_PROVIDERS = new Set<string>([
   ToolProviderIdEnum.PagerDuty,
   ToolProviderIdEnum.Opsgenie,
 ]);
 
-export function isEndpointRoutedToolProvider(providerId: string): boolean {
-  return ENDPOINT_ROUTED_TOOL_PROVIDERS.has(providerId);
+export function isEndpointRoutedToolProvider(
+  providerId: string,
+  credentials?: Pick<ICredentials, 'routingMode'>
+): boolean {
+  if (ENDPOINT_ROUTED_TOOL_PROVIDERS.has(providerId)) {
+    return true;
+  }
+
+  if (providerId === ToolProviderIdEnum.Webhook) {
+    return credentials?.routingMode === 'dynamic';
+  }
+
+  return false;
 }
 
 type ToolStepOutputs = {
@@ -138,23 +156,27 @@ export class SendMessageTool extends SendMessageBase {
     const toolFactory = new ToolFactory();
 
     for (const integration of integrations) {
-      const resolved = endpointsByIntegration.get(integration.identifier);
-      const channelDataList = resolved?.channelData ?? [];
+      const endpointRouted = isEndpointRoutedToolProvider(integration.providerId, integration.credentials);
 
-      if (channelDataList.length === 0) {
-        if (isEndpointRoutedToolProvider(integration.providerId)) {
-          await this.emitSkippedNoEndpoint(command, integration);
-          anySkipped = true;
-          continue;
-        }
-
-        // The tool webhook is the only remaining credential-routed provider —
-        // it routes via env-level integration credentials, so preserve the
-        // legacy send path.
+      if (!endpointRouted) {
+        // Credential-routed (PagerDuty/Opsgenie never reach this branch; the
+        // tool webhook does whenever routingMode is missing or 'static').
+        // Routes via env-level integration credentials, so send exactly once
+        // and ignore any channel endpoints that happen to exist for the
+        // subscriber.
         const result = await this.sendToIntegration(command, integration, content, toolFactory, undefined);
         status = this.mergeStatus(status, result.status);
         if (result.status === SendMessageStatus.SUCCESS) anySent = true;
         else if (result.status === SendMessageStatus.SKIPPED) anySkipped = true;
+        continue;
+      }
+
+      const resolved = endpointsByIntegration.get(integration.identifier);
+      const channelDataList = resolved?.channelData ?? [];
+
+      if (channelDataList.length === 0) {
+        await this.emitSkippedNoEndpoint(command, integration);
+        anySkipped = true;
         continue;
       }
 
