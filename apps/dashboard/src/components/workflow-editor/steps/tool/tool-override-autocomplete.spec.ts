@@ -54,4 +54,26 @@ describe('getToolOverrideCompletionResult', () => {
 
     expect(result?.options.find((option) => option.label === 'incident')?.detail).toContain('Incident webhook');
   });
+
+  it('follows array item schemas into nested object cursors', () => {
+    const doc = '{"events":[{"';
+    const result = getToolOverrideCompletionResult({
+      doc,
+      pos: doc.length,
+      explicit: true,
+      fieldSchemas: {
+        events: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              kind: { type: 'string', enum: ['created', 'updated'] },
+            },
+          },
+        },
+      },
+    });
+
+    expect(result?.options.map((option) => option.label)).toEqual(['kind']);
+  });
 });

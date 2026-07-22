@@ -116,7 +116,18 @@ function mergeFieldSchema(existing: WebhookFieldSchema, incoming: WebhookFieldSc
     return { ...existing, sources, properties };
   }
 
-  return { ...existing, sources };
+  const enumValues =
+    existing.enum && incoming.enum ? existing.enum.filter((value) => incoming.enum?.includes(value)) : existing.enum;
+  const maxLength =
+    existing.maxLength !== undefined && incoming.maxLength !== undefined
+      ? Math.min(existing.maxLength, incoming.maxLength)
+      : (existing.maxLength ?? incoming.maxLength);
+  const items =
+    existing.items && incoming.items
+      ? mergeFieldSchema(existing.items, incoming.items)
+      : (existing.items ?? incoming.items);
+
+  return { ...existing, sources, enum: enumValues ?? incoming.enum, maxLength, items };
 }
 
 function parseRootSchema(payloadSchema: string | undefined): JsonSchema | undefined {

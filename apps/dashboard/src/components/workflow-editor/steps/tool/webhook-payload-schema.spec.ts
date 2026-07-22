@@ -57,6 +57,32 @@ describe('mergeWebhookPayloadSchemas', () => {
     expect(result.properties.incident.properties?.priority.sources).toEqual(['Escalation webhook']);
   });
 
+  it('conservatively merges compatible constraints from every source', () => {
+    const result = mergeWebhookPayloadSchemas([
+      {
+        name: 'Broad webhook',
+        payloadSchema: JSON.stringify({
+          type: 'object',
+          properties: {
+            status: { type: 'string', enum: ['open', 'closed'], maxLength: 20 },
+          },
+        }),
+      },
+      {
+        name: 'Strict webhook',
+        payloadSchema: JSON.stringify({
+          type: 'object',
+          properties: {
+            status: { type: 'string', enum: ['open', 'pending'], maxLength: 10 },
+          },
+        }),
+      },
+    ]);
+
+    expect(result.properties.status.enum).toEqual(['open']);
+    expect(result.properties.status.maxLength).toBe(10);
+  });
+
   it('retains every source and type when schemas collide', () => {
     const result = mergeWebhookPayloadSchemas([
       {

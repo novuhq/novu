@@ -50,12 +50,14 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
 type ToolProviderOverrideEditorProps = {
   providerId: DashboardToolContentOverrideProviderId;
   fieldSchemas?: Record<string, OverrideFieldSchema>;
+  ignoredSchemaSources?: string[];
   onDraftParseValidityChange?: (providerId: DashboardToolContentOverrideProviderId, isParseValid: boolean) => void;
 };
 
 export function ToolProviderOverrideEditor({
   providerId,
   fieldSchemas,
+  ignoredSchemaSources = [],
   onDraftParseValidityChange,
 }: ToolProviderOverrideEditorProps) {
   const { control, getValues } = useFormContext();
@@ -240,6 +242,9 @@ export function ToolProviderOverrideEditor({
                     Non-empty JSON replaces default content and is sent to every active webhook integration. Each
                     integration merges its own body template beneath this payload. Empty <code>{'{}'}</code> uses
                     default content.
+                    {ignoredSchemaSources.length > 0 && (
+                      <> Autocomplete is unavailable for: {ignoredSchemaSources.join(', ')}.</>
+                    )}
                   </span>
                 ) : (
                   <span className="text-xs">

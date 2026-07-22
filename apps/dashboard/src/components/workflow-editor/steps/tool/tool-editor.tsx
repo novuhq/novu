@@ -230,6 +230,9 @@ export const ToolEditor = (props: ToolEditorProps) => {
           <ToolProviderOverrideEditor
             providerId={selectedSource}
             fieldSchemas={selectedSource === WEBHOOK_TOOL_PROVIDER_ID ? webhookPayloadSchema.properties : undefined}
+            ignoredSchemaSources={
+              selectedSource === WEBHOOK_TOOL_PROVIDER_ID ? webhookPayloadSchema.ignoredSources : undefined
+            }
             onDraftParseValidityChange={handleDraftParseValidityChange}
           />
         ) : (

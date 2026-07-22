@@ -13,9 +13,11 @@ import {
   type OverrideFieldSchema,
 } from './tool-override-field-schema';
 
+type SchemaPathSegment = { kind: 'property'; key: string } | { kind: 'items' };
+
 type ObjectFrame = {
   kind: 'object';
-  path: string[];
+  path: SchemaPathSegment[];
   state: 'key-or-end' | 'colon' | 'value' | 'comma-or-end';
   pendingKey?: string;
   usedKeys: Set<string>;
@@ -23,6 +25,7 @@ type ObjectFrame = {
 
 type ArrayFrame = {
   kind: 'array';
+  path: SchemaPathSegment[];
   state: 'value-or-end' | 'comma-or-end';
 };
 
@@ -35,6 +38,18 @@ function finishParentValue(frame: JsonFrame | undefined) {
   } else if (frame?.kind === 'array' && frame.state === 'value-or-end') {
     frame.state = 'comma-or-end';
   }
+}
+
+function getNestedValuePath(frame: JsonFrame | undefined): SchemaPathSegment[] {
+  if (frame?.kind === 'object' && frame.state === 'value' && frame.pendingKey) {
+    return [...frame.path, { kind: 'property', key: frame.pendingKey }];
+  }
+
+  if (frame?.kind === 'array' && frame.state === 'value-or-end') {
+    return [...frame.path, { kind: 'items' }];
+  }
+
+  return [];
 }
 
 function readJsonString(doc: string, start: number, limit: number): { value: string; end: number } | undefined {
@@ -127,10 +142,7 @@ function getObjectCursorContext(doc: string, pos: number): ObjectFrame | undefin
     }
 
     if (char === '{') {
-      const path =
-        frame?.kind === 'object' && frame.state === 'value' && frame.pendingKey
-          ? [...frame.path, frame.pendingKey]
-          : [];
+      const path = getNestedValuePath(frame);
       finishParentValue(frame);
       frames.push({ kind: 'object', path, state: 'key-or-end', usedKeys: new Set() });
       index += 1;
@@ -138,8 +150,9 @@ function getObjectCursorContext(doc: string, pos: number): ObjectFrame | undefin
     }
 
     if (char === '[') {
+      const path = getNestedValuePath(frame);
       finishParentValue(frame);
-      frames.push({ kind: 'array', state: 'value-or-end' });
+      frames.push({ kind: 'array', path, state: 'value-or-end' });
       index += 1;
       continue;
     }
@@ -177,20 +190,26 @@ function getObjectCursorContext(doc: string, pos: number): ObjectFrame | undefin
 
 function getSchemasAtPath(
   rootSchemas: Record<string, OverrideFieldSchema>,
-  path: string[]
+  path: SchemaPathSegment[]
 ): Record<string, OverrideFieldSchema> {
-  let schemas = rootSchemas;
+  let schemas: Record<string, OverrideFieldSchema> | undefined = rootSchemas;
+  let field: OverrideFieldSchema | undefined;
 
   for (const segment of path) {
-    const next = schemas[segment]?.properties;
-    if (!next) {
+    if (segment.kind === 'property') {
+      field = schemas?.[segment.key];
+    } else {
+      field = field?.items;
+    }
+
+    if (!field) {
       return {};
     }
 
-    schemas = next;
+    schemas = field.properties;
   }
 
-  return schemas;
+  return schemas ?? {};
 }
 
 function buildFieldInfo(fieldSchema: OverrideFieldSchema): string | undefined {
