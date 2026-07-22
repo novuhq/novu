@@ -130,4 +130,9 @@ export interface ICredentials {
   headers?: string;
   /** Custom webhook request body template. */
   body?: string;
+  /**
+   * Tool-webhook routing mode. `'static'` sends to the integration `webhookUrl`;
+   * `'dynamic'` fans out to per-subscriber `tool_webhook` endpoints. Missing = static.
+   */
+  routingMode?: 'static' | 'dynamic';
 }

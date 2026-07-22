@@ -98,4 +98,39 @@ describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
     expect(decrypted!.apiKey).toEqual(apiKey);
     expect(decrypted!.region).toEqual('eu');
   });
+
+  it('encrypts tool_webhook url, headers values, and method', () => {
+    const auth = {
+      url: 'https://hooks.example.com/inbound',
+      headers: { Authorization: 'Bearer secret-token', 'X-Custom': 'value' },
+      method: 'POST' as const,
+    };
+    const encrypted = encryptChannelConnectionAuth(auth);
+
+    expect((encrypted!.url as string).startsWith(novuSubMask)).toBe(true);
+    expect(encrypted!.url).not.toEqual(auth.url);
+    expect((encrypted!.method as string).startsWith(novuSubMask)).toBe(true);
+    expect(encrypted!.method).not.toEqual(auth.method);
+
+    const encryptedHeaders = encrypted!.headers as Record<string, string>;
+    expect(encryptedHeaders.Authorization.startsWith(novuSubMask)).toBe(true);
+    expect(encryptedHeaders.Authorization).not.toEqual(auth.headers.Authorization);
+    expect(encryptedHeaders['X-Custom'].startsWith(novuSubMask)).toBe(true);
+
+    const decrypted = decryptChannelConnectionAuth(encrypted);
+    expect(decrypted!.url).toEqual(auth.url);
+    expect(decrypted!.method).toEqual(auth.method);
+    expect(decrypted!.headers).toEqual(auth.headers);
+  });
+
+  it('round-trips tool_webhook auth with optional headers/method omitted', () => {
+    const auth: { url: string; headers?: Record<string, string>; method?: 'POST' | 'PUT' | 'PATCH' } = {
+      url: 'https://example.com/hook',
+    };
+    const decrypted = decryptChannelConnectionAuth(encryptChannelConnectionAuth(auth));
+
+    expect(decrypted!.url).toEqual(auth.url);
+    expect(decrypted!.headers).toBeUndefined();
+    expect(decrypted!.method).toBeUndefined();
+  });
 });

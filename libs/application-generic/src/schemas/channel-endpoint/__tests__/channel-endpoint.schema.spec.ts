@@ -83,4 +83,53 @@ describe('ChannelEndpointSchema', () => {
       })
     ).toBe(false);
   });
+
+  it('should validate tool_webhook endpoints', () => {
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+        url: 'https://hooks.example.com/inbound',
+      })
+    ).toBe(true);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+        url: 'https://hooks.example.com/inbound',
+        headers: { Authorization: 'Bearer token' },
+        method: 'PUT',
+      })
+    ).toBe(true);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+        url: 'http://localhost:3000/hook',
+        method: 'PATCH',
+      })
+    ).toBe(true);
+
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {})).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, { url: 'not-a-url' })).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, { url: 'ftp://example.com' })).toBe(false);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+        url: 'https://hooks.example.com/inbound',
+        method: 'DELETE',
+      })
+    ).toBe(false);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+        url: 'https://hooks.example.com/inbound',
+        headers: 'Authorization: Bearer token',
+      })
+    ).toBe(false);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+        url: 'https://hooks.example.com/inbound',
+        headers: { Authorization: 123 },
+      })
+    ).toBe(false);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+        url: 'https://hooks.example.com/inbound',
+        extra: 'prop',
+      })
+    ).toBe(false);
+  });
 });
