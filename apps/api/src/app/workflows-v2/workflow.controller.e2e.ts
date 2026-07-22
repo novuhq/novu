@@ -1048,6 +1048,88 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       updatedWorkflow = await patchWorkflow(workflowDto.id, true);
       expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
     });
+
+    it('should clear ERROR status after fixing step issues via update', async () => {
+      const createdWorkflow = await createWorkflow(
+        apiClient,
+        buildWorkflow({
+          steps: [
+            {
+              name: 'In-App Test Step',
+              type: 'in_app',
+              controlValues: {
+                redirect: { url: 'https://example.com', target: '_blank' },
+              },
+            },
+          ],
+        } as CreateWorkflowDto)
+      );
+
+      expect(createdWorkflow.status).to.equal(WorkflowStatusEnum.Error);
+
+      const fixedWorkflow = await updateWorkflow(createdWorkflow.id, {
+        ...mapResponseToUpdateDto(createdWorkflow),
+        steps: [
+          {
+            id: createdWorkflow.steps[0].id,
+            type: 'in_app',
+            name: 'In-App Test Step',
+            controlValues: {
+              body: 'Fixed body',
+              redirect: { url: 'https://example.com', target: '_blank' },
+            },
+          },
+        ],
+      });
+
+      expect(fixedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(fixedWorkflow.steps[0].issues?.controls).to.not.exist;
+    });
+
+    it('should clear ERROR status after payload schema patch recalculates step issues', async () => {
+      const createdWorkflow = await createWorkflow(
+        apiClient,
+        buildWorkflow({
+          payloadSchema: {
+            type: 'object',
+            properties: {},
+            required: [],
+            additionalProperties: false,
+          },
+          steps: [
+            {
+              name: 'Email Test Step',
+              type: 'email',
+              controlValues: {
+                subject: 'Welcome',
+                body: 'Hello {{payload.firstName}}',
+              },
+            },
+          ],
+        } as CreateWorkflowDto)
+      );
+
+      expect(createdWorkflow.status).to.equal(WorkflowStatusEnum.Error);
+
+      const patchedWorkflow = (
+        await apiClient.workflows.patch(
+          {
+            payloadSchema: {
+              type: 'object',
+              properties: {
+                firstName: { type: 'string' },
+              },
+              required: [],
+              additionalProperties: false,
+            },
+          },
+          createdWorkflow.id
+        )
+      ).result;
+
+      expect(patchedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(patchedWorkflow.steps[0].issues?.controls).to.not.exist;
+    });
   });
 
   describe('Delete workflow', () => {

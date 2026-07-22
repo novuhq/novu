@@ -3,6 +3,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import {
   AnalyticsService,
   BuildStepIssuesUsecase,
+  computeWorkflowStatus,
   FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -348,6 +349,27 @@ export class DeployStepResolverUsecase {
             'steps._templateId': step.stepInternalId,
           },
           { $set: { 'steps.$.issues': issues } }
+        );
+      }
+
+      const updatedWorkflow = await this.getWorkflowByIdsUseCase.execute(
+        GetWorkflowByIdsCommand.create({
+          workflowIdOrInternalId: workflowInternalId,
+          environmentId: command.user.environmentId,
+          organizationId: command.user.organizationId,
+          userId: command.user._id,
+        })
+      );
+
+      const workflowStatus = computeWorkflowStatus(updatedWorkflow.active ?? false, updatedWorkflow.steps);
+
+      if (workflowStatus !== updatedWorkflow.status) {
+        await this.notificationTemplateRepository.update(
+          {
+            _id: workflowInternalId,
+            _environmentId: command.user.environmentId,
+          },
+          { $set: { status: workflowStatus } }
         );
       }
     }
