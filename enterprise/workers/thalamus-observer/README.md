@@ -27,18 +27,19 @@ API_KEY=local-dev-key
 
 ## Deploy
 
-**Staging and production are deployed by GitHub Actions** (do not rely on laptop Wrangler for Cloud envs):
+Staging and production ship through the shared **Deploy to Novu Cloud** workflow (`.github/workflows/deploy.yml`), same entry point as api/worker/ws:
 
 | Environment | How |
 |-------------|-----|
-| Staging | Auto on push to `next` when this directory changes, or run **Deploy Cloudflare Workers (Staging)** |
-| Production | Manual **Deploy Cloudflare Workers (Production)** workflow only |
+| Staging | Auto on push to `next` when this path is labeled `@novu/thalamus-observer`, or run `deploy.yml` with `deploy_thalamus_observer=true` and `environment=staging` |
+| Production | Manual `deploy.yml` with `deploy_thalamus_observer=true` and `environment=production-us` (or `production-us-and-eu`) |
 
-Workflows:
+Wrangler mapping:
 
-- `.github/workflows/deploy-cf-workers-staging.yml`
-- `.github/workflows/deploy-cf-workers-production.yml`
-- `.github/workflows/reusable-cf-worker-deploy.yml`
+- `staging` → Cloudflare env `staging` (GitHub Environment `staging-eu` secrets)
+- `production-us` / `production-us-and-eu` → Cloudflare env `production` (GitHub Environment `prod-us` secrets)
+
+Required secrets on those GitHub Environments: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
 
 Emergency local deploy (break-glass):
 
