@@ -49,6 +49,8 @@ export interface OutboundPersistContext {
   channel: ConversationChannel;
   agentIdentifier: string;
   agentName?: string;
+  /** Caller-supplied activity identifier for idempotent message persist */
+  activityIdentifier?: string;
   environmentId: string;
   organizationId: string;
 }
@@ -801,6 +803,7 @@ export class OutboundGateway {
       platformMessageId: sent.messageId,
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
+      identifier: persist.activityIdentifier,
       content: this.extractTextFallback(msg),
       richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
