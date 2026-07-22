@@ -119,6 +119,10 @@ export function verifyNovuToolWebhook(rawBody: string, signatureHeader: string |
 
   const expected = crypto.createHmac('sha256', signingSecret).update(rawBody, 'utf-8').digest('hex');
 
+  if (signatureHeader.length !== expected.length) {
+    return false;
+  }
+
   return crypto.timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expected));
 }
 
