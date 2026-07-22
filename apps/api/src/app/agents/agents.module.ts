@@ -69,6 +69,7 @@ import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
 import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
+import { SdkAgentEventsHandler } from './managed-runtime/sdk-agent-events.handler';
 import { ToolTrustService } from './managed-runtime/tool-approval/tool-trust.service';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
@@ -143,6 +144,7 @@ import { USE_CASES } from './usecases';
     ManagedAgentEventHandler,
     AgentEventSink,
     ManagedAgentService,
+    SdkAgentEventsHandler,
     ToolTrustService,
     McpConnectionVaultService,
     McpConnectRedirectService,
