@@ -32,6 +32,8 @@ import type {
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
+import { AgentEventOutbox } from './agent-event-outbox';
+import type { AgentEvent, AgentFileRef, AgentMessageContent } from './agent-event-protocol';
 import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
@@ -208,6 +210,31 @@ async function serializeContent(content: MessageContent, files?: FileRef[]): Pro
   throw new Error('Invalid message content — expected string or CardElement');
 }
 
+function mint(prefix: string): string {
+  return `${prefix}_${crypto.randomUUID()}`;
+}
+
+function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
+  if ('markdown' in reply) {
+    return { markdown: reply.markdown };
+  }
+
+  return { card: reply.card };
+}
+
+function toAgentFileRefs(files?: FileRef[]): AgentFileRef[] | undefined {
+  if (!files?.length) {
+    return undefined;
+  }
+
+  return files.map((file, index) => ({
+    fileId: file.filename || `file_${index}`,
+    name: file.filename,
+    mediaType: file.mimeType,
+    ...(file.data !== undefined ? { data: typeof file.data === 'string' ? file.data : undefined } : {}),
+  }));
+}
+
 interface ReplyPoster {
   post(body: AgentReplyPayload): Promise<SentMessageInfo | null>;
 }
@@ -223,7 +250,8 @@ class ReplyHandleImpl implements ReplyHandle {
     platformThreadId: string,
     private readonly conversationId: string,
     private readonly integrationIdentifier: string,
-    private readonly poster: ReplyPoster
+    private readonly poster: ReplyPoster,
+    private readonly outbox?: AgentEventOutbox
   ) {
     this.messageId = messageId;
     this.platformThreadId = platformThreadId;
@@ -231,6 +259,19 @@ class ReplyHandleImpl implements ReplyHandle {
 
   async edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     this.editedByHandler = true;
+    const serialized = await serializeContent(content, options?.files);
+
+    if (this.outbox) {
+      await this.outbox.emit({
+        type: 'channel.edit',
+        messageId: this.messageId,
+        content: toAgentMessageContent(serialized),
+        files: toAgentFileRefs(serialized.files),
+      });
+
+      return this;
+    }
+
     const info = await this.poster.post({
       conversationId: this.conversationId,
       integrationIdentifier: this.integrationIdentifier,
@@ -254,6 +295,15 @@ class ReplyHandleImpl implements ReplyHandle {
   }
 
   async delete(): Promise<void> {
+    if (this.outbox) {
+      await this.outbox.emit({
+        type: 'channel.delete',
+        messageId: this.messageId,
+      });
+
+      return;
+    }
+
     await this.poster.post({
       conversationId: this.conversationId,
       integrationIdentifier: this.integrationIdentifier,
@@ -298,6 +348,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private readonly _integrationIdentifier: string;
   private readonly _secretKey: string;
   private readonly _poster: ReplyPoster;
+  private readonly _outbox?: AgentEventOutbox;
 
   constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
     this.event = request.event as AgentEventEnum;
@@ -317,6 +368,15 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._secretKey = secretKey;
     this._poster = { post: (body) => this._post(body) };
     this._toolApprovalConfig = toolApprovalConfig;
+    this._outbox = request.eventsUrl
+      ? new AgentEventOutbox({
+          eventsUrl: request.eventsUrl,
+          secretKey,
+          conversationId: request.conversationId,
+          agentId: request.agentId,
+          turnId: request.deliveryId,
+        })
+      : undefined;
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
 
@@ -342,12 +402,23 @@ export class AgentContextImpl implements AgentRuntimeContext {
       },
     };
 
-    const postTyping = (op: TypingOp): Promise<void> =>
-      this._post({
+    const postTyping = (op: TypingOp): Promise<void> => {
+      if (this._outbox) {
+        if (op === 'stop') {
+          return this._outbox.emit({ type: 'channel.typing', state: 'off' });
+        }
+
+        const status = typeof op === 'object' && 'status' in op ? op.status : undefined;
+
+        return this._outbox.emit({ type: 'channel.typing', state: 'on', status });
+      }
+
+      return this._post({
         conversationId: this._conversationId,
         integrationIdentifier: this._integrationIdentifier,
         typing: op,
       }).then(() => undefined);
+    };
 
     const typing = ((status?: string) => postTyping(status === undefined ? {} : { status })) as TypingControl;
     typing.stop = () => postTyping('stop');
@@ -368,6 +439,27 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     const reply = await serializeContent(content, options?.files);
+
+    if (this._outbox) {
+      const messageId = mint('msg');
+      const events = this._collectSideEffectEvents();
+      events.push({
+        type: 'message',
+        messageId,
+        content: toAgentMessageContent(reply),
+        files: toAgentFileRefs(reply.files),
+      });
+      await this._emitAndFlush(events);
+
+      return new ReplyHandleImpl(
+        messageId,
+        '',
+        this._conversationId,
+        this._integrationIdentifier,
+        this._poster,
+        this._outbox
+      );
+    }
 
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
@@ -392,6 +484,13 @@ export class AgentContextImpl implements AgentRuntimeContext {
   }
 
   async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
+    if (this._outbox) {
+      const events = this._collectSideEffectEvents();
+      await this._emitAndFlush(events);
+
+      return new ReplyHandleImpl('', '', this._conversationId, this._integrationIdentifier, this._poster, this._outbox);
+    }
+
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
@@ -416,7 +515,22 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   /** @internal Build a handle to an already-posted message (used to resume an approval). */
   createReplyHandle(messageId: string): ReplyHandleImpl {
-    return new ReplyHandleImpl(messageId, '', this._conversationId, this._integrationIdentifier, this._poster);
+    return new ReplyHandleImpl(
+      messageId,
+      '',
+      this._conversationId,
+      this._integrationIdentifier,
+      this._poster,
+      this._outbox
+    );
+  }
+
+  async emit(event: { name: string; data: unknown }): Promise<void> {
+    if (!this._outbox) {
+      return;
+    }
+
+    await this._outbox.emit({ type: 'custom', name: event.name, data: event.data });
   }
 
   resolve(summary?: string): void {
@@ -452,6 +566,12 @@ export class AgentContextImpl implements AgentRuntimeContext {
   /** Best-effort failure report to Novu. Never throws. */
   async reportTurnError(): Promise<void> {
     try {
+      if (this._outbox) {
+        await this._outbox.emit({ type: 'run-error', message: 'agent handler failed' });
+
+        return;
+      }
+
       await this._post({
         conversationId: this._conversationId,
         integrationIdentifier: this._integrationIdentifier,
@@ -468,6 +588,17 @@ export class AgentContextImpl implements AgentRuntimeContext {
    * Called internally after onResolve returns.
    */
   async flush(): Promise<void> {
+    if (this._outbox) {
+      if (!this._hasPendingSideEffects()) {
+        return;
+      }
+
+      const events = this._collectSideEffectEvents();
+      await this._emitAndFlush(events);
+
+      return;
+    }
+
     if (!this._hasPendingSideEffects()) {
       return;
     }
@@ -480,17 +611,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._drainSideEffects(body);
 
     await this._post(body);
-  }
-
-  private _hasPendingSideEffects(): boolean {
-    return !!(
-      this._pendingToolApprovalRequest ||
-      this._signals.length ||
-      this._toolResults.length ||
-      this._resolveSignal ||
-      this._pendingReactions.length ||
-      this._pendingDeletes.length
-    );
   }
 
   private _drainSideEffects(body: AgentReplyPayload): void {
@@ -523,6 +643,92 @@ export class AgentContextImpl implements AgentRuntimeContext {
       body.resolve = this._resolveSignal;
       this._resolveSignal = null;
     }
+  }
+
+  private _hasPendingSideEffects(): boolean {
+    return !!(
+      this._pendingToolApprovalRequest ||
+      this._signals.length ||
+      this._toolResults.length ||
+      this._resolveSignal ||
+      this._pendingReactions.length ||
+      this._pendingDeletes.length
+    );
+  }
+
+  private _collectSideEffectEvents(): AgentEvent[] {
+    const events: AgentEvent[] = [];
+
+    if (this._pendingToolApprovalRequest) {
+      const request = this._pendingToolApprovalRequest;
+      events.push({
+        type: 'tool-approval-request',
+        approvalId: request.approvalId,
+        toolUseId: request.toolCallId,
+        toolName: request.name,
+        input: request.input,
+      });
+      this._pendingToolApprovalRequest = null;
+    }
+
+    if (this._toolResults.length) {
+      for (const result of this._toolResults) {
+        events.push({
+          type: 'tool-use-result',
+          toolUseId: result.toolCallId,
+          content: [
+            { type: 'text', text: String(result.preview ?? '') },
+            { type: 'json', value: result.output },
+          ],
+        });
+      }
+      this._toolResults = [];
+    }
+
+    if (this._signals.length) {
+      for (const signal of this._signals) {
+        events.push({ type: 'signal', signal });
+      }
+      this._signals = [];
+    }
+
+    if (this._pendingReactions.length) {
+      for (const reaction of this._pendingReactions) {
+        events.push({
+          type: 'channel.reaction',
+          messageId: reaction.messageId,
+          emoji: reaction.emojiName,
+          op: 'add',
+        });
+      }
+      this._pendingReactions = [];
+    }
+
+    if (this._pendingDeletes.length) {
+      for (const deletion of this._pendingDeletes) {
+        events.push({ type: 'channel.delete', messageId: deletion.messageId });
+      }
+      this._pendingDeletes = [];
+    }
+
+    if (this._resolveSignal) {
+      events.push({ type: 'resolve', summary: this._resolveSignal.summary });
+      this._resolveSignal = null;
+    }
+
+    return events;
+  }
+
+  private async _emitAndFlush(events: AgentEvent[]): Promise<void> {
+    if (!this._outbox || events.length === 0) {
+      return;
+    }
+
+    for (const event of events) {
+      this._outbox.enqueue(event);
+    }
+
+    await this._outbox.flush();
   }
 
   private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {

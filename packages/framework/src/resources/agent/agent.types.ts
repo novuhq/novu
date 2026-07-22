@@ -469,6 +469,10 @@ export interface AgentHandlerContext {
    */
   deleteMessage(messageId: string): void;
   /**
+   * Emit a custom AgentEvent (event mode only — no-op when the bridge omits `eventsUrl`).
+   */
+  emit(event: { name: string; data: unknown }): Promise<void>;
+  /**
    * Control the typing / "Thinking…" status for the current turn.
    * Posts immediately (like `reply()`), updating the indicator Novu already shows on inbound.
    *

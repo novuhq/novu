@@ -2491,3 +2491,216 @@ describe('tool approval', () => {
     expect(posts[2].reply).toEqual({ markdown: 'resumed' });
   });
 });
+
+describe('event mode (AgentEvent protocol)', () => {
+  const EVENTS_URL = 'https://api.novu.co/v1/agents/events';
+  const REPLY_URL = 'https://api.novu.co/v1/agents/test-bot/reply';
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  function eventModeBridge(overrides?: Partial<AgentBridgeRequest>): AgentBridgeRequest {
+    return createMockBridgeRequest({
+      eventsUrl: EVENTS_URL,
+      ...overrides,
+    });
+  }
+
+  function stubEventModeFetch() {
+    const eventBatches: Array<{ sequence: number; event: { type: string; [key: string]: unknown } }[]> = [];
+    const replyPosts: Record<string, unknown>[] = [];
+
+    vi.stubGlobal('crypto', {
+      randomUUID: vi.fn(() => '00000000-0000-4000-8000-000000000001'),
+    });
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: { body?: string }) => {
+        if (url === EVENTS_URL) {
+          const body = JSON.parse(init!.body!);
+          eventBatches.push(body.events);
+
+          return new Response(
+            JSON.stringify({
+              data: {
+                results: body.events.map((envelope: { sequence: number }) => ({
+                  sequence: envelope.sequence,
+                  status: 'accepted',
+                })),
+              },
+            }),
+            { status: 200 }
+          );
+        }
+
+        if (url === REPLY_URL) {
+          replyPosts.push(JSON.parse(init!.body!));
+
+          return new Response(JSON.stringify({ data: { messageId: 'msg-legacy', platformThreadId: 'thread-1' } }), {
+            status: 200,
+          });
+        }
+
+        throw new Error(`Unexpected fetch URL: ${url}`);
+      })
+    );
+
+    return { eventBatches, replyPosts };
+  }
+
+  it('reply emits message with minted id and returns handle exposing it', async () => {
+    const { eventBatches } = stubEventModeFetch();
+    let handleMessageId = '';
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          const handle = await ctx.reply('Hello from event mode');
+          handleMessageId = handle.messageId;
+          expect(handle.platformThreadId).toBe('');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches).toHaveLength(2);
+    expect(eventBatches[0]).toHaveLength(1);
+    expect(eventBatches[0][0].event).toEqual({
+      type: 'message',
+      messageId: 'msg_00000000-0000-4000-8000-000000000001',
+      content: { markdown: 'Hello from event mode' },
+    });
+    expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+    expect(handleMessageId).toBe('msg_00000000-0000-4000-8000-000000000001');
+  });
+
+  it('handle.edit emits channel.edit with the same message id', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          const handle = await ctx.reply('Draft');
+          await handle.edit('Final');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches).toHaveLength(3);
+    expect(eventBatches[0][0].event.type).toBe('message');
+    expect(eventBatches[1][0].event).toEqual({
+      type: 'channel.edit',
+      messageId: 'msg_00000000-0000-4000-8000-000000000001',
+      content: { markdown: 'Final' },
+    });
+    expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+  });
+
+  it('typing emits channel.typing events', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          await ctx.typing('Searching…');
+          await ctx.typing.stop();
+          await ctx.reply('Done');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0][0].event).toEqual({
+      type: 'channel.typing',
+      state: 'on',
+      status: 'Searching…',
+    });
+    expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+    expect(eventBatches[2][0].event.type).toBe('message');
+  });
+
+  it('batches queued signal then message in one flush on reply', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          ctx.metadata.set('language', 'en');
+          await ctx.reply('Got it');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches).toHaveLength(2);
+    expect(eventBatches[0]).toHaveLength(2);
+    expect(eventBatches[0][0].event).toEqual({
+      type: 'signal',
+      signal: { type: 'metadata', action: 'set', key: 'language', value: 'en' },
+    });
+    expect(eventBatches[0][1].event).toMatchObject({
+      type: 'message',
+      content: { markdown: 'Got it' },
+    });
+    expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+  });
+
+  it('legacy mode without eventsUrl still POSTs to replyUrl', async () => {
+    const { eventBatches, replyPosts } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          await ctx.reply('Legacy reply');
+        },
+      }),
+      event: 'onMessage',
+      bridge: createMockBridgeRequest(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches).toHaveLength(0);
+    expect(replyPosts).toHaveLength(2);
+    expect(replyPosts[0].reply).toEqual({ markdown: 'Legacy reply' });
+    expect(replyPosts[1].typing).toBe('stop');
+  });
+
+  it('replyApprovalCard drains tool-approval-request without a message event', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          await ctx.toolApproval.request({ id: 'tc-1', name: 'doIt', input: { x: 1 } });
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches).toHaveLength(2);
+    expect(eventBatches[0]).toHaveLength(1);
+    expect(eventBatches[0][0].event).toEqual({
+      type: 'tool-approval-request',
+      approvalId: 'tc-1',
+      toolUseId: 'tc-1',
+      toolName: 'doIt',
+      input: { x: 1 },
+    });
+    expect(eventBatches[0].some((envelope) => envelope.event.type === 'message')).toBe(false);
+    expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+  });
+});
