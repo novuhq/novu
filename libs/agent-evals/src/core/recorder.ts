@@ -15,7 +15,8 @@ export class RunRecorder {
 
   constructor(
     private readonly scenarioId: string,
-    private readonly userPrompt: string
+    private readonly userPrompt: string,
+    private readonly projectRoot = ''
   ) {}
 
   recordToolCall(name: string, args: Record<string, unknown>, result?: unknown): void {
@@ -69,6 +70,7 @@ export class RunRecorder {
     return {
       scenarioId: this.scenarioId,
       userPrompt: this.userPrompt,
+      projectRoot: this.projectRoot,
       toolCalls: [...this.toolCalls],
       assistantMessages: [...this.assistantMessages],
       finalText: this.finalText,

@@ -1,13 +1,23 @@
-import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterAll, describe, expect, it } from 'vitest';
 import type { GraderOutcome, GraderResult, RunResult } from '../../core/types.js';
 import { graderToJudge } from './adapters.js';
 import { catalog } from './catalog.js';
 import { graders as keylessTeamsGraders } from './scenarios/keyless-teams-redirect/graders.js';
 
+const wiringFixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-evals-wiring-'));
+
+afterAll(() => {
+  fs.rmSync(wiringFixtureRoot, { recursive: true, force: true });
+});
+
 function buildResult(partial: Partial<RunResult>): RunResult {
   return {
     scenarioId: partial.scenarioId ?? 'test',
     userPrompt: partial.userPrompt ?? 'Connect WhatsApp',
+    projectRoot: partial.projectRoot ?? '',
     toolCalls: partial.toolCalls ?? [],
     assistantMessages: partial.assistantMessages ?? [],
     finalText: partial.finalText ?? '',
@@ -130,25 +140,25 @@ describe('bridge catalog graders', () => {
   });
 
   it('passes wroteBridgeWiring when Write covers route + agent', () => {
+    const routePath = 'app/api/novu/route.ts';
+    const agentPath = 'app/novu/agents/acme-agent-1.tsx';
+    fs.mkdirSync(path.join(wiringFixtureRoot, 'app/api/novu'), { recursive: true });
+    fs.mkdirSync(path.join(wiringFixtureRoot, 'app/novu/agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(wiringFixtureRoot, routePath),
+      "import { serve } from '@novu/framework/next';\nexport const { GET, POST } = serve({ agents: [] });"
+    );
+    fs.writeFileSync(
+      path.join(wiringFixtureRoot, agentPath),
+      "import { agent } from '@novu/framework/ai-sdk';\nexport const a = agent('acme-agent-1', {});"
+    );
+
     const result = buildResult({
+      projectRoot: wiringFixtureRoot,
+      writtenFiles: [routePath, agentPath],
       toolCalls: [
-        {
-          name: 'Write',
-          args: {
-            file_path: 'app/api/novu/route.ts',
-            content:
-              "import { serve } from '@novu/framework/next';\nexport const { GET, POST } = serve({ agents: [] });",
-          },
-          timestamp: Date.now(),
-        },
-        {
-          name: 'Write',
-          args: {
-            file_path: 'app/novu/agents/acme-agent-1.tsx',
-            content: "import { agent } from '@novu/framework/ai-sdk';\nexport const a = agent('acme-agent-1', {});",
-          },
-          timestamp: Date.now(),
-        },
+        { name: 'Write', args: { file_path: routePath }, timestamp: Date.now() },
+        { name: 'Write', args: { file_path: agentPath }, timestamp: Date.now() },
       ],
     });
 
@@ -156,7 +166,7 @@ describe('bridge catalog graders', () => {
   });
 
   it('fails wroteBridgeWiring when Write is missing', () => {
-    const result = buildResult({ toolCalls: [] });
+    const result = buildResult({ toolCalls: [], projectRoot: wiringFixtureRoot });
 
     expect(status(catalog.wroteBridgeWiring({ runtime: 'ai-sdk', agentId: 'acme-agent-1' })(result))).toBe('fail');
   });

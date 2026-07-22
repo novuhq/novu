@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { defineGraders, fail, judge, labeled, toolCallsNamed, transcriptText } from '../../core/graders.js';
 import { isForbiddenWatcherCommand } from '../../core/recorder.js';
 import type { GraderOutcome, RunResult } from '../../core/types.js';
@@ -316,25 +318,40 @@ export const catalog = {
   wroteBridgeWiring:
     (opts: { runtime: 'ai-sdk' | 'langchain'; agentId: string }) =>
     (result: RunResult): GraderOutcome | 'pass' => {
-      const writeCalls = result.toolCalls.filter((call) => call.name === 'Write');
+      const writePaths =
+        result.writtenFiles.length > 0
+          ? result.writtenFiles
+          : result.toolCalls
+              .filter((call) => call.name === 'Write')
+              .map((call) => String(call.args.file_path ?? ''))
+              .filter(Boolean);
 
-      if (writeCalls.length === 0) {
+      if (writePaths.length === 0) {
         return fail('never used Write to create bridge route or agent handler');
       }
 
+      if (!result.projectRoot) {
+        return fail('missing projectRoot on RunResult; cannot re-read written files');
+      }
+
       const importNeedle = opts.runtime === 'ai-sdk' ? '@novu/framework/ai-sdk' : '@novu/framework/langchain';
-      const wroteRoute = writeCalls.some((call) => {
-        const filePath = String(call.args.file_path ?? '');
-        const content = String(call.args.content ?? '');
+      const agentCall = new RegExp(`agent\\(['\\\`]${opts.agentId}['\\\`]`);
 
-        return /api\/novu\/route\.(ts|js|tsx)$/.test(filePath) || /serve\s*\(/.test(content);
+      const files = writePaths.map((filePath) => {
+        try {
+          return {
+            filePath,
+            content: fs.readFileSync(path.join(result.projectRoot, filePath), 'utf8'),
+          };
+        } catch {
+          return { filePath, content: '' };
+        }
       });
-      const wroteAgent = writeCalls.some((call) => {
-        const content = String(call.args.content ?? '');
-        const agentCall = new RegExp(`agent\\(['\\\`]${opts.agentId}['\\\`]`);
 
-        return content.includes(importNeedle) && agentCall.test(content);
-      });
+      const wroteRoute = files.some(
+        ({ filePath, content }) => /api\/novu\/route\.(ts|js|tsx)$/.test(filePath) || /serve\s*\(/.test(content)
+      );
+      const wroteAgent = files.some(({ content }) => content.includes(importNeedle) && agentCall.test(content));
 
       if (!wroteRoute) {
         return fail('did not Write a bridge route (app/api/novu/route.ts with serve())');

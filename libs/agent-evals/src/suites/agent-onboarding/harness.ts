@@ -113,7 +113,7 @@ export function scenarioHarness<TParsed = ParsedCommand>(options: ScenarioHarnes
   return createHarness({
     name: `agent-onboarding/${options.scenario.id}`,
     run: async ({ input }) => {
-      const recorder = new RunRecorder(options.scenario.id, input);
+      const recorder = new RunRecorder(options.scenario.id, input, options.scenario.projectRoot);
       const context = createHarnessContext(options.suite, options.scenario, recorder);
       const tools = createHarnessTools(context);
       const messages: ModelMessage[] = [{ role: 'user', content: input }];

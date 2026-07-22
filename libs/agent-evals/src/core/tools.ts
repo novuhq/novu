@@ -44,22 +44,18 @@ function pickScriptedAnswer<T>(
   return remaining[0];
 }
 
-async function readFixtureFile(projectRoot: string, filePath: string): Promise<string> {
-  const absolutePath = resolveFixturePath(projectRoot, filePath);
+function isInsideRoot(root: string, candidate: string): boolean {
+  const relative = path.relative(root, candidate);
 
-  return fs.readFile(absolutePath, 'utf8');
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
-async function writeFixtureFile(projectRoot: string, filePath: string, content: string): Promise<string> {
-  const absolutePath = resolveFixturePath(projectRoot, filePath);
-  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
-  await fs.writeFile(absolutePath, content, 'utf8');
-
-  return absolutePath;
-}
-
-/** Resolve a path under the fixture root; throw if it escapes. */
-function resolveFixturePath(projectRoot: string, filePath: string): string {
+/**
+ * Lexical containment under projectRoot. Does not follow symlinks — pair with
+ * {@link assertNoSymlinkInPath} before read/write so a fixture symlink cannot
+ * redirect I/O outside the workspace.
+ */
+function resolveLexicalFixturePath(projectRoot: string, filePath: string): string {
   const normalized = normalizePath(filePath);
   const resolvedRoot = path.resolve(projectRoot);
   const absolutePath = path.isAbsolute(normalized)
@@ -69,11 +65,65 @@ function resolveFixturePath(projectRoot: string, filePath: string): string {
   // Segment-safe containment: `path.relative` yields a `..`-prefixed (or absolute)
   // result when the target escapes the root, so sibling roots like `<root>-evil`
   // no longer pass a naive prefix check.
-  const relative = path.relative(resolvedRoot, absolutePath);
-
-  if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) {
+  if (!isInsideRoot(resolvedRoot, absolutePath) || absolutePath === resolvedRoot) {
     throw new Error(`Refusing to access path outside fixture project: ${filePath}`);
   }
+
+  return absolutePath;
+}
+
+/**
+ * Refuse any symlink on the path from the fixture root to `absolutePath`.
+ * Uses lexical `path.resolve(projectRoot)` (not realpath) so macOS `/var` →
+ * `/private/var` indirection does not false-positive as an escape.
+ */
+async function assertNoSymlinkInPath(projectRoot: string, absolutePath: string): Promise<void> {
+  const resolvedRoot = path.resolve(projectRoot);
+
+  if (!isInsideRoot(resolvedRoot, absolutePath)) {
+    throw new Error(`Refusing to access path outside fixture project: ${absolutePath}`);
+  }
+
+  const relative = path.relative(resolvedRoot, absolutePath);
+  const parts = relative.split(path.sep).filter(Boolean);
+  let current = resolvedRoot;
+
+  for (const part of parts) {
+    current = path.join(current, part);
+
+    try {
+      const st = await fs.lstat(current);
+
+      if (st.isSymbolicLink()) {
+        throw new Error(`Refusing to access symlink path: ${current}`);
+      }
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+
+      if (code === 'ENOENT') {
+        // Remaining segments do not exist yet (new write path) — safe to continue.
+        return;
+      }
+
+      throw error;
+    }
+  }
+}
+
+async function readFixtureFile(projectRoot: string, filePath: string): Promise<string> {
+  const absolutePath = resolveLexicalFixturePath(projectRoot, filePath);
+  await assertNoSymlinkInPath(projectRoot, absolutePath);
+
+  return fs.readFile(absolutePath, 'utf8');
+}
+
+async function writeFixtureFile(projectRoot: string, filePath: string, content: string): Promise<string> {
+  const absolutePath = resolveLexicalFixturePath(projectRoot, filePath);
+  await assertNoSymlinkInPath(projectRoot, absolutePath);
+  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  // Re-check after mkdir: recursive create must not have landed under a symlink.
+  await assertNoSymlinkInPath(projectRoot, absolutePath);
+  await fs.writeFile(absolutePath, content, 'utf8');
 
   return absolutePath;
 }
@@ -377,7 +427,8 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
       try {
         await writeFixtureFile(context.scenario.projectRoot, filePath, content);
         context.recorder.recordWrittenFile(filePath);
-        context.recorder.recordToolCall('Write', { file_path: filePath, content }, { bytes: content.length });
+        // Do not persist file bodies in tool-call logs (secrets / eval artifacts).
+        context.recorder.recordToolCall('Write', { file_path: filePath }, { bytes: content.length });
 
         return { ok: true, bytes: content.length };
       } catch (error) {

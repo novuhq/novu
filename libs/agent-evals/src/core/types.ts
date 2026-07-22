@@ -72,6 +72,8 @@ export type EvalScenario<TParsed = ParsedCommand> = {
 export type RunResult = {
   scenarioId: string;
   userPrompt: string;
+  /** Fixture workspace root — used by graders that re-read written files from disk. */
+  projectRoot: string;
   toolCalls: ToolCallRecord[];
   assistantMessages: string[];
   finalText: string;
