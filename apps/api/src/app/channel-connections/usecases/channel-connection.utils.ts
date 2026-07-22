@@ -17,13 +17,19 @@ export function validateConnectionMode({
   connectionMode,
   subscriberId,
   context,
+  contextKeys,
 }: {
   connectionMode?: ConnectionMode;
   subscriberId?: string;
   context?: ContextPayload;
+  contextKeys?: string[];
 }): void {
+  // A session-validated context can arrive as pre-resolved keys instead of a raw
+  // payload; either satisfies the "context present" requirement below.
+  const hasContext = !!context || !!contextKeys?.length;
+
   if (connectionMode === 'shared') {
-    if (!context) {
+    if (!hasContext) {
       throw new BadRequestException('context is required when connectionMode is "shared"');
     }
 
@@ -38,7 +44,7 @@ export function validateConnectionMode({
     return;
   }
 
-  if (!subscriberId && !context) {
+  if (!subscriberId && !hasContext) {
     throw new BadRequestException('Either subscriberId or context must be provided');
   }
 }

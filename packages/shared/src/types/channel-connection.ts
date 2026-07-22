@@ -18,7 +18,15 @@ export type ChannelConnection = {
   subscriberId?: string;
   contextKeys: string[];
 
-  workspace: { id: string; name?: string };
+  /**
+   * Platform workspace this connection was installed into.
+   *
+   * `botUserId` is the platform user id of the bot within this workspace (e.g. Slack `U…`), captured
+   * at OAuth install time (or lazily backfilled via `auth.test`). It's required for channel-mention
+   * detection in multi-workspace mode, where no default bot token is baked into the adapter and the
+   * bot's own identity can't otherwise be resolved from an inbound event.
+   */
+  workspace: { id: string; name?: string; botUserId?: string };
   /**
    * Provider OAuth/bot credentials persisted alongside the connection.
    *

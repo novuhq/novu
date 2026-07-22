@@ -428,7 +428,9 @@ const statusCases: [string, string][] = [
 
 test.each(statusCases)('parseEventBody maps %s to status "%s"', (type, expected) => {
   const provider = new AnypostEmailProvider(mockConfig);
-  const body = { events: [{ id: 'evt', type, occurred_at: '2026-06-24T12:00:00.000Z', data: { email_id: 'email_x' } }] };
+  const body = {
+    events: [{ id: 'evt', type, occurred_at: '2026-06-24T12:00:00.000Z', data: { email_id: 'email_x' } }],
+  };
 
   expect(provider.parseEventBody(body as any, 'email_x')?.status).toBe(expected);
 });
