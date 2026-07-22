@@ -1,7 +1,7 @@
+import crypto from 'node:crypto';
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import { ENDPOINT_TYPES, ToolWebhookData } from '@novu/stateless';
-import crypto from 'crypto';
 import { afterAll, afterEach, beforeAll, beforeEach, expect, test, vi } from 'vitest';
 import { ToolWebhookProvider } from './tool-webhook.provider';
 
@@ -84,6 +84,77 @@ test('static: POSTs compiled content to the configured URL', async () => {
   expect(lastRequest!.url).toBe('/static');
   expect(lastRequest!.method).toBe('POST');
   expect(JSON.parse(lastRequest!.body)).toEqual({ content: 'tool payload' });
+});
+
+test('static: a non-empty provider override replaces the default content contribution', async () => {
+  const provider = new ToolWebhookProvider({
+    webhookUrl: urlFor('/static'),
+  });
+
+  await provider.sendMessage({ content: 'tool payload' }, { title: 'Webhook title' });
+
+  expect(JSON.parse(lastRequest!.body)).toEqual({ title: 'Webhook title' });
+});
+
+test('static: body template keys remain underneath provider override keys', async () => {
+  const provider = new ToolWebhookProvider({
+    webhookUrl: urlFor('/static'),
+    bodyTemplate: JSON.stringify({ source: 'integration', priority: 'low' }),
+  });
+
+  await provider.sendMessage({ content: 'tool payload' }, { priority: 'high', title: 'Webhook title' });
+
+  expect(JSON.parse(lastRequest!.body)).toEqual({
+    source: 'integration',
+    priority: 'high',
+    title: 'Webhook title',
+  });
+});
+
+test('static: an empty provider override falls back to the default content contribution', async () => {
+  const provider = new ToolWebhookProvider({
+    webhookUrl: urlFor('/static'),
+  });
+
+  await provider.sendMessage({ content: 'tool payload' }, {});
+
+  expect(JSON.parse(lastRequest!.body)).toEqual({ content: 'tool payload' });
+});
+
+test('static: custom data and passthrough remain above the provider override', async () => {
+  const provider = new ToolWebhookProvider({
+    webhookUrl: urlFor('/static'),
+  });
+
+  await provider.sendMessage(
+    {
+      content: 'tool payload',
+      customData: { owner: 'custom-data', priority: 'custom-data' },
+    },
+    {
+      owner: 'provider-override',
+      priority: 'provider-override',
+      _passthrough: { body: { priority: 'passthrough' } },
+    }
+  );
+
+  expect(JSON.parse(lastRequest!.body)).toEqual({
+    owner: 'custom-data',
+    priority: 'passthrough',
+  });
+});
+
+test('static: provider override keys retain their exact user casing', async () => {
+  const provider = new ToolWebhookProvider({
+    webhookUrl: urlFor('/static'),
+  });
+
+  await provider.sendMessage({ content: 'tool payload' }, { alert_type: 'incident', 'X-Custom_Field': 'preserved' });
+
+  expect(JSON.parse(lastRequest!.body)).toEqual({
+    alert_type: 'incident',
+    'X-Custom_Field': 'preserved',
+  });
 });
 
 test('static: shallow-merges the body template with the step payload, step keys winning', async () => {

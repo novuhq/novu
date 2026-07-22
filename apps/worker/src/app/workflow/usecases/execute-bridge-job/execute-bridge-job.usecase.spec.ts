@@ -12,6 +12,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
   function buildUsecase() {
     const notificationTemplateRepository = { findOne: sinon.stub().resolves(null) };
     const jobRepository = { findOne: sinon.stub().resolves(null), find: sinon.stub().resolves([]) };
+    const notificationPayloadService = {};
     const messageRepository = { findOne: sinon.stub().resolves(null) };
     const environmentRepository = {
       findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
@@ -38,6 +39,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const usecase = new ExecuteBridgeJob(
       jobRepository as never,
       notificationTemplateRepository as never,
+      notificationPayloadService as never,
       messageRepository as never,
       environmentRepository as never,
       controlValuesRepository as never,
@@ -181,6 +183,11 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
         controls: { severity: 'warning', summary: 'db down' },
         level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
       },
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        controls: { alert_type: 'incident', priority: 'high' },
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      },
     ]);
 
     const command = {
@@ -222,6 +229,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       body: 'default alert',
       providerOverrides: {
         [ToolProviderIdEnum.PagerDuty]: { severity: 'warning', summary: 'db down' },
+        [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
       },
     });
   });

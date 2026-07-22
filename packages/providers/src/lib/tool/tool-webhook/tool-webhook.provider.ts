@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { ToolProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
@@ -14,8 +15,6 @@ import {
   isChannelDataOfType,
   ToolWebhookData,
 } from '@novu/stateless';
-import crypto from 'crypto';
-import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 type ToolWebhookMethod = 'POST' | 'PUT' | 'PATCH';
@@ -26,8 +25,7 @@ type ResolvedRouting = {
   headers?: Record<string, string>;
 };
 
-export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
-  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
+export class ToolWebhookProvider implements IToolProvider {
   readonly id = ToolProviderIdEnum.Webhook;
   channelType = ChannelTypeEnum.TOOL as ChannelTypeEnum.TOOL;
 
@@ -39,20 +37,22 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
       bodyTemplate?: string;
       hmacSecretKey?: string;
     }
-  ) {
-    super();
-  }
+  ) {}
 
   async sendMessage(
     options: IToolOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const routing = this.resolveRouting(options);
+    const { _passthrough = {}, ...providerOverride } = bridgeProviderData;
+    const hasProviderOverride = Object.keys(providerOverride).length > 0;
 
-    const data = this.transform(bridgeProviderData, {
-      content: options.content,
+    const body: Record<string, unknown> = {
+      ...(!hasProviderOverride && { content: options.content }),
+      ...providerOverride,
       ...(options.customData || {}),
-    });
+      ...(_passthrough.body || {}),
+    };
 
     const webhookUrl = normalizeOutboundHttpUrl(routing.url);
     if (!webhookUrl) {
@@ -68,17 +68,17 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
       throw err;
     }
 
-    const runtimeMethodOverride = data.body.method as string | undefined;
-    if (data.body.method) {
-      delete data.body.method;
+    const runtimeMethodOverride = body.method as string | undefined;
+    if (body.method) {
+      delete body.method;
     }
 
     const method = this.resolveMethod(runtimeMethodOverride || routing.method);
-    const requestBody = this.resolveBody(data.body);
+    const requestBody = this.resolveBody(body);
     const headers: Record<string, string> = {
       'content-type': 'application/json',
       ...routing.headers,
-      ...data.headers,
+      ..._passthrough.headers,
     };
 
     const hmacValue = this.computeHmac(requestBody, this.config.hmacSecretKey);
