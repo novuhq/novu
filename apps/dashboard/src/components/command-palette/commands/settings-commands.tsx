@@ -45,7 +45,7 @@ export function useSettingsCommands(_context: CommandExecutionContext): Command[
     commands.push({
       id: 'settings-billing',
       label: 'Billing Settings',
-      description: 'Manage billing and subscription settings (Owner role required)',
+      description: 'Manage billing and subscription settings',
       category: 'settings',
       icon: <RiMoneyDollarCircleLine />,
       priority: 'medium',
