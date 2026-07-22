@@ -255,6 +255,8 @@ export class UpsertWorkflowUseCase {
     const optimisticSteps = command.workflowDto.steps.map((step, index) => ({
       stepId: stepIds[index],
       type: step.type,
+      ...(step.controlValues ? { controlValues: step.controlValues } : {}),
+      ...(step._id ? { _id: step._id } : {}),
     }));
 
     const optimisticPayloadSchema = command.workflowDto.payloadSchema as JSONSchemaDto | undefined;
