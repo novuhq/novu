@@ -165,22 +165,23 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
     endpoint: { url: 'https://hooks.example.com/inbound' },
   };
 
-  function buildWebhookIntegration(routingMode?: 'static' | 'dynamic') {
+  function buildWebhookIntegration(routingMode?: 'static' | 'dynamic', identifier = 'webhook-main') {
     return {
       _id: 'integration_1',
-      identifier: 'webhook-main',
+      identifier,
       providerId: ToolProviderIdEnum.Webhook,
       channel: ChannelTypeEnum.TOOL,
       credentials: routingMode ? { routingMode } : {},
     };
   }
 
-  function buildUsecase(overrides: { integration: unknown; endpointGroups?: unknown[] }) {
+  function buildUsecase(overrides: { integration: unknown | unknown[]; endpointGroups?: unknown[] }) {
     const { integration, endpointGroups = [] } = overrides;
 
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const messageRepository = { create: sinon.stub().resolves({ _id: 'message_1' }) };
-    const getDecryptedIntegrations = { execute: sinon.stub().resolves([integration]) };
+    const integrations = Array.isArray(integration) ? integration : [integration];
+    const getDecryptedIntegrations = { execute: sinon.stub().resolves(integrations) };
     const resolveChannelEndpoints = { execute: sinon.stub().resolves(endpointGroups) };
 
     const usecase = new SendMessageTool(
@@ -327,5 +328,49 @@ describe('SendMessageTool - Webhook static vs dynamic routing', () => {
     sinon.assert.calledTwice(sendStub);
     expect(sendStub.firstCall.args[0].channelData).to.deep.equal(webhookChannelData);
     expect(sendStub.secondCall.args[0].channelData).to.deep.equal(secondChannelData);
+  });
+
+  it('passes the same provider override to static integrations and dynamic endpoint fan-out', async () => {
+    const secondChannelData = {
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      identifier: 'webhook-endpoint-2',
+      endpoint: { url: 'https://hooks.example.com/second' },
+    };
+    const { usecase } = buildUsecase({
+      integration: [
+        buildWebhookIntegration('static', 'webhook-static'),
+        buildWebhookIntegration('dynamic', 'webhook-dynamic'),
+      ],
+      endpointGroups: [
+        {
+          integrationIdentifier: 'webhook-dynamic',
+          providerId: ToolProviderIdEnum.Webhook,
+          channelData: [webhookChannelData, secondChannelData],
+        },
+      ],
+    });
+    const sendStub = sinon.stub().resolves({ status: 200 });
+    sinon.stub(ToolFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+    const command = buildCommand();
+    if (!command.bridgeData) {
+      throw new Error('Expected bridge data');
+    }
+    command.bridgeData = {
+      ...command.bridgeData,
+      providers: {
+        [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
+      },
+    };
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.callCount(sendStub, 3);
+    for (const call of sendStub.getCalls()) {
+      expect(call.args[0].bridgeProviderData).to.deep.equal({
+        alert_type: 'incident',
+        priority: 'high',
+      });
+    }
   });
 });

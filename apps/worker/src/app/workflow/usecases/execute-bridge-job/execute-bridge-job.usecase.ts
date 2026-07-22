@@ -45,6 +45,7 @@ import {
   JobStatusEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  ToolProviderIdEnum,
 } from '@novu/shared';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
@@ -195,7 +196,12 @@ export class ExecuteBridgeJob {
       sanitizedControls = rawControls ?? {};
     }
 
-    const providerOverrides = stitchProviderOverridesFromDocs(providerDocs);
+    const providerOverrides = stitchProviderOverridesFromDocs(providerDocs) ?? {};
+    for (const providerDoc of providerDocs) {
+      if (providerDoc.providerId === ToolProviderIdEnum.Webhook) {
+        providerOverrides[ToolProviderIdEnum.Webhook] = providerDoc.controls ?? {};
+      }
+    }
 
     return {
       controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides),
