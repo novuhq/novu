@@ -171,12 +171,6 @@ export enum FeatureFlagsKeysEnum {
   IS_JOB_STEP_DEDUP_ENABLED = 'IS_JOB_STEP_DEDUP_ENABLED',
   /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
-  /**
-   * Enable the Tool webhook provider in the integrations catalog. Keep off until
-   * the provider UX/send path is polished. Create the boolean in LaunchDarkly for
-   * cloud, or set `VITE_IS_TOOL_WEBHOOK_PROVIDER_ENABLED` when self-hosted.
-   */
-  IS_TOOL_WEBHOOK_PROVIDER_ENABLED = 'IS_TOOL_WEBHOOK_PROVIDER_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
