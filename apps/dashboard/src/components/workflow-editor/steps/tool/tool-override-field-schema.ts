@@ -1,14 +1,25 @@
-import { getToolProviderOverrideSchema, type ToolContentOverrideProviderId } from '@novu/shared';
+import { getToolProviderOverrideSchema } from '@novu/shared';
+import { type DashboardToolContentOverrideProviderId, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
+import { type WebhookSchemaConflict } from './webhook-payload-schema';
 
 export type OverrideFieldSchema = {
   type?: string;
   description?: string;
   enum?: readonly string[];
   maxLength?: number;
-  items?: { type?: string };
+  items?: OverrideFieldSchema;
+  properties?: Record<string, OverrideFieldSchema>;
+  sources?: string[];
+  conflicts?: WebhookSchemaConflict[];
 };
 
-export function getFieldSchemas(providerId: ToolContentOverrideProviderId): Record<string, OverrideFieldSchema> {
+export function getFieldSchemas(
+  providerId: DashboardToolContentOverrideProviderId
+): Record<string, OverrideFieldSchema> {
+  if (providerId === WEBHOOK_TOOL_PROVIDER_ID) {
+    return {};
+  }
+
   const schema = getToolProviderOverrideSchema(providerId);
 
   return (schema?.properties ?? {}) as Record<string, OverrideFieldSchema>;
@@ -56,6 +67,10 @@ export function defaultValueForFieldSchema(fieldSchema: OverrideFieldSchema | un
   }
 }
 
-export function getToolOverrideFieldDefaultValue(providerId: ToolContentOverrideProviderId, key: string): unknown {
-  return defaultValueForFieldSchema(getFieldSchemas(providerId)[key]);
+export function getToolOverrideFieldDefaultValue(
+  providerId: DashboardToolContentOverrideProviderId,
+  key: string,
+  fieldSchemas?: Record<string, OverrideFieldSchema>
+): unknown {
+  return defaultValueForFieldSchema((fieldSchemas ?? getFieldSchemas(providerId))[key]);
 }
