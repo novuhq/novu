@@ -134,6 +134,7 @@ overrides:
   cookie@<0.7.0: ^0.7.0
   tmp@<0.2.7: ^0.2.7
   socket.io-parser@>=4.0.0 <4.2.6: ^4.2.6
+  engine.io@>=4.1.0 <6.6.7: ^6.6.7
   cross-spawn@<6.0.6: ^6.0.6
   path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
   path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
