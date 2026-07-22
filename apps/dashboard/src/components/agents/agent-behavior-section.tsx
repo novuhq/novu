@@ -162,7 +162,7 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const acknowledgeOnReceived = agent.behavior?.acknowledgeOnReceived !== false;
   const reactionOnResolved =
     agent.behavior?.reactionOnResolved === undefined ? DEFAULT_REACTION_ON_RESOLVED : agent.behavior.reactionOnResolved;
-  const subscriberAccessOpen = agent.behavior?.subscriberAccess === 'open';
+  const subscriberAccessOpen = agent.behavior.subscriberAccess === 'open';
 
   const { mutate, isPending } = useMutation({
     mutationFn: (body: Partial<AgentBehavior>) =>
