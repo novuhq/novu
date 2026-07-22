@@ -1087,6 +1087,7 @@ function toReplyContent(content: AgentMessageContent, files?: AgentFileRef[]): R
         filename: file.name ?? file.fileId,
         mimeType: file.mediaType,
         data: file.data,
+        url: file.url,
       })),
     };
   }

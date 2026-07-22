@@ -1,4 +1,10 @@
-import { HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Request, Response } from 'express';
@@ -18,6 +24,7 @@ export class SdkAgentEventsHandler {
   async handle(req: Request, res: Response): Promise<void> {
     try {
       const user = await this.resolveApiKeyUser(req);
+      await this.assertKillSwitchDisabled(user.organizationId, user.environmentId);
       await this.assertProtocolEnabled(user.organizationId, user.environmentId);
 
       const body = req.body as { events?: Record<string, unknown>[] } | undefined;
@@ -69,6 +76,20 @@ export class SdkAgentEventsHandler {
       return await this.authService.getUserByApiKey(apiKey);
     } catch {
       throw new UnauthorizedException('Invalid API key');
+    }
+  }
+
+  private async assertKillSwitchDisabled(organizationId: string, environmentId: string): Promise<void> {
+    const isKillSwitchEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+      environment: { _id: environmentId },
+      component: 'api',
+    });
+
+    if (isKillSwitchEnabled) {
+      throw new ServiceUnavailableException('Service temporarily unavailable for this organization');
     }
   }
 

@@ -2581,6 +2581,36 @@ describe('event mode (AgentEvent protocol)', () => {
     expect(handleMessageId).toBe('msg_00000000-0000-4000-8000-000000000001');
   });
 
+  it('reply with url file emits AgentFileRef including url', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          await ctx.reply('Here is the report', {
+            files: [{ filename: 'report.pdf', url: 'https://example.com/report.pdf' }],
+          });
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches[0][1].event).toEqual({
+      type: 'message',
+      messageId: 'msg_00000000-0000-4000-8000-000000000001',
+      content: { markdown: 'Here is the report' },
+      files: [
+        {
+          fileId: 'report.pdf',
+          name: 'report.pdf',
+          url: 'https://example.com/report.pdf',
+        },
+      ],
+    });
+  });
+
   it('handle.edit emits channel.edit with the same message id', async () => {
     const { eventBatches } = stubEventModeFetch();
 

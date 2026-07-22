@@ -143,7 +143,8 @@ describe('IngestAgentEvents', () => {
 });
 
 describe('SdkAgentEventsHandler', () => {
-  function setup(flagEnabled = true) {
+  function setup(options: { protocolEnabled?: boolean; killSwitchEnabled?: boolean } = {}) {
+    const { protocolEnabled = true, killSwitchEnabled = false } = options;
     const authService = {
       getUserByApiKey: sinon.stub().resolves({
         _id: 'user-1',
@@ -152,7 +153,17 @@ describe('SdkAgentEventsHandler', () => {
       }),
     };
     const featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
-    featureFlagsService.getFlag.resolves(flagEnabled);
+    featureFlagsService.getFlag.callsFake(async ({ key }: { key: FeatureFlagsKeysEnum }) => {
+      if (key === FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED) {
+        return killSwitchEnabled;
+      }
+
+      if (key === FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED) {
+        return protocolEnabled;
+      }
+
+      return false;
+    });
     const ingestAgentEvents = {
       execute: sinon.stub().resolves({ results: [{ sequence: 1, status: 'accepted' }] }),
     };
@@ -176,11 +187,20 @@ describe('SdkAgentEventsHandler', () => {
   }
 
   it('returns 404 when the protocol flag is disabled', async () => {
-    const { handler, req, res } = setup(false);
+    const { handler, req, res } = setup({ protocolEnabled: false });
 
     await handler.handle(req, res);
 
     expect(res.status.calledWith(404)).to.equal(true);
+  });
+
+  it('returns 503 when the org kill-switch is enabled', async () => {
+    const { handler, ingestAgentEvents, req, res } = setup({ killSwitchEnabled: true });
+
+    await handler.handle(req, res);
+
+    expect(res.status.calledWith(503)).to.equal(true);
+    expect(ingestAgentEvents.execute.called).to.equal(false);
   });
 
   it('returns 401 when the API key is missing', async () => {
@@ -197,8 +217,12 @@ describe('SdkAgentEventsHandler', () => {
 
     await handler.handle(req, res);
 
-    expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
+    expect(featureFlagsService.getFlag.calledTwice).to.equal(true);
     expect(featureFlagsService.getFlag.firstCall.args[0]).to.deep.include({
+      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
+      defaultValue: false,
+    });
+    expect(featureFlagsService.getFlag.secondCall.args[0]).to.deep.include({
       key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
       defaultValue: false,
     });

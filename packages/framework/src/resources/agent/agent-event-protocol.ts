@@ -11,7 +11,10 @@ export interface AgentFileRef {
   fileId: string;
   name?: string;
   mediaType?: string;
+  /** Transitional: inline base64 payload until the pre-upload path ships. Same 5 MB limit as the reply API. */
   data?: string;
+  /** Transitional: publicly-accessible URL until the pre-upload path ships. Same limits as the reply API. */
+  url?: string;
 }
 
 export type AgentRunOutcome = 'completed' | 'paused' | 'aborted';

@@ -236,6 +236,7 @@ function toAgentFileRefs(files?: FileRef[]): AgentFileRef[] | undefined {
     name: file.filename,
     mediaType: file.mimeType,
     ...(file.data !== undefined ? { data: typeof file.data === 'string' ? file.data : undefined } : {}),
+    ...(file.url !== undefined ? { url: file.url } : {}),
   }));
 }
 
