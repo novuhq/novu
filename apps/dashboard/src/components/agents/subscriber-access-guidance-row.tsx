@@ -70,7 +70,7 @@ type SubscriberAccessGuidanceRowProps = {
 
 export function SubscriberAccessGuidanceRow({ channel, agent }: SubscriberAccessGuidanceRowProps) {
   const { currentEnvironment } = useEnvironment();
-  const isOpen = agent.behavior.subscriberAccess === 'open';
+  const isOpen = agent.behavior?.subscriberAccess === 'open';
   const copy = CHANNEL_COPY[channel];
   const subscribersPath = buildRoute(ROUTES.SUBSCRIBERS, {
     environmentSlug: currentEnvironment?.slug ?? '',
