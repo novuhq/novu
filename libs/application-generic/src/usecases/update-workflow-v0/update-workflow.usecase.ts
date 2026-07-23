@@ -49,6 +49,12 @@ import {
 } from '../upsert-preferences';
 import { UpdateWorkflowCommandV0 } from './update-workflow.command';
 
+/** The minimal step shape needed to diff which MessageTemplates a workflow references. */
+interface StepTemplateReference {
+  _templateId?: string;
+  variants?: { _templateId?: string }[];
+}
+
 /**
  * @deprecated - use `UpsertWorkflow` instead
  */
@@ -154,8 +160,6 @@ export class UpdateWorkflowV0 {
           parentChangeId,
           allowedTemplateIds
         );
-
-        await this.deleteRemovedSteps(existingTemplate.steps, command, parentChangeId);
       }
 
       if (command.tags) {
@@ -289,6 +293,17 @@ export class UpdateWorkflowV0 {
         },
         { session }
       );
+
+      if (command.steps) {
+        // Soft-delete after workflow update so concurrent triggers never see orphaned template refs.
+        await this.deleteRemovedSteps(
+          existingTemplate.steps,
+          updatePayload.steps || [],
+          command,
+          parentChangeId,
+          session
+        );
+      }
     };
 
     if (command.session) {
@@ -646,7 +661,7 @@ export class UpdateWorkflowV0 {
     return notificationTemplate;
   }
 
-  private getRemovedSteps(existingSteps: NotificationStepEntity[], newSteps: NotificationStep[]) {
+  private getRemovedSteps(existingSteps: StepTemplateReference[], newSteps: StepTemplateReference[]): string[] {
     const existingStepsIds = (existingSteps || []).flatMap((step) => [
       step._templateId,
       ...(step.variants || []).flatMap((variant) => variant._templateId),
@@ -657,7 +672,7 @@ export class UpdateWorkflowV0 {
       ...(step.variants || []).flatMap((variant) => variant._templateId),
     ]);
 
-    return existingStepsIds.filter((id) => !newStepsIds.includes(id));
+    return existingStepsIds.filter((id): id is string => !!id && !newStepsIds.includes(id));
   }
 
   private async updateVariants(
@@ -733,12 +748,15 @@ export class UpdateWorkflowV0 {
 
   @Instrument()
   private async deleteRemovedSteps(
-    existingSteps: NotificationStepEntity[] | NotificationStepData[] | undefined,
+    existingSteps: StepTemplateReference[] | undefined,
+    newSteps: StepTemplateReference[],
     command: UpdateWorkflowCommandV0,
-    parentChangeId: string
+    parentChangeId: string,
+    session?: ClientSession | null
   ) {
-    const removedStepsIds = this.getRemovedSteps(existingSteps || [], command.steps || []);
+    const removedStepsIds = this.getRemovedSteps(existingSteps || [], newSteps);
 
+    // Sequential on purpose: parallel operations inside a transaction are undefined behaviour in Mongoose.
     for (const id of removedStepsIds) {
       await this.deleteMessageTemplate.execute(
         DeleteMessageTemplateCommand.create({
@@ -748,16 +766,20 @@ export class UpdateWorkflowV0 {
           messageTemplateId: id,
           parentChangeId,
           workflowType: command.type,
+          session,
         })
       );
 
-      await this.controlValuesRepository.delete({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _workflowId: command.id,
-        _stepId: id,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
+      await this.controlValuesRepository.delete(
+        {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _workflowId: command.id,
+          _stepId: id,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+        },
+        { session }
+      );
     }
   }
 }

@@ -14,10 +14,13 @@ export class DeleteMessageTemplate {
 
   async execute(command: DeleteMessageTemplateCommand): Promise<boolean> {
     try {
-      await this.messageTemplateRepository.delete({
-        _environmentId: command.environmentId,
-        _id: command.messageTemplateId,
-      });
+      await this.messageTemplateRepository.deleteById(
+        {
+          _environmentId: command.environmentId,
+          _id: command.messageTemplateId,
+        },
+        command.session ? { session: command.session } : {}
+      );
 
       const changeId = await this.changeRepository.getChangeId(
         command.environmentId,
@@ -25,10 +28,13 @@ export class DeleteMessageTemplate {
         command.messageTemplateId
       );
 
-      const deletedMessageTemplate = await this.messageTemplateRepository.findDeleted({
-        _environmentId: command.environmentId,
-        _id: command.messageTemplateId,
-      });
+      const deletedMessageTemplate = await this.messageTemplateRepository.findDeleted(
+        {
+          _environmentId: command.environmentId,
+          _id: command.messageTemplateId,
+        },
+        command.session ? { session: command.session } : {}
+      );
 
       if (!isBridgeWorkflow(command.workflowType)) {
         await this.createChange.execute(
