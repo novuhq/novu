@@ -151,6 +151,32 @@ describe('IngestAgentEvents', () => {
     }
   });
 
+  it('throws 400 when a batch spans multiple conversations', async () => {
+    const { usecase, agentEventSink } = setup();
+
+    try {
+      await usecase.execute(
+        IngestAgentEventsCommand.create({
+          userId: 'user-1',
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+          events: [
+            envelope({ conversationId: 'conv-1', sequence: 1 }),
+            envelope({ conversationId: 'conv-2', sequence: 2 }),
+          ],
+        })
+      );
+      expect.fail('Expected BadRequestException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect((error as BadRequestException).message).to.equal(
+        'All events in a batch must belong to the same conversation'
+      );
+    }
+
+    expect(agentEventSink.ingestMany.called).to.equal(false);
+  });
+
   it('skips and logs when agent identifier does not match conversation', async () => {
     const { usecase, agentEventSink, agentRepository, logger } = setup();
     agentRepository.findOne.resolves({ _id: 'other-agent', identifier: 'other-agent' });

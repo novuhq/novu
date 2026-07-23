@@ -1,5 +1,5 @@
+import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { AgentAckError, AgentDeliveryError } from './agent.errors';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from './agent-event-protocol';
 
 export interface AgentEventOutboxOptions {
   eventsUrl: string;

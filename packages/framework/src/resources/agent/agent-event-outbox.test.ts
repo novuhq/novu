@@ -1,8 +1,7 @@
+import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent } from '@novu/agent-event-protocol';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentDeliveryError } from './agent.errors';
 import { AgentEventOutbox } from './agent-event-outbox';
-import type { AgentEvent } from './agent-event-protocol';
-import { AGENT_EVENT_PROTOCOL_VERSION } from './agent-event-protocol';
 
 const BASE_OPTIONS = {
   eventsUrl: 'https://api.novu.co/v1/agents/events',

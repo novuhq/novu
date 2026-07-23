@@ -17,11 +17,6 @@ export interface IngestAgentEventsResult {
   results: IngestAgentEventResult[];
 }
 
-interface ConversationGroup {
-  envelopes: AgentEventEnvelope[];
-  originalIndexes: number[];
-}
-
 @Injectable()
 export class IngestAgentEvents {
   constructor(
@@ -47,22 +42,15 @@ export class IngestAgentEvents {
     }
 
     const envelopes = command.events as unknown as AgentEventEnvelope[];
-    const groups = this.groupByConversationId(envelopes);
-    const outcomesByIndex = new Map<number, IngestOutcome>();
 
-    for (const [conversationId, group] of groups) {
-      await this.ingestConversationGroup(conversationId, group, command, outcomesByIndex);
+    // SDK outbox is constructed per-turn with a fixed conversationId; a mixed batch is always a client error.
+    const conversationIds = new Set(envelopes.map((envelope) => envelope.conversationId));
+
+    if (conversationIds.size > 1) {
+      throw new BadRequestException('All events in a batch must belong to the same conversation');
     }
 
-    const results: IngestAgentEventResult[] = [];
-
-    for (let index = 0; index < envelopes.length; index += 1) {
-      const outcome = outcomesByIndex.get(index);
-
-      if (outcome) {
-        results.push({ sequence: envelopes[index].sequence, status: outcome });
-      }
-    }
+    const results = await this.ingestBatch(envelopes, command);
 
     return { results };
   }
@@ -80,34 +68,15 @@ export class IngestAgentEvents {
     }
   }
 
-  private groupByConversationId(envelopes: AgentEventEnvelope[]): Map<string, ConversationGroup> {
-    const groups = new Map<string, ConversationGroup>();
-
-    for (let index = 0; index < envelopes.length; index += 1) {
-      const envelope = envelopes[index];
-      const existing = groups.get(envelope.conversationId);
-
-      if (existing) {
-        existing.envelopes.push(envelope);
-        existing.originalIndexes.push(index);
-        continue;
-      }
-
-      groups.set(envelope.conversationId, {
-        envelopes: [envelope],
-        originalIndexes: [index],
-      });
+  private async ingestBatch(
+    envelopes: AgentEventEnvelope[],
+    command: IngestAgentEventsCommand
+  ): Promise<IngestAgentEventResult[]> {
+    if (envelopes.length === 0) {
+      return [];
     }
 
-    return groups;
-  }
-
-  private async ingestConversationGroup(
-    conversationId: string,
-    group: ConversationGroup,
-    command: IngestAgentEventsCommand,
-    outcomesByIndex: Map<number, IngestOutcome>
-  ): Promise<void> {
+    const conversationId = envelopes[0].conversationId;
     const conversation = await this.conversationService.getConversation(
       conversationId,
       command.environmentId,
@@ -120,7 +89,7 @@ export class IngestAgentEvents {
         'Skipping agent event batch entries — conversation not found'
       );
 
-      return;
+      return [];
     }
 
     const channel = conversation.channels?.[0];
@@ -131,7 +100,7 @@ export class IngestAgentEvents {
         'Skipping agent event batch entries — conversation has no channel'
       );
 
-      return;
+      return [];
     }
 
     const integration = await this.integrationRepository.findOne(
@@ -149,18 +118,16 @@ export class IngestAgentEvents {
         'Skipping agent event batch entries — integration not found for conversation channel'
       );
 
-      return;
+      return [];
     }
 
     const validEnvelopes: AgentEventEnvelope[] = [];
-    const validOriginalIndexes: number[] = [];
     let referenceAgent: { _id: string; identifier: string } | null = null;
     // A batch from one SDK run repeats the same agentId for every envelope; memoize by
     // identifier instead of re-querying Mongo once per envelope.
     const agentsByIdentifier = new Map<string, { _id: string; identifier: string } | null>();
 
-    for (let index = 0; index < group.envelopes.length; index += 1) {
-      const envelope = group.envelopes[index];
+    for (const envelope of envelopes) {
       let agent = agentsByIdentifier.get(envelope.agentId);
 
       if (agent === undefined) {
@@ -193,11 +160,10 @@ export class IngestAgentEvents {
 
       referenceAgent ??= agent;
       validEnvelopes.push(envelope);
-      validOriginalIndexes.push(group.originalIndexes[index]);
     }
 
     if (validEnvelopes.length === 0 || !referenceAgent) {
-      return;
+      return [];
     }
 
     const context: AgentEventContext = {
@@ -214,10 +180,13 @@ export class IngestAgentEvents {
     };
 
     const outcomes = await this.agentEventSink.ingestMany(validEnvelopes, context);
+    const results: IngestAgentEventResult[] = [];
 
     for (let index = 0; index < validEnvelopes.length; index += 1) {
-      outcomesByIndex.set(validOriginalIndexes[index], outcomes[index]);
+      results.push({ sequence: validEnvelopes[index].sequence, status: outcomes[index] });
     }
+
+    return results;
   }
 }
 

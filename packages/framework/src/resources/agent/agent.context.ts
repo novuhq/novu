@@ -1,3 +1,4 @@
+import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from '@novu/agent-event-protocol';
 import type { Emoji } from 'chat';
 import { AgentDeliveryError } from './agent.errors';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
@@ -33,7 +34,6 @@ import type {
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
 import { AgentEventOutbox } from './agent-event-outbox';
-import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from './agent-event-protocol';
 import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
