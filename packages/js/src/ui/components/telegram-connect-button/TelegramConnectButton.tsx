@@ -1,4 +1,5 @@
 import { createSignal, onCleanup, Show } from 'solid-js';
+import type { Context } from '../../../types';
 import { useTelegramConnection } from '../../api/hooks/useTelegramConnection';
 import { useNovu } from '../../context';
 import { useStyle } from '../../helpers/useStyle';
@@ -12,6 +13,11 @@ import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 export type TelegramConnectButtonProps = {
   integrationIdentifier: string;
   subscriberId?: string;
+  /**
+   * Context bound to the Telegram endpoint at link time. Falls back to the
+   * `context` configured on `NovuProvider`.
+   */
+  context?: Context;
   onConnectSuccess?: (endpointIdentifier: string) => void;
   onConnectError?: (error: unknown) => void;
   onDisconnectSuccess?: () => void;
@@ -29,6 +35,7 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
   const novuAccessor = useNovu();
   const integrationIdentifier = () => props.integrationIdentifier;
   const resolvedSubscriberId = () => props.subscriberId ?? novuAccessor().subscriberId;
+  const resolvedContext = () => props.context ?? novuAccessor().context;
 
   const { endpoint, loading, disconnect, mutate, link } = useTelegramConnection({
     integrationIdentifier: integrationIdentifier(),
@@ -120,6 +127,7 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
 
       const result = await link({
         integrationIdentifier: integrationIdentifier(),
+        context: resolvedContext(),
       });
 
       if (result.error) {

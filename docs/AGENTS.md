@@ -54,6 +54,22 @@ openapi: "POST /v1/agents"
 - For icons we use the [Lucide](https://lucide.dev/) library.
 - Prefer Mintlify components (`<Card>`, `<Columns>`, `<Steps>`, `<CodeGroup>`) over raw HTML
 
+### Mintlify Steps and in-page links
+
+`<Step title="...">` does **not** create a heading ID. In-page links such as `#run-the-agent-locally` will not work against a Step `title` prop.
+
+When a step must be linkable, put a markdown heading inside the Step:
+
+```mdx
+<Step>
+## Run the agent locally
+
+...
+</Step>
+```
+
+Then link to `#run-the-agent-locally`. See `.cursor/rules/docs-mintlify-steps.mdc`.
+
 ## API schema reference pages
 
 Pages under `docs/api-reference/**/**-schema.mdx` document resource field shapes for the API reference sidebar.

@@ -1,4 +1,4 @@
-import { ToolProviderIdEnum } from '@novu/shared';
+import { TOOL_PROVIDER_OVERRIDE_KEYS, ToolProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
   ChannelTypeEnum,
@@ -28,16 +28,47 @@ const DEFAULT_SOURCE = 'novu';
 // PagerDuty enforces a 1024-character limit on payload.summary.
 const SUMMARY_MAX_LENGTH = 1024;
 
-const RESERVED_OVERRIDE_KEYS = new Set([
+const PAYLOAD_OPTIONAL_STRING_FIELDS = ['timestamp', 'component', 'group', 'class'] as const;
+const ROOT_OPTIONAL_STRING_FIELDS = ['client', 'client_url'] as const;
+const ROOT_OPTIONAL_ARRAY_FIELDS = ['links', 'images'] as const;
+
+/**
+ * Keys consumed by explicit Events API mapping and therefore excluded from
+ * custom_details. Uses the shared override-key inventory plus provider-internal fields.
+ * Mapped field lists above must stay a subset of TOOL_PROVIDER_OVERRIDE_KEYS[PagerDuty]
+ * (enforced in pagerduty.provider.spec.ts).
+ */
+const RESERVED_OVERRIDE_KEYS = new Set<string>([
   'content',
-  'summary',
-  'source',
-  'severity',
-  'event_action',
-  'dedup_key',
-  'custom_details',
   'routing_key',
+  ...TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty],
 ]);
+
+function assignNonEmptyStringFields(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+  fields: readonly string[]
+) {
+  for (const field of fields) {
+    const value = source[field];
+    if (typeof value === 'string' && value.length > 0) {
+      target[field] = value;
+    }
+  }
+}
+
+function assignArrayFields(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+  fields: readonly string[]
+) {
+  for (const field of fields) {
+    const value = source[field];
+    if (Array.isArray(value)) {
+      target[field] = value;
+    }
+  }
+}
 
 export class PagerDutyProvider extends BaseProvider implements IToolProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
@@ -65,17 +96,25 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
     const dedupKey = this.resolveDedupKey(overrides.dedup_key, options);
     const customDetails = this.extractCustomDetails(overrides);
 
-    const payload = {
+    const eventPayload: Record<string, unknown> = {
+      summary,
+      source,
+      severity,
+    };
+    assignNonEmptyStringFields(eventPayload, overrides, PAYLOAD_OPTIONAL_STRING_FIELDS);
+
+    if (Object.keys(customDetails).length > 0) {
+      eventPayload.custom_details = customDetails;
+    }
+
+    const body: Record<string, unknown> = {
       routing_key: routingKey,
       event_action: eventAction,
       ...(dedupKey ? { dedup_key: dedupKey } : {}),
-      payload: {
-        summary,
-        source,
-        severity,
-        ...(Object.keys(customDetails).length > 0 ? { custom_details: customDetails } : {}),
-      },
+      payload: eventPayload,
     };
+    assignNonEmptyStringFields(body, overrides, ROOT_OPTIONAL_STRING_FIELDS);
+    assignArrayFields(body, overrides, ROOT_OPTIONAL_ARRAY_FIELDS);
 
     // PagerDuty Events API v2 authenticates via routing_key in the body; passthrough headers are not used.
     const response = await safeOutboundJsonRequest<{ dedup_key?: string; message?: string; status?: string }>({
@@ -84,7 +123,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
 
     if (response.statusCode < 200 || response.statusCode >= 300) {

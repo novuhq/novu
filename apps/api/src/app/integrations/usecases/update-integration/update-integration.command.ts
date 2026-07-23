@@ -28,7 +28,7 @@ export class UpdateIntegrationCommand extends OrganizationCommand {
 
   @IsOptional()
   @IsMongoId()
-  userEnvironmentId: string;
+  userEnvironmentId?: string;
 
   @IsDefined()
   @IsMongoId()

@@ -49,7 +49,6 @@ import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-co
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
 import { ConfigureToolStepPreview } from '@/components/workflow-editor/steps/tool/configure-tool-step-preview';
-import { ToolEnabledProviders } from '@/components/workflow-editor/steps/tool/tool-enabled-providers';
 import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { IS_CLOUD } from '@/config';
@@ -177,9 +176,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const isInlineConfigurableStepWithCustomControls = isInlineConfigurableStep && hasCustomControls;
   const showInlineControlValuesSection = isInlineConfigurableStep && !hasCustomControls && !isInlineResolverActive;
   const showHttpRequestFormMiddleSection = step.type === StepTypeEnum.HTTP_REQUEST;
-  const showToolFormMiddleSection = step.type === StepTypeEnum.TOOL;
-  const showConfigureStepFormMiddleSection =
-    showInlineControlValuesSection || showHttpRequestFormMiddleSection || showToolFormMiddleSection;
+  const showConfigureStepFormMiddleSection = showInlineControlValuesSection || showHttpRequestFormMiddleSection;
 
   const onDeleteStep = () => {
     update(
@@ -208,15 +205,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           controlValues: {
             ...(step.controls.values ?? {}),
             continueOnFailure: (step.controls.values?.continueOnFailure as boolean) ?? false,
-          },
-        };
-      }
-
-      if (step.type === StepTypeEnum.TOOL) {
-        return {
-          controlValues: {
-            ...(step.controls.values ?? {}),
-            enabledIntegrations: (step.controls.values?.enabledIntegrations as string[] | undefined) ?? [],
           },
         };
       }
@@ -485,12 +473,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 {showHttpRequestFormMiddleSection && (
                   <SidebarContent>
                     <ContinueOnFailure />
-                  </SidebarContent>
-                )}
-
-                {showToolFormMiddleSection && (
-                  <SidebarContent>
-                    <ToolEnabledProviders />
                   </SidebarContent>
                 )}
               </SaveFormContext.Provider>

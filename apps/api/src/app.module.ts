@@ -40,6 +40,7 @@ import { LayoutsV2Module } from './app/layouts-v2/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { NotificationModule } from './app/notifications/notification.module';
+import { NovuContextModule } from './app/novu-context/novu-context.module';
 import { OrganizationModule } from './app/organization/organization.module';
 import { OutboundWebhooksModule } from './app/outbound-webhooks/outbound-webhooks.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
@@ -136,6 +137,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   ActivityModule,
   AgentsModule,
   ConnectModule,
+  NovuContextModule,
   DomainsModule.forRoot(),
   UserModule,
   IntegrationModule,

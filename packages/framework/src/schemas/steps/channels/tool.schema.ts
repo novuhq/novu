@@ -4,9 +4,12 @@ const toolOutputSchema = {
   type: 'object',
   properties: {
     body: { type: 'string' },
-    enabledIntegrations: {
-      type: 'array',
-      items: { type: 'string' },
+    providerOverrides: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+        additionalProperties: true,
+      },
     },
   },
   required: ['body'],

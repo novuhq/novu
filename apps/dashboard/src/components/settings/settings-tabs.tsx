@@ -9,8 +9,9 @@ import {
   PermissionsEnum,
 } from '@novu/shared';
 import { motion } from 'motion/react';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { BillingRestrictedState } from '@/components/billing/billing-restricted-state';
 import { Plan } from '@/components/billing/plan';
 import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
@@ -130,16 +131,11 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
   const clerkAppearance = useMemo(() => getClerkComponentAppearance(isRbacEnabled), [isRbacEnabled]);
   const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
-  const canShowBilling = IS_CLOUD && hasBillingPermission;
+  const canShowBillingTab = IS_CLOUD;
+  const canManageBilling = IS_CLOUD && hasBillingPermission;
   const brandingTierLabel = getRequiredTierLabelForFeature(FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN);
 
   const currentTab = resolveCurrentTab(location.pathname, routes, rootRoute);
-
-  useEffect(() => {
-    if (currentTab === 'billing' && !canShowBilling) {
-      navigate(routes.account, { replace: true });
-    }
-  }, [currentTab, canShowBilling, navigate, routes.account]);
 
   const handleTabChange = (value: string) => {
     switch (value as SettingsTab) {
@@ -153,7 +149,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
         navigate(routes.team);
         break;
       case 'billing':
-        if (canShowBilling) {
+        if (canShowBillingTab) {
           navigate(routes.billing);
         }
 
@@ -174,7 +170,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
           Team
         </TabsTrigger>
 
-        {canShowBilling && (
+        {canShowBillingTab && (
           <TabsTrigger variant="regular" value="billing" size="xl">
             Billing
           </TabsTrigger>
@@ -182,7 +178,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
       </TabsList>
 
       <div
-        className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' && canShowBilling ? 'max-w-[1400px]' : 'max-w-[700px]'}`}
+        className={`mx-auto mt-1 px-1.5 ${currentTab === 'billing' && canShowBillingTab ? 'max-w-[1400px]' : 'max-w-[700px]'}`}
       >
         <TabsContent value="account" className="rounded-lg">
           <motion.div {...FADE_ANIMATION}>
@@ -207,7 +203,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
           <motion.div {...FADE_ANIMATION}>
             <Card className="border-none shadow-none">
               <div className="pb-6 pt-4 flex flex-col">
-                {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && canShowBilling && (
+                {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && canManageBilling && (
                   <InlineToast
                     title="Tip:"
                     description={
@@ -231,7 +227,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
           <motion.div {...FADE_ANIMATION}>
             <Card className="border-none shadow-none">
               <div className={`pb-6 pt-4 flex flex-col ${isRbacEnabled ? 'show-role-column' : 'hide-role-column'}`}>
-                {isRbacEnabledFlag && !isRbacEnabled && canShowBilling && (
+                {isRbacEnabledFlag && !isRbacEnabled && canManageBilling && (
                   <InlineToast
                     title="Tip:"
                     description="Get role-based access control and add unlimited members by upgrading."
@@ -253,12 +249,12 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
           </motion.div>
         </TabsContent>
 
-        {canShowBilling && (
+        {canShowBillingTab && (
           <TabsContent value="billing" className="rounded-lg">
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
                 <div className="pb-6 pt-4 flex flex-col">
-                  <Plan />
+                  {canManageBilling ? <Plan /> : <BillingRestrictedState />}
                 </div>
               </Card>
             </motion.div>

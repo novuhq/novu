@@ -11,12 +11,16 @@ A small number of legacy endpoints still use page-based pagination with `page` a
 
 | Parameter | Type | Notes |
 | --- | --- | --- |
-| `limit` | number | Items per page. |
+| `limit` | number | Items per page. Minimum `1`, maximum `100`. The default depends on the endpoint. |
 | `after` | string | Cursor to fetch the page after a position. Use the `next` cursor from a previous response. |
 | `before` | string | Cursor to fetch the page before a position. Use the `previous` cursor from a previous response. |
 | `orderBy` | string | Field to sort by (endpoint-specific). |
 | `orderDirection` | string | `ASC` or `DESC`. |
 | `includeCursor` | boolean | Include the cursor item itself in the results. |
+
+<Note>
+  `limit` is capped at `100` items per page across list endpoints (cursor-based, offset-based, and legacy page-based). Requesting a `limit` greater than `100` returns a `422` validation error, so page through large collections with multiple requests instead of raising `limit`.
+</Note>
 
 ## Response envelope
 

@@ -63,6 +63,12 @@ export interface CreateOrGetConversationParams {
   firstMessageText: string;
   /** Whether the thread is a direct message — persisted for active-conversation window selection. */
   isDirectMessage?: boolean;
+  /**
+   * Platform workspace/team id (e.g. Slack `team_id`) this thread belongs to. Persisted on the
+   * channel so outbound delivery can resolve the correct per-workspace bot token in multi-workspace
+   * installs. Absent for single-workspace platforms.
+   */
+  workspaceId?: string;
 }
 
 export interface PersistInboundMessageParams {
@@ -205,6 +211,7 @@ export class AgentConversationService {
           platform: params.platform,
           _integrationId: params.integrationId,
           platformThreadId,
+          ...(params.workspaceId ? { workspace: { id: params.workspaceId } } : {}),
         },
       ],
       status: ConversationStatusEnum.ACTIVE,

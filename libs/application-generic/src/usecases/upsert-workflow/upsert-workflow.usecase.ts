@@ -13,6 +13,7 @@ import {
   ControlValuesLevelEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  type StepProviderOverrides,
   StepTypeEnum,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -29,10 +30,11 @@ import { EmailControlType } from '../../schemas/control';
 import { AnalyticsService } from '../../services';
 import {
   computeWorkflowStatus,
+  isSupportedToolProviderOverrideId,
   removeBrandingFromHtml,
+  resolveStepControlSchemas,
   shortId,
   slugifyOrRandom,
-  stepTypeToControlSchema,
 } from '../../utils';
 import { isStringifiedMailyJSONContent } from '../../utils/maily-utils';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
@@ -107,6 +109,8 @@ export class UpsertWorkflowUseCase {
       GetWorkflowCommand.create({
         workflowIdOrInternalId: upsertedWorkflow._id,
         user: command.user,
+        // Read-after-write: must reflect the preferences we just persisted.
+        skipPreferencesCache: true,
       })
     );
 
@@ -217,12 +221,16 @@ export class UpsertWorkflowUseCase {
           _environmentId: user.environmentId,
           _organizationId: user.organizationId,
           _workflowId: existingWorkflow._id,
-          level: ControlValuesLevelEnum.STEP_CONTROLS,
+          level: {
+            $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+          },
           controls: { $ne: null },
         },
         {
           controls: 1,
           _stepId: 1,
+          level: 1,
+          providerId: 1,
           _id: 0,
         }
       );
@@ -258,9 +266,12 @@ export class UpsertWorkflowUseCase {
         const existingStep: NotificationStepEntity | null | undefined =
           '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
-        const controlSchemaKey = step.type;
-        const controlSchemas: ControlSchemas =
-          existingStep?.template?.controls || stepTypeToControlSchema[controlSchemaKey];
+        const controlSchemas: ControlSchemas = resolveStepControlSchemas({
+          stepType: step.type,
+          workflowOrigin,
+          existingControls: existingStep?.template?.controls,
+          stepResolverHash: existingStep?.template?.stepResolverHash,
+        });
         const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
           workflowOrigin,
           user,
@@ -269,6 +280,7 @@ export class UpsertWorkflowUseCase {
           stepType: step.type,
           controlSchema: controlSchemas.schema,
           controlsDto: step.controlValues,
+          providerOverridesDto: step.providerOverrides,
           optimisticSteps,
           preloadedControlValues,
           optimisticPayloadSchema,
@@ -360,11 +372,14 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ): Promise<void> {
     const controlValuesUpdates = this.getControlValuesUpdates(updatedWorkflow.steps, command);
-    if (controlValuesUpdates.length === 0) return;
+    const providerOverrideUpdates = this.getProviderOverrideUpdates(updatedWorkflow.steps, command);
 
-    await Promise.all(
-      controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, updatedWorkflow._id, command))
-    );
+    await Promise.all([
+      ...controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, updatedWorkflow._id, command)),
+      ...providerOverrideUpdates.map((update) =>
+        this.executeProviderOverridesUpdate(update, updatedWorkflow._id, command)
+      ),
+    ]);
   }
 
   @Instrument()
@@ -384,6 +399,22 @@ export class UpsertWorkflowUseCase {
   }
 
   @Instrument()
+  private getProviderOverrideUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
+    return updatedSteps
+      .map((step) => {
+        const providerOverrides = this.findProviderOverridesInRequest(step, command.workflowDto.steps);
+        if (providerOverrides === undefined) return null;
+
+        return {
+          step,
+          providerOverrides,
+          shouldDelete: providerOverrides === null,
+        };
+      })
+      .filter((update): update is NonNullable<typeof update> => update !== null);
+  }
+
+  @Instrument()
   private async executeControlValuesUpdate(
     {
       shouldDelete,
@@ -394,19 +425,25 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      return this.controlValuesRepository.delete(
+      // Cascade-delete main step controls and any per-provider override docs for the step.
+      return this.controlValuesRepository.deleteMany(
         {
           _environmentId: command.user.environmentId,
           _organizationId: command.user.organizationId,
           _workflowId: workflowId,
           _stepId: step._templateId,
-          level: ControlValuesLevelEnum.STEP_CONTROLS,
+          level: {
+            $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+          },
         },
         { session: command.session }
       );
     }
 
-    const newControlValues = controlValues || {};
+    // providerOverrides is persisted as STEP_PROVIDER_CONTROLS docs — never nest in main controls.
+    const { providerOverrides: _ignoredProviderOverrides, ...controlValuesWithoutProviderOverrides } = (controlValues ||
+      {}) as Record<string, unknown> & { providerOverrides?: unknown };
+    const newControlValues = controlValuesWithoutProviderOverrides;
 
     /*
      * Only apply email-specific processing for NOVU_CLOUD workflows
@@ -475,16 +512,86 @@ export class UpsertWorkflowUseCase {
         workflowId,
         level: ControlValuesLevelEnum.STEP_CONTROLS,
         newControlValues,
+        session: command.session,
       })
     );
   }
 
   @Instrument()
-  private findControlValueInRequest(
+  private async executeProviderOverridesUpdate(
+    {
+      shouldDelete,
+      step,
+      providerOverrides,
+    }: {
+      step: NotificationStepEntity;
+      providerOverrides: StepProviderOverrides | null;
+      shouldDelete: boolean;
+    },
+    workflowId: string,
+    command: UpsertWorkflowCommand
+  ) {
+    const baseQuery = {
+      _environmentId: command.user.environmentId,
+      _organizationId: command.user.organizationId,
+      _workflowId: workflowId,
+      _stepId: step._templateId,
+      level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+    };
+
+    if (shouldDelete || providerOverrides === null) {
+      return this.controlValuesRepository.deleteMany(baseQuery, { session: command.session });
+    }
+
+    const desiredProviderIds = Object.keys(providerOverrides).filter(isSupportedToolProviderOverrideId);
+
+    const existingDocs = await this.controlValuesRepository.find(
+      baseQuery,
+      {
+        providerId: 1,
+        _id: 1,
+      },
+      { session: command.session }
+    );
+    const existingProviderIds = existingDocs
+      .map((doc) => doc.providerId)
+      .filter((id): id is string => typeof id === 'string');
+    const desiredProviderIdSet = new Set<string>(desiredProviderIds);
+    const providerIdsToDelete = existingProviderIds.filter((id) => !desiredProviderIdSet.has(id));
+
+    if (providerIdsToDelete.length > 0) {
+      await this.controlValuesRepository.deleteMany(
+        {
+          ...baseQuery,
+          providerId: { $in: providerIdsToDelete },
+        },
+        { session: command.session }
+      );
+    }
+
+    await Promise.all(
+      desiredProviderIds.map((providerId) =>
+        this.upsertControlValuesUseCase.execute(
+          UpsertControlValuesCommand.create({
+            organizationId: command.user.organizationId,
+            environmentId: command.user.environmentId,
+            stepId: step._templateId,
+            workflowId,
+            level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+            providerId,
+            newControlValues: providerOverrides[providerId] ?? {},
+            session: command.session,
+          })
+        )
+      )
+    );
+  }
+
+  private findMatchingCommandStep(
     updatedStep: NotificationStepEntity,
     commandSteps: UpsertStepDataCommand[]
-  ): Record<string, unknown> | undefined | null {
-    const commandStep = commandSteps.find((commandStepX) => {
+  ): UpsertStepDataCommand | undefined {
+    return commandSteps.find((commandStepX) => {
       const isStepUpdateDashboardDto = '_id' in commandStepX;
       if (isStepUpdateDashboardDto) {
         return commandStepX._id === updatedStep._templateId;
@@ -497,10 +604,31 @@ export class UpsertWorkflowUseCase {
 
       return commandStepX.name === updatedStep.name;
     });
+  }
+
+  @Instrument()
+  private findControlValueInRequest(
+    updatedStep: NotificationStepEntity,
+    commandSteps: UpsertStepDataCommand[]
+  ): Record<string, unknown> | undefined | null {
+    const commandStep = this.findMatchingCommandStep(updatedStep, commandSteps);
 
     if (!commandStep) return null;
 
     return commandStep.controlValues;
+  }
+
+  @Instrument()
+  private findProviderOverridesInRequest(
+    updatedStep: NotificationStepEntity,
+    commandSteps: UpsertStepDataCommand[]
+  ): StepProviderOverrides | undefined | null {
+    const commandStep = this.findMatchingCommandStep(updatedStep, commandSteps);
+
+    // Omit (undefined) when the step is absent from the request — do not treat as delete-all.
+    if (!commandStep) return undefined;
+
+    return commandStep.providerOverrides;
   }
 
   private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {
