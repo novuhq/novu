@@ -12,7 +12,8 @@ export interface DeleteManyValuesQuery {
   _workflowId?: string;
   _stepId?: string;
   _layoutId?: string;
-  level?: ControlValuesLevelEnum;
+  level?: ControlValuesLevelEnum | { $in: ControlValuesLevelEnum[] };
+  providerId?: string | { $in: string[] };
 }
 
 export class ControlValuesRepository extends BaseRepository<

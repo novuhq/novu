@@ -116,7 +116,7 @@ export type UpdateWorkflowDto = WorkflowCommonsFields & {
 
   preferences: PreferencesRequestDto;
 
-  origin: ResourceOriginEnum;
+  origin?: ResourceOriginEnum;
 
   payloadSchema?: object;
 };

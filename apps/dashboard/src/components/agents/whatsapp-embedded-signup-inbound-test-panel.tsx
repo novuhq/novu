@@ -1,11 +1,17 @@
 import { CredentialsKeyEnum, type ICredentials } from '@novu/shared';
-import { RiSendPlaneFill } from 'react-icons/ri';
+import { useQuery } from '@tanstack/react-query';
+import { RiSmartphoneLine, RiWhatsappFill } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
-import { Button } from '@/components/primitives/button';
+import { validateWhatsAppToken } from '@/api/agents';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { Label } from '@/components/primitives/label';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConnectSubscriberPhone } from '@/hooks/use-connect-subscriber-phone';
-import { ReadOnlyValueRow, SetupButton } from './setup-guide-primitives';
+import { SetupButton } from './setup-guide-primitives';
 import { buildWhatsAppDeepLink } from './whatsapp-setup-guide-utils';
+
+const WHATSAPP_GREEN = '#25D366';
 
 export function EmbeddedSignupInboundTestPanel({
   connectSubscriberId,
@@ -16,83 +22,110 @@ export function EmbeddedSignupInboundTestPanel({
   credentials: ICredentials | undefined;
   agentName: string;
 }) {
-  const { phone, setPhone, savedPhone, isPhoneSaved, isSaving, saveError, clearSaveError, handleSavePhone } =
-    useConnectSubscriberPhone(connectSubscriberId);
+  const { currentEnvironment } = useEnvironment();
+  const { savedPhone } = useConnectSubscriberPhone(connectSubscriberId);
 
-  const businessDisplayPhone =
+  const storedDisplayPhone =
     typeof credentials?.[CredentialsKeyEnum.From] === 'string' ? credentials[CredentialsKeyEnum.From].trim() : '';
+  const apiToken =
+    typeof credentials?.[CredentialsKeyEnum.ApiToken] === 'string'
+      ? credentials[CredentialsKeyEnum.ApiToken].trim()
+      : '';
+  const phoneNumberIdentification =
+    typeof credentials?.[CredentialsKeyEnum.phoneNumberIdentification] === 'string'
+      ? credentials[CredentialsKeyEnum.phoneNumberIdentification].trim()
+      : '';
+  const businessAccountId =
+    typeof credentials?.[CredentialsKeyEnum.businessAccountId] === 'string'
+      ? credentials[CredentialsKeyEnum.businessAccountId].trim()
+      : '';
+
+  const displayPhoneQuery = useQuery({
+    queryKey: [
+      'whatsapp-display-phone',
+      currentEnvironment?._id,
+      phoneNumberIdentification,
+      businessAccountId,
+      apiToken.length,
+    ],
+    queryFn: ({ signal }) =>
+      validateWhatsAppToken(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        {
+          accessToken: apiToken,
+          phoneNumberIdentification,
+          businessAccountId: businessAccountId || undefined,
+        },
+        signal
+      ),
+    enabled: Boolean(!storedDisplayPhone && currentEnvironment && apiToken && phoneNumberIdentification),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const businessDisplayPhone = storedDisplayPhone || displayPhoneQuery.data?.displayPhoneNumber?.trim() || '';
   const whatsAppUrl = businessDisplayPhone ? buildWhatsAppDeepLink(businessDisplayPhone, agentName) : '';
 
-  if (!isPhoneSaved) {
+  if (!businessDisplayPhone || !whatsAppUrl) {
     return (
-      <div className="border-stroke-soft flex w-full max-w-[400px] flex-col gap-2 rounded-md border p-3">
-        <p className="text-text-strong text-label-xs font-medium leading-4">Your phone number</p>
+      <div className="border-stroke-weak bg-bg-weak flex w-full max-w-[400px] flex-col gap-4 rounded-lg border p-3">
         <p className="text-text-soft text-label-xs leading-4">
-          Enter the number you&rsquo;ll message from so Novu can link inbound replies to your account.
+          Send any WhatsApp message to your connected business number to confirm Novu receives it.
         </p>
-        <div className="flex items-stretch gap-2">
-          <InputRoot size="xs" hasError={Boolean(saveError)} className="flex-1">
-            <InputWrapper>
-              <InputPure
-                value={phone}
-                onChange={(event) => {
-                  setPhone(event.target.value);
-                  if (saveError) {
-                    clearSaveError();
-                  }
-                }}
-                type="tel"
-                inputMode="tel"
-                placeholder="+14155551234"
-                autoComplete="tel"
-                disabled={isSaving}
-              />
-            </InputWrapper>
-          </InputRoot>
-          <Button
-            type="button"
-            variant="secondary"
-            size="xs"
-            className="px-2"
-            onClick={() => {
-              void handleSavePhone();
-            }}
-            disabled={!phone || isSaving}
-            isLoading={isSaving}
-          >
-            Save
-          </Button>
-        </div>
-        {saveError ? <p className="text-error-base text-label-xs leading-4">{saveError}</p> : null}
       </div>
     );
   }
 
   return (
-    <div className="border-stroke-soft flex w-full max-w-[400px] flex-col gap-3 rounded-md border p-3">
-      <p className="text-text-strong text-label-xs font-medium leading-4">Send a message to your business number</p>
-      {businessDisplayPhone && whatsAppUrl ? (
-        <>
-          <ReadOnlyValueRow label="Your WhatsApp business number" value={businessDisplayPhone} />
-          <SetupButton href={whatsAppUrl} leadingIcon={<RiSendPlaneFill className="size-3.5" />}>
-            Open in WhatsApp
-          </SetupButton>
-          <div className="flex flex-col items-center gap-2">
-            <div className="bg-bg-white rounded-md p-2">
-              <QRCode value={whatsAppUrl} size={120} />
-            </div>
-            <p className="text-text-soft text-label-xs leading-4">Scan with your phone to open the chat.</p>
+    <div className="border-stroke-weak bg-bg-weak flex w-full max-w-[400px] flex-col gap-4 rounded-lg border p-3">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
+          <Label className="text-text-sub">Agent WhatsApp number</Label>
+          <InputRoot size="xs" className="bg-bg-weak">
+            <InputWrapper className="bg-transparent">
+              <InputPure value={businessDisplayPhone} readOnly aria-label="Agent WhatsApp number" type="tel" />
+            </InputWrapper>
+            <CopyButton valueToCopy={businessDisplayPhone} size="xs" className="bg-bg-white shrink-0 px-2" />
+          </InputRoot>
+        </div>
+        <SetupButton
+          href={whatsAppUrl}
+          className="w-full"
+          leadingIcon={<RiWhatsappFill className="size-3.5" color={WHATSAPP_GREEN} />}
+        >
+          Open in WhatsApp
+        </SetupButton>
+      </div>
+
+      <div className="flex w-full items-center gap-2.5">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent to-stroke-soft" />
+        <span className="text-subheading-2xs text-text-soft shrink-0">OR</span>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent to-stroke-soft" />
+      </div>
+
+      <div className="flex items-start gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 pb-0.5">
+          <div className="text-text-strong text-label-xs flex items-center gap-1 font-medium">
+            <RiSmartphoneLine className="size-4 shrink-0" />
+            Setup from your phone
           </div>
-        </>
-      ) : (
-        <p className="text-text-soft text-label-xs leading-4">
-          Send any WhatsApp message to your connected business number to confirm Novu receives it.
-        </p>
-      )}
-      <p className="text-text-soft text-label-xs leading-4">
-        Message from <span className="text-text-sub font-medium">{savedPhone}</span> — Novu is listening and will
-        confirm as soon as it arrives.
-      </p>
+          <div className="text-text-soft text-label-2xs flex flex-col gap-2 leading-[14px]">
+            <p>
+              Message from <span className="text-text-sub font-medium">{savedPhone || 'your phone'}</span> (or) scan with
+              your phone to open the chat.
+            </p>
+            <p>Novu confirms as soon as it arrives.</p>
+          </div>
+        </div>
+        <div className="bg-bg-weak flex shrink-0 items-center self-stretch rounded-lg p-1">
+          <div className="bg-bg-white relative flex items-center justify-center rounded-md p-1.5">
+            <QRCode value={whatsAppUrl} size={96} />
+            <div className="bg-bg-white absolute left-1/2 top-1/2 flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full">
+              <RiWhatsappFill className="size-4" color={WHATSAPP_GREEN} />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

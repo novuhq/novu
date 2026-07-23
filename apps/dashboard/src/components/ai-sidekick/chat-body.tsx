@@ -1,6 +1,7 @@
 import { ChatStatus, UIMessage } from 'ai';
 import { FC, FormEvent, SVGProps, useMemo } from 'react';
 import { IconType } from 'react-icons';
+import { CopilotSlackConnectBanner } from '../agents/copilot-slack-connect-banner';
 import { Conversation, ConversationContent, ConversationScrollButton } from '../ai-elements/conversation';
 import { Message } from '../ai-elements/message';
 import {
@@ -230,7 +231,8 @@ export const ChatBody = ({
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="shrink-0 p-3">
+      <div className="flex flex-col shrink-0 p-3">
+        <CopilotSlackConnectBanner />
         <PromptInput onSubmit={onSubmitHandler}>
           <PromptInputBody>
             <PromptInputTextarea

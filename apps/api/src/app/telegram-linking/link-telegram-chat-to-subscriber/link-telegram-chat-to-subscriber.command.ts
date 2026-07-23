@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentCommand } from '../../shared/commands/project.command';
 
@@ -23,4 +25,11 @@ export class LinkTelegramChatToSubscriberCommand extends EnvironmentCommand {
   @IsString()
   @IsNotEmpty()
   chatId: string;
+
+  /**
+   * Optional context to persist on the created endpoint's `contextKeys`
+   */
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }

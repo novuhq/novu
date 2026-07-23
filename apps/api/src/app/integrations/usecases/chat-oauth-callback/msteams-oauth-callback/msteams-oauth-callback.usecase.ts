@@ -91,6 +91,7 @@ export class MsTeamsOauthCallback {
               subscriberId: stateData.subscriberId,
               integration,
               context: stateData.context,
+              contextKeys: stateData.contextKeys,
               mode: 'link_user',
             })
           );
@@ -148,6 +149,7 @@ export class MsTeamsOauthCallback {
         integrationIdentifier: integration.identifier,
         subscriberId: stateData.subscriberId,
         context: stateData.context,
+        contextKeys: stateData.contextKeys,
         auth: { accessToken: 'app-only' },
         workspace: { id: command.tenant },
       })
@@ -189,8 +191,11 @@ export class MsTeamsOauthCallback {
         connectionIdentifier: stateData.identifier,
         subscriberId: stateData.subscriberId,
         context: stateData.context,
+        contextKeys: stateData.contextKeys,
         type: ENDPOINT_TYPES.MS_TEAMS_USER,
         endpoint: { userId: oid, tenantId: userTenantId },
+        // oid comes from the verified MS Teams id_token claims.
+        platformIdentityVerified: true,
       })
     );
   }
