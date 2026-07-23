@@ -67,7 +67,9 @@ export const LocalWorkflowProvider = ({ children }: { children: ReactNode }) => 
     (data, options) => {
       if (!baseWorkflow) return;
 
-      for (const updatedStep of data.steps ?? []) {
+      const payload = typeof data === 'function' ? data(workflow ?? baseWorkflow) : data;
+
+      for (const updatedStep of payload.steps ?? []) {
         const stepId = 'stepId' in updatedStep ? updatedStep.stepId : undefined;
 
         if (stepId && updatedStep.controlValues !== undefined && updatedStep.controlValues !== null) {

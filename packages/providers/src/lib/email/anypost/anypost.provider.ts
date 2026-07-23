@@ -10,8 +10,8 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import { Anypost, verifyWebhookSignature } from 'anypost';
 import type { Attachment, EmailSendRequest, WebhookDeliveryEvent, WebhookEventType } from 'anypost';
+import { Anypost, verifyWebhookSignature } from 'anypost';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 

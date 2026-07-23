@@ -4,6 +4,7 @@ import {
   AgentIntegrationEntity,
   AgentIntegrationRepository,
   AgentRepository,
+  ChannelConnectionEntity,
   ChannelConnectionRepository,
   CommunityOrganizationRepository,
   ICredentialsEntity,
@@ -11,6 +12,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
+import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
@@ -72,8 +74,12 @@ export interface ResolvedAgentConfig {
   reactionOnResolved: WellKnownEmoji | null;
   /**
    * Whether unknown senders are auto-provisioned as subscribers (`open`) or
-   * rejected (`restricted`). Defaults to `restricted` when the agent has no
-   * explicit setting. Consumed by the inbound handler for the email platform.
+   * gated (`restricted`). Resolved to an effective value per platform: an
+   * explicit `agent.behavior.subscriberAccess` always wins; when unset,
+   * auto-provision platforms (Slack/Teams) default to `open` (preserving their
+   * historical always-provision behavior) and every other platform defaults to
+   * `restricted`. Consumed by the inbound handler across all provision-capable
+   * platforms.
    */
   subscriberAccess: AgentSubscriberAccessEnum;
   bridgeUrl?: string;
@@ -82,6 +88,22 @@ export interface ResolvedAgentConfig {
 }
 
 const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
+
+/**
+ * Extract log-safe fields from an error thrown by an axios request. Raw axios errors carry the full
+ * request `config` — including the `Authorization: Bearer <token>` header — plus `request`/`response`
+ * objects, so they must never be logged directly. Returns only the HTTP status, the Slack error code
+ * (when present) and a short message string.
+ */
+function toLogSafeError(err: unknown): { status?: number; slackError?: string; message: string } {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { error?: string } | undefined;
+
+    return { status: err.response?.status, slackError: data?.error, message: err.message };
+  }
+
+  return { message: err instanceof Error ? err.message : String(err) };
+}
 
 function isDuplicateKeyError(err: unknown): boolean {
   return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: unknown }).code === 11000);
@@ -326,31 +348,159 @@ export class AgentConfigResolver {
   }
 
   /**
-   * Workspace bot tokens live on channel connections (created by Slack OAuth). Pick the
-   * first connection for this integration that has an access token.
+   * Resolve the Slack workspace bot token for this integration.
+   *
+   * Workspace bot tokens live on channel connections (created by Slack OAuth), one per installed
+   * workspace. A single Novu-hosted Slack app can be installed across many customer workspaces
+   * (the NovuCopilot distribution model), so the token must be resolved per workspace:
+   *
+   *  1. When a `workspaceId` (Slack `team_id`) is provided, return the token of the connection
+   *     created for that exact workspace.
+   *  2. Otherwise — or when no per-workspace connection matches — fall back to the first connection
+   *     that carries a token. This preserves the historical single-workspace behavior and heals
+   *     legacy connections created before `workspace.id` was persisted.
    */
-  private async resolveSlackBotToken(
+  async resolveSlackBotToken(
     environmentId: string,
     organizationId: string,
-    integrationIdentifier: string
+    integrationIdentifier: string,
+    workspaceId?: string
   ): Promise<string | undefined> {
+    const resolved = await this.findSlackConnectionWithToken(
+      environmentId,
+      organizationId,
+      integrationIdentifier,
+      workspaceId
+    );
+
+    return resolved?.token;
+  }
+
+  /**
+   * Resolve the Slack workspace installation (bot token + bot user id) for an inbound event.
+   *
+   * In multi-workspace mode the adapter has no default bot token, so `auth.test` is never called at
+   * init and the bot's own user id is unknown — which breaks channel-mention detection (the SDK looks
+   * for `<@botUserId>` / `@botUserId` in the message text). We persist `bot_user_id` at OAuth install
+   * time; for legacy connections created before that, this method lazily backfills it by calling
+   * `auth.test` with the workspace bot token and writing the result onto the connection so subsequent
+   * events skip the extra call.
+   *
+   * Fails soft: a missing/failed backfill returns the token with `botUserId` undefined — mention
+   * detection then falls back to the `app_mention` event path rather than crashing the webhook.
+   */
+  async resolveSlackInstallation(
+    environmentId: string,
+    organizationId: string,
+    integrationIdentifier: string,
+    workspaceId?: string
+  ): Promise<{ token: string; botUserId?: string } | undefined> {
+    const resolved = await this.findSlackConnectionWithToken(
+      environmentId,
+      organizationId,
+      integrationIdentifier,
+      workspaceId
+    );
+
+    if (!resolved) {
+      return undefined;
+    }
+
+    const { connection, token } = resolved;
+    const botUserId =
+      connection.workspace?.botUserId ??
+      (await this.backfillSlackBotUserId(environmentId, organizationId, connection, token));
+
+    return { token, botUserId };
+  }
+
+  private async findSlackConnectionWithToken(
+    environmentId: string,
+    organizationId: string,
+    integrationIdentifier: string,
+    workspaceId?: string
+  ): Promise<{ connection: ChannelConnectionEntity; token: string } | undefined> {
+    if (workspaceId) {
+      const connection = await this.channelConnectionRepository.findOne(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          integrationIdentifier,
+          'workspace.id': workspaceId,
+        },
+        'auth workspace identifier integrationIdentifier'
+      );
+
+      const decryptedAuth = connection ? decryptChannelConnectionAuth(connection.auth) : undefined;
+      if (connection && decryptedAuth?.accessToken) {
+        return { connection, token: decryptedAuth.accessToken };
+      }
+    }
+
     const connections = await this.channelConnectionRepository.find(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
         integrationIdentifier,
       },
-      'auth'
+      'auth workspace identifier integrationIdentifier'
     );
 
     for (const connection of connections) {
       const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
       if (decryptedAuth?.accessToken) {
-        return decryptedAuth.accessToken;
+        return { connection, token: decryptedAuth.accessToken };
       }
     }
 
     return undefined;
+  }
+
+  /**
+   * Resolve the bot's Slack user id for a workspace token via `auth.test` and persist it onto the
+   * connection's `workspace.botUserId`. Best-effort: any failure returns `undefined` without throwing.
+   */
+  private async backfillSlackBotUserId(
+    environmentId: string,
+    organizationId: string,
+    connection: ChannelConnectionEntity,
+    token: string
+  ): Promise<string | undefined> {
+    try {
+      const response = await axios.post<{ ok: boolean; user_id?: string; error?: string }>(
+        'https://slack.com/api/auth.test',
+        undefined,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const botUserId = response.data?.ok ? response.data.user_id : undefined;
+      if (!botUserId) {
+        this.logger.warn(
+          { integrationIdentifier: connection.integrationIdentifier, slackError: response.data?.error },
+          'Slack auth.test did not return a bot user id; skipping botUserId backfill'
+        );
+
+        return undefined;
+      }
+
+      await this.channelConnectionRepository.update(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          identifier: connection.identifier,
+        },
+        { $set: { 'workspace.botUserId': botUserId } }
+      );
+
+      return botUserId;
+    } catch (err) {
+      this.logger.warn(
+        { err: toLogSafeError(err), integrationIdentifier: connection.integrationIdentifier },
+        'Failed to backfill Slack botUserId; continuing without it'
+      );
+
+      return undefined;
+    }
   }
 
   /**

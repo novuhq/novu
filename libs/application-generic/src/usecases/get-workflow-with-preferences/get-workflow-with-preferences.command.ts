@@ -12,6 +12,14 @@ export class GetWorkflowWithPreferencesCommand extends EnvironmentCommand {
   @IsString()
   userId?: string;
 
+  /**
+   * When true, the workflow preferences are read directly from the database,
+   * bypassing the per-instance LRU cache. Set for interactive dashboard (JWT)
+   * reads so a workflow's preferences reflect the latest write immediately.
+   */
+  @IsOptional()
+  skipPreferencesCache?: boolean;
+
   @Exclude()
   session?: ClientSession | null;
 }

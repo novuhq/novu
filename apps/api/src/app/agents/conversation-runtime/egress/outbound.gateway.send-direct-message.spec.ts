@@ -9,12 +9,14 @@ describe('OutboundGateway sendDirectMessage', () => {
   const recipientAddress = 'user@example.com';
   const threadId = 'email:user@example.com:abc123';
 
-  function makeGateway(options: {
-    platform?: AgentPlatformEnum;
-    openDM?: sinon.SinonStub;
-    adapterOpenDM?: sinon.SinonStub;
-    chatOpenDM?: sinon.SinonStub;
-  } = {}) {
+  function makeGateway(
+    options: {
+      platform?: AgentPlatformEnum;
+      openDM?: sinon.SinonStub;
+      adapterOpenDM?: sinon.SinonStub;
+      chatOpenDM?: sinon.SinonStub;
+    } = {}
+  ) {
     const platform = options.platform ?? AgentPlatformEnum.EMAIL;
     const threadPost = sinon.stub().resolves({ id: 'msg-1', threadId });
     const thread = { post: threadPost };

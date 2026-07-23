@@ -24,7 +24,7 @@ function createHandlebarsInstance(i18next: any) {
       };
 
       const replace = (options.replace = {
-        // @ts-ignore
+        // @ts-expect-error
         ...this,
         ...options.replace,
         ...hash,
@@ -35,7 +35,6 @@ function createHandlebarsInstance(i18next: any) {
         options.defaultValue = fn(replace);
       }
 
-      // @ts-ignore
       return new handlebars.SafeString(i18next.t(key, options));
     });
   }
@@ -117,7 +116,7 @@ function createHandlebarsInstance(i18next: any) {
 
   // based on: https://gist.github.com/DennyLoko/61882bc72176ca74a0f2
   handlebars.registerHelper(HandlebarHelpersEnum.NUMBERFORMAT, (number, options) => {
-    if (Number.isNaN(number)) {
+    if (Number.isNaN(Number(number))) {
       return number;
     }
 

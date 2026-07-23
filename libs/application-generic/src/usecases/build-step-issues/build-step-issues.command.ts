@@ -1,5 +1,5 @@
 import { ControlValuesEntity, NotificationTemplateEntity } from '@novu/dal';
-import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { ResourceOriginEnum, StepTypeEnum, ToolProviderIdEnum } from '@novu/shared';
 import { IsDefined, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserObjectCommand } from '../../commands';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
@@ -24,6 +24,10 @@ export class BuildStepIssuesCommand extends EnvironmentWithUserObjectCommand {
   @IsObject()
   @IsOptional()
   controlsDto?: Record<string, unknown> | null;
+
+  @IsObject()
+  @IsOptional()
+  providerOverridesDto?: Partial<Record<ToolProviderIdEnum, Record<string, unknown>>> | null;
 
   @IsDefined()
   @IsEnum(StepTypeEnum)

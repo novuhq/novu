@@ -8,13 +8,14 @@ import { buildLiquidParser } from './template-parser/liquid-engine';
 
 const getErrorPath = (error: ErrorObject): string => {
   const path = error.instancePath.substring(1);
-  const { missingProperty } = error.params;
+  const { missingProperty, additionalProperty } = error.params;
+  const appendedProperty = (missingProperty ?? additionalProperty) as string | undefined;
 
   if (!path || path.trim().length === 0) {
-    return missingProperty;
+    return appendedProperty as string;
   }
 
-  const fullPath = missingProperty ? `${path}/${missingProperty}` : path;
+  const fullPath = appendedProperty ? `${path}/${appendedProperty}` : path;
 
   return fullPath?.replace(/\//g, '.');
 };
@@ -49,6 +50,9 @@ const mapAjvErrorToMessage = (
   if (error.keyword === 'minLength') {
     return `${capitalize(error.instancePath.replace('/', ''))} is required`;
   }
+  if (error.keyword === 'additionalProperties') {
+    return `"${error.params.additionalProperty}" is not a supported property`;
+  }
 
   // Check if this is a URL field error
   const errorPath = getErrorPath(error);
@@ -75,6 +79,8 @@ const mapAjvErrorToIssueType = (error: ErrorObject, isUrlField = false): Content
     case 'pattern':
     case 'anyOf':
       return isUrlField ? ContentIssueEnum.INVALID_URL : ContentIssueEnum.MISSING_VALUE;
+    case 'additionalProperties':
+      return ContentIssueEnum.UNSUPPORTED_PROPERTY;
     default:
       return ContentIssueEnum.MISSING_VALUE;
   }

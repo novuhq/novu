@@ -1,0 +1,55 @@
+import { useMemo } from 'react';
+import { useFetchContexts } from '@/hooks/use-fetch-contexts';
+import { isDangerousObjectKey } from '@/utils/context-variable-utils';
+import { LiquidVariable } from '@/utils/parseStepVariables';
+
+const MAX_CONTEXT_DATA_DEPTH = 5;
+
+function collectDataPaths(obj: Record<string, unknown>, prefix: string, depth = 0): string[] {
+  const paths: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    if (isDangerousObjectKey(key)) continue;
+
+    const path = `${prefix}.${key}`;
+    paths.push(path);
+    if (depth < MAX_CONTEXT_DATA_DEPTH && value && typeof value === 'object' && !Array.isArray(value)) {
+      paths.push(...collectDataPaths(value as Record<string, unknown>, path, depth + 1));
+    }
+  }
+
+  return paths;
+}
+
+export function useContextTypeVariables(): LiquidVariable[] {
+  const { data: contextsData } = useFetchContexts({ limit: 50 }, { staleTime: 30_000 });
+
+  return useMemo(() => {
+    const contexts = contextsData?.data;
+    if (!contexts || contexts.length === 0) return [];
+
+    const seenNames = new Set<string>();
+    const variables: LiquidVariable[] = [];
+
+    const add = (name: string) => {
+      if (seenNames.has(name)) return;
+      seenNames.add(name);
+      variables.push({ name });
+    };
+
+    for (const ctx of contexts) {
+      if (!ctx.type) continue;
+
+      add(`context.${ctx.type}.id`);
+      add(`context.${ctx.type}.data`);
+
+      if (ctx.data && typeof ctx.data === 'object' && Object.keys(ctx.data).length > 0) {
+        const dataPaths = collectDataPaths(ctx.data as Record<string, unknown>, `context.${ctx.type}.data`);
+        for (const path of dataPaths) {
+          add(path);
+        }
+      }
+    }
+
+    return variables;
+  }, [contextsData]);
+}

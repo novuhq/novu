@@ -25,6 +25,7 @@ export * from './nexmo.handler';
 export * from './novu.handler';
 export * from './plivo.handler';
 export * from './ring-central.handler';
+export * from './ruach-sms.handler';
 export * from './sendchamp.handler';
 export * from './simpletexting.handler';
 export * from './sinch.handler';

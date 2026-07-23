@@ -8,6 +8,7 @@ import {
   InstrumentUsecase,
   isMatchingJsonSchema,
   PinoLogger,
+  resolveStepControlSchemas,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -18,8 +19,24 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { EnvironmentTypeEnum, LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
+import {
+  ActionStep,
+  ChannelStep,
+  PostActionEnum,
+  Schema,
+  Step,
+  StepOutput,
+  ToolOutputUnvalidated,
+  Workflow,
+} from '@novu/framework/internal';
+import {
+  EnvironmentTypeEnum,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
+  type ToolContentOverrideProviderId,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import {
@@ -315,9 +332,9 @@ export class ConstructFrameworkWorkflow {
               dbWorkflow,
               organization,
               locale,
-            });
+            }) as Promise<ToolOutputUnvalidated>;
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructToolStepOptions(staticStep, fullPayloadForRender, dbWorkflow)
         );
       case StepTypeEnum.DIGEST:
         return step.digest(
@@ -384,6 +401,69 @@ export class ConstructFrameworkWorkflow {
       disableOutputSanitization: true,
       providers: {},
     };
+  }
+
+  /**
+   * Provider resolvers read liquid-compiled overrides from outputs (not controls),
+   * because framework provider resolvers receive uncompiled controls.
+   *
+   * Control schema is resolved via the canonical policy helper so dashboard-cloud
+   * tool steps are not validated against a persisted keys-only schema that Mongoose
+   * minimize may have stripped of property entries.
+   */
+  @Instrument()
+  private constructToolStepOptions(
+    staticStep: NotificationStepEntity,
+    fullPayloadForRender: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity
+  ) {
+    const skip = (controlValues: Record<string, unknown>) =>
+      this.processSkipOption(controlValues, fullPayloadForRender);
+
+    const controlSchema = dbWorkflow.origin
+      ? resolveStepControlSchemas({
+          stepType: StepTypeEnum.TOOL,
+          workflowOrigin: dbWorkflow.origin,
+          existingControls: staticStep.template?.controls,
+          stepResolverHash: staticStep.template?.stepResolverHash,
+        }).schema
+      : staticStep.template!.controls!.schema;
+
+    /*
+     * providerOverrides are persisted as STEP_PROVIDER_CONTROLS docs and stitched back
+     * into controls at read time. The persisted main control schema intentionally omits
+     * them, but the framework validates controls with removeAdditional:'failing' — so
+     * the runtime control schema must still accept the stitched field.
+     */
+    const runtimeControlSchema = {
+      ...controlSchema,
+      properties: {
+        ...(controlSchema as { properties?: Record<string, unknown> }).properties,
+        providerOverrides: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            additionalProperties: true,
+          },
+        },
+      },
+    };
+
+    const resolveProviderOverride =
+      (providerId: ToolContentOverrideProviderId) =>
+      async ({ outputs }: { outputs: ToolOutputUnvalidated }) =>
+        outputs.providerOverrides?.[providerId] ?? {};
+
+    const providers = Object.fromEntries(
+      TOOL_CONTENT_OVERRIDE_PROVIDER_IDS.map((providerId) => [providerId, resolveProviderOverride(providerId)])
+    );
+
+    return {
+      skip,
+      controlSchema: runtimeControlSchema as unknown as Schema,
+      disableOutputSanitization: true,
+      providers,
+    } as Required<Parameters<ChannelStep>[2]>;
   }
 
   @Instrument()
