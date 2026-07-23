@@ -21,3 +21,4 @@ export { buildApprovalActionId, parseApprovalActionId } from '../resources/agent
 export { actionStepSchemas, channelStepSchemas } from '../schemas';
 export * from '../types';
 export { createLiquidEngine } from '../utils/liquid.utils';
+export { compileJsonControlValues, repairJsonString } from '../utils/compile-json-control-values';
