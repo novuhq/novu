@@ -5,18 +5,10 @@ import { decryptApiKey, encryptApiKey } from './encrypt-provider';
  *
  * Secret fields inside connection auth are encrypted/decrypted automatically by the
  * same helper. Unknown keys, such as token expiry timestamps, are passed through
- * unchanged. Tool-webhook `headers` are handled separately (per-value encryption).
+ * unchanged. Tool-channel secrets live on the endpoint document and are handled by
+ * `encryptChannelEndpoint` / `decryptChannelEndpoint`.
  */
-const SECURE_AUTH_STRING_FIELDS = [
-  'accessToken',
-  'refreshToken',
-  'signingSecret',
-  'clientSecret',
-  'routingKey',
-  'apiKey',
-  'url',
-  'method',
-] as const;
+const SECURE_AUTH_STRING_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
 
 export interface ChannelConnectionAuth {
   accessToken?: string;
@@ -25,44 +17,7 @@ export interface ChannelConnectionAuth {
   refreshTokenExpiresAt?: string;
   signingSecret?: string;
   clientSecret?: string;
-  /**
-   * PagerDuty Events API v2 integration key. 32-character alphanumeric string. Encrypted at rest.
-   */
-  routingKey?: string;
-  /**
-   * Opsgenie API integration key (GenieKey). UUID-format string. Encrypted at rest.
-   */
-  apiKey?: string;
-  /**
-   * Account region ('us' | 'eu'). Non-secret; travels with the secret so we route
-   * to the correct data-center endpoint (e.g. `api.opsgenie.com` vs `api.eu.opsgenie.com`,
-   * `events.pagerduty.com` vs `events.eu.pagerduty.com`).
-   */
-  region?: 'us' | 'eu';
-  /**
-   * Tool-webhook per-subscriber URL. Capability URLs are secrets; encrypted at rest.
-   */
-  url?: string;
-  /**
-   * Tool-webhook per-subscriber request headers. Each string value is encrypted at rest.
-   */
-  headers?: Record<string, string>;
-  /** Tool-webhook per-subscriber HTTP method override. Encrypted at rest. */
-  method?: 'POST' | 'PUT' | 'PATCH';
   [key: string]: unknown;
-}
-
-function transformHeaderValues(
-  headers: Record<string, string>,
-  transform: (value: string) => string
-): Record<string, string> {
-  const transformed: Record<string, string> = {};
-
-  for (const [headerKey, headerValue] of Object.entries(headers)) {
-    transformed[headerKey] = headerValue.length > 0 ? transform(headerValue) : headerValue;
-  }
-
-  return transformed;
 }
 
 function transformSecureFields<T extends object>(auth: T, transform: (value: string) => string): T {
@@ -73,16 +28,6 @@ function transformSecureFields<T extends object>(auth: T, transform: (value: str
     if (typeof value === 'string' && value.length > 0) {
       result[key] = transform(value);
     }
-  }
-
-  const headers = result.headers;
-  if (
-    headers &&
-    typeof headers === 'object' &&
-    !Array.isArray(headers) &&
-    Object.values(headers).every((entry) => typeof entry === 'string')
-  ) {
-    result.headers = transformHeaderValues(headers as Record<string, string>, transform);
   }
 
   return result as T;
