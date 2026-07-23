@@ -14,7 +14,6 @@ import {
   SegmentedControlTrigger,
 } from '@/components/primitives/segmented-control';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import type { IntegrationFormData } from '../types';
 import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
 import { WebhookRequestSchemaEditor } from './webhook-request-schema-editor';
@@ -212,8 +211,6 @@ function StaticRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSetti
       />
 
       <SigningSecretField control={control} isReadOnly={isReadOnly} />
-
-      <TestConnectionPlaceholder />
     </div>
   );
 }
@@ -302,20 +299,5 @@ function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsPro
         </div>
       )}
     />
-  );
-}
-
-function TestConnectionPlaceholder() {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="w-fit">
-          <Button type="button" variant="secondary" mode="outline" size="xs" disabled className="pointer-events-none">
-            Test connection
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>Coming soon</TooltipContent>
-    </Tooltip>
   );
 }
