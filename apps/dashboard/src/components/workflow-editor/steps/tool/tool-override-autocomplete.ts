@@ -12,6 +12,7 @@ import {
   getTypeLabel,
   type OverrideFieldSchema,
 } from './tool-override-field-schema';
+import { formatWebhookSchemaSourceLabel } from './webhook-payload-schema';
 
 type SchemaPathSegment = { kind: 'property'; key: string } | { kind: 'items' };
 
@@ -220,11 +221,15 @@ function buildFieldInfo(fieldSchema: OverrideFieldSchema): string | undefined {
   }
 
   if (fieldSchema.sources && fieldSchema.sources.length > 0) {
-    parts.push(`Sources: ${fieldSchema.sources.join(', ')}`);
+    parts.push(`Sources: ${fieldSchema.sources.map(formatWebhookSchemaSourceLabel).join(', ')}`);
   }
 
   if (fieldSchema.conflicts && fieldSchema.conflicts.length > 0) {
-    parts.push(`Type conflict: ${fieldSchema.conflicts.map(({ source, type }) => `${source} (${type})`).join(', ')}`);
+    parts.push(
+      `Type conflict: ${fieldSchema.conflicts
+        .map(({ source, type }) => `${formatWebhookSchemaSourceLabel(source)}: ${type}`)
+        .join(', ')}`
+    );
   }
 
   const constraints = getConstraints(fieldSchema);

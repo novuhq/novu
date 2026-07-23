@@ -22,8 +22,10 @@ describe('mergeWebhookPayloadSchemas', () => {
       },
     ]);
 
-    expect(result.properties.incidentId.sources).toEqual(['Incident webhook (id: incident-webhook)']);
-    expect(result.properties.actor.sources).toEqual(['Audit webhook (id: audit-webhook)']);
+    expect(result.properties.incidentId.sources).toEqual([
+      { name: 'Incident webhook', identifier: 'incident-webhook' },
+    ]);
+    expect(result.properties.actor.sources).toEqual([{ name: 'Audit webhook', identifier: 'audit-webhook' }]);
   });
 
   it('recursively merges compatible nested object properties', () => {
@@ -57,12 +59,14 @@ describe('mergeWebhookPayloadSchemas', () => {
     ]);
 
     expect(result.properties.incident.sources).toEqual([
-      'Incident webhook (id: incident-webhook)',
-      'Escalation webhook (id: escalation-webhook)',
+      { name: 'Incident webhook', identifier: 'incident-webhook' },
+      { name: 'Escalation webhook', identifier: 'escalation-webhook' },
     ]);
-    expect(result.properties.incident.properties?.id.sources).toEqual(['Incident webhook (id: incident-webhook)']);
+    expect(result.properties.incident.properties?.id.sources).toEqual([
+      { name: 'Incident webhook', identifier: 'incident-webhook' },
+    ]);
     expect(result.properties.incident.properties?.priority.sources).toEqual([
-      'Escalation webhook (id: escalation-webhook)',
+      { name: 'Escalation webhook', identifier: 'escalation-webhook' },
     ]);
   });
 
@@ -115,12 +119,42 @@ describe('mergeWebhookPayloadSchemas', () => {
     ]);
 
     expect(result.properties.incident.conflicts).toEqual([
-      { source: 'String webhook (id: string-webhook)', type: 'string' },
-      { source: 'Object webhook (id: object-webhook)', type: 'object' },
+      { source: { name: 'String webhook', identifier: 'string-webhook' }, type: 'string' },
+      { source: { name: 'Object webhook', identifier: 'object-webhook' }, type: 'object' },
     ]);
     expect(result.properties.incident.sources).toEqual([
-      'String webhook (id: string-webhook)',
-      'Object webhook (id: object-webhook)',
+      { name: 'String webhook', identifier: 'string-webhook' },
+      { name: 'Object webhook', identifier: 'object-webhook' },
+    ]);
+  });
+
+  it('keeps same-named integrations distinct by identifier', () => {
+    const result = mergeWebhookPayloadSchemas([
+      {
+        name: 'Webhook',
+        identifier: 'webhook-a',
+        payloadSchema: JSON.stringify({
+          type: 'object',
+          properties: { incident: { type: 'string' } },
+        }),
+      },
+      {
+        name: 'Webhook',
+        identifier: 'webhook-b',
+        payloadSchema: JSON.stringify({
+          type: 'object',
+          properties: { incident: { type: 'number' } },
+        }),
+      },
+    ]);
+
+    expect(result.properties.incident.sources).toEqual([
+      { name: 'Webhook', identifier: 'webhook-a' },
+      { name: 'Webhook', identifier: 'webhook-b' },
+    ]);
+    expect(result.properties.incident.conflicts).toEqual([
+      { source: { name: 'Webhook', identifier: 'webhook-a' }, type: 'string' },
+      { source: { name: 'Webhook', identifier: 'webhook-b' }, type: 'number' },
     ]);
   });
 
@@ -140,8 +174,8 @@ describe('mergeWebhookPayloadSchemas', () => {
 
     expect(Object.keys(result.properties)).toEqual(['event']);
     expect(result.ignoredSources).toEqual([
-      'Invalid webhook (id: invalid-webhook)',
-      'Missing webhook (id: missing-webhook)',
+      { name: 'Invalid webhook', identifier: 'invalid-webhook' },
+      { name: 'Missing webhook', identifier: 'missing-webhook' },
     ]);
   });
 

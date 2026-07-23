@@ -1,11 +1,14 @@
-export type WebhookSchemaSource = {
+export type WebhookSchemaSourceRef = {
   name: string;
   identifier: string;
+};
+
+export type WebhookSchemaSource = WebhookSchemaSourceRef & {
   payloadSchema?: string;
 };
 
 export type WebhookSchemaConflict = {
-  source: string;
+  source: WebhookSchemaSourceRef;
   type: string;
 };
 
@@ -16,13 +19,13 @@ export type WebhookFieldSchema = {
   maxLength?: number;
   items?: WebhookFieldSchema;
   properties?: Record<string, WebhookFieldSchema>;
-  sources: string[];
+  sources: WebhookSchemaSourceRef[];
   conflicts?: WebhookSchemaConflict[];
 };
 
 export type MergedWebhookPayloadSchema = {
   properties: Record<string, WebhookFieldSchema>;
-  ignoredSources: string[];
+  ignoredSources: WebhookSchemaSourceRef[];
 };
 
 type WebhookIntegrationLike = {
@@ -34,8 +37,8 @@ type WebhookIntegrationLike = {
   configurations?: unknown;
 };
 
-/** Label used in Supported fields / conflict tooltips: "<name> (id: <identifier>)". */
-export function formatWebhookSchemaSourceLabel(source: Pick<WebhookSchemaSource, 'name' | 'identifier'>): string {
+/** UI label for a schema source: "<name> (id: <identifier>)". */
+export function formatWebhookSchemaSourceLabel(source: WebhookSchemaSourceRef): string {
   return `${source.name} (id: ${source.identifier})`;
 }
 
@@ -52,6 +55,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function toSourceRef(source: WebhookSchemaSource): WebhookSchemaSourceRef {
+  return { name: source.name, identifier: source.identifier };
+}
+
+function mergeSourceRefs(
+  existing: WebhookSchemaSourceRef[],
+  incoming: WebhookSchemaSourceRef[]
+): WebhookSchemaSourceRef[] {
+  const byIdentifier = new Map<string, WebhookSchemaSourceRef>();
+
+  for (const source of [...existing, ...incoming]) {
+    byIdentifier.set(source.identifier, source);
+  }
+
+  return [...byIdentifier.values()];
+}
+
 export function getActiveWebhookSchemaSources(integrations: WebhookIntegrationLike[]): WebhookSchemaSource[] {
   return integrations
     .filter((integration) => integration.active && !integration.deleted && integration.providerId === 'tool-webhook')
@@ -65,7 +85,7 @@ export function getActiveWebhookSchemaSources(integrations: WebhookIntegrationLi
     });
 }
 
-function toFieldSchema(schema: JsonSchema, source: string): WebhookFieldSchema {
+function toFieldSchema(schema: JsonSchema, source: WebhookSchemaSourceRef): WebhookFieldSchema {
   const field: WebhookFieldSchema = {
     sources: [source],
   };
@@ -102,7 +122,7 @@ function toFieldSchema(schema: JsonSchema, source: string): WebhookFieldSchema {
 }
 
 function mergeFieldSchema(existing: WebhookFieldSchema, incoming: WebhookFieldSchema): WebhookFieldSchema {
-  const sources = [...new Set([...existing.sources, ...incoming.sources])];
+  const sources = mergeSourceRefs(existing.sources, incoming.sources);
   const typesConflict = existing.type !== undefined && incoming.type !== undefined && existing.type !== incoming.type;
 
   if (typesConflict || existing.conflicts) {
@@ -156,13 +176,13 @@ function parseRootSchema(payloadSchema: string | undefined): JsonSchema | undefi
 
 export function mergeWebhookPayloadSchemas(sources: WebhookSchemaSource[]): MergedWebhookPayloadSchema {
   const properties: Record<string, WebhookFieldSchema> = {};
-  const ignoredSources: string[] = [];
+  const ignoredSources: WebhookSchemaSourceRef[] = [];
 
   for (const source of sources) {
-    const sourceLabel = formatWebhookSchemaSourceLabel(source);
+    const sourceRef = toSourceRef(source);
     const schema = parseRootSchema(source.payloadSchema);
     if (!schema || !isRecord(schema.properties)) {
-      ignoredSources.push(sourceLabel);
+      ignoredSources.push(sourceRef);
       continue;
     }
 
@@ -171,7 +191,7 @@ export function mergeWebhookPayloadSchemas(sources: WebhookSchemaSource[]): Merg
         continue;
       }
 
-      const field = toFieldSchema(value, sourceLabel);
+      const field = toFieldSchema(value, sourceRef);
       properties[key] = properties[key] ? mergeFieldSchema(properties[key], field) : field;
     }
   }

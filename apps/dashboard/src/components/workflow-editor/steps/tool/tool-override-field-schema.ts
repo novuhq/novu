@@ -1,6 +1,6 @@
 import { getToolProviderOverrideSchema } from '@novu/shared';
 import { type DashboardToolContentOverrideProviderId, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
-import { type WebhookSchemaConflict } from './webhook-payload-schema';
+import { type WebhookSchemaConflict, type WebhookSchemaSourceRef } from './webhook-payload-schema';
 
 export type OverrideFieldSchema = {
   type?: string;
@@ -9,7 +9,7 @@ export type OverrideFieldSchema = {
   maxLength?: number;
   items?: OverrideFieldSchema;
   properties?: Record<string, OverrideFieldSchema>;
-  sources?: string[];
+  sources?: WebhookSchemaSourceRef[];
   conflicts?: WebhookSchemaConflict[];
 };
 

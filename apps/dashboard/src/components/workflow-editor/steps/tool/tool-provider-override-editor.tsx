@@ -18,6 +18,7 @@ import { createToolOverrideCompletionSource } from './tool-override-autocomplete
 import { getToolOverrideFieldDefaultValue, type OverrideFieldSchema } from './tool-override-field-schema';
 import { findDuplicateRootKey } from './tool-override-json';
 import { ToolOverrideSupportedFields } from './tool-override-supported-fields';
+import { formatWebhookSchemaSourceLabel, type WebhookSchemaSourceRef } from './webhook-payload-schema';
 
 const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
@@ -50,7 +51,7 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
 type ToolProviderOverrideEditorProps = {
   providerId: DashboardToolContentOverrideProviderId;
   fieldSchemas?: Record<string, OverrideFieldSchema>;
-  ignoredSchemaSources?: string[];
+  ignoredSchemaSources?: WebhookSchemaSourceRef[];
   onDraftParseValidityChange?: (providerId: DashboardToolContentOverrideProviderId, isParseValid: boolean) => void;
 };
 
@@ -243,7 +244,11 @@ export function ToolProviderOverrideEditor({
                     integration merges its own body template beneath this payload. Empty <code>{'{}'}</code> uses
                     default content.
                     {ignoredSchemaSources.length > 0 && (
-                      <> Autocomplete is unavailable for: {ignoredSchemaSources.join(', ')}.</>
+                      <>
+                        {' '}
+                        Autocomplete is unavailable for:{' '}
+                        {ignoredSchemaSources.map(formatWebhookSchemaSourceLabel).join(', ')}.
+                      </>
                     )}
                   </span>
                 ) : (

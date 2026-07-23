@@ -10,7 +10,11 @@ import {
   WEBHOOK_TOOL_PROVIDER_ID,
 } from './tool-content-source';
 import { getConstraints, getFieldSchemas, getTypeLabel, type OverrideFieldSchema } from './tool-override-field-schema';
-import { type WebhookSchemaConflict } from './webhook-payload-schema';
+import {
+  formatWebhookSchemaSourceLabel,
+  type WebhookSchemaConflict,
+  type WebhookSchemaSourceRef,
+} from './webhook-payload-schema';
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
@@ -21,7 +25,7 @@ type SupportedField = {
   description?: string;
   constraints: string[];
   isDefaultContent: boolean;
-  sources: string[];
+  sources: WebhookSchemaSourceRef[];
   conflicts: WebhookSchemaConflict[];
 };
 
@@ -110,7 +114,9 @@ export function ToolOverrideSupportedFields({
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        {field.conflicts.map(({ source, type }) => `${source}: ${type}`).join(' · ')}
+                        {field.conflicts
+                          .map(({ source, type }) => `${formatWebhookSchemaSourceLabel(source)}: ${type}`)
+                          .join(' · ')}
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -138,7 +144,9 @@ export function ToolOverrideSupportedFields({
                   <span className="text-text-soft text-[11px]">{field.constraints.join(' · ')}</span>
                 )}
                 {field.sources.length > 0 && (
-                  <span className="text-text-soft text-[11px]">From {field.sources.join(', ')}</span>
+                  <span className="text-text-soft text-[11px]">
+                    From {field.sources.map(formatWebhookSchemaSourceLabel).join(', ')}
+                  </span>
                 )}
               </button>
             );

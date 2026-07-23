@@ -5,19 +5,19 @@ import { type OverrideFieldSchema } from './tool-override-field-schema';
 const fieldSchemas: Record<string, OverrideFieldSchema> = {
   incident: {
     type: 'object',
-    sources: ['Incident webhook'],
+    sources: [{ name: 'Incident webhook', identifier: 'incident-webhook' }],
     properties: {
-      id: { type: 'string', sources: ['Incident webhook'] },
+      id: { type: 'string', sources: [{ name: 'Incident webhook', identifier: 'incident-webhook' }] },
       severity: {
         type: 'string',
         enum: ['critical', 'warning'],
-        sources: ['Incident webhook'],
+        sources: [{ name: 'Incident webhook', identifier: 'incident-webhook' }],
       },
     },
   },
   actor: {
     type: 'string',
-    sources: ['Audit webhook'],
+    sources: [{ name: 'Audit webhook', identifier: 'audit-webhook' }],
   },
 };
 
@@ -54,7 +54,7 @@ describe('getToolOverrideCompletionResult', () => {
 
     const incident = result?.options.find((option) => option.label === 'incident');
     expect(incident?.detail).toBe('object');
-    expect(incident?.info).toContain('Sources: Incident webhook');
+    expect(incident?.info).toContain('Sources: Incident webhook (id: incident-webhook)');
   });
 
   it('follows array item schemas into nested object cursors', () => {
