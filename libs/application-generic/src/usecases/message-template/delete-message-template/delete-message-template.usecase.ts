@@ -46,6 +46,7 @@ export class DeleteMessageTemplate {
             item: deletedMessageTemplate[0],
             type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
             parentChangeId: command.parentChangeId,
+            session: command.session,
           })
         );
       }

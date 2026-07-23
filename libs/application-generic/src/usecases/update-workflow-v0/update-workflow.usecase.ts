@@ -758,7 +758,7 @@ export class UpdateWorkflowV0 {
 
     // Sequential on purpose: parallel operations inside a transaction are undefined behaviour in Mongoose.
     for (const id of removedStepsIds) {
-      await this.deleteMessageTemplate.execute(
+      const deleted = await this.deleteMessageTemplate.execute(
         DeleteMessageTemplateCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
@@ -769,6 +769,12 @@ export class UpdateWorkflowV0 {
           session,
         })
       );
+
+      // Abort the transaction if the template was not deleted, so we never commit a
+      // workflow that dropped the step and its controls while leaving the template behind.
+      if (!deleted) {
+        throw new BadRequestException(`Failed to delete message template ${id} while updating the workflow`);
+      }
 
       await this.controlValuesRepository.delete(
         {
