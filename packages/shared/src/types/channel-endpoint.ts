@@ -42,9 +42,8 @@ export type ChannelEndpointByType = {
    * Events API v2 integration key; `region` selects the US/EU data-center endpoint.
    *
    * At the API boundary this is the wire shape on both writes and reads. Internally,
-   * the routing key is persisted encrypted on the linked `ChannelConnection.auth`
-   * and the stored `ChannelEndpoint.endpoint` document itself is empty — the read
-   * path re-hydrates this shape from the decrypted connection auth.
+   * `routingKey` is persisted encrypted on `ChannelEndpoint.endpoint`; `region`
+   * stays plaintext. No `ChannelConnection` is involved (connections are OAuth-only).
    */
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
   /**
@@ -52,9 +51,8 @@ export type ChannelEndpointByType = {
    * Opsgenie API integration; `region` selects the US/EU Alert API endpoint.
    *
    * At the API boundary this is the wire shape on both writes and reads. Internally,
-   * the API key is persisted encrypted on the linked `ChannelConnection.auth`
-   * and the stored `ChannelEndpoint.endpoint` document itself is empty — the read
-   * path re-hydrates this shape from the decrypted connection auth.
+   * `apiKey` is persisted encrypted on `ChannelEndpoint.endpoint`; `region` stays
+   * plaintext. No `ChannelConnection` is involved (connections are OAuth-only).
    */
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
   /**
@@ -63,9 +61,9 @@ export type ChannelEndpointByType = {
    * overrides the integration-level HTTP method.
    *
    * At the API boundary this is the wire shape on both writes and reads. Internally,
-   * url/headers/method are persisted encrypted on the linked `ChannelConnection.auth`
-   * and the stored `ChannelEndpoint.endpoint` document itself is empty — the read
-   * path re-hydrates this shape from the decrypted connection auth.
+   * `url` and header values are persisted encrypted on `ChannelEndpoint.endpoint`;
+   * `method` stays plaintext. No `ChannelConnection` is involved (connections are
+   * OAuth-only).
    */
   [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
     url: string;

@@ -164,7 +164,7 @@ sequenceDiagram
   Browser->>CustomerBackend: callback URL (over HTTPS)
   CustomerBackend->>NovuAPI: POST /v1/channel-endpoints (secret key)
   NovuAPI-->>CustomerBackend: 201 endpoint created
-  Note over NovuAPI: url/headers/method stored encrypted
+  Note over NovuAPI: url and header values stored encrypted on endpoint
   Browser->>CustomerBackend: trigger workflow
   CustomerBackend->>NovuAPI: POST /v1/events/trigger
   NovuAPI->>CustomerWebhook: POST merged payload + optional signature
@@ -338,9 +338,9 @@ curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
 | `integrationIdentifier` | `string` | Identifier of the Tool Webhook integration (must have **Routing Mode** = Dynamic). |
 | `subscriberId` | `string` | Subscriber whose endpoints receive the Tool step payload. |
 | `createSubscriberIfMissing` | `boolean` | Optional. When `true`, Novu creates the subscriber if missing. Defaults to `false`. |
-| `endpoint.url` | `string` | HTTPS or HTTP URL Novu calls for this endpoint. Stored encrypted. |
-| `endpoint.headers` | `Record<string, string>` | Optional. Per-endpoint headers; override integration defaults on key collision. Stored encrypted. |
-| `endpoint.method` | `"POST" \| "PUT" \| "PATCH"` | Optional. Overrides the integration HTTP method for this endpoint only. |
+| `endpoint.url` | `string` | HTTPS or HTTP URL Novu calls for this endpoint. Encrypted at rest. |
+| `endpoint.headers` | `Record<string, string>` | Optional. Per-endpoint headers; override integration defaults on key collision. Header values are encrypted at rest. |
+| `endpoint.method` | `"POST" \| "PUT" \| "PATCH"` | Optional. Overrides the integration HTTP method for this endpoint only. Remains plaintext. |
 
 Unlike PagerDuty or Opsgenie, a subscriber may register **multiple** `tool_webhook` endpoints on the same integration. Each endpoint receives its own HTTP request when the workflow runs.
 
@@ -353,7 +353,7 @@ curl -L 'https://api.novu.co/v1/channel-endpoints?subscriberId=<SUBSCRIBER_ID>&i
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
 ```
 
-Delete an endpoint to remove a destination. Novu cascades the delete to the underlying channel connection.
+Delete an endpoint to remove a destination. This removes the encrypted url and header values stored on the endpoint.
 
 See the [channel endpoints API reference](/api-reference/channel-endpoints/create-a-channel-endpoint) for full request and response details.
 
