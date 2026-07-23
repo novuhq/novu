@@ -1,9 +1,10 @@
 import {
   decryptChannelConnectionAuth,
   encryptChannelConnectionAuth,
+  encryptChannelEndpoint,
   type WebexTokenRefreshResponse,
 } from '@novu/application-generic';
-import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
+import { type ChannelEndpointByType, ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -171,6 +172,82 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
   });
 });
 
+describe('ResolveChannelEndpoints - PagerDuty', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      { findOne: sandbox.stub() } as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      { refreshAccessToken: sandbox.stub() } as any
+    );
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('decrypts routingKey from endpoint.endpoint and returns channelData without a connection', async () => {
+    channelEndpointRepository.find.resolves([
+      buildPagerDutyEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.PAGERDUTY_SERVICE, {
+          routingKey: 'R0UTINGK3YEXAMPLE000000000000000',
+          region: 'eu',
+        }),
+      }),
+    ]);
+
+    const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
+
+    expect(result).to.deep.equal([
+      {
+        integrationIdentifier: PAGERDUTY_INTEGRATION_IDENTIFIER,
+        providerId: ToolProviderIdEnum.PagerDuty,
+        channelData: [
+          {
+            type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+            identifier: 'pagerduty-endpoint',
+            endpoint: { routingKey: 'R0UTINGK3YEXAMPLE000000000000000', region: 'eu' },
+          },
+        ],
+      },
+    ]);
+    sinon.assert.notCalled(channelConnectionRepository.find);
+  });
+
+  it('throws when routingKey or region is missing after decrypt', async () => {
+    channelEndpointRepository.find.resolves([
+      buildPagerDutyEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.PAGERDUTY_SERVICE, {
+          routingKey: 'R0UTINGK3YEXAMPLE000000000000000',
+        } as ChannelEndpointByType[typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE]),
+      }),
+    ]);
+
+    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
+
+    expect(error).to.be.instanceOf(Error);
+    expect(error.message).to.contain('pagerduty-endpoint');
+    expect(error.message).to.contain('missing routingKey or region');
+  });
+});
+
 describe('ResolveChannelEndpoints - Opsgenie', () => {
   let sandbox: sinon.SinonSandbox;
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
@@ -202,9 +279,15 @@ describe('ResolveChannelEndpoints - Opsgenie', () => {
     sandbox.restore();
   });
 
-  it('hydrates the Opsgenie endpoint wire shape from decrypted connection auth', async () => {
-    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
-    channelConnectionRepository.find.resolves([buildOpsgenieConnection({ apiKey: 'genie-key-123', region: 'eu' })]);
+  it('decrypts apiKey from endpoint.endpoint and returns channelData without a connection', async () => {
+    channelEndpointRepository.find.resolves([
+      buildOpsgenieEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.OPSGENIE_INTEGRATION, {
+          apiKey: 'genie-key-123',
+          region: 'eu',
+        }),
+      }),
+    ]);
 
     const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
 
@@ -221,34 +304,27 @@ describe('ResolveChannelEndpoints - Opsgenie', () => {
         ],
       },
     ]);
-    expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
-      $in: [OPSGENIE_CONNECTION_IDENTIFIER],
-    });
+    sinon.assert.notCalled(channelConnectionRepository.find);
   });
 
-  it('throws when the linked channel connection is missing', async () => {
-    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
-    channelConnectionRepository.find.resolves([]);
+  it('throws when apiKey or region is missing after decrypt', async () => {
+    channelEndpointRepository.find.resolves([
+      buildOpsgenieEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.OPSGENIE_INTEGRATION, {
+          apiKey: 'genie-key-123',
+        } as ChannelEndpointByType[typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION]),
+      }),
+    ]);
 
     const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
 
     expect(error).to.be.instanceOf(Error);
     expect(error.message).to.contain('opsgenie-endpoint');
-    expect(error.message).to.contain('no auth is available');
-  });
-
-  it('throws when the connection auth is missing apiKey or region', async () => {
-    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
-    channelConnectionRepository.find.resolves([buildOpsgenieConnection({ apiKey: 'genie-key-123' })]);
-
-    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
-
-    expect(error).to.be.instanceOf(Error);
     expect(error.message).to.contain('missing apiKey or region');
   });
 });
 
-describe('ResolveChannelEndpoints - Tool Webhook (dynamic mode)', () => {
+describe('ResolveChannelEndpoints - Tool Webhook', () => {
   let sandbox: sinon.SinonSandbox;
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
   let channelConnectionRepository: Record<string, sinon.SinonStub>;
@@ -279,13 +355,14 @@ describe('ResolveChannelEndpoints - Tool Webhook (dynamic mode)', () => {
     sandbox.restore();
   });
 
-  it('hydrates the tool_webhook endpoint wire shape (url, headers, method) from decrypted connection auth', async () => {
-    channelEndpointRepository.find.resolves([buildToolWebhookEndpoint()]);
-    channelConnectionRepository.find.resolves([
-      buildToolWebhookConnection({
-        url: 'https://hooks.example.com/inbound',
-        headers: { Authorization: 'Bearer secret-token' },
-        method: 'PUT',
+  it('decrypts url/headers from endpoint.endpoint and returns channelData with method, without a connection', async () => {
+    channelEndpointRepository.find.resolves([
+      buildToolWebhookEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+          url: 'https://hooks.example.com/inbound',
+          headers: { Authorization: 'Bearer secret-token' },
+          method: 'PUT',
+        }),
       }),
     ]);
 
@@ -308,15 +385,16 @@ describe('ResolveChannelEndpoints - Tool Webhook (dynamic mode)', () => {
         ],
       },
     ]);
-    expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
-      $in: [TOOL_WEBHOOK_CONNECTION_IDENTIFIER],
-    });
+    sinon.assert.notCalled(channelConnectionRepository.find);
   });
 
-  it('hydrates url-only auth without headers/method', async () => {
-    channelEndpointRepository.find.resolves([buildToolWebhookEndpoint()]);
-    channelConnectionRepository.find.resolves([
-      buildToolWebhookConnection({ url: 'https://hooks.example.com/inbound' }),
+  it('decrypts url-only endpoint without headers/method', async () => {
+    channelEndpointRepository.find.resolves([
+      buildToolWebhookEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.TOOL_WEBHOOK, {
+          url: 'https://hooks.example.com/inbound',
+        }),
+      }),
     ]);
 
     const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
@@ -328,27 +406,21 @@ describe('ResolveChannelEndpoints - Tool Webhook (dynamic mode)', () => {
         endpoint: { url: 'https://hooks.example.com/inbound' },
       },
     ]);
+    sinon.assert.notCalled(channelConnectionRepository.find);
   });
 
-  it('throws when the linked channel connection is missing', async () => {
-    channelEndpointRepository.find.resolves([buildToolWebhookEndpoint()]);
-    channelConnectionRepository.find.resolves([]);
+  it('throws when url is missing after decrypt', async () => {
+    channelEndpointRepository.find.resolves([
+      buildToolWebhookEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.TOOL_WEBHOOK, { url: '' }),
+      }),
+    ]);
 
     const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
 
     expect(error).to.be.instanceOf(Error);
     expect(error.message).to.contain('tool-webhook-endpoint');
-    expect(error.message).to.contain('no auth is available');
-  });
-
-  it('throws when the connection auth is missing url', async () => {
-    channelEndpointRepository.find.resolves([buildToolWebhookEndpoint()]);
-    channelConnectionRepository.find.resolves([buildToolWebhookConnection({ url: '' })]);
-
-    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
-
-    expect(error).to.be.instanceOf(Error);
-    expect(error.message).to.contain('missing url in auth');
+    expect(error.message).to.contain('missing url');
   });
 });
 
@@ -399,8 +471,25 @@ function buildWebexConnection(auth: {
   };
 }
 
+const PAGERDUTY_INTEGRATION_IDENTIFIER = 'pagerduty-integration';
+
+function buildPagerDutyEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'pagerduty-endpoint',
+    integrationIdentifier: PAGERDUTY_INTEGRATION_IDENTIFIER,
+    providerId: ToolProviderIdEnum.PagerDuty,
+    channel: ChannelTypeEnum.TOOL,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+    endpoint: {},
+    ...overrides,
+  };
+}
+
 const OPSGENIE_INTEGRATION_IDENTIFIER = 'opsgenie-integration';
-const OPSGENIE_CONNECTION_IDENTIFIER = 'opsgenie-connection';
 
 function buildOpsgenieEndpoint(overrides: Record<string, unknown> = {}) {
   return {
@@ -412,28 +501,13 @@ function buildOpsgenieEndpoint(overrides: Record<string, unknown> = {}) {
     channel: ChannelTypeEnum.TOOL,
     subscriberId: SUBSCRIBER_ID,
     contextKeys: [],
-    connectionIdentifier: OPSGENIE_CONNECTION_IDENTIFIER,
     type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
     endpoint: {},
     ...overrides,
   };
 }
 
-function buildOpsgenieConnection(auth: { apiKey: string; region?: 'us' | 'eu' }) {
-  return {
-    _environmentId: ENVIRONMENT_ID,
-    _organizationId: ORGANIZATION_ID,
-    identifier: OPSGENIE_CONNECTION_IDENTIFIER,
-    integrationIdentifier: OPSGENIE_INTEGRATION_IDENTIFIER,
-    providerId: ToolProviderIdEnum.Opsgenie,
-    channel: ChannelTypeEnum.TOOL,
-    contextKeys: [],
-    auth: encryptChannelConnectionAuth(auth),
-  };
-}
-
 const TOOL_WEBHOOK_INTEGRATION_IDENTIFIER = 'tool-webhook-integration';
-const TOOL_WEBHOOK_CONNECTION_IDENTIFIER = 'tool-webhook-connection';
 
 function buildToolWebhookEndpoint(overrides: Record<string, unknown> = {}) {
   return {
@@ -445,22 +519,8 @@ function buildToolWebhookEndpoint(overrides: Record<string, unknown> = {}) {
     channel: ChannelTypeEnum.TOOL,
     subscriberId: SUBSCRIBER_ID,
     contextKeys: [],
-    connectionIdentifier: TOOL_WEBHOOK_CONNECTION_IDENTIFIER,
     type: ENDPOINT_TYPES.TOOL_WEBHOOK,
     endpoint: {},
     ...overrides,
-  };
-}
-
-function buildToolWebhookConnection(auth: { url: string; headers?: Record<string, string>; method?: string }) {
-  return {
-    _environmentId: ENVIRONMENT_ID,
-    _organizationId: ORGANIZATION_ID,
-    identifier: TOOL_WEBHOOK_CONNECTION_IDENTIFIER,
-    integrationIdentifier: TOOL_WEBHOOK_INTEGRATION_IDENTIFIER,
-    providerId: ToolProviderIdEnum.Webhook,
-    channel: ChannelTypeEnum.TOOL,
-    contextKeys: [],
-    auth: encryptChannelConnectionAuth(auth),
   };
 }
