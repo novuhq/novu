@@ -195,9 +195,9 @@ jobs:
 
             **Requirements:**
             1. Follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
-            2. ${{ steps.check_team_member.outputs.is_team_member == 'true' && 'As a team member, include Linear ticket ID at the end: `fixes TICKET-ID` or include it in your branch name' || '' }}
+            2. ${{ steps.check_team_member.outputs.is_team_member == 'true' && steps.detect_docs.outputs.docs_only != 'true' && 'As a team member, include Linear ticket ID at the end: `fixes TICKET-ID` or include it in your branch name' || '' }}
 
-            **Expected format:** `feat(scope): Add fancy new feature${{ steps.check_team_member.outputs.is_team_member == 'true' && ' fixes NOV-123' || '' }}`
+            **Expected format:** `feat(scope): Add fancy new feature${{ steps.check_team_member.outputs.is_team_member == 'true' && steps.detect_docs.outputs.docs_only != 'true' && ' fixes NOV-123' || '' }}`
 
             **Details:**
             ${{ steps.lint_pr_title.outputs.error_message != null && steps.lint_pr_title.outputs.error_message || '' }}
