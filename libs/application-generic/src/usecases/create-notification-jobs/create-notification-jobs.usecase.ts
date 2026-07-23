@@ -309,12 +309,12 @@ export class CreateNotificationJobs {
   }
 
   private createATriggerJobIfMissing(
-    steps: NotificationStepEntity[],
+    steps: NotificationStepWithTemplate[],
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
     isPayloadDedupEnabled = false
   ): NotificationJob | undefined {
-    const triggerStepExist = steps.some((step) => step.template?.type === StepTypeEnum.TRIGGER);
+    const triggerStepExist = steps.some((step) => step.template.type === StepTypeEnum.TRIGGER);
 
     if (triggerStepExist) {
       return undefined;
@@ -400,9 +400,10 @@ export class CreateNotificationJobs {
     const digestStep = steps.find((step) => step.template.type === StepTypeEnum.DIGEST);
 
     if (digestStep?.metadata && 'type' in digestStep.metadata) {
-      // DigestFilterSteps only prepends a trigger step (which always carries a template)
-      return (await this.digestFilterSteps.execute(
-        DigestFilterStepsCommand.create({
+      // `steps` is re-supplied after create() because the command class widens it
+      // to NotificationStepEntity[], which would erase the narrowed step type.
+      return await this.digestFilterSteps.execute({
+        ...DigestFilterStepsCommand.create({
           _subscriberId: command.subscriber._id,
           payload: command.payload,
           steps,
@@ -414,8 +415,9 @@ export class CreateNotificationJobs {
           transactionId: command.transactionId,
           type: digestStep.metadata.type as DigestTypeEnum, // We already checked it is a DIGEST
           backoff: 'backoff' in digestStep.metadata ? digestStep.metadata.backoff : undefined,
-        })
-      )) as NotificationStepWithTemplate[];
+        }),
+        steps,
+      });
     }
 
     return steps;
