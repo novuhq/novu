@@ -88,7 +88,7 @@ overrides:
   msgpackr: ^1.10.1
   multer@<2.2.0: ^2.2.0
   jws@<3.2.3: ^3.2.3
-  svgo@>=3.0.0 <3.3.3: ^3.3.3
+  svgo@>=3.0.0 <3.3.4: ^3.3.4
   flatted@<3.4.2: ^3.4.2
   serialize-javascript@<7.0.5: ^7.0.5
   ejs@<3.1.10: ^3.1.10
