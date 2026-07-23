@@ -77,7 +77,6 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     const res = await postIngest([messageEnvelope(conversationId, messageId)]);
 
     expect(res.status).to.equal(200);
-    expect(res.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
 
     const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
     const messageActivity = activities.find(
@@ -89,37 +88,37 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     expect(messageActivity!.content).to.equal(`Content for ${messageId}`);
   });
 
-  it('should report duplicate for a replayed message envelope and not persist a second activity', async () => {
+  it('should accept a replayed message envelope as idempotent and not persist a second activity', async () => {
     const conversationId = await seedConversation(ctx);
     const messageId = `msg-dupe-${Date.now()}`;
     const envelope = messageEnvelope(conversationId, messageId);
 
     const firstRes = await postIngest([envelope]);
     expect(firstRes.status).to.equal(200);
-    expect(firstRes.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
 
     const secondRes = await postIngest([envelope]);
     expect(secondRes.status).to.equal(200);
-    expect(secondRes.body.data.results).to.deep.equal([{ sequence: 1, status: 'duplicate' }]);
 
     const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
     const messageActivities = activities.filter((a) => a.identifier === messageId);
     expect(messageActivities).to.have.length(1);
   });
 
-  it('should return results in request order with matching sequences for a batch', async () => {
+  it('should persist all message activities from a batch', async () => {
     const conversationId = await seedConversation(ctx);
+    const messageId1 = `msg-batch-1-${Date.now()}`;
+    const messageId2 = `msg-batch-2-${Date.now()}`;
 
     const res = await postIngest([
-      messageEnvelope(conversationId, `msg-batch-1-${Date.now()}`, { sequence: 1 }),
-      messageEnvelope(conversationId, `msg-batch-2-${Date.now()}`, { sequence: 2 }),
+      messageEnvelope(conversationId, messageId1, { sequence: 1 }),
+      messageEnvelope(conversationId, messageId2, { sequence: 2 }),
     ]);
 
     expect(res.status).to.equal(200);
-    expect(res.body.data.results).to.deep.equal([
-      { sequence: 1, status: 'accepted' },
-      { sequence: 2, status: 'accepted' },
-    ]);
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    expect(activities.some((a) => a.identifier === messageId1)).to.be.true;
+    expect(activities.some((a) => a.identifier === messageId2)).to.be.true;
   });
 
   it('should reject an invalid envelope with a 400 naming the invalid index', async () => {
@@ -144,14 +143,13 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     expect(res.body.message).to.equal('All events in a batch must belong to the same conversation');
   });
 
-  it('should soft-skip an unknown conversation with a 200 and empty results', async () => {
+  it('should reject an unknown conversation with a 404', async () => {
     const res = await postIngest([messageEnvelope(NONEXISTENT_CONVERSATION_ID, 'msg-unknown-conv')]);
 
-    expect(res.status).to.equal(200);
-    expect(res.body.data.results).to.deep.equal([]);
+    expect(res.status).to.equal(404);
   });
 
-  it('should soft-skip envelopes whose agentId does not match the conversation agent', async () => {
+  it('should reject envelopes whose agentId does not match the conversation agent with a 400', async () => {
     const conversationId = await seedConversation(ctx);
 
     const otherAgentIdentifier = `e2e-other-agent-${Date.now()}`;
@@ -165,8 +163,7 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
       messageEnvelope(conversationId, 'msg-agent-mismatch', { agentId: otherAgentIdentifier }),
     ]);
 
-    expect(res.status).to.equal(200);
-    expect(res.body.data.results).to.deep.equal([]);
+    expect(res.status).to.equal(400);
 
     const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
     expect(activities.filter((a) => a.identifier === 'msg-agent-mismatch')).to.have.length(0);
@@ -203,7 +200,6 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     ]);
 
     expect(res.status).to.equal(200);
-    expect(res.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
 
     const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
     const approvalActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST);
@@ -229,7 +225,6 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     ]);
 
     expect(res.status).to.equal(200);
-    expect(res.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
 
     const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
     const approvalActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST);

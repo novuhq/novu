@@ -11,11 +11,11 @@ const BASE_OPTIONS = {
   turnId: 'del-123',
 };
 
-function ackResponse(results: Array<{ sequence: number; status: 'accepted' | 'duplicate' }>) {
+function okResponse(body = '{}') {
   return {
     ok: true,
     status: 200,
-    text: () => Promise.resolve(JSON.stringify({ data: { results } })),
+    text: () => Promise.resolve(body),
   };
 }
 
@@ -32,7 +32,7 @@ describe('AgentEventOutbox', () => {
   });
 
   it('assigns sequences 1, 2, 3 across enqueues in a single flush batch', async () => {
-    const fetchFn = vi.fn().mockResolvedValue(ackResponse([]));
+    const fetchFn = vi.fn().mockResolvedValue(okResponse());
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
 
     outbox.enqueue({ type: 'run-start' });
@@ -46,7 +46,7 @@ describe('AgentEventOutbox', () => {
   });
 
   it('emit posts correct envelope fields and Authorization header', async () => {
-    const fetchFn = vi.fn().mockResolvedValue(ackResponse([{ sequence: 1, status: 'accepted' }]));
+    const fetchFn = vi.fn().mockResolvedValue(okResponse());
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
     const event: AgentEvent = { type: 'channel.typing', state: 'on', status: 'thinking' };
 
@@ -91,14 +91,14 @@ describe('AgentEventOutbox', () => {
         await firstGate;
         callOrder.push('first-end');
 
-        return ackResponse([{ sequence: 1, status: 'accepted' }]);
+        return okResponse();
       })
       .mockImplementationOnce(async () => {
         callOrder.push('second-start');
         await secondGate;
         callOrder.push('second-end');
 
-        return ackResponse([{ sequence: 2, status: 'accepted' }]);
+        return okResponse();
       });
 
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
@@ -122,7 +122,7 @@ describe('AgentEventOutbox', () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 500, text: () => Promise.resolve('server error') })
-      .mockResolvedValueOnce(ackResponse([{ sequence: 1, status: 'accepted' }]));
+      .mockResolvedValueOnce(okResponse());
 
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn, maxRetries: 3 });
     const flushPromise = outbox.emit({ type: 'run-start' });
@@ -153,6 +153,19 @@ describe('AgentEventOutbox', () => {
     vi.useRealTimers();
   });
 
+  it('does not retry 4xx responses', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: () => Promise.resolve('bad request'),
+    });
+
+    const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn, maxRetries: 3 });
+
+    await expect(outbox.emit({ type: 'run-start' })).rejects.toBeInstanceOf(AgentDeliveryError);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
   it('does not fetch when flush is called on an empty buffer', async () => {
     const fetchFn = vi.fn();
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
@@ -160,22 +173,5 @@ describe('AgentEventOutbox', () => {
     await outbox.flush();
 
     expect(fetchFn).not.toHaveBeenCalled();
-  });
-
-  it('treats missing ack sequences as terminal skips without retry', async () => {
-    const fetchFn = vi.fn().mockResolvedValue(
-      ackResponse([
-        { sequence: 1, status: 'accepted' },
-        { sequence: 3, status: 'duplicate' },
-      ])
-    );
-    const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
-
-    outbox.enqueue({ type: 'run-start' });
-    outbox.enqueue({ type: 'message', messageId: 'msg-1', content: { markdown: 'skipped' } });
-    outbox.enqueue({ type: 'run-finish', outcome: 'completed' });
-    await outbox.flush();
-
-    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 });

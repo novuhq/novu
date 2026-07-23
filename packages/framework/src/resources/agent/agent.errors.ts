@@ -130,22 +130,6 @@ export class AgentDeliveryError extends AgentError {
   }
 }
 
-/**
- * Thrown when the ingest endpoint's ack response for an emitted batch is missing, malformed,
- * or reports an unrecognized per-envelope status. Distinct from {@link AgentDeliveryError}
- * because the HTTP request itself succeeded — the contract violation is in the response body,
- * not the status code, so there is no real `statusCode` to report.
- */
-export class AgentAckError extends AgentError {
-  readonly responseBody: string;
-
-  constructor(responseBody: string) {
-    super(`Delivery ack malformed: ${responseBody || '<empty body>'}`);
-    this.name = 'AgentAckError';
-    this.responseBody = responseBody;
-  }
-}
-
 export function toAgentError(err: unknown): AgentError {
   if (err instanceof AgentError) {
     return err;

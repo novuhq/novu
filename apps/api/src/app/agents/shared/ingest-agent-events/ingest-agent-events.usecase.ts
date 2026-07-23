@@ -4,19 +4,15 @@ import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
-import { AgentEventContext, AgentEventSink, type IngestOutcome } from '../agent-event-sink.service';
+import { AgentEventContext, AgentEventSink } from '../agent-event-sink.service';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import { IngestAgentEventsCommand } from './ingest-agent-events.command';
 
-export interface IngestAgentEventResult {
-  sequence: number;
-  status: IngestOutcome;
-}
-
-export interface IngestAgentEventsResult {
-  results: IngestAgentEventResult[];
-}
-
+/**
+ * SDK-native AgentEvent ingest. Success is HTTP 200 with an empty/minimal body
+ * (status-only ack). Soft skips are hard failures: 404 for missing conversation,
+ * 400 for bad client ids / empty valid batch after filtering.
+ */
 @Injectable()
 export class IngestAgentEvents {
   constructor(
@@ -30,7 +26,7 @@ export class IngestAgentEvents {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: IngestAgentEventsCommand): Promise<IngestAgentEventsResult> {
+  async execute(command: IngestAgentEventsCommand): Promise<void> {
     await this.assertProtocolEnabled(command.organizationId, command.environmentId);
 
     const invalidIndexes = command.events
@@ -50,9 +46,7 @@ export class IngestAgentEvents {
       throw new BadRequestException('All events in a batch must belong to the same conversation');
     }
 
-    const results = await this.ingestBatch(envelopes, command);
-
-    return { results };
+    await this.ingestBatch(envelopes, command);
   }
 
   private async assertProtocolEnabled(organizationId: string, environmentId: string): Promise<void> {
@@ -68,12 +62,9 @@ export class IngestAgentEvents {
     }
   }
 
-  private async ingestBatch(
-    envelopes: AgentEventEnvelope[],
-    command: IngestAgentEventsCommand
-  ): Promise<IngestAgentEventResult[]> {
+  private async ingestBatch(envelopes: AgentEventEnvelope[], command: IngestAgentEventsCommand): Promise<void> {
     if (envelopes.length === 0) {
-      return [];
+      return;
     }
 
     const conversationId = envelopes[0].conversationId;
@@ -83,24 +74,27 @@ export class IngestAgentEvents {
       command.organizationId
     );
 
+    // Soft-skip → hard failure: missing conversation is not a client id typo we can
+    // repair by retrying; callers must stop. Prefer 404 over 400 for "resource gone".
     if (!conversation) {
       this.logger.warn(
         { conversationId, environmentId: command.environmentId },
-        'Skipping agent event batch entries — conversation not found'
+        'Rejecting agent event batch — conversation not found'
       );
 
-      return [];
+      throw new NotFoundException('Conversation not found');
     }
 
+    // 400: client sent a conversation that cannot accept events (bad/incomplete setup ids).
     const channel = conversation.channels?.[0];
 
     if (!channel) {
       this.logger.warn(
         { conversationId, environmentId: command.environmentId },
-        'Skipping agent event batch entries — conversation has no channel'
+        'Rejecting agent event batch — conversation has no channel'
       );
 
-      return [];
+      throw new BadRequestException('Conversation has no channel');
     }
 
     const integration = await this.integrationRepository.findOne(
@@ -115,10 +109,10 @@ export class IngestAgentEvents {
     if (!integration?.identifier) {
       this.logger.warn(
         { conversationId, integrationId: channel._integrationId },
-        'Skipping agent event batch entries — integration not found for conversation channel'
+        'Rejecting agent event batch — integration not found for conversation channel'
       );
 
-      return [];
+      throw new BadRequestException('Integration not found for conversation channel');
     }
 
     const validEnvelopes: AgentEventEnvelope[] = [];
@@ -162,8 +156,9 @@ export class IngestAgentEvents {
       validEnvelopes.push(envelope);
     }
 
+    // 400: every envelope had a bad agentId (not found or mismatched). Do not ack an empty batch.
     if (validEnvelopes.length === 0 || !referenceAgent) {
-      return [];
+      throw new BadRequestException('No valid events in batch — agent not found or does not match conversation');
     }
 
     const context: AgentEventContext = {
@@ -179,14 +174,7 @@ export class IngestAgentEvents {
       source: 'bridge',
     };
 
-    const outcomes = await this.agentEventSink.ingestMany(validEnvelopes, context);
-    const results: IngestAgentEventResult[] = [];
-
-    for (let index = 0; index < validEnvelopes.length; index += 1) {
-      results.push({ sequence: validEnvelopes[index].sequence, status: outcomes[index] });
-    }
-
-    return results;
+    await this.agentEventSink.ingestMany(validEnvelopes, context);
   }
 }
 

@@ -36,17 +36,7 @@ describe('event mode (AgentEvent protocol)', () => {
           const body = JSON.parse(init!.body!);
           eventBatches.push(body.events);
 
-          return new Response(
-            JSON.stringify({
-              data: {
-                results: body.events.map((envelope: { sequence: number }) => ({
-                  sequence: envelope.sequence,
-                  status: 'accepted',
-                })),
-              },
-            }),
-            { status: 200 }
-          );
+          return new Response(JSON.stringify({ data: null }), { status: 200 });
         }
 
         if (url === REPLY_URL) {

@@ -1,5 +1,5 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { AgentAckError, AgentDeliveryError } from './agent.errors';
+import { AgentDeliveryError } from './agent.errors';
 
 export interface AgentEventOutboxOptions {
   eventsUrl: string;
@@ -11,11 +11,6 @@ export interface AgentEventOutboxOptions {
   fetchFn?: typeof fetch;
   maxRetries?: number;
 }
-
-type IngestAckResult = {
-  sequence: number;
-  status: 'accepted' | 'duplicate';
-};
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -127,60 +122,10 @@ export class AgentEventOutbox {
     if (!response.ok) {
       throw new AgentDeliveryError(response.status, responseBody);
     }
-
-    this.validateAck(responseBody, batch);
-  }
-
-  /**
-   * Per the ack contract, an envelope in the batch is either listed with a recognized status
-   * (`accepted`/`duplicate`) or absent — an absent sequence is a terminal skip, not an error.
-   * A sequence listed with anything else means the response is malformed.
-   */
-  private validateAck(responseBody: string, batch: AgentEventEnvelope[]): void {
-    let parsed: unknown;
-
-    try {
-      parsed = JSON.parse(responseBody);
-    } catch {
-      throw new AgentAckError(responseBody);
-    }
-
-    const envelope = parsed as { data?: { results?: unknown } };
-    const results = envelope.data?.results;
-
-    if (!Array.isArray(results)) {
-      throw new AgentAckError(responseBody);
-    }
-
-    const statusBySequence = new Map<number, string>();
-
-    for (const item of results) {
-      if (!item || typeof item !== 'object') {
-        continue;
-      }
-
-      const result = item as Partial<IngestAckResult>;
-
-      if (typeof result.sequence === 'number' && typeof result.status === 'string') {
-        statusBySequence.set(result.sequence, result.status);
-      }
-    }
-
-    for (const envelopeItem of batch) {
-      const status = statusBySequence.get(envelopeItem.sequence);
-
-      if (status !== undefined && status !== 'accepted' && status !== 'duplicate') {
-        throw new AgentAckError(responseBody);
-      }
-    }
   }
 }
 
 function isRetryableError(error: unknown): boolean {
-  if (error instanceof AgentAckError) {
-    return true;
-  }
-
   if (!(error instanceof AgentDeliveryError)) {
     return true;
   }

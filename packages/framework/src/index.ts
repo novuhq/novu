@@ -34,7 +34,6 @@ export type {
 } from './resources';
 export {
   Actions,
-  AgentAckError,
   AgentDeliveryError,
   AgentError,
   agent,

@@ -46,9 +46,7 @@ export interface AgentEventContext {
   conversationId: string;
   agentIdentifier: string;
   integrationIdentifier: string;
-  /** Which runtime produced this batch — drives auto-delivery and typing cleanup, not just a `sessionId` presence check. */
   source: 'managed' | 'bridge';
-  /** Mongo agent `_id` — required for MCP connection lookups (`connection.error`). */
   agentId?: string;
   subscriberId?: string;
   platform?: AgentPlatformEnum;
@@ -78,33 +76,28 @@ export class AgentEventSink {
     this.logger.setContext(this.constructor.name);
   }
 
-  async ingest(envelope: AgentEventEnvelope, context: AgentEventContext): Promise<IngestOutcome> {
-    const outcomes = await this.ingestMany([envelope], context);
-
-    return outcomes[0] ?? 'accepted';
+  async ingest(envelope: AgentEventEnvelope, context: AgentEventContext): Promise<void> {
+    await this.ingestMany([envelope], context);
   }
 
   /**
    * Ingest a batch produced from one upstream unit (e.g. one Thalamus StreamPart).
    * Each envelope is dispatched independently — paused `run-finish` events carry
    * their tool approvals inline.
+   *
+   * Internal handlers may still short-circuit as `duplicate` (message idempotency);
+   * that outcome is not exposed on the public ingest HTTP response.
    */
-  async ingestMany(envelopes: AgentEventEnvelope[], context: AgentEventContext): Promise<IngestOutcome[]> {
-    const outcomes: IngestOutcome[] = [];
-
+  async ingestMany(envelopes: AgentEventEnvelope[], context: AgentEventContext): Promise<void> {
     for (const envelope of envelopes) {
       const { event } = envelope;
 
       if (isDeltaEvent(event)) {
-        outcomes.push('accepted');
         continue;
       }
 
-      const outcome = await this.dispatchEvent(envelope, context, event);
-      outcomes.push(outcome);
+      await this.dispatchEvent(envelope, context, event);
     }
-
-    return outcomes;
   }
 
   private async dispatchEvent(
