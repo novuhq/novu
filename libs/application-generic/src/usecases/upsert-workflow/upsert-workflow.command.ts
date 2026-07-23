@@ -97,8 +97,8 @@ export class UpsertWorkflowDataCommand {
   workflowId?: string;
 
   @IsEnum(ResourceOriginEnum)
-  @IsDefined()
-  origin: ResourceOriginEnum;
+  @IsOptional()
+  origin?: ResourceOriginEnum;
 
   @IsArray()
   @ValidateNested({ each: true })

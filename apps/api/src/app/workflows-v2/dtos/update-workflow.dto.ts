@@ -112,13 +112,14 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
   @Type(() => PreferencesRequestDto)
   preferences: PreferencesRequestDto;
 
-  @ApiProperty({
-    description: 'Origin of the workflow',
+  @ApiPropertyOptional({
+    description: 'Origin of the workflow. Accepted for backwards compatibility but ignored on update.',
     enum: [...Object.values(ResourceOriginEnum)],
     enumName: 'ResourceOriginEnum',
   })
+  @IsOptional()
   @IsEnum(ResourceOriginEnum)
-  origin: ResourceOriginEnum;
+  origin?: ResourceOriginEnum;
 
   @ApiPropertyOptional({
     description: 'Severity of the workflow',
