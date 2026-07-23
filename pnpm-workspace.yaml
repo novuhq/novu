@@ -186,6 +186,7 @@ overrides:
   '@opentelemetry/sdk-trace-base@<2.8.0': ^2.8.0
   '@opentelemetry/resources@<2.8.0': ^2.8.0
   '@opentelemetry/context-async-hooks@<2.8.0': ^2.8.0
+  '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
   mermaid@>=11.0.0-alpha.1 <11.15.0: ^11.15.0
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
