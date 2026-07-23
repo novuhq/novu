@@ -1,16 +1,17 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEventEnvelope, FeatureFlagsKeysEnum } from '@novu/shared';
+import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEventEnvelope } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AuthService } from '../../../auth/services/auth.service';
-import { SdkAgentEventsHandler } from '../../managed-runtime/sdk-agent-events.handler';
 import { AgentEventSink } from '../agent-event-sink.service';
 import { IngestAgentEventsCommand } from './ingest-agent-events.command';
 import { IngestAgentEvents } from './ingest-agent-events.usecase';
 
-function envelope(overrides: Partial<AgentEventEnvelope> = {}): AgentEventEnvelope {
-  return {
+// `IngestAgentEventsCommand.events` is `Record<string, unknown>[]` (validated at the DTO
+// boundary before this usecase ever sees a typed `AgentEventEnvelope`), so the helper mirrors
+// that boundary with a single cast rather than typing each call site as `AgentEventEnvelope`.
+function envelope(overrides: Partial<AgentEventEnvelope> = {}): Record<string, unknown> {
+  const result: AgentEventEnvelope = {
     version: AGENT_EVENT_PROTOCOL_VERSION,
     conversationId: 'conv-1',
     agentId: 'support-agent',
@@ -21,10 +22,13 @@ function envelope(overrides: Partial<AgentEventEnvelope> = {}): AgentEventEnvelo
     event: { type: 'message', messageId: 'msg-1', content: { markdown: 'hello' } },
     ...overrides,
   };
+
+  return result as unknown as Record<string, unknown>;
 }
 
 describe('IngestAgentEvents', () => {
-  function setup() {
+  function setup(options: { protocolEnabled?: boolean } = {}) {
+    const { protocolEnabled = true } = options;
     const agentEventSink = { ingestMany: sinon.stub().resolves(['accepted']) };
     const agentRepository = {
       findOne: sinon.stub().resolves({ _id: 'agent-mongo-1', identifier: 'support-agent' }),
@@ -39,6 +43,8 @@ describe('IngestAgentEvents', () => {
         channels: [{ platform: 'slack', _integrationId: 'int-1', platformThreadId: 'thread-1' }],
       }),
     };
+    const featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    featureFlagsService.getFlag.resolves(protocolEnabled);
     const logger = {
       setContext: sinon.stub(),
       warn: sinon.stub(),
@@ -52,6 +58,7 @@ describe('IngestAgentEvents', () => {
       agentRepository as any,
       integrationRepository as any,
       conversationService as any,
+      featureFlagsService as any,
       logger as any
     );
 
@@ -60,9 +67,30 @@ describe('IngestAgentEvents', () => {
       agentEventSink,
       agentRepository,
       conversationService,
+      featureFlagsService,
       logger,
     };
   }
+
+  it('returns 404 when the AgentEvent protocol flag is disabled', async () => {
+    const { usecase, agentEventSink } = setup({ protocolEnabled: false });
+
+    try {
+      await usecase.execute(
+        IngestAgentEventsCommand.create({
+          userId: 'user-1',
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+          events: [envelope()],
+        })
+      );
+      expect.fail('Expected NotFoundException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(NotFoundException);
+    }
+
+    expect(agentEventSink.ingestMany.called).to.equal(false);
+  });
 
   it('returns results for a valid batch in request order', async () => {
     const { usecase, agentEventSink } = setup();
@@ -139,95 +167,5 @@ describe('IngestAgentEvents', () => {
     expect(result.results).to.deep.equal([]);
     expect(agentEventSink.ingestMany.called).to.equal(false);
     expect(logger.warn.calledOnce).to.equal(true);
-  });
-});
-
-describe('SdkAgentEventsHandler', () => {
-  function setup(options: { protocolEnabled?: boolean; killSwitchEnabled?: boolean } = {}) {
-    const { protocolEnabled = true, killSwitchEnabled = false } = options;
-    const authService = {
-      getUserByApiKey: sinon.stub().resolves({
-        _id: 'user-1',
-        environmentId: 'env-1',
-        organizationId: 'org-1',
-      }),
-    };
-    const featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
-    featureFlagsService.getFlag.callsFake(async ({ key }: { key: FeatureFlagsKeysEnum }) => {
-      if (key === FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED) {
-        return killSwitchEnabled;
-      }
-
-      if (key === FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED) {
-        return protocolEnabled;
-      }
-
-      return false;
-    });
-    const ingestAgentEvents = {
-      execute: sinon.stub().resolves({ results: [{ sequence: 1, status: 'accepted' }] }),
-    };
-
-    const handler = new SdkAgentEventsHandler(
-      authService as unknown as AuthService,
-      featureFlagsService,
-      ingestAgentEvents as unknown as IngestAgentEvents
-    );
-
-    const req = {
-      headers: { authorization: 'ApiKey test-key' },
-      body: { events: [envelope()] },
-    } as any;
-    const res = {
-      status: sinon.stub().returnsThis(),
-      json: sinon.stub(),
-    } as any;
-
-    return { handler, authService, featureFlagsService, ingestAgentEvents, req, res };
-  }
-
-  it('returns 404 when the protocol flag is disabled', async () => {
-    const { handler, req, res } = setup({ protocolEnabled: false });
-
-    await handler.handle(req, res);
-
-    expect(res.status.calledWith(404)).to.equal(true);
-  });
-
-  it('returns 503 when the org kill-switch is enabled', async () => {
-    const { handler, ingestAgentEvents, req, res } = setup({ killSwitchEnabled: true });
-
-    await handler.handle(req, res);
-
-    expect(res.status.calledWith(503)).to.equal(true);
-    expect(ingestAgentEvents.execute.called).to.equal(false);
-  });
-
-  it('returns 401 when the API key is missing', async () => {
-    const { handler, res } = setup();
-    const req = { headers: {}, body: { events: [envelope()] } } as any;
-
-    await handler.handle(req, res);
-
-    expect(res.status.calledWith(401)).to.equal(true);
-  });
-
-  it('returns batch ack payload for authenticated requests', async () => {
-    const { handler, featureFlagsService, ingestAgentEvents, req, res } = setup();
-
-    await handler.handle(req, res);
-
-    expect(featureFlagsService.getFlag.calledTwice).to.equal(true);
-    expect(featureFlagsService.getFlag.firstCall.args[0]).to.deep.include({
-      key: FeatureFlagsKeysEnum.IS_ORG_KILLSWITCH_FLAG_ENABLED,
-      defaultValue: false,
-    });
-    expect(featureFlagsService.getFlag.secondCall.args[0]).to.deep.include({
-      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
-      defaultValue: false,
-    });
-    expect(ingestAgentEvents.execute.calledOnce).to.equal(true);
-    expect(res.status.calledWith(200)).to.equal(true);
-    expect(res.json.calledWith({ data: { results: [{ sequence: 1, status: 'accepted' }] } })).to.equal(true);
   });
 });

@@ -104,9 +104,9 @@ describe('BridgeExecutorService', () => {
 
       const payload = await (service as any).buildPayload(makeExecutionParams());
 
-      expect(payload.eventsUrl).to.match(/\/v1\/agents\/events$/);
+      expect(payload.eventsUrl).to.match(/\/v1\/agents\/events\/ingest$/);
       expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
-      expect(payload.eventsUrl?.replace(/\/v1\/agents\/events$/, '')).to.equal(
+      expect(payload.eventsUrl?.replace(/\/v1\/agents\/events\/ingest$/, '')).to.equal(
         payload.replyUrl.replace(/\/v1\/agents\/agent-1\/reply$/, '')
       );
       expect(featureFlagsService.getFlag.calledOnce).to.equal(true);

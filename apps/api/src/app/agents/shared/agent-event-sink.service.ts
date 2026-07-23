@@ -1,26 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  AgentMcpServerRepository,
-  ConversationActivityEntity,
-  ConversationActivityRepository,
-  ConversationRepository,
-  McpConnectionRepository,
-  SubscriberRepository,
-} from '@novu/dal';
-import type { Signal, ToolResult } from '@novu/framework/internal';
+import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
 import {
   type AgentApprovalRequest,
   type AgentEvent,
   type AgentEventEnvelope,
-  type AgentEventUsage,
-  type AgentFileRef,
-  type AgentMessageContent,
   isDeltaEvent,
-  McpConnectionStatusEnum,
   NOVU_INTERNAL_TOOLS,
 } from '@novu/shared';
-import type { ActionRequired, Response as ThalamusResponse } from '@novu/thalamus';
+import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
@@ -33,11 +21,18 @@ import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-poli
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
-import { listOAuthMcps } from '../managed-runtime/tool-connect/list-oauth-mcps.helper';
-import { findOAuthMcpByServerName } from '../managed-runtime/tool-connect/oauth-mcp.types';
-import type { EditPayloadDto, ReplyContentDto } from './dtos/agent-reply-payload.dto';
+import {
+  activityToApprovalRequest,
+  mapToolUseResultEvent,
+  toActionRequired,
+  toEditContent,
+  toFrameworkSignal,
+  toReplyContent,
+  toThalamusUsage,
+} from './agent-event-mappers';
 import { AgentPlatformEnum } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
+import { McpConnectionErrorHandler } from './mcp-connection-error.handler';
 import { findUnresolvedToolApprovalRequests } from './tool-approval/unresolved-approvals';
 
 export type IngestOutcome = 'accepted' | 'duplicate';
@@ -58,6 +53,8 @@ export interface AgentEventContext {
   conversationId: string;
   agentIdentifier: string;
   integrationIdentifier: string;
+  /** Which runtime produced this batch — drives auto-delivery and typing cleanup, not just a `sessionId` presence check. */
+  source: 'managed' | 'bridge';
   /** Mongo agent `_id` — required for MCP connection lookups (`connection.error`). */
   agentId?: string;
   subscriberId?: string;
@@ -66,6 +63,17 @@ export interface AgentEventContext {
   sessionId?: string;
   suppressReply?: boolean;
 }
+
+/** One batch-plan entry per envelope — see {@link AgentEventSink.planBatch}. */
+type BatchPlanEntry =
+  | { kind: 'delta' }
+  | {
+      kind: 'tool-approval-request';
+      event: Extract<AgentEvent, { type: 'tool-approval-request' }>;
+      autoDeliverCard: boolean;
+    }
+  | { kind: 'paused-run-finish'; event: Extract<AgentEvent, { type: 'run-finish' }> }
+  | { kind: 'dispatch' };
 
 const ACTIVITY_RESOLVE_MAX_ATTEMPTS = 3;
 const ACTIVITY_RESOLVE_DELAY_MS = 300;
@@ -79,12 +87,10 @@ export class AgentEventSink {
     private readonly inboundAck: InboundAckService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly conversationRepository: ConversationRepository,
-    private readonly subscriberRepository: SubscriberRepository,
-    private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
+    private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -102,34 +108,53 @@ export class AgentEventSink {
    * `run-finish { outcome: 'paused' }` — no process-local Map across requests.
    */
   async ingestMany(envelopes: AgentEventEnvelope[], context: AgentEventContext): Promise<IngestOutcome[]> {
+    const plan = this.planBatch(envelopes, context);
     const outcomes: IngestOutcome[] = [];
     const batchApprovals: AgentApprovalRequest[] = [];
 
     for (let index = 0; index < envelopes.length; index += 1) {
       const envelope = envelopes[index];
-      const { event } = envelope;
+      const entry = plan[index];
 
-      if (isDeltaEvent(event)) {
-        outcomes.push('accepted');
-        continue;
+      switch (entry.kind) {
+        case 'delta':
+          outcomes.push('accepted');
+          break;
+
+        case 'tool-approval-request': {
+          const outcome = await this.handleToolApprovalRequest(
+            entry.event,
+            context,
+            batchApprovals,
+            entry.autoDeliverCard
+          );
+          outcomes.push(outcome);
+          break;
+        }
+
+        case 'paused-run-finish':
+          await this.handlePausedRunFinish(
+            entry.event,
+            context,
+            this.buildMetadata(context),
+            envelope.runId,
+            batchApprovals
+          );
+          batchApprovals.length = 0;
+          outcomes.push('accepted');
+          break;
+
+        case 'dispatch': {
+          const outcome = await this.dispatchEvent(envelope, context, envelope.event);
+          outcomes.push(outcome);
+          break;
+        }
+
+        default: {
+          const exhaustive: never = entry;
+          void exhaustive;
+        }
       }
-
-      if (event.type === 'tool-approval-request') {
-        const autoDeliverCard = !context.sessionId && !this.hasFollowingMessageInBatch(envelopes, index);
-        const outcome = await this.handleToolApprovalRequest(event, context, batchApprovals, autoDeliverCard);
-        outcomes.push(outcome);
-        continue;
-      }
-
-      if (event.type === 'run-finish' && event.outcome === 'paused') {
-        await this.handlePausedRunFinish(event, context, this.buildMetadata(context), envelope.runId, batchApprovals);
-        batchApprovals.length = 0;
-        outcomes.push('accepted');
-        continue;
-      }
-
-      const outcome = await this.dispatchEvent(envelope, context, event);
-      outcomes.push(outcome);
     }
 
     if (batchApprovals.length > 0) {
@@ -146,6 +171,36 @@ export class AgentEventSink {
     }
 
     return outcomes;
+  }
+
+  /**
+   * Pre-scans the batch once so the pairing invariant — "approval requests accumulate until
+   * the next paused run-finish in the same batch, and only auto-deliver their card when no
+   * message follows before another approval" — lives in one named place instead of emerging
+   * from loop bookkeeping (a per-approval scan-forward interleaved with per-event dispatch).
+   */
+  private planBatch(envelopes: AgentEventEnvelope[], context: AgentEventContext): BatchPlanEntry[] {
+    return envelopes.map((envelope, index) => {
+      const { event } = envelope;
+
+      if (isDeltaEvent(event)) {
+        return { kind: 'delta' };
+      }
+
+      if (event.type === 'tool-approval-request') {
+        return {
+          kind: 'tool-approval-request',
+          event,
+          autoDeliverCard: context.source === 'bridge' && !this.hasFollowingMessageInBatch(envelopes, index),
+        };
+      }
+
+      if (event.type === 'run-finish' && event.outcome === 'paused') {
+        return { kind: 'paused-run-finish', event };
+      }
+
+      return { kind: 'dispatch' };
+    });
   }
 
   private async dispatchEvent(
@@ -189,7 +244,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'tool-use-result':
-        await this.handleToolUseResult(event, baseFields, context.sessionId);
+        await this.handleToolUseResult(event, baseFields, context, envelope.runId);
 
         return 'accepted';
 
@@ -204,7 +259,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'connection.error':
-        await this.handleConnectionError(event, context);
+        await this.mcpConnectionErrorHandler.handle(event, context);
 
         return 'accepted';
 
@@ -301,6 +356,28 @@ export class AgentEventSink {
     return 'accepted';
   }
 
+  /** Shared dispatch + error-reporting wrapper for the handlers that resolve to a single `HandleAgentReply` call. */
+  private async dispatchReply(
+    command: HandleAgentReplyCommand,
+    context: AgentEventContext,
+    operation: string,
+    runId: string
+  ): Promise<IngestOutcome> {
+    try {
+      await this.handleAgentReply.execute(command);
+    } catch (err) {
+      this.logger.error(err, `${operation} failed: run=${runId}`);
+      captureAgentException(err, {
+        component: 'agent-event-sink',
+        operation,
+        sessionId: context.sessionId,
+      });
+      throw err;
+    }
+
+    return 'accepted';
+  }
+
   private async handleMessageEvent(
     event: Extract<AgentEvent, { type: 'message' }>,
     baseFields: BaseCommandFields,
@@ -323,25 +400,12 @@ export class AgentEventSink {
       return 'accepted';
     }
 
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...baseFields,
-          reply,
-          activityIdentifier: event.messageId,
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `message event failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'message',
-        sessionId: context.sessionId,
-      });
-      throw err;
-    }
-
-    return 'accepted';
+    return this.dispatchReply(
+      HandleAgentReplyCommand.create({ ...baseFields, reply, activityIdentifier: event.messageId }),
+      context,
+      'message',
+      runId
+    );
   }
 
   private async handleChannelEdit(
@@ -350,7 +414,11 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<IngestOutcome> {
-    const activity = await this.resolveActivityByClientId(context.environmentId, event.messageId);
+    const activity = await this.resolveActivityByClientId(
+      context.environmentId,
+      context.conversationId,
+      event.messageId
+    );
 
     if (!activity?.platformMessageId) {
       this.logger.warn(
@@ -361,30 +429,21 @@ export class AgentEventSink {
       return 'accepted';
     }
 
-    const content = toReplyContent(event.content, event.files);
+    const content = toEditContent(event.content, event.files);
 
     if (!content) {
       return 'accepted';
     }
 
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...baseFields,
-          edit: { messageId: activity.platformMessageId, content: content as EditPayloadDto['content'] },
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `channel.edit failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'channel.edit',
-        sessionId: context.sessionId,
-      });
-      throw err;
-    }
-
-    return 'accepted';
+    return this.dispatchReply(
+      HandleAgentReplyCommand.create({
+        ...baseFields,
+        edit: { messageId: activity.platformMessageId, content },
+      }),
+      context,
+      'channel.edit',
+      runId
+    );
   }
 
   private async handleChannelDelete(
@@ -393,7 +452,11 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<IngestOutcome> {
-    const activity = await this.resolveActivityByClientId(context.environmentId, event.messageId);
+    const activity = await this.resolveActivityByClientId(
+      context.environmentId,
+      context.conversationId,
+      event.messageId
+    );
 
     if (!activity?.platformMessageId) {
       this.logger.warn(
@@ -404,24 +467,12 @@ export class AgentEventSink {
       return 'accepted';
     }
 
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...baseFields,
-          deleteMessages: [{ messageId: activity.platformMessageId }],
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `channel.delete failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'channel.delete',
-        sessionId: context.sessionId,
-      });
-      throw err;
-    }
-
-    return 'accepted';
+    return this.dispatchReply(
+      HandleAgentReplyCommand.create({ ...baseFields, deleteMessages: [{ messageId: activity.platformMessageId }] }),
+      context,
+      'channel.delete',
+      runId
+    );
   }
 
   private async handleChannelReaction(
@@ -430,7 +481,11 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<IngestOutcome> {
-    const activity = await this.resolveActivityByClientId(context.environmentId, event.messageId);
+    const activity = await this.resolveActivityByClientId(
+      context.environmentId,
+      context.conversationId,
+      event.messageId
+    );
 
     if (!activity?.platformMessageId) {
       this.logger.warn(
@@ -466,24 +521,15 @@ export class AgentEventSink {
       return 'accepted';
     }
 
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...baseFields,
-          addReactions: [{ messageId: activity.platformMessageId, emojiName: event.emoji }],
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `channel.reaction add failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'channel.reaction',
-        sessionId: context.sessionId,
-      });
-      throw err;
-    }
-
-    return 'accepted';
+    return this.dispatchReply(
+      HandleAgentReplyCommand.create({
+        ...baseFields,
+        addReactions: [{ messageId: activity.platformMessageId, emojiName: event.emoji }],
+      }),
+      context,
+      'channel.reaction',
+      runId
+    );
   }
 
   private async handleChannelTyping(
@@ -494,19 +540,12 @@ export class AgentEventSink {
   ): Promise<IngestOutcome> {
     const typing = event.state === 'off' ? 'stop' : { status: event.status };
 
-    try {
-      await this.handleAgentReply.execute(HandleAgentReplyCommand.create({ ...baseFields, typing }));
-    } catch (err) {
-      this.logger.error(err, `channel.typing failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'channel.typing',
-        sessionId: context.sessionId,
-      });
-      throw err;
-    }
-
-    return 'accepted';
+    return this.dispatchReply(
+      HandleAgentReplyCommand.create({ ...baseFields, typing }),
+      context,
+      'channel.typing',
+      runId
+    );
   }
 
   private async handleSignal(
@@ -515,24 +554,12 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<IngestOutcome> {
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...baseFields,
-          signals: [event.signal as Signal],
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `signal event failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'signal',
-        sessionId: context.sessionId,
-      });
-      throw err;
-    }
-
-    return 'accepted';
+    return this.dispatchReply(
+      HandleAgentReplyCommand.create({ ...baseFields, signals: [toFrameworkSignal(event.signal)] }),
+      context,
+      'signal',
+      runId
+    );
   }
 
   private async handleResolve(
@@ -541,24 +568,12 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<IngestOutcome> {
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          ...baseFields,
-          resolve: { summary: event.summary },
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `resolve event failed: run=${runId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'resolve',
-        sessionId: context.sessionId,
-      });
-      throw err;
-    }
-
-    return 'accepted';
+    return this.dispatchReply(
+      HandleAgentReplyCommand.create({ ...baseFields, resolve: { summary: event.summary } }),
+      context,
+      'resolve',
+      runId
+    );
   }
 
   private async handleToolUseStart(
@@ -637,25 +652,16 @@ export class AgentEventSink {
   private async handleToolUseResult(
     event: Extract<AgentEvent, { type: 'tool-use-result' }>,
     baseFields: BaseCommandFields,
-    sessionId?: string
+    context: AgentEventContext,
+    runId: string
   ): Promise<void> {
-    if (!sessionId) {
-      try {
-        await this.handleAgentReply.execute(
-          HandleAgentReplyCommand.create({
-            ...baseFields,
-            toolResults: [mapToolUseResultEvent(event)],
-          })
-        );
-      } catch (err) {
-        this.logger.error(err, `tool-use-result failed: run=bridge`);
-        captureAgentException(err, {
-          component: 'agent-event-sink',
-          operation: 'tool-use-result',
-          sessionId,
-        });
-        throw err;
-      }
+    if (context.source === 'bridge') {
+      await this.dispatchReply(
+        HandleAgentReplyCommand.create({ ...baseFields, toolResults: [mapToolUseResultEvent(event)] }),
+        context,
+        'tool-use-result',
+        runId
+      );
 
       return;
     }
@@ -671,11 +677,11 @@ export class AgentEventSink {
         })
       );
     } catch (err) {
-      this.logger.error(err, `tool-use-result failed: session=${sessionId}`);
+      this.logger.error(err, `tool-use-result failed: session=${context.sessionId}`);
       captureAgentException(err, {
         component: 'agent-event-sink',
         operation: 'tool-use-result',
-        sessionId,
+        sessionId: context.sessionId,
       });
     }
   }
@@ -837,118 +843,6 @@ export class AgentEventSink {
     }
   }
 
-  /**
-   * Runtime-ops: MCP (or other) connection failed during the run. Auth failures
-   * flip the OAuth MCP connection out of `connected` so reconnect UX can offer.
-   * Non-auth failures are logged only. Errors are swallowed — must not fail the
-   * webhook the way message ingest does.
-   */
-  private async handleConnectionError(
-    event: Extract<AgentEvent, { type: 'connection.error' }>,
-    context: AgentEventContext
-  ): Promise<void> {
-    try {
-      if (event.reason !== 'authentication') {
-        this.logger.warn(
-          {
-            sessionId: context.sessionId,
-            serverName: event.serverName,
-            reason: event.reason,
-            message: event.message,
-            source: event.source,
-          },
-          'MCP server failure (non-auth) — session continues without updating connection status'
-        );
-
-        return;
-      }
-
-      const { environmentId, organizationId, agentId, subscriberId, sessionId } = context;
-
-      if (!agentId || !subscriberId) {
-        this.logger.warn(
-          { sessionId, serverName: event.serverName },
-          'connection.error missing agent/subscriber context — skipping connection update'
-        );
-
-        return;
-      }
-
-      const mcps = await listOAuthMcps(
-        {
-          subscriberRepository: this.subscriberRepository,
-          agentMcpServerRepository: this.agentMcpServerRepository,
-          mcpConnectionRepository: this.mcpConnectionRepository,
-        },
-        {
-          environmentId,
-          organizationId,
-          agentId,
-          subscriberId,
-        }
-      );
-
-      const mcp = findOAuthMcpByServerName(mcps, event.serverName);
-
-      if (!mcp) {
-        this.logger.warn(
-          { sessionId, serverName: event.serverName, agentId },
-          'connection.error for unknown OAuth MCP — skipping connection update'
-        );
-
-        return;
-      }
-
-      if (mcp.status !== McpConnectionStatusEnum.Connected) {
-        return;
-      }
-
-      const subscriber = await this.subscriberRepository.findBySubscriberId(environmentId, subscriberId);
-
-      if (!subscriber) {
-        return;
-      }
-
-      await this.mcpConnectionRepository.update(
-        {
-          _environmentId: environmentId,
-          _organizationId: organizationId,
-          _agentMcpServerId: mcp.agentMcpServerId,
-          _subscriberId: subscriber._id,
-          status: McpConnectionStatusEnum.Connected,
-        },
-        {
-          $set: {
-            status: McpConnectionStatusEnum.Error,
-            lastError: {
-              code: 'authentication_failed',
-              message: event.message,
-              at: new Date(),
-            },
-          },
-        }
-      );
-
-      this.logger.info(
-        {
-          sessionId,
-          serverName: event.serverName,
-          mcpId: mcp.mcpId,
-          agentId,
-          subscriberId,
-        },
-        'Marked MCP connection as error after authentication failure'
-      );
-    } catch (err) {
-      this.logger.error(err, `connection.error failed: session=${context.sessionId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'connection-error',
-        sessionId: context.sessionId,
-      });
-    }
-  }
-
   private async isDuplicateMessage(environmentId: string, messageId: string): Promise<boolean> {
     const existing = await this.activityRepository.findOne(
       { _environmentId: environmentId, identifier: messageId },
@@ -958,8 +852,16 @@ export class AgentEventSink {
     return existing !== null;
   }
 
+  /**
+   * `messageId` is normally the client-minted identifier the SDK's outbox events carry. But
+   * `ctx.action.sourceMessageId` (forwarded from a platform button click) is a *platform*
+   * message id instead — the SDK has no client id to give it — so callers resolving an
+   * edit/delete/reaction against that value would otherwise retry-then-skip forever. Fall back
+   * to a platform-id lookup once the identifier retries are exhausted.
+   */
   private async resolveActivityByClientId(
     environmentId: string,
+    conversationId: string,
     messageId: string
   ): Promise<ConversationActivityEntity | null> {
     for (let attempt = 0; attempt < ACTIVITY_RESOLVE_MAX_ATTEMPTS; attempt += 1) {
@@ -977,7 +879,7 @@ export class AgentEventSink {
       }
     }
 
-    return null;
+    return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, messageId);
   }
 
   private async resolveConversationAgentId(context: AgentEventContext): Promise<string | null> {
@@ -995,7 +897,7 @@ export class AgentEventSink {
   }
 
   private async stopTypingIfBridge(context: AgentEventContext): Promise<void> {
-    if (context.sessionId) {
+    if (context.source === 'managed') {
       return;
     }
 
@@ -1068,104 +970,8 @@ export class AgentEventSink {
   }
 }
 
-function toReplyContent(content: AgentMessageContent, files?: AgentFileRef[]): ReplyContentDto | null {
-  const base: ReplyContentDto =
-    'markdown' in content
-      ? { markdown: content.markdown }
-      : {
-          card: content.card as unknown as ReplyContentDto['card'],
-        };
-
-  if ('markdown' in content && !content.markdown?.trim()) {
-    return null;
-  }
-
-  if (files?.length) {
-    return {
-      ...base,
-      files: files.map((file) => ({
-        filename: file.name ?? file.fileId,
-        mimeType: file.mediaType,
-        data: file.data,
-        url: file.url,
-      })),
-    };
-  }
-
-  return base;
-}
-
-function mapToolUseResultEvent(event: Extract<AgentEvent, { type: 'tool-use-result' }>): ToolResult {
-  const textParts: string[] = [];
-  let output: unknown;
-
-  for (const part of event.content) {
-    if (part.type === 'text') {
-      textParts.push(part.text);
-    } else if (part.type === 'json') {
-      output = part.value;
-    }
-  }
-
-  const joinedText = textParts.join('');
-
-  return {
-    toolCallId: event.toolUseId,
-    output: output ?? joinedText,
-    preview: joinedText || undefined,
-  };
-}
-
-function activityToApprovalRequest(activity: ConversationActivityEntity): AgentApprovalRequest | null {
-  const approvalId = activity.toolData?.approvalId;
-  const toolUseId = activity.toolData?.toolCallId;
-  const toolName = activity.toolData?.toolName;
-
-  if (typeof approvalId !== 'string' || typeof toolUseId !== 'string' || typeof toolName !== 'string') {
-    return null;
-  }
-
-  return {
-    approvalId,
-    toolUseId,
-    toolName,
-    input: activity.toolData?.input as Record<string, unknown> | undefined,
-  };
-}
-
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-}
-
-function toThalamusUsage(usage?: AgentEventUsage): ThalamusResponse['usage'] {
-  if (!usage) {
-    return undefined;
-  }
-
-  return {
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-    totalTokens: usage.totalTokens,
-  };
-}
-
-function toActionRequired(approval: AgentApprovalRequest): ActionRequired {
-  if (approval.source?.type === 'mcp') {
-    return {
-      type: 'mcp-approval',
-      toolUseId: approval.toolUseId,
-      toolName: approval.toolName,
-      serverName: approval.source.serverName,
-      input: approval.input,
-    };
-  }
-
-  return {
-    type: 'tool-confirmation',
-    toolUseId: approval.toolUseId,
-    toolName: approval.toolName,
-    input: approval.input,
-  };
 }

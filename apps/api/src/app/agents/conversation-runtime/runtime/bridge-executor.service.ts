@@ -24,7 +24,12 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, AgentSubscriberAccessEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  AGENT_PLATFORM_PROVISION_SOURCE,
+  AGENT_PROVISION_DATA_KEYS,
+  AgentSubscriberAccessEnum,
+  FeatureFlagsKeysEnum,
+} from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -370,7 +375,7 @@ export class BridgeExecutorService {
     };
 
     if (isEventProtocolEnabled) {
-      payload.eventsUrl = `${apiOrigin}/v1/agents/events`;
+      payload.eventsUrl = `${apiOrigin}/v1/agents/events/ingest`;
     }
 
     return payload;

@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { type AgentEventEnvelope, isAgentEventEnvelope } from '@novu/shared';
+import { type AgentEventEnvelope, FeatureFlagsKeysEnum, isAgentEventEnvelope } from '@novu/shared';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { AgentEventContext, AgentEventSink, type IngestOutcome } from '../agent-event-sink.service';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
@@ -28,12 +28,15 @@ export class IngestAgentEvents {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationService: AgentConversationService,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: IngestAgentEventsCommand): Promise<IngestAgentEventsResult> {
+    await this.assertProtocolEnabled(command.organizationId, command.environmentId);
+
     const invalidIndexes = command.events
       .map((event, index) => (isAgentEventEnvelope(event) ? null : index))
       .filter((index): index is number => index !== null);
@@ -61,6 +64,19 @@ export class IngestAgentEvents {
     }
 
     return { results };
+  }
+
+  private async assertProtocolEnabled(organizationId: string, environmentId: string): Promise<void> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+      environment: { _id: environmentId },
+    });
+
+    if (!isEnabled) {
+      throw new NotFoundException();
+    }
   }
 
   private groupByConversationId(envelopes: AgentEventEnvelope[]): Map<string, ConversationGroup> {
@@ -138,17 +154,25 @@ export class IngestAgentEvents {
     const validEnvelopes: AgentEventEnvelope[] = [];
     const validOriginalIndexes: number[] = [];
     let referenceAgent: { _id: string; identifier: string } | null = null;
+    // A batch from one SDK run repeats the same agentId for every envelope; memoize by
+    // identifier instead of re-querying Mongo once per envelope.
+    const agentsByIdentifier = new Map<string, { _id: string; identifier: string } | null>();
 
     for (let index = 0; index < group.envelopes.length; index += 1) {
       const envelope = group.envelopes[index];
-      const agent = await this.agentRepository.findOne(
-        {
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          identifier: envelope.agentId,
-        },
-        { _id: 1, identifier: 1 }
-      );
+      let agent = agentsByIdentifier.get(envelope.agentId);
+
+      if (agent === undefined) {
+        agent = await this.agentRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+            identifier: envelope.agentId,
+          },
+          { _id: 1, identifier: 1 }
+        );
+        agentsByIdentifier.set(envelope.agentId, agent);
+      }
 
       if (!agent) {
         this.logger.warn(
@@ -185,6 +209,7 @@ export class IngestAgentEvents {
       agentId: referenceAgent._id,
       platform: parsePlatform(channel.platform),
       platformThreadId: channel.platformThreadId,
+      source: 'bridge',
     };
 
     const outcomes = await this.agentEventSink.ingestMany(validEnvelopes, context);

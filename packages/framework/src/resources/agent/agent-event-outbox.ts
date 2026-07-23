@@ -1,4 +1,4 @@
-import { AgentDeliveryError } from './agent.errors';
+import { AgentAckError, AgentDeliveryError } from './agent.errors';
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from './agent-event-protocol';
 
 export interface AgentEventOutboxOptions {
@@ -131,23 +131,28 @@ export class AgentEventOutbox {
     this.validateAck(responseBody, batch);
   }
 
+  /**
+   * Per the ack contract, an envelope in the batch is either listed with a recognized status
+   * (`accepted`/`duplicate`) or absent — an absent sequence is a terminal skip, not an error.
+   * A sequence listed with anything else means the response is malformed.
+   */
   private validateAck(responseBody: string, batch: AgentEventEnvelope[]): void {
     let parsed: unknown;
 
     try {
       parsed = JSON.parse(responseBody);
     } catch {
-      throw new AgentDeliveryError(200, responseBody);
+      throw new AgentAckError(responseBody);
     }
 
     const envelope = parsed as { data?: { results?: unknown } };
     const results = envelope.data?.results;
 
     if (!Array.isArray(results)) {
-      throw new AgentDeliveryError(200, responseBody);
+      throw new AgentAckError(responseBody);
     }
 
-    const ackedSequences = new Set<number>();
+    const statusBySequence = new Map<number, string>();
 
     for (const item of results) {
       if (!item || typeof item !== 'object') {
@@ -156,46 +161,31 @@ export class AgentEventOutbox {
 
       const result = item as Partial<IngestAckResult>;
 
-      if (typeof result.sequence !== 'number') {
-        continue;
-      }
-
-      if (result.status === 'accepted' || result.status === 'duplicate') {
-        ackedSequences.add(result.sequence);
-        continue;
-      }
-
-      if (batch.some((envelopeItem) => envelopeItem.sequence === result.sequence)) {
-        throw new AgentDeliveryError(200, responseBody);
+      if (typeof result.sequence === 'number' && typeof result.status === 'string') {
+        statusBySequence.set(result.sequence, result.status);
       }
     }
 
-    for (const envelope of batch) {
-      if (ackedSequences.has(envelope.sequence)) {
-        continue;
-      }
+    for (const envelopeItem of batch) {
+      const status = statusBySequence.get(envelopeItem.sequence);
 
-      const listed = results.some(
-        (item) => item && typeof item === 'object' && (item as Partial<IngestAckResult>).sequence === envelope.sequence
-      );
-
-      if (listed) {
-        throw new AgentDeliveryError(200, responseBody);
+      if (status !== undefined && status !== 'accepted' && status !== 'duplicate') {
+        throw new AgentAckError(responseBody);
       }
     }
   }
 }
 
 function isRetryableError(error: unknown): boolean {
+  if (error instanceof AgentAckError) {
+    return true;
+  }
+
   if (!(error instanceof AgentDeliveryError)) {
     return true;
   }
 
   if (error.statusCode === 0) {
-    return true;
-  }
-
-  if (error.statusCode === 200) {
     return true;
   }
 

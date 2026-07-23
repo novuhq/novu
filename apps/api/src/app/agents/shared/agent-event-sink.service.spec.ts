@@ -29,6 +29,7 @@ function baseContext(overrides: Partial<AgentEventContext> = {}): AgentEventCont
     agentId: 'mongo-agent-1',
     platform: 'slack' as AgentEventContext['platform'],
     platformThreadId: 'thread-1',
+    source: 'bridge',
     ...overrides,
   };
 }
@@ -41,10 +42,11 @@ describe('AgentEventSink', () => {
     const inboundAck = { onManagedTurnComplete: sinon.stub().resolves(undefined) };
     const demoQuota = { recordUsage: sinon.stub().resolves(undefined) };
     const conversationRepository = { clearExternalSessionId: sinon.stub().resolves(undefined) };
-    const subscriberRepository = { findBySubscriberId: sinon.stub().resolves(null) };
-    const agentMcpServerRepository = {};
-    const mcpConnectionRepository = { update: sinon.stub().resolves(undefined) };
-    const activityRepository = { findOne: sinon.stub().resolves(null) };
+    const mcpConnectionErrorHandler = { handle: sinon.stub().resolves(undefined) };
+    const activityRepository = {
+      findOne: sinon.stub().resolves(null),
+      findByPlatformMessageId: sinon.stub().resolves(null),
+    };
     const outboundGateway = {
       removeReaction: sinon.stub().resolves(undefined),
       stopTypingInConversation: sinon.stub().resolves(undefined),
@@ -68,12 +70,10 @@ describe('AgentEventSink', () => {
       inboundAck as any,
       demoQuota as any,
       conversationRepository as any,
-      subscriberRepository as any,
-      agentMcpServerRepository as any,
-      mcpConnectionRepository as any,
       activityRepository as any,
       outboundGateway as any,
       conversationService as any,
+      mcpConnectionErrorHandler as any,
       logger as any
     );
 
@@ -246,7 +246,7 @@ describe('AgentEventSink', () => {
         }),
         envelope({ type: 'run-finish', outcome: 'paused' }),
       ],
-      baseContext({ sessionId: 'session-1', subscriberId: 'sub-1' })
+      baseContext({ sessionId: 'session-1', subscriberId: 'sub-1', source: 'managed' })
     );
 
     expect(handleAgentReply.execute.calledOnce).to.equal(true);
@@ -271,12 +271,12 @@ describe('AgentEventSink', () => {
         toolName: 'issueRefund',
         input: { amount: 10 },
       },
-    } as ConversationActivityEntity;
+    } as unknown as ConversationActivityEntity;
     conversationService.getHistory.resolves([pending]);
 
     await sink.ingestMany(
       [envelope({ type: 'run-finish', outcome: 'paused' })],
-      baseContext({ sessionId: 'session-1', subscriberId: 'sub-1' })
+      baseContext({ sessionId: 'session-1', subscriberId: 'sub-1', source: 'managed' })
     );
 
     expect(conversationService.getHistory.calledOnce).to.equal(true);

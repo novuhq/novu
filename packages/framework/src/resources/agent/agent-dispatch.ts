@@ -104,20 +104,14 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
       await ctx.emitRunFinish({ outcome: 'completed' });
     }
   } finally {
-    try {
-      await ctx.typing.stop();
-    } catch {
-      // cosmetic — never mask the original failure
-    }
-
     // A handler that throws (e.g. a LangGraph GraphRecursionError) never produces a
     // reply, which would otherwise leave the platform's "thinking" indicator running
-    // forever. Best-effort clear it and flush so the turn visibly ends.
+    // forever. Best-effort clear it and flush any queued signals so the turn visibly ends.
     try {
       await ctx.typing.stop();
       await ctx.flush();
     } catch {
-      // The turn already failed; swallow secondary delivery errors.
+      // cosmetic — never mask the original failure; also swallows secondary delivery errors.
     }
   }
 }

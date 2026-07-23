@@ -16,6 +16,7 @@ export type {
   TriggerSignal,
 } from '../resources/agent/agent.types';
 export { AgentEventEnum } from '../resources/agent/agent.types';
+export type { AgentEvent, AgentEventEnvelope } from '../resources/agent/agent-event-protocol';
 export type { ParsedApprovalAction, ToolApprovalRequestPayload } from '../resources/agent/tool-approval/action-id';
 export { buildApprovalActionId, parseApprovalActionId } from '../resources/agent/tool-approval/action-id';
 export { actionStepSchemas, channelStepSchemas } from '../schemas';
