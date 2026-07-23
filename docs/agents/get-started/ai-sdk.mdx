@@ -153,10 +153,7 @@ Export it from `app/novu/agents/index.ts`:
 export { supportBot } from './support-bot';
 ```
 
-- Match `agent('...')` to the dashboard **Identifier**.
-- `toModelMessages(ctx.history)` already includes the current inbound message.
-- Returning `generateText(...)` delivers the reply. You do not call `ctx.reply()` on this path.
-
+Match `agent('...')` to the dashboard **Identifier**. `toModelMessages(ctx.history)` already includes the current inbound message. Returning `generateText(...)` delivers the reply — you do not call `ctx.reply()` on this path.
   </Accordion>
   <Accordion title="Add the bridge route">
 Create `app/api/novu/route.ts`:

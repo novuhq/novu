@@ -43,6 +43,19 @@ export class GenerateConnectOauthUrlRequestDto {
   context?: ContextPayload;
 
   @ApiPropertyOptional({
+    type: String,
+    description:
+      'HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment secret key ' +
+      '(the same "Inbox with context" signing scheme). Required when the integration has HMAC ' +
+      'validation enabled and the session did not already HMAC-verify the context. Establishes that the ' +
+      'context/tenant binding was minted by an authenticated backend rather than forged in the browser.',
+    example: 'a1b2c3d4e5f6...',
+  })
+  @IsOptional()
+  @IsString()
+  contextHash?: string;
+
+  @ApiPropertyOptional({
     type: [String],
     description:
       `**Slack only**: OAuth scopes to request during authorization. ` +

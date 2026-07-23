@@ -18,6 +18,7 @@ import { ConsumeIntegrationStoreTelegramMobileLink } from './consume-integration
 import { CreateIntegration } from './create-integration/create-integration.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
 import { GenerateAzureSetupOauthUrl } from './generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
+import { ConnectContextVerifier } from './generate-chat-oath-url/connect-context-verifier.service';
 import { GenerateChatOauthUrl } from './generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { GenerateConnectOauthUrl } from './generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { GenerateLinkUserOauthUrl } from './generate-chat-oath-url/generate-link-user-oauth-url.usecase';
@@ -62,6 +63,7 @@ export const USE_CASES = [
   CreateNovuIntegrations,
   NormalizeVariables,
   GenerateChatOauthUrl,
+  ConnectContextVerifier,
   GenerateConnectOauthUrl,
   GenerateLinkUserOauthUrl,
   GenerateSlackOauthUrl,

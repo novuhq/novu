@@ -412,6 +412,46 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.platform).toBe('slack');
     expect(capturedCtx.platformContext.threadId).toBe('t1');
     expect(capturedCtx.history).toEqual([]);
+    // context defaults to null when the bridge payload omits it (backward-compatible wire)
+    expect(capturedCtx.context).toBeNull();
+  });
+
+  it('should expose ctx.context when the bridge payload includes resolved connect context', async () => {
+    let capturedCtx: any;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        capturedCtx = ctx;
+        await ctx.reply('ok');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          context: { tenant: { id: 'org-123', data: { environmentId: 'env-1', userId: 'user-1' } } },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(capturedCtx).toBeDefined());
+
+    expect(capturedCtx.context).toEqual({
+      tenant: { id: 'org-123', data: { environmentId: 'env-1', userId: 'user-1' } },
+    });
   });
 
   it('should expose platformContext.message and platformContext.email for email agents', async () => {
@@ -1988,15 +2028,16 @@ describe('agent dispatch via NovuRequestHandler', () => {
     });
 
     await handler.createHandler()();
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
 
-    const replyCalls = fetchMock.mock.calls.filter(
-      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
-    );
-    const replyBodies = replyCalls
-      .map((call: any[]) => JSON.parse(call[1].body))
-      .filter((body) => body.reply !== undefined);
-    expect(replyBodies).toHaveLength(2);
+    const collectReplyBodies = () =>
+      fetchMock.mock.calls
+        .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
+        .map((call: any[]) => JSON.parse(call[1].body))
+        .filter((body) => body.reply !== undefined);
+
+    await vi.waitFor(() => expect(collectReplyBodies()).toHaveLength(2));
+
+    const replyBodies = collectReplyBodies();
     expect(replyBodies[0].reply.markdown).toBe('Thinking…');
     expect(replyBodies[1].reply.markdown).toBe('Final answer');
   });

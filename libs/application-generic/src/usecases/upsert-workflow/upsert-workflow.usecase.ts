@@ -111,6 +111,8 @@ export class UpsertWorkflowUseCase {
       GetWorkflowCommand.create({
         workflowIdOrInternalId: upsertedWorkflow._id,
         user: command.user,
+        // Read-after-write: must reflect the preferences we just persisted.
+        skipPreferencesCache: true,
       })
     );
 

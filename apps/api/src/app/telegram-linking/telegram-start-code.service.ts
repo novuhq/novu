@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
 
 import { mintAutolinkSafeOpaqueToken } from '../shared/helpers';
 
@@ -18,6 +19,11 @@ export interface TelegramStartCodePayload {
   agentIdentifier: string;
   _integrationId: string;
   subscriberId: string;
+  /**
+   * Optional context bound at issue time. Rebuilt into the endpoint's
+   * `contextKeys` when the `/start` code is consumed. Absent for plain links.
+   */
+  context?: ContextPayload;
 }
 
 export interface TelegramStartCodeScope {
@@ -71,6 +77,7 @@ export class TelegramStartCodeService {
     agentIdentifier: string;
     integrationId: string;
     subscriberId: string;
+    context?: ContextPayload;
   }): Promise<{ code: string; expiresAt: string }> {
     const code = mintAutolinkSafeOpaqueToken();
     const payload: TelegramStartCodePayload = {
@@ -79,6 +86,7 @@ export class TelegramStartCodeService {
       agentIdentifier: params.agentIdentifier,
       _integrationId: params.integrationId,
       subscriberId: params.subscriberId,
+      ...(params.context ? { context: params.context } : {}),
     };
 
     if (!this.cacheService.cacheEnabled()) {
