@@ -46,6 +46,7 @@ jobs:
     name: Get Affected Packages
     runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
+      docs-only: ${{ steps.detect-docs.outputs.docs-only }}
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
       test-e2e-ee: ${{ steps.get-projects-arrays.outputs.test-e2e-ee }}
@@ -85,6 +86,30 @@ jobs:
         if: github.event.pull_request.base.ref != ''
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=50
+
+      # Detect PRs that only touch the Mintlify docs site (docs/). Such PRs are
+      # documentation-only and don't need the E2E / code test suites to run.
+      # `docs/` is not a pnpm workspace package, so `nx affected` already skips
+      # the unit/lib/package/openapi jobs for it; this output additionally gates
+      # the E2E suite, which otherwise always runs.
+      - name: Detect docs-only changes
+        id: detect-docs
+        run: |
+          if [[ "${{ github.event.pull_request.base.ref }}" == "" ]]; then
+            echo "docs-only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "origin/${{ github.event.pull_request.base.ref }}...HEAD")
+          echo "Changed files vs origin/${{ github.event.pull_request.base.ref }}:"
+          echo "$changed"
+          non_docs=$(echo "$changed" | grep -v '^docs/' || true)
+          if [ -n "$changed" ] && [ -z "$non_docs" ]; then
+            echo "docs-only=true" >> "$GITHUB_OUTPUT"
+            echo "Only docs/ changed — E2E and code tests will be skipped."
+          else
+            echo "docs-only=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: ./.github/actions/setup-project-minimal
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
@@ -267,6 +292,8 @@ jobs:
   test_e2e_api:
     name: E2E test API
     needs: [get-affected]
+    # Skip the E2E suite for documentation-only PRs (docs/ changes only).
+    if: ${{ needs.get-affected.outputs.docs-only != 'true' }}
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       # PRs opened from forks (community contributions) do not receive repo
