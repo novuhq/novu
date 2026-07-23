@@ -260,7 +260,7 @@ export class OutboundGateway {
     workspaceId?: string
   ): Promise<void> {
     if (!status.trim()) {
-      await this.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId);
+      await this.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId, workspaceId);
 
       return;
     }
@@ -287,12 +287,13 @@ export class OutboundGateway {
   async stopTypingInConversation(
     agentId: string,
     integrationIdentifier: string,
-    platformThreadId: string
+    platformThreadId: string,
+    workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
     if (config.platform === AgentPlatformEnum.SLACK) {
-      await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId);
+      await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId, workspaceId);
 
       return;
     }
@@ -303,7 +304,8 @@ export class OutboundGateway {
   private async clearSlackAssistantStatus(
     agentId: string,
     integrationIdentifier: string,
-    platformThreadId: string
+    platformThreadId: string,
+    workspaceId?: string
   ): Promise<void> {
     const { channel, threadTs } = decodeSlackPlatformThreadId(platformThreadId);
     if (!threadTs) {
@@ -321,12 +323,15 @@ export class OutboundGateway {
     const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
       setAssistantStatus?: (channelId: string, threadTs: string, status: string) => Promise<void>;
     };
+    const setAssistantStatus = adapter.setAssistantStatus;
 
-    if (typeof adapter.setAssistantStatus !== 'function') {
+    if (typeof setAssistantStatus !== 'function') {
       return;
     }
 
-    await adapter.setAssistantStatus(channel, threadTs, '').catch((err) => {
+    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      setAssistantStatus(channel, threadTs, '')
+    ).catch((err) => {
       this.logger.warn(
         { err, platformThreadId, agentId, integrationIdentifier },
         'Failed to clear Slack assistant status'
@@ -344,7 +349,6 @@ export class OutboundGateway {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-    const dmThread = await this.openDirectMessageThread(chat, config.platform, platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
     const tokenizedContent = await this.applyActionTokensForDelivery(
       deliveryContent,
@@ -353,9 +357,13 @@ export class OutboundGateway {
 
     const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
 
-    const sent = await this.runWithPlatformToken(chat, config, agentId, platformUserId, workspaceId, () =>
-      dmThread.post(postArg)
-    ).catch(toDeliveryError);
+    // openDM must run inside the token binding: Slack multi-workspace adapters have no default
+    // bot token, and conversations.open fails with AuthenticationError outside withBotToken().
+    const sent = await this.runWithPlatformToken(chat, config, agentId, platformUserId, workspaceId, async () => {
+      const dmThread = await this.openDirectMessageThread(chat, config.platform, platformUserId);
+
+      return dmThread.post(postArg);
+    }).catch(toDeliveryError);
 
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
@@ -367,7 +375,8 @@ export class OutboundGateway {
     integrationIdentifier: string,
     platformThreadId: string,
     prompts: SlackAgentSuggestedPrompt[],
-    title?: string
+    title?: string,
+    workspaceId?: string
   ): Promise<void> {
     const { channel, threadTs } = decodeSlackPlatformThreadId(platformThreadId);
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
@@ -381,8 +390,9 @@ export class OutboundGateway {
         promptTitle?: string
       ) => Promise<void>;
     };
+    const setSuggestedPrompts = adapter.setSuggestedPrompts;
 
-    if (typeof adapter.setSuggestedPrompts !== 'function') {
+    if (typeof setSuggestedPrompts !== 'function') {
       return;
     }
 
@@ -396,7 +406,9 @@ export class OutboundGateway {
       return;
     }
 
-    await adapter.setSuggestedPrompts(channel, resolvedThreadTs, prompts, title).catch((err) => {
+    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      setSuggestedPrompts(channel, resolvedThreadTs, prompts, title)
+    ).catch((err) => {
       this.logger.warn(
         { err, platformThreadId, agentId, integrationIdentifier },
         'Failed to set Slack suggested prompts'
