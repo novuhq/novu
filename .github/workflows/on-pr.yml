@@ -101,13 +101,15 @@ jobs:
         run: |
           # Use the GitHub API for the PR file list so detection doesn't depend
           # on the shallow local merge base (the depth-50 fetches above may not
-          # reach it, which would make a local `git diff` fail). Non-PR runs
-          # (e.g. workflow_dispatch) have no PR number, so run the full suite.
+          # reach it, which would make a local `git diff` fail). `--paginate`
+          # walks every page so large PRs (>100 files) aren't misclassified as
+          # docs-only. Non-PR runs (e.g. workflow_dispatch) have no PR number, so
+          # run the full suite.
           if [[ -z "$PR_NUMBER" ]]; then
             echo "docs-only=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          changed=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json files --jq '.files[].path')
+          changed=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/files" --jq '.[].path')
           echo "Changed files:"
           echo "$changed"
           non_docs=$(echo "$changed" | grep -v '^docs/' || true)

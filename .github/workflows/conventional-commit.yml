@@ -47,7 +47,9 @@ jobs:
         run: |
           # Documentation-only PRs (only touching the Mintlify docs/ site) are
           # exempt from the "fixes NV-XXX" Linear ticket requirement below.
-          files=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json files --jq '.files[].path')
+          # `--paginate` walks every page so large PRs (>100 files) aren't
+          # misclassified as docs-only.
+          files=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/files" --jq '.[].path')
           echo "Changed files:"
           echo "$files"
           non_docs=$(echo "$files" | grep -v '^docs/' || true)
