@@ -17,22 +17,22 @@ export const useTelemetry = () => {
 
       const mixpanelEnabled = !!MIXPANEL_KEY;
       const onboardingSessionId = readPersistedCliOnboardingSessionId();
+      let sessionReplayProperties: Record<string, unknown> = {};
 
       if (mixpanelEnabled) {
-        // @ts-expect-error missing from types
-        const sessionReplayProperties = mixpanel.get_session_recording_properties();
-
-        data = {
-          ...(data || {}),
-          ...(onboardingSessionId ? { onboardingSessionId } : {}),
-          ...sessionReplayProperties,
-        };
-      } else if (onboardingSessionId) {
-        data = {
-          ...(data || {}),
-          onboardingSessionId,
-        };
+        try {
+          // @ts-expect-error missing from types
+          sessionReplayProperties = mixpanel.get_session_recording_properties() ?? {};
+        } catch (error) {
+          console.error(error);
+        }
       }
+
+      data = {
+        ...(data || {}),
+        ...(onboardingSessionId ? { onboardingSessionId } : {}),
+        ...sessionReplayProperties,
+      };
 
       mutate({ event: `${event} - [DASHBOARD]`, data });
     },

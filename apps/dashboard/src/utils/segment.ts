@@ -4,6 +4,11 @@ import * as Sentry from '@sentry/react';
 import * as mixpanel from 'mixpanel-browser';
 import { MIXPANEL_KEY, SEGMENT_KEY } from '@/config';
 
+function captureAnalyticsError(error: unknown) {
+  Sentry.captureException(error);
+  console.error(error);
+}
+
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
 
@@ -16,24 +21,38 @@ export class SegmentService {
     this._mixpanelEnabled = !!MIXPANEL_KEY;
 
     if (this._mixpanelEnabled) {
-      mixpanel.init(MIXPANEL_KEY as string, {
-        //@ts-expect-error missing from types
-        record_sessions_percent: 100,
-      });
-
       try {
-        //@ts-expect-error missing from types
-        mixpanel.start_session_recording();
+        mixpanel.init(MIXPANEL_KEY as string, {
+          //@ts-expect-error missing from types
+          record_sessions_percent: 100,
+        });
       } catch (e) {
-        Sentry.captureException(e);
-        console.error(e);
+        this._mixpanelEnabled = false;
+        captureAnalyticsError(e);
+      }
+
+      if (this._mixpanelEnabled) {
+        try {
+          //@ts-expect-error missing from types
+          mixpanel.start_session_recording();
+        } catch (e) {
+          captureAnalyticsError(e);
+        }
       }
     }
 
     if (this._segmentEnabled) {
-      this._segment = AnalyticsBrowser.load({
-        writeKey: SEGMENT_KEY as string,
-      });
+      try {
+        this._segment = AnalyticsBrowser.load({
+          writeKey: SEGMENT_KEY as string,
+        });
+      } catch (e) {
+        this._segmentEnabled = false;
+        this._segment = null;
+        captureAnalyticsError(e);
+
+        return;
+      }
 
       if (!this._mixpanelEnabled) {
         return;
@@ -100,7 +119,11 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      mixpanel.alias(userId, anonymousId);
+      try {
+        mixpanel.alias(userId, anonymousId);
+      } catch (e) {
+        captureAnalyticsError(e);
+      }
     }
 
     this._segment?.alias(userId, anonymousId);
@@ -120,14 +143,18 @@ export class SegmentService {
     }
 
     if (this._mixpanelEnabled) {
-      const sessionReplayProperties =
-        //@ts-expect-error missing from types
-        mixpanel.get_session_recording_properties();
+      try {
+        const sessionReplayProperties =
+          //@ts-expect-error missing from types
+          mixpanel.get_session_recording_properties();
 
-      data = {
-        ...(data || {}),
-        ...sessionReplayProperties,
-      };
+        data = {
+          ...(data || {}),
+          ...sessionReplayProperties,
+        };
+      } catch (e) {
+        captureAnalyticsError(e);
+      }
     }
 
     this._segment?.track(event, data);
