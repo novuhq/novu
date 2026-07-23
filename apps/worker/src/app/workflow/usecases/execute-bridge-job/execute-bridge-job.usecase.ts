@@ -16,6 +16,7 @@ import {
   PinoLogger,
   stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
+  enhanceStepsMap,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -216,11 +217,15 @@ export class ExecuteBridgeJob {
   ): Promise<Record<string, Record<string, unknown>>> {
     const state = await this.generateStateForJob(job, environmentId);
 
-    return state.reduce<Record<string, Record<string, unknown>>>((acc, stepState) => {
-      acc[stepState.stepId] = stepState.outputs;
+    const stepsMap = state.reduce<Record<string, Record<string, unknown>>>((acc, stepState) => {
+      if (!(stepState.stepId in acc)) {
+        acc[stepState.stepId] = stepState.outputs;
+      }
 
       return acc;
     }, {});
+
+    return enhanceStepsMap(stepsMap);
   }
 
   private async generateState(command: ExecuteBridgeJobCommand): Promise<State[]> {

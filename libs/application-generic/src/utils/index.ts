@@ -9,6 +9,7 @@ export * from './compute-workflow-status';
 export * from './create-schema';
 export * from './deepmerge';
 export * from './digest';
+export * from './enhance-digest-step-outputs';
 export * from './duration-utils';
 export * from './email-normalization';
 export * from './exceptions';

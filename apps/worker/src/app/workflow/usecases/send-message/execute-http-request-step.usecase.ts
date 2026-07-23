@@ -18,7 +18,7 @@ import {
   toHeadersRecord,
 } from '@novu/application-generic';
 import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';
-import { createLiquidEngine } from '@novu/framework/internal';
+import { compileJsonControlValues, createLiquidEngine, repairJsonString } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   DeliveryLifecycleDetail,
@@ -124,7 +124,9 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     const url = compiled.url as string | undefined;
     const method = (compiled.method as string) ?? 'POST';
     const rawHeaders = (compiled.headers as Array<{ key: string; value: string }> | undefined) ?? [];
-    const rawBody = compiled.body as string | Array<{ key: string; value: string }> | undefined;
+    const compiledBody = compiled.body as string | Array<{ key: string; value: string }> | undefined;
+    const rawBody =
+      typeof compiledBody === 'string' && compiledBody.trim() ? repairJsonString(compiledBody) : compiledBody;
     const timeout = (compiled.timeout as number | undefined) ?? 5000;
 
     if (!url) {
@@ -347,13 +349,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     values: Record<string, unknown>,
     context: Record<string, unknown>
   ): Promise<unknown> {
-    const compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
-
-    try {
-      return JSON.parse(compiled);
-    } catch {
-      throw new Error('Rendered template output is not valid JSON');
-    }
+    return compileJsonControlValues(values, context, this.liquidEngine);
   }
 
   private async buildCompileContext(command: SendMessageChannelCommand): Promise<Record<string, unknown>> {

@@ -5,7 +5,29 @@ import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageStatus } from './send-message-type.usecase';
 
 describe('ExecuteHttpRequestStep - steps namespace', () => {
-  function buildUsecase() {
+  function buildDigestStepsMap() {
+    return {
+      'digest-step': {
+        events: [
+          {
+            id: 'event_1',
+            time: '2026-07-23T09:00:00.000Z',
+            payload: { name: 'Ada', orderId: '123' },
+          },
+          {
+            id: 'event_2',
+            time: '2026-07-23T09:01:00.000Z',
+            payload: { name: 'Grace', orderId: '456' },
+          },
+        ],
+        eventCount: 2,
+        countSummary: '2 notifications',
+        sentenceSummary: 'Ada, Grace',
+      },
+    };
+  }
+
+  function buildUsecase(controls: Record<string, unknown>) {
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const jobRepository = { updateOne: sinon.stub().resolves(undefined) };
     const httpClientService = {
@@ -16,13 +38,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       }),
     };
     const controlValuesRepository = {
-      findOne: sinon.stub().resolves({
-        controls: {
-          url: 'https://example.com/webhook',
-          method: 'POST',
-          body: '{"eventCount":{{steps.digest-step.eventCount}}}',
-        },
-      }),
+      findOne: sinon.stub().resolves({ controls }),
     };
     const notificationTemplateRepository = {
       findById: sinon.stub().resolves({
@@ -34,18 +50,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       execute: sinon.stub().resolves('secret-key'),
     };
     const executeBridgeJob = {
-      buildStepsMap: sinon.stub().resolves({
-        'digest-step': {
-          events: [
-            {
-              id: 'event_1',
-              time: '2026-07-23T09:00:00.000Z',
-              payload: { orderId: '123' },
-            },
-          ],
-          eventCount: 1,
-        },
-      }),
+      buildStepsMap: sinon.stub().resolves(buildDigestStepsMap()),
     };
     const logger = {
       error: sinon.stub(),
@@ -128,8 +133,12 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     sinon.restore();
   });
 
-  it('compiles steps.digest-step variables into the HTTP request body', async () => {
-    const { usecase, httpClientService, executeBridgeJob } = buildUsecase();
+  it('compiles steps.digest-step.eventCount into the HTTP request body', async () => {
+    const { usecase, httpClientService, executeBridgeJob } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"eventCount":{{steps.digest-step.eventCount}}}',
+    });
 
     const result = await usecase.execute(buildCommand());
 
@@ -137,6 +146,41 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
 
     const requestArgs = httpClientService.request.firstCall.args[0];
-    expect(requestArgs.body).to.deep.equal({ eventCount: 1 });
+    expect(requestArgs.body).to.deep.equal({ eventCount: 2 });
+  });
+
+  it('compiles steps.digest-step.events into the HTTP request body', async () => {
+    const { usecase, httpClientService } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"events":{{steps.digest-step.events}}}',
+    });
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const requestArgs = httpClientService.request.firstCall.args[0];
+    expect(requestArgs.body).to.deep.equal({
+      events: buildDigestStepsMap()['digest-step'].events,
+    });
+  });
+
+  it('compiles digest summary helpers into headers and URL templates', async () => {
+    const { usecase, httpClientService } = buildUsecase({
+      url: 'https://example.com/{{steps.digest-step.countSummary}}',
+      method: 'POST',
+      headers: [{ key: 'X-Digest-Summary', value: '{{steps.digest-step.sentenceSummary}}' }],
+      body: '{"summary":"{{steps.digest-step.countSummary}}"}',
+    });
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+
+    const requestArgs = httpClientService.request.firstCall.args[0];
+    expect(requestArgs.url).to.equal('https://example.com/2 notifications');
+    expect(requestArgs.headers['X-Digest-Summary']).to.equal('Ada, Grace');
+    expect(requestArgs.body).to.deep.equal({ summary: '2 notifications' });
   });
 });
