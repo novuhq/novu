@@ -9,12 +9,12 @@ import { createMockBridgeRequest } from '../resources/agent/bridge-request.fixtu
 type OnMessageMock = Mock<(message: AgentMessage, ctx: AgentMessageContext) => Promise<void>>;
 
 /**
- * The adapter feature-detects `after()` from `next/server` at module scope, so
- * each scenario mocks `next/server` and re-imports the adapter with a fresh
+ * The adapter feature-detects `after()` from `next/server.js` at module scope, so
+ * each scenario mocks `next/server.js` and re-imports the adapter with a fresh
  * module registry.
  */
 async function importServeWithNextServerMock(nextServerExports: Record<string, unknown>) {
-  vi.doMock('next/server', () => nextServerExports);
+  vi.doMock('next/server.js', () => nextServerExports);
   const { serve } = await import('./next');
 
   return serve;
@@ -47,7 +47,7 @@ describe('next serve() waitUntil wiring', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
-    vi.doUnmock('next/server');
+    vi.doUnmock('next/server.js');
     vi.restoreAllMocks();
   });
 
