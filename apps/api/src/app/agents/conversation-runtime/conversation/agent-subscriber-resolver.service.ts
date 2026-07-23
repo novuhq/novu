@@ -658,6 +658,8 @@ export class AgentSubscriberResolver {
           subscriberId,
           type: endpointType,
           endpoint,
+          // platformUserId is taken from the authenticated inbound webhook turn.
+          platformIdentityVerified: true,
         })
       );
     } catch (err) {

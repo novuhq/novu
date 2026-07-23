@@ -34,6 +34,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/application-generic';
 import {
+  ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
   DirectionEnum,
   PermissionsEnum,
@@ -215,6 +216,8 @@ export class WorkflowController {
         workflowIdOrInternalId,
         user,
         environmentId,
+        // Interactive dashboard reads (JWT / Bearer) must reflect the latest write.
+        skipPreferencesCache: user.scheme === ApiAuthSchemeEnum.BEARER,
       })
     );
   }

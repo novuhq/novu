@@ -9,16 +9,16 @@ import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildContextFragmentFromKey, isValidContextVariable } from '@/utils/context-variable-utils';
 
 type VariableType = 'payload' | 'subscriber' | 'actor' | 'context';
 
-interface VariableInfo {
+type VariableInfo = {
   type: VariableType;
   key: string;
   fullPath: string;
-}
+};
 
-// Variable namespace prefixes
 const VARIABLE_PREFIXES = {
   PAYLOAD: 'payload.',
   SUBSCRIBER: 'subscriber.data.',
@@ -167,24 +167,14 @@ export const useCreateVariable = () => {
   const handleContextVariable = useCallback(
     (variableInfo: VariableInfo) => {
       if (!editorValue || !setEditorValue) return;
+      if (!isValidContextVariable(variableInfo.fullPath)) return;
 
       const currentPreviewData = parseJsonValue(editorValue);
       const currentContext = currentPreviewData.context || {};
+      const contextFragment = buildContextFragmentFromKey(variableInfo.key);
+      if (Object.keys(contextFragment).length === 0) return;
 
-      const newVariable = variableInfo.key
-        .split('.')
-        .reduceRight((value, key) => ({ [key]: value }), 'example_value' as unknown);
-
-      const updatedContext = merge({}, currentContext, newVariable);
-
-      // Ensure each context entity has an id field
-      for (const contextKey of Object.keys(updatedContext)) {
-        const contextValue = updatedContext[contextKey];
-        if (typeof contextValue === 'object' && contextValue !== null && !('id' in contextValue)) {
-          updatedContext[contextKey] = { id: 'example_id', ...(contextValue as Record<string, unknown>) };
-        }
-      }
-
+      const updatedContext = merge({}, contextFragment, currentContext);
       const newPreviewData = { ...currentPreviewData, context: updatedContext };
 
       setEditorValue(JSON.stringify(newPreviewData, null, 2));

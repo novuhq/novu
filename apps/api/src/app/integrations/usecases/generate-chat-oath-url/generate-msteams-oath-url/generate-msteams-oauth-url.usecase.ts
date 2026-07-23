@@ -16,6 +16,8 @@ export type StateData = {
   identifier?: string;
   subscriberId?: string;
   context?: ContextPayload;
+  /** Trusted, session-validated context keys. When present the callback persists these directly. */
+  contextKeys?: string[];
   environmentId: string;
   organizationId: string;
   integrationIdentifier: string;
@@ -61,7 +63,8 @@ export class GenerateMsTeamsOauthUrl {
       command.context,
       command.connectionIdentifier,
       command.mode,
-      command.autoLinkUser
+      command.autoLinkUser,
+      command.contextKeys
     );
 
     if (command.mode === 'link_user') {
@@ -77,9 +80,9 @@ export class GenerateMsTeamsOauthUrl {
   }
 
   private validateSubscriberIdOrContext(command: GenerateMsTeamsOauthUrlCommand): void {
-    const { subscriberId, context } = command;
+    const { subscriberId, context, contextKeys } = command;
 
-    if (!subscriberId && !context) {
+    if (!subscriberId && !context && !contextKeys?.length) {
       throw new BadRequestException('Either subscriberId or context must be provided');
     }
   }
@@ -138,14 +141,20 @@ export class GenerateMsTeamsOauthUrl {
     context?: ContextPayload,
     connectionIdentifier?: string,
     mode?: OAuthMode,
-    autoLinkUser?: boolean
+    autoLinkUser?: boolean,
+    contextKeys?: string[]
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
+
+    // A session-validated context is carried as trusted keys; drop the raw payload
+    // so a mismatched body.context can never ride along in the signed state.
+    const hasContextKeys = Boolean(contextKeys?.length);
 
     const stateData: StateData = {
       identifier: connectionIdentifier,
       subscriberId,
-      context,
+      context: hasContextKeys ? undefined : context,
+      contextKeys: hasContextKeys ? contextKeys : undefined,
       environmentId: _environmentId,
       organizationId: _organizationId,
       integrationIdentifier: identifier,

@@ -55,8 +55,9 @@ Novu uses a git submodule at `.source` pointing to `git@github.com:novuhq/packag
    ```
    https://github.com/novuhq/packages-enterprise/compare/next...<branch-name>
    ```
-7. Push the main repo branch and create its PR with `gh pr create`. Mention the enterprise PR link in the body.
-8. **Merge the submodule PR first**, then the main repo PR (to avoid broken builds for teammates).
+7. Push the main repo branch and create its PR with `gh pr create`.
+8. **Cross-link both PRs**: each PR body links the other (monorepo ↔ enterprise); `gh pr edit` the earlier one once the second URL exists.
+9. **Merge the submodule PR first**, then the main repo PR (to avoid broken builds for teammates).
 
 ## Troubleshooting
 

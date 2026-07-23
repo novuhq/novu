@@ -149,10 +149,7 @@ Export it from `app/novu/agents/index.ts`:
 export { supportBot } from './support-bot';
 ```
 
-- Match `agent('...')` to the dashboard **Identifier**.
-- Returning `{ model, system }` is a `LangChainAgentConfig`. Novu calls `createAgent().invoke()` and delivers the final text.
-- Novu maps `ctx.history` for you on this path.
-
+Match `agent('...')` to the dashboard **Identifier**. Returning `{ model, system }` is a `LangChainAgentConfig` — Novu calls `createAgent().invoke()` and delivers the final text. Novu maps `ctx.history` for you on this path.
   </Accordion>
   <Accordion title="Add a tool (optional)">
 ```typescript

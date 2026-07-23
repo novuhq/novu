@@ -3,7 +3,7 @@ import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
 import { VariableFrom } from '@/components/maily/types';
 import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
-import { isValidContextVariable } from '@/utils/context-variable-utils';
+import { extractContextTypesFromVariables, isValidContextVariable } from '@/utils/context-variable-utils';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import {
   isInsideRepeatBlock,
@@ -36,13 +36,15 @@ function addContextVariableSuggestions(
     }
   };
 
-  // "context.tenant" → suggest "context.tenant.id" and "context.tenant.data"
-  if (parts.length === 2 && parts[1]?.trim()) {
+  if (parts.length === 2 && !parts[1]?.trim()) {
+    for (const type of extractContextTypesFromVariables(variables)) {
+      addIfNotExists(`context.${type}.data`);
+      addIfNotExists(`context.${type}.id`);
+    }
+  } else if (parts.length === 2 && parts[1]?.trim()) {
     addIfNotExists(`${queryWithoutSuffix}.id`);
     addIfNotExists(`${queryWithoutSuffix}.data`);
-  }
-  // "context.tenant.id" → suggest if valid and doesn't exist
-  else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
+  } else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
     addIfNotExists(queryWithoutSuffix);
   }
 }
