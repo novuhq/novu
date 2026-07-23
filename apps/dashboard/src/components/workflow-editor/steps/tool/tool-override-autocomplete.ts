@@ -260,9 +260,7 @@ function buildKeyCompletion(key: string, fieldSchema: OverrideFieldSchema): Comp
   return {
     label: key,
     type: 'property',
-    detail: fieldSchema.sources?.length
-      ? `${getTypeLabel(fieldSchema)} · ${fieldSchema.sources.join(', ')}`
-      : getTypeLabel(fieldSchema),
+    detail: getTypeLabel(fieldSchema),
     info: buildFieldInfo(fieldSchema),
     apply: (view, _completion, from, to) => {
       // Resolve end from the live doc — CodeMirror's `to` may stop before an auto-closed `"`.

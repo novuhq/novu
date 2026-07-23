@@ -43,7 +43,7 @@ describe('getToolOverrideCompletionResult', () => {
     expect(labelsFor('{"incident":{"severity":"cr')).toEqual(['critical']);
   });
 
-  it('identifies source integrations in completion details', () => {
+  it('shows only the field type in completion details', () => {
     const doc = '{"';
     const result = getToolOverrideCompletionResult({
       doc,
@@ -52,7 +52,9 @@ describe('getToolOverrideCompletionResult', () => {
       fieldSchemas,
     });
 
-    expect(result?.options.find((option) => option.label === 'incident')?.detail).toContain('Incident webhook');
+    const incident = result?.options.find((option) => option.label === 'incident');
+    expect(incident?.detail).toBe('object');
+    expect(incident?.info).toContain('Sources: Incident webhook');
   });
 
   it('follows array item schemas into nested object cursors', () => {

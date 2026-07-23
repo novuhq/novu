@@ -1,5 +1,6 @@
 export type WebhookSchemaSource = {
   name: string;
+  identifier: string;
   payloadSchema?: string;
 };
 
@@ -29,8 +30,14 @@ type WebhookIntegrationLike = {
   deleted: boolean;
   providerId: string;
   name: string;
+  identifier: string;
   configurations?: unknown;
 };
+
+/** Label used in Supported fields / conflict tooltips: "<name> (id: <identifier>)". */
+export function formatWebhookSchemaSourceLabel(source: Pick<WebhookSchemaSource, 'name' | 'identifier'>): string {
+  return `${source.name} (id: ${source.identifier})`;
+}
 
 type JsonSchema = {
   type?: unknown;
@@ -54,7 +61,7 @@ export function getActiveWebhookSchemaSources(integrations: WebhookIntegrationLi
           ? integration.configurations.payloadSchema
           : undefined;
 
-      return { name: integration.name, payloadSchema };
+      return { name: integration.name, identifier: integration.identifier, payloadSchema };
     });
 }
 
@@ -152,9 +159,10 @@ export function mergeWebhookPayloadSchemas(sources: WebhookSchemaSource[]): Merg
   const ignoredSources: string[] = [];
 
   for (const source of sources) {
+    const sourceLabel = formatWebhookSchemaSourceLabel(source);
     const schema = parseRootSchema(source.payloadSchema);
     if (!schema || !isRecord(schema.properties)) {
-      ignoredSources.push(source.name);
+      ignoredSources.push(sourceLabel);
       continue;
     }
 
@@ -163,7 +171,7 @@ export function mergeWebhookPayloadSchemas(sources: WebhookSchemaSource[]): Merg
         continue;
       }
 
-      const field = toFieldSchema(value, source.name);
+      const field = toFieldSchema(value, sourceLabel);
       properties[key] = properties[key] ? mergeFieldSchema(properties[key], field) : field;
     }
   }
