@@ -1,9 +1,12 @@
 import { CredentialsKeyEnum, type ICredentials } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 import { RiSmartphoneLine, RiWhatsappFill } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
+import { validateWhatsAppToken } from '@/api/agents';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Label } from '@/components/primitives/label';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConnectSubscriberPhone } from '@/hooks/use-connect-subscriber-phone';
 import { SetupButton } from './setup-guide-primitives';
 import { buildWhatsAppDeepLink } from './whatsapp-setup-guide-utils';
@@ -19,10 +22,48 @@ export function EmbeddedSignupInboundTestPanel({
   credentials: ICredentials | undefined;
   agentName: string;
 }) {
+  const { currentEnvironment } = useEnvironment();
   const { savedPhone } = useConnectSubscriberPhone(connectSubscriberId);
 
-  const businessDisplayPhone =
+  const storedDisplayPhone =
     typeof credentials?.[CredentialsKeyEnum.From] === 'string' ? credentials[CredentialsKeyEnum.From].trim() : '';
+  const apiToken =
+    typeof credentials?.[CredentialsKeyEnum.ApiToken] === 'string'
+      ? credentials[CredentialsKeyEnum.ApiToken].trim()
+      : '';
+  const phoneNumberIdentification =
+    typeof credentials?.[CredentialsKeyEnum.phoneNumberIdentification] === 'string'
+      ? credentials[CredentialsKeyEnum.phoneNumberIdentification].trim()
+      : '';
+  const businessAccountId =
+    typeof credentials?.[CredentialsKeyEnum.businessAccountId] === 'string'
+      ? credentials[CredentialsKeyEnum.businessAccountId].trim()
+      : '';
+
+  const displayPhoneQuery = useQuery({
+    queryKey: [
+      'whatsapp-display-phone',
+      currentEnvironment?._id,
+      phoneNumberIdentification,
+      businessAccountId,
+      apiToken.length,
+    ],
+    queryFn: ({ signal }) =>
+      validateWhatsAppToken(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        {
+          accessToken: apiToken,
+          phoneNumberIdentification,
+          businessAccountId: businessAccountId || undefined,
+        },
+        signal
+      ),
+    enabled: Boolean(!storedDisplayPhone && currentEnvironment && apiToken && phoneNumberIdentification),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const businessDisplayPhone = storedDisplayPhone || displayPhoneQuery.data?.displayPhoneNumber?.trim() || '';
   const whatsAppUrl = businessDisplayPhone ? buildWhatsAppDeepLink(businessDisplayPhone, agentName) : '';
 
   if (!businessDisplayPhone || !whatsAppUrl) {
