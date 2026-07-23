@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { type Control, Controller, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { RiBracesLine, RiCornerDownRightLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
+import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { Label, LabelSub } from '@/components/primitives/label';
@@ -15,7 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Separator } from '@/components/primitives/separator';
 import type { IntegrationFormData } from '../types';
-import { ToolWebhookFieldLabel, ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
+import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
 import { WebhookRequestSchemaEditor } from './webhook-request-schema-editor';
 
 const TOOL_WEBHOOK_DYNAMIC_DOCS_URL = 'https://docs.novu.co/platform/integrations/tool/webhook';
@@ -112,7 +113,7 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
       <div className="flex flex-col gap-2 border-t border-neutral-100 pt-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <Label className="inline-flex items-center gap-1">
+            <Label className="text-text-sub inline-flex items-center gap-1 py-1 text-xs font-medium">
               Request schema
               <LabelSub>(optional)</LabelSub>
             </Label>
@@ -187,9 +188,10 @@ function StaticRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSetti
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-1">
-        <ToolWebhookFieldLabel tooltip="The URL Novu sends webhook requests to.">
+        <Label className="text-text-sub py-1 text-xs font-medium">
           Request endpoint
-        </ToolWebhookFieldLabel>
+          <HelpTooltipIndicator text="The URL Novu sends webhook requests to." size="3" className="text-text-soft" />
+        </Label>
         <div className="flex items-center gap-1">
           <RiCornerDownRightLine className="text-text-sub size-4 shrink-0" />
           <MethodSelect
@@ -262,9 +264,14 @@ function DynamicRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSett
       />
 
       <div className="flex flex-col gap-1">
-        <ToolWebhookFieldLabel tooltip="Used when a subscriber's endpoint doesn't specify its own method.">
+        <Label className="text-text-sub py-1 text-xs font-medium">
           Default HTTP method
-        </ToolWebhookFieldLabel>
+          <HelpTooltipIndicator
+            text="Used when a subscriber's endpoint doesn't specify its own method."
+            size="3"
+            className="text-text-soft"
+          />
+        </Label>
         <div className="flex items-center gap-1">
           <RiCornerDownRightLine className="text-text-sub size-4 shrink-0" />
           <MethodSelect
@@ -307,12 +314,15 @@ function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsPro
       name={`credentials.${CredentialsKeyEnum.SecretKey}`}
       render={({ field }) => (
         <div className="flex flex-col gap-1">
-          <ToolWebhookFieldLabel
-            optional
-            tooltip="Used to HMAC-sign outbound webhook requests. When set, Novu sends an X-Novu-Signature header so your endpoint can verify that the payload came from Novu."
-          >
+          <Label className="text-text-sub py-1 text-xs font-medium">
             Signing secret
-          </ToolWebhookFieldLabel>
+            <LabelSub>(optional)</LabelSub>
+            <HelpTooltipIndicator
+              text="Used to HMAC-sign outbound webhook requests. When set, Novu sends an X-Novu-Signature header so your endpoint can verify that the payload came from Novu."
+              size="3"
+              className="text-text-soft"
+            />
+          </Label>
           <SecretInput
             size="2xs"
             placeholder="Enter signing secret"
