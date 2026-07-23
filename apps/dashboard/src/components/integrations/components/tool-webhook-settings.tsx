@@ -1,9 +1,8 @@
 import { CredentialsKeyEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { type Control, Controller, type UseFormSetValue, useWatch } from 'react-hook-form';
-import { RiBracesLine } from 'react-icons/ri';
+import { RiBracesLine, RiCornerDownRightLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
-import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { Label, LabelSub } from '@/components/primitives/label';
@@ -14,8 +13,9 @@ import {
   SegmentedControlTrigger,
 } from '@/components/primitives/segmented-control';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { Separator } from '@/components/primitives/separator';
 import type { IntegrationFormData } from '../types';
-import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
+import { ToolWebhookFieldLabel, ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
 import { WebhookRequestSchemaEditor } from './webhook-request-schema-editor';
 
 const TOOL_WEBHOOK_DYNAMIC_DOCS_URL = 'https://docs.novu.co/platform/integrations/tool/webhook';
@@ -82,7 +82,7 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
   }, [routingModeValue, setValue]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <SegmentedControl
         value={routingMode}
         onValueChange={(value) => {
@@ -91,7 +91,7 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
           }
         }}
       >
-        <SegmentedControlList className="w-fit min-w-[180px]">
+        <SegmentedControlList>
           <SegmentedControlTrigger value="static" disabled={isReadOnly}>
             Static
           </SegmentedControlTrigger>
@@ -100,6 +100,8 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
           </SegmentedControlTrigger>
         </SegmentedControlList>
       </SegmentedControl>
+
+      <Separator />
 
       {routingMode === 'static' ? (
         <StaticRoutingFields control={control} setValue={setValue} isReadOnly={isReadOnly} />
@@ -145,6 +147,32 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
   );
 }
 
+type MethodSelectProps = {
+  value?: string;
+  onValueChange: (value: string) => void;
+  disabled?: boolean;
+};
+
+function MethodSelect({ value, onValueChange, disabled }: MethodSelectProps) {
+  return (
+    <Select value={value || DEFAULT_METHOD} onValueChange={onValueChange} disabled={disabled}>
+      <SelectTrigger
+        size="2xs"
+        className="border-stroke-soft bg-bg-white text-text-strong shadow-xs w-auto min-w-[72px] shrink-0 gap-1 font-mono text-xs font-medium"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {HTTP_METHODS.map((method) => (
+          <SelectItem key={method} value={method} className="font-mono text-xs">
+            {method}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function StaticRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSettingsProps) {
   const methodValue = useWatch({ control, name: `credentials.${CredentialsKeyEnum.Method}` });
 
@@ -157,33 +185,26 @@ function StaticRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSetti
   }, [methodValue, setValue]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-1">
-        <Label>Endpoint URL</Label>
-        <div className="flex gap-1">
-          <Select
-            value={methodValue || DEFAULT_METHOD}
+        <ToolWebhookFieldLabel tooltip="The URL Novu sends webhook requests to.">
+          Request endpoint
+        </ToolWebhookFieldLabel>
+        <div className="flex items-center gap-1">
+          <RiCornerDownRightLine className="text-text-sub size-4 shrink-0" />
+          <MethodSelect
+            value={methodValue}
             onValueChange={(value) => setValue(`credentials.${CredentialsKeyEnum.Method}`, value)}
             disabled={isReadOnly}
-          >
-            <SelectTrigger className="w-[92px] shrink-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {HTTP_METHODS.map((method) => (
-                <SelectItem key={method} value={method}>
-                  {method}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
           <Controller
             control={control}
             name={`credentials.${CredentialsKeyEnum.WebhookUrl}`}
             render={({ field }) => (
               <Input
+                size="2xs"
                 className="min-w-0 flex-1"
-                placeholder="https://example.com/webhook"
+                placeholder="https://events.example.com"
                 value={field.value ?? ''}
                 disabled={isReadOnly}
                 onChange={field.onChange}
@@ -199,14 +220,18 @@ function StaticRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSetti
         name={`credentials.${CredentialsKeyEnum.Headers}`}
         label="Request headers"
         addLabel="Add header"
+        tooltip="Custom headers included with every webhook request."
         isReadOnly={isReadOnly}
       />
+
+      <Separator />
 
       <ToolWebhookKeyValueField
         control={control}
         name={`credentials.${CredentialsKeyEnum.Body}`}
         label="Request body"
         addLabel="Add field"
+        tooltip="Static fields merged into every webhook request payload."
         isReadOnly={isReadOnly}
       />
 
@@ -227,7 +252,7 @@ function DynamicRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSett
   }, [methodValue, setValue]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <InlineToast
         variant="tip"
         title="Dynamic routing:"
@@ -237,23 +262,17 @@ function DynamicRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSett
       />
 
       <div className="flex flex-col gap-1">
-        <Label>Default HTTP method</Label>
-        <Select
-          value={methodValue || DEFAULT_METHOD}
-          onValueChange={(value) => setValue(`credentials.${CredentialsKeyEnum.Method}`, value)}
-          disabled={isReadOnly}
-        >
-          <SelectTrigger className="w-[120px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {HTTP_METHODS.map((method) => (
-              <SelectItem key={method} value={method}>
-                {method}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ToolWebhookFieldLabel tooltip="Used when a subscriber's endpoint doesn't specify its own method.">
+          Default HTTP method
+        </ToolWebhookFieldLabel>
+        <div className="flex items-center gap-1">
+          <RiCornerDownRightLine className="text-text-sub size-4 shrink-0" />
+          <MethodSelect
+            value={methodValue}
+            onValueChange={(value) => setValue(`credentials.${CredentialsKeyEnum.Method}`, value)}
+            disabled={isReadOnly}
+          />
+        </div>
       </div>
 
       <ToolWebhookKeyValueField
@@ -261,14 +280,18 @@ function DynamicRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSett
         name={`credentials.${CredentialsKeyEnum.Headers}`}
         label="Default request headers"
         addLabel="Add header"
+        tooltip="Default headers included with every webhook request."
         isReadOnly={isReadOnly}
       />
+
+      <Separator />
 
       <ToolWebhookKeyValueField
         control={control}
         name={`credentials.${CredentialsKeyEnum.Body}`}
         label="Default request body"
         addLabel="Add field"
+        tooltip="Default fields merged into every webhook request payload."
         isReadOnly={isReadOnly}
       />
 
@@ -284,12 +307,14 @@ function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsPro
       name={`credentials.${CredentialsKeyEnum.SecretKey}`}
       render={({ field }) => (
         <div className="flex flex-col gap-1">
-          <Label className="inline-flex items-center gap-1">
+          <ToolWebhookFieldLabel
+            optional
+            tooltip="Used to HMAC-sign outbound webhook requests. When set, Novu sends an X-Novu-Signature header so your endpoint can verify that the payload came from Novu."
+          >
             Signing secret
-            <LabelSub>(optional)</LabelSub>
-            <HelpTooltipIndicator text="Used to HMAC-sign outbound webhook requests. When set, Novu sends an X-Novu-Signature header so your endpoint can verify that the payload came from Novu." />
-          </Label>
+          </ToolWebhookFieldLabel>
           <SecretInput
+            size="2xs"
             placeholder="Enter signing secret"
             value={field.value ?? ''}
             disabled={isReadOnly}
