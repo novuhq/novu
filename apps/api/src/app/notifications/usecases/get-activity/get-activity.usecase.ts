@@ -8,8 +8,6 @@ import {
   StepRunRepository,
   Trace,
   TraceLogRepository,
-  WorkflowRun,
-  WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
   ExecutionDetailFeedItem,
@@ -25,7 +23,6 @@ import {
   FeatureFlagsKeysEnum,
   ProvidersIdEnum,
   StepTypeEnum,
-  TriggerTypeEnum,
 } from '@novu/shared';
 import { subDays } from 'date-fns';
 
@@ -34,25 +31,6 @@ import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
 import { GetActivityCommand } from './get-activity.command';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
-
-const workflowRunSelectColumns = [
-  'workflow_run_id',
-  'workflow_id',
-  'workflow_name',
-  'organization_id',
-  'environment_id',
-  'subscriber_id',
-  'external_subscriber_id',
-  'trigger_identifier',
-  'transaction_id',
-  'channels',
-  'subscriber_to',
-  'payload',
-  'topics',
-  'context_keys',
-  'created_at',
-  'updated_at',
-] as const;
 
 const stepRunSelectColumns = [
   'step_run_id',
@@ -75,7 +53,6 @@ export class GetActivity {
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
     private stepRunRepository: StepRunRepository,
-    private workflowRunRepository: WorkflowRunRepository,
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
   ) {
@@ -93,7 +70,7 @@ export class GetActivity {
       environment: { _id: command.environmentId },
     } as const;
 
-    const [tracesEnabled, stepRunsEnabled, workflowRunsEnabled] = await Promise.all([
+    const [tracesEnabled, stepRunsEnabled] = await Promise.all([
       this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_READ_ENABLED,
         defaultValue: false,
@@ -104,32 +81,23 @@ export class GetActivity {
         defaultValue: false,
         ...flagContext,
       }),
-      this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_LOGS_READ_ENABLED,
-        defaultValue: false,
-        ...flagContext,
-      }),
     ]);
 
     this.logger.debug(
       {
         tracesEnabled,
         stepRunsEnabled,
-        workflowRunsEnabled,
       },
       'feature flags'
     );
 
     let feedItem: NotificationFeedItemEntity | null = null;
 
-    if (workflowRunsEnabled && stepRunsEnabled && tracesEnabled) {
-      this.logger.debug('analytics full ingegration enabled');
-      feedItem = await this.getFeedItemFromWorkflowRuns(command);
-    } else if (tracesEnabled && stepRunsEnabled) {
-      this.logger.debug('analytics step runs enabled, no workflow runs');
+    if (tracesEnabled && stepRunsEnabled) {
+      this.logger.debug('analytics step runs enabled');
       feedItem = await this.getFeedItemFromStepRuns(command);
     } else if (tracesEnabled) {
-      this.logger.debug('analytics traces enabled, no step runs or workflow runs');
+      this.logger.debug('analytics traces enabled, no step runs');
       feedItem = await this.getFeedItemFromTraceLog(command);
     } else {
       this.logger.debug('analytics fallback to old method');
@@ -295,95 +263,6 @@ export class GetActivity {
 
       // Fall back to the current stage 1 method (traces + jobs from MongoDB)
       return await this.getFeedItemFromTraceLog(command);
-    }
-  }
-
-  private async getFeedItemFromWorkflowRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
-    try {
-      const workflowRunQuery = new QueryBuilder<WorkflowRun>({
-        environmentId: command.environmentId,
-      })
-        .whereEquals('workflow_run_id', command.notificationId)
-        .build();
-
-      const workflowRunsResult = await this.workflowRunRepository.find({
-        where: workflowRunQuery,
-        orderBy: 'created_at',
-        orderDirection: 'ASC',
-        limit: 1,
-        useFinal: true,
-        select: workflowRunSelectColumns,
-      });
-
-      if (!workflowRunsResult.data || workflowRunsResult.data.length === 0) {
-        this.logger.warn(
-          {
-            notificationId: command.notificationId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-          },
-          'No workflow run found in ClickHouse, falling back to step runs'
-        );
-
-        // Fall back to step runs method
-        return await this.getFeedItemFromStepRuns(command);
-      }
-
-      const mostRecentWorkflowRun = workflowRunsResult.data[0];
-
-      // Create the base feed item from workflow run data
-      const feedItem: NotificationFeedItemEntity = {
-        _id: mostRecentWorkflowRun.workflow_run_id,
-        _organizationId: mostRecentWorkflowRun.organization_id,
-        _environmentId: mostRecentWorkflowRun.environment_id,
-        _templateId: mostRecentWorkflowRun.workflow_id,
-        _subscriberId: mostRecentWorkflowRun.subscriber_id,
-        transactionId: mostRecentWorkflowRun.transaction_id,
-        template: {
-          _id: mostRecentWorkflowRun.workflow_id,
-          name: mostRecentWorkflowRun.workflow_name,
-          triggers: [
-            {
-              identifier: mostRecentWorkflowRun.trigger_identifier,
-              type: TriggerTypeEnum.EVENT,
-              variables: [],
-            },
-          ],
-        },
-        subscriber: {
-          _id: mostRecentWorkflowRun.subscriber_id,
-          subscriberId: mostRecentWorkflowRun.external_subscriber_id || '',
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: undefined,
-        },
-        jobs: [],
-        to: mostRecentWorkflowRun.subscriber_to ? JSON.parse(mostRecentWorkflowRun.subscriber_to) : {},
-        payload: mostRecentWorkflowRun.payload ? JSON.parse(mostRecentWorkflowRun.payload) : {},
-        contextKeys: mostRecentWorkflowRun.context_keys,
-        createdAt: new Date(mostRecentWorkflowRun.created_at).toISOString(),
-        updatedAt: new Date(mostRecentWorkflowRun.updated_at).toISOString(),
-        channels: mostRecentWorkflowRun.channels ? JSON.parse(mostRecentWorkflowRun.channels) : [],
-        topics: mostRecentWorkflowRun.topics ? JSON.parse(mostRecentWorkflowRun.topics) : [],
-      };
-
-      feedItem.jobs = await this.processStepRunsForFeedItem(feedItem, command);
-
-      return feedItem;
-    } catch (error) {
-      this.logger.error(
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          notificationId: command.notificationId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        },
-        'Failed to get feed item from workflow runs'
-      );
-
-      // Fall back to step runs method
-      return await this.getFeedItemFromStepRuns(command);
     }
   }
 

@@ -1,8 +1,7 @@
-import { FeatureFlagsKeysEnum, IActivity } from '@novu/shared';
+import { IActivity } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 
-import { ActivityFilters, getActivityList, getWorkflowRunsList } from '@/api/activity';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { ActivityFilters, getActivityList } from '@/api/activity';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironment } from '../context/environment/hooks';
 
@@ -12,7 +11,6 @@ interface UseActivitiesOptions {
   limit?: number;
   staleTime?: number;
   refetchOnWindowFocus?: boolean;
-  cursor?: string | null;
 }
 
 interface ActivityResponse {
@@ -24,7 +22,7 @@ interface ActivityResponse {
 }
 
 export function useFetchActivities(
-  { filters, page = 0, limit = 10, cursor }: UseActivitiesOptions = {},
+  { filters, page = 0, limit = 10 }: UseActivitiesOptions = {},
   {
     enabled = true,
     refetchInterval = false,
@@ -38,31 +36,10 @@ export function useFetchActivities(
   } = {}
 ) {
   const { currentEnvironment } = useEnvironment();
-  const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
 
   const { data, ...rest } = useQuery<ActivityResponse>({
-    queryKey: [
-      QueryKeys.fetchActivities,
-      currentEnvironment?._id,
-      page,
-      limit,
-      filters,
-      isWorkflowRunMigrationEnabled,
-      cursor,
-    ],
+    queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id, page, limit, filters],
     queryFn: async ({ signal }) => {
-      if (isWorkflowRunMigrationEnabled) {
-        const workflowRunsResponse = await getWorkflowRunsList({
-          environment: currentEnvironment!,
-          ...(cursor ? {} : { page }), // Only include page if no cursor
-          limit,
-          filters,
-          signal,
-          cursor,
-        });
-        return workflowRunsResponse;
-      }
-
       return getActivityList({
         environment: currentEnvironment!,
         page,

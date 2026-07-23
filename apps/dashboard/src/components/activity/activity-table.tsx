@@ -1,4 +1,3 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -15,7 +14,6 @@ import {
   TableRow,
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { usePersistedPageSize } from '@/hooks/use-persisted-page-size';
 import { parsePageParam } from '@/utils/parse-page-param';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
@@ -47,21 +45,17 @@ export function ActivityTable({
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
   const { pageSize, setPageSize } = usePersistedPageSize({
     tableId: ACTIVITY_TABLE_ID,
     defaultPageSize: 10,
   });
 
-  // Get pagination parameters from URL
   const page = parsePageParam(searchParams.get('page'));
-  const cursor = searchParams.get('cursor');
 
-  const { activities, isLoading, hasMore, next, previous, error } = useFetchActivities(
+  const { activities, isLoading, hasMore, error } = useFetchActivities(
     {
       filters,
-      page: isWorkflowRunMigrationEnabled ? undefined : page,
-      cursor: isWorkflowRunMigrationEnabled ? cursor : undefined,
+      page,
       limit: pageSize,
     },
     {
@@ -87,50 +81,13 @@ export function ActivityTable({
       ...Object.fromEntries(searchParams),
       page: newPage.toString(),
     });
-    // Remove cursor when using page-based pagination
     newParams.delete('cursor');
     navigate(`${location.pathname}?${newParams}`);
   }
 
-  function handleCursorNavigation(newCursor: string | null, action: 'next' | 'previous' | 'first') {
-    const newParams = createSearchParams({
-      ...Object.fromEntries(searchParams),
-    });
-
-    // Remove page when using cursor-based pagination
-    newParams.delete('page');
-
-    if (action === 'first') {
-      // Go to first page by removing cursor
-      newParams.delete('cursor');
-    } else if (newCursor) {
-      newParams.set('cursor', newCursor);
-    } else {
-      newParams.delete('cursor');
-    }
-
-    navigate(`${location.pathname}?${newParams}`);
-  }
-
-  function handleNext() {
-    if (next) {
-      handleCursorNavigation(next, 'next');
-    }
-  }
-
-  function handlePrevious() {
-    if (previous) {
-      handleCursorNavigation(previous, 'previous');
-    }
-  }
-
   function handlePageSizeChange(newPageSize: number) {
     setPageSize(newPageSize);
-    if (isWorkflowRunMigrationEnabled) {
-      handleCursorNavigation(null, 'first');
-    } else {
-      handlePageChange(0);
-    }
+    handlePageChange(0);
   }
 
   return (
@@ -187,12 +144,10 @@ export function ActivityTable({
                   <TablePaginationFooter
                     pageSize={pageSize}
                     currentPageItemsCount={activities.length}
-                    onPreviousPage={
-                      isWorkflowRunMigrationEnabled ? handlePrevious : () => handlePageChange(Math.max(0, page - 1))
-                    }
-                    onNextPage={isWorkflowRunMigrationEnabled ? handleNext : () => handlePageChange(page + 1)}
+                    onPreviousPage={() => handlePageChange(Math.max(0, page - 1))}
+                    onNextPage={() => handlePageChange(page + 1)}
                     onPageSizeChange={handlePageSizeChange}
-                    hasPreviousPage={isWorkflowRunMigrationEnabled ? !!previous : page > 0}
+                    hasPreviousPage={page > 0}
                     hasNextPage={hasMore}
                     className="bg-transparent shadow-none"
                     itemName="workflow runs"
