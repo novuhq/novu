@@ -334,6 +334,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const inAppControlValue = 'In-App Test';
       const emailControlValue = 'Email Test';
       const updateRequest: UpdateWorkflowDto = {
+        // Required by current generated SDK input schema; API ignores this field on update.
+        origin: workflowCreated.origin,
         name: workflowCreated.name,
         preferences: {
           user: null,
@@ -351,6 +353,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       // TODO: Control values must be typed and accept only valid control values
       expect((updatedWorkflow.steps[0] as InAppStepResponseDto).controls.values.subject).to.be.equal(inAppControlValue);
       expect((updatedWorkflow.steps[1] as EmailStepResponseDto).controls.values.subject).to.be.equal(emailControlValue);
+      expect(updatedWorkflow.origin).to.equal(ResourceOriginEnum.NovuCloud);
     });
 
     it('should ignore origin in the update request body', async () => {
