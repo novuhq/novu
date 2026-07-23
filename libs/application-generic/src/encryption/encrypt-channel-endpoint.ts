@@ -2,13 +2,16 @@ import { ChannelEndpointByType, ChannelEndpointType, ENDPOINT_TYPES } from '@nov
 
 import { decryptApiKey, encryptApiKey } from './encrypt-provider';
 
-function transformStringField(value: unknown, transform: (value: string) => string): string | undefined {
-  if (typeof value !== 'string' || value.length === 0) {
-    return value as string | undefined;
-  }
-
-  return transform(value);
-}
+/**
+ * String fields inside a channel-endpoint `endpoint` document that must be
+ * encrypted at rest, keyed by endpoint type. Unknown types omit an entry and
+ * pass through unchanged (e.g. chat `webhook` keeps its url plaintext).
+ */
+const ENDPOINT_SECRET_STRING_FIELDS: Partial<Record<ChannelEndpointType, readonly string[]>> = {
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: ['url'],
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: ['routingKey'],
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: ['apiKey'],
+};
 
 function transformHeaderValues(
   headers: Record<string, string>,
@@ -23,73 +26,38 @@ function transformHeaderValues(
   return transformed;
 }
 
-function transformToolWebhookEndpoint(
-  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.TOOL_WEBHOOK],
-  transform: (value: string) => string
-): ChannelEndpointByType[typeof ENDPOINT_TYPES.TOOL_WEBHOOK] {
-  const result = { ...endpoint };
-  const url = transformStringField(result.url, transform);
-  if (url !== undefined) {
-    result.url = url;
-  }
-
-  if (result.headers) {
-    result.headers = transformHeaderValues(result.headers, transform);
-  }
-
-  return result;
-}
-
-function transformPagerDutyEndpoint(
-  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE],
-  transform: (value: string) => string
-): ChannelEndpointByType[typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE] {
-  const result = { ...endpoint };
-  const routingKey = transformStringField(result.routingKey, transform);
-  if (routingKey !== undefined) {
-    result.routingKey = routingKey;
-  }
-
-  return result;
-}
-
-function transformOpsgenieEndpoint(
-  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION],
-  transform: (value: string) => string
-): ChannelEndpointByType[typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION] {
-  const result = { ...endpoint };
-  const apiKey = transformStringField(result.apiKey, transform);
-  if (apiKey !== undefined) {
-    result.apiKey = apiKey;
-  }
-
-  return result;
-}
-
 function transformEndpoint<T extends ChannelEndpointType>(
   type: T,
   endpoint: ChannelEndpointByType[T],
   transform: (value: string) => string
 ): ChannelEndpointByType[T] {
-  switch (type) {
-    case ENDPOINT_TYPES.TOOL_WEBHOOK:
-      return transformToolWebhookEndpoint(
-        endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.TOOL_WEBHOOK],
-        transform
-      ) as ChannelEndpointByType[T];
-    case ENDPOINT_TYPES.PAGERDUTY_SERVICE:
-      return transformPagerDutyEndpoint(
-        endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE],
-        transform
-      ) as ChannelEndpointByType[T];
-    case ENDPOINT_TYPES.OPSGENIE_INTEGRATION:
-      return transformOpsgenieEndpoint(
-        endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION],
-        transform
-      ) as ChannelEndpointByType[T];
-    default:
-      return endpoint;
+  const secretFields = ENDPOINT_SECRET_STRING_FIELDS[type];
+  if (!secretFields) {
+    return endpoint;
   }
+
+  const result: Record<string, unknown> = { ...(endpoint as Record<string, unknown>) };
+
+  for (const key of secretFields) {
+    const value = result[key];
+    if (typeof value === 'string' && value.length > 0) {
+      result[key] = transform(value);
+    }
+  }
+
+  if (type === ENDPOINT_TYPES.TOOL_WEBHOOK) {
+    const headers = result.headers;
+    if (
+      headers &&
+      typeof headers === 'object' &&
+      !Array.isArray(headers) &&
+      Object.values(headers).every((entry) => typeof entry === 'string')
+    ) {
+      result.headers = transformHeaderValues(headers as Record<string, string>, transform);
+    }
+  }
+
+  return result as ChannelEndpointByType[T];
 }
 
 /**
