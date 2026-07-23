@@ -13,6 +13,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const notificationTemplateRepository = { findOne: sinon.stub().resolves(null) };
     const jobRepository = { findOne: sinon.stub().resolves(null), find: sinon.stub().resolves([]) };
     const messageRepository = { findOne: sinon.stub().resolves(null) };
+    const notificationPayloadService = { hydrateEntitiesPayload: sinon.stub().resolves(undefined) };
     const environmentRepository = {
       findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
     };
@@ -38,6 +39,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const usecase = new ExecuteBridgeJob(
       jobRepository as never,
       notificationTemplateRepository as never,
+      notificationPayloadService as never,
       messageRepository as never,
       environmentRepository as never,
       controlValuesRepository as never,
@@ -53,6 +55,8 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       executeBridgeRequest,
       environmentRepository,
       controlValuesRepository,
+      jobRepository,
+      notificationPayloadService,
     };
   }
 
@@ -223,6 +227,54 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       providerOverrides: {
         [ToolProviderIdEnum.PagerDuty]: { severity: 'warning', summary: 'db down' },
       },
+    });
+  });
+
+  it('buildStepsMap maps digest parent outputs to steps.<stepId> namespace', async () => {
+    const { usecase, jobRepository, notificationPayloadService } = buildUsecase();
+
+    const digestJob = {
+      _id: 'digest_job_1',
+      _parentId: undefined,
+      _environmentId: 'env_1',
+      type: 'digest',
+      status: 'completed',
+      createdAt: new Date('2026-07-23T09:00:00.000Z'),
+      step: { stepId: 'digest-step', uuid: 'digest-step' },
+      payload: { foo: 'bar' },
+    };
+
+    jobRepository.findOne
+      .withArgs({ _id: 'digest_job_1', _environmentId: 'env_1' })
+      .resolves(digestJob);
+    jobRepository.find
+      .withArgs({
+        _mergedDigestId: 'digest_job_1',
+        type: 'digest',
+        status: 'merged',
+        _environmentId: 'env_1',
+      })
+      .resolves([]);
+
+    const httpJob = {
+      _id: 'http_job_1',
+      _parentId: 'digest_job_1',
+      _environmentId: 'env_1',
+      step: { stepId: 'http-step', uuid: 'http-step' },
+    } as never;
+
+    const stepsMap = await usecase.buildStepsMap(httpJob, 'env_1');
+
+    expect(notificationPayloadService.hydrateEntitiesPayload.calledOnce).to.equal(true);
+    expect(stepsMap['digest-step']).to.deep.equal({
+      events: [
+        {
+          id: 'digest_job_1',
+          time: digestJob.createdAt,
+          payload: { foo: 'bar' },
+        },
+      ],
+      eventCount: 1,
     });
   });
 });

@@ -10,7 +10,6 @@ import {
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   HttpClientService,
-  ICompileContext,
   InstrumentUsecase,
   PinoLogger,
   resolveHttpRequestBody,
@@ -33,6 +32,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
+import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
 
@@ -49,6 +49,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
     private getDecryptedSecretKey: GetDecryptedSecretKey,
+    private executeBridgeJob: ExecuteBridgeJob,
     protected messageRepository: MessageRepository,
     protected createExecutionDetails: CreateExecutionDetails
   ) {
@@ -59,7 +60,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
   @InstrumentUsecase()
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const controlValues = await this.fetchControlValues(command);
-    const compileContext = this.buildCompileContect(command.compileContext);
+    const compileContext = await this.buildCompileContext(command);
     const shouldSkip = this.evaluateSkipCondition(controlValues, compileContext);
 
     if (shouldSkip) {
@@ -355,7 +356,10 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     }
   }
 
-  private buildCompileContect(compileContext: ICompileContext): Record<string, unknown> {
+  private async buildCompileContext(command: SendMessageChannelCommand): Promise<Record<string, unknown>> {
+    const { compileContext } = command;
+    const steps = await this.executeBridgeJob.buildStepsMap(command.job, command.environmentId);
+
     return {
       subscriber: compileContext.subscriber ?? {},
       payload: compileContext.payload ?? {},
@@ -363,6 +367,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       tenant: compileContext.tenant ?? {},
       context: compileContext.context ?? {},
       step: compileContext.step,
+      steps,
       webhook: compileContext.webhook ?? {},
       env: compileContext.env ?? {},
     };
