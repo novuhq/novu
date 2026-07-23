@@ -52,6 +52,7 @@ export type AgentEvent =
       outcome: AgentRunOutcome;
       finishReason?: AgentFinishReason;
       usage?: AgentEventUsage;
+      approvals?: AgentApprovalRequest[];
     }
   | { type: 'run-error'; message: string; code?: string }
   | { type: 'step-start'; name?: string; index?: number }

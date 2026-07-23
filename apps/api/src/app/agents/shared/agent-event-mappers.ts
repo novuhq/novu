@@ -6,7 +6,6 @@ import type {
   AgentMessageContent,
   AgentSignal,
 } from '@novu/agent-event-protocol';
-import { ConversationActivityEntity } from '@novu/dal';
 import type { Signal, ToolResult } from '@novu/framework/internal';
 import type { ActionRequired, Response as ThalamusResponse } from '@novu/thalamus';
 import type { EditPayloadDto, ReplyContentDto } from './dtos/agent-reply-payload.dto';
@@ -85,23 +84,6 @@ export function mapToolUseResultEvent(event: Extract<AgentEvent, { type: 'tool-u
     toolCallId: event.toolUseId,
     output: output ?? joinedText,
     preview: joinedText || undefined,
-  };
-}
-
-export function activityToApprovalRequest(activity: ConversationActivityEntity): AgentApprovalRequest | null {
-  const approvalId = activity.toolData?.approvalId;
-  const toolUseId = activity.toolData?.toolCallId;
-  const toolName = activity.toolData?.toolName;
-
-  if (typeof approvalId !== 'string' || typeof toolUseId !== 'string' || typeof toolName !== 'string') {
-    return null;
-  }
-
-  return {
-    approvalId,
-    toolUseId,
-    toolName,
-    input: activity.toolData?.input as Record<string, unknown> | undefined,
   };
 }
 

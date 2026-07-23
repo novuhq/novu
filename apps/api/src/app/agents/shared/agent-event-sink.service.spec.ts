@@ -1,5 +1,5 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { ConversationActivityEntity, ConversationActivityTypeEnum } from '@novu/dal';
+import { ConversationActivityEntity } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentEventContext, AgentEventSink } from './agent-event-sink.service';
@@ -232,19 +232,23 @@ describe('AgentEventSink', () => {
     expect(handleAgentReply.execute.secondCall.args[0].reply.card).to.deep.equal({ type: 'card', elements: [] });
   });
 
-  it('persists managed tool-approval-request without auto-deliver and dispatches card on paused run-finish', async () => {
+  it('persists managed approval activities and dispatches card on paused run-finish with inline approvals', async () => {
     const { sink, handleAgentReply, handlePendingToolApprovals, inboundAck } = setup();
 
     await sink.ingestMany(
       [
         envelope({
-          type: 'tool-approval-request',
-          approvalId: 'appr-1',
-          toolUseId: 'tool-1',
-          toolName: 'deleteDatabase',
-          input: { confirm: true },
+          type: 'run-finish',
+          outcome: 'paused',
+          approvals: [
+            {
+              approvalId: 'appr-1',
+              toolUseId: 'tool-1',
+              toolName: 'deleteDatabase',
+              input: { confirm: true },
+            },
+          ],
         }),
-        envelope({ type: 'run-finish', outcome: 'paused' }),
       ],
       baseContext({ sessionId: 'session-1', subscriberId: 'sub-1', source: 'managed' })
     );
@@ -261,29 +265,20 @@ describe('AgentEventSink', () => {
     expect(inboundAck.onManagedTurnComplete.calledOnce).to.equal(true);
   });
 
-  it('falls back to unresolved approvals from history on paused run-finish with empty batch buffer', async () => {
-    const { sink, handlePendingToolApprovals, conversationService } = setup();
-    const pending = {
-      type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
-      toolData: {
-        approvalId: 'appr-db',
-        toolCallId: 'tool-db',
-        toolName: 'issueRefund',
-        input: { amount: 10 },
-      },
-    } as unknown as ConversationActivityEntity;
-    conversationService.getHistory.resolves([pending]);
+  it('logs and skips dispatch when paused run-finish carries zero approvals', async () => {
+    const { sink, handleAgentReply, handlePendingToolApprovals, logger } = setup();
 
     await sink.ingestMany(
-      [envelope({ type: 'run-finish', outcome: 'paused' })],
+      [envelope({ type: 'run-finish', outcome: 'paused', approvals: [] })],
       baseContext({ sessionId: 'session-1', subscriberId: 'sub-1', source: 'managed' })
     );
 
-    expect(conversationService.getHistory.calledOnce).to.equal(true);
-    expect(handlePendingToolApprovals.execute.calledOnce).to.equal(true);
-    const response = handlePendingToolApprovals.execute.firstCall.args[0].response;
-    expect(response.actionsRequired).to.have.length(1);
-    expect(response.actionsRequired[0].toolUseId).to.equal('tool-db');
+    expect(logger.error.calledOnce).to.equal(true);
+    expect(logger.error.firstCall.args[1]).to.equal(
+      'paused run-finish carried zero approvals — skipping tool approval dispatch'
+    );
+    expect(handleAgentReply.execute.called).to.equal(false);
+    expect(handlePendingToolApprovals.execute.called).to.equal(false);
   });
 
   it('dispatches resolve events through HandleAgentReply', async () => {

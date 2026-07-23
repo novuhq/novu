@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  type AgentApprovalRequest,
-  type AgentEvent,
-  type AgentEventEnvelope,
-  isDeltaEvent,
-} from '@novu/agent-event-protocol';
+import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
 import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
@@ -22,7 +17,6 @@ import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
 import {
-  activityToApprovalRequest,
   mapToolUseResultEvent,
   toActionRequired,
   toEditContent,
@@ -33,7 +27,6 @@ import {
 import { AgentPlatformEnum } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
 import { McpConnectionErrorHandler } from './mcp-connection-error.handler';
-import { findUnresolvedToolApprovalRequests } from './tool-approval/unresolved-approvals';
 
 export type IngestOutcome = 'accepted' | 'duplicate';
 
@@ -64,17 +57,6 @@ export interface AgentEventContext {
   suppressReply?: boolean;
 }
 
-/** One batch-plan entry per envelope — see {@link AgentEventSink.planBatch}. */
-type BatchPlanEntry =
-  | { kind: 'delta' }
-  | {
-      kind: 'tool-approval-request';
-      event: Extract<AgentEvent, { type: 'tool-approval-request' }>;
-      autoDeliverCard: boolean;
-    }
-  | { kind: 'paused-run-finish'; event: Extract<AgentEvent, { type: 'run-finish' }> }
-  | { kind: 'dispatch' };
-
 const ACTIVITY_RESOLVE_MAX_ATTEMPTS = 3;
 const ACTIVITY_RESOLVE_DELAY_MS = 300;
 
@@ -104,103 +86,33 @@ export class AgentEventSink {
 
   /**
    * Ingest a batch produced from one upstream unit (e.g. one Thalamus StreamPart).
-   * `tool-approval-request` events in the same batch are paired with a following
-   * `run-finish { outcome: 'paused' }` — no process-local Map across requests.
+   * Each envelope is dispatched independently — paused `run-finish` events carry
+   * their tool approvals inline.
    */
   async ingestMany(envelopes: AgentEventEnvelope[], context: AgentEventContext): Promise<IngestOutcome[]> {
-    const plan = this.planBatch(envelopes, context);
     const outcomes: IngestOutcome[] = [];
-    const batchApprovals: AgentApprovalRequest[] = [];
 
     for (let index = 0; index < envelopes.length; index += 1) {
       const envelope = envelopes[index];
-      const entry = plan[index];
-
-      switch (entry.kind) {
-        case 'delta':
-          outcomes.push('accepted');
-          break;
-
-        case 'tool-approval-request': {
-          const outcome = await this.handleToolApprovalRequest(
-            entry.event,
-            context,
-            batchApprovals,
-            entry.autoDeliverCard
-          );
-          outcomes.push(outcome);
-          break;
-        }
-
-        case 'paused-run-finish':
-          await this.handlePausedRunFinish(
-            entry.event,
-            context,
-            this.buildMetadata(context),
-            envelope.runId,
-            batchApprovals
-          );
-          batchApprovals.length = 0;
-          outcomes.push('accepted');
-          break;
-
-        case 'dispatch': {
-          const outcome = await this.dispatchEvent(envelope, context, envelope.event);
-          outcomes.push(outcome);
-          break;
-        }
-
-        default: {
-          const exhaustive: never = entry;
-          void exhaustive;
-        }
-      }
-    }
-
-    if (batchApprovals.length > 0) {
-      // Legitimate for framework/compat emitters that post an approval request
-      // without a managed run-finish in the same batch. Phase-1 managed path
-      // always pairs them via mapFinishEvents → ingestMany.
-      this.logger.debug(
-        {
-          runId: envelopes[envelopes.length - 1]?.runId,
-          count: batchApprovals.length,
-        },
-        'tool-approval-request(s) without paused run-finish in batch — no managed pause dispatch'
-      );
-    }
-
-    return outcomes;
-  }
-
-  /**
-   * Pre-scans the batch once so the pairing invariant — "approval requests accumulate until
-   * the next paused run-finish in the same batch, and only auto-deliver their card when no
-   * message follows before another approval" — lives in one named place instead of emerging
-   * from loop bookkeeping (a per-approval scan-forward interleaved with per-event dispatch).
-   */
-  private planBatch(envelopes: AgentEventEnvelope[], context: AgentEventContext): BatchPlanEntry[] {
-    return envelopes.map((envelope, index) => {
       const { event } = envelope;
 
       if (isDeltaEvent(event)) {
-        return { kind: 'delta' };
+        outcomes.push('accepted');
+        continue;
       }
 
       if (event.type === 'tool-approval-request') {
-        return {
-          kind: 'tool-approval-request',
-          event,
-          autoDeliverCard: context.source === 'bridge' && !this.hasFollowingMessageInBatch(envelopes, index),
-        };
+        const autoDeliverCard = context.source === 'bridge' && !this.hasFollowingMessageInBatch(envelopes, index);
+        const outcome = await this.handleToolApprovalRequest(event, context, autoDeliverCard);
+        outcomes.push(outcome);
+        continue;
       }
 
-      if (event.type === 'run-finish' && event.outcome === 'paused') {
-        return { kind: 'paused-run-finish', event };
-      }
+      const outcome = await this.dispatchEvent(envelope, context, event);
+      outcomes.push(outcome);
+    }
 
-      return { kind: 'dispatch' };
-    });
+    return outcomes;
   }
 
   private async dispatchEvent(
@@ -249,6 +161,12 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'run-finish':
+        if (event.outcome === 'paused') {
+          await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
+
+          return 'accepted';
+        }
+
         await this.handleRunFinish(event, baseFields, context, metadata, envelope.runId);
 
         return 'accepted';
@@ -314,17 +232,8 @@ export class AgentEventSink {
   private async handleToolApprovalRequest(
     event: Extract<AgentEvent, { type: 'tool-approval-request' }>,
     context: AgentEventContext,
-    batchApprovals: AgentApprovalRequest[],
     autoDeliverCard: boolean
   ): Promise<IngestOutcome> {
-    batchApprovals.push({
-      approvalId: event.approvalId,
-      toolUseId: event.toolUseId,
-      toolName: event.toolName,
-      input: event.input,
-      source: event.source,
-    });
-
     const baseFields = this.buildBaseFields(context);
     const toolApprovalRequest = {
       approvalId: event.approvalId,
@@ -693,13 +602,6 @@ export class AgentEventSink {
     metadata: Record<string, string>,
     runId: string
   ): Promise<void> {
-    // Paused finishes are handled in ingestMany (paired with tool-approval-request).
-    if (event.outcome === 'paused') {
-      this.logger.error({ runId }, 'run-finish paused reached dispatch without batch pairing — skipping');
-
-      return;
-    }
-
     try {
       await this.inboundAck.onManagedTurnComplete(metadata);
 
@@ -736,11 +638,11 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'run-finish' }>,
     context: AgentEventContext,
     metadata: Record<string, string>,
-    runId: string,
-    approvals: AgentApprovalRequest[]
+    runId: string
   ): Promise<void> {
     const baseFields = this.buildBaseFields(context);
     const { platform, platformThreadId, sessionId, subscriberId } = context;
+    const approvals = event.approvals ?? [];
 
     if (!platform || !platformThreadId || !sessionId) {
       this.logger.error(
@@ -751,30 +653,33 @@ export class AgentEventSink {
       return;
     }
 
-    let resolvedApprovals = approvals;
-
-    if (resolvedApprovals.length === 0) {
-      const history = await this.conversationService.getHistory(context.environmentId, context.conversationId);
-      resolvedApprovals = findUnresolvedToolApprovalRequests(history)
-        .map(activityToApprovalRequest)
-        .filter((approval): approval is AgentApprovalRequest => approval !== null);
-    }
-
-    if (resolvedApprovals.length === 0) {
-      this.logger.error(
-        { runId },
-        'run-finish paused with zero tool-approval-request events in batch — skipping tool approval dispatch'
-      );
+    if (approvals.length === 0) {
+      this.logger.error({ runId }, 'paused run-finish carried zero approvals — skipping tool approval dispatch');
 
       return;
     }
 
     try {
+      for (const approval of approvals) {
+        await this.handleToolApprovalRequest(
+          {
+            type: 'tool-approval-request',
+            approvalId: approval.approvalId,
+            toolUseId: approval.toolUseId,
+            toolName: approval.toolName,
+            input: approval.input,
+            source: approval.source,
+          },
+          context,
+          false
+        );
+      }
+
       const response: ThalamusResponse = {
         messages: [],
         finishReason: 'requires-action',
         usage: toThalamusUsage(event.usage),
-        actionsRequired: resolvedApprovals.map(toActionRequired),
+        actionsRequired: approvals.map(toActionRequired),
       };
 
       await this.handlePendingToolApprovals.execute(
