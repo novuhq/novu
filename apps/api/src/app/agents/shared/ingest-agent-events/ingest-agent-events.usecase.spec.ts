@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEventEnvelope } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentEventSink } from '../agent-event-sink.service';

@@ -1,5 +1,5 @@
+import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { ConversationActivityEntity, ConversationActivityTypeEnum } from '@novu/dal';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentEventContext, AgentEventSink } from './agent-event-sink.service';

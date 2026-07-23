@@ -68,6 +68,7 @@
     "@nestjs/throttler": "6.5.0",
     "@novu/api": "workspace:*",
     "@novu/application-generic": "workspace:*",
+    "@novu/agent-event-protocol": "workspace:*",
     "@novu/chat-adapter-email": "workspace:*",
     "@novu/chat-adapter-sendblue": "workspace:*",
     "@novu/dal": "workspace:*",

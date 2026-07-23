@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
 import {
   type AgentApprovalRequest,
   type AgentEvent,
   type AgentEventEnvelope,
   isDeltaEvent,
-  NOVU_INTERNAL_TOOLS,
-} from '@novu/shared';
+} from '@novu/agent-event-protocol';
+import { PinoLogger } from '@novu/application-generic';
+import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
+import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';

@@ -6,7 +6,7 @@ import {
   type AgentEventEnvelope,
   type AgentFinishReason,
   type AgentToolSource,
-} from '@novu/shared';
+} from '@novu/agent-event-protocol';
 import type { ActionRequired, Response, StreamPart } from '@novu/thalamus';
 import { SessionExpiredError } from '@novu/thalamus';
 

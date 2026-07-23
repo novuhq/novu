@@ -1,5 +1,3 @@
-import { ConversationActivityEntity } from '@novu/dal';
-import type { Signal, ToolResult } from '@novu/framework/internal';
 import type {
   AgentApprovalRequest,
   AgentEvent,
@@ -7,7 +5,9 @@ import type {
   AgentFileRef,
   AgentMessageContent,
   AgentSignal,
-} from '@novu/shared';
+} from '@novu/agent-event-protocol';
+import { ConversationActivityEntity } from '@novu/dal';
+import type { Signal, ToolResult } from '@novu/framework/internal';
 import type { ActionRequired, Response as ThalamusResponse } from '@novu/thalamus';
 import type { EditPayloadDto, ReplyContentDto } from './dtos/agent-reply-payload.dto';
 

@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { type AgentEventEnvelope, isAgentEventEnvelope } from '@novu/agent-event-protocol';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { type AgentEventEnvelope, FeatureFlagsKeysEnum, isAgentEventEnvelope } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { AgentEventContext, AgentEventSink, type IngestOutcome } from '../agent-event-sink.service';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
