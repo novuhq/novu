@@ -12,7 +12,6 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
   function buildUsecase() {
     const notificationTemplateRepository = { findOne: sinon.stub().resolves(null) };
     const jobRepository = { findOne: sinon.stub().resolves(null), find: sinon.stub().resolves([]) };
-    const notificationPayloadService = {};
     const messageRepository = { findOne: sinon.stub().resolves(null) };
     const notificationPayloadService = { hydrateEntitiesPayload: sinon.stub().resolves(undefined) };
     const environmentRepository = {
@@ -251,9 +250,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       payload: { foo: 'bar' },
     };
 
-    jobRepository.findOne
-      .withArgs({ _id: 'digest_job_1', _environmentId: 'env_1' })
-      .resolves(digestJob);
+    jobRepository.findOne.withArgs({ _id: 'digest_job_1', _environmentId: 'env_1' }).resolves(digestJob);
     jobRepository.find
       .withArgs({
         _mergedDigestId: 'digest_job_1',

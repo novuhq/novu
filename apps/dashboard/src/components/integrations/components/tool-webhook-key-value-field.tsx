@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { type Control, Controller } from 'react-hook-form';
 import { RiAddLine, RiDeleteBin2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
@@ -93,6 +93,20 @@ type ToolWebhookKeyValueRowsProps = {
 
 function ToolWebhookKeyValueRows({ value, onChange, label, addLabel, isReadOnly }: ToolWebhookKeyValueRowsProps) {
   const [rows, setRows] = useState<KeyValueRow[]>(() => jsonToRows(value));
+
+  // Keep local editor rows in sync when RHF resets/loads a different credential value,
+  // without wiping in-progress empty draft rows that serialize to the same JSON.
+  useEffect(() => {
+    setRows((current) => {
+      const serializedValue = typeof value === 'string' ? value : rowsToJson(jsonToRows(value));
+
+      if (rowsToJson(current) === serializedValue) {
+        return current;
+      }
+
+      return jsonToRows(value);
+    });
+  }, [value]);
 
   const commit = (nextRows: KeyValueRow[]) => {
     setRows(nextRows);

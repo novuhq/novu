@@ -14,13 +14,19 @@ const ENDPOINT_SECRET_STRING_FIELDS: Partial<Record<ChannelEndpointType, readonl
 };
 
 function transformHeaderValues(
-  headers: Record<string, string>,
+  headers: Record<string, unknown>,
   transform: (value: string) => string
-): Record<string, string> {
-  const transformed: Record<string, string> = {};
+): Record<string, unknown> {
+  const transformed: Record<string, unknown> = {};
 
   for (const [headerKey, headerValue] of Object.entries(headers)) {
-    transformed[headerKey] = headerValue.length > 0 ? transform(headerValue) : headerValue;
+    if (typeof headerValue === 'string') {
+      transformed[headerKey] = headerValue.length > 0 ? transform(headerValue) : headerValue;
+    } else {
+      // Non-string values are unexpected for TOOL_WEBHOOK headers; leave unchanged
+      // so a single bad entry cannot skip encryption of the remaining string secrets.
+      transformed[headerKey] = headerValue;
+    }
   }
 
   return transformed;
@@ -47,13 +53,8 @@ function transformEndpoint<T extends ChannelEndpointType>(
 
   if (type === ENDPOINT_TYPES.TOOL_WEBHOOK) {
     const headers = result.headers;
-    if (
-      headers &&
-      typeof headers === 'object' &&
-      !Array.isArray(headers) &&
-      Object.values(headers).every((entry) => typeof entry === 'string')
-    ) {
-      result.headers = transformHeaderValues(headers as Record<string, string>, transform);
+    if (headers && typeof headers === 'object' && !Array.isArray(headers)) {
+      result.headers = transformHeaderValues(headers as Record<string, unknown>, transform);
     }
   }
 

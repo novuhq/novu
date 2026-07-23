@@ -135,9 +135,12 @@ function mergeFieldSchema(existing: WebhookFieldSchema, incoming: WebhookFieldSc
   }
 
   if (existing.type === 'object' && incoming.type === 'object') {
-    const properties = { ...existing.properties };
+    const properties: Record<string, WebhookFieldSchema> = Object.create(null);
+    Object.assign(properties, existing.properties);
     for (const [key, field] of Object.entries(incoming.properties ?? {})) {
-      properties[key] = properties[key] ? mergeFieldSchema(properties[key], field) : field;
+      properties[key] = Object.prototype.hasOwnProperty.call(properties, key)
+        ? mergeFieldSchema(properties[key], field)
+        : field;
     }
 
     return { ...existing, sources, properties };
@@ -175,7 +178,9 @@ function parseRootSchema(payloadSchema: string | undefined): JsonSchema | undefi
 }
 
 export function mergeWebhookPayloadSchemas(sources: WebhookSchemaSource[]): MergedWebhookPayloadSchema {
-  const properties: Record<string, WebhookFieldSchema> = {};
+  // Null-prototype map so schema property names like "toString"/"constructor" cannot
+  // collide with Object.prototype and short-circuit the own-property merge check.
+  const properties: Record<string, WebhookFieldSchema> = Object.create(null);
   const ignoredSources: WebhookSchemaSourceRef[] = [];
 
   for (const source of sources) {
@@ -192,7 +197,9 @@ export function mergeWebhookPayloadSchemas(sources: WebhookSchemaSource[]): Merg
       }
 
       const field = toFieldSchema(value, sourceRef);
-      properties[key] = properties[key] ? mergeFieldSchema(properties[key], field) : field;
+      properties[key] = Object.prototype.hasOwnProperty.call(properties, key)
+        ? mergeFieldSchema(properties[key], field)
+        : field;
     }
   }
 

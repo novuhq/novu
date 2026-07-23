@@ -1,10 +1,23 @@
 import { ENDPOINT_TYPES } from '@novu/shared';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { decryptChannelEndpoint, encryptChannelEndpoint } from './encrypt-channel-endpoint';
 
 describe('encryptChannelEndpoint / decryptChannelEndpoint', () => {
   const novuSubMask = 'nvsk.';
+  const previousEncryptionKey = process.env.STORE_ENCRYPTION_KEY;
+
+  beforeAll(() => {
+    process.env.STORE_ENCRYPTION_KEY = previousEncryptionKey || 'XgVGHwIk^42&8v&xFowz1mp6^P3r*9l0';
+  });
+
+  afterAll(() => {
+    if (previousEncryptionKey === undefined) {
+      delete process.env.STORE_ENCRYPTION_KEY;
+    } else {
+      process.env.STORE_ENCRYPTION_KEY = previousEncryptionKey;
+    }
+  });
 
   it('encrypts tool_webhook url with the Novu encryption prefix and round-trips', () => {
     const endpoint = { url: 'https://hooks.example.com/inbound' };
@@ -98,5 +111,21 @@ describe('encryptChannelEndpoint / decryptChannelEndpoint', () => {
     expect(encrypted.url).toEqual('');
     expect(encrypted.headers!.Authorization).toEqual('');
     expect(encrypted.headers!['X-Custom'].startsWith(novuSubMask)).toBe(true);
+  });
+
+  it('still encrypts string header secrets when a non-string header value is present', () => {
+    const endpoint = {
+      url: 'https://hooks.example.com/inbound',
+      headers: {
+        Authorization: 'Bearer secret-token',
+        'X-Bypass': 1,
+      },
+    } as { url: string; headers: Record<string, string | number> };
+
+    const encrypted = encryptChannelEndpoint(ENDPOINT_TYPES.TOOL_WEBHOOK, endpoint as never);
+
+    expect(encrypted.headers!.Authorization.startsWith(novuSubMask)).toBe(true);
+    expect(encrypted.headers!.Authorization).not.toEqual('Bearer secret-token');
+    expect((encrypted.headers as Record<string, unknown>)['X-Bypass']).toBe(1);
   });
 });

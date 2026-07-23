@@ -67,6 +67,12 @@ describe('tool provider override schemas', () => {
     expect(getToolProviderOverrideSchema('unknown')).toBeUndefined();
   });
 
+  it('ignores Object.prototype property names as provider ids', () => {
+    expect(getToolProviderOverrideSchema('toString')).toBeUndefined();
+    expect(getToolProviderOverrideKeys('constructor')).toBeUndefined();
+    expect(getToolProviderOverrideKeysOnlySchema('valueOf')).toBeUndefined();
+  });
+
   it('documents the primary content fields for each provider', () => {
     expect(pagerdutyOverrideJsonSchema.properties?.summary).toBeDefined();
     expect(pagerdutyOverrideJsonSchema.properties?.severity).toBeDefined();

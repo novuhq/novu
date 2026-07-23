@@ -30,7 +30,7 @@ export const TOOL_PROVIDER_OVERRIDE_KEYS = {
 } as const satisfies Partial<Record<ToolContentOverrideProviderId, readonly string[]>>;
 
 export function getToolProviderOverrideSchema(providerId: string) {
-  if (providerId in TOOL_PROVIDER_OVERRIDE_SCHEMAS) {
+  if (Object.prototype.hasOwnProperty.call(TOOL_PROVIDER_OVERRIDE_SCHEMAS, providerId)) {
     return TOOL_PROVIDER_OVERRIDE_SCHEMAS[providerId as keyof typeof TOOL_PROVIDER_OVERRIDE_SCHEMAS];
   }
 
@@ -38,7 +38,7 @@ export function getToolProviderOverrideSchema(providerId: string) {
 }
 
 export function getToolProviderOverrideKeys(providerId: string): readonly string[] | undefined {
-  if (providerId in TOOL_PROVIDER_OVERRIDE_KEYS) {
+  if (Object.prototype.hasOwnProperty.call(TOOL_PROVIDER_OVERRIDE_KEYS, providerId)) {
     return TOOL_PROVIDER_OVERRIDE_KEYS[providerId as keyof typeof TOOL_PROVIDER_OVERRIDE_KEYS];
   }
 

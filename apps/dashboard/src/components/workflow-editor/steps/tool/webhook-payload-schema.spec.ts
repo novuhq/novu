@@ -223,4 +223,31 @@ describe('mergeWebhookPayloadSchemas', () => {
       },
     ]);
   });
+
+  it('treats Object.prototype property names as regular schema fields', () => {
+    const result = mergeWebhookPayloadSchemas([
+      {
+        name: 'Webhook A',
+        identifier: 'webhook-a',
+        payloadSchema: JSON.stringify({
+          type: 'object',
+          properties: { toString: { type: 'string' } },
+        }),
+      },
+      {
+        name: 'Webhook B',
+        identifier: 'webhook-b',
+        payloadSchema: JSON.stringify({
+          type: 'object',
+          properties: { toString: { type: 'number' } },
+        }),
+      },
+    ]);
+
+    expect(result.properties.toString.type).toBe('string');
+    expect(result.properties.toString.conflicts).toEqual([
+      { source: { name: 'Webhook A', identifier: 'webhook-a' }, type: 'string' },
+      { source: { name: 'Webhook B', identifier: 'webhook-b' }, type: 'number' },
+    ]);
+  });
 });
