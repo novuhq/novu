@@ -4,7 +4,7 @@ import {
   encryptChannelEndpoint,
   type WebexTokenRefreshResponse,
 } from '@novu/application-generic';
-import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
+import { type ChannelEndpointByType, ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -236,8 +236,7 @@ describe('ResolveChannelEndpoints - PagerDuty', () => {
       buildPagerDutyEndpoint({
         endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.PAGERDUTY_SERVICE, {
           routingKey: 'R0UTINGK3YEXAMPLE000000000000000',
-          region: undefined as unknown as 'us',
-        }),
+        } as ChannelEndpointByType[typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE]),
       }),
     ]);
 
@@ -313,8 +312,7 @@ describe('ResolveChannelEndpoints - Opsgenie', () => {
       buildOpsgenieEndpoint({
         endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.OPSGENIE_INTEGRATION, {
           apiKey: 'genie-key-123',
-          region: undefined as unknown as 'us',
-        }),
+        } as ChannelEndpointByType[typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION]),
       }),
     ]);
 

@@ -17,7 +17,7 @@ import {
   ChannelEndpointRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChannelEndpointByType, ChannelEndpointType, ProvidersIdEnum } from '@novu/shared';
+import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
@@ -27,23 +27,17 @@ type EndpointStoredSecretConfig = {
   providerLabel: string;
   /** Fields that must all be present (non-empty) after decrypt; missing any triggers one combined error. */
   requiredFields: string[];
-  /** Fields copied onto the endpoint when present, but not required (e.g. tool-webhook headers/method). */
-  optionalFields?: string[];
 };
 
 /**
  * Tool endpoint types whose per-subscriber routing secret lives on the
  * `ChannelEndpoint.endpoint` document. The resolver decrypts secret fields and
- * rehydrates the endpoint wire shape at send time — no channel connection lookup.
+ * returns the decrypted wire shape at send time — no channel connection lookup.
  */
 const ENDPOINT_STORED_SECRET_CONFIGS: Partial<Record<string, EndpointStoredSecretConfig>> = {
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', requiredFields: ['routingKey', 'region'] },
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', requiredFields: ['apiKey', 'region'] },
-  [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
-    providerLabel: 'Tool Webhook',
-    requiredFields: ['url'],
-    optionalFields: ['headers', 'method'],
-  },
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: { providerLabel: 'Tool Webhook', requiredFields: ['url'] },
 };
 
 export type IntegrationEndpoints = {
@@ -232,35 +226,21 @@ export class ResolveChannelEndpoints {
    * Decrypts tool routing secrets from `ChannelEndpoint.endpoint` and returns
    * an `endpoint` override so `buildChannelData`'s spread replaces the
    * encrypted stored document with the plaintext wire shape providers read.
-   * `requiredFields` must all be present or the whole endpoint is rejected;
-   * `optionalFields` are copied over only when present.
+   * `requiredFields` must all be present or the whole endpoint is rejected.
    */
   private extractEndpointStoredSecrets(
     endpoint: ChannelEndpointEntity,
     config: EndpointStoredSecretConfig
   ): Record<string, unknown> {
-    const { providerLabel, requiredFields, optionalFields = [] } = config;
+    const { providerLabel, requiredFields } = config;
+    const decrypted = decryptChannelEndpoint(endpoint.type, endpoint.endpoint);
+    const decryptedFields = decrypted as Record<string, unknown>;
 
-    const decrypted = decryptChannelEndpoint(
-      endpoint.type as ChannelEndpointType,
-      endpoint.endpoint as ChannelEndpointByType[ChannelEndpointType]
-    ) as Record<string, unknown>;
-
-    if (requiredFields.some((field) => !decrypted?.[field])) {
+    if (requiredFields.some((field) => !decryptedFields[field])) {
       throw new Error(`${providerLabel} endpoint ${endpoint.identifier} is missing ${requiredFields.join(' or ')}`);
     }
 
-    const hydratedEndpoint: Record<string, unknown> = {};
-    for (const field of requiredFields) {
-      hydratedEndpoint[field] = decrypted[field];
-    }
-    for (const field of optionalFields) {
-      if (decrypted?.[field] !== undefined && decrypted?.[field] !== null) {
-        hydratedEndpoint[field] = decrypted[field];
-      }
-    }
-
-    return { endpoint: hydratedEndpoint };
+    return { endpoint: decrypted };
   }
 
   /**
