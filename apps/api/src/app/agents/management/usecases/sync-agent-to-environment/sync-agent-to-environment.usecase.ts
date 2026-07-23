@@ -93,6 +93,25 @@ export class SyncAgentToEnvironment {
 
     const processedSourceIntegrationIds = new Set<string>();
 
+    // Batch-fetch existing stubs by parent id up front to avoid a findOne per source
+    // integration inside the loop (N+1). Each source integration has a distinct _parentId,
+    // so a single snapshot before the loop is sufficient.
+    const candidateSourceIds = sourceLinks
+      .map((sourceLink) => sourceIntegrationMap.get(sourceLink._integrationId)?._id)
+      .filter((id): id is string => Boolean(id));
+    const existingStubs =
+      candidateSourceIds.length > 0
+        ? await this.integrationRepository.find({
+            _parentId: { $in: candidateSourceIds },
+            _environmentId: targetEnvironmentId,
+            _organizationId: organizationId,
+          })
+        : [];
+    const stubByParentId = new Map<string, (typeof existingStubs)[0]>();
+    for (const stub of existingStubs) {
+      if (stub._parentId) stubByParentId.set(stub._parentId, stub);
+    }
+
     for (const sourceLink of sourceLinks) {
       const sourceIntegration = sourceIntegrationMap.get(sourceLink._integrationId);
       if (!sourceIntegration) continue;
@@ -104,11 +123,7 @@ export class SyncAgentToEnvironment {
       }
 
       // Reuse an existing stub if another agent already created one for this source integration
-      let stubIntegration = await this.integrationRepository.findOne({
-        _parentId: sourceIntegration._id,
-        _environmentId: targetEnvironmentId,
-        _organizationId: organizationId,
-      });
+      let stubIntegration = stubByParentId.get(sourceIntegration._id);
 
       if (!stubIntegration) {
         stubIntegration = await this.integrationRepository.create({
