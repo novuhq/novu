@@ -1,12 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { retrieveChannelConnection, updateChannelConnection, verifyChannelConnection } from '@/api/channel-connections';
+import { Button } from '@/components/primitives/button';
 import { SecretInput } from '@/components/primitives/secret-input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
-
-const VERIFY_DEBOUNCE_MS = 600;
 
 function formatExpiry(expiresAt?: string): string | null {
   if (!expiresAt) {
@@ -38,18 +36,20 @@ function formatExpiry(expiresAt?: string): string | null {
  * Displays and edits the refresh token for a single Slack workspace connection.
  * Rotation is per-connection, so this reads/writes `channelConnections` directly
  * rather than the integration credentials form. Pasting a fresh refresh token lets
- * Novu re-establish rotation without a full OAuth reconnect — the value is saved and
- * verified automatically after a short debounce.
+ * Novu re-establish rotation without a full OAuth reconnect.
+ *
+ * The refresh token is write-only — the API never echoes it back, so the input is
+ * never pre-filled and is cleared after a successful save. Because Slack refresh
+ * tokens are single-use, saving and verifying only happens on explicit click of
+ * "Save & verify", never automatically while typing or pasting.
  */
 export function SlackConnectionRefreshTokenSection({ connectionIdentifier }: { connectionIdentifier: string }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const refreshTokenInputId = useId();
   const [refreshToken, setRefreshToken] = useState('');
-  const [isDirty, setIsDirty] = useState(false);
+  const [isConfiguring, setIsConfiguring] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
-  const debouncedRefreshToken = useDebouncedValue(refreshToken, VERIFY_DEBOUNCE_MS);
-  // Prevents re-firing the same failed (or in-flight) token when `isPending` flips false.
-  const submittedTokenRef = useRef<string | null>(null);
 
   const queryKey = ['channel-connection', currentEnvironment?._id, connectionIdentifier];
 
@@ -64,12 +64,6 @@ export function SlackConnectionRefreshTokenSection({ connectionIdentifier }: { c
     enabled: Boolean(currentEnvironment && connectionIdentifier),
     retry: false,
   });
-
-  useEffect(() => {
-    if (data && !isDirty) {
-      setRefreshToken(data.auth?.refreshToken ?? '');
-    }
-  }, [data, isDirty]);
 
   const mutation = useMutation({
     mutationFn: async (nextRefreshToken: string) => {
@@ -98,9 +92,9 @@ export function SlackConnectionRefreshTokenSection({ connectionIdentifier }: { c
       });
     },
     onSuccess: (verified) => {
-      setIsDirty(false);
       setVerifyError(null);
-      setRefreshToken(verified.auth?.refreshToken ?? '');
+      setRefreshToken('');
+      setIsConfiguring(false);
       queryClient.setQueryData(queryKey, verified);
       showSuccessToast('Refresh token verified — rotation active');
     },
@@ -109,36 +103,10 @@ export function SlackConnectionRefreshTokenSection({ connectionIdentifier }: { c
       setVerifyError(message);
       showErrorToast(message);
       // The save may have persisted while the verify exchange failed (or vice versa) —
-      // refetch so the displayed token/expiry always reflects the real stored state.
+      // refetch so the displayed status always reflects the real stored state.
       await queryClient.invalidateQueries({ queryKey });
     },
   });
-
-  useEffect(() => {
-    if (!isDirty || mutation.isPending || isLoading || !data?.workspace?.id) {
-      return;
-    }
-
-    const trimmed = debouncedRefreshToken.trim();
-    const stored = data.auth?.refreshToken ?? '';
-
-    if (!trimmed || trimmed === stored || trimmed === submittedTokenRef.current) {
-      return;
-    }
-
-    submittedTokenRef.current = trimmed;
-    mutation.mutate(trimmed);
-    // Intentionally depend on the debounced value + readiness flags only — `mutation`
-    // identity changes every render and would re-fire the exchange.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    debouncedRefreshToken,
-    isDirty,
-    isLoading,
-    data?.workspace?.id,
-    data?.auth?.refreshToken,
-    mutation.isPending,
-  ]);
 
   if (isError) {
     return (
@@ -151,9 +119,35 @@ export function SlackConnectionRefreshTokenSection({ connectionIdentifier }: { c
     );
   }
 
+  const trimmedRefreshToken = refreshToken.trim();
+  const canSave = Boolean(trimmedRefreshToken) && !mutation.isPending && !isLoading && Boolean(data?.workspace?.id);
+
+  function handleSaveAndVerify() {
+    if (!canSave) {
+      return;
+    }
+
+    mutation.mutate(trimmedRefreshToken);
+  }
+
+  function handleCancelConfiguration() {
+    setRefreshToken('');
+    setVerifyError(null);
+    setIsConfiguring(false);
+  }
+
   const expiryHint = formatExpiry(data?.auth?.expiresAt);
-  let statusHint: string | null = expiryHint;
+  const hasRefreshToken = data?.auth?.hasRefreshToken;
+  let statusHint = 'Checking refresh token status…';
   let statusHintClassName = 'text-text-soft text-paragraph-2xs';
+
+  if (!isLoading && hasRefreshToken === true) {
+    statusHint = 'Refresh token configured';
+  } else if (!isLoading && hasRefreshToken === false) {
+    statusHint = 'No refresh token configured yet';
+  } else if (!isLoading && data) {
+    statusHint = 'Refresh token status unavailable — reload after updating the API';
+  }
 
   if (mutation.isPending) {
     statusHint = 'Verifying…';
@@ -168,29 +162,64 @@ export function SlackConnectionRefreshTokenSection({ connectionIdentifier }: { c
         <span className="text-text-strong text-label-xs font-medium">Token rotation</span>
         <span className="text-text-soft text-paragraph-xs">
           Used to renew the bot token before it expires. Paste a refresh token from Slack's app console if rotation
-          stops working — it is verified automatically.
+          stops working, then click Save &amp; verify to exchange it.
         </span>
       </div>
 
-      <SecretInput
-        id="slack-connection-refresh-token"
-        size="xs"
-        className="font-mono"
-        placeholder="xoxe-1-..."
-        value={refreshToken}
-        onChange={(value) => {
-          setIsDirty(true);
-          setVerifyError(null);
-          setRefreshToken(value);
+      <div className="flex flex-col gap-1">
+        <span className={statusHintClassName}>{statusHint}</span>
+        {expiryHint ? <span className="text-text-soft text-paragraph-2xs">{expiryHint}</span> : null}
+      </div>
 
-          if (value.trim() !== submittedTokenRef.current) {
-            submittedTokenRef.current = null;
-          }
-        }}
-        disabled={isLoading || mutation.isPending}
-      />
-
-      {statusHint ? <span className={statusHintClassName}>{statusHint}</span> : null}
+      {isConfiguring ? (
+        <div className="flex flex-col gap-2">
+          <SecretInput
+            id={refreshTokenInputId}
+            size="xs"
+            className="font-mono"
+            placeholder="xoxe-1-..."
+            value={refreshToken}
+            onChange={(value) => {
+              setVerifyError(null);
+              setRefreshToken(value);
+            }}
+            disabled={isLoading || mutation.isPending}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              mode="outline"
+              size="xs"
+              onClick={handleCancelConfiguration}
+              disabled={mutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="xs"
+              onClick={handleSaveAndVerify}
+              disabled={!canSave}
+              isLoading={mutation.isPending}
+            >
+              Save &amp; verify
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="secondary"
+          mode="outline"
+          size="xs"
+          onClick={() => setIsConfiguring(true)}
+          disabled={isLoading}
+        >
+          {hasRefreshToken ? 'Configure new refresh token' : 'Configure refresh token'}
+        </Button>
+      )}
     </div>
   );
 }

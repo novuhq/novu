@@ -167,6 +167,11 @@ function buildExpiresAtIso(expiresInSeconds?: number): string | undefined {
   return new Date(Date.now() + expiresInSeconds * 1000).toISOString();
 }
 
+/** Stable per-connection key shared by the in-process coalescing map and the Redis lock. */
+function buildConnectionRefreshKey(connection: ChannelConnectionEntity): string {
+  return `${connection._organizationId}:${connection._environmentId}:${connection.identifier}`;
+}
+
 /**
  * Single read path for rotating OAuth bot tokens stored on a `ChannelConnection`
  * (Slack, Webex).
@@ -176,16 +181,23 @@ function buildExpiresAtIso(expiresInSeconds?: number): string | undefined {
  * `auth.refreshToken` and `auth.expiresAt` (persisted by the OAuth callback); their
  * access token is refreshed here before it expires and the newly issued pair is persisted.
  *
- * Refresh tokens are single-use, so concurrent refreshes across workers would invalidate
- * each other. A Redis `SET NX` lock per connection serializes the refresh; callers that
- * lose the race keep the currently stored token (still valid thanks to the refresh window)
- * and let the lock holder rotate for the next caller.
+ * Refresh tokens are single-use, so concurrent refreshes would invalidate each other.
+ * Concurrency is serialized at two layers, keyed by the same `organization:environment:
+ * identifier` triple:
+ *  - In-process: a `Map` of in-flight refresh promises coalesces concurrent callers within
+ *    this instance (e.g. a worker resolving several endpoints that share one connection)
+ *    onto a single refresh, so they all share the fresh token instead of racing.
+ *  - Cross-process: a Redis `SET NX` lock serializes the refresh across workers/replicas.
+ *    Callers that lose the lock race keep the currently stored token (still valid thanks
+ *    to the refresh window) and let the lock holder rotate for the next caller.
  *
  * A refresh failure throws `BadGatewayException`; callers that resolve many endpoints in
  * parallel should expect one bad connection to fail the whole batch.
  */
 @Injectable()
 export class RotatingConnectionTokenService {
+  private readonly refreshPromises = new Map<string, Promise<string>>();
+
   constructor(
     private readonly cacheService: CacheService,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
@@ -205,7 +217,27 @@ export class RotatingConnectionTokenService {
       return decryptedAuth.accessToken;
     }
 
-    return await this.refreshWithLock(connection, decryptedAuth, provider);
+    return await this.coalesceRefresh(connection, () => this.refreshWithLock(connection, decryptedAuth, provider));
+  }
+
+  /**
+   * Ensures at most one in-flight refresh per connection within this process. Concurrent
+   * callers for the same connection share the winner's resolved token or rejection instead
+   * of each independently racing for the Redis lock (and, when the cache is disabled,
+   * instead of each firing its own refresh against the single-use refresh token).
+   */
+  private async coalesceRefresh(connection: ChannelConnectionEntity, work: () => Promise<string>): Promise<string> {
+    const key = buildConnectionRefreshKey(connection);
+    const existing = this.refreshPromises.get(key);
+
+    if (existing) {
+      return await existing;
+    }
+
+    const promise = work().finally(() => this.refreshPromises.delete(key));
+    this.refreshPromises.set(key, promise);
+
+    return await promise;
   }
 
   private isRotatingAuth(auth: ChannelConnectionAuth): auth is RotatingConnectionAuth {
@@ -221,7 +253,7 @@ export class RotatingConnectionTokenService {
       return await this.refreshConnectionToken(connection, decryptedAuth, provider);
     }
 
-    const lockKey = `${REFRESH_LOCK_KEY_PREFIX}{${connection._organizationId}:${connection._environmentId}:${connection.identifier}}`;
+    const lockKey = `${REFRESH_LOCK_KEY_PREFIX}{${buildConnectionRefreshKey(connection)}}`;
 
     /*
      * The refresh fires TOKEN_REFRESH_WINDOW_MS before expiry, so a caller that loses the

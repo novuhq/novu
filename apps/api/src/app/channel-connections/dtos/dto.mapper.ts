@@ -9,6 +9,10 @@ import { GetChannelConnectionResponseDto } from './get-channel-connection-respon
  * so we decrypt here to preserve the existing API contract — callers still receive the
  * plaintext access token they wrote. The decrypt helper is idempotent, so legacy
  * unencrypted records pass through unchanged.
+ *
+ * `refreshToken` is a single-use secret and is never echoed back — only its presence
+ * (`hasRefreshToken`) is reported, so callers can tell rotation is configured without
+ * the API ever returning the token itself.
  */
 export function mapChannelConnectionEntityToDto(
   channelConnection: ChannelConnectionEntity
@@ -25,7 +29,7 @@ export function mapChannelConnectionEntityToDto(
     workspace: channelConnection.workspace,
     auth: {
       accessToken: decryptedAuth?.accessToken ?? '',
-      refreshToken: decryptedAuth?.refreshToken,
+      hasRefreshToken: Boolean(decryptedAuth?.refreshToken),
       expiresAt: decryptedAuth?.expiresAt,
       refreshTokenExpiresAt: decryptedAuth?.refreshTokenExpiresAt,
     },

@@ -97,7 +97,8 @@ describe('Verify Channel Connection - /channel-connections/:identifier/verify (P
 
     expect(status, JSON.stringify(body)).to.equal(200);
     expect(body.data.auth.accessToken).to.equal(NEW_ACCESS_TOKEN);
-    expect(body.data.auth.refreshToken).to.equal(NEW_REFRESH_TOKEN);
+    expect(body.data.auth.hasRefreshToken).to.equal(true);
+    expect(body.data.auth.refreshToken, 'verify response must not echo the refresh token').to.be.undefined;
 
     const stored = await findConnection(connection.identifier);
     expect((stored!.auth as { accessToken: string }).accessToken.startsWith(NOVU_ENCRYPTION_PREFIX)).to.equal(true);

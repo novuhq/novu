@@ -21,6 +21,17 @@ function futureIso(ms: number): string {
   return new Date(Date.now() + ms).toISOString();
 }
 
+function createDeferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (reason?: unknown) => void } {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
+
 function buildConnection(auth: Record<string, unknown>, providerId: ChatProviderIdEnum = ChatProviderIdEnum.Slack) {
   return {
     _organizationId: MOCK_ORGANIZATION_ID,
@@ -350,5 +361,148 @@ describe('RotatingConnectionTokenService', () => {
       /Webex token refresh failed \(HTTP 500\): server oops.*Reconnect the Webex channel connection/
     );
     expect(channelConnectionRepository.findOneAndUpdate.called).toBe(false);
+  });
+
+  describe('in-process refresh coalescing', () => {
+    it('coalesces concurrent calls into a single refresh when the cache is disabled', async () => {
+      const { service, cacheService, channelConnectionRepository } = buildHarness();
+      cacheService.cacheEnabled.returns(false);
+      const connection = buildConnection({
+        accessToken: MOCK_ACCESS_TOKEN,
+        refreshToken: MOCK_REFRESH_TOKEN,
+        expiresAt: futureIso(60 * 1000),
+      });
+
+      const deferred = createDeferred<{ data: unknown }>();
+      axiosPost.returns(deferred.promise);
+
+      const waiters = Promise.all([
+        service.getConnectionToken(connection),
+        service.getConnectionToken(connection),
+        service.getConnectionToken(connection),
+      ]);
+
+      deferred.resolve({
+        data: {
+          ok: true,
+          access_token: MOCK_NEW_ACCESS_TOKEN,
+          refresh_token: MOCK_NEW_REFRESH_TOKEN,
+          expires_in: 3600,
+        },
+      });
+
+      const tokens = await waiters;
+
+      expect(tokens).toEqual([MOCK_NEW_ACCESS_TOKEN, MOCK_NEW_ACCESS_TOKEN, MOCK_NEW_ACCESS_TOKEN]);
+      expect(axiosPost.callCount).toEqual(1);
+      expect(channelConnectionRepository.findOneAndUpdate.calledOnce).toBe(true);
+    });
+
+    it('coalesces concurrent calls into a single Redis-locked refresh when the cache is enabled', async () => {
+      const { service, cacheService, channelConnectionRepository } = buildHarness();
+      const connection = buildConnection({
+        accessToken: MOCK_ACCESS_TOKEN,
+        refreshToken: MOCK_REFRESH_TOKEN,
+        expiresAt: futureIso(60 * 1000),
+      });
+      channelConnectionRepository.findOne.resolves(connection);
+
+      const deferred = createDeferred<{ data: unknown }>();
+      axiosPost.returns(deferred.promise);
+
+      const waiters = Promise.all([
+        service.getConnectionToken(connection),
+        service.getConnectionToken(connection),
+        service.getConnectionToken(connection),
+      ]);
+
+      deferred.resolve({
+        data: {
+          ok: true,
+          access_token: MOCK_NEW_ACCESS_TOKEN,
+          refresh_token: MOCK_NEW_REFRESH_TOKEN,
+          expires_in: 3600,
+        },
+      });
+
+      const tokens = await waiters;
+
+      expect(tokens).toEqual([MOCK_NEW_ACCESS_TOKEN, MOCK_NEW_ACCESS_TOKEN, MOCK_NEW_ACCESS_TOKEN]);
+      expect(axiosPost.callCount).toEqual(1);
+      expect(cacheService.setIfNotExist.calledOnce).toBe(true);
+      expect(cacheService.del.calledOnce).toBe(true);
+    });
+
+    it('propagates a shared refresh failure to every coalesced waiter, then retries on the next call', async () => {
+      const { service, channelConnectionRepository } = buildHarness();
+      const connection = buildConnection({
+        accessToken: MOCK_ACCESS_TOKEN,
+        refreshToken: MOCK_REFRESH_TOKEN,
+        expiresAt: futureIso(60 * 1000),
+      });
+      channelConnectionRepository.findOne.resolves(connection);
+
+      const deferred = createDeferred<{ data: unknown }>();
+      axiosPost.onFirstCall().returns(deferred.promise);
+      axiosPost.onSecondCall().resolves({
+        data: {
+          ok: true,
+          access_token: MOCK_NEW_ACCESS_TOKEN,
+          refresh_token: MOCK_NEW_REFRESH_TOKEN,
+          expires_in: 3600,
+        },
+      });
+
+      const waiters = Promise.allSettled([
+        service.getConnectionToken(connection),
+        service.getConnectionToken(connection),
+      ]);
+
+      deferred.resolve({ data: { ok: false, error: 'invalid_refresh_token' } });
+
+      const results = await waiters;
+
+      expect(results.every((result) => result.status === 'rejected')).toBe(true);
+      expect(axiosPost.callCount).toEqual(1);
+
+      // The coalescing map entry is cleared on settle (success or failure), so a call
+      // after the failure retries the refresh rather than replaying the stale rejection.
+      const retriedToken = await service.getConnectionToken(connection);
+      expect(retriedToken).toEqual(MOCK_NEW_ACCESS_TOKEN);
+      expect(axiosPost.callCount).toEqual(2);
+    });
+
+    it('does not coalesce concurrent calls for different connections', async () => {
+      const { service, channelConnectionRepository } = buildHarness();
+      const connectionA = buildConnection({
+        accessToken: MOCK_ACCESS_TOKEN,
+        refreshToken: MOCK_REFRESH_TOKEN,
+        expiresAt: futureIso(60 * 1000),
+      });
+      const connectionB = {
+        ...buildConnection({
+          accessToken: MOCK_ACCESS_TOKEN,
+          refreshToken: MOCK_REFRESH_TOKEN,
+          expiresAt: futureIso(60 * 1000),
+        }),
+        identifier: 'conn-2',
+      };
+      channelConnectionRepository.findOne.callsFake(async (query: { identifier: string }) =>
+        query.identifier === connectionA.identifier ? connectionA : connectionB
+      );
+
+      axiosPost.resolves({
+        data: {
+          ok: true,
+          access_token: MOCK_NEW_ACCESS_TOKEN,
+          refresh_token: MOCK_NEW_REFRESH_TOKEN,
+          expires_in: 3600,
+        },
+      });
+
+      await Promise.all([service.getConnectionToken(connectionA), service.getConnectionToken(connectionB)]);
+
+      expect(axiosPost.callCount).toEqual(2);
+    });
   });
 });

@@ -105,7 +105,7 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
     expect(expiresAtTime).to.be.lte(Date.now());
   });
 
-  it('returns refreshToken and expiresAt on retrieve', async () => {
+  it('reports hasRefreshToken and expiresAt on retrieve, without echoing the secret', async () => {
     const integration = await seedIntegration();
     const subscriber = await createSubscriber();
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
@@ -117,15 +117,59 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
       auth: { accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN, expiresAt },
     });
 
+    expect(created.data.auth.refreshToken, 'create response must not echo the refresh token').to.be.undefined;
+
     const { status, body } = await session.testAgent.get(`/v1/channel-connections/${created.data.identifier}`);
 
     expect(status, JSON.stringify(body)).to.equal(200);
     expect(body.data.auth.accessToken).to.equal(ACCESS_TOKEN);
-    expect(body.data.auth.refreshToken).to.equal(REFRESH_TOKEN);
+    expect(body.data.auth.hasRefreshToken).to.equal(true);
     expect(body.data.auth.expiresAt).to.equal(expiresAt);
+    expect(body.data.auth.refreshToken, 'retrieve response must not echo the refresh token').to.be.undefined;
   });
 
-  it('updates the refreshToken and returns the new value on retrieve', async () => {
+  it('never returns a refreshToken for a legacy connection without one', async () => {
+    const integration = await seedIntegration();
+    const subscriber = await createSubscriber();
+
+    const { body: created } = await session.testAgent.post('/v1/channel-connections').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      workspace: { id: 'T_legacy', name: 'Legacy Workspace' },
+      auth: { accessToken: ACCESS_TOKEN },
+    });
+
+    const { status, body } = await session.testAgent.get(`/v1/channel-connections/${created.data.identifier}`);
+
+    expect(status, JSON.stringify(body)).to.equal(200);
+    expect(body.data.auth.hasRefreshToken).to.equal(false);
+    expect(body.data.auth.refreshToken).to.be.undefined;
+  });
+
+  it('never returns a refreshToken from the list endpoint', async () => {
+    const integration = await seedIntegration();
+    const subscriber = await createSubscriber();
+
+    await session.testAgent.post('/v1/channel-connections').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      workspace: { id: 'T_list', name: 'List Workspace' },
+      auth: { accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN },
+    });
+
+    const { status, body } = await session.testAgent.get(
+      `/v1/channel-connections?subscriberId=${subscriber.subscriberId}`
+    );
+
+    expect(status, JSON.stringify(body)).to.equal(200);
+    expect(body.data.length).to.be.greaterThan(0);
+
+    for (const connection of body.data) {
+      expect(connection.auth.refreshToken, 'list response must never echo a refresh token').to.be.undefined;
+    }
+  });
+
+  it('rotates the stored refreshToken on update while the response only reports its presence', async () => {
     const integration = await seedIntegration();
     const subscriber = await createSubscriber();
     const newRefreshToken = 'xoxe-1-rotated-refresh-token';
@@ -145,9 +189,12 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
       });
 
     expect(patchStatus, JSON.stringify(patchBody)).to.equal(200);
+    expect(patchBody.data.auth.hasRefreshToken).to.equal(true);
+    expect(patchBody.data.auth.refreshToken, 'update response must not echo the refresh token').to.be.undefined;
 
-    const { body } = await session.testAgent.get(`/v1/channel-connections/${created.data.identifier}`);
-    expect(body.data.auth.refreshToken).to.equal(newRefreshToken);
+    const stored = await findConnection(created.data.identifier);
+    const decrypted = decryptChannelConnectionAuth(stored!.auth) as { refreshToken?: string };
+    expect(decrypted.refreshToken).to.equal(newRefreshToken);
   });
 
   it('rejects a refreshToken when the integration has no OAuth credentials', async () => {

@@ -42,7 +42,7 @@ Before integrating Slack chat with Novu, you must create and configure a Slack a
 
   **If rotation stops working, reconnect the workspace.** This is the fix for every broken-rotation scenario: a workspace connected **before** rotation was turned on (or before Novu supported it), or a refresh token that was regenerated in Slack's app console. Reconnecting via OAuth re-runs the authorization flow, and Novu automatically captures a fresh refresh token. Until you reconnect, deliveries may fail with `token_revoked` or `invalid_auth`.
 
-  **Fallback: paste a refresh token directly.** If reconnecting isn't practical, open the agent Slack setup drawer and paste the refresh token from Slack's app console under **Token rotation**. Novu exchanges it right away and reports success or failure immediately, so a stale or already-used token surfaces an error instead of silently failing on the next send — Slack refresh tokens are single-use, so only paste one that hasn't already been exchanged elsewhere.
+  **Fallback: paste a refresh token directly.** If reconnecting isn't practical, open the agent Slack setup drawer, paste the refresh token from Slack's app console under **Token rotation**, and click **Save & verify**. Novu exchanges it immediately and reports success or failure right away, so a stale or already-used token surfaces an error instead of silently failing on the next send — Slack refresh tokens are single-use, so only paste one that hasn't already been exchanged elsewhere.
 </Info>
 
 ### Create a Slack app
