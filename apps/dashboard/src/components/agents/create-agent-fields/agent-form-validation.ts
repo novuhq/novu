@@ -1,4 +1,5 @@
 import {
+  AGENT_IDENTIFIER_MAX_LENGTH,
   AGENT_NAME_MAX_LENGTH,
   AgentRuntimeProviderIdEnum,
   SLUG_IDENTIFIER_REGEX,
@@ -50,6 +51,8 @@ export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormE
 
     if (!trimmedIdentifier) {
       errors.identifier = 'Identifier is required.';
+    } else if (trimmedIdentifier.length > AGENT_IDENTIFIER_MAX_LENGTH) {
+      errors.identifier = `Identifier must be ${AGENT_IDENTIFIER_MAX_LENGTH} characters or fewer.`;
     } else if (!SLUG_IDENTIFIER_REGEX.test(trimmedIdentifier)) {
       errors.identifier = slugIdentifierFormatMessage('identifier');
     }
