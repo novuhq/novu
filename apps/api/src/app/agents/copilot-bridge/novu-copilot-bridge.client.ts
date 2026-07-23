@@ -1,12 +1,6 @@
-import { Inject, NotFoundException } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import {
-  GetDecryptedSecretKey,
-  GetDecryptedSecretKeyCommand,
-  InMemoryLRUCacheService,
-  InMemoryLRUCacheStore,
-  PinoLogger,
-} from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import type { Agent } from '@novu/framework';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
 import type { Request, Response } from 'express';
@@ -28,18 +22,10 @@ type EeAiCopilotModule = {
 };
 
 /**
- * Serves the Novu-hosted NovuCopilot agent over the `@novu/framework` Nest bridge, mirroring
- * {@link NovuBridgeClient} (the workflow bridge): it resolves the hosting environment's decrypted
- * secret per-request and runs the framework handler with `strictAuthentication`, so inbound turns
- * signed by `BridgeExecutorService` are HMAC-verified against the same environment key.
- *
- * The agent implementation lives in `@novu/ee-ai` (`NovuCopilotAgentFactory`); it is resolved from the
- * DI container lazily and built once, then reused. The agent is stateless (it resumes from
- * `ctx.history` and `ctx.metadata`), so a single instance safely handles every turn.
- *
- * Enabled only when `NOVU_HOSTED_AGENT_ENVIRONMENT_ID` (the Novu-prod environment that owns the
- * copilot `AgentEntity`) is configured and the EE module ships; otherwise the route responds 404 and
- * the agent stays inert.
+ * Serves the Novu-hosted Novu Copilot agent over the `@novu/framework` Nest bridge, mirroring
+ * {@link NovuBridgeClient} (the workflow bridge): it resolves the Novu Copilot bridge secret
+ * and runs the framework handler with `strictAuthentication`, so inbound turns
+ * signed by `BridgeExecutorService` are HMAC-verified against the Novu Copilot bridge secret.
  */
 export class NovuCopilotBridgeClient {
   private copilotAgent: Agent | null = null;
@@ -47,17 +33,15 @@ export class NovuCopilotBridgeClient {
   constructor(
     @Inject(NovuHandler) private novuHandler: NovuHandler,
     private moduleRef: ModuleRef,
-    private getDecryptedSecretKey: GetDecryptedSecretKey,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService,
     private logger: PinoLogger
   ) {}
 
   public async handleRequest(req: Request, res: Response) {
-    const environmentId = process.env.NOVU_HOSTED_AGENT_ENVIRONMENT_ID;
-    if (!environmentId || !environmentId.trim()) {
+    const novuSecretApiKey = process.env.NOVU_SECRET_API_KEY;
+    if (!novuSecretApiKey?.trim()) {
       res.status(404).json({
-        error: 'NovuCopilot bridge is not configured',
-        details: 'Set NOVU_HOSTED_AGENT_ENVIRONMENT_ID to enable the hosted NovuCopilot agent bridge.',
+        error: 'Novu Copilot bridge is not configured',
+        details: 'NOVU_SECRET_API_KEY must be configured for the Novu Copilot bridge.',
       });
 
       return;
@@ -76,33 +60,10 @@ export class NovuCopilotBridgeClient {
       return;
     }
 
-    let secretKey: string;
-    try {
-      secretKey = await this.resolveSecretKey(environmentId);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        this.logger.warn(`NovuCopilot bridge environment not found (environmentId=${environmentId}): ${error.message}`);
-        res.status(404).json({
-          error: 'Environment not found',
-          details: `No environment for NOVU_HOSTED_AGENT_ENVIRONMENT_ID=${environmentId}.`,
-        });
-
-        return;
-      }
-
-      this.logger.error({ err: error }, `Failed to resolve NovuCopilot bridge secret (environmentId=${environmentId})`);
-      res.status(500).json({
-        error: 'Failed to resolve environment secret key',
-        details: 'Unexpected error while loading the NovuCopilot hosting environment secret.',
-      });
-
-      return;
-    }
-
     const novuRequestHandler = new NovuRequestHandler({
       frameworkName,
       agents: [agent],
-      client: new Client({ secretKey, strictAuthentication: true, verbose: false }),
+      client: new Client({ secretKey: novuSecretApiKey, strictAuthentication: true, verbose: false }),
       handler: this.novuHandler.handler,
     });
 
@@ -129,23 +90,5 @@ export class NovuCopilotBridgeClient {
     this.copilotAgent = factory.build();
 
     return this.copilotAgent;
-  }
-
-  private async resolveSecretKey(environmentId: string): Promise<string> {
-    const cacheKey = `bridge-secret-key:${environmentId}`;
-    const storeName = InMemoryLRUCacheStore.VALIDATOR;
-
-    const resolved = await this.inMemoryLRUCacheService.get(
-      storeName,
-      cacheKey,
-      () => this.getDecryptedSecretKey.execute(GetDecryptedSecretKeyCommand.create({ environmentId })),
-      { environmentId, cacheVariant: 'bridge-secret-key' }
-    );
-
-    if (typeof resolved !== 'string' || !resolved.trim()) {
-      throw new Error(`Empty or invalid secret for NovuCopilot bridge environment ${environmentId}.`);
-    }
-
-    return resolved;
   }
 }

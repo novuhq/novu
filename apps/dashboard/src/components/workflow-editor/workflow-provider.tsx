@@ -32,8 +32,10 @@ export type DraftStep = StepCreateDto & {
   stepId: string;
 };
 
+export type UpdateWorkflowData = UpdateWorkflowDto | ((current: WorkflowResponseDto) => UpdateWorkflowDto);
+
 export type UpdateWorkflowFn = (
-  data: UpdateWorkflowDto,
+  data: UpdateWorkflowData,
   options?: {
     onSuccess?: (workflow: WorkflowResponseDto) => void;
     onError?: (error: unknown) => void;
@@ -110,14 +112,19 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
   const update = useCallback(
     (
-      data: UpdateWorkflowDto,
+      data: UpdateWorkflowData,
       options?: { onSuccess?: (workflow: WorkflowResponseDto) => void; onError?: (error: unknown) => void }
     ) => {
       const currentWorkflow = workflowRef.current;
       if (currentWorkflow) {
         enqueue(async () => {
           try {
-            const res = await updateWorkflow({ workflowSlug: currentWorkflow.slug, workflow: { ...data } });
+            // Resolve a functional payload against the latest saved workflow so concurrent
+            // field edits (e.g. severity + critical toggle) don't clobber each other.
+            const base = workflowRef.current ?? currentWorkflow;
+            const payload = typeof data === 'function' ? data(base) : data;
+            const res = await updateWorkflow({ workflowSlug: base.slug, workflow: { ...payload } });
+            workflowRef.current = res;
             options?.onSuccess?.(res);
           } catch (error) {
             setLastSaveError(error);

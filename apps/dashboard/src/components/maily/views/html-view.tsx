@@ -2,6 +2,7 @@ import { NodeViewProps, NodeViewRendererProps } from '@tiptap/core';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 import { useEffect, useMemo, useRef } from 'react';
 import { RiCodeBlock } from 'react-icons/ri';
+import { sanitizeEmailHtml } from '@/utils/sanitize-email-html';
 import { cn } from '@/utils/ui';
 
 type HtmlCodeBlockAttributes = {
@@ -86,7 +87,7 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
       .join('');
 
     // combine styles with body content
-    return styles + htmlDoc.body.innerHTML;
+    return sanitizeEmailHtml(styles + htmlDoc.body.innerHTML);
   }, [node.content]);
 
   return (
