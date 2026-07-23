@@ -2,14 +2,13 @@
 name: nv-endpoint-routed-tool-provider
 description: >-
   Build or refactor a Tool-channel provider (PagerDuty, Opsgenie, future
-  incident/alerting tools) to be endpoint-routed: per-subscriber secrets stored
-  encrypted on ChannelEndpoint.endpoint behind a typed channel endpoint, a
-  stateless provider that resolves routing from channelData at send time,
-  SKIPPED steps when no endpoint exists, and the full
-  API/worker/dashboard/docs/playground surface. Starts with a mandatory
-  provider-docs discovery gate. Use when refactoring Opsgenie to the PagerDuty
-  model, adding a new tool provider, or touching pagerduty_service channel
-  endpoints.
+  incident/alerting tools) to be endpoint-routed: per-subscriber secrets
+  encrypted on the channel endpoint resource, a stateless provider that resolves
+  routing from channelData at send time, SKIPPED steps when no endpoint exists,
+  and the full API/worker/dashboard/docs/playground surface. Starts with a
+  mandatory provider-docs discovery gate. Use when refactoring Opsgenie to the
+  PagerDuty model, adding a new tool provider, or touching pagerduty_service
+  channel endpoints.
 ---
 
 # Endpoint-Routed Tool Provider (the PagerDuty model)
@@ -50,7 +49,7 @@ Then apply the gate:
 
 ## Architecture invariants (do not renegotiate these)
 
-1. **Endpoint data lives encrypted on `ChannelEndpoint.endpoint`; connections
+1. **Sensitive routing fields encrypt on `ChannelEndpoint.endpoint`; connections
    are OAuth-only.** The wire shape (e.g. `{ routingKey, region }`) is accepted
    and returned by the API. Sensitive fields (routing key, API key, webhook URL
    and header values) are persisted encrypted on the endpoint document via

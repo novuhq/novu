@@ -338,9 +338,9 @@ curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
 | `integrationIdentifier` | `string` | Identifier of the Tool Webhook integration (must have **Routing Mode** = Dynamic). |
 | `subscriberId` | `string` | Subscriber whose endpoints receive the Tool step payload. |
 | `createSubscriberIfMissing` | `boolean` | Optional. When `true`, Novu creates the subscriber if missing. Defaults to `false`. |
-| `endpoint.url` | `string` | HTTPS or HTTP URL Novu calls for this endpoint. Stored encrypted. |
-| `endpoint.headers` | `Record<string, string>` | Optional. Per-endpoint headers; override integration defaults on key collision. Stored encrypted. |
-| `endpoint.method` | `"POST" \| "PUT" \| "PATCH"` | Optional. Overrides the integration HTTP method for this endpoint only. |
+| `endpoint.url` | `string` | HTTPS or HTTP URL Novu calls for this endpoint. Encrypted at rest. |
+| `endpoint.headers` | `Record<string, string>` | Optional. Per-endpoint headers; override integration defaults on key collision. Header values are encrypted at rest. |
+| `endpoint.method` | `"POST" \| "PUT" \| "PATCH"` | Optional. Overrides the integration HTTP method for this endpoint only. Remains plaintext. |
 
 Unlike PagerDuty or Opsgenie, a subscriber may register **multiple** `tool_webhook` endpoints on the same integration. Each endpoint receives its own HTTP request when the workflow runs.
 

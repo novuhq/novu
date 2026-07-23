@@ -304,7 +304,7 @@ export class CreatePagerDutyServiceEndpointDto extends CreateChannelEndpointBase
 
   @ApiProperty({
     description:
-      'PagerDuty service endpoint data. The routing key is persisted encrypted on ChannelEndpoint.endpoint; region stays plaintext. No ChannelConnection is created.',
+      'PagerDuty service endpoint data. `routingKey` is encrypted at rest on the channel endpoint (`endpoint` field); `region` remains plaintext. No linked channel connection.',
     type: PagerDutyServiceEndpointDto,
   })
   @IsDefined()
@@ -325,7 +325,7 @@ export class CreateOpsgenieIntegrationEndpointDto extends CreateChannelEndpointB
 
   @ApiProperty({
     description:
-      'Opsgenie integration endpoint data. The API key is persisted encrypted on ChannelEndpoint.endpoint; region stays plaintext. No ChannelConnection is created.',
+      'Opsgenie integration endpoint data. `apiKey` is encrypted at rest on the channel endpoint (`endpoint` field); `region` remains plaintext. No linked channel connection.',
     type: OpsgenieIntegrationEndpointDto,
   })
   @IsDefined()
@@ -346,7 +346,7 @@ export class CreateToolWebhookEndpointDto extends CreateChannelEndpointBaseDto {
 
   @ApiProperty({
     description:
-      'Tool webhook endpoint data. The url and header values are persisted encrypted on ChannelEndpoint.endpoint; method stays plaintext. No ChannelConnection is created.',
+      'Tool webhook endpoint data. `url` and header values are encrypted at rest on the channel endpoint (`endpoint` field); `method` remains plaintext. No linked channel connection.',
     type: ToolWebhookEndpointDto,
   })
   @IsDefined()

@@ -103,7 +103,9 @@ if (command.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
 }
 // inside createPagerDutyEndpoint:
 //   endpoint = channelEndpointRepository.create({
-//     ..., endpoint: encryptChannelEndpoint({ routingKey, region }) })
+//     ..., endpoint: encryptChannelEndpoint({ routingKey, region })
+//     // encrypts routingKey only; region stays plaintext
+//   })
 //   return { ...endpoint, endpoint: { routingKey, region } }   // decrypted wire shape
 // catch: duplicate-key (code 11000) -> ConflictException(409)
 ```
