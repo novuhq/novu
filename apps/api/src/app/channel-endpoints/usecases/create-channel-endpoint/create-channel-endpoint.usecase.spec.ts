@@ -148,7 +148,7 @@ function buildToolWebhookCommand(
   });
 }
 
-describe('CreateChannelEndpoint — tool_webhook connection-backed create', () => {
+describe('CreateChannelEndpoint — tool_webhook endpoint-stored secrets', () => {
   const previousEncryptionKey = process.env.STORE_ENCRYPTION_KEY;
 
   before(() => {
@@ -167,25 +167,48 @@ describe('CreateChannelEndpoint — tool_webhook connection-backed create', () =
     sinon.restore();
   });
 
-  it('should create the connection first (encrypted auth) then the endpoint (empty document), and hydrate the response', async () => {
+  it('should persist the encrypted url on the endpoint document, skip connection create, and return plaintext', async () => {
     const { usecase, integrationRepository, channelConnectionRepository, channelEndpointRepository } = createHarness();
     integrationRepository.findOne.resolves(buildMockToolWebhookIntegration());
-    channelConnectionRepository.create.callsFake((doc: any) => Promise.resolve(doc));
-    channelEndpointRepository.create.resolves({ identifier: 'chendp_webhook', endpoint: {} } as any);
+    channelEndpointRepository.create.callsFake((doc: any) => Promise.resolve({ ...doc, identifier: 'chendp_webhook' }));
 
-    const result = await usecase.execute(
-      buildToolWebhookCommand(MOCK_SUBSCRIBER_ID, { url: 'https://example.com/tools/incoming' })
-    );
+    const plaintextUrl = 'https://example.com/tools/incoming';
+    const result = await usecase.execute(buildToolWebhookCommand(MOCK_SUBSCRIBER_ID, { url: plaintextUrl }));
 
-    expect(channelConnectionRepository.create.calledOnce).to.be.true;
-    const connectionArg = channelConnectionRepository.create.firstCall.args[0] as any;
-    expect(connectionArg.auth).to.not.deep.equal({ url: 'https://example.com/tools/incoming' });
+    expect(channelConnectionRepository.create.called).to.be.false;
 
     const endpointArg = channelEndpointRepository.create.firstCall.args[0] as any;
-    expect(endpointArg.endpoint).to.deep.equal({});
-    expect(endpointArg.connectionIdentifier).to.equal(connectionArg.identifier);
+    expect(endpointArg.connectionIdentifier).to.be.undefined;
+    expect(endpointArg.endpoint.url).to.be.a('string');
+    expect(endpointArg.endpoint.url).to.not.equal(plaintextUrl);
+    expect(endpointArg.endpoint.url.startsWith('nvsk.')).to.be.true;
 
-    expect((result.endpoint as { url: string }).url).to.equal('https://example.com/tools/incoming');
+    expect((result.endpoint as { url: string }).url).to.equal(plaintextUrl);
+  });
+
+  it('should encrypt header values at rest while leaving method plaintext on the stored document', async () => {
+    const { usecase, integrationRepository, channelEndpointRepository } = createHarness();
+    integrationRepository.findOne.resolves(buildMockToolWebhookIntegration());
+    channelEndpointRepository.create.callsFake((doc: any) => Promise.resolve({ ...doc, identifier: 'chendp_webhook' }));
+
+    const result = await usecase.execute(
+      buildToolWebhookCommand(MOCK_SUBSCRIBER_ID, {
+        url: 'https://example.com/tools/incoming',
+        headers: { Authorization: 'Bearer test-token' },
+        method: 'POST',
+      })
+    );
+
+    const endpointArg = channelEndpointRepository.create.firstCall.args[0] as any;
+    expect(endpointArg.endpoint.method).to.equal('POST');
+    expect(endpointArg.endpoint.headers.Authorization).to.be.a('string');
+    expect(endpointArg.endpoint.headers.Authorization).to.not.equal('Bearer test-token');
+    expect(endpointArg.endpoint.headers.Authorization.startsWith('nvsk.')).to.be.true;
+
+    expect((result.endpoint as { headers: Record<string, string> }).headers.Authorization).to.equal(
+      'Bearer test-token'
+    );
+    expect((result.endpoint as { method: string }).method).to.equal('POST');
   });
 
   it('should reject creation when the integration is not a Tool webhook integration', async () => {
@@ -217,12 +240,47 @@ describe('CreateChannelEndpoint — tool_webhook connection-backed create', () =
   });
 
   it('should allow creating multiple tool_webhook endpoints for the same subscriber and integration', async () => {
-    const { usecase, integrationRepository, channelConnectionRepository } = createHarness();
+    const { usecase, integrationRepository, channelConnectionRepository, channelEndpointRepository } = createHarness();
     integrationRepository.findOne.resolves(buildMockToolWebhookIntegration());
+    channelEndpointRepository.create.callsFake((doc: any) =>
+      Promise.resolve({ ...doc, identifier: `chendp_${Math.random()}` })
+    );
 
     await usecase.execute(buildToolWebhookCommand(MOCK_SUBSCRIBER_ID, { url: 'https://example.com/tools/first' }));
     await usecase.execute(buildToolWebhookCommand(MOCK_SUBSCRIBER_ID, { url: 'https://example.com/tools/second' }));
 
-    expect(channelConnectionRepository.create.calledTwice).to.be.true;
+    expect(channelEndpointRepository.create.calledTwice).to.be.true;
+    expect(channelConnectionRepository.create.called).to.be.false;
+  });
+
+  it('should persist pagerduty_service routingKey encrypted on the endpoint document without a connection', async () => {
+    const { usecase, integrationRepository, channelConnectionRepository, channelEndpointRepository } = createHarness();
+    integrationRepository.findOne.resolves({
+      _id: 'pd-integration-id',
+      _environmentId: MOCK_ENVIRONMENT_ID,
+      _organizationId: MOCK_ORGANIZATION_ID,
+      identifier: 'pagerduty-integration',
+      providerId: ToolProviderIdEnum.PagerDuty,
+      channel: 'tool',
+    } as any);
+    channelEndpointRepository.create.callsFake((doc: any) => Promise.resolve({ ...doc, identifier: 'chendp_pd' }));
+
+    const routingKey = 'R0UTINGK3YEXAMPLE000000000000000';
+    const result = await usecase.execute(
+      CreateChannelEndpointCommand.create({
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: 'pagerduty-integration',
+        subscriberId: MOCK_SUBSCRIBER_ID,
+        type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+        endpoint: { routingKey, region: 'us' },
+      })
+    );
+
+    expect(channelConnectionRepository.create.called).to.be.false;
+    const endpointArg = channelEndpointRepository.create.firstCall.args[0] as any;
+    expect(endpointArg.endpoint.routingKey.startsWith('nvsk.')).to.be.true;
+    expect(endpointArg.endpoint.region).to.equal('us');
+    expect((result.endpoint as { routingKey: string }).routingKey).to.equal(routingKey);
   });
 });
