@@ -14,6 +14,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const jobRepository = { findOne: sinon.stub().resolves(null), find: sinon.stub().resolves([]) };
     const notificationPayloadService = {};
     const messageRepository = { findOne: sinon.stub().resolves(null) };
+    const notificationPayloadService = { hydrateEntitiesPayload: sinon.stub().resolves(undefined) };
     const environmentRepository = {
       findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
     };
@@ -55,6 +56,8 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       executeBridgeRequest,
       environmentRepository,
       controlValuesRepository,
+      jobRepository,
+      notificationPayloadService,
     };
   }
 
@@ -232,5 +235,76 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
         [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
       },
     });
+  });
+
+  it('buildStepsMap maps digest parent outputs to steps.<stepId> namespace', async () => {
+    const { usecase, jobRepository, notificationPayloadService } = buildUsecase();
+
+    const digestJob = {
+      _id: 'digest_job_1',
+      _parentId: undefined,
+      _environmentId: 'env_1',
+      type: 'digest',
+      status: 'completed',
+      createdAt: new Date('2026-07-23T09:00:00.000Z'),
+      step: { stepId: 'digest-step', uuid: 'digest-step' },
+      payload: { foo: 'bar' },
+    };
+
+    jobRepository.findOne
+      .withArgs({ _id: 'digest_job_1', _environmentId: 'env_1' })
+      .resolves(digestJob);
+    jobRepository.find
+      .withArgs({
+        _mergedDigestId: 'digest_job_1',
+        type: 'digest',
+        status: 'merged',
+        _environmentId: 'env_1',
+      })
+      .resolves([]);
+
+    const httpJob = {
+      _id: 'http_job_1',
+      _parentId: 'digest_job_1',
+      _environmentId: 'env_1',
+      step: { stepId: 'http-step', uuid: 'http-step' },
+    } as never;
+
+    const stepsMap = await usecase.buildStepsMap(httpJob, 'env_1');
+
+    expect(notificationPayloadService.hydrateEntitiesPayload.calledOnce).to.equal(true);
+    expect(stepsMap['digest-step']).to.include({
+      eventCount: 1,
+      countSummary: '1 notification',
+    });
+    expect(stepsMap['digest-step'].events).to.deep.equal([
+      {
+        id: 'digest_job_1',
+        time: digestJob.createdAt,
+        payload: { foo: 'bar' },
+      },
+    ]);
+    expect(stepsMap['digest-step'].sentenceSummary).to.equal('');
+  });
+
+  it('buildStepsMap keeps the nearest parent output when duplicate stepIds exist', async () => {
+    const { usecase } = buildUsecase();
+
+    sinon.stub(usecase as never, 'generateStateForJob' as never).resolves([
+      {
+        stepId: 'digest-step',
+        outputs: { events: [{ id: 'latest' }], eventCount: 1 },
+        state: { status: 'completed' },
+      },
+      {
+        stepId: 'digest-step',
+        outputs: { events: [{ id: 'stale' }], eventCount: 1 },
+        state: { status: 'completed' },
+      },
+    ] as never);
+
+    const stepsMap = await usecase.buildStepsMap({ _parentId: 'digest_job_1' } as never, 'env_1');
+
+    expect(stepsMap['digest-step'].events).to.deep.equal([{ id: 'latest' }]);
   });
 });
