@@ -58,7 +58,7 @@ describe('Delete Channel Endpoint - /channel-endpoints/:identifier (DELETE) #nov
     expect(error?.name).to.equal('ErrorDto');
   });
 
-  it('should delete an opsgenie endpoint without cascading to a channel connection', async () => {
+  it('should delete an opsgenie endpoint that has no linked channel connection', async () => {
     const integration = await createOpsgenieIntegration(session);
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
@@ -71,6 +71,7 @@ describe('Delete Channel Endpoint - /channel-endpoints/:identifier (DELETE) #nov
     });
     expect(createRes.status).to.equal(201);
     const { identifier } = createRes.body.data;
+    // Opsgenie secrets live on the endpoint document — no synthetic connection.
     expect(createRes.body.data.connectionIdentifier).to.be.null;
 
     const deleteRes = await session.testAgent.delete(`/v1/channel-endpoints/${identifier}`);

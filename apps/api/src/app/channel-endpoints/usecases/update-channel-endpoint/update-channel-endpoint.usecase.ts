@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { encryptChannelEndpoint, InstrumentUsecase, validateEndpointForType } from '@novu/application-generic';
+import {
+  decryptChannelEndpoint,
+  encryptChannelEndpoint,
+  InstrumentUsecase,
+  validateEndpointForType,
+} from '@novu/application-generic';
 import { ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
 import { UpdateChannelEndpointCommand } from './update-channel-endpoint.command';
 
@@ -34,7 +39,6 @@ export class UpdateChannelEndpoint {
     command: UpdateChannelEndpointCommand,
     existing: ChannelEndpointEntity
   ): Promise<ChannelEndpointEntity> {
-    const wireEndpoint = command.endpoint;
     const channelEndpoint = await this.channelEndpointRepository.findOneAndUpdate(
       {
         identifier: command.identifier,
@@ -42,7 +46,7 @@ export class UpdateChannelEndpoint {
         _environmentId: command.environmentId,
       },
       {
-        endpoint: encryptChannelEndpoint(existing.type, wireEndpoint),
+        endpoint: encryptChannelEndpoint(existing.type, command.endpoint),
       },
       {
         new: true,
@@ -53,7 +57,9 @@ export class UpdateChannelEndpoint {
       throw new NotFoundException(`Channel endpoint with identifier "${command.identifier}" not found`);
     }
 
-    // Return plaintext wire shape (secrets returned; clients mask).
-    return { ...channelEndpoint, endpoint: { ...wireEndpoint } } as ChannelEndpointEntity;
+    return {
+      ...channelEndpoint,
+      endpoint: decryptChannelEndpoint(existing.type, channelEndpoint.endpoint),
+    };
   }
 }
