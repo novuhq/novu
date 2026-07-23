@@ -27,6 +27,7 @@ function createFocusTrap({ element, enabled }: FocusTrapOptions) {
       if (event.key !== 'Tab') return;
 
       const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
       const firstFocusableElement = focusableElements[0];
       const lastFocusableElement = focusableElements[focusableElements.length - 1];
 

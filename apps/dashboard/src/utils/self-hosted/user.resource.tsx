@@ -13,7 +13,7 @@ export const UserContext = React.createContext<{
 
 export function UserContextProvider({ children }: any) {
   const jwt = localStorage.getItem('self-hosted-jwt');
-  const decodedJwt: DecodedJwt | null = jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
+  const decodedJwt: DecodedJwt | null = jwt && isJwtValid(jwt) ? JSON.parse(atob(jwt.split('.')[1])) : null;
   const value = {
     user: createUserFromJwt(decodedJwt),
     isLoaded: true,

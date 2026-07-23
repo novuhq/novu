@@ -104,9 +104,9 @@ function createHandlebarsInstance(i18next: any) {
 
   handlebars.registerHelper(HandlebarHelpersEnum.SORT_BY, (array, property) => {
     if (!Array.isArray(array)) return '';
-    if (!property) return array.sort();
+    if (!property) return [...array].sort();
 
-    return array.sort((a, b) => {
+    return [...array].sort((a, b) => {
       const _x = a[property];
       const _y = b[property];
 

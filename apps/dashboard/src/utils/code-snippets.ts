@@ -54,7 +54,7 @@ novu.trigger(${JSON.stringify(
     2
   )
     .replace(/"([^"]+)":/g, '$1:')
-    .replace(/"/g, "'")});
+    .replace(/\\"/g, '___ESCQ___').replace(/"/g, "'").replace(/___ESCQ___/g, '\\"')});
 `;
 };
 
@@ -188,7 +188,7 @@ novu.trigger(${JSON.stringify(
     2
   )
     .replace(/"([^"]+)":/g, '$1:')
-    .replace(/"/g, "'")});
+    .replace(/\\"/g, '___ESCQ___').replace(/"/g, "'").replace(/___ESCQ___/g, '\\"')});
 `;
 };
 
@@ -205,7 +205,7 @@ const transformJsonToPhpArray = (data: Record<string, unknown>, indentLevel = 4)
 
   const items = entries
     .map(([key, value]) => {
-      const formattedValue = JSON.stringify(value).replace(/"/g, "'");
+      const formattedValue = JSON.stringify(value).replace(/\\"/g, '___ESCQ___').replace(/"/g, "'").replace(/___ESCQ___/g, '\\"');
       return `${indent}'${key}' => ${formattedValue}`;
     })
     .join(',\n');

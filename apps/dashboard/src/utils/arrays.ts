@@ -1,7 +1,5 @@
 export const sort = (array: number[]) => {
-  array.sort((a, b) => a - b);
-
-  return array;
+  return [...array].sort((a, b) => a - b);
 };
 
 export const range = (start: number, end: number) => {
