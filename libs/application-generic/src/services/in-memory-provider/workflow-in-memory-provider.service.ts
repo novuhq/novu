@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderClient, InMemoryProviderEnum } from './types';
+import { getWorkflowInMemoryProvider } from './in-memory-provider-selection';
 import { isClusterModeEnabled } from './utils';
 
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';
@@ -29,19 +30,7 @@ export class WorkflowInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED === 'true') {
-      if (
-        process.env.NOVU_ENTERPRISE === 'true' &&
-        process.env.MEMORY_DB_CLUSTER_SERVICE_HOST &&
-        process.env.MEMORY_DB_CLUSTER_SERVICE_PORT
-      ) {
-        return InMemoryProviderEnum.MEMORY_DB;
-      }
-
-      return InMemoryProviderEnum.REDIS;
-    }
-
-    return InMemoryProviderEnum.MEMORY_DB;
+    return getWorkflowInMemoryProvider(process.env);
   }
 
   private descriptiveLogMessage(message) {

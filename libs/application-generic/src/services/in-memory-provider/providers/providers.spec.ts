@@ -98,4 +98,18 @@ describe('Client and config for cluster', () => {
       expect(message).toEqual('Provider Elasticache is not properly configured in the environment variables');
     }
   });
+
+  it('should return the Redis Master-Slave provider (no throw) when it is not configured', () => {
+    process.env.ELASTICACHE_CLUSTER_SERVICE_HOST = '';
+    process.env.ELASTICACHE_CLUSTER_SERVICE_PORT = '';
+    process.env.REDIS_CLUSTER_SERVICE_HOST = '';
+    process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
+    process.env.REDIS_MASTER_HOST = '';
+
+    const { provider, getClient } = getClientAndConfigForCluster(InMemoryProviderEnum.REDIS_MASTER_SLAVE);
+
+    expect(provider).toEqual(InMemoryProviderEnum.REDIS_MASTER_SLAVE);
+    // No master host configured, so the cache degrades to an undefined client instead of crashing.
+    expect(getClient()).toBeUndefined();
+  });
 });

@@ -1,3 +1,7 @@
+import {
+  getRedisHostPortEnvValidators,
+  InMemoryProviderConsumer,
+} from '@novu/application-generic';
 import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, url, ValidatorSpec } from 'envalid';
 
@@ -48,8 +52,10 @@ export const envValidators = {
   FRONT_BASE_URL: str(),
   DASHBOARD_URL: str({ default: '' }),
   DISABLE_USER_REGISTRATION: bool({ default: false }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  ...getRedisHostPortEnvValidators(processEnv, [
+    InMemoryProviderConsumer.WORKFLOW,
+    InMemoryProviderConsumer.CACHE,
+  ]),
   REDIS_TLS: json({ default: undefined }),
   REDIS_MASTER_HOST: str({ default: '' }),
   REDIS_MASTER_PORT: str({ default: '' }),

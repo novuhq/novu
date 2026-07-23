@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderClient, InMemoryProviderEnum, ScanStream } from './types';
+import { getCacheInMemoryProvider } from './in-memory-provider-selection';
 import { isClusterModeEnabled } from './utils';
 
 const LOG_CONTEXT = 'CacheInMemoryProviderService';
@@ -28,19 +29,7 @@ export class CacheInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
-      return InMemoryProviderEnum.REDIS;
-    }
-
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'true') {
-      if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST && process.env.ELASTICACHE_CLUSTER_SERVICE_PORT) {
-        return InMemoryProviderEnum.ELASTICACHE;
-      }
-
-      return InMemoryProviderEnum.REDIS_MASTER_SLAVE;
-    }
-
-    return InMemoryProviderEnum.ELASTICACHE;
+    return getCacheInMemoryProvider(process.env);
   }
 
   private descriptiveLogMessage(message) {

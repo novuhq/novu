@@ -1,3 +1,4 @@
+import { getRedisHostPortEnvValidators, InMemoryProviderConsumer } from '@novu/application-generic';
 import { DEFAULT_NOTIFICATION_RETENTION_DAYS, FeatureFlagsKeysEnum, StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, makeValidator, num, port, str, url, ValidatorSpec } from 'envalid';
 
@@ -52,8 +53,7 @@ export const envValidators = {
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
   STORAGE_SERVICE: str({ default: undefined }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  ...getRedisHostPortEnvValidators(processEnv, InMemoryProviderConsumer.WORKFLOW),
   REDIS_PASSWORD: str({ default: undefined }),
   REDIS_TLS: json({ default: undefined }),
   REDIS_DB_INDEX: num(),
