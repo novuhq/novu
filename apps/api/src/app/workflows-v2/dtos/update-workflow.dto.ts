@@ -1,6 +1,6 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { WorkflowCommonsFields } from '@novu/application-generic';
-import { ResourceOriginEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import {
@@ -111,14 +111,6 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
   @ValidateNested()
   @Type(() => PreferencesRequestDto)
   preferences: PreferencesRequestDto;
-
-  @ApiProperty({
-    description: 'Origin of the workflow',
-    enum: [...Object.values(ResourceOriginEnum)],
-    enumName: 'ResourceOriginEnum',
-  })
-  @IsEnum(ResourceOriginEnum)
-  origin: ResourceOriginEnum;
 
   @ApiPropertyOptional({
     description: 'Severity of the workflow',

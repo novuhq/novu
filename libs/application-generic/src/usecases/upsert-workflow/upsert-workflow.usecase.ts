@@ -81,29 +81,31 @@ export class UpsertWorkflowUseCase {
         )
       : null;
 
+    const resolvedCommand = this.resolveWorkflowOrigin(command, existingWorkflow);
+
     let upsertedWorkflow: NotificationTemplateEntity;
 
     if (existingWorkflow) {
-      this.mixpanelTrack(command, 'Workflow Update - [API]');
+      this.mixpanelTrack(resolvedCommand, 'Workflow Update - [API]');
 
       upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
         UpdateWorkflowCommandV0.create({
-          ...(await this.buildUpdateWorkflowCommand(command, existingWorkflow)),
-          session: command.session,
+          ...(await this.buildUpdateWorkflowCommand(resolvedCommand, existingWorkflow)),
+          session: resolvedCommand.session,
         })
       );
     } else {
-      this.mixpanelTrack(command, 'Workflow Created - [API]');
+      this.mixpanelTrack(resolvedCommand, 'Workflow Created - [API]');
 
       upsertedWorkflow = await this.createWorkflowV0Usecase.execute(
         CreateWorkflowCommandV0.create({
-          ...(await this.buildCreateWorkflowCommand(command)),
-          session: command.session,
+          ...(await this.buildCreateWorkflowCommand(resolvedCommand)),
+          session: resolvedCommand.session,
         })
       );
     }
 
-    await this.upsertControlValues(upsertedWorkflow, command);
+    await this.upsertControlValues(upsertedWorkflow, resolvedCommand);
 
     const updatedWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
@@ -136,6 +138,23 @@ export class UpsertWorkflowUseCase {
     }
 
     return updatedWorkflow;
+  }
+
+  private resolveWorkflowOrigin(
+    command: UpsertWorkflowCommand,
+    existingWorkflow: NotificationTemplateEntity | null
+  ): UpsertWorkflowCommand {
+    const origin = existingWorkflow
+      ? (existingWorkflow.origin ?? ResourceOriginEnum.NOVU_CLOUD)
+      : (command.workflowDto.origin ?? ResourceOriginEnum.NOVU_CLOUD);
+
+    return {
+      ...command,
+      workflowDto: {
+        ...command.workflowDto,
+        origin,
+      },
+    };
   }
 
   @Instrument()
@@ -207,10 +226,8 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand,
     existingWorkflow?: NotificationTemplateEntity
   ): Promise<NotificationStep[]> {
-    const {
-      user,
-      workflowDto: { origin: workflowOrigin },
-    } = command;
+    const { user } = command;
+    const workflowOrigin = command.workflowDto.origin ?? ResourceOriginEnum.NOVU_CLOUD;
 
     let preloadedControlValues: ControlValuesEntity[] | undefined;
     if (existingWorkflow) {
