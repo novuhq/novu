@@ -84,7 +84,11 @@ export type AgentEvent =
       source?: AgentToolSource;
     }
   | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
-  | ({ type: 'tool-approval-request' } & AgentApprovalRequest)
+  | ({
+      type: 'tool-approval-request';
+      /** When true, no companion message carries the approval UI — the consumer should render its default approval card. */
+      deliverCard?: boolean;
+    } & AgentApprovalRequest)
   | {
       type: 'tool-approval-response';
       approvalId: string;

@@ -1,0 +1,241 @@
+import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
+import { testServer } from '@novu/testing';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import {
+  AgentTestContext,
+  activityRepository,
+  seedConversation,
+  setupAgentTestContext,
+} from './helpers/agent-test-setup';
+
+const NONEXISTENT_CONVERSATION_ID = '507f1f77bcf86cd799439011';
+
+describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
+  let ctx: AgentTestContext;
+
+  before(() => {
+    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+    process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED = 'true';
+  });
+
+  after(() => {
+    delete process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED;
+  });
+
+  beforeEach(async () => {
+    ctx = await setupAgentTestContext();
+
+    const outboundGateway = testServer.getService(OutboundGateway);
+    sinon
+      .stub(outboundGateway, 'postToConversation')
+      .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
+    sinon.stub(outboundGateway, 'startTypingInConversation').resolves();
+    sinon.stub(outboundGateway, 'stopTypingInConversation').resolves();
+  });
+
+  function buildEnvelope(
+    conversationId: string,
+    event: AgentEvent,
+    overrides: Partial<Omit<AgentEventEnvelope, 'event'>> = {}
+  ): AgentEventEnvelope {
+    return {
+      version: AGENT_EVENT_PROTOCOL_VERSION,
+      conversationId,
+      agentId: ctx.agentIdentifier,
+      runId: 'run-1',
+      turnId: 'turn-1',
+      sequence: 1,
+      timestamp: new Date().toISOString(),
+      event,
+      ...overrides,
+    };
+  }
+
+  function messageEnvelope(
+    conversationId: string,
+    messageId: string,
+    overrides: Partial<Omit<AgentEventEnvelope, 'event'>> = {}
+  ): AgentEventEnvelope {
+    return buildEnvelope(
+      conversationId,
+      { type: 'message', messageId, content: { markdown: `Content for ${messageId}` } },
+      overrides
+    );
+  }
+
+  function postIngest(events: unknown[]) {
+    return ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events });
+  }
+
+  it('should accept a message envelope and persist the message activity', async () => {
+    const conversationId = await seedConversation(ctx);
+    const messageId = `msg-happy-${Date.now()}`;
+
+    const res = await postIngest([messageEnvelope(conversationId, messageId)]);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    const messageActivity = activities.find(
+      (a) =>
+        a.senderType === ConversationActivitySenderTypeEnum.AGENT && a.type === ConversationActivityTypeEnum.MESSAGE
+    );
+    expect(messageActivity).to.exist;
+    expect(messageActivity!.identifier).to.equal(messageId);
+    expect(messageActivity!.content).to.equal(`Content for ${messageId}`);
+  });
+
+  it('should report duplicate for a replayed message envelope and not persist a second activity', async () => {
+    const conversationId = await seedConversation(ctx);
+    const messageId = `msg-dupe-${Date.now()}`;
+    const envelope = messageEnvelope(conversationId, messageId);
+
+    const firstRes = await postIngest([envelope]);
+    expect(firstRes.status).to.equal(200);
+    expect(firstRes.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
+
+    const secondRes = await postIngest([envelope]);
+    expect(secondRes.status).to.equal(200);
+    expect(secondRes.body.data.results).to.deep.equal([{ sequence: 1, status: 'duplicate' }]);
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    const messageActivities = activities.filter((a) => a.identifier === messageId);
+    expect(messageActivities).to.have.length(1);
+  });
+
+  it('should return results in request order with matching sequences for a batch', async () => {
+    const conversationId = await seedConversation(ctx);
+
+    const res = await postIngest([
+      messageEnvelope(conversationId, `msg-batch-1-${Date.now()}`, { sequence: 1 }),
+      messageEnvelope(conversationId, `msg-batch-2-${Date.now()}`, { sequence: 2 }),
+    ]);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.results).to.deep.equal([
+      { sequence: 1, status: 'accepted' },
+      { sequence: 2, status: 'accepted' },
+    ]);
+  });
+
+  it('should reject an invalid envelope with a 400 naming the invalid index', async () => {
+    const conversationId = await seedConversation(ctx);
+
+    const res = await postIngest([messageEnvelope(conversationId, 'msg-valid'), { not: 'an-envelope' }]);
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('Invalid event envelopes at indexes: 1');
+  });
+
+  it('should reject a batch mixing conversations with a 400', async () => {
+    const conversationId = await seedConversation(ctx);
+    const otherConversationId = await seedConversation(ctx);
+
+    const res = await postIngest([
+      messageEnvelope(conversationId, 'msg-mixed-1', { sequence: 1 }),
+      messageEnvelope(otherConversationId, 'msg-mixed-2', { sequence: 2 }),
+    ]);
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('All events in a batch must belong to the same conversation');
+  });
+
+  it('should soft-skip an unknown conversation with a 200 and empty results', async () => {
+    const res = await postIngest([messageEnvelope(NONEXISTENT_CONVERSATION_ID, 'msg-unknown-conv')]);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.results).to.deep.equal([]);
+  });
+
+  it('should soft-skip envelopes whose agentId does not match the conversation agent', async () => {
+    const conversationId = await seedConversation(ctx);
+
+    const otherAgentIdentifier = `e2e-other-agent-${Date.now()}`;
+    const createRes = await ctx.session.testAgent.post('/v1/agents').send({
+      name: 'Other Agent',
+      identifier: otherAgentIdentifier,
+    });
+    expect(createRes.status).to.equal(201);
+
+    const res = await postIngest([
+      messageEnvelope(conversationId, 'msg-agent-mismatch', { agentId: otherAgentIdentifier }),
+    ]);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.results).to.deep.equal([]);
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    expect(activities.filter((a) => a.identifier === 'msg-agent-mismatch')).to.have.length(0);
+  });
+
+  it('should return 404 when the agent event protocol flag is off', async () => {
+    const conversationId = await seedConversation(ctx);
+    const previousFlag = process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED;
+    delete process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED;
+
+    try {
+      const res = await postIngest([messageEnvelope(conversationId, 'msg-flag-off')]);
+
+      expect(res.status).to.equal(404);
+    } finally {
+      process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED = previousFlag;
+    }
+  });
+
+  it('should accept a bridge tool-approval-request, persist the activity, and deliver the approval card', async () => {
+    const conversationId = await seedConversation(ctx);
+    const outboundGateway = testServer.getService(OutboundGateway);
+    const approvalId = `approval-${Date.now()}`;
+
+    const res = await postIngest([
+      buildEnvelope(conversationId, {
+        type: 'tool-approval-request',
+        approvalId,
+        toolUseId: 'tool-use-1',
+        toolName: 'delete_records',
+        input: { table: 'users' },
+        deliverCard: true,
+      }),
+    ]);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    const approvalActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST);
+    expect(approvalActivity).to.exist;
+
+    // A bridge tool-approval-request with deliverCard auto-delivers the approval card to the platform.
+    expect((outboundGateway.postToConversation as sinon.SinonStub).called).to.be.true;
+  });
+
+  it('should accept a tool-approval-request without deliverCard and persist the activity without posting a card', async () => {
+    const conversationId = await seedConversation(ctx);
+    const outboundGateway = testServer.getService(OutboundGateway);
+    const approvalId = `approval-no-card-${Date.now()}`;
+
+    const res = await postIngest([
+      buildEnvelope(conversationId, {
+        type: 'tool-approval-request',
+        approvalId,
+        toolUseId: 'tool-use-1',
+        toolName: 'delete_records',
+        input: { table: 'users' },
+      }),
+    ]);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.results).to.deep.equal([{ sequence: 1, status: 'accepted' }]);
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    const approvalActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST);
+    expect(approvalActivity).to.exist;
+
+    // Without deliverCard the SDK owns the approval UI — no default card is posted.
+    expect((outboundGateway.postToConversation as sinon.SinonStub).called).to.be.false;
+  });
+});

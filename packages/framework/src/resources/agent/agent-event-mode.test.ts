@@ -252,6 +252,7 @@ describe('event mode (AgentEvent protocol)', () => {
       toolUseId: 'tc-1',
       toolName: 'doIt',
       input: { x: 1 },
+      deliverCard: true,
     });
     expect(eventBatches[0].some((envelope) => envelope.event.type === 'message')).toBe(false);
     expect(eventBatches[1][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });

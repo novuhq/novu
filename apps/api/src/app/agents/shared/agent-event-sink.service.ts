@@ -92,19 +92,11 @@ export class AgentEventSink {
   async ingestMany(envelopes: AgentEventEnvelope[], context: AgentEventContext): Promise<IngestOutcome[]> {
     const outcomes: IngestOutcome[] = [];
 
-    for (let index = 0; index < envelopes.length; index += 1) {
-      const envelope = envelopes[index];
+    for (const envelope of envelopes) {
       const { event } = envelope;
 
       if (isDeltaEvent(event)) {
         outcomes.push('accepted');
-        continue;
-      }
-
-      if (event.type === 'tool-approval-request') {
-        const autoDeliverCard = context.source === 'bridge' && !this.hasFollowingMessageInBatch(envelopes, index);
-        const outcome = await this.handleToolApprovalRequest(event, context, autoDeliverCard);
-        outcomes.push(outcome);
         continue;
       }
 
@@ -160,6 +152,13 @@ export class AgentEventSink {
 
         return 'accepted';
 
+      case 'tool-approval-request':
+        return this.handleToolApprovalRequest(
+          event,
+          context,
+          event.deliverCard === true && context.source === 'bridge'
+        );
+
       case 'run-finish':
         if (event.outcome === 'paused') {
           await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
@@ -191,7 +190,6 @@ export class AgentEventSink {
       case 'tool-use-delta':
       case 'source':
       case 'custom':
-      case 'tool-approval-request':
       case 'tool-approval-response':
       case 'message-start':
       case 'message-end':
@@ -207,26 +205,6 @@ export class AgentEventSink {
         return 'accepted';
       }
     }
-  }
-
-  private hasFollowingMessageInBatch(envelopes: AgentEventEnvelope[], approvalIndex: number): boolean {
-    for (let index = approvalIndex + 1; index < envelopes.length; index += 1) {
-      const nextEvent = envelopes[index].event;
-
-      if (isDeltaEvent(nextEvent)) {
-        continue;
-      }
-
-      if (nextEvent.type === 'tool-approval-request') {
-        return false;
-      }
-
-      if (nextEvent.type === 'message') {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private async handleToolApprovalRequest(

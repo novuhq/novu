@@ -307,7 +307,10 @@ function applySideEffects(body: AgentReplyPayload, sideEffects: SideEffectsSnaps
   }
 }
 
-function toSideEffectEvents(sideEffects: SideEffectsSnapshot): AgentEvent[] {
+function toSideEffectEvents(
+  sideEffects: SideEffectsSnapshot,
+  options?: { deliverApprovalCard?: boolean }
+): AgentEvent[] {
   const events: AgentEvent[] = [];
 
   if (sideEffects.toolApprovalRequest) {
@@ -318,6 +321,7 @@ function toSideEffectEvents(sideEffects: SideEffectsSnapshot): AgentEvent[] {
       toolUseId: request.toolCallId,
       toolName: request.name,
       input: request.input,
+      ...(options?.deliverApprovalCard ? { deliverCard: true } : {}),
     });
   }
 
@@ -468,7 +472,7 @@ class EventOutboxTransport implements TurnTransport {
   // (notably the tool-approval-request itself) are drained here. There is no client-addressable
   // message id for the rendered card, so the caller gets a no-op handle rather than a fake one.
   async sendApprovalCard(_card: ToolApprovalCard, sideEffects: SideEffectsSnapshot): Promise<'unaddressable'> {
-    await this._emitAndFlush(toSideEffectEvents(sideEffects));
+    await this._emitAndFlush(toSideEffectEvents(sideEffects, { deliverApprovalCard: true }));
 
     return 'unaddressable';
   }
