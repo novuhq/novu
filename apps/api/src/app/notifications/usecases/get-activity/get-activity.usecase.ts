@@ -4,26 +4,11 @@ import {
   FeatureFlagsService,
   PinoLogger,
   QueryBuilder,
-  StepRun,
-  StepRunRepository,
   Trace,
   TraceLogRepository,
 } from '@novu/application-generic';
-import {
-  ExecutionDetailFeedItem,
-  JobFeedItem,
-  JobStatusEnum,
-  NotificationFeedItemEntity,
-  NotificationRepository,
-  NotificationStepEntity,
-} from '@novu/dal';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
-  ProvidersIdEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { ExecutionDetailFeedItem, NotificationFeedItemEntity, NotificationRepository } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
 
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
@@ -31,18 +16,6 @@ import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
 import { GetActivityCommand } from './get-activity.command';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
-
-const stepRunSelectColumns = [
-  'step_run_id',
-  'step_id',
-  'step_type',
-  'provider_id',
-  'status',
-  'created_at',
-  'updated_at',
-  'schedule_extensions_count',
-] as const;
-type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
 const traceSelectColumns = ['id', 'entity_id', 'title', 'status', 'created_at', 'raw_data'] as const;
 
@@ -52,7 +25,6 @@ export class GetActivity {
     private notificationRepository: NotificationRepository,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private stepRunRepository: StepRunRepository,
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
   ) {
@@ -64,40 +36,20 @@ export class GetActivity {
       _organization: command.organizationId,
     });
 
-    const flagContext = {
+    const tracesEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_READ_ENABLED,
+      defaultValue: false,
       organization: { _id: command.organizationId },
       user: { _id: command.userId },
       environment: { _id: command.environmentId },
-    } as const;
+    });
 
-    const [tracesEnabled, stepRunsEnabled] = await Promise.all([
-      this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_READ_ENABLED,
-        defaultValue: false,
-        ...flagContext,
-      }),
-      this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_READ_ENABLED,
-        defaultValue: false,
-        ...flagContext,
-      }),
-    ]);
-
-    this.logger.debug(
-      {
-        tracesEnabled,
-        stepRunsEnabled,
-      },
-      'feature flags'
-    );
+    this.logger.debug({ tracesEnabled }, 'feature flags');
 
     let feedItem: NotificationFeedItemEntity | null = null;
 
-    if (tracesEnabled && stepRunsEnabled) {
-      this.logger.debug('analytics step runs enabled');
-      feedItem = await this.getFeedItemFromStepRuns(command);
-    } else if (tracesEnabled) {
-      this.logger.debug('analytics traces enabled, no step runs');
+    if (tracesEnabled) {
+      this.logger.debug('analytics traces enabled');
       feedItem = await this.getFeedItemFromTraceLog(command);
     } else {
       this.logger.debug('analytics fallback to old method');
@@ -185,7 +137,7 @@ export class GetActivity {
       const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace) => ({
         _id: trace.id,
         // TODO: add providerId from traces
-        providerId: undefined, // Will be overridden by step runs if available
+        providerId: undefined,
         detail: trace.title,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         _jobId: entityId,
@@ -200,70 +152,6 @@ export class GetActivity {
     }
 
     return executionDetailsByEntityId;
-  }
-
-  private async processStepRunsForFeedItem(
-    feedItem: NotificationFeedItemEntity,
-    command: GetActivityCommand
-  ): Promise<JobFeedItem[]> {
-    const stepRunsQuery = new QueryBuilder<StepRun>({
-      environmentId: command.environmentId,
-    })
-      .whereEquals('transaction_id', feedItem.transactionId)
-      .build();
-
-    const stepRunsResult = await this.stepRunRepository.find({
-      where: stepRunsQuery,
-      orderBy: 'created_at',
-      orderDirection: 'ASC',
-      useFinal: true,
-      select: stepRunSelectColumns,
-    });
-
-    if (!stepRunsResult.data || stepRunsResult.data.length === 0) {
-      return [];
-    }
-
-    const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
-    const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(
-      stepRunIds,
-      command,
-      feedItem.createdAt ? new Date(feedItem.createdAt) : undefined
-    );
-
-    return stepRunsResult.data.map((stepRun) => mapStepRunToJob(stepRun, executionDetailsByStepRunId));
-  }
-
-  private async getFeedItemFromStepRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
-    try {
-      const feedItem = await this.notificationRepository.findNotificationMetadataOnly(
-        command.notificationId,
-        command.environmentId,
-        command.organizationId
-      );
-
-      if (!feedItem) {
-        return null;
-      }
-
-      // Process step runs and add them to the feed item
-      feedItem.jobs = await this.processStepRunsForFeedItem(feedItem, command);
-
-      return feedItem;
-    } catch (error) {
-      this.logger.error(
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          notificationId: command.notificationId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        },
-        'Failed to get feed item from step runs'
-      );
-
-      // Fall back to the current stage 1 method (traces + jobs from MongoDB)
-      return await this.getFeedItemFromTraceLog(command);
-    }
   }
 
   private async getFeedItemFromTraceLog(command: GetActivityCommand) {
@@ -319,40 +207,4 @@ export class GetActivity {
       );
     }
   }
-}
-
-function mapStepRunToJob(
-  stepRun: StepRunFetchResult,
-  executionDetailsByStepRunId: Map<string, ExecutionDetailFeedItem[]>
-): JobFeedItem {
-  const baseExecutionDetails = executionDetailsByStepRunId.get(stepRun.step_run_id) || [];
-  // Create execution details with provider ID from step run data
-  const executionDetails: ExecutionDetailFeedItem[] = baseExecutionDetails.map((detail) => ({
-    ...detail,
-    providerId: stepRun.provider_id as ProvidersIdEnum,
-  }));
-
-  const stepRunDto: NotificationStepEntity = {
-    _id: stepRun.step_id,
-    _templateId: stepRun.step_id,
-    active: true,
-    filters: [],
-  };
-
-  const jobDto: JobFeedItem = {
-    _id: stepRun.step_run_id,
-    status: stepRun.status as JobStatusEnum,
-    overrides: {}, // Step runs don't have overrides, use empty object
-    payload: {}, // Step runs don't have payload, use empty object
-    step: stepRunDto,
-    type: stepRun.step_type as StepTypeEnum,
-    providerId: stepRun.provider_id as ProvidersIdEnum,
-    createdAt: new Date(stepRun.created_at).toISOString(),
-    updatedAt: new Date(stepRun.updated_at).toISOString(),
-    digest: undefined, // Step runs don't have digest info
-    executionDetails,
-    scheduleExtensionsCount: stepRun.schedule_extensions_count,
-  };
-
-  return jobDto;
 }
