@@ -164,7 +164,7 @@ sequenceDiagram
   Browser->>CustomerBackend: callback URL (over HTTPS)
   CustomerBackend->>NovuAPI: POST /v1/channel-endpoints (secret key)
   NovuAPI-->>CustomerBackend: 201 endpoint created
-  Note over NovuAPI: url/headers/method stored encrypted
+  Note over NovuAPI: url and header values stored encrypted on endpoint
   Browser->>CustomerBackend: trigger workflow
   CustomerBackend->>NovuAPI: POST /v1/events/trigger
   NovuAPI->>CustomerWebhook: POST merged payload + optional signature
@@ -353,7 +353,7 @@ curl -L 'https://api.novu.co/v1/channel-endpoints?subscriberId=<SUBSCRIBER_ID>&i
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
 ```
 
-Delete an endpoint to remove a destination. Novu cascades the delete to the underlying channel connection.
+Delete an endpoint to remove a destination. This removes the encrypted url and header values stored on the endpoint.
 
 See the [channel endpoints API reference](/api-reference/channel-endpoints/create-a-channel-endpoint) for full request and response details.
 

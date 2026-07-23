@@ -139,7 +139,7 @@ export class LineUserEndpointDto {
 export class PagerDutyServiceEndpointDto {
   @ApiProperty({
     description:
-      'PagerDuty Events API v2 integration key (32-character alphanumeric string). Stored encrypted on the linked channel connection.',
+      'PagerDuty Events API v2 integration key (32-character alphanumeric string). Stored encrypted on the channel endpoint.',
     example: 'R0UTINGK3YEXAMPLE000000000000000',
     type: String,
     minLength: 32,
@@ -163,7 +163,7 @@ export class PagerDutyServiceEndpointDto {
 export class ToolWebhookEndpointDto {
   @ApiProperty({
     description:
-      'Destination webhook URL (often a per-subscriber capability URL). Stored encrypted on the linked channel connection.',
+      'Destination webhook URL (often a per-subscriber capability URL). Stored encrypted on the channel endpoint.',
     example: 'https://example.com/tools/incoming',
     type: String,
   })
@@ -171,7 +171,8 @@ export class ToolWebhookEndpointDto {
   url: string;
 
   @ApiPropertyOptional({
-    description: 'Optional headers (e.g. auth tokens) sent with every request to this webhook.',
+    description:
+      'Optional headers (e.g. auth tokens) sent with every request to this webhook. Header values are stored encrypted on the channel endpoint.',
     example: { Authorization: 'Bearer <token>' },
     type: Object,
   })
@@ -191,8 +192,7 @@ export class ToolWebhookEndpointDto {
 
 export class OpsgenieIntegrationEndpointDto {
   @ApiProperty({
-    description:
-      'Opsgenie API integration key (GenieKey) in UUID format. Stored encrypted on the linked channel connection.',
+    description: 'Opsgenie API integration key (GenieKey) in UUID format. Stored encrypted on the channel endpoint.',
     example: 'abcdefg-a25a-4652-883c-73703b12345',
     type: String,
   })

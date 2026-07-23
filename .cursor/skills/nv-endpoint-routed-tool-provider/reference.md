@@ -16,9 +16,9 @@ export type ChannelEndpointByType = {
   // ...
   /**
    * At the API boundary this is the wire shape on both writes and reads.
-   * Internally the secret is persisted encrypted on the linked
-   * ChannelConnection.auth and the stored ChannelEndpoint.endpoint is empty;
-   * the read path re-hydrates this shape from the decrypted connection auth.
+   * Internally `routingKey` is persisted encrypted on ChannelEndpoint.endpoint;
+   * `region` stays plaintext. No ChannelConnection is involved (connections
+   * are OAuth-only).
    */
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
 };
@@ -41,12 +41,13 @@ channelEndpointSchema.index(
 );
 ```
 
-## 3. Encryption (`libs/application-generic/src/encryption/encrypt-channel-connection-auth.ts`)
+## 3. Encryption (`libs/application-generic/src/encryption/`)
 
-Add each secret field name to `SECURE_AUTH_FIELDS` and (optionally typed) to
-`ChannelConnectionAuth`. Non-secret companions (e.g. `region`) stay plaintext.
-Spec: assert the encrypted value starts with the novu mask prefix and
-round-trips through `decryptChannelConnectionAuth`.
+Sensitive endpoint fields encrypt via `encryptChannelEndpoint` (and decrypt on
+read). Non-secret companions (e.g. `region`, `method`) stay plaintext. Spec:
+assert the encrypted value starts with the novu mask prefix and round-trips
+through the matching decrypt helper. Do not create a synthetic
+`ChannelConnection` for tool routing secrets.
 
 ## 4. Stateless provider (`packages/providers/src/lib/tool/<provider>/`)
 
@@ -96,26 +97,25 @@ step overrides can't collide with structural payload fields.
 ## 6. Create usecase transaction shape
 
 ```typescript
-// connection first, endpoint second; compensate on failure
+// persist endpoint directly; no ChannelConnection
 if (command.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
   return await this.createPagerDutyEndpoint(command, identifier, integration, contextKeys);
 }
 // inside createPagerDutyEndpoint:
-//   createdConnection = channelConnectionRepository.create({
-//     ..., workspace: { ...STUB }, auth: encryptChannelConnectionAuth({ routingKey, region }) })
-//   endpoint = channelEndpointRepository.create({ ..., connectionIdentifier, endpoint: {} })
-//   return { ...endpoint, endpoint: { routingKey, region } }   // hydrate for the response
-// catch: delete createdConnection; duplicate-key (code 11000) -> ConflictException(409)
+//   endpoint = channelEndpointRepository.create({
+//     ..., endpoint: encryptChannelEndpoint({ routingKey, region }) })
+//   return { ...endpoint, endpoint: { routingKey, region } }   // decrypted wire shape
+// catch: duplicate-key (code 11000) -> ConflictException(409)
 ```
 
 `assertSubscriberExists`: if missing and `createSubscriberIfMissing` is falsy,
 throw 404 whose message names the flag; otherwise
 `CreateOrUpdateSubscriberUseCase.execute({ ..., allowUpdate: false })`.
 
-Update usecase: rotate secret on the connection (re-encrypt), bump endpoint
-`updatedAt`, hydrate response. Delete usecase: cascade-delete the connection
-via `connectionIdentifier`. Get: hydrate one. List: batch-hydrate with one
-`$in` connection query per page.
+Update usecase: re-encrypt rotated secrets on the endpoint document, bump
+`updatedAt`, return the decrypted wire shape. Delete usecase: delete the
+endpoint document (no connection cascade). Get/list: decrypt sensitive fields
+on the endpoint for the response.
 
 ## 7. Worker
 
@@ -123,8 +123,8 @@ via `connectionIdentifier`. Get: hydrate one. List: batch-hydrate with one
 
 ```typescript
 if (endpoint.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
-  // decrypt linked connection auth, return { endpoint: { routingKey, region } }
-  return this.extractPagerDutyAuth(endpoint, connectionMap);
+  // decrypt ChannelEndpoint.endpoint, return { endpoint: { routingKey, region } }
+  return this.extractPagerDutyEndpoint(endpoint);
 }
 ```
 
@@ -152,7 +152,8 @@ the template):
 6. "Store a subscriber's <secret>": server-side-only `<Warning>`, mermaid
    sequence diagram (browser → customer backend → Novu API), create example in
    the full SDK tab order (Node.js, Python, Go, PHP, .NET, Java, cURL),
-   endpoint-shape table, 409/PATCH rotation, read+mask, DELETE cascade.
+   endpoint-shape table, 409/PATCH rotation, read+mask, DELETE of the endpoint
+   (encrypted fields live on the endpoint; no connection cascade).
 7. "Page a subscriber from a workflow": Tool step `<Steps>` + trigger tab set
    + defaults/overrides table (incl. deterministic dedup).
 8. "What happens without an endpoint" + Related `<Columns>` cards to
