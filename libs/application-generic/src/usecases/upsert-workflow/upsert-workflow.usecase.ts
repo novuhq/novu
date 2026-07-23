@@ -146,6 +146,7 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand,
     existingWorkflow: NotificationTemplateEntity | null
   ): UpsertWorkflowCommand {
+    // On update, always keep the persisted origin — request body origin is ignored.
     const origin = existingWorkflow
       ? (existingWorkflow.origin ?? ResourceOriginEnum.NOVU_CLOUD)
       : (command.workflowDto.origin ?? ResourceOriginEnum.NOVU_CLOUD);

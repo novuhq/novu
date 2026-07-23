@@ -334,7 +334,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const inAppControlValue = 'In-App Test';
       const emailControlValue = 'Email Test';
       const updateRequest: UpdateWorkflowDto = {
-        // Required by current generated SDK input schema; API ignores this field on update.
         origin: workflowCreated.origin,
         name: workflowCreated.name,
         preferences: {
@@ -356,7 +355,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(updatedWorkflow.origin).to.equal(ResourceOriginEnum.NovuCloud);
     });
 
-    it('should ignore origin in the update request body', async () => {
+    it('should not change origin when a different origin is sent on update', async () => {
       const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(`Origin Immutable ${Date.now()}`);
       expect(workflowCreated.origin).to.equal(ResourceOriginEnum.NovuCloud);
 
