@@ -94,13 +94,20 @@ jobs:
       # the E2E suite, which otherwise always runs.
       - name: Detect docs-only changes
         id: detect-docs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if [[ "${{ github.event.pull_request.base.ref }}" == "" ]]; then
+          # Use the GitHub API for the PR file list so detection doesn't depend
+          # on the shallow local merge base (the depth-50 fetches above may not
+          # reach it, which would make a local `git diff` fail). Non-PR runs
+          # (e.g. workflow_dispatch) have no PR number, so run the full suite.
+          if [[ -z "$PR_NUMBER" ]]; then
             echo "docs-only=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          changed=$(git diff --name-only "origin/${{ github.event.pull_request.base.ref }}...HEAD")
-          echo "Changed files vs origin/${{ github.event.pull_request.base.ref }}:"
+          changed=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json files --jq '.files[].path')
+          echo "Changed files:"
           echo "$changed"
           non_docs=$(echo "$changed" | grep -v '^docs/' || true)
           if [ -n "$changed" ] && [ -z "$non_docs" ]; then
