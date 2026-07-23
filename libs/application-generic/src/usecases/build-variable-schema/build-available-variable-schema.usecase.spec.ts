@@ -1,4 +1,4 @@
-import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
+import { ControlValuesRepository, EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -8,18 +8,20 @@ import { BuildVariableSchemaUsecase } from './build-available-variable-schema.us
 
 describe('BuildVariableSchemaUsecase', () => {
   let createVariablesObjectMock: sinon.SinonStubbedInstance<CreateVariablesObject>;
+  let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let environmentVariableRepositoryMock: sinon.SinonStubbedInstance<EnvironmentVariableRepository>;
   let environmentRepositoryMock: sinon.SinonStubbedInstance<EnvironmentRepository>;
   let usecase: BuildVariableSchemaUsecase;
 
   beforeEach(() => {
     createVariablesObjectMock = sinon.createStubInstance(CreateVariablesObject);
+    controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     environmentVariableRepositoryMock = sinon.createStubInstance(EnvironmentVariableRepository);
     environmentRepositoryMock = sinon.createStubInstance(EnvironmentRepository);
 
     usecase = new BuildVariableSchemaUsecase(
       createVariablesObjectMock as any,
-      {} as any,
+      controlValuesRepositoryMock as any,
       environmentVariableRepositoryMock as any,
       environmentRepositoryMock as any
     );
@@ -30,6 +32,7 @@ describe('BuildVariableSchemaUsecase', () => {
       actor: {},
       context: {},
     });
+    controlValuesRepositoryMock.find.resolves([]);
     environmentVariableRepositoryMock.findByEnvironment.resolves([]);
     environmentRepositoryMock.findByIdAndOrganization.resolves({ name: 'Development', type: 'dev' } as any);
   });

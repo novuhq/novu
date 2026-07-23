@@ -832,7 +832,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const devWorkflow = await createWorkflow(apiClient, createWorkflowDto);
       const devPushStep = devWorkflow.steps[1];
 
-      expect(devWorkflow.status).to.equal(WorkflowStatusEnum.ACTIVE);
+      expect(devWorkflow.status).to.equal(WorkflowStatusEnum.Active);
       expect(devPushStep.issues?.controls?.skip).to.be.undefined;
 
       await session.switchToProdEnvironment();
@@ -842,7 +842,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const prodWorkflow = await syncWorkflow(devWorkflow, prodEnvironmentId);
       const prodPushStep = prodWorkflow.steps[1];
 
-      expect(prodWorkflow.status).to.equal(WorkflowStatusEnum.ACTIVE);
+      expect(prodWorkflow.status).to.equal(WorkflowStatusEnum.Active);
       expect(prodPushStep.controls.values.skip).to.deep.equal(skipCondition);
       expect(prodPushStep.issues?.controls?.skip).to.be.undefined;
     });
