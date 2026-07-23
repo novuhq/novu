@@ -36,6 +36,8 @@ import { ListChannelConnectionsCommand } from './usecases/list-channel-connectio
 import { ListChannelConnections } from './usecases/list-channel-connections/list-channel-connections.usecase';
 import { UpdateChannelConnectionCommand } from './usecases/update-channel-connection/update-channel-connection.command';
 import { UpdateChannelConnection } from './usecases/update-channel-connection/update-channel-connection.usecase';
+import { VerifyChannelConnectionCommand } from './usecases/verify-channel-connection/verify-channel-connection.command';
+import { VerifyChannelConnection } from './usecases/verify-channel-connection/verify-channel-connection.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller({ path: '/channel-connections', version: '1' })
@@ -50,7 +52,8 @@ export class ChannelConnectionsController {
     private readonly createChannelConnectionUsecase: CreateChannelConnection,
     private readonly updateChannelConnectionUsecase: UpdateChannelConnection,
     private readonly deleteChannelConnectionUsecase: DeleteChannelConnection,
-    private readonly listChannelConnectionsUsecase: ListChannelConnections
+    private readonly listChannelConnectionsUsecase: ListChannelConnections,
+    private readonly verifyChannelConnectionUsecase: VerifyChannelConnection
   ) {}
 
   @Get()
@@ -170,6 +173,36 @@ export class ChannelConnectionsController {
         identifier,
         workspace: body.workspace,
         auth: body.auth,
+      })
+    );
+
+    return mapChannelConnectionEntityToDto(channelConnection);
+  }
+
+  @Post('/:identifier/verify')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Verify a channel connection',
+    description:
+      `Forces an immediate check of the connection's stored auth against the provider. For rotating ` +
+      `providers (e.g. Slack) with an auth that is due for refresh — such as one just set via update — ` +
+      `this exchanges it right away and persists the result, surfacing an error immediately if the stored ` +
+      `refresh token is invalid or already used rather than waiting for the next send to discover it.`,
+  })
+  @ApiParam({ name: 'identifier', description: 'The unique identifier of the channel connection', type: String })
+  @ApiResponse(GetChannelConnectionResponseDto, 200)
+  @SdkMethodName('verify')
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @ExternalApiAccessible()
+  async verifyChannelConnection(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<GetChannelConnectionResponseDto> {
+    const channelConnection = await this.verifyChannelConnectionUsecase.execute(
+      VerifyChannelConnectionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
       })
     );
 

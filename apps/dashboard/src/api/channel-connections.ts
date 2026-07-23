@@ -1,5 +1,17 @@
 import type { IEnvironment } from '@novu/shared';
-import { get } from './api.client';
+import { get, patch, post } from './api.client';
+
+export type ChannelConnectionAuthDto = {
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  refreshTokenExpiresAt?: string;
+};
+
+export type ChannelConnectionWorkspaceDto = {
+  id: string;
+  name?: string;
+};
 
 export type ChannelConnectionDto = {
   identifier: string;
@@ -8,6 +20,8 @@ export type ChannelConnectionDto = {
   integrationIdentifier: string | null;
   subscriberId: string | null;
   contextKeys: string[];
+  workspace?: ChannelConnectionWorkspaceDto;
+  auth?: ChannelConnectionAuthDto;
   createdAt: string;
   updatedAt: string;
 };
@@ -56,4 +70,71 @@ export function listChannelConnections({
     environment,
     signal,
   });
+}
+
+type ChannelConnectionApiEnvelope = { data: ChannelConnectionDto };
+
+export async function retrieveChannelConnection({
+  identifier,
+  environment,
+  signal,
+}: {
+  identifier: string;
+  environment: IEnvironment;
+  signal?: AbortSignal;
+}): Promise<ChannelConnectionDto> {
+  const response = await get<ChannelConnectionApiEnvelope>(
+    `/channel-connections/${encodeURIComponent(identifier)}`,
+    {
+      environment,
+      signal,
+    }
+  );
+
+  return response.data;
+}
+
+export async function updateChannelConnection({
+  identifier,
+  environment,
+  workspace,
+  auth,
+}: {
+  identifier: string;
+  environment: IEnvironment;
+  workspace: ChannelConnectionWorkspaceDto;
+  auth: ChannelConnectionAuthDto;
+}): Promise<ChannelConnectionDto> {
+  const response = await patch<ChannelConnectionApiEnvelope>(
+    `/channel-connections/${encodeURIComponent(identifier)}`,
+    {
+      environment,
+      body: { workspace, auth },
+    }
+  );
+
+  return response.data;
+}
+
+/**
+ * Forces an immediate check (and, for rotating providers, exchange) of the connection's
+ * stored auth against the provider. Used right after saving a pasted refresh token so an
+ * invalid or already-used token surfaces an error immediately instead of only being
+ * discovered on the next real send.
+ */
+export async function verifyChannelConnection({
+  identifier,
+  environment,
+}: {
+  identifier: string;
+  environment: IEnvironment;
+}): Promise<ChannelConnectionDto> {
+  const response = await post<ChannelConnectionApiEnvelope>(
+    `/channel-connections/${encodeURIComponent(identifier)}/verify`,
+    {
+      environment,
+    }
+  );
+
+  return response.data;
 }

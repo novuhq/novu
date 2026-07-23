@@ -8,7 +8,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { validateConnectionMode } from '../channel-connection.utils';
+import { validateAndNormalizeConnectionAuth, validateConnectionMode } from '../channel-connection.utils';
 import { assertSubscriberExists } from '../ensure-connect-dashboard-subscriber';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
@@ -26,6 +26,7 @@ export class CreateChannelConnection {
     this.validateResourceOrContext(command);
 
     const integration = await this.findIntegration(command);
+    const auth = validateAndNormalizeConnectionAuth(command.auth, integration);
     const contextKeys = await this.resolveContexts(command);
 
     await this.ensureSubscriberExists(command);
@@ -46,7 +47,7 @@ export class CreateChannelConnection {
       );
     }
 
-    const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys);
+    const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys, auth);
 
     return channelConnection;
   }
@@ -110,7 +111,8 @@ export class CreateChannelConnection {
     command: CreateChannelConnectionCommand,
     identifier: string,
     integration: IntegrationEntity,
-    contextKeys: string[]
+    contextKeys: string[],
+    auth: CreateChannelConnectionCommand['auth']
   ): Promise<ChannelConnectionEntity> {
     const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
 
@@ -124,7 +126,7 @@ export class CreateChannelConnection {
       subscriberId,
       contextKeys,
       workspace: command.workspace,
-      auth: encryptChannelConnectionAuth(command.auth),
+      auth: encryptChannelConnectionAuth(auth),
     });
 
     return channelConnection;

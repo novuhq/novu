@@ -1,4 +1,4 @@
-import { providers as novuProviders } from '@novu/shared';
+import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -22,6 +22,7 @@ import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { cn } from '@/utils/ui';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
+import { SlackConnectionRefreshTokenSection } from './slack-connection-refresh-token-section';
 import type { StepStatus } from './setup-guide-step-utils';
 
 export type SetupMode = 'quick' | 'manual';
@@ -508,6 +509,7 @@ export function IntegrationCredentialsSidebar({
   agentIdentifier,
   testSubscriberId,
   submitLabel,
+  connectionIdentifier,
 }: {
   integrationId: string;
   isOpen: boolean;
@@ -523,6 +525,11 @@ export function IntegrationCredentialsSidebar({
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
   submitLabel?: string;
+  /**
+   * When set for a Slack integration, surfaces a per-connection refresh-token
+   * editor (token rotation is stored on the channel connection, not the integration).
+   */
+  connectionIdentifier?: string;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -594,6 +601,10 @@ export function IntegrationCredentialsSidebar({
           testSubscriberId={testSubscriberId}
           onFormStateChange={setFormState}
         />
+
+        {provider.id === ChatProviderIdEnum.Slack && connectionIdentifier ? (
+          <SlackConnectionRefreshTokenSection connectionIdentifier={connectionIdentifier} />
+        ) : null}
       </div>
 
       <div className="bg-background flex justify-end gap-2 border-t p-3">

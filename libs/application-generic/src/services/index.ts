@@ -37,6 +37,8 @@ export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';
 export {
   buildConnectionAuthFromOAuth,
+  isRotatingTokenProvider,
+  normalizeRotatingAuth,
   RotatingConnectionTokenService,
   type RotatingTokenRefreshResult,
   SLACK_OAUTH_ACCESS_URL,

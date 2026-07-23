@@ -108,6 +108,31 @@ const ROTATING_TOKEN_PROVIDERS: Partial<Record<ProvidersIdEnum, RotatingTokenPro
 };
 
 /**
+ * Whether a provider supports rotating OAuth tokens (short-lived access token +
+ * refresh token). Only these providers can make use of a stored `refreshToken`, so
+ * manual `channelConnections` write paths reject rotation auth for anything else.
+ */
+export function isRotatingTokenProvider(providerId: ProvidersIdEnum): boolean {
+  return Boolean(ROTATING_TOKEN_PROVIDERS[providerId]);
+}
+
+/**
+ * Normalizes manually-supplied rotation auth. When a `refreshToken` is present without
+ * an `expiresAt`, defaults it to now so the first send treats the token as expiring and
+ * refreshes immediately — Novu then learns the real expiry from the provider's response.
+ * Auth without a `refreshToken` (legacy long-lived tokens) is returned unchanged.
+ */
+export function normalizeRotatingAuth(auth: ChannelConnectionAuth & { accessToken: string }): ChannelConnectionAuth & {
+  accessToken: string;
+} {
+  if (!auth.refreshToken || auth.expiresAt) {
+    return auth;
+  }
+
+  return { ...auth, expiresAt: new Date().toISOString() };
+}
+
+/**
  * Builds the `ChannelConnection.auth` persisted after an OAuth grant. Apps with token
  * rotation return a short-lived `access_token` plus a `refresh_token` and expiry, all of
  * which are stored so the send paths can refresh before expiry. Apps without rotation

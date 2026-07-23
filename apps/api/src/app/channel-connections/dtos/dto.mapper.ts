@@ -25,6 +25,9 @@ export function mapChannelConnectionEntityToDto(
     workspace: channelConnection.workspace,
     auth: {
       accessToken: decryptedAuth?.accessToken ?? '',
+      refreshToken: decryptedAuth?.refreshToken,
+      expiresAt: decryptedAuth?.expiresAt,
+      refreshTokenExpiresAt: decryptedAuth?.refreshTokenExpiresAt,
     },
     createdAt: channelConnection.createdAt,
     updatedAt: channelConnection.updatedAt,

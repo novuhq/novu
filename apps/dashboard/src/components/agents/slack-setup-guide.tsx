@@ -120,7 +120,7 @@ ${botEventsYaml}
     request_url: "${webhookHandlerUrlQuoted}"
   org_deploy_enabled: false
   socket_mode_enabled: false
-  token_rotation_enabled: false`;
+  token_rotation_enabled: true`;
 }
 
 function ManifestControls({
@@ -195,13 +195,20 @@ function QuickSetupStep({
 
       return slackQuickSetup(
         integrationId,
-        { configToken: configToken.trim(), agentId, subscriberId, connectionIdentifier },
+        {
+          configToken: configToken.trim(),
+          agentId,
+          subscriberId,
+          connectionIdentifier,
+        },
         environment
       );
     },
     onSuccess: () => {
       setConfigToken('');
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id],
+      });
       onSuccess();
     },
     onError: (error: Error) => {
@@ -546,6 +553,7 @@ export function SlackSetupGuide({
           onClose={() => setIsCredentialsSidebarOpen(false)}
           onSaveSuccess={() => setCredentialsSavedLocally(true)}
           agentOnboarding
+          connectionIdentifier={connectionIdentifier ?? undefined}
         />
       </div>
     );
@@ -561,6 +569,7 @@ export function SlackSetupGuide({
         onClose={() => setIsCredentialsSidebarOpen(false)}
         onSaveSuccess={() => setCredentialsSavedLocally(true)}
         agentOnboarding
+        connectionIdentifier={connectionIdentifier ?? undefined}
       />
     </>
   );
