@@ -1,6 +1,6 @@
 import { Novu } from '@novu/api';
 import { CreateWebhookEndpointDto } from '@novu/api/models/components';
-import { ChannelConnectionRepository } from '@novu/dal';
+import { ChannelEndpointRepository } from '@novu/dal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -12,7 +12,7 @@ import {
 import { expectSdkExceptionGeneric } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
 
-const channelConnectionRepository = new ChannelConnectionRepository();
+const channelEndpointRepository = new ChannelEndpointRepository();
 
 describe('Delete Channel Endpoint - /channel-endpoints/:identifier (DELETE) #novu-v2', () => {
   let session: UserSession;
@@ -58,7 +58,7 @@ describe('Delete Channel Endpoint - /channel-endpoints/:identifier (DELETE) #nov
     expect(error?.name).to.equal('ErrorDto');
   });
 
-  it('should cascade-delete the linked connection when deleting an opsgenie endpoint', async () => {
+  it('should delete an opsgenie endpoint without cascading to a channel connection', async () => {
     const integration = await createOpsgenieIntegration(session);
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
@@ -70,16 +70,17 @@ describe('Delete Channel Endpoint - /channel-endpoints/:identifier (DELETE) #nov
       endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'us' },
     });
     expect(createRes.status).to.equal(201);
-    const { identifier, connectionIdentifier } = createRes.body.data;
+    const { identifier } = createRes.body.data;
+    expect(createRes.body.data.connectionIdentifier).to.be.null;
 
     const deleteRes = await session.testAgent.delete(`/v1/channel-endpoints/${identifier}`);
     expect(deleteRes.status).to.equal(204);
 
-    const connection = await channelConnectionRepository.findOne({
-      identifier: connectionIdentifier,
+    const storedEndpoint = await channelEndpointRepository.findOne({
+      identifier,
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
     });
-    expect(connection).to.not.exist;
+    expect(storedEndpoint).to.not.exist;
   });
 });

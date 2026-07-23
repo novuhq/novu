@@ -3,7 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
-  encryptChannelConnectionAuth,
+  encryptChannelEndpoint,
   InstrumentUsecase,
   PinoLogger,
   shortId,
@@ -29,10 +29,23 @@ import {
 import { ConfirmLinkedAuthCardsCommand } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.command';
 import { ConfirmLinkedAuthCards } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentPlatformEnum } from '../../../agents/shared/enums/agent-platform.enum';
-import { ConnectionBackedEndpointConfig, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
 const MONGO_DUPLICATE_KEY_CODE = 11000;
+
+/**
+ * Endpoint types whose secret fields are encrypted onto `ChannelEndpoint.endpoint`
+ * (no synthetic ChannelConnection). Labels are used in duplicate-key 409 messages.
+ */
+const ENDPOINT_STORED_SECRET_LABELS: Partial<Record<ChannelEndpointType, string>> = {
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: 'PagerDuty',
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: 'Opsgenie',
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: 'Tool webhook',
+};
+
+function isEndpointStoredSecretType(type: ChannelEndpointType): boolean {
+  return type in ENDPOINT_STORED_SECRET_LABELS;
+}
 
 /**
  * Reverses {@link PLATFORM_ENDPOINT_CONFIG}: maps a freshly created channel endpoint
@@ -107,17 +120,10 @@ export class CreateChannelEndpoint {
       );
     }
 
-    const connectionBackedConfig = getConnectionBackedEndpointConfig(command.type);
-    if (connectionBackedConfig) {
-      this.assertConnectionBackedIntegration(command.type, integration);
+    if (isEndpointStoredSecretType(command.type)) {
+      this.assertEndpointStoredIntegration(command.type, integration);
 
-      return await this.createConnectionBackedEndpoint(
-        command,
-        identifier,
-        integration,
-        contextKeys,
-        connectionBackedConfig
-      );
+      return await this.createEndpointWithEncryptedSecrets(command, identifier, integration, contextKeys);
     }
 
     let connection: ChannelConnectionEntity | null = null;
@@ -240,72 +246,44 @@ export class CreateChannelEndpoint {
   /**
    * PagerDuty / Opsgenie / Tool webhook routing is per subscriber. The wire
    * payload (e.g. `{ routingKey, region }`, `{ apiKey, region }`, or
-   * `{ url, headers?, method? }`) is persisted encrypted on a fresh
-   * `ChannelConnection.auth`. The stored `ChannelEndpoint.endpoint` document
-   * is empty — the read path re-hydrates the wire shape from the decrypted
-   * auth.
+   * `{ url, headers?, method? }`) is persisted encrypted on
+   * `ChannelEndpoint.endpoint` via {@link encryptChannelEndpoint}. No
+   * ChannelConnection is created.
    *
-   * Ordering: connection first, endpoint second. If the endpoint create fails
-   * (partial unique index → duplicate subscriber/integration pair — PagerDuty
-   * and Opsgenie only; tool_webhook has no such index and allows multiple
-   * endpoints per subscriber/integration), we delete the just-created
-   * connection so a retry starts from a clean slate.
+   * Duplicate-key (partial unique index on subscriber/integration) maps to 409
+   * for PagerDuty and Opsgenie; tool_webhook has no such index and allows
+   * multiple endpoints per subscriber/integration.
    */
-  private async createConnectionBackedEndpoint(
+  private async createEndpointWithEncryptedSecrets(
     command: CreateChannelEndpointCommand,
     identifier: string,
     integration: IntegrationEntity,
-    contextKeys: string[],
-    config: ConnectionBackedEndpointConfig
+    contextKeys: string[]
   ): Promise<ChannelEndpointEntity> {
-    const wireEndpoint = command.endpoint as Record<string, unknown>;
-    const connectionIdentifier = this.generateConnectionIdentifier();
+    const wireEndpoint = command.endpoint;
+    const label = ENDPOINT_STORED_SECRET_LABELS[command.type] ?? command.type;
 
-    let createdConnection: ChannelConnectionEntity | null = null;
     try {
-      createdConnection = await this.channelConnectionRepository.create({
-        identifier: connectionIdentifier,
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        integrationIdentifier: integration.identifier,
-        providerId: integration.providerId,
-        channel: integration.channel,
-        subscriberId: command.subscriberId,
-        contextKeys,
-        workspace: { ...config.workspace },
-        auth: encryptChannelConnectionAuth({ ...wireEndpoint }),
-      });
-
       const endpoint = await this.channelEndpointRepository.create({
         identifier,
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,
-        connectionIdentifier: createdConnection.identifier,
         integrationIdentifier: integration.identifier,
         providerId: integration.providerId,
         channel: integration.channel,
         subscriberId: command.subscriberId,
         contextKeys,
         type: command.type,
-        // Wire shape lives on the connection; the stored document is empty.
-        endpoint: {},
+        endpoint: encryptChannelEndpoint(command.type, wireEndpoint),
       });
 
-      // Hydrate the returned entity's endpoint so the response DTO carries the
-      // wire shape without a second connection lookup.
+      // Return the plaintext wire shape so the response DTO matches today's
+      // platform convention (secrets returned; clients mask).
       return { ...endpoint, endpoint: { ...wireEndpoint } } as ChannelEndpointEntity;
     } catch (error) {
-      if (createdConnection) {
-        await this.channelConnectionRepository.delete({
-          _id: createdConnection._id,
-          _organizationId: command.organizationId,
-          _environmentId: command.environmentId,
-        });
-      }
-
       if (this.isDuplicateKeyError(error)) {
         throw new ConflictException(
-          `${config.label} endpoint already exists for subscriber "${command.subscriberId}" on integration "${integration.identifier}"`
+          `${label} endpoint already exists for subscriber "${command.subscriberId}" on integration "${integration.identifier}"`
         );
       }
 
@@ -392,7 +370,7 @@ export class CreateChannelEndpoint {
     }
   }
 
-  private assertConnectionBackedIntegration(type: ChannelEndpointType, integration: IntegrationEntity): void {
+  private assertEndpointStoredIntegration(type: ChannelEndpointType, integration: IntegrationEntity): void {
     if (type === ENDPOINT_TYPES.PAGERDUTY_SERVICE && integration.providerId !== ToolProviderIdEnum.PagerDuty) {
       throw new BadRequestException(`Channel endpoint type "${type}" requires a PagerDuty integration`);
     }
@@ -433,9 +411,5 @@ export class CreateChannelEndpoint {
 
   private generateIdentifier(): string {
     return `chendp_${shortId(12)}`;
-  }
-
-  private generateConnectionIdentifier(): string {
-    return `chconn_${shortId(12)}`;
   }
 }
