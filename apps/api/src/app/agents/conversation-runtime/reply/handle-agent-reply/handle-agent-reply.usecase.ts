@@ -492,7 +492,8 @@ export class HandleAgentReply {
         await this.outboundGateway.stopTypingInConversation(
           conversation._agentId,
           command.integrationIdentifier,
-          channel.platformThreadId
+          channel.platformThreadId,
+          channel.workspace?.id
         );
 
         return;
