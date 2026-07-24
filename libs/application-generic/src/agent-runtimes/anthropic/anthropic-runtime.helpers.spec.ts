@@ -1,4 +1,9 @@
-import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA } from '@novu/shared';
+import {
+  CLAUDE_BUILTIN_TOOLS,
+  isNovuInternalToolName,
+  NOVU_RESOLVE_SCHEMA,
+  NOVU_TOOL_CATALOG_SCHEMA,
+} from '@novu/shared';
 import { expect } from 'chai';
 import {
   buildPlatformToolsPayload,
@@ -69,14 +74,28 @@ describe('buildToolsPayload', () => {
     const toolset = payload.find((entry) => entry.type === 'agent_toolset_20260401') as {
       configs: Array<{ name: string; enabled: boolean }>;
     };
-    const platformTool = payload.find((entry) => entry.type === 'custom');
+    const platformTools = payload.filter((entry) => entry.type === 'custom');
 
     expect(toolset.configs.every((c) => c.enabled === false)).to.equal(true);
-    expect(platformTool).to.deep.equal({ type: 'custom', ...NOVU_TOOLS_SCHEMA });
+    expect(platformTools).to.deep.equal([
+      { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+      { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+    ]);
   });
 
-  it('buildPlatformToolsPayload returns novu_tools only', () => {
-    expect(buildPlatformToolsPayload()).to.deep.equal([{ type: 'custom', ...NOVU_TOOLS_SCHEMA }]);
+  it('buildPlatformToolsPayload returns novu_tool_catalog and novu_resolve', () => {
+    expect(buildPlatformToolsPayload()).to.deep.equal([
+      { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+      { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+    ]);
+  });
+
+  it('isNovuInternalToolName recognizes platform tools only', () => {
+    expect(isNovuInternalToolName('novu_tool_catalog')).to.equal(true);
+    expect(isNovuInternalToolName('novu_tools')).to.equal(true);
+    expect(isNovuInternalToolName('novu_resolve')).to.equal(true);
+    expect(isNovuInternalToolName('customer_tool')).to.equal(false);
+    expect(isNovuInternalToolName(undefined)).to.equal(false);
   });
 
   it('force-enables read when hasSkills is true', () => {

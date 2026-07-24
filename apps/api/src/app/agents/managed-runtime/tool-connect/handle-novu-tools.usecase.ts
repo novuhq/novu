@@ -80,7 +80,7 @@ export class HandleNovuTools {
 
     await this.sendToolResult(command, {
       available,
-      instruction: 'Immediately call novu_tools with request_connect for the relevant service. Do not narrate.',
+      instruction: 'Immediately call novu_tool_catalog with request_connect for the relevant service. Do not narrate.',
     });
   }
 

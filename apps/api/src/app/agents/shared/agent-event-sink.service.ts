@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
-import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
+import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
@@ -205,6 +205,12 @@ export class AgentEventSink {
     context: AgentEventContext,
     autoDeliverCard: boolean
   ): Promise<IngestOutcome> {
+    // Novu platform tools (novu_resolve, novu_tool_catalog) are auto-handled —
+    // never ledger an "Approval required" activity or post a card for them.
+    if (this.isInternalTool(event.toolName)) {
+      return 'accepted';
+    }
+
     const baseFields = this.buildBaseFields(context);
     const toolApprovalRequest = {
       approvalId: event.approvalId,
@@ -631,21 +637,9 @@ export class AgentEventSink {
     }
 
     try {
-      for (const approval of approvals) {
-        await this.handleToolApprovalRequest(
-          {
-            type: 'tool-approval-request',
-            approvalId: approval.approvalId,
-            toolUseId: approval.toolUseId,
-            toolName: approval.toolName,
-            input: approval.input,
-            source: approval.source,
-          },
-          context,
-          false
-        );
-      }
-
+      // Do not ledger approvals here. Internal Novu tools are auto-handled and
+      // must not appear as "Approval required". External tools are ledgered when
+      // HandlePendingToolApprovals delivers the card (or auto-confirms trust).
       const response: ThalamusResponse = {
         messages: [],
         finishReason: 'requires-action',
@@ -853,7 +847,7 @@ export class AgentEventSink {
   }
 
   private isInternalTool(toolName?: string): boolean {
-    return NOVU_INTERNAL_TOOLS.includes(toolName ?? '');
+    return isNovuInternalToolName(toolName);
   }
 }
 
