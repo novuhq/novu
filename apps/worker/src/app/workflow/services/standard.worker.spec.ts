@@ -19,6 +19,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   OrganizationEntity,
+  RUNNING_CLAIM_RENEW_INTERVAL_MS,
   RUNNING_CLAIM_STALE_AFTER_MS,
   SubscriberEntity,
   UserEntity,
@@ -37,7 +38,7 @@ import { formatISO } from 'date-fns';
 import { setTimeout } from 'timers/promises';
 import { v4 as uuid } from 'uuid';
 import { SharedModule } from '../../shared/shared.module';
-import { HandleLastFailedJob, RunJob, SetJobAsFailed, WebhookFilterBackoffStrategy } from '../usecases';
+import { HandleLastFailedJob, RunJob, RunJobCommand, SetJobAsFailed, WebhookFilterBackoffStrategy } from '../usecases';
 import { WorkflowModule } from '../workflow.module';
 import { StandardWorker } from './standard.worker';
 
@@ -85,6 +86,7 @@ describe('Standard Worker', () => {
   let subscriberService: SubscribersService;
   let template: NotificationTemplateEntity;
   let jobsService: JobsService;
+  let runJob: RunJob;
 
   before(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -147,7 +149,7 @@ describe('Standard Worker', () => {
     }).compile();
 
     const handleLastFailedJob = moduleRef.get<HandleLastFailedJob>(HandleLastFailedJob);
-    const runJob = moduleRef.get<RunJob>(RunJob);
+    runJob = moduleRef.get<RunJob>(RunJob);
     const setJobAsFailed = moduleRef.get<SetJobAsFailed>(SetJobAsFailed);
     const webhookFilterBackoffStrategy = moduleRef.get<WebhookFilterBackoffStrategy>(WebhookFilterBackoffStrategy);
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
@@ -529,6 +531,65 @@ describe('Standard Worker', () => {
 
       // ...so a redelivered message can no longer treat the claim as stale.
       expect(await jobRepository.claimAsRunning(running._environmentId, running._id)).to.equal(null);
+    });
+
+    it('does not leak the claim heartbeat when execute throws before the main try block', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
+
+      // Track heartbeat intervals (identified by their renew period) and whether they get cleared.
+      const heartbeats: NodeJS.Timeout[] = [];
+      const cleared = new Set<NodeJS.Timeout>();
+      const originalSetInterval = globalThis.setInterval;
+      const originalClearInterval = globalThis.clearInterval;
+      globalThis.setInterval = ((...intervalArgs: Parameters<typeof originalSetInterval>) => {
+        const timer = originalSetInterval(...intervalArgs);
+        if (intervalArgs[1] === RUNNING_CLAIM_RENEW_INTERVAL_MS) {
+          heartbeats.push(timer);
+        }
+
+        return timer;
+      }) as typeof originalSetInterval;
+      globalThis.clearInterval = ((timer: Parameters<typeof originalClearInterval>[0]) => {
+        cleared.add(timer as NodeJS.Timeout);
+
+        return originalClearInterval(timer);
+      }) as typeof originalClearInterval;
+
+      // Force the first post-claim operation of RunJob.execute to fail.
+      const stepRunRepository = Reflect.get(runJob, 'stepRunRepository') as {
+        create: (...createArgs: unknown[]) => Promise<unknown>;
+      };
+      const originalCreate = stepRunRepository.create;
+      stepRunRepository.create = async () => {
+        throw new Error('step run persistence failure');
+      };
+
+      try {
+        let thrown: Error | undefined;
+        try {
+          await runJob.execute(
+            RunJobCommand.create({
+              jobId: created._id,
+              environmentId: created._environmentId,
+              organizationId: created._organizationId,
+              userId: created._userId,
+            })
+          );
+        } catch (executeError) {
+          thrown = executeError as Error;
+        }
+        expect(thrown?.message).to.equal('step run persistence failure');
+
+        const leaked = heartbeats.filter((timer) => !cleared.has(timer));
+        expect(leaked.length).to.equal(0);
+      } finally {
+        for (const timer of heartbeats) {
+          originalClearInterval(timer);
+        }
+        stepRunRepository.create = originalCreate;
+        globalThis.setInterval = originalSetInterval;
+        globalThis.clearInterval = originalClearInterval;
+      }
     });
 
     it('renewRunningClaim is a no-op once the job has left RUNNING', async () => {

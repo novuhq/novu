@@ -135,19 +135,6 @@ export class RunJob {
     }
     job = claimed;
 
-    /*
-     * Heartbeat: keep the RUNNING claim's lease fresh while this worker is
-     * alive, so a slow-but-healthy execution that outlives the SQS visibility
-     * timeout / BullMQ lock cannot be reclaimed by a redelivered message and
-     * run twice. A stale lease then always means the claiming worker died.
-     */
-    const claimHeartbeat = setInterval(() => {
-      this.jobRepository.renewRunningClaim(claimed._environmentId, claimed._id).catch((renewError: unknown) => {
-        this.logger.warn({ err: renewError, nv: { jobId: claimed._id } }, 'Failed to renew running claim lease');
-      });
-    }, RUNNING_CLAIM_RENEW_INTERVAL_MS);
-    claimHeartbeat.unref();
-
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.RUNNING,
     });
@@ -164,6 +151,23 @@ export class RunJob {
     let isJobExtendedToSubscriberSchedule = false;
     let error: Error | undefined;
     let notification: PartialNotificationEntity | null = null;
+
+    /*
+     * Heartbeat: keep the RUNNING claim's lease fresh while this worker is
+     * alive, so a slow-but-healthy execution that outlives the SQS visibility
+     * timeout / BullMQ lock cannot be reclaimed by a redelivered message and
+     * run twice. A stale lease then always means the claiming worker died.
+     *
+     * Created immediately before the try block — nothing throwable may sit
+     * between here and the `finally` that clears it, or a failure would leak
+     * the interval and renew the claim forever.
+     */
+    const claimHeartbeat = setInterval(() => {
+      this.jobRepository.renewRunningClaim(claimed._environmentId, claimed._id).catch((renewError: unknown) => {
+        this.logger.warn({ err: renewError, nv: { jobId: claimed._id } }, 'Failed to renew running claim lease');
+      });
+    }, RUNNING_CLAIM_RENEW_INTERVAL_MS);
+    claimHeartbeat.unref();
 
     try {
       notification = await this.findNotification(job);
