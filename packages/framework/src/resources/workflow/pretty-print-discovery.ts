@@ -1,19 +1,23 @@
-import type { DiscoverWorkflowOutput } from '../../types';
+import type { DiscoverWorkflowOutput, Logger } from '../../types';
 import { EMOJI, log } from '../../utils';
 
-export function prettyPrintDiscovery(discoveredWorkflow: DiscoverWorkflowOutput, verbose: boolean = true): void {
+export function prettyPrintDiscovery(
+  discoveredWorkflow: DiscoverWorkflowOutput,
+  verbose: boolean = true,
+  logger: Logger = console
+): void {
   if (!verbose) return;
 
-  console.log(`\n${log.bold(log.underline('Discovered workflowId:'))} '${discoveredWorkflow.workflowId}'`);
+  logger.info(`\n${log.bold(log.underline('Discovered workflowId:'))} '${discoveredWorkflow.workflowId}'`);
   discoveredWorkflow.steps.forEach((step, i) => {
     const isLastStep = i === discoveredWorkflow.steps.length - 1;
     const prefix = isLastStep ? '└' : '├';
-    console.log(`${prefix} ${EMOJI.STEP} Discovered stepId: '${step.stepId}'\tType: '${step.type}'`);
+    logger.info(`${prefix} ${EMOJI.STEP} Discovered stepId: '${step.stepId}'\tType: '${step.type}'`);
     step.providers.forEach((provider, providerIndex) => {
       const isLastProvider = providerIndex === step.providers.length - 1;
       const stepPrefix = isLastStep ? ' ' : '│';
       const providerPrefix = isLastProvider ? '└' : '├';
-      console.log(`${stepPrefix} ${providerPrefix} ${EMOJI.PROVIDER} Discovered provider: '${provider.type}'`);
+      logger.info(`${stepPrefix} ${providerPrefix} ${EMOJI.PROVIDER} Discovered provider: '${provider.type}'`);
     });
   });
 }

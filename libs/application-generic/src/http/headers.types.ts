@@ -14,7 +14,9 @@ export enum HttpRequestHeaderKeysEnum {
   BYPASS_TUNNEL_REMINDER = 'Bypass-Tunnel-Reminder',
   IDEMPOTENCY_KEY = 'Idempotency-Key',
   NOVU_APPLICATION_IDENTIFIER = 'Novu-Application-Identifier',
+  NOVU_ANALYTICS_SOURCE = 'Novu-Analytics-Source',
 }
+
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 
 export enum HttpResponseHeaderKeysEnum {

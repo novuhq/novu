@@ -8,6 +8,28 @@ interface IPollForJobOptions {
   query: Partial<JobEntity> & EnforceEnvOrOrgIds;
   timeout?: number;
   pollInterval?: number;
+  expectedCount?: number;
+  until?: (jobs: JobEntity[]) => boolean;
+}
+
+function areJobsReady(jobs: JobEntity[], expectedCount?: number, until?: (jobs: JobEntity[]) => boolean): boolean {
+  if (jobs.length === 0) {
+    return false;
+  }
+
+  if (expectedCount !== undefined && jobs.length !== expectedCount) {
+    return false;
+  }
+
+  if (!jobs.every((job: JobEntity) => job.status !== JobStatusEnum.PENDING)) {
+    return false;
+  }
+
+  if (until && !until(jobs)) {
+    return false;
+  }
+
+  return true;
 }
 
 // Function overloads to make return type conditional based on findMultiple
@@ -25,14 +47,18 @@ export async function pollForJobStatusChange({
   timeout = 5000,
   pollInterval = 100,
   findMultiple = false,
+  expectedCount,
+  until,
 }: IPollForJobOptions & { findMultiple?: boolean }): Promise<JobEntity | JobEntity[] | null> {
   const startTime = Date.now();
+  let lastMultipleJobs: JobEntity[] = [];
 
   while (true) {
     if (findMultiple) {
       const jobs = await jobRepository.find(query);
+      lastMultipleJobs = jobs;
 
-      if (jobs.length > 0 && jobs.every((job: JobEntity) => job.status !== JobStatusEnum.PENDING)) {
+      if (areJobsReady(jobs, expectedCount, until)) {
         return jobs;
       }
     } else {
@@ -44,7 +70,7 @@ export async function pollForJobStatusChange({
     }
 
     if (Date.now() - startTime > timeout) {
-      return findMultiple ? ([] as JobEntity[]) : null;
+      return findMultiple ? lastMultipleJobs : null;
     }
 
     await sleep(pollInterval);

@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
-import { RequestLog } from '../../types/logs';
+import { RequestLog, RequestLogSource } from '../../types/logs';
+import { InboundMailTracesContent } from './inbound-mail-traces-content';
 import { LogsDetailContent } from './logs-detail-content';
 import { RequestLogDetailEmptyState } from './logs-detail-empty';
 import { LogsDetailError } from './logs-detail-error';
@@ -31,6 +32,8 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
     log.path === '/v1/events/trigger/bulk' ||
     log.path === '/v1/events/trigger/broadcast';
 
+  const shouldShowInboundMailTraces = log.source === RequestLogSource.INBOUND_EMAIL;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -41,6 +44,7 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
       <LogsDetailHeader />
       <LogsDetailContent log={log} />
       {shouldShowWorkflowRuns && <WorkflowRunsContent log={log} />}
+      {shouldShowInboundMailTraces && <InboundMailTracesContent log={log} />}
     </motion.div>
   );
 }

@@ -1,30 +1,11 @@
 import { JSONSchemaEntity } from '@novu/dal';
-import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { IN_APP_REDIRECT_URL_REGEX, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 
-/**
- * Regex pattern for validating URLs with template variables. Matches three cases:
- *
- * 1. URLs that start with template variables like {{variable}}
- *    - Example: {{variable}}, {{variable}}/path
- *
- * 2. Full URLs that may contain template variables anywhere
- *    - Excludes mailto: links
- *    - Example: https://example.com, https://example.com/{{variable}}, https://example.com?id={{var1}}&index={{var2}}
- *
- * 3. Paths starting with / that may contain template variables anywhere
- *    - Example: /path/to/page, /path/{{variable}}/page
- *
- * Pattern prevents backtracking by excluding braces from regular character classes,
- * ensuring braces only appear in template variables.
- */
-const redirectUrlRegex =
-  /^(?:\{\{[^}]*\}\}.*|(?!mailto:)(?:https?:\/\/[^\s/$.?#][^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)|\/[^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)$/;
-
 const redirectZodSchema = z.object({
-  url: z.string().regex(redirectUrlRegex),
+  url: z.string().regex(IN_APP_REDIRECT_URL_REGEX),
   target: z.enum(['_self', '_blank', '_parent', '_top', '_unfencedTop']),
 });
 
@@ -39,7 +20,7 @@ const actionZodSchema = z
 const commonInAppProperties = {
   skip: skipZodSchema,
   disableOutputSanitization: z.boolean().optional(),
-  avatar: z.string().regex(redirectUrlRegex).optional(),
+  avatar: z.string().regex(IN_APP_REDIRECT_URL_REGEX).optional(),
   primaryAction: actionZodSchema,
   secondaryAction: actionZodSchema,
   data: z.object({}).catchall(z.unknown()).optional(),

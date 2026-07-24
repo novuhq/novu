@@ -1,6 +1,10 @@
+import type { ResourceLimitSource } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { NovuApiError } from '@/api/api.client';
+import { ApexDomainMxWarning } from '@/components/domains/apex-domain-mx-warning';
+import { DomainLimitDialog } from '@/components/domains/domain-limit-dialog';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
@@ -16,6 +20,7 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateDomain } from '@/hooks/use-domains';
+import { DOMAIN_NAME_PATTERN, isApexInboundDomain } from '@/utils/inbound-domain';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 type AddDomainFormData = {
@@ -29,26 +34,62 @@ type AddDomainDialogProps = {
 
 const DEFAULT_PLACEHOLDER = 'inbound.acme.com';
 
+type DomainLimitError = {
+  limit: number;
+  limitSource: ResourceLimitSource;
+};
+
+/**
+ * Maps a create-domain API rejection to the limit dialog:
+ *   - 402 → plan limit (upgrade lifts it);
+ *   - 409 with a `limit` payload → system cap (contact the Novu team).
+ * Other errors (e.g. 409 "domain already exists") fall through to a toast.
+ */
+function parseDomainLimitError(err: unknown): DomainLimitError | null {
+  if (!(err instanceof NovuApiError)) {
+    return null;
+  }
+
+  const rawLimit = (err.rawError as { limit?: number } | undefined)?.limit;
+
+  if (typeof rawLimit !== 'number') {
+    return null;
+  }
+
+  if (err.status === 402) {
+    return { limit: rawLimit, limitSource: 'plan' };
+  }
+
+  if (err.status === 409) {
+    return { limit: rawLimit, limitSource: 'system' };
+  }
+
+  return null;
+}
+
 export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
   const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
   const createDomain = useCreateDomain();
   const [isPending, setIsPending] = useState(false);
+  const [limitError, setLimitError] = useState<DomainLimitError | null>(null);
 
   const domainPlaceholder = useMemo(() => {
     const emailDomain = currentUser?.email?.split('@')[1];
 
-    if (!emailDomain) {
+    if (!emailDomain || ['gmail.com', 'yahoo.com', 'hotmail.com'].includes(emailDomain)) {
       return DEFAULT_PLACEHOLDER;
     }
 
-    return emailDomain;
+    return 'inbound.' + emailDomain;
   }, [currentUser?.email]);
 
   const form = useForm<AddDomainFormData>({
     defaultValues: { name: '' },
   });
+  const domainName = form.watch('name');
+  const showApexDomainWarning = isApexInboundDomain(domainName);
 
   const onSubmit = async (data: AddDomainFormData) => {
     setIsPending(true);
@@ -66,12 +107,34 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
         );
       }
     } catch (err: unknown) {
+      const domainLimitError = parseDomainLimitError(err);
+
+      if (domainLimitError) {
+        onOpenChange(false);
+        setLimitError(domainLimitError);
+
+        return;
+      }
+
       const message = err instanceof Error ? err.message : 'Failed to create domain';
       showErrorToast(message);
     } finally {
       setIsPending(false);
     }
   };
+
+  if (limitError) {
+    return (
+      <DomainLimitDialog
+        open
+        onOpenChange={(dialogOpen) => {
+          if (!dialogOpen) setLimitError(null);
+        }}
+        limit={limitError.limit}
+        limitSource={limitError.limitSource}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,7 +153,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
               rules={{
                 required: 'Domain name is required',
                 pattern: {
-                  value: /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i,
+                  value: DOMAIN_NAME_PATTERN,
                   message: 'Enter a valid domain name (e.g. example.com)',
                 },
               }}
@@ -104,6 +167,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
                 </FormItem>
               )}
             />
+            {showApexDomainWarning && <ApexDomainMxWarning />}
             <DialogFooter>
               <Button type="submit" disabled={isPending}>
                 {isPending ? 'Setting up...' : 'Setup domain'}

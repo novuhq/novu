@@ -14,9 +14,9 @@ export const useCreateEnvironmentVariable = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: CreateEnvironmentVariableDto) => createEnvironmentVariable(args),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchEnvironmentVariables] });
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

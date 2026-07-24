@@ -6,7 +6,11 @@ export interface IHandler {
 
   getMessageId: (body: unknown | unknown[]) => string[];
 
-  parseEventBody: (body: unknown | unknown[], identifier: string) => IEmailEventBody | ISMSEventBody | undefined;
+  parseEventBody: (
+    body: unknown | unknown[],
+    identifier: string,
+    eventIndex?: number
+  ) => IEmailEventBody | ISMSEventBody | undefined;
 
   verifySignature: ({
     body,
@@ -55,12 +59,16 @@ export abstract class BaseHandler<T extends ChannelProvider = ChannelProvider> i
     return this.provider.getMessageId(body);
   }
 
-  public parseEventBody(body: unknown | unknown[], identifier: string): IEmailEventBody | ISMSEventBody | undefined {
+  public parseEventBody(
+    body: unknown | unknown[],
+    identifier: string,
+    eventIndex?: number
+  ): IEmailEventBody | ISMSEventBody | undefined {
     if (!this.provider?.parseEventBody) {
       return undefined;
     }
 
-    const result = this.provider.parseEventBody(body, identifier);
+    const result = this.provider.parseEventBody(body, identifier, eventIndex);
 
     return result && typeof result === 'object' ? (result as IEmailEventBody | ISMSEventBody) : undefined;
   }

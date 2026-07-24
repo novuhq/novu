@@ -23,6 +23,7 @@ import {
   DetailsSidebarRow,
   ExpandableDetailsTextarea,
 } from '@/components/details-sidebar';
+import { DomainDnsRecords } from '@/components/domains/domain-dns-records';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
 import { PageMeta } from '@/components/page-meta';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
@@ -37,7 +38,6 @@ import {
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CollapsibleSection } from '@/components/primitives/collapsible-section';
-import { CopyButton } from '@/components/primitives/copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,8 +48,6 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { LoadingIndicator } from '@/components/primitives/loading-indicator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
 import {
@@ -102,15 +100,6 @@ function DomainStatusBadge({ status }: { status: DomainStatusEnum }) {
     <Badge variant="lighter" color={isVerified ? 'green' : 'orange'} size="md">
       <AnimatedBadgeDot color={isVerified ? 'green' : 'orange'} size="md" variant="lighter" />
       {isVerified ? 'Verified' : 'Pending verification'}
-    </Badge>
-  );
-}
-
-function MxRecordStatusBadge({ configured }: { configured: boolean }) {
-  return (
-    <Badge variant="lighter" color={configured ? 'green' : 'orange'} size="md">
-      <AnimatedBadgeDot color={configured ? 'green' : 'orange'} size="md" variant="lighter" />
-      {configured ? 'Verified' : 'Pending'}
     </Badge>
   );
 }
@@ -551,7 +540,7 @@ export function DomainDetailPage() {
                       (!hasSubmittedDomainConnectReturn || hasDomainConnectFailure) && (
                         <AutoConfigureButton
                           providerName={domainConnectProviderName}
-                          providerSlug={domain?.dnsProvider}
+                          providerSlug={domain?.dnsProvider?.toLowerCase()}
                           isLoading={startDomainAutoConfigure.isPending}
                           disabled={!canWriteDomains || startDomainAutoConfigure.isPending}
                           onClick={handleAutoConfigure}
@@ -608,69 +597,7 @@ export function DomainDetailPage() {
                       <InlineToast variant="tip" title="Manual setup:" description={domainConnectStatus.reason} />
                     )}
 
-                  <p className="text-xs font-medium text-foreground-400">
-                    Add the following MX record at your DNS provider:
-                  </p>
-
-                  <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
-                    <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
-                      <TableRow>
-                        <TableHead className="h-8 px-3 text-label-xs w-[60px]">Type</TableHead>
-                        <TableHead className="h-8 px-3 text-label-xs">Name</TableHead>
-                        <TableHead className="h-8 px-3 text-label-xs">Content</TableHead>
-                        <TableHead className="h-8 px-3 text-label-xs w-[75px]">TTL</TableHead>
-                        <TableHead className="h-8 px-3 text-label-xs w-[75px]">Priority</TableHead>
-                        <TableHead className="h-8 px-3 text-label-xs w-[150px]">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <TableRow className="[&>td]:border-0">
-                          <TableCell colSpan={6} className="px-3 py-4">
-                            <Skeleton className="h-8 w-full" />
-                          </TableCell>
-                        </TableRow>
-                      ) : domain?.expectedDnsRecords?.length ? (
-                        domain.expectedDnsRecords.map((record, i) => (
-                          <TableRow key={i} className="[&>td]:border-0">
-                            <TableCell className="font-code text-code-xs text-text-sub px-3 py-4">
-                              {record.type}
-                            </TableCell>
-                            <TableCell className="font-code text-code-xs text-text-sub px-3 py-4">
-                              <span className="inline-flex max-w-full items-center gap-1">
-                                <span className="truncate">{record.name}</span>
-                                <CopyButton valueToCopy={record.name} size="2xs" />
-                              </span>
-                            </TableCell>
-                            <TableCell className="max-w-[200px] truncate font-code text-code-xs text-text-sub px-3 py-4">
-                              <span className="inline-flex max-w-full items-center gap-1">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="block truncate">{record.content}</span>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="max-w-sm break-all font-code text-code-xs">
-                                    {record.content}
-                                  </TooltipContent>
-                                </Tooltip>
-                                <CopyButton valueToCopy={record.content} size="2xs" />
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.ttl}</TableCell>
-                            <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.priority}</TableCell>
-                            <TableCell className="px-3 py-4">
-                              <MxRecordStatusBadge configured={domain.mxRecordConfigured} />
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow className="[&>td]:border-0">
-                          <TableCell colSpan={6} className="text-text-soft px-3 py-4 text-center text-label-xs">
-                            No DNS records available.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <DomainDnsRecords domain={domain} isLoading={isLoading} />
                 </div>
               </CollapsibleSection>
 
@@ -759,7 +686,9 @@ type AutoConfigureButtonProps = {
 
 function AutoConfigureButton({ providerName, providerSlug, isLoading, disabled, onClick }: AutoConfigureButtonProps) {
   const ProviderIcon = getProviderIcon(providerSlug);
-  const isCloudflare = providerSlug?.toLowerCase() === 'cloudflare';
+  const normalizedProviderSlug = providerSlug?.toLowerCase();
+  const isCloudflare = normalizedProviderSlug === 'cloudflare';
+  const isVercel = normalizedProviderSlug === 'vercel';
 
   return (
     <button
@@ -771,7 +700,12 @@ function AutoConfigureButton({ providerName, providerSlug, isLoading, disabled, 
     >
       {ProviderIcon && (
         <ProviderIcon
-          className={cn('size-4 shrink-0', isCloudflare ? 'text-[#f38020]' : 'text-text-strong')}
+          className={cn(
+            'size-4 shrink-0',
+            isCloudflare && 'text-[#f38020]',
+            isVercel && 'text-foreground-950',
+            !isCloudflare && !isVercel && 'text-text-strong'
+          )}
           aria-hidden
         />
       )}

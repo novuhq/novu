@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { Novu } from '@novu/api';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -15,6 +16,7 @@ describe('Domain Auto-Configure API - /v1/domains/:domain/auto-configure #novu-v
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
     novuClient = initNovuClassSdkInternalAuth(session);
   });
 

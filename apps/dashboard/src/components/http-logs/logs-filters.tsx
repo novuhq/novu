@@ -1,4 +1,4 @@
-import { useOrganization } from '@clerk/clerk-react';
+import { useOrganization } from '@clerk/react';
 import { CalendarIcon } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -10,14 +10,20 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import type { LogsFilters } from '@/hooks/use-logs-url-state';
 import { buildLogsDateFilters } from '@/utils/logs-filters.utils';
 import { ROUTES } from '@/utils/routes';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_CLOUD } from '../../config';
 
 interface RequestsFiltersProps {
   filters: LogsFilters;
   onFiltersChange: (filters: LogsFilters) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
+  showSourceFilter?: boolean;
 }
+
+const SOURCE_OPTIONS = [
+  { label: 'HTTP', value: 'http' },
+  { label: 'Inbound email', value: 'inbound_email' },
+];
 
 const STATUS_OPTIONS = [
   { label: '200 OK', value: '200' },
@@ -60,7 +66,13 @@ const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
   );
 };
 
-export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasActiveFilters }: RequestsFiltersProps) {
+export function RequestsFilters({
+  filters,
+  onFiltersChange,
+  onClearFilters,
+  hasActiveFilters,
+  showSourceFilter = false,
+}: RequestsFiltersProps) {
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
 
@@ -73,7 +85,7 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
   }, [filters, form]);
 
   const maxLogsRetentionOptions = useMemo(() => {
-    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+    const missingSubscription = !subscription && IS_CLOUD;
 
     if (!organization || missingSubscription) {
       return [];
@@ -95,6 +107,7 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
       transactionId: form.getValues('transactionId'),
       urlPattern: form.getValues('urlPattern'),
       createdGte: form.getValues('createdGte'),
+      source: form.getValues('source'),
     });
   };
 
@@ -105,6 +118,7 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
       transactionId: value,
       urlPattern: form.getValues('urlPattern'),
       createdGte: form.getValues('createdGte'),
+      source: form.getValues('source'),
     });
   };
 
@@ -116,6 +130,7 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
       transactionId: form.getValues('transactionId'),
       urlPattern: form.getValues('urlPattern'),
       createdGte: selectedCreatedGte,
+      source: form.getValues('source'),
     });
   };
 
@@ -127,6 +142,19 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
       transactionId: form.getValues('transactionId'),
       urlPattern: selectedUrlPattern || '',
       createdGte: form.getValues('createdGte'),
+      source: form.getValues('source'),
+    });
+  };
+
+  const handleSourceChange = (values: string[]) => {
+    const selectedSource = values[0] || ''; // Single selection
+    form.setValue('source', selectedSource);
+    onFiltersChange({
+      status: form.getValues('status'),
+      transactionId: form.getValues('transactionId'),
+      urlPattern: form.getValues('urlPattern'),
+      createdGte: form.getValues('createdGte'),
+      source: selectedSource,
     });
   };
 
@@ -170,6 +198,17 @@ export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasA
         selected={filters.urlPattern ? [filters.urlPattern] : []}
         onSelect={handleUrlPatternChange}
       />
+      {showSourceFilter && (
+        <FacetedFormFilter
+          size="small"
+          type="single"
+          title="Type"
+          placeholder="Filter by type"
+          options={SOURCE_OPTIONS}
+          selected={filters.source ? [filters.source] : []}
+          onSelect={handleSourceChange}
+        />
+      )}
       {hasActiveFilters && (
         <button onClick={onClearFilters} className="text-foreground-600 hover:text-foreground-950 text-sm font-medium">
           Clear filters

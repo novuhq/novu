@@ -10,11 +10,13 @@ import {
   HttpRequestOptions,
   InstrumentUsecase,
   KeyValuePair,
+  enhanceStepsMap,
   resolveHttpRequestBody,
   SsrfBlockedError,
   shouldIncludeBody,
 } from '@novu/application-generic';
-import { createLiquidEngine } from '@novu/framework/internal';
+import { createLiquidEngine, compileJsonControlValues, repairJsonString } from '@novu/framework/internal';
+import { isOutboundSsrfProtectionEnabled } from '@novu/shared';
 import { Liquid } from 'liquidjs';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
@@ -64,6 +66,8 @@ export class TestHttpEndpointUsecase {
     const method = (compiled.method as string) ?? 'GET';
     const compiledHeaders = (compiled.headers as KeyValuePair[]) ?? [];
     const compiledBody = compiled.body as string | KeyValuePair[] | undefined;
+    const resolvedBodyInput =
+      typeof compiledBody === 'string' && compiledBody.trim() ? repairJsonString(compiledBody) : compiledBody;
 
     const resolvedHeaders: Record<string, string> = Object.fromEntries(
       compiledHeaders.filter(({ key }) => key).map(({ key, value }) => [key, value])
@@ -73,7 +77,7 @@ export class TestHttpEndpointUsecase {
 
     let resolvedBody: Record<string, unknown> | unknown[] | undefined;
     try {
-      resolvedBody = resolveHttpRequestBody(compiledBody);
+      resolvedBody = resolveHttpRequestBody(resolvedBodyInput);
     } catch (parseError) {
       const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
 
@@ -128,7 +132,7 @@ export class TestHttpEndpointUsecase {
         ...(hasBody ? { body: resolvedBody } : {}),
         timeout: 30_000,
         responseType: 'text',
-        enforceSsrfProtection: true,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
       });
       const durationMs = Math.round(performance.now() - startTime);
 
@@ -180,7 +184,7 @@ export class TestHttpEndpointUsecase {
     return {
       subscriber: previewPayload.subscriber ?? {},
       payload: previewPayload.payload ?? {},
-      steps: previewPayload.steps ?? {},
+      steps: enhanceStepsMap((previewPayload.steps ?? {}) as Record<string, Record<string, unknown>>),
       env: previewPayload.env ?? {},
       ...(previewPayload.context ? { context: previewPayload.context } : {}),
     };
@@ -190,13 +194,7 @@ export class TestHttpEndpointUsecase {
     values: Record<string, unknown>,
     context: Record<string, unknown>
   ): Promise<unknown> {
-    const compiled = await this.liquidEngine.parseAndRender(JSON.stringify(values), context);
-
-    try {
-      return JSON.parse(compiled);
-    } catch {
-      throw new Error('Rendered template output is not valid JSON');
-    }
+    return compileJsonControlValues(values, context, this.liquidEngine);
   }
 }
 

@@ -7,3 +7,4 @@ export * from './layout-control.schema';
 export * from './push-control.schema';
 export * from './sms-control.schema';
 export * from './throttle-control.schema';
+export * from './tool-control.schema';

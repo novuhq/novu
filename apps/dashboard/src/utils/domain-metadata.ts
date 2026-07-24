@@ -1,9 +1,7 @@
 const MAX_METADATA_KEYS = 10;
 const MAX_METADATA_TOTAL_CHARS = 500;
 
-export type ParseDomainMetadataResult =
-  | { ok: true; data: Record<string, string> }
-  | { ok: false; message: string };
+export type ParseDomainMetadataResult = { ok: true; data: Record<string, string> } | { ok: false; message: string };
 
 export function parseDomainMetadataJson(raw: string): ParseDomainMetadataResult {
   const trimmed = raw.trim();

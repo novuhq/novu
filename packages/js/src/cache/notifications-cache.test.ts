@@ -46,6 +46,7 @@ describe('NotificationsCache', () => {
           severity: SeverityLevelEnum.NONE,
         },
         severity: SeverityLevelEnum.NONE,
+        tags: ['tag1'],
       },
       mockEmitter,
       mockInboxService
@@ -71,6 +72,7 @@ describe('NotificationsCache', () => {
           severity: SeverityLevelEnum.NONE,
         },
         severity: SeverityLevelEnum.NONE,
+        tags: ['tag1'],
       },
       mockEmitter,
       mockInboxService
@@ -81,8 +83,63 @@ describe('NotificationsCache', () => {
     jest.clearAllMocks();
   });
 
+  it('should normalize plain notification objects when storing in cache', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+    const plainNotification = {
+      id: '1',
+      transactionId: 'tx-1',
+      body: 'test1',
+      isRead: false,
+      isArchived: false,
+      isSeen: false,
+      isSnoozed: false,
+      to: { id: '1', subscriberId: '1' },
+      createdAt: new Date().toISOString(),
+      channelType: ChannelType.IN_APP,
+      workflow: {
+        id: 'test-workflow-1',
+        critical: true,
+        identifier: 'test-workflow-1',
+        name: 'Test Workflow 1',
+        tags: ['tag1'],
+        severity: SeverityLevelEnum.NONE,
+      },
+      severity: SeverityLevelEnum.NONE,
+    };
+    const data = {
+      hasMore: false,
+      filter: {},
+      notifications: [plainNotification],
+    };
+
+    notificationsCache.set(args, data as unknown as ListNotificationsResponse);
+    const result = notificationsCache.getAll(args);
+
+    expect(result?.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result?.notifications[0].read).toBe('function');
+  });
+
+  it('should normalize plain notification objects when updating cache', () => {
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const plainNotification = {
+      ...notification1,
+      body: 'Updated Notification',
+    };
+    const data: ListNotificationsResponse = { hasMore: false, filter: {}, notifications: [notification1] };
+
+    notificationsCache.set(args, data);
+    (notificationsCache as any).handleNotificationEvent()({ data: plainNotification });
+
+    const result = notificationsCache.getAll(args);
+
+    expect(result?.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result?.notifications[0].read).toBe('function');
+    expect(result?.notifications[0].body).toBe('Updated Notification');
+  });
+
   it('should set and get notifications from the cache', () => {
     const args = { tags: ['tag1'], limit: 10, offset: 0 };
+    const filter = { tags: ['tag1'] };
     const data = {
       hasMore: false,
       filter: {},
@@ -92,7 +149,11 @@ describe('NotificationsCache', () => {
     notificationsCache.set(args, data);
     const result = notificationsCache.getAll(args);
 
-    expect(result).toEqual(data);
+    expect(result).toEqual({
+      hasMore: false,
+      filter,
+      notifications: [notification1],
+    });
   });
 
   it('should clear specific filter from the cache', () => {
@@ -128,7 +189,11 @@ describe('NotificationsCache', () => {
     const result1 = notificationsCache.getAll(args1);
     expect(result1).toBeUndefined();
     const result2 = notificationsCache.getAll(args2);
-    expect(result2).toEqual(data);
+    expect(result2).toEqual({
+      hasMore: false,
+      filter: { tags: ['newsletter'] },
+      notifications: [notification1],
+    });
   });
 
   it('should clear all caches', () => {
@@ -217,14 +282,88 @@ describe('NotificationsCache', () => {
     expect(result).toEqual([notification2]);
   });
 
+  it('should remove notification from read:false bucket when marked as read', () => {
+    const filter = { tags: ['tag1'], read: false, archived: false };
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, ...filter };
+    const readNotification = new Notification(
+      { ...notification1, isRead: true, readAt: new Date().toISOString() },
+      mockEmitter,
+      mockInboxService
+    );
+    const data: ListNotificationsResponse = {
+      hasMore: false,
+      filter,
+      notifications: [notification1, notification2],
+    };
+
+    notificationsCache.set(args, data);
+    (notificationsCache as any).handleNotificationEvent()({ data: readNotification });
+
+    expect(mockEmitter.emit).toHaveBeenCalledWith('notifications.list.updated', {
+      data: {
+        hasMore: false,
+        filter,
+        notifications: [notification2],
+      },
+    });
+  });
+
+  it('should deduplicate notifications across cache keys with the same filter and different limits', () => {
+    const filter = { tags: ['tag1'], read: false, archived: false };
+    const args1: ListNotificationsArgs = { limit: 10, offset: 0, ...filter };
+    const args2: ListNotificationsArgs = { limit: 20, offset: 0, ...filter };
+
+    notificationsCache.set(args1, {
+      hasMore: false,
+      filter,
+      notifications: [notification1, notification2],
+    });
+    notificationsCache.set(args2, {
+      hasMore: false,
+      filter,
+      notifications: [notification1, notification2],
+    });
+
+    const result = notificationsCache.getAll(args1);
+
+    expect(result?.notifications).toEqual([notification1, notification2]);
+  });
+
+  it('should remove notification from seen:false bucket when marked as seen', () => {
+    const filter = { tags: ['tag1'], seen: false, archived: false };
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, ...filter };
+    const seenNotification = new Notification(
+      { ...notification1, isSeen: true, firstSeenAt: new Date().toISOString() },
+      mockEmitter,
+      mockInboxService
+    );
+    const data: ListNotificationsResponse = {
+      hasMore: false,
+      filter,
+      notifications: [notification1, notification2],
+    };
+
+    notificationsCache.set(args, data);
+    (notificationsCache as any).handleNotificationEvent()({ data: seenNotification });
+
+    expect(mockEmitter.emit).toHaveBeenCalledWith('notifications.list.updated', {
+      data: {
+        hasMore: false,
+        filter,
+        notifications: [notification2],
+      },
+    });
+  });
+
   it('should update notification and emit single event', () => {
-    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const filter = { tags: ['tag1'], read: false, archived: false };
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, ...filter };
     const updatedNotification = new Notification(
       { ...notification1, body: 'Updated Notification' },
       mockEmitter,
       mockInboxService
     );
-    const data: ListNotificationsResponse = { hasMore: false, filter: {}, notifications: [notification1] };
+    const data: ListNotificationsResponse = { hasMore: false, filter, notifications: [notification1] };
 
     notificationsCache.set(args, data);
     (notificationsCache as any).handleNotificationEvent()({ data: updatedNotification });
@@ -232,20 +371,21 @@ describe('NotificationsCache', () => {
     expect(mockEmitter.emit).toHaveBeenCalledWith('notifications.list.updated', {
       data: {
         hasMore: false,
-        filter: {},
+        filter,
         notifications: [updatedNotification],
       },
     });
   });
 
   it('should remove notification and emit single event', () => {
-    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const filter = { tags: ['tag1'], read: false, archived: false };
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, ...filter };
     const updatedNotification = new Notification(
       { ...notification1, body: 'Updated Notification' },
       mockEmitter,
       mockInboxService
     );
-    const data: ListNotificationsResponse = { hasMore: false, filter: {}, notifications: [notification1] };
+    const data: ListNotificationsResponse = { hasMore: false, filter, notifications: [notification1] };
 
     notificationsCache.set(args, data);
     (notificationsCache as any).handleNotificationEvent({ remove: true })({ data: updatedNotification });
@@ -253,7 +393,7 @@ describe('NotificationsCache', () => {
     expect(mockEmitter.emit).toHaveBeenCalledWith('notifications.list.updated', {
       data: {
         hasMore: false,
-        filter: {},
+        filter,
         notifications: [],
       },
     });
@@ -286,7 +426,7 @@ describe('NotificationsCache', () => {
       data: {
         hasMore: false,
         filter: filter2,
-        notifications: [updatedNotification, notification2],
+        notifications: [notification2],
       },
     });
   });
@@ -324,7 +464,8 @@ describe('NotificationsCache', () => {
   });
 
   it('should update multiple notifications and emit single event', () => {
-    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const filter = { tags: ['tag1'], read: false, archived: false };
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, ...filter };
     const updatedNotification1 = new Notification(
       { ...notification1, body: 'Updated Notification' },
       mockEmitter,
@@ -337,7 +478,7 @@ describe('NotificationsCache', () => {
     );
     const data: ListNotificationsResponse = {
       hasMore: false,
-      filter: {},
+      filter,
       notifications: [notification1, notification2],
     };
 
@@ -349,14 +490,15 @@ describe('NotificationsCache', () => {
     expect(mockEmitter.emit).toHaveBeenCalledWith('notifications.list.updated', {
       data: {
         hasMore: false,
-        filter: {},
+        filter,
         notifications: [updatedNotification1, updatedNotification2],
       },
     });
   });
 
   it('should remove multiple notifications and emit single event', () => {
-    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const filter = { tags: ['tag1'], read: false, archived: false };
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, ...filter };
     const updatedNotification1 = new Notification(
       { ...notification1, body: 'Updated Notification' },
       mockEmitter,
@@ -370,7 +512,7 @@ describe('NotificationsCache', () => {
     const notification3 = new Notification({ ...notification1, id: '3' }, mockEmitter, mockInboxService);
     const data: ListNotificationsResponse = {
       hasMore: false,
-      filter: {},
+      filter,
       notifications: [notification1, notification2, notification3],
     };
 
@@ -382,7 +524,7 @@ describe('NotificationsCache', () => {
     expect(mockEmitter.emit).toHaveBeenCalledWith('notifications.list.updated', {
       data: {
         hasMore: false,
-        filter: {},
+        filter,
         notifications: [notification3],
       },
     });
@@ -398,8 +540,13 @@ describe('NotificationsCache', () => {
       mockEmitter,
       mockInboxService
     );
+    const notification2Tag2 = new Notification(
+      { ...notification2, tags: ['tag2'], workflow: { ...notification2.workflow!, tags: ['tag2'] } },
+      mockEmitter,
+      mockInboxService
+    );
     const updatedNotification2 = new Notification(
-      { ...notification2, body: 'Updated Notification' },
+      { ...notification2Tag2, body: 'Updated Notification' },
       mockEmitter,
       mockInboxService
     );
@@ -412,7 +559,7 @@ describe('NotificationsCache', () => {
     notificationsCache.set(args2, {
       hasMore: false,
       filter: filter2,
-      notifications: [notification2],
+      notifications: [notification2Tag2],
     });
     (notificationsCache as any).handleNotificationEvent()({
       data: [updatedNotification1, updatedNotification2],
@@ -481,5 +628,67 @@ describe('NotificationsCache', () => {
         notifications: [notification3],
       },
     });
+  });
+
+  it('should dedupe notifications by id in unshift', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter: {},
+      notifications: [notification1],
+    });
+
+    notificationsCache.unshift(args, {
+      id: notification1.id,
+      transactionId: notification1.transactionId,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      isSeen: false,
+      isArchived: false,
+      isSnoozed: false,
+      channelType: ChannelType.IN_APP,
+      to: { subscriberId: '1' },
+      body: 'updated body',
+      subject: 'subject',
+      tags: [],
+      data: {},
+      severity: SeverityLevelEnum.NONE,
+    });
+
+    const result = notificationsCache.getAll(args);
+    expect(result?.notifications.length).toBe(1);
+    expect(result?.notifications[0].body).toBe('updated body');
+  });
+
+  it('should prepend new notification in unshift without duplicates', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter: {},
+      notifications: [notification1],
+    });
+
+    notificationsCache.unshift(args, {
+      id: 'new-id',
+      transactionId: 'tx-new',
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      isSeen: false,
+      isArchived: false,
+      isSnoozed: false,
+      channelType: ChannelType.IN_APP,
+      to: { subscriberId: '1' },
+      body: 'new body',
+      subject: 'subject',
+      tags: [],
+      data: {},
+      severity: SeverityLevelEnum.NONE,
+    });
+
+    const result = notificationsCache.getAll(args);
+    expect(result?.notifications.length).toBe(2);
+    expect(result?.notifications[0].id).toBe('new-id');
   });
 });

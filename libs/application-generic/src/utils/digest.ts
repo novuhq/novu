@@ -38,7 +38,9 @@ export function getJobDigest(job: JobEntity): {
 } {
   const digestMeta = job.digest as IDigestRegularMetadata | undefined;
   const digestKey = digestMeta?.digestKey;
-  const digestValue = getNestedValue(job.payload, digestKey);
+  // Prefer the digest value persisted on the job (payload-independent matching),
+  // falling back to the payload for legacy jobs that predate persisted metadata.
+  const digestValue = digestMeta?.digestValue ?? getNestedValue(job.payload, digestKey);
 
   return {
     digestKey,

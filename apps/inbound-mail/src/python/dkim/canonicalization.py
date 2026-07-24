@@ -41,7 +41,25 @@ def compress_whitespace(content):
 
 
 def strip_trailing_lines(content):
-    return re.sub(b"(\r\n)*$", b"\r\n", content)
+    # Not implemented with a regex: since Python 3.7, re.sub also replaces
+    # the empty match that follows a trailing "\r\n" match of
+    # b"(\r\n)*$", which appended a spurious extra CRLF and broke every
+    # DKIM body hash. Ported from upstream dkimpy.
+    end = None
+    while content.endswith(b"\r\n", 0, end):
+        if end is None:
+            end = -2
+        else:
+            end -= 2
+
+    if end is None:
+        return content + b"\r\n"
+
+    end += 2
+    if end == 0:
+        return content
+
+    return content[:end]
 
 
 def unfold_header_value(content):

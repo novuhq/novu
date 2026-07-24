@@ -59,8 +59,29 @@ export type CredentialsDto = {
   appIOBaseUrl?: string | undefined;
   signingSecret?: string | undefined;
   outboundIntegrationId?: string | undefined;
+  outboundConnectedAt?: string | undefined;
+  /**
+   * ISO timestamp marking Layer-2 What's next completion (Connected badge + guide hide). WhatsApp Business: stamped on post-connect Access Token rotation or manual confirm.
+   */
+  whatsNextCompletedAt?: string | undefined;
   useFromAddressOverride?: boolean | undefined;
   fromAddressOverride?: string | undefined;
+  /**
+   * Agent default shared inbox slug prefix used in `{emailSlugPrefix}-{agentId}@<shared-domain>`. Only meaningful on the NovuAgent email integration.
+   */
+  emailSlugPrefix?: string | undefined;
+  /**
+   * Claude Managed Agents: ID of the Anthropic environment tied to this integration. Hydrated by the API at integration provisioning time.
+   */
+  externalEnvironmentId?: string | undefined;
+  /**
+   * Claude Managed Agents: ID of the Anthropic vault (`vlt_…`) tied to this integration. Hydrated by the API at integration provisioning time and used to push OAuth-completed MCP credentials to the per-vault credentials API.
+   */
+  externalVaultId?: string | undefined;
+  /**
+   * Claude Managed Agents: id of the Anthropic workspace used in console deep links. Defaults to `'default'` (the Default Workspace). Set this when the API key is scoped to a custom workspace (e.g. `wrkspc_…`).
+   */
+  externalWorkspaceId?: string | undefined;
 };
 
 /** @internal */
@@ -146,8 +167,14 @@ export const CredentialsDto$inboundSchema: z.ZodType<
   AppIOBaseUrl: z.string().optional(),
   signingSecret: z.string().optional(),
   outboundIntegrationId: z.string().optional(),
+  outboundConnectedAt: z.string().optional(),
+  whatsNextCompletedAt: z.string().optional(),
   useFromAddressOverride: z.boolean().optional(),
   fromAddressOverride: z.string().optional(),
+  emailSlugPrefix: z.string().optional(),
+  externalEnvironmentId: z.string().optional(),
+  externalVaultId: z.string().optional(),
+  externalWorkspaceId: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     "AppIOBaseUrl": "appIOBaseUrl",
@@ -203,8 +230,14 @@ export type CredentialsDto$Outbound = {
   AppIOBaseUrl?: string | undefined;
   signingSecret?: string | undefined;
   outboundIntegrationId?: string | undefined;
+  outboundConnectedAt?: string | undefined;
+  whatsNextCompletedAt?: string | undefined;
   useFromAddressOverride?: boolean | undefined;
   fromAddressOverride?: string | undefined;
+  emailSlugPrefix?: string | undefined;
+  externalEnvironmentId?: string | undefined;
+  externalVaultId?: string | undefined;
+  externalWorkspaceId?: string | undefined;
 };
 
 /** @internal */
@@ -261,8 +294,14 @@ export const CredentialsDto$outboundSchema: z.ZodType<
   appIOBaseUrl: z.string().optional(),
   signingSecret: z.string().optional(),
   outboundIntegrationId: z.string().optional(),
+  outboundConnectedAt: z.string().optional(),
+  whatsNextCompletedAt: z.string().optional(),
   useFromAddressOverride: z.boolean().optional(),
   fromAddressOverride: z.string().optional(),
+  emailSlugPrefix: z.string().optional(),
+  externalEnvironmentId: z.string().optional(),
+  externalVaultId: z.string().optional(),
+  externalWorkspaceId: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
     appIOBaseUrl: "AppIOBaseUrl",

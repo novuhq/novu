@@ -1,4 +1,8 @@
-export function TrustedCompanies() {
+type TrustedCompaniesProps = {
+  label?: string;
+};
+
+export function TrustedCompanies({ label = 'TRUSTED BY' }: TrustedCompaniesProps) {
   return (
     <div className="inline-flex h-[87px] w-[365px] flex-col items-center justify-center gap-[19px]">
       <div className="inline-flex h-[18px] items-center justify-center self-stretch">
@@ -6,7 +10,7 @@ export function TrustedCompanies() {
         <div className="inline-flex flex-col items-start justify-start px-4">
           <div className="flex flex-col items-center justify-start">
             <div className="text-center text-[10px] font-normal leading-[18px] tracking-wider text-[#99a0ad]">
-              TRUSTED BY
+              {label}
             </div>
           </div>
         </div>

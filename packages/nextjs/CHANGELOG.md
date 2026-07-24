@@ -1,3 +1,27 @@
+## v3.18.1 (2026-07-23)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
+## v3.18.0 (2026-07-08)
+
+### 🚀 Features
+
+- **js, react, api-service:** add Telegram connect button (SDK peer to Slack/MS Teams) ([#11661](https://github.com/novuhq/novu/pull/11661))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
+## v3.17.0 (2026-06-01)
+
+### 🚀 Features
+
+- **js,react,api-service:** implement MS Teams connect and link-user components ([#10870](https://github.com/novuhq/novu/pull/10870))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.16.0 (2026-04-27)
 
 ### 🚀 Features

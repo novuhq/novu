@@ -15,6 +15,7 @@ export class GetActiveIntegrations {
         userId: command.userId,
         active: true,
         returnCredentials: command.returnCredentials,
+        scopeToEnvironment: command.scopeToEnvironment,
       })
     );
 

@@ -9,13 +9,19 @@ export const ROUTES = {
   SSO_SIGN_IN: '/auth/sso',
   VERIFY_EMAIL: '/auth/verify-email',
   USECASE_SELECT: '/onboarding/usecase',
-  AGENTS_USECASE: '/onboarding/agents',
   AGENTS_SETUP: '/onboarding/agents/setup',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',
   INBOX_EMBED_SUCCESS: '/onboarding/inbox/success',
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
+  /** Handshake target opened by `novu dev` with tunnel params (see pages/local-handshake.tsx). */
+  LOCAL_HANDSHAKE: '/local',
+  LOCAL_WORKFLOWS: '/env/:environmentSlug/local/workflows',
+  LOCAL_EDIT_WORKFLOW: '/env/:environmentSlug/local/workflows/:workflowSlug',
+  LOCAL_TRIGGER_WORKFLOW: '/env/:environmentSlug/local/workflows/:workflowSlug/trigger',
+  CLI_AUTH: '/cli/auth',
+  CONNECT_CLAIM: '/connect/claim',
   ENV: '/env',
   SETTINGS: '/settings',
   SETTINGS_ACCOUNT: '/settings/account',
@@ -82,16 +88,11 @@ export const ROUTES = {
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
-  DISPATCH_HOME: '/env/:environmentSlug/dispatch',
-  DISPATCH_AGENTS: '/env/:environmentSlug/dispatch/agents',
-  DISPATCH_AGENT_DETAILS: '/env/:environmentSlug/dispatch/agents/:agentIdentifier',
-  /** Must be registered before DISPATCH_AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
-  DISPATCH_AGENT_DETAILS_INTEGRATIONS_DETAIL:
-    '/env/:environmentSlug/dispatch/agents/:agentIdentifier/integrations/:integrationIdentifier',
-  DISPATCH_AGENT_DETAILS_TAB: '/env/:environmentSlug/dispatch/agents/:agentIdentifier/:agentTab',
-  DISPATCH_CONVERSATIONS: '/env/:environmentSlug/dispatch/conversations',
-  DISPATCH_API_KEYS: '/env/:environmentSlug/dispatch/api-keys',
-  DISPATCH_SETTINGS: '/env/:environmentSlug/dispatch/settings',
+  /** Public, tokenized Embedded Signup page opened by `npx novu connect` (keyless or authenticated). */
+  AGENT_WHATSAPP_SIGNUP: '/agents/whatsapp/connect/:token',
+  AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
+  AGENT_SLACK_SETUP: '/agents/slack/connect/:token',
+  INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';

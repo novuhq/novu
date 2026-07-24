@@ -1,7 +1,9 @@
-import { ChannelTypeEnum, EmailProviderIdEnum, providers as novuProviders } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum, providers as novuProviders } from '@novu/shared';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { useFetchIntegrations } from '../../../hooks/use-fetch-integrations';
 import { TableIntegration } from '../types';
 import { IntegrationChannelGroup } from './integration-channel-group';
@@ -81,14 +83,21 @@ function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsLi
 export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant = 'default' }: IntegrationsListProps) {
   const { currentEnvironment, environments } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const availableIntegrations = novuProviders;
 
   const groupedIntegrations = useMemo(() => {
     return integrations
       ?.filter((i) => i.providerId !== EmailProviderIdEnum.NovuAgent)
+      .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
       .reduce(
         (acc, integration) => {
-          const channel = integration.channel;
+          const { channel } = integration;
+
+          // Skip integrations without a channel (e.g. agent-runtime integrations).
+          if (!channel) {
+            return acc;
+          }
 
           if (!acc[channel]) {
             acc[channel] = [];
@@ -100,7 +109,7 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
         },
         {} as Record<ChannelTypeEnum, typeof integrations>
       );
-  }, [integrations]);
+  }, [integrations, isToolChannelEnabled]);
 
   if (isLoading || !currentEnvironment) {
     return (

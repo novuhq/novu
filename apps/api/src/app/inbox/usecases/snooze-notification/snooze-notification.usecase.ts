@@ -1,9 +1,17 @@
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AnalyticsService,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  getEffectiveJobPayload,
   PinoLogger,
   StandardQueueService,
 } from '@novu/application-generic';
@@ -13,6 +21,7 @@ import {
   JobRepository,
   MessageEntity,
   MessageRepository,
+  NotificationRepository,
   OrganizationEntity,
 } from '@novu/dal';
 import {
@@ -25,6 +34,7 @@ import {
   JobStatusEnum,
 } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
+import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
@@ -39,11 +49,13 @@ export class SnoozeNotification {
     private readonly logger: PinoLogger,
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository,
+    private notificationRepository: NotificationRepository,
     private standardQueueService: StandardQueueService,
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private markNotificationAs: MarkNotificationAs,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getSubscriber: GetSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -146,8 +158,18 @@ export class SnoozeNotification {
   }
 
   private async findNotification(command: SnoozeNotificationCommand): Promise<MessageEntity> {
+    const subscriber = await this.getSubscriber.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: command.subscriberId,
+    });
+    if (!subscriber) {
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
+    }
+
     const message = await this.messageRepository.findOne({
       _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.IN_APP,
       _id: command.notificationId,
       contextKeys: command.contextKeys,
@@ -170,6 +192,19 @@ export class SnoozeNotification {
       throw new InternalServerErrorException(`Job id: '${notification._jobId}' not found`);
     }
 
+    // The unsnooze job diverges from its notification (it carries the
+    // `unsnooze` flag), so under the all-or-nothing payload model it must store
+    // a complete payload copy. When the original job doesn't carry one
+    // (payload-dedup), resolve it from the parent notification first.
+    const parentNotification =
+      originalJob.payload == null
+        ? await this.notificationRepository.findOne(
+            { _id: originalJob._notificationId, _environmentId: originalJob._environmentId },
+            'payload'
+          )
+        : null;
+    const basePayload = getEffectiveJobPayload(originalJob, parentNotification) ?? {};
+
     const newJobData = {
       ...originalJob,
       transactionId: uuidv4(),
@@ -179,7 +214,7 @@ export class SnoozeNotification {
       _id: JobRepository.createObjectId(),
       _parentId: null,
       payload: {
-        ...originalJob.payload,
+        ...basePayload,
         unsnooze: true,
       },
     };

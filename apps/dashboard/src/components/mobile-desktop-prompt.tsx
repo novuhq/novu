@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiCloseLine, RiComputerLine, RiArrowRightLine } from 'react-icons/ri';
+import { RiArrowRightLine, RiCloseLine, RiComputerLine } from 'react-icons/ri';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { cn } from '@/utils/ui';
 
@@ -23,6 +23,10 @@ export function MobileDesktopPrompt() {
 
   if (isDismissed) return null;
 
+  const brandLabel = 'Novu';
+  const productCopy = "Novu's dashboard";
+  const desktopUrl = 'dashboard.novu.co';
+
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in fixed inset-x-0 bottom-0 z-[100] p-3 duration-500 md:hidden">
       <div
@@ -44,13 +48,13 @@ export function MobileDesktopPrompt() {
             <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500/10 to-purple-500/10">
               <LogoCircle className="size-5" />
             </div>
-            <span className="text-sm font-semibold text-neutral-900">Novu</span>
+            <span className="text-sm font-semibold text-neutral-900">{brandLabel}</span>
           </div>
 
           <div className="mb-4">
             <h3 className="mb-1.5 text-base font-semibold text-neutral-900">Best on desktop</h3>
             <p className="text-sm leading-relaxed text-neutral-500">
-              Novu's dashboard is designed for desktop screens. Switch to your computer for the full experience with
+              {productCopy} is designed for desktop screens. Switch to your computer for the full experience with
               workflow editing, code integration, and more.
             </p>
           </div>
@@ -61,7 +65,7 @@ export function MobileDesktopPrompt() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-neutral-800">Open on your computer</p>
-              <p className="truncate text-xs text-neutral-400">dashboard.novu.co</p>
+              <p className="truncate text-xs text-neutral-400">{desktopUrl}</p>
             </div>
             <RiArrowRightLine className="size-4 shrink-0 text-neutral-400" />
           </div>

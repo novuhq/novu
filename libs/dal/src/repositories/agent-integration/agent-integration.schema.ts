@@ -1,7 +1,29 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { FilterQuery, Query, Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { AgentIntegrationDBModel } from './agent-integration.entity';
+
+function referencesDisconnectedAt(filter: unknown): boolean {
+  if (!filter || typeof filter !== 'object') return false;
+
+  if (Array.isArray(filter)) {
+    return filter.some(referencesDisconnectedAt);
+  }
+
+  const filterQuery = filter as FilterQuery<AgentIntegrationDBModel>;
+
+  if ('disconnectedAt' in filterQuery) return true;
+
+  const nestedClauses = [...(filterQuery.$and ?? []), ...(filterQuery.$or ?? []), ...(filterQuery.$nor ?? [])];
+
+  return nestedClauses.some(referencesDisconnectedAt);
+}
+
+function excludeDisconnected(this: Query<unknown, AgentIntegrationDBModel>) {
+  if (!referencesDisconnectedAt(this.getFilter())) {
+    this.where({ disconnectedAt: null });
+  }
+}
 
 const agentIntegrationSchema = new Schema<AgentIntegrationDBModel>(
   {
@@ -26,9 +48,16 @@ const agentIntegrationSchema = new Schema<AgentIntegrationDBModel>(
       required: false,
       default: null,
     },
+    disconnectedAt: {
+      type: Date,
+      required: false,
+      default: null,
+    },
   },
   schemaOptions
 );
+
+agentIntegrationSchema.pre(['find', 'findOne', 'countDocuments'], excludeDisconnected);
 
 agentIntegrationSchema.index(
   {

@@ -1,7 +1,6 @@
 name: Rollback Deployment
 run-name: >
-  Rollback 
-  ${{
+  Rollback  ${{
     github.event.inputs.rollback_api == 'true' && 'api, ' || ''
   }}${{
     github.event.inputs.rollback_worker == 'true' && 'worker, ' || ''
@@ -58,13 +57,13 @@ on:
         default: true
 
       rollback_webhook:
-        description: "Rollback Webhook (staging / production-us / production-eu only)"
+        description: "Rollback Webhook"
         required: true
         type: boolean
         default: false
 
       rollback_inbound_mail:
-        description: "Rollback Inbound Mail (staging / production-us / production-eu only)"
+        description: "Rollback Inbound Mail"
         required: true
         type: boolean
         default: false
@@ -76,7 +75,9 @@ on:
         default: 1
 
       rollback_signoff:
-        description: "This will rollback the selected services to the previous task definition. This won't rollback any database migration or environment changes. Do you agree?"
+        description: "This will rollback the selected services to the previous task
+          definition. This won't rollback any database migration or environment
+          changes. Do you agree?"
         required: true
         type: choice
         default: "I do not agree"
@@ -94,24 +95,31 @@ jobs:
       rollback_matrix: ${{ steps.set-matrix.outputs.rollback_matrix }}
     steps:
       - name: Validate Selected Services
+        env:
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          INPUT_ROLLBACK_API: ${{ github.event.inputs.rollback_api }}
+          INPUT_ROLLBACK_WORKER: ${{ github.event.inputs.rollback_worker }}
+          INPUT_ROLLBACK_WS: ${{ github.event.inputs.rollback_ws }}
+          INPUT_ROLLBACK_WEBHOOK: ${{ github.event.inputs.rollback_webhook }}
+          INPUT_ROLLBACK_INBOUND_MAIL: ${{ github.event.inputs.rollback_inbound_mail }}
         run: |
-          if [ "${{ github.event.inputs.rollback_api }}" != "true" ] && \
-             [ "${{ github.event.inputs.rollback_worker }}" != "true" ] && \
-             [ "${{ github.event.inputs.rollback_ws }}" != "true" ] && \
-             [ "${{ github.event.inputs.rollback_webhook }}" != "true" ] && \
-             [ "${{ github.event.inputs.rollback_inbound_mail }}" != "true" ]; then
+          if [ "$INPUT_ROLLBACK_API" != "true" ] && \
+             [ "$INPUT_ROLLBACK_WORKER" != "true" ] && \
+             [ "$INPUT_ROLLBACK_WS" != "true" ] && \
+             [ "$INPUT_ROLLBACK_WEBHOOK" != "true" ] && \
+             [ "$INPUT_ROLLBACK_INBOUND_MAIL" != "true" ]; then
             echo "Error: At least one service must be selected for rollback."
             exit 1
           fi
 
           # webhook and inbound-mail only have infra in staging-eu, prod-us, prod-eu.
-          if [ "${{ github.event.inputs.rollback_webhook }}" = "true" ] || \
-             [ "${{ github.event.inputs.rollback_inbound_mail }}" = "true" ]; then
-            case "${{ github.event.inputs.environment }}" in
+          if [ "$INPUT_ROLLBACK_WEBHOOK" = "true" ] || \
+             [ "$INPUT_ROLLBACK_INBOUND_MAIL" = "true" ]; then
+            case "$INPUT_ENVIRONMENT" in
               staging|production-us|production-eu|production-us-and-eu) ;;
               *)
                 echo "Error: webhook and inbound-mail can only rollback in staging, production-us, production-eu, or production-us-and-eu."
-                echo "Selected environment: ${{ github.event.inputs.environment }}"
+                echo "Selected environment: $INPUT_ENVIRONMENT"
                 exit 1
                 ;;
             esac
@@ -122,44 +130,50 @@ jobs:
         env:
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE }}
           API_SERVICE: ${{ vars.API_SERVICE }}
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          INPUT_ROLLBACK_API: ${{ github.event.inputs.rollback_api }}
+          INPUT_ROLLBACK_WORKER: ${{ github.event.inputs.rollback_worker }}
+          INPUT_ROLLBACK_WS: ${{ github.event.inputs.rollback_ws }}
+          INPUT_ROLLBACK_WEBHOOK: ${{ github.event.inputs.rollback_webhook }}
+          INPUT_ROLLBACK_INBOUND_MAIL: ${{ github.event.inputs.rollback_inbound_mail }}
         run: |
           envs=()
           services=()
           rollback_matrix=()
 
           # Collect selected environments
-          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "staging" ]; then
             envs+=("\"staging-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "staging-sg" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "staging-sg" ]; then
             envs+=("\"staging-apse1\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-us" ]; then
             envs+=("\"prod-us\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-eu" ]; then
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-sg" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-sg" ]; then
             envs+=("\"prod-apse1\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-au" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-au" ]; then
             envs+=("\"prod-apse2\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-uk" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-uk" ]; then
             envs+=("\"prod-ew2\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-jp" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-jp" ]; then
             envs+=("\"prod-apne1\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-kr" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-kr" ]; then
             envs+=("\"prod-apne2\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-us-and-eu" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-us-and-eu" ]; then
             envs+=("\"prod-us\"")
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-sg-au-uk-jp-kr" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-sg-au-uk-jp-kr" ]; then
             envs+=("\"prod-apse1\"")
             envs+=("\"prod-apse2\"")
             envs+=("\"prod-ew2\"")
@@ -168,19 +182,19 @@ jobs:
           fi
 
           # Collect selected services
-          if [ "${{ github.event.inputs.rollback_api }}" == "true" ]; then
+          if [ "$INPUT_ROLLBACK_API" == "true" ]; then
             services+=("\"api\"")
           fi
-          if [ "${{ github.event.inputs.rollback_worker }}" == "true" ]; then
+          if [ "$INPUT_ROLLBACK_WORKER" == "true" ]; then
             services+=("\"worker\"")
           fi
-          if [ "${{ github.event.inputs.rollback_ws }}" == "true" ]; then
+          if [ "$INPUT_ROLLBACK_WS" == "true" ]; then
             services+=("\"ws\"")
           fi
-          if [ "${{ github.event.inputs.rollback_webhook }}" == "true" ]; then
+          if [ "$INPUT_ROLLBACK_WEBHOOK" == "true" ]; then
             services+=("\"webhook\"")
           fi
-          if [ "${{ github.event.inputs.rollback_inbound_mail }}" == "true" ]; then
+          if [ "$INPUT_ROLLBACK_INBOUND_MAIL" == "true" ]; then
             services+=("\"inbound-mail\"")
           fi
 
@@ -285,8 +299,11 @@ jobs:
           echo "rollback_matrix=$rollback_matrix" >> $GITHUB_OUTPUT
 
   rollback:
-    needs: [prepare-matrix]
+    needs: [ prepare-matrix ]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
         env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
@@ -296,11 +313,11 @@ jobs:
 
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-rollback-${{ github.run_id }}
 
       - name: ECS get output
         env:
@@ -308,8 +325,14 @@ jobs:
           CONTAINER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.container_name }}
           SERVICE_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
           CLUSTER_NAME: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
+          REVISIONS_TO_ROLLBACK: ${{ github.event.inputs.revisions_to_rollback }}
         id: ecs-output
         run: |
+          if ! [[ "$REVISIONS_TO_ROLLBACK" =~ ^[0-9]+$ ]]; then
+            echo "Error: revisions_to_rollback must be a positive integer, got: $REVISIONS_TO_ROLLBACK"
+            exit 1
+          fi
+
           echo "Retrieving current_task_definition_arn..."
           current_task_definition_arn=$(aws ecs describe-services --cluster ${CLUSTER_NAME} --services ${SERVICE_NAME} --query 'services[0].taskDefinition' --output text)
           echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
@@ -319,7 +342,7 @@ jobs:
           echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
 
           echo "Finding previous task definition..."
-          revisions_to_rollback=${{ github.event.inputs.revisions_to_rollback }}
+          revisions_to_rollback="$REVISIONS_TO_ROLLBACK"
           max_items=$((revisions_to_rollback + 10))  # Get a few extra to be safe
 
           # Get only the latest task definitions (limited number to avoid argument length issues)

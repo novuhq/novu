@@ -3,6 +3,8 @@
   "jest.enable": false,
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
+  "typescript.preferences.quoteStyle": "single",
+  "javascript.preferences.quoteStyle": "single",
   "editor.tabSize": 2,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
@@ -26,7 +28,6 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "files.exclude": {
-    "**/.source": true,
     "**/dist/**": true,
     "**/build/**": true,
     "**/*.map": true
@@ -38,5 +39,6 @@
   "vsicons.presets.nestjs": true,
   "biome.enabled": true,
   "biome.lsp.bin": "node_modules/.bin/biome",
-  "terminal.integrated.scrollback": 30000
+  "terminal.integrated.scrollback": 30000,
+  "git.detectSubmodules": true
 }

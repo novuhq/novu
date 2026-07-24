@@ -21,23 +21,41 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
-import type {
-  Agent,
-  AgentActionContext,
-  AgentBridgeRequest,
-  AgentMessageContext,
-  AgentReactionContext,
-  AgentResolveContext,
-  MessageContent,
-} from './resources/agent';
-import { AgentContextImpl, AgentDeliveryError, AgentEventEnum } from './resources/agent';
+import type { Agent } from './resources/agent';
+import type { AgentBridgeRequest } from './resources/agent/agent.types';
+import { dispatchAgentEvent } from './resources/agent/agent-dispatch';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
-import { createHmacSubtle, initApiClient } from './utils';
+import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';
+import { parseSignatureHeader } from './utils/bridge-signature';
 
 export interface ServeHandlerOptions {
   client?: Client;
   workflows?: Array<Workflow>;
   agents?: Array<Agent>;
+  /**
+   * Extends the lifetime of the request handler until the given promise settles.
+   *
+   * Agent events are acknowledged immediately while the turn (LLM calls, replies,
+   * tool use) continues in the background. On serverless platforms the runtime is
+   * frozen as soon as the response is sent, so the background work is silently
+   * dropped unless a platform `waitUntil` primitive is provided.
+   *
+   * The Next.js adapter (on Next.js >= 15.1) and the Hono adapter (on Cloudflare
+   * Workers) wire this automatically. Provide it explicitly for other serverless
+   * platforms, or to override the automatic detection.
+   *
+   * @example Cloudflare Workers (without Hono)
+   * ```ts
+   * export default {
+   *   async fetch(request, env, ctx) {
+   *     const handler = serve({ agents: [myAgent], waitUntil: (promise) => ctx.waitUntil(promise) });
+   *
+   *     return handler(request);
+   *   },
+   * };
+   * ```
+   */
+  waitUntil?: (promise: Promise<unknown>) => void;
 }
 
 export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
@@ -76,6 +94,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private readonly http;
   private readonly workflows: Array<Workflow>;
   private readonly agents: Array<Agent>;
+  private readonly waitUntil?: (promise: Promise<unknown>) => void;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
@@ -85,6 +104,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     this.http = initApiClient(this.client.secretKey, this.client.apiUrl);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
+    this.waitUntil = options.waitUntil;
     this.client.addAgents(this.agents);
   }
 
@@ -170,7 +190,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         action,
         agentId,
         agentEvent,
-        actions.waitUntil
+        // An explicitly provided `waitUntil` overrides the adapter's automatic detection.
+        this.waitUntil ?? actions.waitUntil
       );
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
@@ -231,23 +252,54 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           return this.createResponse(HttpStatusEnum.NOT_FOUND, { error: `Agent '${agentId}' not registered` });
         }
 
-        const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
-
-        const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
-          if (err instanceof AgentDeliveryError) {
-            console.error(`[agent:${agentId}] ${err.message}`);
-          } else {
-            console.error(`[agent:${agentId}] Handler error:`, err);
-          }
+        const handlerPromise = dispatchAgentEvent({
+          agent: registeredAgent,
+          event: agentEvent,
+          bridge: body as AgentBridgeRequest,
+          secretKey: this.client.secretKey,
+          logger: this.client.logger,
         });
 
         if (waitUntil) {
           waitUntil(handlerPromise);
+        } else {
+          this.warnOnUnprotectedServerlessRuntime(agentId);
         }
 
         return this.createResponse(HttpStatusEnum.OK, { status: 'ack' });
       },
     };
+  }
+
+  /**
+   * Agent events are acknowledged immediately and the turn continues in the
+   * background. On serverless platforms the runtime freezes once the response
+   * is sent, so without a `waitUntil` primitive the turn is silently dropped
+   * mid-flight. Detecting the known freeze-prone platforms lets us surface an
+   * actionable warning instead of logs that just stop with no error.
+   */
+  private warnOnUnprotectedServerlessRuntime(agentId: string): void {
+    let detectedPlatform: string | undefined;
+
+    try {
+      if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
+        detectedPlatform = 'AWS Lambda';
+      } else if (process.env.VERCEL) {
+        detectedPlatform = 'Vercel';
+      }
+    } catch {
+      // `process` is unavailable on some edge runtimes.
+    }
+
+    if (!detectedPlatform) {
+      return;
+    }
+
+    this.client.logger.warn(
+      `[agent:${agentId}] Agent event acknowledged without a \`waitUntil\` primitive while running on ${detectedPlatform}. ` +
+        `The runtime may freeze once the response is sent, silently dropping the rest of the agent turn. ` +
+        `Pass \`waitUntil\` to \`serve()\` (e.g. \`serve({ agents, waitUntil })\`) to extend the invocation lifetime.`
+    );
   }
 
   public triggerAction(triggerEvent: EventTriggerParams) {
@@ -316,37 +368,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-    const replyIfPresent = async (result: MessageContent | void) => {
-      if (result != null) await ctx.reply(result);
-    };
-
-    switch (event) {
-      case AgentEventEnum.ON_MESSAGE:
-        await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
-        break;
-      case AgentEventEnum.ON_ACTION:
-        if (registeredAgent.handlers.onAction) {
-          await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
-        }
-        break;
-      case AgentEventEnum.ON_REACTION:
-        if (registeredAgent.handlers.onReaction) {
-          await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));
-        }
-        break;
-      case AgentEventEnum.ON_RESOLVE:
-        if (registeredAgent.handlers.onResolve) {
-          await replyIfPresent(await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
-        }
-        break;
-      default:
-        throw new InvalidActionError(event, AgentEventEnum);
-    }
-
-    await ctx.flush();
-  }
-
   private handleError(error: unknown): IActionResponse {
     if (isFrameworkError(error)) {
       if (error.statusCode >= 500) {
@@ -354,7 +375,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
          * Log bridge server errors to assist the Developer in debugging errors with their integration.
          * This path is reached when the Bridge application throws an error, ensuring they can see the error in their logs.
          */
-        console.error(error);
+        this.client.logger.error(error);
       }
 
       return this.createError(error);
@@ -362,7 +383,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       return this.createError(error);
     } else {
       const bridgeError = new BridgeError(error);
-      console.error(bridgeError);
+      this.client.logger.error(bridgeError);
 
       return this.createError(bridgeError);
     }
@@ -378,24 +399,19 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SigningKeyNotFoundError();
     }
 
-    const [timestampPart, signaturePart] = hmacHeader.split(',');
-    if (!timestampPart || !signaturePart) {
+    const parsed = parseSignatureHeader(hmacHeader);
+    if (!parsed.v1 || parsed.t === undefined) {
       throw new SignatureInvalidError();
     }
 
-    const [timestamp, timestampPayload] = timestampPart.split('=');
-
-    const [signatureVersion, signaturePayload] = signaturePart.split('=');
-
-    if (Number(timestamp) < Date.now() - SIGNATURE_TIMESTAMP_TOLERANCE) {
+    const now = Date.now();
+    if (parsed.t < now - SIGNATURE_TIMESTAMP_TOLERANCE || parsed.t > now + SIGNATURE_TIMESTAMP_TOLERANCE) {
       throw new SignatureExpiredError();
     }
 
-    const localHash = await createHmacSubtle(this.client.secretKey, `${timestampPayload}.${JSON.stringify(payload)}`);
+    const localHash = await createHmacSubtle(this.client.secretKey, `${parsed.t}.${JSON.stringify(payload)}`);
 
-    const isMatching = localHash === signaturePayload;
-
-    if (!isMatching) {
+    if (!timingSafeEqual(localHash, parsed.v1)) {
       throw new SignatureMismatchError();
     }
   }

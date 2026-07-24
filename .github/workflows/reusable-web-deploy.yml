@@ -73,7 +73,7 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         name: Checkout with submodules
         with:
           submodules: true
@@ -86,33 +86,76 @@ jobs:
 
       - name: Create env file
         working-directory: apps/web
+        env:
+          REACT_APP_SEGMENT_KEY: ${{ secrets.WEB_SEGMENT_KEY }}
+          REACT_APP_INTERCOM_APP_ID: ${{ secrets.INTERCOM_APP_ID }}
+          REACT_APP_API_URL: ${{ inputs.react_app_api_url }}
+          REACT_APP_WS_URL: ${{ inputs.react_app_ws_url }}
+          REACT_APP_WEBHOOK_URL: ${{ inputs.react_app_webhook_url }}
+          REACT_APP_WIDGET_EMBED_PATH: ${{ inputs.react_app_widget_embed_path }}
+          REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
+          REACT_APP_SENTRY_DSN: ${{ inputs.react_app_sentry_dsn }}
+          REACT_APP_ENVIRONMENT: ${{ inputs.react_app_environment }}
+          REACT_APP_MAIL_SERVER_DOMAIN: ${{ inputs.react_app_mail_server_domain }}
+          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }}
+          REACT_APP_HUBSPOT_EMBED: ${{ inputs.react_app_hubspot_embed }}
+          REACT_APP_STRIPE_CLIENT_KEY: ${{ secrets.STRIPE_CLIENT_KEY }}
+          REACT_APP_NOVU_GTM_ID: ${{ secrets.REACT_APP_NOVU_GTM_ID }}
+          REACT_APP_MIXPANEL_KEY: ${{ secrets.MIXPANEL_TOKEN }}
+          REACT_APP_CLERK_PUBLISHABLE_KEY: ${{ inputs.clerk_publishable_key }}
+          REACT_APP_IS_EE_AUTH_ENABLED: ${{ inputs.clerk_is_ee_auth_enabled }}
+          REACT_APP_NEW_DASHBOARD_URL: ${{ inputs.new_dashboard_url }}
+          REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID: ${{ secrets.REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID }}
+          INPUT_EXTRA_ENV_VARIABLES: ${{ inputs.extra_env_variables }}
         run: |
-          touch .env
-          echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
-          echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
-          echo REACT_APP_API_URL=${{ inputs.react_app_api_url }} >> .env
-          echo REACT_APP_WS_URL=${{ inputs.react_app_ws_url }} >> .env
-          echo REACT_APP_WEBHOOK_URL=${{ inputs.react_app_webhook_url }} >> .env
-          echo REACT_APP_WIDGET_EMBED_PATH=${{ inputs.react_app_widget_embed_path }} >> .env
-          echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
-          echo REACT_APP_SENTRY_DSN=${{ inputs.react_app_sentry_dsn }} >> .env
-          echo REACT_APP_ENVIRONMENT=${{ inputs.react_app_environment }} >> .env
-          echo REACT_APP_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
-          echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
-          echo REACT_APP_HUBSPOT_EMBED=${{ inputs.react_app_hubspot_embed }} >> .env
-          echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
-          echo REACT_APP_NOVU_GTM_ID=${{ secrets.REACT_APP_NOVU_GTM_ID }} >> .env
-          echo REACT_APP_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
-          echo REACT_APP_CLERK_PUBLISHABLE_KEY=${{ inputs.clerk_publishable_key }} >> .env
-          echo REACT_APP_IS_EE_AUTH_ENABLED=${{ inputs.clerk_is_ee_auth_enabled }} >> .env
-          echo REACT_APP_NEW_DASHBOARD_URL=${{ inputs.new_dashboard_url }} >> .env
-          echo REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID=${{secrets.REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID}} >> .env
-          # Append extra environment variables if provided
-          if [ -n "${{ inputs.extra_env_variables }}" ]; then
+          write_var() {
+            printf '%s=%s\n' "$1" "$2" >> .env
+          }
+          : > .env
+          write_var REACT_APP_SEGMENT_KEY                "$REACT_APP_SEGMENT_KEY"
+          write_var REACT_APP_INTERCOM_APP_ID            "$REACT_APP_INTERCOM_APP_ID"
+          write_var REACT_APP_API_URL                    "$REACT_APP_API_URL"
+          write_var REACT_APP_WS_URL                     "$REACT_APP_WS_URL"
+          write_var REACT_APP_WEBHOOK_URL                "$REACT_APP_WEBHOOK_URL"
+          write_var REACT_APP_WIDGET_EMBED_PATH          "$REACT_APP_WIDGET_EMBED_PATH"
+          write_var REACT_APP_NOVU_APP_ID                "$REACT_APP_NOVU_APP_ID"
+          write_var REACT_APP_SENTRY_DSN                 "$REACT_APP_SENTRY_DSN"
+          write_var REACT_APP_ENVIRONMENT                "$REACT_APP_ENVIRONMENT"
+          write_var REACT_APP_MAIL_SERVER_DOMAIN         "$REACT_APP_MAIL_SERVER_DOMAIN"
+          write_var REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID "$REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID"
+          write_var REACT_APP_HUBSPOT_EMBED              "$REACT_APP_HUBSPOT_EMBED"
+          write_var REACT_APP_STRIPE_CLIENT_KEY          "$REACT_APP_STRIPE_CLIENT_KEY"
+          write_var REACT_APP_NOVU_GTM_ID                "$REACT_APP_NOVU_GTM_ID"
+          write_var REACT_APP_MIXPANEL_KEY               "$REACT_APP_MIXPANEL_KEY"
+          write_var REACT_APP_CLERK_PUBLISHABLE_KEY      "$REACT_APP_CLERK_PUBLISHABLE_KEY"
+          write_var REACT_APP_IS_EE_AUTH_ENABLED         "$REACT_APP_IS_EE_AUTH_ENABLED"
+          write_var REACT_APP_NEW_DASHBOARD_URL          "$REACT_APP_NEW_DASHBOARD_URL"
+          write_var REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID  "$REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID"
+
+          # Append extra environment variables if provided.
+          # Each entry is validated against KEY=VALUE (and must be single-line)
+          # so malformed input cannot smuggle additional lines into the
+          # generated .env file.
+          if [ -n "$INPUT_EXTRA_ENV_VARIABLES" ]; then
             echo "Adding extra environment variables..."
-            IFS='|' read -ra VARS <<< "${{ inputs.extra_env_variables }}"
+            IFS='|' read -ra VARS <<< "$INPUT_EXTRA_ENV_VARIABLES"
             for var in "${VARS[@]}"; do
-              echo "$var" >> .env
+              # Trim leading/trailing whitespace.
+              var="${var#"${var%%[![:space:]]*}"}"
+              var="${var%"${var##*[![:space:]]}"}"
+              if [ -z "$var" ]; then
+                continue
+              fi
+              if [[ "$var" == *$'\n'* ]] || [[ "$var" == *$'\r'* ]]; then
+                echo "Error: extra env variable entry must be single-line: '$var'"
+                exit 1
+              fi
+              if [[ "$var" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+                printf '%s\n' "$var" >> .env
+              else
+                echo "Error: invalid extra env variable entry (expected KEY=VALUE): '$var'"
+                exit 1
+              fi
             done
           fi
       - name: Envsetup
@@ -123,7 +166,7 @@ jobs:
         run: CI='' pnpm build:web --skip-nx-cache
 
       - name: Deploy WEB
-        uses: nwtgck/actions-netlify@v1.2
+        uses: nwtgck/actions-netlify@ac1cb16858bada08a9c71a81240a85cfc3f72913 # v1.2
         with:
           publish-dir: apps/web/build
           github-token: ${{ secrets.GITHUB_TOKEN }}

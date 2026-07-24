@@ -7,6 +7,7 @@ import {
   RiCornerDownLeftLine,
   RiInformation2Fill,
 } from 'react-icons/ri';
+import { AGENTS_DOCS_SETUP_URL } from '@/utils/agent-docs';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../primitives/dialog';
 import { VisuallyHidden } from '../primitives/visually-hidden';
@@ -102,7 +103,7 @@ export function AgentSetupModal({ isOpen, onClose, onSetupClick }: AgentSetupMod
         {/* Footer — grey background with top border */}
         <div className="border-stroke-weak flex items-center gap-3 border-t bg-[#fbfbfb] p-3">
           <a
-            href="https://docs.novu.co/agents/overview"
+            href={AGENTS_DOCS_SETUP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-label-xs text-text-sub hover:text-text-strong inline-flex items-center gap-1 font-medium underline transition-colors"
@@ -111,7 +112,13 @@ export function AgentSetupModal({ isOpen, onClose, onSetupClick }: AgentSetupMod
             View docs
           </a>
           <div className="flex flex-1 items-center justify-end">
-            <Button variant="primary" mode="gradient" size="xs" trailingIcon={RiCornerDownLeftLine} onClick={onSetupClick}>
+            <Button
+              variant="primary"
+              mode="gradient"
+              size="xs"
+              trailingIcon={RiCornerDownLeftLine}
+              onClick={onSetupClick}
+            >
               Setup agent
             </Button>
           </div>

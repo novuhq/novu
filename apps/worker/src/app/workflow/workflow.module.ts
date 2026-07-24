@@ -1,6 +1,7 @@
 import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import {
+  AttachmentRehydrator,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -23,6 +24,7 @@ import {
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
+  ResolveTriggerContexts,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -31,16 +33,22 @@ import {
   TriggerEvent,
   TriggerMulticast,
   VerifyPayload,
+  WebexTokenService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ContextRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
   DomainRepository,
   DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -63,6 +71,7 @@ import {
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
+  SendMessageTool,
   SetJobAsCompleted,
   SetJobAsFailed,
   Throttle,
@@ -71,6 +80,7 @@ import {
 } from './usecases';
 import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { LogInboundEmailRequest } from './usecases/inbound-email-parse/log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from './usecases/inbound-email-parse/strategies/domain-route.strategy';
 import { ReplyToStrategy } from './usecases/inbound-email-parse/strategies/reply-to.strategy';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
@@ -104,8 +114,13 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const REPOSITORIES = [
+  AgentRepository,
+  AgentIntegrationRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
   DomainRepository,
   DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,
@@ -174,6 +189,7 @@ const USE_CASES = [
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
   ProcessTenant,
+  ResolveTriggerContexts,
   QueueNextJob,
   RunJob,
   SendMessage,
@@ -182,6 +198,7 @@ const USE_CASES = [
   SendMessageEmail,
   SendMessageInApp,
   SendMessagePush,
+  SendMessageTool,
   SendMessageSms,
   Throttle,
   ExecuteCodeFirstCustomStep,
@@ -200,6 +217,8 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  LogInboundEmailRequest,
+  AttachmentRehydrator,
   InboundDomainRouteDelivery,
   ReplyToStrategy,
   DomainRouteStrategy,
@@ -210,7 +229,7 @@ const USE_CASES = [
   ResolveChannelEndpoints,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService, WebexTokenService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

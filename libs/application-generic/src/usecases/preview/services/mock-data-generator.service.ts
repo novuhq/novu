@@ -120,6 +120,20 @@ export class MockDataGeneratorService {
     });
   }
 
+  createFullActorObject(): Record<string, unknown> {
+    return {
+      subscriberId: 'actor-123',
+      firstName: 'Jane',
+      lastName: 'Actor',
+      email: 'actor@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: DEFAULT_LOCALE,
+      timezone: 'America/New_York',
+      data: {},
+    };
+  }
+
   /**
    * Creates a complete subscriber object with all standard fields populated,
    * used when V2 template editor requires full subscriber context for previews.

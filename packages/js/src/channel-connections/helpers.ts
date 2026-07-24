@@ -89,7 +89,7 @@ export const getChannelConnection = async ({
 }): Result<ChannelConnectionResponse | null> => {
   try {
     emitter.emit('channel-connection.get.pending', { args });
-    const data = await apiService.getChannelConnection(args.identifier);
+    const data = await apiService.getChannelConnection(args);
     emitter.emit('channel-connection.get.resolved', { args, data });
 
     return { data };

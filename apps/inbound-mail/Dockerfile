@@ -5,7 +5,7 @@ RUN apk add g++ make py3-pip
 ENV NX_DAEMON=false
 
 RUN npm i pm2@6.0.14 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@10.33.0
+RUN npm --no-update-notifier --no-fund --global install pnpm@11.0.9
 RUN pnpm --version
 
 USER 1000
@@ -33,11 +33,10 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
-RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 
-RUN cp -r src/python dist/python
+RUN cp -r src/python dist/src/python
 
 WORKDIR /usr/src/app
 
@@ -81,4 +80,4 @@ WORKDIR /usr/src/app/apps/inbound-mail
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/src/main.js" ]
+ENTRYPOINT [ "sh", "-c", "pm2-runtime start dist/src/main.js" ]

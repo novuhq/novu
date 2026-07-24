@@ -1,113 +1,93 @@
 import { motion } from 'motion/react';
 import { ReactElement, useEffect } from 'react';
-import { RiBookletFill, RiBookmark2Fill } from 'react-icons/ri';
+import { RiChat3Line, RiNotification3Line } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
-import { ProgressSection } from '../components/welcome/progress-section';
-import { Resource, ResourcesList } from '../components/welcome/resources-list';
+import { SetupStepsCard } from '../components/welcome/home/setup-steps-card';
+import { useWelcomeSetup } from '../components/welcome/home/use-welcome-setup';
+import { WelcomeBanner } from '../components/welcome/home/welcome-banner';
+import { WelcomeHeading } from '../components/welcome/home/welcome-heading';
+import { WelcomeSidebar } from '../components/welcome/home/welcome-sidebar';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 
-const helpfulResources: Resource[] = [
-  {
-    title: 'Documentation',
-    image: 'blog.svg',
-    url: 'https://docs.novu.co/',
+const sectionVariants = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
   },
-  {
-    title: 'Install Novu MCP',
-    image: 'mcp.svg',
-    url: 'https://docs.novu.co/platform/additional-resources/mcp',
-  },
-  {
-    title: 'See our code on GitHub',
-    image: 'git.svg',
-    url: 'https://github.com/novuhq/novu',
-  },
-  {
-    title: 'Security & Compliance',
-    image: 'security.svg',
-    url: 'https://trust.novu.co/',
-  },
-];
+};
 
-const learnResources: Resource[] = [
-  {
-    title: 'Manage Subscribers',
-    duration: '4m read',
-    image: 'subscribers.svg',
-    url: 'https://docs.novu.co/platform/concepts/subscribers?utm_source=novu.co&utm_medium=welcome-page',
+const pageVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 },
   },
-  {
-    title: 'Topics',
-    duration: '5m read',
-    image: 'topics.svg',
-    url: 'https://docs.novu.co/platform/concepts/topics?utm_source=novu.co&utm_medium=welcome-page',
-  },
-  {
-    title: 'Code First Workflows',
-    duration: '4m read',
-    image: 'code-first.svg',
-    url: 'https://docs.novu.co/framework/introduction?utm_source=novu.co&utm_medium=welcome-page',
-  },
-  {
-    title: 'Digest Engine',
-    duration: '3m read',
-    image: 'digest engine-1.svg',
-    url: 'https://docs.novu.co/platform/workflow/digest?utm_source=novu.co&utm_medium=welcome-page',
-  },
-];
+};
 
 export function WelcomePage(): ReactElement {
   const telemetry = useTelemetry();
+  const { variant, steps, showWorkflowsBanner, showAgentsBanner, goToWorkflows, goToAgentsSetup, openDocs } =
+    useWelcomeSetup();
 
   useEffect(() => {
-    telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED);
-  }, [telemetry]);
-
-  const pageVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  };
+    telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED, { variant });
+  }, [telemetry, variant]);
 
   return (
     <>
       <PageMeta title="Get Started with Novu" />
       <DashboardLayout>
-        <motion.div className="flex flex-col gap-6 p-4 pt-2 md:gap-8 md:p-9 md:pt-4" variants={pageVariants} initial="hidden" animate="show">
+        <motion.div className="flex flex-col gap-2.5 p-2.5" variants={pageVariants} initial="hidden" animate="show">
           <motion.div variants={sectionVariants}>
-            <ProgressSection />
+            <WelcomeHeading />
           </motion.div>
 
-          <motion.div variants={sectionVariants}>
-            <ResourcesList
-              title="Helpful resources"
-              icon={<RiBookmark2Fill className="h-4 w-4" />}
-              resources={helpfulResources}
-            />
-          </motion.div>
+          <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[minmax(0,1fr)_375px]">
+            <div className="flex min-w-0 flex-col gap-2.5">
+              <motion.div variants={sectionVariants}>
+                <SetupStepsCard steps={steps} onLearnMore={openDocs} />
+              </motion.div>
 
-          <motion.div variants={sectionVariants}>
-            <ResourcesList title="Learn" icon={<RiBookletFill className="h-4 w-4" />} resources={learnResources} />
-          </motion.div>
+              {showWorkflowsBanner ? (
+                <motion.div variants={sectionVariants}>
+                  <WelcomeBanner
+                    badgeLabel="Notifications"
+                    badgeIcon={RiNotification3Line}
+                    badgeColorClassName="text-[#fb3748]"
+                    badgeBackgroundClassName="bg-primary-alpha-10"
+                    title="Send transactional notifications with Workflows"
+                    description="Trigger product events, orchestrate delivery across channels, and optionally connect notifications to your agents for follow-up conversations."
+                    ctaLabel="Setup workflows"
+                    onCtaClick={goToWorkflows}
+                  />
+                </motion.div>
+              ) : null}
+
+              {showAgentsBanner ? (
+                <motion.div variants={sectionVariants}>
+                  <WelcomeBanner
+                    badgeLabel="Conversations"
+                    badgeIcon={RiChat3Line}
+                    badgeColorClassName="text-[#7d52f4]"
+                    badgeBackgroundClassName="bg-[rgba(125,82,244,0.1)]"
+                    title="Setup agents to let your users respond to the notifications."
+                    description="Workflows can notify users when something happens, and with agents, your users can respond to those notifications and get a response back or take action."
+                    ctaLabel="Setup agents"
+                    onCtaClick={goToAgentsSetup}
+                    learnMore={{ onClick: openDocs }}
+                  />
+                </motion.div>
+              ) : null}
+            </div>
+
+            <motion.div variants={sectionVariants}>
+              <WelcomeSidebar />
+            </motion.div>
+          </div>
         </motion.div>
       </DashboardLayout>
     </>

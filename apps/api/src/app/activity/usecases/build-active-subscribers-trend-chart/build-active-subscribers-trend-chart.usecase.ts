@@ -1,12 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  FeatureFlagsService,
-  InstrumentUsecase,
-  PinoLogger,
-  TraceRollupRepository,
-  WorkflowRunRepository,
-} from '@novu/application-generic';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { InstrumentUsecase, PinoLogger, TraceRollupRepository } from '@novu/application-generic';
 import { ActiveSubscribersTrendDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildActiveSubscribersTrendChartCommand } from './build-active-subscribers-trend-chart.command';
 
@@ -14,8 +7,6 @@ import { BuildActiveSubscribersTrendChartCommand } from './build-active-subscrib
 export class BuildActiveSubscribersTrendChart {
   constructor(
     private traceRollupRepository: TraceRollupRepository,
-    private workflowRunRepository: WorkflowRunRepository,
-    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(BuildActiveSubscribersTrendChart.name);
@@ -25,41 +16,13 @@ export class BuildActiveSubscribersTrendChart {
   async execute(command: BuildActiveSubscribersTrendChartCommand): Promise<ActiveSubscribersTrendDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate, workflowIds } = command;
 
-    const featureFlagContext = {
-      organization: { _id: organizationId },
-      environment: { _id: environmentId },
-    };
-
-    const [isGlobalEnabled, isDedicatedEnabled] = await Promise.all([
-      this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_ANALYTIC_V2_LOGS_READ_GLOBAL_ENABLED,
-        defaultValue: false,
-        ...featureFlagContext,
-      }),
-      this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_ANALYTIC_V2_ACTIVE_SUBSCRIBER_TREND_READ_ENABLED,
-        defaultValue: false,
-        ...featureFlagContext,
-      }),
-    ]);
-
-    const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
-
-    const activeSubscribers = useNewQuery
-      ? await this.traceRollupRepository.getActiveSubscribersTrendData(
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-          workflowIds
-        )
-      : await this.workflowRunRepository.getActiveSubscribersTrendData(
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-          workflowIds
-        );
+    const activeSubscribers = await this.traceRollupRepository.getActiveSubscribersTrendData(
+      environmentId,
+      organizationId,
+      startDate,
+      endDate,
+      workflowIds
+    );
 
     const chartDataMap = new Map<string, number>();
 

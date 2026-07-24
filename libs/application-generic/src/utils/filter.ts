@@ -39,11 +39,11 @@ export abstract class Filter {
 
         break;
       case FieldOperatorEnum.NOT_IN:
-        result = !(actualValue as any).includes(filterValue);
+        result = this.evaluateIncludesMembership(actualValue, filterValue, false);
 
         break;
       case FieldOperatorEnum.IN:
-        result = (actualValue as any).includes(filterValue);
+        result = this.evaluateIncludesMembership(actualValue, filterValue, true);
 
         break;
       case FieldOperatorEnum.IS_DEFINED:
@@ -95,6 +95,16 @@ export abstract class Filter {
     }
 
     return summary;
+  }
+
+  private evaluateIncludesMembership(actualValue: unknown, filterValue: unknown, shouldMatch: boolean): boolean {
+    if (Array.isArray(actualValue) || typeof actualValue === 'string') {
+      const includes = actualValue.includes(filterValue as never);
+
+      return shouldMatch ? includes : !includes;
+    }
+
+    return !shouldMatch;
   }
 
   private parseValue(originValue, parsingValue) {

@@ -970,10 +970,16 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
     await session.waitForSubscriberQueueCompletion();
     await session.waitForStandardQueueCompletion();
 
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
+    const jobs = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DIGEST,
+      },
+      findMultiple: true,
+      expectedCount: 10,
+      timeout: 15000,
     });
 
     expect(jobs && jobs.length).to.eql(10);
@@ -992,7 +998,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 1,
+            amount: 2,
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -1018,10 +1024,16 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
     await session.waitForSubscriberQueueCompletion();
     await session.waitForStandardQueueCompletion();
 
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
+    const jobs = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DIGEST,
+      },
+      findMultiple: true,
+      expectedCount: 10,
+      timeout: 15000,
     });
 
     expect(jobs && jobs.length).to.eql(10);

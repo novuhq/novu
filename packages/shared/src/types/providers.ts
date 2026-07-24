@@ -55,11 +55,22 @@ export enum CredentialsKeyEnum {
   TenantId = 'tenantId',
   SigningSecret = 'signingSecret',
   OutboundIntegrationId = 'outboundIntegrationId',
+  /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. Auto-populated by the API — never entered by the user. */
+  ExternalEnvironmentId = 'externalEnvironmentId',
+  /** Claude Platform on AWS: workspace ID (`wrkspc_…`) required for agent runtime dispatch. */
+  ExternalWorkspaceId = 'externalWorkspaceId',
+  /** HTTP method for custom webhook delivery (e.g. POST, PUT). */
+  Method = 'method',
+  /** Custom webhook request headers as JSON. */
+  Headers = 'headers',
+  /** Custom webhook request body template. */
+  Body = 'body',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
 
 export enum EmailProviderIdEnum {
+  Anypost = 'anypost',
   EmailJS = 'emailjs',
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
@@ -125,12 +136,14 @@ export enum SmsProviderIdEnum {
   Sinch = 'sinch',
   ISendProSms = 'isendpro-sms',
   CmTelecom = 'cm-telecom',
+  RuachSms = 'ruach-sms',
 }
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  WebexMessaging = 'webex-messaging',
   Mattermost = 'mattermost',
   Ryver = 'ryver',
   Zulip = 'zulip',
@@ -138,8 +151,11 @@ export enum ChatProviderIdEnum {
   GetStream = 'getstream',
   RocketChat = 'rocket-chat',
   WhatsAppBusiness = 'whatsapp-business',
+  Line = 'line',
   ChatWebhook = 'chat-webhook',
   Novu = 'novu-slack',
+  Telegram = 'telegram',
+  Sendblue = 'sendblue',
 }
 
 export enum PushProviderIdEnum {
@@ -157,12 +173,32 @@ export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
 
+export enum AgentRuntimeProviderIdEnum {
+  Anthropic = 'anthropic',
+  NovuAnthropic = 'novu-anthropic',
+  AnthropicAws = 'anthropic-aws',
+}
+
+export enum ToolProviderIdEnum {
+  PagerDuty = 'pagerduty',
+  Opsgenie = 'opsgenie',
+  Webhook = 'tool-webhook',
+}
+
+/** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
+export enum IntegrationKindEnum {
+  DELIVERY = 'delivery',
+  AGENT = 'agent',
+}
+
 export type ProvidersIdEnum =
   | EmailProviderIdEnum
   | SmsProviderIdEnum
   | PushProviderIdEnum
   | InAppProviderIdEnum
-  | ChatProviderIdEnum;
+  | ChatProviderIdEnum
+  | AgentRuntimeProviderIdEnum
+  | ToolProviderIdEnum;
 
 export const ProvidersIdEnumConst = {
   EmailProviderIdEnum,
@@ -170,4 +206,10 @@ export const ProvidersIdEnumConst = {
   PushProviderIdEnum,
   InAppProviderIdEnum,
   ChatProviderIdEnum,
+  AgentRuntimeProviderIdEnum,
+  ToolProviderIdEnum,
 };
+
+export const providerIdValues = [
+  ...new Set(Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))),
+];

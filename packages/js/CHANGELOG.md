@@ -1,3 +1,61 @@
+## v3.18.1 (2026-07-23)
+
+### 🚀 Features
+
+- **dashboard,api-service,js,react,framework:** novu copilot agent for slack fixes NV-8316 ([#11973](https://github.com/novuhq/novu/pull/11973))
+- **shared:** add Tool channel with PagerDuty, Opsgenie and Webhook providers fixes NV-8284 ([#11923](https://github.com/novuhq/novu/pull/11923))
+- **providers:** add Webex Messaging OAuth support fixes NV-8272 ([#11633](https://github.com/novuhq/novu/pull/11633))
+
+### 🩹 Fixes
+
+- **js:** bump socket.io-client to pull patched ws fixes NV-8326 ([#12002](https://github.com/novuhq/novu/pull/12002))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+- Rahul Jain
+
+## v3.18.0 (2026-07-08)
+
+### 🚀 Features
+
+- **js, react, api-service:** add Telegram connect button (SDK peer to Slack/MS Teams) ([#11661](https://github.com/novuhq/novu/pull/11661))
+- **api-service,js,react:** Telegram subscriber-link SDK + shared linking module fixes NV-8095 ([#11619](https://github.com/novuhq/novu/pull/11619))
+
+### 🩹 Fixes
+
+- **js:** localize de-DE sub-minute inbox timestamps fixes NV-8169 ([#11765](https://github.com/novuhq/novu/pull/11765))
+- **js,react:** keep inbox badge counts in sync after mark-as-read fixes NV-7398 ([#11599](https://github.com/novuhq/novu/pull/11599))
+- **js:** dedupe notifications by id in cache.unshift ([#10785](https://github.com/novuhq/novu/pull/10785))
+- **js:** ensure notification instances in cache after cross-tab sync fixes NV-8092 ([#11617](https://github.com/novuhq/novu/pull/11617))
+- **js:** validate in-app redirect URLs in inbox API and client fixes NV-7971 ([#11453](https://github.com/novuhq/novu/pull/11453))
+
+### ❤️ Thank You
+
+- Abhay J Nayak
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+
+## v3.17.0 (2026-06-01)
+
+### 🚀 Features
+
+- **nextjs:** fix keyless mode dev env fixes NV-7779 ([#11248](https://github.com/novuhq/novu/pull/11248))
+- **shared:** OR/AND filtering for `data` in inbox useNotifications fixes NV-7666 ([#11135](https://github.com/novuhq/novu/pull/11135))
+- **js:** add PartySocket hibernation heartbeat fixes NV-7445 ([#10925](https://github.com/novuhq/novu/pull/10925))
+- **js,react,api-service:** implement MS Teams connect and link-user components ([#10870](https://github.com/novuhq/novu/pull/10870))
+
+### 🩹 Fixes
+
+- **js:** scope default connectionIdentifier to subscriberId to prevent 409 conflicts ([#10896](https://github.com/novuhq/novu/pull/10896))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+
 ## v3.16.0 (2026-04-27)
 
 ### 🚀 Features

@@ -194,7 +194,7 @@ export interface IEmailProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => IEmailEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => IEmailEventBody | undefined;
 
   checkIntegration?: (options: IEmailOptions) => Promise<ICheckIntegrationResponse>;
 }
@@ -206,7 +206,7 @@ export interface ISmsProvider extends IProvider {
 
   getMessageId?: (body: any) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => ISMSEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {
@@ -215,7 +215,7 @@ export interface IChatProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
 export interface IPushProvider extends IProvider {
@@ -227,10 +227,40 @@ export interface IPushProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
-export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider;
+export interface IToolOptions {
+  content: string;
+  customData?: Record<string, unknown>;
+  bridgeProviderData?: Record<string, unknown>;
+  /**
+   * Per-subscriber routing data resolved from a `ChannelEndpoint` + `ChannelConnection.auth`.
+   * Providers that route per-subscriber (e.g. PagerDuty) read fields off this union;
+   * providers that route from env-level credentials ignore it.
+   */
+  channelData?: ChannelData;
+  /**
+   * IDs threaded through so providers can derive a stable, retry-safe dedup key
+   * (e.g. PagerDuty's Events API v2 dedup_key). All three together are the finest-grained
+   * "logical send" identity: unique per trigger, stable across worker retries of the same job.
+   */
+  transactionId?: string;
+  subscriberId?: string;
+  stepId?: string;
+}
+
+export interface IToolProvider extends IProvider {
+  sendMessage(options: IToolOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
+
+  channelType: ChannelTypeEnum.TOOL;
+
+  getMessageId?: (body: any | any[]) => string[];
+
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
+}
+
+export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | IToolProvider;
 
 export interface ICheckIntegrationResponse {
   success: boolean;

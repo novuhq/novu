@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { lastValueFrom } from 'rxjs';
 import {
+  buildDnsProviderDomainConnectDiscovery,
   buildDomainConnectSettingsUrl,
   buildTemplateSupportUrl,
   type DomainConnectProviderSettings,
@@ -26,7 +27,10 @@ export class DomainConnectDiscoveryService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async discoverDomainConnectHost(domainName: string): Promise<DomainConnectDiscovery | undefined> {
+  async discoverDomainConnectHost(
+    domainName: string,
+    dnsProvider?: string
+  ): Promise<DomainConnectDiscovery | undefined> {
     for (const candidate of getDomainConnectDiscoveryCandidates(domainName)) {
       try {
         const records = await dnsPromises.resolveTxt(`_domainconnect.${candidate}`);
@@ -43,6 +47,17 @@ export class DomainConnectDiscoveryService {
 
         this.logger.warn({ err: error, domainName: candidate }, 'Failed to discover Domain Connect provider');
       }
+    }
+
+    const dnsProviderDiscovery = buildDnsProviderDomainConnectDiscovery(domainName, dnsProvider);
+
+    if (dnsProviderDiscovery) {
+      this.logger.debug(
+        { domainName, dnsProvider, providerHost: dnsProviderDiscovery.providerHost },
+        'Using recognized DNS provider for Domain Connect discovery'
+      );
+
+      return dnsProviderDiscovery;
     }
 
     return undefined;

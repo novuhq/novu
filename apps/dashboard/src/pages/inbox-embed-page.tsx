@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
-import { RiComputerLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiComputerLine } from 'react-icons/ri';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { useIsMobile } from '@/hooks/use-is-mobile';
@@ -50,7 +50,12 @@ function MobileEmbedSkip() {
             </div>
           </div>
 
-          <Button variant="primary" className="mt-2 w-full" trailingIcon={RiArrowRightSLine} onClick={handleGoToDashboard}>
+          <Button
+            variant="primary"
+            className="mt-2 w-full"
+            trailingIcon={RiArrowRightSLine}
+            onClick={handleGoToDashboard}
+          >
             Skip to Dashboard
           </Button>
         </div>

@@ -2,8 +2,8 @@ import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum, Conve
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { BridgeExecutorParams, BridgeExecutorService } from '../services/bridge-executor.service';
-import { ChatSdkService } from '../services/chat-sdk.service';
+import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import { AgentExecutionParams, BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
   AgentTestContext,
   activityRepository,
@@ -14,7 +14,7 @@ import {
 
 describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
   let ctx: AgentTestContext;
-  let bridgeCalls: BridgeExecutorParams[];
+  let bridgeCalls: AgentExecutionParams[];
 
   before(() => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
@@ -25,19 +25,22 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
     bridgeCalls = [];
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
-    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: BridgeExecutorParams) => {
+    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
       bridgeCalls.push(params);
     });
 
-    const chatSdkService = testServer.getService(ChatSdkService);
+    const outboundGateway = testServer.getService(OutboundGateway);
     sinon
-      .stub(chatSdkService, 'postToConversation')
+      .stub(outboundGateway, 'postToConversation')
       .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
     sinon
-      .stub(chatSdkService, 'editInConversation')
+      .stub(outboundGateway, 'editInConversation')
       .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
-    sinon.stub(chatSdkService, 'reactToMessage').resolves();
-    sinon.stub(chatSdkService, 'removeReaction').resolves();
+    sinon.stub(outboundGateway, 'reactToMessage').resolves();
+    sinon.stub(outboundGateway, 'deleteInConversation').resolves();
+    sinon.stub(outboundGateway, 'removeReaction').resolves();
+    sinon.stub(outboundGateway, 'startTypingInConversation').resolves();
+    sinon.stub(outboundGateway, 'stopTypingInConversation').resolves();
   });
 
   function postReply(body: Record<string, unknown>) {
@@ -90,6 +93,23 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(res.status).to.equal(200);
       expect(res.body.data.messageId).to.equal('platform-msg-1');
       expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
+    });
+
+    it('should deliver generic copy when bridge reports error: true', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+      const postStub = outboundGateway.postToConversation as sinon.SinonStub;
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        error: true,
+      });
+
+      expect(res.status).to.equal(200);
+      expect(postStub.calledOnce).to.be.true;
+      const [, , , , content] = postStub.firstCall.args;
+      expect(content.markdown).to.include('Something went wrong');
     });
 
     it('should edit a previously sent message and persist an edit activity', async () => {
@@ -152,18 +172,6 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         integrationIdentifier: ctx.integrationIdentifier,
         edit: { messageId: 'platform-msg-1', content: { markdown: 'b' } },
         signals: [{ type: 'metadata', key: 'k', value: 'v' }],
-      });
-
-      expect(res.status).to.equal(400);
-    });
-
-    it('should return 400 when conversation has no serialized thread', async () => {
-      const conversationId = await seedConversation(ctx, { withSerializedThread: false });
-
-      const res = await postReply({
-        conversationId,
-        integrationIdentifier: ctx.integrationIdentifier,
-        reply: { markdown: 'Should fail' },
       });
 
       expect(res.status).to.equal(400);
@@ -300,7 +308,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
   describe('addReactions', () => {
     it('should call reactToMessage for each addReaction entry', async () => {
       const conversationId = await seedConversation(ctx);
-      const chatSdkService = testServer.getService(ChatSdkService);
+      const outboundGateway = testServer.getService(OutboundGateway);
 
       const res = await postReply({
         conversationId,
@@ -312,13 +320,13 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       });
 
       expect(res.status).to.equal(200);
-      expect((chatSdkService.reactToMessage as sinon.SinonStub).callCount).to.equal(2);
+      expect((outboundGateway.reactToMessage as sinon.SinonStub).callCount).to.equal(2);
 
-      const firstCall = (chatSdkService.reactToMessage as sinon.SinonStub).getCall(0).args;
+      const firstCall = (outboundGateway.reactToMessage as sinon.SinonStub).getCall(0).args;
       expect(firstCall[4]).to.equal('msg-abc');
       expect(firstCall[5]).to.equal('thumbs_up');
 
-      const secondCall = (chatSdkService.reactToMessage as sinon.SinonStub).getCall(1).args;
+      const secondCall = (outboundGateway.reactToMessage as sinon.SinonStub).getCall(1).args;
       expect(secondCall[4]).to.equal('msg-def');
       expect(secondCall[5]).to.equal('check');
     });
@@ -334,6 +342,120 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       });
 
       expect(res.status).to.equal(400);
+    });
+  });
+
+  describe('deleteMessages', () => {
+    it('should call deleteInConversation for each deleteMessages entry', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        deleteMessages: [{ messageId: 'msg-abc' }, { messageId: 'msg-def' }],
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data).to.be.null;
+
+      const stub = outboundGateway.deleteInConversation as sinon.SinonStub;
+      expect(stub.callCount).to.equal(2);
+      expect(stub.getCall(0).args[4]).to.equal('msg-abc');
+      expect(stub.getCall(1).args[4]).to.equal('msg-def');
+    });
+
+    it('should return 400 when edit and deleteMessages are combined', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        edit: { messageId: 'msg-edit', content: { markdown: 'updated' } },
+        deleteMessages: [{ messageId: 'msg-abc' }],
+      });
+
+      expect(res.status).to.equal(400);
+    });
+  });
+
+  describe('Typing', () => {
+    it('should set a typing status from a typing-only request', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: { status: 'Searching the docs…' },
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data).to.be.null;
+
+      const stub = outboundGateway.startTypingInConversation as sinon.SinonStub;
+      expect(stub.callCount).to.equal(1);
+      expect(stub.getCall(0).args[3]).to.equal('Searching the docs…');
+    });
+
+    it('should default the status text when typing has no status', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: {},
+      });
+
+      expect(res.status).to.equal(200);
+
+      const stub = outboundGateway.startTypingInConversation as sinon.SinonStub;
+      expect(stub.getCall(0).args[3]).to.equal('Thinking...');
+    });
+
+    it('should stop typing for typing "stop"', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: 'stop',
+      });
+
+      expect(res.status).to.equal(200);
+
+      const startStub = outboundGateway.startTypingInConversation as sinon.SinonStub;
+      const stopStub = outboundGateway.stopTypingInConversation as sinon.SinonStub;
+      expect(startStub.called).to.be.false;
+      expect(stopStub.calledOnce).to.be.true;
+    });
+
+    it('should not fail the turn when the typing call throws', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+      (outboundGateway.startTypingInConversation as sinon.SinonStub).rejects(new Error('platform down'));
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: { status: 'Working…' },
+      });
+
+      expect(res.status).to.equal(200);
+    });
+
+    it('should reject an invalid typing op', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: 'go',
+      });
+
+      expect(res.status).to.equal(422);
     });
   });
 

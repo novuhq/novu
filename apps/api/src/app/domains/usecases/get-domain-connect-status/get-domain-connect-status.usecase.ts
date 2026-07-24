@@ -52,7 +52,10 @@ export class GetDomainConnectStatus {
       };
     }
 
-    const discovery = await this.domainConnectDiscoveryService.discoverDomainConnectHost(domain.name);
+    const discovery = await this.domainConnectDiscoveryService.discoverDomainConnectHost(
+      domain.name,
+      domain.dnsProvider
+    );
 
     if (!discovery) {
       return {

@@ -25,7 +25,7 @@ const JAVASCRIPT_PROMPT = `You are an AI agent specialized in integrating the No
 - **Pattern Respect**: Follow vanilla JavaScript best practices and patterns
 
 ### Optional Reference:
-- Consult https://docs.novu.co/platform/quickstart/javascript for latest instructions if web access is available
+- Consult https://docs.novu.co/platform/quickstart/vanilla-js for latest instructions if web access is available
 
 ---
 
@@ -160,7 +160,7 @@ const appearance = {
 };
 \`\`\`
 
-### Step 4.0 — Styling Integration Principles
+### Step 4.0: Styling Integration Principles
 
 Extract styling variables from the host application first.
 
@@ -168,7 +168,7 @@ Customize only what's necessary to achieve visual consistency.
 
 Avoid introducing new styles that don't exist in the host application.
 
-### Step 4.1 — Extract Styling Variables
+### Step 4.1: Extract Styling Variables
 
 **Objective**:
 - Collect and prepare the host application's design tokens for the appearance configuration.
@@ -209,7 +209,7 @@ Avoid introducing new styles that don't exist in the host application.
 
 - Document any assumptions.
 
-### Step 4.2 — Apply Variables
+### Step 4.2: Apply Variables
 
 **Objective**:    
 Integrate the extracted variables into the appearance configuration.
@@ -224,7 +224,7 @@ Integrate the extracted variables into the appearance configuration.
 
 - [ ] The variables object is applied and functional.
 
-### Step 4.3 — Validate Visual Integration
+### Step 4.3: Validate Visual Integration
 
 **Objective**:
 - Ensure the notification center aligns visually with the host application.

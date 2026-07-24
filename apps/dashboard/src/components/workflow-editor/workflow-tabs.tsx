@@ -19,6 +19,7 @@ import {
   RiQuillPenLine,
 } from 'react-icons/ri';
 import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
+import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
@@ -53,6 +54,7 @@ import { WorkflowCanvas } from './workflow-canvas';
 export const WorkflowTabs = () => {
   const { workflow, isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
+  const { isLocalRoute, editWorkflowRoute, activityRoute } = useWorkflowEditorRoutes();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const isAiWorkflowGenerationEnabled =
@@ -287,9 +289,9 @@ export const WorkflowTabs = () => {
                   mode="ghost"
                   size="xs"
                   onClick={() => {
-                    const activityUrl = `${buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                    const activityUrl = `${buildRoute(activityRoute, {
                       environmentSlug: currentEnvironment?.slug ?? '',
-                      workflowSlug: workflow?.slug ?? '',
+                      ...(isLocalRoute ? {} : { workflowSlug: workflow?.slug ?? '' }),
                     })}?transactionId=${transactionId}`;
                     navigate(activityUrl);
                     close();
@@ -343,9 +345,14 @@ export const WorkflowTabs = () => {
     }
 
     const hasContentSteps = workflow?.steps.some((step) =>
-      [StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.IN_APP, StepTypeEnum.CHAT].includes(
-        step.type
-      )
+      [
+        StepTypeEnum.EMAIL,
+        StepTypeEnum.SMS,
+        StepTypeEnum.PUSH,
+        StepTypeEnum.IN_APP,
+        StepTypeEnum.CHAT,
+        StepTypeEnum.TOOL,
+      ].includes(step.type)
     );
     if (hasContentSteps) {
       suggestions.push({ label: AiWorkflowSuggestion.IMPROVE_MESSAGING, icon: RiQuillPenLine });
@@ -429,7 +436,7 @@ export const WorkflowTabs = () => {
           >
             {currentEnvironment && workflow ? (
               <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+                to={buildRoute(editWorkflowRoute, {
                   environmentSlug: currentEnvironment?.slug ?? '',
                   workflowSlug: workflow?.slug ?? '',
                 })}
@@ -449,9 +456,9 @@ export const WorkflowTabs = () => {
           >
             {currentEnvironment && workflow ? (
               <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                to={buildRoute(activityRoute, {
                   environmentSlug: currentEnvironment?.slug ?? '',
-                  workflowSlug: workflow?.slug ?? '',
+                  ...(isLocalRoute ? {} : { workflowSlug: workflow?.slug ?? '' }),
                 })}
               >
                 Activity

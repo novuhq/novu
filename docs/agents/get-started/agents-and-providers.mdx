@@ -1,0 +1,57 @@
+---
+title: "Agents and providers"
+description: "Understand how Novu agents and provider connections work together to route messages, resolve identities, and deliver replies across supported channels."
+---
+
+## Agents
+
+An agent is the entity you create in Novu when you want to expose agent logic through one or more communication providers.
+
+Each agent has a name, an identifier, and a set of event handlers that define how your application responds to conversation events. An agent can be connected to one or more providers, such as Slack, Microsoft Teams, WhatsApp, or email.
+
+## Provider connections
+
+A provider connection connects an agent to a messaging platform. Providers are the surfaces where users interact with your agent. A provider connection gives Novu the credentials and configuration needed to receive events from that provider and deliver responses back to it.
+
+Each provider has its own setup flow and platform capabilities. Some providers support reactions, typing indicators, attachments, rich cards, or message editing. Others may support only a subset of those behaviors. Novu normalizes provider events before passing them to your agent handler, so your code works with a consistent interface instead of provider-specific webhook payloads.
+
+Your handlers stay provider-agnostic. Novu translates replies into whatever Slack, WhatsApp, or email expects on the way out.
+
+## Supported providers
+
+Novu supports the following providers:
+
+- Slack
+- Microsoft Teams
+- WhatsApp
+- Email
+- Telegram
+
+While adding a new provider to an agent, Novu will guide you through the setup process for the provider.
+
+## Manage agents with the API
+
+You can create agents, link providers, and configure runtime settings from your backend using the [Agents API reference](/api-reference/agents/agent-schema). Common starting points:
+
+<Columns cols={2}>
+  <Card
+    title="Create an agent"
+    href="/api-reference/agents/create-an-agent"
+    description="Create a self-hosted or managed agent in the current environment"
+  />
+  <Card
+    title="Create an agent integration"
+    href="/api-reference/agents/create-an-agent-integration"
+    description="Link a channel integration to an agent"
+  />
+  <Card
+    title="List all agents"
+    href="/api-reference/agents/list-all-agents"
+    description="List agents in the current environment"
+  />
+  <Card
+    title="Create an integration"
+    href="/api-reference/integrations/create-an-integration"
+    description="Create the Slack, Teams, or runtime integration an agent links to"
+  />
+</Columns>

@@ -14,7 +14,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { PluginMetadataGenerator } from '@nestjs/cli/lib/compiler/plugins';
+import { PluginMetadataGenerator } from '@nestjs/cli/lib/compiler/plugins/plugin-metadata-generator';
 import { ReadonlyVisitor } from '@nestjs/swagger/dist/plugin';
 
 const tsconfigPath = 'tsconfig.build.json';

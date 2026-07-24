@@ -20,6 +20,13 @@ export class ChannelEndpointRepository extends BaseRepository<
     type: ChannelEndpointType;
     endpointField: string;
     endpointValue: string;
+    /**
+     * Optional workspace scoping. In the hosted multi-tenant app the same platform
+     * user (e.g. a Slack `userId`) can be linked under several customer connections
+     * within Novu's shared env/integration; passing the workspace's
+     * `connectionIdentifier` keeps the lookup from returning another tenant's endpoint.
+     */
+    connectionIdentifier?: string;
   }): Promise<ChannelEndpointEntity | null> {
     return this.findOne({
       _environmentId: params._environmentId,
@@ -27,6 +34,7 @@ export class ChannelEndpointRepository extends BaseRepository<
       integrationIdentifier: params.integrationIdentifier,
       type: params.type,
       [`endpoint.${params.endpointField}`]: params.endpointValue,
+      ...(params.connectionIdentifier ? { connectionIdentifier: params.connectionIdentifier } : {}),
     });
   }
 }

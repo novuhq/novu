@@ -4,11 +4,9 @@ ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
 
-RUN npm --no-update-notifier --no-fund --global install pnpm@10.33.0
+RUN npm --no-update-notifier --no-fund --global install pnpm@11.0.9
 
-COPY .npmrc .
 COPY package.json .
-COPY patches ./patches
 
 COPY apps/dashboard ./apps/dashboard
 COPY libs ./libs

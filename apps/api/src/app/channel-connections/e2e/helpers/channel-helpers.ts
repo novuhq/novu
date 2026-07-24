@@ -2,6 +2,8 @@ import { Novu } from '@novu/api';
 import {
   CreateChannelConnectionRequestDto,
   CreateSlackChannelEndpointDto,
+  CreateWebexPersonEndpointDto,
+  CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
 } from '@novu/api/models/components';
 import { IntegrationRepository } from '@novu/dal';
@@ -20,6 +22,18 @@ export async function createSlackIntegration(session: UserSession) {
     credentials: {},
     active: true,
     identifier: `slack-${Date.now()}`,
+  });
+}
+
+export async function createWebexIntegration(session: UserSession) {
+  return await integrationRepository.create({
+    _organizationId: session.organization._id,
+    _environmentId: session.environment._id,
+    providerId: ChatProviderIdEnum.WebexMessaging,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: {},
+    active: true,
+    identifier: `webex-${Date.now()}`,
   });
 }
 
@@ -83,6 +97,46 @@ export async function createWebhookEndpoint(
     type: ENDPOINT_TYPES.WEBHOOK,
     endpoint: {
       url: `https://example.com/webhook-${Date.now()}`,
+    },
+  };
+
+  const { result } = await novuClient.channelEndpoints.create(createDto);
+  return result;
+}
+
+export async function createWebexRoomEndpoint(
+  novuClient: Novu,
+  integrationIdentifier: string,
+  subscriberId: string,
+  connectionIdentifier: string
+) {
+  const createDto: CreateWebexRoomEndpointDto = {
+    integrationIdentifier,
+    subscriberId,
+    connectionIdentifier,
+    type: ENDPOINT_TYPES.WEBEX_ROOM,
+    endpoint: {
+      roomId: `Y2lzY29zcGFyazovL3VzL1JPT00v${Date.now()}`,
+    },
+  };
+
+  const { result } = await novuClient.channelEndpoints.create(createDto);
+  return result;
+}
+
+export async function createWebexPersonEndpoint(
+  novuClient: Novu,
+  integrationIdentifier: string,
+  subscriberId: string,
+  connectionIdentifier: string
+) {
+  const createDto: CreateWebexPersonEndpointDto = {
+    integrationIdentifier,
+    subscriberId,
+    connectionIdentifier,
+    type: ENDPOINT_TYPES.WEBEX_PERSON,
+    endpoint: {
+      personEmail: `user-${Date.now()}@example.com`,
     },
   };
 

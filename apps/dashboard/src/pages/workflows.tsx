@@ -339,7 +339,7 @@ export const WorkflowsPage = () => {
                     <div className="flex flex-col gap-2">
                       <span className="flex items-center gap-1 text-label-sm text-text-strong">
                         <Broom fill="#525866" className="text-text-sub h-3 w-3 shrink-0 animate-pulse" />
-                        <Shimmer className="text-label-xs">Personalizing suggestions</Shimmer>
+                        <Shimmer className="text-label-xs">Generating personal suggestions for you...</Shimmer>
                       </span>
                       <span className="text-paragraph-xs text-text-soft">
                         Identifying common notification flows used by similar products. View{' '}

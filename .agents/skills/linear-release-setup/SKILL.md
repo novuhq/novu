@@ -33,6 +33,10 @@ Ask, in order:
    - **Continuous** — every deploy completes a release. Typical for nightlies, dogfood, and web apps that ship on merge.
    - **Scheduled** — releases collect changes over time and move through stages before shipping. Typical for versioned mobile and on-prem.
 
+   **The test:** does the team need to track a release before it ships — naming it, seeing what's queued in it, or moving it through phases (code freeze, QA, etc.)?
+   - Yes → **scheduled** (the release exists as an in-progress thing before it ships).
+   - No → **continuous** (the release is created at the moment of shipping).
+
 4. **For each scheduled pipeline, ask explicitly:**
    - **Branch model** — just `main`, or `main` + release branches (`release/*`)?
    - **Version source** — calendar (`2026.05`), semver (`1.2.0`), or commit SHA? Derived from branch name, CI variable, file, or git tag?
@@ -44,6 +48,21 @@ Ask, in order:
 ### Step 3: Generate the CI configuration
 
 Fetch the [README](https://github.com/linear/linear-release/blob/main/README.md) first for the current commands, flags, install snippet, and command-targeting rules. For GitHub Actions, prefer the official action (`linear/linear-release-action@v0`); for other platforms, use the CLI binary per the README's Installation section.
+
+#### Runtime requirements (Docker-based CI)
+
+The image running the linear-release job must provide:
+
+- **glibc.** The prebuilt binary is dynamically linked against glibc and will not run on Alpine/musl images. Pick a Debian/Ubuntu base (`debian:bookworm-slim`, `ubuntu:24.04`, `buildpack-deps:bookworm`). Avoid `alpine`, any `*-alpine` tag, and `curlimages/curl` — on musl, the binary fails with an opaque "not found" error because the glibc dynamic loader is absent.
+- **`git`.** Slim images do not include it. Install it explicitly: `apt-get update && apt-get install -y git`.
+- **`curl`** (or `wget`). Needed to download the CLI binary.
+
+#### GitLab CI: check existing variables
+
+If `.gitlab-ci.yml` already exists, inspect any default `variables:` block. The linear-release job needs a full clone, so override at the job level when project defaults would prevent that:
+
+- `GIT_STRATEGY: clone` — required if the project default is `none` or `empty` (both skip cloning entirely).
+- `GIT_DEPTH: 0` — set this on the linear-release job regardless. New GitLab projects default to a shallow clone of depth 20, and projects often lower it further.
 
 Pick the matching example template, adapt it (branch patterns, stage names, paths, version format), and add it to an existing workflow or create a new one. Multiple pipelines mean multiple workflows or jobs, each calling the CLI with its own access key — one secret per pipeline (e.g. `LINEAR_ACCESS_KEY_IOS`, `LINEAR_ACCESS_KEY_WEB`).
 
@@ -99,8 +118,9 @@ Everything about commands, flags, environment variables, command targeting, path
 
 ### Checklist
 
-- [ ] Full clone / `fetch-depth: 0`
+- [ ] Full clone / `fetch-depth: 0` (GitLab: `GIT_DEPTH: 0`, and `GIT_STRATEGY` not `none`)
 - [ ] `LINEAR_ACCESS_KEY` set as a secret (one per pipeline)
 - [ ] Correct binary platform (`linux-x64`, `darwin-arm64`, or `darwin-x64`)
+- [ ] Docker-based CI: glibc base image (no Alpine/musl) with `git` and `curl` available
 - [ ] Triggers on the correct branches (`main` for continuous; `main` + `release/*` for scheduled)
 - [ ] Monorepo: path filters set (in Linear config or via `--include-paths`), and separate workflows if using release branches

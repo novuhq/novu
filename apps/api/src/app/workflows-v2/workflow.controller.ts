@@ -20,6 +20,7 @@ import {
   GeneratePreviewResponseDto,
   GetWorkflowCommand,
   GetWorkflowUseCase,
+  OAuthAccessible,
   ParseSlugEnvironmentIdPipe,
   ParseSlugIdPipe,
   PreviewCommand,
@@ -33,6 +34,7 @@ import {
   WorkflowResponseDto,
 } from '@novu/application-generic';
 import {
+  ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
   DirectionEnum,
   PermissionsEnum,
@@ -43,6 +45,7 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { assertEnvironmentScopedAccess } from '../shared/utils/auth.utils';
 import { DeleteWorkflowCommand } from '../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import {
@@ -94,6 +97,7 @@ export class WorkflowController {
   ) {}
 
   @Post('')
+  @OAuthAccessible()
   @ApiOperation({
     summary: 'Create a workflow',
     description: 'Creates a new workflow in the Novu Cloud environment',
@@ -146,6 +150,7 @@ export class WorkflowController {
   }
 
   @Put(':workflowId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update a workflow',
@@ -177,11 +182,16 @@ export class WorkflowController {
     return steps.map((step: StepUpsertDto) => ({
       ...step,
       controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
+      providerOverrides:
+        'providerOverrides' in step
+          ? ((step as { providerOverrides?: Record<string, Record<string, unknown>> | null }).providerOverrides ?? null)
+          : undefined,
     }));
   }
 
   @Get(':workflowId')
   @ExternalApiAccessible()
+  @OAuthAccessible()
   @ApiOperation({
     summary: 'Retrieve a workflow',
     description: 'Fetches details of a specific workflow by its unique identifier **workflowId**',
@@ -199,16 +209,21 @@ export class WorkflowController {
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
     @Query('environmentId') environmentId?: string
   ): Promise<WorkflowResponseDto> {
+    assertEnvironmentScopedAccess(user.scheme, user.environmentId, environmentId);
+
     return this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
         workflowIdOrInternalId,
         user,
         environmentId,
+        // Interactive dashboard reads (JWT / Bearer) must reflect the latest write.
+        skipPreferencesCache: user.scheme === ApiAuthSchemeEnum.BEARER,
       })
     );
   }
 
   @Delete(':workflowId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -232,6 +247,7 @@ export class WorkflowController {
   }
 
   @Get('')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'List all workflows',
@@ -246,8 +262,8 @@ export class WorkflowController {
   ): Promise<ListWorkflowResponse> {
     return this.listWorkflowsUseCase.execute(
       ListWorkflowsCommand.create({
-        offset: Number(query.offset || '0'),
-        limit: Number(query.limit || '50'),
+        offset: query.offset ?? 0,
+        limit: query.limit ?? 50,
         orderDirection: query.orderDirection ?? DirectionEnum.DESC,
         orderBy: query.orderBy ?? 'createdAt',
         searchQuery: query.query,

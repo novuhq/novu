@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { ChannelTypeEnum, WorkflowResponseDto } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
@@ -168,6 +168,8 @@ function isStepContentComplete(step: Step): boolean {
     case StepTypeEnum.PUSH:
       return !!(values.title && values.body);
     case StepTypeEnum.CHAT:
+      return !!values.body;
+    case StepTypeEnum.TOOL:
       return !!values.body;
     default:
       return false;

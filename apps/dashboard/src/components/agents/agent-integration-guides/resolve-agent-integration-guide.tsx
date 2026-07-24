@@ -1,15 +1,21 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { type ReactNode } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
-import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { SendblueSetupGuide } from '@/components/agents/sendblue-setup-guide';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
-import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
+import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
+import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
-import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
-import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
+import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
+import { TeamsAgentConnectedDetails } from './teams-agent-connected-details';
+import { TelegramAgentConnectedDetails } from './telegram-agent-connected-details';
+import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
 type ResolveAgentIntegrationGuideProps = {
@@ -30,6 +36,8 @@ type SetupGuideWrapperProps = {
   onRequestRemoveIntegration?: () => void;
   isRemovingIntegration?: boolean;
   children: React.ReactNode;
+  /** Rendered at the end of the setup card body, in the same flow (e.g. the "Continue" step). */
+  footer?: React.ReactNode;
 };
 
 function SetupGuideWithHeader({
@@ -40,8 +48,9 @@ function SetupGuideWithHeader({
   onRequestRemoveIntegration,
   isRemovingIntegration,
   children,
+  footer,
 }: SetupGuideWrapperProps) {
-  const isConnected = Boolean(integrationLink.connectedAt);
+  const isConnected = isAgentIntegrationConnected(integrationLink);
 
   const statusBadge = isConnected ? (
     <span className="bg-success-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
@@ -71,6 +80,7 @@ function SetupGuideWithHeader({
       />
       <SetupGuideCard label={`Setup ${providerDisplayName} integration`} rightContent={statusBadge}>
         {children}
+        {footer}
       </SetupGuideCard>
     </div>
   );
@@ -86,109 +96,16 @@ export function ResolveAgentIntegrationGuide({
   isRemovingIntegration,
 }: ResolveAgentIntegrationGuideProps) {
   const providerId = integrationLink.integration.providerId;
+  const isConnected = Boolean(integrationLink.connectedAt);
+  const isMsTeamsWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED);
 
-  if (providerId === ChatProviderIdEnum.Slack && !integrationLink.connectedAt) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="Slack"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <SlackSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
+  // MS Teams' user-rollout "what's next" phase is gated behind its own flag; until it's enabled the
+  // connected view falls back to the generic "Continue" note (and hides the rollout guide).
+  const hasUserRolloutPhase =
+    providerHasWhatsNextPhase(providerId) && (providerId !== ChatProviderIdEnum.MsTeams || isMsTeamsWhatsNextEnabled);
 
-  if (providerId === ChatProviderIdEnum.Slack) {
-    return (
-      <SlackAgentIntegrationGuide
-        embedded={embedded}
-        onBack={onBack}
-        agent={agent}
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      />
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.MsTeams && !integrationLink.connectedAt) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="MS Teams"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <TeamsSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.MsTeams) {
-    return (
-      <TeamsAgentIntegrationGuide
-        embedded={embedded}
-        onBack={onBack}
-        agent={agent}
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      />
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.WhatsAppBusiness && !integrationLink.connectedAt) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="WhatsApp Business"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <WhatsAppSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-    return (
-      <WhatsAppAgentIntegrationGuide
-        embedded={embedded}
-        onBack={onBack}
-        agent={agent}
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      />
-    );
-  }
-
-  if (providerId === EmailProviderIdEnum.NovuAgent && !integrationLink.connectedAt) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="Novu Email"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <EmailSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
-
+  // The Novu email integration has no distinct setup phase — render its single guide regardless
+  // of connection state.
   if (providerId === EmailProviderIdEnum.NovuAgent) {
     return (
       <EmailAgentIntegrationGuide
@@ -203,16 +120,137 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  return (
-    <GenericAgentIntegrationGuide
-      embedded={embedded}
+  // WhatsApp owns setup ↔ connected transition + Layer-2 What's Next (email-shaped), same as email.
+  if (providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+    return (
+      <WhatsAppAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  let setupGuide: ReactNode = null;
+  let setupDisplayName = '';
+
+  switch (providerId) {
+    case ChatProviderIdEnum.Slack:
+      setupGuide = <SlackSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Slack';
+      break;
+    case ChatProviderIdEnum.MsTeams:
+      setupGuide = <TeamsSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'MS Teams';
+      break;
+    case ChatProviderIdEnum.Telegram:
+      setupGuide = <TelegramSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Telegram';
+      break;
+    case ChatProviderIdEnum.Sendblue:
+      setupGuide = <SendblueSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Sendblue';
+      break;
+    default:
+      setupGuide = null;
+  }
+
+  // Chat providers without a dedicated setup guide fall back to the single generic guide.
+  if (!setupGuide) {
+    return (
+      <GenericAgentIntegrationGuide
+        embedded={embedded}
+        providerId={providerId}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  const renderSetupView = (footer: ReactNode): ReactNode => (
+    <SetupGuideWithHeader
       providerId={providerId}
-      onBack={onBack}
-      agent={agent}
+      providerDisplayName={setupDisplayName}
       integrationLink={integrationLink}
       canRemoveIntegration={canRemoveIntegration}
       onRequestRemoveIntegration={onRequestRemoveIntegration}
       isRemovingIntegration={isRemovingIntegration}
+      footer={footer}
+    >
+      {setupGuide}
+    </SetupGuideWithHeader>
+  );
+
+  const renderConnectedView = (justConnected: boolean): ReactNode => {
+    switch (providerId) {
+      case ChatProviderIdEnum.Slack:
+        return (
+          <SlackAgentConnectedDetails
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+            justConnected={justConnected}
+          />
+        );
+      case ChatProviderIdEnum.MsTeams:
+        return (
+          <TeamsAgentConnectedDetails
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+            justConnected={justConnected}
+          />
+        );
+      case ChatProviderIdEnum.Telegram:
+        return (
+          <TelegramAgentConnectedDetails
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+            justConnected={justConnected}
+          />
+        );
+      // No bespoke connected details for Sendblue yet — fall back to the generic guide.
+      case ChatProviderIdEnum.Sendblue:
+        return (
+          <GenericAgentIntegrationGuide
+            embedded={embedded}
+            providerId={providerId}
+            onBack={onBack}
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <AgentIntegrationGuideTransition
+      key={integrationLink._id}
+      isConnected={isConnected}
+      providerDisplayName={setupDisplayName}
+      hasUserRolloutPhase={hasUserRolloutPhase}
+      renderSetupView={renderSetupView}
+      renderConnectedView={renderConnectedView}
     />
   );
 }

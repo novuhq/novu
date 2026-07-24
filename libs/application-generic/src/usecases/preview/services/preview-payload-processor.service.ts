@@ -22,13 +22,17 @@ export class PreviewPayloadProcessorService {
       reorderedPayload.subscriber = cleanedPayloadExample.subscriber;
     }
 
+    if (cleanedPayloadExample.actor !== undefined) {
+      reorderedPayload.actor = cleanedPayloadExample.actor;
+    }
+
     if (cleanedPayloadExample.context !== undefined) {
       reorderedPayload.context = cleanedPayloadExample.context;
     }
 
     // Add remaining keys
     Object.keys(cleanedPayloadExample).forEach((key) => {
-      if (key !== 'payload' && key !== 'subscriber' && key !== 'context') {
+      if (key !== 'payload' && key !== 'subscriber' && key !== 'actor' && key !== 'context') {
         reorderedPayload[key] = cleanedPayloadExample[key];
       }
     });

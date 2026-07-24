@@ -3,10 +3,7 @@ import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal'
 import { SECRET_MASK } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import {
-  expectSdkExceptionGeneric,
-  initNovuClassSdkInternalAuth,
-} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Update Environment Variable - /environment-variables/:variableKey (PATCH) #novu-v2', () => {
   let session: UserSession;
@@ -76,10 +73,7 @@ describe('Update Environment Variable - /environment-variables/:variableKey (PAT
     expect(stillUnderOriginalKey?.values).to.have.length(2);
 
     // Now do the dashboard "happy path": rename without sending values at all.
-    const { result: renamed } = await novuClient.environmentVariables.update(
-      { key: renamedKey },
-      originalKey
-    );
+    const { result: renamed } = await novuClient.environmentVariables.update({ key: renamedKey }, originalKey);
 
     expect(renamed.key).to.equal(renamedKey);
     expect(renamed.values).to.have.length(2);

@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { RequestLogSourceEnum } from '@novu/application-generic';
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
+import { IsArray, IsIn, IsNumber, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 // Custom transformer to convert statusCodes to array of numbers
 const StatusCodesTransformer = Transform(({ value }) => {
@@ -99,4 +100,12 @@ export class GetRequestsDto {
   @IsNumber({}, { message: 'createdGte must be a valid timestamp' })
   @Min(0, { message: 'createdGte must be a positive timestamp' })
   createdGte?: number;
+
+  @ApiPropertyOptional({
+    description: "Filter by request origin: 'http' for API triggers or 'inbound_email' for inbound mail",
+    enum: Object.values(RequestLogSourceEnum),
+  })
+  @IsOptional()
+  @IsIn(Object.values(RequestLogSourceEnum))
+  source?: string;
 }

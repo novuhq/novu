@@ -49,7 +49,8 @@ export class TestDomainRoute {
 
     if (dryRun) {
       if (route.type === DomainRouteTypeEnum.WEBHOOK) {
-        const payload = this.inboundDomainRouteDelivery.buildDomainRouteWebhookPayload(domain, route, mail);
+        // Dry-run preview never delivers, so we don't rehydrate attachments from S3.
+        const payload = this.inboundDomainRouteDelivery.buildDomainRouteWebhookPayload(domain, route, mail, []);
 
         return {
           ...base,
@@ -60,7 +61,7 @@ export class TestDomainRoute {
         };
       }
 
-      const agentPayload = this.inboundDomainRouteDelivery.previewAgentMailPayload(mail);
+      const agentPayload = this.inboundDomainRouteDelivery.previewAgentMailPayload(mail, { domain, route });
       const apiBaseUrl = process.env.API_ROOT_URL ?? '';
       const agentId = route.destination ?? '';
       const wouldDeliverTo =

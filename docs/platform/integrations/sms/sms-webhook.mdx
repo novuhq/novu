@@ -1,0 +1,120 @@
+---
+title: "SMS Webhook SMS Integration with Novu"
+sidebarTitle: "SMS Webhook"
+description: "Connect an SMS webhook provider to Novu to send SMS through your own HTTP API or a custom SMS provider endpoint using a webhook URL, headers, and JSON payload."
+---
+
+SMS Webhook lets you send SMS notifications through any HTTP API you control. Instead of a built-in provider SDK, Novu `POST`s each message to your **Base URL** with the subscriber phone number, message body, and sender ID.
+
+Use this integration when your SMS gateway exposes a REST API that is not listed in Novu's provider catalog, or when you want Novu to call an internal service that handles delivery.
+
+## Configure SMS Webhook in Novu
+
+<Steps>
+  <Step title="Prepare your SMS endpoint">
+    Your endpoint must accept `POST` requests and return a JSON response. For local testing, use a tool like [webhook.site](https://webhook.site/).
+  </Step>
+
+  <Step title="Open the Integration Store">
+    In the Novu dashboard, go to **Integrations Store** and click **Connect Provider**.
+  </Step>
+
+  <Step title="Select SMS Webhook">
+    Under **SMS**, select **SMS Webhook** and click **Create Integration**.
+  </Step>
+
+  <Step title="Fill in integration fields">
+    | Field | Required | Description |
+    | --- | --- | --- |
+    | **Base URL** | Yes | The URL Novu calls to send each SMS. |
+    | **API Key Request Header** | Yes | Header name for your API key (for example, `X-API-KEY`). |
+    | **API Key** | Yes | Value sent in that header. |
+    | **Secret Key Request Header** | No | Optional second header name. |
+    | **Secret Key** | No | Value for the optional secret header. |
+    | **From** | Yes | Default sender ID shown on outbound messages. |
+    | **Id Path** | Yes | Dot path to the message ID in your JSON response (default: `data.id`). |
+    | **Date Path** | No | Dot path to the sent date in your response (default: `data.date`). |
+    | **Authenticate by token** | No | Fetch a token from an auth URL before each send. |
+    | **Auth URL** | If token auth | URL Novu calls to obtain the token. |
+    | **Authentication Token Key** | If token auth | Response field and header name for the token. |
+  </Step>
+
+  <Step title="Activate the integration">
+    Mark the integration as **Active** and save.
+  </Step>
+</Steps>
+
+## Request format
+
+For each SMS, Novu sends a `POST` request to your **Base URL** with the configured API key headers.
+
+```json
+{
+  "to": "+1234567890",
+  "content": "Your verification code is 123456",
+  "sender": "MyApp"
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `to` | Recipient phone number from the subscriber profile or trigger override. |
+| `content` | Rendered SMS body from the workflow step. |
+| `sender` | Sender ID from the integration **From** field or trigger override. |
+
+## Response format
+
+Return a `2xx` JSON response. Novu reads the message ID and date using the **Id Path** and **Date Path** you configured.
+
+Example response when **Id Path** is `message.id` and **Date Path** is `message.date`:
+
+```json
+{
+  "message": {
+    "id": "msg_abc123",
+    "date": "2026-01-14T10:30:00.000Z"
+  }
+}
+```
+
+If the date field is missing, Novu uses the current timestamp.
+
+## Token authentication (optional)
+
+When **Authenticate by token** is enabled:
+
+1. Novu `POST`s to your **Auth URL** with the API key headers.
+2. Novu reads the token from `data.<Authentication Token Key>` in the response.
+3. Novu sends the SMS request to **Base URL** with that token in a header named after **Authentication Token Key**.
+
+## Customize the request body
+
+Use [provider overrides](/platform/integrations/trigger-overrides#provider-overrides) to merge extra fields into the outbound request:
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<YOUR_SECRET_KEY_HERE>' });
+
+await novu.trigger({
+  workflowId: 'workflow-id',
+  to: { subscriberId: 'user-123' },
+  overrides: {
+    providers: {
+      'generic-sms': {
+        _passthrough: {
+          body: {
+            templateId: 'otp-template',
+          },
+        },
+      },
+    },
+  },
+});
+```
+
+The `_passthrough.body` fields are deep-merged into the default payload. See [SMS overrides](/platform/integrations/sms#override-sms-settings) to change `to`, `from`, or `content` at trigger time.
+
+<Note>
+  On Novu Cloud, **Base URL** and **Auth URL** must be publicly reachable HTTPS endpoints. Private or internal URLs are blocked by SSRF protection.
+</Note>

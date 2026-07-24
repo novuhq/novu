@@ -136,10 +136,7 @@ export function parseSlackCredentialsBlock(input: string): ParsedSlackCredential
       continue;
     }
 
-    if (
-      result.values[matchedField.key] !== undefined ||
-      result.masked.includes(matchedField.key)
-    ) {
+    if (result.values[matchedField.key] !== undefined || result.masked.includes(matchedField.key)) {
       // Slack pages don't repeat fields; if they do, prefer the first match
       // and skip duplicates so the user's existing value isn't clobbered twice.
       continue;

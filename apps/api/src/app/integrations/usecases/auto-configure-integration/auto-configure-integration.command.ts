@@ -1,8 +1,12 @@
-import { IsDefined, IsString } from 'class-validator';
-import { OrganizationCommand } from '../../../shared/commands/organization.command';
+import { IsBoolean, IsDefined, IsMongoId, IsOptional } from 'class-validator';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class AutoConfigureIntegrationCommand extends OrganizationCommand {
+export class AutoConfigureIntegrationCommand extends EnvironmentWithUserCommand {
   @IsDefined()
-  @IsString()
+  @IsMongoId()
   integrationId: string;
+
+  @IsOptional()
+  @IsBoolean()
+  restrictToUserEnvironment?: boolean;
 }

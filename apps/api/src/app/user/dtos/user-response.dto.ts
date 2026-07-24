@@ -10,12 +10,6 @@ export class UserResponseDto implements IUserEntity {
   @ApiProperty()
   _id: string;
 
-  @ApiPropertyOptional()
-  resetToken?: string;
-
-  @ApiPropertyOptional()
-  resetTokenDate?: string;
-
   @ApiProperty()
   firstName?: string | null;
 

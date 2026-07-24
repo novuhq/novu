@@ -13,9 +13,14 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { buildWorkflowSchema, DEFAULT_ARRAY_ELEMENTS, EmailControlType } from '@novu/application-generic';
+import {
+  buildActorSchema,
+  buildWorkflowSchema,
+  DEFAULT_ARRAY_ELEMENTS,
+  EmailControlType,
+} from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
+import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify, ToolProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { beforeEach } from 'mocha';
@@ -27,6 +32,17 @@ const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
 const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
 const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
+
+const EXPECTED_MOCK_ACTOR_PREVIEW = {
+  firstName: 'Jane',
+  lastName: 'Actor',
+  email: 'actor@example.com',
+  phone: '+1234567890',
+  avatar: 'https://example.com/avatar.png',
+  locale: 'en_US',
+  timezone: 'America/New_York',
+  data: {},
+};
 
 describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v2', async () => {
   let session: UserSession;
@@ -180,6 +196,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             required: ['subscriberId'],
             additionalProperties: false,
           },
+          actor: buildActorSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
@@ -271,6 +288,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           timezone: 'America/New_York',
           data: {},
         },
+        actor: EXPECTED_MOCK_ACTOR_PREVIEW,
         payload: {
           placeholder: {
             body: 'This is a body',
@@ -471,6 +489,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             required: ['subscriberId'],
             type: 'object',
           },
+          actor: buildActorSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
@@ -533,6 +552,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           timezone: 'America/New_York',
           data: {},
         },
+        actor: EXPECTED_MOCK_ACTOR_PREVIEW,
         payload: {
           placeholder: {
             body: 'Default body text',
@@ -1461,6 +1481,67 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       expect(previewResponseDto.result!.preview).to.deep.equal({ body: 'Hello, World! John' });
     });
 
+    it('tool: should echo providerOverrides fields in the preview response', async () => {
+      // Use raw HTTP — @novu/api SDK Zod schemas do not include `tool` yet (internal-sdk lag).
+      // testAgent returns API DTO field names (`_id`), not SDK remapped `id`.
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Override Preview Workflow',
+        workflowId: `tool-override-preview-${randomUUID()}`,
+        description: 'Tool providerOverrides preview coverage',
+        active: true,
+        steps: [
+          {
+            name: 'Tool Test Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default text as',
+            },
+          },
+        ],
+      });
+      expect(createResponse.status).to.equal(201);
+
+      const workflowId = createResponse.body.data._id as string;
+      const stepDatabaseId = createResponse.body.data.steps[0]._id as string;
+      expect(workflowId).to.be.a('string');
+      expect(stepDatabaseId).to.be.a('string');
+
+      const requestDto = {
+        controlValues: {
+          body: 'default text as',
+          providerOverrides: {
+            [ToolProviderIdEnum.Opsgenie]: {
+              alias: 'asd',
+            },
+            [ToolProviderIdEnum.PagerDuty]: {
+              severity: 'warning',
+              links: [{ href: 'https://example.com', text: 'Runbook' }],
+            },
+          },
+        },
+      };
+
+      const previewResponse = await session.testAgent
+        .post(`/v2/workflows/${workflowId}/step/${stepDatabaseId}/preview`)
+        .send(requestDto);
+      expect(previewResponse.status).to.be.oneOf([200, 201]);
+
+      const previewResponseDto = previewResponse.body.data as GeneratePreviewResponseDto;
+      const preview = previewResponseDto.result!.preview as {
+        body?: string;
+        providerOverrides?: Record<string, Record<string, unknown>>;
+      };
+
+      expect(previewResponseDto.result!.type).to.equal(StepTypeEnum.TOOL);
+      expect(preview.body).to.equal('default text as');
+      expect(preview.providerOverrides?.[ToolProviderIdEnum.Opsgenie]).to.deep.equal({ alias: 'asd' });
+      expect(preview.providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({
+        severity: 'warning',
+        links: [{ href: 'https://example.com', text: 'Runbook' }],
+      });
+    });
+
     it('email: should match the body in the preview response', async () => {
       const previewResponseDto = await createWorkflowAndPreview(StepTypeEnum.EMAIL, 'Email');
       const preview = previewResponseDto.result.preview as EmailRenderOutput;
@@ -2034,7 +2115,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         _id: session.environment._id,
       },
       {
-        bridge: { url: `http://localhost:${process.env.PORT}/v1/environments/${session.environment._id}/bridge` },
+        bridge: {
+          url: `http://127.0.0.1:${process.env.PORT}/v1/environments/${session.environment._id}/bridge`,
+        },
       }
     );
   }

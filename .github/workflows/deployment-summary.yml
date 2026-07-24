@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
 
@@ -244,7 +244,7 @@ jobs:
         id: ai-inference-call
         if: ${{ steps.fetch-prs.outputs.pr_count > 0 }}
         continue-on-error: true
-        uses: actions/ai-inference@v1
+        uses: actions/ai-inference@b81b2afb8390ee6839b494a404766bef6493c7d9 # v1
         with:
           system-prompt: ${{ env.SYSTEM_PROMPT }}
           prompt: ${{ env.USER_PROMPT }}
@@ -516,7 +516,7 @@ jobs:
 
       - name: Send deployment summary to Slack
         id: slack
-        uses: slackapi/slack-github-action@v2.1.0
+        uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52 # v2.1.0
         if: ${{ always() }}
         with:
           webhook-type: incoming-webhook

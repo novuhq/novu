@@ -5,6 +5,7 @@ import {
   defaultSubscriptionLocalization,
   dynamicLocalization,
 } from '../config/defaultLocalization';
+import { normalizeIntlLocale } from '../helpers/normalizeIntlLocale';
 
 export type InboxLocalizationKey = keyof typeof defaultInboxLocalization;
 export type SubscriptionLocalizationKey = keyof typeof defaultSubscriptionLocalization;
@@ -79,7 +80,7 @@ export const LocalizationProvider = (props: LocalizationProviderProps) => {
     return value as string;
   };
 
-  const locale = createMemo(() => localization().locale as string);
+  const locale = createMemo(() => normalizeIntlLocale(localization().locale as string));
 
   return (
     <LocalizationContext.Provider

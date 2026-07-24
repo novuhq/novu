@@ -1,7 +1,12 @@
 {
   "name": "@novu/js",
-  "version": "3.16.0",
-  "repository": "https://github.com/novuhq/novu",
+  "version": "3.18.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novuhq/novu",
+    "directory": "packages/js"
+  },
+  "homepage": "https://novu.co",
   "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
   "license": "ISC",
@@ -134,7 +139,7 @@
     "event-target-polyfill": "^0.0.4",
     "mitt": "^3.0.1",
     "partysocket": "^1.1.4",
-    "socket.io-client": "4.7.2",
+    "socket.io-client": "4.8.3",
     "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.9.4",
     "solid-motionone": "^1.0.3",

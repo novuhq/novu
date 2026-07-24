@@ -14,7 +14,7 @@ export const useUpdateLayout = (options?: UseMutationOptions<LayoutResponseDto, 
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: UpdateLayoutParameters) => updateLayout({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchLayout, currentEnvironment?._id],
       });
@@ -28,7 +28,7 @@ export const useUpdateLayout = (options?: UseMutationOptions<LayoutResponseDto, 
         queryKey: [QueryKeys.diffEnvironments],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

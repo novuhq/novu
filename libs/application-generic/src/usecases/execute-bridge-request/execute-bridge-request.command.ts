@@ -50,13 +50,12 @@ export class ExecuteBridgeRequestCommand extends EnvironmentLevelCommand {
   stepResolverHash?: string;
 
   /**
-   * Enforce SSRF protection on the outbound bridge HTTP call (DNS-pinned
+   * Force SSRF protection on the outbound bridge HTTP call (DNS-pinned
    * connect-time guard + redirect re-validation via `HttpClientService`).
    *
-   * Use for endpoints that accept a user-controlled bridgeUrl (e.g.
-   * `/bridge/sync`, `/bridge/validate`) so attacker-controlled IP literals
-   * (loopback / RFC1918 / link-local / cloud metadata) cannot reach internal
-   * services. Leave undefined for trusted internal callers.
+   * `ExecuteFrameworkRequest` also enables the guard automatically for
+   * stateless bridge URLs and EXTERNAL-origin workflows. Set explicitly when
+   * a caller needs the guard outside those cases.
    */
   @IsOptional()
   @IsBoolean()

@@ -8,6 +8,18 @@ import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  LineUserEndpointDto,
+  LineUserEndpointDto$inboundSchema,
+} from "./lineuserendpointdto.js";
+import {
+  MsTeamsChannelEndpointDto,
+  MsTeamsChannelEndpointDto$inboundSchema,
+} from "./msteamschannelendpointdto.js";
+import {
+  MsTeamsUserEndpointDto,
+  MsTeamsUserEndpointDto$inboundSchema,
+} from "./msteamsuserendpointdto.js";
+import {
   PhoneEndpointDto,
   PhoneEndpointDto$inboundSchema,
 } from "./phoneendpointdto.js";
@@ -19,6 +31,18 @@ import {
   SlackUserEndpointDto,
   SlackUserEndpointDto$inboundSchema,
 } from "./slackuserendpointdto.js";
+import {
+  TelegramChatEndpointDto,
+  TelegramChatEndpointDto$inboundSchema,
+} from "./telegramchatendpointdto.js";
+import {
+  WebexPersonEndpointDto,
+  WebexPersonEndpointDto$inboundSchema,
+} from "./webexpersonendpointdto.js";
+import {
+  WebexRoomEndpointDto,
+  WebexRoomEndpointDto$inboundSchema,
+} from "./webexroomendpointdto.js";
 import {
   WebhookEndpointDto,
   WebhookEndpointDto$inboundSchema,
@@ -45,6 +69,7 @@ export type GetChannelEndpointResponseDtoChannel = ClosedEnum<
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
  */
 export const GetChannelEndpointResponseDtoProviderId = {
+  Anypost: "anypost",
   Emailjs: "emailjs",
   Mailgun: "mailgun",
   Mailjet: "mailjet",
@@ -116,6 +141,7 @@ export const GetChannelEndpointResponseDtoProviderId = {
   Slack: "slack",
   Discord: "discord",
   Msteams: "msteams",
+  WebexMessaging: "webex-messaging",
   Mattermost: "mattermost",
   Ryver: "ryver",
   Zulip: "zulip",
@@ -123,8 +149,14 @@ export const GetChannelEndpointResponseDtoProviderId = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  Line: "line",
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
+  Telegram: "telegram",
+  Sendblue: "sendblue",
+  Anthropic: "anthropic",
+  NovuAnthropic: "novu-anthropic",
+  AnthropicAws: "anthropic-aws",
 } as const;
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
@@ -143,6 +175,10 @@ export const GetChannelEndpointResponseDtoType = {
   Phone: "phone",
   MsTeamsChannel: "ms_teams_channel",
   MsTeamsUser: "ms_teams_user",
+  TelegramChat: "telegram_chat",
+  WebexRoom: "webex_room",
+  WebexPerson: "webex_person",
+  LineUser: "line_user",
 } as const;
 /**
  * Type of channel endpoint
@@ -155,10 +191,16 @@ export type GetChannelEndpointResponseDtoType = ClosedEnum<
  * Endpoint data specific to the channel type
  */
 export type Endpoint =
+  | MsTeamsChannelEndpointDto
   | SlackChannelEndpointDto
   | SlackUserEndpointDto
   | WebhookEndpointDto
-  | PhoneEndpointDto;
+  | PhoneEndpointDto
+  | MsTeamsUserEndpointDto
+  | TelegramChatEndpointDto
+  | WebexRoomEndpointDto
+  | LineUserEndpointDto
+  | WebexPersonEndpointDto;
 
 export type GetChannelEndpointResponseDto = {
   /**
@@ -197,10 +239,16 @@ export type GetChannelEndpointResponseDto = {
    * Endpoint data specific to the channel type
    */
   endpoint:
+    | MsTeamsChannelEndpointDto
     | SlackChannelEndpointDto
     | SlackUserEndpointDto
     | WebhookEndpointDto
-    | PhoneEndpointDto;
+    | PhoneEndpointDto
+    | MsTeamsUserEndpointDto
+    | TelegramChatEndpointDto
+    | WebexRoomEndpointDto
+    | LineUserEndpointDto
+    | WebexPersonEndpointDto;
   /**
    * The timestamp indicating when the channel endpoint was created, in ISO 8601 format.
    */
@@ -233,10 +281,16 @@ export const Endpoint$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.union([
+  MsTeamsChannelEndpointDto$inboundSchema,
   SlackChannelEndpointDto$inboundSchema,
   SlackUserEndpointDto$inboundSchema,
   WebhookEndpointDto$inboundSchema,
   PhoneEndpointDto$inboundSchema,
+  MsTeamsUserEndpointDto$inboundSchema,
+  TelegramChatEndpointDto$inboundSchema,
+  WebexRoomEndpointDto$inboundSchema,
+  LineUserEndpointDto$inboundSchema,
+  WebexPersonEndpointDto$inboundSchema,
 ]);
 
 export function endpointFromJSON(
@@ -264,10 +318,16 @@ export const GetChannelEndpointResponseDto$inboundSchema: z.ZodType<
   contextKeys: z.array(z.string()),
   type: GetChannelEndpointResponseDtoType$inboundSchema,
   endpoint: z.union([
+    MsTeamsChannelEndpointDto$inboundSchema,
     SlackChannelEndpointDto$inboundSchema,
     SlackUserEndpointDto$inboundSchema,
     WebhookEndpointDto$inboundSchema,
     PhoneEndpointDto$inboundSchema,
+    MsTeamsUserEndpointDto$inboundSchema,
+    TelegramChatEndpointDto$inboundSchema,
+    WebexRoomEndpointDto$inboundSchema,
+    LineUserEndpointDto$inboundSchema,
+    WebexPersonEndpointDto$inboundSchema,
   ]),
   createdAt: z.string(),
   updatedAt: z.string(),

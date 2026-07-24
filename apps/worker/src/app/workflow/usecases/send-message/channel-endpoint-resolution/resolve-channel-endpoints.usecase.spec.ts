@@ -1,0 +1,329 @@
+import {
+  decryptChannelConnectionAuth,
+  encryptChannelConnectionAuth,
+  type WebexTokenRefreshResponse,
+} from '@novu/application-generic';
+import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
+import { ENDPOINT_TYPES } from '@novu/stateless';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { ResolveChannelEndpoints } from './resolve-channel-endpoints.usecase';
+
+const ORGANIZATION_ID = 'org_123';
+const ENVIRONMENT_ID = 'env_123';
+const SUBSCRIBER_ID = 'subscriber_123';
+const INTEGRATION_IDENTIFIER = 'webex-integration';
+const CONNECTION_IDENTIFIER = 'webex-connection';
+const NOW = new Date('2026-06-01T00:00:00.000Z').getTime();
+
+describe('ResolveChannelEndpoints - Webex Messaging', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let integrationRepository: Record<string, sinon.SinonStub>;
+  let webexTokenService: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+    sandbox.useFakeTimers(NOW);
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub(),
+      findOneAndUpdate: sandbox.stub().resolves(undefined),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    integrationRepository = {
+      findOne: sandbox.stub(),
+    };
+    webexTokenService = {
+      refreshAccessToken: sandbox.stub(),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      integrationRepository as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      webexTokenService as any
+    );
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('resolves Webex endpoint data with the current channel connection access token', async () => {
+    channelEndpointRepository.find.resolves([
+      buildWebexEndpoint({
+        identifier: 'webex-room-endpoint',
+        endpoint: { roomId: 'room_123' },
+        type: ENDPOINT_TYPES.WEBEX_ROOM,
+      }),
+    ]);
+    channelConnectionRepository.find.resolves([
+      buildWebexConnection({
+        accessToken: 'current-token',
+        refreshToken: 'refresh-token',
+        expiresAt: new Date(NOW + 60 * 60 * 1000).toISOString(),
+      }),
+    ]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result).to.deep.equal([
+      {
+        integrationIdentifier: INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.WebexMessaging,
+        channelData: [
+          {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'webex-room-endpoint',
+            endpoint: { roomId: 'room_123' },
+            token: 'current-token',
+          },
+        ],
+      },
+    ]);
+    sinon.assert.notCalled(webexTokenService.refreshAccessToken);
+    expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
+      $in: [CONNECTION_IDENTIFIER],
+    });
+  });
+
+  it('refreshes an expiring Webex connection once for all endpoints and persists encrypted auth', async () => {
+    channelEndpointRepository.find.resolves([
+      buildWebexEndpoint({
+        identifier: 'webex-room-endpoint',
+        endpoint: { roomId: 'room_123' },
+        type: ENDPOINT_TYPES.WEBEX_ROOM,
+      }),
+      buildWebexEndpoint({
+        identifier: 'webex-person-endpoint',
+        endpoint: { personId: 'person_123' },
+        type: ENDPOINT_TYPES.WEBEX_PERSON,
+      }),
+    ]);
+    channelConnectionRepository.find.resolves([
+      buildWebexConnection({
+        accessToken: 'stale-token',
+        refreshToken: 'refresh-token',
+        expiresAt: new Date(NOW + 60 * 1000).toISOString(),
+        refreshTokenExpiresAt: new Date(NOW + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      }),
+    ]);
+    integrationRepository.findOne.resolves({
+      credentials: {
+        clientId: 'webex-client-id',
+        secretKey: 'webex-client-secret',
+      },
+    });
+    webexTokenService.refreshAccessToken.resolves({
+      access_token: 'fresh-token',
+      refresh_token: 'fresh-refresh-token',
+      expires_in: 3600,
+      refresh_token_expires_in: 7200,
+    } satisfies WebexTokenRefreshResponse);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result[0].channelData).to.deep.equal([
+      {
+        type: ENDPOINT_TYPES.WEBEX_ROOM,
+        identifier: 'webex-room-endpoint',
+        endpoint: { roomId: 'room_123' },
+        token: 'fresh-token',
+      },
+      {
+        type: ENDPOINT_TYPES.WEBEX_PERSON,
+        identifier: 'webex-person-endpoint',
+        endpoint: { personId: 'person_123' },
+        token: 'fresh-token',
+      },
+    ]);
+    sinon.assert.calledOnceWithExactly(
+      webexTokenService.refreshAccessToken,
+      'refresh-token',
+      'webex-client-id',
+      'webex-client-secret'
+    );
+    sinon.assert.calledOnce(channelConnectionRepository.findOneAndUpdate);
+
+    const [updateFilter, updatePayload] = channelConnectionRepository.findOneAndUpdate.firstCall.args;
+    expect(updateFilter).to.deep.equal({
+      _environmentId: ENVIRONMENT_ID,
+      _organizationId: ORGANIZATION_ID,
+      identifier: CONNECTION_IDENTIFIER,
+    });
+
+    const encryptedAuth = updatePayload.$set.auth;
+    expect(encryptedAuth.accessToken).to.not.equal('fresh-token');
+
+    const refreshedAuth = decryptChannelConnectionAuth(encryptedAuth);
+    expect(refreshedAuth.accessToken).to.equal('fresh-token');
+    expect(refreshedAuth.refreshToken).to.equal('fresh-refresh-token');
+    expect(refreshedAuth.expiresAt).to.equal(new Date(NOW + 3600 * 1000).toISOString());
+    expect(refreshedAuth.refreshTokenExpiresAt).to.equal(new Date(NOW + 7200 * 1000).toISOString());
+  });
+});
+
+describe('ResolveChannelEndpoints - Opsgenie', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      { findOne: sandbox.stub() } as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      { refreshAccessToken: sandbox.stub() } as any
+    );
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('hydrates the Opsgenie endpoint wire shape from decrypted connection auth', async () => {
+    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
+    channelConnectionRepository.find.resolves([buildOpsgenieConnection({ apiKey: 'genie-key-123', region: 'eu' })]);
+
+    const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
+
+    expect(result).to.deep.equal([
+      {
+        integrationIdentifier: OPSGENIE_INTEGRATION_IDENTIFIER,
+        providerId: ToolProviderIdEnum.Opsgenie,
+        channelData: [
+          {
+            type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+            identifier: 'opsgenie-endpoint',
+            endpoint: { apiKey: 'genie-key-123', region: 'eu' },
+          },
+        ],
+      },
+    ]);
+    expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
+      $in: [OPSGENIE_CONNECTION_IDENTIFIER],
+    });
+  });
+
+  it('throws when the linked channel connection is missing', async () => {
+    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
+    channelConnectionRepository.find.resolves([]);
+
+    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
+
+    expect(error).to.be.instanceOf(Error);
+    expect(error.message).to.contain('opsgenie-endpoint');
+    expect(error.message).to.contain('no auth is available');
+  });
+
+  it('throws when the connection auth is missing apiKey or region', async () => {
+    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
+    channelConnectionRepository.find.resolves([buildOpsgenieConnection({ apiKey: 'genie-key-123' })]);
+
+    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
+
+    expect(error).to.be.instanceOf(Error);
+    expect(error.message).to.contain('missing apiKey or region');
+  });
+});
+
+function buildCommand(overrides: Record<string, unknown> = {}) {
+  return {
+    organizationId: ORGANIZATION_ID,
+    environmentId: ENVIRONMENT_ID,
+    userId: 'user_123',
+    subscriberId: SUBSCRIBER_ID,
+    channelType: ChannelTypeEnum.CHAT,
+    contextKeys: [],
+    ...overrides,
+  } as any;
+}
+
+function buildWebexEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'webex-endpoint',
+    integrationIdentifier: INTEGRATION_IDENTIFIER,
+    providerId: ChatProviderIdEnum.WebexMessaging,
+    channel: ChannelTypeEnum.CHAT,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    connectionIdentifier: CONNECTION_IDENTIFIER,
+    type: ENDPOINT_TYPES.WEBEX_ROOM,
+    endpoint: { roomId: 'room_123' },
+    ...overrides,
+  };
+}
+
+function buildWebexConnection(auth: {
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  refreshTokenExpiresAt?: string;
+}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: CONNECTION_IDENTIFIER,
+    integrationIdentifier: INTEGRATION_IDENTIFIER,
+    providerId: ChatProviderIdEnum.WebexMessaging,
+    channel: ChannelTypeEnum.CHAT,
+    contextKeys: [],
+    auth: encryptChannelConnectionAuth(auth),
+  };
+}
+
+const OPSGENIE_INTEGRATION_IDENTIFIER = 'opsgenie-integration';
+const OPSGENIE_CONNECTION_IDENTIFIER = 'opsgenie-connection';
+
+function buildOpsgenieEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'opsgenie-endpoint',
+    integrationIdentifier: OPSGENIE_INTEGRATION_IDENTIFIER,
+    providerId: ToolProviderIdEnum.Opsgenie,
+    channel: ChannelTypeEnum.TOOL,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    connectionIdentifier: OPSGENIE_CONNECTION_IDENTIFIER,
+    type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+    endpoint: {},
+    ...overrides,
+  };
+}
+
+function buildOpsgenieConnection(auth: { apiKey: string; region?: 'us' | 'eu' }) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: OPSGENIE_CONNECTION_IDENTIFIER,
+    integrationIdentifier: OPSGENIE_INTEGRATION_IDENTIFIER,
+    providerId: ToolProviderIdEnum.Opsgenie,
+    channel: ChannelTypeEnum.TOOL,
+    contextKeys: [],
+    auth: encryptChannelConnectionAuth(auth),
+  };
+}

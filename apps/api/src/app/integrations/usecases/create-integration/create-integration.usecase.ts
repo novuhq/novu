@@ -1,10 +1,21 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AnalyticsService,
   areNovuEmailCredentialsSet,
+  areNovuManagedClaudeCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
   encryptCredentials,
+  FeatureFlagsService,
+  PinoLogger,
+  resolveAgentRuntime,
 } from '@novu/application-generic';
 import {
   DalException,
@@ -14,16 +25,21 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  AgentRuntimeProviderIdEnum,
   CHANNELS_WITH_PRIMARY,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
+  IntegrationKindEnum,
   providers,
   SmsProviderIdEnum,
   slugify,
+  ToolProviderIdEnum,
 } from '@novu/shared';
 import shortid from 'shortid';
+import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
@@ -36,8 +52,12 @@ export class CreateIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private environmentRepository: EnvironmentRepository
-  ) {}
+    private environmentRepository: EnvironmentRepository,
+    private featureFlagsService: FeatureFlagsService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(CreateIntegration.name);
+  }
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
     const result: { primary: boolean; priority: number } = {
@@ -74,39 +94,76 @@ export class CreateIntegration {
   }
 
   private async validate(command: CreateIntegrationCommand): Promise<void> {
-    const existingIntegration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      providerId: command.providerId,
-      channel: command.channel,
-    });
+    const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
 
-    if (
-      existingIntegration &&
-      command.providerId === InAppProviderIdEnum.Novu &&
-      command.channel === ChannelTypeEnum.IN_APP
-    ) {
-      throw new BadRequestException('One environment can only have one In app provider');
+    if (command.providerId === ToolProviderIdEnum.Webhook) {
+      const isToolWebhookProviderEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_TOOL_WEBHOOK_PROVIDER_ENABLED,
+        defaultValue: false,
+        environment: { _id: command.environmentId },
+        organization: { _id: command.organizationId },
+      });
+
+      if (!isToolWebhookProviderEnabled) {
+        throw new ForbiddenException({
+          statusCode: 403,
+          message: 'Tool webhook provider is not enabled for this organization.',
+          error: 'tool_webhook_provider_disabled',
+        });
+      }
     }
 
-    if (
-      (command.providerId === SmsProviderIdEnum.Novu && !areNovuSmsCredentialsSet()) ||
-      (command.providerId === EmailProviderIdEnum.Novu && !areNovuEmailCredentialsSet()) ||
-      (command.providerId === ChatProviderIdEnum.Novu && !areNovuSlackCredentialsSet())
-    ) {
+    if (command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic && !areNovuManagedClaudeCredentialsSet()) {
       throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
     }
 
-    if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
+    if (isAgentKind && command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
       const count = await this.integrationRepository.count({
+        _environmentId: command.environmentId,
+        providerId: command.providerId,
+        kind: IntegrationKindEnum.AGENT,
+      });
+
+      if (count > 0) {
+        throw new ConflictException('Integration with novu provider for agent runtime already exists');
+      }
+    }
+
+    if (!isAgentKind) {
+      const existingIntegration = await this.integrationRepository.findOne({
         _environmentId: command.environmentId,
         providerId: command.providerId,
         channel: command.channel,
       });
 
-      if (count > 0) {
-        throw new ConflictException(
-          `Integration with novu provider for ${command.channel.toLowerCase()} channel already exists`
-        );
+      if (
+        existingIntegration &&
+        command.providerId === InAppProviderIdEnum.Novu &&
+        command.channel === ChannelTypeEnum.IN_APP
+      ) {
+        throw new BadRequestException('One environment can only have one In app provider');
+      }
+
+      if (
+        (command.providerId === SmsProviderIdEnum.Novu && !areNovuSmsCredentialsSet()) ||
+        (command.providerId === EmailProviderIdEnum.Novu && !areNovuEmailCredentialsSet()) ||
+        (command.providerId === ChatProviderIdEnum.Novu && !areNovuSlackCredentialsSet())
+      ) {
+        throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
+      }
+
+      if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
+        const count = await this.integrationRepository.count({
+          _environmentId: command.environmentId,
+          providerId: command.providerId,
+          channel: command.channel,
+        });
+
+        if (count > 0) {
+          throw new ConflictException(
+            `Integration with novu provider for ${command.channel?.toLowerCase()} channel already exists`
+          );
+        }
       }
     }
 
@@ -134,14 +191,21 @@ export class CreateIntegration {
 
     await this.validate(command);
 
+    const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
+
+    if (!isAgentKind) {
+      await validateOutboundIntegrationCredentials(command.providerId, command.credentials);
+    }
+
     this.analyticsService.track('Create Integration - [Integrations]', command.userId, {
       providerId: command.providerId,
       channel: command.channel,
+      kind: command.kind,
       _organization: command.organizationId,
     });
 
     try {
-      if (command.check) {
+      if (command.check && !isAgentKind) {
         await this.checkIntegration.execute(
           CheckIntegrationCommand.create({
             environmentId: command.environmentId,
@@ -170,14 +234,19 @@ export class CreateIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         providerId: command.providerId,
-        channel: command.channel,
         credentials: encryptCredentials(managedCredentials),
         active: command.active,
         conditions: command.conditions,
         configurations: command.configurations,
+        kind: command.kind ?? IntegrationKindEnum.DELIVERY,
       };
 
-      const isActiveAndChannelSupportsPrimary = command.active && CHANNELS_WITH_PRIMARY.includes(command.channel);
+      if (!isAgentKind && command.channel) {
+        query.channel = command.channel;
+      }
+
+      const isActiveAndChannelSupportsPrimary =
+        !isAgentKind && command.active && command.channel && CHANNELS_WITH_PRIMARY.includes(command.channel);
 
       if (isActiveAndChannelSupportsPrimary) {
         const { primary, priority } = await this.calculatePriorityAndPrimary(command);
@@ -188,12 +257,74 @@ export class CreateIntegration {
 
       const integrationEntity = await this.integrationRepository.create(query);
 
+      const shouldProvisionAgentRuntime =
+        isAgentKind && command.providerId !== AgentRuntimeProviderIdEnum.NovuAnthropic;
+
+      if (shouldProvisionAgentRuntime) {
+        await this.provisionAgentRuntimeIntegration(integrationEntity._id, identifier, command);
+      }
+
       return integrationEntity;
     } catch (e) {
       if (e instanceof DalException) {
         throw new BadRequestException(e.message);
       }
       throw e;
+    }
+  }
+
+  private async provisionAgentRuntimeIntegration(
+    integrationId: string,
+    integrationName: string,
+    command: CreateIntegrationCommand
+  ): Promise<void> {
+    const providerId = command.providerId as AgentRuntimeProviderIdEnum;
+    const resolved = resolveAgentRuntime(providerId, command.credentials ?? {});
+
+    if (!resolved) {
+      throw new BadRequestException(
+        `Integration "${integrationId}" has incomplete runtime credentials. Complete setup before provisioning.`
+      );
+    }
+
+    const provider = resolved.provider;
+
+    try {
+      await provider.validateCredentials(resolved.validateCredentialsInput);
+      const result = await provider.provisionIntegration({ integrationName });
+
+      const updatedCredentials = encryptCredentials({
+        ...(command.credentials ?? {}),
+        ...result.credentialsUpdate,
+      });
+
+      await this.integrationRepository.update(
+        {
+          _id: integrationId,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        { $set: { credentials: updatedCredentials } }
+      );
+    } catch (provisionError) {
+      this.logger.error(
+        { err: provisionError, integrationId, providerId: command.providerId },
+        'Failed to provision agent runtime integration; rolling back integration record'
+      );
+
+      try {
+        await this.integrationRepository.delete({
+          _id: integrationId,
+          _organizationId: command.organizationId,
+        });
+      } catch (deleteError) {
+        this.logger.error(
+          { err: deleteError, integrationId },
+          'Failed to delete integration during rollback — manual cleanup required'
+        );
+      }
+
+      throw provisionError;
     }
   }
 }

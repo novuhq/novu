@@ -10,6 +10,7 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 
 type NovuBrandingProps = HTMLAttributes<HTMLDivElement> & {
   resourceOrigin: ResourceOriginEnum;
@@ -92,7 +93,8 @@ export const NovuBranding = ({ className, resourceOrigin, isStepResolver, ...res
     <div className={cn('flex items-center justify-center pb-6 pt-4', className)} {...rest}>
       {!canRemoveNovuBranding ? (
         <UpgradeCTATooltip
-          description="Upgrade to remove Novu branding from your emails."
+          description="Remove Novu branding from your emails."
+          requiredTier={getMinimumTierForFeature(FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN)}
           utmSource="novu-branding-email"
           side="top"
           align="center"

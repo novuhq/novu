@@ -35,6 +35,7 @@ export const channelEndpointRepository = new ChannelEndpointRepository();
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelConnectionRepository = new ChannelConnectionRepository();
+const agentRepository = new AgentRepository();
 
 export async function setupAgentTestContext(): Promise<AgentTestContext> {
   const session = new UserSession();
@@ -46,6 +47,17 @@ export async function setupAgentTestContext(): Promise<AgentTestContext> {
     identifier: agentIdentifier,
   });
   const agentId = createRes.body.data._id as string;
+
+  // Slack e2e historically relied on always-on auto-provision; open access is
+  // now explicit so restricted agents stay lookup-only.
+  await agentRepository.update(
+    {
+      _id: agentId,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    },
+    { $set: { 'behavior.subscriberAccess': 'open' } }
+  );
 
   const integration = await integrationRepository.create({
     _environmentId: session.environment._id,
@@ -92,10 +104,9 @@ export async function setupAgentTestContext(): Promise<AgentTestContext> {
 
 export async function seedConversation(
   ctx: AgentTestContext,
-  opts: { withSerializedThread?: boolean; status?: ConversationStatusEnum; metadata?: Record<string, unknown> } = {}
+  opts: { status?: ConversationStatusEnum; metadata?: Record<string, unknown> } = {}
 ): Promise<string> {
   const { session, agentId, integrationId } = ctx;
-  const withThread = opts.withSerializedThread ?? true;
 
   const conversation = await conversationRepository.create({
     identifier: `conv-e2e-${Date.now()}`,
@@ -109,7 +120,6 @@ export async function seedConversation(
         platform: 'slack',
         _integrationId: integrationId,
         platformThreadId: `thread-${Date.now()}`,
-        ...(withThread ? { serializedThread: { id: 'T_SERIALIZED', platform: 'slack' } } : {}),
       },
     ],
     status: opts.status ?? ConversationStatusEnum.ACTIVE,

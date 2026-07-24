@@ -58,6 +58,7 @@ typescript:
   additionalPackageJSON: {}
   additionalScripts: {}
   alwaysIncludeInboundAndOutbound: false
+  apiPromiseHelpers: false
   author: Novu
   baseErrorName: NovuError
   clientServerStatusCodesAsErrors: true
@@ -67,6 +68,7 @@ typescript:
   enableMCPServer: false
   enableReactQuery: true
   enumFormat: union
+  eventStreamClassName: EventStream
   exportZodModelNamespace: false
   fixEnumNameSanitization: false
   flatAdditionalProperties: false
@@ -98,6 +100,8 @@ typescript:
   packageName: '@novu/api'
   preApplyUnionDiscriminators: true
   preserveModelFieldNames: false
+  privateIdentifierPrefix: '#'
+  requestExtras: false
   responseFormat: flat
   sseFlatResponse: false
   templateVersion: v2

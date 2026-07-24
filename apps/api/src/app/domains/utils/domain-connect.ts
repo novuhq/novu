@@ -13,6 +13,17 @@ export const SUPPORTED_DOMAIN_CONNECT_HOSTS: Record<string, string> = {
   'domainconnect.vercel.com': 'Vercel',
 };
 
+/** Domain Connect host used when NS-based DNS provider detection matches a supported provider. */
+export const DNS_PROVIDER_DOMAIN_CONNECT_HOSTS: Record<string, string> = {
+  Cloudflare: 'domainconnect.cloudflare.com',
+  Vercel: 'domainconnect.vercel.com',
+};
+
+export interface DomainConnectDiscoveryResult {
+  domainName: string;
+  providerHost: string;
+}
+
 const ALLOWED_PROVIDER_URL_HOSTS: Record<string, string[]> = {
   Cloudflare: ['cloudflare.com'],
   Vercel: ['vercel.com'],
@@ -75,6 +86,32 @@ export function isSupportedDomainConnectHost(host: string): boolean {
 
 export function getProviderNameForHost(host: string): string | undefined {
   return SUPPORTED_DOMAIN_CONNECT_HOSTS[getDomainConnectHostname(host)];
+}
+
+export function buildDnsProviderDomainConnectDiscovery(
+  domainName: string,
+  dnsProvider?: string
+): DomainConnectDiscoveryResult | undefined {
+  if (!dnsProvider) {
+    return undefined;
+  }
+
+  const providerHost = DNS_PROVIDER_DOMAIN_CONNECT_HOSTS[dnsProvider];
+
+  if (!providerHost || !isSupportedDomainConnectHost(providerHost)) {
+    return undefined;
+  }
+
+  const connectDomainName = getDomainConnectDiscoveryCandidates(domainName)[0];
+
+  if (!connectDomainName) {
+    return undefined;
+  }
+
+  return {
+    domainName: connectDomainName,
+    providerHost,
+  };
 }
 
 export function buildDomainConnectSettingsUrl(domainName: string, host: string): string {

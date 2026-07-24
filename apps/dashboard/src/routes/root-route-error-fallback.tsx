@@ -4,10 +4,8 @@ import { useMemo } from 'react';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { TooltipProvider } from '@/components/primitives/tooltip';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED, SUPPORT_EMAIL } from '@/config';
 import { cn } from '@/utils/ui';
-
-const SUPPORT_EMAIL = 'support@novu.co';
 
 const SELF_HOSTED_DOCS_URL =
   'https://docs.novu.co/community/run-in-local-machine?utm_source=dashboard&utm_medium=app_error';

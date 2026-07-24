@@ -65,6 +65,7 @@ export class SyncExternalOrganization {
         organizationId: devEnv._organizationId,
         userId: command.userId,
         name: devEnv.name,
+        environmentType: devEnv.type,
       })
     );
 
@@ -101,6 +102,7 @@ export class SyncExternalOrganization {
         organizationId: prodEnv._organizationId,
         userId: command.userId,
         name: prodEnv.name,
+        environmentType: prodEnv.type,
       })
     );
 
@@ -134,7 +136,7 @@ export class SyncExternalOrganization {
       })
     );
 
-    if (organizationAfterChanges !== null) {
+    if (organizationAfterChanges) {
       await this.createCustomer(command.email, organizationAfterChanges._id);
     }
 

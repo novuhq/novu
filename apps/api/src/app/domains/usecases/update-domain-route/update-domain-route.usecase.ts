@@ -53,8 +53,7 @@ export class UpdateDomainRoute {
       organizationId: command.organizationId,
     });
 
-    const hasChanges =
-      command.type !== undefined || command.agentId !== undefined || command.data !== undefined;
+    const hasChanges = command.type !== undefined || command.agentId !== undefined || command.data !== undefined;
 
     if (!hasChanges) {
       return toDomainRouteResponse(currentRoute);

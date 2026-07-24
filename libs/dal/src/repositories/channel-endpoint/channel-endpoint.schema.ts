@@ -1,7 +1,9 @@
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { ChannelEndpointDBModel } from './channel-endpoint.entity';
+
+const PLATFORM_USER_ENDPOINT_TYPES: ChannelEndpointType[] = [ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.MS_TEAMS_USER];
 
 const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
   {
@@ -59,6 +61,60 @@ const channelEndpointSchema = new Schema<ChannelEndpointDBModel>(
 
 channelEndpointSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
 channelEndpointSchema.index({ _environmentId: 1, subscriberId: 1, channel: 1 });
+
+/*
+ * Enforces one ChannelEndpoint row per (env, integration, platform user). Scoped to
+ * the platform-user endpoint types Slack and Teams use for agent auto-provisioning;
+ * other endpoint types (slack_channel, telegram_chat, phone, …) keep their existing
+ * shape and may legitimately repeat the same identity value. The `endpoint.userId`
+ * existence clause keeps documents that lack the field out of the partial index
+ * entirely, so they can't share a `null` key and trip a false-positive duplicate.
+ */
+channelEndpointSchema.index(
+  { _environmentId: 1, integrationIdentifier: 1, type: 1, 'endpoint.userId': 1 },
+  {
+    name: 'unique_platform_user_per_integration',
+    unique: true,
+    partialFilterExpression: {
+      type: { $in: PLATFORM_USER_ENDPOINT_TYPES },
+      'endpoint.userId': { $exists: true },
+    },
+  }
+);
+
+/*
+ * Enforces one PagerDuty endpoint per (env, subscriber, integration). PagerDuty
+ * routing is 1:1 with a subscriber's target service; a duplicate would silently
+ * fan out to two incidents per trigger. Partial index keeps other endpoint types
+ * (Slack, Telegram, phone, …) free to repeat these tuples.
+ */
+channelEndpointSchema.index(
+  { _environmentId: 1, subscriberId: 1, integrationIdentifier: 1, type: 1 },
+  {
+    name: 'unique_pagerduty_service_per_subscriber_integration',
+    unique: true,
+    partialFilterExpression: {
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+    },
+  }
+);
+
+/*
+ * Enforces one Opsgenie endpoint per (env, subscriber, integration). Opsgenie
+ * routing is 1:1 with a subscriber's target API integration; a duplicate would
+ * silently fan out to two alerts per trigger. Partial index keeps other endpoint
+ * types free to repeat these tuples.
+ */
+channelEndpointSchema.index(
+  { _environmentId: 1, subscriberId: 1, integrationIdentifier: 1, type: 1 },
+  {
+    name: 'unique_opsgenie_integration_per_subscriber_integration',
+    unique: true,
+    partialFilterExpression: {
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+    },
+  }
+);
 
 export const ChannelEndpoint =
   (mongoose.models.ChannelEndpoint as mongoose.Model<ChannelEndpointDBModel>) ||

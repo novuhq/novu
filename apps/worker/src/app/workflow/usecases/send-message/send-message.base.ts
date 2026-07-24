@@ -91,7 +91,7 @@ export abstract class SendMessageBase extends SendMessageType {
       integration.providerId === ChatProviderIdEnum.Novu
     ) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
-        channelType: integration.channel,
+        channelType: this.channelType,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,
@@ -105,6 +105,16 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+  }
+
+  /**
+   * Payload-dedup write policy for a stored message: when enabled, the payload
+   * is not persisted on the message and is resolved from the parent
+   * notification at read time. When off, the channel's payload is persisted as
+   * before. In-app messages keep their own payload and don't use this.
+   */
+  protected payloadToPersist<T>(command: SendMessageChannelCommand, payload: T): T | undefined {
+    return command.isPayloadDedupEnabled ? undefined : payload;
   }
 
   protected getCompilePayload(compileContext) {

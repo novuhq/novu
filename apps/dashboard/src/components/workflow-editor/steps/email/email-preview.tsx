@@ -6,6 +6,7 @@ import { MAILY_EMAIL_WIDTH } from '@/components/maily/maily-config';
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integration';
+import { sanitizeEmailHtml } from '@/utils/sanitize-email-html';
 import { cn } from '@/utils/ui';
 import { NovuBranding } from './novu-branding';
 
@@ -95,9 +96,11 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
   const processBody = useCallback((shadowRoot: ShadowRoot, bodyToProcess: string) => {
+    const sanitizedBody = sanitizeEmailHtml(bodyToProcess);
+
     // use a template to parse the full HTML
     const template = document.createElement('template');
-    template.innerHTML = bodyToProcess;
+    template.innerHTML = sanitizedBody;
 
     const doc = template.content;
     const style = document.createElement('style');
@@ -186,9 +189,11 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
   const processBody = useCallback((shadowRoot: ShadowRoot, bodyToProcess: string) => {
+    const sanitizedBody = sanitizeEmailHtml(bodyToProcess);
+
     // use a template to parse the full HTML
     const template = document.createElement('template');
-    template.innerHTML = bodyToProcess;
+    template.innerHTML = sanitizedBody;
 
     const doc = template.content;
     const style = document.createElement('style');

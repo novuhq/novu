@@ -48,19 +48,21 @@ export async function renderMessage(input: RenderInput): Promise<RenderOutput> {
 }
 
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function stripForText(html: string): string {
   const chars: string[] = [];
   let depth = 0;
   for (const ch of html) {
-    if (ch === '<') { depth++; continue; }
-    if (ch === '>') { if (depth > 0) depth--; continue; }
+    if (ch === '<') {
+      depth++;
+      continue;
+    }
+    if (ch === '>') {
+      if (depth > 0) depth--;
+      continue;
+    }
     if (depth === 0) chars.push(ch);
   }
 

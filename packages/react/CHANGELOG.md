@@ -1,3 +1,43 @@
+## v3.18.1 (2026-07-23)
+
+### 🚀 Features
+
+- **dashboard,api-service,js,react,framework:** novu copilot agent for slack fixes NV-8316 ([#11973](https://github.com/novuhq/novu/pull/11973))
+- **providers:** add Webex Messaging OAuth support fixes NV-8272 ([#11633](https://github.com/novuhq/novu/pull/11633))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+- Rahul Jain
+
+## v3.18.0 (2026-07-08)
+
+### 🚀 Features
+
+- **js, react, api-service:** add Telegram connect button (SDK peer to Slack/MS Teams) ([#11661](https://github.com/novuhq/novu/pull/11661))
+- **api-service,js,react:** Telegram subscriber-link SDK + shared linking module fixes NV-8095 ([#11619](https://github.com/novuhq/novu/pull/11619))
+
+### 🩹 Fixes
+
+- **react:** set preferences/schedule data directly on fetch to prevent undefined state on re-mount ([#11756](https://github.com/novuhq/novu/pull/11756))
+- **js,react:** keep inbox badge counts in sync after mark-as-read fixes NV-7398 ([#11599](https://github.com/novuhq/novu/pull/11599))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Shivam S @BIGSUS24
+
+## v3.17.0 (2026-06-01)
+
+### 🚀 Features
+
+- **js,react,api-service:** implement MS Teams connect and link-user components ([#10870](https://github.com/novuhq/novu/pull/10870))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.16.0 (2026-04-27)
 
 ### 🚀 Features

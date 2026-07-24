@@ -66,6 +66,10 @@ const organizationSchema = new Schema<OrganizationDBModel>(
         type: Schema.Types.Boolean,
         default: false,
       },
+      agents: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
     },
     externalId: Schema.Types.String,
     stripeCustomerId: Schema.Types.String,

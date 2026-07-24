@@ -16,6 +16,7 @@ export {
   SlackLinkUser,
   SubscriptionButton,
   SubscriptionPreferences,
+  TelegramConnectButton,
   useNovu,
   WorkflowCriticalityEnum,
 } from '@novu/react';

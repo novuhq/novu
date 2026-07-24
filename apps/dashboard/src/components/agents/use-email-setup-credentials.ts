@@ -7,7 +7,7 @@ import {
 } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type AgentResponse } from '@/api/agents';
+import { type AgentResponse, getAgentIntegrationsQueryKey, setAgentInboxSharedDisabled } from '@/api/agents';
 import {
   createDomainRoute,
   type DomainResponse,
@@ -162,7 +162,14 @@ export function useEmailSetupCredentials({
     () => (outboundId ? integrations?.find((i) => i._id === outboundId) : undefined),
     [integrations, outboundId]
   );
-  const isOutboundDemo = outboundIntegration?.providerId === EmailProviderIdEnum.Novu;
+  // The Novu Email demo integration row carries `providerId === Novu` and is
+  // auto-seeded for Development envs. When the agent points here, the runtime
+  // overrides credentials with the cloud demo API key (see
+  // chat-sdk.service.ts sendViaNovuDemoProvider and send-agent-test-email
+  // findSenderIntegration), so we surface it as "demo selected" in the UI:
+  // no credentials step, rate-limited delivery.
+  const isOutboundDemo =
+    outboundIntegration?.providerId === EmailProviderIdEnum.Novu && outboundIntegration.active === true;
   const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
   const hasOutboundCredentials = useMemo(() => {
     if (!outboundIntegration) return false;
@@ -316,7 +323,23 @@ export function useEmailSetupCredentials({
 
   function onOutboundSelect(id: string) {
     setOutboundId(id);
-    saveCredentials({ outboundIntegrationId: id }).catch((err: unknown) => {
+
+    // Stamp the demo -> own-provider transition once. This marks completion of the email
+    // "What's next" layer-2 onboarding (used to time-box that guide). The demo sender
+    // (`Novu`) and the agent inbox integration (`NovuAgent`) are not "own providers".
+    const selectedProviderId = integrations?.find((integration) => integration._id === id)?.providerId;
+    const isOwnProviderSelection =
+      Boolean(selectedProviderId) &&
+      selectedProviderId !== EmailProviderIdEnum.Novu &&
+      selectedProviderId !== EmailProviderIdEnum.NovuAgent;
+    const alreadyStamped = typeof credentialsRef.current.outboundConnectedAt === 'string';
+
+    const patch: Record<string, unknown> = { outboundIntegrationId: id };
+    if (isOwnProviderSelection && !alreadyStamped) {
+      patch.outboundConnectedAt = new Date().toISOString();
+    }
+
+    saveCredentials(patch).catch((err: unknown) => {
       setOutboundId(lastConfirmedOutboundIdRef.current);
       const message = err instanceof Error ? err.message : 'Could not save provider selection.';
       showErrorToast(message, 'Settings not saved');
@@ -327,7 +350,40 @@ export function useEmailSetupCredentials({
     return saveCredentials({ useFromAddressOverride: enabled, fromAddressOverride: value });
   }
 
+  const setSharedDisabledMutation = useMutation({
+    mutationFn: ({ disabled }: { disabled: boolean }) =>
+      setAgentInboxSharedDisabled(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        disabled
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+      });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
+    },
+  });
+
+  const setSharedInboxDisabled = useCallback(
+    (disabled: boolean) => {
+      setSharedDisabledMutation.mutate(
+        { disabled },
+        {
+          onError: (err) => {
+            const message = err instanceof Error ? err.message : 'Could not update shared inbox setting.';
+            showErrorToast(message, 'Settings not saved');
+          },
+        }
+      );
+    },
+    [setSharedDisabledMutation]
+  );
+
   const outboundFromAddress = (outboundIntegration?.credentials?.from as string | undefined) ?? '';
+  const routesQueryEnabled = Boolean(currentEnvironment && agent.identifier && domainsQuery.isSuccess);
+  const isCredentialStateReady =
+    Boolean(emailIntegration) && domainsQuery.isFetched && (!routesQueryEnabled || routesQuery.isFetched);
 
   return {
     outboundId,
@@ -345,5 +401,8 @@ export function useEmailSetupCredentials({
     serverFromAddressOverride,
     outboundFromAddress,
     saveSenderOverride,
+    setSharedInboxDisabled,
+    isSharedToggleUpdating: setSharedDisabledMutation.isPending,
+    isCredentialStateReady,
   };
 }

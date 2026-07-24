@@ -1,10 +1,10 @@
-import { MAX_DESCRIPTION_LENGTH, PermissionsEnum } from '@novu/shared';
+import { AGENT_NAME_MAX_LENGTH, MAX_DESCRIPTION_LENGTH, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAlertFill, RiInformationFill } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RiAlertFill, RiBarChartBoxLine, RiInformationFill } from 'react-icons/ri';
+import { Link, useNavigate } from 'react-router-dom';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
@@ -16,23 +16,24 @@ import {
   ExpandableDetailsTextarea,
 } from '@/components/details-sidebar';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
+import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { buildRoute } from '@/utils/routes';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { ConnectorSection } from './connector-section';
 
 type AgentSidebarWidgetProps = {
   agent: AgentResponse;
 };
-
-const AGENT_NAME_MAX_LENGTH = 64;
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -230,6 +231,14 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [description, setDescription] = useState(agent.description ?? '');
 
+  const viewActivityHref = useMemo(() => {
+    if (!currentEnvironment?.slug) return undefined;
+
+    const path = buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug });
+
+    return `${path}?agentId=${encodeURIComponent(agent.identifier)}`;
+  }, [currentEnvironment?.slug, agent.identifier]);
+
   const { isPending: isUpdatePending, mutateAsync: updateAgentAsync } = useMutation({
     mutationFn: (body: UpdateAgentBody) =>
       updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, body),
@@ -302,7 +311,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   }, [agent.name, isEditingName]);
 
   return (
-    <DetailsSidebar>
+    <DetailsSidebar className="w-full md:sticky md:top-0 md:w-[300px]">
       {readOnly && (
         <InlineToast
           variant="soft-warning"
@@ -422,7 +431,9 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
                     !canEditFields && 'cursor-default'
                   )}
                 >
-                  <span className="block w-full min-w-0 truncate text-right">{name || 'Untitled agent'}</span>
+                  <TruncatedText className="block w-full min-w-0 text-right font-medium">
+                    {name || 'Untitled agent'}
+                  </TruncatedText>
                 </motion.button>
               )}
             </AnimatePresence>
@@ -430,7 +441,9 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
         </div>
 
         <DetailsSidebarRow label="Agent ID">
-          <span className="text-text-sub font-code text-label-xs tracking-tight">{agent.identifier}</span>
+          <TruncatedText className="text-text-sub font-code block max-w-[24ch] text-label-xs font-normal tracking-tight">
+            {agent.identifier}
+          </TruncatedText>
         </DetailsSidebarRow>
 
         <DetailsSidebarRow label="Created on">
@@ -457,19 +470,36 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
       </DetailsSidebarCard>
 
       <DetailsSidebarCard>
-        <BridgeUrlSection
-          agent={agent}
-          canWrite={canWrite}
-          isUpdatePending={isUpdatePending}
-          onUpdate={updateAgentAsync}
-          readOnly={readOnly}
-        />
+        {agent.runtime === 'managed' ? (
+          <ConnectorSection agent={agent} />
+        ) : (
+          <BridgeUrlSection
+            agent={agent}
+            canWrite={canWrite}
+            isUpdatePending={isUpdatePending}
+            onUpdate={updateAgentAsync}
+            readOnly={readOnly}
+          />
+        )}
       </DetailsSidebarCard>
 
-      <p className="text-label-xs font-medium">
+      <p className="text-label-xs font-medium border-b border-stroke-weak pb-3">
         <span className="text-text-soft">Last updated </span>
         <span className="text-text-sub">{formatDistanceToNow(new Date(agent.updatedAt), { addSuffix: true })}</span>
       </p>
+
+      {viewActivityHref && (
+        <div className="flex flex-col items-start gap-2 py-3">
+          <span className="text-text-soft text-label-xs font-medium">Quick actions</span>
+          <div className="flex flex-wrap items-start gap-2">
+            <Link to={viewActivityHref}>
+              <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiBarChartBoxLine}>
+                View activity
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
 
       <ConfirmationModal
         open={isDeactivateModalOpen}

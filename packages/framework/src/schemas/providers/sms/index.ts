@@ -42,4 +42,5 @@ export const smsProviderSchemas = {
   imedia: genericProviderSchemas,
   sinch: genericProviderSchemas,
   'isendpro-sms': genericProviderSchemas,
+  'ruach-sms': genericProviderSchemas,
 } as const satisfies Record<SmsProviderIdEnum, { output: JsonSchema }>;

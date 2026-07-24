@@ -74,6 +74,11 @@ export interface WorkflowStatusUpdateParams {
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   notification?: NotificationForTrace | null;
   currentJob?: Pick<JobEntity, 'type' | '_id'>;
+  /**
+   * Prefetched workflow metadata. Required for stateless (bridge-URL) runs,
+   * where no notification template exists in the database to look up.
+   */
+  workflow?: WorkflowForTrace | null;
 }
 
 type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id' | '_mergedDigestId'>;
@@ -169,6 +174,7 @@ export class WorkflowRunService {
     deliveryLifecycleDetail: providedDetail,
     notification: passedNotification,
     currentJob,
+    workflow: passedWorkflow,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
       let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
@@ -211,7 +217,7 @@ export class WorkflowRunService {
           organizationId,
           environmentId,
           passedNotification,
-          null
+          passedWorkflow ?? null
         );
         notification = result.notification;
         workflow = result.workflow;
@@ -312,6 +318,7 @@ export class WorkflowRunService {
     deliveryLifecycleDetail: providedDetail,
     notification: passedNotification,
     currentJob,
+    workflow: passedWorkflow,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
       let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
@@ -344,7 +351,7 @@ export class WorkflowRunService {
         organizationId,
         environmentId,
         passedNotification,
-        null
+        passedWorkflow ?? null
       );
 
       // Handle in-app transition: SENT -> DELIVERED

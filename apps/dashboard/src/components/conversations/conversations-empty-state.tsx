@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { RiChat3Line, RiCloseCircleLine } from 'react-icons/ri';
+import { RiCloseCircleLine } from 'react-icons/ri';
 import { Button } from '../primitives/button';
+import { EmptyConversationsIlustration } from './empty-conversations-ilustration';
 
 type ConversationsEmptyStateProps = {
   emptySearchResults?: boolean;
@@ -29,9 +30,9 @@ export function ConversationsEmptyState({ emptySearchResults, onClearFilters }: 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.2 }}
-            className="flex size-12 items-center justify-center rounded-xl border border-neutral-200 bg-white"
+            className="flex items-center justify-center"
           >
-            <RiChat3Line className="size-6 text-neutral-400" />
+            <EmptyConversationsIlustration />
           </motion.div>
 
           <motion.div
@@ -40,14 +41,11 @@ export function ConversationsEmptyState({ emptySearchResults, onClearFilters }: 
             transition={{ duration: 0.2, delay: 0.25 }}
             className="flex flex-col items-center gap-2 text-center"
           >
-            <h2 className="text-text-sub text-md font-medium">
-              {emptySearchResults ? 'No conversations match that filter' : 'No conversations yet'}
-            </h2>
-            <p className="text-text-soft max-w-md text-sm font-normal">
+            <h2 className="text-text-soft text-xs font-normal max-w-[400px]">
               {emptySearchResults
-                ? 'Try adjusting your filters to see more results.'
-                : 'Conversations will appear here once your agents start interacting with subscribers.'}
-            </p>
+                ? 'No conversations match that filter.'
+                : 'No conversations, Agent conversations will appear here once the agent starts responding to messages.'}
+            </h2>
           </motion.div>
 
           {emptySearchResults && onClearFilters && (

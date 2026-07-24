@@ -27,6 +27,7 @@ import {
   nexmoConfig,
   plivoConfig,
   ringCentralConfig,
+  ruachSmsConfig,
   sendchampConfig,
   simpleTextingConfig,
   sinchConfig,
@@ -226,7 +227,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `SMS Webhook`,
     channel: ChannelTypeEnum.SMS,
     credentials: genericSmsConfig,
-    docReference: `https://docs.novu.co/channels/sms/generic-sms${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/sms-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'generic-sms.svg', dark: 'generic-sms.svg' },
   },
   {
@@ -349,5 +350,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: cmTelecomConfig,
     docReference: 'https://developers.cm.com/messaging/docs/sms',
     logoFileName: { light: 'cm-telecom.svg', dark: 'cm-telecom.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.RuachSms,
+    displayName: 'Ruach SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: ruachSmsConfig,
+    docReference: 'https://docs.ruach.ng/',
+    logoFileName: { light: 'ruach-sms.svg', dark: 'ruach-sms.svg' },
   },
 ];

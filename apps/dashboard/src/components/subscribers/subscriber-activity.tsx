@@ -1,4 +1,4 @@
-import { useOrganization } from '@clerk/clerk-react';
+import { useOrganization } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence } from 'motion/react';
 import { useMemo, useState } from 'react';

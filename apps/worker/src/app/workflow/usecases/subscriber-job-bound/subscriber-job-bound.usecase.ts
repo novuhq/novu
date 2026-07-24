@@ -20,15 +20,19 @@ import {
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
+  ContextRepository,
   IntegrationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesRepository,
+  SubscriberEntity,
   TopicPreferenceEvaluation,
 } from '@novu/dal';
+import type { ContextResolved } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
+  ContextPayload,
   FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
@@ -46,6 +50,13 @@ import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 
+type TopicSubscriptionConditionVariables = {
+  payload: Record<string, unknown>;
+  subscriber: SubscriberEntity;
+  actor?: SubscriberEntity;
+  context: ContextResolved;
+};
+
 @Injectable()
 export class SubscriberJobBound {
   constructor(
@@ -60,7 +71,8 @@ export class SubscriberJobBound {
     private getPreferences: GetPreferences,
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private contextRepository: ContextRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -168,7 +180,7 @@ export class SubscriberJobBound {
     }
 
     if (topics && topics.length > 0) {
-      const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id);
+      const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id, subscriberProcessed);
 
       if (evaluatedTopics === null) {
         return;
@@ -360,6 +372,7 @@ export class SubscriberJobBound {
       );
 
       for (const integration of integrations) {
+        if (!integration.channel) continue;
         if (!providers[integration.channel]) {
           providers[integration.channel] = integration.providerId as ProvidersIdEnum;
         }
@@ -372,10 +385,12 @@ export class SubscriberJobBound {
   private async evaluateTopicPreferences(
     command: SubscriberJobBoundCommand,
     topics: SubscriberTopicPreference[],
-    templateId: string
+    templateId: string,
+    subscriber: SubscriberEntity
   ): Promise<SubscriberTopicPreference[] | null> {
     const evaluatedTopics: SubscriberTopicPreference[] = [];
     let filteredCount = 0;
+    const conditionVariables = await this.buildTopicSubscriptionConditionVariables(command, subscriber);
 
     for (const topic of topics) {
       if (!topic._topicSubscriptionId || !topic.subscriptionIdentifier) {
@@ -387,7 +402,9 @@ export class SubscriberJobBound {
         command,
         topic._topicSubscriptionId,
         topic.subscriptionIdentifier,
-        templateId
+        templateId,
+        subscriber._id,
+        conditionVariables
       );
 
       if (!evaluationResult.result) {
@@ -423,7 +440,9 @@ export class SubscriberJobBound {
     command: SubscriberJobBoundCommand,
     internalSubscriptionId: string,
     subscriptionIdentifier: string,
-    templateId: string
+    templateId: string,
+    subscriberId: string,
+    conditionVariables: TopicSubscriptionConditionVariables
   ): Promise<TopicPreferenceEvaluation> {
     try {
       const useContextFiltering = await this.featureFlagsService.getFlag({
@@ -436,9 +455,12 @@ export class SubscriberJobBound {
         enabled: useContextFiltering,
       });
 
+      // Defense in depth: scope the preference lookup to the authenticated subscriber
+      // so any cross-bound (forged) records that may exist in the database are ignored.
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
+        _subscriberId: subscriberId,
         _templateId: templateId,
         _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
@@ -446,7 +468,7 @@ export class SubscriberJobBound {
       });
 
       if (subscriptionPreference) {
-        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, command.payload);
+        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, conditionVariables);
         const condition = subscriptionPreference.preferences.all?.condition;
 
         if (!passes) {
@@ -480,15 +502,126 @@ export class SubscriberJobBound {
     }
   }
 
+  private async buildTopicSubscriptionConditionVariables(
+    command: SubscriberJobBoundCommand,
+    subscriber: SubscriberEntity
+  ): Promise<TopicSubscriptionConditionVariables> {
+    const context = await this.resolveConditionContext(command);
+
+    return {
+      payload: command.payload,
+      subscriber,
+      ...(command.actor && { actor: command.actor }),
+      context,
+    };
+  }
+
+  private async resolveConditionContext(command: SubscriberJobBoundCommand): Promise<ContextResolved> {
+    const { contextKeys, environmentId, organizationId } = command;
+    let resolved: ContextResolved;
+
+    if (contextKeys.length > 0) {
+      const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
+
+      if (contexts.length > 0) {
+        resolved = contexts.reduce((acc, context) => {
+          acc[context.type] = {
+            id: context.id,
+            data: context.data,
+          };
+
+          return acc;
+        }, {} as ContextResolved);
+      } else {
+        resolved = this.buildContextResolvedFromKeys(contextKeys);
+      }
+    } else if (command.context) {
+      const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+        environmentId,
+        organizationId,
+        command.context
+      );
+
+      resolved = contexts.reduce((acc, context) => {
+        acc[context.type] = {
+          id: context.id,
+          data: context.data,
+        };
+
+        return acc;
+      }, {} as ContextResolved);
+    } else {
+      return {} as ContextResolved;
+    }
+
+    if (command.context) {
+      return this.mergeTriggerContextData(resolved, command.context);
+    }
+
+    return resolved;
+  }
+
+  private mergeTriggerContextData(resolved: ContextResolved, triggerContext: ContextPayload): ContextResolved {
+    const merged = { ...resolved };
+
+    for (const [type, value] of Object.entries(triggerContext)) {
+      if (!value) {
+        continue;
+      }
+
+      const { id, data } =
+        typeof value === 'string' ? { id: value, data: undefined } : { id: value.id, data: value.data };
+      const existing = merged[type];
+
+      if (existing && existing.id !== id) {
+        merged[type] = { id, data: data ?? {} };
+
+        continue;
+      }
+
+      if (data !== undefined) {
+        merged[type] = {
+          id: existing?.id ?? id,
+          data,
+        };
+
+        continue;
+      }
+
+      if (!existing) {
+        merged[type] = { id, data: {} };
+      }
+    }
+
+    return merged;
+  }
+
+  private buildContextResolvedFromKeys(contextKeys: string[]): ContextResolved {
+    return contextKeys.reduce((acc, key) => {
+      const separatorIndex = key.indexOf(':');
+
+      if (separatorIndex === -1) {
+        return acc;
+      }
+
+      const type = key.slice(0, separatorIndex);
+      const id = key.slice(separatorIndex + 1);
+
+      acc[type] = { id, data: {} };
+
+      return acc;
+    }, {} as ContextResolved);
+  }
+
   private async evaluatePreferenceCondition(
     preferences: WorkflowPreferencesPartial,
-    payload: Record<string, unknown>
+    conditionVariables: TopicSubscriptionConditionVariables
   ): Promise<boolean> {
     const condition = preferences.all?.condition;
 
     if (condition !== undefined && condition !== null) {
       try {
-        const result = jsonLogic.apply(condition as RulesLogic, { payload });
+        const result = jsonLogic.apply(condition as RulesLogic, conditionVariables);
 
         if (typeof result !== 'boolean') {
           this.logger.warn(

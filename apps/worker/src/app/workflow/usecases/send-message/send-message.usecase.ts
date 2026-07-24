@@ -20,6 +20,7 @@ import {
 } from '@novu/application-generic';
 import {
   ContextRepository,
+  EnvironmentEntity,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   JobEntity,
@@ -55,6 +56,7 @@ import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
+import { SendMessageTool } from './send-message-tool.usecase';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 import { Throttle } from './throttle';
 
@@ -66,6 +68,7 @@ export class SendMessage {
     private sendMessageInApp: SendMessageInApp,
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
+    private sendMessageTool: SendMessageTool,
     private digest: Digest,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
@@ -87,7 +90,7 @@ export class SendMessage {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
-    const variables = await this.buildVariables(command);
+    const { compileContext: variables, environment } = await this.buildVariables(command);
 
     const stepType = command.step?.template?.type;
 
@@ -168,6 +171,7 @@ export class SendMessage {
       compileContext: variables,
       bridgeData: bridgeResponse,
       severity,
+      environment,
     });
 
     switch (stepType) {
@@ -188,6 +192,9 @@ export class SendMessage {
       }
       case StepTypeEnum.PUSH: {
         return await this.sendMessagePush.execute(sendMessageChannelCommand);
+      }
+      case StepTypeEnum.TOOL: {
+        return await this.sendMessageTool.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.DIGEST: {
         return await this.digest.execute(command);
@@ -419,7 +426,9 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async buildVariables(command: SendMessageCommand): Promise<ICompileContext> {
+  private async buildVariables(
+    command: SendMessageCommand
+  ): Promise<{ compileContext: ICompileContext; environment: EnvironmentEntity }> {
     const [subscriber, actor, tenant, context, envVars, environmentEntity] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
@@ -450,7 +459,7 @@ export class SendMessage {
       ...environmentSystemVars,
     };
 
-    return {
+    const compileContext: ICompileContext = {
       subscriber,
       payload: command.payload,
       step: {
@@ -463,6 +472,8 @@ export class SendMessage {
       ...(context && { context }),
       env,
     };
+
+    return { compileContext, environment: environmentEntity };
   }
 
   @Instrument()
@@ -544,7 +555,14 @@ export class SendMessage {
   }
 
   private isChannelStep(job: JobEntity) {
-    const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
+    const channels = [
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.SMS,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+      StepTypeEnum.TOOL,
+    ];
 
     return !!channels.find((channel) => channel === job.type);
   }

@@ -16,6 +16,7 @@ import {
   LookBackWindowType,
   PushControlType,
   SmsControlType,
+  ToolControlType,
 } from '../schemas/control';
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 
@@ -124,6 +125,23 @@ function sanitizeChat(controlValues: ChatControlType) {
   };
 
   return filterNullishValues(mappedValues);
+}
+
+function sanitizeTool(controlValues: ToolControlType & { providerOverrides?: Record<string, unknown> }) {
+  const mappedValues: ToolControlType = {
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+  };
+
+  const sanitized = filterNullishValues(mappedValues) as Record<string, unknown>;
+
+  // Runtime/preview may still nest providerOverrides (stitched or form-sourced).
+  // They are not part of the persisted main control schema — pass them through.
+  if (controlValues.providerOverrides !== undefined) {
+    sanitized.providerOverrides = controlValues.providerOverrides;
+  }
+
+  return sanitized;
 }
 
 function sanitizeDigest(controlValues: DigestControlSchemaType) {
@@ -318,6 +336,9 @@ export function dashboardSanitizeControlValues(
         break;
       case StepTypeEnum.CHAT:
         normalizedValues = sanitizeChat(controlValues as ChatControlType);
+        break;
+      case StepTypeEnum.TOOL:
+        normalizedValues = sanitizeTool(controlValues as ToolControlType);
         break;
       case StepTypeEnum.DIGEST:
         normalizedValues = sanitizeDigest(controlValues as DigestControlSchemaType);

@@ -9,10 +9,13 @@ export type {
   GenerateChatOAuthUrlArgs,
   GetChannelConnectionArgs,
   GetChannelEndpointArgs,
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse,
   ListChannelConnectionsArgs,
   ListChannelEndpointsArgs,
 } from './channel-connections';
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
+export { NOTIFICATION_COUNT_SYNC_EVENTS } from './notifications/count-sync-events';
 export { Novu } from './novu';
 export type {
   PreferenceFilter,
@@ -34,6 +37,13 @@ export {
   UpdateSubscriptionArgs,
   UpdateSubscriptionPreferenceArgs,
 } from './subscriptions';
+export type {
+  TelegramSubscriberLinkOptions,
+  TelegramSubscriberLinkResponse,
+  TelegramSubscriberLinkState,
+  TelegramSubscriberLinkStatus,
+} from './telegram';
+export { TelegramSubscriberLink } from './telegram';
 export {
   ChannelPreference,
   ChannelType,

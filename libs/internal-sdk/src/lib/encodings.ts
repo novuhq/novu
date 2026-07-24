@@ -3,7 +3,7 @@
  */
 
 import { bytesToBase64 } from "./base64.js";
-import { isPlainObject } from "./is-plain-object.js";
+import { isPlainObject } from "./primitives.js";
 
 export class EncodingError extends Error {
   constructor(message: string) {

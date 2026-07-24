@@ -1,6 +1,7 @@
 import { ApiExtraModels, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 import {
   GroupPreferenceFilterDto,
   WorkflowPreferenceRequestDto,
@@ -21,9 +22,13 @@ export class CreateTopicSubscriptionRequestDto {
   @ApiPropertyOptional({
     description: 'Unique identifier for this subscription. If not provided, a default identifier will be generated.',
     example: 'subscriber-123-subscription-a',
+    maxLength: TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH,
   })
   @IsString()
   @IsOptional()
+  @MaxLength(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH, {
+    message: `Subscription identifier must not exceed ${TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH} characters`,
+  })
   identifier?: string;
 
   @ApiPropertyOptional({
@@ -54,7 +59,7 @@ export class CreateTopicSubscriptionRequestDto {
         { $ref: getSchemaPath(GroupPreferenceFilterDto) },
       ],
     },
-    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'tier' }, 'premium'] } }],
+    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'payload.tier' }, 'premium'] } }],
   })
   @IsArray()
   @IsOptional()

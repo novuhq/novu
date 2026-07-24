@@ -40,10 +40,7 @@ export function resolveHttpRequestBody(body: HttpRequestBodyControl): Record<str
   return undefined;
 }
 
-export function shouldIncludeBody(
-  body: Record<string, unknown> | unknown[] | undefined,
-  method: string
-): boolean {
+export function shouldIncludeBody(body: Record<string, unknown> | unknown[] | undefined, method: string): boolean {
   const methodsWithoutBody = ['GET', 'DELETE', 'HEAD', 'OPTIONS'];
 
   return !!body && !methodsWithoutBody.includes(method);

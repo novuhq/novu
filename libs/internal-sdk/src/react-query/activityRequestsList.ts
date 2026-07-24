@@ -114,6 +114,7 @@ export function setActivityRequestsListData(
       urlPattern?: string | undefined;
       transactionId?: string | undefined;
       createdGte?: number | undefined;
+      source?: operations.Source | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -134,6 +135,7 @@ export function invalidateActivityRequestsList(
       urlPattern?: string | undefined;
       transactionId?: string | undefined;
       createdGte?: number | undefined;
+      source?: operations.Source | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,

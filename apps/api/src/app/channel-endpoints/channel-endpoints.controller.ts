@@ -14,7 +14,14 @@ import {
 
 import { ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, ENDPOINT_TYPES, PermissionsEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  ChannelEndpointByType,
+  ChannelEndpointType,
+  ENDPOINT_TYPES,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
@@ -23,20 +30,32 @@ import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.dec
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
 import {
+  CreateLineUserEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
+  CreateOpsgenieIntegrationEndpointDto,
+  CreatePagerDutyServiceEndpointDto,
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
+  CreateTelegramChatEndpointDto,
+  CreateWebexPersonEndpointDto,
+  CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
 import {
+  LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  OpsgenieIntegrationEndpointDto,
+  PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
+  TelegramChatEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
   WebhookEndpointDto,
 } from './dtos/endpoint-types.dto';
 import { GetChannelEndpointResponseDto } from './dtos/get-channel-endpoint-response.dto';
@@ -64,12 +83,24 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreatePhoneEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
+  CreateTelegramChatEndpointDto,
+  CreateWebexPersonEndpointDto,
+  CreateWebexRoomEndpointDto,
+  CreateLineUserEndpointDto,
+  CreatePagerDutyServiceEndpointDto,
+  CreateOpsgenieIntegrationEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
   PhoneEndpointDto,
   MsTeamsChannelEndpointDto,
-  MsTeamsUserEndpointDto
+  MsTeamsUserEndpointDto,
+  TelegramChatEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
+  LineUserEndpointDto,
+  PagerDutyServiceEndpointDto,
+  OpsgenieIntegrationEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -165,6 +196,12 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreatePhoneEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsChannelEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsUserEndpointDto) },
+        { $ref: getSchemaPath(CreateTelegramChatEndpointDto) },
+        { $ref: getSchemaPath(CreateWebexRoomEndpointDto) },
+        { $ref: getSchemaPath(CreateWebexPersonEndpointDto) },
+        { $ref: getSchemaPath(CreateLineUserEndpointDto) },
+        { $ref: getSchemaPath(CreatePagerDutyServiceEndpointDto) },
+        { $ref: getSchemaPath(CreateOpsgenieIntegrationEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -175,6 +212,12 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.PHONE]: getSchemaPath(CreatePhoneEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: getSchemaPath(CreateMsTeamsChannelEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_USER]: getSchemaPath(CreateMsTeamsUserEndpointDto),
+          [ENDPOINT_TYPES.TELEGRAM_CHAT]: getSchemaPath(CreateTelegramChatEndpointDto),
+          [ENDPOINT_TYPES.WEBEX_ROOM]: getSchemaPath(CreateWebexRoomEndpointDto),
+          [ENDPOINT_TYPES.WEBEX_PERSON]: getSchemaPath(CreateWebexPersonEndpointDto),
+          [ENDPOINT_TYPES.LINE_USER]: getSchemaPath(CreateLineUserEndpointDto),
+          [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: getSchemaPath(CreatePagerDutyServiceEndpointDto),
+          [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: getSchemaPath(CreateOpsgenieIntegrationEndpointDto),
         },
       },
     },
@@ -195,9 +238,10 @@ export class ChannelEndpointsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         subscriberId: body.subscriberId,
+        createSubscriberIfMissing: body.createSubscriberIfMissing,
         context: body.context,
         type: body.type,
-        endpoint: body.endpoint,
+        endpoint: body.endpoint as ChannelEndpointByType[typeof body.type],
       })
     );
 
@@ -224,7 +268,7 @@ export class ChannelEndpointsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier,
-        endpoint: body.endpoint,
+        endpoint: body.endpoint as ChannelEndpointByType[ChannelEndpointType],
       })
     );
 

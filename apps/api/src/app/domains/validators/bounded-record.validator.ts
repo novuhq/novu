@@ -10,10 +10,7 @@ export const DOMAIN_DATA_MAX_KEYS = 10;
 
 export const DOMAIN_DATA_MAX_TOTAL_CHARS = 500;
 
-export function isBoundedStringRecord(
-  value: unknown,
-  opts: { maxKeys: number; maxTotalChars: number }
-): boolean {
+export function isBoundedStringRecord(value: unknown, opts: { maxKeys: number; maxTotalChars: number }): boolean {
   if (value === undefined || value === null) {
     return true;
   }
@@ -83,4 +80,3 @@ export function IsBoundedRecord(
     });
   };
 }
-

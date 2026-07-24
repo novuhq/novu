@@ -1,4 +1,4 @@
-import { NOVU_PROVIDERS } from '@novu/shared';
+import { EmailProviderIdEnum, NOVU_PROVIDERS } from '@novu/shared';
 import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { DalException } from '../../shared';
@@ -29,6 +29,27 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     return await this.find({
       _environmentId: environmentId,
     });
+  }
+
+  /**
+   * Unscoped lookup of the NovuAgent integration that owns a given inbox routing
+   * key. Used exclusively by the inbound-email worker, which knows neither the
+   * env nor the org until it has resolved the integration. Backed by the partial
+   * unique index `{ 'credentials.inboxRoutingKey': 1 }` scoped to
+   * `providerId = novu-email-agent`, so at most one document is ever returned.
+   *
+   * Mirrors `AgentRepository.findByIdForWebhook` — both bypass the standard
+   * EnforceEnvOrOrgIds constraint because the inbound bootstrap legitimately
+   * has nothing else to query by.
+   */
+  async findAgentInboundByInboxRoutingKey(inboxRoutingKey: string): Promise<IntegrationEntity | null> {
+    const doc = await this.MongooseModel.findOne({
+      providerId: EmailProviderIdEnum.NovuAgent,
+      'credentials.inboxRoutingKey': inboxRoutingKey,
+    }).lean();
+    if (!doc) return null;
+
+    return this.mapEntity(doc as unknown as IntegrationDBModel);
   }
 
   async findHighestPriorityIntegration({

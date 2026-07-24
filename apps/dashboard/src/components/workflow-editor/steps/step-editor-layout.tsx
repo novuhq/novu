@@ -45,6 +45,7 @@ import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
 import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
+import { ToolContentSourceProvider } from '@/components/workflow-editor/steps/tool/tool-content-source-context';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
@@ -186,6 +187,7 @@ function StepEditorContent() {
       StepTypeEnum.PUSH,
       StepTypeEnum.IN_APP,
       StepTypeEnum.CHAT,
+      StepTypeEnum.TOOL,
     ].includes(step.type);
     const emptyBody = !step.controlValues?.body;
     if (isContentStep && !emptyBody) {
@@ -374,12 +376,16 @@ function StepEditorContent() {
 }
 
 export function StepEditorLayout({ workflow, step, className }: StepEditorLayoutProps) {
+  const content = (
+    <HttpRequestTestProvider>
+      <StepEditorContent />
+    </HttpRequestTestProvider>
+  );
+
   return (
     <div className={cn('h-full w-full', className)}>
       <StepEditorProvider workflow={workflow} step={step}>
-        <HttpRequestTestProvider>
-          <StepEditorContent />
-        </HttpRequestTestProvider>
+        {step.type === StepTypeEnum.TOOL ? <ToolContentSourceProvider>{content}</ToolContentSourceProvider> : content}
       </StepEditorProvider>
     </div>
   );

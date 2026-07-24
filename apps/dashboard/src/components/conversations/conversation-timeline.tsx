@@ -1,4 +1,4 @@
-import { Fragment, useId, useState } from 'react';
+import { Fragment, useId, useMemo, useState } from 'react';
 import {
   RiCheckboxCircleFill,
   RiExpandUpDownLine,
@@ -9,12 +9,14 @@ import {
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ConversationActivityDto } from '@/api/conversations';
+import { MarkdownText } from '@/components/primitives/markdown-text';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { getTimelineLabel, groupActivitiesForTimeline } from './conversation-timeline-grouping';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
 type ConversationTimelineProps = {
@@ -40,13 +42,13 @@ function getActivityContent(activity: ConversationActivityDto): string {
 
 function formatActivityTimestamp(dateStr: string | undefined): string {
   if (!dateStr?.trim()) {
-    return '—';
+    return '-';
   }
 
   const d = new Date(dateStr);
 
   if (Number.isNaN(d.getTime())) {
-    return '—';
+    return '-';
   }
 
   const day = String(d.getDate()).padStart(2, '0');
@@ -132,11 +134,11 @@ function MessageContent({ content }: { content: string }) {
   const [expanded, setExpanded] = useState(false);
   const contentId = useId();
   const isLong = content.length > 80;
-  const displayContent = expanded ? content : content.slice(0, 80);
+  const displayContent = useMemo(() => (expanded ? content : content.slice(0, 80)), [content, expanded]);
 
   return (
     <div className="flex items-center gap-2.5 px-2 py-1">
-      <p
+      <div
         id={contentId}
         className={cn(
           'text-label-xs min-w-0 flex-1 font-medium text-[#1a1a1a]',
@@ -144,9 +146,9 @@ function MessageContent({ content }: { content: string }) {
           expanded && 'wrap-break-word whitespace-pre-wrap'
         )}
       >
-        {displayContent}
+        <MarkdownText className="text-label-xs text-[#1a1a1a]">{displayContent}</MarkdownText>
         {isLong && !expanded && '...'}
-      </p>
+      </div>
       {isLong && (
         <button
           type="button"
@@ -181,10 +183,10 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
 }
 
 function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
-  const isAgentAction = activity.senderType === 'agent' || activity.senderType === 'system';
   const signalData = activity.signalData;
   const signalType = signalData?.type;
   const { currentEnvironment } = useEnvironment();
+  const label = getTimelineLabel(activity);
 
   const transactionId =
     signalType === 'trigger' && signalData?.type === 'trigger' ? signalData.payload?.transactionId : undefined;
@@ -198,7 +200,7 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
     signalType === 'trigger' ? (
       <RiRouteFill className="text-text-soft size-3.5 shrink-0" />
     ) : (
-      <RiRobot2Line className={cn('size-3.5 shrink-0', isAgentAction ? 'text-text-soft' : 'text-text-soft')} />
+      <RiRobot2Line className="text-text-soft size-3.5 shrink-0" />
     );
 
   return (
@@ -209,10 +211,10 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
           to={activityFeedLink}
           className="text-text-sub text-label-xs min-w-0 truncate font-medium underline decoration-dashed underline-offset-[3px] decoration-[currentColor]/40 transition-colors hover:text-text-strong hover:decoration-[currentColor]/70"
         >
-          {activity.content}
+          {label}
         </Link>
       ) : (
-        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{activity.content}</span>
+        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{label}</span>
       )}
       <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">•</span>
       <span className="text-text-soft shrink-0 text-[10px] font-medium leading-[14px]">
@@ -291,7 +293,7 @@ export function ConversationTimeline({
       </div>
 
       <div className="flex flex-col">
-        {activities.map((activity, index) => (
+        {groupActivitiesForTimeline(activities).map((activity, index) => (
           <Fragment key={activity._id}>
             {index > 0 && <TimelineDivider />}
             {activity.type === 'message' ? <MessageCard activity={activity} /> : <InlineLogRow activity={activity} />}

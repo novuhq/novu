@@ -1,7 +1,7 @@
 import { EnvironmentEnum, EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { InlineToast } from '@/components/primitives/inline-toast';
@@ -13,6 +13,7 @@ import { Step } from '@/utils/types';
 import { CanvasContext } from './drag-context';
 import { edgeTypes, nodeTypes } from './node-utils';
 import { useCanvasNodesEdges } from './use-canvas-nodes-edges';
+import { useWorkflowEditorRoutes } from './use-workflow-editor-routes';
 import { WorkflowChecklist } from './workflow-checklist';
 
 const panOnDrag = [1, 2];
@@ -32,6 +33,7 @@ const WorkflowCanvasChild = ({
   const reactFlowInstance = useReactFlow();
   const { currentEnvironment } = useEnvironment();
   const { workflow } = useWorkflow();
+  const { editWorkflowRoute } = useWorkflowEditorRoutes();
   const navigate = useNavigate();
   const { user } = useUser();
 
@@ -149,7 +151,7 @@ const WorkflowCanvasChild = ({
             unselectNode();
             if (currentEnvironment?.slug && workflow?.slug) {
               navigate(
-                buildRoute(ROUTES.EDIT_WORKFLOW, {
+                buildRoute(editWorkflowRoute, {
                   environmentSlug: currentEnvironment.slug,
                   workflowSlug: workflow.slug,
                 })

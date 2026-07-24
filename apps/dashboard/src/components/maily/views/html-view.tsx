@@ -2,6 +2,7 @@ import { NodeViewProps, NodeViewRendererProps } from '@tiptap/core';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 import { useEffect, useMemo, useRef } from 'react';
 import { RiCodeBlock } from 'react-icons/ri';
+import { sanitizeEmailHtml } from '@/utils/sanitize-email-html';
 import { cn } from '@/utils/ui';
 
 type HtmlCodeBlockAttributes = {
@@ -38,9 +39,11 @@ const EMAIL_RESET_MARGIN_STYLES = `
   </style>
 `;
 
-function CodeView() {
+function CodeView(props: { isHidden: boolean }) {
+  const { isHidden } = props;
+
   return (
-    <div className="-mx-2 rounded-md border p-[2px]">
+    <div className={cn('-mx-2 rounded-md border p-[2px]', isHidden && 'hidden')}>
       <pre className="text-black font-code my-0 rounded-md border border-dashed border-gray-300 bg-white p-2 text-xs leading-[18px]">
         <NodeViewContent as="code" className={'is-editable language-html'} />
       </pre>
@@ -84,7 +87,7 @@ function PreviewView(props: { node: NodeViewRendererProps['node']; onClick: () =
       .join('');
 
     // combine styles with body content
-    return styles + htmlDoc.body.innerHTML;
+    return sanitizeEmailHtml(styles + htmlDoc.body.innerHTML);
   }, [node.content]);
 
   return (
@@ -137,8 +140,7 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
 
       if (!isClickingOutside) return;
 
-      // manually select text to force hiding the bubble menu
-      props.editor?.commands.setTextSelection(0);
+      props.editor?.commands.blur();
       updateAttributes({ activeTab: 'preview' });
     };
 
@@ -151,9 +153,16 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
     props.editor?.commands.setTextSelection(props.getPos() + 1);
   };
 
+  const isCodeTab = activeTab === 'code';
+
   return (
     <NodeViewWrapper draggable={false} data-drag-handle={false} data-type="htmlCodeBlock" ref={nodeRef}>
-      {activeTab === 'code' ? <CodeView /> : <PreviewView node={node} onClick={handlePreviewClick} />}
+      {/*
+       * NodeViewContent must stay mounted when switching to preview. Unmounting it removes
+       * ProseMirror's contentDOM and clears the block before autosave runs.
+       */}
+      <CodeView isHidden={!isCodeTab} />
+      {!isCodeTab && <PreviewView node={node} onClick={handlePreviewClick} />}
     </NodeViewWrapper>
   );
 }

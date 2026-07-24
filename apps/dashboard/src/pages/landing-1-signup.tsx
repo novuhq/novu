@@ -1,11 +1,11 @@
-import { SignUp as SignUpForm } from '@clerk/clerk-react';
+import { SignUp as SignUpForm } from '@clerk/react';
 import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
 import { clerkLandingSignupAppearance } from '@/utils/clerk-appearance';
 import { ROUTES } from '@/utils/routes';
-import { IS_SELF_HOSTED } from '../config';
+import { IS_CLOUD } from '../config';
 import { useSegment } from '../context/segment';
 import { TelemetryEvent } from '../utils/telemetry';
 import { getReferrer, getUtmParams } from '../utils/tracking';
@@ -194,7 +194,7 @@ function RightPanel() {
             appearance={clerkLandingSignupAppearance}
             forceRedirectUrl={ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
-          {!IS_SELF_HOSTED && (
+          {IS_CLOUD && (
             <div className="**:border-white/15! [&_.text-neutral-400]:text-white/45! [&_.text-foreground-300]:text-white/30! [&_button]:bg-transparent! [&_button]:text-white/60!">
               <RegionPicker />
             </div>

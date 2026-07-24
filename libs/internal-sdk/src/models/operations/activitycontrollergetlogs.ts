@@ -4,6 +4,19 @@
 
 import * as z from "zod/v3";
 import { remap as remap$ } from "../../lib/primitives.js";
+import { ClosedEnum } from "../../types/enums.js";
+
+/**
+ * Filter by request origin: 'http' for API triggers or 'inbound_email' for inbound mail
+ */
+export const Source = {
+  Http: "http",
+  InboundEmail: "inbound_email",
+} as const;
+/**
+ * Filter by request origin: 'http' for API triggers or 'inbound_email' for inbound mail
+ */
+export type Source = ClosedEnum<typeof Source>;
 
 export type ActivityControllerGetLogsRequest = {
   /**
@@ -31,10 +44,18 @@ export type ActivityControllerGetLogsRequest = {
    */
   createdGte?: number | undefined;
   /**
+   * Filter by request origin: 'http' for API triggers or 'inbound_email' for inbound mail
+   */
+  source?: Source | undefined;
+  /**
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
 };
+
+/** @internal */
+export const Source$outboundSchema: z.ZodNativeEnum<typeof Source> = z
+  .nativeEnum(Source);
 
 /** @internal */
 export type ActivityControllerGetLogsRequest$Outbound = {
@@ -44,6 +65,7 @@ export type ActivityControllerGetLogsRequest$Outbound = {
   urlPattern?: string | undefined;
   transactionId?: string | undefined;
   createdGte?: number | undefined;
+  source?: string | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -59,6 +81,7 @@ export const ActivityControllerGetLogsRequest$outboundSchema: z.ZodType<
   urlPattern: z.string().optional(),
   transactionId: z.string().optional(),
   createdGte: z.number().optional(),
+  source: Source$outboundSchema.optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

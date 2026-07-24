@@ -1,5 +1,11 @@
 import { Module } from '@nestjs/common';
-import { featureFlagsService } from '@novu/application-generic';
+import {
+  analyticsService,
+  CreateOrUpdateSubscriberUseCase,
+  featureFlagsService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+} from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   CommunityOrganizationRepository,
@@ -8,6 +14,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { SharedModule } from '../shared/shared.module';
 import { ChannelConnectionsController } from './channel-connections.controller';
 import { CreateChannelConnection } from './usecases/create-channel-connection/create-channel-connection.usecase';
 import { DeleteChannelConnection } from './usecases/delete-channel-connection/delete-channel-connection.usecase';
@@ -33,8 +40,17 @@ const DAL_MODELS = [
 ];
 
 @Module({
+  imports: [SharedModule],
   controllers: [ChannelConnectionsController],
-  providers: [...USE_CASES, ...DAL_MODELS, featureFlagsService],
+  providers: [
+    ...USE_CASES,
+    ...DAL_MODELS,
+    featureFlagsService,
+    analyticsService,
+    CreateOrUpdateSubscriberUseCase,
+    UpdateSubscriber,
+    UpdateSubscriberChannel,
+  ],
   exports: [...USE_CASES, ...DAL_MODELS],
 })
 export class ChannelConnectionsModule {}

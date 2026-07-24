@@ -1,8 +1,8 @@
 import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
   type AgentResponse,
@@ -16,17 +16,26 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS } from '@/utils/apps';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { AddChannelPicker } from './add-channel-picker';
+import {
+  clearLastSelectedChannel,
+  loadLastSelectedChannel,
+  saveLastSelectedChannel,
+} from './agent-channel-selection-storage';
+import { AgentChannelsEmptyState } from './agent-channels-empty-state';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
-import { ProviderDropdown } from './provider-dropdown';
+import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
+import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
+import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 
 type AgentIntegrationsTabProps = {
   agent: AgentResponse;
@@ -48,6 +57,7 @@ const CONNECTED_PROVIDER_CHANNEL_LABEL: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.EMAIL]: 'Email',
   [ChannelTypeEnum.PUSH]: 'Push',
   [ChannelTypeEnum.SMS]: 'SMS',
+  [ChannelTypeEnum.TOOL]: 'Tool',
 };
 
 type LastUpdatedParts = {
@@ -57,7 +67,7 @@ type LastUpdatedParts = {
 
 function formatLastUpdatedParts(timestamp: number | undefined): LastUpdatedParts {
   if (timestamp == null || Number.isNaN(timestamp)) {
-    return { prefix: 'Last updated ', emphasis: '—' };
+    return { prefix: 'Last updated ', emphasis: '-' };
   }
 
   const diffSec = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
@@ -108,13 +118,6 @@ function groupLinksByChannel(links: AgentIntegrationLink[]) {
   }
 
   return groups;
-}
-
-function getFirstLinkedIntegrationIdentifier(links: AgentIntegrationLink[]): string | undefined {
-  const grouped = groupLinksByChannel(links);
-  const first = grouped[0]?.items[0];
-
-  return first?.integration.identifier;
 }
 
 type IntegrationsHubPlaceholderProps = {
@@ -194,12 +197,7 @@ function IntegrationsMainPanel({
   }
 
   if (links.length > 0) {
-    return (
-      <IntegrationsHubPlaceholder
-        title="Select a provider"
-        description="Choose a connected provider on the left to open its setup guide and finish configuration."
-      />
-    );
+    return <AgentChannelsEmptyState />;
   }
 
   return (
@@ -207,7 +205,7 @@ function IntegrationsMainPanel({
       title="No integrations linked yet"
       description={
         <>
-          Use <span className="text-text-strong">Add provider</span> in the list to connect an integration from this
+          Use <span className="text-text-strong">Add channel</span> in the list to connect an integration from this
           environment.
         </>
       }
@@ -223,8 +221,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const has = useHasPermission();
   const track = useTelemetry();
   const agentRoutes = useAgentRoutes();
-  const currentApp = useCurrentApp();
-  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
   const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
   const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
@@ -232,8 +228,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
   })}${location.search}`;
-
-  const integrationsStorePath = ROUTES.INTEGRATIONS;
 
   const navigateToGuide = (nextIntegrationIdentifier: string) => {
     if (!currentEnvironment?.slug) {
@@ -250,7 +244,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   };
 
   const handleBackFromGuide = () => {
-    navigate(integrationsHubPath, { state: { skipIntegrationsRedirect: true } });
+    clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
+    navigate(integrationsHubPath);
   };
 
   const listQuery = useQuery({
@@ -265,6 +260,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   });
 
   const linkedRows = listQuery.data?.data;
+  const planUsage = listQuery.data?.planUsage;
+  const isOverChannelLimit = Boolean(planUsage && planUsage.used > planUsage.limit);
 
   useEffect(() => {
     if (integrationIdentifier != null) {
@@ -275,21 +272,21 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       return;
     }
 
-    const skipRedirect = Boolean(
-      (location.state as { skipIntegrationsRedirect?: boolean } | null)?.skipIntegrationsRedirect
-    );
-
-    if (skipRedirect) {
-      return;
-    }
-
     if (!listQuery.isSuccess || !linkedRows?.length) {
       return;
     }
 
-    const firstIntegrationIdentifier = getFirstLinkedIntegrationIdentifier(linkedRows);
+    const storedIdentifier = loadLastSelectedChannel(currentEnvironment._id, agent.identifier);
 
-    if (!firstIntegrationIdentifier) {
+    if (!storedIdentifier) {
+      return;
+    }
+
+    const isStillLinked = linkedRows.some((row) => row.integration.identifier === storedIdentifier);
+
+    if (!isStillLinked) {
+      clearLastSelectedChannel(currentEnvironment._id, agent.identifier);
+
       return;
     }
 
@@ -297,26 +294,21 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
-        integrationIdentifier: encodeURIComponent(firstIntegrationIdentifier),
+        integrationIdentifier: encodeURIComponent(storedIdentifier),
       })}${location.search}`,
       { replace: true }
     );
   }, [
     agent.identifier,
     agentRoutes.integrationDetail,
+    currentEnvironment?._id,
     currentEnvironment?.slug,
     linkedRows,
     listQuery.isSuccess,
     location.search,
-    location.state,
     navigate,
     integrationIdentifier,
   ]);
-
-  const linkedIntegrationIdSet = useMemo(
-    () => new Set(linkedRows?.map((row) => row.integration._id) ?? []),
-    [linkedRows]
-  );
 
   const handleProviderDropdownSelect = (_providerId: string, integration?: IIntegration) => {
     if (integration?.identifier) {
@@ -337,16 +329,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       const name = removed?.integration.name ?? 'Integration';
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
-      track(
-        isDispatchApp
-          ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
-          : TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD,
-        {
-          agentIdentifier: agent.identifier,
-          agentIntegrationId,
-          integrationIdentifier: removed?.integration.identifier,
-        }
-      );
+      track(TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD, {
+        agentIdentifier: agent.identifier,
+        agentIntegrationId,
+        integrationIdentifier: removed?.integration.identifier,
+      });
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
@@ -373,11 +360,22 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     integrationIdentifier != null
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
+
+  const selectedIntegrationIdentifier = selectedIntegration?.integration.identifier;
+
+  useEffect(() => {
+    if (!selectedIntegrationIdentifier) {
+      return;
+    }
+
+    saveLastSelectedChannel(currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier);
+  }, [currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier]);
+
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess
     ? formatLastUpdatedParts(selectedIntegrationUpdatedAtMs)
-    : { prefix: 'Last updated ', emphasis: '—' };
+    : { prefix: 'Last updated ', emphasis: '-' };
 
   if (listQuery.isError) {
     return (
@@ -410,9 +408,15 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   );
 
   return (
-    <div className="flex min-w-0 w-full gap-6 px-6 pt-4">
-      <aside className="w-[300px] shrink-0">
+    <div className="flex min-w-0 w-full flex-col gap-4 px-4 pt-4 pb-6 md:flex-row md:gap-6 md:px-6 md:pb-0">
+      <aside className="w-full md:w-[300px] md:shrink-0">
         <div className="flex flex-col gap-2.5">
+          {/* When the agent itself is over the agent limit it won't respond on any
+              channel: the agent-level banner above already says so, and stacking
+              the channel-limit banner here would just be duplicate warning noise. */}
+          {isOverChannelLimit && planUsage && !agent.exceedsPlanLimit && (
+            <ChannelsPlanLimitBanner planUsage={planUsage} />
+          )}
           {readOnly && (
             <InlineToast
               variant="soft-warning"
@@ -431,7 +435,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
             />
           )}
           <div className="bg-bg-weak flex flex-col gap-2 rounded p-1 py-1.5">
-            <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected providers</p>
+            <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected channels</p>
             {isLoading ? (
               <>
                 <div className="text-text-soft px-1 pt-1 text-label-xs font-medium leading-4">In-app</div>
@@ -455,17 +459,31 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                     {items.map((link) => {
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
+                      const channelDisplayName = getAgentChannelDisplayName(
+                        int.providerId,
+                        providerMeta?.displayName ?? int.name
+                      );
                       const isSelected = integrationIdentifier === int.identifier;
-                      const showActionNeeded = !link.connectedAt;
+                      const isConnected = isAgentIntegrationConnected(link);
+                      // Setup ("Action needed") takes precedence — the plan limit only
+                      // becomes the blocking issue once the channel is actually connected.
+                      const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
+                      const showActionNeeded = !isConnected;
 
-                      const statusLabel = showActionNeeded ? 'Action needed' : 'Active';
+                      let statusLabel = 'Active';
 
-                      return (
+                      if (exceedsPlan) {
+                        statusLabel = 'Exceeds plan';
+                      } else if (showActionNeeded) {
+                        statusLabel = 'Action needed';
+                      }
+
+                      const row = (
                         <button
                           key={link._id}
                           type="button"
                           onClick={() => handleLinkedRowClick(link)}
-                          aria-label={`${int.name} — ${statusLabel}`}
+                          aria-label={`${channelDisplayName}, ${statusLabel}`}
                           className={cn(
                             'bg-bg-white border-stroke-weak hover:border-stroke-soft flex w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors',
                             isSelected && 'border-stroke-soft'
@@ -474,15 +492,18 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                           <span className="flex min-w-0 items-center gap-1.5">
                             <ProviderIcon
                               providerId={int.providerId}
-                              providerDisplayName={providerMeta?.displayName ?? int.name}
+                              providerDisplayName={channelDisplayName}
                               className="size-4 shrink-0"
                             />
                             <span className="text-text-sub text-label-sm min-w-0 truncate font-medium leading-5">
-                              {int.name}
+                              {channelDisplayName}
                             </span>
                           </span>
                           <span className="flex shrink-0 items-center gap-1" aria-hidden>
-                            {showActionNeeded ? (
+                            {exceedsPlan && (
+                              <span className="text-warning-base text-[10px] font-medium leading-4">Exceeds plan</span>
+                            )}
+                            {exceedsPlan || showActionNeeded ? (
                               <RiErrorWarningFill className="text-warning-base size-3 shrink-0" />
                             ) : (
                               <div className="bg-success-base size-1.5 shrink-0 rounded-full" />
@@ -491,6 +512,19 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                           </span>
                         </button>
                       );
+
+                      if (!exceedsPlan) {
+                        return row;
+                      }
+
+                      return (
+                        <Tooltip key={link._id}>
+                          <TooltipTrigger asChild>{row}</TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[260px]">
+                            {getExceedsPlanTooltipCopy('channel')}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
                     })}
                   </div>
                 ))}
@@ -498,13 +532,13 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                 {links.length > 0 ? <div className="bg-stroke-weak h-px" role="presentation" /> : null}
 
                 {!readOnly && (
-                  <ProviderDropdown
+                  <AddChannelPicker
                     agentIdentifier={agent.identifier}
                     agentName={agent.name}
+                    links={links}
+                    planUsage={planUsage}
                     selectedIntegrationId={selectedIntegration?.integration._id}
-                    linkedIntegrationIds={linkedIntegrationIdSet}
-                    excludeLinked
-                    onSelect={handleProviderDropdownSelect}
+                    onSelected={handleProviderDropdownSelect}
                     renderTrigger={({ isBusy }) => (
                       <button
                         type="button"
@@ -513,7 +547,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       >
                         <span className="flex items-center gap-1.5">
                           <RiAddLine className="size-4 shrink-0" aria-hidden />
-                          <span className="text-label-sm leading-5">Add provider</span>
+                          <span className="text-label-sm leading-5">Add channel</span>
                         </span>
                         <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
                       </button>
@@ -528,22 +562,12 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
             <span className="text-text-soft">{lastUpdatedParts.prefix}</span>
             <span className="text-text-sub font-medium">{lastUpdatedParts.emphasis}</span>
           </p>
-
-          <div className="border-stroke-soft border-t pt-3">
-            <p className="text-text-soft text-label-xs font-medium leading-4">Quick actions</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                to={integrationsStorePath}
-                className="border-stroke-soft text-text-strong hover:bg-bg-weak text-label-xs inline-flex h-7 items-center rounded-md border bg-transparent px-3 font-medium transition-colors"
-              >
-                View integration store
-              </Link>
-            </div>
-          </div>
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1">{mainPanel}</div>
+      <div className="min-w-0 flex-1 mt-10 md:mt-0 border-t border-stroke-weak md:border-t-0 pt-4 md:pt-0">
+        {mainPanel}
+      </div>
     </div>
   );
 }

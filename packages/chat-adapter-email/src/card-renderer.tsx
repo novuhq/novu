@@ -1,15 +1,4 @@
-import {
-  Body,
-  Button,
-  Container,
-  Heading,
-  Hr,
-  Html,
-  Img,
-  Link,
-  Section,
-  Text,
-} from '@react-email/components';
+import { Body, Button, Container, Heading, Hr, Html, Img, Link, Section, Text } from '@react-email/components';
 import { render } from '@react-email/render';
 import React from 'react';
 import type { ActionButtonStyle, ActionUrlBuilder } from './types.js';
@@ -100,10 +89,7 @@ function collectActionButtons(node: CardNode, out: CardNode[]): void {
  * and no explicit `url`, and returns a Map keyed by node reference. Pre-resolved up-front
  * because `@react-email/render` walks the tree synchronously.
  */
-async function resolveActionUrls(
-  card: CardNode,
-  action: ActionContext
-): Promise<Map<CardNode, string>> {
+async function resolveActionUrls(card: CardNode, action: ActionContext): Promise<Map<CardNode, string>> {
   const buttons: CardNode[] = [];
   collectActionButtons(card, buttons);
   if (buttons.length === 0) return new Map();
@@ -129,9 +115,7 @@ async function resolveActionUrls(
 function renderChildren(children: CardNode[] | undefined, ctx: RenderContext): React.ReactNode {
   if (!children || children.length === 0) return null;
 
-  return children.map((child, i) => (
-    <React.Fragment key={i}>{renderNode(child, ctx)}</React.Fragment>
-  ));
+  return children.map((child, i) => <React.Fragment key={i}>{renderNode(child, ctx)}</React.Fragment>);
 }
 
 const BUTTON_STYLE = {
@@ -154,10 +138,10 @@ function renderNode(node: CardNode, ctx: RenderContext): React.ReactNode {
               {node.title}
             </Heading>
           )}
-          {node.subtitle && (
-            <Text style={{ margin: '0 0 12px', color: '#666666' }}>{node.subtitle}</Text>
+          {node.subtitle && <Text style={{ margin: '0 0 12px', color: '#666666' }}>{node.subtitle}</Text>}
+          {safeUrl(node.imageUrl) && (
+            <Img src={safeUrl(node.imageUrl)} alt="" style={{ maxWidth: '100%', marginBottom: '12px' }} />
           )}
-          {safeUrl(node.imageUrl) && <Img src={safeUrl(node.imageUrl)} alt="" style={{ maxWidth: '100%', marginBottom: '12px' }} />}
           {renderChildren(node.children, ctx)}
         </Container>
       );
@@ -199,7 +183,11 @@ function renderNode(node: CardNode, ctx: RenderContext): React.ReactNode {
     }
 
     case 'link':
-      return <Link href={safeUrl(node.url) ?? '#'} style={{ color: '#0066cc' }}>{getNodeLabel(node) || ''}</Link>;
+      return (
+        <Link href={safeUrl(node.url) ?? '#'} style={{ color: '#0066cc' }}>
+          {getNodeLabel(node) || ''}
+        </Link>
+      );
 
     case 'section':
       return <Section style={{ margin: '8px 0' }}>{renderChildren(node.children, ctx)}</Section>;
@@ -225,7 +213,14 @@ export async function renderCard(card: CardNode, action?: ActionContext): Promis
 
   const emailComponent = (
     <Html>
-      <Body style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color: '#333333', margin: '0 auto', maxWidth: '600px' }}>
+      <Body
+        style={{
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          color: '#333333',
+          margin: '0 auto',
+          maxWidth: '600px',
+        }}
+      >
         {renderNode(card, ctx)}
       </Body>
     </Html>

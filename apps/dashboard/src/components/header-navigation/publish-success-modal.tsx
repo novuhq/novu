@@ -41,7 +41,8 @@ export function PublishSuccessModal({
 
   const workflowCount = publishResult?.results?.find((r) => r.resourceType === 'workflow')?.successful?.length ?? 0;
   const layoutCount = publishResult?.results?.find((r) => r.resourceType === 'layout')?.successful?.length ?? 0;
-  const translationCount = publishResult?.results?.find((r) => r.resourceType === 'translation')?.successful?.length ?? 0;
+  const translationCount =
+    publishResult?.results?.find((r) => r.resourceType === 'translation')?.successful?.length ?? 0;
   const publishedAgents = publishResult?.results?.find((r) => r.resourceType === 'agent')?.successful ?? [];
   // First-time promotions publish as inactive and require production setup
   const newAgents = publishedAgents.filter((a) => a.action === 'created');
@@ -51,7 +52,8 @@ export function PublishSuccessModal({
     if (workflowCount > 0) parts.push(`${workflowCount} workflow${workflowCount !== 1 ? 's' : ''}`);
     if (layoutCount > 0) parts.push(`${layoutCount} layout${layoutCount !== 1 ? 's' : ''}`);
     if (translationCount > 0) parts.push(`${translationCount} shared component${translationCount !== 1 ? 's' : ''}`);
-    if (publishedAgents.length > 0) parts.push(`${publishedAgents.length} agent${publishedAgents.length !== 1 ? 's' : ''}`);
+    if (publishedAgents.length > 0)
+      parts.push(`${publishedAgents.length} agent${publishedAgents.length !== 1 ? 's' : ''}`);
     if (parts.length === 0) return 'No items';
     if (parts.length === 1) return parts[0];
     if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
@@ -74,9 +76,7 @@ export function PublishSuccessModal({
 
         <div className="space-y-1.5">
           <div className="flex items-center gap-1">
-            <h2 className="text-label-sm font-medium text-text-strong">
-              Changes published to {environment?.name}
-            </h2>
+            <h2 className="text-label-sm font-medium text-text-strong">Changes published to {environment?.name}</h2>
             {environment && (
               <span className="inline-flex max-w-[150px] shrink-0 items-center gap-1 rounded border border-feature-lighter bg-feature-lighter pl-0.5 pr-1 py-px">
                 <EnvironmentBranchIcon environment={environment} size="xs" />
@@ -161,7 +161,13 @@ export function PublishSuccessModal({
         )}
 
         <div className="flex justify-end">
-          <Button variant="secondary" mode="filled" size="2xs" onClick={onSwitchEnvironment} trailingIcon={RiArrowRightSLine}>
+          <Button
+            variant="secondary"
+            mode="filled"
+            size="2xs"
+            onClick={onSwitchEnvironment}
+            trailingIcon={RiArrowRightSLine}
+          >
             Switch to {environment?.name}
           </Button>
         </div>

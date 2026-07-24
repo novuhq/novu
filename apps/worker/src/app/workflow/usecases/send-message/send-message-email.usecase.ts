@@ -202,7 +202,7 @@ export class SendMessageEmail extends SendMessageBase {
       transactionId: command.transactionId,
       email,
       providerId: integration?.providerId,
-      payload: messagePayload,
+      payload: this.payloadToPersist(command, messagePayload),
       overrides,
       templateIdentifier: command.identifier,
       stepId: command.step.stepId,
@@ -315,7 +315,36 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
-    if (!email || !integration) {
+    const replaceToRecipient = overrides?.replaceToRecipient === true;
+    const hasOverrideRecipients = hasEmailOverrideRecipients(overrides);
+
+    if (replaceToRecipient && !hasOverrideRecipients) {
+      const mailErrorMessage = 'replaceToRecipient requires at least one of to / cc / bcc';
+
+      await this.sendErrorStatus(message, 'warning', 'mail_unexpected_error', mailErrorMessage, command);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.NOTIFICATION_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: mailErrorMessage }),
+        })
+      );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.NOTIFICATION_ERROR,
+      };
+    }
+
+    const canSendWithoutSubscriberEmail = replaceToRecipient && hasOverrideRecipients;
+
+    if (!email && !canSendWithoutSubscriberEmail) {
       return await this.sendErrors(email, integration, message, command);
     }
 
@@ -344,7 +373,12 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (integration.providerId === EmailProviderIdEnum.EmailWebhook) {
-      mailData.payloadDetails = payload;
+      mailData.payloadDetails = command.bridgeData
+        ? {
+            ...payload,
+            content: (bridgeOutputs as EmailOutput)?.body || html || '',
+          }
+        : payload;
     }
 
     return await this.sendMessage(integration, mailData, message, command);
@@ -696,18 +730,52 @@ export class SendMessageEmail extends SendMessageBase {
   }
 }
 
+function hasEmailOverrideRecipients(emailOverrides?: Record<string, unknown>): boolean {
+  if (!emailOverrides) {
+    return false;
+  }
+
+  const to = emailOverrides.to;
+  const cc = emailOverrides.cc;
+  const bcc = emailOverrides.bcc;
+
+  return (
+    (Array.isArray(to) && to.length > 0) ||
+    (Array.isArray(cc) && cc.length > 0) ||
+    (Array.isArray(bcc) && bcc.length > 0)
+  );
+}
+
+function hasExplicitEmptyToOverride(overrides: Record<string, unknown>): boolean {
+  return 'to' in overrides && Array.isArray(overrides.to) && overrides.to.length === 0;
+}
+
 const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
+  const replaceToRecipient = overrides?.replaceToRecipient === true;
+  const explicitEmptyTo = replaceToRecipient && hasExplicitEmptyToOverride(overrides);
+  const from = overrides?.from || options.from;
 
-  let to = Array.isArray(options.to) ? options.to : [options.to];
-  to = [...to, ...(overrides?.to || [])];
-  to = to.reduce(filterDuplicate, []);
+  let to: string[];
+
+  if (replaceToRecipient) {
+    to = Array.isArray(overrides?.to) ? [...overrides.to] : [];
+  } else {
+    const baseTo = Array.isArray(options.to) ? options.to : [options.to];
+    to = [...baseTo, ...(overrides?.to || [])];
+    to = to.reduce(filterDuplicate, []);
+  }
+
+  if (replaceToRecipient && to.length === 0 && from && !explicitEmptyTo) {
+    to = [from];
+  }
+
   const ipPoolName = overrides?.ipPoolName ? { ipPoolName: overrides?.ipPoolName } : {};
 
   return {
     ...options,
     to,
-    from: overrides?.from || options.from,
+    from,
     text: overrides?.text,
     html: overrides?.html || overrides?.text || options.html,
     cc: overrides?.cc || [],

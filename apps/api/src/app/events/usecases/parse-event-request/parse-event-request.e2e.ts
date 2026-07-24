@@ -7,6 +7,7 @@ import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
+import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ParseEventRequest } from './parse-event-request.usecase';
 
@@ -262,6 +263,90 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     expect(command.payload.name).to.equal('Jane Doe');
     expect(command.payload.age).to.equal(25);
     expect(command.payload.isActive).to.equal(false);
+  });
+
+  it('should throw when an attachment lacks a file property', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'valid.txt', file: Buffer.from('hello').toString('base64'), mime: 'text/plain' },
+        { name: 'missing-file.txt', mime: 'text/plain' },
+      ],
+    };
+
+    try {
+      await parseEventRequestUsecase.execute(command);
+      expect.fail('expected PayloadValidationException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(PayloadValidationException);
+      expect((error as PayloadValidationException).validationErrors).to.deep.include({
+        field: 'attachments.1.file',
+        message: 'Each attachment must include file content as a base64-encoded string or Buffer',
+      });
+    }
+  });
+
+  it('should throw when attachment file is null or non-string', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'null-file.txt', file: null, mime: 'text/plain' },
+        { name: 'number-file.txt', file: 123, mime: 'text/plain' },
+      ],
+    };
+
+    try {
+      await parseEventRequestUsecase.execute(command);
+      expect.fail('expected PayloadValidationException');
+    } catch (error) {
+      expect(error).to.be.instanceOf(PayloadValidationException);
+      expect((error as PayloadValidationException).validationErrors).to.have.length(2);
+    }
+  });
+
+  it('should accept JSON-serialized Buffer attachment file', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'text1.txt', file: 'hello world!', mime: 'text/plain' },
+        {
+          name: 'text2.txt',
+          file: { type: 'Buffer', data: Array.from(Buffer.from('hello world!', 'utf-8')) },
+          mime: 'text/plain',
+        },
+      ],
+    };
+
+    const result = await parseEventRequestUsecase.execute(command);
+
+    expect(result.acknowledged).to.be.true;
   });
 });
 

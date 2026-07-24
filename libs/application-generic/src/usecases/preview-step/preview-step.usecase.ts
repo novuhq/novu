@@ -29,6 +29,8 @@ export class PreviewStep {
         workflowOrigin: command.workflowOrigin,
         stepResolverHash,
         retriesLimit: 1,
+        statelessBridgeUrl: command.statelessBridgeUrl,
+        enforceSsrfProtection: command.enforceSsrfProtection,
       })
     );
 
@@ -43,6 +45,7 @@ export class PreviewStep {
       payload: command.payload || {},
       state: command.state || [],
       subscriber: command.subscriber || {},
+      ...(command.actor && { actor: command.actor }),
       context: command.context || {},
       stepId: command.stepId,
       workflowId: command.workflowId,

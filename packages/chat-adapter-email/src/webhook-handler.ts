@@ -61,9 +61,7 @@ export class WebhookHandler {
       return false;
     }
 
-    const expectedHmac = createHmac('sha256', this.signingSecret)
-      .update(`${timestamp}.${body}`)
-      .digest('hex');
+    const expectedHmac = createHmac('sha256', this.signingSecret).update(`${timestamp}.${body}`).digest('hex');
 
     if (receivedHmac.length !== expectedHmac.length) {
       return false;

@@ -17,7 +17,7 @@ import {
 } from "./stepfilterdto.js";
 
 /**
- * The channel type for the integration
+ * The channel type for the integration. Not required for agent-kind integrations.
  */
 export const CreateIntegrationRequestDtoChannel = {
   InApp: "in_app",
@@ -27,10 +27,24 @@ export const CreateIntegrationRequestDtoChannel = {
   Push: "push",
 } as const;
 /**
- * The channel type for the integration
+ * The channel type for the integration. Not required for agent-kind integrations.
  */
 export type CreateIntegrationRequestDtoChannel = ClosedEnum<
   typeof CreateIntegrationRequestDtoChannel
+>;
+
+/**
+ * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not require a channel.
+ */
+export const CreateIntegrationRequestDtoKind = {
+  Delivery: "delivery",
+  Agent: "agent",
+} as const;
+/**
+ * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not require a channel.
+ */
+export type CreateIntegrationRequestDtoKind = ClosedEnum<
+  typeof CreateIntegrationRequestDtoKind
 >;
 
 /**
@@ -54,11 +68,15 @@ export type CreateIntegrationRequestDto = {
   /**
    * The provider ID for the integration
    */
-  providerId: string;
+  providerId?: string | undefined;
   /**
-   * The channel type for the integration
+   * The channel type for the integration. Not required for agent-kind integrations.
    */
-  channel: CreateIntegrationRequestDtoChannel;
+  channel?: CreateIntegrationRequestDtoChannel | undefined;
+  /**
+   * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not require a channel.
+   */
+  kind?: CreateIntegrationRequestDtoKind | undefined;
   /**
    * The credentials for the integration
    */
@@ -87,6 +105,11 @@ export const CreateIntegrationRequestDtoChannel$outboundSchema: z.ZodNativeEnum<
 > = z.nativeEnum(CreateIntegrationRequestDtoChannel);
 
 /** @internal */
+export const CreateIntegrationRequestDtoKind$outboundSchema: z.ZodNativeEnum<
+  typeof CreateIntegrationRequestDtoKind
+> = z.nativeEnum(CreateIntegrationRequestDtoKind);
+
+/** @internal */
 export type Configurations$Outbound = {};
 
 /** @internal */
@@ -105,8 +128,9 @@ export type CreateIntegrationRequestDto$Outbound = {
   name?: string | undefined;
   identifier?: string | undefined;
   _environmentId?: string | undefined;
-  providerId: string;
-  channel: string;
+  providerId?: string | undefined;
+  channel?: string | undefined;
+  kind?: string | undefined;
   credentials?: CredentialsDto$Outbound | undefined;
   active?: boolean | undefined;
   check?: boolean | undefined;
@@ -123,8 +147,9 @@ export const CreateIntegrationRequestDto$outboundSchema: z.ZodType<
   name: z.string().optional(),
   identifier: z.string().optional(),
   environmentId: z.string().optional(),
-  providerId: z.string(),
-  channel: CreateIntegrationRequestDtoChannel$outboundSchema,
+  providerId: z.string().optional(),
+  channel: CreateIntegrationRequestDtoChannel$outboundSchema.optional(),
+  kind: CreateIntegrationRequestDtoKind$outboundSchema.optional(),
   credentials: CredentialsDto$outboundSchema.optional(),
   active: z.boolean().optional(),
   check: z.boolean().optional(),

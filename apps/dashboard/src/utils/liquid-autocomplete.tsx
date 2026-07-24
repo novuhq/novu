@@ -12,7 +12,7 @@ import { createRoot } from 'react-dom/client';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import { getFilters } from '@/components/variable/constants';
 import { LiquidVariable } from '@/utils/parseStepVariables';
-import { isValidContextVariable } from './context-variable-utils';
+import { extractContextTypesFromVariables, isValidContextVariable } from './context-variable-utils';
 import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
 
 export interface CompletionOption {
@@ -26,6 +26,7 @@ export interface CompletionOption {
 // Novu JIT namespaces
 const PAYLOAD_NAMESPACE = 'payload';
 const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
+const ACTOR_DATA_NAMESPACE = 'actor.data';
 const CONTEXT_NAMESPACE = 'context';
 const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
 
@@ -37,11 +38,13 @@ function createJitVariables({
   namespaces,
   isPayloadSchemaEnabled,
   onCreateNewVariable,
+  existingVariables,
 }: {
   searchText: string;
   namespaces: string[];
   isPayloadSchemaEnabled?: boolean;
   onCreateNewVariable?: (variableName: string) => Promise<void>;
+  existingVariables?: LiquidVariable[];
 }): LiquidVariable[] {
   // Skip if user is typing steps.* or env.* to avoid conflicts — these are schema-driven, not JIT-created
   if (searchText.startsWith('steps.') || searchText.startsWith('env.')) {
@@ -53,7 +56,9 @@ function createJitVariables({
   for (const namespace of namespaces) {
     // Case 1: User typed "namespace.something" (e.g., "context.tenant", "payload.user")
     if (searchText.startsWith(namespace + '.') && searchText !== namespace) {
-      variables.push(...handleNamespacedInput(searchText, namespace, isPayloadSchemaEnabled, onCreateNewVariable));
+      variables.push(
+        ...handleNamespacedInput(searchText, namespace, isPayloadSchemaEnabled, onCreateNewVariable, existingVariables)
+      );
     }
     // Case 2: User typed something without namespace (e.g., "tenant", "user")
     else if (!searchText.startsWith(namespace)) {
@@ -71,11 +76,18 @@ function handleNamespacedInput(
   searchText: string,
   namespace: string,
   isPayloadSchemaEnabled?: boolean,
-  onCreateNewVariable?: (variableName: string) => Promise<void>
+  onCreateNewVariable?: (variableName: string) => Promise<void>,
+  existingVariables?: LiquidVariable[]
 ): LiquidVariable[] {
   // Special handling for context variables
   if (namespace === CONTEXT_NAMESPACE) {
-    return handleContextNamespacedInput(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace);
+    return handleContextNamespacedInput(
+      searchText,
+      isPayloadSchemaEnabled,
+      onCreateNewVariable,
+      namespace,
+      existingVariables
+    );
   }
 
   // Standard handling for other namespaces (payload, subscriber.data, etc.)
@@ -89,7 +101,8 @@ function handleContextNamespacedInput(
   searchText: string,
   isPayloadSchemaEnabled?: boolean,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  namespace?: string
+  namespace?: string,
+  existingVariables?: LiquidVariable[]
 ): LiquidVariable[] {
   const parts = searchText.split('.');
 
@@ -102,6 +115,20 @@ function handleContextNamespacedInput(
         createJitVariable(`${searchText}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
       ];
     }
+
+    // When typing just "context." (no type yet), suggest known context types
+    if (existingVariables) {
+      const knownTypes = extractContextTypesFromVariables(existingVariables);
+      const suggestions: LiquidVariable[] = [];
+      for (const type of knownTypes) {
+        suggestions.push(
+          createJitVariable(`context.${type}.id`, isPayloadSchemaEnabled, onCreateNewVariable, namespace),
+          createJitVariable(`context.${type}.data`, isPayloadSchemaEnabled, onCreateNewVariable, namespace)
+        );
+      }
+      if (suggestions.length > 0) return suggestions;
+    }
+
     return [];
   }
 
@@ -215,7 +242,15 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  *    Invalid:
  *    - subscriber.someOtherField (must use valid subscriber field)
  *
- * 3. Step Variables:
+ * 3. Actor Variables:
+ *    Valid:
+ *    - actor.data.
+ *    - actor.data.anyNewField (allows any new field)
+ *    - actor.firstName
+ *    - actor.email
+ *    - actor.subscriberId
+ *
+ * 4. Step Variables:
  *    Valid:
  *    - steps.
  *    - steps.digest-step (must be existing step ID)
@@ -299,7 +334,7 @@ const completions =
             ? matchingVariables.map((v) =>
                 createCompletionOption(
                   v.name,
-                  v.isNewSuggestion && isPayloadSchemaEnabled ? 'new-variable' : (v.type ?? 'variable'),
+                  getJitCompletionType(v, isPayloadSchemaEnabled),
                   v.boost,
                   v.info,
                   v.displayLabel
@@ -313,6 +348,19 @@ const completions =
 
     return null;
   };
+
+function getJitCompletionType(v: LiquidVariable, isPayloadSchemaEnabled?: boolean): string {
+  if (!v.isNewSuggestion) return v.type ?? 'variable';
+
+  const isDynamicNamespace =
+    v.name.startsWith('context.') || v.name.startsWith('subscriber.data.') || v.name.startsWith('actor.data.');
+
+  if (isDynamicNamespace) return 'new-variable';
+
+  if (isPayloadSchemaEnabled) return 'new-variable';
+
+  return v.type ?? 'variable';
+}
 
 function isInsideLiquidBlock(beforeCursor: string): boolean {
   const lastOpenBrace = beforeCursor.lastIndexOf('{{');
@@ -359,14 +407,25 @@ function getMatchingVariables(
   isContextEnabled?: boolean
 ): LiquidVariable[] {
   const allVariables = [...scopedVariables, ...variables];
-  if (!searchText) return allVariables;
+  if (!searchText) {
+    // Prefer payload.* → subscriber.* → env.* → actor.* then root namespaces / rest
+    return [...allVariables].sort((a, b) => (b.boost ?? 0) - (a.boost ?? 0) || a.name.localeCompare(b.name));
+  }
 
   const searchTextTrimmed = searchText.trim();
 
   // Handle dot endings
   if (searchText.endsWith('.')) {
     const prefix = searchText.slice(0, -1);
-    return allVariables.filter((v) => v.name.startsWith(prefix));
+
+    if (isContextEnabled && prefix.startsWith(CONTEXT_NAMESPACE)) {
+      const subProperties = allVariables.filter((v) => v.name.startsWith(prefix + '.'));
+      if (subProperties.length > 0) return subProperties;
+
+      if (prefix !== CONTEXT_NAMESPACE) return [];
+    } else {
+      return allVariables.filter((v) => v.name.startsWith(prefix));
+    }
   }
 
   // Filter jit step namespaces out of the returned variables from the server
@@ -383,7 +442,7 @@ function getMatchingVariables(
   }, []);
 
   // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events.0.payload.foo
-  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces];
+  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ACTOR_DATA_NAMESPACE, ...stepPayloadNamespaces];
   const namespaces = isContextEnabled ? [...baseNamespaces, CONTEXT_NAMESPACE] : baseNamespaces;
 
   const jitVariables = createJitVariables({
@@ -391,6 +450,7 @@ function getMatchingVariables(
     namespaces,
     isPayloadSchemaEnabled,
     onCreateNewVariable,
+    existingVariables: allVariables,
   });
 
   const prefix = searchText.split('.')[0];

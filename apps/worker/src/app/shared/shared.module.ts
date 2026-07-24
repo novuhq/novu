@@ -21,14 +21,18 @@ import {
   GetDecryptedSecretKey,
   GetTenant,
   HttpClientService,
+  InboundMailRequestLogger,
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
   MetricsModule,
+  NotificationPayloadService,
   ProcessTenant,
   QueuesModule,
+  RequestLogRepository,
   SafeOutboundHttpService,
   StepRunRepository,
+  StepTemplateHydrationService,
   StorageHelperService,
   storageService,
   TraceLogRepository,
@@ -102,11 +106,16 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  RequestLogRepository,
 
   // Services
   clickHouseService,
   clickHouseBatchService,
   WorkflowRunService,
+
+  // Inbound mail logging (shared with apps/inbound-mail; worker only writes
+  // terminal completion traces so the tenant resolver is not needed here).
+  InboundMailRequestLogger,
 ];
 
 const PROVIDERS = [
@@ -124,6 +133,8 @@ const PROVIDERS = [
   featureFlagsService,
   InMemoryLRUCacheService,
   InvalidateCacheService,
+  NotificationPayloadService,
+  StepTemplateHydrationService,
   StorageHelperService,
   storageService,
   UpdateSubscriber,

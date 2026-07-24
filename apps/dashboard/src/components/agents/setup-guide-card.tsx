@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 
@@ -7,26 +7,75 @@ type SetupGuideCardProps = {
   rightContent?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  /** When set, persist collapsed/expanded state in localStorage under this key. */
+  persistKey?: string;
+  /** Initial expanded state when nothing is persisted yet. Defaults to true. */
+  defaultExpanded?: boolean;
 };
 
-export function SetupGuideCard({ label, rightContent, children, className }: SetupGuideCardProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+function readPersistedExpanded(persistKey: string, defaultExpanded: boolean): boolean {
+  try {
+    const stored = localStorage.getItem(persistKey);
+
+    if (stored === 'false') {
+      return false;
+    }
+
+    if (stored === 'true') {
+      return true;
+    }
+
+    return defaultExpanded;
+  } catch {
+    return defaultExpanded;
+  }
+}
+
+function writePersistedExpanded(persistKey: string, expanded: boolean) {
+  try {
+    localStorage.setItem(persistKey, String(expanded));
+  } catch {
+    // ignore quota / private-mode errors
+  }
+}
+
+export function SetupGuideCard({
+  label,
+  rightContent,
+  children,
+  className,
+  persistKey,
+  defaultExpanded = true,
+}: SetupGuideCardProps) {
+  const [isExpanded, setIsExpanded] = useState(() =>
+    persistKey ? readPersistedExpanded(persistKey, defaultExpanded) : defaultExpanded
+  );
+
+  const handleToggle = useCallback(() => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+
+      if (persistKey) {
+        writePersistedExpanded(persistKey, next);
+      }
+
+      return next;
+    });
+  }, [persistKey]);
 
   return (
     <div className={cn('bg-bg-weak flex flex-col rounded-[10px] p-1', className)}>
-      <button
-        type="button"
-        className="flex w-full items-center justify-between px-2 py-1.5"
-        onClick={() => setIsExpanded((prev) => !prev)}
-      >
+      <button type="button" className="flex w-full items-center justify-between px-2 py-1.5" onClick={handleToggle}>
         <span className="font-code text-text-sub text-[12px] uppercase leading-4 tracking-[-0.24px]">{label}</span>
         <div className="flex items-center gap-2">
           {rightContent}
-          <RiExpandUpDownLine className={cn('text-text-soft size-3 transition-transform', isExpanded && 'rotate-180')} />
+          <RiExpandUpDownLine
+            className={cn('text-text-soft size-3 transition-transform', isExpanded && 'rotate-180')}
+          />
         </div>
       </button>
       {isExpanded && (
-        <div className="bg-bg-white flex flex-col overflow-hidden rounded-md p-3 pr-6 shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
+        <div className="bg-bg-white flex flex-col overflow-hidden rounded-md p-3 pr-3 md:pr-6 shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
           {children}
         </div>
       )}

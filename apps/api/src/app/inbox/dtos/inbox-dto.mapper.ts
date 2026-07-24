@@ -5,6 +5,10 @@ import { InboxChannelEndpointResponseDto } from './inbox-channel-endpoint-respon
 export function mapChannelConnectionToInboxDto(entity: ChannelConnectionEntity): InboxChannelConnectionResponseDto {
   return {
     identifier: entity.identifier,
+    workspace: entity.workspace
+      ? { id: entity.workspace.id, name: entity.workspace.name, botUserId: entity.workspace.botUserId }
+      : undefined,
+    createdAt: entity.createdAt,
   };
 }
 

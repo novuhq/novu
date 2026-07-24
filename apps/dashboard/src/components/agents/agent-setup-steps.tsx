@@ -1,6 +1,12 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  type IIntegration,
+} from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -10,75 +16,270 @@ import {
   listAgentIntegrations,
   sendAgentWelcomeMessage,
 } from '@/api/agents';
+import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
+import { ConnectAgentForm } from '@/components/onboarding/connect-agent/connect-agent-form';
+import {
+  type ConnectSummary,
+  deriveConnectSummaryDisplay,
+} from '@/components/onboarding/connect-agent/connect-summary';
+import { IS_SELF_HOSTED_EE } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { withOnboardingSource } from '@/utils/onboarding-redirect';
 import { buildRoute } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
-import { EmailSetupGuide } from './email-setup-guide';
-import { ProviderDropdown } from './provider-dropdown';
-import { SetupStep } from './setup-guide-primitives';
+import { AgentIntegrationGuideTransition } from './agent-integration-guides/agent-integration-guide-transition';
+import { resolveAgentProviderDisplayName } from './agent-integration-guides/agent-provider-display-name';
+import { providerHasWhatsNextPhase } from './agent-integration-guides/whats-next/whats-next-config';
+import { AgentListenStep } from './agent-listen-step';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
+import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
+import { ProviderCards } from './provider-cards';
+import { resolveProviderSetupGuide, shouldShowProviderSetupGuide } from './provider-setup-guide';
+import { CompletedStepIndicator, SetupStep, SetupStepperRail } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
-import { SlackSetupGuide } from './slack-setup-guide';
-import { TeamsSetupGuide } from './teams-setup-guide';
-import { WhatsAppSetupGuide } from './whatsapp-setup-guide';
 
-function resolveProviderSetupGuide(providerId: string) {
-  switch (providerId) {
-    case ChatProviderIdEnum.Slack:
-      return SlackSetupGuide;
-    case ChatProviderIdEnum.MsTeams:
-      return TeamsSetupGuide;
-    case ChatProviderIdEnum.WhatsAppBusiness:
-      return WhatsAppSetupGuide;
-    case EmailProviderIdEnum.NovuAgent:
-      return EmailSetupGuide;
-    default:
-      return null;
-  }
-}
+const noop = () => {};
 
 const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
+const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welcome:${agentIdentifier}`;
+
+// The brain section is a single step in the onboarding flow — the created agent is shown as a
+// recap card (step 1) above this component's channel step.
+const BRAIN_STEPS = 1;
+// Provider guides reserve up to three numbered steps; the bridge section continues from there.
+const PROVIDER_GUIDE_RESERVED_STEPS = 3;
+// The iMessage (Sendblue) guide prepends a "Setup iMessage via" provider-select step, so it
+// reserves one extra step to keep the bridge/handler numbering aligned for self-hosted agents.
+const IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS = 4;
+
+function resolveProviderGuideReservedSteps(providerId: string | undefined): number {
+  return providerId === ChatProviderIdEnum.Sendblue
+    ? IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS
+    : PROVIDER_GUIDE_RESERVED_STEPS;
+}
+// Self-hosted agents add three handler steps (scaffold + run + send) below the provider guide.
+const HANDLER_STEPS = 3;
+
+/**
+ * Channel-level integration snapshot the parent uses to drive the right-side illustration.
+ * `selectedProviderId` is the chat provider the user picked from the provider cards (or the
+ * agent's default integration); `connectedProviderIds` carries every provider whose link is
+ * actively connected, so the preview can flip the matching channel card to CONNECTED.
+ */
+export type AgentChannelState = {
+  selectedProviderId: string | undefined;
+  connectedProviderIds: ReadonlyArray<string>;
+};
 
 type AgentSetupStepsProps = {
   agent: AgentResponse;
-  onBridgeConnected?: () => void;
+  /**
+   * Fires once when the agent is considered "fully set up":
+   * - managed runtimes: as soon as the chosen provider integration is connected
+   * - other runtimes: when the user's bridge endpoint becomes reachable
+   */
+  onSetupComplete?: () => void;
+  /** Called when a channel becomes connected (first real inbound message) during onboarding. */
+  onChannelConnected?: (providerId: string) => void;
   hideAddProvider?: boolean;
+  /**
+   * Onboarding flow only: the connector + template the user picked in the connect phase,
+   * used to render the "View all instructions" recap above the channel step.
+   */
+  connectSummary?: ConnectSummary | null;
+  /**
+   * Onboarding flow only: notifies the parent whenever the picked provider or the set of
+   * actually-connected providers changes, so the illustration can highlight the right card.
+   */
+  onChannelStateChange?: (state: AgentChannelState) => void;
+  /**
+   * When true, the agent recap (step 1) is not rendered here — the parent owns it (e.g. the
+   * onboarding page crossfades the brain form into the recap card). Step numbering is preserved.
+   */
+  hideRecap?: boolean;
+  /**
+   * When true, the channel-selection step (the provider cards) is hidden so only the active
+   * provider setup guide shows. The parent collapses the agent preview alongside it.
+   */
+  collapseChannelSelection?: boolean;
+  /**
+   * Fires whenever an explicitly-picked channel's setup guide becomes active/inactive, so the
+   * parent can collapse the preview + channel cards behind a "Show all instructions" toggle.
+   */
+  onChannelGuideActiveChange?: (active: boolean) => void;
 };
 
-function CollapsedProviderSection({
-  expanded,
-  onToggle,
-  visible,
-}: {
-  expanded: boolean;
-  onToggle: () => void;
-  visible: boolean;
-}) {
-  if (!visible) return null;
-
+function ViewAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; onToggle: () => void }) {
   return (
     <div className="relative flex items-center pl-6">
       <div className="absolute -left-[20px] flex w-5 justify-center">
-        <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-success-dark bg-success-base shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))]">
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <CompletedStepIndicator />
       </div>
       <button
         type="button"
         onClick={onToggle}
         className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 transition-colors"
       >
-        <span className="text-label-xs font-medium">{expanded ? 'Hide instructions' : 'View all instructions'}</span>
+        <span className="text-label-xs font-medium">
+          {expanded ? 'Hide all instructions' : 'View all instructions'}
+        </span>
         <RiExpandUpDownLine className="size-4" />
       </button>
     </div>
   );
 }
 
-export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: AgentSetupStepsProps) {
+function ConnectPhaseRecap({
+  summary,
+  integrations,
+}: {
+  summary: ConnectSummary;
+  integrations: IIntegration[] | undefined;
+}) {
+  const display = deriveConnectSummaryDisplay(summary, integrations);
+
+  return (
+    <div className="flex flex-col gap-10">
+      <ConnectAgentForm
+        connectorId={summary.connectorId}
+        isClaudeSelected={display.isClaudeSelected}
+        isScratchRuntime={display.isScratchRuntime}
+        apiKey={summary.apiKey}
+        externalWorkspaceId={summary.externalWorkspaceId}
+        region={summary.region ?? ''}
+        templateSelection={summary.templateSelection}
+        isExistingMode={display.isExistingMode}
+        isScratchMode={display.isScratchMode}
+        showExistingOption={display.showExistingOption}
+        existingOptionIcon={display.existingOptionIcon}
+        name={summary.name}
+        identifier={summary.identifier}
+        instructions={summary.instructions}
+        isIdentifierTouched
+        externalAgentId={summary.externalAgentId}
+        externalEnvironmentId={summary.externalEnvironmentId}
+        errors={{}}
+        disabled
+        integrations={integrations}
+        selectedIntegrationId={summary.selectedIntegrationId}
+        dropdownStatus={summary.selectedIntegrationId ? 'valid' : 'idle'}
+        showSavedBadge={false}
+        credentialsPanelVisible={false}
+        credentialsPanelExpanded={false}
+        integrationName={summary.integrationName ?? ''}
+        verifyStatus="idle"
+        verifyMessage={undefined}
+        isSavingIntegration={false}
+        onConnectorChange={noop}
+        onTemplateChange={noop}
+        onApiKeyChange={noop}
+        onExternalWorkspaceIdChange={noop}
+        onRegionChange={noop}
+        onNameChange={noop}
+        onIdentifierChange={noop}
+        onIdentifierTouched={noop}
+        onInstructionsChange={noop}
+        onExternalAgentIdChange={noop}
+        onExternalEnvironmentIdChange={noop}
+        onSelectIntegration={noop}
+        onRequestSetupCredentials={noop}
+        onCredentialsExpandedChange={noop}
+        onIntegrationNameChange={noop}
+        onVerify={noop}
+        onSaveIntegration={noop}
+      />
+    </div>
+  );
+}
+
+/**
+ * Onboarding-only recap: the just-created managed agent rendered as the checked step-1 card
+ * (reuses the `AgentCard` from the preview illustration). Server-projected MCPs/tools/system
+ * prompt are authoritative; the connect-phase `summary` is the fallback when the API omitted the
+ * managed-runtime view.
+ */
+// Mirror of the connect-agent brain step copy, so the title/subtitle stay identical before and
+// after the form morphs into the agent preview card.
+const BRAIN_STEP_TITLE = 'What should your agent do?';
+const BRAIN_STEP_DESCRIPTION =
+  "We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials.";
+
+export function ManagedAgentRecap({
+  agent,
+  summary,
+  hideHeader,
+}: {
+  agent: AgentResponse;
+  summary: ConnectSummary;
+  /**
+   * When true, the step title/description are omitted and only the agent preview card is rendered
+   * next to the completed-step indicator (onboarding "Agent preview" step).
+   */
+  hideHeader?: boolean;
+}) {
+  const isManagedAgent = agent.runtime === 'managed';
+  const managedConnector: AgentCardConnectorKind =
+    agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws ? 'aws' : 'anthropic';
+  // Custom-code (self-hosted) agents render the trimmed card variant: custom-code icon + footer,
+  // no status badge, and no MCPs/tools/instructions (those live in the user's own code).
+  const connector: AgentCardConnectorKind = isManagedAgent ? managedConnector : 'custom';
+  const serverMcpIds = agent.managedRuntime?.mcpServers?.map((m) => m.externalId);
+  const serverToolIds = agent.managedRuntime?.tools?.map((t) => t.externalId);
+
+  const agentCard = (
+    <AgentCard
+      connector={connector}
+      isDemoCredential={agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic}
+      status="connected"
+      agentCreated
+      displayName={agent.name}
+      isPlaceholderName={false}
+      description={agent.description}
+      identifier={agent.identifier}
+      instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
+      mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
+      tools={serverToolIds ?? summary.tools ?? []}
+    />
+  );
+
+  if (hideHeader) {
+    return (
+      <div className="relative flex flex-col pl-6">
+        <div className="absolute -left-[20px] top-[3px] flex w-5 justify-center">
+          <CompletedStepIndicator />
+        </div>
+        {agentCard}
+      </div>
+    );
+  }
+
+  return (
+    <SetupStep
+      index={1}
+      status="completed"
+      title={BRAIN_STEP_TITLE}
+      description={BRAIN_STEP_DESCRIPTION}
+      fullWidthContent={agentCard}
+    />
+  );
+}
+
+export function AgentSetupSteps({
+  agent,
+  onSetupComplete,
+  hideAddProvider,
+  connectSummary,
+  onChannelConnected,
+  onChannelStateChange,
+  hideRecap,
+  collapseChannelSelection,
+  onChannelGuideActiveChange,
+}: AgentSetupStepsProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
   const queryClient = useQueryClient();
@@ -86,6 +287,9 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const location = useLocation();
   const agentRoutes = useAgentRoutes();
   const [searchParams, setSearchParams] = useSearchParams();
+  const telemetry = useTelemetry();
+  const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
+  const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
   // Tracks the last conversationId for which a bridge-connected message was sent,
   // scoping dedup per conversation rather than globally for the component lifetime.
   const lastSentConversationIdRef = useRef<string | null>(null);
@@ -97,6 +301,11 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(
     () => sessionStorage.getItem(SESSION_KEY(agent.identifier)) ?? undefined
   );
+  // Set synchronously in handleProviderSelect so the setup guide (and Continue gate) can mount
+  // before the integrations list refetch validates the new id — otherwise Telegram can flip
+  // connectedAt while validatedSelectedId is still undefined and the transition remounts with
+  // connectedOnMount=true, skipping the Continue step.
+  const [pickedChannelProviderId, setPickedChannelProviderId] = useState<string | undefined>();
 
   const validatedSelectedId = useMemo(() => {
     if (!selectedIntegrationId) return undefined;
@@ -120,26 +329,10 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     const links = agentIntegrationsQuery.data?.data;
     if (!links?.length) return false;
 
-    return links.some((link) => Boolean(link.connectedAt));
+    return links.some((link) => hasAgentInboundConnection(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
-  const [userExpandedProvider, setUserExpandedProvider] = useState(false);
-  const isProviderExpanded = !hasConnectedIntegration || userExpandedProvider;
-
-  useEffect(() => {
-    if (!hasConnectedIntegration) {
-      setUserExpandedProvider(false);
-    }
-  }, [hasConnectedIntegration]);
-
-  const defaultFromAgent = agent.integrations?.[0];
-  const effectiveIntegrationId = validatedSelectedId ?? defaultFromAgent?.integrationId;
-
-  useEffect(() => {
-    if (defaultFromAgent?.integrationId) {
-      sessionStorage.removeItem(SESSION_KEY(agent.identifier));
-    }
-  }, [defaultFromAgent?.integrationId, agent.identifier]);
+  const [isInstructionsExpanded, setIsInstructionsExpanded] = useState(false);
 
   const selectedIntegration = useMemo(() => {
     if (validatedSelectedId) {
@@ -149,23 +342,336 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     return undefined;
   }, [integrations, validatedSelectedId]);
 
-  const selectedProviderId = selectedIntegration?.providerId ?? defaultFromAgent?.providerId;
-
-  const hasProviderSelected = Boolean(effectiveIntegrationId);
-
-  const linkedIntegrationIds = useMemo(
-    () => new Set(agent.integrations?.map((i) => i.integrationId) ?? []),
-    [agent.integrations]
+  const agentIntegrationLinks = useMemo(
+    () => agentIntegrationsQuery.data?.data ?? [],
+    [agentIntegrationsQuery.data?.data]
   );
 
-  const firstIncompleteStep = hasProviderSelected ? 2 : 1;
+  const sharedInboundAddress = useMemo(() => {
+    return agentIntegrationLinks.find((link) => link.integration.providerId === EmailProviderIdEnum.NovuAgent)
+      ?.integration.sharedInboundAddress;
+  }, [agentIntegrationLinks]);
 
-  const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
+  // Managed agents have no bridge — the setup is considered complete as soon as the chosen
+  // provider integration becomes connected. Fire onSetupComplete exactly once.
+  const isManagedRuntime = agent.runtime === 'managed';
 
-  const integrationIdentifier = selectedIntegration?.identifier ?? defaultFromAgent?.identifier;
+  const useCloudMergedListenStep = Boolean(sharedInboundAddress) && !isManagedRuntime;
+
+  // The brain section (connector + template) only renders in the onboarding flow above this
+  // component. On the agent details page there is no brain section, so step numbering must
+  // start at 1 here instead of continuing from 3.
+  const isOnboarding = Boolean(connectSummary);
+  const brainStepsBefore = isOnboarding ? BRAIN_STEPS : 0;
+  const handlerStepsAfter = isManagedRuntime ? 0 : HANDLER_STEPS;
+
+  const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
+  const selectedProviderId = selectedIntegration?.providerId ?? legacyDefaultFromAgent?.providerId;
+  const isEmailChannelSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent;
+  const effectiveIntegrationId = validatedSelectedId ?? selectedIntegrationId ?? legacyDefaultFromAgent?.integrationId;
+
+  // Email is surfaced as a provider card inside the listen step, so it never gets its own numbered
+  // step — the channel cards are always the first step after the brain section.
+  const channelStepIndex = brainStepsBefore + 1;
+  const providerGuideStepOffset = channelStepIndex + 1;
+
+  const channelReadyForBridge = isChannelReadyForBridge({
+    selectedIntegrationId: validatedSelectedId,
+    agentIntegrationLinks,
+  });
+
+  const skipProviderGuide = useCloudMergedListenStep && isEmailChannelSelected && channelReadyForBridge;
+
+  const providerGuideSteps = skipProviderGuide ? 0 : resolveProviderGuideReservedSteps(selectedProviderId);
+  const bridgeStepOffset = providerGuideStepOffset + providerGuideSteps;
+
+  const totalSteps = brainStepsBefore + 1 + providerGuideSteps + handlerStepsAfter;
+
+  useEffect(() => {
+    if (useCloudMergedListenStep) return;
+
+    if (legacyDefaultFromAgent?.integrationId) {
+      sessionStorage.removeItem(SESSION_KEY(agent.identifier));
+    }
+  }, [legacyDefaultFromAgent?.integrationId, agent.identifier, useCloudMergedListenStep]);
+
+  const firstIncompleteStep = useMemo(() => {
+    if (!effectiveIntegrationId) {
+      return channelStepIndex;
+    }
+
+    if (channelReadyForBridge) {
+      return bridgeStepOffset;
+    }
+
+    return providerGuideStepOffset;
+  }, [effectiveIntegrationId, channelReadyForBridge, bridgeStepOffset, providerGuideStepOffset, channelStepIndex]);
+
+  // In onboarding the setup guide (and the collapse it triggers) only appears once the user
+  // explicitly picks a channel. On the agent details page the guide keeps following the agent's
+  // default/selected integration.
+  const guideIntegrationId = isOnboarding ? (validatedSelectedId ?? selectedIntegrationId) : effectiveIntegrationId;
+  const guideProviderId = isOnboarding
+    ? (selectedIntegration?.providerId ?? pickedChannelProviderId)
+    : selectedProviderId;
+  const ProviderGuide = guideProviderId ? resolveProviderSetupGuide(guideProviderId) : null;
+  const isChannelGuideActive = Boolean(ProviderGuide && guideIntegrationId && !skipProviderGuide);
+  // Agent details page: once a channel is picked and its guide is showing, the channel cards render
+  // as a persistent compact switcher rail so the user can switch or start another channel in one
+  // click without ever losing sight of the other channels.
+  const showChannelSwitcherRail = !isOnboarding && isChannelGuideActive;
+
+  // The agent–integration link carries the server-computed shared inbound address (e.g. the demo
+  // email's default `…@agentconnect.sh` inbox). The email guide needs it to surface that address.
+  const guideIntegrationLink = useMemo(
+    () => agentIntegrationLinks.find((link) => link.integration._id === guideIntegrationId),
+    [agentIntegrationLinks, guideIntegrationId]
+  );
+
+  // Providers with a user-rollout "what's next" phase (Slack/Telegram) split setup into two layers —
+  // connect the channel for yourself (layer 1), then roll it out to your users (layer 2). Managed
+  // agents have no bridge step, so the first inbound user message (`connectedAt`) completes layer 1.
+  // We gate the jump to layer 2 behind an explicit Continue click instead of auto-advancing the
+  // moment that message lands — the user may still be in Telegram/Slack when the webhook fires.
+  const guideHasWhatsNextPhase = Boolean(guideProviderId && providerHasWhatsNextPhase(guideProviderId));
+  const useOnboardingRolloutGate = isManagedRuntime && guideHasWhatsNextPhase && isWhatsNextEnabled;
+
+  const emailLink = useMemo(
+    () => agentIntegrationLinks.find((link) => link.integration.providerId === EmailProviderIdEnum.NovuAgent),
+    [agentIntegrationLinks]
+  );
+  const emailSharedInboxReady = Boolean(
+    emailLink?.integration.sharedInboundAddress && !emailLink.integration.sharedInboxDisabled
+  );
+  const useEmailWhatsNextRolloutGate =
+    isManagedRuntime &&
+    isEmailChannelSelected &&
+    isEmailWhatsNextEnabled &&
+    emailSharedInboxReady &&
+    !IS_SELF_HOSTED_EE;
+
+  // Providers below have no "what's next" rollout phase yet, but their layer-1 connect can still
+  // land asynchronously (e.g. an inbound webhook arriving while the user is elsewhere). Hold them
+  // behind the same generic Continue step the details page uses for non-whats-next providers
+  // (`ConnectionSuccessFooter` with `hasUserRolloutPhase={false}`) instead of auto-advancing the
+  // moment they connect, so the guide stays visible with every step checked off.
+  const genericContinueGateProviders = useMemo(() => new Set<string>([ChatProviderIdEnum.Sendblue]), []);
+  const useGenericContinueGate =
+    isManagedRuntime && Boolean(guideProviderId && genericContinueGateProviders.has(guideProviderId));
+
+  const useRolloutGate = useOnboardingRolloutGate || useEmailWhatsNextRolloutGate || useGenericContinueGate;
+
+  const guideLayer1Complete = guideIntegrationLink
+    ? hasAgentInboundConnection(guideIntegrationLink.connectedAt)
+    : false;
+
+  const [hasContinuedSetup, setHasContinuedSetup] = useState(false);
+
+  // Reset when the user switches channel so a fresh guide gets a fresh Continue gate.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset on integration switch only
+  useEffect(() => {
+    setHasContinuedSetup(false);
+  }, [guideIntegrationId]);
+
+  // Session restore: rehydrate the picked provider once integrations load so the guide can
+  // render before validatedSelectedId catches up (same early-mount path as handleProviderSelect).
+  useEffect(() => {
+    if (!isOnboarding || pickedChannelProviderId || !selectedIntegrationId || !integrations?.length) {
+      return;
+    }
+
+    const providerId = integrations.find((integration) => integration._id === selectedIntegrationId)?.providerId;
+    if (providerId) {
+      setPickedChannelProviderId(providerId);
+    }
+  }, [isOnboarding, pickedChannelProviderId, selectedIntegrationId, integrations]);
+
+  const onChannelGuideActiveChangeRef = useRef(onChannelGuideActiveChange);
+  onChannelGuideActiveChangeRef.current = onChannelGuideActiveChange;
+  useEffect(() => {
+    onChannelGuideActiveChangeRef.current?.(isChannelGuideActive);
+  }, [isChannelGuideActive]);
+  const integrationIdentifier = selectedIntegration?.identifier ?? legacyDefaultFromAgent?.identifier;
+
+  const onSetupCompleteRef = useRef(onSetupComplete);
+  onSetupCompleteRef.current = onSetupComplete;
+  const setupCompleteFiredRef = useRef(false);
+  const channelConnectedTrackedRef = useRef(false);
+  const integrationGuideTrackedRef = useRef<string | null>(null);
+
+  const trackWelcomeSent = useCallback(
+    (providerId: string) => {
+      if (!isOnboarding) return;
+
+      telemetry(TelemetryEvent.ONBOARDING_WELCOME_SENT, {
+        agentIdentifier: agent.identifier,
+        providerId,
+      });
+    },
+    [agent.identifier, isOnboarding, telemetry]
+  );
+
+  const requestEmailWelcome = useCallback(
+    (integrationIdentifierOverride?: string) => {
+      const targetIntegrationIdentifier = integrationIdentifierOverride ?? integrationIdentifier;
+
+      if (!currentEnvironment || !targetIntegrationIdentifier) {
+        return;
+      }
+
+      const storageKey = EMAIL_WELCOME_SESSION_KEY(agent.identifier);
+      if (sessionStorage.getItem(storageKey)) {
+        return;
+      }
+
+      sessionStorage.setItem(storageKey, '1');
+
+      sendAgentWelcomeMessage(currentEnvironment, agent.identifier, targetIntegrationIdentifier)
+        .then(() => {
+          trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
+        })
+        .catch(() => {
+          sessionStorage.removeItem(storageKey);
+        });
+    },
+    [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]
+  );
+
+  const handleProviderSelect = useCallback(
+    (providerId: string, integration?: IIntegration) => {
+      if (isOnboarding) {
+        telemetry(TelemetryEvent.ONBOARDING_CHANNEL_SELECTED, {
+          agentIdentifier: agent.identifier,
+          providerId,
+        });
+      }
+
+      if (integration?._id) {
+        setSelectedIntegrationId(integration._id);
+        setPickedChannelProviderId(providerId);
+        sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
+
+        // Activate the collapse in the same render as the selection so the preview,
+        // channel cards, and provider guide animate together rather than in two stages.
+        if (isOnboarding && shouldShowProviderSetupGuide(providerId)) {
+          onChannelGuideActiveChangeRef.current?.(true);
+        }
+      }
+
+      if (isOnboarding && providerId === EmailProviderIdEnum.NovuAgent && integration?.identifier) {
+        requestEmailWelcome(integration.identifier);
+      }
+    },
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
+  );
+
+  useEffect(() => {
+    if (!isOnboarding || channelConnectedTrackedRef.current) return;
+
+    if (!hasConnectedIntegration) return;
+
+    const connectedLink = agentIntegrationsQuery.data?.data?.find((link) =>
+      hasAgentInboundConnection(link.connectedAt)
+    );
+    if (!connectedLink) return;
+
+    channelConnectedTrackedRef.current = true;
+    onChannelConnected?.(connectedLink.integration.providerId);
+    telemetry(TelemetryEvent.ONBOARDING_CHANNEL_CONNECTED, {
+      agentIdentifier: agent.identifier,
+      providerId: connectedLink.integration.providerId,
+      integrationIdentifier: connectedLink.integration.identifier,
+    });
+  }, [
+    agent.identifier,
+    agentIntegrationsQuery.data?.data,
+    hasConnectedIntegration,
+    isOnboarding,
+    onChannelConnected,
+    telemetry,
+  ]);
+
+  useEffect(() => {
+    if (!isOnboarding || !selectedProviderId || !effectiveIntegrationId || skipProviderGuide) return;
+    if (integrationGuideTrackedRef.current === effectiveIntegrationId) return;
+
+    integrationGuideTrackedRef.current = effectiveIntegrationId;
+    telemetry(TelemetryEvent.CONNECT_AGENT_INTEGRATION_GUIDE_VIEWED, {
+      agentIdentifier: agent.identifier,
+      providerId: selectedProviderId,
+      integrationIdentifier: selectedIntegration?.identifier,
+      isOnboarding: true,
+    });
+  }, [
+    agent.identifier,
+    effectiveIntegrationId,
+    isOnboarding,
+    selectedIntegration?.identifier,
+    selectedProviderId,
+    skipProviderGuide,
+    telemetry,
+  ]);
+
+  useEffect(() => {
+    if (!isManagedRuntime) return;
+    if (setupCompleteFiredRef.current) return;
+
+    if (useRolloutGate) {
+      if (!hasContinuedSetup) return;
+    } else if (!hasConnectedIntegration) {
+      return;
+    }
+
+    setupCompleteFiredRef.current = true;
+    onSetupCompleteRef.current?.();
+  }, [isManagedRuntime, hasConnectedIntegration, useRolloutGate, hasContinuedSetup]);
+
+  const handleRolloutContinue = useCallback(() => {
+    setHasContinuedSetup(true);
+
+    const integrationIdentifier = guideIntegrationLink?.integration.identifier;
+    if (!currentEnvironment?.slug || !integrationIdentifier) {
+      return;
+    }
+
+    void navigate(
+      withOnboardingSource(
+        `${buildRoute(agentRoutes.integrationDetail, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agent.identifier),
+          integrationIdentifier: encodeURIComponent(integrationIdentifier),
+        })}${location.search}`
+      )
+    );
+  }, [
+    agent.identifier,
+    agentRoutes.integrationDetail,
+    currentEnvironment?.slug,
+    guideIntegrationLink?.integration.identifier,
+    location.search,
+    navigate,
+  ]);
+
+  const connectedProviderIds = useMemo<ReadonlyArray<string>>(() => {
+    return agentIntegrationLinks
+      .filter((link) => hasAgentInboundConnection(link.connectedAt))
+      .map((link) => link.integration.providerId);
+  }, [agentIntegrationLinks]);
+
+  const onChannelStateChangeRef = useRef(onChannelStateChange);
+  onChannelStateChangeRef.current = onChannelStateChange;
+  useEffect(() => {
+    onChannelStateChangeRef.current?.({
+      selectedProviderId,
+      connectedProviderIds,
+    });
+  }, [selectedProviderId, connectedProviderIds]);
 
   const handleBridgeConnected = useCallback(() => {
-    onBridgeConnected?.();
+    if (!setupCompleteFiredRef.current) {
+      setupCompleteFiredRef.current = true;
+      onSetupComplete?.();
+    }
 
     const conversationId = onboardingConversationIdRef.current;
     if (
@@ -180,6 +686,10 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     lastSentConversationIdRef.current = conversationId;
     sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier, conversationId)
       .then(() => {
+        if (selectedProviderId) {
+          trackWelcomeSent(selectedProviderId);
+        }
+
         setSearchParams((prev) => {
           prev.delete('onboardingConversationId');
 
@@ -191,7 +701,15 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
           lastSentConversationIdRef.current = null;
         }
       });
-  }, [onBridgeConnected, currentEnvironment, integrationIdentifier, agent.identifier, setSearchParams]);
+  }, [
+    onSetupComplete,
+    currentEnvironment,
+    integrationIdentifier,
+    agent.identifier,
+    selectedProviderId,
+    setSearchParams,
+    trackWelcomeSent,
+  ]);
 
   const handleProviderStepsCompleted = useCallback(() => {
     queryClient.invalidateQueries({
@@ -202,7 +720,7 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const handleAddProvider = useCallback(() => {
     if (!currentEnvironment?.slug) return;
 
-    navigate(
+    void navigate(
       `${buildRoute(agentRoutes.detailsTab, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
@@ -212,69 +730,155 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   }, [agent.identifier, agentRoutes.detailsTab, currentEnvironment?.slug, location.search, navigate]);
 
   return (
-    <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6">
-      <div
-        className="absolute bottom-0 left-[22px] top-0 w-px"
-        style={{
-          background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-        }}
-      />
-
-      <CollapsedProviderSection
-        expanded={isProviderExpanded}
-        onToggle={() => setUserExpandedProvider((prev) => !prev)}
-        visible={hasConnectedIntegration}
-      />
-
-      <motion.div
-        initial={false}
-        animate={{ height: isProviderExpanded ? 'auto' : 0, opacity: isProviderExpanded ? 1 : 0 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
-      >
-        <div className="flex flex-col gap-10">
-          <SetupStep
-            index={1}
-            status={deriveStepStatus(1, firstIncompleteStep)}
-            sectionLabel="1/2 SETUP PROVIDER"
-            title="Choose where your agent listens and communicates"
-            description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
-            rightContent={
-              <ProviderDropdown
-                agentIdentifier={agent.identifier}
-                agentName={agent.name}
-                selectedIntegrationId={validatedSelectedId ?? defaultFromAgent?.integrationId}
-                linkedIntegrationIds={linkedIntegrationIds}
-                onSelect={(_providerId, integration) => {
-                  if (integration?._id) {
-                    setSelectedIntegrationId(integration._id);
-                    sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
-                  }
-                }}
+    <div className="flex flex-col gap-10 py-6 pb-3 pr-3 md:pr-6">
+      {/* When a provider guide renders below, its steps live in a second rail — keep the line solid
+          across the junction instead of fading out and back in. */}
+      <SetupStepperRail continuesBelow={isChannelGuideActive}>
+        {connectSummary &&
+          !hideRecap &&
+          (isManagedRuntime ? (
+            <ManagedAgentRecap agent={agent} summary={connectSummary} />
+          ) : (
+            <div className="flex flex-col gap-10">
+              <ViewAllInstructionsToggle
+                expanded={isInstructionsExpanded}
+                onToggle={() => setIsInstructionsExpanded((prev) => !prev)}
               />
-            }
-          />
 
-          {ProviderGuide && effectiveIntegrationId ? (
-            <ProviderGuide
-              agent={agent}
-              integrationId={effectiveIntegrationId}
-              stepOffset={2}
-              embedded={false}
-              onStepsCompleted={handleProviderStepsCompleted}
+              <motion.div
+                initial={false}
+                animate={{
+                  height: isInstructionsExpanded ? 'auto' : 0,
+                  opacity: isInstructionsExpanded ? 1 : 0,
+                  marginTop: isInstructionsExpanded ? 0 : '-40px',
+                }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
+              >
+                <ConnectPhaseRecap summary={connectSummary} integrations={integrations} />
+              </motion.div>
+            </div>
+          ))}
+
+        {/*
+         * Keep the channel-selection step mounted and collapse it via height/opacity so it animates
+         * away in sync with the agent preview (page) and the expanding provider guide. The negative
+         * margin absorbs the parent's `gap-10` while collapsed so the rail doesn't keep a 40px gap.
+         */}
+        <motion.div
+          initial={false}
+          animate={{
+            height: collapseChannelSelection ? 0 : 'auto',
+            opacity: collapseChannelSelection ? 0 : 1,
+            marginBottom: collapseChannelSelection ? '-40px' : 0,
+          }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
+        >
+          {useCloudMergedListenStep && sharedInboundAddress ? (
+            <AgentListenStep
+              index={channelStepIndex}
+              totalSteps={totalSteps}
+              firstIncompleteStep={firstIncompleteStep}
+              agentIdentifier={agent.identifier}
+              agentName={agent.name}
+              selectedIntegrationId={effectiveIntegrationId}
+              existingLinks={agentIntegrationLinks}
+              onSelect={handleProviderSelect}
+              showChannelSwitcherRail={showChannelSwitcherRail}
             />
-          ) : null}
-        </div>
-      </motion.div>
+          ) : (
+            <SetupStep
+              index={channelStepIndex}
+              status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
+              title="Choose where your agent can talk"
+              description="Connect a channel so users can message the agent and receive replies."
+              fullWidthContent={
+                <ProviderCards
+                  agentIdentifier={agent.identifier}
+                  agentName={agent.name}
+                  selectedIntegrationId={effectiveIntegrationId}
+                  existingLinks={agentIntegrationLinks}
+                  onSelect={handleProviderSelect}
+                  showChannelSwitcherRail={showChannelSwitcherRail}
+                />
+              }
+            />
+          )}
+        </motion.div>
+      </SetupStepperRail>
 
-      {hasConnectedIntegration && (
-        <AgentCodeSetupSection
-          agent={agent}
-          stepOffset={5}
-          providerId={selectedProviderId}
-          onBridgeConnected={handleBridgeConnected}
-          onAddProvider={hideAddProvider ? undefined : handleAddProvider}
-        />
+      <AnimatePresence initial={false}>
+        {ProviderGuide && guideIntegrationId && !skipProviderGuide && (isOnboarding || showChannelSwitcherRail) ? (
+          <motion.div
+            key={guideIntegrationId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="flex flex-col gap-10"
+            style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
+          >
+            {useRolloutGate && guideIntegrationId && guideProviderId ? (
+              <AgentIntegrationGuideTransition
+                isConnected={guideLayer1Complete}
+                providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
+                hasUserRolloutPhase={useOnboardingRolloutGate || useEmailWhatsNextRolloutGate}
+                onContinued={handleRolloutContinue}
+                renderSetupView={(footer) => (
+                  <>
+                    <ProviderGuide
+                      agent={agent}
+                      integrationId={guideIntegrationId}
+                      stepOffset={providerGuideStepOffset}
+                      embedded={false}
+                      isOnboarding={isOnboarding}
+                      onStepsCompleted={handleProviderStepsCompleted}
+                      onWelcomeSent={
+                        guideProviderId !== EmailProviderIdEnum.NovuAgent
+                          ? () => trackWelcomeSent(guideProviderId)
+                          : undefined
+                      }
+                      integrationLink={guideIntegrationLink}
+                    />
+                    {footer}
+                  </>
+                )}
+                renderConnectedView={() => null}
+              />
+            ) : (
+              <ProviderGuide
+                agent={agent}
+                integrationId={guideIntegrationId}
+                stepOffset={providerGuideStepOffset}
+                embedded={false}
+                isOnboarding={isOnboarding}
+                onStepsCompleted={handleProviderStepsCompleted}
+                onWelcomeSent={
+                  isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
+                    ? () => trackWelcomeSent(guideProviderId)
+                    : undefined
+                }
+                integrationLink={guideIntegrationLink}
+              />
+            )}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {channelReadyForBridge && !isManagedRuntime && (
+        <div className="pl-8">
+          <AgentCodeSetupSection
+            agent={agent}
+            stepOffset={bridgeStepOffset}
+            totalSteps={totalSteps}
+            providerId={selectedProviderId}
+            sharedInboundAddress={isEmailChannelSelected ? sharedInboundAddress : undefined}
+            onBridgeConnected={handleBridgeConnected}
+            onAddProvider={hideAddProvider ? undefined : handleAddProvider}
+            connectorId={connectSummary?.connectorId}
+          />
+        </div>
       )}
     </div>
   );

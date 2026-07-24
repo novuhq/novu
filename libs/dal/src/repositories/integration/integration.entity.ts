@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IConfigurations, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, IConfigurations, ICredentials, IntegrationKindEnum } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import { StepFilter } from '../notification-template';
@@ -26,7 +26,10 @@ export class IntegrationEntity {
 
   providerId: string;
 
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
+
+  /** Distinguishes delivery integrations from agent-runtime integrations. Defaults to 'delivery'. */
+  kind?: IntegrationKindEnum;
 
   credentials: ICredentialsEntity;
 

@@ -1,4 +1,7 @@
 import { Novu } from '@novu/api';
+import { CreateTelegramChatEndpointDto } from '@novu/api/models/components';
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -9,6 +12,21 @@ import {
   createWebhookEndpoint,
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
+import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
+
+const integrationRepository = new IntegrationRepository();
+
+async function createTelegramIntegration(session: UserSession) {
+  return integrationRepository.create({
+    _organizationId: session.organization._id,
+    _environmentId: session.environment._id,
+    providerId: ChatProviderIdEnum.Telegram,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: {},
+    active: true,
+    identifier: `telegram-${Date.now()}`,
+  });
+}
 
 describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
   let session: UserSession;
@@ -79,6 +97,34 @@ describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
     expect(contextResult.data.some((ep) => ep.identifier === endpointWithContext.identifier)).to.be.true;
   });
 
+  it('should filter by providerId including telegram', async () => {
+    const integration = await createTelegramIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createDto: CreateTelegramChatEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpoint: {
+        chatId: '123456789',
+      },
+    };
+
+    const { result: created } = await novuClient.channelEndpoints.create(createDto);
+
+    const { result: telegramResult } = await novuClient.channelEndpoints.list({
+      subscriberId: subscriber.subscriberId,
+      integrationIdentifier: integration.identifier,
+      providerId: ChatProviderIdEnum.Telegram,
+      limit: 1,
+    });
+
+    expect(telegramResult.data.length).to.equal(1);
+    expect(telegramResult.data[0].identifier).to.equal(created.identifier);
+    expect(telegramResult.data[0].providerId).to.equal(ChatProviderIdEnum.Telegram);
+  });
+
   it('should support pagination', async () => {
     const integration = await createSlackIntegration(session);
     const subscribersService = createSubscribersService(session);
@@ -110,5 +156,31 @@ describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
 
     expect(result.data).to.be.an('array');
     expect(result.totalCount).to.equal(0);
+  });
+
+  it('should hydrate opsgenie endpoints with the wire shape from their connections', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'eu' },
+    });
+    expect(createRes.status).to.equal(201);
+
+    const listRes = await session.testAgent.get('/v1/channel-endpoints').query({
+      subscriberId: subscriber.subscriberId,
+    });
+
+    expect(listRes.status).to.equal(200);
+    const opsgenieEndpoint = listRes.body.data.find(
+      (endpoint: { type: string }) => endpoint.type === ENDPOINT_TYPES.OPSGENIE_INTEGRATION
+    );
+    expect(opsgenieEndpoint).to.exist;
+    expect(opsgenieEndpoint.endpoint.apiKey).to.equal(VALID_OPSGENIE_API_KEY);
+    expect(opsgenieEndpoint.endpoint.region).to.equal('eu');
   });
 });

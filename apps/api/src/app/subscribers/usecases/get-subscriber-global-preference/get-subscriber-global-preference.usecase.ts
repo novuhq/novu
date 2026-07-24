@@ -37,6 +37,7 @@ export class GetSubscriberGlobalPreference {
       organizationId: command.organizationId,
       subscriberId: subscriber._id,
       contextKeys: command.contextKeys,
+      subscriberGlobalPreference: command.subscriberGlobalPreference,
     });
 
     const channelsWithDefaults = this.buildDefaultPreferences(subscriberGlobalPreference.channels);
@@ -126,6 +127,7 @@ export class GetSubscriberGlobalPreference {
       in_app: true,
       chat: true,
       push: true,
+      tool: true,
     };
 
     return { ...defaultPreference, ...preference };

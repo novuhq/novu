@@ -21,7 +21,7 @@ apps/dashboard/src/api/          # API client and query definitions
 apps/dashboard/src/ee/           # Enterprise-only features
 ```
 
-**Agent sign-in:** A default user and org are pre-seeded — sign in at `http://localhost:4201/auth/sign-in`, do not go through onboarding unless asked.
+**Agent sign-in:** A default user and org are pre-seeded. In Cursor cloud agent environments (`apps/dashboard/.env.agent`), the dashboard auto signs in — open `http://localhost:4201` and wait for redirect; do not type credentials unless auto sign-in fails.
 
 | Field | Value |
 |-------|-------|

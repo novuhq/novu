@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.10.1-alpha.7",
+  "version": "2.13.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -18,6 +18,7 @@
     "dist",
     "express",
     "h3",
+    "hono",
     "internal",
     "lambda",
     "nest",
@@ -29,6 +30,9 @@
     "jsx-runtime",
     "jsx-dev-runtime",
     "validators",
+    "ai-sdk",
+    "langchain",
+    "cards",
     "README.md"
   ],
   "scripts": {
@@ -36,11 +40,11 @@
     "test:watch": "vitest --typecheck --watch",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "build": "NODE_ENV=production tsup",
+    "build": "cross-env NODE_ENV=production tsup",
     "debug": "NODE_ENV=production tsup --config tsup-debug.config.ts",
     "build:watch": "tsup --watch",
     "postbuild": "pnpm run check:exports && pnpm check:circulars",
-    "check:exports": "attw --pack .",
+    "check:exports": "attw --pack . --exclude-entrypoints ./langchain && attw --pack . --entrypoints ./langchain --ignore-rules no-resolution",
     "check:circulars": "madge --circular --extensions ts ./src",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
@@ -60,6 +64,7 @@
     "next",
     "nuxt",
     "h3",
+    "hono",
     "express"
   ],
   "author": "Novu Team <engineering@novu.co>",
@@ -145,6 +150,16 @@
         "default": "./dist/esm/servers/h3.js"
       }
     },
+    "./hono": {
+      "require": {
+        "types": "./dist/cjs/servers/hono.d.cts",
+        "default": "./dist/cjs/servers/hono.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/servers/hono.d.ts",
+        "default": "./dist/esm/servers/hono.js"
+      }
+    },
     "./lambda": {
       "require": {
         "types": "./dist/cjs/servers/lambda.d.cts",
@@ -204,20 +219,60 @@
         "types": "./dist/esm/validators.d.ts",
         "default": "./dist/esm/validators.js"
       }
+    },
+    "./ai-sdk": {
+      "require": {
+        "types": "./dist/cjs/ai-sdk/index.d.cts",
+        "default": "./dist/cjs/ai-sdk/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/ai-sdk/index.d.ts",
+        "default": "./dist/esm/ai-sdk/index.js"
+      }
+    },
+    "./langchain": {
+      "require": {
+        "types": "./dist/cjs/langchain/index.d.cts",
+        "default": "./dist/cjs/langchain/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/langchain/index.d.ts",
+        "default": "./dist/esm/langchain/index.js"
+      }
+    },
+    "./cards": {
+      "require": {
+        "types": "./dist/cjs/cards.d.cts",
+        "default": "./dist/cjs/cards.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/cards.d.ts",
+        "default": "./dist/esm/cards.js"
+      }
     }
   },
   "peerDependencies": {
+    "@langchain/core": ">=1.0.0",
     "@nestjs/common": ">=10.0.0",
     "@sveltejs/kit": ">=1.27.3",
     "@vercel/node": ">=2.15.9",
+    "ai": ">=7.0.0",
     "aws-lambda": ">=1.0.7",
     "express": ">=4.19.2",
     "h3": ">=1.8.1",
+    "hono": ">=4.0.0",
+    "langchain": ">=1.0.0",
     "next": ">=12.0.0",
     "zod": ">=3.0.0",
     "zod-to-json-schema": ">=3.0.0"
   },
   "peerDependenciesMeta": {
+    "@langchain/core": {
+      "optional": true
+    },
+    "langchain": {
+      "optional": true
+    },
     "@nestjs/common": {
       "optional": true
     },
@@ -236,10 +291,16 @@
     "h3": {
       "optional": true
     },
+    "hono": {
+      "optional": true
+    },
     "aws-lambda": {
       "optional": true
     },
     "next": {
+      "optional": true
+    },
+    "ai": {
       "optional": true
     },
     "zod": {
@@ -252,7 +313,9 @@
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@arethetypeswrong/cli": "^0.17.4",
-    "@nestjs/common": "10.4.18",
+    "@novu/agent-event-protocol": "workspace:*",
+    "@langchain/core": "^1.1.44",
+    "@nestjs/common": "11.1.27",
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",
@@ -260,31 +323,34 @@
     "@types/pluralize": "^0.0.33",
     "@types/sanitize-html": "2.11.0",
     "@vercel/node": "^2.15.9",
+    "ai": "^7.0.0",
     "aws-lambda": "^1.0.7",
     "express": "^4.19.2",
     "h3": "^1.11.1",
+    "hono": "^4.12.25",
+    "langchain": "^1.2.16",
     "madge": "^8.0.0",
     "next": "^16.2.1",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
     "tsx": "4.16.2",
     "typescript": "5.6.2",
-    "vitest": "^1.2.1",
+    "vitest": "^4.1.0",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"
   },
   "dependencies": {
-    "chat": "^4.25.0",
-    "ajv": "^8.18.0",
+    "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",
     "chalk": "^4.1.2",
+    "chat": "4.33.0",
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
     "jsonrepair": "^3.13.1",
-    "liquidjs": "^10.25.7",
+    "liquidjs": "^10.27.1",
     "pluralize": "^8.0.0",
-    "sanitize-html": "^2.13.0"
+    "sanitize-html": "^2.17.5"
   },
   "nx": {
     "tags": [

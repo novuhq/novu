@@ -4,7 +4,7 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
 import { PinoLogger } from '../../logging';
 import { SqsService } from './sqs.service';
-import { SqsPayloadOffloadService, SQS_LARGE_PAYLOAD_MARKER } from './sqs-payload-offload.service';
+import { SQS_LARGE_PAYLOAD_MARKER, SqsPayloadOffloadService } from './sqs-payload-offload.service';
 import {
   ISqsConsumerOptions,
   ISqsMessageMeta,

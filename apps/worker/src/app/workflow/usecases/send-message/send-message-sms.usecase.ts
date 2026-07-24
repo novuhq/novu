@@ -149,7 +149,7 @@ export class SendMessageSms extends SendMessageBase {
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const overrides = {
-      ...(command.overrides[integration?.channel] || {}),
+      ...(integration?.channel ? command.overrides[integration.channel] || {} : {}),
       ...(command.overrides[integration?.providerId] || {}),
     };
 
@@ -168,7 +168,7 @@ export class SendMessageSms extends SendMessageBase {
       phone,
       content: this.storeContent() ? content : null,
       providerId: integration?.providerId,
-      payload: messagePayload,
+      payload: this.payloadToPersist(command, messagePayload),
       overrides,
       templateIdentifier: command.identifier,
       stepId: command.step.stepId,
