@@ -352,6 +352,7 @@ export class AgentConversationService {
     participantId: string;
     participantType?: ConversationParticipantTypeEnum;
     title?: string;
+    workspaceId?: string;
   }): Promise<ConversationEntity | null> {
     return this.conversationRepository.findByAgentIntegrationParticipant(
       params.environmentId,
@@ -360,7 +361,8 @@ export class AgentConversationService {
       params.integrationId,
       params.participantId,
       params.participantType,
-      params.title
+      params.title,
+      params.workspaceId
     );
   }
 

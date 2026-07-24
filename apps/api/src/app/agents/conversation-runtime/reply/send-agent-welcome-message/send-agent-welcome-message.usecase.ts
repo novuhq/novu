@@ -101,6 +101,7 @@ export class SendAgentWelcomeMessage {
       platform,
       platformUserId,
       welcomeText,
+      workspaceId,
     });
 
     if (existingWelcomeConversation) {
@@ -281,6 +282,7 @@ export class SendAgentWelcomeMessage {
     platform: AgentPlatformEnum;
     platformUserId: string;
     welcomeText: string;
+    workspaceId?: string;
   }) {
     const participantId = `${params.platform}:${params.platformUserId}`;
     const welcomeTitle = getConversationTitle(params.welcomeText);
@@ -293,6 +295,7 @@ export class SendAgentWelcomeMessage {
       participantId,
       participantType: ConversationParticipantTypeEnum.PLATFORM_USER,
       title: welcomeTitle,
+      workspaceId: params.workspaceId,
     });
   }
 

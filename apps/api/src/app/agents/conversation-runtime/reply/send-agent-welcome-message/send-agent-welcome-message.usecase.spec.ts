@@ -196,6 +196,14 @@ describe('SendAgentWelcomeMessage usecase', () => {
       )
     ).to.equal(true);
     expect(
+      conversationService.findByAgentIntegrationParticipant.calledOnceWith(
+        sinon.match({
+          participantId: 'slack:U123456',
+          workspaceId: SLACK_WORKSPACE_ID,
+        })
+      )
+    ).to.equal(true);
+    expect(
       outboundGateway.sendDirectMessage.calledOnceWith(
         AGENT_ID,
         'slack-integration',
@@ -222,6 +230,52 @@ describe('SendAgentWelcomeMessage usecase', () => {
         SLACK_WORKSPACE_ID
       )
     ).to.equal(true);
+  });
+
+  it('still sends a Slack welcome when only another workspace has an existing welcome conversation', async () => {
+    integrationRepository.findOne.resolves({
+      _id: 'integration-id',
+      providerId: ChatProviderIdEnum.Slack,
+    });
+    channelEndpointRepository.findOne.resolves({
+      endpoint: { userId: 'U123456' },
+      connectionIdentifier: 'conn-intended',
+    });
+    channelConnectionRepository.findOne.resolves({
+      identifier: 'conn-intended',
+      workspace: { id: SLACK_WORKSPACE_ID },
+    });
+    // Dedup is workspace-scoped: a welcome in another workspace must not suppress this one.
+    conversationService.findByAgentIntegrationParticipant.resolves(null);
+    conversationService.createOrGetConversation.resolves({
+      _id: 'conversation-id',
+      channels: [
+        {
+          platform: AgentPlatformEnum.SLACK,
+          platformThreadId: 'slack:D999:msg-1',
+          workspace: { id: SLACK_WORKSPACE_ID },
+        },
+      ],
+    });
+    conversationService.getPrimaryChannel.returns({
+      platform: AgentPlatformEnum.SLACK,
+      platformThreadId: 'slack:D999:msg-1',
+      workspace: { id: SLACK_WORKSPACE_ID },
+    });
+    outboundGateway.sendDirectMessage.resolves({
+      messageId: 'msg-1',
+      platformThreadId: 'slack:D999:msg-1',
+    });
+
+    const result = await buildUsecase().execute(buildCommand({ integrationIdentifier: 'slack-integration' }));
+
+    expect(result.sent).to.equal(true);
+    expect(
+      conversationService.findByAgentIntegrationParticipant.calledOnceWith(
+        sinon.match({ workspaceId: SLACK_WORKSPACE_ID })
+      )
+    ).to.equal(true);
+    expect(outboundGateway.sendDirectMessage.calledOnce).to.equal(true);
   });
 
   it('returns sent:false when the dashboard subscriber has no email', async () => {
