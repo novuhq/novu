@@ -81,7 +81,6 @@ describe('SyncAgentToEnvironment usecase', () => {
   };
   let integrationRepo: {
     find: sinon.SinonStub;
-    findOne: sinon.SinonStub;
     create: sinon.SinonStub;
     delete: sinon.SinonStub;
   };
@@ -93,7 +92,7 @@ describe('SyncAgentToEnvironment usecase', () => {
   beforeEach(() => {
     agentRepo = { findOne: stub(), create: stub(), update: stub().resolves() };
     agentIntegrationRepo = { find: stub(), createOrReviveLink: stub().resolves(), delete: stub().resolves() };
-    integrationRepo = { find: stub(), findOne: stub(), create: stub(), delete: stub().resolves() };
+    integrationRepo = { find: stub(), create: stub(), delete: stub().resolves() };
   });
 
   afterEach(() => restore());
@@ -144,7 +143,6 @@ describe('SyncAgentToEnvironment usecase', () => {
       agentRepo.create.resolves(targetAgent);
       agentIntegrationRepo.find.onSecondCall().resolves([]);
       integrationRepo.find.onSecondCall().resolves([]);
-      integrationRepo.findOne.resolves(null);
       integrationRepo.create.resolves(stubIntegration);
 
       await buildUsecase().execute(baseCommand());
@@ -209,6 +207,8 @@ describe('SyncAgentToEnvironment usecase', () => {
       integrationRepo.find.onFirstCall().resolves([sourceIntegration]);
       agentIntegrationRepo.find.onSecondCall().resolves([existingTargetLink]);
       integrationRepo.find.onSecondCall().resolves([existingStub]);
+      // batched stub prefetch (replaces the per-iteration findOne)
+      integrationRepo.find.onThirdCall().resolves([existingStub]);
 
       await buildUsecase().execute(baseCommand());
 
