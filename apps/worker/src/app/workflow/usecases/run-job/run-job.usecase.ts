@@ -123,17 +123,21 @@ export class RunJob {
 
     /*
      * Atomic claim: transition QUEUED|DELAYED -> RUNNING in a single doc op so
-     * concurrent deliveries (SQS at-least-once redelivery, BullMQ stalled-job
-     * recovery, retries after partial success) cannot both pass through. Only
-     * the winning caller proceeds; the others exit silently to avoid duplicate
-     * `sendMessage` calls and duplicate child-job enqueueing.
+     * concurrent duplicate deliveries (SQS at-least-once delivery, BullMQ
+     * stalled-job recovery racing the original worker) cannot both pass
+     * through. The claim is a lease, not a permanent fence: a redelivery
+     * arriving after the previous worker crashed mid-execution finds a stale
+     * RUNNING claim and re-claims the job (see JobRepository.claimAsRunning),
+     * so genuine crash recovery still makes progress.
      */
     const claimed = await this.jobRepository.claimAsRunning(job._environmentId, job._id);
     if (!claimed) {
       this.logger.info(
         { nv: { jobId: job._id, currentStatus: job.status } },
-        'Skipping job: could not atomically claim (already running, completed, or canceled by another worker)'
+        'Skipping job: could not atomically claim (freshly running, completed, or canceled by another worker)'
       );
+
+      await this.resumeChainIfStrandedAfterCompletion(job);
 
       return;
     }
@@ -157,31 +161,7 @@ export class RunJob {
     let notification: PartialNotificationEntity | null = null;
 
     try {
-      notification = await this.notificationRepository.findOne(
-        {
-          _id: job._notificationId,
-          _environmentId: job._environmentId,
-        },
-        {
-          _id: 1,
-          _templateId: 1,
-          _organizationId: 1,
-          _environmentId: 1,
-          _subscriberId: 1,
-          transactionId: 1,
-          channels: 1,
-          to: 1,
-          payload: 1,
-          controls: 1,
-          topics: 1,
-          _digestedNotificationId: 1,
-          createdAt: 1,
-          severity: 1,
-          critical: 1,
-          contextKeys: 1,
-          tags: 1,
-        }
-      );
+      notification = await this.findNotification(job);
 
       if (!notification) {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
@@ -445,6 +425,18 @@ export class RunJob {
       if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
+
+      if (this.shouldBackoff(error)) {
+        /*
+         * The queue retries webhook-filter failures against this same job
+         * document. Release the RUNNING claim so the retry can claim it again
+         * — otherwise every retry would find a live RUNNING claim and be
+         * dropped, and the webhook filter would never be re-evaluated. On the
+         * last attempt the worker's failed handler overwrites the status with
+         * FAILED via SetJobAsFailed.
+         */
+        await this.jobRepository.releaseRunningClaim(job._environmentId, job._id);
+      }
       throw caughtError;
     } finally {
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
@@ -467,6 +459,75 @@ export class RunJob {
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
     }
+  }
+
+  @Instrument()
+  private async findNotification(job: JobEntity): Promise<PartialNotificationEntity | null> {
+    return this.notificationRepository.findOne(
+      {
+        _id: job._notificationId,
+        _environmentId: job._environmentId,
+      },
+      {
+        _id: 1,
+        _templateId: 1,
+        _organizationId: 1,
+        _environmentId: 1,
+        _subscriberId: 1,
+        transactionId: 1,
+        channels: 1,
+        to: 1,
+        payload: 1,
+        controls: 1,
+        topics: 1,
+        _digestedNotificationId: 1,
+        createdAt: 1,
+        severity: 1,
+        critical: 1,
+        contextKeys: 1,
+        tags: 1,
+      }
+    );
+  }
+
+  /**
+   * A redelivered message can lose the claim because the previous run already
+   * marked this job COMPLETED but crashed inside tryQueueNextJobs, before the
+   * next step was claimed and enqueued. The job document itself is terminal,
+   * so no future delivery will ever claim it again — without this, the rest of
+   * the workflow chain would be stranded forever. Resume it idempotently:
+   * claimNextChildAsQueued only matches PENDING children, so a child that was
+   * already claimed/enqueued by the previous run is never double-queued, and
+   * the common case (duplicate delivery of a healthy completed job) exits on
+   * the cheap PENDING-child existence check without side effects.
+   */
+  @Instrument()
+  private async resumeChainIfStrandedAfterCompletion(job: JobEntity): Promise<void> {
+    const currentJob = await this.jobRepository.findOne({ _id: job._id, _environmentId: job._environmentId }, 'status');
+    if (currentJob?.status !== JobStatusEnum.COMPLETED) {
+      return;
+    }
+
+    const pendingChild = await this.jobRepository.findOne(
+      {
+        _environmentId: job._environmentId,
+        _parentId: job._id,
+        status: JobStatusEnum.PENDING,
+      },
+      '_id'
+    );
+    if (!pendingChild) {
+      return;
+    }
+
+    this.logger.info(
+      { nv: { jobId: job._id, pendingChildJobId: pendingChild._id } },
+      'Redelivered completed job still has a pending child: resuming the stranded workflow chain'
+    );
+
+    const notification = await this.findNotification(job);
+
+    await this.tryQueueNextJobs(job, notification);
   }
 
   @Instrument()

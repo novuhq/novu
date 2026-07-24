@@ -19,6 +19,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   OrganizationEntity,
+  RUNNING_CLAIM_STALE_AFTER_MS,
   SubscriberEntity,
   UserEntity,
 } from '@novu/dal';
@@ -411,50 +412,60 @@ describe('Standard Worker', () => {
     });
   });
 
-  describe('atomic job claim', () => {
-    const buildJob = (
-      status: JobStatusEnum,
-      overrides: Partial<Omit<JobEntity, '_id'>> = {}
-    ): Omit<JobEntity, '_id'> => {
-      const _environmentId = environment._id;
-      const _organizationId = organization._id;
-      const _userId = user._id;
-      const _subscriberId = subscriber._id;
-      const _templateId = NotificationTemplateRepository.createObjectId();
-      const _notificationId = NotificationRepository.createObjectId();
+  const buildJob = (status: JobStatusEnum, overrides: Partial<Omit<JobEntity, '_id'>> = {}): Omit<JobEntity, '_id'> => {
+    const _environmentId = environment._id;
+    const _organizationId = organization._id;
+    const _userId = user._id;
+    const _subscriberId = subscriber._id;
+    const _templateId = NotificationTemplateRepository.createObjectId();
+    const _notificationId = NotificationRepository.createObjectId();
 
-      return {
-        identifier: 'atomic-claim-test',
-        payload: {},
-        overrides: {},
-        step: {
-          template: {
-            _environmentId,
-            _organizationId,
-            _creatorId: _userId,
-            type: StepTypeEnum.TRIGGER,
-            content: '',
-          } as MessageTemplateEntity,
-          _templateId,
-        },
-        transactionId: uuid(),
-        _notificationId,
-        _environmentId,
-        _organizationId,
-        _userId,
-        _subscriberId,
-        subscriberId: subscriber.subscriberId,
-        status,
+    return {
+      identifier: 'atomic-claim-test',
+      payload: {},
+      overrides: {},
+      step: {
+        template: {
+          _environmentId,
+          _organizationId,
+          _creatorId: _userId,
+          type: StepTypeEnum.TRIGGER,
+          content: '',
+        } as MessageTemplateEntity,
         _templateId,
-        digest: undefined,
-        type: StepTypeEnum.TRIGGER,
-        providerId: 'sendgrid',
-        createdAt: formatISO(Date.now()),
-        updatedAt: formatISO(Date.now()),
-        ...overrides,
-      };
+      },
+      transactionId: uuid(),
+      _notificationId,
+      _environmentId,
+      _organizationId,
+      _userId,
+      _subscriberId,
+      subscriberId: subscriber.subscriberId,
+      status,
+      _templateId,
+      digest: undefined,
+      type: StepTypeEnum.TRIGGER,
+      providerId: 'sendgrid',
+      createdAt: formatISO(Date.now()),
+      updatedAt: formatISO(Date.now()),
+      ...overrides,
     };
+  };
 
+  /**
+   * `create` always stamps a fresh `updatedAt` (schema timestamps), so tests
+   * simulating a stale RUNNING claim (crashed worker) backdate it directly,
+   * bypassing the automatic timestamp update.
+   */
+  const backdateJobClaim = async (jobId: string, ageMs: number): Promise<void> => {
+    await (jobRepository as any)._model.updateOne(
+      { _id: jobId },
+      { $set: { updatedAt: new Date(Date.now() - ageMs) } },
+      { timestamps: false }
+    );
+  };
+
+  describe('atomic job claim', () => {
     it('claimAsRunning transitions QUEUED -> RUNNING and returns the updated job', async () => {
       const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
 
@@ -475,14 +486,50 @@ describe('Standard Worker', () => {
       expect(claimed?.status).to.equal(JobStatusEnum.RUNNING);
     });
 
-    it('claimAsRunning returns null when the job is not in a claimable state', async () => {
+    it('claimAsRunning returns null for terminal statuses and for a freshly claimed RUNNING job', async () => {
       const completed = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
-      const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
       const canceled = await jobRepository.create(buildJob(JobStatusEnum.CANCELED));
+      // Fresh RUNNING = another worker claimed it moments ago (concurrent duplicate delivery).
+      const freshlyRunning = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
 
       expect(await jobRepository.claimAsRunning(completed._environmentId, completed._id)).to.equal(null);
-      expect(await jobRepository.claimAsRunning(running._environmentId, running._id)).to.equal(null);
       expect(await jobRepository.claimAsRunning(canceled._environmentId, canceled._id)).to.equal(null);
+      expect(await jobRepository.claimAsRunning(freshlyRunning._environmentId, freshlyRunning._id)).to.equal(null);
+    });
+
+    it('claimAsRunning reclaims a RUNNING job whose claim lease went stale (crashed worker redelivery)', async () => {
+      const stuck = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
+      await backdateJobClaim(stuck._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
+
+      const reclaimed = await jobRepository.claimAsRunning(stuck._environmentId, stuck._id);
+
+      expect(reclaimed).to.not.equal(null);
+      expect(reclaimed?.status).to.equal(JobStatusEnum.RUNNING);
+
+      // The reclaim renewed the lease, so an immediate duplicate delivery is fenced out again.
+      expect(await jobRepository.claimAsRunning(stuck._environmentId, stuck._id)).to.equal(null);
+    });
+
+    it('releaseRunningClaim makes a RUNNING job claimable again (webhook-filter backoff retry)', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
+
+      const firstAttempt = await jobRepository.claimAsRunning(created._environmentId, created._id);
+      expect(firstAttempt?.status).to.equal(JobStatusEnum.RUNNING);
+
+      // Attempt 1 throws a retryable (webhook filter) error and releases its claim before rethrowing.
+      await jobRepository.releaseRunningClaim(created._environmentId, created._id);
+
+      const retryAttempt = await jobRepository.claimAsRunning(created._environmentId, created._id);
+      expect(retryAttempt?.status).to.equal(JobStatusEnum.RUNNING);
+    });
+
+    it('releaseRunningClaim does not touch a job that already left RUNNING', async () => {
+      const failed = await jobRepository.create(buildJob(JobStatusEnum.FAILED));
+
+      await jobRepository.releaseRunningClaim(failed._environmentId, failed._id);
+
+      const fresh = await jobRepository.findOne({ _id: failed._id, _environmentId: failed._environmentId });
+      expect(fresh?.status).to.equal(JobStatusEnum.FAILED);
     });
 
     it('claimAsRunning is exclusive under concurrent callers (only one wins)', async () => {
@@ -527,6 +574,88 @@ describe('Standard Worker', () => {
       const result = await jobRepository.claimNextChildAsQueued(parent._environmentId, parent._id);
 
       expect(result).to.equal(null);
+    });
+  });
+
+  describe('redelivery recovery', () => {
+    const createNotification = async () =>
+      notificationRepository.create({
+        _environmentId: environment._id,
+        _organizationId: organization._id,
+        _subscriberId: subscriber._id,
+        _templateId: template._id,
+        _userId: user._id,
+        tags: [],
+      });
+
+    it('a redelivered message re-runs and completes a job stuck RUNNING by a crashed worker', async () => {
+      const notification = await createNotification();
+      const stuck = await jobRepository.create(
+        buildJob(JobStatusEnum.RUNNING, { _notificationId: notification._id, _templateId: template._id })
+      );
+      // Simulate a worker that claimed the job and died before reaching a
+      // terminal status: the claim lease has expired by the time the queue
+      // redelivers the message.
+      await backdateJobClaim(stuck._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
+
+      await standardQueueService.add({
+        name: stuck._id,
+        data: {
+          _environmentId: stuck._environmentId,
+          _id: stuck._id,
+          _organizationId: stuck._organizationId,
+          _userId: stuck._userId,
+        },
+        groupId: '0',
+      });
+
+      await jobsService.waitForJobCompletion({
+        templateId: template._id,
+        organizationId: organization._id,
+      });
+
+      const recovered = await jobRepository.findOne({ _id: stuck._id, _environmentId: stuck._environmentId });
+      expect(recovered?.status).to.equal(JobStatusEnum.COMPLETED);
+    });
+
+    it('a redelivered completed job resumes a workflow chain stranded before the child was queued', async () => {
+      const notification = await createNotification();
+      const parent = await jobRepository.create(
+        buildJob(JobStatusEnum.COMPLETED, { _notificationId: notification._id, _templateId: template._id })
+      );
+      const child = await jobRepository.create({
+        ...buildJob(JobStatusEnum.PENDING, {
+          _notificationId: notification._id,
+          _templateId: template._id,
+          transactionId: parent.transactionId,
+        }),
+        _parentId: parent._id,
+      });
+
+      // Simulate the queue redelivering the parent's message after the
+      // previous run crashed between marking the parent COMPLETED and
+      // claiming/enqueueing the child.
+      await standardQueueService.add({
+        name: parent._id,
+        data: {
+          _environmentId: parent._environmentId,
+          _id: parent._id,
+          _organizationId: parent._organizationId,
+          _userId: parent._userId,
+        },
+        groupId: '0',
+      });
+
+      await jobsService.waitForJobCompletion({
+        templateId: template._id,
+        organizationId: organization._id,
+      });
+
+      const resumedChild = await jobRepository.findOne({ _id: child._id, _environmentId: child._environmentId });
+      expect(resumedChild?.status).to.equal(JobStatusEnum.COMPLETED);
+
+      const parentAfter = await jobRepository.findOne({ _id: parent._id, _environmentId: parent._environmentId });
+      expect(parentAfter?.status).to.equal(JobStatusEnum.COMPLETED);
     });
   });
 });

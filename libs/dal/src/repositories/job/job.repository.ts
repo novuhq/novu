@@ -31,6 +31,19 @@ export interface IDelayOrDigestJobResult {
   activeNotificationId?: string;
 }
 
+/**
+ * How long a RUNNING claim ({@link JobRepository.claimAsRunning}) is treated
+ * as live before a redelivered message may re-claim the job.
+ *
+ * Must be shorter than the earliest possible redelivery of the same message —
+ * the BullMQ lock duration (90s, see `getStandardWorkerOptions`) and the SQS
+ * visibility timeout (`SQS_DEFAULT_VISIBILITY_TIMEOUT`, 90s default) — so a
+ * genuine redelivery (previous worker crashed mid-execution) always finds an
+ * expired lease and can recover the job, while near-simultaneous duplicate
+ * deliveries are still fenced out.
+ */
+export const RUNNING_CLAIM_STALE_AFTER_MS = 60_000;
+
 export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
@@ -83,15 +96,30 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
    * and must exit silently to avoid duplicate side effects (e.g. duplicate
    * notifications).
    *
-   * Returns the updated job, or `null` if the job is already RUNNING /
-   * COMPLETED / FAILED / CANCELED / SKIPPED / MERGED.
+   * The RUNNING claim is a *lease*, not a permanent fence: the claim itself
+   * refreshes `updatedAt` (schema `timestamps: true`), and a job whose claim
+   * is older than {@link RUNNING_CLAIM_STALE_AFTER_MS} can be re-claimed. This
+   * is what lets a redelivered message recover a job whose previous worker
+   * crashed between the claim and a terminal status — without it, the job
+   * would be stuck RUNNING forever and every redelivery silently dropped.
+   * Redeliveries can never arrive before the BullMQ lock duration (90s) or
+   * the SQS visibility timeout (90s default) has elapsed, so a fresh lease
+   * only ever fences genuinely concurrent duplicate deliveries.
+   *
+   * Returns the updated job, or `null` if the job is COMPLETED / FAILED /
+   * CANCELED / SKIPPED / MERGED, or RUNNING under a still-live lease.
    */
   public async claimAsRunning(environmentId: string, jobId: string): Promise<JobEntity | null> {
+    const staleClaimCutoff = new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
+
     return this.findOneAndUpdate(
       {
         _environmentId: environmentId,
         _id: jobId,
-        status: { $in: [JobStatusEnum.QUEUED, JobStatusEnum.DELAYED] },
+        $or: [
+          { status: { $in: [JobStatusEnum.QUEUED, JobStatusEnum.DELAYED] } },
+          { status: JobStatusEnum.RUNNING, updatedAt: { $lte: staleClaimCutoff } },
+        ],
       },
       {
         $set: {
@@ -103,6 +131,30 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
   }
 
   /**
+   * Release a RUNNING claim back to QUEUED so a later delivery of the same
+   * message can claim the job again. Used on the webhook-filter backoff path,
+   * where the queue retries the same job document after a short delay (0-8s,
+   * well within the claim lease) — without the release, every retry would find
+   * a live RUNNING claim and be dropped, so the filter would never be
+   * re-evaluated. No-op when the job already left RUNNING (e.g. it was set to
+   * FAILED in the meantime).
+   */
+  public async releaseRunningClaim(environmentId: string, jobId: string): Promise<void> {
+    await this.updateOne(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: JobStatusEnum.RUNNING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.QUEUED,
+        },
+      }
+    );
+  }
+
+  /**
    * Atomically claim the next child job (by `_parentId`) by transitioning it
    * from PENDING to QUEUED. Used to fence child-job enqueueing so a redelivered
    * parent does not re-queue an already-claimed child.
@@ -110,6 +162,13 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
    * Returns the claimed child, or `null` if there is no PENDING child for this
    * parent (either because the workflow ends here, or the child has already
    * been claimed by another invocation).
+   *
+   * Deliberately matches PENDING only: a QUEUED child already has (or is about
+   * to have) a queue message, and re-running AddJob on it would duplicate its
+   * side effects (digest merge evaluation, execution details). The residual
+   * crash window between this claim and the enqueue mirrors the pre-existing
+   * window inside AddJob itself (status is set to QUEUED/DELAYED before
+   * `queueJob`) and is tracked as a follow-up.
    */
   public async claimNextChildAsQueued(environmentId: string, parentJobId: string): Promise<JobEntity | null> {
     return this.findOneAndUpdate(
