@@ -174,9 +174,10 @@ export class RunJob {
         notification
       );
 
-      // Stateless (bridge-URL) jobs carry no persisted workflow — the bridge
-      // is the source of truth (`job.step.bridgeUrl`). Every downstream
-      // consumer accepts an undefined workflow and falls back accordingly.
+      // Purely stateless jobs have no persisted workflow id. Synced workflows
+      // triggered with an override `bridgeUrl` still have `_templateId`, but
+      // step content comes from the bridge (`job.step.bridgeUrl`) — hydration
+      // skips those stubs; every downstream consumer tolerates either shape.
       const workflow = job._templateId
         ? await this.getWorkflow(job._templateId, job._environmentId, job._organizationId, job.payload?.__source)
         : undefined;
