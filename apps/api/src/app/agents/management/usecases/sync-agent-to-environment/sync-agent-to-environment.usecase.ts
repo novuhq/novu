@@ -109,7 +109,10 @@ export class SyncAgentToEnvironment {
         : [];
     const stubByParentId = new Map<string, (typeof existingStubs)[0]>();
     for (const stub of existingStubs) {
-      if (stub._parentId) stubByParentId.set(stub._parentId, stub);
+      // first occurrence wins, matching the findOne this replaces
+      if (stub._parentId && !stubByParentId.has(stub._parentId)) {
+        stubByParentId.set(stub._parentId, stub);
+      }
     }
 
     for (const sourceLink of sourceLinks) {
@@ -140,6 +143,10 @@ export class SyncAgentToEnvironment {
           _environmentId: targetEnvironmentId,
           _organizationId: organizationId,
         });
+
+        // keep the snapshot in sync so a later iteration reuses this stub,
+        // exactly as the per-iteration findOne would have
+        stubByParentId.set(sourceIntegration._id, stubIntegration);
       }
 
       // Revives a tombstoned (disconnected) target link when one exists for this
