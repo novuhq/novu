@@ -47,7 +47,16 @@ function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMe
   return { role: isAssistant ? 'assistant' : 'user', content: text };
 }
 
-function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): ModelMessage[] {
+function mapHistoryEntry(
+  entry: AgentHistoryEntry,
+  multiSender: boolean,
+  index: ApprovalIndex,
+  entryIndex: number
+): ModelMessage[] {
+  if (index.skipEntryIndices.has(entryIndex)) {
+    return [];
+  }
+
   switch (entry.type) {
     case TYPE_MESSAGE: {
       const message = mapTextMessage(entry, multiSender);
@@ -86,5 +95,5 @@ export function toModelMessages(history: AgentHistoryEntry[]): ModelMessage[] {
   const multiSender = distinctHumanSenders(history) > 1;
   const index = buildApprovalIndex(history);
 
-  return history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
+  return history.flatMap((entry, entryIndex) => mapHistoryEntry(entry, multiSender, index, entryIndex));
 }
