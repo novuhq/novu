@@ -86,7 +86,7 @@ export class ManagedAgentService implements OnModuleInit {
   ): Promise<ManagedAgentDispatchResult> {
     await this.demoQuota.assertAllowed(context, agent);
 
-    // Backfill Novu-owned platform config (e.g. novu_tools) on agents created before the
+    // Backfill Novu-owned platform config (e.g. novu_tool_catalog) on agents created before the
     // current definition version. Fail-open: never blocks the message.
     await this.agentRuntimeDefinition.reconcileIfStale({
       agentId: agent._id,

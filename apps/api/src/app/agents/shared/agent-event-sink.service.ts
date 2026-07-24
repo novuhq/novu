@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
-import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
+import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
@@ -853,7 +853,7 @@ export class AgentEventSink {
   }
 
   private isInternalTool(toolName?: string): boolean {
-    return NOVU_INTERNAL_TOOLS.includes(toolName ?? '');
+    return isNovuInternalToolName(toolName);
   }
 }
 

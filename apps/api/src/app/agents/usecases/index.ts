@@ -14,6 +14,7 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
+import { HandleNovuResolve } from '../managed-runtime/novu-resolve/handle-novu-resolve.usecase';
 import { ConfirmToolApproval } from '../managed-runtime/tool-approval/confirm-tool-approval.usecase';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
 import { HandleNovuTools } from '../managed-runtime/tool-connect/handle-novu-tools.usecase';
@@ -91,5 +92,6 @@ export const USE_CASES = [
   HandlePendingToolApprovals,
   ConfirmToolApproval,
   HandleNovuTools,
+  HandleNovuResolve,
   IngestAgentEvents,
 ];
