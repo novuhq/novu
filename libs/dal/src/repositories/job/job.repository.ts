@@ -31,6 +31,16 @@ export interface IDelayOrDigestJobResult {
   activeNotificationId?: string;
 }
 
+/**
+ * Lease TTL for {@link JobRepository.claimAsRunning}. Must stay below BullMQ lock / SQS visibility (90s).
+ * Live workers renew the lease via {@link JobRepository.renewRunningClaim} while executing, so a stale
+ * lease always means the claiming worker died — not that the job is merely slow.
+ */
+export const RUNNING_CLAIM_STALE_AFTER_MS = 60_000;
+
+/** Heartbeat period for renewing a RUNNING claim; several renewals fit within one lease TTL. */
+export const RUNNING_CLAIM_RENEW_INTERVAL_MS = RUNNING_CLAIM_STALE_AFTER_MS / 3;
+
 export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
@@ -68,6 +78,83 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         $set: {
           status,
           deliveryLifecycleState,
+        },
+      },
+      { new: true }
+    );
+  }
+
+  /**
+   * Atomically claim a job for execution (QUEUED|DELAYED -> RUNNING, or stale RUNNING).
+   * Returns null when another worker holds a live lease or the job is already terminal.
+   */
+  public async claimAsRunning(environmentId: string, jobId: string): Promise<JobEntity | null> {
+    const staleClaimCutoff = new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
+
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        $or: [
+          { status: { $in: [JobStatusEnum.QUEUED, JobStatusEnum.DELAYED] } },
+          { status: JobStatusEnum.RUNNING, updatedAt: { $lte: staleClaimCutoff } },
+        ],
+      },
+      {
+        $set: {
+          status: JobStatusEnum.RUNNING,
+        },
+      },
+      { new: true }
+    );
+  }
+
+  /**
+   * Renew a live RUNNING claim's lease (schema timestamps refresh `updatedAt` on write).
+   * No-op once the job has left RUNNING, so a late heartbeat can never resurrect a claim.
+   */
+  public async renewRunningClaim(environmentId: string, jobId: string): Promise<void> {
+    await this.updateOne(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: JobStatusEnum.RUNNING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.RUNNING,
+        },
+      }
+    );
+  }
+
+  /** Release RUNNING -> QUEUED so a short-delay retry (e.g. webhook filter) can reclaim. */
+  public async releaseRunningClaim(environmentId: string, jobId: string): Promise<void> {
+    await this.updateOne(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: JobStatusEnum.RUNNING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.QUEUED,
+        },
+      }
+    );
+  }
+
+  /** Atomically claim the next PENDING child as QUEUED so a redelivered parent cannot re-enqueue it. */
+  public async claimNextChildAsQueued(environmentId: string, parentJobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _parentId: parentJobId,
+        status: JobStatusEnum.PENDING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.QUEUED,
         },
       },
       { new: true }
@@ -324,7 +411,13 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         $ne: job._notificationId,
       },
       _templateId: job._templateId,
-      status: { $in: [JobStatusEnum.PENDING, JobStatusEnum.SKIPPED, JobStatusEnum.COMPLETED] },
+      /*
+       * QUEUED covers the window between claimNextChildAsQueued and the
+       * merge/skip decision in AddJob — without it, two concurrent triggers
+       * with the same digest value are invisible to each other's backoff
+       * check and both skip the digest.
+       */
+      status: { $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.SKIPPED, JobStatusEnum.COMPLETED] },
       type: StepTypeEnum.DIGEST,
       _environmentId: job._environmentId,
       _subscriberId: job._subscriberId,
