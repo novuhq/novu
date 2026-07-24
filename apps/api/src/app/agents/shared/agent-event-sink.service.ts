@@ -268,7 +268,7 @@ export class AgentEventSink {
       return 'accepted';
     }
 
-    const isDuplicate = await this.isDuplicateMessage(context.environmentId, event.messageId);
+    const isDuplicate = await this.isDuplicateMessage(context.environmentId, context.conversationId, event.messageId);
 
     if (isDuplicate) {
       return 'duplicate';
@@ -719,9 +719,13 @@ export class AgentEventSink {
     }
   }
 
-  private async isDuplicateMessage(environmentId: string, messageId: string): Promise<boolean> {
+  private async isDuplicateMessage(environmentId: string, conversationId: string, messageId: string): Promise<boolean> {
+    if (typeof messageId !== 'string' || messageId.length === 0) {
+      return false;
+    }
+
     const existing = await this.activityRepository.findOne(
-      { _environmentId: environmentId, identifier: messageId },
+      { _environmentId: environmentId, _conversationId: conversationId, identifier: messageId },
       '*'
     );
 
@@ -734,15 +738,22 @@ export class AgentEventSink {
    * message id instead — the SDK has no client id to give it — so callers resolving an
    * edit/delete/reaction against that value would otherwise retry-then-skip forever. Fall back
    * to a platform-id lookup once the identifier retries are exhausted.
+   *
+   * Lookups are conversation-scoped so a same-environment client cannot resolve or mutate
+   * another conversation's activity by reusing its identifier.
    */
   private async resolveActivityByClientId(
     environmentId: string,
     conversationId: string,
     messageId: string
   ): Promise<ConversationActivityEntity | null> {
+    if (typeof messageId !== 'string' || messageId.length === 0) {
+      return null;
+    }
+
     for (let attempt = 0; attempt < ACTIVITY_RESOLVE_MAX_ATTEMPTS; attempt += 1) {
       const activity = await this.activityRepository.findOne(
-        { _environmentId: environmentId, identifier: messageId },
+        { _environmentId: environmentId, _conversationId: conversationId, identifier: messageId },
         '*'
       );
 

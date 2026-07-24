@@ -394,7 +394,11 @@ export class AgentConversationService {
         );
 
         const existing = await this.activityRepository.findOne(
-          { _environmentId: params.environmentId, identifier: params.identifier },
+          {
+            _environmentId: params.environmentId,
+            _conversationId: params.conversationId,
+            identifier: params.identifier,
+          },
           '*'
         );
 
