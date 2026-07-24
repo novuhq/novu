@@ -36,7 +36,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Novu Email',
     channel: ChannelTypeEnum.EMAIL,
     credentials: [],
-    docReference: `https://docs.novu.co/integrations/providers/default-providers${UTM_CAMPAIGN_QUERY_PARAM}#novu-email-provider`,
+    docReference: `https://docs.novu.co/platform/integrations/demo-integration${UTM_CAMPAIGN_QUERY_PARAM}#novu-email-provider`,
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
   {
