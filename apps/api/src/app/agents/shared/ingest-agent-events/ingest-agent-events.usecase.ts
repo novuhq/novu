@@ -11,7 +11,7 @@ import { IngestAgentEventsCommand } from './ingest-agent-events.command';
 /**
  * SDK-native AgentEvent ingest. Success is HTTP 200 with an empty/minimal body
  * (status-only ack). Soft skips are hard failures: 404 for missing conversation,
- * 400 for bad client ids / empty valid batch after filtering.
+ * 400 for bad client ids / agent mismatch / mixed batch identity.
  */
 @Injectable()
 export class IngestAgentEvents {
@@ -39,11 +39,17 @@ export class IngestAgentEvents {
 
     const envelopes = command.events as unknown as AgentEventEnvelope[];
 
-    // SDK outbox is constructed per-turn with a fixed conversationId; a mixed batch is always a client error.
+    // SDK outbox stamps one conversationId and one agentId per turn; a mixed batch is always a client error.
     const conversationIds = new Set(envelopes.map((envelope) => envelope.conversationId));
 
     if (conversationIds.size > 1) {
       throw new BadRequestException('All events in a batch must belong to the same conversation');
+    }
+
+    const agentIds = new Set(envelopes.map((envelope) => envelope.agentId));
+
+    if (agentIds.size > 1) {
+      throw new BadRequestException('All events in a batch must belong to the same agent');
     }
 
     await this.ingestBatch(envelopes, command);
@@ -68,6 +74,7 @@ export class IngestAgentEvents {
     }
 
     const conversationId = envelopes[0].conversationId;
+    const agentIdentifier = envelopes[0].agentId;
     const conversation = await this.conversationService.getConversation(
       conversationId,
       command.environmentId,
@@ -115,50 +122,28 @@ export class IngestAgentEvents {
       throw new BadRequestException('Integration not found for conversation channel');
     }
 
-    const validEnvelopes: AgentEventEnvelope[] = [];
-    let referenceAgent: { _id: string; identifier: string } | null = null;
-    // A batch from one SDK run repeats the same agentId for every envelope; memoize by
-    // identifier instead of re-querying Mongo once per envelope.
-    const agentsByIdentifier = new Map<string, { _id: string; identifier: string } | null>();
+    const agent = await this.agentRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        identifier: agentIdentifier,
+      },
+      { _id: 1, identifier: 1 }
+    );
 
-    for (const envelope of envelopes) {
-      let agent = agentsByIdentifier.get(envelope.agentId);
+    if (!agent) {
+      this.logger.warn({ conversationId, agentIdentifier }, 'Rejecting agent event batch — agent not found');
 
-      if (agent === undefined) {
-        agent = await this.agentRepository.findOne(
-          {
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-            identifier: envelope.agentId,
-          },
-          { _id: 1, identifier: 1 }
-        );
-        agentsByIdentifier.set(envelope.agentId, agent);
-      }
-
-      if (!agent) {
-        this.logger.warn(
-          { conversationId, agentIdentifier: envelope.agentId },
-          'Skipping agent event envelope — agent not found'
-        );
-        continue;
-      }
-
-      if (String(agent._id) !== conversation._agentId) {
-        this.logger.warn(
-          { conversationId, agentIdentifier: envelope.agentId, conversationAgentId: conversation._agentId },
-          'Skipping agent event envelope — agent identifier does not match conversation'
-        );
-        continue;
-      }
-
-      referenceAgent ??= agent;
-      validEnvelopes.push(envelope);
+      throw new BadRequestException('Agent not found');
     }
 
-    // 400: every envelope had a bad agentId (not found or mismatched). Do not ack an empty batch.
-    if (validEnvelopes.length === 0 || !referenceAgent) {
-      throw new BadRequestException('No valid events in batch — agent not found or does not match conversation');
+    if (String(agent._id) !== conversation._agentId) {
+      this.logger.warn(
+        { conversationId, agentIdentifier, conversationAgentId: conversation._agentId },
+        'Rejecting agent event batch — agent identifier does not match conversation'
+      );
+
+      throw new BadRequestException('Agent does not match conversation');
     }
 
     const context: AgentEventContext = {
@@ -166,15 +151,15 @@ export class IngestAgentEvents {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       conversationId: String(conversation._id),
-      agentIdentifier: referenceAgent.identifier,
+      agentIdentifier: agent.identifier,
       integrationIdentifier: integration.identifier,
-      agentId: referenceAgent._id,
+      agentId: agent._id,
       platform: parsePlatform(channel.platform),
       platformThreadId: channel.platformThreadId,
       source: 'bridge',
     };
 
-    await this.agentEventSink.ingestMany(validEnvelopes, context);
+    await this.agentEventSink.ingestMany(envelopes, context);
   }
 }
 

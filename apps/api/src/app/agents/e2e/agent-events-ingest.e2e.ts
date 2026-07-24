@@ -143,6 +143,31 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     expect(res.body.message).to.equal('All events in a batch must belong to the same conversation');
   });
 
+  it('should reject a batch mixing agents with a 400', async () => {
+    const conversationId = await seedConversation(ctx);
+
+    const otherAgentIdentifier = `e2e-mixed-agent-${Date.now()}`;
+    const createRes = await ctx.session.testAgent.post('/v1/agents').send({
+      name: 'Other Agent',
+      identifier: otherAgentIdentifier,
+    });
+    expect(createRes.status).to.equal(201);
+
+    const res = await postIngest([
+      messageEnvelope(conversationId, 'msg-mixed-agent-1', { sequence: 1 }),
+      messageEnvelope(conversationId, 'msg-mixed-agent-2', {
+        sequence: 2,
+        agentId: otherAgentIdentifier,
+      }),
+    ]);
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('All events in a batch must belong to the same agent');
+
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
+    expect(activities.filter((a) => a.identifier?.startsWith('msg-mixed-agent-'))).to.have.length(0);
+  });
+
   it('should reject an unknown conversation with a 404', async () => {
     const res = await postIngest([messageEnvelope(NONEXISTENT_CONVERSATION_ID, 'msg-unknown-conv')]);
 
@@ -164,6 +189,7 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
     ]);
 
     expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('Agent does not match conversation');
 
     const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
     expect(activities.filter((a) => a.identifier === 'msg-agent-mismatch')).to.have.length(0);
