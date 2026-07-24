@@ -174,6 +174,7 @@ overrides:
   mongoose@>=8.0.0 <8.22.1: ^8.22.1
   newrelic: 13.19.2
   fast-uri@<3.1.2: ^3.1.2
+  sharp@<0.35.0: ^0.35.3
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
   '@taskforcesh/bullmq-pro@6.11.0>uuid': 11.1.1
