@@ -49,6 +49,7 @@ export class ManagedAgentEventHandler {
       platformThreadId: metadata.platformThreadId,
       sessionId,
       suppressReply: metadata.suppressReply === 'true',
+      source: 'managed',
     };
 
     let protocolEnabled: boolean | undefined;
