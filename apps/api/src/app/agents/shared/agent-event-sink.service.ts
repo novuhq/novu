@@ -205,6 +205,12 @@ export class AgentEventSink {
     context: AgentEventContext,
     autoDeliverCard: boolean
   ): Promise<IngestOutcome> {
+    // Novu platform tools (novu_resolve, novu_tool_catalog) are auto-handled —
+    // never ledger an "Approval required" activity or post a card for them.
+    if (this.isInternalTool(event.toolName)) {
+      return 'accepted';
+    }
+
     const baseFields = this.buildBaseFields(context);
     const toolApprovalRequest = {
       approvalId: event.approvalId,
@@ -631,21 +637,9 @@ export class AgentEventSink {
     }
 
     try {
-      for (const approval of approvals) {
-        await this.handleToolApprovalRequest(
-          {
-            type: 'tool-approval-request',
-            approvalId: approval.approvalId,
-            toolUseId: approval.toolUseId,
-            toolName: approval.toolName,
-            input: approval.input,
-            source: approval.source,
-          },
-          context,
-          false
-        );
-      }
-
+      // Do not ledger approvals here. Internal Novu tools are auto-handled and
+      // must not appear as "Approval required". External tools are ledgered when
+      // HandlePendingToolApprovals delivers the card (or auto-confirms trust).
       const response: ThalamusResponse = {
         messages: [],
         finishReason: 'requires-action',
