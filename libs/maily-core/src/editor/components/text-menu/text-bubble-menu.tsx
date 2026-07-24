@@ -29,19 +29,42 @@ export interface BubbleMenuItem {
   tooltip?: string;
 }
 
+export type TextMenuConfig = {
+  showTurnInto?: boolean;
+  showUnderline?: boolean;
+  showAlignment?: boolean;
+  showTextColor?: boolean;
+  showListMenu?: boolean;
+};
+
+export type ImageMenuConfig = {
+  showAlignment?: boolean;
+  showExternalLink?: boolean;
+};
+
+export type MenuConfig = {
+  text?: TextMenuConfig;
+  image?: ImageMenuConfig;
+};
+
 export type EditorBubbleMenuProps = Omit<BubbleMenuProps, 'children'> & {
   appendTo?: React.RefObject<any>;
+  textMenuConfig?: TextMenuConfig;
+  imageMenuConfig?: ImageMenuConfig;
 };
 
 export function TextBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo } = props;
+  const { editor, appendTo, textMenuConfig } = props;
 
   if (!editor) {
     return null;
   }
 
+  const showTurnInto = textMenuConfig?.showTurnInto ?? true;
+
+  const { textMenuConfig: _textMenuConfig, ...restProps } = props;
   const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
+    ...restProps,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     pluginKey: 'text-menu',
     shouldShow: ({ editor, from, view }) => {
@@ -84,11 +107,21 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
       className="mly-flex mly-gap-0.5 mly-rounded-lg mly-border mly-border-gray-200 mly-bg-white mly-p-0.5 mly-shadow-md"
     >
       <TooltipProvider>
-        <TurnIntoBlock options={turnIntoBlockOptions} />
+        {showTurnInto && (
+          <>
+            <TurnIntoBlock options={turnIntoBlockOptions} />
 
-        <Divider className="mly-mx-0" />
+            <Divider className="mly-mx-0" />
+          </>
+        )}
 
-        <TextBubbleContent editor={editor} />
+        <TextBubbleContent
+          editor={editor}
+          showUnderline={textMenuConfig?.showUnderline}
+          showAlignment={textMenuConfig?.showAlignment}
+          showTextColor={textMenuConfig?.showTextColor}
+          showListMenu={textMenuConfig?.showListMenu}
+        />
       </TooltipProvider>
     </BubbleMenu>
   );
