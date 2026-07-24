@@ -5,6 +5,7 @@ export * from './anthropic-aws';
 export * from './auth';
 export * from './billing';
 export * from './builder';
+export * from './card-element.types';
 export * from './channel';
 export * from './channel-connection';
 export * from './channel-endpoint';
