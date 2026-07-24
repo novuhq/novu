@@ -18,6 +18,7 @@ type TestJob = {
     uuid?: string;
     stepId?: string;
     _templateId?: string;
+    bridgeUrl?: string;
     template: TestTemplate;
   };
 };
@@ -83,6 +84,25 @@ describe('StepTemplateHydrationService', () => {
   it('skips stateless jobs (no _templateId)', async () => {
     const { service, messageTemplateRepository } = buildService();
     const job = buildLeanJob({ _templateId: undefined });
+
+    const status = await hydrate(service, job);
+
+    expect(status).toBe(StepTemplateHydrationStatus.SKIPPED);
+    expect(messageTemplateRepository.findOne).not.toHaveBeenCalled();
+  });
+
+  it('skips bridgeUrl jobs even when a synced _templateId is present', async () => {
+    const { service, messageTemplateRepository } = buildService();
+    const job = buildLeanJob({
+      step: {
+        _id: 'step_1',
+        uuid: 'uuid_1',
+        stepId: 'email-step',
+        _templateId: 'mt_1',
+        bridgeUrl: 'https://tunnel.example.com/api/novu',
+        template: { _id: 'mt_1', type: StepTypeEnum.EMAIL },
+      },
+    });
 
     const status = await hydrate(service, job);
 

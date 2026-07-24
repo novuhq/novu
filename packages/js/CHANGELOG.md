@@ -1,3 +1,22 @@
+## v3.18.1 (2026-07-23)
+
+### 🚀 Features
+
+- **dashboard,api-service,js,react,framework:** novu copilot agent for slack fixes NV-8316 ([#11973](https://github.com/novuhq/novu/pull/11973))
+- **shared:** add Tool channel with PagerDuty, Opsgenie and Webhook providers fixes NV-8284 ([#11923](https://github.com/novuhq/novu/pull/11923))
+- **providers:** add Webex Messaging OAuth support fixes NV-8272 ([#11633](https://github.com/novuhq/novu/pull/11633))
+
+### 🩹 Fixes
+
+- **js:** bump socket.io-client to pull patched ws fixes NV-8326 ([#12002](https://github.com/novuhq/novu/pull/12002))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+- Rahul Jain
+
 ## v3.18.0 (2026-07-08)
 
 ### 🚀 Features
