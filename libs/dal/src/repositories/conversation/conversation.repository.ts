@@ -75,7 +75,13 @@ export class ConversationRepository extends BaseRepositoryV2<
     integrationId: string,
     participantId: string,
     participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER,
-    title?: string
+    title?: string,
+    /**
+     * When set, only match conversations whose channel belongs to this platform workspace
+     * (e.g. Slack `team_id`). Required for multi-workspace welcome dedup so a prior welcome
+     * in workspace A does not suppress a welcome in workspace B for the same participant key.
+     */
+    workspaceId?: string
   ): Promise<ConversationEntity | null> {
     return this.findOne(
       {
@@ -85,6 +91,7 @@ export class ConversationRepository extends BaseRepositoryV2<
         channels: {
           $elemMatch: {
             _integrationId: new Types.ObjectId(integrationId),
+            ...(workspaceId ? { 'workspace.id': workspaceId } : {}),
           },
         },
         participants: { $elemMatch: { id: participantId, type: participantType } },
