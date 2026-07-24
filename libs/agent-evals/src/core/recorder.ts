@@ -6,6 +6,7 @@ export class RunRecorder {
   private finalText = '';
   private capturedUrls: string[] = [];
   private openedFiles: string[] = [];
+  private writtenFiles: string[] = [];
   private killedShellIds: string[] = [];
   private trackedShellIds: string[] = [];
   private polledShellIds: string[] = [];
@@ -14,7 +15,8 @@ export class RunRecorder {
 
   constructor(
     private readonly scenarioId: string,
-    private readonly userPrompt: string
+    private readonly userPrompt: string,
+    private readonly projectRoot = ''
   ) {}
 
   recordToolCall(name: string, args: Record<string, unknown>, result?: unknown): void {
@@ -46,6 +48,10 @@ export class RunRecorder {
     this.openedFiles.push(filePath);
   }
 
+  recordWrittenFile(filePath: string): void {
+    this.writtenFiles.push(filePath);
+  }
+
   recordTrackedShell(shellId: string): void {
     this.trackedShellIds.push(shellId);
   }
@@ -64,11 +70,13 @@ export class RunRecorder {
     return {
       scenarioId: this.scenarioId,
       userPrompt: this.userPrompt,
+      projectRoot: this.projectRoot,
       toolCalls: [...this.toolCalls],
       assistantMessages: [...this.assistantMessages],
       finalText: this.finalText,
       capturedUrls: [...this.capturedUrls],
       openedFiles: [...this.openedFiles],
+      writtenFiles: [...this.writtenFiles],
       killedShellIds: [...this.killedShellIds],
       trackedShellIds: [...this.trackedShellIds],
       polledShellIds: [...this.polledShellIds],
