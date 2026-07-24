@@ -121,15 +121,6 @@ export class RunJob {
       this.assignLogger(job);
     }
 
-    /*
-     * Atomic claim: transition QUEUED|DELAYED -> RUNNING in a single doc op so
-     * concurrent duplicate deliveries (SQS at-least-once delivery, BullMQ
-     * stalled-job recovery racing the original worker) cannot both pass
-     * through. The claim is a lease, not a permanent fence: a redelivery
-     * arriving after the previous worker crashed mid-execution finds a stale
-     * RUNNING claim and re-claims the job (see JobRepository.claimAsRunning),
-     * so genuine crash recovery still makes progress.
-     */
     const claimed = await this.jobRepository.claimAsRunning(job._environmentId, job._id);
     if (!claimed) {
       this.logger.info(
@@ -272,8 +263,6 @@ export class RunJob {
 
         return;
       }
-
-      // Status is already RUNNING from the atomic claim at the top of execute().
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
@@ -427,14 +416,6 @@ export class RunJob {
       }
 
       if (this.shouldBackoff(error)) {
-        /*
-         * The queue retries webhook-filter failures against this same job
-         * document. Release the RUNNING claim so the retry can claim it again
-         * — otherwise every retry would find a live RUNNING claim and be
-         * dropped, and the webhook filter would never be re-evaluated. On the
-         * last attempt the worker's failed handler overwrites the status with
-         * FAILED via SetJobAsFailed.
-         */
         await this.jobRepository.releaseRunningClaim(job._environmentId, job._id);
       }
       throw caughtError;
@@ -491,15 +472,8 @@ export class RunJob {
   }
 
   /**
-   * A redelivered message can lose the claim because the previous run already
-   * marked this job COMPLETED but crashed inside tryQueueNextJobs, before the
-   * next step was claimed and enqueued. The job document itself is terminal,
-   * so no future delivery will ever claim it again — without this, the rest of
-   * the workflow chain would be stranded forever. Resume it idempotently:
-   * claimNextChildAsQueued only matches PENDING children, so a child that was
-   * already claimed/enqueued by the previous run is never double-queued, and
-   * the common case (duplicate delivery of a healthy completed job) exits on
-   * the cheap PENDING-child existence check without side effects.
+   * If a completed job still has a PENDING child (crashed after COMPLETED, before
+   * enqueue), resume the chain. No-op when there is no pending child.
    */
   @Instrument()
   private async resumeChainIfStrandedAfterCompletion(job: JobEntity): Promise<void> {
@@ -619,13 +593,6 @@ export class RunJob {
           return;
         }
 
-        /*
-         * Atomic child claim: transition the child PENDING -> QUEUED in one
-         * doc op. A redelivered parent that re-enters this loop cannot find a
-         * still-PENDING child (the first run already claimed it), so it cannot
-         * re-enqueue the same logical step. addJobUsecase.execute() below will
-         * then re-set the status to QUEUED/DELAYED idempotently.
-         */
         nextJob = await this.jobRepository.claimNextChildAsQueued(currentJob._environmentId, currentJob._id);
 
         if (!nextJob) {

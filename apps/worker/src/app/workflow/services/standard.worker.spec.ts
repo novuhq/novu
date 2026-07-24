@@ -239,9 +239,7 @@ describe('Standard Worker', () => {
       _userId,
       _subscriberId,
       subscriberId: subscriber.subscriberId,
-      // RunJob's atomic claim only transitions QUEUED|DELAYED -> RUNNING. AddJobUsecase
-      // sets the status to QUEUED before pushing to the queue in the real flow; this test
-      // bypasses AddJobUsecase, so we set QUEUED here directly.
+      // claimAsRunning only accepts QUEUED|DELAYED (AddJob sets QUEUED before enqueue).
       status: JobStatusEnum.QUEUED,
       _templateId,
       digest: undefined,
@@ -304,9 +302,7 @@ describe('Standard Worker', () => {
       _userId,
       _subscriberId,
       subscriberId: subscriber.subscriberId,
-      // RunJob's atomic claim only transitions QUEUED|DELAYED -> RUNNING. AddJobUsecase
-      // sets the status to QUEUED before pushing to the queue in the real flow; this test
-      // bypasses AddJobUsecase, so we set QUEUED here directly.
+      // claimAsRunning only accepts QUEUED|DELAYED (AddJob sets QUEUED before enqueue).
       status: JobStatusEnum.QUEUED,
       _templateId,
       digest: undefined,
@@ -452,13 +448,9 @@ describe('Standard Worker', () => {
     };
   };
 
-  /**
-   * `create` always stamps a fresh `updatedAt` (schema timestamps), so tests
-   * simulating a stale RUNNING claim (crashed worker) backdate it directly,
-   * bypassing the automatic timestamp update.
-   */
+  // Bypass schema timestamps so we can simulate a stale RUNNING claim.
   const backdateJobClaim = async (jobId: string, ageMs: number): Promise<void> => {
-    await (jobRepository as any)._model.updateOne(
+    await jobRepository._model.updateOne(
       { _id: jobId },
       { $set: { updatedAt: new Date(Date.now() - ageMs) } },
       { timestamps: false }
@@ -489,7 +481,6 @@ describe('Standard Worker', () => {
     it('claimAsRunning returns null for terminal statuses and for a freshly claimed RUNNING job', async () => {
       const completed = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
       const canceled = await jobRepository.create(buildJob(JobStatusEnum.CANCELED));
-      // Fresh RUNNING = another worker claimed it moments ago (concurrent duplicate delivery).
       const freshlyRunning = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
 
       expect(await jobRepository.claimAsRunning(completed._environmentId, completed._id)).to.equal(null);
@@ -505,8 +496,6 @@ describe('Standard Worker', () => {
 
       expect(reclaimed).to.not.equal(null);
       expect(reclaimed?.status).to.equal(JobStatusEnum.RUNNING);
-
-      // The reclaim renewed the lease, so an immediate duplicate delivery is fenced out again.
       expect(await jobRepository.claimAsRunning(stuck._environmentId, stuck._id)).to.equal(null);
     });
 
@@ -516,7 +505,6 @@ describe('Standard Worker', () => {
       const firstAttempt = await jobRepository.claimAsRunning(created._environmentId, created._id);
       expect(firstAttempt?.status).to.equal(JobStatusEnum.RUNNING);
 
-      // Attempt 1 throws a retryable (webhook filter) error and releases its claim before rethrowing.
       await jobRepository.releaseRunningClaim(created._environmentId, created._id);
 
       const retryAttempt = await jobRepository.claimAsRunning(created._environmentId, created._id);
@@ -593,9 +581,6 @@ describe('Standard Worker', () => {
       const stuck = await jobRepository.create(
         buildJob(JobStatusEnum.RUNNING, { _notificationId: notification._id, _templateId: template._id })
       );
-      // Simulate a worker that claimed the job and died before reaching a
-      // terminal status: the claim lease has expired by the time the queue
-      // redelivers the message.
       await backdateJobClaim(stuck._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
 
       await standardQueueService.add({
@@ -632,9 +617,6 @@ describe('Standard Worker', () => {
         _parentId: parent._id,
       });
 
-      // Simulate the queue redelivering the parent's message after the
-      // previous run crashed between marking the parent COMPLETED and
-      // claiming/enqueueing the child.
       await standardQueueService.add({
         name: parent._id,
         data: {
