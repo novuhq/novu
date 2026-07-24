@@ -13,22 +13,16 @@ import type { ToolApprovalRequestPayload } from '../../resources/agent/tool-appr
  *
  * We pre-scan the ledger once, classify each cycle, then replay it in a provider-safe shape:
  *
- * | State     | Meaning                                      | Emitted at request entry                         |
- * |-----------|----------------------------------------------|--------------------------------------------------|
- * | in-flight | Approved just now; tip of history (resume)   | tool-call + approval-request + approval-response |
- * | orphaned  | Approved earlier; conversation continued       | tool-call + execution-denied                     |
- * | denied    | User/system denied                           | tool-call + execution-denied                     |
- * | resolved  | Tool executed                                | tool-call + tool-result                          |
- * | pending   | Card shown; no decision yet                  | tool-call + tool-approval-request                |
+ * | State     | Meaning                    | Emitted at request entry          |
+ * |-----------|----------------------------|-----------------------------------|
+ * | in-flight | Approved, tool not run yet | tool-call + tool-approval-request |
+ * | denied    | User/system denied         | tool-call + execution-denied      |
+ * | resolved  | Tool executed              | tool-call + tool-result           |
  *
- * Terminal / resume states pair call + outcome at the **request** entry so interleaved
- * ledger rows (approval cards, onToolApproval replies, error notices) cannot split them.
- *
- * Orphaned approved cycles (decision present, no tool_result, later model-relevant rows)
- * are mapped as execution-denied so a failed resume cannot permanently poison the thread.
+ * Terminal states pair call + outcome at the **request** entry so interleaved ledger rows
+ * (onToolApproval replies, superseding user messages, auto-deny) cannot split them.
  */
 
-const TYPE_MESSAGE = 'message';
 const TYPE_TOOL_APPROVAL_REQUEST = 'tool_approval_request';
 const TYPE_TOOL_APPROVAL_DECISION = 'tool_approval_decision';
 const TYPE_TOOL_RESULT = 'tool_result';
@@ -73,43 +67,16 @@ function toolResultOf(entry: AgentHistoryEntry): ToolResultPayload | undefined {
   return { toolCallId: tool.toolCallId, toolName: tool.toolName, output: tool.output };
 }
 
-function isModelRelevant(entry: AgentHistoryEntry): boolean {
-  switch (entry.type) {
-    case TYPE_MESSAGE:
-      return entry.content.trim().length > 0;
-    case TYPE_TOOL_APPROVAL_REQUEST:
-    case TYPE_TOOL_APPROVAL_DECISION:
-    case TYPE_TOOL_RESULT:
-      return true;
-    default:
-      // `edit`, `signal`, and unknown types are UI/runtime artifacts.
-      return false;
-  }
-}
-
-function approvalResponseMessage(approvalId: string): ToolModelMessage {
-  return {
-    role: 'tool',
-    content: [{ type: 'tool-approval-response', approvalId, approved: true }],
-  };
-}
-
 // ─── Approval index (one pre-scan per turn) ───────────────────────────────────
 
 /** Snapshot of all approval cycles in the ledger, built before mapping any entry. */
 export interface ApprovalIndex {
   deniedApprovalIds: Set<string>;
-  /** Approved without a tool_result, and the decision is still the tip of history. */
-  activeResumeApprovalIds: Set<string>;
-  /** Approved without a tool_result, but later model-relevant rows exist (failed resume). */
-  orphanedApprovedIds: Set<string>;
   /** toolCallId → persisted result payload */
   toolResults: Map<string, ToolResultPayload>;
   approvalIdToToolCallId: Map<string, string>;
   /** Gated tool results already emitted adjacent to their request entry (skip standalone rows). */
   pairedAtRequest: Set<string>;
-  /** Approval-card message rows between a request and its decision — skip in the transcript. */
-  skipEntryIndices: Set<number>;
 }
 
 export function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex {
@@ -117,13 +84,8 @@ export function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex 
   const toolResults = new Map<string, ToolResultPayload>();
   const approvalIdToToolCallId = new Map<string, string>();
   const gatedToolCallIds = new Set<string>();
-  const approvedPendingIds = new Set<string>();
-  const decisionIndexByApprovalId = new Map<string, number>();
-  const skipEntryIndices = new Set<number>();
 
-  for (let i = 0; i < history.length; i++) {
-    const entry = history[i];
-
+  for (const entry of history) {
     if (entry.type === TYPE_TOOL_APPROVAL_REQUEST) {
       const approval = approvalOf(entry);
       if (approval) {
@@ -132,77 +94,14 @@ export function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex 
       }
     } else if (entry.type === TYPE_TOOL_APPROVAL_DECISION) {
       const decision = decisionOf(entry);
-      if (decision) {
-        decisionIndexByApprovalId.set(decision.approvalId, i);
-        if (!decision.approved) {
-          deniedApprovalIds.add(decision.approvalId);
-        }
+      if (decision && !decision.approved) {
+        deniedApprovalIds.add(decision.approvalId);
       }
     } else if (entry.type === TYPE_TOOL_RESULT) {
       const result = toolResultOf(entry);
       if (result) {
         toolResults.set(result.toolCallId, result);
       }
-    }
-  }
-
-  for (let i = 0; i < history.length; i++) {
-    if (history[i].type !== TYPE_TOOL_APPROVAL_REQUEST) {
-      continue;
-    }
-
-    const approval = approvalOf(history[i]);
-    if (!approval) {
-      continue;
-    }
-
-    const decisionIdx = decisionIndexByApprovalId.get(approval.approvalId);
-    if (decisionIdx === undefined || decisionIdx <= i) {
-      continue;
-    }
-
-    for (let k = i + 1; k < decisionIdx; k++) {
-      if (history[k].type === TYPE_MESSAGE) {
-        skipEntryIndices.add(k);
-      }
-    }
-  }
-
-  for (const [approvalId, toolCallId] of approvalIdToToolCallId) {
-    if (deniedApprovalIds.has(approvalId) || toolResults.has(toolCallId)) {
-      continue;
-    }
-
-    if (decisionIndexByApprovalId.has(approvalId)) {
-      approvedPendingIds.add(approvalId);
-    }
-  }
-
-  const activeResumeApprovalIds = new Set<string>();
-  const orphanedApprovedIds = new Set<string>();
-
-  for (const approvalId of approvedPendingIds) {
-    const decisionIdx = decisionIndexByApprovalId.get(approvalId);
-    if (decisionIdx === undefined) {
-      continue;
-    }
-
-    let hasLaterModelRelevant = false;
-    for (let i = decisionIdx + 1; i < history.length; i++) {
-      if (skipEntryIndices.has(i)) {
-        continue;
-      }
-
-      if (isModelRelevant(history[i])) {
-        hasLaterModelRelevant = true;
-        break;
-      }
-    }
-
-    if (hasLaterModelRelevant) {
-      orphanedApprovedIds.add(approvalId);
-    } else {
-      activeResumeApprovalIds.add(approvalId);
     }
   }
 
@@ -213,39 +112,23 @@ export function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex 
     }
   }
 
-  return {
-    deniedApprovalIds,
-    activeResumeApprovalIds,
-    orphanedApprovedIds,
-    toolResults,
-    approvalIdToToolCallId,
-    pairedAtRequest,
-    skipEntryIndices,
-  };
+  return { deniedApprovalIds, toolResults, approvalIdToToolCallId, pairedAtRequest };
 }
 
 // ─── Cycle classification ─────────────────────────────────────────────────────
 
-type ApprovalCycleState = 'in-flight' | 'orphaned' | 'denied' | 'resolved' | 'pending';
+type ApprovalCycleState = 'in-flight' | 'denied' | 'resolved';
 
 function cycleState(approval: ToolApprovalRequestPayload, index: ApprovalIndex): ApprovalCycleState {
   if (index.deniedApprovalIds.has(approval.approvalId)) {
     return 'denied';
   }
 
-  if (index.orphanedApprovedIds.has(approval.approvalId)) {
-    return 'orphaned';
-  }
-
   if (index.toolResults.has(approval.toolCallId)) {
     return 'resolved';
   }
 
-  if (index.activeResumeApprovalIds.has(approval.approvalId)) {
-    return 'in-flight';
-  }
-
-  return 'pending';
+  return 'in-flight';
 }
 
 // ─── AI SDK message builders ──────────────────────────────────────────────────
@@ -300,7 +183,6 @@ export function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalInde
 
   switch (state) {
     case 'denied':
-    case 'orphaned':
       return pairedToolCall(approval, executionDeniedResult(approval.toolCallId));
     case 'resolved': {
       const result = index.toolResults.get(approval.toolCallId);
@@ -311,9 +193,7 @@ export function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalInde
       return pairedToolCall(approval, executedToolResult(result));
     }
     case 'in-flight':
-      // Pair approval-response here so approval-card messages cannot sit between call and response.
-      return [assistantToolCall(approval, true), approvalResponseMessage(approval.approvalId)];
-    case 'pending':
+      // Decision entry adds tool-approval-response; resume triggers tool execution.
       return [assistantToolCall(approval, true)];
     default: {
       const unreachable: never = state;
@@ -323,9 +203,26 @@ export function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalInde
   }
 }
 
-export function mapApprovalDecision(_entry: AgentHistoryEntry, _index: ApprovalIndex): ModelMessage | undefined {
-  // Denied, orphaned, resolved, and active-resume cycles are fully handled at the request entry.
-  return undefined;
+export function mapApprovalDecision(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage | undefined {
+  const decision = decisionOf(entry);
+  if (!decision) {
+    return undefined;
+  }
+
+  // Denied and resolved cycles are fully handled at the request entry.
+  if (!decision.approved) {
+    return undefined;
+  }
+
+  const toolCallId = index.approvalIdToToolCallId.get(decision.approvalId);
+  if (toolCallId && index.toolResults.has(toolCallId)) {
+    return undefined;
+  }
+
+  return {
+    role: 'tool',
+    content: [{ type: 'tool-approval-response', approvalId: decision.approvalId, approved: true }],
+  };
 }
 
 export function mapToolResult(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage | undefined {

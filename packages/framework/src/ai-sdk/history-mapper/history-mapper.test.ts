@@ -175,63 +175,6 @@ describe('toModelMessages', () => {
       ]);
     });
 
-    it('in-flight with approval card between request and decision → card skipped, pair stays adjacent', () => {
-      const result = toModelMessages([
-        userMessage('test custom approval'),
-        approvalRequest({
-          approvalId: 'a_custom',
-          toolCallId: 'toolu_custom',
-          toolName: 'launchConfettiCustom',
-          input: { message: 'Ship it!', intensity: 'medium' },
-        }),
-        agentMessage('Launch confetti?'),
-        approvalDecision({ approvalId: 'a_custom', approved: true }),
-      ]);
-
-      expect(result).toEqual([
-        { role: 'user', content: 'test custom approval' },
-        {
-          role: 'assistant',
-          content: [
-            toolCall('toolu_custom', 'launchConfettiCustom', { message: 'Ship it!', intensity: 'medium' }),
-            approvalRequestPart('a_custom', 'toolu_custom'),
-          ],
-        },
-        approvalResponse('a_custom'),
-      ]);
-    });
-
-    it('orphaned: approved without tool_result after conversation continued → execution-denied', () => {
-      // Failed resume left a decision with no tool_result, then an error notice / next user turn.
-      const result = toModelMessages([
-        userMessage('test custom approval'),
-        approvalRequest({
-          approvalId: 'a_orphan',
-          toolCallId: 'toolu_orphan',
-          toolName: 'launchConfettiCustom',
-          input: { message: 'Ship it!' },
-        }),
-        agentMessage('Launch confetti?'),
-        approvalDecision({ approvalId: 'a_orphan', approved: true }),
-        agentMessage('*Something went wrong while processing your message. Please try again in a moment.*'),
-        userMessage('ok just call confetti'),
-      ]);
-
-      expect(result).toEqual([
-        { role: 'user', content: 'test custom approval' },
-        {
-          role: 'assistant',
-          content: [toolCall('toolu_orphan', 'launchConfettiCustom', { message: 'Ship it!' })],
-        },
-        { role: 'tool', content: [executionDenied('toolu_orphan')] },
-        {
-          role: 'assistant',
-          content: '*Something went wrong while processing your message. Please try again in a moment.*',
-        },
-        { role: 'user', content: 'ok just call confetti' },
-      ]);
-    });
-
     it('resolved: tool ran → replay as call+result pair, no approval parts', () => {
       // Ledger: request → approve → tool_result → agent reply
       const result = toModelMessages([
