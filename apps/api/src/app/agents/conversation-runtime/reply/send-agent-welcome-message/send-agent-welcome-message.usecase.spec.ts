@@ -11,6 +11,7 @@ const ORG_ID = 'org-id';
 const USER_ID = 'user-123';
 const AGENT_ID = 'agent-mongo-id';
 const INTEGRATION_IDENTIFIER = 'novu-email-agent';
+const SLACK_WORKSPACE_ID = 'T-INTENDED';
 
 function buildCommand(overrides: Partial<SendAgentWelcomeMessageCommand> = {}) {
   return SendAgentWelcomeMessageCommand.create({
@@ -27,6 +28,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
   let agentRepository: { findOne: sinon.SinonStub };
   let integrationRepository: { findOne: sinon.SinonStub };
   let channelEndpointRepository: { findOne: sinon.SinonStub };
+  let channelConnectionRepository: { findOne: sinon.SinonStub };
   let subscriberRepository: { findBySubscriberId: sinon.SinonStub };
   let conversationService: {
     createOrGetConversation: sinon.SinonStub;
@@ -47,6 +49,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
       agentRepository as any,
       integrationRepository as any,
       channelEndpointRepository as any,
+      channelConnectionRepository as any,
       subscriberRepository as any,
       conversationService as any,
       analyticsService as any,
@@ -67,6 +70,9 @@ describe('SendAgentWelcomeMessage usecase', () => {
       }),
     };
     channelEndpointRepository = {
+      findOne: stub().resolves(null),
+    };
+    channelConnectionRepository = {
       findOne: stub().resolves(null),
     };
     subscriberRepository = {
@@ -115,7 +121,8 @@ describe('SendAgentWelcomeMessage usecase', () => {
         AGENT_ID,
         INTEGRATION_IDENTIFIER,
         'user@example.com',
-        sinon.match({ markdown: 'Connected! Reply to this email to try it out.' })
+        sinon.match({ markdown: 'Connected! Reply to this email to try it out.' }),
+        undefined
       )
     ).to.equal(true);
   });
@@ -142,21 +149,33 @@ describe('SendAgentWelcomeMessage usecase', () => {
     expect(outboundGateway.setSlackSuggestedPrompts.called).to.equal(false);
   });
 
-  it('sets Slack suggested prompts after sending a Slack welcome message', async () => {
+  it('binds the Slack workspace from the endpoint connection for welcome DM and prompts', async () => {
     integrationRepository.findOne.resolves({
       _id: 'integration-id',
       providerId: ChatProviderIdEnum.Slack,
     });
     channelEndpointRepository.findOne.resolves({
       endpoint: { userId: 'U123456' },
+      connectionIdentifier: 'conn-intended',
+    });
+    channelConnectionRepository.findOne.resolves({
+      identifier: 'conn-intended',
+      workspace: { id: SLACK_WORKSPACE_ID, name: 'Intended Workspace' },
     });
     conversationService.createOrGetConversation.resolves({
       _id: 'conversation-id',
-      channels: [{ platform: AgentPlatformEnum.SLACK, platformThreadId: 'slack:D123:msg-1' }],
+      channels: [
+        {
+          platform: AgentPlatformEnum.SLACK,
+          platformThreadId: 'slack:D123:msg-1',
+          workspace: { id: SLACK_WORKSPACE_ID },
+        },
+      ],
     });
     conversationService.getPrimaryChannel.returns({
       platform: AgentPlatformEnum.SLACK,
       platformThreadId: 'slack:D123:msg-1',
+      workspace: { id: SLACK_WORKSPACE_ID },
     });
     outboundGateway.sendDirectMessage.resolves({
       messageId: 'msg-1',
@@ -166,14 +185,41 @@ describe('SendAgentWelcomeMessage usecase', () => {
     const result = await buildUsecase().execute(buildCommand({ integrationIdentifier: 'slack-integration' }));
 
     expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: undefined });
-    expect(outboundGateway.setSlackSuggestedPrompts.calledOnce).to.equal(true);
+    expect(
+      channelConnectionRepository.findOne.calledOnceWith(
+        sinon.match({
+          _environmentId: ENV_ID,
+          _organizationId: ORG_ID,
+          identifier: 'conn-intended',
+        }),
+        'workspace'
+      )
+    ).to.equal(true);
+    expect(
+      outboundGateway.sendDirectMessage.calledOnceWith(
+        AGENT_ID,
+        'slack-integration',
+        'U123456',
+        sinon.match.object,
+        SLACK_WORKSPACE_ID
+      )
+    ).to.equal(true);
+    expect(
+      conversationService.createOrGetConversation.calledOnceWith(
+        sinon.match({
+          workspaceId: SLACK_WORKSPACE_ID,
+          platformUserId: 'U123456',
+        })
+      )
+    ).to.equal(true);
     expect(
       outboundGateway.setSlackSuggestedPrompts.calledOnceWith(
         AGENT_ID,
         'slack-integration',
         'slack:D123:msg-1',
         sinon.match.array,
-        sinon.match.string
+        sinon.match.string,
+        SLACK_WORKSPACE_ID
       )
     ).to.equal(true);
   });

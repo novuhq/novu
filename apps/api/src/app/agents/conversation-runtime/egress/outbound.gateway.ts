@@ -323,7 +323,7 @@ export class OutboundGateway {
     const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
       setAssistantStatus?: (channelId: string, threadTs: string, status: string) => Promise<void>;
     };
-    const setAssistantStatus = adapter.setAssistantStatus;
+    const setAssistantStatus = adapter.setAssistantStatus?.bind(adapter);
 
     if (typeof setAssistantStatus !== 'function') {
       return;
@@ -390,7 +390,7 @@ export class OutboundGateway {
         promptTitle?: string
       ) => Promise<void>;
     };
-    const setSuggestedPrompts = adapter.setSuggestedPrompts;
+    const setSuggestedPrompts = adapter.setSuggestedPrompts?.bind(adapter);
 
     if (typeof setSuggestedPrompts !== 'function') {
       return;
