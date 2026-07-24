@@ -520,6 +520,30 @@ describe('Standard Worker', () => {
       expect(fresh?.status).to.equal(JobStatusEnum.FAILED);
     });
 
+    it('renewRunningClaim keeps a slow-but-healthy execution fenced against redelivery', async () => {
+      const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
+      await backdateJobClaim(running._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
+
+      // Heartbeat from the live worker renews the lease...
+      await jobRepository.renewRunningClaim(running._environmentId, running._id);
+
+      // ...so a redelivered message can no longer treat the claim as stale.
+      expect(await jobRepository.claimAsRunning(running._environmentId, running._id)).to.equal(null);
+    });
+
+    it('renewRunningClaim is a no-op once the job has left RUNNING', async () => {
+      const completed = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+      await backdateJobClaim(completed._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
+      const before = await jobRepository.findOne({ _id: completed._id, _environmentId: completed._environmentId });
+
+      await jobRepository.renewRunningClaim(completed._environmentId, completed._id);
+
+      const after = await jobRepository.findOne({ _id: completed._id, _environmentId: completed._environmentId });
+      expect(after?.status).to.equal(JobStatusEnum.COMPLETED);
+      expect(before?.updatedAt).to.be.a('string');
+      expect(after?.updatedAt).to.equal(before?.updatedAt);
+    });
+
     it('claimAsRunning is exclusive under concurrent callers (only one wins)', async () => {
       const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
 

@@ -31,8 +31,15 @@ export interface IDelayOrDigestJobResult {
   activeNotificationId?: string;
 }
 
-/** Lease TTL for {@link JobRepository.claimAsRunning}. Must stay below BullMQ lock / SQS visibility (90s). */
+/**
+ * Lease TTL for {@link JobRepository.claimAsRunning}. Must stay below BullMQ lock / SQS visibility (90s).
+ * Live workers renew the lease via {@link JobRepository.renewRunningClaim} while executing, so a stale
+ * lease always means the claiming worker died — not that the job is merely slow.
+ */
 export const RUNNING_CLAIM_STALE_AFTER_MS = 60_000;
+
+/** Heartbeat period for renewing a RUNNING claim; several renewals fit within one lease TTL. */
+export const RUNNING_CLAIM_RENEW_INTERVAL_MS = RUNNING_CLAIM_STALE_AFTER_MS / 3;
 
 export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
@@ -99,6 +106,25 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         },
       },
       { new: true }
+    );
+  }
+
+  /**
+   * Renew a live RUNNING claim's lease (schema timestamps refresh `updatedAt` on write).
+   * No-op once the job has left RUNNING, so a late heartbeat can never resurrect a claim.
+   */
+  public async renewRunningClaim(environmentId: string, jobId: string): Promise<void> {
+    await this.updateOne(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: JobStatusEnum.RUNNING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.RUNNING,
+        },
+      }
     );
   }
 

@@ -29,6 +29,7 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  RUNNING_CLAIM_RENEW_INTERVAL_MS,
   SubscriberRepository,
 } from '@novu/dal';
 import {
@@ -133,6 +134,19 @@ export class RunJob {
       return;
     }
     job = claimed;
+
+    /*
+     * Heartbeat: keep the RUNNING claim's lease fresh while this worker is
+     * alive, so a slow-but-healthy execution that outlives the SQS visibility
+     * timeout / BullMQ lock cannot be reclaimed by a redelivered message and
+     * run twice. A stale lease then always means the claiming worker died.
+     */
+    const claimHeartbeat = setInterval(() => {
+      this.jobRepository.renewRunningClaim(claimed._environmentId, claimed._id).catch((renewError: unknown) => {
+        this.logger.warn({ err: renewError, nv: { jobId: claimed._id } }, 'Failed to renew running claim lease');
+      });
+    }, RUNNING_CLAIM_RENEW_INTERVAL_MS);
+    claimHeartbeat.unref();
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.RUNNING,
@@ -420,6 +434,7 @@ export class RunJob {
       }
       throw caughtError;
     } finally {
+      clearInterval(claimHeartbeat);
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
         await this.tryQueueNextJobs(job, notification, !!error);
       } else if (!isJobExtendedToSubscriberSchedule && !error) {
