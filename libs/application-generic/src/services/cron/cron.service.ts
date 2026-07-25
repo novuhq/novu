@@ -154,11 +154,11 @@ export abstract class CronService implements OnApplicationBootstrap, OnApplicati
       this.addJob(
         jobName,
         async function runCronJob(job) {
-          nr.startBackgroundTransaction(
-            ObservabilityBackgroundTransactionEnum.CRON_JOB_QUEUE,
-            `cron-${jobName}`,
-            function transactionHandler() {
-              return new Promise<void>(async (resolve, reject) => {
+          return new Promise<void>((resolve, reject) => {
+            nr.startBackgroundTransaction(
+              ObservabilityBackgroundTransactionEnum.CRON_JOB_QUEUE,
+              `cron-${jobName}`,
+              async function transactionHandler() {
                 const transaction = nr.getTransaction();
                 try {
                   _this.handleJobOutcome(jobName, CronMetricsEventEnum.STARTED);
@@ -175,9 +175,9 @@ export abstract class CronService implements OnApplicationBootstrap, OnApplicati
                 } finally {
                   transaction.end();
                 }
-              });
-            }
-          );
+              }
+            );
+          });
         },
         interval,
         {
