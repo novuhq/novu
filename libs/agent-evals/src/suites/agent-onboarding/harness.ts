@@ -9,7 +9,7 @@ import type { EvalScenario, ParsedCommand, RunResult, Suite } from '../../core/t
 const DEFAULT_PREAMBLE = [
   'You are an AI coding agent executing the following playbook exactly.',
   'Follow the playbook precisely. Use the provided tools.',
-  'You are running in a Claude Code-like environment with Bash, BashOutput, AskUserQuestion, and Read tools.',
+  'You are running in a Claude Code-like environment with Bash, BashOutput, AskUserQuestion, Read, and Write tools.',
   'Read any relevant fixture files in the workspace before acting.',
 ].join('\n');
 
@@ -113,7 +113,7 @@ export function scenarioHarness<TParsed = ParsedCommand>(options: ScenarioHarnes
   return createHarness({
     name: `agent-onboarding/${options.scenario.id}`,
     run: async ({ input }) => {
-      const recorder = new RunRecorder(options.scenario.id, input);
+      const recorder = new RunRecorder(options.scenario.id, input, options.scenario.projectRoot);
       const context = createHarnessContext(options.suite, options.scenario, recorder);
       const tools = createHarnessTools(context);
       const messages: ModelMessage[] = [{ role: 'user', content: input }];

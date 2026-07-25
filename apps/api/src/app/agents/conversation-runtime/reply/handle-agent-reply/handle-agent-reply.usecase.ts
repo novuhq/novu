@@ -413,6 +413,7 @@ export class HandleAgentReply {
         channel,
         agentIdentifier: command.agentIdentifier,
         agentName,
+        activityIdentifier: command.activityIdentifier,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
@@ -492,7 +493,8 @@ export class HandleAgentReply {
         await this.outboundGateway.stopTypingInConversation(
           conversation._agentId,
           command.integrationIdentifier,
-          channel.platformThreadId
+          channel.platformThreadId,
+          channel.workspace?.id
         );
 
         return;

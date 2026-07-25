@@ -1,3 +1,4 @@
+export type { AgentEvent, AgentEventEnvelope } from '@novu/agent-event-protocol';
 export * from '../constants';
 export * from '../errors';
 export * from '../filters';
