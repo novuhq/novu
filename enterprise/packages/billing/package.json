@@ -24,7 +24,7 @@
     "class-validator": "0.15.1",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "mongoose": "^8.22.1",
+    "mongoose": "^8.24.1",
     "rxjs": "7.8.2",
     "shortid": "^2.2.17",
     "stripe": "^11.18.0",

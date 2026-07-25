@@ -27,7 +27,7 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "jwks-rsa": "^3.1.0",
-    "mongoose": "^8.22.1",
+    "mongoose": "^8.24.1",
     "svix": "^1.96.1"
   },
   "devDependencies": {
