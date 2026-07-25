@@ -57,7 +57,7 @@ overrides:
   basic-ftp@<5.3.1: ^5.3.1
   axios@>=1.0.0 <1.18.0: ^1.18.1
   '@slack/web-api': 7.17.0
-  seroval@<1.4.1: ^1.4.1
+  seroval@<1.5.3: ^1.5.3
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1
@@ -25235,10 +25235,10 @@ packages:
     resolution: {integrity: sha512-H5vs53+39+x4Udwp4J5rNZfgFuA+Lt+uU+09w1gYBVWomtAl98B+E9w7yC05Xc81/HgLvJdlyqJbU0fJCKCmdw==}
     engines: {node: '>=10'}
     peerDependencies:
-      seroval: ^1.4.1
+      seroval: ^1.5.3
 
-  seroval@1.5.1:
-    resolution: {integrity: sha512-OwrZRZAfhHww0WEnKHDY8OM0U/Qs8OTfIDWhUD4BLpNJUfXK4cGmjiagGze086m+mhI+V2nD0gfbHEnJjb9STA==}
+  seroval@1.5.6:
+    resolution: {integrity: sha512-rVQVWjjSvlINzaQPZH5JFqsqEsIWdTxY3iJZCnTL/5gQbXIRooVZKI60tVCkOVfzcRPejboxO2t0P89dg5mQaA==}
     engines: {node: '>=10'}
 
   serve-static@1.16.2:
@@ -56543,11 +56543,11 @@ snapshots:
 
   serialize-javascript@7.0.5: {}
 
-  seroval-plugins@1.2.1(seroval@1.5.1):
+  seroval-plugins@1.2.1(seroval@1.5.6):
     dependencies:
-      seroval: 1.5.1
+      seroval: 1.5.6
 
-  seroval@1.5.1: {}
+  seroval@1.5.6: {}
 
   serve-static@1.16.2:
     dependencies:
@@ -56893,8 +56893,8 @@ snapshots:
   solid-js@1.9.6:
     dependencies:
       csstype: 3.2.3
-      seroval: 1.5.1
-      seroval-plugins: 1.2.1(seroval@1.5.1)
+      seroval: 1.5.6
+      seroval-plugins: 1.2.1(seroval@1.5.6)
 
   solid-motionone@1.0.3(solid-js@1.9.6):
     dependencies:
