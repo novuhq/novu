@@ -72,8 +72,8 @@ overrides:
   ws@>=8.0.0 <8.21.0: ^8.21.0
   ws@>=7.0.0 <7.5.11: ^7.5.11
   websocket-driver@<0.7.5: ^0.7.5
-  nextjs>next: 15.5.18
-  next@<16.2.6: ^16.2.6
+  nextjs>next: 15.5.21
+  next@<16.2.11: ^16.2.11
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
@@ -88,7 +88,7 @@ overrides:
   msgpackr: ^1.10.1
   multer@<2.2.0: ^2.2.0
   jws@<3.2.3: ^3.2.3
-  svgo@>=3.0.0 <3.3.3: ^3.3.3
+  svgo@>=3.0.0 <3.3.4: ^3.3.4
   flatted@<3.4.2: ^3.4.2
   serialize-javascript@<7.0.5: ^7.0.5
   ejs@<3.1.10: ^3.1.10
@@ -173,7 +173,7 @@ overrides:
   ip-address@<10.1.1: ^10.1.1
   mongoose@>=8.0.0 <8.22.1: ^8.22.1
   newrelic: 13.19.2
-  fast-uri@<3.1.2: ^3.1.2
+  fast-uri@<3.1.4: ^3.1.4
   sharp@<0.35.0: ^0.35.3
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
