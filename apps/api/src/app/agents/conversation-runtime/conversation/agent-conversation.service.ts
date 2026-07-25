@@ -11,6 +11,7 @@ import {
   ConversationParticipantTypeEnum,
   ConversationRepository,
   ConversationStatusEnum,
+  isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 
@@ -99,6 +100,8 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   platformMessageId: string;
   /** Overrides channel.platformThreadId when delivery returns a different thread ID */
   platformThreadId?: string;
+  /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
+  identifier?: string;
   agentName?: string;
   content: string;
   richContent?: Record<string, unknown>;
@@ -383,7 +386,31 @@ export class AgentConversationService {
   }
 
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
-    return this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
+    try {
+      return await this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
+    } catch (err) {
+      if (params.identifier && isDuplicateKeyError(err)) {
+        this.logger.warn(
+          { identifier: params.identifier, conversationId: params.conversationId },
+          'Agent message activity already recorded (duplicate identifier)'
+        );
+
+        const existing = await this.activityRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _conversationId: params.conversationId,
+            identifier: params.identifier,
+          },
+          '*'
+        );
+
+        if (existing) {
+          return existing;
+        }
+      }
+
+      throw err;
+    }
   }
 
   async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
@@ -448,7 +475,7 @@ export class AgentConversationService {
 
     const [activity] = await Promise.all([
       this.activityRepository.createAgentActivity({
-        identifier: `act_${shortId(12)}`,
+        identifier: params.identifier ?? `act_${shortId(12)}`,
         conversationId: params.conversationId,
         platform: params.channel.platform,
         integrationId: params.channel._integrationId,

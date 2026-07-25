@@ -81,6 +81,8 @@ import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.se
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
 import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
+import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
+import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
 import { USE_CASES } from './usecases';
 
 @Module({
@@ -103,6 +105,7 @@ import { USE_CASES } from './usecases';
     AgentInboundController,
     AgentReplyController,
     ManagedRuntimeController,
+    AgentEventsIngestController,
     AgentEmailActionsController,
     AgentsMcpOAuthController,
   ],
@@ -142,6 +145,7 @@ import { USE_CASES } from './usecases';
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
     AgentEventSink,
+    McpConnectionErrorHandler,
     ManagedAgentService,
     ToolTrustService,
     McpConnectionVaultService,

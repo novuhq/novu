@@ -6,7 +6,7 @@ import {
   type AgentEventEnvelope,
   type AgentFinishReason,
   type AgentToolSource,
-} from '@novu/shared';
+} from '@novu/agent-event-protocol';
 import type { ActionRequired, Response, StreamPart } from '@novu/thalamus';
 import { SessionExpiredError } from '@novu/thalamus';
 
@@ -202,28 +202,33 @@ function mapFinishReason(finishReason: Response['finishReason']): AgentFinishRea
 
 /**
  * Thalamus only surfaces approvals on `finish.actionsRequired` (never a
- * dedicated StreamPart). We lift each action into a first-class
- * `tool-approval-request`, then emit `run-finish`. Callers must ingest the
- * returned events as one batch so paused finish can pair with those requests
- * without process-local buffering.
+ * dedicated StreamPart). For paused runs, approvals ride inside the
+ * `run-finish` event so each envelope is self-contained.
  */
 function mapFinishEvents(response: Response): AgentEvent[] {
-  const events: AgentEvent[] = (response.actionsRequired ?? []).map((action) => ({
-    type: 'tool-approval-request' as const,
-    ...mapActionRequired(action),
-  }));
-
   const outcome = response.finishReason === 'requires-action' ? 'paused' : 'completed';
   const finishReason = mapFinishReason(response.finishReason);
 
-  events.push({
-    type: 'run-finish',
-    outcome,
-    ...(finishReason !== undefined ? { finishReason } : {}),
-    ...(response.usage !== undefined ? { usage: response.usage } : {}),
-  });
+  if (outcome === 'paused') {
+    return [
+      {
+        type: 'run-finish',
+        outcome,
+        ...(finishReason !== undefined ? { finishReason } : {}),
+        ...(response.usage !== undefined ? { usage: response.usage } : {}),
+        approvals: (response.actionsRequired ?? []).map(mapActionRequired),
+      },
+    ];
+  }
 
-  return events;
+  return [
+    {
+      type: 'run-finish',
+      outcome,
+      ...(finishReason !== undefined ? { finishReason } : {}),
+      ...(response.usage !== undefined ? { usage: response.usage } : {}),
+    },
+  ];
 }
 
 function mapErrorEvents(error: Error): AgentEvent[] {
