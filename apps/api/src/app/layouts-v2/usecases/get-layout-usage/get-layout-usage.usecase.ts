@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GetLayoutCommand, GetLayoutUseCase, InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
 import { GetLayoutUsageResponseDto, WorkflowInfoDto } from '../../dtos';
 import { GetLayoutUsageCommand } from './get-layout-usage.command';
+
+const LOG_CONTEXT = 'GetLayoutUsageUseCase';
 
 @Injectable()
 export class GetLayoutUsageUseCase {
@@ -49,7 +51,13 @@ export class GetLayoutUsageUseCase {
             workflowId: workflow.triggers[0].identifier,
           });
         }
-      } catch (error) {}
+      } catch (error) {
+        Logger.error(
+          error,
+          `Failed to fetch workflow ${workflowId} for layout usage lookup`,
+          LOG_CONTEXT
+        );
+      }
     }
 
     return {
