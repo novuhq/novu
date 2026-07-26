@@ -1,5 +1,5 @@
 import type { ChatPostMessageArguments } from '@slack/web-api';
-import { NON_OVERRIDABLE_SLACK_KEYS } from '../src/consts/providers/provider-overrides/slack/keys';
+import { NON_OVERRIDABLE_SLACK_KEYS } from '../src/consts/providers/provider-overrides/slack/keys.ts';
 
 export { NON_OVERRIDABLE_SLACK_KEYS };
 

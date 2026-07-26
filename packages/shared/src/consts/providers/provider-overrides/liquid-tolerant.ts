@@ -29,12 +29,29 @@ function acceptsAnyString(schema: JSONSchemaDto): boolean {
   );
 }
 
+/**
+ * Rewrites one node so it also accepts a Liquid template in place of its concrete value.
+ * Distinct from the exported root entry, which deliberately withholds the template branch.
+ */
+function toLiquidTolerantNode(schema: JSONSchemaDto): JSONSchemaDto {
+  if (acceptsAnyString(schema)) {
+    return schema;
+  }
+
+  // `$ref` pointers are absolute (`#/definitions/...`), so definitions are hoisted onto the
+  // wrapper rather than buried inside its first branch.
+  const { definitions, ...rest } = transformChildren(schema);
+  const wrapped: JSONSchemaDto = { anyOf: [rest, { ...liquidStringSchema }] };
+
+  return definitions === undefined ? wrapped : { definitions, ...wrapped };
+}
+
 function transformDefinition(definition: JSONSchemaDefinition): JSONSchemaDefinition {
   if (typeof definition === 'boolean') {
     return definition;
   }
 
-  return toLiquidTolerantSchema(definition);
+  return toLiquidTolerantNode(definition);
 }
 
 function transformRecord(record: Readonly<Record<string, JSONSchemaDefinition>>): Record<string, JSONSchemaDefinition> {
@@ -95,16 +112,16 @@ function transformChildren(schema: JSONSchemaDto): JSONSchemaDto {
  * stored value has to validate against a schema that also accepts a template wherever a concrete
  * value is expected. `additionalProperties: false` is preserved throughout: catching a typo'd key
  * is the reason deep validation is worth doing at all.
+ *
+ * The root deliberately does NOT get a template branch. An override blob is always an object, and
+ * a root that also accepted a bare string would let `{"pagerduty": "{{ payload.blob }}"}` validate
+ * — which lodash then character-indexes into `{0:'{', 1:'{', ...}` when merging it at send time.
+ * Templates inside the blob are still tolerated at every level below the root.
  */
 export function toLiquidTolerantSchema(schema: JSONSchemaDto): JSONSchemaDto {
   if (acceptsAnyString(schema)) {
     return schema;
   }
 
-  // `$ref` pointers are absolute (`#/definitions/...`), so definitions are hoisted onto the
-  // wrapper rather than buried inside its first branch.
-  const { definitions, ...rest } = transformChildren(schema);
-  const wrapped: JSONSchemaDto = { anyOf: [rest, { ...liquidStringSchema }] };
-
-  return definitions === undefined ? wrapped : { definitions, ...wrapped };
+  return transformChildren(schema);
 }

@@ -5,6 +5,226 @@
 import type { JSONSchemaDto } from '../../../../dto/workflows/json-schema-dto';
 
 export const slackOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "Text of the message. If used in conjunction with `blocks` or `attachments`, `text` will be used\nas fallback text for notifications only."
+    },
+    "reply_broadcast": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "const": false,
+              "description": "Used in conjunction with `thread_ts`, when set to `false` will make the reply only visibile within\na thread."
+            },
+            {
+              "type": "boolean",
+              "description": "Used in conjunction with `thread_ts`, when set to `true` will broadcast the reply to the channel."
+            }
+          ],
+          "description": "Used in conjunction with `thread_ts`, when set to `false` will make the reply only visibile within\na thread."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "thread_ts": {
+      "type": "string",
+      "description": "Provide another message's `ts` value to post this message in a thread. Avoid using a reply's `ts`\nvalue; use its parent's value instead. Not supported when the subscriber is connected via an incoming webhook URL."
+    },
+    "icon_emoji": {
+      "type": "string",
+      "description": "Emoji to use as the icon for this message. Overrides `icon_url`.\nCan only be used with `as_user` set to `false`. Not supported when the subscriber is connected via an incoming webhook URL."
+    },
+    "username": {
+      "type": "string",
+      "description": "Set your bot's username. Can only be used with `as_user` set to `false`. Not supported when the subscriber is connected via an incoming webhook URL."
+    },
+    "parse": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "full",
+            "none"
+          ],
+          "description": "Change how messages are treated. Defaults to `none`."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "link_names": {
+      "anyOf": [
+        {
+          "type": "boolean",
+          "description": "Find and link channel names and usernames."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "entities": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/EntityMetadata"
+                  },
+                  "description": "An array of work object entities."
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\{\\{|\\{%"
+                }
+              ]
+            },
+            "event_type": {
+              "type": "string",
+              "description": "A human readable alphanumeric string representing your application's metadata event.\nThe value of this field may appear in the UI to developers."
+            },
+            "event_payload": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/definitions/MessageMetadataEventPayloadObject"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/definitions/MessageMetadataEventPayloadObject"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "\\{\\{|\\{%"
+                      }
+                    ]
+                  },
+                  "description": "A free-form object containing whatever data your application wishes to attach to messages."
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\{\\{|\\{%"
+                }
+              ]
+            }
+          },
+          "description": "Object representing message metadata, entity and/or event data to attach to a Slack message.\nProvide 'entities' to set work object entity metadata.\nProvide 'event_type' and 'event_payload' to set event metadata. Not supported when the subscriber is connected via an incoming webhook URL."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "unfurl_links": {
+      "anyOf": [
+        {
+          "type": "boolean",
+          "description": "Pass `true` to enable unfurling of primarily text-based content."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "unfurl_media": {
+      "anyOf": [
+        {
+          "type": "boolean",
+          "description": "Pass `false` to disable unfurling of media content."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "mrkdwn": {
+      "anyOf": [
+        {
+          "type": "boolean",
+          "description": "Disable Slack markup parsing by setting to `false`. Enabled by default."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "icon_url": {
+      "type": "string",
+      "description": "URL to an image to use as the icon for this message. `icon_emoji` takes precendence over this field.\nCan only be used with `as_user` set to `false`. Not supported when the subscriber is connected via an incoming webhook URL."
+    },
+    "blocks": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KnownBlock"
+          },
+          "description": "An array of structured Blocks."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "attachments": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MessageAttachment"
+          },
+          "description": "An array of structured attachments."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "markdown_text": {
+      "type": "string",
+      "description": "Accepts message text formatted in markdown. This argument should not be used in conjunction with `blocks` or `text`. Limit this field to 12,000 characters."
+    }
+  },
+  "additionalProperties": false,
   "definitions": {
     "Omit<ChatPostMessageArguments,(\"channel\"|\"token\"|\"as_user\")>": {
       "$ref": "#/definitions/Pick%3CChatPostMessageArguments%2CExclude%3C(%22token%22%7C%22channel%22%7C%22text%22%7C%22reply_broadcast%22%7C%22thread_ts%22%7C%22as_user%22%7C%22icon_emoji%22%7C%22username%22%7C%22parse%22%7C%22link_names%22%7C%22metadata%22%7C%22unfurl_links%22%7C%22unfurl_media%22%7C%22mrkdwn%22%7C%22icon_url%22%7C%22blocks%22%7C%22attachments%22%7C%22markdown_text%22)%2C(%22channel%22%7C%22token%22%7C%22as_user%22)%3E%3E"
@@ -7860,233 +8080,5 @@ export const slackOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
         }
       ]
     }
-  },
-  "anyOf": [
-    {
-      "type": "object",
-      "properties": {
-        "text": {
-          "type": "string",
-          "description": "Text of the message. If used in conjunction with `blocks` or `attachments`, `text` will be used\nas fallback text for notifications only."
-        },
-        "reply_broadcast": {
-          "anyOf": [
-            {
-              "anyOf": [
-                {
-                  "type": "boolean",
-                  "const": false,
-                  "description": "Used in conjunction with `thread_ts`, when set to `false` will make the reply only visibile within\na thread."
-                },
-                {
-                  "type": "boolean",
-                  "description": "Used in conjunction with `thread_ts`, when set to `true` will broadcast the reply to the channel."
-                }
-              ],
-              "description": "Used in conjunction with `thread_ts`, when set to `false` will make the reply only visibile within\na thread."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "thread_ts": {
-          "type": "string",
-          "description": "Provide another message's `ts` value to post this message in a thread. Avoid using a reply's `ts`\nvalue; use its parent's value instead. Not supported when the subscriber is connected via an incoming webhook URL."
-        },
-        "icon_emoji": {
-          "type": "string",
-          "description": "Emoji to use as the icon for this message. Overrides `icon_url`.\nCan only be used with `as_user` set to `false`. Not supported when the subscriber is connected via an incoming webhook URL."
-        },
-        "username": {
-          "type": "string",
-          "description": "Set your bot's username. Can only be used with `as_user` set to `false`. Not supported when the subscriber is connected via an incoming webhook URL."
-        },
-        "parse": {
-          "anyOf": [
-            {
-              "type": "string",
-              "enum": [
-                "full",
-                "none"
-              ],
-              "description": "Change how messages are treated. Defaults to `none`."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "link_names": {
-          "anyOf": [
-            {
-              "type": "boolean",
-              "description": "Find and link channel names and usernames."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "metadata": {
-          "anyOf": [
-            {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "entities": {
-                  "anyOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/EntityMetadata"
-                      },
-                      "description": "An array of work object entities."
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\{\\{|\\{%"
-                    }
-                  ]
-                },
-                "event_type": {
-                  "type": "string",
-                  "description": "A human readable alphanumeric string representing your application's metadata event.\nThe value of this field may appear in the UI to developers."
-                },
-                "event_payload": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "additionalProperties": {
-                        "anyOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "$ref": "#/definitions/MessageMetadataEventPayloadObject"
-                              },
-                              {
-                                "type": "array",
-                                "items": {
-                                  "$ref": "#/definitions/MessageMetadataEventPayloadObject"
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "type": "string",
-                            "pattern": "\\{\\{|\\{%"
-                          }
-                        ]
-                      },
-                      "description": "A free-form object containing whatever data your application wishes to attach to messages."
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\{\\{|\\{%"
-                    }
-                  ]
-                }
-              },
-              "description": "Object representing message metadata, entity and/or event data to attach to a Slack message.\nProvide 'entities' to set work object entity metadata.\nProvide 'event_type' and 'event_payload' to set event metadata. Not supported when the subscriber is connected via an incoming webhook URL."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "unfurl_links": {
-          "anyOf": [
-            {
-              "type": "boolean",
-              "description": "Pass `true` to enable unfurling of primarily text-based content."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "unfurl_media": {
-          "anyOf": [
-            {
-              "type": "boolean",
-              "description": "Pass `false` to disable unfurling of media content."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "mrkdwn": {
-          "anyOf": [
-            {
-              "type": "boolean",
-              "description": "Disable Slack markup parsing by setting to `false`. Enabled by default."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "icon_url": {
-          "type": "string",
-          "description": "URL to an image to use as the icon for this message. `icon_emoji` takes precendence over this field.\nCan only be used with `as_user` set to `false`. Not supported when the subscriber is connected via an incoming webhook URL."
-        },
-        "blocks": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/KnownBlock"
-              },
-              "description": "An array of structured Blocks."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "attachments": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/MessageAttachment"
-              },
-              "description": "An array of structured attachments."
-            },
-            {
-              "type": "string",
-              "pattern": "\\{\\{|\\{%"
-            }
-          ]
-        },
-        "markdown_text": {
-          "type": "string",
-          "description": "Accepts message text formatted in markdown. This argument should not be used in conjunction with `blocks` or `text`. Limit this field to 12,000 characters."
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "string",
-      "pattern": "\\{\\{|\\{%"
-    }
-  ]
+  }
 };

@@ -156,6 +156,43 @@ describe('combineProviderOverrides', () => {
     expect(combined).to.deep.equal({ text: 'hi' });
   });
 
+  it('drops routing keys persisted on the step, for schema-less providers too', () => {
+    const combined = combineProviderOverrides(
+      { providers: { discord: { content: 'hi', webhookUrl: 'https://elsewhere.example/hook' } } },
+      undefined,
+      'step_1',
+      'discord'
+    );
+
+    expect(combined).to.deep.equal({ content: 'hi' });
+  });
+
+  it('drops a persisted endpoint swap while leaving ordinary object overrides alone', () => {
+    const combined = combineProviderOverrides(
+      bridge({
+        text: 'hi',
+        'slack-endpoint-1': { endpoint: { channelId: 'C_ATTACKER' } },
+        metadata: { event_type: 'x' },
+      }),
+      undefined,
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({ text: 'hi', metadata: { event_type: 'x' } });
+  });
+
+  it('still lets a trigger-time caller choose the destination', () => {
+    const combined = combineProviderOverrides(
+      bridge({ text: 'hi' }),
+      stepOverrides({ webhookUrl: 'https://chosen.example/hook' }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined.webhookUrl).to.equal('https://chosen.example/hook');
+  });
+
   it('keeps _passthrough intact, so the documented raw-field door still works', () => {
     const combined = combineProviderOverrides(
       bridge({ channel: 'C_ATTACKER', _passthrough: { body: { channel: 'C_DELIBERATE' } } }),
