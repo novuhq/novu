@@ -16,7 +16,7 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto } from '@novu/share
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
-import { CHAT_INTEGRATION_NOT_FOUND_MESSAGE, validateEncryption } from '../chat-oauth/chat-oauth.usecase';
+import { assertLegacyChatOauthHmac, CHAT_INTEGRATION_NOT_FOUND_MESSAGE } from '../chat-oauth/chat-oauth.usecase';
 import {
   getLegacyChatOauthMode,
   LEGACY_CHAT_OAUTH_MIGRATION_HINT,
@@ -76,10 +76,11 @@ export class ChatOauthCallback {
 
     const { _organizationId, apiKeys } = await this.getEnvironment(routing.environmentId);
 
-    this.hmacValidation({
+    assertLegacyChatOauthHmac({
       isHmacRequired: integrationCredentials.hmac === true || mode === LegacyChatOauthMode.HMAC_REQUIRED,
-      apiKey: apiKeys[0].key,
-      routing,
+      apiKeys: apiKeys.map(({ key }) => key),
+      subscriberId: routing.subscriberId,
+      externalHmacHash: routing.hmacHash,
     });
 
     const webhookUrl = await this.getWebhook(command.providerCode, routing, integrationCredentials);
@@ -257,31 +258,5 @@ export class ChatOauthCallback {
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration;
-  }
-
-  private hmacValidation({
-    isHmacRequired,
-    apiKey,
-    routing,
-  }: {
-    isHmacRequired: boolean;
-    apiKey: string;
-    routing: ResolvedCallbackRouting;
-  }) {
-    if (!isHmacRequired) {
-      return;
-    }
-
-    if (!routing.hmacHash) {
-      throw new BadRequestException(
-        'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
-      );
-    }
-
-    validateEncryption({
-      apiKey,
-      subscriberId: routing.subscriberId,
-      externalHmacHash: routing.hmacHash,
-    });
   }
 }

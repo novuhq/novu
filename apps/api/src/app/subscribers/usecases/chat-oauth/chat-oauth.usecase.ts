@@ -1,9 +1,9 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash, PinoLogger } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 
-import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
+import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { ChatOauthCommand } from './chat-oauth.command';
 import {
   getLegacyChatOauthMode,
@@ -49,11 +49,11 @@ export class ChatOauth {
       throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
-    const apiKey = await this.getEnvironmentApiKey(command.environmentId);
+    const apiKeys = await this.getEnvironmentApiKeys(command.environmentId);
 
-    this.hmacValidation({
+    assertLegacyChatOauthHmac({
       isHmacRequired: hmac === true || mode === LegacyChatOauthMode.HMAC_REQUIRED,
-      apiKey,
+      apiKeys,
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,
     });
@@ -79,7 +79,7 @@ export class ChatOauth {
         hmacHash: command.hmacHash,
         timestamp: Date.now(),
       },
-      apiKey
+      apiKeys[0]
     );
 
     return this.getOAuthUrl(
@@ -89,34 +89,6 @@ export class ChatOauth {
       state,
       command.integrationIdentifier
     );
-  }
-
-  private hmacValidation({
-    isHmacRequired,
-    apiKey,
-    subscriberId,
-    externalHmacHash,
-  }: {
-    isHmacRequired: boolean;
-    apiKey: string;
-    subscriberId: string;
-    externalHmacHash: string | undefined;
-  }) {
-    if (!isHmacRequired) {
-      return;
-    }
-
-    if (!externalHmacHash) {
-      throw new BadRequestException(
-        'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
-      );
-    }
-
-    validateEncryption({
-      apiKey,
-      subscriberId,
-      externalHmacHash,
-    });
   }
 
   private getOAuthUrl(
@@ -174,29 +146,47 @@ export class ChatOauth {
     return integration;
   }
 
-  private async getEnvironmentApiKey(environmentId: string): Promise<string> {
+  private async getEnvironmentApiKeys(environmentId: string): Promise<string[]> {
     const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
 
     if (!apiKeys.length) {
       throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
-    return apiKeys[0].key;
+    return apiKeys.map(({ key }) => key);
   }
 }
 
-export function validateEncryption({
-  apiKey,
+/**
+ * Validates the subscriber HMAC the way every other subscriber-facing surface
+ * does: against the decrypted secret key the customer holds, and against every
+ * active key so a rolling rotation does not break in-flight authorizations.
+ * This flow used to hash the at-rest ciphertext instead, which no client could
+ * reproduce — enabling `hmac` on an integration made the flow unusable rather
+ * than protected.
+ */
+export function assertLegacyChatOauthHmac({
+  isHmacRequired,
+  apiKeys,
   subscriberId,
   externalHmacHash,
 }: {
-  apiKey: string;
+  isHmacRequired: boolean;
+  apiKeys: string[];
   subscriberId: string;
-  externalHmacHash: string;
+  externalHmacHash: string | undefined;
 }) {
-  const hmacHash = createHash(apiKey, subscriberId);
+  if (!isHmacRequired) {
+    return;
+  }
 
-  if (!areHexDigestsEqual(hmacHash, externalHmacHash)) {
+  if (!externalHmacHash) {
+    throw new BadRequestException(
+      'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
+    );
+  }
+
+  if (!isHmacValidForAnyKey(apiKeys, subscriberId, externalHmacHash)) {
     throw new BadRequestException('Hmac is enabled on the integration, please provide a valid HMAC hash');
   }
 }
