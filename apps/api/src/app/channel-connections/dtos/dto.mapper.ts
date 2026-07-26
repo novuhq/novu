@@ -9,9 +9,6 @@ import { GetChannelConnectionResponseDto } from './get-channel-connection-respon
  * so we decrypt here to preserve the existing API contract — callers still receive the
  * plaintext access token they wrote. The decrypt helper is idempotent, so legacy
  * unencrypted records pass through unchanged.
- *
- * Refresh tokens and expiry metadata are never echoed — expiry is used internally
- * for rotation only.
  */
 export function mapChannelConnectionEntityToDto(
   channelConnection: ChannelConnectionEntity

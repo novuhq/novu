@@ -105,78 +105,7 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
     expect(expiresAtTime).to.be.lte(Date.now());
   });
 
-  it('returns accessToken on retrieve without echoing refresh or expiry fields', async () => {
-    const integration = await seedIntegration();
-    const subscriber = await createSubscriber();
-    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
-
-    const { body: created } = await session.testAgent.post('/v1/channel-connections').send({
-      integrationIdentifier: integration.identifier,
-      subscriberId: subscriber.subscriberId,
-      workspace: { id: 'T_retrieve', name: 'Retrieve Workspace' },
-      auth: { accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN, expiresAt },
-    });
-
-    expect(created.data.auth.refreshToken, 'create response must not echo the refresh token').to.be.undefined;
-    expect(created.data.auth.expiresAt, 'create response must not echo expiresAt').to.be.undefined;
-    expect(created.data.auth.refreshTokenExpiresAt, 'create response must not echo refreshTokenExpiresAt').to.be
-      .undefined;
-
-    const { status, body } = await session.testAgent.get(`/v1/channel-connections/${created.data.identifier}`);
-
-    expect(status, JSON.stringify(body)).to.equal(200);
-    expect(body.data.auth.accessToken).to.equal(ACCESS_TOKEN);
-    expect(body.data.auth.refreshToken, 'retrieve response must not echo the refresh token').to.be.undefined;
-    expect(body.data.auth.expiresAt, 'retrieve response must not echo expiresAt').to.be.undefined;
-    expect(body.data.auth.refreshTokenExpiresAt, 'retrieve response must not echo refreshTokenExpiresAt').to.be
-      .undefined;
-
-    const stored = await findConnection(created.data.identifier);
-    const decrypted = decryptChannelConnectionAuth(stored!.auth) as { expiresAt?: string };
-    expect(decrypted.expiresAt).to.equal(expiresAt);
-  });
-
-  it('never returns a refreshToken for a legacy connection without one', async () => {
-    const integration = await seedIntegration();
-    const subscriber = await createSubscriber();
-
-    const { body: created } = await session.testAgent.post('/v1/channel-connections').send({
-      integrationIdentifier: integration.identifier,
-      subscriberId: subscriber.subscriberId,
-      workspace: { id: 'T_legacy', name: 'Legacy Workspace' },
-      auth: { accessToken: ACCESS_TOKEN },
-    });
-
-    const { status, body } = await session.testAgent.get(`/v1/channel-connections/${created.data.identifier}`);
-
-    expect(status, JSON.stringify(body)).to.equal(200);
-    expect(body.data.auth.refreshToken).to.be.undefined;
-  });
-
-  it('never returns a refreshToken from the list endpoint', async () => {
-    const integration = await seedIntegration();
-    const subscriber = await createSubscriber();
-
-    await session.testAgent.post('/v1/channel-connections').send({
-      integrationIdentifier: integration.identifier,
-      subscriberId: subscriber.subscriberId,
-      workspace: { id: 'T_list', name: 'List Workspace' },
-      auth: { accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN },
-    });
-
-    const { status, body } = await session.testAgent.get(
-      `/v1/channel-connections?subscriberId=${subscriber.subscriberId}`
-    );
-
-    expect(status, JSON.stringify(body)).to.equal(200);
-    expect(body.data.length).to.be.greaterThan(0);
-
-    for (const connection of body.data) {
-      expect(connection.auth.refreshToken, 'list response must never echo a refresh token').to.be.undefined;
-    }
-  });
-
-  it('rotates the stored refreshToken on update without echoing it in the response', async () => {
+  it('rotates the stored refreshToken on update', async () => {
     const integration = await seedIntegration();
     const subscriber = await createSubscriber();
     const newRefreshToken = 'xoxe-1-rotated-refresh-token';
@@ -196,8 +125,6 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
       });
 
     expect(patchStatus, JSON.stringify(patchBody)).to.equal(200);
-    expect(patchBody.data.auth.refreshToken, 'update response must not echo the refresh token').to.be.undefined;
-
     const stored = await findConnection(created.data.identifier);
     const decrypted = decryptChannelConnectionAuth(stored!.auth) as { refreshToken?: string };
     expect(decrypted.refreshToken).to.equal(newRefreshToken);

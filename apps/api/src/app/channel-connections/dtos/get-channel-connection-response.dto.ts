@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
-import { AuthResponseDto, WorkspaceDto } from './shared.dto';
+import { AuthDto, WorkspaceDto } from './shared.dto';
 
 export class GetChannelConnectionResponseDto {
   @ApiProperty({
@@ -48,8 +48,8 @@ export class GetChannelConnectionResponseDto {
   @ApiProperty({ type: WorkspaceDto })
   workspace: WorkspaceDto;
 
-  @ApiProperty({ type: AuthResponseDto })
-  auth: AuthResponseDto;
+  @ApiProperty({ type: AuthDto })
+  auth: AuthDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

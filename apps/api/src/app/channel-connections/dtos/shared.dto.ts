@@ -18,11 +18,6 @@ export class WorkspaceDto {
   botUserId?: string;
 }
 
-/**
- * Request-only shape: accepts a `refreshToken` on create/update so rotation can be
- * configured or re-established (e.g. pasting a fresh Slack refresh token). Never used
- * to describe a response — see `AuthResponseDto` for what is actually returned.
- */
 export class AuthDto {
   @ApiProperty({ example: 'Workspace access token' })
   @IsDefined()
@@ -43,13 +38,4 @@ export class AuthDto {
   @IsOptional()
   @IsString()
   refreshTokenExpiresAt?: string;
-}
-
-/**
- * Response-only shape: returns the access token only. Refresh tokens and expiry
- * metadata are never echoed — expiry is used internally for rotation.
- */
-export class AuthResponseDto {
-  @ApiProperty({ example: 'Workspace access token' })
-  accessToken: string;
 }
