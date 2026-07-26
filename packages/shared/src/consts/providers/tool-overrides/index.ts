@@ -1,5 +1,6 @@
 import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
 import { ToolProviderIdEnum } from '../../../types';
+import { grafanaOverrideJsonSchema } from './grafana-override.schema';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
 import type { ToolContentOverrideProviderId } from './tool-provider-primary-content';
@@ -8,6 +9,7 @@ export {
   type AnnotatedPreviewLine,
   buildAnnotatedPreviewLines,
 } from './build-annotated-preview-lines';
+export { grafanaOverrideJsonSchema } from './grafana-override.schema';
 export { type MergedToolPreview, mergeToolProviderPreview } from './merge-tool-provider-preview';
 export { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 export { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
@@ -21,12 +23,14 @@ export {
 export const TOOL_PROVIDER_OVERRIDE_SCHEMAS = {
   [ToolProviderIdEnum.PagerDuty]: pagerdutyOverrideJsonSchema,
   [ToolProviderIdEnum.Opsgenie]: opsgenieOverrideJsonSchema,
+  [ToolProviderIdEnum.Grafana]: grafanaOverrideJsonSchema,
 } as const satisfies Partial<Record<ToolContentOverrideProviderId, JSONSchemaDto>>;
 
 /** Top-level override keys for each provider — shared by validation, UI, and send-path reservation. */
 export const TOOL_PROVIDER_OVERRIDE_KEYS = {
   [ToolProviderIdEnum.PagerDuty]: Object.keys(pagerdutyOverrideJsonSchema.properties),
   [ToolProviderIdEnum.Opsgenie]: Object.keys(opsgenieOverrideJsonSchema.properties),
+  [ToolProviderIdEnum.Grafana]: Object.keys(grafanaOverrideJsonSchema.properties),
 } as const satisfies Partial<Record<ToolContentOverrideProviderId, readonly string[]>>;
 
 export function getToolProviderOverrideSchema(providerId: string) {

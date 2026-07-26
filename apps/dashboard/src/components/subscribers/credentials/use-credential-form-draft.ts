@@ -47,7 +47,15 @@ export function useCredentialFormDraft({ fields, onSave, onCancel }: UseCredenti
 
     setIsSaving(true);
     const values = fields.reduce<Record<string, string>>((acc, field) => {
-      acc[field.key] = (draft[field.key] ?? '').trim();
+      const value = (draft[field.key] ?? '').trim();
+
+      // Blank optional fields are omitted entirely: endpoint validators treat
+      // them as absent (e.g. grafana authToken must be non-empty when present).
+      if (value.length === 0 && field.optional) {
+        return acc;
+      }
+
+      acc[field.key] = value;
 
       return acc;
     }, {});

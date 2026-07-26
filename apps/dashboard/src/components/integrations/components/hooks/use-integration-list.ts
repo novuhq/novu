@@ -60,7 +60,12 @@ export function useIntegrationList(searchQuery: string = '') {
         ChatProviderIdEnum.Mattermost,
         ChatProviderIdEnum.ChatWebhook,
       ],
-      [ChannelTypeEnum.TOOL]: [ToolProviderIdEnum.PagerDuty, ToolProviderIdEnum.Opsgenie, ToolProviderIdEnum.Webhook],
+      [ChannelTypeEnum.TOOL]: [
+        ToolProviderIdEnum.PagerDuty,
+        ToolProviderIdEnum.Opsgenie,
+        ToolProviderIdEnum.Grafana,
+        ToolProviderIdEnum.Webhook,
+      ],
       [ChannelTypeEnum.IN_APP]: [],
     };
 

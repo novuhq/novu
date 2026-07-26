@@ -11,6 +11,8 @@ const ENDPOINT_SECRET_STRING_FIELDS: Partial<Record<ChannelEndpointType, readonl
   [ENDPOINT_TYPES.TOOL_WEBHOOK]: ['url'],
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: ['routingKey'],
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: ['apiKey'],
+  // The webhook URL embeds the routing secret in its path; authToken is an optional bearer token.
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: ['url', 'authToken'],
 };
 
 function transformHeaderValues(

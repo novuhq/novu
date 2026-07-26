@@ -1,5 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
-import { ChannelEndpointType, ENDPOINT_TYPES, isValidOpsgenieApiKey } from '@novu/shared';
+import {
+  ChannelEndpointType,
+  ENDPOINT_TYPES,
+  isValidGrafanaOnCallWebhookUrl,
+  isValidOpsgenieApiKey,
+} from '@novu/shared';
 
 // Centralized schema definition
 export const CHANNEL_ENDPOINT_SCHEMAS = {
@@ -144,6 +149,26 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
       isValidOpsgenieApiKey(endpoint.apiKey) &&
       (endpoint.region === 'us' || endpoint.region === 'eu') &&
       Object.keys(endpoint).length === 2,
+  },
+  /*
+   * Grafana wire shape: IRM/OnCall Formatted Webhook URL (the routing secret is a
+   * token embedded in the URL path) plus an optional service account bearer token.
+   * Format-validated at write time so a truncated paste or a non-webhook Grafana
+   * URL fails fast at the API boundary rather than at the first alert send. The
+   * API layer persists both fields encrypted on `ChannelEndpoint.endpoint`.
+   */
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: {
+    description: 'Grafana OnCall Integration Endpoint',
+    properties: {
+      url: { type: 'string' as const },
+      authToken: { type: 'string' as const },
+    },
+    required: ['url'],
+    validate: (endpoint: Record<string, unknown>) =>
+      Object.keys(endpoint).every((key) => ['url', 'authToken'].includes(key)) &&
+      typeof endpoint.url === 'string' &&
+      isValidGrafanaOnCallWebhookUrl(endpoint.url) &&
+      (endpoint.authToken === undefined || (typeof endpoint.authToken === 'string' && endpoint.authToken.length > 0)),
   },
   [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
     description: 'Tool Webhook Endpoint',

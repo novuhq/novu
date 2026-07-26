@@ -5,6 +5,7 @@ import {
   getToolProviderOverrideKeysOnlySchema,
   getToolProviderOverrideSchema,
   getToolProviderPrimaryContentKey,
+  grafanaOverrideJsonSchema,
   opsgenieOverrideJsonSchema,
   pagerdutyOverrideJsonSchema,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -18,6 +19,7 @@ describe('tool provider override schemas', () => {
     expect(TOOL_CONTENT_OVERRIDE_PROVIDER_IDS).toEqual([
       ToolProviderIdEnum.PagerDuty,
       ToolProviderIdEnum.Opsgenie,
+      ToolProviderIdEnum.Grafana,
       ToolProviderIdEnum.Webhook,
     ]);
   });
@@ -25,8 +27,10 @@ describe('tool provider override schemas', () => {
   it('maps each override provider to a strict object schema', () => {
     expect(TOOL_PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.PagerDuty]).toBe(pagerdutyOverrideJsonSchema);
     expect(TOOL_PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Opsgenie]).toBe(opsgenieOverrideJsonSchema);
+    expect(TOOL_PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Grafana]).toBe(grafanaOverrideJsonSchema);
     expect(pagerdutyOverrideJsonSchema.additionalProperties).toBe(false);
     expect(opsgenieOverrideJsonSchema.additionalProperties).toBe(false);
+    expect(grafanaOverrideJsonSchema.additionalProperties).toBe(false);
   });
 
   it('keeps documented free-form maps permissive', () => {
@@ -40,6 +44,9 @@ describe('tool provider override schemas', () => {
     );
     expect(TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie]).toEqual(
       Object.keys(opsgenieOverrideJsonSchema.properties)
+    );
+    expect(TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Grafana]).toEqual(
+      Object.keys(grafanaOverrideJsonSchema.properties)
     );
     expect(getToolProviderOverrideKeys(ToolProviderIdEnum.PagerDuty)).toEqual(
       TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]
@@ -83,6 +90,7 @@ describe('tool provider override schemas', () => {
   it('maps each override provider to its primary content key', () => {
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.PagerDuty]).toBe('summary');
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Opsgenie]).toBe('message');
+    expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Grafana]).toBe('message');
     expect(getToolProviderPrimaryContentKey(ToolProviderIdEnum.PagerDuty)).toBe('summary');
   });
 });

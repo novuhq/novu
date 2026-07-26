@@ -16,6 +16,7 @@ export const ENDPOINT_TYPES = {
   LINE_USER: 'line_user',
   PAGERDUTY_SERVICE: 'pagerduty_service',
   OPSGENIE_INTEGRATION: 'opsgenie_integration',
+  GRAFANA_ONCALL_INTEGRATION: 'grafana_oncall_integration',
   TOOL_WEBHOOK: 'tool_webhook',
 } as const;
 
@@ -56,6 +57,17 @@ export type ChannelEndpointByType = {
    */
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
   /**
+   * Grafana per-subscriber routing. `url` is the Grafana IRM/OnCall incoming-webhook
+   * (Formatted Webhook) integration URL, which embeds the routing secret in its path;
+   * `authToken` optionally carries a Grafana service account bearer token for
+   * integrations that require authenticated ingestion.
+   *
+   * At the API boundary this is the wire shape on both writes and reads. Internally,
+   * `url` and `authToken` are persisted encrypted on `ChannelEndpoint.endpoint`.
+   * No `ChannelConnection` is involved (connections are OAuth-only).
+   */
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: { url: string; authToken?: string };
+  /**
    * Tool-webhook per-subscriber routing. `url` is the destination (often a
    * capability URL); `headers` may carry auth tokens; `method` optionally
    * overrides the integration-level HTTP method.
@@ -77,6 +89,18 @@ export const OPSGENIE_API_KEY_PATTERN = /^[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0
 
 export function isValidOpsgenieApiKey(value: string): boolean {
   return OPSGENIE_API_KEY_PATTERN.test(value);
+}
+
+/**
+ * Grafana IRM/OnCall Formatted Webhook URL: HTTPS, any host (Grafana Cloud stacks and
+ * self-hosted OnCall both apply), path ending in `/integrations/v1/formatted_webhook/<token>/`.
+ * The token segment is the per-integration routing secret embedded in the URL.
+ */
+export const GRAFANA_ONCALL_WEBHOOK_URL_PATTERN =
+  /^https:\/\/[^\s/]+(?:\/[^\s]*)?\/integrations\/v1\/formatted_webhook\/[a-zA-Z0-9]+\/?$/;
+
+export function isValidGrafanaOnCallWebhookUrl(value: string): boolean {
+  return GRAFANA_ONCALL_WEBHOOK_URL_PATTERN.test(value);
 }
 
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {
