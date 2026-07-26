@@ -84,7 +84,7 @@ describe('encryptChannelEndpoint / decryptChannelEndpoint', () => {
 
     expect(encrypted.url.startsWith(novuSubMask)).toBe(true);
     expect(encrypted.url).not.toEqual(endpoint.url);
-    expect(encrypted.authToken!.startsWith(novuSubMask)).toBe(true);
+    expect(encrypted.authToken?.startsWith(novuSubMask)).toBe(true);
     expect(encrypted.authToken).not.toEqual(endpoint.authToken);
 
     const decrypted = decryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, encrypted);

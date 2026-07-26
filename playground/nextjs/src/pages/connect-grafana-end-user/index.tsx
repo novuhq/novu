@@ -32,9 +32,9 @@ function ConnectGrafanaContent() {
     <div className="flex max-w-xl flex-col gap-4 p-4">
       <div className="flex flex-col gap-2">
         <p className="text-sm text-muted-foreground">
-          Each signed-in user brings their own Grafana stack: a distinct incoming-webhook URL routes to their own
-          OnCall escalation chains and responders. Paste the Formatted Webhook URL from your Grafana IRM integration to
-          have Novu create alert groups in <em>your</em> Grafana account.
+          Each signed-in user brings their own Grafana stack: a distinct incoming-webhook URL routes to their own OnCall
+          escalation chains and responders. Paste the Formatted Webhook URL from your Grafana IRM integration to have
+          Novu create alert groups in <em>your</em> Grafana account.
         </p>
         <p className="text-xs text-muted-foreground">
           Subscriber: <code>{user.id}</code>

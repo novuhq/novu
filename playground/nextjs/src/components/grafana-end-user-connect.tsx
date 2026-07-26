@@ -92,9 +92,7 @@ export function GrafanaEndUserConnect({ subscriberId }: Props) {
     void refresh();
   }, [refresh]);
 
-  const isUrlValid = /^https:\/\/[^\s/]+(?:\/[^\s]*)?\/integrations\/v1\/formatted_webhook\/[a-zA-Z0-9]+\/?$/.test(
-    url
-  );
+  const isUrlValid = /^https:\/\/[^\s/]+(?:\/[^\s]*)?\/integrations\/v1\/formatted_webhook\/[a-zA-Z0-9]+\/?$/.test(url);
   const alreadyConnected = endpoints.length > 0;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -103,7 +101,8 @@ export function GrafanaEndUserConnect({ subscriberId }: Props) {
     if (!isUrlValid) {
       setStatus({
         type: 'error',
-        message: 'URL must be an HTTPS Grafana Formatted Webhook URL ending in /integrations/v1/formatted_webhook/<token>/',
+        message:
+          'URL must be an HTTPS Grafana Formatted Webhook URL ending in /integrations/v1/formatted_webhook/<token>/',
       });
 
       return;
@@ -229,8 +228,8 @@ export function GrafanaEndUserConnect({ subscriberId }: Props) {
   if (!INTEGRATION_IDENTIFIER) {
     return (
       <p className="text-sm text-muted-foreground">
-        Set <code>NEXT_PUBLIC_CONNECT_GRAFANA_INTEGRATION_IDENTIFIER</code> in <code>playground/nextjs/.env</code>,
-        then restart the dev server.
+        Set <code>NEXT_PUBLIC_CONNECT_GRAFANA_INTEGRATION_IDENTIFIER</code> in <code>playground/nextjs/.env</code>, then
+        restart the dev server.
       </p>
     );
   }
