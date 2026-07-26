@@ -9,10 +9,10 @@ export interface AgentBehavior {
   /**
    * Whether the agent accepts inbound messages from senders not yet linked to a
    * subscriber, across all channels. `open` auto-provisions unknown senders;
-   * `restricted` rejects them. Unset resolves as restricted. Managed create
-   * defaults to open; self-hosted create defaults to restricted.
+   * `restricted` rejects them. Managed create defaults to open; self-hosted
+   * create defaults to restricted. Always persisted (backfilled for legacy rows).
    */
-  subscriberAccess?: AgentSubscriberAccessEnum;
+  subscriberAccess: AgentSubscriberAccessEnum;
 }
 
 export interface ManagedRuntimeConfig {
@@ -37,7 +37,7 @@ export class AgentEntity {
 
   active: boolean;
 
-  behavior?: AgentBehavior;
+  behavior: AgentBehavior;
 
   bridgeUrl?: string;
 

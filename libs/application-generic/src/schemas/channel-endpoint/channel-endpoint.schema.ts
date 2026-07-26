@@ -145,7 +145,55 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
       (endpoint.region === 'us' || endpoint.region === 'eu') &&
       Object.keys(endpoint).length === 2,
   },
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
+    description: 'Tool Webhook Endpoint',
+    properties: {
+      url: { type: 'string' as const },
+      headers: { type: 'object' as const },
+      method: { type: 'string' as const },
+    },
+    required: ['url'],
+    validate: (endpoint: Record<string, unknown>) => isValidToolWebhookEndpoint(endpoint),
+  },
 } as const;
+
+const TOOL_WEBHOOK_METHODS = new Set(['POST', 'PUT', 'PATCH']);
+const TOOL_WEBHOOK_ALLOWED_KEYS = new Set(['url', 'headers', 'method']);
+
+function isValidToolWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function isValidToolWebhookHeaders(headers: unknown): boolean {
+  if (headers === undefined) {
+    return true;
+  }
+
+  if (typeof headers !== 'object' || headers === null || Array.isArray(headers)) {
+    return false;
+  }
+
+  return Object.values(headers).every((value) => typeof value === 'string');
+}
+
+function isValidToolWebhookEndpoint(endpoint: Record<string, unknown>): boolean {
+  const keys = Object.keys(endpoint);
+
+  return (
+    keys.every((key) => TOOL_WEBHOOK_ALLOWED_KEYS.has(key)) &&
+    typeof endpoint.url === 'string' &&
+    isValidToolWebhookUrl(endpoint.url) &&
+    isValidToolWebhookHeaders(endpoint.headers) &&
+    (endpoint.method === undefined ||
+      (typeof endpoint.method === 'string' && TOOL_WEBHOOK_METHODS.has(endpoint.method)))
+  );
+}
 
 // Generate API property examples automatically
 export function getApiPropertyExamples() {

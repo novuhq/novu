@@ -34,7 +34,8 @@ export class AgentBehaviorDto {
       '"open" on managed agents auto-creates a lightweight subscriber so the agent can reply; ' +
       'on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. ' +
       '"restricted" rejects unknown senders with a managed denial reply (any runtime). ' +
-      'Unset resolves as "restricted". Managed agent create defaults to "open"; self-hosted create defaults to "restricted".',
+      'Optional on update (partial PATCH). Persisted agents always have a value — managed create defaults to "open"; ' +
+      'self-hosted create defaults to "restricted".',
   })
   @IsOptional()
   @IsEnum(AgentSubscriberAccessEnum)

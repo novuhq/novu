@@ -7,6 +7,7 @@ import {
   InAppProviderIdEnum,
   PushProviderIdEnum,
   SmsProviderIdEnum,
+  ToolProviderIdEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -182,6 +183,28 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     expect(data.providerId).to.equal(EmailProviderIdEnum.SendGrid);
     expect(data.channel).to.equal(ChannelTypeEnum.EMAIL);
     expect(data.active).to.equal(false);
+  });
+
+  it('should persist webhook payload schema configuration', async () => {
+    const payloadSchema = JSON.stringify({
+      type: 'object',
+      properties: { event: { type: 'string' } },
+    });
+    const {
+      body: { data },
+    } = await session.testAgent.post('/v1/integrations').send({
+      providerId: ToolProviderIdEnum.Webhook,
+      channel: ChannelTypeEnum.TOOL,
+      configurations: { payloadSchema },
+      check: false,
+    });
+    const persisted = await integrationRepository.findOne({
+      _id: data._id,
+      _environmentId: session.environment._id,
+    });
+
+    expect(data.configurations.payloadSchema).to.equal(payloadSchema);
+    expect(persisted?.configurations?.payloadSchema).to.equal(payloadSchema);
   });
 
   it('should allow creating the integration in the chosen environment', async () => {

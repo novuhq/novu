@@ -32,20 +32,6 @@ Novu is distributed in 3 modes, Community Edition, Enterprise Cloud Edition, and
 
 When making changes targeted to the Enterprise distribution, we need to make sure that the changes are not breaking the Community edition, and are properly gated behind a flag, or the novu enterpise env variables. Similarly when some changes are only targeting the Cloud, self-hosted on prem should not be affected.
 
-## Agent skills
-
-### Issue tracker
-
-Linear (Engineering team, novu workspace) via Linear MCP; Wayfinder uses `wayfinder:*` labels and native blockers. See `docs/agents/skill-config/issue-tracker.md`.
-
-### Triage labels
-
-Default vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/skill-config/triage-labels.md`.
-
-### Domain docs
-
-Multi-context (root `CONTEXT-MAP.md` when present). See `docs/agents/skill-config/domain.md`.
-
 <!-- Infrastructure & services: see .cursor/rules/infrastructure.mdc -->
 <!-- Dependency graph: see .cursor/rules/dependency-graph.mdc -->
 <!-- Testing: see .cursor/rules/testing.mdc -->

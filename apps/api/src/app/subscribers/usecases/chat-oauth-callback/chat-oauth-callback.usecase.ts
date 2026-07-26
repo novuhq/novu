@@ -3,21 +3,51 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   decryptCredentials,
+  FeatureFlagsService,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
+  CommunityOrganizationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
-import { validateEncryption } from '../chat-oauth/chat-oauth.usecase';
+import { assertLegacyChatOauthHmac } from '../chat-oauth/chat-oauth.usecase';
+import {
+  assertLegacyChatOauthIntegrationHmacEnabled,
+  CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
+  isLegacySubscriberChatOauthHmacRequired,
+  LEGACY_CHAT_OAUTH_MIGRATION_HINT,
+  resolveLegacyChatOauthHmacRequired,
+  resolveLegacyChatOauthOrganization,
+} from '../chat-oauth/legacy-chat-oauth.config';
+import {
+  decodeLegacyChatOauthState,
+  peekLegacyChatOauthStateEnvironmentId,
+} from '../chat-oauth/legacy-chat-oauth-state';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import { ChatOauthCallbackResult, ResponseTypeEnum } from './chat-oauth-callback.result';
+
+/**
+ * Routing fields the callback acts on. When the provider echoes back a `state`
+ * minted by `ChatOauth`, they come from that signed payload; otherwise they fall
+ * back to the query string, which is the pre-`state` behavior kept alive for
+ * authorization URLs that were built by hand rather than by our own endpoint.
+ */
+type ResolvedCallbackRouting = {
+  environmentId: string;
+  subscriberId: string;
+  providerId: ChatProviderIdEnum;
+  integrationIdentifier?: string;
+  hmacHash?: string;
+  isStateVerified: boolean;
+};
 
 /**
  * @deprecated Use the new channel management approach.
@@ -31,26 +61,45 @@ export class ChatOauthCallback {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
+    private organizationRepository: CommunityOrganizationRepository,
+    private featureFlagsService: FeatureFlagsService,
     private createSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-    private createChannelEndpoint: CreateChannelEndpoint
-  ) {}
+    private createChannelEndpoint: CreateChannelEndpoint,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(ChatOauthCallback.name);
+  }
 
   async execute(command: ChatOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
-    const integration = await this.getIntegration(command);
+    const routingEnvironmentId = command.state
+      ? peekLegacyChatOauthStateEnvironmentId(command.state)
+      : command.environmentId;
+    const organization = await resolveLegacyChatOauthOrganization(
+      this.environmentRepository,
+      this.organizationRepository,
+      routingEnvironmentId
+    );
+    const hmacRequiredEnabled = await isLegacySubscriberChatOauthHmacRequired(this.featureFlagsService, organization);
+
+    const routing = await this.resolveRouting(command);
+    const integration = await this.getIntegration(routing);
     const integrationCredentials = integration.credentials;
+    const integrationHmacEnabled = integrationCredentials.hmac === true;
 
-    const { _organizationId, apiKeys } = await this.getEnvironment(command.environmentId);
+    assertLegacyChatOauthIntegrationHmacEnabled(hmacRequiredEnabled, integrationHmacEnabled);
 
-    await this.hmacValidation({
-      credentialHmac: integrationCredentials.hmac,
-      apiKey: apiKeys[0].key,
-      subscriberId: command.subscriberId,
-      externalHmacHash: command.hmacHash,
+    const { _organizationId, apiKeys } = await this.getEnvironment(routing.environmentId);
+
+    assertLegacyChatOauthHmac({
+      isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
+      apiKeys: apiKeys.map(({ key }) => key),
+      subscriberId: routing.subscriberId,
+      externalHmacHash: routing.hmacHash,
     });
 
-    const webhookUrl = await this.getWebhook(command, integrationCredentials);
+    const webhookUrl = await this.getWebhook(command.providerCode, routing, integrationCredentials);
 
-    await this.createSubscriber(_organizationId, command, webhookUrl, integration);
+    await this.createSubscriber(_organizationId, routing, webhookUrl, integration);
 
     if (integrationCredentials?.redirectUrl) {
       return { typeOfResponse: ResponseTypeEnum.URL, resultString: integrationCredentials.redirectUrl };
@@ -59,26 +108,69 @@ export class ChatOauthCallback {
     return { typeOfResponse: ResponseTypeEnum.HTML, resultString: this.SCRIPT_CLOSE_TAB };
   }
 
+  /**
+   * A signed `state` is the only thing that ties this callback to an OAuth URL
+   * this API actually minted, so whatever it carries wins over the query string.
+   */
+  private async resolveRouting(command: ChatOauthCallbackCommand): Promise<ResolvedCallbackRouting> {
+    if (!command.state) {
+      this.logger.warn(
+        {
+          environmentId: command.environmentId,
+          providerId: command.providerId,
+          integrationIdentifier: command.integrationIdentifier,
+        },
+        `Legacy chat OAuth callback received without a signed state. ${LEGACY_CHAT_OAUTH_MIGRATION_HINT}`
+      );
+
+      return {
+        environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+        providerId: command.providerId,
+        integrationIdentifier: command.integrationIdentifier,
+        hmacHash: command.hmacHash,
+        isStateVerified: false,
+      };
+    }
+
+    const stateEnvironmentId = peekLegacyChatOauthStateEnvironmentId(command.state);
+    const apiKey = await this.getEnvironmentApiKey(stateEnvironmentId);
+    const state = decodeLegacyChatOauthState(command.state, apiKey);
+
+    if (state.subscriberId !== command.subscriberId || state.providerId !== command.providerId) {
+      throw new BadRequestException('OAuth state does not match the requested subscriber');
+    }
+
+    return {
+      environmentId: state.environmentId,
+      subscriberId: state.subscriberId,
+      providerId: state.providerId,
+      integrationIdentifier: state.integrationIdentifier,
+      hmacHash: state.hmacHash,
+      isStateVerified: true,
+    };
+  }
+
   private async createSubscriber(
     organizationId: string,
-    command: ChatOauthCallbackCommand,
+    routing: ResolvedCallbackRouting,
     webhookUrl: string,
     integration: IntegrationEntity
   ): Promise<void> {
     await this.createSubscriberUsecase.execute(
       CreateOrUpdateSubscriberCommand.create({
         organizationId,
-        environmentId: command.environmentId,
-        subscriberId: command?.subscriberId,
+        environmentId: routing.environmentId,
+        subscriberId: routing.subscriberId,
       })
     );
 
     await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
         organizationId: organizationId,
-        environmentId: command.environmentId,
+        environmentId: routing.environmentId,
         integrationIdentifier: integration.identifier,
-        subscriberId: command.subscriberId,
+        subscriberId: routing.subscriberId,
         type: ENDPOINT_TYPES.WEBHOOK,
         endpoint: {
           url: webhookUrl,
@@ -91,27 +183,38 @@ export class ChatOauthCallback {
     const environment = await this.environmentRepository.findOne({ _id: environmentId });
 
     if (environment == null) {
-      throw new NotFoundException(`Environment ID: ${environmentId} not found`);
+      throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
     return environment;
   }
 
+  private async getEnvironmentApiKey(environmentId: string): Promise<string> {
+    const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
+
+    if (!apiKeys.length) {
+      throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
+    }
+
+    return apiKeys[0].key;
+  }
+
   private async getWebhook(
-    command: ChatOauthCallbackCommand,
+    providerCode: string,
+    routing: ResolvedCallbackRouting,
     integrationCredentials: ICredentialsDto
   ): Promise<string> {
-    let redirectUri = `${
-      process.env.API_ROOT_URL
-    }/v1/subscribers/${command.subscriberId}/credentials/${command.providerId}/oauth/callback?environmentId=${command.environmentId}`;
+    let redirectUri = `${process.env.API_ROOT_URL}/v1/subscribers/${routing.subscriberId}/credentials/${
+      routing.providerId
+    }/oauth/callback?environmentId=${routing.environmentId}`;
 
-    if (command.integrationIdentifier) {
-      redirectUri = `${redirectUri}&integrationIdentifier=${command.integrationIdentifier}`;
+    if (routing.integrationIdentifier) {
+      redirectUri = `${redirectUri}&integrationIdentifier=${routing.integrationIdentifier}`;
     }
 
     const body = {
       redirect_uri: redirectUri,
-      code: command.providerCode,
+      code: providerCode,
       client_id: integrationCredentials.clientId,
       client_secret: integrationCredentials.secretKey,
     };
@@ -127,26 +230,26 @@ export class ChatOauthCallback {
     if (res?.data?.ok === false) {
       const metaData = res?.data?.response_metadata?.messages?.join(', ');
       throw new BadRequestException(
-        `Provider ${command.providerId} returned error ${res.data.error}${metaData ? `, metadata:${metaData}` : ''}`
+        `Provider ${routing.providerId} returned error ${res.data.error}${metaData ? `, metadata:${metaData}` : ''}`
       );
     }
 
     if (!webhook) {
-      throw new BadRequestException(`Provider ${command.providerId} did not return a webhook url`);
+      throw new BadRequestException(`Provider ${routing.providerId} did not return a webhook url`);
     }
 
     return webhook;
   }
 
-  private async getIntegration(command: ChatOauthCallbackCommand) {
+  private async getIntegration(routing: ResolvedCallbackRouting): Promise<IntegrationEntity> {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
-      _environmentId: command.environmentId,
+      _environmentId: routing.environmentId,
       channel: ChannelTypeEnum.CHAT,
-      providerId: command.providerId,
+      providerId: routing.providerId,
     };
 
-    if (command.integrationIdentifier) {
-      query.identifier = command.integrationIdentifier;
+    if (routing.integrationIdentifier) {
+      query.identifier = routing.integrationIdentifier;
     }
 
     const integration = await this.integrationRepository.findOne(query, undefined, {
@@ -154,40 +257,20 @@ export class ChatOauthCallback {
     });
 
     if (integration == null) {
-      throw new NotFoundException(
-        `Integration in environment ${command.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
-          `providerId: ${command.providerId}`
+      this.logger.warn(
+        {
+          environmentId: routing.environmentId,
+          providerId: routing.providerId,
+          integrationIdentifier: routing.integrationIdentifier,
+        },
+        'Legacy chat OAuth callback could not be resolved to an integration'
       );
+
+      throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration;
-  }
-
-  private async hmacValidation({
-    credentialHmac,
-    apiKey,
-    subscriberId,
-    externalHmacHash,
-  }: {
-    credentialHmac: boolean | undefined;
-    apiKey: string;
-    subscriberId: string;
-    externalHmacHash: string | undefined;
-  }) {
-    if (credentialHmac) {
-      if (!externalHmacHash) {
-        throw new BadRequestException(
-          'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
-        );
-      }
-
-      validateEncryption({
-        apiKey,
-        subscriberId,
-        externalHmacHash,
-      });
-    }
   }
 }
