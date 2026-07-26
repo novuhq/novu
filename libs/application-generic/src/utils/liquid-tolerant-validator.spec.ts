@@ -77,4 +77,22 @@ describe('createLiquidTolerantValidator', () => {
     expect(errors.map((error) => error.keyword)).toEqual(['type']);
     expect(errors[0]?.instancePath).toBe('/enabled');
   });
+
+  it('keeps a real failure when a subschema object is shared between two sites', () => {
+    const sharedBranch = { type: 'object', additionalProperties: false, properties: { a: { type: 'string' } } };
+    const sharedSchema = {
+      type: 'object',
+      additionalProperties: false,
+      properties: { left: sharedBranch, right: sharedBranch },
+    } as unknown as JSONSchemaDto;
+
+    const errors = createLiquidTolerantValidator(sharedSchema)({ right: { a: 'ok', b: 'nope' } });
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({
+      instancePath: '/right',
+      keyword: 'additionalProperties',
+      params: { additionalProperty: 'b' },
+    });
+  });
 });

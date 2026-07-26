@@ -57,10 +57,12 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
-/** Shape the tool and chat renderers both emit once stitched overrides are compiled. */
-type ProviderOverrideOutputUnvalidated = {
-  providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
-};
+type ProviderOverrideStepType = StepTypeEnum.CHAT | StepTypeEnum.TOOL;
+
+const OVERRIDE_PROVIDER_IDS_BY_STEP_TYPE = {
+  [StepTypeEnum.CHAT]: CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
+  [StepTypeEnum.TOOL]: TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
+} as const satisfies Record<ProviderOverrideStepType, readonly ContentOverrideProviderId[]>;
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -313,13 +315,7 @@ export class ConstructFrameworkWorkflow {
               locale,
             }) as Promise<ChatOutputUnvalidated>;
           },
-          this.constructProviderOverrideStepOptions(
-            staticStep,
-            fullPayloadForRender,
-            dbWorkflow,
-            StepTypeEnum.CHAT,
-            CHAT_CONTENT_OVERRIDE_PROVIDER_IDS
-          )
+          this.constructProviderOverrideStepOptions(staticStep, fullPayloadForRender, dbWorkflow, StepTypeEnum.CHAT)
         );
       case StepTypeEnum.PUSH:
         return step.push(
@@ -347,13 +343,7 @@ export class ConstructFrameworkWorkflow {
               locale,
             }) as Promise<ToolOutputUnvalidated>;
           },
-          this.constructProviderOverrideStepOptions(
-            staticStep,
-            fullPayloadForRender,
-            dbWorkflow,
-            StepTypeEnum.TOOL,
-            TOOL_CONTENT_OVERRIDE_PROVIDER_IDS
-          )
+          this.constructProviderOverrideStepOptions(staticStep, fullPayloadForRender, dbWorkflow, StepTypeEnum.TOOL)
         );
       case StepTypeEnum.DIGEST:
         return step.digest(
@@ -435,8 +425,7 @@ export class ConstructFrameworkWorkflow {
     staticStep: NotificationStepEntity,
     fullPayloadForRender: FullPayloadForRender,
     dbWorkflow: NotificationTemplateEntity,
-    stepType: StepTypeEnum.TOOL | StepTypeEnum.CHAT,
-    providerIds: readonly ContentOverrideProviderId[]
+    stepType: ProviderOverrideStepType
   ) {
     const skip = (controlValues: Record<string, unknown>) =>
       this.processSkipOption(controlValues, fullPayloadForRender);
@@ -472,11 +461,14 @@ export class ConstructFrameworkWorkflow {
 
     const resolveProviderOverride =
       (providerId: ContentOverrideProviderId) =>
-      async ({ outputs }: { outputs: ProviderOverrideOutputUnvalidated }) =>
+      async ({ outputs }: { outputs: ChatOutputUnvalidated | ToolOutputUnvalidated }) =>
         outputs.providerOverrides?.[providerId] ?? {};
 
     const providers = Object.fromEntries(
-      providerIds.map((providerId) => [providerId, resolveProviderOverride(providerId)])
+      OVERRIDE_PROVIDER_IDS_BY_STEP_TYPE[stepType].map((providerId) => [
+        providerId,
+        resolveProviderOverride(providerId),
+      ])
     );
 
     return {

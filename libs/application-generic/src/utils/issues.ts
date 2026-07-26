@@ -105,14 +105,21 @@ const joinIssuePath = (pathPrefix: string | undefined, errorPath: string | undef
 };
 
 /**
- * Turns AJV errors into `StepIssue`s keyed by control path. `pathPrefix` namespaces the result for
- * values validated against their own root schema rather than the step's control schema.
+ * Turns AJV errors into `StepIssue`s keyed by control path.
+ *
+ * `pathPrefix` namespaces the result for values validated against their own root schema rather
+ * than the step's control schema. `collapseUrlFieldErrors` drives the step-control URL heuristic,
+ * which rewrites the message and keeps a single error per field; callers validating a third-party
+ * schema turn it off, since a `url` there means whatever that provider says it means.
  */
 export const mapSchemaErrorsToControlIssues = (
   errors: readonly ErrorObject[],
-  { stepType, pathPrefix }: { stepType?: StepTypeEnum; pathPrefix?: string } = {}
+  {
+    stepType,
+    pathPrefix,
+    collapseUrlFieldErrors = true,
+  }: { stepType?: StepTypeEnum; pathPrefix?: string; collapseUrlFieldErrors?: boolean } = {}
 ): ControlIssues => {
-  // First pass: identify URL fields and collect errors
   const urlFieldErrors = new Map<string, ErrorObject[]>();
   const otherErrors: Array<{ error: ErrorObject; path: string }> = [];
 
@@ -124,14 +131,13 @@ export const mapSchemaErrorsToControlIssues = (
       continue;
     }
 
-    if (isUrlFieldError(errorPath, error.instancePath || '')) {
+    if (collapseUrlFieldErrors && isUrlFieldError(errorPath, error.instancePath || '')) {
       urlFieldErrors.set(path, [...(urlFieldErrors.get(path) ?? []), error]);
     } else {
       otherErrors.push({ error, path });
     }
   }
 
-  // Second pass: build issues object
   const controls: Record<string, RuntimeIssue[]> = {};
 
   // For URL fields, only keep one error (prefer anyOf, then first pattern error)
@@ -149,7 +155,6 @@ export const mapSchemaErrorsToControlIssues = (
     ];
   }
 
-  // Add all other errors
   for (const { error, path } of otherErrors) {
     if (!controls[path]) {
       controls[path] = [];

@@ -5,11 +5,15 @@ import { createSchemaValidationAjv } from './issues';
 
 /**
  * Absolute location of every subschema object, so an error can be traced back to where its
- * subschema actually lives in the document. Objects reused in several places keep the first
- * location found, which is enough: what matters is that sibling branches end up distinguishable.
+ * subschema actually lives in the document.
+ *
+ * A subschema reachable from more than one place has no single location, and guessing one would
+ * silently attribute its errors to the wrong branch. Those are dropped from the index instead, so
+ * their errors keep the path AJV reported: noisier output, never wrong output.
  */
 function buildSchemaPathIndex(schema: JSONSchemaDto): Map<object, string> {
   const index = new Map<object, string>();
+  const ambiguous = new Set<object>();
 
   const walk = (node: unknown, path: string) => {
     if (node === null || typeof node !== 'object') {
@@ -17,12 +21,16 @@ function buildSchemaPathIndex(schema: JSONSchemaDto): Map<object, string> {
     }
 
     if (Array.isArray(node)) {
-      node.forEach((child, position) => walk(child, `${path}/${position}`));
+      node.forEach((child, position) => {
+        walk(child, `${path}/${position}`);
+      });
 
       return;
     }
 
-    if (!index.has(node)) {
+    if (index.has(node)) {
+      ambiguous.add(node);
+    } else {
       index.set(node, path);
     }
 
@@ -32,6 +40,10 @@ function buildSchemaPathIndex(schema: JSONSchemaDto): Map<object, string> {
   };
 
   walk(schema, '#');
+
+  for (const node of ambiguous) {
+    index.delete(node);
+  }
 
   return index;
 }
@@ -69,7 +81,7 @@ function toAbsoluteSchemaPaths(
     const keywordIndex = error.schemaPath.lastIndexOf('/');
     const reportedParentPath = error.schemaPath.slice(0, keywordIndex);
 
-    if (!parentSchema || resolveSchemaPointer(schema, reportedParentPath) === parentSchema) {
+    if (!parentSchema || keywordIndex < 0 || resolveSchemaPointer(schema, reportedParentPath) === parentSchema) {
       return error;
     }
 
@@ -100,20 +112,30 @@ function isCompositionError(error: ErrorObject): boolean {
 
 /** "must match a schema in anyOf" says nothing once a concrete failure is reported underneath it. */
 function dropRedundantCompositionErrors(errors: ErrorObject[]): ErrorObject[] {
-  const concretePaths = errors.filter((error) => !isCompositionError(error)).map((error) => error.instancePath);
+  const explainedPaths = new Set<string>();
 
-  return errors.filter(
-    (error) =>
-      !isCompositionError(error) ||
-      !concretePaths.some((path) => path === error.instancePath || path.startsWith(`${error.instancePath}/`))
-  );
+  for (const error of errors) {
+    if (isCompositionError(error)) {
+      continue;
+    }
+
+    // A concrete failure explains its own node and every composition enclosing it.
+    let path = error.instancePath;
+    explainedPaths.add(path);
+    while (path !== '') {
+      path = path.slice(0, Math.max(0, path.lastIndexOf('/')));
+      explainedPaths.add(path);
+    }
+  }
+
+  return errors.filter((error) => !isCompositionError(error) || !explainedPaths.has(error.instancePath));
 }
 
 function dedupe(errors: ErrorObject[]): ErrorObject[] {
   const seen = new Set<string>();
 
   return errors.filter((error) => {
-    const key = [error.instancePath, error.keyword, error.params?.additionalProperty, error.message].join('\u0000');
+    const key = [error.instancePath, error.keyword, JSON.stringify(error.params), error.message].join('\u0000');
     if (seen.has(key)) {
       return false;
     }

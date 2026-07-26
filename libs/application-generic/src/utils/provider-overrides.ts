@@ -1,23 +1,22 @@
 import { ControlValuesEntity, JsonSchemaTypeEnum } from '@novu/dal';
 import {
   CONTENT_OVERRIDE_PROVIDER_IDS,
+  ContentIssueEnum,
   type ContentOverrideProviderId,
   getProviderOverrideConfig,
   type ProviderOverrideConfig,
+  type RuntimeIssue,
   SLACK_OVERRIDE_SCHEMA_SUBPATH,
   type StepProviderOverrides,
 } from '@novu/shared';
 import { slackOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/slack';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
-import { type ControlIssues, mapSchemaErrorsToControlIssues, processControlValuesBySchema } from './issues';
+import { type ControlIssues, mapSchemaErrorsToControlIssues } from './issues';
 import { createLiquidTolerantValidator } from './liquid-tolerant-validator';
 
 export type { StepProviderOverrides };
 
 const SUPPORTED_PROVIDER_IDS = new Set<string>(CONTENT_OVERRIDE_PROVIDER_IDS);
-
-/** Always-valid property schema — matches shared keys-only contract (boolean `true`). */
-const ALWAYS_VALID_PROPERTY = true as unknown as JSONSchemaDto;
 
 /** Escape-hatch providers accept keys we cannot describe up front: well-formedness only. */
 const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
@@ -28,8 +27,11 @@ const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
 /**
  * Schemas the shared registry only points at by subpath, resolved eagerly. The subpath exists to
  * keep a very large schema out of the dashboard bundle; on the server there is no bundle to protect.
+ *
+ * `provider-overrides.spec.ts` fails if the registry gains a subpath that is missing here, because
+ * at runtime an unregistered one can only degrade to accepting anything.
  */
-const LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH: Readonly<Record<string, JSONSchemaDto>> = {
+export const LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH: Readonly<Record<string, JSONSchemaDto>> = {
   [SLACK_OVERRIDE_SCHEMA_SUBPATH]: slackOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
 };
 
@@ -78,25 +80,9 @@ export function withStitchedProviderOverrides(
 }
 
 /**
- * Provider-id level only. Each override value is then validated against its own schema as a
- * separate root document, because a provider schema may use absolute `$ref`s into its own
- * `definitions` and those stop resolving once the schema is nested under a wrapper.
+ * A provider whose schema ships behind a subpath we never registered can only be accepted as-is:
+ * refusing the whole request would turn a `@novu/shared` release into failing upserts and previews.
  */
-function buildProviderOverridesEnvelopeSchema(): JSONSchemaDto {
-  return {
-    type: JsonSchemaTypeEnum.OBJECT,
-    properties: {
-      providerOverrides: {
-        type: JsonSchemaTypeEnum.OBJECT,
-        properties: Object.fromEntries(CONTENT_OVERRIDE_PROVIDER_IDS.map((id) => [id, ALWAYS_VALID_PROPERTY])),
-        additionalProperties: false,
-      },
-    },
-  };
-}
-
-const PROVIDER_OVERRIDES_ENVELOPE_SCHEMA = buildProviderOverridesEnvelopeSchema();
-
 function resolveLiquidTolerantSchema(config: ProviderOverrideConfig): JSONSchemaDto {
   if (config.liquidTolerantSchema) {
     return config.liquidTolerantSchema as unknown as JSONSchemaDto;
@@ -106,40 +92,35 @@ function resolveLiquidTolerantSchema(config: ProviderOverrideConfig): JSONSchema
     return FREE_FORM_OBJECT_SCHEMA;
   }
 
-  const schema = LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH[config.schemaSubpath];
-  if (!schema) {
-    throw new Error(`No eagerly loaded override schema registered for subpath: ${config.schemaSubpath}`);
-  }
-
-  return schema;
+  return LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH[config.schemaSubpath] ?? FREE_FORM_OBJECT_SCHEMA;
 }
 
-const validatorsByProviderId = new Map<string, ReturnType<typeof createLiquidTolerantValidator>>();
+/**
+ * Keyed by schema rather than by provider so the escape-hatch providers, which all resolve to the
+ * same free-form schema, share one validator. Building one is expensive: Slack's schema is a few
+ * hundred kilobytes and gets both AJV-compiled and walked.
+ */
+const validatorsBySchema = new Map<JSONSchemaDto, ReturnType<typeof createLiquidTolerantValidator>>();
 
-/** Provider schemas are static and Slack's is large enough that recompiling per call is wasteful. */
-function getProviderOverrideValidator(providerId: string, config: ProviderOverrideConfig) {
-  const cached = validatorsByProviderId.get(providerId);
+function getProviderOverrideValidator(config: ProviderOverrideConfig) {
+  const schema = resolveLiquidTolerantSchema(config);
+  const cached = validatorsBySchema.get(schema);
   if (cached) {
     return cached;
   }
 
-  const validate = createLiquidTolerantValidator(resolveLiquidTolerantSchema(config));
-  validatorsByProviderId.set(providerId, validate);
+  const validate = createLiquidTolerantValidator(schema);
+  validatorsBySchema.set(schema, validate);
 
   return validate;
 }
 
-function collectIssues(target: ControlIssues, source: ControlIssues): ControlIssues {
-  if (!source.controls) {
-    return target;
-  }
-
-  const controls = { ...target.controls };
-  for (const [path, pathIssues] of Object.entries(source.controls)) {
-    controls[path] = [...(controls[path] ?? []), ...pathIssues];
-  }
-
-  return { controls };
+function unsupportedProviderIssue(path: string, providerId: string): RuntimeIssue {
+  return {
+    message: `"${providerId}" is not a supported property`,
+    issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+    variableName: path,
+  };
 }
 
 /**
@@ -147,6 +128,10 @@ function collectIssues(target: ControlIssues, source: ControlIssues): ControlIss
  * step issues namespaced as `providerOverrides.<providerId>.<path>`. Values are validated with the
  * Liquid still in them — they are only compiled at send time — so the tolerant schema variant
  * accepts a template wherever a concrete value is expected.
+ *
+ * Each blob is validated as its own root document rather than nested under one envelope schema,
+ * because a provider schema may use absolute `$ref`s into its own `definitions` and those stop
+ * resolving once the schema is nested under a wrapper.
  */
 export function processProviderOverridesIssues(
   providerOverrides: StepProviderOverrides | null | undefined
@@ -155,29 +140,26 @@ export function processProviderOverridesIssues(
     return {};
   }
 
-  let issues = processControlValuesBySchema({
-    controlSchema: PROVIDER_OVERRIDES_ENVELOPE_SCHEMA,
-    controlValues: { providerOverrides },
-  });
+  const controls: Record<string, RuntimeIssue[]> = {};
 
   for (const [providerId, override] of Object.entries(providerOverrides)) {
+    const providerPath = `providerOverrides.${providerId}`;
     const config = getProviderOverrideConfig(providerId);
 
-    // Unsupported provider ids are already reported by the envelope schema.
     if (!config) {
+      controls[providerPath] = [unsupportedProviderIssue(providerPath, providerId)];
       continue;
     }
 
-    const errors = getProviderOverrideValidator(providerId, config)(override);
-    if (errors.length === 0) {
-      continue;
-    }
+    const providerIssues = mapSchemaErrorsToControlIssues(getProviderOverrideValidator(config)(override), {
+      pathPrefix: providerPath,
+      collapseUrlFieldErrors: false,
+    }).controls;
 
-    issues = collectIssues(
-      issues,
-      mapSchemaErrorsToControlIssues(errors, { pathPrefix: `providerOverrides.${providerId}` })
-    );
+    for (const [path, pathIssues] of Object.entries(providerIssues ?? {})) {
+      controls[path] = [...(controls[path] ?? []), ...pathIssues];
+    }
   }
 
-  return issues;
+  return Object.keys(controls).length === 0 ? {} : { controls };
 }

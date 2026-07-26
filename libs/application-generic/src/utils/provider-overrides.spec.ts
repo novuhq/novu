@@ -1,6 +1,13 @@
-import { ChatProviderIdEnum, ContentIssueEnum, ToolProviderIdEnum } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  CONTENT_OVERRIDE_PROVIDER_IDS,
+  ContentIssueEnum,
+  getProviderOverrideConfig,
+  ToolProviderIdEnum,
+} from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH,
   processProviderOverridesIssues,
   stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
@@ -10,6 +17,17 @@ const slackPath = (pointer?: string) =>
   pointer
     ? `providerOverrides.${ChatProviderIdEnum.Slack}.${pointer}`
     : `providerOverrides.${ChatProviderIdEnum.Slack}`;
+
+describe('LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH', () => {
+  it('registers every schema subpath the shared provider registry points at', () => {
+    const subpaths = CONTENT_OVERRIDE_PROVIDER_IDS.map(
+      (providerId) => getProviderOverrideConfig(providerId)?.schemaSubpath
+    ).filter((subpath): subpath is string => Boolean(subpath));
+
+    expect(subpaths.length).toBeGreaterThan(0);
+    expect(subpaths.filter((subpath) => !(subpath in LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH))).toEqual([]);
+  });
+});
 
 describe('stitchProviderOverridesFromDocs', () => {
   it('rebuilds a providerOverrides map from STEP_PROVIDER_CONTROLS docs', () => {
@@ -185,6 +203,21 @@ describe('processProviderOverridesIssues', () => {
     });
 
     expect(issues.controls).toBeUndefined();
+  });
+
+  it('reports the provider schema error rather than the step-control URL message', () => {
+    const issues = processProviderOverridesIssues({
+      [ChatProviderIdEnum.Slack]: {
+        blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'x' }, accessory: { type: 'button', url: 12 } }],
+      },
+    });
+
+    const messages = Object.values(issues.controls ?? {})
+      .flat()
+      .map((issue) => issue.message);
+
+    expect(messages.length).toBeGreaterThan(0);
+    expect(messages.every((message) => !message.includes('path starting with /'))).toBe(true);
   });
 
   it('rejects an override for a provider that supports no overrides at all', () => {

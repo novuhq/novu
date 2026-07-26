@@ -126,7 +126,7 @@ type WithProviderOverrides<T> = T & { providerOverrides?: Record<string, unknown
  */
 function keepProviderOverrides(
   sanitized: Record<string, unknown>,
-  controlValues: WithProviderOverrides<unknown>
+  controlValues: { providerOverrides?: Record<string, unknown> }
 ): Record<string, unknown> {
   if (controlValues.providerOverrides === undefined) {
     return sanitized;

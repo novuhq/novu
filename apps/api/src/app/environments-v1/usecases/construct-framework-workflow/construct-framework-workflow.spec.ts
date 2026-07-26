@@ -16,7 +16,12 @@ type StepOptions = {
 };
 
 const usecase = Object.create(ConstructFrameworkWorkflow.prototype) as ConstructFrameworkWorkflow & {
-  constructProviderOverrideStepOptions: (...args: unknown[]) => StepOptions;
+  constructProviderOverrideStepOptions: (
+    staticStep: NotificationStepEntity,
+    fullPayloadForRender: unknown,
+    dbWorkflow: NotificationTemplateEntity,
+    stepType: StepTypeEnum
+  ) => StepOptions;
 };
 
 const staticStep = {
@@ -25,49 +30,45 @@ const staticStep = {
 
 const dbWorkflow = { origin: ResourceOriginEnum.NOVU_CLOUD } as NotificationTemplateEntity;
 
-function buildOptions(stepType: StepTypeEnum, providerIds: readonly string[]): StepOptions {
-  return usecase.constructProviderOverrideStepOptions(staticStep, {}, dbWorkflow, stepType, providerIds);
+function buildOptions(stepType: StepTypeEnum): StepOptions {
+  return usecase.constructProviderOverrideStepOptions(staticStep, {}, dbWorkflow, stepType);
 }
 
 describe('ConstructFrameworkWorkflow provider override step options', () => {
-  it('registers a resolver for every chat provider that supports content overrides', () => {
-    const { providers } = buildOptions(StepTypeEnum.CHAT, CHAT_CONTENT_OVERRIDE_PROVIDER_IDS);
+  it('gives a chat step exactly the chat providers, and no tool providers', () => {
+    const { providers } = buildOptions(StepTypeEnum.CHAT);
 
     expect(Object.keys(providers).sort()).to.deep.equal([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS].sort());
+    expect(providers[ToolProviderIdEnum.PagerDuty]).to.equal(undefined);
   });
 
-  it('still registers a resolver for every tool provider', () => {
-    const { providers } = buildOptions(StepTypeEnum.TOOL, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS);
+  it('gives a tool step exactly the tool providers, and no chat providers', () => {
+    const { providers } = buildOptions(StepTypeEnum.TOOL);
 
     expect(Object.keys(providers).sort()).to.deep.equal([...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS].sort());
+    expect(providers[ChatProviderIdEnum.Slack]).to.equal(undefined);
   });
 
   it('resolves a provider payload from the compiled overrides on the step outputs', async () => {
-    const { providers } = buildOptions(StepTypeEnum.CHAT, CHAT_CONTENT_OVERRIDE_PROVIDER_IDS);
+    const { providers } = buildOptions(StepTypeEnum.CHAT);
     const outputs = { body: 'hi', providerOverrides: { [ChatProviderIdEnum.Slack]: { text: 'compiled' } } };
 
     expect(await providers[ChatProviderIdEnum.Slack]({ outputs })).to.deep.equal({ text: 'compiled' });
-    expect(await providers[ChatProviderIdEnum.Discord]({ outputs })).to.deep.equal({});
   });
 
-  it('extends the runtime control schema so the stitched providerOverrides field survives validation', () => {
-    for (const [stepType, providerIds] of [
-      [StepTypeEnum.CHAT, CHAT_CONTENT_OVERRIDE_PROVIDER_IDS],
-      [StepTypeEnum.TOOL, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS],
-    ] as const) {
-      const { controlSchema } = buildOptions(stepType, providerIds);
+  it('resolves an empty payload for a provider the step has no override for', async () => {
+    const { providers } = buildOptions(StepTypeEnum.CHAT);
 
-      expect(controlSchema.properties?.providerOverrides).to.deep.equal({
-        type: 'object',
-        additionalProperties: { type: 'object', additionalProperties: true },
-      });
-    }
+    expect(await providers[ChatProviderIdEnum.Discord]({ outputs: { body: 'hi' } })).to.deep.equal({});
   });
 
-  it('keeps tool overrides addressable by their own provider ids', async () => {
-    const { providers } = buildOptions(StepTypeEnum.TOOL, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS);
-    const outputs = { body: 'hi', providerOverrides: { [ToolProviderIdEnum.PagerDuty]: { severity: 'warning' } } };
+  it('accepts the stitched providerOverrides field the framework would otherwise strip', () => {
+    const { controlSchema } = buildOptions(StepTypeEnum.CHAT);
+    const providerOverrides = controlSchema.properties?.providerOverrides as {
+      additionalProperties?: { additionalProperties?: boolean };
+    };
 
-    expect(await providers[ToolProviderIdEnum.PagerDuty]({ outputs })).to.deep.equal({ severity: 'warning' });
+    expect(controlSchema.properties?.body, 'the step\u2019s own controls must survive').to.exist;
+    expect(providerOverrides?.additionalProperties?.additionalProperties).to.equal(true);
   });
 });
