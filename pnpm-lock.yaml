@@ -23,7 +23,7 @@ overrides:
   proxy-agent@<6.3.1: ^6.3.1
   semver@>=7.0.0 <7.5.2: ^7.5.2
   systeminformation@<5.31.7: ^5.31.7
-  tar: ^7.5.21
+  tar: 7.5.21
   tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
   trim-newlines@<3.0.1: ^3.0.1
@@ -340,7 +340,7 @@ importers:
         specifier: ^3.1.2
         version: 3.3.1
       tar:
-        specifier: ^7.5.21
+        specifier: 7.5.21
         version: 7.5.21
       ts-jest:
         specifier: 29.4.1
@@ -643,8 +643,8 @@ importers:
         specifier: ^4.4.0
         version: 4.6.2(express@5.2.1)
       tar:
-        specifier: ^7.5.21
-        version: 7.5.22
+        specifier: 7.5.21
+        version: 7.5.21
       tldts:
         specifier: ^7.0.28
         version: 7.0.30
@@ -26153,10 +26153,6 @@ packages:
 
   tar@7.5.21:
     resolution: {integrity: sha512-XdhtCvlMywwxpCW8YEq3lOXBJpUPTR2OHHcwLPO3HwsJqOHa2Ok/oJ7ruGzp+JrKoRPVCzJwAdEjqLW/vNRPHA==}
-    engines: {node: '>=18'}
-
-  tar@7.5.22:
-    resolution: {integrity: sha512-MFO/QzvtAOmJbkhOaCTvbGcFN9L9b+JunIsDwaKljSOdcLMea3NJ1k9Usz/rjdfSXTq4dfzfeS7W4p4YOAAHeA==}
     engines: {node: '>=18'}
 
   teeny-request@7.1.1:
@@ -57726,14 +57722,6 @@ snapshots:
     optional: true
 
   tar@7.5.21:
-    dependencies:
-      '@isaacs/fs-minipass': 4.0.1
-      chownr: 3.0.0
-      minipass: 7.1.3
-      minizlib: 3.1.0
-      yallist: 5.0.0
-
-  tar@7.5.22:
     dependencies:
       '@isaacs/fs-minipass': 4.0.1
       chownr: 3.0.0
