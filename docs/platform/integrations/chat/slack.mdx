@@ -35,12 +35,6 @@ This guide walks you through setting up Slack chat, connect workspaces, and deli
 
 Before integrating Slack chat with Novu, you must create and configure a Slack app. The Slack app manages the OAuth permissions, bot token scopes, and redirect URLs needed for Novu to connect to your users' workspaces securely.
 
-<Info>
-  **Token rotation is supported.** Novu stores the refresh token and expiry returned during OAuth and automatically refreshes the bot token before it expires. Apps without token rotation continue to work with their long-lived bot tokens.
-
-  Apps created through Novu's **quick setup** (App Configuration Token) or the setup guide's manifest have token rotation enabled by default. Enabling token rotation on a Slack app is irreversible.
-</Info>
-
 ### Create a Slack app
 First, you need to create a Slack app. This provides you with the credential you need to create a Slack integration in Novu.
 
@@ -360,31 +354,8 @@ await novu.channelConnections.create({
 });
 ```
 
-  **Token rotation.** If your Slack app has token rotation enabled, `oauth.v2.access` returns a short-lived `access_token` plus a `refresh_token` and `expires_in` (seconds). Pass all three so Novu refreshes the bot token automatically before it expires. Convert `expires_in` to an absolute ISO timestamp for `expiresAt`:
-
-```tsx
-await novu.channelConnections.create({
-  integrationIdentifier: 'slack',
-  subscriberId: 'user-123',
-  context: { tenant: 'acme' },
-  workspace: {
-    id: authData.team.id,
-    name: authData.team.name,
-  },
-  auth: {
-    accessToken: authData.access_token,
-    refreshToken: authData.refresh_token,
-    expiresAt: new Date(Date.now() + authData.expires_in * 1000).toISOString(),
-  },
-});
-```
-
-  Storing a `refreshToken` requires your Novu Slack integration to have its **Client ID** and **Client Secret** configured (the same OAuth client used to issue the token) — Novu uses them to perform the refresh. If they are missing, the request is rejected. If you omit `expiresAt`, Novu treats the token as already expiring and refreshes it on the first send.
+  If your app uses short-lived tokens, see [Token rotation](#token-rotation) for the additional credentials to register.
 </Note>
-
-### Troubleshoot token rotation
-
-If deliveries fail with `token_revoked` or `invalid_auth`, reconnect the workspace through OAuth. Reconnecting captures a new refresh token and is required when the workspace was connected before rotation was enabled, before Novu supported rotation, or when the refresh token was regenerated in Slack.
 
 ## Choose delivery destinations
 
@@ -1600,6 +1571,57 @@ Trigger overrides are set when you call the trigger API. They work well when eac
 
 For [digest workflows](/platform/workflow/add-and-configure-steps/configure-action-steps/digest), Novu batches multiple triggers into one notification. The Chat step body can use [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) to summarize batched events, but `overrides` are not re-evaluated with that aggregated data. To build Block Kit dynamically from a digest batch, use [Framework provider overrides](/framework/typescript/steps#provider-overrides) in a code-first workflow.
 
+## Token rotation
+
+Slack token rotation replaces long-lived bot tokens with short-lived access tokens and single-use refresh tokens. Novu stores the credentials returned during OAuth and refreshes the bot token automatically before it expires.
+
+Apps created through Novu's **quick setup** (App Configuration Token) or the setup guide's manifest have token rotation enabled by default. Enabling token rotation on a Slack app is irreversible. Apps without token rotation continue to work with their long-lived bot tokens.
+
+### How token rotation works
+
+When a user connects a workspace, Slack's `oauth.v2.access` response includes:
+
+- `access_token`: the short-lived bot token used to call Slack APIs
+- `refresh_token`: a single-use token used to request the next access token
+- `expires_in`: the access token lifetime in seconds
+
+Novu converts the lifetime into an expiry time and refreshes the access token before it expires. Slack returns a new access token and refresh token after each successful refresh, and Novu stores the new pair for the next rotation.
+
+### Register rotated credentials when handling OAuth yourself
+
+If you handle OAuth yourself and create the channel connection through the API, pass the access token, refresh token, and expiry time:
+
+```tsx
+await novu.channelConnections.create({
+  integrationIdentifier: 'slack',
+  subscriberId: 'user-123',
+  context: { tenant: 'acme' },
+  workspace: {
+    id: authData.team.id,
+    name: authData.team.name,
+  },
+  auth: {
+    accessToken: authData.access_token,
+    refreshToken: authData.refresh_token,
+    expiresAt: new Date(Date.now() + authData.expires_in * 1000).toISOString(),
+  },
+});
+```
+
+Your Novu Slack integration must have the same **Client ID** and **Client Secret** that issued the token. Novu uses these credentials during refresh, and rejects the request if they are missing. If you omit `expiresAt`, Novu treats the token as expiring and refreshes it on the first send.
+
+### Troubleshoot token rotation
+
+If deliveries fail with `token_revoked` or `invalid_auth`, reconnect the workspace through OAuth. Reconnecting captures a new refresh token and is required when:
+
+- The workspace was connected before token rotation was enabled
+- The workspace was connected before Novu supported token rotation
+- The refresh token was regenerated in Slack
+
+For an agent connection, you can replace the refresh token without reconnecting the workspace. Open the Slack setup drawer for the agent, paste a new token under **Token rotation**, and click **Save & verify**. Novu exchanges and validates the token immediately.
+
+Slack refresh tokens are single-use. Only paste a token that has not been exchanged elsewhere.
+
 ## Using Slack with agents
 
 Slack is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your Slack app to an agent so users can message in channels or DMs and get replies in the same thread, without building Slack event handling yourself.
@@ -1617,12 +1639,6 @@ When Slack is connected to an agent:
 - Supported content includes text, markdown, files, interactive cards, reactions, and typing indicators
 
 See [agent conversations](/agents/conversations#supported-platforms) for capabilities across all providers.
-
-### Replace an agent connection's refresh token
-
-If reconnecting a workspace is not practical, open the Slack setup drawer for the agent. Under **Token rotation**, paste a new refresh token from Slack and click **Save & verify**. Novu exchanges and validates the token immediately.
-
-Slack refresh tokens are single-use. Only paste a token that has not been exchanged elsewhere.
 
 ### Agent conversations vs. workflow notifications
 
