@@ -81,6 +81,49 @@ describe('stripReservedOverrideKeys', () => {
     expect(stripReservedOverrideKeys('not-a-provider', discord)).toBe(discord);
   });
 
+  it('strips body-level destinations from providers that route inside the request body', () => {
+    expect(stripReservedOverrideKeys(ChatProviderIdEnum.Telegram, { chat_id: 'attacker', text: 'hi' })).toEqual({
+      text: 'hi',
+    });
+    expect(stripReservedOverrideKeys(ChatProviderIdEnum.Line, { to: 'attacker', messages: [] })).toEqual({
+      messages: [],
+    });
+    expect(stripReservedOverrideKeys(ChatProviderIdEnum.WhatsAppBusiness, { to: '+1555', type: 'text' })).toEqual({
+      type: 'text',
+    });
+    expect(
+      stripReservedOverrideKeys(ChatProviderIdEnum.Sendblue, { number: '+1555', from_number: '+1444', content: 'hi' })
+    ).toEqual({ content: 'hi' });
+    expect(stripReservedOverrideKeys(ChatProviderIdEnum.Mattermost, { channel: 'town-square', text: 'hi' })).toEqual({
+      text: 'hi',
+    });
+    expect(
+      stripReservedOverrideKeys(ChatProviderIdEnum.WebexMessaging, { roomId: 'attacker', markdown: '**hi**' })
+    ).toEqual({ markdown: '**hi**' });
+  });
+
+  it('strips a nested destination path while keeping the content beside it', () => {
+    const stripped = stripReservedOverrideKeys(ChatProviderIdEnum.RocketChat, {
+      message: { rid: 'attacker-room', msg: 'hello', alias: 'bot' },
+    });
+
+    expect(stripped).toEqual({ message: { msg: 'hello', alias: 'bot' } });
+  });
+
+  it('strips a nested destination smuggled through _passthrough.body', () => {
+    const stripped = stripReservedOverrideKeys(ChatProviderIdEnum.RocketChat, {
+      _passthrough: { body: { message: { rid: 'attacker-room', emoji: ':ok:' } } },
+    });
+
+    expect(stripped).toEqual({ _passthrough: { body: { message: { emoji: ':ok:' } } } });
+  });
+
+  it('returns the original object when a nested reservation is absent', () => {
+    const override = { message: { msg: 'hello' } };
+
+    expect(stripReservedOverrideKeys(ChatProviderIdEnum.RocketChat, override)).toBe(override);
+  });
+
   it('reserves exactly the Slack keys that are absent from the overridable key list', () => {
     const config = getProviderOverrideConfig(ChatProviderIdEnum.Slack);
 

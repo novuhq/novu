@@ -26,7 +26,8 @@ export type ProviderOverrideConfig = {
   /**
    * Keys the send path strips from a merged override before handing it to the provider, because
    * Novu owns them (routing, credentials). Leaving them out of `schema` only produces an advisory
-   * step issue, so enforcement has to happen at send.
+   * step issue, so enforcement has to happen at send. A dot in a key makes it a nested path
+   * (Rocket.Chat routes via `message.rid` while its content lives beside it in `message.msg`).
    */
   reservedKeys?: readonly string[];
   /** Top-level payload key the step body falls back into. null when the provider nests its content. */
@@ -63,8 +64,8 @@ function schemaBacked(schema: JSONSchemaDto, keys: readonly string[], primaryCon
 }
 
 /** Free-form JSON passthrough: the provider accepts keys we cannot describe up front. */
-function escapeHatch(primaryContentKey: string | null) {
-  return { primaryContentKey } satisfies ProviderOverrideConfig;
+function escapeHatch(primaryContentKey: string | null, reservedKeys?: readonly string[]) {
+  return { primaryContentKey, ...(reservedKeys ? { reservedKeys } : {}) } satisfies ProviderOverrideConfig;
 }
 
 const TOOL_PROVIDER_OVERRIDE_CONFIGS = {
@@ -87,6 +88,14 @@ const TOOL_PROVIDER_OVERRIDE_CONFIGS = {
  * Primary content keys mirror the field each provider drops the compiled body into; `null` means
  * the body is nested (Line `messages[].text`, WhatsApp `text.body`, Rocket.Chat `message.msg`)
  * and there is no flat top-level equivalent to fall back into.
+ *
+ * Reserved keys cover the providers whose request *body* carries the destination, so a persisted
+ * override cannot re-route a subscriber's message (Slack `channel`, Telegram `chat_id`, LINE and
+ * WhatsApp `to`, Sendblue `number`, Mattermost `channel`, Rocket.Chat `message.rid`, Webex
+ * `roomId`/`toPersonId`/`toPersonEmail`). Webhook-URL providers (Discord, MS Teams, Zulip,
+ * Grafana OnCall, Ryver, GetStream, generic webhook) reserve nothing: their destination is the
+ * stored channel endpoint, and `webhookUrl`/`endpoint` overrides are stripped generically by the
+ * send path before this per-provider strip runs.
  */
 const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Slack]: {
@@ -100,18 +109,18 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Novu]: escapeHatch('text'),
   [ChatProviderIdEnum.Discord]: escapeHatch('content'),
   [ChatProviderIdEnum.MsTeams]: escapeHatch('text'),
-  [ChatProviderIdEnum.WebexMessaging]: escapeHatch('text'),
-  [ChatProviderIdEnum.Mattermost]: escapeHatch('text'),
+  [ChatProviderIdEnum.WebexMessaging]: escapeHatch('text', ['roomId', 'parentId', 'toPersonId', 'toPersonEmail']),
+  [ChatProviderIdEnum.Mattermost]: escapeHatch('text', ['channel']),
   [ChatProviderIdEnum.Ryver]: escapeHatch('content'),
   [ChatProviderIdEnum.Zulip]: escapeHatch('text'),
   [ChatProviderIdEnum.GrafanaOnCall]: escapeHatch('message'),
   [ChatProviderIdEnum.GetStream]: escapeHatch('text'),
-  [ChatProviderIdEnum.RocketChat]: escapeHatch(null),
-  [ChatProviderIdEnum.WhatsAppBusiness]: escapeHatch(null),
-  [ChatProviderIdEnum.Line]: escapeHatch(null),
+  [ChatProviderIdEnum.RocketChat]: escapeHatch(null, ['message.rid']),
+  [ChatProviderIdEnum.WhatsAppBusiness]: escapeHatch(null, ['to']),
+  [ChatProviderIdEnum.Line]: escapeHatch(null, ['to']),
   [ChatProviderIdEnum.ChatWebhook]: escapeHatch('content'),
-  [ChatProviderIdEnum.Telegram]: escapeHatch('text'),
-  [ChatProviderIdEnum.Sendblue]: escapeHatch('content'),
+  [ChatProviderIdEnum.Telegram]: escapeHatch('text', ['chat_id']),
+  [ChatProviderIdEnum.Sendblue]: escapeHatch('content', ['number', 'from_number']),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 export const PROVIDER_OVERRIDE_CONFIGS = {
@@ -190,7 +199,48 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Strips the keys Novu owns (routing, credentials) from a merged override payload.
+ * Removes one reserved key (given as a path of segments) from `target`, cloning only the objects
+ * along the path. Returns `target` itself when the path is absent, so callers can detect no-ops
+ * by identity.
+ */
+function stripPath(target: Record<string, unknown>, path: readonly string[]): Record<string, unknown> {
+  const [head, ...rest] = path;
+  if (head === undefined || !(head in target)) {
+    return target;
+  }
+
+  if (rest.length === 0) {
+    const { [head]: _removed, ...remaining } = target;
+
+    return remaining;
+  }
+
+  const child = target[head];
+  if (!isRecord(child)) {
+    return target;
+  }
+
+  const strippedChild = stripPath(child, rest);
+  if (strippedChild === child) {
+    return target;
+  }
+
+  return { ...target, [head]: strippedChild };
+}
+
+function stripReservedFrom(target: Record<string, unknown>, reservedKeys: readonly string[]): Record<string, unknown> {
+  let result = target;
+  for (const key of reservedKeys) {
+    result = stripPath(result, key.split('.'));
+  }
+
+  return result;
+}
+
+/**
+ * Strips the keys Novu owns (routing, credentials) from a merged override payload. A dot in a
+ * reserved key addresses a nested field, leaving its siblings intact (Rocket.Chat's `message.rid`
+ * is stripped while `message.msg` — the content — survives).
  *
  * Reserved keys are removed from `_passthrough.body` as well: the provider send path merges
  * `_passthrough.body` with the highest precedence, so leaving it untouched would let an override
@@ -204,27 +254,16 @@ export function stripReservedOverrideKeys<T extends Record<string, unknown>>(pro
     return override;
   }
 
-  const topLevelPresent = reservedKeys.filter((key) => key in override);
+  let stripped: Record<string, unknown> = stripReservedFrom(override, reservedKeys);
 
-  const passthrough = isRecord(override._passthrough) ? override._passthrough : undefined;
+  const passthrough = isRecord(stripped._passthrough) ? stripped._passthrough : undefined;
   const passthroughBody = passthrough && isRecord(passthrough.body) ? passthrough.body : undefined;
-  const passthroughPresent = passthroughBody ? reservedKeys.filter((key) => key in passthroughBody) : [];
-
-  if (topLevelPresent.length === 0 && passthroughPresent.length === 0) {
-    return override;
-  }
-
-  const stripped: Record<string, unknown> = { ...override };
-  for (const key of topLevelPresent) {
-    delete stripped[key];
-  }
-
-  if (passthrough && passthroughBody && passthroughPresent.length > 0) {
-    const strippedBody = { ...passthroughBody };
-    for (const key of passthroughPresent) {
-      delete strippedBody[key];
+  if (passthrough && passthroughBody) {
+    const strippedBody = stripReservedFrom(passthroughBody, reservedKeys);
+    if (strippedBody !== passthroughBody) {
+      stripped = stripped === override ? { ...override } : stripped;
+      stripped._passthrough = { ...passthrough, body: strippedBody };
     }
-    stripped._passthrough = { ...passthrough, body: strippedBody };
   }
 
   return stripped as T;

@@ -1,4 +1,5 @@
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import { providerSchemas } from '@novu/framework';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   ChatProviderIdEnum,
@@ -60,6 +61,20 @@ describe('ConstructFrameworkWorkflow provider override step options', () => {
     const { providers } = buildOptions(StepTypeEnum.CHAT);
 
     expect(await providers[ChatProviderIdEnum.Discord]({ outputs: { body: 'hi' } })).to.deep.equal({});
+  });
+
+  /**
+   * `discoverProviders` reads `providerSchemas[channel][providerId].output` without a guard, so a
+   * provider id the framework does not know about crashes the whole bridge request — including
+   * previews of unrelated steps in the same workflow (NV-8397 regression on `novu-slack`,
+   * `webex-messaging`, and `line`).
+   */
+  it('only registers provider ids the framework has schemas for', () => {
+    const chatSchemaIds = Object.keys(providerSchemas.chat);
+    const toolSchemaIds = Object.keys(providerSchemas.tool);
+
+    expect(chatSchemaIds).to.include.members([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS]);
+    expect(toolSchemaIds).to.include.members([...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS]);
   });
 
   it('accepts the stitched providerOverrides field the framework would otherwise strip', () => {
