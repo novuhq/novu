@@ -24,7 +24,7 @@ This guide walks you through setting up Slack chat, connect workspaces, and deli
 </CardGroup>
 
 <Note>
-  The Chat step body is plain text. To send [Slack Block Kit](https://api.slack.com/block-kit) messages, either save a Slack content override on the Chat step in the workflow editor, or pass `blocks` in [trigger overrides](/platform/integrations/trigger-overrides) when you call the API. See [Format messages with Block Kit](#format-messages-with-block-kit).
+  The Chat step body is plain text. To send [Slack Block Kit](https://api.slack.com/block-kit) messages, either save a Slack content override on the Chat step in the workflow editor (rolling out gradually — see [Configure Slack overrides in the dashboard](#configure-slack-overrides-in-the-dashboard)), or pass `blocks` in [trigger overrides](/platform/integrations/trigger-overrides) when you call the API.
 </Note>
 
 <Note>
@@ -883,12 +883,13 @@ You can supply that object from three places:
 
 | Approach | Best for |
 | --- | --- |
-| **Chat step body (dashboard)** | Plain text summaries, including [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) |
 | **Slack overrides on the step (dashboard)** | Block Kit that is part of the workflow itself, saved and versioned with the step |
 | **Trigger overrides (API)** | Block Kit that only your calling code can build, decided per trigger |
 | **Framework provider overrides** | Full control in code-first workflows, including dynamic digest formatting |
 
-Overrides from these sources are combined rather than chosen between. See [How Slack overrides are combined](#how-slack-overrides-are-combined).
+If you send no override at all, Slack receives the rendered Chat step body as plain text, which is enough for summaries built from [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables).
+
+Step overrides and trigger overrides are combined rather than chosen between. See [How Slack overrides are combined](#how-slack-overrides-are-combined).
 
 ### Plain text and digest summaries
 
@@ -909,7 +910,7 @@ This renders as plain text in Slack. It does not produce Block Kit formatting su
 Save a Slack override on the Chat step and every trigger of that workflow sends it, with no change to your trigger call. The override is stored on the step, so it is versioned and promoted between environments along with the rest of the workflow.
 
 <Note>
-  Editing provider content overrides in the workflow editor is rolling out gradually. If the **Slack** override editor is not visible on your Chat step, contact support@novu.co to have it enabled for your organization. Overrides passed at trigger time work regardless.
+  Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Chat step yet. Overrides passed at trigger time work regardless.
 </Note>
 
 <Steps>
@@ -922,15 +923,15 @@ Save a Slack override on the Chat step and every trigger of that workflow sends 
   </Step>
 
   <Step title="Write the override JSON">
-    Enter a JSON object of `chat.postMessage` fields. The editor autocompletes the supported field names, including inside `blocks[].elements[]`, and flags invalid JSON and unsupported fields before you can save.
+    Enter a JSON object of `chat.postMessage` fields. The editor autocompletes the supported field names, including inside `blocks[].elements[]`, validates the JSON, and flags unsupported fields.
   </Step>
 
   <Step title="Save the workflow">
-    Save the step. The override applies on the next trigger.
+    The override applies on the next trigger.
   </Step>
 </Steps>
 
-Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates. Novu compiles them at send time against the same variables the step body uses, so `{{payload.*}}`, `{{subscriber.*}}`, and step variables all resolve:
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time, so `{{payload.*}}` and `{{subscriber.*}}` resolve the same way they do in the step body:
 
 ```json
 {
@@ -999,7 +1000,7 @@ Three fields are deliberately not overridable:
 <Warning>
   **Incoming webhook endpoints ignore some fields.** Slack's incoming webhook API is narrower than `chat.postMessage`: `thread_ts`, `metadata`, `username`, `icon_emoji`, and `icon_url` have no effect on messages delivered through a webhook URL.
 
-  Which API is used depends on how each subscriber connected — a `slack_channel` or `slack_user` endpoint posts through `chat.postMessage`, while an endpoint created by Slack's channel picker posts through an incoming webhook. You cannot know that when authoring the workflow, so avoid depending on these five fields unless you control how every subscriber connects.
+  Which API is used depends on how each subscriber connected — a `slack_channel` or `slack_user` endpoint posts through `chat.postMessage`, while a `webhook` endpoint, the type Slack's channel picker creates, posts through an incoming webhook. You cannot know that when authoring the workflow, so avoid depending on these five fields unless you control how every subscriber connects.
 </Warning>
 
 ### Send Block Kit with trigger overrides
@@ -1370,7 +1371,7 @@ If your workflow has a single Slack Chat step, you can apply Block Kit to all Sl
 
 ### Send extra Slack fields with `_passthrough`
 
-Use `_passthrough` when you need raw [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) fields that are not exposed in the dashboard. Values in `_passthrough.body` are merged last and take priority over other override fields.
+Use `_passthrough` when you need a value to win unconditionally, or to reach a [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) field Novu has not yet surfaced. Values in `_passthrough.body` are merged last and take priority over other override fields.
 
 <Tabs>
   <Tab title="Node.js">
@@ -1673,7 +1674,9 @@ When a Slack override exists in more than one place, Novu merges them in this or
 2. **Workflow-level trigger overrides** — `overrides.providers.slack` from the trigger call
 3. **Step-scoped trigger overrides** — `overrides.steps.<step-id>.providers.slack` from the trigger call
 
-Runtime always wins: an override sent at trigger time replaces the value saved on the step for the same field. Fields you do not send at trigger time keep their configured values, so you can save a full Block Kit layout on the step and override only `thread_ts` per trigger.
+Runtime always wins: an override sent at trigger time replaces the value saved on the step for the same field. Fields you do not send at trigger time keep their configured values, so you can save a full Block Kit layout on the step and override only `unfurl_links` per trigger.
+
+`_passthrough.body` sits outside this ordering. Wherever it appears, it is merged last and takes priority over every field above. See [Send extra Slack fields with `_passthrough`](#send-extra-slack-fields-with-_passthrough).
 
 <Warning>
   **Arrays replace, they do not merge.** When the same array key appears at two levels, the higher-priority array is used whole. A trigger override of `blocks` with one block replaces a configured `blocks` array of three blocks — the result is a one-block message, not a three-block message with the first one patched.

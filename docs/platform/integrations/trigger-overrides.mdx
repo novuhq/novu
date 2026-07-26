@@ -711,7 +711,7 @@ In this example, only the `push-step` is affected, and multiple FCM-specific set
 Use trigger overrides to send [Slack Block Kit](https://api.slack.com/block-kit) messages that only your calling code can build. Pass a `blocks` array under `overrides.steps.<step-id>.providers.slack`, or use `_passthrough.body` for raw Slack API fields.
 
 <Note>
-  Trigger overrides are no longer the only way to reach Block Kit from a dashboard workflow. You can also save Slack overrides directly on the Chat step in the workflow editor, which keeps the layout versioned with the workflow instead of duplicated across every trigger call. Use trigger overrides when the message depends on data your application has at send time.
+  You can also save Slack overrides directly on the Chat step in the workflow editor, which keeps the layout versioned with the workflow instead of duplicated across every trigger call. That editor is [rolling out gradually](/platform/integrations/chat#provider-content-overrides). Use trigger overrides when the message depends on data your application only has at send time.
 </Note>
 
 <Card title="Slack Block Kit guide" icon="messages-square" href="/platform/integrations/chat/slack#format-messages-with-block-kit">
