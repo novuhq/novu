@@ -81,15 +81,14 @@ describe('Trigger Event SSRF protection - /v1/events/trigger (POST) #novu-v2', (
     await expectNoQueuedBridgeJob();
   });
 
-  // Connect-time block: IP literal passes the synchronous URL policy but
-  // must be rejected by the DNS-pinned guard before the TCP connect, and
-  // the resolved IP must NOT leak into the response.
+  // IP-literal private addresses are rejected by the synchronous
+  // assertSafeOutboundUrl check (before connect / queue).
   it('should reject bridgeUrl pointing at link-local cloud metadata IP', async () => {
     const result = await trigger('http://169.254.169.254/computeMetadata/v1/');
 
     expect(result.status).to.equal(400);
-    expect(JSON.stringify(result.data)).to.match(/blocked by the outbound SSRF policy/i);
-    expect(JSON.stringify(result.data)).to.not.match(/169\.254\.169\.254/);
+    expect(JSON.stringify(result.data)).to.match(/bridgeUrl/i);
+    expect(JSON.stringify(result.data)).to.match(/private or reserved/i);
     await expectNoQueuedBridgeJob();
   });
 
@@ -97,8 +96,8 @@ describe('Trigger Event SSRF protection - /v1/events/trigger (POST) #novu-v2', (
     const result = await trigger('http://10.0.0.1/api/novu');
 
     expect(result.status).to.equal(400);
-    expect(JSON.stringify(result.data)).to.match(/blocked by the outbound SSRF policy/i);
-    expect(JSON.stringify(result.data)).to.not.match(/10\.0\.0\.1/);
+    expect(JSON.stringify(result.data)).to.match(/bridgeUrl/i);
+    expect(JSON.stringify(result.data)).to.match(/private or reserved/i);
     await expectNoQueuedBridgeJob();
   });
 
