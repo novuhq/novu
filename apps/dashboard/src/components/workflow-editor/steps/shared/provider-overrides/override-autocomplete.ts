@@ -409,17 +409,16 @@ export function getOverrideCompletionResult({
   };
 }
 
+/** The resolver carries the root schema, so the caller owns both and completion never rebuilds one. */
 export function createOverrideCompletionSource({
-  rootSchema,
+  resolver,
   describeField,
 }: {
-  rootSchema: OverrideFieldSchema | undefined;
+  resolver: SchemaResolver | undefined;
   describeField?: DescribeOverrideField;
 }): CompletionSource {
-  const resolver = rootSchema ? createSchemaResolver(rootSchema) : undefined;
-
   return (context: CompletionContext): CompletionResult | null => {
-    if (!rootSchema || !resolver || Object.keys(rootSchema.properties ?? {}).length === 0) {
+    if (!resolver || Object.keys(resolver.rootSchema.properties ?? {}).length === 0) {
       return null;
     }
 
@@ -427,7 +426,7 @@ export function createOverrideCompletionSource({
       doc: context.state.doc.toString(),
       pos: context.pos,
       explicit: context.explicit,
-      rootSchema,
+      rootSchema: resolver.rootSchema,
       resolver,
       describeField,
     });

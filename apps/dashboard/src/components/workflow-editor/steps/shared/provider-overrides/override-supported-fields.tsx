@@ -4,7 +4,7 @@ import { RiAddLine, RiCheckLine, RiListUnordered } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { type AnnotateOverrideField, getConstraints, type OverrideFieldSchema } from './override-field-schema';
-import { createSchemaResolver } from './schema-resolver';
+import { type SchemaResolver } from './schema-resolver';
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
@@ -18,11 +18,10 @@ type SupportedField = {
   fieldSchema: OverrideFieldSchema;
 };
 
-function buildSupportedFields(providerId: string, rootSchema: OverrideFieldSchema): SupportedField[] {
+function buildSupportedFields(providerId: string, resolver: SchemaResolver): SupportedField[] {
   const primaryKey = getProviderPrimaryContentKey(providerId);
-  const resolver = createSchemaResolver(rootSchema);
 
-  return Object.entries(rootSchema.properties ?? {}).map(([key, fieldSchema]) => {
+  return Object.entries(resolver.rootSchema.properties ?? {}).map(([key, fieldSchema]) => {
     const described = resolver.describedNode(fieldSchema);
 
     return {
@@ -39,7 +38,8 @@ function buildSupportedFields(providerId: string, rootSchema: OverrideFieldSchem
 type OverrideSupportedFieldsProps = {
   providerId: string;
   displayName: string;
-  rootSchema: OverrideFieldSchema | undefined;
+  /** Undefined when the provider has no browsable schema, which hides the popover entirely. */
+  resolver: SchemaResolver | undefined;
   usedKeys: Set<string>;
   canInsert: boolean;
   annotateField?: AnnotateOverrideField;
@@ -49,16 +49,13 @@ type OverrideSupportedFieldsProps = {
 export function OverrideSupportedFields({
   providerId,
   displayName,
-  rootSchema,
+  resolver,
   usedKeys,
   canInsert,
   annotateField,
   onInsertField,
 }: OverrideSupportedFieldsProps) {
-  const fields = useMemo(
-    () => (rootSchema ? buildSupportedFields(providerId, rootSchema) : []),
-    [providerId, rootSchema]
-  );
+  const fields = useMemo(() => (resolver ? buildSupportedFields(providerId, resolver) : []), [providerId, resolver]);
 
   if (fields.length === 0) {
     return null;

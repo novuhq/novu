@@ -87,10 +87,12 @@ export function ProviderOverrideEditor({
   // reach the popover, whose rows would list every field as `any` and insert the wrong default.
   const browsableSchema = rootSchemaOverride ?? (registrySchema.isTopLevelKeysOnly ? undefined : rootSchema);
   const schemaStatus = registrySchema.isLoading ? `Loading ${displayName} fields…` : undefined;
-  const insertResolver = useMemo(
-    () => (browsableSchema ? createSchemaResolver(browsableSchema) : undefined),
-    [browsableSchema]
-  );
+  // One resolver per schema, shared by completion and the supported-fields popover so they hit the
+  // same deref cache. Keyed on schema identity: a provider switch or a lazy load swaps the schema
+  // object, which rebuilds it, while a re-render on the same schema reuses it.
+  const resolver = useMemo(() => (rootSchema ? createSchemaResolver(rootSchema) : undefined), [rootSchema]);
+  // `browsableSchema` is either `rootSchema` or nothing, so the same resolver serves both.
+  const browsableResolver = browsableSchema ? resolver : undefined;
   const primaryKey = getProviderPrimaryContentKey(providerId) ?? undefined;
   const showEscapeHatchCallout = !notice && isEscapeHatchProvider(providerId);
 
@@ -152,8 +154,8 @@ export function ProviderOverrideEditor({
   const usedDraftKeys = useMemo(() => new Set(Object.keys(parsedDraft ?? {})), [parsedDraft]);
 
   const completionSources = useMemo(
-    () => [createOverrideCompletionSource({ rootSchema, describeField })],
-    [describeField, rootSchema]
+    () => [createOverrideCompletionSource({ resolver, describeField })],
+    [describeField, resolver]
   );
 
   useEffect(() => {
@@ -194,7 +196,7 @@ export function ProviderOverrideEditor({
 
             const next = {
               ...parsedDraft,
-              [key]: insertResolver?.defaultValue(browsableSchema?.properties?.[key]) ?? '',
+              [key]: browsableResolver?.defaultValue(browsableSchema?.properties?.[key]) ?? '',
             };
             setDraft(formatOverrideJson(next));
             writeProviderOverride(next);
@@ -211,7 +213,7 @@ export function ProviderOverrideEditor({
                     <OverrideSupportedFields
                       providerId={providerId}
                       displayName={displayName}
-                      rootSchema={browsableSchema}
+                      resolver={browsableResolver}
                       usedKeys={usedDraftKeys}
                       canInsert={!parseError}
                       annotateField={annotateField}
