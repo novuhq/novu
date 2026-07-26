@@ -9,27 +9,30 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { cn } from '@/utils/ui';
 import {
+  type ContentSource,
   DEFAULT_CONTENT_SOURCE,
   getContentSourceLabel,
-  type ToolContentSource,
-  type ToolOverrideProviderOption,
-} from './tool-content-source';
+  type ProviderOverrideOption,
+} from './content-source';
 
-type ToolContentSourceSelectorProps = {
-  selectedSource: ToolContentSource;
-  providers: ToolOverrideProviderOption[];
+type ContentSourceSelectorProps = {
+  selectedSource: ContentSource;
+  providers: ProviderOverrideOption[];
   invalidProviderIds?: Set<string>;
-  onSelectSource: (source: ToolContentSource) => void;
-  onAddOverride?: (providerId: ToolOverrideProviderOption['providerId']) => void;
+  /** Marks providers whose override payload is free-form. Off by default so existing tabs stay untouched. */
+  showEscapeHatchBadge?: boolean;
+  onSelectSource: (source: ContentSource) => void;
+  onAddOverride?: (providerId: ProviderOverrideOption['providerId']) => void;
 };
 
-export function ToolContentSourceSelector({
+export function ContentSourceSelector({
   selectedSource,
   providers,
   invalidProviderIds,
+  showEscapeHatchBadge = false,
   onSelectSource,
   onAddOverride,
-}: ToolContentSourceSelectorProps) {
+}: ContentSourceSelectorProps) {
   const canAddOverrides = !!onAddOverride;
 
   return (
@@ -108,6 +111,14 @@ export function ToolContentSourceSelector({
                       {provider.displayName}
                     </span>
                     {isInvalid && <RiErrorWarningFill className="text-destructive size-3 shrink-0" />}
+                    {showEscapeHatchBadge && provider.isEscapeHatch && (
+                      <span
+                        className="text-foreground-400 border-stroke-soft shrink-0 rounded-sm border px-1 text-[10px] font-medium uppercase leading-4 tracking-[0.2px]"
+                        title="No schema — this override is passed through to the provider API without validation."
+                      >
+                        no schema
+                      </span>
+                    )}
                     {!provider.isConnected && provider.hasOverride && (
                       <span className="text-warning text-[10px] font-medium">disconnected</span>
                     )}

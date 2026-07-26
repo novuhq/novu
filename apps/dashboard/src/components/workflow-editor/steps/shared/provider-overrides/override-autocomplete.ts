@@ -4,29 +4,30 @@ import {
   type CompletionResult,
   type CompletionSource,
 } from '@codemirror/autocomplete';
-import { type DashboardToolContentOverrideProviderId } from './tool-content-source';
 import {
+  type DescribeOverrideField,
   defaultValueForFieldSchema,
   getConstraints,
-  getFieldSchemas,
-  getTypeLabel,
   type OverrideFieldSchema,
-} from './tool-override-field-schema';
-import { formatWebhookSchemaSourceLabel } from './webhook-payload-schema';
+} from './override-field-schema';
+import { createSchemaResolver, DISCRIMINATOR_KEY, type SchemaResolver } from './schema-resolver';
 
-type SchemaPathSegment = { kind: 'property'; key: string } | { kind: 'items' };
+/** How the cursor's frame was entered from its parent frame. */
+type FrameLink = { kind: 'property'; key: string } | { kind: 'items' };
 
 type ObjectFrame = {
   kind: 'object';
-  path: SchemaPathSegment[];
+  link?: FrameLink;
   state: 'key-or-end' | 'colon' | 'value' | 'comma-or-end';
   pendingKey?: string;
   usedKeys: Set<string>;
+  /** Value of the object's `type` property, used to pick an `anyOf` branch. */
+  discriminator?: string;
 };
 
 type ArrayFrame = {
   kind: 'array';
-  path: SchemaPathSegment[];
+  link?: FrameLink;
   state: 'value-or-end' | 'comma-or-end';
 };
 
@@ -41,16 +42,16 @@ function finishParentValue(frame: JsonFrame | undefined) {
   }
 }
 
-function getNestedValuePath(frame: JsonFrame | undefined): SchemaPathSegment[] {
-  if (frame?.kind === 'object' && frame.state === 'value' && frame.pendingKey) {
-    return [...frame.path, { kind: 'property', key: frame.pendingKey }];
+function linkFromParent(frame: JsonFrame | undefined): FrameLink | undefined {
+  if (frame?.kind === 'object' && frame.state === 'value' && frame.pendingKey !== undefined) {
+    return { kind: 'property', key: frame.pendingKey };
   }
 
   if (frame?.kind === 'array' && frame.state === 'value-or-end') {
-    return [...frame.path, { kind: 'items' }];
+    return { kind: 'items' };
   }
 
-  return [];
+  return undefined;
 }
 
 function readJsonString(doc: string, start: number, limit: number): { value: string; end: number } | undefined {
@@ -111,7 +112,8 @@ function getOpenStringAtCursor(doc: string, pos: number): { from: number; text: 
   };
 }
 
-function getObjectCursorContext(doc: string, pos: number): ObjectFrame | undefined {
+/** Frame stack from the document root down to the cursor, innermost last. */
+function getCursorFrames(doc: string, pos: number): JsonFrame[] {
   const frames: JsonFrame[] = [];
   let index = 0;
 
@@ -135,6 +137,10 @@ function getObjectCursorContext(doc: string, pos: number): ObjectFrame | undefin
         frame.usedKeys.add(stringToken.value);
         frame.state = 'colon';
       } else {
+        if (frame?.kind === 'object' && frame.state === 'value' && frame.pendingKey === DISCRIMINATOR_KEY) {
+          frame.discriminator = stringToken.value;
+        }
+
         finishParentValue(frame);
       }
 
@@ -143,17 +149,17 @@ function getObjectCursorContext(doc: string, pos: number): ObjectFrame | undefin
     }
 
     if (char === '{') {
-      const path = getNestedValuePath(frame);
+      const link = linkFromParent(frame);
       finishParentValue(frame);
-      frames.push({ kind: 'object', path, state: 'key-or-end', usedKeys: new Set() });
+      frames.push({ kind: 'object', link, state: 'key-or-end', usedKeys: new Set() });
       index += 1;
       continue;
     }
 
     if (char === '[') {
-      const path = getNestedValuePath(frame);
+      const link = linkFromParent(frame);
       finishParentValue(frame);
-      frames.push({ kind: 'array', path, state: 'value-or-end' });
+      frames.push({ kind: 'array', link, state: 'value-or-end' });
       index += 1;
       continue;
     }
@@ -184,53 +190,40 @@ function getObjectCursorContext(doc: string, pos: number): ObjectFrame | undefin
     index += 1;
   }
 
-  const current = frames.at(-1);
-
-  return current?.kind === 'object' ? current : undefined;
+  return frames;
 }
 
-function getSchemasAtPath(
-  rootSchemas: Record<string, OverrideFieldSchema>,
-  path: SchemaPathSegment[]
-): Record<string, OverrideFieldSchema> {
-  let schemas: Record<string, OverrideFieldSchema> | undefined = rootSchemas;
-  let field: OverrideFieldSchema | undefined;
+/** Walks the schema down the frame stack, following `$ref`s and narrowing `anyOf` branches. */
+function resolveSchemaAtCursor(resolver: SchemaResolver, frames: JsonFrame[]): OverrideFieldSchema | undefined {
+  let node: OverrideFieldSchema | undefined = resolver.rootSchema;
 
-  for (const segment of path) {
-    if (segment.kind === 'property') {
-      field = schemas?.[segment.key];
-    } else {
-      field = field?.items;
+  for (const frame of frames) {
+    if (frame.link) {
+      node = frame.link.kind === 'property' ? resolver.propertyNode(node, frame.link.key) : resolver.itemsNode(node);
     }
 
-    if (!field) {
-      return {};
-    }
+    node = frame.kind === 'object' ? resolver.objectNode(node, frame.discriminator) : resolver.deref(node);
 
-    schemas = field.properties;
+    if (!node) {
+      return undefined;
+    }
   }
 
-  return schemas ?? {};
+  return node;
 }
 
-function buildFieldInfo(fieldSchema: OverrideFieldSchema): string | undefined {
+function buildFieldInfo(
+  key: string,
+  fieldSchema: OverrideFieldSchema,
+  describeField: DescribeOverrideField | undefined
+): string | undefined {
   const parts: string[] = [];
 
   if (fieldSchema.description) {
     parts.push(fieldSchema.description);
   }
 
-  if (fieldSchema.sources && fieldSchema.sources.length > 0) {
-    parts.push(`Sources: ${fieldSchema.sources.map(formatWebhookSchemaSourceLabel).join(', ')}`);
-  }
-
-  if (fieldSchema.conflicts && fieldSchema.conflicts.length > 0) {
-    parts.push(
-      `Type conflict: ${fieldSchema.conflicts
-        .map(({ source, type }) => `${formatWebhookSchemaSourceLabel(source)}: ${type}`)
-        .join(', ')}`
-    );
-  }
+  parts.push(...(describeField?.(key, fieldSchema) ?? []));
 
   const constraints = getConstraints(fieldSchema);
   if (constraints.length > 0) {
@@ -258,15 +251,21 @@ function getKeyReplacementTo(doc: string, matchTo: number): number {
   return matchTo;
 }
 
-function buildKeyCompletion(key: string, fieldSchema: OverrideFieldSchema): Completion {
-  const defaultValue = defaultValueForFieldSchema(fieldSchema);
+function buildKeyCompletion(
+  key: string,
+  fieldSchema: OverrideFieldSchema,
+  resolver: SchemaResolver,
+  describeField: DescribeOverrideField | undefined
+): Completion {
+  const described = resolver.describedNode(fieldSchema);
+  const defaultValue = defaultValueForFieldSchema(described);
   const keyPrefix = `"${key}": `;
 
   return {
     label: key,
     type: 'property',
-    detail: getTypeLabel(fieldSchema),
-    info: buildFieldInfo(fieldSchema),
+    detail: resolver.typeLabel(fieldSchema),
+    info: buildFieldInfo(key, described, describeField),
     apply: (view, _completion, from, to) => {
       // Resolve end from the live doc — CodeMirror's `to` may stop before an auto-closed `"`.
       const doc = view.state.doc.toString();
@@ -285,12 +284,20 @@ function buildKeyCompletion(key: string, fieldSchema: OverrideFieldSchema): Comp
   };
 }
 
-function availableKeyOptions(
-  fieldSchemas: Record<string, OverrideFieldSchema>,
-  usedKeys: Set<string>,
-  prefix?: string
-): Completion[] {
-  return Object.entries(fieldSchemas)
+function availableKeyOptions({
+  objectSchema,
+  usedKeys,
+  prefix,
+  resolver,
+  describeField,
+}: {
+  objectSchema: OverrideFieldSchema;
+  usedKeys: Set<string>;
+  prefix?: string;
+  resolver: SchemaResolver;
+  describeField: DescribeOverrideField | undefined;
+}): Completion[] {
+  return Object.entries(objectSchema.properties ?? {})
     .filter(([key]) => {
       if (usedKeys.has(key)) {
         return false;
@@ -302,15 +309,11 @@ function availableKeyOptions(
 
       return true;
     })
-    .map(([key, fieldSchema]) => buildKeyCompletion(key, fieldSchema));
+    .map(([key, fieldSchema]) => buildKeyCompletion(key, fieldSchema, resolver, describeField));
 }
 
-function createEnumOptions(fieldSchema: OverrideFieldSchema | undefined, typedValue: string): Completion[] {
-  if (!fieldSchema?.enum || fieldSchema.enum.length === 0) {
-    return [];
-  }
-
-  return fieldSchema.enum
+function createValueOptions(values: string[], typedValue: string): Completion[] {
+  return values
     .filter((value) => value.startsWith(typedValue))
     .map(
       (value) =>
@@ -323,31 +326,40 @@ function createEnumOptions(fieldSchema: OverrideFieldSchema | undefined, typedVa
     );
 }
 
-type ToolOverrideCompletionInput = {
+type OverrideCompletionInput = {
   doc: string;
   pos: number;
   explicit: boolean;
-  fieldSchemas: Record<string, OverrideFieldSchema>;
+  rootSchema: OverrideFieldSchema;
+  resolver?: SchemaResolver;
+  describeField?: DescribeOverrideField;
 };
 
-export function getToolOverrideCompletionResult({
+export function getOverrideCompletionResult({
   doc,
   pos,
   explicit,
-  fieldSchemas,
-}: ToolOverrideCompletionInput): CompletionResult | null {
+  rootSchema,
+  resolver = createSchemaResolver(rootSchema),
+  describeField,
+}: OverrideCompletionInput): CompletionResult | null {
   const openString = getOpenStringAtCursor(doc, pos);
   const quoteFrom = openString?.from ?? pos;
-  const objectContext = getObjectCursorContext(doc, quoteFrom);
-  if (!objectContext) {
+  const frames = getCursorFrames(doc, quoteFrom);
+  const objectContext = frames.at(-1);
+  if (objectContext?.kind !== 'object') {
     return null;
   }
 
-  const schemas = getSchemasAtPath(fieldSchemas, objectContext.path);
+  const objectSchema = resolveSchemaAtCursor(resolver, frames);
+  if (!objectSchema) {
+    return null;
+  }
 
   if (openString && objectContext.state === 'value' && objectContext.pendingKey) {
     const typedValue = openString.text;
-    const options = createEnumOptions(schemas[objectContext.pendingKey], typedValue);
+    const values = resolver.valueOptions(resolver.propertyNode(objectSchema, objectContext.pendingKey));
+    const options = createValueOptions(values, typedValue);
     if (options.length === 0) {
       return null;
     }
@@ -365,8 +377,13 @@ export function getToolOverrideCompletionResult({
     return null;
   }
 
-  const prefix = openString?.text;
-  const options = availableKeyOptions(schemas, objectContext.usedKeys, prefix);
+  const options = availableKeyOptions({
+    objectSchema,
+    usedKeys: objectContext.usedKeys,
+    prefix: openString?.text,
+    resolver,
+    describeField,
+  });
   if (options.length === 0) {
     return null;
   }
@@ -392,22 +409,27 @@ export function getToolOverrideCompletionResult({
   };
 }
 
-export function createToolOverrideCompletionSource(
-  providerId: DashboardToolContentOverrideProviderId,
-  schemaOverride?: Record<string, OverrideFieldSchema>
-): CompletionSource {
-  const fieldSchemas = schemaOverride ?? getFieldSchemas(providerId);
+export function createOverrideCompletionSource({
+  rootSchema,
+  describeField,
+}: {
+  rootSchema: OverrideFieldSchema | undefined;
+  describeField?: DescribeOverrideField;
+}): CompletionSource {
+  const resolver = rootSchema ? createSchemaResolver(rootSchema) : undefined;
 
   return (context: CompletionContext): CompletionResult | null => {
-    if (Object.keys(fieldSchemas).length === 0) {
+    if (!rootSchema || !resolver || Object.keys(rootSchema.properties ?? {}).length === 0) {
       return null;
     }
 
-    return getToolOverrideCompletionResult({
+    return getOverrideCompletionResult({
       doc: context.state.doc.toString(),
       pos: context.pos,
       explicit: context.explicit,
-      fieldSchemas,
+      rootSchema,
+      resolver,
+      describeField,
     });
   };
 }
