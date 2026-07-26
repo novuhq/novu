@@ -35,18 +35,18 @@ function extractChatPreview(previewData?: GeneratePreviewResponseDto): ChatRende
  * Split out so the flag-off preview never subscribes to the `providerOverrides` form field.
  */
 function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanelProps) {
-  const { providerOptions } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
+  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
   const { previewSource, setPreviewSource } = useContentSource();
 
   const preview = extractChatPreview(previewData);
   const body = preview?.body ?? '';
-  const previewProviderOverrides = preview?.providerOverrides ?? {};
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
 
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
     providerId: activeProviderId,
-    override: activeProviderId ? previewProviderOverrides[activeProviderId] : undefined,
+    formOverrides: providerOverrides,
+    previewOverrides: preview?.providerOverrides,
   });
 
   const renderBody = () => {
@@ -69,7 +69,7 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
         <AnnotatedOverrideJson {...annotatedPreview} />
         <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
           {getMergedOverrideHint({
-            hasOverride: activeProviderId in previewProviderOverrides,
+            hasOverride: annotatedPreview.hasOverride,
             defaultContentKey: annotatedPreview.defaultContentKey,
             body,
             providerId: activeProviderId,

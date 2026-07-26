@@ -58,4 +58,21 @@ describe('buildAnnotatedPreviewLines', () => {
       ['{', '  "message": "Override alert",', '  "priority": "P1"', '}'].join('\n')
     );
   });
+
+  it('marks a nested default-content path without matching same-named siblings', () => {
+    const lines = buildAnnotatedPreviewLines(
+      {
+        other: { body: 'not this one' },
+        text: {
+          preview_url: true,
+          body: 'Hello from Novu',
+        },
+      },
+      'text.body'
+    );
+
+    const marked = lines.filter((line) => line.isDefaultContentKey);
+    expect(marked).toHaveLength(1);
+    expect(marked[0]?.json.trim()).toBe('"body": "Hello from Novu"');
+  });
 });

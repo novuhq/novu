@@ -30,7 +30,11 @@ export type ProviderOverrideConfig = {
    * (Rocket.Chat routes via `message.rid` while its content lives beside it in `message.msg`).
    */
   reservedKeys?: readonly string[];
-  /** Top-level payload key the step body falls back into. null when the provider nests its content. */
+  /**
+   * Payload key the step body falls back into. May be a dotted path for nested content
+   * (WhatsApp `text.body`, Rocket.Chat `message.msg`). `null` when there is no stable
+   * object-path equivalent to fill in the override preview (e.g. LINE `messages[].text`).
+   */
   primaryContentKey: string | null;
 };
 
@@ -85,9 +89,10 @@ const TOOL_PROVIDER_OVERRIDE_CONFIGS = {
 /**
  * Every chat provider is registered, even the schema-less ones, so `satisfies Record<...>` fails
  * the build when a provider joins the enum without a decision about how its overrides behave.
- * Primary content keys mirror the field each provider drops the compiled body into; `null` means
- * the body is nested (Line `messages[].text`, WhatsApp `text.body`, Rocket.Chat `message.msg`)
- * and there is no flat top-level equivalent to fall back into.
+ * Primary content keys mirror the field each provider drops the compiled body into. Dotted paths
+ * are used when the body lives under a nested object (WhatsApp `text.body`, Rocket.Chat
+ * `message.msg`). `null` means there is no stable object-path equivalent to fall back into
+ * (LINE builds `messages[].text` as an array element).
  *
  * Reserved keys cover the providers whose request *body* carries the destination, so a persisted
  * override cannot re-route a subscriber's message (Slack `channel`, Telegram `chat_id`, LINE and
@@ -115,8 +120,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Zulip]: escapeHatch('text'),
   [ChatProviderIdEnum.GrafanaOnCall]: escapeHatch('message'),
   [ChatProviderIdEnum.GetStream]: escapeHatch('text'),
-  [ChatProviderIdEnum.RocketChat]: escapeHatch(null, ['message.rid']),
-  [ChatProviderIdEnum.WhatsAppBusiness]: escapeHatch(null, ['to']),
+  [ChatProviderIdEnum.RocketChat]: escapeHatch('message.msg', ['message.rid']),
+  [ChatProviderIdEnum.WhatsAppBusiness]: escapeHatch('text.body', ['to']),
   [ChatProviderIdEnum.Line]: escapeHatch(null, ['to']),
   [ChatProviderIdEnum.ChatWebhook]: escapeHatch('content'),
   [ChatProviderIdEnum.Telegram]: escapeHatch('text', ['chat_id']),

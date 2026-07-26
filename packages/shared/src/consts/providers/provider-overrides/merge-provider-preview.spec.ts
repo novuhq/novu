@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ToolProviderIdEnum } from '../../../types';
+import { ChatProviderIdEnum, ToolProviderIdEnum } from '../../../types';
 import { mergeProviderPreview } from './merge-provider-preview';
 
 describe('mergeProviderPreview', () => {
@@ -76,5 +76,41 @@ describe('mergeProviderPreview', () => {
       },
       defaultContentKey: 'message',
     });
+  });
+
+  it('fills a nested primary path while preserving sibling override fields', () => {
+    const result = mergeProviderPreview({
+      body: 'Hello from Novu',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      override: { text: { preview_url: true } },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        text: {
+          preview_url: true,
+          body: 'Hello from Novu',
+        },
+      },
+      defaultContentKey: 'text.body',
+    });
+  });
+
+  it('keeps an explicit nested primary path and omits defaultContentKey', () => {
+    const result = mergeProviderPreview({
+      body: 'Hello from Novu',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      override: { text: { body: 'Custom WhatsApp body', preview_url: true } },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        text: {
+          body: 'Custom WhatsApp body',
+          preview_url: true,
+        },
+      },
+    });
+    expect(result.defaultContentKey).toBeUndefined();
   });
 });

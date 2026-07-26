@@ -4,7 +4,10 @@ import { type AnnotatedOverridePreview, PREVIEW_PANEL_CLASS } from './override-p
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
 
-export function AnnotatedOverrideJson({ annotatedLines, defaultContentKey }: AnnotatedOverridePreview) {
+export function AnnotatedOverrideJson({
+  annotatedLines,
+  defaultContentKey,
+}: Pick<AnnotatedOverridePreview, 'annotatedLines' | 'defaultContentKey'>) {
   return (
     <pre className={PREVIEW_PANEL_CLASS}>
       {annotatedLines.map((line, index) => (

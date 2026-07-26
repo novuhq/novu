@@ -172,7 +172,15 @@ export function ProviderOverrideEditor({
       ? `These fields merge over your default content. "${primaryKey}" falls back to the default message unless set here. Supports Liquid variables inside string values.`
       : 'These fields are merged into the provider payload as-is. Supports Liquid variables inside string values.');
 
-  const resolvedPlaceholder = placeholder ?? `{\n  "${primaryKey ?? 'key'}": "{{payload.title}}"\n}`;
+  const resolvedPlaceholder =
+    placeholder ??
+    JSON.stringify(
+      primaryKey
+        ? primaryKey.split('.').reduceRight<unknown>((acc, segment) => ({ [segment]: acc }), '{{payload.title}}')
+        : { key: '{{payload.title}}' },
+      null,
+      2
+    );
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">

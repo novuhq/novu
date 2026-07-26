@@ -12,7 +12,42 @@ export const PREVIEW_PANEL_CLASS =
 export type AnnotatedOverridePreview = {
   annotatedLines: AnnotatedPreviewLine[];
   defaultContentKey?: string;
+  hasOverride: boolean;
 };
+
+type ProviderOverrideMap = Partial<Record<string, Record<string, unknown>>> | undefined;
+
+/**
+ * Form state is the source of truth for whether an override exists. Preview may lag
+ * (`keepPreviousData`, payload hydration) and briefly omit or invent keys — never let that
+ * flip the footer/JSON between "no override" and "merged".
+ */
+export function resolveOverrideForPreview({
+  providerId,
+  formOverrides,
+  previewOverrides,
+}: {
+  providerId: string | undefined;
+  formOverrides: ProviderOverrideMap;
+  previewOverrides: ProviderOverrideMap;
+}): {
+  hasOverride: boolean;
+  override: Record<string, unknown> | undefined;
+} {
+  if (!providerId) {
+    return { hasOverride: false, override: undefined };
+  }
+
+  const hasOverride = providerId in (formOverrides ?? {});
+  if (!hasOverride) {
+    return { hasOverride: false, override: undefined };
+  }
+
+  return {
+    hasOverride: true,
+    override: previewOverrides?.[providerId] ?? formOverrides?.[providerId],
+  };
+}
 
 /**
  * Merges the compiled step body into the provider override the same way the send path does, so the
@@ -21,24 +56,32 @@ export type AnnotatedOverridePreview = {
 export function useAnnotatedOverridePreview({
   body,
   providerId,
-  override,
+  formOverrides,
+  previewOverrides,
 }: {
   body: string;
   providerId: string | undefined;
-  override: Record<string, unknown> | undefined;
+  formOverrides: ProviderOverrideMap;
+  previewOverrides: ProviderOverrideMap;
 }): AnnotatedOverridePreview | undefined {
   return useMemo(() => {
     if (!providerId) {
       return undefined;
     }
 
+    const { hasOverride, override } = resolveOverrideForPreview({
+      providerId,
+      formOverrides,
+      previewOverrides,
+    });
     const { merged, defaultContentKey } = mergeProviderPreview({ body, providerId, override });
 
     return {
       annotatedLines: buildAnnotatedPreviewLines(merged, defaultContentKey),
       defaultContentKey,
+      hasOverride,
     };
-  }, [body, providerId, override]);
+  }, [body, providerId, formOverrides, previewOverrides]);
 }
 
 /** Explains, under the merged JSON, where each half of the payload came from. */

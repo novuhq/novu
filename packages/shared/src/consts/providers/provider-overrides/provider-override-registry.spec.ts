@@ -111,10 +111,13 @@ describe('provider override registry', () => {
     expect(getProviderPrimaryContentKey(ToolProviderIdEnum.Opsgenie)).toBe('message');
   });
 
-  it('reports no fallback key for providers that nest their content', () => {
+  it('uses dotted paths for providers that nest their content under a stable object key', () => {
+    expect(getProviderPrimaryContentKey(ChatProviderIdEnum.WhatsAppBusiness)).toBe('text.body');
+    expect(getProviderPrimaryContentKey(ChatProviderIdEnum.RocketChat)).toBe('message.msg');
+  });
+
+  it('reports no fallback key when content is built into an array element', () => {
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.Line)).toBeNull();
-    expect(getProviderPrimaryContentKey(ChatProviderIdEnum.WhatsAppBusiness)).toBeNull();
-    expect(getProviderPrimaryContentKey(ChatProviderIdEnum.RocketChat)).toBeNull();
   });
 
   it('reports no fallback key for an unregistered provider', () => {

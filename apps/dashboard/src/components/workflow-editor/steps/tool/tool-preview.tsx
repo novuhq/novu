@@ -73,9 +73,8 @@ export const ToolPreviewMini = ({ isPreviewPending, previewData }: ToolPreviewPr
 export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps) => {
   const preview = extractToolPreview(previewData);
   const body = preview?.body ?? '';
-  const previewProviderOverrides = preview?.providerOverrides ?? {};
 
-  const { providerOptions } = useToolOverrideProviderOptions();
+  const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
   const { previewSource, setPreviewSource } = useContentSource();
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
   const isWebhookPreview = activeProviderId === ToolProviderIdEnum.Webhook;
@@ -83,13 +82,11 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
     providerId: isWebhookPreview ? undefined : activeProviderId,
-    override: activeProviderId ? previewProviderOverrides[activeProviderId] : undefined,
+    formOverrides: providerOverrides,
+    previewOverrides: preview?.providerOverrides,
   });
-  const defaultContentKey = annotatedPreview?.defaultContentKey;
-
-  const hasOverride = !!activeProviderId && activeProviderId in previewProviderOverrides;
   const webhookPreviewJson = isWebhookPreview
-    ? JSON.stringify(previewProviderOverrides[ToolProviderIdEnum.Webhook] ?? {}, null, 2)
+    ? JSON.stringify(preview?.providerOverrides?.[ToolProviderIdEnum.Webhook] ?? {}, null, 2)
     : undefined;
 
   const getHintText = () => {
@@ -101,9 +98,13 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       return 'Each webhook integration merges its own body template beneath this payload.';
     }
 
+    if (!annotatedPreview) {
+      return '';
+    }
+
     return getMergedOverrideHint({
-      hasOverride,
-      defaultContentKey,
+      hasOverride: annotatedPreview.hasOverride,
+      defaultContentKey: annotatedPreview.defaultContentKey,
       body,
       providerId: activeProviderId,
       displayName: providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? '',
