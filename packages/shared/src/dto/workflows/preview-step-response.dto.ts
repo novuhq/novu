@@ -6,6 +6,7 @@ export class RenderOutput {}
 
 export class ChatRenderOutput extends RenderOutput {
   body: string;
+  providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
 }
 
 export class ToolRenderOutput extends RenderOutput {
