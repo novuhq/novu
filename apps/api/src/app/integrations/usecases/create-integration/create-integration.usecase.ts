@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   areNovuEmailCredentialsSet,
@@ -13,7 +6,6 @@ import {
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
   encryptCredentials,
-  FeatureFlagsService,
   PinoLogger,
   resolveAgentRuntime,
 } from '@novu/application-generic';
@@ -30,13 +22,11 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
-  FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
   IntegrationKindEnum,
   providers,
   SmsProviderIdEnum,
   slugify,
-  ToolProviderIdEnum,
 } from '@novu/shared';
 import shortid from 'shortid';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
@@ -53,7 +43,6 @@ export class CreateIntegration {
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
     private environmentRepository: EnvironmentRepository,
-    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(CreateIntegration.name);
@@ -95,23 +84,6 @@ export class CreateIntegration {
 
   private async validate(command: CreateIntegrationCommand): Promise<void> {
     const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
-
-    if (command.providerId === ToolProviderIdEnum.Webhook) {
-      const isToolWebhookProviderEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_TOOL_WEBHOOK_PROVIDER_ENABLED,
-        defaultValue: false,
-        environment: { _id: command.environmentId },
-        organization: { _id: command.organizationId },
-      });
-
-      if (!isToolWebhookProviderEnabled) {
-        throw new ForbiddenException({
-          statusCode: 403,
-          message: 'Tool webhook provider is not enabled for this organization.',
-          error: 'tool_webhook_provider_disabled',
-        });
-      }
-    }
 
     if (command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic && !areNovuManagedClaudeCredentialsSet()) {
       throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);

@@ -3,6 +3,7 @@ import {
   analyticsService,
   CreateOrUpdateSubscriberUseCase,
   featureFlagsService,
+  RotatingConnectionTokenService,
   UpdateSubscriber,
   UpdateSubscriberChannel,
 } from '@novu/application-generic';
@@ -50,6 +51,7 @@ const DAL_MODELS = [
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,
     UpdateSubscriberChannel,
+    RotatingConnectionTokenService,
   ],
   exports: [...USE_CASES, ...DAL_MODELS],
 })

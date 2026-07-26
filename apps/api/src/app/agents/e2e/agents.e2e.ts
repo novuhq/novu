@@ -36,7 +36,7 @@ describe('Agents API - /agents #novu-v2', () => {
     // tests in managed-agent.e2e.ts for the populated-view contract.
     expect(createRes.body.data.managedRuntime).to.equal(undefined);
     expect(createRes.body.data.createdBy).to.equal(session.user._id);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const listRes = await session.testAgent.get('/v1/agents');
 
@@ -80,7 +80,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const patchRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { acknowledgeOnReceived: false },
@@ -114,7 +114,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const setRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { reactionOnResolved: 'thumbs_up' },
@@ -148,7 +148,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const persisted = await agentRepository.findOne(
       {
@@ -158,7 +158,7 @@ describe('Agents API - /agents #novu-v2', () => {
       },
       '*'
     );
-    expect(persisted?.behavior?.subscriberAccess).to.equal('restricted');
+    expect(persisted?.behavior.subscriberAccess).to.equal('restricted');
 
     const openRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { subscriberAccess: 'open' },

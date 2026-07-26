@@ -12,4 +12,11 @@ export class ConfigurationsDto implements IConfigurations {
   @IsString()
   @IsOptional()
   inboundWebhookSigningKey?: string;
+
+  @ApiPropertyOptional({
+    description: 'JSON Schema describing the payload accepted by this integration.',
+  })
+  @IsString()
+  @IsOptional()
+  payloadSchema?: string;
 }
