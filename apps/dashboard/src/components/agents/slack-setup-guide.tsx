@@ -195,20 +195,13 @@ function QuickSetupStep({
 
       return slackQuickSetup(
         integrationId,
-        {
-          configToken: configToken.trim(),
-          agentId,
-          subscriberId,
-          connectionIdentifier,
-        },
+        { configToken: configToken.trim(), agentId, subscriberId, connectionIdentifier },
         environment
       );
     },
     onSuccess: () => {
       setConfigToken('');
-      queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id],
-      });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
       onSuccess();
     },
     onError: (error: Error) => {

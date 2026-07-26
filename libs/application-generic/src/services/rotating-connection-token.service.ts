@@ -234,12 +234,17 @@ export class RotatingConnectionTokenService {
     }
 
     const provider = ROTATING_TOKEN_PROVIDERS[connection.providerId];
+    const forceRefresh = options.forceRefresh === true;
 
-    if (!provider || !this.isRotatingAuth(decryptedAuth) || !this.isExpiringSoon(decryptedAuth.expiresAt)) {
+    // A forced verify must exchange the refresh token even while the current access token is still
+    // far from expiry — otherwise a freshly pasted (possibly invalid) refresh token would be accepted
+    // and stored without ever being validated against the provider.
+    const shouldRefresh = forceRefresh || this.isExpiringSoon(decryptedAuth.expiresAt);
+
+    if (!provider || !this.isRotatingAuth(decryptedAuth) || !shouldRefresh) {
       return decryptedAuth.accessToken;
     }
 
-    const forceRefresh = options.forceRefresh === true;
     const runRefresh = () => this.refreshWithLock(connection, decryptedAuth, provider, forceRefresh);
 
     // A forced verify must observe its own exchange, so it bypasses the in-process coalescing that
@@ -314,9 +319,11 @@ export class RotatingConnectionTokenService {
 
     try {
       // Another process may have refreshed just before we acquired the lock — re-read first.
+      // A forced verify skips this shortcut so it always performs its own exchange and validates
+      // the stored refresh token rather than trusting a still-valid access token.
       const currentAuth = await this.readPersistedAuth(connection);
 
-      if (currentAuth?.accessToken && !this.isExpiringSoon(currentAuth.expiresAt)) {
+      if (!forceRefresh && currentAuth?.accessToken && !this.isExpiringSoon(currentAuth.expiresAt)) {
         return currentAuth.accessToken;
       }
 

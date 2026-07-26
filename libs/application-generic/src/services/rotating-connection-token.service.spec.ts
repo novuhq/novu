@@ -335,6 +335,49 @@ describe('RotatingConnectionTokenService', () => {
     expect(cacheService.del.calledOnce).toBe(true);
   });
 
+  it('exchanges the refresh token on a forced verify even when the stored token is far from expiry', async () => {
+    const { service, channelConnectionRepository } = buildHarness();
+    const connection = buildConnection({
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      // Not close to expiry — a normal pre-send call would skip the exchange here.
+      expiresAt: futureIso(60 * 60 * 1000),
+    });
+    channelConnectionRepository.findOne.resolves(connection);
+
+    axiosPost.resolves({
+      data: {
+        ok: true,
+        access_token: MOCK_NEW_ACCESS_TOKEN,
+        refresh_token: MOCK_NEW_REFRESH_TOKEN,
+        expires_in: 3600,
+      },
+    });
+
+    const token = await service.getConnectionToken(connection, { forceRefresh: true });
+
+    expect(token).toEqual(MOCK_NEW_ACCESS_TOKEN);
+    expect(axiosPost.calledOnce).toBe(true);
+    const params = new URLSearchParams(axiosPost.firstCall.args[1] as string);
+    expect(params.get('refresh_token')).toEqual(MOCK_REFRESH_TOKEN);
+    expect(channelConnectionRepository.findOneAndUpdate.calledOnce).toBe(true);
+  });
+
+  it('surfaces a provider rejection on a forced verify of a far-from-expiry token', async () => {
+    const { service, channelConnectionRepository } = buildHarness();
+    const connection = buildConnection({
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      expiresAt: futureIso(60 * 60 * 1000),
+    });
+    channelConnectionRepository.findOne.resolves(connection);
+
+    axiosPost.resolves({ data: { ok: false, error: 'invalid_refresh_token' } });
+
+    await expect(service.getConnectionToken(connection, { forceRefresh: true })).rejects.toThrow(BadGatewayException);
+    expect(channelConnectionRepository.findOneAndUpdate.called).toBe(false);
+  });
+
   it('refreshes without a lock when the cache is disabled', async () => {
     const { service, cacheService } = buildHarness();
     cacheService.cacheEnabled.returns(false);
