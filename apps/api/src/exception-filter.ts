@@ -28,8 +28,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<RequestWithReqId>();
     const errorDto = this.buildErrorResponse(exception, request);
 
-    // TODO: In same cases the statusCode is a string. We should investigate why this is happening.
-    const statusCode = Number(errorDto.statusCode);
+    const statusCode = this.normalizeStatusCode(errorDto.statusCode);
     if (statusCode >= 500) {
       this.logError(errorDto, exception);
     }
@@ -223,6 +222,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const errorDto = this.buildErrorDto(request, HttpStatus.UNPROCESSABLE_ENTITY, 'Validation Error', {});
 
     return { ...errorDto, errors: { general: { messages: exception.response.message, value: 'No Value Recorded' } } };
+  }
+
+  private normalizeStatusCode(rawStatusCode: number | string): number {
+    if (typeof rawStatusCode === 'number' && Number.isFinite(rawStatusCode)) {
+      return rawStatusCode;
+    }
+
+    const parsed = Number(rawStatusCode);
+
+    if (!Number.isFinite(parsed)) {
+      this.logger.warn(
+        { rawStatusCode },
+        'Received non-numeric statusCode in error response, defaulting to 500'
+      );
+
+      return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
+    return parsed;
   }
 
   private handlerThrottlerException(request: RequestWithReqId) {
