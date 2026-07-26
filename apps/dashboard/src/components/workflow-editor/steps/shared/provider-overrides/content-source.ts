@@ -1,12 +1,11 @@
 import {
-  CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   ChannelTypeEnum,
   type ContentOverrideProviderId,
+  getContentOverrideProviderIds,
   getProviderOverrideConfig,
   getProviderOverrideKeys,
   type IProviderConfig,
   providers,
-  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
 } from '@novu/shared';
 
 export const DEFAULT_CONTENT_SOURCE = 'default' as const;
@@ -28,20 +27,11 @@ export type ProviderOverrideOption = {
   isEscapeHatch: boolean;
 };
 
-const OVERRIDE_PROVIDER_IDS_BY_CHANNEL = {
-  [ChannelTypeEnum.CHAT]: CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
-  [ChannelTypeEnum.TOOL]: TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
-} as const satisfies Record<OverrideChannel, readonly ContentOverrideProviderId[]>;
-
-export function getOverrideProviderIds(channel: OverrideChannel): readonly ContentOverrideProviderId[] {
-  return OVERRIDE_PROVIDER_IDS_BY_CHANNEL[channel];
-}
-
 export function isContentOverrideProviderId(
   channel: OverrideChannel,
   value: string
 ): value is ContentOverrideProviderId {
-  return (getOverrideProviderIds(channel) as readonly string[]).includes(value);
+  return (getContentOverrideProviderIds(channel) as readonly string[]).includes(value);
 }
 
 /** Provider ids are globally unique across channels, so no channel filter is needed here. */
@@ -80,7 +70,7 @@ export function buildProviderOverrideOptions({
     Object.keys(providerOverrides ?? {}).filter((providerId) => isContentOverrideProviderId(channel, providerId))
   );
 
-  return getOverrideProviderIds(channel)
+  return getContentOverrideProviderIds(channel)
     .filter((providerId) => activeProviderIds.has(providerId) || overrideKeys.has(providerId))
     .map((providerId) => ({
       providerId,

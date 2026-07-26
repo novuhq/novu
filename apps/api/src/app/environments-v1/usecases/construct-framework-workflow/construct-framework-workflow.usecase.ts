@@ -31,13 +31,12 @@ import {
   Workflow,
 } from '@novu/framework/internal';
 import {
-  CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ContentOverrideProviderId,
   EnvironmentTypeEnum,
+  getContentOverrideProviderIds,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
   StepTypeEnum,
-  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
 } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
@@ -58,11 +57,6 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
 type ProviderOverrideStepType = StepTypeEnum.CHAT | StepTypeEnum.TOOL;
-
-const OVERRIDE_PROVIDER_IDS_BY_STEP_TYPE = {
-  [StepTypeEnum.CHAT]: CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
-  [StepTypeEnum.TOOL]: TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
-} as const satisfies Record<ProviderOverrideStepType, readonly ContentOverrideProviderId[]>;
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -465,10 +459,7 @@ export class ConstructFrameworkWorkflow {
         outputs.providerOverrides?.[providerId] ?? {};
 
     const providers = Object.fromEntries(
-      OVERRIDE_PROVIDER_IDS_BY_STEP_TYPE[stepType].map((providerId) => [
-        providerId,
-        resolveProviderOverride(providerId),
-      ])
+      getContentOverrideProviderIds(stepType).map((providerId) => [providerId, resolveProviderOverride(providerId)])
     );
 
     return {
