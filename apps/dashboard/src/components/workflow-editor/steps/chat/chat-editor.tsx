@@ -1,4 +1,4 @@
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
 import { type ReactNode } from 'react';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { ContentOverridePanel } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
@@ -8,17 +8,16 @@ import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
-import { CHAT_OVERRIDE_CHANNEL } from './chat-content-source';
 
 type ChatEditorProps = { uiSchema: UiSchema };
 
 /** Split out so the flag-off editor never subscribes to the `providerOverrides` form field. */
 function ChatOverrideEditor({ defaultContent }: { defaultContent: ReactNode }) {
-  const { providerOptions, providerOverrides } = useProviderOverrideOptions(CHAT_OVERRIDE_CHANNEL);
+  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
 
   return (
     <ContentOverridePanel
-      channel={CHAT_OVERRIDE_CHANNEL}
+      channel={ChannelTypeEnum.CHAT}
       providerOptions={providerOptions}
       providerOverrides={providerOverrides}
       defaultContent={defaultContent}

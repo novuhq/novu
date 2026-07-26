@@ -15,7 +15,6 @@ import {
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { CHAT_OVERRIDE_CHANNEL } from './chat-content-source';
 import { ChatPreview } from './chat-preview';
 
 type ChatPreviewPanelProps = {
@@ -36,7 +35,7 @@ function extractChatPreview(previewData?: GeneratePreviewResponseDto): ChatRende
  * Split out so the flag-off preview never subscribes to the `providerOverrides` form field.
  */
 function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanelProps) {
-  const { providerOptions } = useProviderOverrideOptions(CHAT_OVERRIDE_CHANNEL);
+  const { providerOptions } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
   const { previewSource, setPreviewSource } = useContentSource();
 
   const preview = extractChatPreview(previewData);

@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, type GeneratePreviewResponseDto, type ToolRenderOutput } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  type GeneratePreviewResponseDto,
+  ToolProviderIdEnum,
+  type ToolRenderOutput,
+} from '@novu/shared';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
@@ -10,7 +15,6 @@ import {
   PREVIEW_PANEL_CLASS,
   useAnnotatedOverridePreview,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
-import { TOOL_OVERRIDE_CHANNEL, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 
 type ToolPreviewResult = {
@@ -74,7 +78,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const { providerOptions } = useToolOverrideProviderOptions();
   const { previewSource, setPreviewSource } = useContentSource();
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
-  const isWebhookPreview = activeProviderId === WEBHOOK_TOOL_PROVIDER_ID;
+  const isWebhookPreview = activeProviderId === ToolProviderIdEnum.Webhook;
 
   const annotatedPreview = useAnnotatedOverridePreview({
     body,
@@ -85,7 +89,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
 
   const hasOverride = !!activeProviderId && activeProviderId in previewProviderOverrides;
   const webhookPreviewJson = isWebhookPreview
-    ? JSON.stringify(previewProviderOverrides[WEBHOOK_TOOL_PROVIDER_ID] ?? {}, null, 2)
+    ? JSON.stringify(previewProviderOverrides[ToolProviderIdEnum.Webhook] ?? {}, null, 2)
     : undefined;
 
   const getHintText = () => {

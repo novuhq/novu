@@ -1,4 +1,10 @@
-import { type ContentOverrideProviderId, EnvironmentTypeEnum, type UiSchema } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  type ContentOverrideProviderId,
+  EnvironmentTypeEnum,
+  ToolProviderIdEnum,
+  type UiSchema,
+} from '@novu/shared';
 import { useCallback } from 'react';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import {
@@ -7,7 +13,6 @@ import {
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
 import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
-import { TOOL_OVERRIDE_CHANNEL, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 import { annotateWebhookField, describeWebhookField } from './webhook-override-annotations';
 import { formatWebhookSchemaSourceLabel } from './webhook-payload-schema';
@@ -23,7 +28,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
 
   const getEditorExtras = useCallback(
     (providerId: ContentOverrideProviderId): ProviderOverrideEditorExtras => {
-      if (providerId !== WEBHOOK_TOOL_PROVIDER_ID) {
+      if (providerId !== ToolProviderIdEnum.Webhook) {
         return {};
       }
 
@@ -55,7 +60,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
 
   return (
     <ContentOverridePanel
-      channel={TOOL_OVERRIDE_CHANNEL}
+      channel={ChannelTypeEnum.TOOL}
       providerOptions={providerOptions}
       providerOverrides={providerOverrides}
       defaultContent={body ? getComponentByType({ component: body.component }) : null}
