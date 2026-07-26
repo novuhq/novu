@@ -1,4 +1,4 @@
-import { getProviderOverrideKeys, getProviderOverrideSchema } from '@novu/shared';
+import { getProviderOverrideKeysOnlySchema, getProviderOverrideSchema } from '@novu/shared';
 import { type ReactNode } from 'react';
 
 /**
@@ -40,17 +40,13 @@ export function getEagerRootSchema(providerId: string): OverrideFieldSchema | un
 /**
  * Top-level keys only, with no types or descriptions. Used while a lazily loaded schema is in
  * flight and as the fallback when that load fails, so completion never goes fully dark.
+ *
+ * The shared builder gives each property the always-valid schema `true` rather than `{}`. The
+ * resolver reads `$ref`, `type`, `enum` and `properties` off it, all of which are absent either
+ * way, so completion offers the same keys with the same `any` label and empty-string default.
  */
 export function getKeysOnlyRootSchema(providerId: string): OverrideFieldSchema | undefined {
-  const keys = getProviderOverrideKeys(providerId);
-  if (!keys) {
-    return undefined;
-  }
-
-  return {
-    type: 'object',
-    properties: Object.fromEntries(keys.map((key) => [key, {}])),
-  };
+  return getProviderOverrideKeysOnlySchema(providerId) as OverrideFieldSchema | undefined;
 }
 
 export function getTypeLabel(
