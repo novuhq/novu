@@ -19,6 +19,7 @@ import {
   PROVIDER_OVERRIDE_SCHEMAS,
   PROVIDER_PRIMARY_CONTENT_KEY,
   pagerdutyOverrideJsonSchema,
+  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   TOOL_PROVIDER_OVERRIDE_KEYS,
   TOOL_PROVIDER_OVERRIDE_SCHEMAS,
   TOOL_PROVIDER_PRIMARY_CONTENT_KEY,
@@ -30,10 +31,76 @@ describe('provider override registry', () => {
     expect([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(ChatProviderIdEnum).sort());
   });
 
+  it('exposes every tool provider, including the schema-less webhook', () => {
+    expect(TOOL_CONTENT_OVERRIDE_PROVIDER_IDS).toEqual([
+      ToolProviderIdEnum.PagerDuty,
+      ToolProviderIdEnum.Opsgenie,
+      ToolProviderIdEnum.Webhook,
+    ]);
+  });
+
   it('keeps each config in step with the key inventory published alongside it', () => {
     for (const providerId of CONTENT_OVERRIDE_PROVIDER_IDS) {
       expect(getProviderOverrideConfig(providerId)?.keys).toEqual(getProviderOverrideKeys(providerId));
     }
+  });
+
+  it('maps each tool provider to a strict object schema', () => {
+    expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.PagerDuty]).toBe(pagerdutyOverrideJsonSchema);
+    expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Opsgenie]).toBe(opsgenieOverrideJsonSchema);
+    expect(pagerdutyOverrideJsonSchema.additionalProperties).toBe(false);
+    expect(opsgenieOverrideJsonSchema.additionalProperties).toBe(false);
+  });
+
+  it('keeps documented free-form maps permissive', () => {
+    expect(pagerdutyOverrideJsonSchema.properties.custom_details.additionalProperties).toBe(true);
+    expect(opsgenieOverrideJsonSchema.properties.details.additionalProperties).toBe(true);
+  });
+
+  it('documents the primary content fields for each tool provider', () => {
+    expect(pagerdutyOverrideJsonSchema.properties?.summary).toBeDefined();
+    expect(pagerdutyOverrideJsonSchema.properties?.severity).toBeDefined();
+    expect(opsgenieOverrideJsonSchema.properties?.message).toBeDefined();
+    expect(opsgenieOverrideJsonSchema.properties?.priority).toBeDefined();
+  });
+
+  it('exposes a key inventory that matches each eager schema property set', () => {
+    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]).toEqual(
+      Object.keys(pagerdutyOverrideJsonSchema.properties)
+    );
+    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie]).toEqual(
+      Object.keys(opsgenieOverrideJsonSchema.properties)
+    );
+    expect(getProviderOverrideKeys(ToolProviderIdEnum.PagerDuty)).toEqual(
+      PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]
+    );
+  });
+
+  it('derives keys-only schemas that are strict on names and permissive on values', () => {
+    const keysOnlySchema = getProviderOverrideKeysOnlySchema(ToolProviderIdEnum.Opsgenie);
+
+    expect(keysOnlySchema?.additionalProperties).toBe(false);
+    expect(Object.keys(keysOnlySchema?.properties ?? {})).toEqual(Object.keys(opsgenieOverrideJsonSchema.properties));
+    expect(keysOnlySchema?.properties?.priority).toBe(true);
+  });
+
+  it('returns no static metadata for the tool webhook escape hatch', () => {
+    expect(getProviderOverrideSchema(ToolProviderIdEnum.Webhook)).toBeUndefined();
+    expect(getProviderOverrideKeys(ToolProviderIdEnum.Webhook)).toBeUndefined();
+    expect(getProviderOverrideKeysOnlySchema(ToolProviderIdEnum.Webhook)).toBeUndefined();
+    expect(getProviderPrimaryContentKey(ToolProviderIdEnum.Webhook)).toBeNull();
+  });
+
+  it('returns undefined for unregistered provider ids', () => {
+    expect(getProviderOverrideSchema('unknown')).toBeUndefined();
+    expect(getProviderOverrideKeys('unknown')).toBeUndefined();
+    expect(getProviderOverrideKeysOnlySchema('unknown')).toBeUndefined();
+  });
+
+  it('ignores Object.prototype property names as provider ids', () => {
+    expect(getProviderOverrideSchema('toString')).toBeUndefined();
+    expect(getProviderOverrideKeys('constructor')).toBeUndefined();
+    expect(getProviderOverrideKeysOnlySchema('valueOf')).toBeUndefined();
   });
 
   it('points each chat provider at the payload key its step body falls back into', () => {
@@ -41,6 +108,7 @@ describe('provider override registry', () => {
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.Discord)).toBe('content');
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.GrafanaOnCall)).toBe('message');
     expect(getProviderPrimaryContentKey(ToolProviderIdEnum.PagerDuty)).toBe('summary');
+    expect(getProviderPrimaryContentKey(ToolProviderIdEnum.Opsgenie)).toBe('message');
   });
 
   it('reports no fallback key for providers that nest their content', () => {
@@ -92,6 +160,7 @@ describe('provider override registry', () => {
       ToolProviderIdEnum.Opsgenie,
     ]);
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.PagerDuty]).toBe('summary');
+    expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Opsgenie]).toBe('message');
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Webhook]).toBeUndefined();
     expect(getToolProviderPrimaryContentKey(ChatProviderIdEnum.Line)).toBeUndefined();
     expect(PROVIDER_PRIMARY_CONTENT_KEY[ChatProviderIdEnum.Line]).toBeNull();
