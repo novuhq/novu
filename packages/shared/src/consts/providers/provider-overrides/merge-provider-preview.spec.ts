@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ToolProviderIdEnum } from '../../../types';
-import { mergeToolProviderPreview } from './merge-tool-provider-preview';
+import { mergeProviderPreview } from './merge-provider-preview';
 
-describe('mergeToolProviderPreview', () => {
+describe('mergeProviderPreview', () => {
   it('fills omitted primary key from body and sets defaultContentKey', () => {
-    const result = mergeToolProviderPreview({
+    const result = mergeProviderPreview({
       body: 'Default incident message',
       providerId: ToolProviderIdEnum.PagerDuty,
       override: { severity: 'critical' },
@@ -20,7 +20,7 @@ describe('mergeToolProviderPreview', () => {
   });
 
   it('keeps a non-empty primary key override and omits defaultContentKey', () => {
-    const result = mergeToolProviderPreview({
+    const result = mergeProviderPreview({
       body: 'Default incident message',
       providerId: ToolProviderIdEnum.Opsgenie,
       override: { message: 'Override alert', priority: 'P1' },
@@ -37,7 +37,7 @@ describe('mergeToolProviderPreview', () => {
 
   it('keeps webhook overrides unchanged when no primary content key exists', () => {
     expect(
-      mergeToolProviderPreview({
+      mergeProviderPreview({
         body: 'Default webhook body',
         providerId: ToolProviderIdEnum.Webhook,
         override: { event: 'incident.created' },
@@ -48,7 +48,7 @@ describe('mergeToolProviderPreview', () => {
   });
 
   it('treats empty-string primary key as missing and fills from body', () => {
-    const result = mergeToolProviderPreview({
+    const result = mergeProviderPreview({
       body: 'Default incident message',
       providerId: ToolProviderIdEnum.PagerDuty,
       override: { summary: '', severity: 'warning' },
@@ -64,7 +64,7 @@ describe('mergeToolProviderPreview', () => {
   });
 
   it('treats null primary key as missing and fills from body', () => {
-    const result = mergeToolProviderPreview({
+    const result = mergeProviderPreview({
       body: 'Default opsgenie message',
       providerId: ToolProviderIdEnum.Opsgenie,
       override: { message: null },

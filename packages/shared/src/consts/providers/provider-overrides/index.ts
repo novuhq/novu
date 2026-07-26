@@ -1,68 +1,76 @@
-import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
-import { ToolProviderIdEnum } from '../../../types';
-import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
-import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
-import type { ToolContentOverrideProviderId } from './tool-provider-primary-content';
+import {
+  getProviderOverrideKeys,
+  getProviderOverrideKeysOnlySchema,
+  getProviderOverrideSchema,
+  getProviderPrimaryContentKey,
+  PROVIDER_OVERRIDE_KEYS,
+  PROVIDER_OVERRIDE_SCHEMAS,
+  PROVIDER_PRIMARY_CONTENT_KEY,
+  type ToolContentOverrideProviderId,
+} from './provider-override-registry';
 
+export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
 export {
-  type AnnotatedPreviewLine,
-  buildAnnotatedPreviewLines,
-} from './build-annotated-preview-lines';
-export { type MergedToolPreview, mergeToolProviderPreview } from './merge-tool-provider-preview';
+  LIQUID_TEMPLATE_PATTERN,
+  type SchemaValidationErrorLike,
+  selectDiscriminatedErrors,
+  toLiquidTolerantSchema,
+} from './liquid-tolerant';
+export {
+  type MergedProviderPreview,
+  /** @deprecated Renamed to `MergedProviderPreview`. */
+  type MergedToolPreview,
+  mergeProviderPreview,
+  /** @deprecated Renamed to `mergeProviderPreview`. */
+  mergeToolProviderPreview,
+} from './merge-provider-preview';
 export { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 export { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
 export {
-  getToolProviderPrimaryContentKey,
+  CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
+  type ChatContentOverrideProviderId,
+  CONTENT_OVERRIDE_PROVIDER_IDS,
+  type ContentOverrideProviderId,
+  getProviderOverrideConfig,
+  getProviderOverrideKeys,
+  getProviderOverrideKeysOnlySchema,
+  getProviderOverrideSchema,
+  getProviderPrimaryContentKey,
+  PROVIDER_OVERRIDE_CONFIGS,
+  PROVIDER_OVERRIDE_KEYS,
+  PROVIDER_OVERRIDE_SCHEMAS,
+  PROVIDER_PRIMARY_CONTENT_KEY,
+  type ProviderOverrideConfig,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
-  TOOL_PROVIDER_PRIMARY_CONTENT_KEY,
   type ToolContentOverrideProviderId,
-} from './tool-provider-primary-content';
+} from './provider-override-registry';
+export { SLACK_OVERRIDE_KEYS, SLACK_OVERRIDE_SCHEMA_SUBPATH, SLACK_PRIMARY_CONTENT_KEY } from './slack/keys';
 
-export const TOOL_PROVIDER_OVERRIDE_SCHEMAS = {
-  [ToolProviderIdEnum.PagerDuty]: pagerdutyOverrideJsonSchema,
-  [ToolProviderIdEnum.Opsgenie]: opsgenieOverrideJsonSchema,
-} as const satisfies Partial<Record<ToolContentOverrideProviderId, JSONSchemaDto>>;
+/** @deprecated Renamed to `PROVIDER_OVERRIDE_SCHEMAS` now that chat providers are covered too. */
+export const TOOL_PROVIDER_OVERRIDE_SCHEMAS = PROVIDER_OVERRIDE_SCHEMAS;
 
-/** Top-level override keys for each provider — shared by validation, UI, and send-path reservation. */
-export const TOOL_PROVIDER_OVERRIDE_KEYS = {
-  [ToolProviderIdEnum.PagerDuty]: Object.keys(pagerdutyOverrideJsonSchema.properties),
-  [ToolProviderIdEnum.Opsgenie]: Object.keys(opsgenieOverrideJsonSchema.properties),
-} as const satisfies Partial<Record<ToolContentOverrideProviderId, readonly string[]>>;
+/** @deprecated Renamed to `PROVIDER_OVERRIDE_KEYS` now that chat providers are covered too. */
+export const TOOL_PROVIDER_OVERRIDE_KEYS = PROVIDER_OVERRIDE_KEYS;
 
-export function getToolProviderOverrideSchema(providerId: string) {
-  if (Object.prototype.hasOwnProperty.call(TOOL_PROVIDER_OVERRIDE_SCHEMAS, providerId)) {
-    return TOOL_PROVIDER_OVERRIDE_SCHEMAS[providerId as keyof typeof TOOL_PROVIDER_OVERRIDE_SCHEMAS];
-  }
+/** @deprecated Renamed to `getProviderOverrideSchema`. */
+export const getToolProviderOverrideSchema = getProviderOverrideSchema;
 
-  return undefined;
-}
+/** @deprecated Renamed to `getProviderOverrideKeys`. */
+export const getToolProviderOverrideKeys = getProviderOverrideKeys;
 
-export function getToolProviderOverrideKeys(providerId: string): readonly string[] | undefined {
-  if (Object.prototype.hasOwnProperty.call(TOOL_PROVIDER_OVERRIDE_KEYS, providerId)) {
-    return TOOL_PROVIDER_OVERRIDE_KEYS[providerId as keyof typeof TOOL_PROVIDER_OVERRIDE_KEYS];
-  }
-
-  return undefined;
-}
+/** @deprecated Renamed to `getProviderOverrideKeysOnlySchema`. */
+export const getToolProviderOverrideKeysOnlySchema = getProviderOverrideKeysOnlySchema;
 
 /**
- * Step-issues contract for providerOverrides: top-level keys only, values unchecked.
- * Distinct from the full override schemas (used for docs / client value-shape hints),
- * which may also set nested `additionalProperties: false` — those nested rules are not
- * enforced via this helper so Liquid templates never fail type/enum checks.
- *
- * Property schemas use boolean `true` (always-valid) rather than `{}` so Mongoose
- * minimize cannot strip them when controls.schema is persisted as Mixed.
+ * @deprecated Use `PROVIDER_PRIMARY_CONTENT_KEY`, which also reports `null` for providers whose
+ * content is nested. This alias keeps the original `string | undefined` shape.
  */
-export function getToolProviderOverrideKeysOnlySchema(providerId: string): JSONSchemaDto | undefined {
-  const keys = getToolProviderOverrideKeys(providerId);
-  if (!keys) {
-    return undefined;
-  }
+export const TOOL_PROVIDER_PRIMARY_CONTENT_KEY: Readonly<Partial<Record<ToolContentOverrideProviderId, string>>> =
+  Object.fromEntries(
+    Object.entries(PROVIDER_PRIMARY_CONTENT_KEY).filter(([, primaryContentKey]) => primaryContentKey !== null)
+  );
 
-  return {
-    type: 'object',
-    properties: Object.fromEntries(keys.map((key) => [key, true as const])),
-    additionalProperties: false,
-  };
+/** @deprecated Use `getProviderPrimaryContentKey`, which reports `null` for nested-content providers. */
+export function getToolProviderPrimaryContentKey(providerId: string): string | undefined {
+  return getProviderPrimaryContentKey(providerId) ?? undefined;
 }
