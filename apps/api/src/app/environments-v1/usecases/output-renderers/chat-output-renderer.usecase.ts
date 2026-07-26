@@ -37,6 +37,14 @@ export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization: renderCommand.organization,
     });
 
-    return translatedControls as any;
+    const output: ChatRenderOutput = {
+      body: (translatedControls.body as string) ?? '',
+    };
+
+    if (translatedControls.providerOverrides !== undefined) {
+      output.providerOverrides = translatedControls.providerOverrides as ChatRenderOutput['providerOverrides'];
+    }
+
+    return output;
   }
 }

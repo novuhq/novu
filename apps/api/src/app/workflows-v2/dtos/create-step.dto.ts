@@ -134,6 +134,24 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   @IsOptional()
   @IsObject()
   controlValues?: ChatControlDto | Record<string, unknown> | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Per-provider content overrides keyed by providerId. Stored separately from controlValues and merged over the default body at send time. Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.',
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+    nullable: true,
+    example: {
+      slack: { blocks: [{ type: 'divider' }] },
+      telegram: { parse_mode: 'MarkdownV2' },
+    },
+  })
+  @IsOptional()
+  @IsObject()
+  providerOverrides?: Partial<Record<string, Record<string, unknown>>> | null;
 }
 
 export class ToolStepUpsertDto extends BaseStepConfigDto {

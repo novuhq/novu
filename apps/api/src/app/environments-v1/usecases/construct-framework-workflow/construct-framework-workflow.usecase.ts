@@ -22,6 +22,7 @@ import { workflow } from '@novu/framework/express';
 import {
   ActionStep,
   ChannelStep,
+  ChatOutputUnvalidated,
   PostActionEnum,
   Schema,
   Step,
@@ -30,12 +31,13 @@ import {
   Workflow,
 } from '@novu/framework/internal';
 import {
+  CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
+  type ContentOverrideProviderId,
   EnvironmentTypeEnum,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
   StepTypeEnum,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
-  type ToolContentOverrideProviderId,
 } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
@@ -54,6 +56,11 @@ import { ThrottleOutputRendererUsecase } from '../output-renderers/throttle-outp
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
+
+/** Shape the tool and chat renderers both emit once stitched overrides are compiled. */
+type ProviderOverrideOutputUnvalidated = {
+  providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
+};
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -304,9 +311,15 @@ export class ConstructFrameworkWorkflow {
               dbWorkflow,
               organization,
               locale,
-            });
+            }) as Promise<ChatOutputUnvalidated>;
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructProviderOverrideStepOptions(
+            staticStep,
+            fullPayloadForRender,
+            dbWorkflow,
+            StepTypeEnum.CHAT,
+            CHAT_CONTENT_OVERRIDE_PROVIDER_IDS
+          )
         );
       case StepTypeEnum.PUSH:
         return step.push(
@@ -334,7 +347,13 @@ export class ConstructFrameworkWorkflow {
               locale,
             }) as Promise<ToolOutputUnvalidated>;
           },
-          this.constructToolStepOptions(staticStep, fullPayloadForRender, dbWorkflow)
+          this.constructProviderOverrideStepOptions(
+            staticStep,
+            fullPayloadForRender,
+            dbWorkflow,
+            StepTypeEnum.TOOL,
+            TOOL_CONTENT_OVERRIDE_PROVIDER_IDS
+          )
         );
       case StepTypeEnum.DIGEST:
         return step.digest(
@@ -408,21 +427,23 @@ export class ConstructFrameworkWorkflow {
    * because framework provider resolvers receive uncompiled controls.
    *
    * Control schema is resolved via the canonical policy helper so dashboard-cloud
-   * tool steps are not validated against a persisted keys-only schema that Mongoose
+   * steps are not validated against a persisted keys-only schema that Mongoose
    * minimize may have stripped of property entries.
    */
   @Instrument()
-  private constructToolStepOptions(
+  private constructProviderOverrideStepOptions(
     staticStep: NotificationStepEntity,
     fullPayloadForRender: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity
+    dbWorkflow: NotificationTemplateEntity,
+    stepType: StepTypeEnum.TOOL | StepTypeEnum.CHAT,
+    providerIds: readonly ContentOverrideProviderId[]
   ) {
     const skip = (controlValues: Record<string, unknown>) =>
       this.processSkipOption(controlValues, fullPayloadForRender);
 
     const controlSchema = dbWorkflow.origin
       ? resolveStepControlSchemas({
-          stepType: StepTypeEnum.TOOL,
+          stepType,
           workflowOrigin: dbWorkflow.origin,
           existingControls: staticStep.template?.controls,
           stepResolverHash: staticStep.template?.stepResolverHash,
@@ -450,12 +471,12 @@ export class ConstructFrameworkWorkflow {
     };
 
     const resolveProviderOverride =
-      (providerId: ToolContentOverrideProviderId) =>
-      async ({ outputs }: { outputs: ToolOutputUnvalidated }) =>
+      (providerId: ContentOverrideProviderId) =>
+      async ({ outputs }: { outputs: ProviderOverrideOutputUnvalidated }) =>
         outputs.providerOverrides?.[providerId] ?? {};
 
     const providers = Object.fromEntries(
-      TOOL_CONTENT_OVERRIDE_PROVIDER_IDS.map((providerId) => [providerId, resolveProviderOverride(providerId)])
+      providerIds.map((providerId) => [providerId, resolveProviderOverride(providerId)])
     );
 
     return {
