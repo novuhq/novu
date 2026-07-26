@@ -185,6 +185,11 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
         controls: { severity: 'warning', summary: 'db down' },
         level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
       },
+      {
+        providerId: ToolProviderIdEnum.Webhook,
+        controls: { alert_type: 'incident', priority: 'high' },
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      },
     ]);
 
     const command = {
@@ -226,6 +231,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       body: 'default alert',
       providerOverrides: {
         [ToolProviderIdEnum.PagerDuty]: { severity: 'warning', summary: 'db down' },
+        [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
       },
     });
   });
@@ -244,9 +250,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       payload: { foo: 'bar' },
     };
 
-    jobRepository.findOne
-      .withArgs({ _id: 'digest_job_1', _environmentId: 'env_1' })
-      .resolves(digestJob);
+    jobRepository.findOne.withArgs({ _id: 'digest_job_1', _environmentId: 'env_1' }).resolves(digestJob);
     jobRepository.find
       .withArgs({
         _mergedDigestId: 'digest_job_1',

@@ -59,7 +59,7 @@ Every subscriber routes to their own Opsgenie account or team, so each subscribe
 
 ## Store a subscriber's API key
 
-Register each subscriber's API key as a **channel endpoint** on the Opsgenie integration. Novu encrypts the API key at rest on the linked channel connection and hydrates the wire shape `{ apiKey, region }` back on reads.
+Register each subscriber's API key as a **channel endpoint** on the Opsgenie integration. Novu encrypts the API key at rest on `ChannelEndpoint.endpoint` and returns the wire shape `{ apiKey, region }` on reads (`region` stays plaintext).
 
 <Warning>
   Registering an endpoint requires your Novu secret key. Always call the channel-endpoints API from your server, never from a browser or mobile client. A typical flow is: your app UI sends the API key to **your** backend, and your backend forwards it to Novu.
@@ -74,7 +74,7 @@ sequenceDiagram
   Browser->>CustomerBackend: API key (over HTTPS)
   CustomerBackend->>NovuAPI: POST /v1/channel-endpoints (secret key)
   NovuAPI-->>CustomerBackend: 201 endpoint created
-  Note over NovuAPI: API key stored encrypted
+  Note over NovuAPI: API key stored encrypted on endpoint
   Browser->>CustomerBackend: trigger workflow
   CustomerBackend->>NovuAPI: POST /v1/events/trigger
   NovuAPI->>OpsgenieAPI: create alert using subscriber's API key
@@ -264,7 +264,7 @@ curl -L 'https://api.novu.co/v1/channel-endpoints?subscriberId=<SUBSCRIBER_ID>&i
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
 ```
 
-Delete the endpoint to disconnect a subscriber. Novu cascades the delete to the underlying channel connection, dropping the encrypted API key:
+Delete the endpoint to disconnect a subscriber. This removes the encrypted API key stored on the endpoint:
 
 ```bash
 curl -L -X DELETE 'https://api.novu.co/v1/channel-endpoints/<ENDPOINT_IDENTIFIER>' \

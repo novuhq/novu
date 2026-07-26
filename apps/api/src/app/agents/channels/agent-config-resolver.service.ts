@@ -79,12 +79,9 @@ export interface ResolvedAgentConfig {
   reactionOnResolved: WellKnownEmoji | null;
   /**
    * Whether unknown senders are auto-provisioned as subscribers (`open`) or
-   * gated (`restricted`). Resolved to an effective value per platform: an
-   * explicit `agent.behavior.subscriberAccess` always wins; when unset,
-   * auto-provision platforms (Slack/Teams) default to `open` (preserving their
-   * historical always-provision behavior) and every other platform defaults to
-   * `restricted`. Consumed by the inbound handler across all provision-capable
-   * platforms.
+   * gated (`restricted`). Resolved from persisted `agent.behavior.subscriberAccess`.
+   * Legacy rows missing the field (pre-migration self-hosted) fall back to `open`
+   * so inbound webhooks keep working until the backfill migration runs.
    */
   subscriberAccess: AgentSubscriberAccessEnum;
   bridgeUrl?: string;
@@ -324,10 +321,7 @@ export class AgentConfigResolver {
         DEFAULT_REACTION_ON_RESOLVED,
         this.logger
       ),
-      subscriberAccess:
-        agent.behavior?.subscriberAccess === 'open'
-          ? AgentSubscriberAccessEnum.OPEN
-          : AgentSubscriberAccessEnum.RESTRICTED,
+      subscriberAccess: agent.behavior?.subscriberAccess ?? AgentSubscriberAccessEnum.OPEN,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

@@ -7,6 +7,7 @@ import {
   InAppProviderIdEnum,
   ITenantFilterPart,
   PushProviderIdEnum,
+  ToolProviderIdEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -76,6 +77,36 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
 
     expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
     expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
+  });
+
+  it('should update webhook payload schema configuration', async () => {
+    const integration = await integrationRepository.create({
+      name: 'Webhook',
+      identifier: 'webhook-payload-schema',
+      providerId: ToolProviderIdEnum.Webhook,
+      channel: ChannelTypeEnum.TOOL,
+      active: false,
+      configurations: { payloadSchema: '{"type":"object"}' },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    const payloadSchema = JSON.stringify({
+      type: 'object',
+      properties: { event: { type: 'string' } },
+    });
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${integration._id}`).send({
+      configurations: { payloadSchema },
+      check: false,
+    });
+    const persisted = await integrationRepository.findOne({
+      _id: integration._id,
+      _environmentId: session.environment._id,
+    });
+
+    expect(data.configurations.payloadSchema).to.equal(payloadSchema);
+    expect(persisted?.configurations?.payloadSchema).to.equal(payloadSchema);
   });
 
   it('should update conditions on integration', async () => {

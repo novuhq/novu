@@ -71,8 +71,8 @@ export class AgentResponseDto {
   @ApiPropertyOptional()
   description?: string;
 
-  @ApiPropertyOptional({ type: AgentBehaviorDto })
-  behavior?: AgentBehaviorDto;
+  @ApiProperty({ type: AgentBehaviorDto })
+  behavior: AgentBehaviorDto;
 
   @ApiProperty()
   active: boolean;

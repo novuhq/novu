@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
-  type ChannelConnectionAuth,
   decryptChannelConnectionAuth,
+  decryptChannelEndpoint,
   decryptCredentials,
   InstrumentUsecase,
   MsTeamsTokenService,
@@ -18,19 +18,21 @@ import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
-type ConnectionRoutedAuthConfig = {
+type EndpointStoredSecretConfig = {
   providerLabel: string;
-  secretField: 'routingKey' | 'apiKey';
+  /** Fields that must all be present (non-empty) after decrypt; missing any triggers one combined error. */
+  requiredFields: string[];
 };
 
 /**
- * Tool endpoint types whose per-subscriber routing secret lives on the linked
- * `ChannelConnection.auth`: the resolver decrypts `{ <secretField>, region }`
- * and rehydrates the endpoint wire shape at send time.
+ * Tool endpoint types whose per-subscriber routing secret lives on the
+ * `ChannelEndpoint.endpoint` document. The resolver decrypts secret fields and
+ * returns the decrypted wire shape at send time — no channel connection lookup.
  */
-const CONNECTION_ROUTED_AUTH_CONFIGS: Partial<Record<string, ConnectionRoutedAuthConfig>> = {
-  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', secretField: 'routingKey' },
-  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', secretField: 'apiKey' },
+const ENDPOINT_STORED_SECRET_CONFIGS: Partial<Record<string, EndpointStoredSecretConfig>> = {
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', requiredFields: ['routingKey', 'region'] },
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', requiredFields: ['apiKey', 'region'] },
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: { providerLabel: 'Tool Webhook', requiredFields: ['url'] },
 };
 
 export type IntegrationEndpoints = {
@@ -185,10 +187,10 @@ export class ResolveChannelEndpoints {
   }
 
   /**
-   * Extracts token for endpoint based on type
+   * Extracts token / hydrated endpoint data based on type
    * - MS Teams: Fetches Bot Framework token from Microsoft
    * - Slack / Webex: Reads the OAuth token from the connection, refreshing rotation-enabled tokens
-   * - PagerDuty / Opsgenie: Decrypts the routing secret + region and hydrates endpoint wire shape
+   * - PagerDuty / Opsgenie / Tool Webhook: Decrypts secrets from endpoint.endpoint and hydrates the endpoint wire shape
    */
   private async extractToken(
     endpoint: ChannelEndpointEntity,
@@ -208,9 +210,9 @@ export class ResolveChannelEndpoints {
       return await this.extractRotatingConnectionToken(endpoint, connectionMap);
     }
 
-    const connectionRoutedAuthConfig = CONNECTION_ROUTED_AUTH_CONFIGS[endpoint.type];
-    if (connectionRoutedAuthConfig) {
-      return this.extractConnectionRoutedAuth(endpoint, connectionMap, connectionRoutedAuthConfig);
+    const endpointStoredSecretConfig = ENDPOINT_STORED_SECRET_CONFIGS[endpoint.type];
+    if (endpointStoredSecretConfig) {
+      return this.extractEndpointStoredSecrets(endpoint, endpointStoredSecretConfig);
     }
 
     // Other connection-based tokens
@@ -219,40 +221,24 @@ export class ResolveChannelEndpoints {
   }
 
   /**
-   * Rehydrates a connection-routed tool wire shape (`endpoint: { <secretField>, region }`,
-   * e.g. PagerDuty `routingKey` or Opsgenie `apiKey`) from the linked, encrypted
-   * `ChannelConnection.auth`. Returned as an `endpoint` override so
-   * `buildChannelData`'s spread replaces the empty stored endpoint document
-   * with the routing values the provider reads.
+   * Decrypts tool routing secrets from `ChannelEndpoint.endpoint` and returns
+   * an `endpoint` override so `buildChannelData`'s spread replaces the
+   * encrypted stored document with the plaintext wire shape providers read.
+   * `requiredFields` must all be present or the whole endpoint is rejected.
    */
-  private extractConnectionRoutedAuth(
+  private extractEndpointStoredSecrets(
     endpoint: ChannelEndpointEntity,
-    connectionMap: Map<string, ChannelConnectionEntity>,
-    config: ConnectionRoutedAuthConfig
+    config: EndpointStoredSecretConfig
   ): Record<string, unknown> {
-    const { providerLabel, secretField } = config;
+    const { providerLabel, requiredFields } = config;
+    const decrypted = decryptChannelEndpoint(endpoint.type, endpoint.endpoint);
+    const decryptedFields = decrypted as Record<string, unknown>;
 
-    if (!endpoint.connectionIdentifier) {
-      throw new Error(`${providerLabel} endpoint ${endpoint.identifier} requires a linked channel connection`);
+    if (requiredFields.some((field) => !decryptedFields[field])) {
+      throw new Error(`${providerLabel} endpoint ${endpoint.identifier} is missing ${requiredFields.join(' or ')}`);
     }
 
-    const connection = connectionMap.get(endpoint.connectionIdentifier);
-    if (!connection?.auth) {
-      throw new Error(
-        `${providerLabel} endpoint ${endpoint.identifier} references channel connection ${endpoint.connectionIdentifier} but no auth is available`
-      );
-    }
-
-    const decrypted = decryptChannelConnectionAuth(connection.auth) as ChannelConnectionAuth | null;
-    const secret = decrypted?.[secretField];
-
-    if (!secret || !decrypted?.region) {
-      throw new Error(
-        `${providerLabel} channel connection ${connection.identifier} is missing ${secretField} or region in auth`
-      );
-    }
-
-    return { endpoint: { [secretField]: secret, region: decrypted.region } };
+    return { endpoint: decrypted };
   }
 
   /**

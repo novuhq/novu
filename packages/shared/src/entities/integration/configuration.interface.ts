@@ -10,4 +10,5 @@ export interface IConfigurations {
   configurationSetName?: string;
   pushResources?: string;
   inboxCount?: InboxCountTypeEnum;
+  payloadSchema?: string;
 }

@@ -4,7 +4,7 @@ import {
   CreateWebhookEndpointDto,
   UpdateChannelEndpointRequestDto,
 } from '@novu/api/models/components';
-import { ChannelConnectionRepository } from '@novu/dal';
+import { ChannelEndpointRepository } from '@novu/dal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -15,8 +15,9 @@ import {
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
+import { createToolWebhookIntegration, VALID_TOOL_WEBHOOK_URL } from './helpers/tool-webhook-helpers';
 
-const channelConnectionRepository = new ChannelConnectionRepository();
+const channelEndpointRepository = new ChannelEndpointRepository();
 
 describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu-v2', () => {
   let session: UserSession;
@@ -100,7 +101,7 @@ describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu
     expect(error?.name).to.equal('ErrorDto');
   });
 
-  it('should rotate the opsgenie apiKey and region on the linked connection', async () => {
+  it('should rotate the opsgenie apiKey and region on the endpoint document', async () => {
     const integration = await createOpsgenieIntegration(session);
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
@@ -123,18 +124,19 @@ describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu
     expect(updateRes.status).to.equal(200);
     expect(updateRes.body.data.endpoint.apiKey).to.equal(rotatedApiKey);
     expect(updateRes.body.data.endpoint.region).to.equal('eu');
+    expect(updateRes.body.data.connectionIdentifier).to.be.null;
 
-    // The rotated secret is re-encrypted on the linked connection.
-    const connection = await channelConnectionRepository.findOne({
-      identifier: createRes.body.data.connectionIdentifier,
+    // The rotated secret is re-encrypted on the endpoint document.
+    const storedEndpoint = await channelEndpointRepository.findOne({
+      identifier: createRes.body.data.identifier,
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
     });
-    const storedApiKey = (connection?.auth as { apiKey?: string })?.apiKey;
+    const storedApiKey = (storedEndpoint?.endpoint as { apiKey?: string })?.apiKey;
     expect(storedApiKey).to.be.a('string');
     expect(storedApiKey).to.not.equal(rotatedApiKey);
     expect(storedApiKey?.startsWith('nvsk.')).to.be.true;
-    expect((connection?.auth as { region?: string })?.region).to.equal('eu');
+    expect((storedEndpoint?.endpoint as { region?: string })?.region).to.equal('eu');
 
     // A follow-up GET returns the rotated wire shape.
     const getRes = await session.testAgent.get(`/v1/channel-endpoints/${createRes.body.data.identifier}`);
@@ -159,6 +161,69 @@ describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu
     const updateRes = await session.testAgent
       .patch(`/v1/channel-endpoints/${createRes.body.data.identifier}`)
       .send({ endpoint: { apiKey: 'not-a-uuid', region: 'us' } });
+
+    expect(updateRes.status).to.equal(400);
+  });
+
+  it('should rotate the tool_webhook url/headers/method on the endpoint document', async () => {
+    const integration = await createToolWebhookIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const rotatedUrl = 'https://example.com/tools/rotated';
+
+    const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: VALID_TOOL_WEBHOOK_URL },
+    });
+    expect(createRes.status).to.equal(201);
+
+    const updateRes = await session.testAgent
+      .patch(`/v1/channel-endpoints/${createRes.body.data.identifier}`)
+      .send({ endpoint: { url: rotatedUrl, headers: { Authorization: 'Bearer rotated-token' }, method: 'PUT' } });
+
+    expect(updateRes.status).to.equal(200);
+    expect(updateRes.body.data.endpoint.url).to.equal(rotatedUrl);
+    expect(updateRes.body.data.endpoint.headers).to.deep.equal({ Authorization: 'Bearer rotated-token' });
+    expect(updateRes.body.data.endpoint.method).to.equal('PUT');
+    expect(updateRes.body.data.connectionIdentifier).to.be.null;
+
+    // The rotated secret is re-encrypted on the endpoint document.
+    const storedEndpoint = await channelEndpointRepository.findOne({
+      identifier: createRes.body.data.identifier,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    const storedUrl = (storedEndpoint?.endpoint as { url?: string })?.url;
+    expect(storedUrl).to.be.a('string');
+    expect(storedUrl).to.not.equal(rotatedUrl);
+    expect(storedUrl?.startsWith('nvsk.')).to.be.true;
+
+    // A follow-up GET returns the rotated wire shape.
+    const getRes = await session.testAgent.get(`/v1/channel-endpoints/${createRes.body.data.identifier}`);
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.endpoint.url).to.equal(rotatedUrl);
+    expect(getRes.body.data.endpoint.method).to.equal('PUT');
+  });
+
+  it('should reject a tool_webhook rotation with a malformed url', async () => {
+    const integration = await createToolWebhookIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: VALID_TOOL_WEBHOOK_URL },
+    });
+    expect(createRes.status).to.equal(201);
+
+    const updateRes = await session.testAgent
+      .patch(`/v1/channel-endpoints/${createRes.body.data.identifier}`)
+      .send({ endpoint: { url: 'not-a-valid-url' } });
 
     expect(updateRes.status).to.equal(400);
   });
