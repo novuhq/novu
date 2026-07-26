@@ -1,26 +1,5 @@
 import type { IEnvironment } from '@novu/shared';
-import { get, patch } from './api.client';
-
-/** Write-only: a refresh token is a single-use secret, only ever sent, never returned. */
-export type ChannelConnectionAuthRequestDto = {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: string;
-  refreshTokenExpiresAt?: string;
-};
-
-/** The API never echoes back a stored refresh token — only whether one is configured. */
-export type ChannelConnectionAuthResponseDto = {
-  accessToken: string;
-  hasRefreshToken: boolean;
-  expiresAt?: string;
-  refreshTokenExpiresAt?: string;
-};
-
-export type ChannelConnectionWorkspaceDto = {
-  id: string;
-  name?: string;
-};
+import { get } from './api.client';
 
 export type ChannelConnectionDto = {
   identifier: string;
@@ -29,8 +8,6 @@ export type ChannelConnectionDto = {
   integrationIdentifier: string | null;
   subscriberId: string | null;
   contextKeys: string[];
-  workspace?: ChannelConnectionWorkspaceDto;
-  auth?: ChannelConnectionAuthResponseDto;
   createdAt: string;
   updatedAt: string;
 };
@@ -79,42 +56,4 @@ export function listChannelConnections({
     environment,
     signal,
   });
-}
-
-type ChannelConnectionApiEnvelope = { data: ChannelConnectionDto };
-
-export async function retrieveChannelConnection({
-  identifier,
-  environment,
-  signal,
-}: {
-  identifier: string;
-  environment: IEnvironment;
-  signal?: AbortSignal;
-}): Promise<ChannelConnectionDto> {
-  const response = await get<ChannelConnectionApiEnvelope>(`/channel-connections/${encodeURIComponent(identifier)}`, {
-    environment,
-    signal,
-  });
-
-  return response.data;
-}
-
-export async function updateChannelConnection({
-  identifier,
-  environment,
-  workspace,
-  auth,
-}: {
-  identifier: string;
-  environment: IEnvironment;
-  workspace: ChannelConnectionWorkspaceDto;
-  auth: ChannelConnectionAuthRequestDto;
-}): Promise<ChannelConnectionDto> {
-  const response = await patch<ChannelConnectionApiEnvelope>(`/channel-connections/${encodeURIComponent(identifier)}`, {
-    environment,
-    body: { workspace, auth },
-  });
-
-  return response.data;
 }
