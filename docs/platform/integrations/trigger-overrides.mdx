@@ -50,6 +50,12 @@ Overrides are defined in the `overrides` property of a trigger payload. You can 
 - Workflow-level: Applies to all steps using a specific provider and takes precedence over the default workflow provider settings.
 - Step-level: Targets a specific step in the workflow and it takes precedence over both workflow-level overrides and the default workflow provider settings.
 
+Some channels also let you save provider overrides on the step itself in the workflow editor, rather than sending them with every trigger. Those configured overrides sit below both scopes above: anything you send at trigger time replaces the configured value for the same field, and fields you do not send keep their configured values. See [chat provider content overrides](/platform/integrations/chat#provider-content-overrides).
+
+<Warning>
+  **Arrays replace, they do not merge.** When an array key is set at more than one level, the higher-priority array is used whole rather than merged element by element. Previously arrays were merged by index, which could leave a partial array patched over a longer one. Send the complete array at the level you want to win.
+</Warning>
+
 ### Workflow-level provider overrides
 
 Workflow-level provider overrides apply configuration to all steps that use a given provider in the workflow. They’re useful for applying shared logic across multiple steps, without repeating the same settings in each one.
@@ -702,10 +708,14 @@ In this example, only the `push-step` is affected, and multiple FCM-specific set
 
 ### Slack Block Kit overrides
 
-Use provider overrides to send [Slack Block Kit](https://api.slack.com/block-kit) messages from a dashboard workflow. Pass a `blocks` array under `overrides.steps.<step-id>.providers.slack`, or use `_passthrough.body` for raw Slack API fields.
+Use trigger overrides to send [Slack Block Kit](https://api.slack.com/block-kit) messages that only your calling code can build. Pass a `blocks` array under `overrides.steps.<step-id>.providers.slack`, or use `_passthrough.body` for raw Slack API fields.
+
+<Note>
+  Trigger overrides are no longer the only way to reach Block Kit from a dashboard workflow. You can also save Slack overrides directly on the Chat step in the workflow editor, which keeps the layout versioned with the workflow instead of duplicated across every trigger call. Use trigger overrides when the message depends on data your application has at send time.
+</Note>
 
 <Card title="Slack Block Kit guide" icon="messages-square" href="/platform/integrations/chat/slack#format-messages-with-block-kit">
-  Step-by-step examples for plain text digests, direct `blocks` overrides, and `_passthrough` for all supported SDKs.
+  Step-by-step examples for plain text digests, step-configured overrides, direct `blocks` overrides, and `_passthrough` for all supported SDKs.
 </Card>
 
 <Tabs>

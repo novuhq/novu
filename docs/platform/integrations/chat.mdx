@@ -241,6 +241,56 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
   </Tab>
 </Tabs>
 
+## Provider content overrides
+
+The Chat step body is plain text, which is the lowest common denominator across chat platforms. When you need a platform's richer message format — Slack Block Kit, a Discord embed, a Telegram parse mode — configure a **provider content override** on the Chat step in the workflow editor.
+
+An override is a JSON object that Novu merges into the request it sends to that provider. It is saved on the step, so it is versioned and promoted between environments with the rest of the workflow, and it applies to every trigger without any change to your trigger call.
+
+<Note>
+  Editing provider content overrides in the workflow editor is rolling out gradually. If the override editor is not visible on your Chat step, contact support@novu.co to have it enabled for your organization. [Trigger overrides](/platform/integrations/trigger-overrides) work regardless.
+</Note>
+
+### Slack is schema-backed
+
+Slack overrides are validated against the [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argument set, and the editor autocompletes field names as you type — including inside `blocks[].elements[]`. Novu blocks invalid JSON and unsupported fields before you can save.
+
+<Card title="Configure Slack overrides" icon="messages-square" href="/platform/integrations/chat/slack#configure-slack-overrides-in-the-dashboard">
+  Field-by-field reference, a Block Kit example with Liquid variables, and the incoming-webhook caveats.
+</Card>
+
+### Every other chat provider is a raw passthrough
+
+For all other chat providers, the override is an unvalidated escape hatch. Whatever JSON object you save is merged into that provider's outbound payload as-is.
+
+That means:
+
+- **No validation.** Novu does not check field names, types, or nesting. A typo reaches the provider's API and surfaces as a delivery error in the Activity feed, not as an error in the editor.
+- **No autocomplete.** There is no schema to suggest from, so the editor cannot help you.
+- **The shape is the provider's contract, not Novu's.** Write the object against the provider's own API reference. If the provider changes its API, your override has to change with it.
+
+Use this when a provider supports something Novu's step editor does not expose. Consult that provider's API documentation for the exact field names, and test with a real trigger before relying on it.
+
+### Liquid and content fallback
+
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates. Novu compiles them at send time, so `{{payload.*}}` and `{{subscriber.*}}` resolve the same way they do in the step body.
+
+Where a provider has a primary content field — `text` for Slack — and your override omits it, Novu fills it with the rendered Chat step body. The step body is not lost just because you supplied a richer layout.
+
+### Precedence
+
+When the same field is set in more than one place, the last one wins:
+
+1. Provider content overrides configured on the step
+2. Workflow-level trigger overrides (`overrides.providers.<provider>`)
+3. Step-scoped trigger overrides (`overrides.steps.<step-id>.providers.<provider>`)
+
+Runtime beats configuration: what your application sends at trigger time replaces the configured value for that field. Fields you do not send keep their configured values.
+
+<Warning>
+  **Arrays replace, they do not merge.** If the same array key is set at two levels, the higher-priority array is used whole rather than merged element by element. Send the complete array at trigger time when you override one.
+</Warning>
+
 ## Supported providers
 
 Here are the chat providers that are currently supported by Novu. Select any provider to see its detailed setup guide.
