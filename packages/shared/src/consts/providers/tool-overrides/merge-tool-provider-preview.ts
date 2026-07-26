@@ -17,6 +17,10 @@ export function mergeToolProviderPreview({
   const primaryKey = getToolProviderPrimaryContentKey(providerId);
   const merged: Record<string, unknown> = { ...(override ?? {}) };
 
+  if (!primaryKey) {
+    return { merged };
+  }
+
   if (!merged[primaryKey]) {
     merged[primaryKey] = body;
 

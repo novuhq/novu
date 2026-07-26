@@ -6,7 +6,7 @@ import {
   CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
 } from '@novu/api/models/components';
-import { ChannelConnectionRepository, ChannelEndpointRepository, IntegrationRepository } from '@novu/dal';
+import { ChannelEndpointRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -20,10 +20,10 @@ import {
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
 import { createPagerDutyIntegration, VALID_PAGERDUTY_ROUTING_KEY } from './helpers/pagerduty-helpers';
+import { createToolWebhookIntegration, VALID_TOOL_WEBHOOK_URL } from './helpers/tool-webhook-helpers';
 
 const integrationRepository = new IntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
-const channelConnectionRepository = new ChannelConnectionRepository();
 
 async function createTelegramIntegration(session: UserSession) {
   return integrationRepository.create({
@@ -432,7 +432,7 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(result.connectionIdentifier).to.be.null;
   });
 
-  it('should create an opsgenie_integration endpoint with the secret persisted encrypted on the connection', async () => {
+  it('should create an opsgenie_integration endpoint with the secret persisted encrypted on the endpoint document', async () => {
     const integration = await createOpsgenieIntegration(session);
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
@@ -447,33 +447,23 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(res.status).to.equal(201);
     expect(res.body.data.type).to.equal(ENDPOINT_TYPES.OPSGENIE_INTEGRATION);
     expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
-    expect(res.body.data.connectionIdentifier).to.be.a('string');
-    // The response is hydrated with the wire shape.
+    expect(res.body.data.connectionIdentifier).to.be.null;
+    // The response returns the plaintext wire shape.
     expect(res.body.data.endpoint.apiKey).to.equal(VALID_OPSGENIE_API_KEY);
     expect(res.body.data.endpoint.region).to.equal('eu');
 
-    // The stored endpoint document is empty (Mongoose minimizes {} to undefined);
-    // the secret lives on the connection.
+    // Secret fields are encrypted on the endpoint document at rest.
     const storedEndpoint = await channelEndpointRepository.findOne({
       identifier: res.body.data.identifier,
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
     });
     expect(storedEndpoint).to.exist;
-    expect(storedEndpoint?.endpoint ?? {}).to.deep.equal({});
-
-    // The connection auth carries the apiKey encrypted at rest.
-    const connection = await channelConnectionRepository.findOne({
-      identifier: res.body.data.connectionIdentifier,
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-    expect(connection).to.exist;
-    const storedApiKey = (connection?.auth as { apiKey?: string })?.apiKey;
+    const storedApiKey = (storedEndpoint?.endpoint as { apiKey?: string })?.apiKey;
     expect(storedApiKey).to.be.a('string');
     expect(storedApiKey).to.not.equal(VALID_OPSGENIE_API_KEY);
     expect(storedApiKey?.startsWith('nvsk.')).to.be.true;
-    expect((connection?.auth as { region?: string })?.region).to.equal('eu');
+    expect((storedEndpoint?.endpoint as { region?: string })?.region).to.equal('eu');
   });
 
   it('should reject an opsgenie endpoint when the apiKey is not a UUID', async () => {
@@ -588,7 +578,7 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
     expect(res.body.data.endpoint.routingKey).to.equal(VALID_PAGERDUTY_ROUTING_KEY);
     expect(res.body.data.endpoint.region).to.equal('us');
-    expect(res.body.data.connectionIdentifier).to.be.a('string');
+    expect(res.body.data.connectionIdentifier).to.be.null;
   });
 
   it('should fail when creating a pagerduty_service endpoint for a non-PagerDuty integration', async () => {
@@ -608,5 +598,136 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
 
     expect(res.status).to.equal(400);
     expect(res.body.message).to.include('requires a PagerDuty integration');
+  });
+
+  it('should create a tool_webhook endpoint with the secret persisted encrypted on the endpoint document', async () => {
+    const integration = await createToolWebhookIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: VALID_TOOL_WEBHOOK_URL, headers: { Authorization: 'Bearer test-token' }, method: 'POST' },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.type).to.equal(ENDPOINT_TYPES.TOOL_WEBHOOK);
+    expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
+    expect(res.body.data.connectionIdentifier).to.be.null;
+    // The response returns the plaintext wire shape.
+    expect(res.body.data.endpoint.url).to.equal(VALID_TOOL_WEBHOOK_URL);
+    expect(res.body.data.endpoint.headers).to.deep.equal({ Authorization: 'Bearer test-token' });
+    expect(res.body.data.endpoint.method).to.equal('POST');
+
+    // Secret fields are encrypted on the endpoint document at rest; method stays plaintext.
+    const storedEndpoint = await channelEndpointRepository.findOne({
+      identifier: res.body.data.identifier,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    expect(storedEndpoint).to.exist;
+    const storedUrl = (storedEndpoint?.endpoint as { url?: string })?.url;
+    expect(storedUrl).to.be.a('string');
+    expect(storedUrl).to.not.equal(VALID_TOOL_WEBHOOK_URL);
+    expect(storedUrl?.startsWith('nvsk.')).to.be.true;
+    const storedHeaders = (storedEndpoint?.endpoint as { headers?: Record<string, string> })?.headers;
+    expect(storedHeaders?.Authorization?.startsWith('nvsk.')).to.be.true;
+    expect((storedEndpoint?.endpoint as { method?: string })?.method).to.equal('POST');
+  });
+
+  it('should allow creating multiple tool_webhook endpoints for the same subscriber and integration', async () => {
+    const integration = await createToolWebhookIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const firstRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: 'https://example.com/tools/first' },
+    });
+    expect(firstRes.status).to.equal(201);
+
+    const secondRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: 'https://example.com/tools/second' },
+    });
+    // Unlike PagerDuty/Opsgenie, tool_webhook has no unique-per-subscriber-integration
+    // index, so a second endpoint for the same subscriber/integration succeeds.
+    expect(secondRes.status).to.equal(201);
+    expect(secondRes.body.data.identifier).to.not.equal(firstRes.body.data.identifier);
+    expect(secondRes.body.data.connectionIdentifier).to.be.null;
+  });
+
+  it('should reject a tool_webhook endpoint with a malformed url', async () => {
+    const integration = await createToolWebhookIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: 'not-a-valid-url' },
+    });
+
+    // Command-level schema validation rejects malformed wire shapes with 422,
+    // matching the pagerduty_service/opsgenie_integration behavior.
+    expect(res.status).to.equal(422);
+  });
+
+  it('should fail when creating a tool_webhook endpoint for a non-Tool-webhook integration', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: VALID_TOOL_WEBHOOK_URL },
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('requires a Tool webhook integration');
+  });
+
+  it('should fail with 404 for tool_webhook when the subscriber does not exist and createSubscriberIfMissing is not set', async () => {
+    const integration = await createToolWebhookIntegration(session);
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: 'ghost-tool-webhook-subscriber',
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: VALID_TOOL_WEBHOOK_URL },
+    });
+
+    expect(res.status).to.equal(404);
+    expect(res.body.message).to.include('Subscriber not found: ghost-tool-webhook-subscriber');
+    expect(res.body.message).to.include('createSubscriberIfMissing');
+  });
+
+  it('should create the subscriber on the fly for tool_webhook when createSubscriberIfMissing is true', async () => {
+    const integration = await createToolWebhookIntegration(session);
+    const subscriberId = `jit-tool-webhook-subscriber-${Date.now()}`;
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+      endpoint: { url: VALID_TOOL_WEBHOOK_URL },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.subscriberId).to.equal(subscriberId);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.subscriberId).to.equal(subscriberId);
   });
 });

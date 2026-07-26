@@ -25,9 +25,16 @@ describe('stitchProviderOverridesFromDocs', () => {
     });
   });
 
+  it('stitches tool-webhook provider docs', () => {
+    expect(stitchProviderOverridesFromDocs([{ providerId: ToolProviderIdEnum.Webhook, controls: { foo: 1 } }])).toEqual(
+      {
+        [ToolProviderIdEnum.Webhook]: { foo: 1 },
+      }
+    );
+  });
+
   it('returns undefined when there are no supported provider docs', () => {
     expect(stitchProviderOverridesFromDocs([])).toBeUndefined();
-    expect(stitchProviderOverridesFromDocs([{ providerId: 'tool-webhook', controls: { foo: 1 } }])).toBeUndefined();
   });
 });
 
@@ -78,17 +85,22 @@ describe('processProviderOverridesIssues', () => {
     expect(issues.controls).toBeUndefined();
   });
 
-  it('flags unsupported provider ids', () => {
+  it('accepts arbitrary object keys for tool-webhook', () => {
     const issues = processProviderOverridesIssues({
-      'tool-webhook': { foo: 'bar' },
+      [ToolProviderIdEnum.Webhook]: {
+        event: '{{payload.event}}',
+        nested: { any: 'value' },
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
+  it.each([null, [], 'not-an-object'])('rejects malformed tool-webhook override value %j', (override) => {
+    const issues = processProviderOverridesIssues({
+      [ToolProviderIdEnum.Webhook]: override,
     } as never);
 
-    expect(issues.controls?.['providerOverrides.tool-webhook']).toEqual([
-      {
-        message: '"tool-webhook" is not a supported property',
-        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
-        variableName: 'providerOverrides.tool-webhook',
-      },
-    ]);
+    expect(issues.controls?.[`providerOverrides.${ToolProviderIdEnum.Webhook}`]).toBeDefined();
   });
 });

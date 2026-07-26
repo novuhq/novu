@@ -8,6 +8,7 @@ import {
   isToolContentOverrideProviderId,
   type ToolProviderOverrides,
 } from './tool-content-source';
+import { getActiveWebhookSchemaSources, mergeWebhookPayloadSchemas } from './webhook-payload-schema';
 
 const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
@@ -38,5 +39,14 @@ export function useToolOverrideProviderOptions() {
     });
   }, [integrations, currentEnvironment?._id, providerOverrides]);
 
-  return { providerOptions, providerOverrides };
+  const webhookPayloadSchema = useMemo(() => {
+    const environmentIntegrations = (integrations ?? []).filter(
+      (integration) =>
+        integration.channel === ChannelTypeEnum.TOOL && integration._environmentId === currentEnvironment?._id
+    );
+
+    return mergeWebhookPayloadSchemas(getActiveWebhookSchemaSources(environmentIntegrations));
+  }, [currentEnvironment?._id, integrations]);
+
+  return { providerOptions, providerOverrides, webhookPayloadSchema };
 }
