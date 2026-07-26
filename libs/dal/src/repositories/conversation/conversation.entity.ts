@@ -28,6 +28,13 @@ export interface ConversationChannel {
   platformThreadId: string;
   /** Platform message ID of the thread-starting message */
   firstPlatformMessageId?: string;
+  /**
+   * Platform workspace/team id this thread belongs to (e.g. Slack `team_id`). Captured at inbound
+   * creation so outbound delivery can resolve the correct per-workspace bot token when a single
+   * platform app is installed across many workspaces. Absent on single-workspace platforms and
+   * on conversations created before multi-workspace support.
+   */
+  workspace?: { id: string };
 }
 
 export interface ConversationTokenUsage {

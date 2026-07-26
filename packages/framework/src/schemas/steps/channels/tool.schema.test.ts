@@ -8,13 +8,10 @@ describe('tool channel schemas', () => {
       type: 'object',
       properties: {
         body: { type: 'string' },
-        enabledIntegrations: {
-          type: 'array',
-          items: { type: 'string' },
-        },
       },
       required: ['body'],
     });
+    expect(channelStepSchemas.tool.output.properties).not.toHaveProperty('enabledIntegrations');
     expect(channelStepSchemas.tool.result).toMatchObject({
       type: 'object',
       properties: {},

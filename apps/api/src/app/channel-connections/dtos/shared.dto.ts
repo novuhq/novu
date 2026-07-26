@@ -11,6 +11,11 @@ export class WorkspaceDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @ApiPropertyOptional({ example: 'U0123456789' })
+  @IsOptional()
+  @IsString()
+  botUserId?: string;
 }
 
 /**

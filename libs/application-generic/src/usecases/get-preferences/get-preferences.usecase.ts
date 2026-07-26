@@ -168,6 +168,7 @@ export class GetPreferences {
           templateId: command.templateId,
           excludeSubscriberPreferences: command.excludeSubscriberPreferences,
           contextKeys: command.contextKeys,
+          skipCache: command.skipCache,
         })
       );
     } catch (e) {
@@ -306,6 +307,7 @@ export class GetPreferences {
         organizationId: command.organizationId,
         workflowIds: [command.templateId],
         readOptions: queryOptions,
+        skipCache: command.skipCache,
       });
 
       [workflowResourcePreference, workflowUserPreference] = workflowPreferencesById.get(command.templateId) ?? [
@@ -400,11 +402,13 @@ export class GetPreferences {
     organizationId,
     workflowIds,
     readOptions,
+    skipCache,
   }: {
     environmentId: string;
     organizationId: string;
     workflowIds: string[];
     readOptions?: { readPreference?: 'secondaryPreferred' | 'primary' };
+    skipCache?: boolean;
   }): Promise<Map<string, WorkflowPreferencesCacheData>> {
     const queryOptions = readOptions ?? { readPreference: 'secondaryPreferred' as const };
     const cacheKey = (workflowId: string) => `${environmentId}:${workflowId}`;
@@ -438,7 +442,7 @@ export class GetPreferences {
 
         return tuples;
       },
-      { environmentId, organizationId }
+      { environmentId, organizationId, skipCache }
     );
 
     const tuplesByWorkflowId = new Map<string, WorkflowPreferencesCacheData>();

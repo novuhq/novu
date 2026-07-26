@@ -1,3 +1,15 @@
+## v3.18.1 (2026-07-23)
+
+### 🚀 Features
+
+- **dashboard,api-service,js,react,framework:** novu copilot agent for slack fixes NV-8316 ([#11973](https://github.com/novuhq/novu/pull/11973))
+- **providers:** add Webex Messaging OAuth support fixes NV-8272 ([#11633](https://github.com/novuhq/novu/pull/11633))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+- Rahul Jain
+
 ## v3.18.0 (2026-07-08)
 
 ### 🚀 Features

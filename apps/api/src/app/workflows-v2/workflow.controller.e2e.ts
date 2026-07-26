@@ -334,7 +334,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const inAppControlValue = 'In-App Test';
       const emailControlValue = 'Email Test';
       const updateRequest: UpdateWorkflowDto = {
-        origin: ResourceOriginEnum.NovuCloud,
+        origin: workflowCreated.origin,
         name: workflowCreated.name,
         preferences: {
           user: null,
@@ -352,6 +352,20 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       // TODO: Control values must be typed and accept only valid control values
       expect((updatedWorkflow.steps[0] as InAppStepResponseDto).controls.values.subject).to.be.equal(inAppControlValue);
       expect((updatedWorkflow.steps[1] as EmailStepResponseDto).controls.values.subject).to.be.equal(emailControlValue);
+      expect(updatedWorkflow.origin).to.equal(ResourceOriginEnum.NovuCloud);
+    });
+
+    it('should not change origin when a different origin is sent on update', async () => {
+      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(`Origin Immutable ${Date.now()}`);
+      expect(workflowCreated.origin).to.equal(ResourceOriginEnum.NovuCloud);
+
+      const updatedWorkflow = await updateWorkflow(workflowCreated.id, {
+        ...mapResponseToUpdateDto(workflowCreated),
+        origin: ResourceOriginEnum.External,
+      } as UpdateWorkflowDto);
+
+      expect(updatedWorkflow.origin).to.equal(ResourceOriginEnum.NovuCloud);
+      expect(updatedWorkflow.name).to.equal(workflowCreated.name);
     });
 
     it('should keep the step id on updated ', async () => {

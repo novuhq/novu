@@ -11,6 +11,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  getEffectiveJobPayload,
   PinoLogger,
   StandardQueueService,
 } from '@novu/application-generic';
@@ -20,6 +21,7 @@ import {
   JobRepository,
   MessageEntity,
   MessageRepository,
+  NotificationRepository,
   OrganizationEntity,
 } from '@novu/dal';
 import {
@@ -47,6 +49,7 @@ export class SnoozeNotification {
     private readonly logger: PinoLogger,
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository,
+    private notificationRepository: NotificationRepository,
     private standardQueueService: StandardQueueService,
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
@@ -189,6 +192,19 @@ export class SnoozeNotification {
       throw new InternalServerErrorException(`Job id: '${notification._jobId}' not found`);
     }
 
+    // The unsnooze job diverges from its notification (it carries the
+    // `unsnooze` flag), so under the all-or-nothing payload model it must store
+    // a complete payload copy. When the original job doesn't carry one
+    // (payload-dedup), resolve it from the parent notification first.
+    const parentNotification =
+      originalJob.payload == null
+        ? await this.notificationRepository.findOne(
+            { _id: originalJob._notificationId, _environmentId: originalJob._environmentId },
+            'payload'
+          )
+        : null;
+    const basePayload = getEffectiveJobPayload(originalJob, parentNotification) ?? {};
+
     const newJobData = {
       ...originalJob,
       transactionId: uuidv4(),
@@ -198,7 +214,7 @@ export class SnoozeNotification {
       _id: JobRepository.createObjectId(),
       _parentId: null,
       payload: {
-        ...originalJob.payload,
+        ...basePayload,
         unsnooze: true,
       },
     };

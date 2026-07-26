@@ -11,6 +11,9 @@
     },
     "cursor-team-kit": {
       "enabled": true
+    },
+    "mongodb": {
+      "enabled": true
     }
   }
 }

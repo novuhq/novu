@@ -80,6 +80,10 @@ export class ChannelConnectionsController {
         orderBy: query.orderBy || 'createdAt',
         includeCursor: query.includeCursor,
         subscriberId: query.subscriberId,
+        // Preserve the historical admin behavior where a `subscriberId` filter
+        // returns only that subscriber's own connections (never shared), unless
+        // the caller explicitly asks for a different scope.
+        connectionMode: query.connectionMode ?? (query.subscriberId ? 'subscriber' : undefined),
         contextKeys: query.contextKeys,
         channel: query.channel,
         providerId: query.providerId,

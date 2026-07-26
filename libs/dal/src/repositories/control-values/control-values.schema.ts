@@ -34,9 +34,18 @@ const controlValuesSchema = new Schema<ControlValuesModel>(
     level: Schema.Types.String,
     priority: Schema.Types.Number,
     controls: Schema.Types.Mixed,
+    providerId: Schema.Types.String,
   },
   schemaOptions
 );
+
+controlValuesSchema.index({
+  _environmentId: 1,
+  _workflowId: 1,
+  _stepId: 1,
+  level: 1,
+  providerId: 1,
+});
 
 controlValuesSchema.plugin(mongooseDelete, {
   deletedAt: true,

@@ -342,7 +342,7 @@ export class IntegrationsController {
           name: body.name,
           identifier: body.identifier,
           environmentId: body._environmentId,
-          userEnvironmentId: user.environmentId,
+          userEnvironmentId: user.environmentId || undefined,
           organizationId: user.organizationId,
           integrationId,
           credentials: body.credentials,
@@ -748,6 +748,7 @@ export class IntegrationsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,
+        contextHash: body.contextHash,
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
@@ -780,6 +781,7 @@ export class IntegrationsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,
+        contextHash: body.contextHash,
         userScope: body.userScope,
       })
     );
@@ -984,6 +986,7 @@ export class IntegrationsController {
             organizationId: user.organizationId,
             integrationIdentifier: body.integrationIdentifier,
             subscriberId: body.subscriberId,
+            context: body.context,
           })
         );
 

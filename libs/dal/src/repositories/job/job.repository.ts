@@ -31,6 +31,16 @@ export interface IDelayOrDigestJobResult {
   activeNotificationId?: string;
 }
 
+/**
+ * Lease TTL for {@link JobRepository.claimAsRunning}. Must stay below BullMQ lock / SQS visibility (90s).
+ * Live workers renew the lease via {@link JobRepository.renewRunningClaim} while executing, so a stale
+ * lease always means the claiming worker died — not that the job is merely slow.
+ */
+export const RUNNING_CLAIM_STALE_AFTER_MS = 60_000;
+
+/** Heartbeat period for renewing a RUNNING claim; several renewals fit within one lease TTL. */
+export const RUNNING_CLAIM_RENEW_INTERVAL_MS = RUNNING_CLAIM_STALE_AFTER_MS / 3;
+
 export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
@@ -74,6 +84,83 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
+  /**
+   * Atomically claim a job for execution (QUEUED|DELAYED -> RUNNING, or stale RUNNING).
+   * Returns null when another worker holds a live lease or the job is already terminal.
+   */
+  public async claimAsRunning(environmentId: string, jobId: string): Promise<JobEntity | null> {
+    const staleClaimCutoff = new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
+
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        $or: [
+          { status: { $in: [JobStatusEnum.QUEUED, JobStatusEnum.DELAYED] } },
+          { status: JobStatusEnum.RUNNING, updatedAt: { $lte: staleClaimCutoff } },
+        ],
+      },
+      {
+        $set: {
+          status: JobStatusEnum.RUNNING,
+        },
+      },
+      { new: true }
+    );
+  }
+
+  /**
+   * Renew a live RUNNING claim's lease (schema timestamps refresh `updatedAt` on write).
+   * No-op once the job has left RUNNING, so a late heartbeat can never resurrect a claim.
+   */
+  public async renewRunningClaim(environmentId: string, jobId: string): Promise<void> {
+    await this.updateOne(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: JobStatusEnum.RUNNING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.RUNNING,
+        },
+      }
+    );
+  }
+
+  /** Release RUNNING -> QUEUED so a short-delay retry (e.g. webhook filter) can reclaim. */
+  public async releaseRunningClaim(environmentId: string, jobId: string): Promise<void> {
+    await this.updateOne(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: JobStatusEnum.RUNNING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.QUEUED,
+        },
+      }
+    );
+  }
+
+  /** Atomically claim the next PENDING child as QUEUED so a redelivered parent cannot re-enqueue it. */
+  public async claimNextChildAsQueued(environmentId: string, parentJobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _parentId: parentJobId,
+        status: JobStatusEnum.PENDING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.QUEUED,
+        },
+      },
+      { new: true }
+    );
+  }
+
   public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
     const result = await this._model.updateOne(
       {
@@ -92,6 +179,84 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         `There was a problem when trying to set an error for the job ${jobId} in the organization ${organizationId}`
       );
     }
+  }
+
+  /**
+   * The single "completed TRIGGER jobs for this digest value" primitive shared
+   * by the regular ({@link findJobsToDigest}) and backoff digest event
+   * collection paths.
+   *
+   * Payload-dedup: trigger jobs may no longer carry a payload, so the digest
+   * value is matched against the value persisted on each transaction's sibling
+   * DIGEST job (`digest.digestValue`) rather than `payload.${digestKey}`. When
+   * no transaction matches, returns `[]` explicitly (no accidental `$in: []`).
+   */
+  public async findDigestEventTriggers(params: {
+    window: { field: 'createdAt' | 'updatedAt'; from: Date };
+    templateId: string;
+    environmentId: string;
+    subscriberId: string;
+    digestKey?: string;
+    digestValue?: string | number;
+    excludeTransactionIds?: string[];
+  }): Promise<JobEntity[]> {
+    const {
+      window,
+      templateId,
+      environmentId,
+      subscriberId,
+      digestKey,
+      digestValue,
+      excludeTransactionIds = [],
+    } = params;
+
+    const windowFilter =
+      window.field === 'updatedAt' ? { updatedAt: { $gte: window.from } } : { createdAt: { $gte: window.from } };
+
+    let matchingTransactionIds: string[] | undefined;
+    if (digestKey) {
+      const matchingDigestJobs = await this.find(
+        {
+          ...windowFilter,
+          _templateId: templateId,
+          type: StepTypeEnum.DIGEST,
+          _environmentId: environmentId,
+          _subscriberId: subscriberId,
+          // Payload-dedup jobs persist `digest.digestValue`; legacy digest jobs
+          // (created before it was persisted) still carry the trigger payload,
+          // so fall back to matching the value inside it. Without this, legacy
+          // events queued before deployment would be dropped from the window.
+          $or: [{ 'digest.digestValue': digestValue }, { [`payload.${digestKey}`]: digestValue }],
+        },
+        'transactionId'
+      );
+
+      matchingTransactionIds = [...new Set(matchingDigestJobs.map((job) => job.transactionId))].filter(
+        (transactionId) => !excludeTransactionIds.includes(transactionId)
+      );
+
+      if (matchingTransactionIds.length === 0) {
+        return [];
+      }
+    }
+
+    return this.find(
+      {
+        ...windowFilter,
+        _templateId: templateId,
+        status: JobStatusEnum.COMPLETED,
+        type: StepTypeEnum.TRIGGER,
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        transactionId: {
+          $nin: excludeTransactionIds,
+          ...(matchingTransactionIds ? { $in: matchingTransactionIds } : {}),
+        },
+      },
+      // Only what downstream consumers need: buildDigestEvent (event refs) and
+      // findJobsToDigest's completion update (transactionId).
+      '_id payload _notificationId createdAt transactionId'
+    );
   }
 
   public async findJobsToDigest(
@@ -117,21 +282,16 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       _environmentId: environmentId,
       _subscriberId: subscriberId,
     });
-    const transactionIds = digests.map((job) => job.transactionId);
+    const excludeTransactionIds = digests.map((job) => job.transactionId);
 
-    const result = await this.find({
-      updatedAt: {
-        $gte: from,
-      },
-      _templateId: templateId,
-      status: JobStatusEnum.COMPLETED,
-      type: StepTypeEnum.TRIGGER,
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
-      transactionId: {
-        $nin: transactionIds,
-      },
+    const result = await this.findDigestEventTriggers({
+      window: { field: 'updatedAt', from },
+      templateId,
+      environmentId,
+      subscriberId,
+      digestKey,
+      digestValue,
+      excludeTransactionIds,
     });
 
     const transactionIdsTriggers = result.map((job) => job.transactionId);
@@ -251,7 +411,13 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         $ne: job._notificationId,
       },
       _templateId: job._templateId,
-      status: { $in: [JobStatusEnum.PENDING, JobStatusEnum.SKIPPED, JobStatusEnum.COMPLETED] },
+      /*
+       * QUEUED covers the window between claimNextChildAsQueued and the
+       * merge/skip decision in AddJob — without it, two concurrent triggers
+       * with the same digest value are invisible to each other's backoff
+       * check and both skip the digest.
+       */
+      status: { $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.SKIPPED, JobStatusEnum.COMPLETED] },
       type: StepTypeEnum.DIGEST,
       _environmentId: job._environmentId,
       _subscriberId: job._subscriberId,

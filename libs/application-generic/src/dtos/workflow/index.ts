@@ -5,6 +5,7 @@ export * from './generate-preview-request.dto';
 export * from './generate-preview-response.dto';
 export * from './preferences.response.dto';
 export * from './preview-payload.dto';
+export * from './provider-overrides.dto';
 export * from './runtime-issue.dto';
 export * from './skip.dto';
 export * from './step.response.dto';

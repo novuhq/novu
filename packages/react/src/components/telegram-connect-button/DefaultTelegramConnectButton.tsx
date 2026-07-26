@@ -7,6 +7,7 @@ export type DefaultTelegramConnectButtonProps = Pick<
   TelegramConnectButtonProps,
   | 'integrationIdentifier'
   | 'subscriberId'
+  | 'context'
   | 'onConnectSuccess'
   | 'onConnectError'
   | 'onDisconnectSuccess'
@@ -19,6 +20,7 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
   const {
     integrationIdentifier,
     subscriberId,
+    context,
     onConnectSuccess,
     onConnectError,
     onDisconnectSuccess,
@@ -35,6 +37,7 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
         props: {
           integrationIdentifier,
           subscriberId,
+          context,
           onConnectSuccess,
           onConnectError,
           onDisconnectSuccess,
@@ -49,6 +52,7 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
       novuUI,
       integrationIdentifier,
       subscriberId,
+      context,
       onConnectSuccess,
       onConnectError,
       onDisconnectSuccess,

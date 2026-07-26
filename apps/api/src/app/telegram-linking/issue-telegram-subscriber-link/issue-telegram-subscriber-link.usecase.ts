@@ -103,6 +103,7 @@ export class IssueTelegramSubscriberLink {
         agentIdentifier: agent.agentIdentifier,
         integrationId,
         subscriberId: command.subscriberId,
+        context: command.context,
       });
       code = issued.code;
       expiresAt = issued.expiresAt;

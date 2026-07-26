@@ -2,6 +2,7 @@ import { NodeViewProps } from '@tiptap/core';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 import { useMemo } from 'react';
 import { cn } from '@/editor/utils/classname';
+import { sanitizeEmailHtml } from '@/editor/utils/sanitize-email-html';
 import { HtmlCodeBlockAttributes } from './html';
 
 export function HTMLCodeBlockView(props: NodeViewProps) {
@@ -33,7 +34,7 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
       .map((s) => s.innerHTML)
       .join('\n');
 
-    return `<style>${combinedStyle}</style>${body.innerHTML}`;
+    return sanitizeEmailHtml(`<style>${combinedStyle}</style>${body.innerHTML}`);
   }, [activeTab]);
 
   const isEmpty = html === '';

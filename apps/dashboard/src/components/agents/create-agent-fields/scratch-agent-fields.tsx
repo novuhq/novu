@@ -1,4 +1,4 @@
-import { AGENT_NAME_MAX_LENGTH, slugify } from '@novu/shared';
+import { AGENT_IDENTIFIER_MAX_LENGTH, AGENT_NAME_MAX_LENGTH, slugify } from '@novu/shared';
 import { useId } from 'react';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Input } from '@/components/primitives/input';
@@ -98,6 +98,7 @@ export function ScratchAgentFields({
             size="xs"
             className="font-mono"
             value={identifier}
+            maxLength={AGENT_IDENTIFIER_MAX_LENGTH}
             onChange={(e) => {
               onIdentifierChange(e.target.value);
               onIdentifierTouched();

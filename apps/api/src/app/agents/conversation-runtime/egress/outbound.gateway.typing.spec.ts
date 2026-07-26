@@ -14,14 +14,22 @@ describe('OutboundGateway typing', () => {
     const platform = options.platform ?? AgentPlatformEnum.SLACK;
     const setAssistantStatus = options.setAssistantStatus ?? sinon.stub().resolves();
     const startTyping = options.startTyping ?? sinon.stub().resolves();
+    const withBotToken = sinon.stub().callsFake(async (_token: string, fn: () => Promise<unknown>) => fn());
 
     const agentConfigResolver = {
-      resolve: sinon.stub().resolves({ platform }),
+      resolve: sinon.stub().resolves({
+        platform,
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        integrationIdentifier,
+        integrationId: 'integration-1',
+      }),
+      resolveSlackBotToken: sinon.stub().resolves('xoxb-test-token'),
     };
     const registry = {
       getOrCreate: sinon.stub().resolves({
         thread: () => ({ startTyping }),
-        getAdapter: () => ({ setAssistantStatus }),
+        getAdapter: () => ({ setAssistantStatus, withBotToken }),
       }),
     };
     const logger = {
@@ -30,23 +38,28 @@ describe('OutboundGateway typing', () => {
       error: sinon.stub(),
     };
 
+    const conversation = {
+      findByPlatformThread: sinon.stub().resolves(null),
+    };
+
     const gateway = new OutboundGateway(
       registry as any,
-      {} as any,
+      conversation as any,
       agentConfigResolver as any,
       {} as any,
       {} as any,
       logger as any
     );
 
-    return { gateway, setAssistantStatus, startTyping, logger };
+    return { gateway, setAssistantStatus, startTyping, logger, withBotToken };
   }
 
   it('clears Slack assistant status on stop without calling startTyping', async () => {
-    const { gateway, setAssistantStatus, startTyping } = makeGateway();
+    const { gateway, setAssistantStatus, startTyping, withBotToken } = makeGateway();
 
     await gateway.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId);
 
+    expect(withBotToken.calledOnce).to.equal(true);
     expect(setAssistantStatus.calledOnceWith('C123', '1783695626.846689', '')).to.equal(true);
     expect(startTyping.called).to.equal(false);
   });
@@ -75,7 +88,9 @@ describe('OutboundGateway typing', () => {
 
     await gateway.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId);
 
-    expect(logger.warn.calledOnce).to.equal(true);
+    expect(
+      logger.warn.calledWithMatch(sinon.match.object, 'Failed to clear Slack assistant status')
+    ).to.equal(true);
   });
 
   it('warns and does not throw when startTyping fails', async () => {

@@ -1,4 +1,4 @@
-import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum, ToolProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ExecuteBridgeJob } from './execute-bridge-job.usecase';
@@ -13,10 +13,14 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const notificationTemplateRepository = { findOne: sinon.stub().resolves(null) };
     const jobRepository = { findOne: sinon.stub().resolves(null), find: sinon.stub().resolves([]) };
     const messageRepository = { findOne: sinon.stub().resolves(null) };
+    const notificationPayloadService = { hydrateEntitiesPayload: sinon.stub().resolves(undefined) };
     const environmentRepository = {
       findOne: sinon.stub().resolves({ _id: 'env_1', apiKeys: [], echo: undefined }),
     };
-    const controlValuesRepository = { findOne: sinon.stub().resolves(null) };
+    const controlValuesRepository = {
+      findOne: sinon.stub().resolves(null),
+      find: sinon.stub().resolves([]),
+    };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const executeBridgeRequest = { execute: sinon.stub().resolves({ outputs: {}, options: {} }) };
     const logger = {
@@ -35,6 +39,7 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     const usecase = new ExecuteBridgeJob(
       jobRepository as never,
       notificationTemplateRepository as never,
+      notificationPayloadService as never,
       messageRepository as never,
       environmentRepository as never,
       controlValuesRepository as never,
@@ -44,7 +49,15 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       inMemoryLRUCacheService as never
     );
 
-    return { usecase, notificationTemplateRepository, executeBridgeRequest, environmentRepository };
+    return {
+      usecase,
+      notificationTemplateRepository,
+      executeBridgeRequest,
+      environmentRepository,
+      controlValuesRepository,
+      jobRepository,
+      notificationPayloadService,
+    };
   }
 
   function buildCommand(workflow?: Record<string, unknown>) {
@@ -157,5 +170,134 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
     expect(bridgeRequest.event.actor).to.deep.equal(actor);
+  });
+
+  it('stitches STEP_PROVIDER_CONTROLS docs into controls.providerOverrides for the bridge event', async () => {
+    const { usecase, executeBridgeRequest, controlValuesRepository } = buildUsecase();
+
+    controlValuesRepository.findOne.resolves({
+      controls: { body: 'default alert' },
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+    controlValuesRepository.find.resolves([
+      {
+        providerId: ToolProviderIdEnum.PagerDuty,
+        controls: { severity: 'warning', summary: 'db down' },
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      },
+    ]);
+
+    const command = {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: {
+          stepId: 'step_1',
+          uuid: 'step_1',
+          _id: 'step_tpl_1',
+          template: { type: 'tool' },
+        },
+      },
+      variables: {
+        payload: {},
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+
+    await usecase.execute(command);
+
+    expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
+    const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
+    expect(bridgeRequest.event.controls).to.deep.equal({
+      body: 'default alert',
+      providerOverrides: {
+        [ToolProviderIdEnum.PagerDuty]: { severity: 'warning', summary: 'db down' },
+      },
+    });
+  });
+
+  it('buildStepsMap maps digest parent outputs to steps.<stepId> namespace', async () => {
+    const { usecase, jobRepository, notificationPayloadService } = buildUsecase();
+
+    const digestJob = {
+      _id: 'digest_job_1',
+      _parentId: undefined,
+      _environmentId: 'env_1',
+      type: 'digest',
+      status: 'completed',
+      createdAt: new Date('2026-07-23T09:00:00.000Z'),
+      step: { stepId: 'digest-step', uuid: 'digest-step' },
+      payload: { foo: 'bar' },
+    };
+
+    jobRepository.findOne
+      .withArgs({ _id: 'digest_job_1', _environmentId: 'env_1' })
+      .resolves(digestJob);
+    jobRepository.find
+      .withArgs({
+        _mergedDigestId: 'digest_job_1',
+        type: 'digest',
+        status: 'merged',
+        _environmentId: 'env_1',
+      })
+      .resolves([]);
+
+    const httpJob = {
+      _id: 'http_job_1',
+      _parentId: 'digest_job_1',
+      _environmentId: 'env_1',
+      step: { stepId: 'http-step', uuid: 'http-step' },
+    } as never;
+
+    const stepsMap = await usecase.buildStepsMap(httpJob, 'env_1');
+
+    expect(notificationPayloadService.hydrateEntitiesPayload.calledOnce).to.equal(true);
+    expect(stepsMap['digest-step']).to.include({
+      eventCount: 1,
+      countSummary: '1 notification',
+    });
+    expect(stepsMap['digest-step'].events).to.deep.equal([
+      {
+        id: 'digest_job_1',
+        time: digestJob.createdAt,
+        payload: { foo: 'bar' },
+      },
+    ]);
+    expect(stepsMap['digest-step'].sentenceSummary).to.equal('');
+  });
+
+  it('buildStepsMap keeps the nearest parent output when duplicate stepIds exist', async () => {
+    const { usecase } = buildUsecase();
+
+    sinon.stub(usecase as never, 'generateStateForJob' as never).resolves([
+      {
+        stepId: 'digest-step',
+        outputs: { events: [{ id: 'latest' }], eventCount: 1 },
+        state: { status: 'completed' },
+      },
+      {
+        stepId: 'digest-step',
+        outputs: { events: [{ id: 'stale' }], eventCount: 1 },
+        state: { status: 'completed' },
+      },
+    ] as never);
+
+    const stepsMap = await usecase.buildStepsMap({ _parentId: 'digest_job_1' } as never, 'env_1');
+
+    expect(stepsMap['digest-step'].events).to.deep.equal([{ id: 'latest' }]);
   });
 });

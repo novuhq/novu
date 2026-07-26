@@ -5,7 +5,7 @@ import {
   AgentRuntimeCapabilities,
   AgentRuntimeProviderIdEnum,
   isAnthropicAwsProvider,
-  NOVU_TOOLS_SCHEMA,
+  isNovuInternalToolName,
 } from '@novu/shared';
 import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
@@ -335,7 +335,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       try {
         // Read the agent's current user-selected tools/MCP and re-emit them through
         // buildToolsPayload, which always appends Novu-owned platform tools (e.g.
-        // novu_tools). Nothing the user chose changes — this only backfills the overlay.
+        // novu_tool_catalog). Nothing the user chose changes — this only backfills the overlay.
         const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
         const rawTools = (currentAgent.tools as any[]) ?? [];
         const currentTools = rawTools.flatMap(mapToolset);
@@ -343,9 +343,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         const hasSkills = ((currentAgent.skills as any[]) ?? []).length > 0;
 
         // Preserve any provider-side custom tools we don't own (e.g. on an adopted agent).
-        // buildToolsPayload re-emits Novu's own novu_tools, so drop it here to avoid a duplicate.
+        // buildToolsPayload re-emits Novu-owned platform tools, so drop those here to avoid duplicates.
         const foreignCustomTools = rawTools.filter(
-          (tool) => tool?.type === 'custom' && tool?.name !== NOVU_TOOLS_SCHEMA.name
+          (tool) => tool?.type === 'custom' && !isNovuInternalToolName(tool?.name)
         );
 
         const toolsPayload = [

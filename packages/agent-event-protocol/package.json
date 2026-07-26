@@ -1,0 +1,40 @@
+{
+  "name": "@novu/agent-event-protocol",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AgentEvent wire protocol types and runtime guards (private workspace package).",
+  "main": "./dist/cjs/index.cjs",
+  "types": "./dist/cjs/index.d.cts",
+  "module": "./dist/esm/index.js",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "biome lint ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "typescript": "5.6.2"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

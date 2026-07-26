@@ -1,7 +1,7 @@
 import { IsValidContextPayload } from '@novu/application-generic';
 import { ConnectionMode, ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsDefined, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { AuthDto, WorkspaceDto } from '../../dtos/shared.dto';
 
@@ -21,6 +21,16 @@ export class CreateChannelConnectionCommand extends EnvironmentCommand {
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
+
+  /**
+   * Pre-resolved context keys. When provided they are persisted verbatim and the
+   * `context` payload is ignored — used by the OAuth callback to carry a
+   * session-validated context without re-resolving (and re-trusting) a payload.
+   */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
 
   @IsOptional()
   @IsString()
