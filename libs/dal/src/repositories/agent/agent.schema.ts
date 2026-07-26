@@ -25,6 +25,7 @@ const agentSchema = new Schema<AgentDBModel>(
       subscriberAccess: {
         type: Schema.Types.String,
         enum: Object.values(AgentSubscriberAccessEnum),
+        required: true,
       },
     },
     bridgeUrl: Schema.Types.String,
