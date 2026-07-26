@@ -80,18 +80,11 @@ export function ContentSourceSelector({
                     'flex cursor-pointer items-center justify-between gap-2 rounded-md px-1.5 py-1',
                     isSelected && 'bg-neutral-alpha-50'
                   )}
-                  onSelect={(event) => {
-                    // Keep menu open when the dedicated + control is used; that button handles add itself.
-                    if ((event.target as HTMLElement).closest('[data-override-action]')) {
-                      event.preventDefault();
-
-                      return;
-                    }
-
+                  onSelect={() => {
                     if (canSelectDirectly) {
                       onSelectSource(provider.providerId);
-                    } else {
-                      onAddOverride?.(provider.providerId);
+                    } else if (onAddOverride) {
+                      onAddOverride(provider.providerId);
                     }
                   }}
                 >
@@ -126,9 +119,9 @@ export function ContentSourceSelector({
                   {canAddOverrides && !provider.hasOverride && (
                     <button
                       type="button"
-                      data-override-action="add"
                       aria-label={`Add ${provider.displayName} override`}
                       className="text-foreground-400 hover:text-foreground-950 rounded p-0.5"
+                      onPointerDown={(event) => event.preventDefault()}
                       onClick={(event) => {
                         event.stopPropagation();
                         onAddOverride?.(provider.providerId);
