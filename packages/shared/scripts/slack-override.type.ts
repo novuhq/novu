@@ -7,4 +7,6 @@ import type { ChatPostMessageArguments } from '@slack/web-api';
  * credentials — both are security-relevant. They are resolved from Novu's subscriber routing and
  * stored credentials instead. `as_user` is dropped because Novu always posts as the installed bot.
  */
-export type SlackOverride = Omit<ChatPostMessageArguments, 'channel' | 'token' | 'as_user'>;
+export const NON_OVERRIDABLE_SLACK_KEYS = ['channel', 'token', 'as_user'] as const;
+
+export type SlackOverride = Omit<ChatPostMessageArguments, (typeof NON_OVERRIDABLE_SLACK_KEYS)[number]>;

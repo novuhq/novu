@@ -1,9 +1,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGenerator } from 'ts-json-schema-generator';
 import { toLiquidTolerantSchema } from '../src/consts/providers/provider-overrides/liquid-tolerant.ts';
 import type { JSONSchemaDto } from '../src/dto/workflows/json-schema-dto.ts';
+import { NON_OVERRIDABLE_SLACK_KEYS } from './slack-override.type.ts';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const outputDir = join(scriptDir, '../src/consts/providers/provider-overrides/slack');
@@ -71,12 +72,19 @@ function inlineRootNode(schema: JSONSchemaDto): JSONSchemaDto {
   return { ...rest, definitions } as JSONSchemaDto;
 }
 
-function narrowBlocksToKnownBlocks(schema: JSONSchemaDto): JSONSchemaDto {
-  const rewritten = mapSchemaNodes(schema, (node) => {
+function replaceOpenBlockRefs(schema: JSONSchemaDto): JSONSchemaDto {
+  return mapSchemaNodes(schema, (node) => {
     if (typeof node.$ref === 'string' && OPEN_BLOCK_DEFINITIONS.includes(definitionKeyOf(node.$ref))) {
       return { ...node, $ref: KNOWN_BLOCK_REF };
     }
 
+    return node;
+  }) as JSONSchemaDto;
+}
+
+/** Rewriting the open-block refs leaves `anyOf: [KnownBlock, KnownBlock]` behind. */
+function collapseRedundantAnyOf(schema: JSONSchemaDto): JSONSchemaDto {
+  return mapSchemaNodes(schema, (node) => {
     if (!Array.isArray(node.anyOf)) {
       return node;
     }
@@ -92,16 +100,20 @@ function narrowBlocksToKnownBlocks(schema: JSONSchemaDto): JSONSchemaDto {
       return true;
     });
 
-    if (deduped.length !== 1 || typeof deduped[0] !== 'object' || deduped[0] === null) {
+    const { anyOf: _composition, ...siblings } = node;
+    const [only] = deduped;
+    const canInline =
+      deduped.length === 1 &&
+      typeof only === 'object' &&
+      only !== null &&
+      Object.keys(only).every((key) => !(key in siblings));
+
+    if (!canInline) {
       return { ...node, anyOf: deduped };
     }
 
-    const { anyOf: _collapsed, ...withoutComposition } = node;
-
-    return { ...withoutComposition, ...(deduped[0] as SchemaNode) };
+    return { ...siblings, ...(only as SchemaNode) };
   }) as JSONSchemaDto;
-
-  return dropOpenBlockDefinitions(rewritten);
 }
 
 function dropOpenBlockDefinitions(schema: JSONSchemaDto): JSONSchemaDto {
@@ -152,7 +164,7 @@ function annotateWebhookUnsupportedKeys(schema: JSONSchemaDto): JSONSchemaDto {
 }
 
 function assertRoutingKeysAreAbsent(schema: JSONSchemaDto): void {
-  for (const key of ['channel', 'token', 'as_user']) {
+  for (const key of NON_OVERRIDABLE_SLACK_KEYS) {
     if (schema.properties?.[key] !== undefined) {
       throw new Error(`\`${key}\` must not be overridable — it is resolved from subscriber routing or credentials.`);
     }
@@ -177,9 +189,14 @@ export function buildSlackOverrideSchemas(): {
   };
 
   const generated = createGenerator(config).createSchema(ROOT_TYPE) as JSONSchemaDto;
-  const schema = annotateWebhookUnsupportedKeys(
-    makeEveryTopLevelKeyOptional(narrowBlocksToKnownBlocks(inlineRootNode(generated)))
-  );
+  const schema = [
+    inlineRootNode,
+    replaceOpenBlockRefs,
+    collapseRedundantAnyOf,
+    dropOpenBlockDefinitions,
+    makeEveryTopLevelKeyOptional,
+    annotateWebhookUnsupportedKeys,
+  ].reduce<JSONSchemaDto>((current, step) => step(current), generated);
 
   assertRoutingKeysAreAbsent(schema);
 
@@ -221,6 +238,6 @@ function main(): void {
   process.stdout.write(`Wrote Slack override schemas to ${outputDir}\n`);
 }
 
-if (process.argv[1]?.endsWith('generate-slack-override-schema.ts')) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main();
 }

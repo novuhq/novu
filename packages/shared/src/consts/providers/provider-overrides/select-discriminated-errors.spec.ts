@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type SchemaValidationErrorLike, selectDiscriminatedErrors } from './liquid-tolerant';
+import { type SchemaValidationErrorLike, selectDiscriminatedErrors } from './select-discriminated-errors';
 
 const BLOCKS_PROPERTY = '#/anyOf/0/properties/blocks';
 const BLOCK_UNION = `${BLOCKS_PROPERTY}/anyOf/0/items/anyOf/0/anyOf`;

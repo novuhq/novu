@@ -22,7 +22,14 @@ export type ProviderOverrideConfig = {
   primaryContentKey: string | null;
 };
 
-/** Eagerly available schemas only — Slack's is large enough to warrant its own package subpath. */
+/**
+ * Eagerly available schemas only — Slack's is large enough to warrant its own package subpath.
+ *
+ * This and `PROVIDER_OVERRIDE_KEYS` stay object literals rather than being derived from
+ * `PROVIDER_OVERRIDE_CONFIGS`: published consumers index them by a literal provider id and rely
+ * on the resulting non-optional type, which a derived `Partial<Record<...>>` would lose. The
+ * configs read their `keys` back out of the map below, and a spec asserts the two agree.
+ */
 export const PROVIDER_OVERRIDE_SCHEMAS = {
   [ToolProviderIdEnum.PagerDuty]: pagerdutyOverrideJsonSchema,
   [ToolProviderIdEnum.Opsgenie]: opsgenieOverrideJsonSchema,
@@ -76,7 +83,9 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
     keys: PROVIDER_OVERRIDE_KEYS[ChatProviderIdEnum.Slack],
     primaryContentKey: SLACK_PRIMARY_CONTENT_KEY,
   },
-  [ChatProviderIdEnum.Novu]: escapeHatch(SLACK_PRIMARY_CONTENT_KEY),
+  // `novu-slack` is Slack posted through Novu-managed credentials, but it is not given Slack's
+  // schema: the demo integration is not the place to surface Block Kit validation.
+  [ChatProviderIdEnum.Novu]: escapeHatch('text'),
   [ChatProviderIdEnum.Discord]: escapeHatch('content'),
   [ChatProviderIdEnum.MsTeams]: escapeHatch('text'),
   [ChatProviderIdEnum.WebexMessaging]: escapeHatch('text'),

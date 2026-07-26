@@ -6,16 +6,12 @@ import {
   PROVIDER_OVERRIDE_KEYS,
   PROVIDER_OVERRIDE_SCHEMAS,
   PROVIDER_PRIMARY_CONTENT_KEY,
+  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
 } from './provider-override-registry';
 
 export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
-export {
-  LIQUID_TEMPLATE_PATTERN,
-  type SchemaValidationErrorLike,
-  selectDiscriminatedErrors,
-  toLiquidTolerantSchema,
-} from './liquid-tolerant';
+export { LIQUID_TEMPLATE_PATTERN, toLiquidTolerantSchema } from './liquid-tolerant';
 export {
   type MergedProviderPreview,
   /** @deprecated Renamed to `MergedProviderPreview`. */
@@ -44,6 +40,7 @@ export {
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
 } from './provider-override-registry';
+export { type SchemaValidationErrorLike, selectDiscriminatedErrors } from './select-discriminated-errors';
 export { SLACK_OVERRIDE_KEYS, SLACK_OVERRIDE_SCHEMA_SUBPATH, SLACK_PRIMARY_CONTENT_KEY } from './slack/keys';
 
 /** @deprecated Renamed to `PROVIDER_OVERRIDE_SCHEMAS` now that chat providers are covered too. */
@@ -67,7 +64,10 @@ export const getToolProviderOverrideKeysOnlySchema = getProviderOverrideKeysOnly
  */
 export const TOOL_PROVIDER_PRIMARY_CONTENT_KEY: Readonly<Partial<Record<ToolContentOverrideProviderId, string>>> =
   Object.fromEntries(
-    Object.entries(PROVIDER_PRIMARY_CONTENT_KEY).filter(([, primaryContentKey]) => primaryContentKey !== null)
+    TOOL_CONTENT_OVERRIDE_PROVIDER_IDS.map((providerId) => [
+      providerId,
+      PROVIDER_PRIMARY_CONTENT_KEY[providerId],
+    ]).filter(([, primaryContentKey]) => primaryContentKey !== null)
   );
 
 /** @deprecated Use `getProviderPrimaryContentKey`, which reports `null` for nested-content providers. */

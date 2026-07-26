@@ -10,9 +10,18 @@ describe('toLiquidTolerantSchema', () => {
   });
 
   it('leaves an unconstrained string leaf untouched because it already accepts templates', () => {
-    expect(toLiquidTolerantSchema({ type: 'string', maxLength: 130 })).toEqual({
+    expect(toLiquidTolerantSchema({ type: 'string', description: 'Alert message.' })).toEqual({
       type: 'string',
-      maxLength: 130,
+      description: 'Alert message.',
+    });
+  });
+
+  it('keeps a length-limited string tolerant, since a template is longer than what it renders to', () => {
+    expect(toLiquidTolerantSchema({ type: 'string', maxLength: 50 })).toEqual({
+      anyOf: [
+        { type: 'string', maxLength: 50 },
+        { type: 'string', pattern: LIQUID_TEMPLATE_PATTERN },
+      ],
     });
   });
 

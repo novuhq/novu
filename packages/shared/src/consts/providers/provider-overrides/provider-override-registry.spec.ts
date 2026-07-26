@@ -19,7 +19,6 @@ import {
   PROVIDER_OVERRIDE_SCHEMAS,
   PROVIDER_PRIMARY_CONTENT_KEY,
   pagerdutyOverrideJsonSchema,
-  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   TOOL_PROVIDER_OVERRIDE_KEYS,
   TOOL_PROVIDER_OVERRIDE_SCHEMAS,
   TOOL_PROVIDER_PRIMARY_CONTENT_KEY,
@@ -31,11 +30,10 @@ describe('provider override registry', () => {
     expect([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(ChatProviderIdEnum).sort());
   });
 
-  it('combines the tool and chat provider ids', () => {
-    expect(CONTENT_OVERRIDE_PROVIDER_IDS).toEqual([
-      ...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
-      ...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
-    ]);
+  it('keeps each config in step with the key inventory published alongside it', () => {
+    for (const providerId of CONTENT_OVERRIDE_PROVIDER_IDS) {
+      expect(getProviderOverrideConfig(providerId)?.keys).toEqual(getProviderOverrideKeys(providerId));
+    }
   });
 
   it('points each chat provider at the payload key its step body falls back into', () => {
@@ -89,6 +87,10 @@ describe('provider override registry', () => {
   });
 
   it('keeps the deprecated primary content map on its original string-or-absent shape', () => {
+    expect(Object.keys(TOOL_PROVIDER_PRIMARY_CONTENT_KEY)).toEqual([
+      ToolProviderIdEnum.PagerDuty,
+      ToolProviderIdEnum.Opsgenie,
+    ]);
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.PagerDuty]).toBe('summary');
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Webhook]).toBeUndefined();
     expect(getToolProviderPrimaryContentKey(ChatProviderIdEnum.Line)).toBeUndefined();
