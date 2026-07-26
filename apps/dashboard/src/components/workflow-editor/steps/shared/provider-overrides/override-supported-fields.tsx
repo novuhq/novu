@@ -9,6 +9,7 @@ import {
   getTypeLabel,
   type OverrideFieldSchema,
 } from './override-field-schema';
+import { createSchemaResolver } from './schema-resolver';
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
@@ -24,15 +25,20 @@ type SupportedField = {
 
 function buildSupportedFields(providerId: string, rootSchema: OverrideFieldSchema): SupportedField[] {
   const primaryKey = getProviderPrimaryContentKey(providerId);
+  const resolver = createSchemaResolver(rootSchema);
 
-  return Object.entries(rootSchema.properties ?? {}).map(([key, fieldSchema]) => ({
-    key,
-    typeLabel: getTypeLabel(fieldSchema),
-    description: fieldSchema.description,
-    constraints: getConstraints(fieldSchema),
-    isDefaultContent: key === primaryKey,
-    fieldSchema,
-  }));
+  return Object.entries(rootSchema.properties ?? {}).map(([key, fieldSchema]) => {
+    const described: OverrideFieldSchema = { ...(resolver.deref(fieldSchema) ?? fieldSchema), ...fieldSchema };
+
+    return {
+      key,
+      typeLabel: getTypeLabel(described, (items) => resolver.deref(items)?.type),
+      description: described.description,
+      constraints: getConstraints(described),
+      isDefaultContent: key === primaryKey,
+      fieldSchema,
+    };
+  });
 }
 
 type OverrideSupportedFieldsProps = {

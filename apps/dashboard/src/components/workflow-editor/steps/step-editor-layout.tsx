@@ -63,6 +63,9 @@ import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_RESOLVER_SUPPORTED_STEP_TYPES } fr
 import { cn } from '@/utils/ui';
 import { Protect } from '../../../utils/protect';
 
+/** Step types whose editor and preview share a provider-override content source. */
+const CONTENT_OVERRIDE_STEP_TYPES: StepTypeEnum[] = [StepTypeEnum.CHAT, StepTypeEnum.TOOL];
+
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
   step: StepResponseDto;
@@ -385,7 +388,11 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
   return (
     <div className={cn('h-full w-full', className)}>
       <StepEditorProvider workflow={workflow} step={step}>
-        {step.type === StepTypeEnum.TOOL ? <ContentSourceProvider>{content}</ContentSourceProvider> : content}
+        {CONTENT_OVERRIDE_STEP_TYPES.includes(step.type) ? (
+          <ContentSourceProvider>{content}</ContentSourceProvider>
+        ) : (
+          content
+        )}
       </StepEditorProvider>
     </div>
   );

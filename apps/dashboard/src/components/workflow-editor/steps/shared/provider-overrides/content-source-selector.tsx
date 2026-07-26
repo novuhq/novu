@@ -21,6 +21,8 @@ type ContentSourceSelectorProps = {
   selectedSource: ContentSource;
   providers: ProviderOverrideOption[];
   invalidProviderIds?: Set<string>;
+  /** Marks providers whose override payload is free-form. Off by default so existing tabs stay untouched. */
+  showEscapeHatchBadge?: boolean;
   onSelectSource: (source: ContentSource) => void;
   onAddOverride?: (providerId: ProviderOverrideOption['providerId']) => void;
 };
@@ -30,6 +32,7 @@ export function ContentSourceSelector({
   selectedSource,
   providers,
   invalidProviderIds,
+  showEscapeHatchBadge = false,
   onSelectSource,
   onAddOverride,
 }: ContentSourceSelectorProps) {
@@ -111,6 +114,14 @@ export function ContentSourceSelector({
                       {provider.displayName}
                     </span>
                     {isInvalid && <RiErrorWarningFill className="text-destructive size-3 shrink-0" />}
+                    {showEscapeHatchBadge && provider.isEscapeHatch && (
+                      <span
+                        className="text-foreground-400 border-stroke-soft shrink-0 rounded-sm border px-1 text-[10px] font-medium uppercase leading-4 tracking-[0.2px]"
+                        title="No schema — this override is passed through to the provider API without validation."
+                      >
+                        no schema
+                      </span>
+                    )}
                     {!provider.isConnected && provider.hasOverride && (
                       <span className="text-warning text-[10px] font-medium">disconnected</span>
                     )}

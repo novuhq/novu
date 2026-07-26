@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getOverrideCompletionResult } from './override-autocomplete';
 import { type OverrideFieldSchema } from './override-field-schema';
 
-const rootSchema: OverrideFieldSchema = {
+const webhookRootSchema: OverrideFieldSchema = {
   type: 'object',
   properties: {
     incident: {
@@ -16,7 +16,42 @@ const rootSchema: OverrideFieldSchema = {
   },
 };
 
-function labelsFor(doc: string) {
+const blockKitRootSchema: OverrideFieldSchema = {
+  type: 'object',
+  properties: {
+    text: { type: 'string' },
+    blocks: { type: 'array', items: { $ref: '#/definitions/KnownBlock' } },
+  },
+  definitions: {
+    KnownBlock: {
+      anyOf: [{ $ref: '#/definitions/SectionBlock' }, { $ref: '#/definitions/DividerBlock' }],
+    },
+    SectionBlock: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', const: 'section' },
+        block_id: { type: 'string' },
+        fields: { type: 'array', items: { $ref: '#/definitions/TextObject' } },
+      },
+    },
+    DividerBlock: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', const: 'divider' },
+        block_id: { type: 'string' },
+      },
+    },
+    TextObject: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', enum: ['plain_text', 'mrkdwn'] },
+        text: { type: 'string' },
+      },
+    },
+  },
+};
+
+function labelsFor(doc: string, rootSchema: OverrideFieldSchema = webhookRootSchema) {
   const result = getOverrideCompletionResult({
     doc,
     pos: doc.length,
@@ -40,7 +75,7 @@ describe('getOverrideCompletionResult', () => {
 
   it('shows the field type in completion details', () => {
     const doc = '{"';
-    const result = getOverrideCompletionResult({ doc, pos: doc.length, explicit: true, rootSchema });
+    const result = getOverrideCompletionResult({ doc, pos: doc.length, explicit: true, rootSchema: webhookRootSchema });
 
     expect(result?.options.find((option) => option.label === 'incident')?.detail).toBe('object');
   });
@@ -51,7 +86,7 @@ describe('getOverrideCompletionResult', () => {
       doc,
       pos: doc.length,
       explicit: true,
-      rootSchema,
+      rootSchema: webhookRootSchema,
       describeField: (key) => [`Sources: ${key} webhook`],
     });
 
@@ -81,5 +116,35 @@ describe('getOverrideCompletionResult', () => {
     });
 
     expect(result?.options.map((option) => option.label)).toEqual(['kind']);
+  });
+
+  it('asks for a block type before any branch of an anyOf union is chosen', () => {
+    expect(labelsFor('{"blocks":[{"', blockKitRootSchema)).toEqual(['type']);
+    expect(labelsFor('{"blocks":[{"type":"', blockKitRootSchema)).toEqual(['section', 'divider']);
+  });
+
+  it('narrows to one branch once the discriminator is set', () => {
+    expect(labelsFor('{"blocks":[{"type":"section","', blockKitRootSchema)).toEqual(['block_id', 'fields']);
+    expect(labelsFor('{"blocks":[{"type":"divider","', blockKitRootSchema)).toEqual(['block_id']);
+  });
+
+  it('follows $ref pointers into array items nested inside a branch', () => {
+    expect(labelsFor('{"blocks":[{"type":"section","fields":[{"', blockKitRootSchema)).toEqual(['type', 'text']);
+    expect(labelsFor('{"blocks":[{"type":"section","fields":[{"type":"', blockKitRootSchema)).toEqual([
+      'plain_text',
+      'mrkdwn',
+    ]);
+  });
+
+  it('reports array item types resolved through a $ref', () => {
+    const doc = '{"';
+    const result = getOverrideCompletionResult({
+      doc,
+      pos: doc.length,
+      explicit: true,
+      rootSchema: blockKitRootSchema,
+    });
+
+    expect(result?.options.find((option) => option.label === 'blocks')?.detail).toBe('array');
   });
 });

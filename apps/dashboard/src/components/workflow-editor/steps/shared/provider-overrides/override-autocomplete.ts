@@ -11,6 +11,7 @@ import {
   getTypeLabel,
   type OverrideFieldSchema,
 } from './override-field-schema';
+import { createSchemaResolver, type SchemaResolver } from './schema-resolver';
 
 /** How the cursor's frame was entered from its parent frame. */
 type FrameLink = { kind: 'property'; key: string } | { kind: 'items' };
@@ -21,6 +22,8 @@ type ObjectFrame = {
   state: 'key-or-end' | 'colon' | 'value' | 'comma-or-end';
   pendingKey?: string;
   usedKeys: Set<string>;
+  /** Value of the object's `type` property, used to pick an `anyOf` branch. */
+  discriminator?: string;
 };
 
 type ArrayFrame = {
@@ -30,6 +33,8 @@ type ArrayFrame = {
 };
 
 type JsonFrame = ObjectFrame | ArrayFrame;
+
+const DISCRIMINATOR_KEY = 'type';
 
 function finishParentValue(frame: JsonFrame | undefined) {
   if (frame?.kind === 'object' && frame.state === 'value') {
@@ -135,6 +140,10 @@ function getCursorFrames(doc: string, pos: number): JsonFrame[] {
         frame.usedKeys.add(stringToken.value);
         frame.state = 'colon';
       } else {
+        if (frame?.kind === 'object' && frame.state === 'value' && frame.pendingKey === DISCRIMINATOR_KEY) {
+          frame.discriminator = stringToken.value;
+        }
+
         finishParentValue(frame);
       }
 
@@ -187,14 +196,16 @@ function getCursorFrames(doc: string, pos: number): JsonFrame[] {
   return frames;
 }
 
-/** Walks the schema down the frame stack to the object the cursor sits in. */
-function resolveSchemaAtCursor(rootSchema: OverrideFieldSchema, frames: JsonFrame[]): OverrideFieldSchema | undefined {
-  let node: OverrideFieldSchema | undefined = rootSchema;
+/** Walks the schema down the frame stack, following `$ref`s and narrowing `anyOf` branches. */
+function resolveSchemaAtCursor(resolver: SchemaResolver, frames: JsonFrame[]): OverrideFieldSchema | undefined {
+  let node: OverrideFieldSchema | undefined = resolver.rootSchema;
 
   for (const frame of frames) {
     if (frame.link) {
-      node = frame.link.kind === 'property' ? node?.properties?.[frame.link.key] : node?.items;
+      node = frame.link.kind === 'property' ? resolver.propertyNode(node, frame.link.key) : resolver.itemsNode(node);
     }
+
+    node = frame.kind === 'object' ? resolver.objectNode(node, frame.discriminator) : resolver.deref(node);
 
     if (!node) {
       return undefined;
@@ -246,16 +257,21 @@ function getKeyReplacementTo(doc: string, matchTo: number): number {
 function buildKeyCompletion(
   key: string,
   fieldSchema: OverrideFieldSchema,
+  resolver: SchemaResolver,
   describeField: DescribeOverrideField | undefined
 ): Completion {
-  const defaultValue = defaultValueForFieldSchema(fieldSchema);
+  // Types and constraints live on the target of a `$ref`; the description and any caller-supplied
+  // annotations live on the referencing node, so the two are layered.
+  const resolved = resolver.deref(fieldSchema) ?? fieldSchema;
+  const described: OverrideFieldSchema = { ...resolved, ...fieldSchema };
+  const defaultValue = defaultValueForFieldSchema(described);
   const keyPrefix = `"${key}": `;
 
   return {
     label: key,
     type: 'property',
-    detail: getTypeLabel(fieldSchema),
-    info: buildFieldInfo(key, fieldSchema, describeField),
+    detail: getTypeLabel(described, (items) => resolver.deref(items)?.type),
+    info: buildFieldInfo(key, described, describeField),
     apply: (view, _completion, from, to) => {
       // Resolve end from the live doc — CodeMirror's `to` may stop before an auto-closed `"`.
       const doc = view.state.doc.toString();
@@ -278,11 +294,13 @@ function availableKeyOptions({
   objectSchema,
   usedKeys,
   prefix,
+  resolver,
   describeField,
 }: {
   objectSchema: OverrideFieldSchema;
   usedKeys: Set<string>;
   prefix?: string;
+  resolver: SchemaResolver;
   describeField: DescribeOverrideField | undefined;
 }): Completion[] {
   return Object.entries(objectSchema.properties ?? {})
@@ -297,7 +315,7 @@ function availableKeyOptions({
 
       return true;
     })
-    .map(([key, fieldSchema]) => buildKeyCompletion(key, fieldSchema, describeField));
+    .map(([key, fieldSchema]) => buildKeyCompletion(key, fieldSchema, resolver, describeField));
 }
 
 function createValueOptions(values: string[], typedValue: string): Completion[] {
@@ -337,14 +355,15 @@ export function getOverrideCompletionResult({
     return null;
   }
 
-  const objectSchema = resolveSchemaAtCursor(rootSchema, frames);
+  const resolver = createSchemaResolver(rootSchema);
+  const objectSchema = resolveSchemaAtCursor(resolver, frames);
   if (!objectSchema) {
     return null;
   }
 
   if (openString && objectContext.state === 'value' && objectContext.pendingKey) {
     const typedValue = openString.text;
-    const values = [...(objectSchema.properties?.[objectContext.pendingKey]?.enum ?? [])];
+    const values = resolver.valueOptions(resolver.propertyNode(objectSchema, objectContext.pendingKey));
     const options = createValueOptions(values, typedValue);
     if (options.length === 0) {
       return null;
@@ -367,6 +386,7 @@ export function getOverrideCompletionResult({
     objectSchema,
     usedKeys: objectContext.usedKeys,
     prefix: openString?.text,
+    resolver,
     describeField,
   });
   if (options.length === 0) {

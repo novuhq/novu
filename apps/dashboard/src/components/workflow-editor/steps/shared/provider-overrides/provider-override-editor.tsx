@@ -8,17 +8,25 @@ import { SectionHeader } from '@/components/workflow-editor/steps/http-request/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { getUnsupportedOverrideKeys, PROVIDER_OVERRIDES_FIELD, type ProviderOverrides } from './content-source';
+import {
+  getUnsupportedOverrideKeys,
+  isEscapeHatchProvider,
+  type OverrideChannel,
+  PROVIDER_OVERRIDES_FIELD,
+  type ProviderOverrides,
+} from './content-source';
+import { EscapeHatchCallout } from './escape-hatch-callout';
 import { createOverrideCompletionSource } from './override-autocomplete';
 import {
   type AnnotateOverrideField,
   type DescribeOverrideField,
   defaultValueForFieldSchema,
-  getEagerRootSchema,
   type OverrideFieldSchema,
 } from './override-field-schema';
 import { findDuplicateRootKey } from './override-json';
 import { OverrideSupportedFields } from './override-supported-fields';
+import { createSchemaResolver } from './schema-resolver';
+import { useProviderOverrideSchema } from './use-provider-override-schema';
 
 function formatOverrideJson(value: Record<string, unknown> | undefined): string {
   return JSON.stringify(value ?? {}, null, 2);
@@ -47,9 +55,10 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
 }
 
 type ProviderOverrideEditorProps = {
+  channel: OverrideChannel;
   providerId: ContentOverrideProviderId;
   displayName: string;
-  /** Replaces the default hint with channel-specific copy. */
+  /** Replaces both the schema-less callout and the default hint with channel-specific copy. */
   notice?: ReactNode;
   headerTooltip?: string;
   placeholder?: string;
@@ -61,6 +70,7 @@ type ProviderOverrideEditorProps = {
 };
 
 export function ProviderOverrideEditor({
+  channel,
   providerId,
   displayName,
   notice,
@@ -75,8 +85,10 @@ export function ProviderOverrideEditor({
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const rootSchema = rootSchemaOverride ?? getEagerRootSchema(providerId);
+  const registrySchema = useProviderOverrideSchema(providerId);
+  const rootSchema = rootSchemaOverride ?? registrySchema.rootSchema;
   const primaryKey = getProviderPrimaryContentKey(providerId) ?? undefined;
+  const showEscapeHatchCallout = !notice && isEscapeHatchProvider(providerId);
 
   const [draft, setDraft] = useState(() =>
     formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined)?.[providerId])
@@ -148,7 +160,16 @@ export function ProviderOverrideEditor({
     };
   }, [onDraftParseValidityChange, parseError, providerId]);
 
-  const getInsertedFieldValue = (key: string): unknown => defaultValueForFieldSchema(rootSchema?.properties?.[key]);
+  const getInsertedFieldValue = (key: string): unknown => {
+    if (!rootSchema) {
+      return '';
+    }
+
+    const resolver = createSchemaResolver(rootSchema);
+    const fieldSchema = rootSchema.properties?.[key];
+
+    return defaultValueForFieldSchema(resolver.deref(fieldSchema) ?? fieldSchema);
+  };
 
   const resolvedTooltip =
     headerTooltip ??
@@ -192,17 +213,30 @@ export function ProviderOverrideEditor({
                 label="Override fields"
                 tooltip={resolvedTooltip}
                 rightSlot={
-                  <OverrideSupportedFields
-                    providerId={providerId}
-                    displayName={displayName}
-                    rootSchema={rootSchema}
-                    usedKeys={usedDraftKeys}
-                    canInsert={!parseError}
-                    annotateField={annotateField}
-                    onInsertField={handleInsertField}
-                  />
+                  <div className="flex items-center gap-2">
+                    {registrySchema.isLoading && (
+                      <span className="text-text-soft text-[11px]">Loading {displayName} fields…</span>
+                    )}
+                    {registrySchema.hasFailed && (
+                      <span className="text-text-soft text-[11px]">Top-level fields only</span>
+                    )}
+                    <OverrideSupportedFields
+                      providerId={providerId}
+                      displayName={displayName}
+                      rootSchema={rootSchema}
+                      usedKeys={usedDraftKeys}
+                      canInsert={!parseError}
+                      annotateField={annotateField}
+                      onInsertField={handleInsertField}
+                    />
+                  </div>
                 }
               />
+              {showEscapeHatchCallout && (
+                <div className="px-1 pb-1">
+                  <EscapeHatchCallout channel={channel} providerId={providerId} displayName={displayName} />
+                </div>
+              )}
               <InputRoot className="min-h-[180px]" hasError={!!parseError}>
                 <ControlInput
                   size="2xs"

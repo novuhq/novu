@@ -25,6 +25,7 @@ export type ProviderOverrideOption = {
   displayName: string;
   hasOverride: boolean;
   isConnected: boolean;
+  isEscapeHatch: boolean;
 };
 
 const OVERRIDE_PROVIDER_IDS_BY_CHANNEL = {
@@ -57,6 +58,16 @@ export function getOverrideProviderDisplayName(
   return getOverrideProviderConfig(channel, providerId)?.displayName ?? providerId;
 }
 
+/**
+ * True for providers whose override payload is free-form: no eager schema and no lazily loaded one,
+ * so the JSON is merged into the provider API payload without validation or autocomplete.
+ */
+export function isEscapeHatchProvider(providerId: string): boolean {
+  const config = getProviderOverrideConfig(providerId);
+
+  return !config?.schema && !config?.schemaSubpath;
+}
+
 export function buildProviderOverrideOptions({
   channel,
   activeProviderIds,
@@ -77,6 +88,7 @@ export function buildProviderOverrideOptions({
       displayName: getOverrideProviderDisplayName(channel, providerId),
       hasOverride: providerId in (providerOverrides ?? {}),
       isConnected: activeProviderIds.has(providerId),
+      isEscapeHatch: isEscapeHatchProvider(providerId),
     }));
 }
 

@@ -33,6 +33,7 @@ type ContentOverridePanelProps = {
   providerOptions: ProviderOverrideOption[];
   providerOverrides: ProviderOverrides | undefined;
   defaultContent: ReactNode;
+  showEscapeHatchBadge?: boolean;
   getEditorExtras?: (providerId: ContentOverrideProviderId) => ProviderOverrideEditorExtras;
 };
 
@@ -41,6 +42,7 @@ export function ContentOverridePanel({
   providerOptions,
   providerOverrides,
   defaultContent,
+  showEscapeHatchBadge,
   getEditorExtras,
 }: ContentOverridePanelProps) {
   const { setValue, getValues } = useFormContext();
@@ -199,6 +201,7 @@ export function ContentOverridePanel({
           selectedSource={showingOverride ? selectedSource : DEFAULT_CONTENT_SOURCE}
           providers={providerOptions}
           invalidProviderIds={providersWithErrors}
+          showEscapeHatchBadge={showEscapeHatchBadge}
           onSelectSource={setSelectedSource}
           onAddOverride={handleAddOverride}
         />
@@ -236,6 +239,7 @@ export function ContentOverridePanel({
       <TabsSection className="p-3">
         {overrideProviderId ? (
           <ProviderOverrideEditor
+            channel={channel}
             providerId={overrideProviderId}
             displayName={selectedOption?.displayName ?? getContentSourceLabel(channel, overrideProviderId)}
             onDraftParseValidityChange={handleDraftParseValidityChange}

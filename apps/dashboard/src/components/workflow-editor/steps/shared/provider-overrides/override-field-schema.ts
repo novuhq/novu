@@ -1,4 +1,4 @@
-import { getProviderOverrideSchema } from '@novu/shared';
+import { getProviderOverrideKeys, getProviderOverrideSchema } from '@novu/shared';
 import { type ReactNode } from 'react';
 
 /**
@@ -10,9 +10,15 @@ export type OverrideFieldSchema = {
   type?: string;
   description?: string;
   enum?: readonly string[];
+  const?: unknown;
   maxLength?: number;
   items?: OverrideFieldSchema;
   properties?: Record<string, OverrideFieldSchema>;
+  additionalProperties?: boolean | OverrideFieldSchema;
+  anyOf?: readonly OverrideFieldSchema[];
+  oneOf?: readonly OverrideFieldSchema[];
+  $ref?: string;
+  definitions?: Record<string, OverrideFieldSchema>;
 };
 
 /** Extra `info` lines a channel can contribute to a completion popup. */
@@ -26,13 +32,39 @@ export type OverrideFieldAnnotations = {
 
 export type AnnotateOverrideField = (key: string, fieldSchema: OverrideFieldSchema) => OverrideFieldAnnotations;
 
+/** Root schema for providers whose schema is small enough to live on the `@novu/shared` barrel. */
 export function getEagerRootSchema(providerId: string): OverrideFieldSchema | undefined {
   return getProviderOverrideSchema(providerId) as OverrideFieldSchema | undefined;
 }
 
-export function getTypeLabel(fieldSchema: OverrideFieldSchema): string {
+/**
+ * Top-level keys only, with no types or descriptions. Used while a lazily loaded schema is in
+ * flight and as the fallback when that load fails, so completion never goes fully dark.
+ */
+export function getKeysOnlyRootSchema(providerId: string): OverrideFieldSchema | undefined {
+  const keys = getProviderOverrideKeys(providerId);
+  if (!keys) {
+    return undefined;
+  }
+
+  return {
+    type: 'object',
+    properties: Object.fromEntries(keys.map((key) => [key, {}])),
+  };
+}
+
+export function getTypeLabel(
+  fieldSchema: OverrideFieldSchema,
+  resolveItems?: (items: OverrideFieldSchema) => string | undefined
+): string {
   if (fieldSchema.type === 'array') {
-    return fieldSchema.items?.type ? `${fieldSchema.items.type}[]` : 'array';
+    if (!fieldSchema.items) {
+      return 'array';
+    }
+
+    const itemLabel = resolveItems?.(fieldSchema.items) ?? fieldSchema.items.type;
+
+    return itemLabel ? `${itemLabel}[]` : 'array';
   }
 
   return fieldSchema.type ?? 'any';
