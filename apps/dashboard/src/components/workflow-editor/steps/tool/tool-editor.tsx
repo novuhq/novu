@@ -18,7 +18,8 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { currentEnvironment } = useEnvironment();
   const { uiSchema } = props;
   const { body } = uiSchema?.properties ?? {};
-  const { providerOptions, providerOverrides, webhookPayloadSchema } = useToolOverrideProviderOptions();
+  const { providerOptions, providerOverrides, webhookPayloadSchema, webhookRootSchema } =
+    useToolOverrideProviderOptions();
 
   const getEditorExtras = useCallback(
     (providerId: ContentOverrideProviderId): ProviderOverrideEditorExtras => {
@@ -26,10 +27,10 @@ export const ToolEditor = (props: ToolEditorProps) => {
         return {};
       }
 
-      const { properties, ignoredSources } = webhookPayloadSchema;
+      const { ignoredSources } = webhookPayloadSchema;
 
       return {
-        rootSchemaOverride: { type: 'object', properties },
+        rootSchemaOverride: webhookRootSchema,
         describeField: describeWebhookField,
         annotateField: annotateWebhookField,
         headerTooltip: 'Webhook overrides replace default content and accept arbitrary JSON object keys.',
@@ -45,7 +46,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
         ),
       };
     },
-    [webhookPayloadSchema]
+    [webhookPayloadSchema, webhookRootSchema]
   );
 
   if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {

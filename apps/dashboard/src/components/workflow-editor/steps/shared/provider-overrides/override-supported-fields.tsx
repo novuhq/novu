@@ -3,12 +3,7 @@ import { useMemo } from 'react';
 import { RiAddLine, RiCheckLine, RiListUnordered } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
-import {
-  type AnnotateOverrideField,
-  getConstraints,
-  getTypeLabel,
-  type OverrideFieldSchema,
-} from './override-field-schema';
+import { type AnnotateOverrideField, getConstraints, type OverrideFieldSchema } from './override-field-schema';
 import { createSchemaResolver } from './schema-resolver';
 
 const DEFAULT_CONTENT_CHIP_CLASS =
@@ -28,11 +23,11 @@ function buildSupportedFields(providerId: string, rootSchema: OverrideFieldSchem
   const resolver = createSchemaResolver(rootSchema);
 
   return Object.entries(rootSchema.properties ?? {}).map(([key, fieldSchema]) => {
-    const described: OverrideFieldSchema = { ...(resolver.deref(fieldSchema) ?? fieldSchema), ...fieldSchema };
+    const described = resolver.describedNode(fieldSchema);
 
     return {
       key,
-      typeLabel: getTypeLabel(described, (items) => resolver.deref(items)?.type),
+      typeLabel: resolver.typeLabel(fieldSchema),
       description: described.description,
       constraints: getConstraints(described),
       isDefaultContent: key === primaryKey,

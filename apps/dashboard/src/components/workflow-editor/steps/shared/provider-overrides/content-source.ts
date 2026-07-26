@@ -44,18 +44,17 @@ export function isContentOverrideProviderId(
   return (getOverrideProviderIds(channel) as readonly string[]).includes(value);
 }
 
-export function getOverrideProviderConfig(
-  channel: OverrideChannel,
-  providerId: ContentOverrideProviderId
-): IProviderConfig | undefined {
-  return providers.find((provider) => provider.id === providerId && provider.channel === channel);
+/** Provider ids are globally unique across channels, so no channel filter is needed here. */
+function findProviderConfig(providerId: string): IProviderConfig | undefined {
+  return providers.find((provider) => provider.id === providerId);
 }
 
-export function getOverrideProviderDisplayName(
-  channel: OverrideChannel,
-  providerId: ContentOverrideProviderId
-): string {
-  return getOverrideProviderConfig(channel, providerId)?.displayName ?? providerId;
+export function getOverrideProviderDisplayName(providerId: string): string {
+  return findProviderConfig(providerId)?.displayName ?? providerId;
+}
+
+export function getProviderDocReference(providerId: string): string | undefined {
+  return findProviderConfig(providerId)?.docReference;
 }
 
 /**
@@ -85,19 +84,19 @@ export function buildProviderOverrideOptions({
     .filter((providerId) => activeProviderIds.has(providerId) || overrideKeys.has(providerId))
     .map((providerId) => ({
       providerId,
-      displayName: getOverrideProviderDisplayName(channel, providerId),
+      displayName: getOverrideProviderDisplayName(providerId),
       hasOverride: providerId in (providerOverrides ?? {}),
       isConnected: activeProviderIds.has(providerId),
       isEscapeHatch: isEscapeHatchProvider(providerId),
     }));
 }
 
-export function getContentSourceLabel(channel: OverrideChannel, source: ContentSource): string {
+export function getContentSourceLabel(source: ContentSource): string {
   if (source === DEFAULT_CONTENT_SOURCE) {
     return 'Default content';
   }
 
-  return getOverrideProviderDisplayName(channel, source);
+  return getOverrideProviderDisplayName(source);
 }
 
 export function getUnsupportedOverrideKeys(

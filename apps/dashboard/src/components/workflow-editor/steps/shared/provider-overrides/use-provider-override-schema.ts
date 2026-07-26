@@ -1,28 +1,31 @@
 import { getProviderOverrideConfig, SLACK_OVERRIDE_SCHEMA_SUBPATH } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getEagerRootSchema, getKeysOnlyRootSchema, type OverrideFieldSchema } from './override-field-schema';
 
 export type OverrideSchemaState = {
   rootSchema: OverrideFieldSchema | undefined;
+  /** True while a lazily loaded schema is in flight or after it failed: only top-level keys are known. */
+  isTopLevelKeysOnly: boolean;
   isLoading: boolean;
-  hasFailed: boolean;
 };
-
-const loadedSubpathSchemas = new Map<string, OverrideFieldSchema>();
 
 /**
  * Slack's generated schema is a few hundred kilobytes and deliberately unreachable from the
  * `@novu/shared` barrel, so it is pulled in as its own chunk the first time its tab is opened.
+ * Keyed by the `schemaSubpath` the provider registry records: a provider that gains a lazy schema
+ * without an entry here degrades to its top-level key list.
  */
-async function loadSubpathSchema(subpath: string): Promise<OverrideFieldSchema> {
-  if (subpath !== SLACK_OVERRIDE_SCHEMA_SUBPATH) {
-    throw new Error(`No lazily loaded override schema is registered for "${subpath}"`);
-  }
+const SUBPATH_SCHEMA_LOADERS: Record<string, () => Promise<OverrideFieldSchema>> = {
+  [SLACK_OVERRIDE_SCHEMA_SUBPATH]: async () => {
+    const { slackOverrideJsonSchema } = await import('@novu/shared/provider-overrides/slack');
 
-  const { slackOverrideJsonSchema } = await import('@novu/shared/provider-overrides/slack');
+    return slackOverrideJsonSchema as OverrideFieldSchema;
+  },
+};
 
-  return slackOverrideJsonSchema as OverrideFieldSchema;
-}
+const loadedSubpathSchemas = new Map<string, OverrideFieldSchema>();
+
+type LoadOutcome = { subpath: string; schema?: OverrideFieldSchema };
 
 /**
  * Resolves the JSON schema backing a provider's override editor. Providers with an eager schema
@@ -33,10 +36,9 @@ async function loadSubpathSchema(subpath: string): Promise<OverrideFieldSchema> 
 export function useProviderOverrideSchema(providerId: string): OverrideSchemaState {
   const config = getProviderOverrideConfig(providerId);
   const subpath = config?.schemaSubpath;
-  const [loadedSchema, setLoadedSchema] = useState<OverrideFieldSchema | undefined>(() =>
-    subpath ? loadedSubpathSchemas.get(subpath) : undefined
-  );
-  const [hasFailed, setHasFailed] = useState(false);
+  // Keyed by subpath so a provider switch cannot serve the previously loaded provider's schema.
+  const [outcome, setOutcome] = useState<LoadOutcome | undefined>();
+  const keysOnlySchema = useMemo(() => getKeysOnlyRootSchema(providerId), [providerId]);
 
   useEffect(() => {
     if (!subpath || loadedSubpathSchemas.has(subpath)) {
@@ -44,19 +46,25 @@ export function useProviderOverrideSchema(providerId: string): OverrideSchemaSta
     }
 
     let isActive = true;
-    setHasFailed(false);
 
-    loadSubpathSchema(subpath)
+    const load = SUBPATH_SCHEMA_LOADERS[subpath];
+    if (!load) {
+      setOutcome({ subpath });
+
+      return;
+    }
+
+    load()
       .then((schema) => {
         loadedSubpathSchemas.set(subpath, schema);
 
         if (isActive) {
-          setLoadedSchema(schema);
+          setOutcome({ subpath, schema });
         }
       })
       .catch(() => {
         if (isActive) {
-          setHasFailed(true);
+          setOutcome({ subpath });
         }
       });
 
@@ -66,17 +74,19 @@ export function useProviderOverrideSchema(providerId: string): OverrideSchemaSta
   }, [subpath]);
 
   if (config?.schema) {
-    return { rootSchema: getEagerRootSchema(providerId), isLoading: false, hasFailed: false };
+    return { rootSchema: getEagerRootSchema(providerId), isTopLevelKeysOnly: false, isLoading: false };
   }
 
   if (!subpath) {
-    return { rootSchema: undefined, isLoading: false, hasFailed: false };
+    return { rootSchema: undefined, isTopLevelKeysOnly: false, isLoading: false };
   }
 
-  const cachedSchema = loadedSchema ?? loadedSubpathSchemas.get(subpath);
+  const cachedSchema = loadedSubpathSchemas.get(subpath);
   if (cachedSchema) {
-    return { rootSchema: cachedSchema, isLoading: false, hasFailed: false };
+    return { rootSchema: cachedSchema, isTopLevelKeysOnly: false, isLoading: false };
   }
 
-  return { rootSchema: getKeysOnlyRootSchema(providerId), isLoading: !hasFailed, hasFailed };
+  const hasFailed = outcome?.subpath === subpath && !outcome.schema;
+
+  return { rootSchema: keysOnlySchema, isTopLevelKeysOnly: true, isLoading: !hasFailed };
 }

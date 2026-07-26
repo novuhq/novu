@@ -130,7 +130,6 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
         <ContentSourceSelector
-          channel={TOOL_OVERRIDE_CHANNEL}
           selectedSource={previewSource}
           providers={providerOptions}
           onSelectSource={setPreviewSource}

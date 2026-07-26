@@ -11,7 +11,6 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
   getUnsupportedOverrideKeys,
   isEscapeHatchProvider,
-  type OverrideChannel,
   PROVIDER_OVERRIDES_FIELD,
   type ProviderOverrides,
 } from './content-source';
@@ -20,7 +19,6 @@ import { createOverrideCompletionSource } from './override-autocomplete';
 import {
   type AnnotateOverrideField,
   type DescribeOverrideField,
-  defaultValueForFieldSchema,
   type OverrideFieldSchema,
 } from './override-field-schema';
 import { findDuplicateRootKey } from './override-json';
@@ -55,7 +53,6 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
 }
 
 type ProviderOverrideEditorProps = {
-  channel: OverrideChannel;
   providerId: ContentOverrideProviderId;
   displayName: string;
   /** Replaces both the schema-less callout and the default hint with channel-specific copy. */
@@ -70,7 +67,6 @@ type ProviderOverrideEditorProps = {
 };
 
 export function ProviderOverrideEditor({
-  channel,
   providerId,
   displayName,
   notice,
@@ -87,6 +83,14 @@ export function ProviderOverrideEditor({
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const registrySchema = useProviderOverrideSchema(providerId);
   const rootSchema = rootSchemaOverride ?? registrySchema.rootSchema;
+  // A top-level-keys-only schema has no types or descriptions, so it drives completion but must not
+  // reach the popover, whose rows would list every field as `any` and insert the wrong default.
+  const browsableSchema = rootSchemaOverride ?? (registrySchema.isTopLevelKeysOnly ? undefined : rootSchema);
+  const schemaStatus = registrySchema.isLoading ? `Loading ${displayName} fields…` : undefined;
+  const insertResolver = useMemo(
+    () => (browsableSchema ? createSchemaResolver(browsableSchema) : undefined),
+    [browsableSchema]
+  );
   const primaryKey = getProviderPrimaryContentKey(providerId) ?? undefined;
   const showEscapeHatchCallout = !notice && isEscapeHatchProvider(providerId);
 
@@ -160,17 +164,6 @@ export function ProviderOverrideEditor({
     };
   }, [onDraftParseValidityChange, parseError, providerId]);
 
-  const getInsertedFieldValue = (key: string): unknown => {
-    if (!rootSchema) {
-      return '';
-    }
-
-    const resolver = createSchemaResolver(rootSchema);
-    const fieldSchema = rootSchema.properties?.[key];
-
-    return defaultValueForFieldSchema(resolver.deref(fieldSchema) ?? fieldSchema);
-  };
-
   const resolvedTooltip =
     headerTooltip ??
     (primaryKey
@@ -201,7 +194,7 @@ export function ProviderOverrideEditor({
 
             const next = {
               ...parsedDraft,
-              [key]: getInsertedFieldValue(key),
+              [key]: insertResolver?.defaultValue(browsableSchema?.properties?.[key]) ?? '',
             };
             setDraft(formatOverrideJson(next));
             writeProviderOverride(next);
@@ -214,16 +207,11 @@ export function ProviderOverrideEditor({
                 tooltip={resolvedTooltip}
                 rightSlot={
                   <div className="flex items-center gap-2">
-                    {registrySchema.isLoading && (
-                      <span className="text-text-soft text-[11px]">Loading {displayName} fields…</span>
-                    )}
-                    {registrySchema.hasFailed && (
-                      <span className="text-text-soft text-[11px]">Top-level fields only</span>
-                    )}
+                    {schemaStatus && <span className="text-text-soft text-[11px]">{schemaStatus}</span>}
                     <OverrideSupportedFields
                       providerId={providerId}
                       displayName={displayName}
-                      rootSchema={rootSchema}
+                      rootSchema={browsableSchema}
                       usedKeys={usedDraftKeys}
                       canInsert={!parseError}
                       annotateField={annotateField}
@@ -234,7 +222,7 @@ export function ProviderOverrideEditor({
               />
               {showEscapeHatchCallout && (
                 <div className="px-1 pb-1">
-                  <EscapeHatchCallout channel={channel} providerId={providerId} displayName={displayName} />
+                  <EscapeHatchCallout providerId={providerId} displayName={displayName} />
                 </div>
               )}
               <InputRoot className="min-h-[180px]" hasError={!!parseError}>

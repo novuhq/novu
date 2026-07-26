@@ -8,10 +8,9 @@ import {
   type DescribeOverrideField,
   defaultValueForFieldSchema,
   getConstraints,
-  getTypeLabel,
   type OverrideFieldSchema,
 } from './override-field-schema';
-import { createSchemaResolver, type SchemaResolver } from './schema-resolver';
+import { createSchemaResolver, DISCRIMINATOR_KEY, type SchemaResolver } from './schema-resolver';
 
 /** How the cursor's frame was entered from its parent frame. */
 type FrameLink = { kind: 'property'; key: string } | { kind: 'items' };
@@ -33,8 +32,6 @@ type ArrayFrame = {
 };
 
 type JsonFrame = ObjectFrame | ArrayFrame;
-
-const DISCRIMINATOR_KEY = 'type';
 
 function finishParentValue(frame: JsonFrame | undefined) {
   if (frame?.kind === 'object' && frame.state === 'value') {
@@ -260,17 +257,14 @@ function buildKeyCompletion(
   resolver: SchemaResolver,
   describeField: DescribeOverrideField | undefined
 ): Completion {
-  // Types and constraints live on the target of a `$ref`; the description and any caller-supplied
-  // annotations live on the referencing node, so the two are layered.
-  const resolved = resolver.deref(fieldSchema) ?? fieldSchema;
-  const described: OverrideFieldSchema = { ...resolved, ...fieldSchema };
+  const described = resolver.describedNode(fieldSchema);
   const defaultValue = defaultValueForFieldSchema(described);
   const keyPrefix = `"${key}": `;
 
   return {
     label: key,
     type: 'property',
-    detail: getTypeLabel(described, (items) => resolver.deref(items)?.type),
+    detail: resolver.typeLabel(fieldSchema),
     info: buildFieldInfo(key, described, describeField),
     apply: (view, _completion, from, to) => {
       // Resolve end from the live doc — CodeMirror's `to` may stop before an auto-closed `"`.
@@ -337,6 +331,7 @@ type OverrideCompletionInput = {
   pos: number;
   explicit: boolean;
   rootSchema: OverrideFieldSchema;
+  resolver?: SchemaResolver;
   describeField?: DescribeOverrideField;
 };
 
@@ -345,6 +340,7 @@ export function getOverrideCompletionResult({
   pos,
   explicit,
   rootSchema,
+  resolver = createSchemaResolver(rootSchema),
   describeField,
 }: OverrideCompletionInput): CompletionResult | null {
   const openString = getOpenStringAtCursor(doc, pos);
@@ -355,7 +351,6 @@ export function getOverrideCompletionResult({
     return null;
   }
 
-  const resolver = createSchemaResolver(rootSchema);
   const objectSchema = resolveSchemaAtCursor(resolver, frames);
   if (!objectSchema) {
     return null;
@@ -421,8 +416,10 @@ export function createOverrideCompletionSource({
   rootSchema: OverrideFieldSchema | undefined;
   describeField?: DescribeOverrideField;
 }): CompletionSource {
+  const resolver = rootSchema ? createSchemaResolver(rootSchema) : undefined;
+
   return (context: CompletionContext): CompletionResult | null => {
-    if (!rootSchema || Object.keys(rootSchema.properties ?? {}).length === 0) {
+    if (!rootSchema || !resolver || Object.keys(rootSchema.properties ?? {}).length === 0) {
       return null;
     }
 
@@ -431,6 +428,7 @@ export function createOverrideCompletionSource({
       pos: context.pos,
       explicit: context.explicit,
       rootSchema,
+      resolver,
       describeField,
     });
   };

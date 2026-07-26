@@ -1,10 +1,10 @@
-import { type OverrideFieldSchema } from './override-field-schema';
+import { defaultValueForFieldSchema, getTypeLabel, type OverrideFieldSchema } from './override-field-schema';
 
 /**
  * Property that discriminates `anyOf` branches. Slack's Block Kit unions all key off `type`
  * (`{ "type": "section" }`), which is what lets completion narrow to one block's fields.
  */
-const DISCRIMINATOR_KEY = 'type';
+export const DISCRIMINATOR_KEY = 'type';
 
 const MAX_REF_HOPS = 20;
 
@@ -25,8 +25,14 @@ function readPointer(root: OverrideFieldSchema, ref: string): OverrideFieldSchem
       return undefined;
     }
 
-    const segment = decodeURIComponent(rawSegment).replace(/~1/g, '/').replace(/~0/g, '~');
-    node = (node as Record<string, unknown>)[segment];
+    let segment: string;
+    try {
+      segment = decodeURIComponent(rawSegment);
+    } catch {
+      return undefined;
+    }
+
+    node = (node as Record<string, unknown>)[segment.replace(/~1/g, '/').replace(/~0/g, '~')];
   }
 
   if (typeof node !== 'object' || node === null || Array.isArray(node)) {
@@ -45,6 +51,14 @@ export type SchemaResolver = {
   /** Follows `$ref` chains. Returns undefined when a pointer cannot be resolved. */
   deref: (fieldSchema: OverrideFieldSchema | undefined) => OverrideFieldSchema | undefined;
   /**
+   * Types and constraints live on the target of a `$ref`, while the description and any
+   * caller-supplied annotations live on the referencing node, so the two are layered.
+   */
+  describedNode: (fieldSchema: OverrideFieldSchema) => OverrideFieldSchema;
+  typeLabel: (fieldSchema: OverrideFieldSchema) => string;
+  /** Seed value inserted when a field is added from the supported-fields popover. */
+  defaultValue: (fieldSchema: OverrideFieldSchema | undefined) => unknown;
+  /**
    * Narrows a node to the concrete object schema whose properties should be offered, picking the
    * `anyOf` branch that matches `discriminator` when one is known.
    */
@@ -56,18 +70,46 @@ export type SchemaResolver = {
 };
 
 export function createSchemaResolver(rootSchema: OverrideFieldSchema): SchemaResolver {
+  // Slack's schema is deeply cross-referenced and completion re-walks it on every keystroke.
+  const derefCache = new Map<string, OverrideFieldSchema | undefined>();
+
   function deref(fieldSchema: OverrideFieldSchema | undefined): OverrideFieldSchema | undefined {
-    let current = fieldSchema;
+    if (!fieldSchema?.$ref) {
+      return fieldSchema;
+    }
+
+    const cacheKey = fieldSchema.$ref;
+    if (derefCache.has(cacheKey)) {
+      return derefCache.get(cacheKey);
+    }
+
+    let current: OverrideFieldSchema | undefined = fieldSchema;
 
     for (let hop = 0; current?.$ref && hop < MAX_REF_HOPS; hop += 1) {
       current = readPointer(rootSchema, current.$ref);
     }
 
-    if (current?.$ref) {
-      return undefined;
+    const resolved = current?.$ref ? undefined : current;
+    derefCache.set(cacheKey, resolved);
+
+    return resolved;
+  }
+
+  function describedNode(fieldSchema: OverrideFieldSchema): OverrideFieldSchema {
+    const resolved = deref(fieldSchema);
+    if (!resolved || resolved === fieldSchema) {
+      return fieldSchema;
     }
 
-    return current;
+    return { ...resolved, ...fieldSchema };
+  }
+
+  function typeLabel(fieldSchema: OverrideFieldSchema): string {
+    return getTypeLabel(describedNode(fieldSchema), (items) => deref(items)?.type);
+  }
+
+  function defaultValue(fieldSchema: OverrideFieldSchema | undefined): unknown {
+    return defaultValueForFieldSchema(fieldSchema && describedNode(fieldSchema));
   }
 
   /** String literals a node accepts, walking `const`, `enum` and nested branches. */
@@ -181,5 +223,15 @@ export function createSchemaResolver(rootSchema: OverrideFieldSchema): SchemaRes
     return unique(collectValues(fieldSchema, 0));
   }
 
-  return { rootSchema, deref, objectNode, propertyNode, itemsNode, valueOptions };
+  return {
+    rootSchema,
+    deref,
+    describedNode,
+    typeLabel,
+    defaultValue,
+    objectNode,
+    propertyNode,
+    itemsNode,
+    valueOptions,
+  };
 }

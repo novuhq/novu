@@ -20,6 +20,7 @@ import {
 } from './content-source';
 import { useContentSource } from './content-source-context';
 import { ContentSourceSelector } from './content-source-selector';
+import { DefaultContentCard } from './default-content-card';
 import { ProviderOverrideEditor } from './provider-override-editor';
 
 /** Per-provider customizations a channel can layer onto the generic override editor. */
@@ -197,7 +198,6 @@ export function ContentOverridePanel({
     <div className="-mx-3 -mt-3 flex h-full flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
         <ContentSourceSelector
-          channel={channel}
           selectedSource={showingOverride ? selectedSource : DEFAULT_CONTENT_SOURCE}
           providers={providerOptions}
           invalidProviderIds={providersWithErrors}
@@ -239,9 +239,8 @@ export function ContentOverridePanel({
       <TabsSection className="p-3">
         {overrideProviderId ? (
           <ProviderOverrideEditor
-            channel={channel}
             providerId={overrideProviderId}
-            displayName={selectedOption?.displayName ?? getContentSourceLabel(channel, overrideProviderId)}
+            displayName={selectedOption?.displayName ?? getContentSourceLabel(overrideProviderId)}
             onDraftParseValidityChange={handleDraftParseValidityChange}
             {...getEditorExtras?.(overrideProviderId)}
           />
@@ -265,9 +264,8 @@ export function ContentOverridePanel({
         title="Reset to default content?"
         description={
           <>
-            This will remove the{' '}
-            {pendingResetProviderId ? getContentSourceLabel(channel, pendingResetProviderId) : 'provider'} override and
-            restore the default content for this step. This action cannot be undone.
+            This will remove the {pendingResetProviderId ? getContentSourceLabel(pendingResetProviderId) : 'provider'}{' '}
+            override and restore the default content for this step. This action cannot be undone.
           </>
         }
         confirmButtonText="Reset to default"

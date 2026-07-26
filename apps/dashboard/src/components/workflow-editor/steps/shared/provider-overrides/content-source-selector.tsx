@@ -12,12 +12,10 @@ import {
   type ContentSource,
   DEFAULT_CONTENT_SOURCE,
   getContentSourceLabel,
-  type OverrideChannel,
   type ProviderOverrideOption,
 } from './content-source';
 
 type ContentSourceSelectorProps = {
-  channel: OverrideChannel;
   selectedSource: ContentSource;
   providers: ProviderOverrideOption[];
   invalidProviderIds?: Set<string>;
@@ -28,7 +26,6 @@ type ContentSourceSelectorProps = {
 };
 
 export function ContentSourceSelector({
-  channel,
   selectedSource,
   providers,
   invalidProviderIds,
@@ -48,11 +45,11 @@ export function ContentSourceSelector({
           {selectedSource !== DEFAULT_CONTENT_SOURCE && (
             <ProviderIcon
               providerId={selectedSource}
-              providerDisplayName={getContentSourceLabel(channel, selectedSource)}
+              providerDisplayName={getContentSourceLabel(selectedSource)}
               className="size-3.5"
             />
           )}
-          <span className="text-label-xs text-text-sub">{getContentSourceLabel(channel, selectedSource)}</span>
+          <span className="text-label-xs text-text-sub">{getContentSourceLabel(selectedSource)}</span>
           <RiExpandUpDownLine className="text-text-sub ml-0.5 size-3" />
         </button>
       </DropdownMenuTrigger>

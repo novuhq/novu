@@ -32,9 +32,10 @@ function extractChatPreview(previewData?: GeneratePreviewResponseDto): ChatRende
 /**
  * Wraps the Slack-style chat mock with the content-source bar. Provider tabs render the merged
  * override payload as JSON rather than a channel-specific renderer.
+ *
+ * Split out so the flag-off preview never subscribes to the `providerOverrides` form field.
  */
-export const ChatPreviewPanel = ({ isPreviewPending, previewData }: ChatPreviewPanelProps) => {
-  const areProviderOverridesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_PROVIDER_OVERRIDES_ENABLED);
+function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanelProps) {
   const { providerOptions } = useProviderOverrideOptions(CHAT_OVERRIDE_CHANNEL);
   const { previewSource, setPreviewSource } = useContentSource();
 
@@ -49,12 +50,6 @@ export const ChatPreviewPanel = ({ isPreviewPending, previewData }: ChatPreviewP
     override: activeProviderId ? previewProviderOverrides[activeProviderId] : undefined,
   });
 
-  if (!areProviderOverridesEnabled) {
-    return <ChatPreview isPreviewPending={isPreviewPending} previewData={previewData} />;
-  }
-
-  const selectedOption = providerOptions.find((option) => option.providerId === activeProviderId);
-
   const renderBody = () => {
     if (!activeProviderId || !annotatedPreview) {
       return <ChatPreview isPreviewPending={isPreviewPending} previewData={previewData} />;
@@ -63,6 +58,9 @@ export const ChatPreviewPanel = ({ isPreviewPending, previewData }: ChatPreviewP
     if (isPreviewPending) {
       return <Skeleton className="h-24 w-full shrink-0 rounded-md" />;
     }
+
+    const displayName =
+      providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? activeProviderId;
 
     return (
       <div className="flex min-h-0 flex-col gap-1.5">
@@ -76,7 +74,7 @@ export const ChatPreviewPanel = ({ isPreviewPending, previewData }: ChatPreviewP
             defaultContentKey: annotatedPreview.defaultContentKey,
             body,
             providerId: activeProviderId,
-            displayName: selectedOption?.displayName ?? activeProviderId,
+            displayName,
           })}
         </div>
       </div>
@@ -87,7 +85,6 @@ export const ChatPreviewPanel = ({ isPreviewPending, previewData }: ChatPreviewP
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
         <ContentSourceSelector
-          channel={CHAT_OVERRIDE_CHANNEL}
           selectedSource={previewSource}
           providers={providerOptions}
           showEscapeHatchBadge
@@ -99,4 +96,14 @@ export const ChatPreviewPanel = ({ isPreviewPending, previewData }: ChatPreviewP
       <div className="flex min-h-0 flex-1 flex-col p-3">{renderBody()}</div>
     </div>
   );
+}
+
+export const ChatPreviewPanel = (props: ChatPreviewPanelProps) => {
+  const areProviderOverridesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_PROVIDER_OVERRIDES_ENABLED);
+
+  if (!areProviderOverridesEnabled) {
+    return <ChatPreview {...props} />;
+  }
+
+  return <ChatOverridePreview {...props} />;
 };

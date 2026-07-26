@@ -1,16 +1,16 @@
-import { type ContentOverrideProviderId, getProviderPrimaryContentKey } from '@novu/shared';
+import { getProviderOverrideConfig } from '@novu/shared';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { getOverrideProviderConfig, type OverrideChannel } from './content-source';
+import { getProviderDocReference } from './content-source';
 
 type EscapeHatchCalloutProps = {
-  channel: OverrideChannel;
-  providerId: ContentOverrideProviderId;
+  providerId: string;
   displayName: string;
 };
 
-export function EscapeHatchCallout({ channel, providerId, displayName }: EscapeHatchCalloutProps) {
-  const docReference = getOverrideProviderConfig(channel, providerId)?.docReference;
-  const hasPrimaryContentKey = getProviderPrimaryContentKey(providerId) !== null;
+export function EscapeHatchCallout({ providerId, displayName }: EscapeHatchCalloutProps) {
+  const docReference = getProviderDocReference(providerId);
+  // An unregistered provider has no known content key either, so it gets the same caveat.
+  const nestsContent = getProviderOverrideConfig(providerId)?.primaryContentKey == null;
 
   return (
     <InlineToast
@@ -19,7 +19,7 @@ export function EscapeHatchCallout({ channel, providerId, displayName }: EscapeH
         <>
           No schema available. This object is merged into the {displayName} API payload as-is; fields aren't validated
           or autocompleted.
-          {!hasPrimaryContentKey && (
+          {nestsContent && (
             <> {displayName} nests its message content, so the step body is not filled in automatically here.</>
           )}
           {docReference && (
