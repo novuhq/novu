@@ -4,6 +4,7 @@ import {
   CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
+  RotatingConnectionTokenService,
   UpdateSubscriber,
   UpdateSubscriberChannel,
 } from '@novu/application-generic';
@@ -127,6 +128,7 @@ import { USE_CASES } from './usecases';
     SubscriberRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
+    RotatingConnectionTokenService,
     AgentSubscriberResolver,
     AgentSubscriberAdoptionService,
     AgentConversationService,
