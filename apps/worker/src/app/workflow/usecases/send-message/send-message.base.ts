@@ -33,7 +33,7 @@ import {
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
-import { mergeWith } from 'lodash';
+import { cloneDeep, mergeWith } from 'lodash';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
@@ -43,13 +43,33 @@ import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-me
  * higher-priority `blocks: [x]` layered over a persisted `blocks: [a, b, c]` would yield
  * `[merge(a, x), b, c]` — a corrupted first element plus two stale ones. An override array is a
  * complete replacement of the list it overrides, so the higher-priority array wins whole.
+ *
+ * The clone keeps the result detached from the command the way `merge` used to: the merged blob
+ * leaves the worker as `bridgeProviderData`, and it is reused across every endpoint of a fan-out.
  */
 function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] | undefined {
   if (Array.isArray(sourceValue)) {
-    return sourceValue;
+    return cloneDeep(sourceValue);
   }
 
   return undefined;
+}
+
+/**
+ * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
+ * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ */
+export function combineProviderOverrides(
+  bridgeData: Record<string, any> | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  integrationId: string
+): Record<string, unknown> {
+  const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
+  const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
+  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
+
+  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
 }
 
 export abstract class SendMessageBase extends SendMessageType {
@@ -64,19 +84,6 @@ export abstract class SendMessageBase extends SendMessageType {
     protected moduleRef: ModuleRef
   ) {
     super(messageRepository, createExecutionDetails);
-  }
-
-  protected combineOverrides(
-    bridgeData: Record<string, any> | null | undefined,
-    overrides: TriggerOverrides | undefined,
-    stepId: string | undefined,
-    integrationId: string
-  ): Record<string, unknown> {
-    const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
-    const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
-    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
-
-    return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides, replaceArrays);
   }
 
   @Instrument()

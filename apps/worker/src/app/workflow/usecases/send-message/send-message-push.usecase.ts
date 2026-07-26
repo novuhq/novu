@@ -47,7 +47,7 @@ import { IPushOptions } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -620,7 +620,7 @@ export class SendMessagePush extends SendMessageBase {
         overrides,
         subscriber,
         step,
-        bridgeProviderData: this.combineOverrides(
+        bridgeProviderData: combineProviderOverrides(
           command.bridgeData,
           command.overrides,
           command.step.stepId,

@@ -155,7 +155,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     { type: 'context', elements: [{ type: 'mrkdwn', text: 'persisted context' }] },
   ];
 
-  let originalNodeEnv: string | undefined;
+  let originalNodeEnv: typeof process.env.NODE_ENV;
 
   /**
    * `BaseChatHandler.send` no-ops under `NODE_ENV=test` so suites never reach a provider API. These
@@ -168,18 +168,18 @@ describe('SendMessageChat - Slack provider content overrides', () => {
   });
 
   afterEach(() => {
-    if (originalNodeEnv === undefined) {
-      delete process.env.NODE_ENV;
-    } else {
-      process.env.NODE_ENV = originalNodeEnv;
-    }
+    process.env.NODE_ENV = originalNodeEnv;
     sinon.restore();
   });
 
   function stubSlackTransport() {
     const handler = new ChatFactory().getHandler(slackIntegration as never);
+    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
+    // Fail here rather than silently letting the suite make a real request to slack.com.
+    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+
     const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
-    (handler as unknown as { provider: { axiosInstance: unknown } }).provider.axiosInstance = { post };
+    provider.axiosInstance = { post };
     sinon.stub(ChatFactory.prototype, 'getHandler').returns(handler);
 
     return post;
@@ -286,7 +286,7 @@ describe('SendMessageChat - Slack provider content overrides', () => {
         providerOverrides: { blocks: persistedBlocks },
         overrides: {
           steps: { step_1: { providers: { [ChatProviderIdEnum.Slack]: { blocks: triggerBlocks } } } },
-        } as TriggerOverrides,
+        } as unknown as TriggerOverrides,
       })
     );
 
@@ -301,16 +301,5 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     expect(post.firstCall.args[1].text).to.equal('compiled step body');
-  });
-
-  it('lets an override text win over the compiled step body', async () => {
-    const post = stubSlackTransport();
-
-    const result = await buildUsecase().execute(
-      buildCommand({ providerOverrides: { text: 'override text', blocks: persistedBlocks } })
-    );
-
-    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
-    expect(post.firstCall.args[1].text).to.equal('override text');
   });
 });

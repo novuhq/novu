@@ -291,9 +291,12 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     await usecase.execute(command);
 
     const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
-    expect(bridgeRequest.event.controls.providerOverrides).to.deep.equal({
-      [ChatProviderIdEnum.Slack]: {
-        blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'from the editor' } }],
+    expect(bridgeRequest.event.controls).to.deep.equal({
+      body: 'default chat body',
+      providerOverrides: {
+        [ChatProviderIdEnum.Slack]: {
+          blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'from the editor' } }],
+        },
       },
     });
   });
