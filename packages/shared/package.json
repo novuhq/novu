@@ -17,7 +17,8 @@
     "check:fix": "biome check --write .",
     "test": "vitest",
     "watch:test": "pnpm test --watch",
-    "check:circulars": "madge --circular --extensions ts ./src"
+    "check:circulars": "madge --circular --extensions ts ./src",
+    "generate:slack-schema": "node scripts/generate-slack-override-schema.ts"
   },
   "author": "",
   "license": "ISC",
@@ -69,14 +70,22 @@
       "import": "./dist/esm/utils/validate-smtp-outbound-target.js",
       "types": "./dist/esm/utils/validate-smtp-outbound-target.d.ts"
     },
+    "./provider-overrides/slack": {
+      "require": "./dist/cjs/consts/providers/provider-overrides/slack/index.js",
+      "import": "./dist/esm/consts/providers/provider-overrides/slack/index.js",
+      "types": "./dist/esm/consts/providers/provider-overrides/slack/index.d.ts"
+    },
     "./docs/agent-onboarding.md": "./docs/agent-onboarding.md"
   },
   "dependencies": {
     "lru-cache": "^11.5.1"
   },
   "devDependencies": {
+    "@slack/types": "2.21.1",
+    "@slack/web-api": "7.17.0",
     "madge": "^8.0.0",
     "rimraf": "^3.0.2",
+    "ts-json-schema-generator": "2.9.0",
     "typescript": "5.6.2",
     "vitest": "^4.1.0"
   },

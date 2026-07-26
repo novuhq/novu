@@ -5,20 +5,20 @@
  */
 export const SLACK_OVERRIDE_KEYS = [
   'text',
-  'markdown_text',
-  'blocks',
-  'attachments',
-  'username',
-  'icon_emoji',
-  'icon_url',
-  'thread_ts',
   'reply_broadcast',
+  'thread_ts',
+  'icon_emoji',
+  'username',
   'parse',
   'link_names',
   'metadata',
   'unfurl_links',
   'unfurl_media',
   'mrkdwn',
+  'icon_url',
+  'blocks',
+  'attachments',
+  'markdown_text',
 ] as const;
 
 /** Slack puts the compiled step body into `text`. */

@@ -6,6 +6,11 @@ export const LIQUID_TEMPLATE_PATTERN = '\\{\\{|\\{%';
 const liquidStringSchema: JSONSchemaDto = { type: 'string', pattern: LIQUID_TEMPLATE_PATTERN };
 
 function acceptsAnyString(schema: JSONSchemaDto): boolean {
+  // Every definition is rewritten, so a reference already resolves to a tolerant schema.
+  if (schema.$ref !== undefined) {
+    return true;
+  }
+
   const types = Array.isArray(schema.type) ? schema.type : [schema.type];
   if (!types.includes('string')) {
     return false;
@@ -58,6 +63,10 @@ function transformChildren(schema: JSONSchemaDto): JSONSchemaDto {
     next.patternProperties = transformRecord(next.patternProperties);
   }
 
+  if (next.definitions) {
+    next.definitions = transformRecord(next.definitions);
+  }
+
   if (next.additionalProperties !== undefined) {
     next.additionalProperties = transformDefinition(next.additionalProperties);
   }
@@ -82,7 +91,12 @@ export function toLiquidTolerantSchema(schema: JSONSchemaDto): JSONSchemaDto {
     return schema;
   }
 
-  return { anyOf: [transformChildren(schema), { ...liquidStringSchema }] };
+  // `$ref` pointers are absolute (`#/definitions/...`), so definitions are hoisted onto the
+  // wrapper rather than buried inside its first branch.
+  const { definitions, ...rest } = transformChildren(schema);
+  const wrapped: JSONSchemaDto = { anyOf: [rest, { ...liquidStringSchema }] };
+
+  return definitions === undefined ? wrapped : { definitions, ...wrapped };
 }
 
 /** Structural subset of AJV's `ErrorObject`, so this package needs no AJV dependency. */

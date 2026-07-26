@@ -124,10 +124,30 @@ describe('toLiquidTolerantSchema', () => {
     expect(imageBranch.properties?.alt_text).toEqual({ type: 'string' });
   });
 
-  it('carries keywords it does not rewrite through untouched', () => {
-    const withRef = { $ref: '#/definitions/Block', description: 'A block.' } as unknown as JSONSchemaDto;
+  it('makes definitions tolerant and leaves the references to them alone', () => {
+    const tolerant = toLiquidTolerantSchema({
+      type: 'object',
+      properties: { block: { $ref: '#/definitions/Block' } },
+      definitions: {
+        Block: { type: 'object', properties: { indent: { type: 'number' } } },
+      },
+    });
+    const objectBranch = tolerant.anyOf?.[0] as JSONSchemaDto;
+    const blockDefinition = tolerant.definitions?.Block as JSONSchemaDto;
 
-    expect(toLiquidTolerantSchema(withRef).anyOf?.[0]).toEqual(withRef);
+    // `#/definitions/...` is absolute, so definitions have to stay at the root of the wrapper.
+    expect(objectBranch.definitions).toBeUndefined();
+    expect(objectBranch.properties?.block).toEqual({ $ref: '#/definitions/Block' });
+    expect(blockDefinition.anyOf?.[1]).toEqual({ type: 'string', pattern: LIQUID_TEMPLATE_PATTERN });
+    expect((blockDefinition.anyOf?.[0] as JSONSchemaDto).properties?.indent).toEqual({
+      anyOf: [{ type: 'number' }, { type: 'string', pattern: LIQUID_TEMPLATE_PATTERN }],
+    });
+  });
+
+  it('carries keywords it does not rewrite through untouched', () => {
+    const withFormat = { type: 'integer', format: 'int64' } as const satisfies JSONSchemaDto;
+
+    expect(toLiquidTolerantSchema(withFormat).anyOf?.[0]).toEqual(withFormat);
   });
 
   it('does not mutate the schema it is given', () => {
