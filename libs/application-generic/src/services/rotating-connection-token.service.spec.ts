@@ -21,6 +21,10 @@ function futureIso(ms: number): string {
   return new Date(Date.now() + ms).toISOString();
 }
 
+function pastIso(ms: number): string {
+  return new Date(Date.now() - ms).toISOString();
+}
+
 function createDeferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (reason?: unknown) => void } {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
@@ -264,6 +268,47 @@ describe('RotatingConnectionTokenService', () => {
     expect(channelConnectionRepository.findOne.called).toBe(false);
     expect(channelConnectionRepository.findOneAndUpdate.called).toBe(false);
     expect(cacheService.del.called).toBe(false);
+  });
+
+  it('waits for the lock holder and returns the refreshed token when the stored token is already expired', async () => {
+    const { service, cacheService, channelConnectionRepository } = buildHarness();
+    const expiredConnection = buildConnection({
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      expiresAt: pastIso(60 * 1000),
+    });
+    const refreshedConnection = buildConnection({
+      accessToken: MOCK_NEW_ACCESS_TOKEN,
+      refreshToken: MOCK_NEW_REFRESH_TOKEN,
+      expiresAt: futureIso(12 * 60 * 60 * 1000),
+    });
+
+    cacheService.setIfNotExist.resolves(null);
+    channelConnectionRepository.findOne.onFirstCall().resolves(expiredConnection);
+    channelConnectionRepository.findOne.onSecondCall().resolves(refreshedConnection);
+
+    const token = await service.getConnectionToken(expiredConnection);
+
+    expect(token).toEqual(MOCK_NEW_ACCESS_TOKEN);
+    expect(axiosPost.called).toBe(false);
+    expect(channelConnectionRepository.findOneAndUpdate.called).toBe(false);
+    expect(cacheService.del.called).toBe(false);
+  });
+
+  it('throws when the lock holder never persists a fresh token before the wait budget expires', async () => {
+    const { service, cacheService, channelConnectionRepository } = buildHarness();
+    const expiredConnection = buildConnection({
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      expiresAt: pastIso(60 * 1000),
+    });
+
+    cacheService.setIfNotExist.resolves(null);
+    channelConnectionRepository.findOne.resolves(expiredConnection);
+
+    await expect(service.getConnectionToken(expiredConnection)).rejects.toThrow(BadGatewayException);
+    expect(axiosPost.called).toBe(false);
+    expect(channelConnectionRepository.findOneAndUpdate.called).toBe(false);
   });
 
   it('refreshes without a lock when the cache is disabled', async () => {

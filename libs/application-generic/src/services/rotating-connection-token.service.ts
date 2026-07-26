@@ -24,6 +24,9 @@ const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 const REFRESH_LOCK_KEY_PREFIX = 'connection_token_refresh_lock:';
 const REFRESH_LOCK_TTL_SECONDS = 30;
 const REFRESH_REQUEST_TIMEOUT_MS = 10000;
+/** How long a lock-loser waits for the holder to persist a fresh token when the current one is already expired. */
+const REFRESH_WAIT_ATTEMPTS = 5;
+const REFRESH_WAIT_INTERVAL_MS = 200;
 
 /** Normalized shape of a provider's `refresh_token` grant response. */
 export interface RotatingTokenRefreshResult {
@@ -188,8 +191,10 @@ function buildConnectionRefreshKey(connection: ChannelConnectionEntity): string 
  *    this instance (e.g. a worker resolving several endpoints that share one connection)
  *    onto a single refresh, so they all share the fresh token instead of racing.
  *  - Cross-process: a Redis `SET NX` lock serializes the refresh across workers/replicas.
- *    Callers that lose the lock race keep the currently stored token (still valid thanks
- *    to the refresh window) and let the lock holder rotate for the next caller.
+ *    Callers that lose the lock race return the currently stored token when it is still
+ *    valid (the common case inside the refresh window). When the token is already expired
+ *    (first send after a quiet period past expiry), they briefly wait for the lock holder
+ *    to persist a fresh token instead of returning a dead one.
  *
  * A refresh failure throws `BadGatewayException`; callers that resolve many endpoints in
  * parallel should expect one bad connection to fail the whole batch.
@@ -259,8 +264,14 @@ export class RotatingConnectionTokenService {
     const acquired = await this.cacheService.setIfNotExist(lockKey, '1', { ttl: REFRESH_LOCK_TTL_SECONDS });
 
     if (acquired !== 'OK') {
-      // Refresh starts before expiry, so this token remains valid while the lock holder rotates it.
-      return decryptedAuth.accessToken;
+      // Inside the refresh window the stored token is still valid — return it immediately.
+      if (!this.isExpired(decryptedAuth.expiresAt)) {
+        return decryptedAuth.accessToken;
+      }
+
+      // Already expired (quiet period past expiry): wait for the lock holder to persist
+      // a fresh token rather than hand back a dead one to a concurrent send.
+      return await this.awaitRefreshedToken(connection);
     }
 
     try {
@@ -277,6 +288,29 @@ export class RotatingConnectionTokenService {
     } finally {
       await this.cacheService.del(lockKey);
     }
+  }
+
+  /**
+   * Polls the persisted connection auth until the lock holder writes a non-expired token,
+   * or until the wait budget is exhausted. Used only when the lock was lost and the caller's
+   * local token is already past `expiresAt`.
+   */
+  private async awaitRefreshedToken(connection: ChannelConnectionEntity): Promise<string> {
+    for (let attempt = 0; attempt < REFRESH_WAIT_ATTEMPTS; attempt += 1) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, REFRESH_WAIT_INTERVAL_MS);
+      });
+
+      const currentAuth = await this.readPersistedAuth(connection);
+
+      if (currentAuth?.accessToken && !this.isExpired(currentAuth.expiresAt)) {
+        return currentAuth.accessToken;
+      }
+    }
+
+    throw new BadGatewayException(
+      `Timed out waiting for token refresh for connection ${connection.identifier}. Reconnect the channel connection.`
+    );
   }
 
   private async readPersistedAuth(connection: ChannelConnectionEntity): Promise<ChannelConnectionAuth | undefined> {
@@ -437,5 +471,19 @@ export class RotatingConnectionTokenService {
     }
 
     return expiresAtTime - Date.now() <= TOKEN_REFRESH_WINDOW_MS;
+  }
+
+  private isExpired(expiresAt?: string): boolean {
+    if (!expiresAt) {
+      return false;
+    }
+
+    const expiresAtTime = new Date(expiresAt).getTime();
+
+    if (Number.isNaN(expiresAtTime)) {
+      return false;
+    }
+
+    return expiresAtTime <= Date.now();
   }
 }
