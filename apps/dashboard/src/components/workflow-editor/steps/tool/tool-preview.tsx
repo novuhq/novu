@@ -1,18 +1,16 @@
-import {
-  buildAnnotatedPreviewLines,
-  ChannelTypeEnum,
-  type GeneratePreviewResponseDto,
-  getToolProviderPrimaryContentKey,
-  mergeToolProviderPreview,
-  type ToolRenderOutput,
-} from '@novu/shared';
-import { useMemo } from 'react';
+import { ChannelTypeEnum, type GeneratePreviewResponseDto, type ToolRenderOutput } from '@novu/shared';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { DEFAULT_CONTENT_SOURCE, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
-import { useToolContentSource } from './tool-content-source-context';
-import { ToolContentSourceSelector } from './tool-content-source-selector';
+import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
+import { DEFAULT_CONTENT_SOURCE } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
+import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
+import { ContentSourceSelector } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-selector';
+import {
+  getMergedOverrideHint,
+  PREVIEW_PANEL_CLASS,
+  useAnnotatedOverridePreview,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import { TOOL_OVERRIDE_CHANNEL, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 
 type ToolPreviewResult = {
@@ -25,13 +23,7 @@ type ToolPreviewProps = {
   previewData?: GeneratePreviewResponseDto;
 };
 
-const PANEL_CLASS =
-  'bg-neutral-alpha-50 text-foreground-950 min-h-16 overflow-auto rounded-md border border-neutral-100 p-2 font-mono text-[11px] leading-4 [scrollbar-gutter:stable]';
-
 const EMPTY_BODY_PLACEHOLDER = 'Default content will be delivered to enabled tools';
-
-const DEFAULT_CONTENT_CHIP_CLASS =
-  'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
 
 function extractToolPreview(previewData?: GeneratePreviewResponseDto): ToolRenderOutput | undefined {
   const previewResult = previewData?.result as ToolPreviewResult | undefined;
@@ -80,26 +72,16 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const previewProviderOverrides = preview?.providerOverrides ?? {};
 
   const { providerOptions } = useToolOverrideProviderOptions();
-  const { previewSource, setPreviewSource } = useToolContentSource();
+  const { previewSource, setPreviewSource } = useContentSource();
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
   const isWebhookPreview = activeProviderId === WEBHOOK_TOOL_PROVIDER_ID;
 
-  const { annotatedLines, defaultContentKey } = useMemo(() => {
-    if (!activeProviderId || activeProviderId === WEBHOOK_TOOL_PROVIDER_ID) {
-      return { annotatedLines: undefined, defaultContentKey: undefined };
-    }
-
-    const result = mergeToolProviderPreview({
-      body,
-      providerId: activeProviderId,
-      override: previewProviderOverrides[activeProviderId],
-    });
-
-    return {
-      annotatedLines: buildAnnotatedPreviewLines(result.merged, result.defaultContentKey),
-      defaultContentKey: result.defaultContentKey,
-    };
-  }, [activeProviderId, body, previewProviderOverrides]);
+  const annotatedPreview = useAnnotatedOverridePreview({
+    body,
+    providerId: isWebhookPreview ? undefined : activeProviderId,
+    override: activeProviderId ? previewProviderOverrides[activeProviderId] : undefined,
+  });
+  const defaultContentKey = annotatedPreview?.defaultContentKey;
 
   const hasOverride = !!activeProviderId && activeProviderId in previewProviderOverrides;
   const webhookPreviewJson = isWebhookPreview
@@ -111,58 +93,29 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       return "This message is delivered to every enabled tool provider, mapped to each provider's primary content field.";
     }
 
-    if (activeProviderId === WEBHOOK_TOOL_PROVIDER_ID) {
+    if (isWebhookPreview) {
       return 'Each webhook integration merges its own body template beneath this payload.';
     }
 
-    if (hasOverride) {
-      if (!defaultContentKey) {
-        return 'Override merged over the default content.';
-      }
-
-      if (!body) {
-        return `Override merged over the default content. "${defaultContentKey}" is taken from your default message (currently empty).`;
-      }
-
-      return `Override merged over the default content. "${defaultContentKey}" is taken from your default message.`;
-    }
-
-    const primaryKey = getToolProviderPrimaryContentKey(activeProviderId);
-
-    return `No override for this provider. Default message maps to "${primaryKey}".`;
+    return getMergedOverrideHint({
+      hasOverride,
+      defaultContentKey,
+      body,
+      providerId: activeProviderId,
+      displayName: providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? '',
+    });
   };
 
   const renderPanel = () => {
     if (webhookPreviewJson !== undefined) {
-      return <pre className={PANEL_CLASS}>{webhookPreviewJson}</pre>;
+      return <pre className={PREVIEW_PANEL_CLASS}>{webhookPreviewJson}</pre>;
     }
 
-    if (annotatedLines) {
-      return (
-        <pre className={PANEL_CLASS}>
-          {annotatedLines.map((line, index) => (
-            <div key={`${index}-${line.json}`}>
-              {line.json}
-              {line.isDefaultContentKey ? (
-                <>
-                  {' '}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className={DEFAULT_CONTENT_CHIP_CLASS}>DEFAULT CONTENT</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {`Filled from your Default content because the override doesn't set "${defaultContentKey}".`}
-                    </TooltipContent>
-                  </Tooltip>
-                </>
-              ) : null}
-            </div>
-          ))}
-        </pre>
-      );
+    if (annotatedPreview) {
+      return <AnnotatedOverrideJson {...annotatedPreview} />;
     }
 
-    return <div className={`${PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
+    return <div className={`${PREVIEW_PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
   };
 
   let previewLabel = 'Message';
@@ -176,7 +129,8 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
-        <ToolContentSourceSelector
+        <ContentSourceSelector
+          channel={TOOL_OVERRIDE_CHANNEL}
           selectedSource={previewSource}
           providers={providerOptions}
           onSelectSource={setPreviewSource}

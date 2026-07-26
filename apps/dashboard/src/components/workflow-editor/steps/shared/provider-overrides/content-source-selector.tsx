@@ -9,27 +9,30 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { cn } from '@/utils/ui';
 import {
+  type ContentSource,
   DEFAULT_CONTENT_SOURCE,
   getContentSourceLabel,
-  type ToolContentSource,
-  type ToolOverrideProviderOption,
-} from './tool-content-source';
+  type OverrideChannel,
+  type ProviderOverrideOption,
+} from './content-source';
 
-type ToolContentSourceSelectorProps = {
-  selectedSource: ToolContentSource;
-  providers: ToolOverrideProviderOption[];
+type ContentSourceSelectorProps = {
+  channel: OverrideChannel;
+  selectedSource: ContentSource;
+  providers: ProviderOverrideOption[];
   invalidProviderIds?: Set<string>;
-  onSelectSource: (source: ToolContentSource) => void;
-  onAddOverride?: (providerId: ToolOverrideProviderOption['providerId']) => void;
+  onSelectSource: (source: ContentSource) => void;
+  onAddOverride?: (providerId: ProviderOverrideOption['providerId']) => void;
 };
 
-export function ToolContentSourceSelector({
+export function ContentSourceSelector({
+  channel,
   selectedSource,
   providers,
   invalidProviderIds,
   onSelectSource,
   onAddOverride,
-}: ToolContentSourceSelectorProps) {
+}: ContentSourceSelectorProps) {
   const canAddOverrides = !!onAddOverride;
 
   return (
@@ -42,11 +45,11 @@ export function ToolContentSourceSelector({
           {selectedSource !== DEFAULT_CONTENT_SOURCE && (
             <ProviderIcon
               providerId={selectedSource}
-              providerDisplayName={getContentSourceLabel(selectedSource)}
+              providerDisplayName={getContentSourceLabel(channel, selectedSource)}
               className="size-3.5"
             />
           )}
-          <span className="text-label-xs text-text-sub">{getContentSourceLabel(selectedSource)}</span>
+          <span className="text-label-xs text-text-sub">{getContentSourceLabel(channel, selectedSource)}</span>
           <RiExpandUpDownLine className="text-text-sub ml-0.5 size-3" />
         </button>
       </DropdownMenuTrigger>

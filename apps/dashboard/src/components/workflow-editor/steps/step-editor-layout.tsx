@@ -43,9 +43,9 @@ import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-hea
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { ContentSourceProvider } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
 import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
-import { ToolContentSourceProvider } from '@/components/workflow-editor/steps/tool/tool-content-source-context';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
@@ -385,7 +385,7 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
   return (
     <div className={cn('h-full w-full', className)}>
       <StepEditorProvider workflow={workflow} step={step}>
-        {step.type === StepTypeEnum.TOOL ? <ToolContentSourceProvider>{content}</ToolContentSourceProvider> : content}
+        {step.type === StepTypeEnum.TOOL ? <ContentSourceProvider>{content}</ContentSourceProvider> : content}
       </StepEditorProvider>
     </div>
   );

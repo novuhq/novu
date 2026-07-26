@@ -1,20 +1,14 @@
-import { getToolProviderPrimaryContentKey } from '@novu/shared';
+import { getProviderPrimaryContentKey } from '@novu/shared';
 import { useMemo } from 'react';
-import { RiAddLine, RiCheckLine, RiErrorWarningLine, RiListUnordered } from 'react-icons/ri';
+import { RiAddLine, RiCheckLine, RiListUnordered } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import {
-  type DashboardToolContentOverrideProviderId,
-  getToolOverrideProviderDisplayName,
-  WEBHOOK_TOOL_PROVIDER_ID,
-} from './tool-content-source';
-import { getConstraints, getFieldSchemas, getTypeLabel, type OverrideFieldSchema } from './tool-override-field-schema';
-import {
-  formatWebhookSchemaSourceLabel,
-  type WebhookSchemaConflict,
-  type WebhookSchemaSourceRef,
-} from './webhook-payload-schema';
+  type AnnotateOverrideField,
+  getConstraints,
+  getTypeLabel,
+  type OverrideFieldSchema,
+} from './override-field-schema';
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
@@ -25,49 +19,49 @@ type SupportedField = {
   description?: string;
   constraints: string[];
   isDefaultContent: boolean;
-  sources: WebhookSchemaSourceRef[];
-  conflicts: WebhookSchemaConflict[];
+  fieldSchema: OverrideFieldSchema;
 };
 
-function buildToolOverrideSupportedFields(
-  providerId: DashboardToolContentOverrideProviderId,
-  schemaOverride?: Record<string, OverrideFieldSchema>
-): SupportedField[] {
-  const primaryKey = providerId === WEBHOOK_TOOL_PROVIDER_ID ? undefined : getToolProviderPrimaryContentKey(providerId);
+function buildSupportedFields(providerId: string, rootSchema: OverrideFieldSchema): SupportedField[] {
+  const primaryKey = getProviderPrimaryContentKey(providerId);
 
-  return Object.entries(schemaOverride ?? getFieldSchemas(providerId)).map(([key, fieldSchema]) => ({
+  return Object.entries(rootSchema.properties ?? {}).map(([key, fieldSchema]) => ({
     key,
     typeLabel: getTypeLabel(fieldSchema),
     description: fieldSchema.description,
     constraints: getConstraints(fieldSchema),
     isDefaultContent: key === primaryKey,
-    sources: fieldSchema.sources ?? [],
-    conflicts: fieldSchema.conflicts ?? [],
+    fieldSchema,
   }));
 }
 
-type ToolOverrideSupportedFieldsProps = {
-  providerId: DashboardToolContentOverrideProviderId;
-  fieldSchemas?: Record<string, OverrideFieldSchema>;
+type OverrideSupportedFieldsProps = {
+  providerId: string;
+  displayName: string;
+  rootSchema: OverrideFieldSchema | undefined;
   usedKeys: Set<string>;
   canInsert: boolean;
+  annotateField?: AnnotateOverrideField;
   onInsertField: (key: string) => void;
 };
 
-export function ToolOverrideSupportedFields({
+export function OverrideSupportedFields({
   providerId,
-  fieldSchemas,
+  displayName,
+  rootSchema,
   usedKeys,
   canInsert,
+  annotateField,
   onInsertField,
-}: ToolOverrideSupportedFieldsProps) {
-  const fields = useMemo(() => buildToolOverrideSupportedFields(providerId, fieldSchemas), [fieldSchemas, providerId]);
+}: OverrideSupportedFieldsProps) {
+  const fields = useMemo(
+    () => (rootSchema ? buildSupportedFields(providerId, rootSchema) : []),
+    [providerId, rootSchema]
+  );
 
   if (fields.length === 0) {
     return null;
   }
-
-  const displayName = getToolOverrideProviderDisplayName(providerId);
 
   return (
     <Popover>
@@ -88,6 +82,7 @@ export function ToolOverrideSupportedFields({
         <div className="max-h-80 overflow-y-auto p-1">
           {fields.map((field) => {
             const isUsed = usedKeys.has(field.key);
+            const annotations = annotateField?.(field.key, field.fieldSchema);
 
             return (
               <button
@@ -102,24 +97,7 @@ export function ToolOverrideSupportedFields({
                 <div className="flex w-full items-center gap-1.5">
                   <code className="text-code-xs text-text-strong">{field.key}</code>
                   <span className="text-text-soft text-[11px]">{field.typeLabel}</span>
-                  {field.conflicts.length > 0 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span
-                          className="text-warning-base inline-flex"
-                          role="img"
-                          aria-label={`Conflicting types for ${field.key}`}
-                        >
-                          <RiErrorWarningLine className="size-3.5" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {field.conflicts
-                          .map(({ source, type }) => `${formatWebhookSchemaSourceLabel(source)}: ${type}`)
-                          .join(' · ')}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+                  {annotations?.badge}
                   {field.isDefaultContent && (
                     <span
                       className={DEFAULT_CONTENT_CHIP_CLASS}
@@ -143,11 +121,7 @@ export function ToolOverrideSupportedFields({
                 {field.constraints.length > 0 && (
                   <span className="text-text-soft text-[11px]">{field.constraints.join(' · ')}</span>
                 )}
-                {field.sources.length > 0 && (
-                  <span className="text-text-soft text-[11px]">
-                    From {field.sources.map(formatWebhookSchemaSourceLabel).join(', ')}
-                  </span>
-                )}
+                {annotations?.footnote}
               </button>
             );
           })}

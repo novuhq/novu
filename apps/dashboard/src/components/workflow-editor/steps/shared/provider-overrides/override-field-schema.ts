@@ -1,7 +1,11 @@
-import { getToolProviderOverrideSchema } from '@novu/shared';
-import { type DashboardToolContentOverrideProviderId, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
-import { type WebhookSchemaConflict, type WebhookSchemaSourceRef } from './webhook-payload-schema';
+import { getProviderOverrideSchema } from '@novu/shared';
+import { type ReactNode } from 'react';
 
+/**
+ * The JSON Schema subset the override editor understands. Structural only — channel-specific
+ * annotations (for example the tool webhook's per-integration sources) are attached by the caller
+ * as extra properties and read back through the `describe*` hooks.
+ */
 export type OverrideFieldSchema = {
   type?: string;
   description?: string;
@@ -9,20 +13,21 @@ export type OverrideFieldSchema = {
   maxLength?: number;
   items?: OverrideFieldSchema;
   properties?: Record<string, OverrideFieldSchema>;
-  sources?: WebhookSchemaSourceRef[];
-  conflicts?: WebhookSchemaConflict[];
 };
 
-export function getFieldSchemas(
-  providerId: DashboardToolContentOverrideProviderId
-): Record<string, OverrideFieldSchema> {
-  if (providerId === WEBHOOK_TOOL_PROVIDER_ID) {
-    return {};
-  }
+/** Extra `info` lines a channel can contribute to a completion popup. */
+export type DescribeOverrideField = (key: string, fieldSchema: OverrideFieldSchema) => string[];
 
-  const schema = getToolProviderOverrideSchema(providerId);
+/** Extra nodes a channel can contribute to a row of the supported-fields popover. */
+export type OverrideFieldAnnotations = {
+  badge?: ReactNode;
+  footnote?: ReactNode;
+};
 
-  return (schema?.properties ?? {}) as Record<string, OverrideFieldSchema>;
+export type AnnotateOverrideField = (key: string, fieldSchema: OverrideFieldSchema) => OverrideFieldAnnotations;
+
+export function getEagerRootSchema(providerId: string): OverrideFieldSchema | undefined {
+  return getProviderOverrideSchema(providerId) as OverrideFieldSchema | undefined;
 }
 
 export function getTypeLabel(fieldSchema: OverrideFieldSchema): string {
@@ -65,12 +70,4 @@ export function defaultValueForFieldSchema(fieldSchema: OverrideFieldSchema | un
     default:
       return '';
   }
-}
-
-export function getToolOverrideFieldDefaultValue(
-  providerId: DashboardToolContentOverrideProviderId,
-  key: string,
-  fieldSchemas?: Record<string, OverrideFieldSchema>
-): unknown {
-  return defaultValueForFieldSchema((fieldSchemas ?? getFieldSchemas(providerId))[key]);
 }
