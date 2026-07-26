@@ -1,12 +1,16 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { CreateOrUpdateSubscriberUseCase, createHash, PinoLogger } from '@novu/application-generic';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import {
+  CreateOrUpdateSubscriberUseCase,
+  createHash,
+  FeatureFlagsService,
+  PinoLogger,
+} from '@novu/application-generic';
+import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { ChatProviderIdEnum, LegacySubscriberChatOauthMode } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
-import { LEGACY_CHAT_OAUTH_MODE_ENV_VAR, LegacyChatOauthMode } from '../chat-oauth/legacy-chat-oauth.config';
 import { encodeLegacyChatOauthState } from '../chat-oauth/legacy-chat-oauth-state';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import { ChatOauthCallback } from './chat-oauth-callback.usecase';
@@ -44,9 +48,10 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
   let usecase: ChatOauthCallback;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
+  let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let featureFlagsService: { getFlag: sinon.SinonStub };
   let createSubscriber: sinon.SinonStubbedInstance<CreateOrUpdateSubscriberUseCase>;
   let createChannelEndpoint: sinon.SinonStubbedInstance<CreateChannelEndpoint>;
-  let originalMode: string | undefined;
 
   function stubIntegration(credentials: Record<string, unknown>) {
     integrationRepository.findOne.resolves({
@@ -59,13 +64,17 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     } as any);
   }
 
+  function stubLegacyMode(mode: LegacySubscriberChatOauthMode) {
+    featureFlagsService.getFlag.resolves(mode);
+  }
+
   beforeEach(() => {
-    originalMode = process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR];
-    delete process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR];
     process.env.API_ROOT_URL = 'https://api.novu.co';
 
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
+    organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    featureFlagsService = { getFlag: sinon.stub() };
     createSubscriber = sinon.createStubInstance(CreateOrUpdateSubscriberUseCase);
     createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
 
@@ -75,6 +84,11 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
       apiKeys: [{ key: API_KEY }],
     } as any);
     environmentRepository.getApiKeys.resolves([{ key: API_KEY } as any]);
+    organizationRepository.findOne.resolves({
+      _id: ORGANIZATION_ID,
+      createdAt: new Date('2020-01-01'),
+    } as any);
+    stubLegacyMode(LegacySubscriberChatOauthMode.ENABLED);
 
     stubIntegration({ clientId: 'victim-client-id', secretKey: 'victim-secret' });
 
@@ -83,6 +97,8 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     usecase = new ChatOauthCallback(
       integrationRepository as any,
       environmentRepository as any,
+      organizationRepository as any,
+      featureFlagsService as unknown as FeatureFlagsService,
       createSubscriber as any,
       createChannelEndpoint as any,
       sinon.createStubInstance(PinoLogger) as any
@@ -91,12 +107,14 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
 
   afterEach(() => {
     sinon.restore();
+  });
 
-    if (originalMode === undefined) {
-      delete process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR];
-    } else {
-      process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR] = originalMode;
-    }
+  it('rejects every request when the feature flag defaults to disabled', async () => {
+    stubLegacyMode(LegacySubscriberChatOauthMode.DISABLED);
+
+    await expectRejection(usecase.execute(buildCommand()), ForbiddenException);
+
+    expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
   it('attaches the endpoint when the state was signed by the target environment', async () => {
@@ -160,24 +178,16 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
-  it('still accepts a stateless callback in the default mode', async () => {
+  it('still accepts a stateless callback when the flag is enabled', async () => {
     await usecase.execute(buildCommand());
 
     expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
   });
 
   it('blocks a stateless cross-tenant callback in hmac_required mode', async () => {
-    process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR] = LegacyChatOauthMode.HMAC_REQUIRED;
+    stubLegacyMode(LegacySubscriberChatOauthMode.HMAC_REQUIRED);
 
     await expectRejection(usecase.execute(buildCommand()), BadRequestException);
-
-    expect(createChannelEndpoint.execute.called).to.equal(false);
-  });
-
-  it('rejects every request in disabled mode', async () => {
-    process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR] = LegacyChatOauthMode.DISABLED;
-
-    await expectRejection(usecase.execute(buildCommand()), ForbiddenException);
 
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });

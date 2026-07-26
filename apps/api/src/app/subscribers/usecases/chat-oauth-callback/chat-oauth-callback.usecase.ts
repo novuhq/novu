@@ -3,24 +3,27 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   decryptCredentials,
+  FeatureFlagsService,
   PinoLogger,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
+  CommunityOrganizationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto, LegacySubscriberChatOauthMode } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
-import { assertLegacyChatOauthHmac, CHAT_INTEGRATION_NOT_FOUND_MESSAGE } from '../chat-oauth/chat-oauth.usecase';
+import { assertLegacyChatOauthHmac } from '../chat-oauth/chat-oauth.usecase';
 import {
+  CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
   getLegacyChatOauthMode,
   LEGACY_CHAT_OAUTH_MIGRATION_HINT,
-  LegacyChatOauthMode,
+  resolveLegacyChatOauthOrganization,
 } from '../chat-oauth/legacy-chat-oauth.config';
 import {
   decodeLegacyChatOauthState,
@@ -56,6 +59,8 @@ export class ChatOauthCallback {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
+    private organizationRepository: CommunityOrganizationRepository,
+    private featureFlagsService: FeatureFlagsService,
     private createSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
     private createChannelEndpoint: CreateChannelEndpoint,
     private logger: PinoLogger
@@ -64,9 +69,17 @@ export class ChatOauthCallback {
   }
 
   async execute(command: ChatOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
-    const mode = getLegacyChatOauthMode();
+    const routingEnvironmentId = command.state
+      ? peekLegacyChatOauthStateEnvironmentId(command.state)
+      : command.environmentId;
+    const organization = await resolveLegacyChatOauthOrganization(
+      this.environmentRepository,
+      this.organizationRepository,
+      routingEnvironmentId
+    );
+    const mode = await getLegacyChatOauthMode(this.featureFlagsService, organization);
 
-    if (mode === LegacyChatOauthMode.DISABLED) {
+    if (mode === LegacySubscriberChatOauthMode.DISABLED) {
       throw new ForbiddenException(LEGACY_CHAT_OAUTH_MIGRATION_HINT);
     }
 
@@ -77,7 +90,7 @@ export class ChatOauthCallback {
     const { _organizationId, apiKeys } = await this.getEnvironment(routing.environmentId);
 
     assertLegacyChatOauthHmac({
-      isHmacRequired: integrationCredentials.hmac === true || mode === LegacyChatOauthMode.HMAC_REQUIRED,
+      isHmacRequired: integrationCredentials.hmac === true || mode === LegacySubscriberChatOauthMode.HMAC_REQUIRED,
       apiKeys: apiKeys.map(({ key }) => key),
       subscriberId: routing.subscriberId,
       externalHmacHash: routing.hmacHash,

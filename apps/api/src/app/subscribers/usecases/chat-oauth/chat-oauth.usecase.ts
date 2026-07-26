@@ -1,23 +1,23 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
-import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
+import { LegacySubscriberChatOauthMode } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
 
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { ChatOauthCommand } from './chat-oauth.command';
 import {
+  CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
   getLegacyChatOauthMode,
   LEGACY_CHAT_OAUTH_MIGRATION_HINT,
-  LegacyChatOauthMode,
+  resolveLegacyChatOauthOrganization,
 } from './legacy-chat-oauth.config';
 import { encodeLegacyChatOauthState } from './legacy-chat-oauth-state';
-
-/**
- * Both the environment and the integration are reported the same way so an
- * unauthenticated caller cannot use the error to tell an environment that has
- * no chat integration from one that does not exist at all.
- */
-export const CHAT_INTEGRATION_NOT_FOUND_MESSAGE = 'Chat integration not found';
 
 /**
  * @deprecated Use `POST /v1/integrations/chat/oauth`.
@@ -30,15 +30,22 @@ export class ChatOauth {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
+    private organizationRepository: CommunityOrganizationRepository,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(ChatOauth.name);
   }
 
   async execute(command: ChatOauthCommand): Promise<string> {
-    const mode = getLegacyChatOauthMode();
+    const organization = await resolveLegacyChatOauthOrganization(
+      this.environmentRepository,
+      this.organizationRepository,
+      command.environmentId
+    );
+    const mode = await getLegacyChatOauthMode(this.featureFlagsService, organization);
 
-    if (mode === LegacyChatOauthMode.DISABLED) {
+    if (mode === LegacySubscriberChatOauthMode.DISABLED) {
       throw new ForbiddenException(LEGACY_CHAT_OAUTH_MIGRATION_HINT);
     }
 
@@ -52,7 +59,7 @@ export class ChatOauth {
     const apiKeys = await this.getEnvironmentApiKeys(command.environmentId);
 
     assertLegacyChatOauthHmac({
-      isHmacRequired: hmac === true || mode === LegacyChatOauthMode.HMAC_REQUIRED,
+      isHmacRequired: hmac === true || mode === LegacySubscriberChatOauthMode.HMAC_REQUIRED,
       apiKeys,
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,

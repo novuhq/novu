@@ -1,44 +1,53 @@
-/**
- * Operating mode for the deprecated per-subscriber chat OAuth endpoints
- * (`GET /v1/subscribers/:subscriberId/credentials/:providerId/oauth[/callback]`).
- *
- * Those two routes are unauthenticated by design — they are opened in the
- * subscriber's browser and hit again by the provider's redirect — so the only
- * proof of authorization they can carry is the subscriber HMAC hash, which is
- * opt-in per integration. `enabled` preserves that historical behavior;
- * operators that have migrated to `POST /v1/integrations/chat/oauth` should
- * move to `hmac_required` and then `disabled`.
- */
-export enum LegacyChatOauthMode {
-  /** Historical behavior: HMAC enforced only when the integration opts in. */
-  ENABLED = 'enabled',
-  /** HMAC always enforced, regardless of the integration's `hmac` credential. */
-  HMAC_REQUIRED = 'hmac_required',
-  /** Both routes reject every request. */
-  DISABLED = 'disabled',
-}
+import { NotFoundException } from '@nestjs/common';
+import { FeatureFlagsService } from '@novu/application-generic';
+import { CommunityOrganizationRepository, EnvironmentRepository, OrganizationEntity } from '@novu/dal';
+import { FeatureFlagsKeysEnum, LegacySubscriberChatOauthMode } from '@novu/shared';
 
-export const LEGACY_CHAT_OAUTH_MODE_ENV_VAR = 'NOVU_LEGACY_SUBSCRIBER_CHAT_OAUTH';
+export const CHAT_INTEGRATION_NOT_FOUND_MESSAGE = 'Chat integration not found';
 
 export const LEGACY_CHAT_OAUTH_MIGRATION_HINT =
   'The per-subscriber chat OAuth endpoints are deprecated. Use POST /v1/integrations/chat/oauth to mint an ' +
   'authenticated OAuth URL instead.';
 
-const VALID_MODES = new Set<string>(Object.values(LegacyChatOauthMode));
+const VALID_MODES = new Set<string>(Object.values(LegacySubscriberChatOauthMode));
 
-export function getLegacyChatOauthMode(): LegacyChatOauthMode {
-  const configured = process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR]?.trim().toLowerCase();
+type LegacyChatOauthOrganization = Pick<OrganizationEntity, '_id' | 'createdAt'>;
 
-  if (!configured) {
-    return LegacyChatOauthMode.ENABLED;
+export async function getLegacyChatOauthMode(
+  featureFlagsService: FeatureFlagsService,
+  organization: LegacyChatOauthOrganization
+): Promise<LegacySubscriberChatOauthMode> {
+  const configured = await featureFlagsService.getFlag({
+    key: FeatureFlagsKeysEnum.LEGACY_SUBSCRIBER_CHAT_OAUTH_MODE,
+    defaultValue: LegacySubscriberChatOauthMode.DISABLED,
+    organization,
+  });
+
+  const normalized = typeof configured === 'string' ? configured.trim().toLowerCase() : '';
+
+  if (!VALID_MODES.has(normalized)) {
+    return LegacySubscriberChatOauthMode.DISABLED;
   }
 
-  // Falling back to the permissive default keeps a typo from taking a working
-  // integration offline. Both endpoints log the resolved mode on every call, so
-  // a misconfiguration still shows up as `mode: enabled` in the request logs.
-  if (!VALID_MODES.has(configured)) {
-    return LegacyChatOauthMode.ENABLED;
+  return normalized as LegacySubscriberChatOauthMode;
+}
+
+export async function resolveLegacyChatOauthOrganization(
+  environmentRepository: EnvironmentRepository,
+  organizationRepository: CommunityOrganizationRepository,
+  environmentId: string
+): Promise<LegacyChatOauthOrganization> {
+  const environment = await environmentRepository.findOne({ _id: environmentId }, '_organizationId');
+
+  if (!environment?._organizationId) {
+    throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
   }
 
-  return configured as LegacyChatOauthMode;
+  const organization = await organizationRepository.findOne({ _id: environment._organizationId }, '_id createdAt');
+
+  if (!organization) {
+    throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
+  }
+
+  return organization;
 }

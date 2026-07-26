@@ -1,12 +1,11 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { createHash, PinoLogger } from '@novu/application-generic';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { createHash, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { ChatProviderIdEnum, LegacySubscriberChatOauthMode } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ChatOauthCommand } from './chat-oauth.command';
 import { ChatOauth } from './chat-oauth.usecase';
-import { LEGACY_CHAT_OAUTH_MODE_ENV_VAR, LegacyChatOauthMode } from './legacy-chat-oauth.config';
 import { decodeLegacyChatOauthState } from './legacy-chat-oauth-state';
 
 const ENVIRONMENT_ID = '6a6600c7762b9e152a1f6728';
@@ -28,7 +27,8 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
   let usecase: ChatOauth;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
-  let originalMode: string | undefined;
+  let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
+  let featureFlagsService: { getFlag: sinon.SinonStub };
 
   function stubIntegration(credentials: Record<string, unknown>) {
     integrationRepository.findOne.resolves({
@@ -41,18 +41,34 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     } as any);
   }
 
+  function stubLegacyMode(mode: LegacySubscriberChatOauthMode) {
+    featureFlagsService.getFlag.resolves(mode);
+  }
+
   beforeEach(() => {
-    originalMode = process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR];
-    delete process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR];
     process.env.API_ROOT_URL = 'https://api.novu.co';
 
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
+    organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
+    featureFlagsService = { getFlag: sinon.stub() };
+
+    environmentRepository.findOne.resolves({
+      _id: ENVIRONMENT_ID,
+      _organizationId: ORGANIZATION_ID,
+    } as any);
     environmentRepository.getApiKeys.resolves([{ key: API_KEY } as any]);
+    organizationRepository.findOne.resolves({
+      _id: ORGANIZATION_ID,
+      createdAt: new Date('2020-01-01'),
+    } as any);
+    stubLegacyMode(LegacySubscriberChatOauthMode.ENABLED);
 
     usecase = new ChatOauth(
       integrationRepository as any,
       environmentRepository as any,
+      organizationRepository as any,
+      featureFlagsService as unknown as FeatureFlagsService,
       sinon.createStubInstance(PinoLogger) as any
     );
 
@@ -61,12 +77,12 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
 
   afterEach(() => {
     sinon.restore();
+  });
 
-    if (originalMode === undefined) {
-      delete process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR];
-    } else {
-      process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR] = originalMode;
-    }
+  it('rejects every request when the feature flag defaults to disabled', async () => {
+    stubLegacyMode(LegacySubscriberChatOauthMode.DISABLED);
+
+    await expectRejection(usecase.execute(buildCommand()), ForbiddenException);
   });
 
   it('mints an authorization URL carrying a state signed with the environment key', async () => {
@@ -98,25 +114,19 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     await expectRejection(usecase.execute(buildCommand({ hmacHash: 'not-the-right-hash' })), BadRequestException);
   });
 
-  it('does not require an HMAC hash by default', async () => {
+  it('does not require an HMAC hash when the flag is enabled and the integration does not opt in', async () => {
     const url = await usecase.execute(buildCommand());
 
     expect(url).to.include('slack.com/oauth');
   });
 
   it('requires an HMAC hash in hmac_required mode even when the integration does not opt in', async () => {
-    process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR] = LegacyChatOauthMode.HMAC_REQUIRED;
+    stubLegacyMode(LegacySubscriberChatOauthMode.HMAC_REQUIRED);
 
     await expectRejection(usecase.execute(buildCommand()), BadRequestException);
 
     const url = await usecase.execute(buildCommand({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string }));
     expect(url).to.include('slack.com/oauth');
-  });
-
-  it('rejects every request in disabled mode', async () => {
-    process.env[LEGACY_CHAT_OAUTH_MODE_ENV_VAR] = LegacyChatOauthMode.DISABLED;
-
-    await expectRejection(usecase.execute(buildCommand()), ForbiddenException);
   });
 
   it('reports a missing environment and a missing integration identically', async () => {
