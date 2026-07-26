@@ -33,10 +33,24 @@ import {
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
-import { merge } from 'lodash';
+import { mergeWith } from 'lodash';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
+
+/**
+ * Never replace this with a plain `merge`: lodash merges arrays element-by-element, so a
+ * higher-priority `blocks: [x]` layered over a persisted `blocks: [a, b, c]` would yield
+ * `[merge(a, x), b, c]` — a corrupted first element plus two stale ones. An override array is a
+ * complete replacement of the list it overrides, so the higher-priority array wins whole.
+ */
+function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] | undefined {
+  if (Array.isArray(sourceValue)) {
+    return sourceValue;
+  }
+
+  return undefined;
+}
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -62,7 +76,7 @@ export abstract class SendMessageBase extends SendMessageType {
     const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
     const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
-    return merge({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides);
+    return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides, replaceArrays);
   }
 
   @Instrument()
