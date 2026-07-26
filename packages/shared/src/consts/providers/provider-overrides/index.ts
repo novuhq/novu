@@ -22,6 +22,7 @@ export {
 } from './merge-provider-preview';
 export { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 export { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
+export { getAtPath, isRecord, setAtPath } from './path';
 export {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ChatContentOverrideProviderId,

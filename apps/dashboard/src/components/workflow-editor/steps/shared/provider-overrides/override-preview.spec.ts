@@ -49,4 +49,16 @@ describe('resolveOverrideForPreview', () => {
       })
     ).toEqual({ hasOverride: true, override: {} });
   });
+
+  it('keeps form content when preview echoes an empty object for the same provider', () => {
+    const formOverride = { text: { preview_url: true } };
+
+    expect(
+      resolveOverrideForPreview({
+        providerId: ChatProviderIdEnum.WhatsAppBusiness,
+        formOverrides: { [ChatProviderIdEnum.WhatsAppBusiness]: formOverride },
+        previewOverrides: { [ChatProviderIdEnum.WhatsAppBusiness]: {} },
+      })
+    ).toEqual({ hasOverride: true, override: formOverride });
+  });
 });

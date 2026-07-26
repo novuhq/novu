@@ -1,77 +1,150 @@
+import { isRecord } from './path';
+
 export type AnnotatedPreviewLine = {
   json: string;
   isDefaultContentKey?: boolean;
 };
 
-const PROPERTY_KEY_PATTERN = /^("(?:\\.|[^"\\])*")\s*:/;
-
-function parsePropertyKey(trimmedLine: string): string | undefined {
-  const match = trimmedLine.match(PROPERTY_KEY_PATTERN);
-  if (!match) {
-    return undefined;
-  }
-
-  const capturedKey = match[1];
-  if (capturedKey === undefined) {
-    return undefined;
-  }
-
-  try {
-    return JSON.parse(capturedKey) as string;
-  } catch {
-    return undefined;
-  }
-}
-
 /**
  * Pretty-prints a merged provider override preview and marks the line whose value was
  * filled from the step's default content. `defaultContentKey` may be a dotted path
  * (`text.body`) for providers that nest their message body.
+ *
+ * Emits the same shape as `JSON.stringify(value, null, 2)` by walking the object, so
+ * marking can follow the structured path instead of re-parsing pretty-printed text.
  */
 export function buildAnnotatedPreviewLines(
   merged: Record<string, unknown>,
   defaultContentKey?: string
 ): AnnotatedPreviewLine[] {
-  const prettyJson = Object.keys(merged).length === 0 ? '{\n}' : JSON.stringify(merged, null, 2);
-  const jsonLines = prettyJson.split('\n');
-
-  if (!defaultContentKey) {
-    return jsonLines.map((json) => ({ json }));
+  if (Object.keys(merged).length === 0) {
+    return [{ json: '{' }, { json: '}' }];
   }
 
-  const segments = defaultContentKey.split('.');
-  let segmentIndex = 0;
-  let hasMarkedDefaultContentKey = false;
+  const lines: AnnotatedPreviewLine[] = [];
+  appendObject(merged, 0, '', defaultContentKey, lines);
 
-  return jsonLines.map((json) => {
-    if (hasMarkedDefaultContentKey) {
-      return { json };
-    }
+  return lines;
+}
 
-    const trimmed = json.trimStart();
-    const key = parsePropertyKey(trimmed);
-    if (key === undefined) {
-      return { json };
-    }
+function appendObject(
+  value: Record<string, unknown>,
+  indent: number,
+  pathPrefix: string,
+  markPath: string | undefined,
+  lines: AnnotatedPreviewLine[]
+): void {
+  const pad = ' '.repeat(indent * 2);
+  const keys = Object.keys(value);
 
-    const indentLevel = (json.length - trimmed.length) / 2;
-    const expectedIndent = segmentIndex + 1;
+  lines.push({ json: `${pad}{` });
 
-    // Left the matched parent object without finding the rest of the path.
-    if (indentLevel < expectedIndent) {
-      segmentIndex = 0;
-    }
-
-    if (indentLevel === segmentIndex + 1 && key === segments[segmentIndex]) {
-      if (segmentIndex === segments.length - 1) {
-        hasMarkedDefaultContentKey = true;
-
-        return { json, isDefaultContentKey: true };
-      }
-
-      segmentIndex += 1;
-    }
-
-    return { json };
+  keys.forEach((key, index) => {
+    const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+    appendProperty(key, value[key], indent + 1, path, markPath, lines, index === keys.length - 1);
   });
+
+  lines.push({ json: `${pad}}` });
+}
+
+function appendProperty(
+  key: string,
+  value: unknown,
+  indent: number,
+  path: string,
+  markPath: string | undefined,
+  lines: AnnotatedPreviewLine[],
+  isLast: boolean
+): void {
+  const pad = ' '.repeat(indent * 2);
+  const keyPrefix = `${JSON.stringify(key)}: `;
+  const comma = isLast ? '' : ',';
+  const marked = markPath !== undefined && path === markPath;
+
+  if (isRecord(value)) {
+    const keys = Object.keys(value);
+    if (keys.length === 0) {
+      lines.push({ json: `${pad}${keyPrefix}{}` + comma, ...(marked ? { isDefaultContentKey: true } : {}) });
+
+      return;
+    }
+
+    lines.push({ json: `${pad}${keyPrefix}{` });
+    keys.forEach((childKey, index) => {
+      appendProperty(
+        childKey,
+        value[childKey],
+        indent + 1,
+        `${path}.${childKey}`,
+        markPath,
+        lines,
+        index === keys.length - 1
+      );
+    });
+    lines.push({ json: `${pad}}` + comma });
+
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      lines.push({ json: `${pad}${keyPrefix}[]` + comma, ...(marked ? { isDefaultContentKey: true } : {}) });
+
+      return;
+    }
+
+    lines.push({ json: `${pad}${keyPrefix}[` });
+    value.forEach((item, index) => {
+      // Primary content keys never address array elements; disable marking inside arrays.
+      appendArrayItem(item, indent + 1, lines, index === value.length - 1);
+    });
+    lines.push({ json: `${pad}]` + comma });
+
+    return;
+  }
+
+  lines.push({
+    json: `${pad}${keyPrefix}${JSON.stringify(value)}` + comma,
+    ...(marked ? { isDefaultContentKey: true } : {}),
+  });
+}
+
+function appendArrayItem(value: unknown, indent: number, lines: AnnotatedPreviewLine[], isLast: boolean): void {
+  const pad = ' '.repeat(indent * 2);
+  const comma = isLast ? '' : ',';
+
+  if (isRecord(value)) {
+    const keys = Object.keys(value);
+    if (keys.length === 0) {
+      lines.push({ json: `${pad}{}` + comma });
+
+      return;
+    }
+
+    lines.push({ json: `${pad}{` });
+    keys.forEach((key, index) => {
+      appendProperty(key, value[key], indent + 1, '', undefined, lines, index === keys.length - 1);
+    });
+    lines.push({ json: `${pad}}` + comma });
+
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      lines.push({ json: `${pad}[]` + comma });
+
+      return;
+    }
+
+    lines.push({ json: `${pad}[` });
+    value.forEach((item, index) => {
+      appendArrayItem(item, indent + 1, lines, index === value.length - 1);
+    });
+    lines.push({ json: `${pad}]` + comma });
+
+    return;
+  }
+
+  lines.push({ json: `${pad}${JSON.stringify(value)}` + comma });
 }

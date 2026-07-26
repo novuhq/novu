@@ -3,6 +3,7 @@ import { ChannelTypeEnum, ChatProviderIdEnum, StepTypeEnum, ToolProviderIdEnum }
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
+import { isRecord } from './path';
 import {
   NON_OVERRIDABLE_SLACK_KEYS,
   SLACK_OVERRIDE_KEYS,
@@ -197,10 +198,6 @@ export function getProviderOverrideKeys(providerId: string): readonly string[] |
 
 export function getProviderPrimaryContentKey(providerId: string): string | null | undefined {
   return getProviderOverrideConfig(providerId)?.primaryContentKey;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /**

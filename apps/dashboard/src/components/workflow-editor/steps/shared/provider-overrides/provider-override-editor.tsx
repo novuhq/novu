@@ -1,4 +1,9 @@
-import { ContentIssueEnum, type ContentOverrideProviderId, getProviderPrimaryContentKey } from '@novu/shared';
+import {
+  ContentIssueEnum,
+  type ContentOverrideProviderId,
+  getProviderPrimaryContentKey,
+  setAtPath,
+} from '@novu/shared';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
@@ -174,13 +179,7 @@ export function ProviderOverrideEditor({
 
   const resolvedPlaceholder =
     placeholder ??
-    JSON.stringify(
-      primaryKey
-        ? primaryKey.split('.').reduceRight<unknown>((acc, segment) => ({ [segment]: acc }), '{{payload.title}}')
-        : { key: '{{payload.title}}' },
-      null,
-      2
-    );
+    JSON.stringify(primaryKey ? setAtPath({}, primaryKey, '{{payload.title}}') : { key: '{{payload.title}}' }, null, 2);
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">

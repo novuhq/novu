@@ -98,13 +98,10 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       return 'Each webhook integration merges its own body template beneath this payload.';
     }
 
-    if (!annotatedPreview) {
-      return '';
-    }
-
+    // Non-webhook providerId always yields an annotated preview object from the hook.
     return getMergedOverrideHint({
-      hasOverride: annotatedPreview.hasOverride,
-      defaultContentKey: annotatedPreview.defaultContentKey,
+      hasOverride: annotatedPreview?.hasOverride ?? false,
+      defaultContentKey: annotatedPreview?.defaultContentKey,
       body,
       providerId: activeProviderId,
       displayName: providerOptions.find((option) => option.providerId === activeProviderId)?.displayName ?? '',

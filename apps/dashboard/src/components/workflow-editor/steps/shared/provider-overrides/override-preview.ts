@@ -43,9 +43,18 @@ export function resolveOverrideForPreview({
     return { hasOverride: false, override: undefined };
   }
 
+  const formOverride = formOverrides?.[providerId];
+  const previewHasKey = !!previewOverrides && providerId in previewOverrides;
+  const previewOverride = previewHasKey ? previewOverrides[providerId] : undefined;
+
+  // Prefer liquid-resolved preview content when present. An empty preview echo while the form
+  // still has fields is lag — keep the form override so the merge preview does not blank out.
+  const previewIsEmptyLag =
+    previewHasKey && Object.keys(previewOverride ?? {}).length === 0 && Object.keys(formOverride ?? {}).length > 0;
+
   return {
     hasOverride: true,
-    override: previewOverrides?.[providerId] ?? formOverrides?.[providerId],
+    override: previewHasKey && !previewIsEmptyLag ? previewOverride : formOverride,
   };
 }
 
