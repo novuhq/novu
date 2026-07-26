@@ -193,14 +193,14 @@ describe('combineProviderOverrides', () => {
     expect(combined.webhookUrl).to.equal('https://chosen.example/hook');
   });
 
-  it('keeps _passthrough intact, so the documented raw-field door still works', () => {
+  it('strips reserved keys hidden in _passthrough.body while keeping the raw-field door open', () => {
     const combined = combineProviderOverrides(
-      bridge({ channel: 'C_ATTACKER', _passthrough: { body: { channel: 'C_DELIBERATE' } } }),
+      bridge({ channel: 'C_ATTACKER', _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } } }),
       undefined,
       'step_1',
       PROVIDER_ID
     );
 
-    expect(combined).to.deep.equal({ _passthrough: { body: { channel: 'C_DELIBERATE' } } });
+    expect(combined).to.deep.equal({ _passthrough: { body: { unfurl_links: false } } });
   });
 });

@@ -16,13 +16,46 @@ describe('stripReservedOverrideKeys', () => {
     expect(stripped).toEqual({ text: 'hello', blocks: [{ type: 'divider' }] });
   });
 
-  it('leaves _passthrough alone, since it is the deliberate door for raw provider fields', () => {
+  it('strips reserved keys from _passthrough.body, since it outranks the subscriber-derived routing at send', () => {
     const stripped = stripReservedOverrideKeys(ChatProviderIdEnum.Slack, {
       channel: 'C_ATTACKER',
-      _passthrough: { body: { channel: 'C_DELIBERATE' } },
+      _passthrough: { body: { channel: 'C_ATTACKER', token: 'xoxb-stolen', unfurl_links: false } },
     });
 
-    expect(stripped).toEqual({ _passthrough: { body: { channel: 'C_DELIBERATE' } } });
+    expect(stripped).toEqual({ _passthrough: { body: { unfurl_links: false } } });
+  });
+
+  it('keeps the rest of _passthrough intact, since it is the deliberate door for raw provider fields', () => {
+    const stripped = stripReservedOverrideKeys(ChatProviderIdEnum.Slack, {
+      channel: 'C_ATTACKER',
+      _passthrough: {
+        body: { channel: 'C_ATTACKER', unfurl_links: false },
+        headers: { 'X-Custom': 'kept' },
+        query: { pretty: '1' },
+      },
+    });
+
+    expect(stripped).toEqual({
+      _passthrough: {
+        body: { unfurl_links: false },
+        headers: { 'X-Custom': 'kept' },
+        query: { pretty: '1' },
+      },
+    });
+  });
+
+  it('does not mutate a _passthrough that carries reserved keys', () => {
+    const override = { _passthrough: { body: { channel: 'C_ATTACKER', text: 'hello' } } };
+
+    stripReservedOverrideKeys(ChatProviderIdEnum.Slack, override);
+
+    expect(override._passthrough.body.channel).toBe('C_ATTACKER');
+  });
+
+  it('returns the original object when _passthrough carries no reserved keys', () => {
+    const override = { _passthrough: { body: { unfurl_links: false } } };
+
+    expect(stripReservedOverrideKeys(ChatProviderIdEnum.Slack, override)).toBe(override);
   });
 
   it('returns the original object when nothing is reserved, so the send path does not copy needlessly', () => {

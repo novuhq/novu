@@ -185,11 +185,18 @@ export function getProviderPrimaryContentKey(providerId: string): string | null 
   return getProviderOverrideConfig(providerId)?.primaryContentKey;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 /**
  * Strips the keys Novu owns (routing, credentials) from a merged override payload.
  *
- * `_passthrough` is left untouched: it is the documented, deliberate door for callers who need
- * raw provider API fields, so it stays the one explicit way to reach these.
+ * Reserved keys are removed from `_passthrough.body` as well: the provider send path merges
+ * `_passthrough.body` with the highest precedence, so leaving it untouched would let an override
+ * smuggle `channel`/`token` past the top-level strip and redirect a subscriber's message. The rest
+ * of `_passthrough` stays intact — it remains the documented door for raw provider API fields
+ * Novu does not own.
  */
 export function stripReservedOverrideKeys<T extends Record<string, unknown>>(providerId: string, override: T): T {
   const reservedKeys = getProviderOverrideConfig(providerId)?.reservedKeys;
@@ -197,17 +204,30 @@ export function stripReservedOverrideKeys<T extends Record<string, unknown>>(pro
     return override;
   }
 
-  const present = reservedKeys.filter((key) => key in override);
-  if (present.length === 0) {
+  const topLevelPresent = reservedKeys.filter((key) => key in override);
+
+  const passthrough = isRecord(override._passthrough) ? override._passthrough : undefined;
+  const passthroughBody = passthrough && isRecord(passthrough.body) ? passthrough.body : undefined;
+  const passthroughPresent = passthroughBody ? reservedKeys.filter((key) => key in passthroughBody) : [];
+
+  if (topLevelPresent.length === 0 && passthroughPresent.length === 0) {
     return override;
   }
 
-  const stripped = { ...override };
-  for (const key of present) {
+  const stripped: Record<string, unknown> = { ...override };
+  for (const key of topLevelPresent) {
     delete stripped[key];
   }
 
-  return stripped;
+  if (passthrough && passthroughBody && passthroughPresent.length > 0) {
+    const strippedBody = { ...passthroughBody };
+    for (const key of passthroughPresent) {
+      delete strippedBody[key];
+    }
+    stripped._passthrough = { ...passthrough, body: strippedBody };
+  }
+
+  return stripped as T;
 }
 
 /**

@@ -997,7 +997,7 @@ Three fields are deliberately not overridable:
 | `token` | Novu supplies the access token from the subscriber's workspace connection. |
 | `as_user` | Deprecated by Slack, and it conflicts with how Novu authenticates as your bot. |
 
-Novu strips these three from every Slack override before sending, whether they were saved on the step or passed at trigger time, so a stray `channel` cannot redirect a subscriber's message. If you genuinely need to set a raw Slack field that Novu owns, use `_passthrough.body` at trigger time — that is the one deliberate, explicit way through.
+Novu strips these three from every Slack override before sending — whether they were saved on the step, passed at trigger time, or nested under `_passthrough.body` — so a stray `channel` cannot redirect a subscriber's message. To deliver to a destination other than the subscriber's connected endpoints, address the trigger to a subscriber or topic that owns that destination instead.
 
 <Warning>
   **Incoming webhook endpoints ignore some fields.** Slack's incoming webhook API is narrower than `chat.postMessage`: `thread_ts`, `metadata`, `username`, `icon_emoji`, and `icon_url` have no effect on messages delivered through a webhook URL.
@@ -1373,7 +1373,7 @@ If your workflow has a single Slack Chat step, you can apply Block Kit to all Sl
 
 ### Send extra Slack fields with `_passthrough`
 
-Use `_passthrough` when you need a value to win unconditionally, or to reach a [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) field Novu has not yet surfaced. Values in `_passthrough.body` are merged last and take priority over other override fields.
+Use `_passthrough` when you need a value to win unconditionally, or to reach a [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) field Novu has not yet surfaced. Values in `_passthrough.body` are merged last and take priority over other override fields. The three fields Novu owns — `channel`, `token`, and `as_user` — are stripped from `_passthrough.body` just like everywhere else.
 
 <Tabs>
   <Tab title="Node.js">
