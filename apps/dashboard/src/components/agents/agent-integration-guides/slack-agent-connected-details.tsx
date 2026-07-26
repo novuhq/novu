@@ -1,9 +1,8 @@
 import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
-import { useMemo, useState } from 'react';
-import { RiArrowRightUpLine, RiPencilLine } from 'react-icons/ri';
+import { useMemo } from 'react';
+import { RiArrowRightUpLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { API_HOSTNAME } from '@/config';
-import { IntegrationCredentialsSidebar } from '../setup-guide-primitives';
 import {
   AgentConnectedDetailsShell,
   DetailSection,
@@ -43,7 +42,6 @@ export function SlackAgentConnectedDetails({
   justConnected = false,
 }: SlackAgentConnectedDetailsProps) {
   const webhookUrl = buildWebhookUrl(agent._id, integrationLink.integration.identifier);
-  const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
 
   return (
     <AgentConnectedDetailsShell
@@ -64,23 +62,14 @@ export function SlackAgentConnectedDetails({
           : MANAGE_SLACK_APP_BASE_URL;
 
         return (
-          <>
-            <SlackDetailSections
-              credentials={credentials}
-              isLoading={isLoading}
-              applicationId={applicationId}
-              slackAppName={slackAppName}
-              manageSlackAppUrl={manageSlackAppUrl}
-              webhookUrl={webhookUrl}
-              onEditCredentials={() => setIsCredentialsSidebarOpen(true)}
-            />
-            <IntegrationCredentialsSidebar
-              integrationId={integrationLink.integration._id}
-              isOpen={isCredentialsSidebarOpen}
-              onClose={() => setIsCredentialsSidebarOpen(false)}
-              agentOnboarding
-            />
-          </>
+          <SlackDetailSections
+            credentials={credentials}
+            isLoading={isLoading}
+            applicationId={applicationId}
+            slackAppName={slackAppName}
+            manageSlackAppUrl={manageSlackAppUrl}
+            webhookUrl={webhookUrl}
+          />
         );
       }}
     </AgentConnectedDetailsShell>
@@ -94,7 +83,6 @@ function SlackDetailSections({
   slackAppName,
   manageSlackAppUrl,
   webhookUrl,
-  onEditCredentials,
 }: {
   credentials?: ICredentials;
   isLoading: boolean;
@@ -102,7 +90,6 @@ function SlackDetailSections({
   slackAppName: string;
   manageSlackAppUrl: string;
   webhookUrl: string;
-  onEditCredentials: () => void;
 }) {
   const credentialFields = useMemo(
     () => [
@@ -160,14 +147,7 @@ function SlackDetailSections({
         />
       </DetailSection>
 
-      <DetailSection
-        title="Slack credentials"
-        action={
-          <SectionLinkButton icon={RiPencilLine} iconPosition="leading" onClick={onEditCredentials}>
-            Edit credentials
-          </SectionLinkButton>
-        }
-      >
+      <DetailSection title="Slack credentials">
         {isLoading ? (
           <>
             <FieldSkeleton />

@@ -46,19 +46,10 @@ export class AuthDto {
 }
 
 /**
- * Response-only shape: a refresh token is a single-use secret, so it is never echoed
- * back over the API — only its presence (`hasRefreshToken`) is reported.
+ * Response-only shape: returns the access token only. Refresh tokens and expiry
+ * metadata are never echoed — expiry is used internally for rotation.
  */
 export class AuthResponseDto {
   @ApiProperty({ example: 'Workspace access token' })
   accessToken: string;
-
-  @ApiProperty({ example: true, description: 'Whether a rotating refresh token is stored for this connection.' })
-  hasRefreshToken: boolean;
-
-  @ApiPropertyOptional({ example: '2026-06-15T12:00:00.000Z' })
-  expiresAt?: string;
-
-  @ApiPropertyOptional({ example: '2026-09-15T12:00:00.000Z' })
-  refreshTokenExpiresAt?: string;
 }

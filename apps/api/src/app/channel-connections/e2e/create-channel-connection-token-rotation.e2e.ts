@@ -105,7 +105,7 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
     expect(expiresAtTime).to.be.lte(Date.now());
   });
 
-  it('reports hasRefreshToken and expiresAt on retrieve, without echoing the secret', async () => {
+  it('returns accessToken on retrieve without echoing refresh or expiry fields', async () => {
     const integration = await seedIntegration();
     const subscriber = await createSubscriber();
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
@@ -118,14 +118,22 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
     });
 
     expect(created.data.auth.refreshToken, 'create response must not echo the refresh token').to.be.undefined;
+    expect(created.data.auth.expiresAt, 'create response must not echo expiresAt').to.be.undefined;
+    expect(created.data.auth.refreshTokenExpiresAt, 'create response must not echo refreshTokenExpiresAt').to.be
+      .undefined;
 
     const { status, body } = await session.testAgent.get(`/v1/channel-connections/${created.data.identifier}`);
 
     expect(status, JSON.stringify(body)).to.equal(200);
     expect(body.data.auth.accessToken).to.equal(ACCESS_TOKEN);
-    expect(body.data.auth.hasRefreshToken).to.equal(true);
-    expect(body.data.auth.expiresAt).to.equal(expiresAt);
     expect(body.data.auth.refreshToken, 'retrieve response must not echo the refresh token').to.be.undefined;
+    expect(body.data.auth.expiresAt, 'retrieve response must not echo expiresAt').to.be.undefined;
+    expect(body.data.auth.refreshTokenExpiresAt, 'retrieve response must not echo refreshTokenExpiresAt').to.be
+      .undefined;
+
+    const stored = await findConnection(created.data.identifier);
+    const decrypted = decryptChannelConnectionAuth(stored!.auth) as { expiresAt?: string };
+    expect(decrypted.expiresAt).to.equal(expiresAt);
   });
 
   it('never returns a refreshToken for a legacy connection without one', async () => {
@@ -142,7 +150,6 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
     const { status, body } = await session.testAgent.get(`/v1/channel-connections/${created.data.identifier}`);
 
     expect(status, JSON.stringify(body)).to.equal(200);
-    expect(body.data.auth.hasRefreshToken).to.equal(false);
     expect(body.data.auth.refreshToken).to.be.undefined;
   });
 
@@ -169,7 +176,7 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
     }
   });
 
-  it('rotates the stored refreshToken on update while the response only reports its presence', async () => {
+  it('rotates the stored refreshToken on update without echoing it in the response', async () => {
     const integration = await seedIntegration();
     const subscriber = await createSubscriber();
     const newRefreshToken = 'xoxe-1-rotated-refresh-token';
@@ -189,7 +196,6 @@ describe('Create Channel Connection token rotation - /channel-connections (POST)
       });
 
     expect(patchStatus, JSON.stringify(patchBody)).to.equal(200);
-    expect(patchBody.data.auth.hasRefreshToken).to.equal(true);
     expect(patchBody.data.auth.refreshToken, 'update response must not echo the refresh token').to.be.undefined;
 
     const stored = await findConnection(created.data.identifier);
