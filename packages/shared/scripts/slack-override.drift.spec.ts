@@ -9,7 +9,26 @@ import { buildSlackOverrideSchemas } from './generate-slack-override-schema';
 import { NON_OVERRIDABLE_SLACK_KEYS } from './slack-override.type';
 
 const REGENERATE_HINT = 'Run `pnpm --filter @novu/shared generate:slack-schema` and commit the result.';
+const DRIFT_ENV_VAR = 'NOVU_TEST_SLACK_SCHEMA_DRIFT';
 const sharedRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * Comparing against a freshly generated schema means running ts-json-schema-generator over the
+ * Slack SDK types, which every `vitest` run of this package would otherwise pay for. CI always
+ * runs it; locally it is opt-in.
+ */
+const isDriftCheckEnabled = process.env.CI === 'true' || process.env[DRIFT_ENV_VAR] === 'true';
+
+const SKIP_HINT = `run \`${DRIFT_ENV_VAR}=true pnpm --filter @novu/shared test\` to check this locally`;
+
+let regeneratedSchemas: ReturnType<typeof buildSlackOverrideSchemas> | undefined;
+
+/** Lazy so the generator never runs when the suite is skipped, and only once when it is not. */
+function regenerate() {
+  regeneratedSchemas ??= buildSlackOverrideSchemas();
+
+  return regeneratedSchemas;
+}
 
 function resolveRelativeImport(fromDir: string, specifier: string): string | undefined {
   const base = join(fromDir, specifier.replace(/\.ts$/, ''));
@@ -40,17 +59,21 @@ function modulesReachableFrom(entry: string): Set<string> {
   return seen;
 }
 
-describe('generated Slack override schema', () => {
-  const regenerated = buildSlackOverrideSchemas();
+describe('regenerated Slack override schema', () => {
+  it(`matches the committed artifact. ${REGENERATE_HINT}`, (ctx) => {
+    ctx.skip(!isDriftCheckEnabled, SKIP_HINT);
 
-  it(`matches the committed artifact. ${REGENERATE_HINT}`, () => {
-    expect(slackOverrideJsonSchema).toEqual(regenerated.schema);
+    expect(slackOverrideJsonSchema).toEqual(regenerate().schema);
   });
 
-  it(`matches the committed liquid-tolerant artifact. ${REGENERATE_HINT}`, () => {
-    expect(slackOverrideLiquidTolerantJsonSchema).toEqual(regenerated.liquidTolerantSchema);
-  });
+  it(`matches the committed liquid-tolerant artifact. ${REGENERATE_HINT}`, (ctx) => {
+    ctx.skip(!isDriftCheckEnabled, SKIP_HINT);
 
+    expect(slackOverrideLiquidTolerantJsonSchema).toEqual(regenerate().liquidTolerantSchema);
+  });
+});
+
+describe('committed Slack override schema', () => {
   it('keeps the hand-written key list in step with the schema', () => {
     expect([...SLACK_OVERRIDE_KEYS]).toEqual(Object.keys(slackOverrideJsonSchema.properties ?? {}));
   });
