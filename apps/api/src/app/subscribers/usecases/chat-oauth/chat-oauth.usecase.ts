@@ -1,65 +1,112 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash } from '@novu/application-generic';
-import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import {
+  CommunityOrganizationRepository,
+  EnvironmentRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 
+import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { ChatOauthCommand } from './chat-oauth.command';
+import {
+  assertLegacyChatOauthIntegrationHmacEnabled,
+  CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
+  isLegacySubscriberChatOauthHmacRequired,
+  LEGACY_CHAT_OAUTH_MIGRATION_HINT,
+  resolveLegacyChatOauthHmacRequired,
+  resolveLegacyChatOauthOrganization,
+} from './legacy-chat-oauth.config';
+import { encodeLegacyChatOauthState } from './legacy-chat-oauth-state';
 
+/**
+ * @deprecated Use `POST /v1/integrations/chat/oauth`.
+ * @see apps/api/src/app/integrations/usecases/generate-chat-oath-url
+ */
 @Injectable()
 export class ChatOauth {
   readonly SLACK_OAUTH_URL = 'https://slack.com/oauth/v2/authorize?';
 
   constructor(
     private integrationRepository: IntegrationRepository,
-    private environmentRepository: EnvironmentRepository
-  ) {}
-  async execute(command: ChatOauthCommand): Promise<string> {
-    const { clientId, hmac } = await this.getCredentials(command);
+    private environmentRepository: EnvironmentRepository,
+    private organizationRepository: CommunityOrganizationRepository,
+    private featureFlagsService: FeatureFlagsService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(ChatOauth.name);
+  }
 
-    await this.hmacValidation({
-      credentialHmac: hmac,
-      environmentId: command.environmentId,
+  async execute(command: ChatOauthCommand): Promise<string> {
+    const organization = await resolveLegacyChatOauthOrganization(
+      this.environmentRepository,
+      this.organizationRepository,
+      command.environmentId
+    );
+    const hmacRequiredEnabled = await isLegacySubscriberChatOauthHmacRequired(this.featureFlagsService, organization);
+
+    const integration = await this.getIntegration(command);
+    const { clientId, hmac } = integration.credentials;
+    const integrationHmacEnabled = hmac === true;
+
+    if (!clientId) {
+      throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
+    }
+
+    assertLegacyChatOauthIntegrationHmacEnabled(hmacRequiredEnabled, integrationHmacEnabled);
+
+    const apiKeys = await this.getEnvironmentApiKeys(command.environmentId);
+
+    assertLegacyChatOauthHmac({
+      isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
+      apiKeys,
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,
     });
 
-    return this.getOAuthUrl(command.subscriberId, command.environmentId, clientId!, command.integrationIdentifier);
-  }
+    this.logger.warn(
+      {
+        environmentId: command.environmentId,
+        organizationId: integration._organizationId,
+        providerId: command.providerId,
+        integrationIdentifier: integration.identifier,
+        hmacRequiredEnabled,
+        hmacEnabled: integrationHmacEnabled,
+      },
+      `Deprecated per-subscriber chat OAuth URL requested. ${LEGACY_CHAT_OAUTH_MIGRATION_HINT}`
+    );
 
-  private async hmacValidation({
-    credentialHmac,
-    environmentId,
-    subscriberId,
-    externalHmacHash,
-  }: {
-    credentialHmac: boolean | undefined;
-    environmentId: string;
-    subscriberId: string;
-    externalHmacHash: string | undefined;
-  }) {
-    if (credentialHmac) {
-      if (!externalHmacHash) {
-        throw new BadRequestException(
-          'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
-        );
-      }
+    const state = encodeLegacyChatOauthState(
+      {
+        environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+        providerId: command.providerId,
+        integrationIdentifier: command.integrationIdentifier,
+        hmacHash: command.hmacHash,
+        timestamp: Date.now(),
+      },
+      apiKeys[0]
+    );
 
-      const apiKey = await this.getEnvironmentApiKey(environmentId);
-
-      validateEncryption({
-        apiKey,
-        subscriberId,
-        externalHmacHash,
-      });
-    }
+    return this.getOAuthUrl(
+      command.subscriberId,
+      command.environmentId,
+      clientId,
+      state,
+      command.integrationIdentifier
+    );
   }
 
   private getOAuthUrl(
     subscriberId: string,
     environmentId: string,
     clientId: string,
+    state: string,
     integrationIdentifier?: string
   ): string {
+    // The redirect URI is registered with the provider and rebuilt verbatim by
+    // the callback for the token exchange — it must stay byte-identical.
     let redirectUri = `${
       process.env.API_ROOT_URL
     }/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
@@ -68,12 +115,13 @@ export class ChatOauth {
       redirectUri = `${redirectUri}&integrationIdentifier=${integrationIdentifier}`;
     }
 
-    return `${
-      this.SLACK_OAUTH_URL
-    }client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    return (
+      `${this.SLACK_OAUTH_URL}client_id=${clientId}&scope=incoming-webhook&user_scope=` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`
+    );
   }
 
-  private async getCredentials(command: ChatOauthCommand): Promise<ICredentialsEntity> {
+  private async getIntegration(command: ChatOauthCommand): Promise<IntegrationEntity> {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.CHAT,
@@ -88,52 +136,64 @@ export class ChatOauth {
       query: { sort: { createdAt: -1 } },
     });
 
-    if (!integration) {
-      throw new NotFoundException(
-        `Integration in environment ${command.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
-          `providerId: ${command.providerId}`
+    if (!integration?.credentials) {
+      this.logger.warn(
+        {
+          environmentId: command.environmentId,
+          providerId: command.providerId,
+          integrationIdentifier: command.integrationIdentifier,
+          reason: integration ? 'missing credentials' : 'no matching integration',
+        },
+        'Legacy chat OAuth URL request could not be resolved to an integration'
       );
+
+      throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
-    if (!integration.credentials) {
-      throw new NotFoundException(
-        `Integration in environment ${command.environmentId} missing credentials, channel: ${ChannelTypeEnum.CHAT}, ` +
-          `providerId: ${command.providerId}`
-      );
-    }
-
-    if (!integration.credentials.clientId) {
-      throw new NotFoundException(
-        `Integration in environment ${command.environmentId} missing clientId, channel: ${ChannelTypeEnum.CHAT}, ` +
-          `providerId: ${command.providerId}`
-      );
-    }
-
-    return integration.credentials;
+    return integration;
   }
 
-  private async getEnvironmentApiKey(environmentId: string): Promise<string> {
+  private async getEnvironmentApiKeys(environmentId: string): Promise<string[]> {
     const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
 
     if (!apiKeys.length) {
-      throw new NotFoundException(`Environment ID: ${environmentId} not found`);
+      throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
-    return apiKeys[0].key;
+    return apiKeys.map(({ key }) => key);
   }
 }
 
-export function validateEncryption({
-  apiKey,
+/**
+ * Validates the subscriber HMAC the way every other subscriber-facing surface
+ * does: against the decrypted secret key the customer holds, and against every
+ * active key so a rolling rotation does not break in-flight authorizations.
+ * This flow used to hash the at-rest ciphertext instead, which no client could
+ * reproduce — enabling `hmac` on an integration made the flow unusable rather
+ * than protected.
+ */
+export function assertLegacyChatOauthHmac({
+  isHmacRequired,
+  apiKeys,
   subscriberId,
   externalHmacHash,
 }: {
-  apiKey: string;
+  isHmacRequired: boolean;
+  apiKeys: string[];
   subscriberId: string;
-  externalHmacHash: string;
+  externalHmacHash: string | undefined;
 }) {
-  const hmacHash = createHash(apiKey, subscriberId);
-  if (hmacHash !== externalHmacHash) {
+  if (!isHmacRequired) {
+    return;
+  }
+
+  if (!externalHmacHash) {
+    throw new BadRequestException(
+      'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
+    );
+  }
+
+  if (!isHmacValidForAnyKey(apiKeys, subscriberId, externalHmacHash)) {
     throw new BadRequestException('Hmac is enabled on the integration, please provide a valid HMAC hash');
   }
 }
