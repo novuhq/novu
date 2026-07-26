@@ -1,5 +1,5 @@
 import type { IEnvironment } from '@novu/shared';
-import { get, patch, post } from './api.client';
+import { get, patch } from './api.client';
 
 /** Write-only: a refresh token is a single-use secret, only ever sent, never returned. */
 export type ChannelConnectionAuthRequestDto = {
@@ -115,29 +115,6 @@ export async function updateChannelConnection({
     environment,
     body: { workspace, auth },
   });
-
-  return response.data;
-}
-
-/**
- * Forces an immediate check (and, for rotating providers, exchange) of the connection's
- * stored auth against the provider. Used right after saving a pasted refresh token so an
- * invalid or already-used token surfaces an error immediately instead of only being
- * discovered on the next real send.
- */
-export async function verifyChannelConnection({
-  identifier,
-  environment,
-}: {
-  identifier: string;
-  environment: IEnvironment;
-}): Promise<ChannelConnectionDto> {
-  const response = await post<ChannelConnectionApiEnvelope>(
-    `/channel-connections/${encodeURIComponent(identifier)}/verify`,
-    {
-      environment,
-    }
-  );
 
   return response.data;
 }

@@ -25,14 +25,6 @@ const REFRESH_LOCK_KEY_PREFIX = 'connection_token_refresh_lock:';
 const REFRESH_LOCK_TTL_SECONDS = 30;
 const REFRESH_REQUEST_TIMEOUT_MS = 10000;
 
-/**
- * A forced refresh (the `/verify` endpoint) must observe a real token exchange, so instead of
- * falling back to the stored token when it loses the lock race, it briefly waits and retries the
- * lock while the current holder rotates.
- */
-const FORCE_REFRESH_LOCK_MAX_ATTEMPTS = 5;
-const FORCE_REFRESH_LOCK_RETRY_DELAY_MS = 200;
-
 /** Normalized shape of a provider's `refresh_token` grant response. */
 export interface RotatingTokenRefreshResult {
   accessToken: string;
@@ -180,12 +172,6 @@ function buildConnectionRefreshKey(connection: ChannelConnectionEntity): string 
   return `${connection._organizationId}:${connection._environmentId}:${connection.identifier}`;
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
 /**
  * Single read path for rotating OAuth bot tokens stored on a `ChannelConnection`
  * (Slack, Webex).
@@ -218,15 +204,7 @@ export class RotatingConnectionTokenService {
     private readonly integrationRepository: IntegrationRepository
   ) {}
 
-  /**
-   * `forceRefresh` is set by the `/verify` endpoint: it must confirm an actual exchange of the stored
-   * refresh token rather than reporting success off a still-valid access token, so it never takes the
-   * lock-loser shortcut and never piggybacks on another caller's in-flight refresh.
-   */
-  async getConnectionToken(
-    connection: ChannelConnectionEntity,
-    options: { forceRefresh?: boolean } = {}
-  ): Promise<string | undefined> {
+  async getConnectionToken(connection: ChannelConnectionEntity): Promise<string | undefined> {
     const decryptedAuth = decryptChannelConnectionAuth(connection.auth) as ChannelConnectionAuth | undefined;
 
     if (!decryptedAuth?.accessToken) {
@@ -234,24 +212,11 @@ export class RotatingConnectionTokenService {
     }
 
     const provider = ROTATING_TOKEN_PROVIDERS[connection.providerId];
-    const forceRefresh = options.forceRefresh === true;
-
-    // A forced verify must exchange the refresh token even while the current access token is still
-    // far from expiry — otherwise a freshly pasted (possibly invalid) refresh token would be accepted
-    // and stored without ever being validated against the provider.
-    const shouldRefresh = forceRefresh || this.isExpiringSoon(decryptedAuth.expiresAt);
-
-    if (!provider || !this.isRotatingAuth(decryptedAuth) || !shouldRefresh) {
+    if (!provider || !this.isRotatingAuth(decryptedAuth) || !this.isExpiringSoon(decryptedAuth.expiresAt)) {
       return decryptedAuth.accessToken;
     }
 
-    const runRefresh = () => this.refreshWithLock(connection, decryptedAuth, provider, forceRefresh);
-
-    // A forced verify must observe its own exchange, so it bypasses the in-process coalescing that
-    // could otherwise hand it a token from a pre-send refresh that lost the lock (no exchange happened).
-    if (forceRefresh) {
-      return await runRefresh();
-    }
+    const runRefresh = () => this.refreshWithLock(connection, decryptedAuth, provider);
 
     return await this.coalesceRefresh(connection, runRefresh);
   }
@@ -283,8 +248,7 @@ export class RotatingConnectionTokenService {
   private async refreshWithLock(
     connection: ChannelConnectionEntity,
     decryptedAuth: RotatingConnectionAuth,
-    provider: RotatingTokenProvider,
-    forceRefresh: boolean
+    provider: RotatingTokenProvider
   ): Promise<string> {
     if (!this.cacheService.cacheEnabled()) {
       return await this.refreshConnectionToken(connection, decryptedAuth, provider);
@@ -292,38 +256,18 @@ export class RotatingConnectionTokenService {
 
     const lockKey = `${REFRESH_LOCK_KEY_PREFIX}{${buildConnectionRefreshKey(connection)}}`;
 
-    const acquired = await this.acquireRefreshLock(lockKey, forceRefresh);
+    const acquired = await this.cacheService.setIfNotExist(lockKey, '1', { ttl: REFRESH_LOCK_TTL_SECONDS });
 
     if (acquired !== 'OK') {
-      /*
-       * The refresh fires TOKEN_REFRESH_WINDOW_MS before expiry, so a pre-send caller that loses the
-       * lock race is still holding a valid access token — return it and let the lock holder rotate for
-       * the next caller. A forced verify cannot make that assumption: after waiting for the lock it
-       * still failed to acquire it, so it accepts only a token the holder has already rotated (proving
-       * the refresh token works) and otherwise fails fast.
-       */
-      if (!forceRefresh) {
-        return decryptedAuth.accessToken;
-      }
-
-      const rotatedAuth = await this.readPersistedAuth(connection);
-
-      if (rotatedAuth?.accessToken && !this.isExpiringSoon(rotatedAuth.expiresAt)) {
-        return rotatedAuth.accessToken;
-      }
-
-      throw new BadGatewayException(
-        `A token refresh for the ${provider.label} channel connection is already in progress. Retry the verification in a few seconds.`
-      );
+      // Refresh starts before expiry, so this token remains valid while the lock holder rotates it.
+      return decryptedAuth.accessToken;
     }
 
     try {
       // Another process may have refreshed just before we acquired the lock — re-read first.
-      // A forced verify skips this shortcut so it always performs its own exchange and validates
-      // the stored refresh token rather than trusting a still-valid access token.
       const currentAuth = await this.readPersistedAuth(connection);
 
-      if (!forceRefresh && currentAuth?.accessToken && !this.isExpiringSoon(currentAuth.expiresAt)) {
+      if (currentAuth?.accessToken && !this.isExpiringSoon(currentAuth.expiresAt)) {
         return currentAuth.accessToken;
       }
 
@@ -333,31 +277,6 @@ export class RotatingConnectionTokenService {
     } finally {
       await this.cacheService.del(lockKey);
     }
-  }
-
-  /**
-   * Acquire the per-connection Redis refresh lock. A pre-send refresh takes a single non-blocking
-   * shot and falls back to the stored token when it loses. A forced verify instead retries the lock
-   * for a short window so it can perform (or observe) a real exchange rather than skip it.
-   */
-  private async acquireRefreshLock(lockKey: string, forceRefresh: boolean): Promise<string | null> {
-    const acquired = await this.cacheService.setIfNotExist(lockKey, '1', { ttl: REFRESH_LOCK_TTL_SECONDS });
-
-    if (acquired === 'OK' || !forceRefresh) {
-      return acquired;
-    }
-
-    for (let attempt = 1; attempt < FORCE_REFRESH_LOCK_MAX_ATTEMPTS; attempt += 1) {
-      await delay(FORCE_REFRESH_LOCK_RETRY_DELAY_MS);
-
-      const retried = await this.cacheService.setIfNotExist(lockKey, '1', { ttl: REFRESH_LOCK_TTL_SECONDS });
-
-      if (retried === 'OK') {
-        return retried;
-      }
-    }
-
-    return null;
   }
 
   private async readPersistedAuth(connection: ChannelConnectionEntity): Promise<ChannelConnectionAuth | undefined> {

@@ -1610,6 +1610,8 @@ await novu.channelConnections.create({
 
 Your Novu Slack integration must have the same **Client ID** and **Client Secret** that issued the token. Novu uses these credentials during refresh, and rejects the request if they are missing. If you omit `expiresAt`, Novu treats the token as expiring and refreshes it on the first send.
 
+Slack refresh tokens are single-use, so only pass a token that has not already been exchanged elsewhere.
+
 ### Troubleshoot token rotation
 
 If deliveries fail with `token_revoked` or `invalid_auth`, reconnect the workspace through OAuth. Reconnecting captures a new refresh token and is required when:
@@ -1618,9 +1620,7 @@ If deliveries fail with `token_revoked` or `invalid_auth`, reconnect the workspa
 - The workspace was connected before Novu supported token rotation
 - The refresh token was regenerated in Slack
 
-For an agent connection, you can replace the refresh token without reconnecting the workspace. Open the Slack setup drawer for the agent, paste a new token under **Token rotation**, and click **Save & verify**. Novu exchanges and validates the token immediately.
-
-Slack refresh tokens are single-use. Only paste a token that has not been exchanged elsewhere.
+Reconnect using the same [`SlackConnectButton`](/agents/custom-code-agent/connect-components) (or the agent's install control) that created the connection: click the connected control to disconnect, then click again to run OAuth and store a fresh access token and refresh token pair. This applies equally to a workflow subscriber's connection and to an agent's own workspace connection — each is reconnected from wherever it was originally installed.
 
 ## Using Slack with agents
 

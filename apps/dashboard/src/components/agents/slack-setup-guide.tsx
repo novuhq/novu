@@ -546,7 +546,6 @@ export function SlackSetupGuide({
           onClose={() => setIsCredentialsSidebarOpen(false)}
           onSaveSuccess={() => setCredentialsSavedLocally(true)}
           agentOnboarding
-          connectionIdentifier={connectionIdentifier ?? undefined}
         />
       </div>
     );
@@ -562,7 +561,6 @@ export function SlackSetupGuide({
         onClose={() => setIsCredentialsSidebarOpen(false)}
         onSaveSuccess={() => setCredentialsSavedLocally(true)}
         agentOnboarding
-        connectionIdentifier={connectionIdentifier ?? undefined}
       />
     </>
   );

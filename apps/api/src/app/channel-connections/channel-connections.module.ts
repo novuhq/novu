@@ -22,7 +22,6 @@ import { DeleteChannelConnection } from './usecases/delete-channel-connection/de
 import { GetChannelConnection } from './usecases/get-channel-connection/get-channel-connection.usecase';
 import { ListChannelConnections } from './usecases/list-channel-connections/list-channel-connections.usecase';
 import { UpdateChannelConnection } from './usecases/update-channel-connection/update-channel-connection.usecase';
-import { VerifyChannelConnection } from './usecases/verify-channel-connection/verify-channel-connection.usecase';
 
 const USE_CASES = [
   GetChannelConnection,
@@ -30,7 +29,6 @@ const USE_CASES = [
   CreateChannelConnection,
   UpdateChannelConnection,
   DeleteChannelConnection,
-  VerifyChannelConnection,
 ];
 
 const DAL_MODELS = [
