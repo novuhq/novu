@@ -24,7 +24,10 @@ export class VerifyChannelConnection {
   async execute(command: VerifyChannelConnectionCommand): Promise<ChannelConnectionEntity> {
     const channelConnection = await this.findConnection(command);
 
-    await this.rotatingConnectionTokenService.getConnectionToken(channelConnection);
+    // `forceRefresh` guarantees a real provider exchange (or an error) instead of letting the call
+    // short-circuit to the stored token when it loses the refresh lock — otherwise verify could report
+    // success without ever validating the freshly pasted refresh token.
+    await this.rotatingConnectionTokenService.getConnectionToken(channelConnection, { forceRefresh: true });
 
     // getConnectionToken persists a refreshed auth pair on the connection document when it
     // refreshes; re-read so the response reflects the new token/expiry rather than stale data.

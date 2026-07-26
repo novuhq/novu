@@ -266,6 +266,75 @@ describe('RotatingConnectionTokenService', () => {
     expect(cacheService.del.called).toBe(false);
   });
 
+  it('fails fast on a forced verify when it never acquires the lock and the token was not rotated', async () => {
+    const { service, cacheService, channelConnectionRepository } = buildHarness();
+    const staleConnection = buildConnection({
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      expiresAt: futureIso(60 * 1000),
+    });
+
+    cacheService.setIfNotExist.resolves(null);
+    // The lock holder has not rotated the token yet, so the persisted auth is still the stale one.
+    channelConnectionRepository.findOne.resolves(staleConnection);
+
+    await expect(service.getConnectionToken(staleConnection, { forceRefresh: true })).rejects.toThrow(
+      BadGatewayException
+    );
+    // A forced verify never falls back to the stored token; it retried the lock before giving up.
+    expect(axiosPost.called).toBe(false);
+    expect(cacheService.setIfNotExist.callCount).toBeGreaterThan(1);
+  });
+
+  it('accepts the token a concurrent holder rotated when a forced verify cannot acquire the lock', async () => {
+    const { service, cacheService, channelConnectionRepository } = buildHarness();
+    const staleConnection = buildConnection({
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      expiresAt: futureIso(60 * 1000),
+    });
+    const rotatedConnection = buildConnection({
+      accessToken: MOCK_NEW_ACCESS_TOKEN,
+      refreshToken: MOCK_NEW_REFRESH_TOKEN,
+      expiresAt: futureIso(12 * 60 * 60 * 1000),
+    });
+
+    cacheService.setIfNotExist.resolves(null);
+    channelConnectionRepository.findOne.resolves(rotatedConnection);
+
+    const token = await service.getConnectionToken(staleConnection, { forceRefresh: true });
+
+    expect(token).toEqual(MOCK_NEW_ACCESS_TOKEN);
+    expect(axiosPost.called).toBe(false);
+  });
+
+  it('retries the lock and performs the exchange during a forced verify', async () => {
+    const { service, cacheService, channelConnectionRepository } = buildHarness();
+    const connection = buildConnection({
+      accessToken: MOCK_ACCESS_TOKEN,
+      refreshToken: MOCK_REFRESH_TOKEN,
+      expiresAt: futureIso(60 * 1000),
+    });
+
+    cacheService.setIfNotExist.onFirstCall().resolves(null);
+    cacheService.setIfNotExist.resolves('OK');
+    channelConnectionRepository.findOne.resolves(connection);
+    axiosPost.resolves({
+      data: {
+        ok: true,
+        access_token: MOCK_NEW_ACCESS_TOKEN,
+        refresh_token: MOCK_NEW_REFRESH_TOKEN,
+        expires_in: 3600,
+      },
+    });
+
+    const token = await service.getConnectionToken(connection, { forceRefresh: true });
+
+    expect(token).toEqual(MOCK_NEW_ACCESS_TOKEN);
+    expect(axiosPost.calledOnce).toBe(true);
+    expect(cacheService.del.calledOnce).toBe(true);
+  });
+
   it('refreshes without a lock when the cache is disabled', async () => {
     const { service, cacheService } = buildHarness();
     cacheService.cacheEnabled.returns(false);
