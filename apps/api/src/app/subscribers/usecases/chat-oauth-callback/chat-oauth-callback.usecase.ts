@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
@@ -14,15 +14,17 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto, LegacySubscriberChatOauthMode } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { assertLegacyChatOauthHmac } from '../chat-oauth/chat-oauth.usecase';
 import {
+  assertLegacyChatOauthIntegrationHmacEnabled,
   CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
-  getLegacyChatOauthMode,
+  isLegacySubscriberChatOauthHmacRequired,
   LEGACY_CHAT_OAUTH_MIGRATION_HINT,
+  resolveLegacyChatOauthHmacRequired,
   resolveLegacyChatOauthOrganization,
 } from '../chat-oauth/legacy-chat-oauth.config';
 import {
@@ -77,20 +79,19 @@ export class ChatOauthCallback {
       this.organizationRepository,
       routingEnvironmentId
     );
-    const mode = await getLegacyChatOauthMode(this.featureFlagsService, organization);
-
-    if (mode === LegacySubscriberChatOauthMode.DISABLED) {
-      throw new ForbiddenException(LEGACY_CHAT_OAUTH_MIGRATION_HINT);
-    }
+    const hmacRequiredEnabled = await isLegacySubscriberChatOauthHmacRequired(this.featureFlagsService, organization);
 
     const routing = await this.resolveRouting(command);
     const integration = await this.getIntegration(routing);
     const integrationCredentials = integration.credentials;
+    const integrationHmacEnabled = integrationCredentials.hmac === true;
+
+    assertLegacyChatOauthIntegrationHmacEnabled(hmacRequiredEnabled, integrationHmacEnabled);
 
     const { _organizationId, apiKeys } = await this.getEnvironment(routing.environmentId);
 
     assertLegacyChatOauthHmac({
-      isHmacRequired: integrationCredentials.hmac === true || mode === LegacySubscriberChatOauthMode.HMAC_REQUIRED,
+      isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
       apiKeys: apiKeys.map(({ key }) => key),
       subscriberId: routing.subscriberId,
       externalHmacHash: routing.hmacHash,

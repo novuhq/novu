@@ -174,15 +174,16 @@ export enum FeatureFlagsKeysEnum {
   /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
 
-  // String flags
   /**
-   * Operating mode for the deprecated per-subscriber chat OAuth routes
-   * (`GET /v1/subscribers/:subscriberId/credentials/:providerId/oauth[/callback]`).
-   * Target in LaunchDarkly by `organization.createdAt` so pre-existing orgs can
-   * keep `enabled` while new orgs stay on the default `disabled`. Self-hosted:
-   * set `LEGACY_SUBSCRIBER_CHAT_OAUTH_MODE` in the environment.
+   * When true (default), the deprecated per-subscriber chat OAuth routes require
+   * HMAC to be enabled on the Slack integration and a valid subscriber HMAC hash.
+   * Target legacy organizations to false in LaunchDarkly so they can keep the
+   * historical behavior during migration. Self-hosted: set
+   * `IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED=false` to disable enforcement.
    */
-  LEGACY_SUBSCRIBER_CHAT_OAUTH_MODE = 'LEGACY_SUBSCRIBER_CHAT_OAUTH_MODE',
+  IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
+
+  // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
   QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
@@ -219,19 +220,6 @@ export enum QueueBackendMode {
   SHADOW = 'shadow',
   LIVE = 'live',
   COMPLETE = 'complete',
-}
-
-/**
- * Operating mode for the deprecated per-subscriber chat OAuth endpoints.
- * Evaluated via {@link FeatureFlagsKeysEnum.LEGACY_SUBSCRIBER_CHAT_OAUTH_MODE}.
- */
-export enum LegacySubscriberChatOauthMode {
-  /** Both routes reject every request. Default for new organizations. */
-  DISABLED = 'disabled',
-  /** Historical behavior: HMAC enforced only when the integration opts in. */
-  ENABLED = 'enabled',
-  /** HMAC always enforced, regardless of the integration's `hmac` credential. */
-  HMAC_REQUIRED = 'hmac_required',
 }
 
 export type FeatureFlags = {

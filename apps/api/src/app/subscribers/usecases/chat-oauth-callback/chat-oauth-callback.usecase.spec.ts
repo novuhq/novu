@@ -6,7 +6,7 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum, LegacySubscriberChatOauthMode } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -64,8 +64,8 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     } as any);
   }
 
-  function stubLegacyMode(mode: LegacySubscriberChatOauthMode) {
-    featureFlagsService.getFlag.resolves(mode);
+  function stubHmacRequiredEnabled(enabled: boolean) {
+    featureFlagsService.getFlag.resolves(enabled);
   }
 
   beforeEach(() => {
@@ -88,9 +88,9 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
       _id: ORGANIZATION_ID,
       createdAt: new Date('2020-01-01'),
     } as any);
-    stubLegacyMode(LegacySubscriberChatOauthMode.ENABLED);
+    stubHmacRequiredEnabled(true);
 
-    stubIntegration({ clientId: 'victim-client-id', secretKey: 'victim-secret' });
+    stubIntegration({ clientId: 'victim-client-id', secretKey: 'victim-secret', hmac: true });
 
     sinon.stub(axios, 'post').resolves({ data: { ok: true, incoming_webhook: { url: ATTACKER_WEBHOOK } } } as any);
 
@@ -109,16 +109,23 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     sinon.restore();
   });
 
-  it('rejects every request when the feature flag defaults to disabled', async () => {
-    stubLegacyMode(LegacySubscriberChatOauthMode.DISABLED);
+  it('blocks new organizations when the Slack integration does not enable HMAC', async () => {
+    stubIntegration({ clientId: 'victim-client-id', secretKey: 'victim-secret' });
 
-    await expectRejection(usecase.execute(buildCommand()), ForbiddenException);
+    await expectRejection(usecase.execute(buildCommand({ state: buildState() })), ForbiddenException);
 
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
   it('attaches the endpoint when the state was signed by the target environment', async () => {
-    await usecase.execute(buildCommand({ state: buildState({ integrationIdentifier: 'victim-slack' }) }));
+    await usecase.execute(
+      buildCommand({
+        state: buildState({
+          integrationIdentifier: 'victim-slack',
+          hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string,
+        }),
+      })
+    );
 
     expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
     expect(createChannelEndpoint.execute.firstCall.args[0]).to.include({
@@ -132,7 +139,10 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
       buildCommand({
         environmentId: 'ffffffffffffffffffffffff',
         integrationIdentifier: 'attacker-supplied',
-        state: buildState({ integrationIdentifier: 'victim-slack' }),
+        state: buildState({
+          integrationIdentifier: 'victim-slack',
+          hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string,
+        }),
       })
     );
 
@@ -161,8 +171,6 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
   });
 
   it('completes an HMAC-protected flow using the hash carried in the state', async () => {
-    stubIntegration({ clientId: 'victim-client-id', secretKey: 'victim-secret', hmac: true });
-
     await usecase.execute(
       buildCommand({ state: buildState({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string }) })
     );
@@ -171,22 +179,21 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
   });
 
   it('rejects an HMAC-protected flow whose state carries no hash', async () => {
-    stubIntegration({ clientId: 'victim-client-id', secretKey: 'victim-secret', hmac: true });
-
     await expectRejection(usecase.execute(buildCommand({ state: buildState() })), BadRequestException);
 
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
-  it('still accepts a stateless callback when the flag is enabled', async () => {
+  it('still accepts a stateless callback for allowlisted legacy organizations', async () => {
+    stubHmacRequiredEnabled(false);
+    stubIntegration({ clientId: 'victim-client-id', secretKey: 'victim-secret' });
+
     await usecase.execute(buildCommand());
 
     expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
   });
 
-  it('blocks a stateless cross-tenant callback in hmac_required mode', async () => {
-    stubLegacyMode(LegacySubscriberChatOauthMode.HMAC_REQUIRED);
-
+  it('blocks a stateless callback for new organizations without a valid HMAC hash', async () => {
     await expectRejection(usecase.execute(buildCommand()), BadRequestException);
 
     expect(createChannelEndpoint.execute.called).to.equal(false);

@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { CommunityOrganizationRepository, EnvironmentRepository, OrganizationEntity } from '@novu/dal';
-import { FeatureFlagsKeysEnum, LegacySubscriberChatOauthMode } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export const CHAT_INTEGRATION_NOT_FOUND_MESSAGE = 'Chat integration not found';
 
@@ -9,27 +9,41 @@ export const LEGACY_CHAT_OAUTH_MIGRATION_HINT =
   'The per-subscriber chat OAuth endpoints are deprecated. Use POST /v1/integrations/chat/oauth to mint an ' +
   'authenticated OAuth URL instead.';
 
-const VALID_MODES = new Set<string>(Object.values(LegacySubscriberChatOauthMode));
+export const LEGACY_CHAT_OAUTH_HMAC_REQUIRED_MESSAGE =
+  'HMAC must be enabled on the Slack integration to use the per-subscriber chat OAuth endpoints. ' +
+  LEGACY_CHAT_OAUTH_MIGRATION_HINT;
 
 type LegacyChatOauthOrganization = Pick<OrganizationEntity, '_id' | 'createdAt'>;
 
-export async function getLegacyChatOauthMode(
+export async function isLegacySubscriberChatOauthHmacRequired(
   featureFlagsService: FeatureFlagsService,
   organization: LegacyChatOauthOrganization
-): Promise<LegacySubscriberChatOauthMode> {
-  const configured = await featureFlagsService.getFlag({
-    key: FeatureFlagsKeysEnum.LEGACY_SUBSCRIBER_CHAT_OAUTH_MODE,
-    defaultValue: LegacySubscriberChatOauthMode.DISABLED,
+): Promise<boolean> {
+  return featureFlagsService.getFlag({
+    key: FeatureFlagsKeysEnum.IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED,
+    defaultValue: true,
     organization,
   });
+}
 
-  const normalized = typeof configured === 'string' ? configured.trim().toLowerCase() : '';
-
-  if (!VALID_MODES.has(normalized)) {
-    return LegacySubscriberChatOauthMode.DISABLED;
+export function resolveLegacyChatOauthHmacRequired(
+  hmacRequiredEnabled: boolean,
+  integrationHmacEnabled: boolean
+): boolean {
+  if (hmacRequiredEnabled) {
+    return true;
   }
 
-  return normalized as LegacySubscriberChatOauthMode;
+  return integrationHmacEnabled;
+}
+
+export function assertLegacyChatOauthIntegrationHmacEnabled(
+  hmacRequiredEnabled: boolean,
+  integrationHmacEnabled: boolean
+): void {
+  if (hmacRequiredEnabled && !integrationHmacEnabled) {
+    throw new ForbiddenException(LEGACY_CHAT_OAUTH_HMAC_REQUIRED_MESSAGE);
+  }
 }
 
 export async function resolveLegacyChatOauthOrganization(

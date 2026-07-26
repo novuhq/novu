@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -6,15 +6,16 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { LegacySubscriberChatOauthMode } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
 
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { ChatOauthCommand } from './chat-oauth.command';
 import {
+  assertLegacyChatOauthIntegrationHmacEnabled,
   CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
-  getLegacyChatOauthMode,
+  isLegacySubscriberChatOauthHmacRequired,
   LEGACY_CHAT_OAUTH_MIGRATION_HINT,
+  resolveLegacyChatOauthHmacRequired,
   resolveLegacyChatOauthOrganization,
 } from './legacy-chat-oauth.config';
 import { encodeLegacyChatOauthState } from './legacy-chat-oauth-state';
@@ -43,23 +44,22 @@ export class ChatOauth {
       this.organizationRepository,
       command.environmentId
     );
-    const mode = await getLegacyChatOauthMode(this.featureFlagsService, organization);
-
-    if (mode === LegacySubscriberChatOauthMode.DISABLED) {
-      throw new ForbiddenException(LEGACY_CHAT_OAUTH_MIGRATION_HINT);
-    }
+    const hmacRequiredEnabled = await isLegacySubscriberChatOauthHmacRequired(this.featureFlagsService, organization);
 
     const integration = await this.getIntegration(command);
     const { clientId, hmac } = integration.credentials;
+    const integrationHmacEnabled = hmac === true;
 
     if (!clientId) {
       throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
     }
 
+    assertLegacyChatOauthIntegrationHmacEnabled(hmacRequiredEnabled, integrationHmacEnabled);
+
     const apiKeys = await this.getEnvironmentApiKeys(command.environmentId);
 
     assertLegacyChatOauthHmac({
-      isHmacRequired: hmac === true || mode === LegacySubscriberChatOauthMode.HMAC_REQUIRED,
+      isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
       apiKeys,
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,
@@ -71,8 +71,8 @@ export class ChatOauth {
         organizationId: integration._organizationId,
         providerId: command.providerId,
         integrationIdentifier: integration.identifier,
-        mode,
-        hmacEnabled: hmac === true,
+        hmacRequiredEnabled,
+        hmacEnabled: integrationHmacEnabled,
       },
       `Deprecated per-subscriber chat OAuth URL requested. ${LEGACY_CHAT_OAUTH_MIGRATION_HINT}`
     );

@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { createHash, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { CommunityOrganizationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum, LegacySubscriberChatOauthMode } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ChatOauthCommand } from './chat-oauth.command';
@@ -41,8 +41,8 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     } as any);
   }
 
-  function stubLegacyMode(mode: LegacySubscriberChatOauthMode) {
-    featureFlagsService.getFlag.resolves(mode);
+  function stubHmacRequiredEnabled(enabled: boolean) {
+    featureFlagsService.getFlag.resolves(enabled);
   }
 
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
       _id: ORGANIZATION_ID,
       createdAt: new Date('2020-01-01'),
     } as any);
-    stubLegacyMode(LegacySubscriberChatOauthMode.ENABLED);
+    stubHmacRequiredEnabled(true);
 
     usecase = new ChatOauth(
       integrationRepository as any,
@@ -79,14 +79,25 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     sinon.restore();
   });
 
-  it('rejects every request when the feature flag defaults to disabled', async () => {
-    stubLegacyMode(LegacySubscriberChatOauthMode.DISABLED);
-
+  it('blocks new organizations when the Slack integration does not enable HMAC', async () => {
     await expectRejection(usecase.execute(buildCommand()), ForbiddenException);
   });
 
+  it('requires a valid HMAC hash for new organizations once HMAC is enabled on the integration', async () => {
+    stubIntegration({ clientId: CLIENT_ID, secretKey: 'victim-secret', hmac: true });
+
+    await expectRejection(usecase.execute(buildCommand()), BadRequestException);
+
+    const url = await usecase.execute(buildCommand({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string }));
+
+    expect(url).to.include('slack.com/oauth');
+  });
+
   it('mints an authorization URL carrying a state signed with the environment key', async () => {
-    const url = await usecase.execute(buildCommand({ integrationIdentifier: 'victim-slack' }));
+    stubIntegration({ clientId: CLIENT_ID, secretKey: 'victim-secret', hmac: true });
+    const hmacHash = createHash(API_KEY, SUBSCRIBER_ID) as string;
+
+    const url = await usecase.execute(buildCommand({ integrationIdentifier: 'victim-slack', hmacHash }));
 
     expect(url).to.include(`client_id=${CLIENT_ID}`);
 
@@ -114,18 +125,11 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     await expectRejection(usecase.execute(buildCommand({ hmacHash: 'not-the-right-hash' })), BadRequestException);
   });
 
-  it('does not require an HMAC hash when the flag is enabled and the integration does not opt in', async () => {
+  it('does not require an HMAC hash for allowlisted legacy organizations without integration HMAC', async () => {
+    stubHmacRequiredEnabled(false);
+
     const url = await usecase.execute(buildCommand());
 
-    expect(url).to.include('slack.com/oauth');
-  });
-
-  it('requires an HMAC hash in hmac_required mode even when the integration does not opt in', async () => {
-    stubLegacyMode(LegacySubscriberChatOauthMode.HMAC_REQUIRED);
-
-    await expectRejection(usecase.execute(buildCommand()), BadRequestException);
-
-    const url = await usecase.execute(buildCommand({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string }));
     expect(url).to.include('slack.com/oauth');
   });
 
