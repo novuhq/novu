@@ -3,7 +3,12 @@ import { ChatProviderIdEnum, ToolProviderIdEnum } from '../../../types';
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
-import { SLACK_OVERRIDE_KEYS, SLACK_OVERRIDE_SCHEMA_SUBPATH, SLACK_PRIMARY_CONTENT_KEY } from './slack/keys';
+import {
+  NON_OVERRIDABLE_SLACK_KEYS,
+  SLACK_OVERRIDE_KEYS,
+  SLACK_OVERRIDE_SCHEMA_SUBPATH,
+  SLACK_PRIMARY_CONTENT_KEY,
+} from './slack/keys';
 
 export type ProviderOverrideConfig = {
   /** Absent => escape hatch: free-form JSON, no validation beyond well-formedness. */
@@ -18,6 +23,12 @@ export type ProviderOverrideConfig = {
   schemaSubpath?: string;
   /** Top-level override keys. Present for every provider that has a schema, lazy or not. */
   keys?: readonly string[];
+  /**
+   * Keys the send path strips from a merged override before handing it to the provider, because
+   * Novu owns them (routing, credentials). Leaving them out of `schema` only produces an advisory
+   * step issue, so enforcement has to happen at send.
+   */
+  reservedKeys?: readonly string[];
   /** Top-level payload key the step body falls back into. null when the provider nests its content. */
   primaryContentKey: string | null;
 };
@@ -81,6 +92,7 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Slack]: {
     schemaSubpath: SLACK_OVERRIDE_SCHEMA_SUBPATH,
     keys: PROVIDER_OVERRIDE_KEYS[ChatProviderIdEnum.Slack],
+    reservedKeys: NON_OVERRIDABLE_SLACK_KEYS,
     primaryContentKey: SLACK_PRIMARY_CONTENT_KEY,
   },
   // `novu-slack` is Slack posted through Novu-managed credentials, but it is not given Slack's
@@ -155,6 +167,31 @@ export function getProviderOverrideKeys(providerId: string): readonly string[] |
 
 export function getProviderPrimaryContentKey(providerId: string): string | null | undefined {
   return getProviderOverrideConfig(providerId)?.primaryContentKey;
+}
+
+/**
+ * Strips the keys Novu owns (routing, credentials) from a merged override payload.
+ *
+ * `_passthrough` is left untouched: it is the documented, deliberate door for callers who need
+ * raw provider API fields, so it stays the one explicit way to reach these.
+ */
+export function stripReservedOverrideKeys<T extends Record<string, unknown>>(providerId: string, override: T): T {
+  const reservedKeys = getProviderOverrideConfig(providerId)?.reservedKeys;
+  if (!reservedKeys?.length) {
+    return override;
+  }
+
+  const present = reservedKeys.filter((key) => key in override);
+  if (present.length === 0) {
+    return override;
+  }
+
+  const stripped = { ...override };
+  for (const key of present) {
+    delete stripped[key];
+  }
+
+  return stripped;
 }
 
 /**

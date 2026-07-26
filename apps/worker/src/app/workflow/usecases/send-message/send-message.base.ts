@@ -29,6 +29,7 @@ import {
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
+  stripReservedOverrideKeys,
   TriggerOverrides,
 } from '@novu/shared';
 import { format } from 'date-fns';
@@ -58,6 +59,10 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ *
+ * Keys Novu owns are stripped from the result. Omitting them from a provider's schema only
+ * raises an advisory step issue, and escape-hatch providers have no schema at all, so this is
+ * the only point that actually holds the guarantee before the payload reaches the provider.
  */
 export function combineProviderOverrides(
   bridgeData: Record<string, any> | null | undefined,
@@ -69,7 +74,9 @@ export function combineProviderOverrides(
   const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
-  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
+  const merged = mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
+
+  return stripReservedOverrideKeys(integrationId, merged);
 }
 
 export abstract class SendMessageBase extends SendMessageType {

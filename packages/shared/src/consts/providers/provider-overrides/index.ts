@@ -37,11 +37,17 @@ export {
   PROVIDER_OVERRIDE_SCHEMAS,
   PROVIDER_PRIMARY_CONTENT_KEY,
   type ProviderOverrideConfig,
+  stripReservedOverrideKeys,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
 } from './provider-override-registry';
 export { type SchemaValidationErrorLike, selectDiscriminatedErrors } from './select-discriminated-errors';
-export { SLACK_OVERRIDE_KEYS, SLACK_OVERRIDE_SCHEMA_SUBPATH, SLACK_PRIMARY_CONTENT_KEY } from './slack/keys';
+export {
+  NON_OVERRIDABLE_SLACK_KEYS,
+  SLACK_OVERRIDE_KEYS,
+  SLACK_OVERRIDE_SCHEMA_SUBPATH,
+  SLACK_PRIMARY_CONTENT_KEY,
+} from './slack/keys';
 
 /** @deprecated Renamed to `PROVIDER_OVERRIDE_SCHEMAS` now that chat providers are covered too. */
 export const TOOL_PROVIDER_OVERRIDE_SCHEMAS = PROVIDER_OVERRIDE_SCHEMAS;

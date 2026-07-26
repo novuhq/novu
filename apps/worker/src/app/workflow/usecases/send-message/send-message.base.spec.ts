@@ -130,4 +130,40 @@ describe('combineProviderOverrides', () => {
     expect(combineProviderOverrides(undefined, undefined, undefined, PROVIDER_ID)).to.deep.equal({});
     expect(combineProviderOverrides(bridge({ blocks: ['bridge'] }), undefined, undefined, 'discord')).to.deep.equal({});
   });
+
+  it('strips Slack routing and credential keys persisted on the step', () => {
+    const combined = combineProviderOverrides(
+      bridge({ channel: 'C_ATTACKER', token: 'xoxb-stolen', as_user: true, text: 'hi' }),
+      undefined,
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({ text: 'hi' });
+  });
+
+  it('strips Slack routing keys arriving from trigger overrides too', () => {
+    const combined = combineProviderOverrides(
+      bridge({ text: 'hi' }),
+      triggerOverrides({
+        providers: { [PROVIDER_ID]: { channel: 'C_GLOBAL' } },
+        steps: { step_1: { providers: { [PROVIDER_ID]: { channel: 'C_STEP' } } } },
+      }),
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({ text: 'hi' });
+  });
+
+  it('keeps _passthrough intact, so the documented raw-field door still works', () => {
+    const combined = combineProviderOverrides(
+      bridge({ channel: 'C_ATTACKER', _passthrough: { body: { channel: 'C_DELIBERATE' } } }),
+      undefined,
+      'step_1',
+      PROVIDER_ID
+    );
+
+    expect(combined).to.deep.equal({ _passthrough: { body: { channel: 'C_DELIBERATE' } } });
+  });
 });

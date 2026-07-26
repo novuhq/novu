@@ -1,12 +1,6 @@
 import type { ChatPostMessageArguments } from '@slack/web-api';
+import { NON_OVERRIDABLE_SLACK_KEYS } from '../src/consts/providers/provider-overrides/slack/keys';
 
-/**
- * `channel` and `token` are deliberately not overridable. `bridgeProviderData` outranks the base
- * body in `BaseProvider.transform()`, so an overridable `channel` key would silently hijack which
- * subscriber the message reaches, and an overridable `token` would swap the integration
- * credentials — both are security-relevant. They are resolved from Novu's subscriber routing and
- * stored credentials instead. `as_user` is dropped because Novu always posts as the installed bot.
- */
-export const NON_OVERRIDABLE_SLACK_KEYS = ['channel', 'token', 'as_user'] as const;
+export { NON_OVERRIDABLE_SLACK_KEYS };
 
 export type SlackOverride = Omit<ChatPostMessageArguments, (typeof NON_OVERRIDABLE_SLACK_KEYS)[number]>;
