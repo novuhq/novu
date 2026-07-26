@@ -81,22 +81,21 @@ export function ContentSourceSelector({
                     isSelected && 'bg-neutral-alpha-50'
                   )}
                   onSelect={(event) => {
+                    // Keep menu open when the dedicated + control is used; that button handles add itself.
                     if ((event.target as HTMLElement).closest('[data-override-action]')) {
                       event.preventDefault();
+
+                      return;
+                    }
+
+                    if (canSelectDirectly) {
+                      onSelectSource(provider.providerId);
+                    } else {
+                      onAddOverride?.(provider.providerId);
                     }
                   }}
                 >
-                  <button
-                    type="button"
-                    className="flex min-w-0 flex-1 items-center gap-1"
-                    onClick={() => {
-                      if (canSelectDirectly) {
-                        onSelectSource(provider.providerId);
-                      } else {
-                        onAddOverride?.(provider.providerId);
-                      }
-                    }}
-                  >
+                  <div className="flex min-w-0 flex-1 items-center gap-1">
                     <ProviderIcon
                       providerId={provider.providerId}
                       providerDisplayName={provider.displayName}
@@ -122,7 +121,7 @@ export function ContentSourceSelector({
                     {!provider.isConnected && provider.hasOverride && (
                       <span className="text-warning text-[10px] font-medium">disconnected</span>
                     )}
-                  </button>
+                  </div>
 
                   {canAddOverrides && !provider.hasOverride && (
                     <button
