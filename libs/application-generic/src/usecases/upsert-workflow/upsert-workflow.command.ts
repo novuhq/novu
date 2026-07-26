@@ -4,8 +4,8 @@ import {
   MAX_NAME_LENGTH,
   ResourceOriginEnum,
   SeverityLevelEnum,
+  type StepProviderOverrides,
   StepTypeEnum,
-  ToolProviderIdEnum,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
 import { Exclude, Type } from 'class-transformer';
@@ -80,7 +80,7 @@ export class UpsertStepDataCommand {
   @IsObject()
   @ValidateNested()
   @Type(() => ProviderOverridesDto)
-  providerOverrides?: Partial<Record<ToolProviderIdEnum, Record<string, unknown>>> | null;
+  providerOverrides?: StepProviderOverrides | null;
 
   @IsOptional()
   @IsString()
