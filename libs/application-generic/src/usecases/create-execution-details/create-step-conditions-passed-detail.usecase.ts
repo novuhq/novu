@@ -110,6 +110,11 @@ export class CreateStepConditionsPassedDetail {
  * secrets (API keys, tokens). Their `isSecret` flag is no longer available at
  * this layer, so every env-sourced value is masked before persisting — the
  * execution detail is readable by low-privilege roles via the activity feed.
+ *
+ * Masking is decided by the variable path's root segment: `env` covers direct
+ * references, and an empty root covers unscoped paths — json-logic resolves
+ * `{"var": ""}` to the entire evaluation context (including `env`), so such
+ * values must never be persisted unmasked.
  */
 function redactEnvironmentValues(
   evaluatedValues: Record<string, unknown> | undefined
@@ -119,11 +124,14 @@ function redactEnvironmentValues(
   }
 
   return Object.fromEntries(
-    Object.entries(evaluatedValues).map(([path, value]) => [
-      path,
-      path === 'env' || path.startsWith('env.') ? SECRET_MASK : value,
-    ])
+    Object.entries(evaluatedValues).map(([path, value]) => [path, isSensitivePath(path) ? SECRET_MASK : value])
   );
+}
+
+function isSensitivePath(path: string): boolean {
+  const [root] = path.split('.');
+
+  return root === '' || root === 'env';
 }
 
 /**
