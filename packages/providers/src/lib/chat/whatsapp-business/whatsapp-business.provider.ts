@@ -45,7 +45,12 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
 
     const { phoneNumber } = options.channelData.endpoint;
 
-    const payload = this.transform(bridgeProviderData, this.defineMessagePayload(options, phoneNumber)).body;
+    const merged = this.transform(
+      bridgeProviderData,
+      this.defineMessagePayload(options, phoneNumber, bridgeProviderData)
+    ).body as Record<string, unknown>;
+
+    const payload = this.projectMessagePayload(merged, options, bridgeProviderData);
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
       `${this.baseUrl + this.config.phoneNumberIdentification}/messages`,
@@ -58,8 +63,12 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     };
   }
 
-  private defineMessagePayload(options: IChatOptions, phoneNumber: string) {
-    const type = this.defineMessageType(options);
+  private defineMessagePayload(
+    options: IChatOptions,
+    phoneNumber: string,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>
+  ) {
+    const type = this.defineMessageType(options, bridgeProviderData);
 
     const basePayload = {
       messaging_product: 'whatsapp',
@@ -68,7 +77,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       type,
     };
 
-    // Handle TEXT messages separately (since it's not in `customData`)
+    // Emit the default text block only for text messages
     if (type === WhatsAppMessageTypeEnum.TEXT) {
       const textData = options.customData?.text;
 
@@ -81,8 +90,12 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       };
     }
 
-    // For all other types, get data from customData
+    // For all other types, get data from customData when present
     const payloadData = options.customData?.[type];
+
+    if (payloadData === undefined) {
+      return basePayload;
+    }
 
     return {
       ...basePayload,
@@ -90,27 +103,84 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     };
   }
 
-  private defineMessageType(options: IChatOptions): WhatsAppMessageTypeEnum {
-    const typeKeys: Record<string, WhatsAppMessageTypeEnum> = {
-      template: WhatsAppMessageTypeEnum.TEMPLATE,
-      interactive: WhatsAppMessageTypeEnum.INTERACTIVE,
-      image: WhatsAppMessageTypeEnum.IMAGE,
-      document: WhatsAppMessageTypeEnum.DOCUMENT,
-      video: WhatsAppMessageTypeEnum.VIDEO,
-      audio: WhatsAppMessageTypeEnum.AUDIO,
-      location: WhatsAppMessageTypeEnum.LOCATION,
-      contacts: WhatsAppMessageTypeEnum.CONTACTS,
-      sticker: WhatsAppMessageTypeEnum.STICKER,
+  /**
+   * Project the merged transform body onto a single WhatsApp message shape.
+   * Type is resolved from bridge/customData sources (not the merged `type` field alone),
+   * so transform key-merges cannot leave a conflicting type + stray sibling bodies.
+   */
+  private projectMessagePayload(
+    merged: Record<string, unknown>,
+    options: IChatOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>
+  ) {
+    const type = this.defineMessageType(options, bridgeProviderData);
+
+    const payload: Record<string, unknown> = {
+      messaging_product: merged.messaging_product,
+      recipient_type: merged.recipient_type,
+      to: merged.to,
+      type,
     };
 
-    if (options.customData) {
-      for (const key of Object.keys(typeKeys)) {
-        if (key in options.customData) {
-          return typeKeys[key];
-        }
+    if (type === WhatsAppMessageTypeEnum.TEXT) {
+      payload.text = merged.text ?? {
+        body: options.content,
+        preview_url: false,
+      };
+
+      return payload;
+    }
+
+    if (merged[type] != null) {
+      payload[type] = merged[type];
+    }
+
+    return payload;
+  }
+
+  private defineMessageType(
+    options: IChatOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>
+  ): WhatsAppMessageTypeEnum {
+    const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
+    const passthroughBody = (_passthrough.body || {}) as Record<string, unknown>;
+
+    // Highest priority first — matches transform merge order. Resolve each source
+    // fully (explicit type, then typed keys) before falling through to a lower one.
+    const sources = [passthroughBody, bridgeData as Record<string, unknown>, options.customData].filter(
+      (source): source is Record<string, unknown> => source != null && Object.keys(source).length > 0
+    );
+
+    for (const source of sources) {
+      const typeFromSource = this.resolveTypeFromSource(source);
+
+      if (typeFromSource) {
+        return typeFromSource;
       }
     }
 
     return WhatsAppMessageTypeEnum.TEXT;
+  }
+
+  private resolveTypeFromSource(source: Record<string, unknown>): WhatsAppMessageTypeEnum | undefined {
+    if (typeof source.type === 'string' && this.isWhatsAppMessageType(source.type)) {
+      return source.type;
+    }
+
+    for (const key of Object.values(WhatsAppMessageTypeEnum)) {
+      if (key === WhatsAppMessageTypeEnum.TEXT) {
+        continue;
+      }
+
+      if (key in source) {
+        return key;
+      }
+    }
+
+    return undefined;
+  }
+
+  private isWhatsAppMessageType(value: string): value is WhatsAppMessageTypeEnum {
+    return (Object.values(WhatsAppMessageTypeEnum) as string[]).includes(value);
   }
 }
