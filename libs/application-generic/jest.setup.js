@@ -6,6 +6,11 @@ jest.mock('newrelic', () => ({
       return handler();
     }
   }),
+  startSegment: jest.fn((name, record, handler) => {
+    if (typeof handler === 'function') {
+      return handler();
+    }
+  }),
   getTransaction: jest.fn(() => ({
     end: jest.fn(),
   })),
