@@ -491,8 +491,14 @@ export class RunJob {
   }
 
   /**
-   * If a completed job still has a PENDING child (crashed after COMPLETED, before
-   * enqueue), resume the chain. No-op when there is no pending child.
+   * If a completed job still has a stranded child, resume the chain. Two crash
+   * windows leave a child stranded:
+   * - PENDING child: the worker died after COMPLETED but before claiming the child.
+   * - stale QUEUED child: the worker died after claimNextChildAsQueued but before
+   *   AddJob enqueued it, so the child has no queue message. Staleness (lease TTL)
+   *   distinguishes this from a child whose AddJob is still in flight; releasing it
+   *   back to PENDING funnels both windows through the same recovery path.
+   * No-op when there is no stranded child.
    */
   @Instrument()
   private async resumeChainIfStrandedAfterCompletion(job: JobEntity): Promise<void> {
@@ -501,21 +507,22 @@ export class RunJob {
       return;
     }
 
-    const pendingChild = await this.jobRepository.findOne(
-      {
-        _environmentId: job._environmentId,
-        _parentId: job._id,
-        status: JobStatusEnum.PENDING,
-      },
-      '_id'
-    );
-    if (!pendingChild) {
+    const strandedChild =
+      (await this.jobRepository.findOne(
+        {
+          _environmentId: job._environmentId,
+          _parentId: job._id,
+          status: JobStatusEnum.PENDING,
+        },
+        '_id'
+      )) ?? (await this.jobRepository.releaseStaleQueuedChildToPending(job._environmentId, job._id));
+    if (!strandedChild) {
       return;
     }
 
     this.logger.info(
-      { nv: { jobId: job._id, pendingChildJobId: pendingChild._id } },
-      'Redelivered completed job still has a pending child: resuming the stranded workflow chain'
+      { nv: { jobId: job._id, strandedChildJobId: strandedChild._id } },
+      'Redelivered completed job still has a stranded child: resuming the workflow chain'
     );
 
     const notification = await this.findNotification(job);

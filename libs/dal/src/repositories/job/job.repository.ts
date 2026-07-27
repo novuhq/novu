@@ -89,15 +89,13 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
    * Returns null when another worker holds a live lease or the job is already terminal.
    */
   public async claimAsRunning(environmentId: string, jobId: string): Promise<JobEntity | null> {
-    const staleClaimCutoff = new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
-
     return this.findOneAndUpdate(
       {
         _environmentId: environmentId,
         _id: jobId,
         $or: [
           { status: { $in: [JobStatusEnum.QUEUED, JobStatusEnum.DELAYED] } },
-          { status: JobStatusEnum.RUNNING, updatedAt: { $lte: staleClaimCutoff } },
+          { status: JobStatusEnum.RUNNING, updatedAt: { $lte: this.staleClaimCutoff() } },
         ],
       },
       {
@@ -159,6 +157,42 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       },
       { new: true }
     );
+  }
+
+  /**
+   * Release a child stuck in QUEUED back to PENDING because the worker died between
+   * {@link claimNextChildAsQueued} and AddJob's enqueue — the child then has no
+   * queue message and the chain is stranded until a redelivered parent re-drives it.
+   * Once PENDING again, the ordinary chain-resume path recovers it.
+   *
+   * Staleness (`updatedAt` older than {@link RUNNING_CLAIM_STALE_AFTER_MS}) separates
+   * that crash from a healthy child whose AddJob just ran: redeliveries only arrive
+   * after the BullMQ lock / SQS visibility window (~90s), so a fresh QUEUED child is
+   * still being processed by the original worker.
+   *
+   * Worst case — a non-deferred child legitimately QUEUED for over a minute behind a
+   * queue backlog — re-runs AddJob and enqueues a duplicate message, which
+   * {@link claimAsRunning} fences at execution time.
+   */
+  public async releaseStaleQueuedChildToPending(environmentId: string, parentJobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _parentId: parentJobId,
+        status: JobStatusEnum.QUEUED,
+        updatedAt: { $lte: this.staleClaimCutoff() },
+      },
+      {
+        $set: {
+          status: JobStatusEnum.PENDING,
+        },
+      },
+      { new: true }
+    );
+  }
+
+  private staleClaimCutoff(): Date {
+    return new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
   }
 
   public async setError(organizationId: string, jobId: string, error: any): Promise<void> {

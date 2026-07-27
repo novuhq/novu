@@ -648,6 +648,56 @@ describe('Standard Worker', () => {
 
       expect(result).to.equal(null);
     });
+
+    it('releaseStaleQueuedChildToPending leaves a freshly claimed QUEUED child alone (AddJob still in flight)', async () => {
+      const parent = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+      await jobRepository.create({
+        ...buildJob(JobStatusEnum.QUEUED, { _notificationId: parent._notificationId }),
+        _parentId: parent._id,
+      });
+
+      const result = await jobRepository.releaseStaleQueuedChildToPending(parent._environmentId, parent._id);
+
+      expect(result).to.equal(null);
+    });
+
+    it('releaseStaleQueuedChildToPending releases a stale QUEUED child exactly once under concurrent redeliveries', async () => {
+      const parent = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+      const child = await jobRepository.create({
+        ...buildJob(JobStatusEnum.QUEUED, { _notificationId: parent._notificationId }),
+        _parentId: parent._id,
+      });
+      await backdateJobClaim(child._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
+
+      const concurrency = 6;
+      const results = await Promise.all(
+        Array.from({ length: concurrency }, () =>
+          jobRepository.releaseStaleQueuedChildToPending(parent._environmentId, parent._id)
+        )
+      );
+
+      // The winning release flips the child to PENDING, so the losers no longer match QUEUED.
+      const winners = results.filter((res) => res !== null);
+      expect(winners.length).to.equal(1);
+      expect(winners[0]?._id).to.equal(child._id);
+      expect(winners[0]?.status).to.equal(JobStatusEnum.PENDING);
+
+      const fresh = await jobRepository.findOne({ _id: child._id, _environmentId: child._environmentId });
+      expect(fresh?.status).to.equal(JobStatusEnum.PENDING);
+    });
+
+    it('releaseStaleQueuedChildToPending ignores children that already progressed past QUEUED', async () => {
+      const parent = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+      const child = await jobRepository.create({
+        ...buildJob(JobStatusEnum.RUNNING, { _notificationId: parent._notificationId }),
+        _parentId: parent._id,
+      });
+      await backdateJobClaim(child._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
+
+      const result = await jobRepository.releaseStaleQueuedChildToPending(parent._environmentId, parent._id);
+
+      expect(result).to.equal(null);
+    });
   });
 
   describe('redelivery recovery', () => {
@@ -701,6 +751,46 @@ describe('Standard Worker', () => {
         }),
         _parentId: parent._id,
       });
+
+      await standardQueueService.add({
+        name: parent._id,
+        data: {
+          _environmentId: parent._environmentId,
+          _id: parent._id,
+          _organizationId: parent._organizationId,
+          _userId: parent._userId,
+        },
+        groupId: '0',
+      });
+
+      await jobsService.waitForJobCompletion({
+        templateId: template._id,
+        organizationId: organization._id,
+      });
+
+      const resumedChild = await jobRepository.findOne({ _id: child._id, _environmentId: child._environmentId });
+      expect(resumedChild?.status).to.equal(JobStatusEnum.COMPLETED);
+
+      const parentAfter = await jobRepository.findOne({ _id: parent._id, _environmentId: parent._environmentId });
+      expect(parentAfter?.status).to.equal(JobStatusEnum.COMPLETED);
+    });
+
+    it('a redelivered completed job resumes a chain whose child was claimed QUEUED but never enqueued', async () => {
+      // Production scenario: worker died between claimNextChildAsQueued and
+      // AddJob's enqueue — the child sits QUEUED with no queue message.
+      const notification = await createNotification();
+      const parent = await jobRepository.create(
+        buildJob(JobStatusEnum.COMPLETED, { _notificationId: notification._id, _templateId: template._id })
+      );
+      const child = await jobRepository.create({
+        ...buildJob(JobStatusEnum.QUEUED, {
+          _notificationId: notification._id,
+          _templateId: template._id,
+          transactionId: parent.transactionId,
+        }),
+        _parentId: parent._id,
+      });
+      await backdateJobClaim(child._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
 
       await standardQueueService.add({
         name: parent._id,
