@@ -2,6 +2,7 @@ import { ChannelEndpointByType, ENDPOINT_TYPES, IChatOptions } from '@novu/state
 import { nanoid } from 'nanoid';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
 
 const mockProviderConfig = {
@@ -445,7 +446,13 @@ test('should keep shared Message fields like context when projecting typed overr
     image,
     context,
   });
-  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('text');
+  const sentPayload = mockPost.mock.calls[0][1] as Record<string, unknown>;
+
+  for (const key of Object.values(WhatsAppMessageTypeEnum)) {
+    if (key !== WhatsAppMessageTypeEnum.IMAGE) {
+      expect(sentPayload).not.toHaveProperty(key);
+    }
+  }
 });
 
 function baseUrl(phoneNumberIdentification: string) {

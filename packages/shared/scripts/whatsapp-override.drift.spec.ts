@@ -98,6 +98,10 @@ describe('regenerated WhatsApp override schema', () => {
 });
 
 describe('committed WhatsApp override schema', () => {
+  it('rejects unknown root keys', () => {
+    expect(whatsappOverrideJsonSchema.additionalProperties).toBe(false);
+  });
+
   it('keeps the hand-written key list in step with the schema', () => {
     expect([...WHATSAPP_OVERRIDE_KEYS]).toEqual(Object.keys(whatsappOverrideJsonSchema.properties ?? {}));
   });
