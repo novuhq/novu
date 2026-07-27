@@ -1,6 +1,7 @@
 /**
  * Builds the WhatsApp Business override JSON Schema from the vendored Meta OpenAPI Message
  * closure (not from an SDK — Meta has no usable types package for Cloud API messages).
+ * Update `scripts/vendor/whatsapp-messages.openapi.json` manually when Meta's OpenAPI drifts.
  *
  *   pnpm --filter @novu/shared generate:whatsapp-schema
  */

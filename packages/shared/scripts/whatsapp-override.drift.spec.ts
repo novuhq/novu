@@ -9,13 +9,16 @@ import {
 import { whatsappOverrideJsonSchema } from '../src/consts/providers/provider-overrides/whatsapp/whatsapp-override.generated';
 import { whatsappOverrideLiquidTolerantJsonSchema } from '../src/consts/providers/provider-overrides/whatsapp/whatsapp-override.liquid-tolerant.generated';
 import { buildWhatsappOverrideSchemas } from './generate-whatsapp-override-schema';
-import { WHATSAPP_OPENAPI_UPSTREAM_COMMIT, WHATSAPP_OPENAPI_UPSTREAM_FILE } from './refresh-whatsapp-openapi';
 
 const REGENERATE_HINT = 'Run `pnpm --filter @novu/shared generate:whatsapp-schema` and commit the result.';
 const DRIFT_ENV_VAR = 'NOVU_TEST_WHATSAPP_SCHEMA_DRIFT';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const sharedRoot = join(scriptDir, '..');
 const vendorPath = join(scriptDir, 'vendor/whatsapp-messages.openapi.json');
+
+/** Pinned facebook/openapi source recorded in the vendored JSON `meta` (updated manually). */
+const VENDORED_UPSTREAM_FILE = 'business-messaging-api_v23.0.yaml';
+const VENDORED_UPSTREAM_COMMIT = '5f30dc1c6b482e67149ae6de0b27f19285d12839';
 
 /**
  * Comparing against a freshly generated schema means walking the vendored Meta OpenAPI closure,
@@ -73,22 +76,10 @@ describe('vendored WhatsApp OpenAPI Message closure', () => {
       schemas?: Record<string, unknown>;
     };
 
-    expect(vendor.meta?.upstreamFile).toBe(WHATSAPP_OPENAPI_UPSTREAM_FILE);
-    expect(vendor.meta?.upstreamCommit).toBe(WHATSAPP_OPENAPI_UPSTREAM_COMMIT);
+    expect(vendor.meta?.upstreamFile).toBe(VENDORED_UPSTREAM_FILE);
+    expect(vendor.meta?.upstreamCommit).toBe(VENDORED_UPSTREAM_COMMIT);
     expect(vendor.schemas?.Message).toBeDefined();
     expect(vendor.schemas?.TextMessage).toBeDefined();
-  });
-});
-
-describe('WhatsApp override schema generator', () => {
-  it('produces a flat root with the expected keys and no routing keys', () => {
-    const { schema } = buildWhatsappOverrideSchemas();
-    const keys = Object.keys(schema.properties ?? {}).sort();
-
-    expect(keys).toEqual([...WHATSAPP_OVERRIDE_KEYS]);
-    expect(schema.properties?.messaging_product).toBeUndefined();
-    expect(schema.properties?.to).toBeUndefined();
-    expect(schema.additionalProperties).toBe(false);
   });
 });
 

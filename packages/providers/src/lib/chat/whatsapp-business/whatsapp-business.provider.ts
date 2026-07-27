@@ -44,13 +44,12 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     }
 
     const { phoneNumber } = options.channelData.endpoint;
+    const type = this.defineMessageType(options, bridgeProviderData);
 
-    const merged = this.transform(
-      bridgeProviderData,
-      this.defineMessagePayload(options, phoneNumber, bridgeProviderData)
-    ).body as Record<string, unknown>;
+    const merged = this.transform(bridgeProviderData, this.defineMessagePayload(options, phoneNumber, type))
+      .body as Record<string, unknown>;
 
-    const payload = this.projectMessagePayload(merged, options, bridgeProviderData);
+    const payload = this.projectMessagePayload(merged, type, options);
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
       `${this.baseUrl + this.config.phoneNumberIdentification}/messages`,
@@ -63,13 +62,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     };
   }
 
-  private defineMessagePayload(
-    options: IChatOptions,
-    phoneNumber: string,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>>
-  ) {
-    const type = this.defineMessageType(options, bridgeProviderData);
-
+  private defineMessagePayload(options: IChatOptions, phoneNumber: string, type: WhatsAppMessageTypeEnum) {
     const basePayload = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
@@ -77,7 +70,6 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       type,
     };
 
-    // Emit the default text block only for text messages
     if (type === WhatsAppMessageTypeEnum.TEXT) {
       const textData = options.customData?.text;
 
@@ -90,7 +82,6 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       };
     }
 
-    // For all other types, get data from customData when present
     const payloadData = options.customData?.[type];
 
     if (payloadData === undefined) {
@@ -104,35 +95,23 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
   }
 
   /**
-   * Project the merged transform body onto a single WhatsApp message shape.
-   * Type is resolved from bridge/customData sources (not the merged `type` field alone),
-   * so transform key-merges cannot leave a conflicting type + stray sibling bodies.
+   * Keep shared Message fields from the merge (`context`, `recipient_type`, …) and strip sibling
+   * typed bodies so an image override cannot leave a stray `text` / `template` key behind.
    */
-  private projectMessagePayload(
-    merged: Record<string, unknown>,
-    options: IChatOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>>
-  ) {
-    const type = this.defineMessageType(options, bridgeProviderData);
+  private projectMessagePayload(merged: Record<string, unknown>, type: WhatsAppMessageTypeEnum, options: IChatOptions) {
+    const payload: Record<string, unknown> = { ...merged, type };
 
-    const payload: Record<string, unknown> = {
-      messaging_product: merged.messaging_product,
-      recipient_type: merged.recipient_type,
-      to: merged.to,
-      type,
-    };
+    for (const key of Object.values(WhatsAppMessageTypeEnum)) {
+      if (key !== type) {
+        delete payload[key];
+      }
+    }
 
-    if (type === WhatsAppMessageTypeEnum.TEXT) {
-      payload.text = merged.text ?? {
+    if (type === WhatsAppMessageTypeEnum.TEXT && payload.text == null) {
+      payload.text = {
         body: options.content,
         preview_url: false,
       };
-
-      return payload;
-    }
-
-    if (merged[type] != null) {
-      payload[type] = merged[type];
     }
 
     return payload;

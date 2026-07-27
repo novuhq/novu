@@ -412,6 +412,42 @@ test('should send reaction messages from bridgeProviderData', async () => {
   expect(res.id).toBe(messageId);
 });
 
+test('should keep shared Message fields like context when projecting typed overrides', async () => {
+  const messageId = nanoid();
+
+  const { mockPost } = axiosSpy(buildResponse(messageId));
+
+  const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
+
+  const options: IChatOptions = {
+    content: 'fallback text that must not be sent',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
+  };
+
+  const context = { message_id: 'wamid.reply-target' };
+  const image = { link: 'https://example.com/photo.jpg' };
+
+  await provider.sendMessage(options, {
+    type: 'image',
+    image,
+    context,
+  });
+
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
+    type: 'image',
+    image,
+    context,
+  });
+  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('text');
+});
+
 function baseUrl(phoneNumberIdentification: string) {
   return `https://graph.facebook.com/v22.0/${phoneNumberIdentification}/messages`;
 }

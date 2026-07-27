@@ -21,8 +21,7 @@
     "check:circulars": "madge --circular --extensions ts ./src",
     "generate:slack-schema": "node scripts/generate-slack-override-schema.ts",
     "generate:telegram-schema": "node scripts/generate-telegram-override-schema.ts",
-    "generate:whatsapp-schema": "node scripts/generate-whatsapp-override-schema.ts",
-    "refresh:whatsapp-openapi": "node scripts/refresh-whatsapp-openapi.ts"
+    "generate:whatsapp-schema": "node scripts/generate-whatsapp-override-schema.ts"
   },
   "author": "",
   "license": "ISC",
@@ -97,8 +96,6 @@
   "devDependencies": {
     "@grammyjs/types": "4.0.0",
     "@slack/web-api": "7.17.0",
-    "@types/js-yaml": "4.0.9",
-    "js-yaml": "5.2.2",
     "madge": "^8.0.0",
     "rimraf": "^3.0.2",
     "ts-json-schema-generator": "2.9.0",
