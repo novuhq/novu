@@ -510,8 +510,9 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
 
       it('should create a step conditions passed execution detail when the flag is enabled', async () => {
         const flagKey = FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED;
-        const previousFlagValue = process.env[flagKey];
-        process.env[flagKey] = 'true';
+        const mutableEnv = process.env as Record<string, string | undefined>;
+        const previousFlagValue = mutableEnv[flagKey];
+        mutableEnv[flagKey] = 'true';
 
         try {
           const v2Workflow = await createV2WorkflowWithSkipConditions();
@@ -546,9 +547,9 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
           expect(raw.evaluatedValues).to.deep.equal({ 'payload.tier': 'pro' });
         } finally {
           if (previousFlagValue === undefined) {
-            delete process.env[flagKey];
+            delete mutableEnv[flagKey];
           } else {
-            process.env[flagKey] = previousFlagValue;
+            mutableEnv[flagKey] = previousFlagValue;
           }
         }
       });

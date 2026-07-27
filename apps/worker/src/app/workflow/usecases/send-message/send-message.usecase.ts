@@ -5,8 +5,8 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  CreateStepConditionsPassedDetail,
   DetailEnum,
-  FeatureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -38,7 +38,6 @@ import {
   EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FeatureFlagsKeysEnum,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IPreferenceChannels,
@@ -88,7 +87,7 @@ export class SendMessage {
     private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private featureFlagsService: FeatureFlagsService
+    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail
   ) {}
 
   @InstrumentUsecase()
@@ -266,31 +265,10 @@ export class SendMessage {
         })
       );
     } else if (command.job.step.filters?.length) {
-      const isPassedTraceEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-        environment: { _id: command.environmentId },
+      await this.createStepConditionsPassedDetail.execute({
+        job: command.job,
+        conditions: stepCondition.conditions,
       });
-
-      if (isPassedTraceEnabled) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.STEP_CONDITIONS_PASSED,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.SUCCESS,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              filter: {
-                conditions: stepCondition.conditions,
-                passed: stepCondition.passed,
-              },
-            }),
-          })
-        );
-      }
     }
 
     return stepCondition;
