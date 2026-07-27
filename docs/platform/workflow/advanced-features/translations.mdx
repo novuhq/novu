@@ -278,8 +278,8 @@ Here are some frequently asked questions about translations.
 
 <AccordionGroup>
   <Accordion title="Is translation resolved when the notification is fetched, or when it is sent?">
-    Translation is resolved when the workflow step executes, using the subscriber's locale at that time. For in-app notifications, the translated content is stored with the message.
+    Translation is resolved when the channel step executes, using the subscriber's locale at that moment (not at trigger time, and not when the Inbox loads the message). For delayed or digest workflows, a locale update before the channel step runs is reflected in that notification.
 
-    Novu does not re-translate existing notifications when the Inbox loads them. If you later update the subscriber's locale, only new notifications use the updated language. Historical in-app messages keep the locale they were created with.
+    Once the step has executed, the translated in-app notification content is stored with the message. Novu does not re-translate existing in-app notifications when they are fetched. Historical messages keep the locale they were created with.
   </Accordion>
 </AccordionGroup>
