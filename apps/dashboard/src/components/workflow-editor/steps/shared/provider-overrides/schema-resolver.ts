@@ -46,6 +46,30 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
+/** One concrete `anyOf`/`oneOf` branch, identified by its discriminator (`type`) literal. */
+export type UnionBranchSummary = {
+  typeValue: string;
+  description?: string;
+};
+
+/**
+ * Slack (and similar) schemas ship JSDoc `{@link …}` markup in descriptions. Strip it so the
+ * supported-fields popover can show a short plain-text summary.
+ */
+function plainDescription(description: string | undefined): string | undefined {
+  if (!description) {
+    return undefined;
+  }
+
+  const cleaned = description
+    .replace(/\{@link\s+https?:\/\/\S+\s+([^}]+)\}/g, '$1')
+    .replace(/\{@link\s+([^}]+)\}/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return cleaned || undefined;
+}
+
 export type SchemaResolver = {
   rootSchema: OverrideFieldSchema;
   /** Follows `$ref` chains. Returns undefined when a pointer cannot be resolved. */
@@ -67,6 +91,11 @@ export type SchemaResolver = {
   itemsNode: (fieldSchema: OverrideFieldSchema | undefined) => OverrideFieldSchema | undefined;
   /** String literals accepted at a value position, gathered across `enum`, `const` and branches. */
   valueOptions: (fieldSchema: OverrideFieldSchema | undefined) => string[];
+  /**
+   * Summaries of discriminated `anyOf`/`oneOf` object branches (e.g. Slack `KnownBlock`). Used by
+   * the supported-fields popover for informational reference sections — not for insertion.
+   */
+  unionBranchSummaries: (fieldSchema: OverrideFieldSchema | undefined) => UnionBranchSummary[];
 };
 
 export function createSchemaResolver(rootSchema: OverrideFieldSchema): SchemaResolver {
@@ -223,6 +252,34 @@ export function createSchemaResolver(rootSchema: OverrideFieldSchema): SchemaRes
     return unique(collectValues(fieldSchema, 0));
   }
 
+  function unionBranchSummaries(fieldSchema: OverrideFieldSchema | undefined): UnionBranchSummary[] {
+    const resolved = deref(fieldSchema);
+    const rawBranches = resolved?.anyOf ?? resolved?.oneOf;
+    if (!rawBranches) {
+      return [];
+    }
+
+    const byType = new Map<string, UnionBranchSummary>();
+
+    for (const branch of rawBranches) {
+      const objectBranch = deref(branch);
+      if (!objectBranch?.properties?.[DISCRIMINATOR_KEY]) {
+        continue;
+      }
+
+      const typeValues = collectValues(objectBranch.properties[DISCRIMINATOR_KEY], 0);
+      const description = plainDescription(objectBranch.description);
+
+      for (const typeValue of typeValues) {
+        if (!byType.has(typeValue)) {
+          byType.set(typeValue, { typeValue, description });
+        }
+      }
+    }
+
+    return [...byType.values()];
+  }
+
   return {
     rootSchema,
     deref,
@@ -233,5 +290,6 @@ export function createSchemaResolver(rootSchema: OverrideFieldSchema): SchemaRes
     propertyNode,
     itemsNode,
     valueOptions,
+    unionBranchSummaries,
   };
 }
