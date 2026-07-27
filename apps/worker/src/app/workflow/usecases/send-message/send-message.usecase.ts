@@ -148,7 +148,8 @@ export class SendMessage {
     }
 
     // Emitted only after every skip gate (conditions, preferences, bridge skip)
-    // has passed, so the trace never contradicts the actual outcome.
+    // has passed. Channel-level skips further down (e.g. missing email or push
+    // token) are reported by their own execution details.
     if (command.job.step.filters?.length) {
       await this.createStepConditionsPassedDetail.execute({
         job: command.job,

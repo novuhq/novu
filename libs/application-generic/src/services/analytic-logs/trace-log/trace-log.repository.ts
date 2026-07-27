@@ -617,7 +617,7 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'step_skipped':
       return 'Step skipped';
     case 'step_conditions_passed':
-      return 'Step conditions matched, step will be executed';
+      return 'Step conditions matched';
     case 'step_skipped_outside_of_the_schedule':
       return "The step was skipped as it fell outside the subscriber's schedule";
     case 'step_extended_to_schedule':

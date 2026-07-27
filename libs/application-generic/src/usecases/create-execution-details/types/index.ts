@@ -55,7 +55,12 @@ export enum DetailEnum {
   PROCESSING_STEP_FILTER = 'Processing step filter',
   PROCESSING_STEP_FILTER_ERROR = 'Processing step filter failed',
   SKIPPED_STEP_BY_CONDITIONS = 'Step was skipped based on steps conditions',
-  STEP_CONDITIONS_PASSED = 'Step conditions matched, step will be executed',
+  /**
+   * Records only the condition evaluation result — the step can still be
+   * skipped downstream (e.g. missing email/phone/push token), which is
+   * reported by its own execution detail.
+   */
+  STEP_CONDITIONS_PASSED = 'Step conditions matched',
   SKIPPED_STEP_OUTSIDE_OF_THE_SCHEDULE = "The step was skipped as it fell outside the subscriber's schedule",
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES = 'Step filtered by subscriber workflow preferences',
