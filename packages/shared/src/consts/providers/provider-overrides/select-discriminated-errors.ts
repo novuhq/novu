@@ -1,3 +1,11 @@
+import {
+  instanceSegmentsBetween,
+  isSchemaObject,
+  reachableSchemaNodes,
+  resolveSchemaPointer,
+  type SchemaNodeLike,
+} from './schema-reachability';
+
 /**
  * Narrows the error avalanche AJV produces for the liquid-tolerant schemas, whose `anyOf`
  * wrapping multiplies every failure by the number of branches that were tried.
@@ -233,33 +241,12 @@ function isPayloadShapeError(error: SchemaValidationErrorLike, branchPrefix: str
 }
 
 /**
- * Type-matched object branches that still failed on payload shape under the branch prefix.
- * Needed separately from discriminated sites: when `type` is correct, both the object branch and
- * its liquid sibling "match", so that block never becomes a single-winner site — yet its
- * `required` errors are the ones we want to keep, and foreign type-consts should stay shadowed.
+ * Type-matched object branches (non-liquid, not type-mismatched). Includes branches whose only
+ * failures AJV re-based into a shared `$ref` definition. Fed to {@link resolveConcreteWinners};
+ * composition wrappers like KnownBlock are filtered there by discriminator, so they never enter
+ * the liquid/type-const `winners` set alone.
  */
-function concreteWinnerGroups(
-  groups: readonly BranchGroup[],
-  errors: readonly SchemaValidationErrorLike[],
-  mismatched: ReadonlySet<string>
-): BranchGroup[] {
-  return groups.filter((group) => {
-    const key = `${group.branchPrefix}\u0000${group.nodeInstancePath}`;
-    if (mismatched.has(key) || isLiquidFallbackBranch(group, errors)) {
-      return false;
-    }
-
-    return errorsUnderBranch(group, errors).some((error) => isPayloadShapeError(error, group.branchPrefix));
-  });
-}
-
-/**
- * Every type-matched object branch, including those whose only failures AJV re-based into a
- * shared `$ref` definition (so nothing remains under the branch prefix). Used solely as input
- * to {@link uniqueConcreteWinners}; must not feed the liquid/type-const `winners` set, or
- * composition wrappers like KnownBlock would suppress the unknown-`type` const signal.
- */
-function typeMatchedConcreteGroups(
+function typeMatchedGroups(
   groups: readonly BranchGroup[],
   errors: readonly SchemaValidationErrorLike[],
   mismatched: ReadonlySet<string>
@@ -269,6 +256,24 @@ function typeMatchedConcreteGroups(
 
     return !mismatched.has(key) && !isLiquidFallbackBranch(group, errors);
   });
+}
+
+/**
+ * Fallback when no root schema is available: only branches that still failed on payload shape
+ * under their own prefix can authoritatively suppress sibling type-consts.
+ */
+function payloadShapeWinnerPaths(
+  groups: readonly BranchGroup[],
+  errors: readonly SchemaValidationErrorLike[],
+  mismatched: ReadonlySet<string>
+): Set<string> {
+  return new Set(
+    typeMatchedGroups(groups, errors, mismatched)
+      .filter((group) =>
+        errorsUnderBranch(group, errors).some((error) => isPayloadShapeError(error, group.branchPrefix))
+      )
+      .map((group) => group.nodeInstancePath)
+  );
 }
 
 function findDiscriminatedSites(
@@ -353,192 +358,6 @@ function isShadowedBy(
   });
 }
 
-type SchemaNodeLike = Record<string, unknown>;
-
-function isSchemaObject(value: unknown): value is SchemaNodeLike {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function decodePointerSegment(rawSegment: string): string {
-  return rawSegment.replace(/~1/g, '/').replace(/~0/g, '~');
-}
-
-/** AJV percent-encodes special characters in schema paths (`Record%3Cstring%2Cunknown%3E`). */
-function tryDecodeUriComponent(segment: string): string | undefined {
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    return undefined;
-  }
-}
-
-function resolveSchemaPointer(root: SchemaNodeLike, pointer: string): unknown {
-  if (pointer === '#') {
-    return root;
-  }
-
-  if (!pointer.startsWith('#/')) {
-    return undefined;
-  }
-
-  let node: unknown = root;
-
-  for (const rawSegment of pointer.slice(2).split('/')) {
-    if (node === null || typeof node !== 'object') {
-      return undefined;
-    }
-
-    const segment = decodePointerSegment(rawSegment);
-
-    if (Array.isArray(node)) {
-      node = node[Number(segment)];
-    } else {
-      const container = node as Record<string, unknown>;
-
-      if (segment in container) {
-        node = container[segment];
-      } else {
-        const decoded = tryDecodeUriComponent(segment);
-        node = decoded !== undefined && decoded in container ? container[decoded] : undefined;
-      }
-    }
-  }
-
-  return node;
-}
-
-/**
- * Adds `node` plus everything it stands for to `out`: `$ref` targets and every composition
- * branch, since AJV anchors an error on whichever of those it was checking. Returns false when a
- * `$ref` does not resolve — the walk can then prove nothing and the caller must keep the error.
- */
-function expandSchemaNode(root: SchemaNodeLike, node: unknown, out: Set<SchemaNodeLike>): boolean {
-  if (!isSchemaObject(node) || out.has(node)) {
-    return true;
-  }
-
-  out.add(node);
-
-  if (typeof node.$ref === 'string') {
-    const target = resolveSchemaPointer(root, node.$ref);
-    if (target === undefined || !expandSchemaNode(root, target, out)) {
-      return false;
-    }
-  }
-
-  for (const keyword of ['anyOf', 'oneOf', 'allOf'] as const) {
-    const branches = node[keyword];
-    if (Array.isArray(branches)) {
-      for (const branch of branches) {
-        if (!expandSchemaNode(root, branch, out)) {
-          return false;
-        }
-      }
-    }
-  }
-
-  return true;
-}
-
-/**
- * Keywords that attach subschemas this walk does not follow. A node carrying one could describe
- * the child instance in a way the walk cannot see, so descending past it would risk declaring a
- * genuine error unreachable.
- */
-const UNMODELED_CHILD_KEYWORDS = [
-  'patternProperties',
-  'propertyNames',
-  'dependencies',
-  'dependentSchemas',
-  'if',
-  'then',
-  'else',
-  'not',
-  'contains',
-] as const;
-
-function childSchemasFor(node: SchemaNodeLike, segment: string): { children: unknown[]; provable: boolean } {
-  if (UNMODELED_CHILD_KEYWORDS.some((keyword) => keyword in node)) {
-    return { children: [], provable: false };
-  }
-
-  const children: unknown[] = [];
-  const { properties } = node;
-
-  if (isSchemaObject(properties) && segment in properties) {
-    children.push(properties[segment]);
-  } else if (isSchemaObject(node.additionalProperties)) {
-    children.push(node.additionalProperties);
-  }
-
-  if (/^\d+$/.test(segment)) {
-    const { items } = node;
-    if (Array.isArray(items)) {
-      const positional = items[Number(segment)] ?? node.additionalItems;
-      if (positional !== undefined) {
-        children.push(positional);
-      }
-    } else if (items !== undefined) {
-      children.push(items);
-    }
-  }
-
-  return { children, provable: true };
-}
-
-/**
- * Every schema node that can describe the value `segments` below `branchSchema`. `undefined`
- * means the walk met something it cannot model and proves nothing; an empty set means the branch
- * provably says nothing about that location.
- */
-function reachableSchemaNodes(
-  root: SchemaNodeLike,
-  branchSchema: SchemaNodeLike,
-  segments: readonly string[]
-): Set<SchemaNodeLike> | undefined {
-  let current = new Set<SchemaNodeLike>();
-
-  if (!expandSchemaNode(root, branchSchema, current)) {
-    return undefined;
-  }
-
-  for (const segment of segments) {
-    const next = new Set<SchemaNodeLike>();
-
-    for (const node of current) {
-      const { children, provable } = childSchemasFor(node, segment);
-      if (!provable) {
-        return undefined;
-      }
-
-      for (const child of children) {
-        if (!expandSchemaNode(root, child, next)) {
-          return undefined;
-        }
-      }
-    }
-
-    current = next;
-
-    if (current.size === 0) {
-      return current;
-    }
-  }
-
-  return current;
-}
-
-function instanceSegmentsBetween(nodeInstancePath: string, errorInstancePath: string): string[] {
-  if (errorInstancePath === nodeInstancePath) {
-    return [];
-  }
-
-  return errorInstancePath
-    .slice(nodeInstancePath.length + 1)
-    .split('/')
-    .map(decodePointerSegment);
-}
-
 type ConcreteWinner = {
   nodeInstancePath: string;
   branchPrefix: string;
@@ -616,7 +435,7 @@ function branchTypeDiscriminator(rootSchema: SchemaNodeLike, branchPrefix: strin
 
 /**
  * When a block's only failures live under a `$ref`'d property, AJV never emits an error under
- * that block's own branch prefix — so {@link typeMatchedConcreteGroups} has nothing to offer.
+ * that block's own branch prefix — so {@link typeMatchedGroups} has nothing to offer.
  * Scan definitions for the unique object branch whose type discriminator equals `expectedType`.
  */
 function discoverTypeMatchedBranchPrefix(rootSchema: SchemaNodeLike, expectedType: string): string | undefined {
@@ -657,16 +476,15 @@ function discoverTypeMatchedBranchPrefix(rootSchema: SchemaNodeLike, expectedTyp
 }
 
 /**
- * Winner branches usable as a reachability-shadowing authority. Nested variant unions
- * (ImageBlock's image_url vs slack_file) contribute several type-matched groups under one
- * definition; those coalesce to their common parent so shared-`$ref` foreign errors can still
- * be shadowed without pretending one nested variant won.
+ * Single winner model for typed instance nodes: path + authoritative branch prefix.
+ * Used for both type-const suppression and shared-`$ref` foreign-error shadowing.
  *
- * KnownBlock (and similar composition-only wrappers) also appear as type-matched groups because
- * they have no `properties.type` of their own — they are ignored in favour of the definition
- * whose type discriminator equals the instance's `type`.
+ * Nested variant unions (ImageBlock's image_url vs slack_file) contribute several type-matched
+ * groups under one definition; those coalesce to their common parent. Composition-only wrappers
+ * like KnownBlock have no `properties.type` and are ignored in favour of the definition whose
+ * type discriminator equals the instance's `type`.
  */
-function uniqueConcreteWinners(
+function resolveConcreteWinners(
   winnerGroups: readonly BranchGroup[],
   rootSchema: SchemaNodeLike,
   dataAtPath: unknown
@@ -848,7 +666,8 @@ function dedupeTypeDiscriminators<TError extends SchemaValidationErrorLike>(erro
  * `dataAtPath` is the value the errors were produced against; `instancePath`s resolve against it.
  * `rootSchema`, when provided, must be the schema the errors were validated against (with
  * document-absolute `schemaPath`s); it additionally shadows rejected-sibling errors that AJV
- * anchored inside shared `$ref` definitions — see {@link isForeignToWinner}.
+ * anchored inside shared `$ref` definitions — see {@link isForeignToWinner}. Shared-`$ref`
+ * shadowing runs whenever winners resolve, independent of whether composition sites exist.
  */
 export function selectDiscriminatedErrors<TError extends SchemaValidationErrorLike>(
   errors: readonly TError[],
@@ -858,21 +677,16 @@ export function selectDiscriminatedErrors<TError extends SchemaValidationErrorLi
   const groups = groupBranches(errors);
   const mismatched = effectivelyMismatchedKeys(groups);
   const sites = findDiscriminatedSites(groups, errors, mismatched, dataAtPath);
-
-  if (sites.length === 0) {
-    return [...errors];
-  }
-
-  const winnerGroups = concreteWinnerGroups(groups, errors, mismatched);
-  const winners = new Set(winnerGroups.map((group) => group.nodeInstancePath));
   const schemaRoot = isSchemaObject(rootSchema) ? rootSchema : undefined;
-  const shadowingWinners = schemaRoot
-    ? uniqueConcreteWinners(typeMatchedConcreteGroups(groups, errors, mismatched), schemaRoot, dataAtPath)
-    : [];
+  const matchedGroups = typeMatchedGroups(groups, errors, mismatched);
 
-  // A shared-`$ref`-only failure still needs to suppress sibling type-consts.
-  for (const winner of shadowingWinners) {
-    winners.add(winner.nodeInstancePath);
+  const concreteWinners = schemaRoot ? resolveConcreteWinners(matchedGroups, schemaRoot, dataAtPath) : [];
+  const winners = schemaRoot
+    ? new Set(concreteWinners.map((winner) => winner.nodeInstancePath))
+    : payloadShapeWinnerPaths(groups, errors, mismatched);
+
+  if (sites.length === 0 && concreteWinners.length === 0) {
+    return [...errors];
   }
 
   return dedupeTypeDiscriminators(
@@ -885,7 +699,7 @@ export function selectDiscriminatedErrors<TError extends SchemaValidationErrorLi
         return true;
       }
 
-      const winner = deepestWinnerContaining(shadowingWinners, error.instancePath);
+      const winner = deepestWinnerContaining(concreteWinners, error.instancePath);
 
       return !winner || !isForeignToWinner(error, winner, schemaRoot);
     })
