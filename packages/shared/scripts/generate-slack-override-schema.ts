@@ -29,6 +29,30 @@ const OPEN_BLOCK_DEFINITIONS = ['Block', 'AnyBlock'];
 const WEBHOOK_UNSUPPORTED_KEYS = ['thread_ts', 'metadata', 'username', 'icon_emoji', 'icon_url'];
 const WEBHOOK_UNSUPPORTED_NOTE = 'Not supported when the subscriber is connected via an incoming webhook URL.';
 
+type ArraySizeLimit = {
+  /** Omitted to target the override root itself rather than a named definition. */
+  definition?: string;
+  property: string;
+  minItems?: number;
+  maxItems?: number;
+};
+
+/**
+ * Sizes Slack documents in the {@link https://docs.slack.dev/reference/block-kit/blocks Block Kit
+ * reference} but cannot express in TypeScript: `elements: []` satisfies `(Button | …)[]`, yet
+ * `chat.postMessage` rejects the message with `invalid_blocks`. Declaring them here is what lets
+ * the override editor report the problem before a trigger reaches Slack.
+ *
+ * A minimum is only claimed for arrays Slack requires, where an empty one leaves the block with
+ * nothing to render.
+ */
+const ARRAY_SIZE_LIMITS: ArraySizeLimit[] = [
+  { property: 'blocks', maxItems: 50 },
+  { definition: 'ActionsBlock', property: 'elements', minItems: 1, maxItems: 25 },
+  { definition: 'ContextBlock', property: 'elements', minItems: 1, maxItems: 10 },
+  { definition: 'SectionBlock', property: 'fields', maxItems: 10 },
+];
+
 function definitionKeyOf(ref: string): string {
   return decodeURIComponent(ref.replace('#/definitions/', ''));
 }
@@ -163,6 +187,51 @@ function annotateWebhookUnsupportedKeys(schema: JSONSchemaDto): JSONSchemaDto {
   return { ...schema, properties };
 }
 
+/**
+ * Throwing on a property that is missing or no longer an array keeps a limit from silently going
+ * unenforced after the Slack SDK renames or restructures the field it describes.
+ */
+function constrainArrayProperty(container: JSONSchemaDto, limit: ArraySizeLimit, containerName: string): JSONSchemaDto {
+  const property = container.properties?.[limit.property];
+
+  if (property === undefined || typeof property === 'boolean' || property.type !== 'array') {
+    throw new Error(`Expected \`${containerName}.${limit.property}\` to be an array schema to apply its size limits.`);
+  }
+
+  return {
+    ...container,
+    properties: {
+      ...container.properties,
+      [limit.property]: {
+        ...property,
+        ...(limit.minItems === undefined ? {} : { minItems: limit.minItems }),
+        ...(limit.maxItems === undefined ? {} : { maxItems: limit.maxItems }),
+      },
+    },
+  };
+}
+
+function applyArraySizeLimits(schema: JSONSchemaDto): JSONSchemaDto {
+  const definitions = { ...(schema.definitions ?? {}) };
+  let root = schema;
+
+  for (const limit of ARRAY_SIZE_LIMITS) {
+    if (limit.definition === undefined) {
+      root = constrainArrayProperty(root, limit, ROOT_TYPE);
+      continue;
+    }
+
+    const definition = definitions[limit.definition];
+    if (definition === undefined || typeof definition === 'boolean') {
+      throw new Error(`Expected definition \`${limit.definition}\` to be an object schema to apply its size limits.`);
+    }
+
+    definitions[limit.definition] = constrainArrayProperty(definition, limit, limit.definition);
+  }
+
+  return { ...root, definitions };
+}
+
 function assertRoutingKeysAreAbsent(schema: JSONSchemaDto): void {
   for (const key of NON_OVERRIDABLE_SLACK_KEYS) {
     if (schema.properties?.[key] !== undefined) {
@@ -196,6 +265,7 @@ export function buildSlackOverrideSchemas(): {
     dropOpenBlockDefinitions,
     makeEveryTopLevelKeyOptional,
     annotateWebhookUnsupportedKeys,
+    applyArraySizeLimits,
   ].reduce<JSONSchemaDto>((current, step) => step(current), generated);
 
   assertRoutingKeysAreAbsent(schema);

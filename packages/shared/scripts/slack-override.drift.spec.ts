@@ -78,6 +78,15 @@ describe('committed Slack override schema', () => {
     expect([...SLACK_OVERRIDE_KEYS]).toEqual(Object.keys(slackOverrideJsonSchema.properties ?? {}));
   });
 
+  it('carries the Block Kit array size limits that Slack enforces outside its types', () => {
+    const definitions = slackOverrideJsonSchema.definitions ?? {};
+
+    expect(slackOverrideJsonSchema.properties?.blocks).toMatchObject({ maxItems: 50 });
+    expect(definitions.ActionsBlock).toMatchObject({ properties: { elements: { minItems: 1, maxItems: 25 } } });
+    expect(definitions.ContextBlock).toMatchObject({ properties: { elements: { minItems: 1, maxItems: 10 } } });
+    expect(definitions.SectionBlock).toMatchObject({ properties: { fields: { maxItems: 10 } } });
+  });
+
   it('never exposes the routing fields Novu resolves itself', () => {
     for (const key of NON_OVERRIDABLE_SLACK_KEYS) {
       expect(slackOverrideJsonSchema.properties?.[key]).toBeUndefined();

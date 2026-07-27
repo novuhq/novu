@@ -200,6 +200,38 @@ describe('processProviderOverridesIssues', () => {
     ]);
   });
 
+  it('reports a Slack actions block whose elements array is empty, which Slack rejects as invalid_blocks', () => {
+    const issues = processProviderOverridesIssues({
+      [ChatProviderIdEnum.Slack]: {
+        blocks: [{ type: 'actions', elements: [] }],
+      },
+    });
+
+    expect(issues.controls?.[slackPath('blocks.0.elements')]).toEqual([
+      {
+        message: 'must NOT have fewer than 1 items',
+        issueType: ContentIssueEnum.MISSING_VALUE,
+        variableName: slackPath('blocks.0.elements'),
+      },
+    ]);
+  });
+
+  it('accepts a Slack actions block once it holds an element, or a Liquid template in its place', () => {
+    const issues = processProviderOverridesIssues({
+      [ChatProviderIdEnum.Slack]: {
+        blocks: [
+          {
+            type: 'actions',
+            elements: [{ type: 'button', text: { type: 'plain_text', text: 'View' }, url: 'https://example.com' }],
+          },
+          { type: 'actions', elements: '{{payload.actions}}' },
+        ],
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
   it('reports an unknown Slack block type on the type field instead of dumping every branch', () => {
     const issues = processProviderOverridesIssues({
       [ChatProviderIdEnum.Slack]: {
