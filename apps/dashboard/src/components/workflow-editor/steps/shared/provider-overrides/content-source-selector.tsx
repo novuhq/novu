@@ -103,19 +103,19 @@ export function ContentSourceSelector({
                       {provider.displayName}
                     </span>
                     {isInvalid && <RiErrorWarningFill className="text-destructive size-3 shrink-0" />}
-                    {showEscapeHatchBadge && provider.isEscapeHatch && (
-                      <span
-                        className="text-foreground-400 border-stroke-soft shrink-0 rounded-sm border px-1 text-[10px] font-medium uppercase leading-4 tracking-[0.2px]"
-                        title="No schema — this override is passed through to the provider API without validation."
-                      >
-                        no schema
-                      </span>
-                    )}
                     {!provider.isConnected && provider.hasOverride && (
                       <span className="text-warning text-[10px] font-medium">disconnected</span>
                     )}
                   </div>
 
+                  {showEscapeHatchBadge && provider.isEscapeHatch && (
+                    <span
+                      className="text-foreground-400 border-stroke-soft shrink-0 rounded-sm border px-1 text-[10px] font-medium uppercase leading-4 tracking-[0.2px]"
+                      title="No schema — this override is passed through to the provider API without validation."
+                    >
+                      no schema
+                    </span>
+                  )}
                   {canAddOverrides && !provider.hasOverride && (
                     <button
                       type="button"
