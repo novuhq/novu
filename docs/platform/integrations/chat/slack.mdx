@@ -970,7 +970,7 @@ This matters because Slack uses `text` as the notification preview in the sideba
 
 #### Overridable fields
 
-Every [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argument is available except the three Novu owns:
+Every [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argument is available:
 
 | Field | Notes |
 | --- | --- |
@@ -989,15 +989,9 @@ Every [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argum
 | `username` | Override the displayed bot name. |
 | `metadata` | Slack message metadata for event subscriptions. |
 
-Three fields are deliberately not overridable:
+By default, Novu resolves `channel` and `token` from the subscriber's Slack endpoint and workspace connection. Novu does not set `as_user` — Slack deprecated it, and Novu posts as the installed bot.
 
-| Field | Why |
-| --- | --- |
-| `channel` | Novu resolves the destination from the subscriber's Slack endpoint. Overriding it on the step would send every subscriber's message to one hardcoded destination, bypassing the routing you configured per subscriber. |
-| `token` | Novu supplies the access token from the subscriber's workspace connection. |
-| `as_user` | Deprecated by Slack, and it conflicts with how Novu authenticates as your bot. |
-
-Novu strips these three from every Slack override before sending — whether they were saved on the step, passed at trigger time, or nested under `_passthrough.body` — so a stray `channel` cannot redirect a subscriber's message. To deliver to a destination other than the subscriber's connected endpoints, address the trigger to a subscriber or topic that owns that destination instead.
+If you pass `channel`, `token`, or `as_user` in step or trigger overrides (including `_passthrough.body`), Novu applies them as sent. You own the destination when you set these fields. Prefer addressing a different subscriber or topic when you want a different destination, rather than overriding routing keys.
 
 <Warning>
   **Incoming webhook endpoints ignore some fields.** Slack's incoming webhook API is narrower than `chat.postMessage`: `thread_ts`, `metadata`, `username`, `icon_emoji`, and `icon_url` have no effect on messages delivered through a webhook URL.
@@ -1373,7 +1367,7 @@ If your workflow has a single Slack Chat step, you can apply Block Kit to all Sl
 
 ### Send extra Slack fields with `_passthrough`
 
-Use `_passthrough` when you need a value to win unconditionally, or to reach a [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) field Novu has not yet surfaced. Values in `_passthrough.body` are merged last and take priority over other override fields. The three fields Novu owns — `channel`, `token`, and `as_user` — are stripped from `_passthrough.body` just like everywhere else.
+Use `_passthrough` when you need a value to win unconditionally, or to reach a [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) field Novu has not yet surfaced. Values in `_passthrough.body` are merged last and take priority over other override fields.
 
 <Tabs>
   <Tab title="Node.js">
