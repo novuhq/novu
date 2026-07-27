@@ -29,6 +29,7 @@ import { GetActivityFeedCommand } from './get-activity-feed.command';
 import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
+const EXECUTION_DETAILS_TRACE_LIMIT = 200;
 const traceFindColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at'] as const;
 type TraceFindResult = Pick<Trace, (typeof traceFindColumns)[number]>;
 
@@ -357,6 +358,7 @@ export class GetActivityFeed {
       where: traceQuery,
       orderBy: 'created_at',
       orderDirection: 'ASC',
+      limit: EXECUTION_DETAILS_TRACE_LIMIT,
       select: traceFindColumns,
     });
 
