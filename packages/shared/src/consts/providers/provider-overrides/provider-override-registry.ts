@@ -9,6 +9,11 @@ import {
   TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,
   TELEGRAM_PRIMARY_CONTENT_KEY,
 } from './telegram/keys';
+import {
+  WHATSAPP_OVERRIDE_KEYS,
+  WHATSAPP_OVERRIDE_SCHEMA_SUBPATH,
+  WHATSAPP_PRIMARY_CONTENT_KEY,
+} from './whatsapp/keys';
 
 export type ProviderOverrideConfig = {
   /** Absent => escape hatch: free-form JSON, no validation beyond well-formedness. */
@@ -50,6 +55,7 @@ export const PROVIDER_OVERRIDE_KEYS = {
   [ToolProviderIdEnum.Opsgenie]: Object.keys(opsgenieOverrideJsonSchema.properties),
   [ChatProviderIdEnum.Slack]: SLACK_OVERRIDE_KEYS,
   [ChatProviderIdEnum.Telegram]: TELEGRAM_OVERRIDE_KEYS,
+  [ChatProviderIdEnum.WhatsAppBusiness]: WHATSAPP_OVERRIDE_KEYS,
 } as const satisfies Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum, readonly string[]>>;
 
 function schemaBacked(schema: JSONSchemaDto, keys: readonly string[], primaryContentKey: string) {
@@ -106,7 +112,11 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.GrafanaOnCall]: escapeHatch('message'),
   [ChatProviderIdEnum.GetStream]: escapeHatch('text'),
   [ChatProviderIdEnum.RocketChat]: escapeHatch('message.msg'),
-  [ChatProviderIdEnum.WhatsAppBusiness]: escapeHatch('text.body'),
+  [ChatProviderIdEnum.WhatsAppBusiness]: {
+    schemaSubpath: WHATSAPP_OVERRIDE_SCHEMA_SUBPATH,
+    keys: PROVIDER_OVERRIDE_KEYS[ChatProviderIdEnum.WhatsAppBusiness],
+    primaryContentKey: WHATSAPP_PRIMARY_CONTENT_KEY,
+  },
   [ChatProviderIdEnum.Line]: escapeHatch(null),
   [ChatProviderIdEnum.ChatWebhook]: escapeHatch('content'),
   [ChatProviderIdEnum.Telegram]: {

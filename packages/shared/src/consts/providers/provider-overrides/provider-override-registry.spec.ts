@@ -151,6 +151,18 @@ describe('provider override registry', () => {
     expect(getProviderOverrideKeysOnlySchema(ChatProviderIdEnum.Telegram)?.properties?.parse_mode).toBe(true);
   });
 
+  it('exposes WhatsApp keys eagerly while its schema stays behind a package subpath', () => {
+    const config = getProviderOverrideConfig(ChatProviderIdEnum.WhatsAppBusiness);
+
+    expect(config?.schema).toBeUndefined();
+    expect(config?.schemaSubpath).toBe('@novu/shared/provider-overrides/whatsapp');
+    expect(config?.primaryContentKey).toBe('text.body');
+    expect(getProviderOverrideKeys(ChatProviderIdEnum.WhatsAppBusiness)).toContain('type');
+    expect(getProviderOverrideKeys(ChatProviderIdEnum.WhatsAppBusiness)).toContain('text');
+    expect(getProviderOverrideKeys(ChatProviderIdEnum.WhatsAppBusiness)).toContain('template');
+    expect(getProviderOverrideKeysOnlySchema(ChatProviderIdEnum.WhatsAppBusiness)?.properties?.template).toBe(true);
+  });
+
   it('pairs every eager schema with a liquid-tolerant twin', () => {
     const config = getProviderOverrideConfig(ToolProviderIdEnum.PagerDuty);
 
