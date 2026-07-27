@@ -131,7 +131,7 @@ describe('combineProviderOverrides', () => {
     expect(combineProviderOverrides(bridge({ blocks: ['bridge'] }), undefined, undefined, 'discord')).to.deep.equal({});
   });
 
-  it('strips Slack routing and credential keys persisted on the step', () => {
+  it('passes Slack routing and credential keys from the persisted layer through', () => {
     const combined = combineProviderOverrides(
       bridge({ channel: 'C_ATTACKER', token: 'xoxb-stolen', as_user: true, text: 'hi' }),
       undefined,
@@ -139,10 +139,10 @@ describe('combineProviderOverrides', () => {
       PROVIDER_ID
     );
 
-    expect(combined).to.deep.equal({ text: 'hi' });
+    expect(combined).to.deep.equal({ channel: 'C_ATTACKER', token: 'xoxb-stolen', as_user: true, text: 'hi' });
   });
 
-  it('strips Slack routing keys arriving from trigger overrides too', () => {
+  it('lets step-scoped Slack routing keys win over workflow-global ones', () => {
     const combined = combineProviderOverrides(
       bridge({ text: 'hi' }),
       triggerOverrides({
@@ -153,10 +153,10 @@ describe('combineProviderOverrides', () => {
       PROVIDER_ID
     );
 
-    expect(combined).to.deep.equal({ text: 'hi' });
+    expect(combined).to.deep.equal({ text: 'hi', channel: 'C_STEP' });
   });
 
-  it('drops routing keys persisted on the step, for schema-less providers too', () => {
+  it('passes routing keys persisted on the step through, for schema-less providers too', () => {
     const combined = combineProviderOverrides(
       { providers: { discord: { content: 'hi', webhookUrl: 'https://elsewhere.example/hook' } } },
       undefined,
@@ -164,10 +164,10 @@ describe('combineProviderOverrides', () => {
       'discord'
     );
 
-    expect(combined).to.deep.equal({ content: 'hi' });
+    expect(combined).to.deep.equal({ content: 'hi', webhookUrl: 'https://elsewhere.example/hook' });
   });
 
-  it('drops a persisted endpoint swap while leaving ordinary object overrides alone', () => {
+  it('passes a persisted endpoint swap through while keeping ordinary object overrides', () => {
     const combined = combineProviderOverrides(
       bridge({
         text: 'hi',
@@ -179,7 +179,11 @@ describe('combineProviderOverrides', () => {
       PROVIDER_ID
     );
 
-    expect(combined).to.deep.equal({ text: 'hi', metadata: { event_type: 'x' } });
+    expect(combined).to.deep.equal({
+      text: 'hi',
+      'slack-endpoint-1': { endpoint: { channelId: 'C_ATTACKER' } },
+      metadata: { event_type: 'x' },
+    });
   });
 
   it('still lets a trigger-time caller choose the destination', () => {
@@ -193,7 +197,7 @@ describe('combineProviderOverrides', () => {
     expect(combined.webhookUrl).to.equal('https://chosen.example/hook');
   });
 
-  it('strips reserved keys hidden in _passthrough.body while keeping the raw-field door open', () => {
+  it('passes reserved keys in _passthrough.body and at the top level through', () => {
     const combined = combineProviderOverrides(
       bridge({ channel: 'C_ATTACKER', _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } } }),
       undefined,
@@ -201,6 +205,9 @@ describe('combineProviderOverrides', () => {
       PROVIDER_ID
     );
 
-    expect(combined).to.deep.equal({ _passthrough: { body: { unfurl_links: false } } });
+    expect(combined).to.deep.equal({
+      channel: 'C_ATTACKER',
+      _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } },
+    });
   });
 });
