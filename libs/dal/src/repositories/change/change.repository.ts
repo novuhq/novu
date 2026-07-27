@@ -1,4 +1,5 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ClientSession } from 'mongoose';
 
 import { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
@@ -15,7 +16,8 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
   public async getEntityChanges(
     organizationId: string,
     entityType: ChangeEntityTypeEnum,
-    entityId: string
+    entityId: string,
+    options: { session?: ClientSession | null } = {}
   ): Promise<ChangeEntity[]> {
     return await this.find(
       {
@@ -26,6 +28,7 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
       '',
       {
         sort: { createdAt: 1 },
+        session: options.session,
       }
     );
   }
