@@ -18,6 +18,7 @@ import { Label } from '@/components/primitives/label';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
+import { parseBotFatherMessage } from '@/utils/telegram-bot-token';
 import { cn } from '../../../utils/ui';
 import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
@@ -274,6 +275,7 @@ export function IntegrationSettings({
 
         {!isDemo &&
           !isAgentOnboarding &&
+          !isTelegramProvider &&
           ((integration && integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) ||
             provider?.docReference) && (
             <div className="p-3">
@@ -301,7 +303,7 @@ export function IntegrationSettings({
           )}
 
         {!isDemo && (isToolWebhookProvider || providerCredentials.length > 0) && (
-          <div className="p-3">
+          <div className="flex flex-col gap-3 p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
                 <AccordionItem value="credentials">
@@ -332,7 +334,6 @@ export function IntegrationSettings({
                       {showTelegramPaste && (
                         <TelegramCredentialsPaste
                           control={control}
-                          setValue={setValue}
                           isReadOnly={isReadOnly}
                           mobileSetup={telegramMobileVariant}
                         />
@@ -341,23 +342,35 @@ export function IntegrationSettings({
                         <ToolWebhookSettings control={control} setValue={setValue} isReadOnly={isReadOnly} />
                       ) : (
                         <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
-                          {providerCredentials.map((credential) => (
-                            <CredentialSection
-                              key={`${credential.key}-${integration?._id || 'no-id'}`}
-                              credential={
-                                showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
-                                  ? {
-                                      ...credential,
-                                      description:
-                                        'Auto-filled from the BotFather message above, or enter it manually.',
-                                    }
-                                  : credential
-                              }
-                              control={control}
-                              isReadOnly={isReadOnly}
-                              integrationId={integration?._id}
-                            />
-                          ))}
+                          {providerCredentials.map((credential) => {
+                            const isTelegramApiToken =
+                              showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken;
+
+                            return (
+                              <CredentialSection
+                                key={`${credential.key}-${integration?._id || 'no-id'}`}
+                                credential={credential}
+                                control={control}
+                                isReadOnly={isReadOnly}
+                                integrationId={integration?._id}
+                                hideDescription={isTelegramApiToken}
+                                placeholder={
+                                  isTelegramApiToken
+                                    ? "Enter bot token or paste the full message here, we'll parse it..."
+                                    : undefined
+                                }
+                                onPasteTransform={
+                                  isTelegramApiToken
+                                    ? (pastedText) => {
+                                        const { token } = parseBotFatherMessage(pastedText);
+
+                                        return token;
+                                      }
+                                    : undefined
+                                }
+                              />
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -365,6 +378,25 @@ export function IntegrationSettings({
                 </AccordionItem>
               </Accordion>
             </Protect>
+            {isTelegramProvider && !isAgentOnboarding && provider?.docReference && (
+              <InlineToast
+                variant="tip"
+                description={
+                  <>
+                    To learn more about how to configure your integration, view{' '}
+                    <button
+                      type="button"
+                      className="text-foreground-600 underline underline-offset-2"
+                      onClick={() => {
+                        window.open(provider.docReference ?? '', '_blank');
+                      }}
+                    >
+                      set-up guide
+                    </button>
+                  </>
+                }
+              />
+            )}
           </div>
         )}
       </FormRoot>

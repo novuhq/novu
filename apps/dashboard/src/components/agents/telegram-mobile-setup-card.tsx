@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { RiFileCopyLine, RiQrCodeLine, RiRefreshLine, RiSmartphoneLine } from 'react-icons/ri';
+import { RiQrCodeLine, RiRefreshLine, RiSmartphoneLine } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
 import { requestTelegramMobileLink, type TelegramMobileLink } from '@/api/agents';
 import { type IntegrationStoreTelegramMobileLink, requestIntegrationStoreTelegramMobileLink } from '@/api/integrations';
@@ -28,7 +28,7 @@ type TelegramMobileSetupCardShellProps = {
   className?: string;
   /**
    * `stacked` (default): vertical layout, QR centered above controls. Best when the parent is narrow.
-   * `inline`: QR on the left, helper text + actions on the right. Best for wider containers like modals.
+   * `inline`: text + actions on the left, compact QR + countdown on the right. Matches the credentials Figma.
    */
   layout?: CardLayout;
 };
@@ -52,39 +52,44 @@ function TelegramMobileSetupCardShell({
 
   if (layout === 'inline') {
     return (
-      <div
-        className={cn('border-stroke-soft bg-bg-weak/50 flex w-full flex-row gap-3 rounded-md border p-3', className)}
-      >
-        <div className="shrink-0">
-          {link ? <QrPreview link={link} isRefreshing={isRefreshing} hideMeta size={120} /> : <QrSkeleton size={120} />}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-          <div className="flex flex-col gap-1">
-            <div className="text-text-strong text-label-xs flex items-center gap-1.5 font-medium">
-              <RiSmartphoneLine className="size-3.5" />
-              Set up from your phone
-            </div>
-            <p className="text-text-soft text-label-xs leading-4">
-              Scan or open the link on the device where BotFather sent the token and paste the entire message. Refreshes
-              every 5 minutes.
-            </p>
-          </div>
-          <div className="flex flex-col items-start gap-1.5">
-            {link && (
-              <>
-                <ExpiresCountdown expiresAtMs={new Date(link.expiresAt).getTime()} />
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <CopyLinkButton url={link.url} />
-                  <RefreshLinkButton
-                    expiresAtMs={new Date(link.expiresAt).getTime()}
-                    isRefreshing={isRefreshing}
-                    onRefresh={onRefresh}
+      <div className={cn('flex w-full flex-col gap-4', className)}>
+        <div className="flex w-full items-start gap-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <div className="text-text-strong text-label-xs flex items-center gap-1 font-medium">
+                <span className="flex size-4 shrink-0 items-center justify-center">
+                  <img
+                    src="/images/telegram-setup/phone-find-line.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-3 w-[10px]"
                   />
-                </div>
-              </>
-            )}
+                </span>
+                Setup from your phone
+              </div>
+              <p className="text-text-soft text-label-xs leading-4">
+                Scan or open the link, then paste the full BotFather message. Refreshes every 5 minutes.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {link && <CopyLinkButton url={link.url} />}
+              {link && (
+                <RefreshLinkButton
+                  expiresAtMs={new Date(link.expiresAt).getTime()}
+                  isRefreshing={isRefreshing}
+                  onRefresh={onRefresh}
+                />
+              )}
+            </div>
             {isError && (
               <p className="text-error-base text-label-xs">Couldn&apos;t generate a setup link. Try refreshing.</p>
+            )}
+          </div>
+          <div className="shrink-0">
+            {link ? (
+              <QrPreview link={link} isRefreshing={isRefreshing} compact />
+            ) : (
+              <QrSkeleton size={98} compact />
             )}
           </div>
         </div>
@@ -101,7 +106,7 @@ function TelegramMobileSetupCardShell({
     >
       <div className="text-text-strong text-label-xs flex items-center gap-1.5 font-medium">
         <RiSmartphoneLine className="size-3.5" />
-        Set up from your phone
+        Setup from your phone
       </div>
       <p className="text-text-soft text-label-xs leading-4">
         Scan the QR code or open the link on the device where BotFather sent the token. Refreshes every 5 minutes.
@@ -211,7 +216,20 @@ export function IntegrationStoreTelegramMobileSetupCard({
   );
 }
 
-function QrSkeleton({ size = 140 }: { size?: number }) {
+function QrSkeleton({ size = 140, compact }: { size?: number; compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="bg-bg-muted rounded-lg p-1" aria-label="Loading QR code">
+        <div
+          className="bg-bg-white flex animate-pulse items-center justify-center rounded"
+          style={{ width: size + 8, height: size + 22 }}
+        >
+          <RiQrCodeLine className="text-text-soft size-8" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="border-stroke-soft bg-bg-white flex animate-pulse items-center justify-center rounded-md border"
@@ -226,39 +244,78 @@ function QrSkeleton({ size = 140 }: { size?: number }) {
 function QrPreview({
   link,
   isRefreshing,
-  hideMeta,
+  compact,
   size = 140,
   onRefresh,
 }: {
   link: TelegramMobileLink;
   isRefreshing: boolean;
-  hideMeta?: boolean;
+  compact?: boolean;
   size?: number;
   onRefresh?: () => void;
 }) {
   const expiresAtMs = useMemo(() => new Date(link.expiresAt).getTime(), [link.expiresAt]);
+  const qrSize = compact ? 84 : size;
+
+  if (compact) {
+    return (
+      <div className={cn('bg-bg-muted rounded-lg p-1 transition-opacity', isRefreshing && 'opacity-60')}>
+        <div className="bg-bg-white flex flex-col items-center overflow-hidden rounded pb-1">
+          <div className="flex h-[100px] w-[98px] shrink-0 justify-center pt-1">
+            <div className="relative size-[84px]">
+              <QRCode value={link.url} size={qrSize} level="H" className="size-full" />
+              <div className="bg-bg-white absolute top-1/2 left-1/2 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full">
+                <img
+                  src="/images/providers/light/square/telegram.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="size-full"
+                />
+              </div>
+            </div>
+          </div>
+          <ExpiresCountdown expiresAtMs={expiresAtMs} variant="resets" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      <div className={cn('bg-bg-white rounded-md p-2 transition-opacity', isRefreshing && 'opacity-60')}>
-        <QRCode value={link.url} size={size} />
+      <div
+        className={cn(
+          'bg-bg-white relative rounded-md p-2 transition-opacity',
+          isRefreshing && 'opacity-60'
+        )}
+      >
+        <QRCode value={link.url} size={qrSize} level="H" />
+        <div className="bg-bg-white absolute top-1/2 left-1/2 flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full p-0.5">
+          <img
+            src="/images/providers/light/square/telegram.svg"
+            alt=""
+            aria-hidden="true"
+            className="size-full"
+          />
+        </div>
       </div>
-      {!hideMeta && (
-        <>
-          <ExpiresCountdown expiresAtMs={expiresAtMs} />
-          <div className="flex flex-wrap items-center justify-center gap-1.5">
-            <CopyLinkButton url={link.url} />
-            {onRefresh && (
-              <RefreshLinkButton expiresAtMs={expiresAtMs} isRefreshing={isRefreshing} onRefresh={onRefresh} />
-            )}
-          </div>
-        </>
-      )}
+      <ExpiresCountdown expiresAtMs={expiresAtMs} />
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        <CopyLinkButton url={link.url} />
+        {onRefresh && (
+          <RefreshLinkButton expiresAtMs={expiresAtMs} isRefreshing={isRefreshing} onRefresh={onRefresh} />
+        )}
+      </div>
     </>
   );
 }
 
-function ExpiresCountdown({ expiresAtMs }: { expiresAtMs: number }) {
+function ExpiresCountdown({
+  expiresAtMs,
+  variant = 'refreshes',
+}: {
+  expiresAtMs: number;
+  variant?: 'refreshes' | 'resets';
+}) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -269,11 +326,28 @@ function ExpiresCountdown({ expiresAtMs }: { expiresAtMs: number }) {
 
   const remainingMs = Math.max(0, expiresAtMs - now);
   const isStale = remainingMs <= 0;
+  const isCompact = variant === 'resets';
 
   if (isStale) {
     return (
-      <div className="text-text-soft flex items-center gap-1 text-label-xs">
-        <RiRefreshLine className="size-3" />
+      <div
+        className={cn(
+          'text-text-soft flex items-center justify-center gap-1',
+          isCompact ? 'text-[10px] leading-[14px]' : 'text-label-xs'
+        )}
+      >
+        {isCompact ? (
+          <span className="flex size-2.5 items-center justify-center">
+            <img
+              src="/images/telegram-setup/refresh-cw-small.svg"
+              alt=""
+              aria-hidden="true"
+              className="size-[8.5px]"
+            />
+          </span>
+        ) : (
+          <RiRefreshLine className="size-3" />
+        )}
         Refreshing…
       </div>
     );
@@ -283,11 +357,29 @@ function ExpiresCountdown({ expiresAtMs }: { expiresAtMs: number }) {
   const seconds = Math.floor((remainingMs % 60_000) / 1000);
   const padded = `${minutes}:${seconds.toString().padStart(2, '0')}`;
   const nearExpiry = remainingMs < TOKEN_TTL_MS - REFRESH_INTERVAL_MS;
+  const label = variant === 'resets' ? `Resets in\u00a0${padded}` : `Refreshes in ${padded}`;
 
   return (
-    <div className={cn('text-text-soft flex items-center gap-1 text-label-xs', nearExpiry && 'text-warning-base')}>
-      <RiRefreshLine className="size-3" />
-      Refreshes in {padded}
+    <div
+      className={cn(
+        'text-text-soft flex items-center justify-center gap-1',
+        isCompact ? 'text-[10px] leading-[14px]' : 'text-label-xs',
+        nearExpiry && 'text-warning-base'
+      )}
+    >
+      {isCompact ? (
+        <span className="flex size-2.5 items-center justify-center">
+          <img
+            src="/images/telegram-setup/refresh-cw-small.svg"
+            alt=""
+            aria-hidden="true"
+            className="size-[8.5px]"
+          />
+        </span>
+      ) : (
+        <RiRefreshLine className="size-3" />
+      )}
+      {label}
     </div>
   );
 }
@@ -319,14 +411,21 @@ function RefreshLinkButton({
     <Button
       type="button"
       variant="secondary"
-      mode="outline"
+      mode="ghost"
       size="xs"
-      leadingIcon={RiRefreshLine}
       onClick={onRefresh}
       disabled={isRefreshing}
-      className="text-text-sub gap-1.5 px-2 py-1.5"
+      className="text-text-sub gap-0.5 px-1 py-1.5"
     >
-      Refresh
+      <span className="flex size-3.5 items-center justify-center">
+        <img
+          src="/images/telegram-setup/refresh-cw.svg"
+          alt=""
+          aria-hidden="true"
+          className="size-[11.5px]"
+        />
+      </span>
+      Refresh token
     </Button>
   );
 }
@@ -349,10 +448,17 @@ function CopyLinkButton({ url }: { url: string }) {
       variant="secondary"
       mode="outline"
       size="xs"
-      leadingIcon={RiFileCopyLine}
       onClick={handleCopy}
-      className="text-text-sub gap-1.5 px-2 py-1.5"
+      className="text-text-sub gap-0.5 px-2 py-1.5"
     >
+      <span className="flex size-3.5 items-center justify-center">
+        <img
+          src="/images/telegram-setup/copy.svg"
+          alt=""
+          aria-hidden="true"
+          className="size-[13px]"
+        />
+      </span>
       Copy link
     </Button>
   );

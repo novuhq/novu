@@ -173,10 +173,14 @@ function SecretInputControl({
   credential,
   field,
   isReadOnly,
+  placeholder,
+  onPasteTransform,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
   isReadOnly?: boolean;
+  placeholder?: string;
+  onPasteTransform?: (pastedText: string) => string | null;
 }) {
   const stringValue = typeof field.value === 'string' ? field.value : '';
 
@@ -186,9 +190,24 @@ function SecretInputControl({
       <FormControl>
         <SecretInput
           id={credential.key}
-          placeholder={`Enter ${credential.displayName.toLowerCase()}`}
+          placeholder={placeholder ?? `Enter ${credential.displayName.toLowerCase()}`}
           value={stringValue}
           onChange={field.onChange}
+          onPaste={
+            onPasteTransform
+              ? (event) => {
+                  const pastedText = event.clipboardData.getData('text/plain');
+                  const transformed = onPasteTransform(pastedText);
+
+                  if (transformed === null) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  field.onChange(transformed);
+                }
+              : undefined
+          }
           disabled={isReadOnly}
         />
       </FormControl>
@@ -302,6 +321,8 @@ function InputControl({
   disabledSwitchMessage,
   integrationId,
   tooltip,
+  placeholder,
+  onPasteTransform,
 }: {
   credential: IConfigCredential;
   field: ControllerRenderProps<IntegrationFormData>;
@@ -311,6 +332,8 @@ function InputControl({
   disabledSwitchMessage?: string;
   integrationId?: string;
   tooltip?: ReactNode;
+  placeholder?: string;
+  onPasteTransform?: (pastedText: string) => string | null;
 }) {
   if (credential.type === 'pushResources') {
     return <PushResources credential={credential} integrationId={integrationId} />;
@@ -338,7 +361,15 @@ function InputControl({
   }
 
   if (SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum)) {
-    return <SecretInputControl credential={credential} field={field} isReadOnly={isReadOnly} />;
+    return (
+      <SecretInputControl
+        credential={credential}
+        field={field}
+        isReadOnly={isReadOnly}
+        placeholder={placeholder}
+        onPasteTransform={onPasteTransform}
+      />
+    );
   }
 
   return <TextInputControl credential={credential} field={field} fieldState={fieldState} isReadOnly={isReadOnly} />;
@@ -352,6 +383,9 @@ export function CredentialSection({
   disabledSwitchMessage,
   name = 'credentials',
   integrationId,
+  placeholder,
+  onPasteTransform,
+  hideDescription,
 }: {
   credential: IConfigCredential;
   control: Control<IntegrationFormData>;
@@ -360,6 +394,10 @@ export function CredentialSection({
   disabledSwitchMessage?: string;
   name?: 'credentials' | 'configurations';
   integrationId?: string;
+  placeholder?: string;
+  /** When paste yields a string, that value is written; return `null` to keep the default paste. */
+  onPasteTransform?: (pastedText: string) => string | null;
+  hideDescription?: boolean;
 }) {
   return (
     <FormField
@@ -386,6 +424,8 @@ export function CredentialSection({
             isDisabledWithSwitch={isDisabledWithSwitch}
             disabledSwitchMessage={disabledSwitchMessage}
             integrationId={integrationId}
+            placeholder={placeholder}
+            onPasteTransform={onPasteTransform}
             tooltip={
               credential.tooltip?.text ? (
                 <DescriptionWithLinks description={credential.tooltip?.text} links={credential.links} />
@@ -395,7 +435,7 @@ export function CredentialSection({
 
           <FormMessage>
             {fieldState.error?.message ||
-              (credential.description && (
+              (!hideDescription && credential.description && (
                 <DescriptionWithLinks description={credential.description} links={credential.links} />
               ))}
           </FormMessage>
