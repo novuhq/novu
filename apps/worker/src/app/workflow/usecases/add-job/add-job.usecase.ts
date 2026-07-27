@@ -364,11 +364,16 @@ export class AddJob {
       throw new Error(`Job with id ${job._id} not found`);
     }
 
+    // 1. Queue the job FIRST. If we crash after this point the queue message
+    //    still fires and the worker reclaims the stale RUNNING claim.
+    await this.queueJob({ job, delay, untilDate: bridgeDelayAmountDate, timezone: subscriber?.timezone });
+
+    // 2. THEN update the MongoDB status atomically.
+    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
+
     await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
     });
-
-    await this.queueJob({ job, delay, untilDate: bridgeDelayAmountDate, timezone: subscriber?.timezone });
 
     return {
       workflowStatus: null,
@@ -416,14 +421,18 @@ export class AddJob {
   private async executeNoneDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
-    this.logger.trace(`Updating status to queued for job ${job._id}`);
+    this.logger.trace(`Queueing job ${job._id}`);
+
+    // 1. Queue the job FIRST. If we crash after this point the queue message
+    //    still fires and the worker reclaims the stale RUNNING claim.
+    await this.queueJob({ job, delay: 0, untilDate: null });
+
+    // 2. THEN update the MongoDB status atomically.
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
 
     await this.stepRunRepository.create(job, {
       status: JobStatusEnum.QUEUED,
     });
-
-    await this.queueJob({ job, delay: 0, untilDate: null });
 
     /*
      * The message now exists, so the claim-to-enqueue crash window is over: without
@@ -478,8 +487,6 @@ export class AddJob {
     if (delayType === DelayTypeEnum.DYNAMIC) {
       await this.validateDynamicDuration(command, job, delayAmount, StepTypeEnum.DELAY);
     }
-
-    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
 
     this.logger.debug(`Delay step Amount is: ${delayAmount}`);
 

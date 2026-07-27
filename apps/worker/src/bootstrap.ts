@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/response.interceptor';
 import { prepareAppInfra, startAppInfra } from './app/workflow/services/cold-start.service';
+import { JobReconciliationService } from './app/workflow/services/job-reconciliation.service';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, validateEnv } from './config';
 
@@ -72,6 +73,18 @@ export async function bootstrap(): Promise<INestApplication> {
   } catch (e) {
     Logger.error('[@novu/worker]: Failed to start app infra', e.message, e.start);
     process.exit(1);
+  }
+
+  // Fire-and-forget: reconcile any jobs stuck in DELAYED state without queue
+  // entries. This is a startup safety net; the reverse-order fix in
+  // extendJobToNextAvailableSchedule / executeDeferredJob / executeNoneDeferredJob
+  // prevents new occurrences.
+  try {
+    app.get(JobReconciliationService).reconcileOnStartup().catch((reconcileErr) => {
+      Logger.error('[@novu/worker]: Job reconciliation error', reconcileErr);
+    });
+  } catch (e) {
+    Logger.error('[@novu/worker]: Failed to start job reconciliation', e);
   }
 
   await app.listen(process.env.PORT!);

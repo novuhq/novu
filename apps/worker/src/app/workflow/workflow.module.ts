@@ -89,6 +89,7 @@ import { ExecuteCodeFirstCustomStep } from './usecases/send-message/execute-code
 import { ExecuteHttpRequestStep } from './usecases/send-message/execute-http-request-step.usecase';
 import { StoreSubscriberJobs } from './usecases/store-subscriber-jobs';
 import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-job-bound.usecase';
+import { JobReconciliationService } from './services/job-reconciliation.service';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -229,7 +230,7 @@ const USE_CASES = [
   ResolveChannelEndpoints,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService, RotatingConnectionTokenService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService, RotatingConnectionTokenService, JobReconciliationService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

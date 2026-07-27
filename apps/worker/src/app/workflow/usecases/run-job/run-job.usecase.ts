@@ -1111,6 +1111,25 @@ export class RunJob {
       return false;
     }
 
+    const updatedJob = await this.jobRepository.findOne({
+      _id: job._id,
+      _environmentId: job._environmentId,
+    });
+
+    if (!updatedJob) {
+      throw new PlatformException(`Job with id ${job._id} not found`);
+    }
+
+    // 1. Queue the job FIRST. If we crash after this point the queue message
+    //    still fires and the worker reclaims the stale RUNNING claim.
+    await this.addJobUsecase.queueJob({
+      job: updatedJob,
+      delay: delayMs,
+      untilDate: nextAvailableTime,
+      timezone,
+    });
+
+    // 2. THEN update the MongoDB status atomically.
     await this.jobRepository.updateOne(
       {
         _id: job._id,
@@ -1123,15 +1142,6 @@ export class RunJob {
         },
       }
     );
-
-    const updatedJob = await this.jobRepository.findOne({
-      _id: job._id,
-      _environmentId: job._environmentId,
-    });
-
-    if (!updatedJob) {
-      throw new PlatformException(`Job with id ${job._id} not found`);
-    }
 
     await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,
@@ -1157,14 +1167,6 @@ export class RunJob {
         }),
       })
     );
-
-    // re-queue the job with the new delay
-    await this.addJobUsecase.queueJob({
-      job: updatedJob,
-      delay: delayMs,
-      untilDate: nextAvailableTime,
-      timezone,
-    });
 
     this.logger.info(
       {
