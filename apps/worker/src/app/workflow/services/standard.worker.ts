@@ -11,12 +11,12 @@ import {
   StandardWorkerService,
   Store,
   storage,
+  UnrecoverableError,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, JobStatusEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
-import { UnrecoverableError } from 'bullmq';
 import {
   HandleLastFailedJob,
   HandleLastFailedJobCommand,
