@@ -6,6 +6,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  FeatureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -37,6 +38,7 @@ import {
   EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   IPreferenceChannels,
@@ -85,7 +87,8 @@ export class SendMessage {
     private environmentVariableRepository: EnvironmentVariableRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -262,6 +265,32 @@ export class SendMessage {
           }),
         })
       );
+    } else if (command.job.step.filters?.length) {
+      const isPassedTraceEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+        environment: { _id: command.environmentId },
+      });
+
+      if (isPassedTraceEnabled) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.STEP_CONDITIONS_PASSED,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.SUCCESS,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              filter: {
+                conditions: stepCondition.conditions,
+                passed: stepCondition.passed,
+              },
+            }),
+          })
+        );
+      }
     }
 
     return stepCondition;

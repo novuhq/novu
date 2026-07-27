@@ -26,6 +26,7 @@ import {
   EmailBlockTypeEnum,
   EmailProviderIdEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
   FilterPartTypeEnum,
@@ -478,6 +479,106 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       });
 
       expect(executionDetails.length).to.equal(0);
+    });
+
+    describe('step conditions passed trace', () => {
+      const skipRule = { '==': [{ var: 'payload.tier' }, 'pro'] };
+
+      async function createV2WorkflowWithSkipConditions(): Promise<WorkflowResponseDto> {
+        const workflowBody: CreateWorkflowDto = {
+          name: 'Skip Conditions Passed Workflow',
+          workflowId: `skip-conditions-passed-${uuid()}`,
+          __source: WorkflowCreationSourceEnum.DASHBOARD,
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              name: 'In-App Step',
+              controlValues: {
+                subject: 'Test Subject',
+                body: 'Test Body',
+                skip: skipRule,
+              },
+            },
+          ],
+        };
+
+        const workflowResponse = await session.testAgent.post('/v2/workflows').send(workflowBody);
+        expect(workflowResponse.status).to.equal(201);
+
+        return workflowResponse.body.data;
+      }
+
+      it('should create a step conditions passed execution detail when the flag is enabled', async () => {
+        const flagKey = FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED;
+        const previousFlagValue = process.env[flagKey];
+        process.env[flagKey] = 'true';
+
+        try {
+          const v2Workflow = await createV2WorkflowWithSkipConditions();
+
+          await novuClient.trigger({
+            workflowId: v2Workflow.workflowId,
+            to: [subscriber.subscriberId],
+            payload: { tier: 'pro' },
+          });
+
+          await session.waitForJobCompletion(v2Workflow._id);
+
+          const messages = await messageRepository.find({
+            _environmentId: session.environment._id,
+            _subscriberId: subscriber._id,
+            channel: StepTypeEnum.IN_APP,
+          });
+          expect(messages.length).to.equal(1);
+
+          const executionDetails = await executionDetailsRepository.find({
+            _environmentId: session.environment._id,
+            _notificationTemplateId: v2Workflow._id,
+            detail: DetailEnum.STEP_CONDITIONS_PASSED,
+          });
+
+          expect(executionDetails.length).to.equal(1);
+          expect(executionDetails[0].status).to.equal(ExecutionDetailsStatusEnum.SUCCESS);
+
+          const raw = JSON.parse(executionDetails[0].raw as string);
+          expect(raw.passed).to.equal(true);
+          expect(raw.conditions).to.deep.equal(skipRule);
+          expect(raw.evaluatedValues).to.deep.equal({ 'payload.tier': 'pro' });
+        } finally {
+          if (previousFlagValue === undefined) {
+            delete process.env[flagKey];
+          } else {
+            process.env[flagKey] = previousFlagValue;
+          }
+        }
+      });
+
+      it('should not create a step conditions passed execution detail when the flag is disabled', async () => {
+        const v2Workflow = await createV2WorkflowWithSkipConditions();
+
+        await novuClient.trigger({
+          workflowId: v2Workflow.workflowId,
+          to: [subscriber.subscriberId],
+          payload: { tier: 'pro' },
+        });
+
+        await session.waitForJobCompletion(v2Workflow._id);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+        });
+        expect(messages.length).to.equal(1);
+
+        const executionDetails = await executionDetailsRepository.find({
+          _environmentId: session.environment._id,
+          _notificationTemplateId: v2Workflow._id,
+          detail: DetailEnum.STEP_CONDITIONS_PASSED,
+        });
+
+        expect(executionDetails.length).to.equal(0);
+      });
     });
 
     it('should digest events with filters', async () => {

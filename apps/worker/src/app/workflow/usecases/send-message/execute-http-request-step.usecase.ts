@@ -7,6 +7,8 @@ import {
   DetailEnum,
   dashboardSanitizeControlValues,
   evaluateRules,
+  extractRuleVariables,
+  FeatureFlagsService,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   HttpClientService,
@@ -25,6 +27,7 @@ import {
   DeliveryLifecycleStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
 } from '@novu/shared';
@@ -50,6 +53,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     private logger: PinoLogger,
     private getDecryptedSecretKey: GetDecryptedSecretKey,
     private executeBridgeJob: ExecuteBridgeJob,
+    private featureFlagsService: FeatureFlagsService,
     protected messageRepository: MessageRepository,
     protected createExecutionDetails: CreateExecutionDetails
   ) {
@@ -84,6 +88,8 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         },
       };
     }
+
+    await this.createStepConditionsPassedDetail(command, controlValues, compileContext);
 
     const { skip: _skip, ...controlValuesWithoutSkip } = controlValues;
 
@@ -367,6 +373,45 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       webhook: compileContext.webhook ?? {},
       env: compileContext.env ?? {},
     };
+  }
+
+  private async createStepConditionsPassedDetail(
+    command: SendMessageChannelCommand,
+    controlValues: Record<string, unknown>,
+    compileContext: Record<string, unknown>
+  ): Promise<void> {
+    const skipRules = controlValues.skip as RulesLogic<AdditionalOperation> | undefined;
+
+    if (!skipRules || (typeof skipRules === 'object' && Object.keys(skipRules).length === 0)) {
+      return;
+    }
+
+    const isPassedTraceEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+    });
+
+    if (!isPassedTraceEnabled) {
+      return;
+    }
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.STEP_CONDITIONS_PASSED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+        raw: truncateRaw({
+          passed: true,
+          conditions: skipRules,
+          evaluatedValues: extractRuleVariables(skipRules, compileContext),
+        }),
+      })
+    );
   }
 
   private evaluateSkipCondition(
