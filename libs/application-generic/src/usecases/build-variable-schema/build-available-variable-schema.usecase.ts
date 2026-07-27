@@ -109,12 +109,7 @@ export class BuildVariableSchemaUsecase {
       ? { name: environmentEntity.name, type: environmentEntity.type }
       : {};
     const envVars = { ...resolveEnvironmentVariables(rawEnvVars), ...systemVars };
-    const controlValuesMap: Record<string, Record<string, unknown>> = {};
-    for (const cv of controls) {
-      if (cv._stepId) {
-        controlValuesMap[cv._stepId] = cv.controls;
-      }
-    }
+    const controlValuesMap = buildControlValuesMap(controls, optimisticSteps);
 
     return {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -227,6 +222,70 @@ export class BuildVariableSchemaUsecase {
   }
 }
 
+function buildControlValuesMap(
+  controls: SelectedControlValuesFields[],
+  optimisticSteps?: IOptimisticStepInfo[]
+): Record<string, Record<string, unknown>> {
+  const controlValuesMap: Record<string, Record<string, unknown>> = {};
+
+  for (const cv of controls) {
+    if (cv._stepId) {
+      controlValuesMap[cv._stepId] = cv.controls;
+    }
+  }
+
+  if (!optimisticSteps) {
+    return controlValuesMap;
+  }
+
+  for (const optimisticStep of optimisticSteps) {
+    if (!optimisticStep.controlValues || !optimisticStep._id) {
+      continue;
+    }
+
+    controlValuesMap[optimisticStep._id] = {
+      ...controlValuesMap[optimisticStep._id],
+      ...optimisticStep.controlValues,
+    };
+  }
+
+  return controlValuesMap;
+}
+
+function resolveHttpResponseBodySchema(
+  step: StepForVariableSchema | IOptimisticStepInfo,
+  stepType: StepTypeEnum,
+  controlValuesMap?: Record<string, Record<string, unknown>>
+): JSONSchemaDto | undefined {
+  if (stepType !== StepTypeEnum.HTTP_REQUEST) {
+    return undefined;
+  }
+
+  if ('controlValues' in step && step.controlValues?.responseBodySchema) {
+    return step.controlValues.responseBodySchema as JSONSchemaDto;
+  }
+
+  const stepControlsKey = getStepControlsKey(step);
+
+  if (stepControlsKey && controlValuesMap?.[stepControlsKey]?.responseBodySchema) {
+    return controlValuesMap[stepControlsKey].responseBodySchema as JSONSchemaDto;
+  }
+
+  return undefined;
+}
+
+function getStepControlsKey(step: StepForVariableSchema | IOptimisticStepInfo): string | undefined {
+  if ('_id' in step && step._id) {
+    return step._id;
+  }
+
+  if ('_templateId' in step && step._templateId) {
+    return step._templateId;
+  }
+
+  return undefined;
+}
+
 function buildPreviousStepsProperties({
   previousSteps,
   payloadSchema,
@@ -240,24 +299,18 @@ function buildPreviousStepsProperties({
     (acc, step) => {
       let stepId: string | undefined;
       let stepType: StepTypeEnum | undefined;
-      let responseBodySchema: JSONSchemaDto | undefined;
 
       if ('template' in step && step.template?.type) {
         stepId = step.stepId;
         stepType = step.template.type;
-
-        if (stepType === StepTypeEnum.HTTP_REQUEST && step._id && controlValuesMap) {
-          const stepControls = controlValuesMap[step._id];
-          if (stepControls?.responseBodySchema) {
-            responseBodySchema = stepControls.responseBodySchema as JSONSchemaDto;
-          }
-        }
       } else if ('type' in step) {
         stepId = step.stepId;
         stepType = step.type;
       }
 
       if (stepId && stepType) {
+        const responseBodySchema = resolveHttpResponseBodySchema(step, stepType, controlValuesMap);
+
         acc[stepId] = computeResultSchema({
           stepType,
           payloadSchema,
