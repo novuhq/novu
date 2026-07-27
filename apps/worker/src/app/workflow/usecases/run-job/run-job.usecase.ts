@@ -12,6 +12,7 @@ import {
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  isRetryableWebhookFilterError,
   NotificationPayloadService,
   PinoLogger,
   StepRunRepository,
@@ -42,7 +43,7 @@ import {
 import { setUser } from '@sentry/node';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
+import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { PartialNotificationEntity } from '../add-job/add-job.command';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
@@ -859,7 +860,7 @@ export class RunJob {
   }
 
   public shouldBackoff(error: Error): boolean {
-    return error?.message?.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
+    return isRetryableWebhookFilterError(error);
   }
 
   /**

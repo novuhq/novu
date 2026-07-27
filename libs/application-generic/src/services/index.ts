@@ -12,6 +12,7 @@ export {
   QueueOptions,
   Worker,
   WorkerOptions,
+  UnrecoverableError,
 } from './bull-mq';
 export * from './cache';
 export * from './calculate-delay';
