@@ -29,7 +29,6 @@ import {
   ProvidersIdEnum,
   providers,
   SmsProviderIdEnum,
-  stripReservedOverrideKeys,
   TriggerOverrides,
 } from '@novu/shared';
 import { format } from 'date-fns';
@@ -57,40 +56,8 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
 }
 
 /**
- * `SendMessageChat` reads delivery routing out of the merged override blob: `webhookUrl` picks the
- * webhook destination, and an endpoint-identifier key carrying an `endpoint` swaps a subscriber's
- * endpoint outright. Choosing a destination at trigger time is deliberate, but a workflow author
- * configuring message content is not choosing where it goes, so these are dropped from the
- * persisted layer only.
- */
-function stripPersistedRoutingKeys(persisted: Record<string, unknown>): Record<string, unknown> {
-  const routingKeys = Object.keys(persisted).filter(
-    (key) => key === 'webhookUrl' || isEndpointOverride(persisted[key])
-  );
-
-  if (routingKeys.length === 0) {
-    return persisted;
-  }
-
-  const stripped = { ...persisted };
-  for (const key of routingKeys) {
-    delete stripped[key];
-  }
-
-  return stripped;
-}
-
-function isEndpointOverride(value: unknown): boolean {
-  return typeof value === 'object' && value !== null && 'endpoint' in value;
-}
-
-/**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
- *
- * Keys Novu owns are stripped from the result. Omitting them from a provider's schema only
- * raises an advisory step issue, and escape-hatch providers have no schema at all, so this is
- * the only point that actually holds the guarantee before the payload reaches the provider.
  */
 export function combineProviderOverrides(
   bridgeData: Record<string, any> | null | undefined,
@@ -98,13 +65,11 @@ export function combineProviderOverrides(
   stepId: string | undefined,
   integrationId: string
 ): Record<string, unknown> {
-  const bridgeProviderData = stripPersistedRoutingKeys(bridgeData?.providers?.[integrationId] || {});
+  const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
   const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
-  const merged = mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
-
-  return stripReservedOverrideKeys(integrationId, merged);
+  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
 }
 
 export abstract class SendMessageBase extends SendMessageType {
