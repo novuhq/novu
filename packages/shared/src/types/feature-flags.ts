@@ -173,6 +173,12 @@ export enum FeatureFlagsKeysEnum {
   IS_JOB_STEP_DEDUP_ENABLED = 'IS_JOB_STEP_DEDUP_ENABLED',
   /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
+  /**
+   * Enable assigning an agent to a workflow in the dashboard ("Send & reply via agent").
+   * Create the boolean in LaunchDarkly for cloud, or set
+   * `VITE_IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED` when self-hosted.
+   */
+  IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED = 'IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require

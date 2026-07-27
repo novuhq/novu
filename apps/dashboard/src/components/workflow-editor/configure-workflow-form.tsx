@@ -1,6 +1,7 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
   MAX_DESCRIPTION_LENGTH,
   MAX_TAG_ELEMENTS,
   PermissionsEnum,
@@ -17,6 +18,7 @@ import {
   RiArrowRightSLine,
   RiCodeSSlashLine,
   RiDeleteBin2Line,
+  RiInformationLine,
   RiListView,
   RiMore2Fill,
   RiSettingsLine,
@@ -49,12 +51,14 @@ import { Switch } from '@/components/primitives/switch';
 import { Tag } from '@/components/primitives/tag';
 import { TagInput } from '@/components/primitives/tag-input';
 import { Textarea } from '@/components/primitives/textarea';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { usePromotionalBanner } from '@/components/promotional/coming-soon-banner';
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { workflowSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
 import { useTags } from '@/hooks/use-tags';
@@ -127,6 +131,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const { tags } = useTags();
   const { currentEnvironment } = useEnvironment();
   const { isSyncable, PromoteConfirmModal } = useSyncWorkflow(workflow);
+  const isWorkflowAgentAssignmentEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED);
 
   const { show: showComingSoonBanner } = usePromotionalBanner({
     content: {
@@ -741,6 +746,42 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
               />
             )}
           />
+          {isWorkflowAgentAssignmentEnabled ? (
+            <Link to={ROUTES.EDIT_WORKFLOW_AGENT} className="block border-t border-stroke-weak">
+              <div className="flex flex-col gap-0.5 px-2.5 py-3">
+                <div className="flex h-5 items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center">
+                    <span className="text-text-strong text-label-xs font-medium whitespace-nowrap">
+                      Send & reply via agent
+                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-text-soft inline-flex size-4 shrink-0 items-center justify-center"
+                          onClick={(event) => event.preventDefault()}
+                        >
+                          <RiInformationLine className="size-3.5" />
+                          <span className="sr-only">About send and reply via agent</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        Assign an agent so this workflow can send through the agent&apos;s connected channels and route
+                        replies back automatically.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <span className="text-text-sub inline-flex shrink-0 items-center gap-0 pl-1 text-label-xs font-medium">
+                    Setup
+                    <RiArrowRightSLine className="size-4" />
+                  </span>
+                </div>
+                <p className="text-text-soft text-label-2xs leading-3.5">
+                  Let your user reply and continue with an agent
+                </p>
+              </div>
+            </Link>
+          ) : null}
         </SidebarContent>
         <Separator />
       </motion.div>

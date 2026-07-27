@@ -107,6 +107,10 @@ export class UpdateWorkflowV0 {
       updatePayload.severity = command.severity;
     }
 
+    if (command.agentId !== undefined) {
+      updatePayload.agentId = command.agentId;
+    }
+
     if (command.description !== undefined && command.description !== null) {
       updatePayload.description = command.description;
     }

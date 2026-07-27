@@ -60,4 +60,14 @@ export class WorkflowCommonsFields {
   @IsOptional()
   @IsBoolean()
   isTranslationEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      "Optional public agent identifier used to route this workflow through an agent's connected channels. Pass null to clear.",
+    type: 'string',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  agentId?: string | null;
 }

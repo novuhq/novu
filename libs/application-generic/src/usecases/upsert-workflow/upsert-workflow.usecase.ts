@@ -190,6 +190,7 @@ export class UpsertWorkflowUseCase {
       validatePayload: workflowDto.validatePayload,
       isTranslationEnabled: workflowDto.isTranslationEnabled,
       severity: workflowDto.severity,
+      agentId: workflowDto.agentId,
     };
   }
 
@@ -221,6 +222,7 @@ export class UpsertWorkflowUseCase {
       validatePayload: workflowDto.validatePayload,
       isTranslationEnabled: workflowDto.isTranslationEnabled,
       severity: workflowDto.severity,
+      agentId: workflowDto.agentId,
     };
   }
 

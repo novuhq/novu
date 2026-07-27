@@ -211,6 +211,16 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   })
   @IsEnum(SeverityLevelEnum)
   severity: SeverityLevelEnum;
+
+  @ApiPropertyOptional({
+    description:
+      "Optional public agent identifier used to route this workflow through an agent's connected channels. Null when unassigned.",
+    type: 'string',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  agentId?: string | null;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

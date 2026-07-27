@@ -56,6 +56,11 @@ export type WorkflowCommonsFields = {
   validatePayload?: boolean;
   isTranslationEnabled?: boolean;
   severity?: SeverityLevelEnum;
+  /**
+   * Optional public agent identifier used to route this workflow through an agent's
+   * connected channels. `null` clears a previously saved assignment.
+   */
+  agentId?: string | null;
 };
 
 export type PreferencesResponseDto = {

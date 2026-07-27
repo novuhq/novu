@@ -35,6 +35,7 @@ export interface WorkflowForResponseMapper {
   validatePayload?: boolean;
   isTranslationEnabled?: boolean;
   severity?: SeverityLevelEnum;
+  agentId?: string | null;
 }
 
 export interface WorkflowWithPreferencesForMapper extends WorkflowForResponseMapper {

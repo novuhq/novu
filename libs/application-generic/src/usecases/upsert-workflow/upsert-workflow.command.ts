@@ -153,6 +153,10 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   @IsEnum(SeverityLevelEnum)
   severity?: SeverityLevelEnum;
+
+  @IsOptional()
+  @IsString()
+  agentId?: string | null;
 }
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {

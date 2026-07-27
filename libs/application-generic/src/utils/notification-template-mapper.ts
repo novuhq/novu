@@ -59,6 +59,7 @@ export function toResponseWorkflowDto(
     validatePayload: workflow.validatePayload || false,
     isTranslationEnabled: workflow.isTranslationEnabled || false,
     severity: workflow.severity || SeverityLevelEnum.NONE,
+    agentId: workflow.agentId ?? null,
   };
 }
 

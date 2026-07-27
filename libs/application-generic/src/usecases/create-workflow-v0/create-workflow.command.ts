@@ -157,4 +157,8 @@ export class CreateWorkflowCommandV0 extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(SeverityLevelEnum)
   severity?: SeverityLevelEnum;
+
+  @IsOptional()
+  @IsString()
+  agentId?: string | null;
 }
