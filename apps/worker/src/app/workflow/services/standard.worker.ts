@@ -4,6 +4,7 @@ import {
   FeatureFlagsService,
   getStandardWorkerOptions,
   IStandardDataDto,
+  isWebhookFilterSsrfBlockedError,
   Job,
   PinoLogger,
   SqsService,
@@ -15,6 +16,7 @@ import {
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, JobStatusEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { UnrecoverableError } from 'bullmq';
 import {
   HandleLastFailedJob,
   HandleLastFailedJobCommand,
@@ -186,6 +188,10 @@ export class StandardWorker extends StandardWorkerService {
                     `Failed to run the job ${minimalJobData.jobId} during worker processing`,
                     LOG_CONTEXT
                   );
+
+                  if (isWebhookFilterSsrfBlockedError(error)) {
+                    return reject(new UnrecoverableError((error as Error).message));
+                  }
 
                   return reject(error);
                 })
