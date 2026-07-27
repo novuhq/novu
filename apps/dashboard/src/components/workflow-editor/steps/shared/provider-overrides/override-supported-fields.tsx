@@ -4,7 +4,7 @@ import { RiAddLine, RiCheckLine, RiListUnordered } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { type AnnotateOverrideField, getConstraints, type OverrideFieldSchema } from './override-field-schema';
-import { type SchemaResolver, type UnionBranchSummary } from './schema-resolver';
+import { DISCRIMINATOR_KEY, type SchemaResolver, type UnionBranchSummary } from './schema-resolver';
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
@@ -24,7 +24,6 @@ type SupportedField = {
 
 type ReferenceSection = {
   propertyKey: string;
-  title: string;
   branches: UnionBranchSummary[];
 };
 
@@ -45,17 +44,6 @@ function buildSupportedFields(providerId: string, resolver: SchemaResolver): Sup
   });
 }
 
-/** "blocks" → "Block types"; falls back to "`key` types" when pluralization is unclear. */
-function referenceSectionTitle(propertyKey: string): string {
-  if (propertyKey.endsWith('s') && propertyKey.length > 1) {
-    const singular = propertyKey.slice(0, -1);
-
-    return `${singular.charAt(0).toUpperCase()}${singular.slice(1)} types`;
-  }
-
-  return `${propertyKey.charAt(0).toUpperCase()}${propertyKey.slice(1)} types`;
-}
-
 /**
  * Root array properties whose items are a discriminated union (e.g. Slack `blocks` → KnownBlock).
  * Shown as informational reference only — clicking does not insert into the editor.
@@ -73,11 +61,7 @@ function buildReferenceSections(resolver: SchemaResolver): ReferenceSection[] {
       continue;
     }
 
-    sections.push({
-      propertyKey,
-      title: referenceSectionTitle(propertyKey),
-      branches,
-    });
+    sections.push({ propertyKey, branches });
   }
 
   return sections;
@@ -180,11 +164,11 @@ export function OverrideSupportedFields({
           {referenceSections.map((section) => (
             <div key={section.propertyKey} className="border-t border-neutral-100 p-1">
               <div className={STICKY_GROUP_HEADER_CLASS}>
-                {section.title}
+                {section.propertyKey}
                 <span className="ml-1.5 font-normal normal-case tracking-normal">· reference</span>
               </div>
               <p className="text-text-soft px-2 py-1 text-[11px]">
-                Set <code className="text-code-xs">type</code> inside{' '}
+                Set <code className="text-code-xs">{DISCRIMINATOR_KEY}</code> inside{' '}
                 <code className="text-code-xs">{section.propertyKey}</code> to use one of these. Not inserted from this
                 list.
               </p>

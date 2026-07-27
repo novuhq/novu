@@ -14,7 +14,11 @@ const blockKitRootSchema: OverrideFieldSchema = {
   },
   definitions: {
     KnownBlock: {
-      anyOf: [{ $ref: '#/definitions/SectionBlock' }, { $ref: '#/definitions/DividerBlock' }],
+      anyOf: [
+        { $ref: '#/definitions/SectionBlock' },
+        { $ref: '#/definitions/DividerBlock' },
+        { $ref: '#/definitions/ImageBlock' },
+      ],
     },
     SectionBlock: {
       type: 'object',
@@ -31,6 +35,27 @@ const blockKitRootSchema: OverrideFieldSchema = {
       properties: {
         type: { type: 'string', const: 'divider' },
       },
+    },
+    // Mirrors Slack ImageBlock: nested anyOf of leaf shapes that share `type: "image"`, with the
+    // human description on the union node rather than the leaves.
+    ImageBlock: {
+      description: 'Displays an image.',
+      anyOf: [
+        {
+          type: 'object',
+          properties: {
+            type: { type: 'string', const: 'image' },
+            image_url: { type: 'string' },
+          },
+        },
+        {
+          type: 'object',
+          properties: {
+            type: { type: 'string', const: 'image' },
+            slack_file: { type: 'object' },
+          },
+        },
+      ],
     },
     MessageAttachment: {
       type: 'object',
@@ -54,6 +79,10 @@ describe('createSchemaResolver.unionBranchSummaries', () => {
       {
         typeValue: 'divider',
         description: 'A content divider.',
+      },
+      {
+        typeValue: 'image',
+        description: 'Displays an image.',
       },
     ]);
   });

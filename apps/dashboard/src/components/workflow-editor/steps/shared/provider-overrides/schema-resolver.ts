@@ -52,6 +52,9 @@ export type UnionBranchSummary = {
   description?: string;
 };
 
+/** Keep reference-section copy scannable; Slack Block Kit descriptions often run hundreds of chars. */
+const MAX_SUMMARY_DESCRIPTION_LENGTH = 120;
+
 /**
  * Slack (and similar) schemas ship JSDoc `{@link …}` markup in descriptions. Strip it so the
  * supported-fields popover can show a short plain-text summary.
@@ -67,7 +70,15 @@ function plainDescription(description: string | undefined): string | undefined {
     .replace(/\s+/g, ' ')
     .trim();
 
-  return cleaned || undefined;
+  if (!cleaned) {
+    return undefined;
+  }
+
+  if (cleaned.length <= MAX_SUMMARY_DESCRIPTION_LENGTH) {
+    return cleaned;
+  }
+
+  return `${cleaned.slice(0, MAX_SUMMARY_DESCRIPTION_LENGTH - 1).trimEnd()}…`;
 }
 
 export type SchemaResolver = {
@@ -253,29 +264,41 @@ export function createSchemaResolver(rootSchema: OverrideFieldSchema): SchemaRes
   }
 
   function unionBranchSummaries(fieldSchema: OverrideFieldSchema | undefined): UnionBranchSummary[] {
-    const resolved = deref(fieldSchema);
-    const rawBranches = resolved?.anyOf ?? resolved?.oneOf;
-    if (!rawBranches) {
-      return [];
-    }
-
     const byType = new Map<string, UnionBranchSummary>();
 
-    for (const branch of rawBranches) {
-      const objectBranch = deref(branch);
-      if (!objectBranch?.properties?.[DISCRIMINATOR_KEY]) {
-        continue;
+    // Nested unions (Slack ImageBlock = anyOf of image_url vs slack_file shapes) only expose
+    // `properties.type` on the leaves; recurse the same branch graph collectValues walks.
+    function visit(node: OverrideFieldSchema | undefined, depth: number, fallbackDescription?: string): void {
+      const resolved = deref(node);
+      if (!resolved || depth > MAX_BRANCH_DEPTH) {
+        return;
       }
 
-      const typeValues = collectValues(objectBranch.properties[DISCRIMINATOR_KEY], 0);
-      const description = plainDescription(objectBranch.description);
+      const rawBranches = resolved.anyOf ?? resolved.oneOf;
+      if (rawBranches) {
+        const unionDescription = plainDescription(resolved.description) ?? fallbackDescription;
 
-      for (const typeValue of typeValues) {
+        for (const branch of rawBranches) {
+          visit(branch, depth + 1, unionDescription);
+        }
+
+        return;
+      }
+
+      if (!resolved.properties?.[DISCRIMINATOR_KEY]) {
+        return;
+      }
+
+      const description = plainDescription(resolved.description) ?? fallbackDescription;
+
+      for (const typeValue of collectValues(resolved.properties[DISCRIMINATOR_KEY], 0)) {
         if (!byType.has(typeValue)) {
           byType.set(typeValue, { typeValue, description });
         }
       }
     }
+
+    visit(fieldSchema, 0);
 
     return [...byType.values()];
   }
