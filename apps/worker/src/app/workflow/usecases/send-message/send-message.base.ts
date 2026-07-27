@@ -69,9 +69,7 @@ export function combineProviderOverrides(
   const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
-  const merged = mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
-
-  return merged;
+  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
 }
 
 export abstract class SendMessageBase extends SendMessageType {
