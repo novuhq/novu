@@ -22,15 +22,10 @@ export const SLACK_OVERRIDE_KEYS = [
 ] as const;
 
 /**
- * Resolved from Novu's subscriber routing and stored credentials, never from an override.
- * `bridgeProviderData` outranks the base body in `BaseProvider.transform()`, so an override
- * `channel` would silently redirect the message away from the subscriber it was addressed to,
- * and an override `token` would swap the integration credentials. `as_user` is excluded because
- * Novu always posts as the installed bot.
- *
- * Omitting these from the schema only raises a step issue, and step issues are advisory — they
- * flag a workflow without blocking the save. The send path strips them so the guarantee holds
- * regardless of how the override was written.
+ * Excluded from the generated Slack override schema / editor autocomplete only. These keys are
+ * resolved from Novu's subscriber routing and stored credentials at send time; omitting them from
+ * the schema keeps autocomplete from suggesting them, but overrides may still set them (typed or
+ * `_passthrough`) and they are not stripped on the send path.
  */
 export const NON_OVERRIDABLE_SLACK_KEYS = ['channel', 'token', 'as_user'] as const;
 

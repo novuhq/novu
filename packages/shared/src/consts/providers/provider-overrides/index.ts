@@ -40,7 +40,6 @@ export {
   PROVIDER_OVERRIDE_SCHEMAS,
   PROVIDER_PRIMARY_CONTENT_KEY,
   type ProviderOverrideConfig,
-  stripReservedOverrideKeys,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
 } from './provider-override-registry';
