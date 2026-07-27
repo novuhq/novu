@@ -4233,6 +4233,12 @@ importers:
       '@slack/web-api':
         specifier: 7.17.0
         version: 7.17.0
+      '@types/js-yaml':
+        specifier: 4.0.9
+        version: 4.0.9
+      js-yaml:
+        specifier: 5.2.2
+        version: 5.2.2
       madge:
         specifier: ^8.0.0
         version: 8.0.0(typescript@5.6.2)
@@ -14569,6 +14575,9 @@ packages:
   '@types/js-cookie@3.0.6':
     resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
 
+  '@types/js-yaml@4.0.9':
+    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
+
   '@types/jsdom@20.0.1':
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
 
@@ -20887,6 +20896,10 @@ packages:
 
   js-yaml@4.3.0:
     resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
+    hasBin: true
+
+  js-yaml@5.2.2:
+    resolution: {integrity: sha512-dayzUzKkJ1MkuUtZglSebU43utNXH0OWQByK9rKOOuYIO8M5TV1y+n8ALMdG0rdzBnfNkOmZEqrURepb0ejqBw==}
     hasBin: true
 
   jsbn@0.1.1:
@@ -43041,6 +43054,8 @@ snapshots:
 
   '@types/js-cookie@3.0.6': {}
 
+  '@types/js-yaml@4.0.9': {}
+
   '@types/jsdom@20.0.1':
     dependencies:
       '@types/node': 22.15.13
@@ -51258,6 +51273,10 @@ snapshots:
       esprima: 4.0.1
 
   js-yaml@4.3.0:
+    dependencies:
+      argparse: 2.0.1
+
+  js-yaml@5.2.2:
     dependencies:
       argparse: 2.0.1
 
