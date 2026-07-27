@@ -1,6 +1,6 @@
 ---
 name: nv-implement
-description: Implement planned work by fanning out parallel subagents on isolated worktrees — TDD at pre-agreed seams, per-slice nv-review-local-changes, merge back, full suite once at the end.
+description: Implement planned work by fanning out parallel subagents on isolated worktrees — TDD at pre-agreed seams, per-slice nv-park-and-review, merge back, full suite once at the end.
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,7 @@ Invoking this skill authorizes the commits it produces (slice commits, review re
 ```
 - [ ] 1. Cut the work into seams
 - [ ] 2. Resolve feature branch + one worktree per seam
-- [ ] 3. Fan out subagents (TDD → commit → /nv-review-local-changes)
+- [ ] 3. Fan out subagents (TDD → commit → /nv-park-and-review)
 - [ ] 4. Merge slices back into the feature branch
 - [ ] 5. Integration pass (typecheck + cross-slice fallout)
 - [ ] 6. Full suite once + teardown
@@ -62,7 +62,7 @@ Launch all slice subagents **in one message** (parallel Task calls, `run_in_back
 - Exact files to change and files owned by **other** slices (do not touch)
 - `/tdd` instruction for TDD-able seams: vertical slices, one behavior at a time, with the prioritized behavior list
 - The test command (see Commands below) and instruction to run single spec files regularly
-- Closing step: commit with `type(scope): why`, then run `/nv-review-local-changes` from the worktree
+- Closing step: commit with `type(scope): why`, then run `/nv-park-and-review` from the worktree
 
 **Done when:** every subagent reports commits + test results + review triage. Read each summary; a subagent that skipped review or left tests red gets resumed, not merged.
 
@@ -113,13 +113,13 @@ Dashboard has no unit harness for most components — verify via `ReadLints`; do
 
 - If the checkout is already on a feature branch, reuse it — do not branch from `origin/next` or merge slices into `next`.
 - One slice, one worktree, one branch — a subagent that edits outside its worktree corrupts a sibling slice.
-- Slice commits and review refactor commits stay separate (per `/nv-review-local-changes`); never amend or squash them during merge.
+- Slice commits and review refactor commits stay separate (per `/nv-park-and-review`); never amend or squash them during merge.
 - E2E suites that need a running API/DB are out of scope for slices — flag them for CI instead.
 - If a Linear ticket is required for the eventual PR, create it early; hand off to `/novu-prepare-pr` when implementation is done.
 
 ## Related skills
 
 - `/tdd` — the red-green loop each TDD-able slice runs
-- `/nv-review-local-changes` — each slice's closing review
+- `/nv-park-and-review` — each slice's closing review
 - [novu-prepare-pr](../novu-prepare-pr/SKILL.md) — PR prep after implementation
 - [nv-worktree-commands](../nv-worktree-commands/SKILL.md) — worktree debugging reference

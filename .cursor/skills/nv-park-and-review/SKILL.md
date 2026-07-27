@@ -1,15 +1,15 @@
 ---
-name: nv-review-local-changes
+name: nv-park-and-review
 description: >-
   Commit local changes as a baseline, hop into a lightweight review worktree, run a
   thermo-nuclear code quality review scoped to ONLY that commit, commit the resulting
   refactor as a separate follow-up commit, then land it back and tear the worktree
   down. Use when the user asks to review their local/uncommitted changes for AI slop
-  and redundant code, or invokes nv-review-local-changes.
+  and redundant code, or invokes nv-park-and-review.
 disable-model-invocation: true
 ---
 
-# Review Local Changes (commit → worktree → nuclear review → refactor commit)
+# Park and Review (commit → worktree → nuclear review → refactor commit)
 
 Snapshot the current work as a baseline commit, immediately exit to a throwaway review
 worktree, audit **only that commit** with the thermo-nuclear code quality review, then
