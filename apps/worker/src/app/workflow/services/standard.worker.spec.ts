@@ -636,6 +636,8 @@ describe('Standard Worker', () => {
       expect(winners.length).to.equal(1);
       expect(winners[0]?._id).to.equal(child._id);
       expect(winners[0]?.status).to.equal(JobStatusEnum.QUEUED);
+      // The claim opens the claim-to-enqueue crash window; AddJob closes it via markEnqueued.
+      expect(winners[0]?.awaitingEnqueue).to.equal(true);
 
       const fresh = await jobRepository.findOne({ _id: child._id, _environmentId: child._environmentId });
       expect(fresh?.status).to.equal(JobStatusEnum.QUEUED);
@@ -684,6 +686,28 @@ describe('Standard Worker', () => {
 
       const fresh = await jobRepository.findOne({ _id: child._id, _environmentId: child._environmentId });
       expect(fresh?.status).to.equal(JobStatusEnum.PENDING);
+    });
+
+    it('releaseStaleQueuedChildToPending never releases a child whose message was already enqueued', async () => {
+      const parent = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+      await jobRepository.create({
+        ...buildJob(JobStatusEnum.PENDING, { _notificationId: parent._notificationId }),
+        _parentId: parent._id,
+      });
+
+      const claimed = await jobRepository.claimNextChildAsQueued(parent._environmentId, parent._id);
+      if (!claimed) throw new Error('expected the child to be claimed');
+      expect(claimed.awaitingEnqueue).to.equal(true);
+
+      // AddJob confirms the queue message exists, then the message sits behind a long backlog.
+      await jobRepository.markEnqueued(claimed._environmentId, claimed._id);
+      await backdateJobClaim(claimed._id, RUNNING_CLAIM_STALE_AFTER_MS + 1_000);
+
+      const released = await jobRepository.releaseStaleQueuedChildToPending(parent._environmentId, parent._id);
+
+      expect(released).to.equal(null);
+      const fresh = await jobRepository.findOne({ _id: claimed._id, _environmentId: claimed._environmentId });
+      expect(fresh?.status).to.equal(JobStatusEnum.QUEUED);
     });
 
     it('releaseStaleQueuedChildToPending ignores children that already progressed past QUEUED', async () => {
