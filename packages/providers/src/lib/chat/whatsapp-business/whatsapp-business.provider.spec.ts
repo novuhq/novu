@@ -193,6 +193,178 @@ test('should trigger whatsapp-business library correctly with template message w
   expect(res.id).toBe(messageId);
 });
 
+test('should resolve image type from bridgeProviderData without a stray text block', async () => {
+  const messageId = nanoid();
+
+  const { mockPost, axiosMockSpy } = axiosSpy(buildResponse(messageId));
+
+  const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
+
+  const options: IChatOptions = {
+    content: 'fallback text that must not be sent',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
+  };
+
+  const image = { link: 'https://example.com/photo.jpg' };
+
+  const res = await provider.sendMessage(options, {
+    type: 'image',
+    image,
+  });
+
+  expect(mockPost).toHaveBeenCalled();
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
+    type: 'image',
+    image,
+  });
+  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('text');
+
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
+
+  expect(res.id).toBe(messageId);
+});
+
+test('should resolve template type from bridge _passthrough.body without a stray text block', async () => {
+  const messageId = nanoid();
+
+  const { mockPost, axiosMockSpy } = axiosSpy(buildResponse(messageId));
+
+  const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
+
+  const options: IChatOptions = {
+    content: 'fallback text that must not be sent',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
+  };
+
+  const template = {
+    name: 'hello_world_passthrough',
+    language: {
+      code: 'en_US',
+    },
+  };
+
+  const res = await provider.sendMessage(options, {
+    _passthrough: {
+      body: {
+        template,
+      },
+    },
+  });
+
+  expect(mockPost).toHaveBeenCalled();
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
+    type: 'template',
+    template,
+  });
+  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('text');
+
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
+
+  expect(res.id).toBe(messageId);
+});
+
+test('should let explicit bridge type win over customData template key', async () => {
+  const messageId = nanoid();
+
+  const { mockPost, axiosMockSpy } = axiosSpy(buildResponse(messageId));
+
+  const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
+
+  const options: IChatOptions = {
+    content: 'fallback text that must not be sent',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
+    customData: {
+      template: {
+        name: 'hello_world',
+        language: {
+          code: 'en_US',
+        },
+      },
+    },
+  };
+
+  const image = { link: 'https://example.com/photo.jpg' };
+
+  const res = await provider.sendMessage(options, {
+    type: 'image',
+    image,
+  });
+
+  expect(mockPost).toHaveBeenCalled();
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
+    type: 'image',
+    image,
+  });
+  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('text');
+  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('template');
+
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
+
+  expect(res.id).toBe(messageId);
+});
+
+test('should send reaction messages from bridgeProviderData', async () => {
+  const messageId = nanoid();
+
+  const { mockPost, axiosMockSpy } = axiosSpy(buildResponse(messageId));
+
+  const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
+
+  const options: IChatOptions = {
+    content: 'fallback text that must not be sent',
+    channelData: {
+      identifier: '-',
+      type: ENDPOINT_TYPES.PHONE,
+      endpoint: { phoneNumber: '+111111111' },
+    },
+  };
+
+  const reaction = {
+    message_id: 'wamid.reaction-target',
+    emoji: '👍',
+  };
+
+  const res = await provider.sendMessage(options, {
+    type: 'reaction',
+    reaction,
+  });
+
+  expect(mockPost).toHaveBeenCalled();
+  expect(mockPost).toHaveBeenCalledWith(baseUrl(mockProviderConfig.phoneNumberIdentification), {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE]).phoneNumber,
+    type: 'reaction',
+    reaction,
+  });
+  expect(mockPost.mock.calls[0][1]).not.toHaveProperty('text');
+
+  expect(axiosMockSpy).toHaveBeenCalledWith(expectedHeaders(mockProviderConfig.accessToken));
+
+  expect(res.id).toBe(messageId);
+});
+
 function baseUrl(phoneNumberIdentification: string) {
   return `https://graph.facebook.com/v22.0/${phoneNumberIdentification}/messages`;
 }

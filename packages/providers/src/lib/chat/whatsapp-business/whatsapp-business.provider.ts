@@ -45,7 +45,10 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
 
     const { phoneNumber } = options.channelData.endpoint;
 
-    const payload = this.transform(bridgeProviderData, this.defineMessagePayload(options, phoneNumber)).body;
+    const payload = this.transform(
+      bridgeProviderData,
+      this.defineMessagePayload(options, phoneNumber, bridgeProviderData)
+    ).body;
 
     const { data } = await this.axiosClient.post<ISendMessageRes>(
       `${this.baseUrl + this.config.phoneNumberIdentification}/messages`,
@@ -58,8 +61,12 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     };
   }
 
-  private defineMessagePayload(options: IChatOptions, phoneNumber: string) {
-    const type = this.defineMessageType(options);
+  private defineMessagePayload(
+    options: IChatOptions,
+    phoneNumber: string,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ) {
+    const type = this.defineMessageType(options, bridgeProviderData);
 
     const basePayload = {
       messaging_product: 'whatsapp',
@@ -68,7 +75,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       type,
     };
 
-    // Handle TEXT messages separately (since it's not in `customData`)
+    // Emit the default text block only for text messages
     if (type === WhatsAppMessageTypeEnum.TEXT) {
       const textData = options.customData?.text;
 
@@ -81,8 +88,12 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       };
     }
 
-    // For all other types, get data from customData
+    // For all other types, get data from customData when present
     const payloadData = options.customData?.[type];
+
+    if (payloadData === undefined) {
+      return basePayload;
+    }
 
     return {
       ...basePayload,
@@ -90,7 +101,10 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
     };
   }
 
-  private defineMessageType(options: IChatOptions): WhatsAppMessageTypeEnum {
+  private defineMessageType(
+    options: IChatOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): WhatsAppMessageTypeEnum {
     const typeKeys: Record<string, WhatsAppMessageTypeEnum> = {
       template: WhatsAppMessageTypeEnum.TEMPLATE,
       interactive: WhatsAppMessageTypeEnum.INTERACTIVE,
@@ -101,16 +115,36 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       location: WhatsAppMessageTypeEnum.LOCATION,
       contacts: WhatsAppMessageTypeEnum.CONTACTS,
       sticker: WhatsAppMessageTypeEnum.STICKER,
+      reaction: WhatsAppMessageTypeEnum.REACTION,
     };
 
-    if (options.customData) {
+    const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
+    const passthroughBody = (_passthrough.body || {}) as Record<string, unknown>;
+
+    // Highest priority first — matches transform merge order
+    const sources = [passthroughBody, bridgeData as Record<string, unknown>, options.customData].filter(
+      (source): source is Record<string, unknown> => source != null && Object.keys(source).length > 0
+    );
+
+    for (const source of sources) {
+      const explicitType = source.type;
+      if (typeof explicitType === 'string' && this.isWhatsAppMessageType(explicitType)) {
+        return explicitType;
+      }
+    }
+
+    for (const source of sources) {
       for (const key of Object.keys(typeKeys)) {
-        if (key in options.customData) {
+        if (key in source) {
           return typeKeys[key];
         }
       }
     }
 
     return WhatsAppMessageTypeEnum.TEXT;
+  }
+
+  private isWhatsAppMessageType(value: string): value is WhatsAppMessageTypeEnum {
+    return (Object.values(WhatsAppMessageTypeEnum) as string[]).includes(value);
   }
 }
