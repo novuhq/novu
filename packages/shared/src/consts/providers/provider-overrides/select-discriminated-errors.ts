@@ -110,6 +110,10 @@ function isDiscriminatorMismatch(error: SchemaValidationErrorLike, branchPrefix:
   return error.schemaPath.startsWith(`${branchPrefix}/properties/type/`);
 }
 
+function isTypeDiscriminatorError(error: SchemaValidationErrorLike): boolean {
+  return (error.keyword === 'const' || error.keyword === 'enum') && /\/properties\/type(?:\/|$)/.test(error.schemaPath);
+}
+
 type BranchGroup = {
   site: string;
   branchPrefix: string;
@@ -121,6 +125,44 @@ type DiscriminatedSite = {
   selectedBranchPrefix: string;
   nodeInstancePath: string;
 };
+
+/**
+ * When every branch of a nested composition rejects the value's `type` (e.g. ImageBlock's
+ * image_url vs slack_file variants both require `type: "image"`), the enclosing parent branch
+ * was never meant for this value either. Bubble that mismatch one level up so the parent
+ * object-vs-liquid union can select the liquid fallback and shadow required-field noise.
+ */
+function bubbleNestedDiscriminatorMismatches(groups: BranchGroup[]): void {
+  const bySite = new Map<string, BranchGroup[]>();
+
+  for (const group of groups) {
+    const key = `${group.site}\u0000${group.nodeInstancePath}`;
+    bySite.set(key, [...(bySite.get(key) ?? []), group]);
+  }
+
+  for (const siteGroups of bySite.values()) {
+    if (siteGroups.length === 0 || !siteGroups.every((group) => group.hasDiscriminatorMismatch)) {
+      continue;
+    }
+
+    const nestedSite = siteGroups[0]?.site;
+    if (!nestedSite) {
+      continue;
+    }
+
+    const parentBranchPrefix = nestedSite.replace(/\/(anyOf|oneOf|allOf)$/, '');
+    if (parentBranchPrefix === nestedSite) {
+      continue;
+    }
+
+    const nodeInstancePath = siteGroups[0]?.nodeInstancePath;
+    for (const group of groups) {
+      if (group.branchPrefix === parentBranchPrefix && group.nodeInstancePath === nodeInstancePath) {
+        group.hasDiscriminatorMismatch = true;
+      }
+    }
+  }
+}
 
 function groupBranches<TError extends SchemaValidationErrorLike>(errors: readonly TError[]): BranchGroup[] {
   const groups = new Map<string, BranchGroup>();
@@ -146,23 +188,76 @@ function groupBranches<TError extends SchemaValidationErrorLike>(errors: readonl
   return [...groups.values()];
 }
 
-function findDiscriminatedSites<TError extends SchemaValidationErrorLike>(
-  errors: readonly TError[],
-  dataAtPath: unknown
-): DiscriminatedSite[] {
+/** Liquid-tolerance fallbacks only fail with a root `type: string` error under the branch. */
+function isLiquidFallbackBranch(group: BranchGroup, errors: readonly SchemaValidationErrorLike[]): boolean {
+  const underBranch = errors.filter(
+    (error) => error.schemaPath === group.branchPrefix || error.schemaPath.startsWith(`${group.branchPrefix}/`)
+  );
+
+  return (
+    underBranch.length > 0 &&
+    underBranch.every((error) => error.keyword === 'type' && error.schemaPath === `${group.branchPrefix}/type`)
+  );
+}
+
+/**
+ * A branch that accepted the `type` discriminator but still failed on payload shape. Composition
+ * wrappers (KnownBlock's union of $refs) are not winners — only property-level failures count.
+ */
+function isConcreteWinningBranch(group: BranchGroup, errors: readonly SchemaValidationErrorLike[]): boolean {
+  if (group.hasDiscriminatorMismatch || isLiquidFallbackBranch(group, errors)) {
+    return false;
+  }
+
+  return errors.some((error) => {
+    if (!(error.schemaPath === group.branchPrefix || error.schemaPath.startsWith(`${group.branchPrefix}/`))) {
+      return false;
+    }
+
+    switch (error.keyword) {
+      case 'required':
+      case 'additionalProperties':
+      case 'minItems':
+      case 'maxItems':
+      case 'minLength':
+      case 'maxLength':
+      case 'minimum':
+      case 'maximum':
+      case 'pattern':
+        return true;
+      case 'type':
+      case 'const':
+      case 'enum':
+        return error.schemaPath.includes('/properties/') && !error.schemaPath.includes('/properties/type/');
+      default:
+        return false;
+    }
+  });
+}
+
+function concreteWinnerPaths(
+  groups: readonly BranchGroup[],
+  errors: readonly SchemaValidationErrorLike[]
+): Set<string> {
+  return new Set(
+    groups.filter((group) => isConcreteWinningBranch(group, errors)).map((group) => group.nodeInstancePath)
+  );
+}
+
+function findDiscriminatedSites(groups: readonly BranchGroup[], dataAtPath: unknown): DiscriminatedSite[] {
   const bySite = new Map<string, BranchGroup[]>();
 
-  for (const group of groupBranches(errors)) {
+  for (const group of groups) {
     const key = `${group.site}\u0000${group.nodeInstancePath}`;
     bySite.set(key, [...(bySite.get(key) ?? []), group]);
   }
 
   const sites: DiscriminatedSite[] = [];
 
-  for (const groups of bySite.values()) {
-    const matched = groups.filter((group) => !group.hasDiscriminatorMismatch);
+  for (const siteGroups of bySite.values()) {
+    const matched = siteGroups.filter((group) => !group.hasDiscriminatorMismatch);
     const selected = matched[0];
-    const isDiscriminated = matched.length === 1 && groups.length > matched.length;
+    const isDiscriminated = matched.length === 1 && siteGroups.length > matched.length;
 
     if (
       !isDiscriminated ||
@@ -203,11 +298,24 @@ function isShadowedBy(error: SchemaValidationErrorLike, site: DiscriminatedSite)
   });
 }
 
+function isCompositionNoise(error: SchemaValidationErrorLike): boolean {
+  return error.keyword === 'anyOf' || error.keyword === 'oneOf';
+}
+
+function isLiquidRootTypeError(error: SchemaValidationErrorLike): boolean {
+  return error.keyword === 'type' && /\/(?:anyOf|oneOf)\/\d+\/type$/.test(error.schemaPath);
+}
+
 /**
  * AJV reports every branch of a union, so one typo inside a Block Kit block yields a useless
  * "must match a schema in anyOf" plus the failures of every other block type it tried. When the
  * failing node carries a `type` that lines up with exactly one branch, this keeps only that
  * branch's errors and drops the rejected siblings and the enclosing composition noise.
+ *
+ * Nested variant unions (ImageBlock's image_url vs slack_file) bubble a full type rejection up
+ * so the parent can select the liquid fallback and drop required-field noise. When no concrete
+ * branch matches at all (unknown `type`), one discriminator error is restored onto the type
+ * field so the caller still sees a useful signal instead of a bare anyOf.
  *
  * `dataAtPath` is the value the errors were produced against; `instancePath`s resolve against it.
  */
@@ -215,11 +323,40 @@ export function selectDiscriminatedErrors<TError extends SchemaValidationErrorLi
   errors: readonly TError[],
   dataAtPath: unknown
 ): TError[] {
-  const sites = findDiscriminatedSites(errors, dataAtPath);
+  const groups = groupBranches(errors);
+  bubbleNestedDiscriminatorMismatches(groups);
+  const sites = findDiscriminatedSites(groups, dataAtPath);
 
   if (sites.length === 0) {
     return [...errors];
   }
 
-  return errors.filter((error) => !sites.some((site) => isShadowedBy(error, site)));
+  const narrowed = errors.filter((error) => !sites.some((site) => isShadowedBy(error, site)));
+  const winners = concreteWinnerPaths(groups, errors);
+  const restored: TError[] = [];
+  const restoredPaths = new Set<string>();
+
+  for (const path of new Set(sites.map((site) => site.nodeInstancePath))) {
+    if (winners.has(path)) {
+      continue;
+    }
+
+    const hasConcreteSignal = narrowed.some(
+      (error) =>
+        isOnSameInstanceChain(error.instancePath, path) && !isCompositionNoise(error) && !isLiquidRootTypeError(error)
+    );
+    if (hasConcreteSignal) {
+      continue;
+    }
+
+    const typeError = errors.find(
+      (error) => isTypeDiscriminatorError(error) && isOnSameInstanceChain(error.instancePath, path)
+    );
+    if (typeError && !restoredPaths.has(path)) {
+      restored.push(typeError);
+      restoredPaths.add(path);
+    }
+  }
+
+  return [...narrowed, ...restored];
 }

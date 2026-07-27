@@ -182,6 +182,24 @@ describe('processProviderOverridesIssues', () => {
     ]);
   });
 
+  it('reports only the missing elements field for an incomplete Slack actions block', () => {
+    const issues = processProviderOverridesIssues({
+      [ChatProviderIdEnum.Slack]: {
+        blocks: [{ type: 'actions' }],
+      },
+    });
+
+    const allIssues = Object.values(issues.controls ?? {}).flat();
+
+    expect(allIssues).toEqual([
+      {
+        message: 'Elements is required',
+        issueType: ContentIssueEnum.MISSING_VALUE,
+        variableName: slackPath('blocks.0.elements'),
+      },
+    ]);
+  });
+
   it('reports an unknown Slack block type on the type field instead of dumping every branch', () => {
     const issues = processProviderOverridesIssues({
       [ChatProviderIdEnum.Slack]: {

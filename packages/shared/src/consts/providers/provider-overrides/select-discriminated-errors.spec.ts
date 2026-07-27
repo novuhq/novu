@@ -168,4 +168,134 @@ describe('selectDiscriminatedErrors', () => {
 
     expect(selectDiscriminatedErrors(errors, { blocks: [{ type: 'image' }] })).toEqual(errors);
   });
+
+  /**
+   * ImageBlock wraps its image_url / slack_file shapes in a nested anyOf. When the value's type
+   * matches none of those variants, every nested branch reports a type const mismatch — without
+   * bubbling that up, the parent ImageBlock branch looks "matched" and leaks alt_text / image_url /
+   * slack_file required errors onto an actions block.
+   */
+  it('shadows a nested-variant block when every nested branch rejects the type discriminator', () => {
+    const item = '/blocks/0';
+    const errors: SchemaValidationErrorLike[] = [
+      {
+        instancePath: item,
+        schemaPath: `${BLOCK_UNION}/0/required`,
+        keyword: 'required',
+        message: "must have required property 'elements'",
+      },
+      {
+        instancePath: item,
+        schemaPath: `${BLOCK_UNION}/1/anyOf/0/required`,
+        keyword: 'required',
+        message: "must have required property 'alt_text'",
+      },
+      {
+        instancePath: item,
+        schemaPath: `${BLOCK_UNION}/1/anyOf/0/required`,
+        keyword: 'required',
+        message: "must have required property 'image_url'",
+      },
+      {
+        instancePath: `${item}/type`,
+        schemaPath: `${BLOCK_UNION}/1/anyOf/0/properties/type/const`,
+        keyword: 'const',
+        message: 'must be equal to constant',
+      },
+      {
+        instancePath: item,
+        schemaPath: `${BLOCK_UNION}/1/anyOf/1/required`,
+        keyword: 'required',
+        message: "must have required property 'alt_text'",
+      },
+      {
+        instancePath: item,
+        schemaPath: `${BLOCK_UNION}/1/anyOf/1/required`,
+        keyword: 'required',
+        message: "must have required property 'slack_file'",
+      },
+      {
+        instancePath: `${item}/type`,
+        schemaPath: `${BLOCK_UNION}/1/anyOf/1/properties/type/const`,
+        keyword: 'const',
+        message: 'must be equal to constant',
+      },
+      {
+        instancePath: item,
+        schemaPath: `${BLOCK_UNION}/1/anyOf`,
+        keyword: 'anyOf',
+        message: 'must match a schema in anyOf',
+      },
+      {
+        instancePath: item,
+        schemaPath: BLOCK_UNION,
+        keyword: 'anyOf',
+        message: 'must match a schema in anyOf',
+      },
+    ];
+
+    expect(selectDiscriminatedErrors(errors, { blocks: [{ type: 'actions' }] })).toEqual([
+      {
+        instancePath: item,
+        schemaPath: `${BLOCK_UNION}/0/required`,
+        keyword: 'required',
+        message: "must have required property 'elements'",
+      },
+    ]);
+  });
+
+  it('restores one type discriminator error when no concrete block matches the type', () => {
+    const item = '/blocks/0';
+    const typeConst: SchemaValidationErrorLike = {
+      instancePath: `${item}/type`,
+      schemaPath: `#/definitions/ActionsBlock/anyOf/0/properties/type/anyOf/0/const`,
+      keyword: 'const',
+      message: 'must be equal to constant',
+    };
+    const errors: SchemaValidationErrorLike[] = [
+      typeConst,
+      {
+        instancePath: item,
+        schemaPath: `#/definitions/ActionsBlock/anyOf/1/type`,
+        keyword: 'type',
+        message: 'must be string',
+      },
+      {
+        instancePath: `${item}/type`,
+        schemaPath: `#/definitions/ImageBlock/anyOf/0/anyOf/0/properties/type/anyOf/0/const`,
+        keyword: 'const',
+        message: 'must be equal to constant',
+      },
+      {
+        instancePath: item,
+        schemaPath: `#/definitions/ImageBlock/anyOf/0/anyOf/0/required`,
+        keyword: 'required',
+        message: "must have required property 'alt_text'",
+      },
+      {
+        instancePath: `${item}/type`,
+        schemaPath: `#/definitions/ImageBlock/anyOf/0/anyOf/1/properties/type/anyOf/0/const`,
+        keyword: 'const',
+        message: 'must be equal to constant',
+      },
+      {
+        instancePath: item,
+        schemaPath: `#/definitions/ImageBlock/anyOf/1/type`,
+        keyword: 'type',
+        message: 'must be string',
+      },
+      {
+        instancePath: item,
+        schemaPath: `#/definitions/KnownBlock/anyOf/0/anyOf`,
+        keyword: 'anyOf',
+        message: 'must match a schema in anyOf',
+      },
+    ];
+
+    const result = selectDiscriminatedErrors(errors, { blocks: [{ type: 'imagee' }] });
+
+    expect(result.filter((error) => error.keyword === 'required')).toEqual([]);
+    expect(result.filter((error) => error.keyword === 'const')).toHaveLength(1);
+    expect(result.some((error) => error.instancePath === `${item}/type` && error.keyword === 'const')).toBe(true);
+  });
 });
