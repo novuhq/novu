@@ -687,27 +687,36 @@ function resolveOneOfContainer(rootSchema: SchemaNodeLike, site: string): Schema
   return parent;
 }
 
-/** True when a oneOf is an either/or on `required` keys (e.g. MediaObject id vs link), not on `type`. */
-function oneOfUsesRequiredKeyDiscriminator(rootSchema: SchemaNodeLike, site: string): boolean {
+/**
+ * True for a single-key XOR oneOf (e.g. MediaObject `id` vs `link`): every branch requires
+ * exactly one distinct key and has no `type` discriminator. Multi-key oneOfs like ActionObject
+ * (`button`+`sections` vs `buttons`) are left alone — partial `.some()` matching would mis-pick.
+ */
+function oneOfUsesSingleRequiredKeyXor(rootSchema: SchemaNodeLike, site: string): boolean {
   const oneOfContainer = resolveOneOfContainer(rootSchema, site);
   if (!oneOfContainer || !Array.isArray(oneOfContainer.oneOf) || oneOfContainer.oneOf.length < 2) {
     return false;
   }
 
-  return oneOfContainer.oneOf.every((branch) => {
-    if (!isSchemaObject(branch)) {
+  const keys: string[] = [];
+
+  for (const branch of oneOfContainer.oneOf) {
+    if (!isSchemaObject(branch) || branchHasTypeDiscriminator(branch)) {
       return false;
     }
 
-    if (branchHasTypeDiscriminator(branch)) {
+    const required = branch.required;
+    if (!Array.isArray(required) || required.length !== 1 || typeof required[0] !== 'string') {
       return false;
     }
 
-    return Array.isArray(branch.required) && branch.required.length > 0;
-  });
+    keys.push(required[0]);
+  }
+
+  return new Set(keys).size === keys.length;
 }
 
-function selectRequiredKeyBranchIndex(oneOfContainer: SchemaNodeLike, value: unknown): number {
+function selectSingleRequiredKeyBranchIndex(oneOfContainer: SchemaNodeLike, value: unknown): number {
   const branches = oneOfContainer.oneOf as SchemaNodeLike[];
   const valueKeys = new Set(
     value !== null && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value) : []
@@ -716,9 +725,9 @@ function selectRequiredKeyBranchIndex(oneOfContainer: SchemaNodeLike, value: unk
   const matching = branches
     .map((branch, index) => ({ branch, index }))
     .filter(({ branch }) => {
-      const required = Array.isArray(branch.required) ? branch.required : [];
+      const key = Array.isArray(branch.required) ? branch.required[0] : undefined;
 
-      return required.some((key) => typeof key === 'string' && valueKeys.has(key));
+      return typeof key === 'string' && valueKeys.has(key);
     })
     .map(({ index }) => index);
 
@@ -729,18 +738,16 @@ function selectRequiredKeyBranchIndex(oneOfContainer: SchemaNodeLike, value: unk
   return 0;
 }
 
-type RequiredKeyOneOfSite = {
-  site: string;
-  nodeInstancePath: string;
-  selectedBranchIndex: number;
-};
-
-function findRequiredKeyOneOfSites(
+/**
+ * Required-key XOR oneOfs (MediaObject) produce the same {@link DiscriminatedSite} shape as
+ * type-discriminated unions so they share {@link isShadowedBy}.
+ */
+function findRequiredKeyXorSites(
   errors: readonly SchemaValidationErrorLike[],
   dataAtPath: unknown,
   rootSchema: SchemaNodeLike
-): RequiredKeyOneOfSite[] {
-  const siteKeys = new Map<string, RequiredKeyOneOfSite>();
+): DiscriminatedSite[] {
+  const siteKeys = new Map<string, DiscriminatedSite>();
 
   for (const error of errors) {
     for (const { site, branchIndex } of compositionSegments(error.schemaPath)) {
@@ -753,7 +760,7 @@ function findRequiredKeyOneOfSites(
       const nodeInstancePath = dropTrailingSegments(error.instancePath, instanceDepthOfSchemaSuffix(suffix));
       const key = `${site}\u0000${nodeInstancePath}`;
 
-      if (siteKeys.has(key) || !oneOfUsesRequiredKeyDiscriminator(rootSchema, site)) {
+      if (siteKeys.has(key) || !oneOfUsesSingleRequiredKeyXor(rootSchema, site)) {
         continue;
       }
 
@@ -763,56 +770,17 @@ function findRequiredKeyOneOfSites(
       }
 
       const value = resolveInstancePath(dataAtPath, nodeInstancePath);
-      const selectedBranchIndex = selectRequiredKeyBranchIndex(oneOfContainer, value);
+      const selectedBranchIndex = selectSingleRequiredKeyBranchIndex(oneOfContainer, value);
 
-      siteKeys.set(key, { site, nodeInstancePath, selectedBranchIndex });
+      siteKeys.set(key, {
+        selectedBranchPrefix: `${site}/${selectedBranchIndex}`,
+        nodeInstancePath,
+        selectedIsLiquid: false,
+      });
     }
   }
 
   return [...siteKeys.values()];
-}
-
-function isShadowedByRequiredKeyOneOf(error: SchemaValidationErrorLike, site: RequiredKeyOneOfSite): boolean {
-  if (!isOnSameInstanceChain(error.instancePath, site.nodeInstancePath)) {
-    return false;
-  }
-
-  const selectedPrefix = `${site.site}/${site.selectedBranchIndex}`;
-  if (error.schemaPath === selectedPrefix || error.schemaPath.startsWith(`${selectedPrefix}/`)) {
-    return false;
-  }
-
-  if (error.keyword === 'oneOf' && error.schemaPath === site.site) {
-    return true;
-  }
-
-  if (!error.schemaPath.startsWith(`${site.site}/`)) {
-    return false;
-  }
-
-  const branchIndex = error.schemaPath.slice(site.site.length + 1).split('/')[0];
-  if (branchIndex === undefined || !/^\d+$/.test(branchIndex)) {
-    return false;
-  }
-
-  return branchIndex !== String(site.selectedBranchIndex);
-}
-
-/**
- * AJV reports every branch of a required-key oneOf (e.g. WhatsApp MediaObject's id vs link).
- * Pick the branch whose required key is present, or the first branch when neither is.
- */
-function selectRequiredKeyOneOfErrors<TError extends SchemaValidationErrorLike>(
-  errors: readonly TError[],
-  dataAtPath: unknown,
-  rootSchema: SchemaNodeLike
-): TError[] {
-  const sites = findRequiredKeyOneOfSites(errors, dataAtPath, rootSchema);
-  if (sites.length === 0) {
-    return [...errors];
-  }
-
-  return errors.filter((error) => !sites.some((site) => isShadowedByRequiredKeyOneOf(error, site)));
 }
 
 /**
@@ -820,6 +788,11 @@ function selectRequiredKeyOneOfErrors<TError extends SchemaValidationErrorLike>(
  * "must match a schema in anyOf" plus the failures of every other block type it tried. When the
  * failing node carries a `type` that lines up with exactly one branch, this keeps only that
  * branch's errors and drops the rejected siblings and the enclosing composition noise.
+ *
+ * Single-key required XOR oneOfs (WhatsApp MediaObject's `id` vs `link`) reuse the same
+ * {@link DiscriminatedSite} / {@link isShadowedBy} path: pick the branch whose required key is
+ * present (or the first when neither is), then shadow sibling-branch noise. Multi-key oneOfs
+ * (ActionObject) are left alone.
  *
  * Nested variant unions (ImageBlock's image_url vs slack_file) treat a full type rejection as a
  * parent mismatch so the object-vs-liquid union can select the liquid fallback and drop
@@ -837,24 +810,26 @@ export function selectDiscriminatedErrors<TError extends SchemaValidationErrorLi
   dataAtPath: unknown,
   rootSchema?: object
 ): TError[] {
-  const schemaRoot = isSchemaObject(rootSchema) ? rootSchema : undefined;
-  const narrowed = schemaRoot ? selectRequiredKeyOneOfErrors(errors, dataAtPath, schemaRoot) : [...errors];
-  const groups = groupBranches(narrowed);
+  const groups = groupBranches(errors);
   const mismatched = effectivelyMismatchedKeys(groups);
-  const sites = findDiscriminatedSites(groups, narrowed, mismatched, dataAtPath);
-  const matchedGroups = typeMatchedGroups(groups, narrowed, mismatched);
+  const schemaRoot = isSchemaObject(rootSchema) ? rootSchema : undefined;
+  const sites = [
+    ...findDiscriminatedSites(groups, errors, mismatched, dataAtPath),
+    ...(schemaRoot ? findRequiredKeyXorSites(errors, dataAtPath, schemaRoot) : []),
+  ];
+  const matchedGroups = typeMatchedGroups(groups, errors, mismatched);
 
   const concreteWinners = schemaRoot ? resolveConcreteWinners(matchedGroups, schemaRoot, dataAtPath) : [];
   const winners = schemaRoot
     ? new Set(concreteWinners.map((winner) => winner.nodeInstancePath))
-    : payloadShapeWinnerPaths(groups, narrowed, mismatched);
+    : payloadShapeWinnerPaths(groups, errors, mismatched);
 
   if (sites.length === 0 && concreteWinners.length === 0) {
-    return narrowed;
+    return [...errors];
   }
 
   return dedupeTypeDiscriminators(
-    narrowed.filter((error) => {
+    errors.filter((error) => {
       if (sites.some((site) => isShadowedBy(error, site, winners))) {
         return false;
       }

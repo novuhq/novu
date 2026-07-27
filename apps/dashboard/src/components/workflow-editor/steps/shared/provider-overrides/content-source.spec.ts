@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, ContentIssueEnum, ToolProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import {
   buildProviderOverrideOptions,
@@ -6,6 +6,7 @@ import {
   isEscapeHatchProvider,
   isTopLevelOverrideIssuePath,
   PROVIDER_OVERRIDES_FIELD,
+  shouldKeepServerOverrideIssue,
 } from './content-source';
 
 describe('getUnsupportedOverrideKeys', () => {
@@ -29,6 +30,34 @@ describe('isTopLevelOverrideIssuePath', () => {
     expect(isTopLevelOverrideIssuePath(`${prefix}.document.id`, prefix)).toBe(false);
     expect(isTopLevelOverrideIssuePath(prefix, prefix)).toBe(false);
     expect(isTopLevelOverrideIssuePath(`${PROVIDER_OVERRIDES_FIELD}.slack.custom`, prefix)).toBe(false);
+  });
+});
+
+describe('shouldKeepServerOverrideIssue', () => {
+  const prefix = `${PROVIDER_OVERRIDES_FIELD}.${ChatProviderIdEnum.WhatsAppBusiness}`;
+
+  it('drops mirrored top-level unsupported keys and keeps nested ones', () => {
+    expect(
+      shouldKeepServerOverrideIssue(
+        { issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY, variableName: `${prefix}.custom` },
+        prefix,
+        prefix
+      )
+    ).toBe(false);
+    expect(
+      shouldKeepServerOverrideIssue(
+        { issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY, variableName: `${prefix}.document.link` },
+        `${prefix}.document.link`,
+        prefix
+      )
+    ).toBe(true);
+    expect(
+      shouldKeepServerOverrideIssue(
+        { issueType: ContentIssueEnum.MISSING_VALUE, variableName: `${prefix}.document.id` },
+        `${prefix}.document.id`,
+        prefix
+      )
+    ).toBe(true);
   });
 });
 

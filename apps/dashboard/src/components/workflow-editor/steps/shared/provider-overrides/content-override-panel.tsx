@@ -1,4 +1,4 @@
-import { ContentIssueEnum, type ContentOverrideProviderId } from '@novu/shared';
+import { type ContentOverrideProviderId } from '@novu/shared';
 import { Undo2 } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -13,11 +13,11 @@ import {
   getContentSourceLabel,
   getUnsupportedOverrideKeys,
   isContentOverrideProviderId,
-  isTopLevelOverrideIssuePath,
   type OverrideChannel,
   PROVIDER_OVERRIDES_FIELD,
   type ProviderOverrideOption,
   type ProviderOverrides,
+  shouldKeepServerOverrideIssue,
 } from './content-source';
 import { useContentSource } from './content-source-context';
 import { ContentSourceSelector } from './content-source-selector';
@@ -92,15 +92,9 @@ export function ContentOverridePanel({
       const providerPathPrefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
       // Mirror the editor: top-level UNSUPPORTED_PROPERTY is counted via
       // getUnsupportedOverrideKeys; nested ones only exist on the server issues.
-      const otherCount = issueList.filter((issue) => {
-        if (issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY) {
-          return true;
-        }
-
-        const issuePath = issue.variableName ?? key;
-
-        return !isTopLevelOverrideIssuePath(issuePath, providerPathPrefix);
-      }).length;
+      const otherCount = issueList.filter((issue) =>
+        shouldKeepServerOverrideIssue(issue, key, providerPathPrefix)
+      ).length;
       if (otherCount > 0) {
         counts.set(providerId, (counts.get(providerId) ?? 0) + otherCount);
       }

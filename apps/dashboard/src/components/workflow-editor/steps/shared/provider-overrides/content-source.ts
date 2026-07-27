@@ -1,5 +1,6 @@
 import {
   ChannelTypeEnum,
+  ContentIssueEnum,
   type ContentOverrideProviderId,
   getContentOverrideProviderIds,
   getProviderOverrideConfig,
@@ -127,4 +128,20 @@ export function isTopLevelOverrideIssuePath(issuePath: string, providerPathPrefi
   const relative = issuePath.slice(providerPathPrefix.length + 1);
 
   return relative.length > 0 && !relative.includes('.');
+}
+
+/**
+ * Whether a server control issue should still be shown for a provider override.
+ * Top-level UNSUPPORTED_PROPERTY is mirrored client-side; nested ones are not.
+ */
+export function shouldKeepServerOverrideIssue(
+  issue: { issueType: string; variableName?: string },
+  fallbackPath: string,
+  providerPathPrefix: string
+): boolean {
+  if (issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY) {
+    return true;
+  }
+
+  return !isTopLevelOverrideIssuePath(issue.variableName ?? fallbackPath, providerPathPrefix);
 }

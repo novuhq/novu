@@ -398,4 +398,48 @@ describe('selectDiscriminatedErrors', () => {
       },
     ]);
   });
+
+  it('leaves multi-key required oneOfs untouched (ActionObject-shaped)', () => {
+    const site = '#/definitions/ActionObject/anyOf/0/oneOf';
+    const errors: SchemaValidationErrorLike[] = [
+      {
+        instancePath: '/interactive/action',
+        schemaPath: `${site}/0/required`,
+        keyword: 'required',
+        message: "must have required property 'sections'",
+      },
+      {
+        instancePath: '/interactive/action',
+        schemaPath: `${site}/1/required`,
+        keyword: 'required',
+        message: "must have required property 'buttons'",
+      },
+    ];
+    const schema = {
+      definitions: {
+        ActionObject: {
+          anyOf: [
+            {
+              type: 'object',
+              oneOf: [
+                {
+                  required: ['button', 'sections'],
+                  properties: { button: { type: 'string' }, sections: { type: 'array' } },
+                  additionalProperties: false,
+                },
+                {
+                  required: ['buttons'],
+                  properties: { buttons: { type: 'array' } },
+                  additionalProperties: false,
+                },
+              ],
+            },
+            { type: 'string' },
+          ],
+        },
+      },
+    };
+
+    expect(selectDiscriminatedErrors(errors, { interactive: { action: { button: 'Pick' } } }, schema)).toEqual(errors);
+  });
 });

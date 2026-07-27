@@ -1,9 +1,4 @@
-import {
-  ContentIssueEnum,
-  type ContentOverrideProviderId,
-  getProviderPrimaryContentKey,
-  setAtPath,
-} from '@novu/shared';
+import { type ContentOverrideProviderId, getProviderPrimaryContentKey, setAtPath } from '@novu/shared';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
@@ -16,9 +11,9 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
   getUnsupportedOverrideKeys,
   isEscapeHatchProvider,
-  isTopLevelOverrideIssuePath,
   PROVIDER_OVERRIDES_FIELD,
   type ProviderOverrides,
+  shouldKeepServerOverrideIssue,
 } from './content-source';
 import { EscapeHatchCallout } from './escape-hatch-callout';
 import { createOverrideCompletionSource } from './override-autocomplete';
@@ -162,15 +157,7 @@ export function ProviderOverrideEditor({
       .filter(([key]) => key === issuePathPrefix || key.startsWith(`${issuePathPrefix}.`))
       .flatMap(([path, issueList]) =>
         issueList
-          .filter((issue) => {
-            if (issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY) {
-              return true;
-            }
-
-            const issuePath = issue.variableName ?? path;
-
-            return !isTopLevelOverrideIssuePath(issuePath, issuePathPrefix);
-          })
+          .filter((issue) => shouldKeepServerOverrideIssue(issue, path, issuePathPrefix))
           .map((issue) => ({ ...issue, path }))
       )
       .filter((issue) => {
