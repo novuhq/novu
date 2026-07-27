@@ -1,6 +1,12 @@
 import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { buildProviderOverrideOptions, getUnsupportedOverrideKeys, isEscapeHatchProvider } from './content-source';
+import {
+  buildProviderOverrideOptions,
+  getUnsupportedOverrideKeys,
+  isEscapeHatchProvider,
+  isTopLevelOverrideIssuePath,
+  PROVIDER_OVERRIDES_FIELD,
+} from './content-source';
 
 describe('getUnsupportedOverrideKeys', () => {
   it('allows arbitrary webhook keys while preserving strict provider schemas', () => {
@@ -11,6 +17,18 @@ describe('getUnsupportedOverrideKeys', () => {
 
   it('checks top-level keys for providers whose schema is loaded lazily', () => {
     expect(getUnsupportedOverrideKeys(ChatProviderIdEnum.Slack, { blocks: [], custom: true })).toEqual(['custom']);
+  });
+});
+
+describe('isTopLevelOverrideIssuePath', () => {
+  const prefix = `${PROVIDER_OVERRIDES_FIELD}.${ChatProviderIdEnum.WhatsAppBusiness}`;
+
+  it('matches only a single segment under the provider path', () => {
+    expect(isTopLevelOverrideIssuePath(`${prefix}.custom`, prefix)).toBe(true);
+    expect(isTopLevelOverrideIssuePath(`${prefix}.document.link`, prefix)).toBe(false);
+    expect(isTopLevelOverrideIssuePath(`${prefix}.document.id`, prefix)).toBe(false);
+    expect(isTopLevelOverrideIssuePath(prefix, prefix)).toBe(false);
+    expect(isTopLevelOverrideIssuePath(`${PROVIDER_OVERRIDES_FIELD}.slack.custom`, prefix)).toBe(false);
   });
 });
 

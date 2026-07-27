@@ -16,6 +16,7 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
   getUnsupportedOverrideKeys,
   isEscapeHatchProvider,
+  isTopLevelOverrideIssuePath,
   PROVIDER_OVERRIDES_FIELD,
   type ProviderOverrides,
 } from './content-source';
@@ -150,9 +151,10 @@ export function ProviderOverrideEditor({
 
   const issuePathPrefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
 
-  // Unsupported keys are detected client-side from the shared override schema (it
-  // tracks the draft keystroke-by-keystroke); server UNSUPPORTED_PROPERTY issues are
-  // skipped here so the same key is never reported twice.
+  // Top-level unsupported keys are detected client-side from the shared override key
+  // list (keystroke-by-keystroke); skip only those server UNSUPPORTED_PROPERTY issues
+  // so the same key is never reported twice. Nested ones (e.g. document.link) are not
+  // covered by the local check and must still render under the editor.
   const activeServerIssues = useMemo(() => {
     const controlIssues = step?.issues?.controls ?? {};
 
@@ -160,7 +162,15 @@ export function ProviderOverrideEditor({
       .filter(([key]) => key === issuePathPrefix || key.startsWith(`${issuePathPrefix}.`))
       .flatMap(([path, issueList]) =>
         issueList
-          .filter((issue) => issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY)
+          .filter((issue) => {
+            if (issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY) {
+              return true;
+            }
+
+            const issuePath = issue.variableName ?? path;
+
+            return !isTopLevelOverrideIssuePath(issuePath, issuePathPrefix);
+          })
           .map((issue) => ({ ...issue, path }))
       )
       .filter((issue) => {

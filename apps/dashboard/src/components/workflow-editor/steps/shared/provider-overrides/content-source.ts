@@ -113,3 +113,18 @@ export function getUnsupportedOverrideKeys(
 
   return Object.keys(override ?? {}).filter((key) => !allowedKeySet.has(key));
 }
+
+/**
+ * True when a control-issue path is a top-level key under `providerOverrides.<providerId>`.
+ * Those UNSUPPORTED_PROPERTY issues are mirrored client-side by `getUnsupportedOverrideKeys`;
+ * nested paths (e.g. `…document.link`) are not, so the server issue must still be shown.
+ */
+export function isTopLevelOverrideIssuePath(issuePath: string, providerPathPrefix: string): boolean {
+  if (!issuePath.startsWith(`${providerPathPrefix}.`)) {
+    return false;
+  }
+
+  const relative = issuePath.slice(providerPathPrefix.length + 1);
+
+  return relative.length > 0 && !relative.includes('.');
+}

@@ -652,6 +652,169 @@ function dedupeTypeDiscriminators<TError extends SchemaValidationErrorLike>(erro
   });
 }
 
+function branchHasTypeDiscriminator(branch: SchemaNodeLike): boolean {
+  const typeSchema = isSchemaObject(branch.properties) ? branch.properties.type : undefined;
+  if (!isSchemaObject(typeSchema)) {
+    return false;
+  }
+
+  if (typeof typeSchema.const === 'string') {
+    return true;
+  }
+
+  if (Array.isArray(typeSchema.enum) && typeSchema.enum.length > 0) {
+    return true;
+  }
+
+  if (Array.isArray(typeSchema.anyOf)) {
+    return typeSchema.anyOf.some((option) => isSchemaObject(option) && typeof option.const === 'string');
+  }
+
+  return false;
+}
+
+/** Site paths from {@link compositionSegments} end at `/oneOf`; resolve the parent object that owns the branches. */
+function resolveOneOfContainer(rootSchema: SchemaNodeLike, site: string): SchemaNodeLike | undefined {
+  if (!site.endsWith('/oneOf')) {
+    return undefined;
+  }
+
+  const parent = resolveSchemaPointer(rootSchema, site.replace(/\/oneOf$/, ''));
+  if (!isSchemaObject(parent) || !Array.isArray(parent.oneOf)) {
+    return undefined;
+  }
+
+  return parent;
+}
+
+/** True when a oneOf is an either/or on `required` keys (e.g. MediaObject id vs link), not on `type`. */
+function oneOfUsesRequiredKeyDiscriminator(rootSchema: SchemaNodeLike, site: string): boolean {
+  const oneOfContainer = resolveOneOfContainer(rootSchema, site);
+  if (!oneOfContainer || !Array.isArray(oneOfContainer.oneOf) || oneOfContainer.oneOf.length < 2) {
+    return false;
+  }
+
+  return oneOfContainer.oneOf.every((branch) => {
+    if (!isSchemaObject(branch)) {
+      return false;
+    }
+
+    if (branchHasTypeDiscriminator(branch)) {
+      return false;
+    }
+
+    return Array.isArray(branch.required) && branch.required.length > 0;
+  });
+}
+
+function selectRequiredKeyBranchIndex(oneOfContainer: SchemaNodeLike, value: unknown): number {
+  const branches = oneOfContainer.oneOf as SchemaNodeLike[];
+  const valueKeys = new Set(
+    value !== null && typeof value === 'object' && !Array.isArray(value) ? Object.keys(value) : []
+  );
+
+  const matching = branches
+    .map((branch, index) => ({ branch, index }))
+    .filter(({ branch }) => {
+      const required = Array.isArray(branch.required) ? branch.required : [];
+
+      return required.some((key) => typeof key === 'string' && valueKeys.has(key));
+    })
+    .map(({ index }) => index);
+
+  if (matching.length >= 1) {
+    return matching[0] as number;
+  }
+
+  return 0;
+}
+
+type RequiredKeyOneOfSite = {
+  site: string;
+  nodeInstancePath: string;
+  selectedBranchIndex: number;
+};
+
+function findRequiredKeyOneOfSites(
+  errors: readonly SchemaValidationErrorLike[],
+  dataAtPath: unknown,
+  rootSchema: SchemaNodeLike
+): RequiredKeyOneOfSite[] {
+  const siteKeys = new Map<string, RequiredKeyOneOfSite>();
+
+  for (const error of errors) {
+    for (const { site, branchIndex } of compositionSegments(error.schemaPath)) {
+      if (!site.endsWith('/oneOf')) {
+        continue;
+      }
+
+      const branchPrefix = `${site}/${branchIndex}`;
+      const suffix = error.schemaPath.slice(branchPrefix.length);
+      const nodeInstancePath = dropTrailingSegments(error.instancePath, instanceDepthOfSchemaSuffix(suffix));
+      const key = `${site}\u0000${nodeInstancePath}`;
+
+      if (siteKeys.has(key) || !oneOfUsesRequiredKeyDiscriminator(rootSchema, site)) {
+        continue;
+      }
+
+      const oneOfContainer = resolveOneOfContainer(rootSchema, site);
+      if (!oneOfContainer) {
+        continue;
+      }
+
+      const value = resolveInstancePath(dataAtPath, nodeInstancePath);
+      const selectedBranchIndex = selectRequiredKeyBranchIndex(oneOfContainer, value);
+
+      siteKeys.set(key, { site, nodeInstancePath, selectedBranchIndex });
+    }
+  }
+
+  return [...siteKeys.values()];
+}
+
+function isShadowedByRequiredKeyOneOf(error: SchemaValidationErrorLike, site: RequiredKeyOneOfSite): boolean {
+  if (!isOnSameInstanceChain(error.instancePath, site.nodeInstancePath)) {
+    return false;
+  }
+
+  const selectedPrefix = `${site.site}/${site.selectedBranchIndex}`;
+  if (error.schemaPath === selectedPrefix || error.schemaPath.startsWith(`${selectedPrefix}/`)) {
+    return false;
+  }
+
+  if (error.keyword === 'oneOf' && error.schemaPath === site.site) {
+    return true;
+  }
+
+  if (!error.schemaPath.startsWith(`${site.site}/`)) {
+    return false;
+  }
+
+  const branchIndex = error.schemaPath.slice(site.site.length + 1).split('/')[0];
+  if (branchIndex === undefined || !/^\d+$/.test(branchIndex)) {
+    return false;
+  }
+
+  return branchIndex !== String(site.selectedBranchIndex);
+}
+
+/**
+ * AJV reports every branch of a required-key oneOf (e.g. WhatsApp MediaObject's id vs link).
+ * Pick the branch whose required key is present, or the first branch when neither is.
+ */
+function selectRequiredKeyOneOfErrors<TError extends SchemaValidationErrorLike>(
+  errors: readonly TError[],
+  dataAtPath: unknown,
+  rootSchema: SchemaNodeLike
+): TError[] {
+  const sites = findRequiredKeyOneOfSites(errors, dataAtPath, rootSchema);
+  if (sites.length === 0) {
+    return [...errors];
+  }
+
+  return errors.filter((error) => !sites.some((site) => isShadowedByRequiredKeyOneOf(error, site)));
+}
+
 /**
  * AJV reports every branch of a union, so one typo inside a Block Kit block yields a useless
  * "must match a schema in anyOf" plus the failures of every other block type it tried. When the
@@ -674,23 +837,24 @@ export function selectDiscriminatedErrors<TError extends SchemaValidationErrorLi
   dataAtPath: unknown,
   rootSchema?: object
 ): TError[] {
-  const groups = groupBranches(errors);
-  const mismatched = effectivelyMismatchedKeys(groups);
-  const sites = findDiscriminatedSites(groups, errors, mismatched, dataAtPath);
   const schemaRoot = isSchemaObject(rootSchema) ? rootSchema : undefined;
-  const matchedGroups = typeMatchedGroups(groups, errors, mismatched);
+  const narrowed = schemaRoot ? selectRequiredKeyOneOfErrors(errors, dataAtPath, schemaRoot) : [...errors];
+  const groups = groupBranches(narrowed);
+  const mismatched = effectivelyMismatchedKeys(groups);
+  const sites = findDiscriminatedSites(groups, narrowed, mismatched, dataAtPath);
+  const matchedGroups = typeMatchedGroups(groups, narrowed, mismatched);
 
   const concreteWinners = schemaRoot ? resolveConcreteWinners(matchedGroups, schemaRoot, dataAtPath) : [];
   const winners = schemaRoot
     ? new Set(concreteWinners.map((winner) => winner.nodeInstancePath))
-    : payloadShapeWinnerPaths(groups, errors, mismatched);
+    : payloadShapeWinnerPaths(groups, narrowed, mismatched);
 
   if (sites.length === 0 && concreteWinners.length === 0) {
-    return [...errors];
+    return narrowed;
   }
 
   return dedupeTypeDiscriminators(
-    errors.filter((error) => {
+    narrowed.filter((error) => {
       if (sites.some((site) => isShadowedBy(error, site, winners))) {
         return false;
       }

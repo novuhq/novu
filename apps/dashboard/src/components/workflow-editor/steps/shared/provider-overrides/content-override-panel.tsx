@@ -13,6 +13,7 @@ import {
   getContentSourceLabel,
   getUnsupportedOverrideKeys,
   isContentOverrideProviderId,
+  isTopLevelOverrideIssuePath,
   type OverrideChannel,
   PROVIDER_OVERRIDES_FIELD,
   type ProviderOverrideOption,
@@ -88,7 +89,18 @@ export function ContentOverridePanel({
       }
 
       const providerId = key.slice(prefix.length).split('.')[0];
-      const otherCount = issueList.filter((issue) => issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY).length;
+      const providerPathPrefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
+      // Mirror the editor: top-level UNSUPPORTED_PROPERTY is counted via
+      // getUnsupportedOverrideKeys; nested ones only exist on the server issues.
+      const otherCount = issueList.filter((issue) => {
+        if (issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY) {
+          return true;
+        }
+
+        const issuePath = issue.variableName ?? key;
+
+        return !isTopLevelOverrideIssuePath(issuePath, providerPathPrefix);
+      }).length;
       if (otherCount > 0) {
         counts.set(providerId, (counts.get(providerId) ?? 0) + otherCount);
       }

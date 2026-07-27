@@ -298,4 +298,104 @@ describe('selectDiscriminatedErrors', () => {
     expect(result.filter((error) => error.keyword === 'const')).toHaveLength(1);
     expect(result.some((error) => error.instancePath === `${item}/type` && error.keyword === 'const')).toBe(true);
   });
+
+  it('keeps only the id branch when both id and link are present in a required-key oneOf', () => {
+    const site = '#/definitions/MediaObject/anyOf/0/oneOf';
+    const errors: SchemaValidationErrorLike[] = [
+      {
+        instancePath: '/document',
+        schemaPath: `${site}/0/additionalProperties`,
+        keyword: 'additionalProperties',
+        message: 'must NOT have additional properties',
+      },
+      {
+        instancePath: '/document',
+        schemaPath: `${site}/1/additionalProperties`,
+        keyword: 'additionalProperties',
+        message: 'must NOT have additional properties',
+      },
+      {
+        instancePath: '/document',
+        schemaPath: site,
+        keyword: 'oneOf',
+        message: 'must match exactly one schema in oneOf',
+      },
+    ];
+    const schema = {
+      definitions: {
+        MediaObject: {
+          anyOf: [
+            {
+              type: 'object',
+              oneOf: [
+                { required: ['id'], properties: { id: { type: 'string' } }, additionalProperties: false },
+                { required: ['link'], properties: { link: { type: 'string' } }, additionalProperties: false },
+              ],
+            },
+            { type: 'string' },
+          ],
+        },
+      },
+    };
+
+    const result = selectDiscriminatedErrors(
+      errors,
+      { document: { id: 'x', link: 'https://example.com', text: { body: 'hi' } } },
+      schema
+    );
+
+    expect(result).toEqual([
+      {
+        instancePath: '/document',
+        schemaPath: `${site}/0/additionalProperties`,
+        keyword: 'additionalProperties',
+        message: 'must NOT have additional properties',
+      },
+    ]);
+  });
+
+  it('keeps only the first branch required error when neither required key is present', () => {
+    const site = '#/definitions/MediaObject/anyOf/0/oneOf';
+    const errors: SchemaValidationErrorLike[] = [
+      {
+        instancePath: '/document',
+        schemaPath: `${site}/0/required`,
+        keyword: 'required',
+        message: "must have required property 'id'",
+      },
+      {
+        instancePath: '/document',
+        schemaPath: `${site}/1/required`,
+        keyword: 'required',
+        message: "must have required property 'link'",
+      },
+    ];
+    const schema = {
+      definitions: {
+        MediaObject: {
+          anyOf: [
+            {
+              type: 'object',
+              oneOf: [
+                { required: ['id'], properties: { id: { type: 'string' } }, additionalProperties: false },
+                { required: ['link'], properties: { link: { type: 'string' } }, additionalProperties: false },
+              ],
+            },
+            { type: 'string' },
+          ],
+        },
+      },
+    };
+
+    const result = selectDiscriminatedErrors(errors, { document: { text: { body: 'hi' } } }, schema);
+
+    expect(result).toEqual([
+      {
+        instancePath: '/document',
+        schemaPath: `${site}/0/required`,
+        keyword: 'required',
+        message: "must have required property 'id'",
+      },
+    ]);
+  });
 });

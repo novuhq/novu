@@ -310,4 +310,37 @@ describe('processProviderOverridesIssues', () => {
       },
     ]);
   });
+
+  it('narrows WhatsApp MediaObject oneOf errors when id and link are both present', () => {
+    const issues = processProviderOverridesIssues({
+      [ChatProviderIdEnum.WhatsAppBusiness]: {
+        document: {
+          id: 'ads',
+          link: 'https://example.com/doc',
+          text: { body: 'adad', preview_url: false },
+        },
+      },
+    });
+
+    expect(Object.keys(issues.controls ?? {})).toEqual([
+      'providerOverrides.whatsapp-business.document.link',
+      'providerOverrides.whatsapp-business.document.text',
+    ]);
+  });
+
+  it('narrows WhatsApp MediaObject oneOf errors when neither id nor link is present', () => {
+    const issues = processProviderOverridesIssues({
+      [ChatProviderIdEnum.WhatsAppBusiness]: {
+        document: {
+          text: { body: 'adad', preview_url: false },
+        },
+      },
+    });
+
+    expect(Object.keys(issues.controls ?? {})).toEqual([
+      'providerOverrides.whatsapp-business.document.id',
+      'providerOverrides.whatsapp-business.document.text',
+    ]);
+    expect(issues.controls?.['providerOverrides.whatsapp-business.document.link']).toBeUndefined();
+  });
 });
