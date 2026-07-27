@@ -89,15 +89,13 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
    * Returns null when another worker holds a live lease or the job is already terminal.
    */
   public async claimAsRunning(environmentId: string, jobId: string): Promise<JobEntity | null> {
-    const staleClaimCutoff = new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
-
     return this.findOneAndUpdate(
       {
         _environmentId: environmentId,
         _id: jobId,
         $or: [
           { status: { $in: [JobStatusEnum.QUEUED, JobStatusEnum.DELAYED] } },
-          { status: JobStatusEnum.RUNNING, updatedAt: { $lte: staleClaimCutoff } },
+          { status: JobStatusEnum.RUNNING, updatedAt: { $lte: this.staleClaimCutoff() } },
         ],
       },
       {
@@ -144,7 +142,11 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
-  /** Atomically claim the next PENDING child as QUEUED so a redelivered parent cannot re-enqueue it. */
+  /**
+   * Atomically claim the next PENDING child as QUEUED so a redelivered parent cannot re-enqueue it.
+   * `awaitingEnqueue` stays true until AddJob confirms the queue message exists (see
+   * {@link markEnqueued}), which is what makes the claim-to-enqueue crash window detectable.
+   */
   public async claimNextChildAsQueued(environmentId: string, parentJobId: string): Promise<JobEntity | null> {
     return this.findOneAndUpdate(
       {
@@ -155,10 +157,69 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       {
         $set: {
           status: JobStatusEnum.QUEUED,
+          awaitingEnqueue: true,
         },
       },
       { new: true }
     );
+  }
+
+  /**
+   * Record that the job's queue message was successfully enqueued, ending its
+   * claim-to-enqueue crash window. Guarded on QUEUED so a fast consumer that already
+   * moved the job to RUNNING (or beyond) is never touched — once a job leaves QUEUED
+   * the flag is irrelevant.
+   */
+  public async markEnqueued(environmentId: string, jobId: string): Promise<void> {
+    await this.updateOne(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: JobStatusEnum.QUEUED,
+      },
+      {
+        $set: {
+          awaitingEnqueue: false,
+        },
+      }
+    );
+  }
+
+  /**
+   * Release a child stuck in QUEUED back to PENDING because the worker died between
+   * {@link claimNextChildAsQueued} and AddJob's enqueue — the child then has no
+   * queue message and the chain is stranded until a redelivered parent re-drives it.
+   * Once PENDING again, the ordinary chain-resume path recovers it.
+   *
+   * Two conditions fence out healthy children:
+   * - `awaitingEnqueue` not false: {@link markEnqueued} clears the flag once the queue
+   *   message exists, so a live-but-backlogged child is never released and re-enqueued.
+   *   `$ne: false` (rather than `true`) keeps children claimed by pre-flag workers
+   *   recoverable.
+   * - Staleness (`updatedAt` older than {@link RUNNING_CLAIM_STALE_AFTER_MS}): redeliveries
+   *   only arrive after the BullMQ lock / SQS visibility window (~90s), so a fresh QUEUED
+   *   child is still being processed by the original worker's AddJob.
+   */
+  public async releaseStaleQueuedChildToPending(environmentId: string, parentJobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _parentId: parentJobId,
+        status: JobStatusEnum.QUEUED,
+        awaitingEnqueue: { $ne: false },
+        updatedAt: { $lte: this.staleClaimCutoff() },
+      },
+      {
+        $set: {
+          status: JobStatusEnum.PENDING,
+        },
+      },
+      { new: true }
+    );
+  }
+
+  private staleClaimCutoff(): Date {
+    return new Date(Date.now() - RUNNING_CLAIM_STALE_AFTER_MS);
   }
 
   public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
