@@ -147,6 +147,15 @@ export class SendMessage {
       };
     }
 
+    // Emitted only after every skip gate (conditions, preferences, bridge skip)
+    // has passed, so the trace never contradicts the actual outcome.
+    if (command.job.step.filters?.length) {
+      await this.createStepConditionsPassedDetail.execute({
+        job: command.job,
+        conditions: stepCondition.conditions,
+      });
+    }
+
     let severity = command.severity;
     const { overrides } = command;
     if (stepType !== StepTypeEnum.TRIGGER && overrides?.severity && overrides.severity !== severity) {
@@ -264,11 +273,6 @@ export class SendMessage {
           }),
         })
       );
-    } else if (command.job.step.filters?.length) {
-      await this.createStepConditionsPassedDetail.execute({
-        job: command.job,
-        conditions: stepCondition.conditions,
-      });
     }
 
     return stepCondition;
