@@ -3321,7 +3321,9 @@ export const slackOverrideJsonSchema: JSONSchemaDto = {
           "items": {
             "$ref": "#/definitions/CardBlock"
           },
-          "description": "An array of {@link CardBlock } elements. Minimum 1, maximum 10 cards."
+          "description": "An array of {@link CardBlock } elements. Minimum 1, maximum 10 cards.",
+          "minItems": 1,
+          "maxItems": 10
         }
       },
       "required": [
@@ -3388,7 +3390,9 @@ export const slackOverrideJsonSchema: JSONSchemaDto = {
           "items": {
             "$ref": "#/definitions/ContextActionsBlockElement"
           },
-          "description": "An array of {@link FeedbackButtons } or {@link IconButton } block elements. Maximum number of items is 5."
+          "description": "An array of {@link FeedbackButtons } or {@link IconButton } block elements. Maximum number of items is 5.",
+          "minItems": 1,
+          "maxItems": 5
         }
       },
       "required": [

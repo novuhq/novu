@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { SLACK_OVERRIDE_KEYS } from '../src/consts/providers/provider-overrides/slack/keys';
 import { slackOverrideJsonSchema } from '../src/consts/providers/provider-overrides/slack/slack-override.generated';
 import { slackOverrideLiquidTolerantJsonSchema } from '../src/consts/providers/provider-overrides/slack/slack-override.liquid-tolerant.generated';
-import { buildSlackOverrideSchemas } from './generate-slack-override-schema';
+import { buildSlackOverrideSchemas, SLACK_OVERRIDE_ARRAY_SIZE_LIMITS } from './generate-slack-override-schema';
 import { NON_OVERRIDABLE_SLACK_KEYS } from './slack-override.type';
 
 const REGENERATE_HINT = 'Run `pnpm --filter @novu/shared generate:slack-schema` and commit the result.';
@@ -79,12 +79,21 @@ describe('committed Slack override schema', () => {
   });
 
   it('carries the Block Kit array size limits that Slack enforces outside its types', () => {
-    const definitions = slackOverrideJsonSchema.definitions ?? {};
+    for (const limit of SLACK_OVERRIDE_ARRAY_SIZE_LIMITS) {
+      const container =
+        limit.definition === undefined
+          ? slackOverrideJsonSchema
+          : slackOverrideJsonSchema.definitions?.[limit.definition];
 
-    expect(slackOverrideJsonSchema.properties?.blocks).toMatchObject({ maxItems: 50 });
-    expect(definitions.ActionsBlock).toMatchObject({ properties: { elements: { minItems: 1, maxItems: 25 } } });
-    expect(definitions.ContextBlock).toMatchObject({ properties: { elements: { minItems: 1, maxItems: 10 } } });
-    expect(definitions.SectionBlock).toMatchObject({ properties: { fields: { maxItems: 10 } } });
+      expect(container).toMatchObject({
+        properties: {
+          [limit.property]: {
+            ...(limit.minItems === undefined ? {} : { minItems: limit.minItems }),
+            ...(limit.maxItems === undefined ? {} : { maxItems: limit.maxItems }),
+          },
+        },
+      });
+    }
   });
 
   it('never exposes the routing fields Novu resolves itself', () => {

@@ -200,10 +200,15 @@ describe('processProviderOverridesIssues', () => {
     ]);
   });
 
-  it('reports a Slack actions block whose elements array is empty, which Slack rejects as invalid_blocks', () => {
+  it.each([
+    { type: 'actions', elements: [] },
+    { type: 'context', elements: [] },
+    { type: 'context_actions', elements: [] },
+    { type: 'carousel', elements: [] },
+  ])('reports a Slack $type block whose elements array is empty, which Slack rejects as invalid_blocks', (block) => {
     const issues = processProviderOverridesIssues({
       [ChatProviderIdEnum.Slack]: {
-        blocks: [{ type: 'actions', elements: [] }],
+        blocks: [block],
       },
     });
 
