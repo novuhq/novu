@@ -282,6 +282,45 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 </Step>
 </Steps>
 
+## Configure WhatsApp overrides
+
+Save a WhatsApp Business override on the Chat step when you need Cloud API message shapes beyond the plain-text step body — for example templates, interactive buttons, or media. The override is stored on the step, so it is versioned and promoted with the workflow, and every trigger sends it without changing your trigger call.
+
+<Note>
+  Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Chat step yet. Overrides passed at trigger time work regardless. See [provider content overrides](/platform/integrations/chat#provider-content-overrides).
+</Note>
+
+<Steps>
+  <Step title="Open the Chat step">
+    In the [Novu Dashboard](https://dashboard.novu.co), open your workflow and select the Chat step that uses the WhatsApp Business integration.
+  </Step>
+
+  <Step title="Open the WhatsApp overrides editor">
+    In the step editor, open the content source dropdown — it reads **Default content** until you switch it — and pick **WhatsApp Business** under **Overrides**. If WhatsApp has no override yet, use the **+** beside it to add one.
+  </Step>
+
+  <Step title="Write the override JSON">
+    Enter a JSON object of [WhatsApp Cloud API Message](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages) fields. The editor autocompletes supported field names (`type`, `text`, `template`, `interactive`, media, `context`, and related bodies), validates the JSON, and flags unsupported fields.
+  </Step>
+
+  <Step title="Save the workflow">
+    The override applies on the next trigger.
+  </Step>
+</Steps>
+
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time:
+
+```json
+{
+  "type": "text",
+  "text": {
+    "body": "Order {{payload.orderId}} is {{payload.status}}"
+  }
+}
+```
+
+For text messages, `text.body` is the primary content field. If your override omits it, Novu fills it with the rendered Chat step body. Recipient addressing (`to`) is resolved from the subscriber endpoint — prefer addressing a different subscriber when you want a different destination.
+
 ## Using WhatsApp with agents
 
 WhatsApp is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your WhatsApp Business account to an agent so users can message your number and get replies in the same thread - without building Meta webhook handling yourself.

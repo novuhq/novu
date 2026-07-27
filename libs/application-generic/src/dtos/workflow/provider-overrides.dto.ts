@@ -148,7 +148,7 @@ export class ProviderOverridesDto {
 
   @ApiPropertyOptional({
     description:
-      'WhatsApp Business content overrides. Free-form: any key the WhatsApp Cloud API accepts is passed through.',
+      'WhatsApp Business content overrides, validated against WhatsApp Cloud API Message fields (`type`, `text`, `template`, `interactive`, media such as `image`/`audio`/`video`/`document`/`sticker`, `context`, and related message bodies). Recipient addressing is resolved from the subscriber endpoint. For text messages, `text.body` falls back to the default step body.',
     type: 'object',
     additionalProperties: true,
     example: { type: 'text', text: { body: '{{payload.title}}' } },

@@ -259,6 +259,14 @@ Slack overrides are validated against the [`chat.postMessage`](https://api.slack
   Field-by-field reference, a Block Kit example with Liquid variables, and the incoming-webhook caveats.
 </Card>
 
+### WhatsApp is schema-backed
+
+WhatsApp Business overrides are validated against [WhatsApp Cloud API Message](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages) fields such as `type`, `text`, `template`, `interactive`, media, and `context`. The editor autocompletes supported field names, validates the JSON, and flags unsupported fields.
+
+<Card title="Configure WhatsApp overrides" icon="whatsapp" href="/platform/integrations/chat/whats-app#configure-whatsapp-overrides">
+  How to save a schema-backed WhatsApp override on the Chat step, with a text and template example.
+</Card>
+
 ### Every other chat provider is a raw passthrough
 
 For all other chat providers, the override is an unvalidated escape hatch. Whatever JSON object you save is merged into that provider's outbound payload as-is.
@@ -273,7 +281,7 @@ Use this when a provider supports something Novu's step editor does not expose, 
 
 ### Liquid, fallback, and precedence
 
-Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time. Where a provider has a primary content field — `text` for Slack — and your override omits it, Novu fills it with the rendered Chat step body.
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time. Where a provider has a primary content field — `text` for Slack, `text.body` for WhatsApp — and your override omits it, Novu fills it with the rendered Chat step body.
 
 When the same field is set both on the step and at trigger time, the trigger value wins, and arrays replace rather than merge. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
 

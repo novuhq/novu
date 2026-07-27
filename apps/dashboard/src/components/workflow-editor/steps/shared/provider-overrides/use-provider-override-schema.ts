@@ -30,6 +30,12 @@ const SUBPATH_SCHEMA_LOADERS: Record<string, () => Promise<OverrideFieldSchema>>
 
     return telegramOverrideJsonSchema as OverrideFieldSchema;
   },
+  // Literal matches WHATSAPP_OVERRIDE_SCHEMA_SUBPATH once the schema slice lands.
+  ['@novu/shared/provider-overrides/whatsapp']: async () => {
+    const { whatsappOverrideJsonSchema } = await import('@novu/shared/provider-overrides/whatsapp');
+
+    return whatsappOverrideJsonSchema as OverrideFieldSchema;
+  },
 };
 
 const loadedSubpathSchemas = new Map<string, OverrideFieldSchema>();
