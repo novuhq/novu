@@ -27,6 +27,10 @@ Run `pnpm build` after changes to `packages/` or `enterprise/`. Direct changes t
 - If doing a monorepo wide refactor, you can touch the read only, but only when necessary.
 
 
+## Developer-local agent config
+
+If a **`.agents-local/`** directory exists in your working copy, read **`.agents-local/README.md`** first for personal, git-ignored agent configuration, skills and rules. Absence of the directory is normal.
+
 ## Novu Distribution
 Novu is distributed in 3 modes, Community Edition, Enterprise Cloud Edition, and On-Prem Enterprise Edition.
 
