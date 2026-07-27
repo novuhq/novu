@@ -1,6 +1,6 @@
-import { ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getUnsupportedOverrideKeys, isEscapeHatchProvider } from './content-source';
+import { buildProviderOverrideOptions, getUnsupportedOverrideKeys, isEscapeHatchProvider } from './content-source';
 
 describe('getUnsupportedOverrideKeys', () => {
   it('allows arbitrary webhook keys while preserving strict provider schemas', () => {
@@ -20,5 +20,31 @@ describe('isEscapeHatchProvider', () => {
     expect(isEscapeHatchProvider(ChatProviderIdEnum.Slack)).toBe(false);
     expect(isEscapeHatchProvider(ToolProviderIdEnum.Webhook)).toBe(true);
     expect(isEscapeHatchProvider(ChatProviderIdEnum.Discord)).toBe(true);
+  });
+});
+
+describe('buildProviderOverrideOptions', () => {
+  it('lists configured overrides first, then alphabetically by display name', () => {
+    const options = buildProviderOverrideOptions({
+      channel: ChannelTypeEnum.CHAT,
+      activeProviderIds: new Set([
+        ChatProviderIdEnum.Telegram,
+        ChatProviderIdEnum.Discord,
+        ChatProviderIdEnum.Slack,
+        ChatProviderIdEnum.Mattermost,
+      ]),
+      providerOverrides: {
+        [ChatProviderIdEnum.Telegram]: { text: 'hi' },
+        [ChatProviderIdEnum.Slack]: { text: 'hi' },
+      },
+    });
+
+    expect(options.map((option) => option.providerId)).toEqual([
+      ChatProviderIdEnum.Slack,
+      ChatProviderIdEnum.Telegram,
+      ChatProviderIdEnum.Discord,
+      ChatProviderIdEnum.Mattermost,
+    ]);
+    expect(options.map((option) => option.hasOverride)).toEqual([true, true, false, false]);
   });
 });

@@ -70,15 +70,26 @@ export function buildProviderOverrideOptions({
     Object.keys(providerOverrides ?? {}).filter((providerId) => isContentOverrideProviderId(channel, providerId))
   );
 
-  return getContentOverrideProviderIds(channel)
-    .filter((providerId) => activeProviderIds.has(providerId) || overrideKeys.has(providerId))
-    .map((providerId) => ({
-      providerId,
-      displayName: getOverrideProviderDisplayName(providerId),
-      hasOverride: providerId in (providerOverrides ?? {}),
-      isConnected: activeProviderIds.has(providerId),
-      isEscapeHatch: isEscapeHatchProvider(providerId),
-    }));
+  return (
+    getContentOverrideProviderIds(channel)
+      .filter((providerId) => activeProviderIds.has(providerId) || overrideKeys.has(providerId))
+      .map((providerId) => ({
+        providerId,
+        displayName: getOverrideProviderDisplayName(providerId),
+        hasOverride: providerId in (providerOverrides ?? {}),
+        isConnected: activeProviderIds.has(providerId),
+        isEscapeHatch: isEscapeHatchProvider(providerId),
+      }))
+      // Configured overrides first (selectable / hold data); alphabetical within each group so the
+      // menu stays stable across registry edits and selection changes.
+      .sort((left, right) => {
+        if (left.hasOverride !== right.hasOverride) {
+          return left.hasOverride ? -1 : 1;
+        }
+
+        return left.displayName.localeCompare(right.displayName);
+      })
+  );
 }
 
 export function getContentSourceLabel(source: ContentSource): string {

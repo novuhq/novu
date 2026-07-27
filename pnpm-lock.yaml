@@ -4227,6 +4227,9 @@ importers:
         specifier: ^11.5.1
         version: 11.5.1
     devDependencies:
+      '@grammyjs/types':
+        specifier: 4.0.0
+        version: 4.0.0
       '@slack/web-api':
         specifier: 7.17.0
         version: 7.17.0
@@ -7641,6 +7644,9 @@ packages:
   '@google-cloud/storage@7.16.0':
     resolution: {integrity: sha512-7/5LRgykyOfQENcm6hDKP8SX/u9XxE5YOiWOkgkwcoO+cG8xT/cyOvp9wwN3IxfdYgpHs8CE7Nq2PKX2lNaEXw==}
     engines: {node: '>=14'}
+
+  '@grammyjs/types@4.0.0':
+    resolution: {integrity: sha512-Z8lDLTvOlo12e5Vnly/vQh3JC9ppaitS1dGZ3w068gNitOd/y8tTSiib+Xm38aBGbtYGmUZwOc6afYrLs2CSTg==}
 
   '@graphql-tools/merge@9.0.0':
     resolution: {integrity: sha512-J7/xqjkGTTwOJmaJQJ2C+VDBDOWJL3lKrHJN4yMaRLAJH3PosB7GiPRaSDZdErs0+F77sH2MKs2haMMkywzx7Q==}
@@ -33230,6 +33236,8 @@ snapshots:
       - encoding
       - supports-color
     optional: true
+
+  '@grammyjs/types@4.0.0': {}
 
   '@graphql-tools/merge@9.0.0(graphql@16.9.0)':
     dependencies:

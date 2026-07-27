@@ -189,10 +189,11 @@ export class ProviderOverridesDto {
   'novu-slack'?: Record<string, unknown>;
 
   @ApiPropertyOptional({
-    description: 'Telegram content overrides. Free-form: any key the Telegram Bot API accepts is passed through.',
+    description:
+      'Telegram content overrides for Bot API sendMessage. Validated against the generated schema from @grammyjs/types; `chat_id` is resolved from the subscriber endpoint. `text` falls back to the default step body.',
     type: 'object',
     additionalProperties: true,
-    example: { text: '{{payload.title}}', parse_mode: 'MarkdownV2' },
+    example: { text: '{{payload.title}}', parse_mode: 'MarkdownV2', disable_notification: true },
   })
   @IsObject()
   @IsOptional()

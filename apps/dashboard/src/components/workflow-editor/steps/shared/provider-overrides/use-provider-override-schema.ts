@@ -1,4 +1,8 @@
-import { getProviderOverrideConfig, SLACK_OVERRIDE_SCHEMA_SUBPATH } from '@novu/shared';
+import {
+  getProviderOverrideConfig,
+  SLACK_OVERRIDE_SCHEMA_SUBPATH,
+  TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,
+} from '@novu/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { getEagerRootSchema, getKeysOnlyRootSchema, type OverrideFieldSchema } from './override-field-schema';
 
@@ -10,16 +14,21 @@ export type OverrideSchemaState = {
 };
 
 /**
- * Slack's generated schema is a few hundred kilobytes and deliberately unreachable from the
- * `@novu/shared` barrel, so it is pulled in as its own chunk the first time its tab is opened.
- * Keyed by the `schemaSubpath` the provider registry records: a provider that gains a lazy schema
- * without an entry here degrades to its top-level key list.
+ * Generated schemas (Slack Block Kit, Telegram reply_markup / MessageEntity, …) are deliberately
+ * unreachable from the `@novu/shared` barrel, so each is pulled in as its own chunk the first time
+ * its tab is opened. Keyed by the `schemaSubpath` the provider registry records: a provider that
+ * gains a lazy schema without an entry here degrades to its top-level key list.
  */
 const SUBPATH_SCHEMA_LOADERS: Record<string, () => Promise<OverrideFieldSchema>> = {
   [SLACK_OVERRIDE_SCHEMA_SUBPATH]: async () => {
     const { slackOverrideJsonSchema } = await import('@novu/shared/provider-overrides/slack');
 
     return slackOverrideJsonSchema as OverrideFieldSchema;
+  },
+  [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: async () => {
+    const { telegramOverrideJsonSchema } = await import('@novu/shared/provider-overrides/telegram');
+
+    return telegramOverrideJsonSchema as OverrideFieldSchema;
   },
 };
 

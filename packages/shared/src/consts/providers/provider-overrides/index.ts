@@ -50,6 +50,12 @@ export {
   SLACK_OVERRIDE_SCHEMA_SUBPATH,
   SLACK_PRIMARY_CONTENT_KEY,
 } from './slack/keys';
+export {
+  NON_OVERRIDABLE_TELEGRAM_KEYS,
+  TELEGRAM_OVERRIDE_KEYS,
+  TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,
+  TELEGRAM_PRIMARY_CONTENT_KEY,
+} from './telegram/keys';
 
 /** @deprecated Renamed to `PROVIDER_OVERRIDE_SCHEMAS` now that chat providers are covered too. */
 export const TOOL_PROVIDER_OVERRIDE_SCHEMAS = PROVIDER_OVERRIDE_SCHEMAS;

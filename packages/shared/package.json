@@ -19,7 +19,8 @@
     "test": "vitest",
     "watch:test": "pnpm test --watch",
     "check:circulars": "madge --circular --extensions ts ./src",
-    "generate:slack-schema": "node scripts/generate-slack-override-schema.ts"
+    "generate:slack-schema": "node scripts/generate-slack-override-schema.ts",
+    "generate:telegram-schema": "node scripts/generate-telegram-override-schema.ts"
   },
   "author": "",
   "license": "ISC",
@@ -76,12 +77,18 @@
       "require": "./dist/cjs/consts/providers/provider-overrides/slack/index.js",
       "import": "./dist/esm/consts/providers/provider-overrides/slack/index.js"
     },
+    "./provider-overrides/telegram": {
+      "types": "./dist/esm/consts/providers/provider-overrides/telegram/index.d.ts",
+      "require": "./dist/cjs/consts/providers/provider-overrides/telegram/index.js",
+      "import": "./dist/esm/consts/providers/provider-overrides/telegram/index.js"
+    },
     "./docs/agent-onboarding.md": "./docs/agent-onboarding.md"
   },
   "dependencies": {
     "lru-cache": "^11.5.1"
   },
   "devDependencies": {
+    "@grammyjs/types": "4.0.0",
     "@slack/web-api": "7.17.0",
     "madge": "^8.0.0",
     "rimraf": "^3.0.2",

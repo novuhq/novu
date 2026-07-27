@@ -140,6 +140,17 @@ describe('provider override registry', () => {
     expect(getProviderOverrideKeysOnlySchema(ChatProviderIdEnum.Slack)?.properties?.blocks).toBe(true);
   });
 
+  it('exposes Telegram keys eagerly while its schema stays behind a package subpath', () => {
+    const config = getProviderOverrideConfig(ChatProviderIdEnum.Telegram);
+
+    expect(config?.schema).toBeUndefined();
+    expect(config?.schemaSubpath).toBe('@novu/shared/provider-overrides/telegram');
+    expect(config?.primaryContentKey).toBe('text');
+    expect(getProviderOverrideKeys(ChatProviderIdEnum.Telegram)).toContain('parse_mode');
+    expect(getProviderOverrideKeys(ChatProviderIdEnum.Telegram)).toContain('reply_markup');
+    expect(getProviderOverrideKeysOnlySchema(ChatProviderIdEnum.Telegram)?.properties?.parse_mode).toBe(true);
+  });
+
   it('pairs every eager schema with a liquid-tolerant twin', () => {
     const config = getProviderOverrideConfig(ToolProviderIdEnum.PagerDuty);
 

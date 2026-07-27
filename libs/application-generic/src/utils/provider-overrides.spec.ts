@@ -249,10 +249,34 @@ describe('processProviderOverridesIssues', () => {
   it('reports nothing for escape-hatch chat providers whose keys cannot be described up front', () => {
     const issues = processProviderOverridesIssues({
       [ChatProviderIdEnum.Discord]: { content: '{{payload.body}}', embeds: [{ anything: true }] },
-      [ChatProviderIdEnum.Telegram]: { text: 'hi', parse_mode: 'MarkdownV2', whatever: 1 },
+      [ChatProviderIdEnum.MsTeams]: { text: 'hi', whatever: 1 },
     });
 
     expect(issues.controls).toBeUndefined();
+  });
+
+  it('validates Telegram overrides against the generated sendMessage schema', () => {
+    const valid = processProviderOverridesIssues({
+      [ChatProviderIdEnum.Telegram]: {
+        text: '{{payload.title}}',
+        parse_mode: 'MarkdownV2',
+        disable_notification: true,
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalid = processProviderOverridesIssues({
+      [ChatProviderIdEnum.Telegram]: { text: 'hi', whatever: 1 },
+    });
+
+    expect(invalid.controls?.['providerOverrides.telegram.whatever']).toEqual([
+      {
+        message: '"whatever" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.telegram.whatever',
+      },
+    ]);
   });
 
   it('reports the provider schema error rather than the step-control URL message', () => {
