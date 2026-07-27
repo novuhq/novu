@@ -33,6 +33,7 @@ import {
   IEmailBlock,
   InAppProviderIdEnum,
   PreviousStepTypeEnum,
+  SECRET_MASK,
   SmsProviderIdEnum,
   StepTypeEnum,
   SystemAvatarIconEnum,
@@ -484,7 +485,9 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
     describe('step conditions passed trace', () => {
       const skipRule = { '==': [{ var: 'payload.tier' }, 'pro'] };
 
-      async function createV2WorkflowWithSkipConditions(): Promise<WorkflowResponseDto> {
+      async function createV2WorkflowWithSkipConditions(
+        skip: Record<string, unknown> = skipRule
+      ): Promise<WorkflowResponseDto> {
         const workflowBody: CreateWorkflowDto = {
           name: 'Skip Conditions Passed Workflow',
           workflowId: `skip-conditions-passed-${uuid()}`,
@@ -496,7 +499,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
               controlValues: {
                 subject: 'Test Subject',
                 body: 'Test Body',
-                skip: skipRule,
+                skip,
               },
             },
           ],
@@ -579,6 +582,55 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         });
 
         expect(executionDetails.length).to.equal(0);
+      });
+
+      it('should mask environment variable values in the evaluated values of the execution detail', async () => {
+        const flagKey = FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED;
+        const mutableEnv = process.env as Record<string, string | undefined>;
+        const previousFlagValue = mutableEnv[flagKey];
+        mutableEnv[flagKey] = 'true';
+
+        const secretValue = 'sk_live_super_secret_value_123';
+
+        try {
+          const createVariableResponse = await session.testAgent.post('/v1/environment-variables').send({
+            key: 'STRIPE_API_KEY',
+            isSecret: true,
+            values: [{ _environmentId: session.environment._id, value: secretValue }],
+          });
+          expect(createVariableResponse.status).to.equal(200);
+
+          const envSkipRule = { '!=': [{ var: 'env.STRIPE_API_KEY' }, ''] };
+          const v2Workflow = await createV2WorkflowWithSkipConditions(envSkipRule);
+
+          await novuClient.trigger({
+            workflowId: v2Workflow.workflowId,
+            to: [subscriber.subscriberId],
+            payload: {},
+          });
+
+          await session.waitForJobCompletion(v2Workflow._id);
+
+          const executionDetails = await executionDetailsRepository.find({
+            _environmentId: session.environment._id,
+            _notificationTemplateId: v2Workflow._id,
+            detail: DetailEnum.STEP_CONDITIONS_PASSED,
+          });
+
+          expect(executionDetails.length).to.equal(1);
+
+          const rawString = executionDetails[0].raw as string;
+          expect(rawString).to.not.include(secretValue);
+
+          const raw = JSON.parse(rawString);
+          expect(raw.evaluatedValues).to.deep.equal({ 'env.STRIPE_API_KEY': SECRET_MASK });
+        } finally {
+          if (previousFlagValue === undefined) {
+            delete mutableEnv[flagKey];
+          } else {
+            mutableEnv[flagKey] = previousFlagValue;
+          }
+        }
       });
     });
 

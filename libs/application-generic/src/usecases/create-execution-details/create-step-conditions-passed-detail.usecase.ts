@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum, ICondition } from '@novu/shared';
+import {
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
+  ICondition,
+  SECRET_MASK,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
 import { FeatureFlagsService } from '../../services';
@@ -86,13 +92,38 @@ export class CreateStepConditionsPassedDetail {
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
-          raw: serializeConditionsRaw({ passed: true, conditions, evaluatedValues }),
+          raw: serializeConditionsRaw({
+            passed: true,
+            conditions,
+            evaluatedValues: redactEnvironmentValues(evaluatedValues),
+          }),
         })
       );
     } catch (error) {
       Logger.error(error, 'Failed to create step conditions passed execution detail', LOG_CONTEXT);
     }
   }
+}
+
+/**
+ * Environment variables are decrypted into the evaluation context and can hold
+ * secrets (API keys, tokens). Their `isSecret` flag is no longer available at
+ * this layer, so every env-sourced value is masked before persisting — the
+ * execution detail is readable by low-privilege roles via the activity feed.
+ */
+function redactEnvironmentValues(
+  evaluatedValues: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!evaluatedValues) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(evaluatedValues).map(([path, value]) => [
+      path,
+      path === 'env' || path.startsWith('env.') ? SECRET_MASK : value,
+    ])
+  );
 }
 
 /**
