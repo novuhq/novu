@@ -17,9 +17,6 @@ const outputDir = join(scriptDir, '../src/consts/providers/provider-overrides/wh
 
 const GENERATE_COMMAND = 'pnpm --filter @novu/shared generate:whatsapp-schema';
 
-/** Bases Meta models with `discriminator.mapping` instead of `oneOf` / `anyOf`. */
-const DISCRIMINATOR_BASES = ['TemplateComponent', 'ParameterObject', 'ButtonParameterObject'] as const;
-
 /**
  * Flow `data` is a free-form map of screen inputs. Every other object with `properties` gets
  * `additionalProperties: false`. The allowlist throws if this path disappears after an upstream
@@ -175,23 +172,26 @@ function materializeDiscriminatorSubtype(
   return merged;
 }
 
+function discriminatorMappingOf(schema: JSONSchemaDto): Record<string, string> | undefined {
+  const mapping = (schema as JSONSchemaDto & { discriminator?: { mapping?: Record<string, string> } }).discriminator
+    ?.mapping;
+
+  return mapping && Object.keys(mapping).length > 0 ? mapping : undefined;
+}
+
 /**
- * Meta attaches `discriminator.mapping` without a corresponding `oneOf`. Rewrite the three known
- * bases into `anyOf` of their mapped subtypes so `template.components[].parameters` is typed.
+ * Meta often attaches `discriminator.mapping` without a corresponding `oneOf`/`anyOf`. Expand every
+ * mapping-only base into `anyOf` of its mapped subtypes so `template.components[].parameters` (and
+ * peers) stay typed. Bases that already expose a composition (`Message`) are left for later steps.
  */
 function expandDiscriminatorMappings(definitions: SchemaMap): SchemaMap {
   const next = { ...definitions };
+  let expansions = 0;
 
-  for (const baseName of DISCRIMINATOR_BASES) {
-    const base = next[baseName];
-    if (!base) {
-      throw new Error(`Expected definition \`${baseName}\` for discriminator expansion.`);
-    }
-
-    const mapping = (base as JSONSchemaDto & { discriminator?: { mapping?: Record<string, string> } }).discriminator
-      ?.mapping;
-    if (!mapping || Object.keys(mapping).length === 0) {
-      throw new Error(`Definition \`${baseName}\` is missing discriminator.mapping.`);
+  for (const [baseName, base] of Object.entries(definitions)) {
+    const mapping = discriminatorMappingOf(base);
+    if (!mapping || Array.isArray(base.oneOf) || Array.isArray(base.anyOf)) {
+      continue;
     }
 
     const { discriminator: _dropped, ...baseWithoutDiscriminator } = base as JSONSchemaDto & {
@@ -211,6 +211,11 @@ function expandDiscriminatorMappings(definitions: SchemaMap): SchemaMap {
     next[baseName] = {
       anyOf: Object.values(mapping).map((mappedRef) => ({ $ref: toDefinitionsRef(mappedRef) })),
     };
+    expansions += 1;
+  }
+
+  if (expansions === 0) {
+    throw new Error('Expected at least one mapping-only discriminator base to expand.');
   }
 
   return next;
@@ -286,7 +291,7 @@ function assertMessageVariantShape(
     throw new Error(`Message variant ${variantName} type enum must be a string.`);
   }
 
-  const baseKeys = new Set(['messaging_product', 'recipient_type', 'to', 'type', 'context']);
+  const baseKeys = new Set<string>([...NON_OVERRIDABLE_WHATSAPP_KEYS, 'recipient_type', 'type', 'context']);
   const payloadKeys = Object.keys(properties).filter((key) => !baseKeys.has(key));
   if (payloadKeys.length !== 1) {
     throw new Error(
@@ -309,6 +314,31 @@ function assertMessageVariantShape(
   return { typeEnum, payloadKey, payloadSchema };
 }
 
+function assertMessageOneOfMatchesDiscriminator(message: JSONSchemaDto): void {
+  const mapping = discriminatorMappingOf(message);
+  if (!mapping || !Array.isArray(message.oneOf)) {
+    throw new Error('Message must expose both oneOf and discriminator.mapping before flattening.');
+  }
+
+  const oneOfNames = message.oneOf.map((member) => {
+    if (typeof member === 'boolean' || !member.$ref) {
+      throw new Error('Each Message oneOf member must be a $ref to a variant schema.');
+    }
+
+    return definitionKeyOf(member.$ref);
+  });
+  const mappingNames = Object.values(mapping)
+    .map((ref) => definitionKeyOf(ref))
+    .sort();
+  const sortedOneOf = [...oneOfNames].sort();
+
+  if (JSON.stringify(sortedOneOf) !== JSON.stringify(mappingNames)) {
+    throw new Error(
+      `Message oneOf and discriminator.mapping disagree.\noneOf: ${sortedOneOf.join(', ')}\nmapping: ${mappingNames.join(', ')}`
+    );
+  }
+}
+
 /**
  * Derive a flat object root from Message's oneOf: lift each payload key, union `type` enums, and
  * keep shared overridable base fields (`recipient_type`, `context`). Routing keys are dropped.
@@ -318,6 +348,8 @@ function flattenMessageUnion(definitions: SchemaMap): JSONSchemaDto {
   if (!message || !Array.isArray(message.oneOf) || message.oneOf.length === 0) {
     throw new Error('Message schema must be a non-empty oneOf of message variants.');
   }
+
+  assertMessageOneOfMatchesDiscriminator(message);
 
   const properties: Record<string, JSONSchemaDefinition> = {};
   const typeEnums: string[] = [];
@@ -450,69 +482,67 @@ function closeObjects(schema: JSONSchemaDto): JSONSchemaDto {
   return closed;
 }
 
+function patchMediaObjectDefinition(mediaObject: JSONSchemaDto): JSONSchemaDto {
+  if (!Array.isArray(mediaObject.oneOf) || mediaObject.oneOf.length !== 2) {
+    throw new Error('MediaObject patch expected a two-branch oneOf (id | link).');
+  }
+
+  const branches = mediaObject.oneOf.map((branch) => {
+    if (typeof branch === 'boolean' || !isSchemaNode(branch.properties)) {
+      throw new Error('MediaObject patch expected object branches with properties.');
+    }
+
+    const props = branch.properties as Record<string, JSONSchemaDefinition>;
+    const hasId = props.id !== undefined;
+    const hasLink = props.link !== undefined;
+    if (!hasId && !hasLink) {
+      throw new Error('MediaObject patch could not recognize an id/link branch.');
+    }
+
+    return {
+      ...branch,
+      properties: {
+        ...props,
+        caption: {
+          type: 'string',
+          description: 'Describes the specified media for document, image, or video messages.',
+        },
+        filename: {
+          type: 'string',
+          description: 'Describes the filename for the specific document. Only for document messages.',
+        },
+      },
+    };
+  });
+
+  return { ...mediaObject, oneOf: branches };
+}
+
 function applySpecPatches(schema: JSONSchemaDto): JSONSchemaDto {
   let indexPatternHits = 0;
-  let mediaCaptionHits = 0;
+  const definitions = { ...(schema.definitions ?? {}) };
+  const mediaObject = definitions.MediaObject;
+  if (mediaObject === undefined || typeof mediaObject === 'boolean') {
+    throw new Error('Spec patch target missing: definitions.MediaObject.');
+  }
 
-  const patched = mapSchemaNodes(schema, (node) => {
-    let next = node;
+  definitions.MediaObject = patchMediaObjectDefinition(mediaObject);
 
-    if (node.pattern === BROKEN_TEMPLATE_INDEX_PATTERN) {
-      indexPatternHits += 1;
-      next = { ...next, pattern: FIXED_TEMPLATE_INDEX_PATTERN };
+  const withMediaPatch = { ...schema, definitions };
+  const patched = mapSchemaNodes(withMediaPatch, (node) => {
+    if (node.pattern !== BROKEN_TEMPLATE_INDEX_PATTERN) {
+      return node;
     }
 
-    // MediaObject is a oneOf of id/link branches — attach caption/filename to each branch object.
-    if (
-      Array.isArray(next.oneOf) &&
-      next.oneOf.length === 2 &&
-      typeof next.description === 'string' &&
-      next.description.includes('media object')
-    ) {
-      const branches = next.oneOf.map((branch) => {
-        if (typeof branch === 'boolean' || !isSchemaNode(branch.properties)) {
-          throw new Error('MediaObject patch expected object branches with properties.');
-        }
+    indexPatternHits += 1;
 
-        const props = branch.properties as Record<string, JSONSchemaDefinition>;
-        const hasId = props.id !== undefined;
-        const hasLink = props.link !== undefined;
-        if (!hasId && !hasLink) {
-          throw new Error('MediaObject patch could not recognize an id/link branch.');
-        }
-
-        mediaCaptionHits += 1;
-
-        return {
-          ...branch,
-          properties: {
-            ...props,
-            caption: {
-              type: 'string',
-              description: 'Describes the specified media for document, image, or video messages.',
-            },
-            filename: {
-              type: 'string',
-              description: 'Describes the filename for the specific document. Only for document messages.',
-            },
-          },
-        };
-      });
-
-      next = { ...next, oneOf: branches };
-    }
-
-    return next;
+    return { ...node, pattern: FIXED_TEMPLATE_INDEX_PATTERN };
   }) as JSONSchemaDto;
 
   if (indexPatternHits === 0) {
     throw new Error(
       `Spec patch target missing: pattern ${BROKEN_TEMPLATE_INDEX_PATTERN} was not found on TemplateComponent index.`
     );
-  }
-
-  if (mediaCaptionHits === 0) {
-    throw new Error('Spec patch target missing: MediaObject oneOf branches were not found.');
   }
 
   return patched;
