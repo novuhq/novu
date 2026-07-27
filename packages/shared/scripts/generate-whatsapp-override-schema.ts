@@ -504,15 +504,15 @@ function patchMediaObjectDefinition(mediaObject: JSONSchemaDto): JSONSchemaDto {
       properties: {
         ...props,
         caption: {
-          type: 'string',
+          type: 'string' as const,
           description: 'Describes the specified media for document, image, or video messages.',
         },
         filename: {
-          type: 'string',
+          type: 'string' as const,
           description: 'Describes the filename for the specific document. Only for document messages.',
         },
       },
-    };
+    } satisfies JSONSchemaDto;
   });
 
   return { ...mediaObject, oneOf: branches };
