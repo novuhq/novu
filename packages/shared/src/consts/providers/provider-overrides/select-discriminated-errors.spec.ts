@@ -244,7 +244,7 @@ describe('selectDiscriminatedErrors', () => {
     ]);
   });
 
-  it('restores one type discriminator error when no concrete block matches the type', () => {
+  it('keeps one type discriminator error when no concrete block matches the type', () => {
     const item = '/blocks/0';
     const typeConst: SchemaValidationErrorLike = {
       instancePath: `${item}/type`,

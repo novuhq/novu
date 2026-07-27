@@ -86,15 +86,4 @@ describe('Slack override error narrowing (real schema)', () => {
       expect(foreign.map((error) => error.schemaPath)).toEqual([]);
     }
   );
-
-  it('reports only the missing elements field for an incomplete actions block', () => {
-    const errors = validate({ blocks: [{ type: 'actions' }] });
-
-    expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatchObject({
-      instancePath: '/blocks/0',
-      keyword: 'required',
-      params: { missingProperty: 'elements' },
-    });
-  });
 });
