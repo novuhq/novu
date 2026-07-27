@@ -12,6 +12,7 @@ import {
 } from '@novu/shared';
 import { slackOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/slack';
 import { telegramOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/telegram';
+import { whatsappOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/whatsapp';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { type ControlIssues, mapSchemaErrorsToControlIssues } from './issues';
 import { createLiquidTolerantValidator } from './liquid-tolerant-validator';
@@ -36,6 +37,8 @@ const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
 export const LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH: Readonly<Record<string, JSONSchemaDto>> = {
   [SLACK_OVERRIDE_SCHEMA_SUBPATH]: slackOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
   [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: telegramOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
+  // Literal matches WHATSAPP_OVERRIDE_SCHEMA_SUBPATH once the schema slice lands.
+  ['@novu/shared/provider-overrides/whatsapp']: whatsappOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
 };
 
 export function isSupportedProviderOverrideId(providerId: string): providerId is ContentOverrideProviderId {

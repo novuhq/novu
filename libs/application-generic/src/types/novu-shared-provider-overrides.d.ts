@@ -24,3 +24,13 @@ declare module '@novu/shared/provider-overrides/telegram' {
   export const TELEGRAM_PRIMARY_CONTENT_KEY: string;
   export const TELEGRAM_OVERRIDE_SCHEMA_SUBPATH: string;
 }
+
+declare module '@novu/shared/provider-overrides/whatsapp' {
+  import type { JSONSchemaDto } from '@novu/shared';
+
+  export const whatsappOverrideJsonSchema: JSONSchemaDto;
+  export const whatsappOverrideLiquidTolerantJsonSchema: JSONSchemaDto;
+  export const WHATSAPP_OVERRIDE_KEYS: readonly string[];
+  export const WHATSAPP_PRIMARY_CONTENT_KEY: string;
+  export const WHATSAPP_OVERRIDE_SCHEMA_SUBPATH: string;
+}
