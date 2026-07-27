@@ -10,7 +10,7 @@ const BUTTON_GROUP_ROOT_NAME = 'ButtonGroupRoot';
 const BUTTON_GROUP_ITEM_NAME = 'ButtonGroupItem';
 const BUTTON_GROUP_ICON_NAME = 'ButtonGroupIcon';
 
-export const buttonGroupVariants = tv({
+const buttonGroupVariants = tv({
   slots: {
     root: 'flex -space-x-[1.5px]',
     item: [
@@ -162,4 +162,4 @@ function ButtonGroupText({
   );
 }
 
-export { ButtonGroupIcon, ButtonGroupItem, ButtonGroupRoot, ButtonGroupText };
+export { ButtonGroupItem, ButtonGroupRoot };

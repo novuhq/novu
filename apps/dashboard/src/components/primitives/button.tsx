@@ -391,4 +391,4 @@ function ButtonIcon<T extends React.ElementType>({
 
 ButtonIcon.displayName = BUTTON_ICON_NAME;
 
-export { Button, ButtonIcon, ButtonRoot };
+export { Button };
