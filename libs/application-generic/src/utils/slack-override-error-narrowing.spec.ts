@@ -86,4 +86,58 @@ describe('Slack override error narrowing (real schema)', () => {
       expect(foreign.map((error) => error.schemaPath)).toEqual([]);
     }
   );
+
+  /**
+   * CardBlock/VideoBlock title fields `$ref` shared composition objects. When a task_card is
+   * missing `status`, AJV also tries those siblings and used to leak "title must be object"
+   * even though TaskCardBlock.title is a string.
+   */
+  it('does not leak sibling $ref title errors onto a task_card missing status', () => {
+    const errors = validate({
+      blocks: [{ type: 'task_card', task_id: '', title: '' }],
+    });
+
+    expect(errors.map((error) => error.params)).toEqual([{ missingProperty: 'status' }]);
+    expect(errors.every((error) => error.schemaPath.includes('/definitions/TaskCardBlock/'))).toBe(true);
+  });
+
+  it('keeps nested RichTextBlock failures on task_card.details without sibling title noise', () => {
+    const errors = validate({
+      blocks: [
+        {
+          type: 'task_card',
+          task_id: 't',
+          title: 'Fetching weather',
+          status: 'pending',
+          details: { type: 'rich_text' },
+        },
+      ],
+    });
+
+    expect(
+      errors.some(
+        (error) =>
+          error.instancePath === '/blocks/0/details' &&
+          error.keyword === 'required' &&
+          error.params?.missingProperty === 'elements'
+      )
+    ).toBe(true);
+    expect(errors.some((error) => error.schemaPath.includes('/definitions/MrkdwnElement/'))).toBe(false);
+    expect(errors.some((error) => error.instancePath === '/blocks/0/title')).toBe(false);
+  });
+
+  it('keeps a legitimate shared-definition title error on card', () => {
+    const errors = validate({ blocks: [{ type: 'card', title: '' }] });
+
+    expect(errors.some((error) => error.instancePath === '/blocks/0/title' && error.message === 'must be object')).toBe(
+      true
+    );
+  });
+
+  it('keeps one type-discriminator const when the block type is unknown', () => {
+    const errors = validate({ blocks: [{ type: 'imagee' }] });
+
+    expect(errors.filter((error) => error.keyword === 'required')).toEqual([]);
+    expect(errors.filter((error) => error.keyword === 'const')).toHaveLength(1);
+  });
 });

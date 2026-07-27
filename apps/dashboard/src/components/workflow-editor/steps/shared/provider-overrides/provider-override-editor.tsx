@@ -35,6 +35,36 @@ function formatOverrideJson(value: Record<string, unknown> | undefined): string 
   return JSON.stringify(value ?? {}, null, 2);
 }
 
+/**
+ * Server issues carry the full control path (e.g. `providerOverrides.slack.blocks.0.status`) in
+ * `variableName`, but their message only names the leaf field ("Status is required"). Derive the
+ * path relative to this provider, with array indices in bracket notation (`blocks[0].status`), so
+ * nested errors point at a location. Top-level fields return undefined — the message already names
+ * them.
+ */
+function formatIssueLocation(issuePath: string, pathPrefix: string): string | undefined {
+  if (!issuePath.startsWith(`${pathPrefix}.`)) {
+    return undefined;
+  }
+
+  const segments = issuePath.slice(pathPrefix.length + 1).split('.');
+  if (segments.length <= 1) {
+    return undefined;
+  }
+
+  let location = '';
+
+  for (const segment of segments) {
+    if (/^\d+$/.test(segment)) {
+      location += `[${segment}]`;
+    } else {
+      location += location ? `.${segment}` : segment;
+    }
+  }
+
+  return location;
+}
+
 function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; error?: string } {
   if (!value.trim()) {
     return { error: 'Override must be a JSON object' };
@@ -118,15 +148,16 @@ export function ProviderOverrideEditor({
     return { parseError: undefined, parsedDraft: parsed };
   }, [draft]);
 
+  const issuePathPrefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
+
   // Unsupported keys are detected client-side from the shared override schema (it
   // tracks the draft keystroke-by-keystroke); server UNSUPPORTED_PROPERTY issues are
   // skipped here so the same key is never reported twice.
   const activeServerIssues = useMemo(() => {
     const controlIssues = step?.issues?.controls ?? {};
-    const prefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
 
     return Object.entries(controlIssues)
-      .filter(([key]) => key === prefix || key.startsWith(`${prefix}.`))
+      .filter(([key]) => key === issuePathPrefix || key.startsWith(`${issuePathPrefix}.`))
       .flatMap(([path, issueList]) =>
         issueList
           .filter((issue) => issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY)
@@ -138,15 +169,15 @@ export function ProviderOverrideEditor({
         }
 
         const issuePath = issue.variableName ?? issue.path;
-        if (!issuePath.startsWith(`${prefix}.`)) {
+        if (!issuePath.startsWith(`${issuePathPrefix}.`)) {
           return true;
         }
 
-        const topKey = issuePath.slice(prefix.length + 1).split('.')[0];
+        const topKey = issuePath.slice(issuePathPrefix.length + 1).split('.')[0];
 
         return topKey in parsedDraft;
       });
-  }, [step?.issues?.controls, providerId, parsedDraft]);
+  }, [step?.issues?.controls, issuePathPrefix, parsedDraft]);
 
   const localUnsupportedPropertyMessages = useMemo(() => {
     if (!parsedDraft) {
@@ -267,12 +298,25 @@ export function ProviderOverrideEditor({
                 </div>
               ) : (
                 <>
-                  {activeServerIssues.map((issue) => (
-                    <div key={issue.variableName ?? issue.path} className="flex items-start gap-1 px-1">
-                      <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />
-                      <span className="text-destructive text-xs">{issue.message}</span>
-                    </div>
-                  ))}
+                  {activeServerIssues.map((issue) => {
+                    const issuePath = issue.variableName ?? issue.path;
+                    const location = formatIssueLocation(issuePath, issuePathPrefix);
+
+                    return (
+                      <div key={`${issuePath}:${issue.message}`} className="flex items-start gap-1 px-1">
+                        <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />
+                        <span className="text-destructive text-xs">
+                          {location && (
+                            <>
+                              <code className="text-[11px]">{location}</code>
+                              {' — '}
+                            </>
+                          )}
+                          {issue.message}
+                        </span>
+                      </div>
+                    );
+                  })}
                   {localUnsupportedPropertyMessages.map((message) => (
                     <div key={message} className="flex items-start gap-1 px-1">
                       <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />

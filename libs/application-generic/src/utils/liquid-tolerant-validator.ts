@@ -163,7 +163,7 @@ export function createLiquidTolerantValidator(schema: JSONSchemaDto): (value: un
     }
 
     const absoluteErrors = toAbsoluteSchemaPaths(validate.errors ?? [], schema, pathIndex);
-    const discriminated = selectDiscriminatedErrors(absoluteErrors, value);
+    const discriminated = selectDiscriminatedErrors(absoluteErrors, value, schema);
 
     return dedupe(
       dropRedundantCompositionErrors(discriminated.filter((error) => !isLiquidToleranceBranchError(error)))
