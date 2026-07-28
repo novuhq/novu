@@ -16,7 +16,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://novu.co"
+    "href": "https://docs.novu.co"
   },
   "seo": {
     "indexing": "all",
@@ -290,7 +290,11 @@
               },
               {
                 "group": "Tool",
-                "pages": ["platform/integrations/tool/pagerduty", "platform/integrations/tool/opsgenie"]
+                "pages": [
+                  "platform/integrations/tool/pagerduty",
+                  "platform/integrations/tool/opsgenie",
+                  "platform/integrations/tool/webhook"
+                ]
               },
               "platform/integrations/trigger-overrides"
             ],

@@ -10,6 +10,8 @@
   - apps/inbound-mail/**/*
 '@novu/webhook':
   - apps/webhook/**/*
+'@novu/thalamus-observer':
+  - enterprise/workers/thalamus-observer/**/*
 '@novu/dal':
   - libs/dal/**/*
 '@novu/shared':

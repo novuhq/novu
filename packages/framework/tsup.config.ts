@@ -29,12 +29,14 @@ const baseConfig: Options = {
   ],
   sourcemap: false,
   clean: true,
-  dts: true,
+  dts: {
+    resolve: ['@novu/agent-event-protocol'],
+  },
   minify: true,
   minifyWhitespace: true,
   minifyIdentifiers: true,
   minifySyntax: true,
-  noExternal: ['chat'],
+  noExternal: ['chat', '@novu/agent-event-protocol'],
   define: {
     SDK_VERSION: `"${version}"`,
     FRAMEWORK_VERSION: `"2024-06-26"`,

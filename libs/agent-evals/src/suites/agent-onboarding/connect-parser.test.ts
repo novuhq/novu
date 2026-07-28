@@ -75,6 +75,16 @@ describe('connectParser', () => {
     expect(flags.runtime).toBe('ai-sdk');
     expect(flags.description).toBeUndefined();
   });
+
+  it('parses --llm-auth for empty-dir scaffold commands', () => {
+    const flags = connectParser.parse(
+      'npx novu connect --ci --runtime ai-sdk --llm-auth openai --openai-api-key sk-test --channel slack',
+      {}
+    );
+
+    expect(flags.runtime).toBe('ai-sdk');
+    expect(flags.llmAuth).toBe('openai');
+  });
 });
 
 describe('connectValidate', () => {

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelTypeEnum, providerIdValues, ProvidersIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ConnectionMode, ProvidersIdEnum, providerIdValues } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
@@ -17,6 +17,18 @@ export class ListChannelConnectionsQueryDto extends CursorPaginationQueryDto<
   @IsOptional()
   @IsString()
   subscriberId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Scope results relative to the subscriber. `subscriber` returns only the subscriber-owned ' +
+      'connections, `shared` returns only shared (workspace-level) connections. Omit to return both.',
+    enum: ['subscriber', 'shared'],
+    example: 'shared',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['subscriber', 'shared'])
+  connectionMode?: ConnectionMode;
 
   @ApiPropertyOptional({
     description: 'Filter by channel type (email, sms, push, chat, etc.).',

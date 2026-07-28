@@ -16,6 +16,7 @@ import {
   PinoLogger,
   stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
+  enhanceStepsMap,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -41,7 +42,6 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ITriggerPayload,
-  isOutboundSsrfProtectionEnabled,
   JobStatusEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -210,11 +210,32 @@ export class ExecuteBridgeJob {
     return payload;
   }
 
+  public async buildStepsMap(
+    job: JobEntity,
+    environmentId: string
+  ): Promise<Record<string, Record<string, unknown>>> {
+    const state = await this.generateStateForJob(job, environmentId);
+
+    const stepsMap = state.reduce<Record<string, Record<string, unknown>>>((acc, stepState) => {
+      if (!(stepState.stepId in acc)) {
+        acc[stepState.stepId] = stepState.outputs;
+      }
+
+      return acc;
+    }, {});
+
+    return enhanceStepsMap(stepsMap);
+  }
+
   private async generateState(command: ExecuteBridgeJobCommand): Promise<State[]> {
+    return this.generateStateForJob(command.job, command.environmentId);
+  }
+
+  private async generateStateForJob(job: JobEntity, environmentId: string): Promise<State[]> {
     const previousJobs: State[] = [];
     let theJob = (await this.jobRepository.findOne({
-      _id: command.job._parentId,
-      _environmentId: command.environmentId,
+      _id: job._parentId,
+      _environmentId: environmentId,
     })) as JobEntity;
 
     if (theJob) {
@@ -225,7 +246,7 @@ export class ExecuteBridgeJob {
     while (theJob) {
       theJob = (await this.jobRepository.findOne({
         _id: theJob._parentId,
-        _environmentId: command.environmentId,
+        _environmentId: environmentId,
       })) as JobEntity;
 
       if (theJob) {
@@ -263,8 +284,7 @@ export class ExecuteBridgeJob {
       // (stateless bridgeUrl on the job, or the environment's stored bridge
       // URL). This blocks internal hosts even if a malicious URL was persisted
       // before validation landed or queued by an older API release.
-      enforceSsrfProtection:
-        isOutboundSsrfProtectionEnabled() && (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
+      enforceSsrfProtection: !!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL,
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

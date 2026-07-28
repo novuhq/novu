@@ -4,6 +4,7 @@ import {
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
+  ToolWebhookEndpointDto,
   WebexPersonEndpointDto,
   WebexRoomEndpointDto,
   WebhookEndpointDto,
@@ -19,6 +20,7 @@ export class UpdateChannelEndpointRequestDto {
       { $ref: getSchemaPath(PhoneEndpointDto) },
       { $ref: getSchemaPath(WebexRoomEndpointDto) },
       { $ref: getSchemaPath(WebexPersonEndpointDto) },
+      { $ref: getSchemaPath(ToolWebhookEndpointDto) },
     ],
   })
   @IsDefined()
@@ -29,5 +31,6 @@ export class UpdateChannelEndpointRequestDto {
     | WebhookEndpointDto
     | PhoneEndpointDto
     | WebexRoomEndpointDto
-    | WebexPersonEndpointDto;
+    | WebexPersonEndpointDto
+    | ToolWebhookEndpointDto;
 }

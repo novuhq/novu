@@ -13,6 +13,7 @@ import {
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  ToolWebhookEndpointDto,
   WebexPersonEndpointDto,
   WebexRoomEndpointDto,
   WebhookEndpointDto,
@@ -303,7 +304,7 @@ export class CreatePagerDutyServiceEndpointDto extends CreateChannelEndpointBase
 
   @ApiProperty({
     description:
-      'PagerDuty service endpoint data. The routing key is persisted encrypted on the linked ChannelConnection; the ChannelEndpoint itself carries a lightweight connection reference.',
+      'PagerDuty service endpoint data. `routingKey` is encrypted at rest on the channel endpoint (`endpoint` field); `region` remains plaintext. No linked channel connection.',
     type: PagerDutyServiceEndpointDto,
   })
   @IsDefined()
@@ -324,11 +325,32 @@ export class CreateOpsgenieIntegrationEndpointDto extends CreateChannelEndpointB
 
   @ApiProperty({
     description:
-      'Opsgenie integration endpoint data. The API key is persisted encrypted on the linked ChannelConnection; the ChannelEndpoint itself carries a lightweight connection reference.',
+      'Opsgenie integration endpoint data. `apiKey` is encrypted at rest on the channel endpoint (`endpoint` field); `region` remains plaintext. No linked channel connection.',
     type: OpsgenieIntegrationEndpointDto,
   })
   @IsDefined()
   @ValidateNested()
   @Type(() => OpsgenieIntegrationEndpointDto)
   endpoint: OpsgenieIntegrationEndpointDto;
+}
+
+export class CreateToolWebhookEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.TOOL_WEBHOOK],
+    example: ENDPOINT_TYPES.TOOL_WEBHOOK,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.TOOL_WEBHOOK])
+  type: typeof ENDPOINT_TYPES.TOOL_WEBHOOK;
+
+  @ApiProperty({
+    description:
+      'Tool webhook endpoint data. `url` and header values are encrypted at rest on the channel endpoint (`endpoint` field); `method` remains plaintext. No linked channel connection.',
+    type: ToolWebhookEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => ToolWebhookEndpointDto)
+  endpoint: ToolWebhookEndpointDto;
 }

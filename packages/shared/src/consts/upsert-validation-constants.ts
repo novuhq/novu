@@ -11,3 +11,9 @@ export const MAX_DESCRIPTION_LENGTH = 256;
  * truncated to this length rather than rejected.
  */
 export const AGENT_NAME_MAX_LENGTH = 60;
+
+/**
+ * Maximum length for a manually created agent identifier (slug).
+ * Prevents HTTP 414 URI Too Long errors caused by excessively long URLs.
+ */
+export const AGENT_IDENTIFIER_MAX_LENGTH = 60;

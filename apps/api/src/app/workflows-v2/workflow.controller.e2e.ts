@@ -77,6 +77,39 @@ function buildEmailStep(overrides: Partial<EmailStepUpsertDto> = {}): EmailStepU
   } as EmailStepUpsertDto;
 }
 
+function buildHttpRequestStep(overrides: Record<string, unknown> = {}) {
+  return {
+    name: 'HTTP Request Test Step',
+    type: 'http_request',
+    stepId: 'http-request-step',
+    controlValues: {
+      method: 'GET',
+      url: 'https://example.com',
+      responseBodySchema: {
+        type: 'object',
+        properties: {
+          type: { type: 'string' },
+        },
+        additionalProperties: false,
+      },
+    },
+    ...overrides,
+  };
+}
+
+function buildPushStep(overrides: Record<string, unknown> = {}) {
+  return {
+    name: 'Push Test Step',
+    type: 'push',
+    stepId: 'push-step',
+    controlValues: {
+      subject: 'Push subject',
+      body: 'Push body',
+    },
+    ...overrides,
+  };
+}
+
 // biome-ignore lint/suspicious/noExportsInTest: <explanation>
 export function buildWorkflow(overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
   const name = overrides.name || 'Test Workflow';
@@ -334,7 +367,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const inAppControlValue = 'In-App Test';
       const emailControlValue = 'Email Test';
       const updateRequest: UpdateWorkflowDto = {
-        origin: ResourceOriginEnum.NovuCloud,
+        origin: workflowCreated.origin,
         name: workflowCreated.name,
         preferences: {
           user: null,
@@ -352,6 +385,20 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       // TODO: Control values must be typed and accept only valid control values
       expect((updatedWorkflow.steps[0] as InAppStepResponseDto).controls.values.subject).to.be.equal(inAppControlValue);
       expect((updatedWorkflow.steps[1] as EmailStepResponseDto).controls.values.subject).to.be.equal(emailControlValue);
+      expect(updatedWorkflow.origin).to.equal(ResourceOriginEnum.NovuCloud);
+    });
+
+    it('should not change origin when a different origin is sent on update', async () => {
+      const workflowCreated: WorkflowResponseDto = await createWorkflowAndValidate(`Origin Immutable ${Date.now()}`);
+      expect(workflowCreated.origin).to.equal(ResourceOriginEnum.NovuCloud);
+
+      const updatedWorkflow = await updateWorkflow(workflowCreated.id, {
+        ...mapResponseToUpdateDto(workflowCreated),
+        origin: ResourceOriginEnum.External,
+      } as UpdateWorkflowDto);
+
+      expect(updatedWorkflow.origin).to.equal(ResourceOriginEnum.NovuCloud);
+      expect(updatedWorkflow.name).to.equal(workflowCreated.name);
     });
 
     it('should keep the step id on updated ', async () => {
@@ -774,6 +821,44 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         body: 'Example body',
         disableOutputSanitization: false,
       });
+    });
+
+    it('should promote workflow with HTTP step response variables in skip conditions without validation issues', async () => {
+      const httpStepId = 'http-request-step';
+      const skipCondition = {
+        '!=': [{ var: `steps.${httpStepId}.type` }, 'like'],
+      };
+
+      const createWorkflowDto = buildWorkflow({
+        name: 'HTTP Skip Promote Workflow',
+        steps: [
+          buildHttpRequestStep(),
+          buildPushStep({
+            controlValues: {
+              subject: 'Push subject',
+              body: 'Push body',
+              skip: skipCondition,
+            },
+          }),
+        ] as any,
+      });
+
+      const devWorkflow = await createWorkflow(apiClient, createWorkflowDto);
+      const devPushStep = devWorkflow.steps[1];
+
+      expect(devWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(devPushStep.issues?.controls?.skip).to.be.undefined;
+
+      await session.switchToProdEnvironment();
+      const prodEnvironmentId = session.environment._id;
+      await session.switchToDevEnvironment();
+
+      const prodWorkflow = await syncWorkflow(devWorkflow, prodEnvironmentId);
+      const prodPushStep = prodWorkflow.steps[1];
+
+      expect(prodWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(prodPushStep.controls.values.skip).to.deep.equal(skipCondition);
+      expect(prodPushStep.issues?.controls?.skip).to.be.undefined;
     });
 
     it('should throw an error if trying to promote to the same environment', async () => {

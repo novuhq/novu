@@ -6,6 +6,7 @@ export type ConnectFlags = {
   ci: boolean;
   channel?: string;
   runtime?: string;
+  llmAuth?: string;
   description?: string;
   slackConfigToken?: string;
   sendblueApiKey?: string;
@@ -22,6 +23,9 @@ export function isConnectCommand(command: string): boolean {
 const VALUE_FLAGS = new Set([
   '--channel',
   '--runtime',
+  '--llm-auth',
+  '--openai-api-key',
+  '--anthropic-api-key',
   '--slack-config-token',
   '--secret-key',
   '--api-url',
@@ -199,6 +203,7 @@ export const connectParser: CommandParser<ConnectFlags> = {
 
     flags.channel = readFlagValue(tokens, '--channel');
     flags.runtime = readFlagValue(tokens, '--runtime');
+    flags.llmAuth = readFlagValue(tokens, '--llm-auth');
     flags.slackConfigToken = readFlagValue(tokens, '--slack-config-token');
     flags.sendblueApiKey = resolveMaybeEnvValue(readFlagValue(tokens, '--sendblue-api-key'), env);
     flags.sendblueSecretKey = resolveMaybeEnvValue(readFlagValue(tokens, '--sendblue-secret-key'), env);

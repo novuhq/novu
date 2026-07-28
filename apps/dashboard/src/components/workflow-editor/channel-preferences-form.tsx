@@ -121,13 +121,13 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { override } = useWatch(overrideForm);
 
   const updateUserPreference = (userPreferences: WorkflowPreferences | null) => {
-    update({
-      ...workflow,
+    update((current) => ({
+      ...current,
       preferences: {
-        ...workflow.preferences,
+        ...current.preferences,
         user: userPreferences,
       },
-    });
+    }));
 
     const value = userPreferences === null ? workflow.preferences.default : userPreferences;
     form.reset({
@@ -345,10 +345,10 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                       <Select
                         onValueChange={(value) => {
                           field.onChange(value as SeverityLevelEnum);
-                          update({
-                            ...workflow,
+                          update((current) => ({
+                            ...current,
                             severity: value as SeverityLevelEnum,
-                          });
+                          }));
                         }}
                         defaultValue={SeverityLevelEnum.NONE}
                         disabled={isReadOnly}

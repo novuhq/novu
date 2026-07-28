@@ -12,6 +12,7 @@ import {
   JobRepository,
   MessageEntity,
   MessageRepository,
+  NotificationRepository,
   OrganizationEntity,
 } from '@novu/dal';
 import { ApiServiceLevelEnum, ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
@@ -44,6 +45,7 @@ describe('SnoozeNotification', () => {
   let loggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
+  let notificationRepositoryMock: sinon.SinonStubbedInstance<NotificationRepository>;
   let standardQueueServiceMock: sinon.SinonStubbedInstance<StandardQueueService>;
   let organizationRepositoryMock: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
@@ -93,6 +95,7 @@ describe('SnoozeNotification', () => {
     loggerMock = sinon.createStubInstance(PinoLogger);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
+    notificationRepositoryMock = sinon.createStubInstance(NotificationRepository);
     standardQueueServiceMock = sinon.createStubInstance(StandardQueueService);
     organizationRepositoryMock = sinon.createStubInstance(CommunityOrganizationRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
@@ -119,6 +122,7 @@ describe('SnoozeNotification', () => {
       loggerMock as any,
       messageRepositoryMock as any,
       jobRepositoryMock as any,
+      notificationRepositoryMock as any,
       standardQueueServiceMock as any,
       organizationRepositoryMock as any,
       createExecutionDetailsMock as any,
@@ -209,7 +213,8 @@ describe('SnoozeNotification', () => {
     expect(result).to.deep.equal(mockNotification);
     expect(jobRepositoryMock.create.calledOnce).to.be.true;
     const createCallArg = jobRepositoryMock.create.firstCall.args[0];
-    expect(createCallArg).to.have.property('status', JobStatusEnum.PENDING);
+    // DELAYED so RunJob's atomic claim (QUEUED|DELAYED only) can claim the unsnooze delivery
+    expect(createCallArg).to.have.property('status', JobStatusEnum.DELAYED);
     expect(createCallArg).to.have.property('delay').that.is.a('number');
     expect(createCallArg.payload).to.have.property('unsnooze', true);
 
