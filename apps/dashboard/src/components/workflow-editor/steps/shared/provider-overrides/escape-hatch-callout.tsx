@@ -1,4 +1,4 @@
-import { getProviderOverrideConfig } from '@novu/shared';
+import { ChatProviderIdEnum, getProviderOverrideConfig } from '@novu/shared';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { getProviderDocReference } from './content-source';
 
@@ -11,6 +11,7 @@ export function EscapeHatchCallout({ providerId, displayName }: EscapeHatchCallo
   const docReference = getProviderDocReference(providerId);
   // An unregistered provider has no known content key either, so it gets the same caveat.
   const nestsContent = getProviderOverrideConfig(providerId)?.primaryContentKey == null;
+  const isLine = providerId === ChatProviderIdEnum.Line;
 
   return (
     <InlineToast
@@ -19,8 +20,16 @@ export function EscapeHatchCallout({ providerId, displayName }: EscapeHatchCallo
         <>
           No schema available. This object is merged into the {displayName} API payload as-is; fields aren't validated
           or autocompleted.
-          {nestsContent && (
-            <> {displayName} nests its message content, so the step body is not filled in automatically here.</>
+          {isLine ? (
+            <>
+              {' '}
+              If this override sets <code>messages</code>, it replaces the default text message built from the step
+              body. Omit <code>messages</code> to send the step body as a text message.
+            </>
+          ) : (
+            nestsContent && (
+              <> {displayName} nests its message content, so the step body is not filled in automatically here.</>
+            )
           )}
           {docReference && (
             <>

@@ -92,7 +92,8 @@ const TOOL_PROVIDER_OVERRIDE_CONFIGS = {
  * Primary content keys mirror the field each provider drops the compiled body into. Dotted paths
  * are used when the body lives under a nested object (WhatsApp `text.body`, Rocket.Chat
  * `message.msg`). `null` means there is no stable object-path equivalent to fall back into
- * (LINE builds `messages[].text` as an array element).
+ * (LINE builds `messages[].text` as an array element; preview injects that when `messages`
+ * is omitted from the override, matching the send path).
  */
 const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Slack]: {

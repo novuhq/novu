@@ -47,6 +47,40 @@ describe('mergeProviderPreview', () => {
     });
   });
 
+  it('injects a LINE text message from the step body when override omits messages', () => {
+    const result = mergeProviderPreview({
+      body: 'Hello from Novu',
+      providerId: ChatProviderIdEnum.Line,
+      override: { notificationDisabled: true },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        notificationDisabled: true,
+        messages: [{ type: 'text', text: 'Hello from Novu' }],
+      },
+      defaultContentKey: 'messages.0.text',
+    });
+  });
+
+  it('keeps an explicit LINE messages override and omits defaultContentKey', () => {
+    const flexMessage = {
+      type: 'flex',
+      altText: 'Card',
+      contents: { type: 'bubble' },
+    };
+    const result = mergeProviderPreview({
+      body: 'Hello from Novu',
+      providerId: ChatProviderIdEnum.Line,
+      override: { messages: [flexMessage] },
+    });
+
+    expect(result).toEqual({
+      merged: { messages: [flexMessage] },
+    });
+    expect(result.defaultContentKey).toBeUndefined();
+  });
+
   it('treats empty-string primary key as missing and fills from body', () => {
     const result = mergeProviderPreview({
       body: 'Default incident message',

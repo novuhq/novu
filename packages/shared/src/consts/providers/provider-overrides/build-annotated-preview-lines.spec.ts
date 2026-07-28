@@ -75,4 +75,17 @@ describe('buildAnnotatedPreviewLines', () => {
     expect(marked).toHaveLength(1);
     expect(marked[0]?.json.trim()).toBe('"body": "Hello from Novu"');
   });
+
+  it('marks a default-content path inside an array element', () => {
+    const lines = buildAnnotatedPreviewLines(
+      {
+        messages: [{ type: 'text', text: 'Hello from Novu' }],
+      },
+      'messages.0.text'
+    );
+
+    const marked = lines.filter((line) => line.isDefaultContentKey);
+    expect(marked).toHaveLength(1);
+    expect(marked[0]?.json.trim()).toBe('"text": "Hello from Novu"');
+  });
 });

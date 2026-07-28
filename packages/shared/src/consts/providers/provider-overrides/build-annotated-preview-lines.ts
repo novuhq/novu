@@ -8,7 +8,7 @@ export type AnnotatedPreviewLine = {
 /**
  * Pretty-prints a merged provider override preview and marks the line whose value was
  * filled from the step's default content. `defaultContentKey` may be a dotted path
- * (`text.body`) for providers that nest their message body.
+ * (`text.body`, `messages.0.text`) for providers that nest their message body.
  *
  * Emits the same shape as `JSON.stringify(value, null, 2)` by walking the object, so
  * marking can follow the structured path instead of re-parsing pretty-printed text.
@@ -95,8 +95,7 @@ function appendProperty(
 
     lines.push({ json: `${pad}${keyPrefix}[` });
     value.forEach((item, index) => {
-      // Primary content keys never address array elements; disable marking inside arrays.
-      appendArrayItem(item, indent + 1, lines, index === value.length - 1);
+      appendArrayItem(item, indent + 1, `${path}.${index}`, markPath, lines, index === value.length - 1);
     });
     lines.push({ json: `${pad}]` + comma });
 
@@ -109,21 +108,29 @@ function appendProperty(
   });
 }
 
-function appendArrayItem(value: unknown, indent: number, lines: AnnotatedPreviewLine[], isLast: boolean): void {
+function appendArrayItem(
+  value: unknown,
+  indent: number,
+  path: string,
+  markPath: string | undefined,
+  lines: AnnotatedPreviewLine[],
+  isLast: boolean
+): void {
   const pad = ' '.repeat(indent * 2);
   const comma = isLast ? '' : ',';
+  const marked = markPath !== undefined && path === markPath;
 
   if (isRecord(value)) {
     const keys = Object.keys(value);
     if (keys.length === 0) {
-      lines.push({ json: `${pad}{}` + comma });
+      lines.push({ json: `${pad}{}` + comma, ...(marked ? { isDefaultContentKey: true } : {}) });
 
       return;
     }
 
     lines.push({ json: `${pad}{` });
     keys.forEach((key, index) => {
-      appendProperty(key, value[key], indent + 1, '', undefined, lines, index === keys.length - 1);
+      appendProperty(key, value[key], indent + 1, `${path}.${key}`, markPath, lines, index === keys.length - 1);
     });
     lines.push({ json: `${pad}}` + comma });
 
@@ -132,19 +139,22 @@ function appendArrayItem(value: unknown, indent: number, lines: AnnotatedPreview
 
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      lines.push({ json: `${pad}[]` + comma });
+      lines.push({ json: `${pad}[]` + comma, ...(marked ? { isDefaultContentKey: true } : {}) });
 
       return;
     }
 
     lines.push({ json: `${pad}[` });
     value.forEach((item, index) => {
-      appendArrayItem(item, indent + 1, lines, index === value.length - 1);
+      appendArrayItem(item, indent + 1, `${path}.${index}`, markPath, lines, index === value.length - 1);
     });
     lines.push({ json: `${pad}]` + comma });
 
     return;
   }
 
-  lines.push({ json: `${pad}${JSON.stringify(value)}` + comma });
+  lines.push({
+    json: `${pad}${JSON.stringify(value)}` + comma,
+    ...(marked ? { isDefaultContentKey: true } : {}),
+  });
 }

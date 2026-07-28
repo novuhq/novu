@@ -40,11 +40,13 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
     }
 
     const to = options.channelData.endpoint.userId;
+    // Override/passthrough `messages` replaces the body-derived default. Seeding a text
+    // message alongside it would concatenate (deepmerge arrays) and send both.
+    const triggerData = this.hasMessagesOverride(bridgeProviderData)
+      ? { to }
+      : { to, messages: [this.buildMessage(options)] };
 
-    const payload = this.transform(bridgeProviderData, {
-      to,
-      messages: [this.buildMessage(options)],
-    }).body;
+    const payload = this.transform(bridgeProviderData, triggerData).body;
 
     const { data } = await this.axiosClient.post<ILineSentMessagesResponse>('/push', payload);
 
@@ -52,6 +54,18 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
       id: data.sentMessages?.[0]?.id,
       date: new Date().toISOString(),
     };
+  }
+
+  /**
+   * True when an override source that wins in `transform` supplies a `messages` array.
+   * Highest-priority source first — matches WhatsApp's dual-source resolution order.
+   */
+  private hasMessagesOverride(bridgeProviderData: WithPassthrough<Record<string, unknown>>): boolean {
+    const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
+    const passthroughBody = (_passthrough.body || {}) as Record<string, unknown>;
+    const sources = [passthroughBody, bridgeData as Record<string, unknown>];
+
+    return sources.some((source) => Array.isArray(source.messages));
   }
 
   private buildMessage(options: IChatOptions): Record<string, unknown> {
