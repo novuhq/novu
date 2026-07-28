@@ -15,6 +15,21 @@ import {
   WHATSAPP_PRIMARY_CONTENT_KEY,
 } from './whatsapp/keys';
 
+/**
+ * When `primaryContentKey` is null but the step body still seeds a top-level override field
+ * (e.g. LINE `messages`), describe how preview fills that field when the override omits it.
+ */
+export type ProviderOverrideSeedWhenAbsent = {
+  /** Top-level override key that holds the seeded value (must be absent or non-array to seed). */
+  key: string;
+  /** Builds the seeded value from the compiled step body. */
+  buildDefault: (body: string) => unknown;
+  /** Dotted path used to annotate the seeded value in the override preview. */
+  defaultContentKey: string;
+  /** Escape-hatch callout sentence explaining the seed/replace policy. */
+  escapeHatchHint: string;
+};
+
 export type ProviderOverrideConfig = {
   /** Absent => escape hatch: free-form JSON, no validation beyond well-formedness. */
   schema?: JSONSchemaDto;
@@ -31,9 +46,14 @@ export type ProviderOverrideConfig = {
   /**
    * Payload key the step body falls back into. May be a dotted path for nested content
    * (WhatsApp `text.body`, Rocket.Chat `message.msg`). `null` when there is no stable
-   * object-path equivalent to fill in the override preview (e.g. LINE `messages[].text`).
+   * object-path equivalent — use `seedWhenAbsent` when the body still seeds an array-shaped field.
    */
   primaryContentKey: string | null;
+  /**
+   * Seeds a top-level field from the step body when the override omits that field as an array.
+   * Used when content lives in an array element (LINE `messages[].text`) rather than a scalar path.
+   */
+  seedWhenAbsent?: ProviderOverrideSeedWhenAbsent;
 };
 
 /**
@@ -91,9 +111,8 @@ const TOOL_PROVIDER_OVERRIDE_CONFIGS = {
  * the build when a provider joins the enum without a decision about how its overrides behave.
  * Primary content keys mirror the field each provider drops the compiled body into. Dotted paths
  * are used when the body lives under a nested object (WhatsApp `text.body`, Rocket.Chat
- * `message.msg`). `null` means there is no stable object-path equivalent to fall back into
- * (LINE builds `messages[].text` as an array element; preview injects that when `messages`
- * is omitted from the override, matching the send path).
+ * `message.msg`). `null` means there is no scalar/object path to fill — pair with
+ * `seedWhenAbsent` when the body still seeds an array-shaped field (LINE `messages`).
  */
 const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Slack]: {
@@ -118,7 +137,16 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
     keys: PROVIDER_OVERRIDE_KEYS[ChatProviderIdEnum.WhatsAppBusiness],
     primaryContentKey: WHATSAPP_PRIMARY_CONTENT_KEY,
   },
-  [ChatProviderIdEnum.Line]: escapeHatch(null),
+  [ChatProviderIdEnum.Line]: {
+    primaryContentKey: null,
+    seedWhenAbsent: {
+      key: 'messages',
+      buildDefault: (body) => [{ type: 'text', text: body }],
+      defaultContentKey: 'messages.0.text',
+      escapeHatchHint:
+        'If this override sets messages, it replaces the default text message built from the step body. Omit messages to send the step body as a text message.',
+    },
+  },
   [ChatProviderIdEnum.ChatWebhook]: escapeHatch('content'),
   [ChatProviderIdEnum.Telegram]: {
     schemaSubpath: TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,

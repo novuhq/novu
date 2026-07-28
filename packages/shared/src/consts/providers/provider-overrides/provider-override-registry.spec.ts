@@ -116,8 +116,13 @@ describe('provider override registry', () => {
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.RocketChat)).toBe('message.msg');
   });
 
-  it('reports no fallback key when content is built into an array element', () => {
+  it('reports no scalar fallback key for LINE and seeds messages when absent', () => {
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.Line)).toBeNull();
+
+    const seed = getProviderOverrideConfig(ChatProviderIdEnum.Line)?.seedWhenAbsent;
+    expect(seed?.key).toBe('messages');
+    expect(seed?.defaultContentKey).toBe('messages.0.text');
+    expect(seed?.buildDefault('Hello')).toEqual([{ type: 'text', text: 'Hello' }]);
   });
 
   it('reports no fallback key for an unregistered provider', () => {

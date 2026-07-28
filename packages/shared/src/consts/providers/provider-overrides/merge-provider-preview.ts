@@ -1,6 +1,5 @@
-import { ChatProviderIdEnum } from '../../../types';
 import { getAtPath, setAtPath } from './path';
-import { getProviderPrimaryContentKey } from './provider-override-registry';
+import { getProviderOverrideConfig, getProviderPrimaryContentKey } from './provider-override-registry';
 
 export type MergedProviderPreview = {
   merged: Record<string, unknown>;
@@ -16,14 +15,27 @@ export function mergeProviderPreview({
   providerId: string;
   override: Record<string, unknown> | undefined;
 }): MergedProviderPreview {
-  const primaryKey = getProviderPrimaryContentKey(providerId);
+  const config = getProviderOverrideConfig(providerId);
   const merged: Record<string, unknown> = { ...(override ?? {}) };
+  const seed = config?.seedWhenAbsent;
 
-  // LINE nests body content in `messages[]`. Mirror the send path: inject a text message from the
-  // step body only when the override does not already supply `messages`.
-  if (providerId === ChatProviderIdEnum.Line) {
-    return mergeLineProviderPreview(body, merged);
+  // Array-shaped content (LINE `messages`) — seed from the body only when the override omits
+  // that key as an array, matching the send path that skips the default text message.
+  if (seed) {
+    if (Array.isArray(merged[seed.key])) {
+      return { merged };
+    }
+
+    return {
+      merged: {
+        ...merged,
+        [seed.key]: seed.buildDefault(body),
+      },
+      defaultContentKey: seed.defaultContentKey,
+    };
   }
+
+  const primaryKey = getProviderPrimaryContentKey(providerId);
 
   if (!primaryKey) {
     return { merged };
@@ -34,20 +46,6 @@ export function mergeProviderPreview({
   }
 
   return { merged };
-}
-
-function mergeLineProviderPreview(body: string, merged: Record<string, unknown>): MergedProviderPreview {
-  if (Array.isArray(merged.messages)) {
-    return { merged };
-  }
-
-  return {
-    merged: {
-      ...merged,
-      messages: [{ type: 'text', text: body }],
-    },
-    defaultContentKey: 'messages.0.text',
-  };
 }
 
 /** @deprecated Renamed to `MergedProviderPreview`. */

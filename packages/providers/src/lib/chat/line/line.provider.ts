@@ -56,16 +56,11 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
     };
   }
 
-  /**
-   * True when an override source that wins in `transform` supplies a `messages` array.
-   * Highest-priority source first — matches WhatsApp's dual-source resolution order.
-   */
+  /** True when bridge or `_passthrough.body` supplies a `messages` array that would win in `transform`. */
   private hasMessagesOverride(bridgeProviderData: WithPassthrough<Record<string, unknown>>): boolean {
-    const { _passthrough = {}, ...bridgeData } = bridgeProviderData;
-    const passthroughBody = (_passthrough.body || {}) as Record<string, unknown>;
-    const sources = [passthroughBody, bridgeData as Record<string, unknown>];
+    const { _passthrough, ...bridgeData } = bridgeProviderData;
 
-    return sources.some((source) => Array.isArray(source.messages));
+    return Array.isArray(_passthrough?.body?.messages) || Array.isArray(bridgeData.messages);
   }
 
   private buildMessage(options: IChatOptions): Record<string, unknown> {
