@@ -23,7 +23,7 @@ import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
-import { mapProvidersToPreviewOverrides } from './utils/map-providers-to-preview-overrides';
+import { buildStepPreview } from './utils/map-providers-to-preview-overrides';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
@@ -100,18 +100,9 @@ export class PreviewUsecase {
           ? await this.buildNovuSignatureSample(command.user.environmentId, executeOutput.outputs)
           : undefined;
 
-        const shouldExposeProviderOverrides =
-          context.stepData.type === StepTypeEnum.CHAT || context.stepData.type === StepTypeEnum.TOOL;
-        const providerOverrides = shouldExposeProviderOverrides
-          ? mapProvidersToPreviewOverrides(executeOutput.providers)
-          : undefined;
-
         return {
           result: {
-            preview: {
-              ...executeOutput.outputs,
-              ...(providerOverrides ? { providerOverrides } : {}),
-            },
+            preview: buildStepPreview(context.stepData.type, executeOutput),
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,

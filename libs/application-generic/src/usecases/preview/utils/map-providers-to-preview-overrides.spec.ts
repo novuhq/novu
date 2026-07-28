@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapProvidersToPreviewOverrides } from './map-providers-to-preview-overrides';
+import { buildStepPreview, mapProvidersToPreviewOverrides } from './map-providers-to-preview-overrides';
 
 describe('mapProvidersToPreviewOverrides', () => {
   it('maps non-empty provider payloads', () => {
@@ -47,5 +47,32 @@ describe('mapProvidersToPreviewOverrides', () => {
         slack: { _passthrough: { body: true } },
       })
     ).toBeUndefined();
+  });
+});
+
+describe('buildStepPreview', () => {
+  it('merges mapped providers onto chat and tool preview', () => {
+    const executeOutput = {
+      outputs: { body: 'hello' },
+      providers: { slack: { text: 'override' } },
+    };
+
+    expect(buildStepPreview('chat', executeOutput)).toEqual({
+      body: 'hello',
+      providerOverrides: { slack: { text: 'override' } },
+    });
+    expect(buildStepPreview('tool', executeOutput)).toEqual({
+      body: 'hello',
+      providerOverrides: { slack: { text: 'override' } },
+    });
+  });
+
+  it('leaves non-chat/tool preview as outputs only', () => {
+    const executeOutput = {
+      outputs: { body: 'hello' },
+      providers: { slack: { text: 'override' } },
+    };
+
+    expect(buildStepPreview('email', executeOutput)).toEqual({ body: 'hello' });
   });
 });
