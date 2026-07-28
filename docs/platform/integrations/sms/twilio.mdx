@@ -58,7 +58,37 @@ For more detailed instructions, follow one of their many [Tutorials](https://www
    - `Account SID`
    - `Auth Token`
    - `Twilio Phone Number`
+   - `Data residency region` (optional) — leave as **US (default)** unless your Twilio account uses EU data residency
 3. Click on the **Save** button
+</Step>
+</Steps>
+
+## Multi-region data residency
+
+Twilio supports processing and storing SMS data in specific regions. Novu lets you choose the API region when connecting your Twilio integration.
+
+| Region | Twilio region | When to use |
+| --- | --- | --- |
+| US (default) | US1 | Existing Twilio accounts and US-based data residency |
+| EU (Ireland) | IE1 | EU data residency for SMS (phone numbers, message bodies, and related personal data processed in Ireland) |
+
+<Note>
+  EU data residency requires **IE1-specific credentials** from the Twilio Console and senders configured for the IE1 region. See Twilio's [Messaging API with Twilio Regions](https://www.twilio.com/docs/global-infrastructure/messaging-api-with-twilio-regions) guide for setup details.
+</Note>
+
+### Configure EU data residency
+
+<Steps>
+<Step title="Create IE1 API credentials">
+In the Twilio Console, create API credentials for the **IE1** region. Use those credentials in your Novu Twilio integration instead of your US credentials.
+</Step>
+
+<Step title="Configure senders for IE1">
+If you send with phone numbers, set each number's active messaging region to **IE1** in the Twilio Console under **Numbers & Senders**.
+</Step>
+
+<Step title="Select EU in Novu">
+When connecting or updating your Twilio integration in Novu, set **Data residency region** to **EU (Ireland)** and save your IE1 credentials.
 </Step>
 </Steps>
 
