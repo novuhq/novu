@@ -62,7 +62,7 @@ export const supportAgent = agent('support-bot', {
 
 Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route - see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
 
-On Next.js, model strings need LangChain listed in `serverExternalPackages` — see [Next.js and Turbopack](#nextjs-and-turbopack). `npx novu connect --runtime langchain` configures this for you.
+On Next.js, model strings need LangChain listed in `serverExternalPackages` — see [Next.js and Turbopack](#next-js-and-turbopack). `npx novu connect --runtime langchain` configures this for you.
 
 For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to the LangChain adapter.
 
