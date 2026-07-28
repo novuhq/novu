@@ -35,6 +35,7 @@ import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.modu
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
+import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -157,6 +158,7 @@ import { USE_CASES } from './usecases';
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
+    NovuWebChatProvisioningService,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
