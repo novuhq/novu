@@ -106,17 +106,16 @@ describe('generateSupportAgentSource', () => {
     expect(source).not.toContain('demo agent');
   });
 
-  it('generates wired LangChain OpenAI handler with a ChatOpenAI instance', () => {
+  it('generates wired LangChain OpenAI handler with a model string', () => {
     const source = generateSupportAgentSource({
       runtime: 'langchain',
       agentIdentifier: 'support-agent',
       llmAuth: { kind: 'openai-api-key', apiKey: 'sk-test' },
     });
 
-    expect(source).toContain("import { ChatOpenAI } from '@langchain/openai'");
-    expect(source).toContain("model: new ChatOpenAI({ model: 'gpt-4o-mini' })");
+    expect(source).toContain("model: 'openai:gpt-4o-mini'");
     expect(source).toContain('tools: [searchNovuDocs]');
-    expect(source).not.toContain("model: 'openai:");
+    expect(source).not.toContain('ChatOpenAI');
   });
 
   it('generates wired LangChain Anthropic handler', () => {
@@ -127,12 +126,11 @@ describe('generateSupportAgentSource', () => {
     });
 
     expect(source).toContain("agent('my-agent'");
-    expect(source).toContain("import { ChatAnthropic } from '@langchain/anthropic'");
-    expect(source).toContain("model: new ChatAnthropic({ model: 'claude-haiku-4-5' })");
+    expect(source).toContain("model: 'anthropic:claude-haiku-4-5'");
     expect(source).toContain('tools: [searchNovuDocs]');
     expect(source).toContain("toolCall.name === 'searchNovuDocs'");
     expect(source).toContain('export const myAgent');
-    expect(source).not.toContain("model: 'anthropic:");
+    expect(source).not.toContain('ChatAnthropic');
   });
 
   it('generates wired LangChain Codex subscription handler with tools', () => {

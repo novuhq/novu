@@ -101,7 +101,7 @@ describe('generateAgentNextConfigSource provider selection', () => {
 });
 
 describe('installTemplate langchain package wiring', () => {
-  it('writes provider package, ChatOpenAI handler, env, and next.config for OpenAI', async () => {
+  it('writes provider package, model-string handler, env, and next.config for OpenAI', async () => {
     const root = makeTempDir();
 
     await installTemplate({
@@ -139,9 +139,9 @@ describe('installTemplate langchain package wiring', () => {
     expect(packageJson.dependencies['@langchain/openai']).toBe('^1.0.0');
     expect(packageJson.dependencies['@langchain/anthropic']).toBeUndefined();
 
-    expect(agentSource).toContain("import { ChatOpenAI } from '@langchain/openai'");
-    expect(agentSource).toContain("model: new ChatOpenAI({ model: 'gpt-4o-mini' })");
+    expect(agentSource).toContain("model: 'openai:gpt-4o-mini'");
     expect(agentSource).toContain("agent('langchain-checl-demo'");
+    expect(agentSource).not.toContain('ChatOpenAI');
 
     expect(nextConfig).toContain("'@langchain/openai'");
     expect(nextConfig).not.toContain("'@langchain/anthropic'");
@@ -150,7 +150,7 @@ describe('installTemplate langchain package wiring', () => {
     expect(envLocal).toContain('NOVU_SECRET_KEY=nv-test-secret');
   });
 
-  it('writes Anthropic provider package and ChatAnthropic handler when Anthropic is selected', async () => {
+  it('writes Anthropic provider package and model-string handler when Anthropic is selected', async () => {
     const root = makeTempDir();
 
     await installTemplate({
@@ -182,8 +182,8 @@ describe('installTemplate langchain package wiring', () => {
 
     expect(packageJson.dependencies['@langchain/anthropic']).toBe('^1.0.0');
     expect(packageJson.dependencies['@langchain/openai']).toBeUndefined();
-    expect(agentSource).toContain("import { ChatAnthropic } from '@langchain/anthropic'");
-    expect(agentSource).toContain("model: new ChatAnthropic({ model: 'claude-haiku-4-5' })");
+    expect(agentSource).toContain("model: 'anthropic:claude-haiku-4-5'");
+    expect(agentSource).not.toContain('ChatAnthropic');
     expect(nextConfig).toContain("'@langchain/anthropic'");
     expect(nextConfig).not.toContain("'@langchain/openai'");
     expect(envLocal).toContain('ANTHROPIC_API_KEY=sk-ant-test');

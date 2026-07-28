@@ -23,7 +23,7 @@ describe('app-agent-langchain template', () => {
     );
     expect(source).toContain('const searchNovuDocs = tool(');
     expect(source).toContain("toolCall.name === 'searchNovuDocs'");
-    expect(source).toContain("new ChatOpenAI({ model: 'gpt-4o-mini' })");
+    expect(source).toContain("model: 'openai:gpt-4o-mini'");
     expect(activeImports).toMatch(/@langchain\/core/);
     expect(activeImports).not.toMatch(/@langchain\/openai/);
   });
