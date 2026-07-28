@@ -478,7 +478,7 @@ export class ConstructFrameworkWorkflow {
       (providerId: ContentOverrideProviderId) =>
       async ({ controls }: { controls: Record<string, unknown> }) => {
         const blob = (controls.providerOverrides as Record<string, unknown> | undefined)?.[providerId];
-        if (!blob || typeof blob !== 'object') {
+        if (!blob || typeof blob !== 'object' || Array.isArray(blob)) {
           return {};
         }
 
