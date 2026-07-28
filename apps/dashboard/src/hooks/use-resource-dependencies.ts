@@ -17,6 +17,10 @@ type UseResourceDependenciesResult = {
   calculateDependencyState: (selection: ResourceSelection) => ResourceSelection;
 };
 
+function getResourceId(resource: IResourceDiffResult): string | undefined {
+  return resource.sourceResource?.id || resource.targetResource?.id || undefined;
+}
+
 export function useResourceDependencies(diffData: IEnvironmentDiffResponse | undefined): UseResourceDependenciesResult {
   const { workflows, layouts, agents, dependencyMap } = useMemo(() => {
     if (!diffData?.resources) {
@@ -27,30 +31,19 @@ export function useResourceDependencies(diffData: IEnvironmentDiffResponse | und
     const layoutResources = diffData.resources.filter((r: IResourceDiffResult) => r.resourceType === 'layout');
     const agentResources = diffData.resources.filter((r: IResourceDiffResult) => r.resourceType === 'agent');
 
-    // Build dependency map for quick lookup (include both workflows and layouts)
     const depMap = new Map<string, IResourceDependency[]>();
 
-    // Add workflow dependencies
-    workflowResources.forEach((workflow: IResourceDiffResult) => {
-      if (workflow.dependencies?.length) {
-        const workflowId = workflow.sourceResource?.id || workflow.targetResource?.id;
-
-        if (workflowId) {
-          depMap.set(workflowId, workflow.dependencies);
-        }
+    for (const resource of diffData.resources) {
+      if (!resource.dependencies?.length) {
+        continue;
       }
-    });
 
-    // Add layout dependencies to the map as well
-    layoutResources.forEach((layout: IResourceDiffResult) => {
-      if (layout.dependencies?.length) {
-        const layoutId = layout.sourceResource?.id || layout.targetResource?.id;
+      const resourceId = getResourceId(resource);
 
-        if (layoutId) {
-          depMap.set(layoutId, layout.dependencies);
-        }
+      if (resourceId) {
+        depMap.set(resourceId, resource.dependencies);
       }
-    });
+    }
 
     return {
       workflows: workflowResources,
@@ -60,70 +53,50 @@ export function useResourceDependencies(diffData: IEnvironmentDiffResponse | und
     };
   }, [diffData]);
 
-  // Function to calculate dependency state
   const calculateDependencyState = useMemo(() => {
     return (selection: ResourceSelection): ResourceSelection => {
-      const updated = { ...selection };
+      const updated: ResourceSelection = {};
 
-      // Reset all disabled states
-      Object.keys(updated).forEach((id) => {
-        updated[id] = { ...updated[id], disabled: false };
-      });
+      for (const [id, resourceState] of Object.entries(selection)) {
+        updated[id] = { ...resourceState, disabled: false };
+      }
 
-      // Check dependencies for all selected resources (both workflows and layouts)
-      Object.entries(updated).forEach(([resourceId, resourceState]) => {
-        if (resourceState.selected) {
-          // Get dependencies from the resource itself
-          const resourceDependencies = resourceState.resource.dependencies;
+      for (const [resourceId, resourceState] of Object.entries(updated)) {
+        if (!resourceState.selected) {
+          continue;
+        }
 
-          if (resourceDependencies && resourceDependencies.length > 0) {
-            resourceDependencies.forEach((dep: IResourceDependency) => {
-              if (dep.isBlocking) {
-                // Find the dependent resource by ID and mark it as selected and disabled
-                Object.entries(updated).forEach(([depResourceId, depResourceState]) => {
-                  const depResource = depResourceState.resource;
-                  const depResourceActualId = depResource.sourceResource?.id || depResource.targetResource?.id;
+        const dependencies = resourceState.resource.dependencies ?? dependencyMap.get(resourceId);
 
-                  if (depResourceActualId === dep.resourceId) {
-                    updated[depResourceId] = {
-                      ...updated[depResourceId],
-                      selected: true,
-                      disabled: true,
-                    };
-                  }
-                });
-              }
-            });
+        if (!dependencies?.length) {
+          continue;
+        }
+
+        for (const dep of dependencies) {
+          /*
+           * Lock resources that must publish with the selected parent:
+           * - blocking deps (missing in target)
+           * - agent deps present in this publish set (workflow uses this agent)
+           */
+          const shouldLock = dep.isBlocking || dep.resourceType === 'agent';
+
+          if (!shouldLock) {
+            continue;
           }
 
-          // Also check if this is a workflow with dependencies (original logic)
-          if (resourceState.resource.resourceType === 'workflow') {
-            const dependencies = dependencyMap.get(resourceId);
+          for (const [depSelectionId, depResourceState] of Object.entries(updated)) {
+            const depResourceActualId = getResourceId(depResourceState.resource);
 
-            if (dependencies) {
-              dependencies.forEach((dep: IResourceDependency) => {
-                // Find the dependent layout and mark as disabled if blocking
-                Object.entries(updated).forEach(([layoutId, layoutState]) => {
-                  if (layoutState.resource.resourceType === 'layout' && dep.isBlocking) {
-                    const layoutResource = layoutState.resource;
-                    const layoutResourceId = layoutResource.sourceResource?.id || layoutResource.targetResource?.id;
-
-                    const matchesById = layoutResourceId === dep.resourceId;
-
-                    if (matchesById) {
-                      updated[layoutId] = {
-                        ...updated[layoutId],
-                        selected: true,
-                        disabled: true,
-                      };
-                    }
-                  }
-                });
-              });
+            if (depResourceActualId === dep.resourceId || depSelectionId === dep.resourceId) {
+              updated[depSelectionId] = {
+                ...updated[depSelectionId],
+                selected: true,
+                disabled: true,
+              };
             }
           }
         }
-      });
+      }
 
       return updated;
     };

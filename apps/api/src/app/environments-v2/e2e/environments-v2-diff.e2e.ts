@@ -376,6 +376,208 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         expect(workflowResource.dependencies[0].resourceId).to.equal('new-layout');
       });
     });
+
+    describe('Agent-Workflow Dependencies', () => {
+      let previousAgentsFlag: string | undefined;
+
+      before(() => {
+        previousAgentsFlag = process.env.IS_CONVERSATIONAL_AGENTS_ENABLED;
+        process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+      });
+
+      after(() => {
+        process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = previousAgentsFlag;
+      });
+
+      async function createTestAgent(identifier: string, name = identifier) {
+        const response = await session.testAgent.post('/v1/agents').send({ name, identifier });
+        expect(response.status).to.equal(201);
+
+        return response.body.data;
+      }
+
+      it('should show workflow blocked by agent dependency when both are new resources', async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+        const prodEnv = await getProductionEnvironment();
+        const agentIdentifier = `new-agent-for-blocking-test-${Date.now()}`;
+
+        await createTestAgent(agentIdentifier, 'New Agent for Blocking Test');
+
+        const workflowId = `new-workflow-with-new-agent-dependency-${Date.now()}`;
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'New Workflow with New Agent Dependency',
+          workflowId,
+          description: 'New workflow that depends on a new agent',
+          active: true,
+          agent: { identifier: agentIdentifier },
+          steps: [
+            {
+              name: 'Chat Step',
+              type: 'chat',
+              controlValues: {
+                body: 'hello',
+              },
+            },
+          ],
+        });
+        expect(createResponse.status).to.equal(201);
+
+        const diffResult = await session.testAgent
+          .post(`/v2/environments/${prodEnv._id}/diff`)
+          .send({
+            sourceEnvironmentId: session.environment._id,
+          })
+          .expect(200);
+
+        const workflowResource = diffResult.body.data.resources.find(
+          (resource) => resource.resourceType === 'workflow' && resource.sourceResource?.id === workflowId
+        );
+        const agentResource = diffResult.body.data.resources.find(
+          (resource) => resource.resourceType === 'agent' && resource.sourceResource?.id === agentIdentifier
+        );
+
+        expect(workflowResource).to.exist;
+        expect(workflowResource.sourceResource?.name).to.equal('New Workflow with New Agent Dependency');
+        expect(workflowResource.targetResource).to.be.null;
+
+        expect(agentResource).to.exist;
+        expect(agentResource.sourceResource?.name).to.equal('New Agent for Blocking Test');
+        expect(agentResource.targetResource).to.be.null;
+
+        expect(workflowResource.dependencies).to.be.an('array');
+        expect(workflowResource.dependencies.length).to.be.greaterThan(0);
+
+        const agentDependency = workflowResource.dependencies.find(
+          (dep) => dep.resourceType === 'agent' && dep.resourceId === agentIdentifier
+        );
+
+        expect(agentDependency).to.exist;
+        expect(agentDependency.resourceName).to.equal('New Agent for Blocking Test');
+        expect(agentDependency.isBlocking).to.equal(true);
+        expect(agentDependency.reason).to.equal('AGENT_REQUIRED_FOR_WORKFLOW');
+      });
+
+      it('should mark agent dependency as non-blocking when agent already exists in target', async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+        const prodEnv = await getProductionEnvironment();
+        const agentIdentifier = `existing-agent-dep-${Date.now()}`;
+
+        await createTestAgent(agentIdentifier, 'Existing Agent');
+
+        await session.testAgent
+          .post(`/v2/environments/${prodEnv._id}/publish`)
+          .send({
+            sourceEnvironmentId: session.environment._id,
+            dryRun: false,
+            resources: [{ resourceType: 'agent', resourceId: agentIdentifier }],
+          })
+          .expect(200);
+
+        const workflowId = `workflow-with-existing-agent-${Date.now()}`;
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Workflow with Existing Agent',
+          workflowId,
+          active: true,
+          agent: { identifier: agentIdentifier },
+          steps: [
+            {
+              name: 'Chat Step',
+              type: 'chat',
+              controlValues: {
+                body: 'hello',
+              },
+            },
+          ],
+        });
+        expect(createResponse.status).to.equal(201);
+
+        const diffResult = await session.testAgent
+          .post(`/v2/environments/${prodEnv._id}/diff`)
+          .send({
+            sourceEnvironmentId: session.environment._id,
+          })
+          .expect(200);
+
+        const workflowResource = diffResult.body.data.resources.find(
+          (resource) => resource.resourceType === 'workflow' && resource.sourceResource?.id === workflowId
+        );
+
+        expect(workflowResource).to.exist;
+        expect(workflowResource.dependencies).to.be.an('array');
+
+        const agentDependency = workflowResource.dependencies.find(
+          (dep) => dep.resourceType === 'agent' && dep.resourceId === agentIdentifier
+        );
+
+        expect(agentDependency).to.exist;
+        expect(agentDependency.isBlocking).to.equal(false);
+        expect(agentDependency.reason).to.equal('AGENT_EXISTS_IN_TARGET');
+      });
+
+      it('should handle agent-workflow reverse dependencies when agent is removed after publishing', async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+        const prodEnv = await getProductionEnvironment();
+        const agentIdentifier = `test-agent-dependency-${Date.now()}`;
+        const workflowId = `test-workflow-with-agent-dependency-${Date.now()}`;
+
+        await createTestAgent(agentIdentifier, 'Test Agent for Dependencies');
+
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Test Workflow with Agent Dependency',
+          workflowId,
+          description: 'Workflow that depends on the test agent',
+          active: true,
+          agent: { identifier: agentIdentifier },
+          steps: [
+            {
+              name: 'Chat Step',
+              type: 'chat',
+              controlValues: {
+                body: 'hello',
+              },
+            },
+          ],
+        });
+        expect(createResponse.status).to.equal(201);
+
+        await session.testAgent
+          .post(`/v2/environments/${prodEnv._id}/publish`)
+          .send({
+            sourceEnvironmentId: session.environment._id,
+            dryRun: false,
+          })
+          .expect(200);
+
+        await session.testAgent.delete(`/v1/agents/${encodeURIComponent(agentIdentifier)}`).expect(204);
+
+        const diffResult = await session.testAgent
+          .post(`/v2/environments/${prodEnv._id}/diff`)
+          .send({
+            sourceEnvironmentId: session.environment._id,
+          })
+          .expect(200);
+
+        const agentResource = diffResult.body.data.resources.find(
+          (resource: any) => resource.resourceType === 'agent' && resource.targetResource?.id === agentIdentifier
+        );
+
+        expect(agentResource).to.exist;
+        expect(agentResource.targetResource?.name).to.equal('Test Agent for Dependencies');
+        expect(agentResource.sourceResource).to.be.null;
+
+        expect(agentResource.dependencies).to.be.an('array');
+        expect(agentResource.dependencies.length).to.be.greaterThan(0);
+
+        const workflowDependency = agentResource.dependencies.find((dep: any) => dep.resourceType === 'workflow');
+
+        expect(workflowDependency.resourceName).to.equal('Test Workflow with Agent Dependency');
+        expect(workflowDependency.isBlocking).to.equal(true);
+        expect(workflowDependency.reason).to.equal('AGENT_REQUIRED_FOR_WORKFLOW');
+      });
+    });
   });
 
   describe('Localization Group Diff Tests', () => {

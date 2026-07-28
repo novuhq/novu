@@ -34,6 +34,10 @@ import {
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
 import {
+  SyncAgentToEnvironment,
+  SyncAgentToEnvironmentCommand,
+} from '../../../agents/management/usecases/sync-agent-to-environment';
+import {
   LayoutSyncToEnvironmentCommand,
   LayoutSyncToEnvironmentUseCase,
 } from '../../../layouts-v2/usecases/sync-to-environment';
@@ -63,6 +67,7 @@ export class SyncToEnvironmentUseCase {
     private preferencesRepository: PreferencesRepository,
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
+    private syncAgentToEnvironment: SyncAgentToEnvironment,
     private syncStepResolverToEnvironmentUsecase: SyncStepResolverToEnvironmentUsecase,
     private featureFlagsService: FeatureFlagsService,
     private moduleRef: ModuleRef,
@@ -123,6 +128,18 @@ export class SyncToEnvironmentUseCase {
       this.publishTranslationGroup(layoutId, LocalizationResourceEnum.LAYOUT, command)
     );
     await Promise.all(layoutsTranslationGroupsPromises);
+
+    if (workflowDto.agent?.identifier) {
+      await this.syncAgentToEnvironment.execute(
+        SyncAgentToEnvironmentCommand.create({
+          agentIdentifier: workflowDto.agent.identifier,
+          environmentId: command.user.environmentId,
+          targetEnvironmentId: command.targetEnvironmentId,
+          organizationId: command.user.organizationId,
+          userId: command.user._id,
+        })
+      );
+    }
 
     const upsertedWorkflow = await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({

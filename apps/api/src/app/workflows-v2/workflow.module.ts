@@ -25,6 +25,7 @@ import {
   UpsertWorkflowUseCase,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
+import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { BridgeModule } from '../bridge';
 import { ChangeModule } from '../change/change.module';
@@ -57,6 +58,7 @@ const MODULES = [
   BridgeModule,
   IntegrationModule,
   LayoutsV2Module,
+  AgentsModule,
   OutboundWebhooksModule.forRoot(),
   StepResolversModule,
 ];

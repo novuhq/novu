@@ -785,7 +785,6 @@ describe('Upsert Workflow #novu-v2', () => {
       const workflow = createResponse.body.data;
 
       await session.switchToProdEnvironment();
-      await createTestAgent('ops-agent', 'Ops Agent');
       const prodEnvironmentId = session.environment._id;
       await session.switchToDevEnvironment();
 
