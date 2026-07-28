@@ -13,7 +13,7 @@ import { ConstructFrameworkWorkflow } from './construct-framework-workflow.useca
 
 type StepOptions = {
   controlSchema: { properties?: Record<string, unknown> };
-  providers: Record<string, (args: { outputs: unknown }) => Promise<unknown>>;
+  providers: Record<string, (args: { controls: Record<string, unknown> }) => Promise<unknown>>;
 };
 
 const usecase = Object.create(ConstructFrameworkWorkflow.prototype) as ConstructFrameworkWorkflow & {
@@ -21,15 +21,26 @@ const usecase = Object.create(ConstructFrameworkWorkflow.prototype) as Construct
     staticStep: NotificationStepEntity,
     fullPayloadForRender: unknown,
     dbWorkflow: NotificationTemplateEntity,
-    stepType: StepTypeEnum
+    stepType: StepTypeEnum,
+    organization?: unknown,
+    locale?: string
   ) => StepOptions;
+  translateProviderOverrideBlob: (args: { blob: Record<string, unknown> }) => Promise<Record<string, unknown>>;
 };
+
+// Isolation: these tests assert resolver control→payload mapping, not enterprise translation.
+usecase.translateProviderOverrideBlob = async ({ blob }) => blob;
 
 const staticStep = {
   template: { type: StepTypeEnum.CHAT, controls: { schema: { type: 'object', properties: { body: {} } } } },
 } as unknown as NotificationStepEntity;
 
-const dbWorkflow = { origin: ResourceOriginEnum.NOVU_CLOUD } as NotificationTemplateEntity;
+const dbWorkflow = {
+  origin: ResourceOriginEnum.NOVU_CLOUD,
+  _id: 'workflow-id',
+  _environmentId: 'env-id',
+  _organizationId: 'org-id',
+} as NotificationTemplateEntity;
 
 function buildOptions(stepType: StepTypeEnum): StepOptions {
   return usecase.constructProviderOverrideStepOptions(staticStep, {}, dbWorkflow, stepType);
@@ -50,17 +61,20 @@ describe('ConstructFrameworkWorkflow provider override step options', () => {
     expect(providers[ChatProviderIdEnum.Slack]).to.equal(undefined);
   });
 
-  it('resolves a provider payload from the compiled overrides on the step outputs', async () => {
+  it('resolves a provider payload from compiled controls.providerOverrides', async () => {
     const { providers } = buildOptions(StepTypeEnum.CHAT);
-    const outputs = { body: 'hi', providerOverrides: { [ChatProviderIdEnum.Slack]: { text: 'compiled' } } };
 
-    expect(await providers[ChatProviderIdEnum.Slack]({ outputs })).to.deep.equal({ text: 'compiled' });
+    expect(
+      await providers[ChatProviderIdEnum.Slack]({
+        controls: { providerOverrides: { [ChatProviderIdEnum.Slack]: { text: 'compiled' } } },
+      })
+    ).to.deep.equal({ text: 'compiled' });
   });
 
   it('resolves an empty payload for a provider the step has no override for', async () => {
     const { providers } = buildOptions(StepTypeEnum.CHAT);
 
-    expect(await providers[ChatProviderIdEnum.Discord]({ outputs: { body: 'hi' } })).to.deep.equal({});
+    expect(await providers[ChatProviderIdEnum.Discord]({ controls: { body: 'hi' } })).to.deep.equal({});
   });
 
   /**
