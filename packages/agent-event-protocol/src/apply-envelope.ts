@@ -224,7 +224,7 @@ function ensureAssistantMessage(
   envelope: AgentEventEnvelope,
   messageId: string
 ): { messages: AgentMessage[]; index: number } {
-  const existingIndex = state.messages.findIndex((message) => message.id === messageId);
+  const existingIndex = state.messages.findIndex((message) => message.id === messageId && message.role === 'assistant');
 
   if (existingIndex >= 0) {
     return { messages: state.messages, index: existingIndex };
@@ -381,6 +381,19 @@ function findToolPartIndex(parts: AgentMessagePart[], toolUseId: string): number
   return parts.findIndex((part) => part.type === 'tool' && part.toolUseId === toolUseId);
 }
 
+function getToolInputStream(input: AgentToolPart['input']): string {
+  if (typeof input !== 'object' || input === null) {
+    return '';
+  }
+
+  const stream = input.__stream;
+  if (typeof stream === 'string') {
+    return stream;
+  }
+
+  return JSON.stringify(input);
+}
+
 function appendToToolInputDelta(parts: AgentMessagePart[], toolUseId: string, delta: string): AgentMessagePart[] {
   const index = findToolPartIndex(parts, toolUseId);
 
@@ -390,7 +403,7 @@ function appendToToolInputDelta(parts: AgentMessagePart[], toolUseId: string, de
 
   const next = parts.slice();
   const part = next[index] as AgentToolPart;
-  const rawInput = typeof part.input === 'object' && part.input !== null ? JSON.stringify(part.input) : '';
+  const rawInput = getToolInputStream(part.input);
   const streamed = `${rawInput}${delta}`;
   let parsedInput: Record<string, unknown> | undefined;
 

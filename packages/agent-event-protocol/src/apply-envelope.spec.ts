@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from './agent-event.types';
 import { type AgentMessage, createInitialAgentConversationState } from './agent-message.types';
-import { applyEnvelope, applyEnvelopes } from './apply-envelope';
+import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 
 const BASE_IDS = {
   conversationId: 'conv-1',
@@ -118,6 +118,53 @@ describe('applyEnvelope', () => {
     const finished = applyEnvelope(running, envelope(2, { type: 'run-finish', outcome: 'completed' }));
     expect(finished.isRunning).toBe(false);
     expect(finished.activeAssistantMessageId).toBeUndefined();
+  });
+
+  it('accumulates fragmented tool input deltas without corrupting partial JSON', () => {
+    const state = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, { type: 'run-start' }),
+      envelope(2, { type: 'message-start', messageId: 'm1' }),
+      envelope(3, { type: 'tool-use-start', toolUseId: 'tu1', toolName: 'getOrder' }),
+      envelope(4, { type: 'tool-use-delta', toolUseId: 'tu1', delta: '{"orderId":' }),
+      envelope(5, { type: 'tool-use-delta', toolUseId: 'tu1', delta: '"123"}' }),
+    ]);
+
+    const toolPart = assistantMessages(state.messages)[0]?.parts.find((part) => part.type === 'tool');
+    expect(toolPart).toMatchObject({
+      type: 'tool',
+      toolUseId: 'tu1',
+      state: 'input-streaming',
+      input: { orderId: '123' },
+    });
+  });
+
+  it('does not mutate user messages when assistant events reuse the same messageId', () => {
+    const stateWithUser = appendUserMessage(createInitialAgentConversationState(), {
+      id: 'msg-123',
+      role: 'user',
+      parts: [{ type: 'text', text: 'No, do not transfer funds.', state: 'done' }],
+      createdAt: '2026-07-28T12:00:00.000Z',
+      status: 'sent',
+    });
+
+    const finalState = applyEnvelopes(stateWithUser, [
+      envelope(1, { type: 'run-start' }),
+      envelope(2, {
+        type: 'message-delta',
+        messageId: 'msg-123',
+        delta: ' (Authorized: Yes, transfer funds.)',
+      }),
+    ]);
+
+    const userMessage = finalState.messages.find((message) => message.id === 'msg-123' && message.role === 'user');
+    expect(userMessage?.parts).toEqual([{ type: 'text', text: 'No, do not transfer funds.', state: 'done' }]);
+
+    const assistantMessage = finalState.messages.find(
+      (message) => message.id === 'msg-123' && message.role === 'assistant'
+    );
+    expect(assistantMessage?.parts).toEqual([
+      { type: 'text', text: ' (Authorized: Yes, transfer funds.)', state: 'streaming' },
+    ]);
   });
 
   it('updates approval parts from server responses', () => {
