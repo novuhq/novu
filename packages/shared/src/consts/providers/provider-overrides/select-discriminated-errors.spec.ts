@@ -442,4 +442,13 @@ describe('selectDiscriminatedErrors', () => {
 
     expect(selectDiscriminatedErrors(errors, { interactive: { action: { button: 'Pick' } } }, schema)).toEqual(errors);
   });
+
+  it('does not throw on deeply nested override payloads', () => {
+    let nested: unknown = { type: 'section' };
+    for (let i = 0; i < 200; i += 1) {
+      nested = { child: nested };
+    }
+
+    expect(() => selectDiscriminatedErrors([], nested)).not.toThrow();
+  });
 });

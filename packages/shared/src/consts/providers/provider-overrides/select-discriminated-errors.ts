@@ -496,9 +496,15 @@ function resolveConcreteWinners(
   }
 
   // Instance nodes that carry a string `type` even when no error group was emitted under the
-  // matching branch (shared-`$ref`-only failures).
+  // matching branch (shared-`$ref`-only failures). Cap depth so a pathological override cannot
+  // blow the call stack during validation.
+  const MAX_TYPED_PATH_DEPTH = 64;
   const typedInstancePaths = new Set<string>(byPath.keys());
-  const collectTypedPaths = (value: unknown, path: string) => {
+  const collectTypedPaths = (value: unknown, path: string, depth: number) => {
+    if (depth > MAX_TYPED_PATH_DEPTH) {
+      return;
+    }
+
     if (hasStringTypeField(value)) {
       typedInstancePaths.add(path);
     }
@@ -509,17 +515,17 @@ function resolveConcreteWinners(
 
     if (Array.isArray(value)) {
       value.forEach((entry, index) => {
-        collectTypedPaths(entry, `${path}/${index}`);
+        collectTypedPaths(entry, `${path}/${index}`, depth + 1);
       });
 
       return;
     }
 
     for (const [key, child] of Object.entries(value)) {
-      collectTypedPaths(child, path === '' ? `/${key}` : `${path}/${key}`);
+      collectTypedPaths(child, path === '' ? `/${key}` : `${path}/${key}`, depth + 1);
     }
   };
-  collectTypedPaths(dataAtPath, '');
+  collectTypedPaths(dataAtPath, '', 0);
 
   const winners: ConcreteWinner[] = [];
 

@@ -1,3 +1,10 @@
+/** Keys that must never be used as object property paths (prototype pollution). */
+const UNSAFE_PATH_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function isSafePathSegment(segment: string): boolean {
+  return segment !== '' && !UNSAFE_PATH_KEYS.has(segment);
+}
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -8,7 +15,7 @@ export function getAtPath(target: Record<string, unknown>, path: string): unknow
   let current: unknown = target;
 
   for (const segment of segments) {
-    if (!isRecord(current) || !(segment in current)) {
+    if (!isSafePathSegment(segment) || !isRecord(current) || !Object.hasOwn(current, segment)) {
       return undefined;
     }
 
@@ -24,7 +31,7 @@ export function getAtPath(target: Record<string, unknown>, path: string): unknow
  */
 export function setAtPath(target: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
   const segments = path.split('.');
-  if (segments.length === 0 || segments[0] === '') {
+  if (segments.length === 0 || segments[0] === '' || !segments.every(isSafePathSegment)) {
     return { ...target };
   }
 
@@ -33,7 +40,7 @@ export function setAtPath(target: Record<string, unknown>, path: string, value: 
 
   for (let index = 0; index < segments.length - 1; index += 1) {
     const segment = segments[index] as string;
-    const next = current[segment];
+    const next = Object.hasOwn(current, segment) ? current[segment] : undefined;
 
     if (isRecord(next)) {
       current[segment] = { ...next };
