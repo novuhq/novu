@@ -776,13 +776,15 @@ export class UpdateWorkflowV0 {
         throw new BadRequestException(`Failed to delete message template ${id} while updating the workflow`);
       }
 
-      await this.controlValuesRepository.delete(
+      await this.controlValuesRepository.deleteMany(
         {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
           _workflowId: command.id,
           _stepId: id,
-          level: ControlValuesLevelEnum.STEP_CONTROLS,
+          level: {
+            $in: [ControlValuesLevelEnum.STEP_CONTROLS, ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS],
+          },
         },
         { session }
       );

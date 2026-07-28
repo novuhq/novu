@@ -15,6 +15,7 @@ import {
   PushStepUpsertDto,
   SmsStepUpsertDto,
   ThrottleStepUpsertDto,
+  ToolStepUpsertDto,
 } from './create-step.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
 
@@ -27,6 +28,7 @@ import { PreferencesRequestDto } from './preferences.request.dto';
   DelayStepUpsertDto,
   DigestStepUpsertDto,
   ThrottleStepUpsertDto,
+  ToolStepUpsertDto,
   CustomStepUpsertDto,
   HttpRequestStepUpsertDto
 )
@@ -51,6 +53,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(DelayStepUpsertDto) },
         { $ref: getSchemaPath(DigestStepUpsertDto) },
         { $ref: getSchemaPath(ThrottleStepUpsertDto) },
+        { $ref: getSchemaPath(ToolStepUpsertDto) },
         { $ref: getSchemaPath(CustomStepUpsertDto) },
         { $ref: getSchemaPath(HttpRequestStepUpsertDto) },
       ],
@@ -65,6 +68,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
           [StepTypeEnum.DELAY]: getSchemaPath(DelayStepUpsertDto),
           [StepTypeEnum.DIGEST]: getSchemaPath(DigestStepUpsertDto),
           [StepTypeEnum.THROTTLE]: getSchemaPath(ThrottleStepUpsertDto),
+          [StepTypeEnum.TOOL]: getSchemaPath(ToolStepUpsertDto),
           [StepTypeEnum.CUSTOM]: getSchemaPath(CustomStepUpsertDto),
           [StepTypeEnum.HTTP_REQUEST]: getSchemaPath(HttpRequestStepUpsertDto),
         },
@@ -85,6 +89,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.DELAY, value: DelayStepUpsertDto },
         { name: StepTypeEnum.DIGEST, value: DigestStepUpsertDto },
         { name: StepTypeEnum.THROTTLE, value: ThrottleStepUpsertDto },
+        { name: StepTypeEnum.TOOL, value: ToolStepUpsertDto },
         { name: StepTypeEnum.CUSTOM, value: CustomStepUpsertDto },
         { name: StepTypeEnum.HTTP_REQUEST, value: HttpRequestStepUpsertDto },
       ],
@@ -100,6 +105,7 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
     | DelayStepUpsertDto
     | DigestStepUpsertDto
     | ThrottleStepUpsertDto
+    | ToolStepUpsertDto
     | CustomStepUpsertDto
     | HttpRequestStepUpsertDto
   )[];
