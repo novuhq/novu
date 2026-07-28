@@ -19,6 +19,7 @@ type StepOptions = {
 type ConstructFrameworkWorkflowTestDouble = {
   constructProviderOverrideStepOptions: (
     staticStep: NotificationStepEntity,
+    skip: (controlValues: Record<string, unknown>) => Promise<boolean>,
     fullPayloadForRender: unknown,
     dbWorkflow: NotificationTemplateEntity,
     stepType: StepTypeEnum,
@@ -62,8 +63,10 @@ const translationArgs = {
   dbWorkflow,
 };
 
+const noopSkip = async () => false;
+
 function buildOptions(stepType: StepTypeEnum): StepOptions {
-  return usecase.constructProviderOverrideStepOptions(staticStep, {}, dbWorkflow, stepType);
+  return usecase.constructProviderOverrideStepOptions(staticStep, noopSkip, {}, dbWorkflow, stepType);
 }
 
 describe('ConstructFrameworkWorkflow content-override channel steps', () => {

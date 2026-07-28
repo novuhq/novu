@@ -40,6 +40,12 @@ export class JobEntity {
   delay?: number;
   _parentId?: string;
   status: JobStatusEnum;
+  /**
+   * True from claimNextChildAsQueued until AddJob confirms the queue message exists.
+   * Lets stranded-chain recovery distinguish a child whose worker died before the
+   * enqueue (releasable) from one whose message is live but backlogged (leave alone).
+   */
+  awaitingEnqueue?: boolean;
   deliveryLifecycleState?: DeliveryLifecycleState;
   error?: any;
   createdAt: string;

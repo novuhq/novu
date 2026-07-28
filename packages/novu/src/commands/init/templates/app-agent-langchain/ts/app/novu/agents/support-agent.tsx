@@ -19,6 +19,8 @@ const searchNovuDocs = tool(async ({ query }) => ({ matches: await searchNovuDoc
 //
 // Returning { model, system, tools } lets Novu run the agent and own the
 // tool-approval loop — no LangGraph checkpointer required.
+// next.config.mjs already lists LangChain packages in serverExternalPackages
+// so model strings work with Next.js Turbopack.
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action

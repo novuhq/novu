@@ -159,6 +159,15 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
   /**
+   * Emit a "step conditions matched" execution detail when a step's conditions
+   * pass and the step executes (v2 skip conditions, HTTP Request steps, and
+   * legacy v1 filters including webhook filters). When off, condition results
+   * are only persisted when a step is skipped. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED`
+   * when self-hosted.
+   */
+  IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED = 'IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED',
+  /**
    * Stop embedding the fully populated workflow step (message template
    * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
    * schemas, etc.) onto every job's `step`. When enabled, new jobs persist a
@@ -175,6 +184,15 @@ export enum FeatureFlagsKeysEnum {
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
   /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
   IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
+
+  /**
+   * When true (default), the deprecated per-subscriber chat OAuth routes require
+   * HMAC to be enabled on the Slack integration and a valid subscriber HMAC hash.
+   * Target legacy organizations to false in LaunchDarkly so they can keep the
+   * historical behavior during migration. Self-hosted: set
+   * `IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED=false` to disable enforcement.
+   */
+  IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
