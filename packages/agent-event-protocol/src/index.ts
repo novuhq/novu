@@ -1,30 +1,13 @@
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 
+import type { AgentFileRef, AgentMessageContent, AgentToolResultContent, AgentToolSource } from './wire-types';
+
+export type { AgentFileRef, AgentMessageContent, AgentToolResultContent, AgentToolSource } from './wire-types';
+
 export interface AgentEventUsage {
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
-}
-
-export type AgentToolSource = { type: 'builtin' } | { type: 'custom' } | { type: 'mcp'; serverName: string };
-
-export type AgentToolResultContent =
-  | { type: 'text'; text: string }
-  | { type: 'citation'; url: string; title?: string; excerpts?: string[] }
-  | { type: 'json'; value: unknown }
-  | { type: 'media'; mediaType: string; data: string; name?: string }
-  | { type: 'unknown'; providerType: string; data: Record<string, unknown> };
-
-export type AgentMessageContent = { markdown: string } | { card: Record<string, unknown> };
-
-export interface AgentFileRef {
-  fileId: string;
-  name?: string;
-  mediaType?: string;
-  /** Transitional: inline base64 payload until the pre-upload path ships. Same 5 MB limit as the reply API. */
-  data?: string;
-  /** Transitional: publicly-accessible URL until the pre-upload path ships. Same limits as the reply API. */
-  url?: string;
 }
 
 export type AgentRunOutcome = 'completed' | 'paused' | 'aborted';
@@ -131,6 +114,31 @@ const DELTA_EVENT_TYPES = new Set(['message-delta', 'thinking-delta', 'tool-use-
 export function isDeltaEvent(event: { type: string }): boolean {
   return DELTA_EVENT_TYPES.has(event.type);
 }
+
+export type {
+  AgentApprovalPart,
+  AgentApprovalPartState,
+  AgentCardPart,
+  AgentConversationError,
+  AgentConversationState,
+  AgentConversationStatus,
+  AgentFilePart,
+  AgentMessage,
+  AgentMessagePart,
+  AgentMessageRole,
+  AgentMessageStatus,
+  AgentSourcePart,
+  AgentTextPart,
+  AgentTextPartState,
+  AgentThinkingPart,
+  AgentToolPart,
+  AgentToolPartState,
+} from './agent-message.types';
+export {
+  createInitialAgentConversationState,
+  derivePendingApprovals,
+} from './agent-message.types';
+export { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 
 export function isAgentEventEnvelope(value: unknown): value is AgentEventEnvelope {
   if (typeof value !== 'object' || value === null) {
