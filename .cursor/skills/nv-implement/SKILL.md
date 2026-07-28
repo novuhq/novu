@@ -17,7 +17,7 @@ Invoking this skill authorizes the commits it produces (slice commits, review re
 - [ ] 2. Resolve feature branch + one worktree per seam
 - [ ] 3. Fan out subagents (TDD → commit → /nv-park-and-review)
 - [ ] 4. Merge slices back into the feature branch
-- [ ] 5. Integration pass (typecheck + cross-slice fallout)
+- [ ] 5. Integration pass (typecheck + cross-slice fallout + thermo-nuclear review)
 - [ ] 6. Full suite once + teardown
 ```
 
@@ -85,8 +85,9 @@ Slices were reviewed in isolation — the seams between them were not. Expect cr
 1. Typecheck: `pnpm exec nest build` in `apps/api`; `ReadLints` on dashboard files
 2. Run every spec file touched by any slice, together, from the main checkout
 3. Fix fallout as small commits on the feature branch
+4. Launch **one** `thermo-nuclear-code-quality-review` subagent over the full feature-branch diff (merge-base with `origin/next` → HEAD) — the main agent runs this, not a slice. Fix valid findings as small commits; re-run touched specs after.
 
-**Done when:** typecheck is clean and all touched spec files pass in one run.
+**Done when:** typecheck is clean, all touched spec files pass in one run, and the whole-diff review is done with valid findings addressed.
 
 ### 6. Full suite once + teardown
 
@@ -121,5 +122,6 @@ Dashboard has no unit harness for most components — verify via `ReadLints`; do
 
 - `/tdd` — the red-green loop each TDD-able slice runs
 - `/nv-park-and-review` — each slice's closing review
+- `thermo-nuclear-code-quality-review` — the whole-diff audit in step 5
 - [novu-prepare-pr](../novu-prepare-pr/SKILL.md) — PR prep after implementation
 - [nv-worktree-commands](../nv-worktree-commands/SKILL.md) — worktree debugging reference
