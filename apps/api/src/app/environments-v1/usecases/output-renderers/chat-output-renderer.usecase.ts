@@ -22,7 +22,7 @@ export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
   @InstrumentUsecase()
   async execute(renderCommand: ChatOutputRendererCommand): Promise<ChatRenderOutput> {
-    const { skip, ...outputControls } = renderCommand.controlValues ?? {};
+    const { skip, providerOverrides: _providerOverrides, ...outputControls } = renderCommand.controlValues ?? {};
     const { _environmentId, _organizationId, _id: workflowId } = renderCommand.dbWorkflow;
 
     const translatedControls = await this.processTranslations({
@@ -37,14 +37,8 @@ export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization: renderCommand.organization,
     });
 
-    const output: ChatRenderOutput = {
+    return {
       body: (translatedControls.body as string) ?? '',
     };
-
-    if (translatedControls.providerOverrides !== undefined) {
-      output.providerOverrides = translatedControls.providerOverrides as ChatRenderOutput['providerOverrides'];
-    }
-
-    return output;
   }
 }

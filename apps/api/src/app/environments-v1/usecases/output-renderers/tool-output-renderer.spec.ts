@@ -3,11 +3,11 @@ import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { ChatOutputRendererCommand, ChatOutputRendererUsecase } from './chat-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
+import { ToolOutputRendererCommand, ToolOutputRendererUsecase } from './tool-output-renderer.usecase';
 
 function buildUsecase(translatedControls: Record<string, unknown>) {
-  const usecase = new ChatOutputRendererUsecase(
+  const usecase = new ToolOutputRendererUsecase(
     sinon.createStubInstance(ModuleRef),
     sinon.createStubInstance(PinoLogger)
   );
@@ -18,21 +18,21 @@ function buildUsecase(translatedControls: Record<string, unknown>) {
   return { usecase, processTranslations };
 }
 
-function buildCommand(controlValues: Record<string, unknown>): ChatOutputRendererCommand {
+function buildCommand(controlValues: Record<string, unknown>): ToolOutputRendererCommand {
   return {
     controlValues,
     fullPayloadForRender: {} as FullPayloadForRender,
     dbWorkflow: { _environmentId: 'env', _organizationId: 'org', _id: 'wf' } as NotificationTemplateEntity,
-  } as ChatOutputRendererCommand;
+  } as ToolOutputRendererCommand;
 }
 
-describe('ChatOutputRendererUsecase', () => {
+describe('ToolOutputRendererUsecase', () => {
   afterEach(() => {
     sinon.restore();
   });
 
   it('returns only body and does not translate providerOverrides', async () => {
-    const providerOverrides = { slack: { blocks: [{ type: 'divider' }] } };
+    const providerOverrides = { pagerduty: { severity: 'critical' } };
     const { usecase, processTranslations } = buildUsecase({ body: 'translated-body' });
 
     const output = await usecase.execute(buildCommand({ body: 'hello', providerOverrides, skip: false }));
