@@ -29,7 +29,12 @@ export interface LangChainToolCall {
  * `ctx.history` — no LangGraph checkpointer required.
  */
 export interface LangChainAgentConfig {
-  /** Chat model instance or `"provider:model"` identifier passed to `createAgent`. */
+  /**
+   * Chat model instance or `"provider:model"` identifier passed to `createAgent`.
+   * Prefer a statically imported instance (e.g. `new ChatOpenAI(...)`) on Next.js —
+   * model strings use a dynamic `import()` that Turbopack rejects unless LangChain
+   * packages are listed in `serverExternalPackages`.
+   */
   model: string | LanguageModelLike;
   /** Tools available to the agent. */
   tools?: StructuredToolInterface[];

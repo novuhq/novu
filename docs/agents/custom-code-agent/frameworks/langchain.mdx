@@ -35,10 +35,11 @@ npm install @novu/framework langchain @langchain/core @langchain/google-genai
 
 ## Minimal agent
 
-Import `agent` from `@novu/framework/langchain`, then return a `LangChainAgentConfig` from `onMessage`:
+Import `agent` from `@novu/framework/langchain`, then return a `LangChainAgentConfig` from `onMessage`. Prefer a statically imported chat model instance (works with Next.js Turbopack without extra config):
 
 ```typescript
 import { tool } from '@langchain/core/tools';
+import { ChatOpenAI } from '@langchain/openai';
 import { agent } from '@novu/framework/langchain';
 import { z } from 'zod';
 
@@ -53,12 +54,14 @@ const lookupOrder = tool(
 
 export const supportAgent = agent('support-bot', {
   onMessage: async (message, ctx) => ({
-    model: 'openai:gpt-4o',
+    model: new ChatOpenAI({ model: 'gpt-4o' }),
     system: 'You are a helpful support agent.',
     tools: [lookupOrder],
   }),
 });
 ```
+
+Model strings like `model: 'openai:gpt-4o'` also work. On Next.js, list LangChain packages in `serverExternalPackages` — see [Next.js and Turbopack](#nextjs-and-turbopack).
 
 Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route - see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
 
@@ -80,10 +83,47 @@ Shorthand when you only need `onMessage`: pass the handler directly.
 
 ```typescript
 const supportAgent = agent('support-bot', async (message, ctx) => ({
-  model: 'openai:gpt-4o',
+  model: new ChatOpenAI({ model: 'gpt-4o' }),
   tools: [lookupOrder],
 }));
 ```
+
+## Next.js and Turbopack
+
+LangChain resolves provider packages for model strings via a runtime dynamic `import()`. Next.js Turbopack cannot analyze that expression and fails with:
+
+```text
+Cannot find module as expression is too dynamic
+```
+
+**Fix either of these:**
+
+1. Pass a statically imported chat model instance (recommended):
+
+```typescript
+import { ChatOpenAI } from '@langchain/openai';
+
+return { model: new ChatOpenAI({ model: 'gpt-4o' }), system: '...' };
+```
+
+2. Or keep model strings and externalize LangChain in `next.config.mjs`:
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  serverExternalPackages: [
+    'langchain',
+    '@langchain/core',
+    '@langchain/langgraph',
+    '@langchain/langgraph-checkpoint',
+    '@langchain/openai', // plus any other @langchain/* provider you use
+  ],
+};
+
+export default nextConfig;
+```
+
+`npx novu connect --runtime langchain` scaffolds this `serverExternalPackages` list for you.
 
 ## `toLangChainMessages()`
 
@@ -104,10 +144,14 @@ const messages = toLangChainMessages(ctx.history);
 If you already run a LangChain agent or graph in your handler, return its messages and Novu delivers the final text - tool approval is **not** managed on this path:
 
 ```typescript
+import { ChatOpenAI } from '@langchain/openai';
 import { createAgent } from 'langchain';
 import { agent, toLangChainMessages } from '@novu/framework/langchain';
 
-const billingAgent = createAgent({ model: 'openai:gpt-4o', tools: [lookupOrder] });
+const billingAgent = createAgent({
+  model: new ChatOpenAI({ model: 'gpt-4o' }),
+  tools: [lookupOrder],
+});
 
 export const supportAgent = agent('support-bot', {
   onMessage: async (message, ctx) => {
@@ -128,6 +172,7 @@ Set `needsApproval` on `LangChainAgentConfig`. When the model calls a gated tool
 
 ```typescript
 import { tool } from '@langchain/core/tools';
+import { ChatOpenAI } from '@langchain/openai';
 import { agent } from '@novu/framework/langchain';
 import { z } from 'zod';
 
@@ -142,7 +187,7 @@ const issueRefund = tool(
 
 export const supportAgent = agent('support-bot', {
   onMessage: async (message, ctx) => ({
-    model: 'openai:gpt-4o',
+    model: new ChatOpenAI({ model: 'gpt-4o' }),
     system: 'You are a helpful support agent.',
     tools: [issueRefund],
     needsApproval: (toolCall) => toolCall.name === 'issueRefund',
@@ -159,7 +204,7 @@ When Novu runs `createAgent().invoke()` for a returned `LangChainAgentConfig` an
 ```typescript
 export const supportAgent = agent('support-bot', {
   onMessage: async (message, ctx) => ({
-    model: 'openai:gpt-4o',
+    model: new ChatOpenAI({ model: 'gpt-4o' }),
     system: 'You are a helpful support agent.',
     tools: [lookupOrder],
   }),

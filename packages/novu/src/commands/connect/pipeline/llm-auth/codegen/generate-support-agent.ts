@@ -120,8 +120,14 @@ function buildOnMessageBody(input: GenerateSupportAgentInput): string {
   }
 
   if (runtime === 'langchain') {
-    if (llmAuth.kind === 'openai-api-key') return buildLangChainHandler("'openai:gpt-4o-mini'");
-    if (llmAuth.kind === 'anthropic-api-key') return buildLangChainHandler("'anthropic:claude-haiku-4-5'");
+    // Prefer Chat* instances over "provider:model" strings so Turbopack never hits
+    // LangChain's dynamic import(config.package) for the scaffolded happy path.
+    if (llmAuth.kind === 'openai-api-key') {
+      return buildLangChainHandler("new ChatOpenAI({ model: 'gpt-4o-mini' })");
+    }
+    if (llmAuth.kind === 'anthropic-api-key') {
+      return buildLangChainHandler("new ChatAnthropic({ model: 'claude-haiku-4-5' })");
+    }
     if (llmAuth.kind === 'codex-subscription') {
       return buildLangChainHandler("new ChatCodexOAuth({ model: 'gpt-5.4-mini' })");
     }
@@ -173,6 +179,16 @@ import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/langchain';
 import { tool } from '@langchain/core/tools';
 import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`;
+
+  if (kind === 'openai-api-key') {
+    return `${base}
+import { ChatOpenAI } from '@langchain/openai';`;
+  }
+
+  if (kind === 'anthropic-api-key') {
+    return `${base}
+import { ChatAnthropic } from '@langchain/anthropic';`;
+  }
 
   if (kind === 'codex-subscription') {
     return `${base}

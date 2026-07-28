@@ -42,11 +42,34 @@ describe('generateAgentNextConfigSource', () => {
     expect(source).toContain("'@openai/codex'");
   });
 
-  it('omits serverExternalPackages for API key scaffolds', () => {
+  it('omits serverExternalPackages for AI SDK API key scaffolds', () => {
     const source = generateAgentNextConfigSource('ai-sdk', { kind: 'openai-api-key', apiKey: 'sk-test' });
 
     expect(source).toContain('turbopack');
     expect(source).not.toContain('serverExternalPackages');
+  });
+
+  it('always externalizes LangChain packages for langchain scaffolds', () => {
+    const source = generateAgentNextConfigSource('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' });
+
+    expect(source).toContain('serverExternalPackages');
+    expect(source).toContain("'langchain'");
+    expect(source).toContain("'@langchain/core'");
+    expect(source).toContain("'@langchain/openai'");
+  });
+
+  it('externalizes LangChain packages even when LLM auth is skipped', () => {
+    const source = generateAgentNextConfigSource('langchain', { kind: 'skip' });
+
+    expect(source).toContain("'langchain'");
+    expect(source).toContain("'@langchain/openai'");
+  });
+
+  it('includes Codex OAuth alongside LangChain packages for subscription scaffolds', () => {
+    const source = generateAgentNextConfigSource('langchain', { kind: 'codex-subscription' });
+
+    expect(source).toContain("'langchain'");
+    expect(source).toContain("'langchainjs-codex-oauth'");
   });
 });
 
@@ -76,6 +99,19 @@ describe('generateSupportAgentSource', () => {
     expect(source).not.toContain('demo agent');
   });
 
+  it('generates wired LangChain OpenAI handler with a ChatOpenAI instance', () => {
+    const source = generateSupportAgentSource({
+      runtime: 'langchain',
+      agentIdentifier: 'support-agent',
+      llmAuth: { kind: 'openai-api-key', apiKey: 'sk-test' },
+    });
+
+    expect(source).toContain("import { ChatOpenAI } from '@langchain/openai'");
+    expect(source).toContain("model: new ChatOpenAI({ model: 'gpt-4o-mini' })");
+    expect(source).toContain('tools: [searchNovuDocs]');
+    expect(source).not.toContain("model: 'openai:");
+  });
+
   it('generates wired LangChain Anthropic handler', () => {
     const source = generateSupportAgentSource({
       runtime: 'langchain',
@@ -84,10 +120,12 @@ describe('generateSupportAgentSource', () => {
     });
 
     expect(source).toContain("agent('my-agent'");
-    expect(source).toContain("model: 'anthropic:claude-haiku-4-5'");
+    expect(source).toContain("import { ChatAnthropic } from '@langchain/anthropic'");
+    expect(source).toContain("model: new ChatAnthropic({ model: 'claude-haiku-4-5' })");
     expect(source).toContain('tools: [searchNovuDocs]');
     expect(source).toContain("toolCall.name === 'searchNovuDocs'");
     expect(source).toContain('export const myAgent');
+    expect(source).not.toContain("model: 'anthropic:");
   });
 
   it('generates wired LangChain Codex subscription handler with tools', () => {

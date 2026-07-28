@@ -133,11 +133,12 @@ Copy `NOVU_SECRET_KEY` from **API Keys** in the dashboard if needed.
 Create `app/novu/agents/<your-identifier>.ts` using the identifier from the dashboard:
 
 ```typescript
+import { ChatOpenAI } from '@langchain/openai';
 import { agent } from '@novu/framework/langchain';
 
 export const supportBot = agent('support-bot', {
   onMessage: async (_message, ctx) => ({
-    model: 'openai:gpt-4o',
+    model: new ChatOpenAI({ model: 'gpt-4o' }),
     system: 'You are a helpful support agent. Keep answers short.',
   }),
 });
@@ -150,10 +151,13 @@ export { supportBot } from './support-bot';
 ```
 
 Match `agent('...')` to the dashboard **Identifier**. Returning `{ model, system }` is a `LangChainAgentConfig` — Novu calls `createAgent().invoke()` and delivers the final text. Novu maps `ctx.history` for you on this path.
+
+Prefer a `Chat*` instance for `model`. Model strings like `'openai:gpt-4o'` need LangChain listed in Next.js `serverExternalPackages` — see [Next.js and Turbopack](/agents/custom-code-agent/frameworks/langchain#nextjs-and-turbopack).
   </Accordion>
   <Accordion title="Add a tool (optional)">
 ```typescript
 import { tool } from '@langchain/core/tools';
+import { ChatOpenAI } from '@langchain/openai';
 import { agent } from '@novu/framework/langchain';
 import { z } from 'zod';
 
@@ -168,7 +172,7 @@ const lookupOrder = tool(
 
 export const supportBot = agent('support-bot', {
   onMessage: async (_message, ctx) => ({
-    model: 'openai:gpt-4o',
+    model: new ChatOpenAI({ model: 'gpt-4o' }),
     system: 'You are a helpful support agent. Use lookupOrder when the user asks about an order.',
     tools: [lookupOrder],
   }),
@@ -208,6 +212,9 @@ Then run `npx novu dev` (or `npm run dev:novu`) and message the bot. For Express
   </Accordion>
   <Accordion title="I skipped LLM auth in the CLI. What now?">
     Add `OPENAI_API_KEY` (or your provider key) to `.env.local`, then update `app/novu/agents/` so `onMessage` returns a LangChain config (`model`, `system`, optional `tools`). Restart `npm run dev:novu`.
+  </Accordion>
+  <Accordion title='I get "Cannot find module as expression is too dynamic"'>
+    Next.js Turbopack cannot resolve LangChain's dynamic provider imports for model strings. Pass a chat model instance (`new ChatOpenAI({ model: 'gpt-4o' })`) or add LangChain packages to `serverExternalPackages` in `next.config.mjs`. See [Next.js and Turbopack](/agents/custom-code-agent/frameworks/langchain#nextjs-and-turbopack).
   </Accordion>
 </AccordionGroup>
 

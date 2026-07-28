@@ -17,6 +17,11 @@ const searchNovuDocs = tool(async ({ query }) => ({ matches: await searchNovuDoc
 //   npm install @langchain/anthropic     # Anthropic
 //   npm install @langchain/google-genai  # Google
 //
+// Prefer a Chat* instance (avoids Turbopack dynamic-import issues):
+//   import { ChatOpenAI } from '@langchain/openai';
+// Model strings like 'openai:gpt-4o-mini' also work — next.config.mjs already
+// lists LangChain packages in serverExternalPackages.
+//
 // Returning { model, system, tools } lets Novu run the agent and own the
 // tool-approval loop — no LangGraph checkpointer required.
 
@@ -65,7 +70,7 @@ export const supportAgent = agent('support-agent', {
     );
 
     // return {
-    //   model: 'openai:gpt-4o-mini',
+    //   model: new ChatOpenAI({ model: 'gpt-4o-mini' }),
     //   system: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
     //   tools: [searchNovuDocs],
     //   needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',

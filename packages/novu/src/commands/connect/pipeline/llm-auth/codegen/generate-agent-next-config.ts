@@ -1,23 +1,50 @@
 import type { BridgeAdapterVariant } from '../../bridge-adapter/types';
 import type { LlmAuthChoice } from '../types';
 
+/**
+ * Packages that LangChain resolves via runtime `import(packageName)` (model strings like
+ * `openai:gpt-4o`). Next.js Turbopack cannot analyze those expressions and throws
+ * "Cannot find module as expression is too dynamic" unless the packages stay external.
+ *
+ * @see https://github.com/langchain-ai/langchainjs/issues/10818
+ */
+const LANGCHAIN_SERVER_EXTERNAL_PACKAGES = [
+  'langchain',
+  '@langchain/core',
+  '@langchain/langgraph',
+  '@langchain/langgraph-checkpoint',
+  '@langchain/openai',
+  '@langchain/anthropic',
+  '@langchain/google-genai',
+] as const;
+
 export function resolveAgentServerExternalPackages(
   runtime: BridgeAdapterVariant,
   llmAuth: LlmAuthChoice
 ): readonly string[] {
+  const packages = new Set<string>();
+
+  if (runtime === 'langchain') {
+    for (const pkg of LANGCHAIN_SERVER_EXTERNAL_PACKAGES) {
+      packages.add(pkg);
+    }
+  }
+
   if (llmAuth.kind === 'codex-subscription') {
     if (runtime === 'ai-sdk') {
-      return ['ai-sdk-provider-codex-cli', '@openai/codex'];
+      packages.add('ai-sdk-provider-codex-cli');
+      packages.add('@openai/codex');
+    } else {
+      packages.add('langchainjs-codex-oauth');
     }
-
-    return ['langchainjs-codex-oauth'];
   }
 
   if (llmAuth.kind === 'claude-subscription') {
-    return ['ai-sdk-provider-claude-code', '@anthropic-ai/claude-agent-sdk'];
+    packages.add('ai-sdk-provider-claude-code');
+    packages.add('@anthropic-ai/claude-agent-sdk');
   }
 
-  return [];
+  return [...packages];
 }
 
 export function generateAgentNextConfigSource(runtime: BridgeAdapterVariant, llmAuth: LlmAuthChoice): string {
@@ -25,7 +52,8 @@ export function generateAgentNextConfigSource(runtime: BridgeAdapterVariant, llm
   const externalPackagesBlock =
     serverExternalPackages.length > 0
       ? `
-  // CLI-based LLM providers spawn subprocesses; keep them out of the Next.js bundle.
+  // Keep LLM packages out of the Turbopack bundle.
+  // LangChain model strings (e.g. "openai:gpt-4o") use dynamic import() that Turbopack rejects.
   serverExternalPackages: [
 ${serverExternalPackages.map((pkg) => `    '${pkg}',`).join('\n')}
   ],`

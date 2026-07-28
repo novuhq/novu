@@ -65,17 +65,21 @@ Your `onMessage` handler is called with `(message, ctx)`:
 
 ## Wiring Up Your LLM
 
-Replace the echo `return` in `app/novu/agents/support-agent.tsx` with a LangChain agent config:
+Replace the echo `return` in `app/novu/agents/support-agent.tsx` with a LangChain agent config. Prefer a statically imported chat model (works with Turbopack out of the box):
 
 ```typescript
+import { ChatOpenAI } from '@langchain/openai';
+
 return {
-  model: 'openai:gpt-4o-mini',
+  model: new ChatOpenAI({ model: 'gpt-4o-mini' }),
   system:
     'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
   tools: [searchNovuDocs],
   needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
 };
 ```
+
+Model strings like `model: 'openai:gpt-4o-mini'` also work — this scaffold already lists LangChain packages in `serverExternalPackages` in `next.config.mjs` so Turbopack can resolve LangChain's dynamic provider imports.
 
 The scaffold includes a `searchNovuDocs` tool gated behind approval — it fetches the live Novu docs index. Uncomment the config return to wire your LLM, then try asking "how does tool approval work in Novu?" to see the approval card flow.
 
