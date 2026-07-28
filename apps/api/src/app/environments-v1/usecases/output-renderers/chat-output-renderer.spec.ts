@@ -11,9 +11,11 @@ function buildUsecase(translatedControls: Record<string, unknown>) {
     sinon.createStubInstance(ModuleRef),
     sinon.createStubInstance(PinoLogger)
   );
-  sinon.stub(usecase as never as { processTranslations: unknown }, 'processTranslations').resolves(translatedControls);
+  const processTranslations = sinon
+    .stub(usecase as never as { processTranslations: unknown }, 'processTranslations')
+    .resolves(translatedControls);
 
-  return usecase;
+  return { usecase, processTranslations };
 }
 
 function buildCommand(controlValues: Record<string, unknown>): ChatOutputRendererCommand {
@@ -29,18 +31,18 @@ describe('ChatOutputRendererUsecase', () => {
     sinon.restore();
   });
 
-  it('returns only body when controls include providerOverrides', async () => {
+  it('returns only body and does not translate providerOverrides', async () => {
     const providerOverrides = { slack: { blocks: [{ type: 'divider' }] } };
-    const usecase = buildUsecase({ body: 'translated-body', providerOverrides });
+    const { usecase, processTranslations } = buildUsecase({ body: 'translated-body' });
 
-    const output = await usecase.execute(buildCommand({ body: 'hello', providerOverrides }));
+    const output = await usecase.execute(buildCommand({ body: 'hello', providerOverrides, skip: false }));
 
     expect(output).to.deep.equal({ body: 'translated-body' });
-    expect(output).to.not.have.property('providerOverrides');
+    expect(processTranslations.firstCall.args[0].controls).to.deep.equal({ body: 'hello' });
   });
 
   it('returns body from translated controls when there are no providerOverrides', async () => {
-    const usecase = buildUsecase({ body: 'translated-body' });
+    const { usecase } = buildUsecase({ body: 'translated-body' });
 
     const output = await usecase.execute(buildCommand({ body: 'hello' }));
 
