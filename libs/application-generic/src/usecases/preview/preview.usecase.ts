@@ -23,7 +23,7 @@ import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
-import { buildStepPreview } from './utils/map-providers-to-preview-overrides';
+import { buildStepPreview } from './utils/build-step-preview';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()

@@ -1,4 +1,4 @@
-const PREVIEW_PROVIDER_OVERRIDE_STEP_TYPES = new Set(['chat', 'tool']);
+import { StepTypeEnum, supportsContentProviderOverrides } from '@novu/shared';
 
 export function mapProvidersToPreviewOverrides(
   providers?: Record<string, Record<string, unknown>>
@@ -27,13 +27,13 @@ export function mapProvidersToPreviewOverrides(
 }
 
 export function buildStepPreview(
-  stepType: string,
+  stepType: StepTypeEnum | string,
   executeOutput: {
     outputs: Record<string, unknown>;
     providers?: Record<string, Record<string, unknown>>;
   }
 ): Record<string, unknown> {
-  const providerOverrides = PREVIEW_PROVIDER_OVERRIDE_STEP_TYPES.has(stepType)
+  const providerOverrides = supportsContentProviderOverrides(stepType)
     ? mapProvidersToPreviewOverrides(executeOutput.providers)
     : undefined;
 

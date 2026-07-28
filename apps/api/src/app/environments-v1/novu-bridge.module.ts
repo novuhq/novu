@@ -29,6 +29,7 @@ import { NovuBridgeClient } from './novu-bridge-client';
 import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workflow';
 import {
   ChatOutputRendererUsecase,
+  ControlsTranslationService,
   EmailOutputRendererUsecase,
   InAppOutputRendererUsecase,
   PushOutputRendererUsecase,
@@ -68,6 +69,7 @@ export const featureFlagsService = {
     GetOrganizationSettings,
     ConstructFrameworkWorkflow,
     GetDecryptedSecretKey,
+    ControlsTranslationService,
     InAppOutputRendererUsecase,
     EmailOutputRendererUsecase,
     SmsOutputRendererUsecase,

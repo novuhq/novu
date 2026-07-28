@@ -1,5 +1,6 @@
+import { StepTypeEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { buildStepPreview, mapProvidersToPreviewOverrides } from './map-providers-to-preview-overrides';
+import { buildStepPreview, mapProvidersToPreviewOverrides } from './build-step-preview';
 
 describe('mapProvidersToPreviewOverrides', () => {
   it('maps non-empty provider payloads', () => {
@@ -57,11 +58,11 @@ describe('buildStepPreview', () => {
       providers: { slack: { text: 'override' } },
     };
 
-    expect(buildStepPreview('chat', executeOutput)).toEqual({
+    expect(buildStepPreview(StepTypeEnum.CHAT, executeOutput)).toEqual({
       body: 'hello',
       providerOverrides: { slack: { text: 'override' } },
     });
-    expect(buildStepPreview('tool', executeOutput)).toEqual({
+    expect(buildStepPreview(StepTypeEnum.TOOL, executeOutput)).toEqual({
       body: 'hello',
       providerOverrides: { slack: { text: 'override' } },
     });
@@ -73,6 +74,6 @@ describe('buildStepPreview', () => {
       providers: { slack: { text: 'override' } },
     };
 
-    expect(buildStepPreview('email', executeOutput)).toEqual({ body: 'hello' });
+    expect(buildStepPreview(StepTypeEnum.EMAIL, executeOutput)).toEqual({ body: 'hello' });
   });
 });

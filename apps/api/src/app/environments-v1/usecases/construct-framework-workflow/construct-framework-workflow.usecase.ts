@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import {
   emailControlSchema,
   evaluateRules,
@@ -21,18 +20,7 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
-import {
-  ActionStep,
-  ChannelStep,
-  ChatOutputUnvalidated,
-  createLiquidEngine,
-  PostActionEnum,
-  Schema,
-  Step,
-  StepOutput,
-  ToolOutputUnvalidated,
-  Workflow,
-} from '@novu/framework/internal';
+import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
 import {
   type ContentOverrideProviderId,
   EnvironmentTypeEnum,
@@ -40,11 +28,13 @@ import {
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
   StepTypeEnum,
+  withProviderOverridesRuntimeSchema,
 } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import {
   ChatOutputRendererUsecase,
+  ControlsTranslationService,
   EmailOutputRendererUsecase,
   FullPayloadForRender,
   InAppOutputRendererUsecase,
@@ -65,7 +55,7 @@ type ProviderOverrideStepType = StepTypeEnum.CHAT | StepTypeEnum.TOOL;
 export class ConstructFrameworkWorkflow {
   constructor(
     private logger: PinoLogger,
-    private moduleRef: ModuleRef,
+    private controlsTranslationService: ControlsTranslationService,
     private workflowsRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
@@ -305,13 +295,14 @@ export class ConstructFrameworkWorkflow {
         return step.chat(
           stepId,
           async (controlValues) => {
-            return this.chatOutputRendererUseCase.execute({
-              controlValues,
-              fullPayloadForRender,
-              dbWorkflow,
-              organization,
-              locale,
-            }) as Promise<ChatOutputUnvalidated>;
+            return this.chatOutputRendererUseCase.execute(
+              await this.translateContentOverrideControls(controlValues, {
+                fullPayloadForRender,
+                dbWorkflow,
+                organization,
+                locale,
+              })
+            );
           },
           this.constructProviderOverrideStepOptions(
             staticStep,
@@ -340,13 +331,14 @@ export class ConstructFrameworkWorkflow {
         return step.tool(
           stepId,
           async (controlValues) => {
-            return this.toolOutputRendererUseCase.execute({
-              controlValues,
-              fullPayloadForRender,
-              dbWorkflow,
-              organization,
-              locale,
-            }) as Promise<ToolOutputUnvalidated>;
+            return this.toolOutputRendererUseCase.execute(
+              await this.translateContentOverrideControls(controlValues, {
+                fullPayloadForRender,
+                dbWorkflow,
+                organization,
+                locale,
+              })
+            );
           },
           this.constructProviderOverrideStepOptions(
             staticStep,
@@ -424,14 +416,51 @@ export class ConstructFrameworkWorkflow {
     };
   }
 
+  /** One translation per controls object for chat/tool resolve + provider resolvers. */
+  private contentOverrideTranslationCache?: WeakMap<object, Promise<Record<string, unknown>>>;
+
+  private translateContentOverrideControls(
+    controls: Record<string, unknown>,
+    {
+      fullPayloadForRender,
+      dbWorkflow,
+      organization,
+      locale,
+    }: {
+      fullPayloadForRender: FullPayloadForRender;
+      dbWorkflow: NotificationTemplateEntity;
+      organization?: OrganizationEntity;
+      locale?: string;
+    }
+  ): Promise<Record<string, unknown>> {
+    this.contentOverrideTranslationCache ??= new WeakMap();
+
+    const cached = this.contentOverrideTranslationCache.get(controls);
+    if (cached) {
+      return cached;
+    }
+
+    const { skip: _skip, ...rest } = controls;
+    const translatedControlsPromise = this.controlsTranslationService.processTranslations({
+      controls: rest,
+      variables: fullPayloadForRender,
+      environmentId: dbWorkflow._environmentId,
+      organizationId: dbWorkflow._organizationId,
+      resourceId: dbWorkflow._id,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale,
+      resourceEntity: dbWorkflow,
+      organization,
+    });
+
+    this.contentOverrideTranslationCache.set(controls, translatedControlsPromise);
+
+    return translatedControlsPromise;
+  }
+
   /**
-   * Provider resolvers read liquid-compiled overrides from controls.providerOverrides
-   * (framework compiles controls before invoking resolvers). Each per-provider blob is
-   * translated so `{{t.key}}` parity with chat/tool renderers is preserved.
-   *
-   * Control schema is resolved via the canonical policy helper so dashboard-cloud
-   * steps are not validated against a persisted keys-only schema that Mongoose
-   * minimize may have stripped of property entries.
+   * Chat/tool step options: canonical control schema plus runtime `providerOverrides`,
+   * and resolvers that project a provider slice from the shared translated controls.
    */
   @Instrument()
   private constructProviderOverrideStepOptions(
@@ -441,7 +470,7 @@ export class ConstructFrameworkWorkflow {
     stepType: ProviderOverrideStepType,
     organization?: OrganizationEntity,
     locale?: string
-  ) {
+  ): Required<Parameters<ChannelStep>[2]> {
     const skip = (controlValues: Record<string, unknown>) =>
       this.processSkipOption(controlValues, fullPayloadForRender);
 
@@ -454,41 +483,21 @@ export class ConstructFrameworkWorkflow {
         }).schema
       : staticStep.template!.controls!.schema;
 
-    /*
-     * providerOverrides are persisted as STEP_PROVIDER_CONTROLS docs and stitched back
-     * into controls at read time. The persisted main control schema intentionally omits
-     * them, but the framework validates controls with removeAdditional:'failing' — so
-     * the runtime control schema must still accept the stitched field.
-     */
-    const runtimeControlSchema = {
-      ...controlSchema,
-      properties: {
-        ...(controlSchema as { properties?: Record<string, unknown> }).properties,
-        providerOverrides: {
-          type: 'object',
-          additionalProperties: {
-            type: 'object',
-            additionalProperties: true,
-          },
-        },
-      },
-    };
-
     const resolveProviderOverride =
       (providerId: ContentOverrideProviderId) =>
       async ({ controls }: { controls: Record<string, unknown> }) => {
-        const blob = (controls.providerOverrides as Record<string, unknown> | undefined)?.[providerId];
-        if (!blob || typeof blob !== 'object' || Array.isArray(blob)) {
-          return {};
-        }
-
-        return this.translateProviderOverrideBlob({
-          blob: blob as Record<string, unknown>,
+        const translated = await this.translateContentOverrideControls(controls, {
           fullPayloadForRender,
           dbWorkflow,
           organization,
           locale,
         });
+        const blob = (translated.providerOverrides as Record<string, unknown> | undefined)?.[providerId];
+        if (!blob || typeof blob !== 'object' || Array.isArray(blob)) {
+          return {};
+        }
+
+        return blob as Record<string, unknown>;
       };
 
     const providers = Object.fromEntries(
@@ -497,103 +506,12 @@ export class ConstructFrameworkWorkflow {
 
     return {
       skip,
-      controlSchema: runtimeControlSchema as unknown as Schema,
+      controlSchema: withProviderOverridesRuntimeSchema(
+        controlSchema as { properties?: Record<string, unknown> }
+      ) as unknown as Schema,
       disableOutputSanitization: true,
       providers,
     } as Required<Parameters<ChannelStep>[2]>;
-  }
-
-  private async translateProviderOverrideBlob({
-    blob,
-    fullPayloadForRender,
-    dbWorkflow,
-    organization,
-    locale,
-  }: {
-    blob: Record<string, unknown>;
-    fullPayloadForRender: FullPayloadForRender;
-    dbWorkflow: NotificationTemplateEntity;
-    organization?: OrganizationEntity;
-    locale?: string;
-  }): Promise<Record<string, unknown>> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
-      return blob;
-    }
-
-    const { _environmentId, _organizationId, _id: workflowId } = dbWorkflow;
-    if (!workflowId) {
-      this.logger.warn(
-        {
-          resourceId: workflowId,
-          organizationId: _organizationId,
-          environmentId: _environmentId,
-          locale,
-        },
-        'Resource ID is required for translation module'
-      );
-
-      return blob;
-    }
-
-    try {
-      const translate = this.getTranslationModule();
-      const contentString = JSON.stringify(blob);
-      const liquidEngine = createLiquidEngine();
-
-      const translatedContent = await translate.execute({
-        resourceId: workflowId,
-        resourceType: LocalizationResourceEnum.WORKFLOW,
-        organizationId: _organizationId,
-        environmentId: _environmentId,
-        userId: 'system',
-        locale,
-        content: contentString,
-        payload: fullPayloadForRender,
-        liquidEngine,
-        resourceEntity: dbWorkflow,
-        organization,
-      });
-
-      return JSON.parse(translatedContent);
-    } catch (error) {
-      this.logger.error(
-        {
-          error: error?.message || error,
-          resourceId: workflowId,
-          resourceType: LocalizationResourceEnum.WORKFLOW,
-          organizationId: _organizationId,
-          environmentId: _environmentId,
-          locale,
-          stack: error?.stack,
-        },
-        'Translation processing failed'
-      );
-
-      throw new InternalServerErrorException(
-        `Translation processing failed for resource ${workflowId}: ${error?.message || String(error)}`
-      );
-    }
-  }
-
-  private getTranslationModule() {
-    try {
-      const translationModule = require('@novu/ee-translation')?.Translate;
-      if (!translationModule) {
-        throw new Error('Translation module (@novu/ee-translation) not found or Translate class not exported');
-      }
-
-      return this.moduleRef.get(translationModule, { strict: false });
-    } catch (error) {
-      this.logger.error(
-        {
-          error: error?.message || error,
-          stack: error?.stack,
-        },
-        'Translation module loading failed'
-      );
-
-      throw new InternalServerErrorException(`Unable to load Translation module: ${error?.message || String(error)}`);
-    }
   }
 
   @Instrument()

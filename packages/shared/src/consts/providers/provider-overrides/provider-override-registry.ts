@@ -194,6 +194,34 @@ export function getContentOverrideProviderIds(channel: OverrideChannelType): rea
   return CONTENT_OVERRIDE_PROVIDER_IDS_BY_CHANNEL[channel];
 }
 
+export function supportsContentProviderOverrides(channel: string): channel is OverrideChannelType {
+  return Object.prototype.hasOwnProperty.call(CONTENT_OVERRIDE_PROVIDER_IDS_BY_CHANNEL, channel);
+}
+
+/**
+ * Runtime control-schema fragment that accepts stitched `providerOverrides`.
+ * Persisted step schemas omit this field; bridge validation must still allow it.
+ */
+export const PROVIDER_OVERRIDES_RUNTIME_SCHEMA = {
+  type: 'object',
+  additionalProperties: {
+    type: 'object',
+    additionalProperties: true,
+  },
+} as const;
+
+export function withProviderOverridesRuntimeSchema<T extends { properties?: Record<string, unknown> }>(
+  controlSchema: T
+): T & { properties: Record<string, unknown> } {
+  return {
+    ...controlSchema,
+    properties: {
+      ...(controlSchema.properties ?? {}),
+      providerOverrides: PROVIDER_OVERRIDES_RUNTIME_SCHEMA,
+    },
+  };
+}
+
 /** Primary content field that falls back to the step's default `body`. */
 export const PROVIDER_PRIMARY_CONTENT_KEY = Object.fromEntries(
   Object.entries(PROVIDER_OVERRIDE_CONFIGS).map(([providerId, config]) => [providerId, config.primaryContentKey])

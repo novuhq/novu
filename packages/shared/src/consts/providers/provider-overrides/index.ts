@@ -38,11 +38,14 @@ export {
   PROVIDER_OVERRIDE_CONFIGS,
   PROVIDER_OVERRIDE_KEYS,
   PROVIDER_OVERRIDE_SCHEMAS,
+  PROVIDER_OVERRIDES_RUNTIME_SCHEMA,
   PROVIDER_PRIMARY_CONTENT_KEY,
   type ProviderOverrideConfig,
   type ProviderOverrideSeedWhenAbsent,
+  supportsContentProviderOverrides,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
+  withProviderOverridesRuntimeSchema,
 } from './provider-override-registry';
 export { type SchemaValidationErrorLike, selectDiscriminatedErrors } from './select-discriminated-errors';
 export {
