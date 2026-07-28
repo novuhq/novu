@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { toolChannelSchemas } from './tool.schema';
+import { chatChannelSchemas } from './chat.schema';
 
-describe('tool channel schemas', () => {
+describe('chat channel schemas', () => {
   it('keeps output schema to required body only', () => {
-    expect(toolChannelSchemas.output).toMatchObject({
+    expect(chatChannelSchemas.output).toMatchObject({
       type: 'object',
       properties: {
         body: { type: 'string' },
@@ -11,12 +11,12 @@ describe('tool channel schemas', () => {
       required: ['body'],
       additionalProperties: false,
     });
-    expect(Object.keys(toolChannelSchemas.output.properties)).toEqual(['body']);
-    expect(toolChannelSchemas.output.properties).not.toHaveProperty('providerOverrides');
+    expect(Object.keys(chatChannelSchemas.output.properties)).toEqual(['body']);
+    expect(chatChannelSchemas.output.properties).not.toHaveProperty('providerOverrides');
   });
 
   it('does not change the empty result schema', () => {
-    expect(toolChannelSchemas.result).toMatchObject({
+    expect(chatChannelSchemas.result).toMatchObject({
       type: 'object',
       properties: {},
       required: [],
