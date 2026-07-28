@@ -10,6 +10,9 @@ describe('llm-auth registry', () => {
     expect(resolveLlmAuthPackages('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' })).toEqual([
       '@langchain/openai',
     ]);
+    expect(resolveLlmAuthPackageDependencies('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' })).toEqual({
+      '@langchain/openai': '^1.0.0',
+    });
   });
 
   it('writes API keys to env vars', () => {
@@ -49,20 +52,23 @@ describe('generateAgentNextConfigSource', () => {
     expect(source).not.toContain('serverExternalPackages');
   });
 
-  it('always externalizes LangChain packages for langchain scaffolds', () => {
+  it('externalizes LangChain base packages plus the selected OpenAI provider', () => {
     const source = generateAgentNextConfigSource('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' });
 
     expect(source).toContain('serverExternalPackages');
     expect(source).toContain("'langchain'");
     expect(source).toContain("'@langchain/core'");
     expect(source).toContain("'@langchain/openai'");
+    expect(source).not.toContain("'@langchain/anthropic'");
+    expect(source).not.toContain("'@langchain/google-genai'");
   });
 
-  it('externalizes LangChain packages even when LLM auth is skipped', () => {
+  it('externalizes LangChain base packages without providers when LLM auth is skipped', () => {
     const source = generateAgentNextConfigSource('langchain', { kind: 'skip' });
 
     expect(source).toContain("'langchain'");
-    expect(source).toContain("'@langchain/openai'");
+    expect(source).not.toContain("'@langchain/openai'");
+    expect(source).not.toContain("'@langchain/anthropic'");
   });
 
   it('includes Codex OAuth alongside LangChain packages for subscription scaffolds', () => {
@@ -70,6 +76,7 @@ describe('generateAgentNextConfigSource', () => {
 
     expect(source).toContain("'langchain'");
     expect(source).toContain("'langchainjs-codex-oauth'");
+    expect(source).not.toContain("'@langchain/openai'");
   });
 });
 

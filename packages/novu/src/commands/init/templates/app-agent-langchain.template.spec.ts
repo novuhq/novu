@@ -5,6 +5,7 @@ import { TemplateTypeEnum } from './types';
 
 const templateRoot = path.join(__dirname, TemplateTypeEnum.APP_AGENT_LANGCHAIN, 'ts');
 const agentFile = path.join(templateRoot, 'app/novu/agents/support-agent.tsx');
+const nextConfigFile = path.join(templateRoot, 'next.config.mjs');
 
 describe('app-agent-langchain template', () => {
   it('matches the langchain scaffold contract', () => {
@@ -22,7 +23,18 @@ describe('app-agent-langchain template', () => {
     );
     expect(source).toContain('const searchNovuDocs = tool(');
     expect(source).toContain("toolCall.name === 'searchNovuDocs'");
+    expect(source).toContain("new ChatOpenAI({ model: 'gpt-4o-mini' })");
     expect(activeImports).toMatch(/@langchain\/core/);
     expect(activeImports).not.toMatch(/@langchain\/openai/);
+  });
+
+  it('ships a Turbopack-safe next.config without unused provider packages', () => {
+    const nextConfig = fs.readFileSync(nextConfigFile, 'utf8');
+
+    expect(nextConfig).toContain('serverExternalPackages');
+    expect(nextConfig).toContain("'langchain'");
+    expect(nextConfig).toContain("'@langchain/core'");
+    expect(nextConfig).not.toContain("'@langchain/openai'");
+    expect(nextConfig).not.toContain("'@langchain/anthropic'");
   });
 });
