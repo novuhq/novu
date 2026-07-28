@@ -613,17 +613,38 @@ export class Client {
     );
   }
 
-  private previewProvider(
+  private async previewProvider(
     event: Event,
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
-
     outputs: Record<string, unknown>
-  ): Record<string, unknown> {
-    this.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
-    const mockOutput = this.mock(provider.outputs.schema);
+  ): Promise<Record<string, unknown>> {
+    try {
+      const controls = await this.compileControls(await this.createStepControls(step, event), event);
+      const result = await provider.resolve({
+        controls,
+        outputs,
+      });
+      const validatedOutput = await this.validate(
+        result,
+        provider.outputs.unknownSchema,
+        'step',
+        'output',
+        event.workflowId,
+        step.stepId,
+        provider.type
+      );
+      this.log(`  ${EMOJI.SUCCESS} Executed provider: \`${provider.type}\``);
 
-    return mockOutput;
+      return {
+        ...validatedOutput,
+        _passthrough: result._passthrough,
+      };
+    } catch {
+      this.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
+
+      return this.mock(provider.outputs.schema);
+    }
   }
 
   private async executeProvider(
@@ -634,7 +655,7 @@ export class Client {
   ): Promise<WithPassthrough<Record<string, unknown>>> {
     try {
       if (event.stepId === step.stepId) {
-        const controls = await this.createStepControls(step, event);
+        const controls = await this.compileControls(await this.createStepControls(step, event), event);
         const result = await provider.resolve({
           controls,
           outputs,
