@@ -29,7 +29,11 @@ export interface LangChainToolCall {
  * `ctx.history` — no LangGraph checkpointer required.
  */
 export interface LangChainAgentConfig {
-  /** Chat model instance or `"provider:model"` identifier passed to `createAgent`. */
+  /**
+   * Chat model instance or `"provider:model"` identifier passed to `createAgent`.
+   * On Next.js, model strings require LangChain packages in `serverExternalPackages`
+   * (scaffolded by `novu connect --runtime langchain`).
+   */
   model: string | LanguageModelLike;
   /** Tools available to the agent. */
   tools?: StructuredToolInterface[];

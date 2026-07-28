@@ -16,14 +16,14 @@ const REGISTRY: Record<Exclude<LlmAuthKind, 'skip'>, LlmAuthRegistryEntry> = {
     envKey: 'OPENAI_API_KEY',
     packages: {
       'ai-sdk': [{ name: '@ai-sdk/openai', version: 'latest' }],
-      langchain: [{ name: '@langchain/openai', version: 'latest' }],
+      langchain: [{ name: '@langchain/openai', version: '^1.0.0' }],
     },
   },
   'anthropic-api-key': {
     envKey: 'ANTHROPIC_API_KEY',
     packages: {
       'ai-sdk': [{ name: '@ai-sdk/anthropic', version: 'latest' }],
-      langchain: [{ name: '@langchain/anthropic', version: 'latest' }],
+      langchain: [{ name: '@langchain/anthropic', version: '^1.0.0' }],
     },
   },
   'codex-subscription': {
