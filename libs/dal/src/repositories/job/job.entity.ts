@@ -64,6 +64,11 @@ export class JobEntity {
    * used to track the number of times a step has been extended to the next available time in the subscriber schedule
    */
   scheduleExtensionsCount?: number;
+  /**
+   * The next time this job is scheduled for. Set when the job enters DELAYED status.
+   * Used by job reconciliation to preserve the remaining delay on recovery.
+   */
+  nextScheduledAt?: string;
 }
 
 export type JobDBModel = ChangePropsValueType<

@@ -1139,6 +1139,7 @@ export class RunJob {
         $set: {
           scheduleExtensionsCount: currentExtensions + 1,
           status: JobStatusEnum.DELAYED,
+          nextScheduledAt: nextAvailableTime.toISOString(),
         },
       }
     );

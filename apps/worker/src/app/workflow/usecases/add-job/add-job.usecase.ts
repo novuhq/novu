@@ -348,6 +348,7 @@ export class AddJob {
     }
 
     const delay = this.getExecutionDelayAmount(filtered, digestAmount, delayAmount);
+    const nextScheduledAt = new Date(Date.now() + delay).toISOString();
 
     const valid = await this.validateDeferDuration(delay, job, command, digestResult?.cronExpression);
 
@@ -369,7 +370,18 @@ export class AddJob {
     await this.queueJob({ job, delay, untilDate: bridgeDelayAmountDate, timezone: subscriber?.timezone });
 
     // 2. THEN update the MongoDB status atomically.
-    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
+    await this.jobRepository.updateOne(
+      {
+        _id: job._id,
+        _environmentId: job._environmentId,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.DELAYED,
+          nextScheduledAt,
+        },
+      }
+    );
 
     await this.stepRunRepository.create(updatedJob, {
       status: JobStatusEnum.DELAYED,

@@ -1,5 +1,5 @@
 import { PinoLogger, StandardQueueService } from '@novu/application-generic';
-import { JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { JobReconciliationService } from './job-reconciliation.service';
@@ -32,6 +32,19 @@ describe('JobReconciliationService', () => {
     sinon.restore();
   });
 
+  const makeStub = (overrides: Record<string, unknown> = {}) =>
+    ({
+      _id: 'job-1',
+      _environmentId: 'env-1',
+      _organizationId: 'org-1',
+      _userId: 'user-1',
+      scheduleExtensionsCount: 1,
+      status: JobStatusEnum.DELAYED,
+      updatedAt: new Date(Date.now() - 60_000),
+      nextScheduledAt: new Date(Date.now() + 30_000).toISOString(),
+      ...overrides,
+    }) as unknown as JobEntity;
+
   describe('reconcileOnStartup', () => {
     it('should query for DELAYED jobs with scheduleExtensionsCount > 0 and stale updatedAt', async () => {
       jobRepository.find.resolves([]);
@@ -40,10 +53,11 @@ describe('JobReconciliationService', () => {
 
       const findCall = jobRepository.find.getCall(0);
       expect(findCall).to.not.be.undefined;
+      expect(findCall.args[0]._organizationId).to.deep.equal({ $exists: true });
       expect(findCall.args[0].status).to.equal(JobStatusEnum.DELAYED);
       expect(findCall.args[0].scheduleExtensionsCount).to.deep.equal({ $gt: 0 });
       expect(findCall.args[0].updatedAt).to.have.property('$lt');
-      expect(findCall.args[1]).to.equal('_id _environmentId _organizationId _userId');
+      expect(findCall.args[1]).to.equal('_id _environmentId _organizationId _userId nextScheduledAt');
     });
 
     it('should not call add when no stuck jobs exist', async () => {
@@ -55,103 +69,88 @@ describe('JobReconciliationService', () => {
       sinon.assert.notCalled(standardQueueService.add);
     });
 
-    it('should atomically claim and re-enqueue a stuck job', async () => {
-      const jobId = 'job-1';
-      const envId = 'env-1';
-      const orgId = 'org-1';
-      const userId = 'user-1';
+    it('should queue before claiming (reversed order)', async () => {
+      const stub = makeStub();
 
-      const stuckJob = {
-        _id: jobId,
-        _environmentId: envId,
-        _organizationId: orgId,
-        _userId: userId,
-        scheduleExtensionsCount: 1,
-        status: JobStatusEnum.DELAYED,
-        updatedAt: new Date(Date.now() - 60_000),
-      };
-
-      jobRepository.find.resolves([stuckJob]);
-      jobRepository.findOneAndUpdate.resolves({ ...stuckJob, status: JobStatusEnum.QUEUED });
+      jobRepository.find.resolves([stub]);
+      jobRepository.findOneAndUpdate.resolves(makeStub({ status: JobStatusEnum.QUEUED }));
       standardQueueService.add.resolves();
 
       await service.reconcileOnStartup();
 
-      sinon.assert.calledWith(
-        jobRepository.findOneAndUpdate,
-        {
-          _id: jobId,
-          _environmentId: envId,
-          status: JobStatusEnum.DELAYED,
-        },
-        { $set: { status: JobStatusEnum.QUEUED } },
-        { new: true }
-      );
-
-      sinon.assert.calledWith(standardQueueService.add, {
-        name: jobId,
-        data: {
-          _environmentId: envId,
-          _id: jobId,
-          _organizationId: orgId,
-          _userId: userId,
-        },
-        groupId: orgId,
-        options: { delay: 0 },
-      });
+      sinon.assert.callOrder(standardQueueService.add, jobRepository.findOneAndUpdate);
     });
 
-    it('should skip a job when another worker already claimed it (findOneAndUpdate returns null)', async () => {
-      const stuckJob = {
-        _id: 'job-1',
-        _environmentId: 'env-1',
-        _organizationId: 'org-1',
-        _userId: 'user-1',
-        scheduleExtensionsCount: 1,
-        status: JobStatusEnum.DELAYED,
-        updatedAt: new Date(Date.now() - 60_000),
-      };
+    it('should preserve remaining delay from nextScheduledAt', async () => {
+      const futureMs = 30_000;
+      const stub = makeStub({ nextScheduledAt: new Date(Date.now() + futureMs).toISOString() });
 
-      jobRepository.find.resolves([stuckJob]);
+      jobRepository.find.resolves([stub]);
+      jobRepository.findOneAndUpdate.resolves(makeStub({ status: JobStatusEnum.QUEUED }));
+      standardQueueService.add.resolves();
+
+      await service.reconcileOnStartup();
+
+      const addCall = standardQueueService.add.getCall(0);
+      expect(addCall).to.not.be.undefined;
+      const args = addCall!.args[0] as any;
+      expect(args.options.delay).to.be.greaterThan(0);
+      expect(args.options.delay).to.be.at.most(futureMs);
+    });
+
+    it('should use delay 0 when nextScheduledAt is in the past', async () => {
+      const stub = makeStub({ nextScheduledAt: new Date(Date.now() - 10_000).toISOString() });
+
+      jobRepository.find.resolves([stub]);
+      jobRepository.findOneAndUpdate.resolves(makeStub({ status: JobStatusEnum.QUEUED }));
+      standardQueueService.add.resolves();
+
+      await service.reconcileOnStartup();
+
+      const addCall = standardQueueService.add.getCall(0);
+      expect(addCall).to.not.be.undefined;
+      expect((addCall!.args[0] as any).options.delay).to.equal(0);
+    });
+
+    it('should skip a job when another worker already claimed it', async () => {
+      const stub = makeStub();
+
+      jobRepository.find.resolves([stub]);
+      standardQueueService.add.resolves();
       jobRepository.findOneAndUpdate.resolves(null);
 
       await service.reconcileOnStartup();
 
+      sinon.assert.calledOnce(standardQueueService.add);
       sinon.assert.calledOnce(jobRepository.findOneAndUpdate);
-      sinon.assert.notCalled(standardQueueService.add);
+    });
+
+    it('should not attempt to claim if queue insertion fails', async () => {
+      const stub = makeStub();
+
+      jobRepository.find.resolves([stub]);
+      standardQueueService.add.rejects(new Error('Queue unavailable'));
+
+      await service.reconcileOnStartup();
+
+      sinon.assert.calledOnce(standardQueueService.add);
+      sinon.assert.notCalled(jobRepository.findOneAndUpdate);
     });
 
     it('should recover multiple stuck jobs and skip those already claimed by other workers', async () => {
-      const baseTime = Date.now() - 120_000;
-
-      const job1 = {
-        _id: 'job-1',
-        _environmentId: 'env-1',
-        _organizationId: 'org-1',
-        _userId: 'user-1',
-        scheduleExtensionsCount: 1,
-        status: JobStatusEnum.DELAYED,
-        updatedAt: new Date(baseTime),
-      };
-      const job2 = {
-        _id: 'job-2',
-        _environmentId: 'env-1',
-        _organizationId: 'org-1',
-        _userId: 'user-2',
-        scheduleExtensionsCount: 2,
-        status: JobStatusEnum.DELAYED,
-        updatedAt: new Date(baseTime),
-      };
+      const job1 = makeStub({ _id: 'job-1', _userId: 'user-1' });
+      const job2 = makeStub({ _id: 'job-2', _userId: 'user-2' });
 
       jobRepository.find.resolves([job1, job2]);
-      // job1 gets claimed by this worker, job2 was already claimed
+      standardQueueService.add.resolves();
+
       jobRepository.findOneAndUpdate
         .withArgs(
           { _id: 'job-1', _environmentId: 'env-1', status: JobStatusEnum.DELAYED },
           { $set: { status: JobStatusEnum.QUEUED } },
           { new: true }
         )
-        .resolves({ ...job1, status: JobStatusEnum.QUEUED });
+        .resolves(makeStub({ _id: 'job-1', status: JobStatusEnum.QUEUED }));
       jobRepository.findOneAndUpdate
         .withArgs(
           { _id: 'job-2', _environmentId: 'env-1', status: JobStatusEnum.DELAYED },
@@ -160,52 +159,26 @@ describe('JobReconciliationService', () => {
         )
         .resolves(null);
 
-      standardQueueService.add.resolves();
-
       await service.reconcileOnStartup();
 
+      sinon.assert.calledTwice(standardQueueService.add);
       sinon.assert.calledTwice(jobRepository.findOneAndUpdate);
-      sinon.assert.calledOnce(standardQueueService.add);
-      sinon.assert.calledWith(
-        standardQueueService.add,
-        sinon.match({ name: 'job-1' })
-      );
     });
 
     it('should handle queue insertion failure gracefully without crashing', async () => {
-      const stuckJob = {
-        _id: 'job-1',
-        _environmentId: 'env-1',
-        _organizationId: 'org-1',
-        _userId: 'user-1',
-        scheduleExtensionsCount: 1,
-        status: JobStatusEnum.DELAYED,
-        updatedAt: new Date(Date.now() - 60_000),
-      };
+      const stub = makeStub();
 
-      jobRepository.find.resolves([stuckJob]);
-      jobRepository.findOneAndUpdate.resolves({ ...stuckJob, status: JobStatusEnum.QUEUED });
+      jobRepository.find.resolves([stub]);
       standardQueueService.add.rejects(new Error('Queue unavailable'));
 
-      // Should not throw
       await service.reconcileOnStartup();
 
-      sinon.assert.calledOnce(jobRepository.findOneAndUpdate);
       sinon.assert.calledOnce(standardQueueService.add);
+      sinon.assert.notCalled(jobRepository.findOneAndUpdate);
     });
 
     it('should skip jobs that were recently updated (within the backoff window)', async () => {
-      const recentJob = {
-        _id: 'job-1',
-        _environmentId: 'env-1',
-        _organizationId: 'org-1',
-        _userId: 'user-1',
-        scheduleExtensionsCount: 1,
-        status: JobStatusEnum.DELAYED,
-        updatedAt: new Date(), // very recent
-      };
-
-      jobRepository.find.resolves([]); // filtered by the MongoDB query
+      jobRepository.find.resolves([]);
       await service.reconcileOnStartup();
 
       sinon.assert.notCalled(jobRepository.findOneAndUpdate);
@@ -215,11 +188,33 @@ describe('JobReconciliationService', () => {
     it('should handle database errors gracefully', async () => {
       jobRepository.find.rejects(new Error('MongoDB connection error'));
 
-      // Should not throw
       await service.reconcileOnStartup();
 
       sinon.assert.notCalled(jobRepository.findOneAndUpdate);
       sinon.assert.notCalled(standardQueueService.add);
+    });
+
+    it('should paginate through more than MAX_RECONCILE_PER_RUN stuck jobs', async () => {
+      const makeBatch = (start: number, count: number): JobEntity[] =>
+        Array.from({ length: count }, (_, i) =>
+          makeStub({ _id: `job-${start + i}` })
+        );
+
+      jobRepository.find
+        .onFirstCall()
+        .resolves(makeBatch(0, 100))
+        .onSecondCall()
+        .resolves(makeBatch(100, 50))
+        .onThirdCall()
+        .resolves([]);
+
+      standardQueueService.add.resolves();
+      jobRepository.findOneAndUpdate.resolves(makeStub({ status: JobStatusEnum.QUEUED }));
+
+      await service.reconcileOnStartup();
+
+      sinon.assert.calledThrice(jobRepository.find);
+      sinon.assert.callCount(standardQueueService.add, 150);
     });
   });
 });
