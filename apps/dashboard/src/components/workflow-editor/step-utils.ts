@@ -148,6 +148,16 @@ function splitProviderOverridesFromControlValues(controlValues: Record<string, u
   };
 }
 
+function toStepUpsertShape(step: StepResponseDto): StepUpdateDto {
+  // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
+  const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+
+  return {
+    ...stepWithoutProviderOverrides,
+    controlValues: step.controls?.values || {},
+  };
+}
+
 export const updateStepInWorkflow = (
   workflow: WorkflowResponseDto,
   stepId: string,
@@ -156,8 +166,7 @@ export const updateStepInWorkflow = (
   return {
     ...workflow,
     steps: workflow.steps.map((step) => {
-      // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
-      const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+      const stepWithoutProviderOverrides = toStepUpsertShape(step);
 
       if (step.stepId === stepId) {
         const existingControlValues = step.controls?.values || {};
@@ -190,11 +199,18 @@ export const updateStepInWorkflow = (
         };
       }
 
-      return {
-        ...stepWithoutProviderOverrides,
-        controlValues: step.controls?.values || {},
-      };
+      return stepWithoutProviderOverrides;
     }),
+  };
+};
+
+export const removeStepFromWorkflow = (
+  workflow: WorkflowResponseDto,
+  shouldKeep: (step: StepResponseDto) => boolean
+): UpdateWorkflowDto => {
+  return {
+    ...workflow,
+    steps: workflow.steps.filter(shouldKeep).map(toStepUpsertShape),
   };
 };
 
