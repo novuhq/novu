@@ -159,6 +159,15 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
   /**
+   * Emit a "step conditions matched" execution detail when a step's conditions
+   * pass and the step executes (v2 skip conditions, HTTP Request steps, and
+   * legacy v1 filters including webhook filters). When off, condition results
+   * are only persisted when a step is skipped. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED`
+   * when self-hosted.
+   */
+  IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED = 'IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED',
+  /**
    * Stop embedding the fully populated workflow step (message template
    * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
    * schemas, etc.) onto every job's `step`. When enabled, new jobs persist a
