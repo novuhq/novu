@@ -284,7 +284,7 @@ export class SyncToEnvironmentUseCase {
       description: sourceWorkflow.description,
       __source: WorkflowCreationSourceEnum.DASHBOARD,
       severity: sourceWorkflow.severity,
-      agentId: sourceWorkflow.agentId ?? null,
+      agent: sourceWorkflow.agent ?? null,
       steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps),
       preferences: this.mapPreferences(preferences),
     };
@@ -306,7 +306,7 @@ export class SyncToEnvironmentUseCase {
       tags: sourceWorkflow.tags,
       description: sourceWorkflow.description,
       severity: sourceWorkflow.severity,
-      agentId: sourceWorkflow.agentId ?? null,
+      agent: sourceWorkflow.agent ?? null,
       steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps, existingTargetEnvWorkflow?.steps),
       preferences: this.mapPreferences(preferencesToClone),
     };

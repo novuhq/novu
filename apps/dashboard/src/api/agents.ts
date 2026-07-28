@@ -40,6 +40,14 @@ export function getAgentsListQueryKey(
   return [AGENTS_LIST_QUERY_KEY, environmentId, params] as const;
 }
 
+/** Separate from {@link getAgentsListQueryKey} so paginated pages never share a cache entry with single-page reads. */
+export function getAgentsInfiniteListQueryKey(
+  environmentId: string | undefined,
+  params: { limit: number; identifier: string }
+) {
+  return [AGENTS_LIST_QUERY_KEY, 'infinite', environmentId, params] as const;
+}
+
 export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
   return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
 }

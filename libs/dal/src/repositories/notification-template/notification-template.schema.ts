@@ -251,8 +251,18 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
-    agentId: {
-      type: Schema.Types.String,
+    agent: {
+      type: {
+        identifier: {
+          type: Schema.Types.String,
+          required: true,
+        },
+        providers: {
+          type: Schema.Types.Mixed,
+          required: false,
+        },
+      },
+      required: false,
       default: null,
     },
     issues: Schema.Types.Mixed,

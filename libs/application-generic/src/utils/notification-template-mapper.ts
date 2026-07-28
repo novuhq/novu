@@ -16,7 +16,6 @@ import { WorkflowListResponseDto } from '../dtos/workflow/workflow-list-response
 import { WorkflowResponseDto } from '../dtos/workflow/workflow-response.dto';
 import { WorkflowForResponseMapper, WorkflowWithPreferencesForMapper } from '../types/workflow-mapper.types';
 import { buildSlug } from './build-slug';
-
 export function toResponseWorkflowDto(
   workflow: WorkflowWithPreferencesForMapper,
   steps: StepResponseDto[],
@@ -59,7 +58,7 @@ export function toResponseWorkflowDto(
     validatePayload: workflow.validatePayload || false,
     isTranslationEnabled: workflow.isTranslationEnabled || false,
     severity: workflow.severity || SeverityLevelEnum.NONE,
-    agentId: workflow.agentId ?? null,
+    agent: workflow.agent ?? null,
   };
 }
 

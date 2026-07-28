@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import {
   ClientSession,
   ControlSchemas,
@@ -45,6 +45,7 @@ import { CreateWorkflowCommandV0, CreateWorkflowV0 } from '../create-workflow-v0
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout-v2';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { PreviewCommand, PreviewUsecase } from '../preview';
+import { ResolveAgentInboundAddresses } from '../resolve-agent-inbound-addresses';
 import { UpdateWorkflowCommandV0, UpdateWorkflowV0 } from '../update-workflow-v0';
 import { UpsertControlValuesCommand, UpsertControlValuesUseCase } from '../upsert-control-values';
 import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
@@ -65,11 +66,29 @@ export class UpsertWorkflowUseCase {
     private getLayoutUseCase: GetLayoutUseCase,
     private analyticsService: AnalyticsService,
     private logger: PinoLogger,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    /**
+     * Only registered by modules that expose workflow agent assignment (the v2
+     * workflow API). Modules that never set `agent` (e.g. AI workflow generation)
+     * omit it along with the agent/domain repositories it needs.
+     */
+    @Optional() private resolveAgentInboundAddresses?: ResolveAgentInboundAddresses
   ) {}
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
+    if (command.workflowDto.agent) {
+      if (!this.resolveAgentInboundAddresses) {
+        throw new BadRequestException('Workflow agent assignment is not supported in this context.');
+      }
+
+      await this.resolveAgentInboundAddresses.validateWorkflowAgentConfig({
+        agent: command.workflowDto.agent,
+        environmentId: command.user.environmentId,
+        organizationId: command.user.organizationId,
+      });
+    }
+
     const existingWorkflow = command.workflowIdOrInternalId
       ? await this.getWorkflowByIdsUseCase.execute(
           GetWorkflowByIdsCommand.create({
@@ -190,7 +209,7 @@ export class UpsertWorkflowUseCase {
       validatePayload: workflowDto.validatePayload,
       isTranslationEnabled: workflowDto.isTranslationEnabled,
       severity: workflowDto.severity,
-      agentId: workflowDto.agentId,
+      agent: workflowDto.agent,
     };
   }
 
@@ -222,7 +241,7 @@ export class UpsertWorkflowUseCase {
       validatePayload: workflowDto.validatePayload,
       isTranslationEnabled: workflowDto.isTranslationEnabled,
       severity: workflowDto.severity,
-      agentId: workflowDto.agentId,
+      agent: workflowDto.agent,
     };
   }
 

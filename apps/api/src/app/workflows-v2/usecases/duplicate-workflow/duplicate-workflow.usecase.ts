@@ -91,7 +91,7 @@ export class DuplicateWorkflowUseCase {
       payloadSchema: originWorkflow.payloadSchema || null,
       validatePayload: originWorkflow.validatePayload,
       severity: originWorkflow.severity,
-      agentId: originWorkflow.agentId ?? null,
+      agent: originWorkflow.agent ?? null,
     };
   }
 

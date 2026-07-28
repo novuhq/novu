@@ -26,6 +26,7 @@ import {
 import { EnvironmentWithUserObjectCommand } from '../../commands';
 import { IsValidJsonSchema } from '../../decorators';
 import { ProviderOverridesDto } from '../../dtos/workflow/provider-overrides.dto';
+import { WorkflowAgentConfigDto } from '../../dtos/workflow/workflow-agent-config.dto';
 
 export class ChannelPreferenceData {
   @IsBoolean()
@@ -155,8 +156,10 @@ export class UpsertWorkflowDataCommand {
   severity?: SeverityLevelEnum;
 
   @IsOptional()
-  @IsString()
-  agentId?: string | null;
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  @Type(() => WorkflowAgentConfigDto)
+  agent?: WorkflowAgentConfigDto | null;
 }
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {

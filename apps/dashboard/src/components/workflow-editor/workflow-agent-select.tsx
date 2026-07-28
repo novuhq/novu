@@ -1,8 +1,14 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiCloseLine, RiExpandUpDownLine, RiLoader4Line, RiRobot2Line } from 'react-icons/ri';
-import { type AgentResponse, getAgent, getAgentDetailQueryKey, getAgentsListQueryKey, listAgents } from '@/api/agents';
+import {
+  type AgentResponse,
+  getAgent,
+  getAgentDetailQueryKey,
+  getAgentsInfiniteListQueryKey,
+  listAgents,
+} from '@/api/agents';
 import {
   Command,
   CommandEmpty,
@@ -32,55 +38,35 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [after, setAfter] = useState<string | undefined>();
-  const [accumulatedAgents, setAccumulatedAgents] = useState<AgentResponse[]>([]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedSearch(search.trim());
-      setAfter(undefined);
-      setAccumulatedAgents([]);
     }, 300);
 
     return () => clearTimeout(timeout);
   }, [search]);
 
-  const listQuery = useQuery({
-    queryKey: getAgentsListQueryKey(currentEnvironment?._id, {
-      after,
-      before: undefined,
+  const listQuery = useInfiniteQuery({
+    queryKey: getAgentsInfiniteListQueryKey(currentEnvironment?._id, {
       limit: PAGE_SIZE,
       identifier: debouncedSearch,
     }),
-    queryFn: () =>
+    queryFn: ({ pageParam, signal }) =>
       listAgents({
         environment: requireEnvironment(currentEnvironment, 'No environment selected'),
         limit: PAGE_SIZE,
-        after,
+        after: pageParam,
         orderBy: 'updatedAt',
         orderDirection: DirectionEnum.DESC,
         identifier: debouncedSearch || undefined,
+        signal,
       }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     enabled: Boolean(currentEnvironment) && canReadAgents && open,
     placeholderData: keepPreviousData,
   });
-
-  useEffect(() => {
-    if (!listQuery.data) {
-      return;
-    }
-
-    setAccumulatedAgents((previous) => {
-      if (!after) {
-        return listQuery.data.data;
-      }
-
-      const existingIds = new Set(previous.map((agent) => agent._id));
-      const nextPage = listQuery.data.data.filter((agent) => !existingIds.has(agent._id));
-
-      return [...previous, ...nextPage];
-    });
-  }, [after, listQuery.data]);
 
   const selectedAgentQuery = useQuery({
     queryKey: getAgentDetailQueryKey(currentEnvironment?._id, value ?? undefined),
@@ -102,9 +88,20 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
     [onChange]
   );
 
-  const nextCursor = listQuery.data?.next ?? null;
-  const isLoading = listQuery.isPending && accumulatedAgents.length === 0;
-  const agents = useMemo(() => accumulatedAgents, [accumulatedAgents]);
+  const agents = useMemo(() => {
+    const seenIds = new Set<string>();
+
+    return (listQuery.data?.pages ?? []).reduce<AgentResponse[]>((all, page) => {
+      for (const agent of page.data) {
+        if (!seenIds.has(agent._id)) {
+          seenIds.add(agent._id);
+          all.push(agent);
+        }
+      }
+
+      return all;
+    }, []);
+  }, [listQuery.data]);
 
   if (!canReadAgents) {
     return (
@@ -146,7 +143,7 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
           <Command shouldFilter={false}>
             <CommandInput placeholder="Search agents..." value={search} onValueChange={setSearch} />
             <CommandList>
-              {isLoading ? (
+              {listQuery.isLoading ? (
                 <div className="text-text-soft flex items-center justify-center gap-2 py-6 text-label-xs">
                   <RiLoader4Line className="size-4 animate-spin" />
                   Loading agents…
@@ -170,15 +167,15 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                  {nextCursor ? (
+                  {listQuery.hasNextPage ? (
                     <div className="border-stroke-weak border-t p-1">
                       <button
                         type="button"
                         className="text-text-sub hover:bg-bg-weak flex w-full items-center justify-center rounded px-2 py-1.5 text-label-xs font-medium disabled:opacity-50"
-                        disabled={listQuery.isFetching}
-                        onClick={() => setAfter(nextCursor)}
+                        disabled={listQuery.isFetchingNextPage}
+                        onClick={() => listQuery.fetchNextPage()}
                       >
-                        {listQuery.isFetching ? 'Loading…' : 'Load more'}
+                        {listQuery.isFetchingNextPage ? 'Loading…' : 'Load more'}
                       </button>
                     </div>
                   ) : null}

@@ -9,6 +9,7 @@ import {
   UpdateWorkflowDto,
   WorkflowResponseDto,
 } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronsUpDown, CircleDot, FilesIcon, FileText, Hash, Tags } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,13 +19,22 @@ import {
   RiArrowRightSLine,
   RiCodeSSlashLine,
   RiDeleteBin2Line,
+  RiErrorWarningFill,
   RiInformationLine,
   RiListView,
   RiMore2Fill,
+  RiRobot2Line,
   RiSettingsLine,
 } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
+import {
+  getAgent,
+  getAgentDetailQueryKey,
+  getAgentIntegrationsQueryKey,
+  listAgentIntegrations,
+} from '@/api/agents';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DeleteWorkflowDialog } from '@/components/delete-workflow-dialog';
 import { RouteFill } from '@/components/icons/route-fill';
@@ -56,10 +66,11 @@ import { usePromotionalBanner } from '@/components/promotional/coming-soon-banne
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { workflowSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
 import { useTags } from '@/hooks/use-tags';
 import { LocalizationResourceEnum } from '@/types/translations';
@@ -89,6 +100,53 @@ type TagInputFieldProps = {
   onBlur: () => void;
   hasReachedTagLimit: boolean;
 };
+
+type WorkflowAgentAssignmentSummaryProps = {
+  agentIdentifier: string;
+};
+
+function WorkflowAgentAssignmentSummary({ agentIdentifier }: WorkflowAgentAssignmentSummaryProps) {
+  const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
+
+  const agentQuery = useQuery({
+    queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agentIdentifier),
+    queryFn: () => getAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agentIdentifier),
+    enabled: Boolean(currentEnvironment) && canReadAgents,
+    retry: false,
+  });
+
+  const integrationsQuery = useQuery({
+    queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agentIdentifier),
+    queryFn: () =>
+      listAgentIntegrations({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        agentIdentifier,
+        limit: 100,
+      }),
+    enabled: Boolean(currentEnvironment) && canReadAgents,
+  });
+
+  const hasUnconfiguredChannel = integrationsQuery.data?.data.some(
+    (integrationLink) => !isAgentIntegrationConnected(integrationLink)
+  );
+
+  return (
+    <div className="flex min-w-0 items-center gap-1">
+      <RiRobot2Line className="text-text-soft size-4 shrink-0" />
+      <span className="text-text-soft truncate text-label-xs font-medium">
+        {agentQuery.data?.name ?? agentIdentifier}
+      </span>
+      {hasUnconfiguredChannel ? (
+        <RiErrorWarningFill
+          className="text-warning-base size-3.5 shrink-0"
+          aria-label="Some agent channels are not set up"
+        />
+      ) : null}
+    </div>
+  );
+}
 
 function TagInputField({ currentTags, suggestions, onAddTag, onBlur, hasReachedTagLimit }: TagInputFieldProps) {
   return (
@@ -772,13 +830,17 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                     </Tooltip>
                   </div>
                   <span className="text-text-sub inline-flex shrink-0 items-center gap-0 pl-1 text-label-xs font-medium">
-                    Setup
+                    {!workflow.agent?.identifier ? 'Setup' : null}
                     <RiArrowRightSLine className="size-4" />
                   </span>
                 </div>
-                <p className="text-text-soft text-label-2xs leading-3.5">
-                  Let your user reply and continue with an agent
-                </p>
+                {workflow.agent?.identifier ? (
+                  <WorkflowAgentAssignmentSummary agentIdentifier={workflow.agent.identifier} />
+                ) : (
+                  <p className="text-text-soft text-label-2xs leading-3.5">
+                    Let your user reply and continue with an agent
+                  </p>
+                )}
               </div>
             </Link>
           ) : null}

@@ -34,7 +34,8 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       {} as never,
       featureFlagService as never,
       {} as never,
-      sendWebhookMessage as never
+      sendWebhookMessage as never,
+      { resolveEffectiveReplyTo: sinon.stub().resolves(undefined) } as never
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
@@ -90,7 +91,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
               body: bridgeBody,
             },
           } as never)
-        : undefined,
+        : null,
       step: {
         stepId: 'email-step',
         template: {

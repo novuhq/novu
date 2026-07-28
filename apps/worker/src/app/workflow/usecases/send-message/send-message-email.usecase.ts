@@ -14,6 +14,7 @@ import {
   InstrumentUsecase,
   MailFactory,
   messageWebhookMapper,
+  ResolveAgentInboundAddresses,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -70,7 +71,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected moduleRef: ModuleRef,
     private featureFlagService: FeatureFlagsService,
     private getLayoutUseCaseV0: GetLayoutUseCaseV0,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private resolveAgentInboundAddresses: ResolveAgentInboundAddresses
   ) {
     super(
       messageRepository,
@@ -221,6 +223,30 @@ export class SendMessageEmail extends SendMessageBase {
 
         if (payload.payload.step) {
           payload.payload.step.reply_to_address = replyTo;
+        }
+      }
+    }
+
+    if (!replyToAddress && !command.overrides?.email?.replyTo) {
+      const workflowAgent = command.workflow?.agent ?? null;
+
+      if (workflowAgent) {
+        try {
+          const agentReplyTo = await this.resolveAgentInboundAddresses.resolveEffectiveReplyTo({
+            agent: workflowAgent,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+          });
+
+          if (agentReplyTo) {
+            replyToAddress = agentReplyTo;
+          }
+        } catch (error) {
+          Logger.warn(
+            { error, agentIdentifier: workflowAgent.identifier },
+            'Failed to resolve workflow agent reply-to address',
+            LOG_CONTEXT
+          );
         }
       }
     }
