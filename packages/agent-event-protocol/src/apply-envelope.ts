@@ -1,3 +1,4 @@
+import type { AgentEventEnvelope } from './agent-event.types';
 import type {
   AgentConversationState,
   AgentMessage,
@@ -8,8 +9,7 @@ import type {
   AgentToolPart,
 } from './agent-message.types';
 import { createInitialAgentConversationState } from './agent-message.types';
-import type { AgentEventEnvelope } from './index';
-import type { AgentFileRef, AgentMessageContent } from './wire-types';
+import type { AgentFileRef, AgentMessageContent } from './wire-content.types';
 
 export function applyEnvelopes(
   initialState: AgentConversationState = createInitialAgentConversationState(),

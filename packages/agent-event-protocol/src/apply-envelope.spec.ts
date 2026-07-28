@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from './agent-event.types';
 import { type AgentMessage, createInitialAgentConversationState } from './agent-message.types';
 import { applyEnvelope, applyEnvelopes } from './apply-envelope';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from './index';
 
 const BASE_IDS = {
   conversationId: 'conv-1',

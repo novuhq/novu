@@ -1,4 +1,4 @@
-import type { AgentToolResultContent, AgentToolSource } from './wire-types';
+import type { AgentToolResultContent, AgentToolSource } from './wire-content.types';
 
 export type AgentMessageRole = 'user' | 'assistant';
 
