@@ -1,5 +1,9 @@
+export function isWebLocksAvailable(): boolean {
+  return typeof navigator !== 'undefined' && 'locks' in navigator && !!navigator.locks;
+}
+
 export function requestLock(id: string, cb: (id: string) => void) {
-  if (typeof navigator === 'undefined' || !('locks' in navigator) || !navigator.locks) {
+  if (!isWebLocksAvailable()) {
     cb(id);
 
     return () => {};

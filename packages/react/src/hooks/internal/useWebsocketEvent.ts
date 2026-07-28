@@ -1,6 +1,6 @@
 import { EventHandler, Events, SocketEventNames } from '@novu/js';
 import { useEffect } from 'react';
-import { requestLock } from '../../utils/requestLock';
+import { isWebLocksAvailable, requestLock } from '../../utils/requestLock';
 import { useNovu } from '../NovuProvider';
 import { useBrowserTabsChannel } from './useBrowserTabsChannel';
 
@@ -15,14 +15,19 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
 }) => {
   const novu = useNovu();
   const channelName = `nv_ws_connection:a=${novu.applicationIdentifier}:s=${novu.subscriberId}:c=${novu.contextKey}:e=${webSocketEvent}`;
+  const useTabCoordination = isWebLocksAvailable();
 
+  // BroadcastChannel is only safe when Web Locks coordinate a single socket
+  // subscriber across tabs. On non-secure HTTP origins (e.g. http://my-app.test)
+  // locks are unavailable, every tab has its own socket, and BC would
+  // double-deliver events.
   const { postMessage } = useBrowserTabsChannel({
     channelName,
     onMessage,
-    enabled,
+    enabled: enabled && useTabCoordination,
   });
 
-  const updateReadCount: EventHandler<Events[E]> = (data) => {
+  const broadcastAndHandle: EventHandler<Events[E]> = (data) => {
     onMessage(data);
     postMessage(data);
   };
@@ -30,9 +35,17 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
   useEffect(() => {
     if (!enabled) return;
 
-    let cleanup: () => void;
+    if (!useTabCoordination) {
+      const cleanup = novu.on(webSocketEvent, onMessage);
+
+      return () => {
+        cleanup();
+      };
+    }
+
+    let cleanup: (() => void) | undefined;
     const resolveLock = requestLock(channelName, () => {
-      cleanup = novu.on(webSocketEvent, updateReadCount);
+      cleanup = novu.on(webSocketEvent, broadcastAndHandle);
     });
 
     return () => {
@@ -42,5 +55,7 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
 
       resolveLock();
     };
+    // Intentionally match prior dep surface: re-subscribe when enabled flips.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 };

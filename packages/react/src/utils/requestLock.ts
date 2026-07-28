@@ -1,7 +1,9 @@
+export function isWebLocksAvailable(): boolean {
+  return typeof navigator !== 'undefined' && 'locks' in navigator && !!navigator.locks;
+}
+
 export function requestLock(id: string, cb: (id: string) => void) {
-  // Check if the Lock API is available
-  if (!('locks' in navigator)) {
-    // If Lock API is not available, immediately invoke the callback and return a no-op function
+  if (!isWebLocksAvailable()) {
     cb(id);
 
     return () => {};

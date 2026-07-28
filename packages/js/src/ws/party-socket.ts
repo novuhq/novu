@@ -23,6 +23,7 @@ import {
 import { NovuError } from '../utils/errors';
 import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
 import type { BaseSocketInterface } from './base-socket';
+import { runSingleFlight } from './run-single-flight';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
 
@@ -117,6 +118,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #token: string;
   #emitter: NovuEventEmitter;
   #partySocket: WebSocket | undefined;
+  #connectFlight: { current?: Promise<void> } = {};
   #socketUrl: string;
   #socketOptions?: Record<string, unknown>;
   #hibernationHeartbeatIntervalId: ReturnType<typeof setInterval> | undefined;
@@ -237,6 +239,14 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   }
 
   async #initializeSocket(): Promise<void> {
+    if (this.#partySocket) {
+      return;
+    }
+
+    await runSingleFlight(this.#connectFlight, () => this.#openSocket());
+  }
+
+  async #openSocket(): Promise<void> {
     if (this.#partySocket) {
       return;
     }
