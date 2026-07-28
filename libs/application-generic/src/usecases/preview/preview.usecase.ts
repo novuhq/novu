@@ -23,6 +23,7 @@ import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
+import { buildStepPreview } from './utils/map-providers-to-preview-overrides';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
@@ -101,7 +102,7 @@ export class PreviewUsecase {
 
         return {
           result: {
-            preview: executeOutput.outputs as Record<string, unknown>,
+            preview: buildStepPreview(context.stepData.type, executeOutput),
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
