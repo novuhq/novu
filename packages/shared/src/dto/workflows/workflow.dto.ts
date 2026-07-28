@@ -33,6 +33,7 @@ export type ListWorkflowResponse = {
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
   | 'name'
+  | 'description'
   | 'tags'
   | 'updatedAt'
   | 'createdAt'
