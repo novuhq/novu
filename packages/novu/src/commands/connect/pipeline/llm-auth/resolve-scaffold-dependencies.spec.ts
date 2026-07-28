@@ -63,21 +63,17 @@ describe('resolveBridgeScaffoldDependencies', () => {
 });
 
 describe('generateAgentNextConfigSource provider selection', () => {
-  it('externalizes only the selected LangChain provider package', () => {
+  it('always externalizes common LangChain providers for Turbopack-safe model strings', () => {
     const openai = generateAgentNextConfigSource('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' });
     const anthropic = generateAgentNextConfigSource('langchain', { kind: 'anthropic-api-key', apiKey: 'sk-ant' });
     const skip = generateAgentNextConfigSource('langchain', { kind: 'skip' });
 
-    expect(openai).toContain("'@langchain/openai'");
-    expect(openai).not.toContain("'@langchain/anthropic'");
-    expect(openai).not.toContain("'@langchain/google-genai'");
-
-    expect(anthropic).toContain("'@langchain/anthropic'");
-    expect(anthropic).not.toContain("'@langchain/openai'");
-
-    expect(skip).toContain("'langchain'");
-    expect(skip).not.toContain("'@langchain/openai'");
-    expect(skip).not.toContain("'@langchain/anthropic'");
+    for (const source of [openai, anthropic, skip]) {
+      expect(source).toContain("'langchain'");
+      expect(source).toContain("'@langchain/openai'");
+      expect(source).toContain("'@langchain/anthropic'");
+      expect(source).toContain("'@langchain/google-genai'");
+    }
   });
 
   it('aligns serverExternalPackages with installed provider packages', () => {
@@ -144,8 +140,6 @@ describe('installTemplate langchain package wiring', () => {
     expect(agentSource).not.toContain('ChatOpenAI');
 
     expect(nextConfig).toContain("'@langchain/openai'");
-    expect(nextConfig).not.toContain("'@langchain/anthropic'");
-
     expect(envLocal).toContain('OPENAI_API_KEY=sk-test-key');
     expect(envLocal).toContain('NOVU_SECRET_KEY=nv-test-secret');
   });
@@ -185,7 +179,6 @@ describe('installTemplate langchain package wiring', () => {
     expect(agentSource).toContain("model: 'anthropic:claude-haiku-4-5'");
     expect(agentSource).not.toContain('ChatAnthropic');
     expect(nextConfig).toContain("'@langchain/anthropic'");
-    expect(nextConfig).not.toContain("'@langchain/openai'");
     expect(envLocal).toContain('ANTHROPIC_API_KEY=sk-ant-test');
   });
 
@@ -222,6 +215,6 @@ describe('installTemplate langchain package wiring', () => {
     expect(packageJson.dependencies['@langchain/openai']).toBeUndefined();
     expect(packageJson.dependencies['@langchain/anthropic']).toBeUndefined();
     expect(nextConfig).toContain("'langchain'");
-    expect(nextConfig).not.toContain("'@langchain/openai'");
+    expect(nextConfig).toContain("'@langchain/openai'");
   });
 });

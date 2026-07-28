@@ -3,16 +3,23 @@ import { resolveLlmAuthPackages } from '../registry';
 import type { LlmAuthChoice } from '../types';
 
 /**
- * Base LangChain packages that must stay outside the Turbopack bundle.
+ * LangChain packages that must stay outside the Turbopack bundle.
  * Model strings and createAgent pull these in via runtime dynamic import().
+ *
+ * Common provider packages are always listed so demo/skip scaffolds still work
+ * when users later `npm install @langchain/openai` and uncomment a model string
+ * without editing next.config.
  *
  * @see https://github.com/langchain-ai/langchainjs/issues/10818
  */
-const LANGCHAIN_BASE_SERVER_EXTERNAL_PACKAGES = [
+const LANGCHAIN_SERVER_EXTERNAL_PACKAGES = [
   'langchain',
   '@langchain/core',
   '@langchain/langgraph',
   '@langchain/langgraph-checkpoint',
+  '@langchain/openai',
+  '@langchain/anthropic',
+  '@langchain/google-genai',
 ] as const;
 
 export function resolveAgentServerExternalPackages(
@@ -22,11 +29,11 @@ export function resolveAgentServerExternalPackages(
   const packages = new Set<string>();
 
   if (runtime === 'langchain') {
-    for (const pkg of LANGCHAIN_BASE_SERVER_EXTERNAL_PACKAGES) {
+    for (const pkg of LANGCHAIN_SERVER_EXTERNAL_PACKAGES) {
       packages.add(pkg);
     }
 
-    // Only externalize provider packages that this scaffold actually installs.
+    // Also include any selected auth package not in the common list (e.g. Codex OAuth).
     for (const pkg of resolveLlmAuthPackages(runtime, llmAuth)) {
       packages.add(pkg);
     }

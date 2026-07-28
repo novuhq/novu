@@ -28,13 +28,14 @@ describe('app-agent-langchain template', () => {
     expect(activeImports).not.toMatch(/@langchain\/openai/);
   });
 
-  it('ships a Turbopack-safe next.config without unused provider packages', () => {
+  it('ships a Turbopack-safe next.config including common provider packages', () => {
     const nextConfig = fs.readFileSync(nextConfigFile, 'utf8');
 
     expect(nextConfig).toContain('serverExternalPackages');
     expect(nextConfig).toContain("'langchain'");
     expect(nextConfig).toContain("'@langchain/core'");
-    expect(nextConfig).not.toContain("'@langchain/openai'");
-    expect(nextConfig).not.toContain("'@langchain/anthropic'");
+    expect(nextConfig).toContain("'@langchain/openai'");
+    expect(nextConfig).toContain("'@langchain/anthropic'");
+    expect(nextConfig).toContain("'@langchain/google-genai'");
   });
 });

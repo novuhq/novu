@@ -10,12 +10,16 @@ const nextConfig = {
   },
   // Keep LLM packages out of the Turbopack bundle.
   // LangChain model strings (e.g. "openai:gpt-4o") use dynamic import() that Turbopack rejects.
-  // Provider packages (e.g. @langchain/openai) are added when you wire an LLM via novu connect.
+  // Common providers are listed so wiring an LLM later (npm install + model string) works
+  // without editing this file. Unused packages here are harmless.
   serverExternalPackages: [
     'langchain',
     '@langchain/core',
     '@langchain/langgraph',
     '@langchain/langgraph-checkpoint',
+    '@langchain/openai',
+    '@langchain/anthropic',
+    '@langchain/google-genai',
   ],
 };
 

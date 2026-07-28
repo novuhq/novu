@@ -59,16 +59,15 @@ describe('generateAgentNextConfigSource', () => {
     expect(source).toContain("'langchain'");
     expect(source).toContain("'@langchain/core'");
     expect(source).toContain("'@langchain/openai'");
-    expect(source).not.toContain("'@langchain/anthropic'");
-    expect(source).not.toContain("'@langchain/google-genai'");
   });
 
-  it('externalizes LangChain base packages without providers when LLM auth is skipped', () => {
+  it('externalizes common LangChain providers even when LLM auth is skipped', () => {
     const source = generateAgentNextConfigSource('langchain', { kind: 'skip' });
 
     expect(source).toContain("'langchain'");
-    expect(source).not.toContain("'@langchain/openai'");
-    expect(source).not.toContain("'@langchain/anthropic'");
+    expect(source).toContain("'@langchain/openai'");
+    expect(source).toContain("'@langchain/anthropic'");
+    expect(source).toContain("'@langchain/google-genai'");
   });
 
   it('includes Codex OAuth alongside LangChain packages for subscription scaffolds', () => {
@@ -76,7 +75,7 @@ describe('generateAgentNextConfigSource', () => {
 
     expect(source).toContain("'langchain'");
     expect(source).toContain("'langchainjs-codex-oauth'");
-    expect(source).not.toContain("'@langchain/openai'");
+    expect(source).toContain("'@langchain/openai'");
   });
 });
 
