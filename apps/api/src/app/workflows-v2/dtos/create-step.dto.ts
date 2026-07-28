@@ -7,7 +7,7 @@ import {
   EmailControlDto,
   HttpRequestControlDto,
   InAppControlDto,
-  ProviderOverridesDto,
+  PROVIDER_OVERRIDES_API_PROPERTY,
   PushControlDto,
   SmsControlDto,
   ThrottleControlDto,
@@ -142,10 +142,8 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   controlValues?: ChatControlDto | Record<string, unknown> | null;
 
   @ApiPropertyOptional({
-    description:
-      'Per-provider content overrides keyed by providerId. Stored separately from controlValues and merged over the default body at send time. Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.',
-    type: () => ProviderOverridesDto,
-    nullable: true,
+    ...PROVIDER_OVERRIDES_API_PROPERTY,
+    description: `${PROVIDER_OVERRIDES_API_PROPERTY.description} Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.`,
   })
   @IsOptional()
   @IsObject()
@@ -171,10 +169,8 @@ export class ToolStepUpsertDto extends BaseStepConfigDto {
   controlValues?: ToolControlDto | Record<string, unknown> | null;
 
   @ApiPropertyOptional({
-    description:
-      'Per-provider content overrides keyed by providerId. Stored separately from controlValues and merged over the default body at send time. Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.',
-    type: () => ProviderOverridesDto,
-    nullable: true,
+    ...PROVIDER_OVERRIDES_API_PROPERTY,
+    description: `${PROVIDER_OVERRIDES_API_PROPERTY.description} Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.`,
   })
   @IsOptional()
   @IsObject()

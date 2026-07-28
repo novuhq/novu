@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { ControlsMetadataDto } from '../../controls-metadata.dto';
 import { ChatControlDto } from '../chat-control.dto';
-import { ProviderOverridesDto } from '../provider-overrides.dto';
+import { PROVIDER_OVERRIDES_API_PROPERTY } from '../provider-overrides.dto';
 import { StepResponseDto } from '../step.response.dto';
 
 class ChatControlsMetadataResponseDto extends ControlsMetadataDto {
@@ -35,14 +35,9 @@ export class ChatStepResponseDto extends StepResponseDto<ChatControlDto> {
   declare controlValues?: ChatControlDto;
 
   @ApiPropertyOptional({
-    description:
-      'Per-provider content overrides keyed by providerId. Stored separately from controlValues and merged over the default body at send time.',
-    type: () => ProviderOverridesDto,
-    nullable: true,
+    ...PROVIDER_OVERRIDES_API_PROPERTY,
   })
   @IsOptional()
   @IsObject()
-  @ValidateNested()
-  @Type(() => ProviderOverridesDto)
   declare providerOverrides?: Partial<Record<ChatProviderIdEnum, Record<string, unknown>>> | null;
 }

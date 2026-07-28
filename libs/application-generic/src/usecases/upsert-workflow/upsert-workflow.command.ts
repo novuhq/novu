@@ -25,7 +25,6 @@ import {
 } from 'class-validator';
 import { EnvironmentWithUserObjectCommand } from '../../commands';
 import { IsValidJsonSchema } from '../../decorators';
-import { ProviderOverridesDto } from '../../dtos/workflow/provider-overrides.dto';
 
 export class ChannelPreferenceData {
   @IsBoolean()
@@ -78,8 +77,6 @@ export class UpsertStepDataCommand {
 
   @IsOptional()
   @IsObject()
-  @ValidateNested()
-  @Type(() => ProviderOverridesDto)
   providerOverrides?: StepProviderOverrides | null;
 
   @IsOptional()

@@ -1,16 +1,17 @@
-import { CONTENT_OVERRIDE_PROVIDER_IDS } from '@novu/shared';
-import { getMetadataStorage } from 'class-validator';
 import { describe, expect, it } from 'vitest';
-import { ProviderOverridesDto } from './provider-overrides.dto';
+import { PROVIDER_OVERRIDES_API_PROPERTY } from './provider-overrides.dto';
 
-describe('ProviderOverridesDto', () => {
-  it('declares a property for every provider that supports content overrides', () => {
-    const declared = new Set(
-      getMetadataStorage()
-        .getTargetValidationMetadatas(ProviderOverridesDto, '', false, false)
-        .map((metadata) => metadata.propertyName)
-    );
-
-    expect([...CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual([...declared].sort());
+describe('PROVIDER_OVERRIDES_API_PROPERTY', () => {
+  it('exposes provider overrides as a map keyed by providerId, not fixed properties', () => {
+    expect(PROVIDER_OVERRIDES_API_PROPERTY.type).toBe('object');
+    expect(PROVIDER_OVERRIDES_API_PROPERTY.additionalProperties).toEqual({
+      type: 'object',
+      additionalProperties: true,
+    });
+    expect(PROVIDER_OVERRIDES_API_PROPERTY.example).toMatchObject({
+      slack: expect.any(Object),
+      'whatsapp-business': expect.any(Object),
+      pagerduty: expect.any(Object),
+    });
   });
 });
