@@ -16,7 +16,7 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
+import { type AgentAnalyticsSource, AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
@@ -87,6 +87,8 @@ export interface ResolvedAgentConfig {
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
+  /** Where the agent was created from; drives CLI vs dashboard no-bridge replies. */
+  creationSource?: AgentAnalyticsSource;
 }
 
 const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
@@ -325,6 +327,7 @@ export class AgentConfigResolver {
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
+      creationSource: agent.creationSource,
     };
   }
 
