@@ -79,6 +79,10 @@ export function useResourceDependencies(diffData: IEnvironmentDiffResponse | und
           }
 
           for (const [depSelectionId, depResourceState] of Object.entries(updated)) {
+            if (depResourceState.resource.resourceType !== dep.resourceType) {
+              continue;
+            }
+
             const depResourceActualId = getResourceId(depResourceState.resource);
 
             if (depResourceActualId === dep.resourceId || depSelectionId === dep.resourceId) {
