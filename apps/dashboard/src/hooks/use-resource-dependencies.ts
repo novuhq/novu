@@ -73,14 +73,8 @@ export function useResourceDependencies(diffData: IEnvironmentDiffResponse | und
         }
 
         for (const dep of dependencies) {
-          /*
-           * Lock resources that must publish with the selected parent:
-           * - blocking deps (missing in target)
-           * - agent deps present in this publish set (workflow uses this agent)
-           */
-          const shouldLock = dep.isBlocking || dep.resourceType === 'agent';
-
-          if (!shouldLock) {
+          // Only deps missing from the target must publish with the selected parent.
+          if (!dep.isBlocking) {
             continue;
           }
 

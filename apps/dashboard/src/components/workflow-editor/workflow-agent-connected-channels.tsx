@@ -55,6 +55,11 @@ function groupLinksByChannel(links: AgentIntegrationLink[]) {
   return groups;
 }
 
+/*
+ * Lists every integration the agent has, not only the channels the workflow currently steps
+ * through: the preview answers "what can this agent send and reply on", so a channel the agent
+ * supports stays visible before a matching step exists.
+ */
 export function WorkflowAgentConnectedChannels({ agentIdentifier }: WorkflowAgentConnectedChannelsProps) {
   const { currentEnvironment } = useEnvironment();
 
@@ -102,9 +107,7 @@ export function WorkflowAgentConnectedChannels({ agentIdentifier }: WorkflowAgen
 
   if (grouped.length === 0) {
     return (
-      <p className="text-text-soft px-3 py-4 text-label-xs leading-4">
-        This agent has no connected channels yet.
-      </p>
+      <p className="text-text-soft px-3 py-4 text-label-xs leading-4">This agent has no connected channels yet.</p>
     );
   }
 
