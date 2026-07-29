@@ -39,28 +39,6 @@ describe('mapProvidersToPreviewOverrides', () => {
     });
   });
 
-  it('strips JSONSchemaFaker [placeholder] keys invented for additionalProperties', () => {
-    const result = mapProvidersToPreviewOverrides({
-      slack: {
-        blocks: [{ type: 'card' }],
-        '[placeholder]': true,
-        '[placeholder]_4': -1,
-      },
-    });
-
-    expect(result).toEqual({
-      slack: { blocks: [{ type: 'card' }] },
-    });
-  });
-
-  it('drops entries that only contained placeholder keys', () => {
-    expect(
-      mapProvidersToPreviewOverrides({
-        slack: { '[placeholder]': true },
-      })
-    ).toBeUndefined();
-  });
-
   it('returns undefined when all entries are empty or input is undefined', () => {
     expect(mapProvidersToPreviewOverrides(undefined)).toBeUndefined();
     expect(mapProvidersToPreviewOverrides({})).toBeUndefined();

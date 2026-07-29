@@ -1792,48 +1792,6 @@ describe('Novu Client', () => {
       );
     });
 
-    const blockKitWorkflow = (blocks: Array<Record<string, unknown>>) =>
-      workflow('test-workflow', async ({ step }) => {
-        await step.chat('send-chat', async () => ({ body: 'Default body' }), {
-          providers: {
-            slack: async () => ({ blocks }),
-          },
-        });
-      });
-
-    const chatEvent = (action: PostActionEnum): Event => ({
-      action,
-      workflowId: 'test-workflow',
-      stepId: 'send-chat',
-      subscriber: {},
-      state: [],
-      payload: {},
-      controls: {},
-      context: {},
-      env: testEventEnv,
-    });
-
-    // Block types Slack shipped after the original hardcoded enum was written. Regression guard
-    // for the stale list silently rejecting valid Block Kit payloads.
-    it.each(['alert', 'card', 'carousel', 'context_actions', 'markdown', 'plan', 'table', 'task_card'])(
-      'should accept the `%s` Slack block type',
-      async (blockType) => {
-        await client.addWorkflows([blockKitWorkflow([{ type: blockType }])]);
-
-        const executionResult = await client.executeWorkflow(chatEvent(PostActionEnum.EXECUTE));
-
-        expect(executionResult.providers.slack).toEqual({ blocks: [{ type: blockType }] });
-      }
-    );
-
-    it('should reject an unknown Slack block type on execute', async () => {
-      await client.addWorkflows([blockKitWorkflow([{ type: 'not_a_block' }])]);
-
-      await expect(client.executeWorkflow(chatEvent(PostActionEnum.EXECUTE))).rejects.toThrow(
-        ProviderExecutionFailedError
-      );
-    });
-
     it('should execute a tool-webhook provider resolver', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.tool('send-webhook', async () => ({ body: 'Default body' }), {

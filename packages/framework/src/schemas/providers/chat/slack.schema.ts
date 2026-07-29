@@ -20,27 +20,9 @@ const slackOutputSchema = {
       items: {
         type: 'object',
         properties: {
+          // Open string — Slack adds block types over time; shared override schemas own deep shape.
           type: {
-            enum: [
-              'actions',
-              'alert',
-              'card',
-              'carousel',
-              'context',
-              'context_actions',
-              'divider',
-              'file',
-              'header',
-              'image',
-              'input',
-              'markdown',
-              'plan',
-              'rich_text',
-              'section',
-              'table',
-              'task_card',
-              'video',
-            ],
+            type: 'string',
           },
         },
         required: ['type'],

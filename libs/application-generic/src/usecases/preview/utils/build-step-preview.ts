@@ -1,9 +1,5 @@
 import { StepTypeEnum, supportsContentProviderOverrides } from '@novu/shared';
 
-function stripSchemaFakerPlaceholderKeys(payload: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(payload).filter(([key]) => !key.includes('[placeholder]')));
-}
-
 export function mapProvidersToPreviewOverrides(
   providers?: Record<string, Record<string, unknown>>
 ): Record<string, Record<string, unknown>> | undefined {
@@ -15,13 +11,12 @@ export function mapProvidersToPreviewOverrides(
 
   for (const [providerId, payload] of Object.entries(providers)) {
     const { _passthrough: _, ...rest } = payload;
-    const cleaned = stripSchemaFakerPlaceholderKeys(rest);
 
-    if (Object.keys(cleaned).length === 0) {
+    if (Object.keys(rest).length === 0) {
       continue;
     }
 
-    result[providerId] = cleaned;
+    result[providerId] = rest;
   }
 
   if (Object.keys(result).length === 0) {
