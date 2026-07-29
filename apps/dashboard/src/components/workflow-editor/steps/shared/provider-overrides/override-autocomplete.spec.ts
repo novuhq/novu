@@ -73,6 +73,50 @@ describe('getOverrideCompletionResult', () => {
     expect(labelsFor('{"incident":{"severity":"cr')).toEqual(['critical']);
   });
 
+  it('narrows enum values as the typed prefix grows', () => {
+    const blockTypes: OverrideFieldSchema = {
+      type: 'object',
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['actions', 'alert', 'card', 'carousel', 'context', 'context_actions', 'divider'],
+        },
+      },
+    };
+
+    expect(labelsFor('{"type":"', blockTypes)).toEqual([
+      'actions',
+      'alert',
+      'card',
+      'carousel',
+      'context',
+      'context_actions',
+      'divider',
+    ]);
+    expect(labelsFor('{"type":"c', blockTypes)).toEqual(['card', 'carousel', 'context', 'context_actions']);
+    expect(labelsFor('{"type":"card', blockTypes)).toEqual(['card']);
+  });
+
+  it('narrows property keys as the typed prefix grows', () => {
+    expect(labelsFor('{"')).toEqual(['incident', 'actor']);
+    expect(labelsFor('{"a')).toEqual(['actor']);
+    expect(labelsFor('{"inc')).toEqual(['incident']);
+  });
+
+  it('re-queries on further typing instead of freezing the first result', () => {
+    const doc = '{"incident":{"severity":"c';
+    const result = getOverrideCompletionResult({
+      doc,
+      pos: doc.length,
+      explicit: true,
+      rootSchema: webhookRootSchema,
+    });
+
+    // A sticky validFor + filter:false previously kept the unfiltered first result open.
+    expect(result?.validFor).toBeUndefined();
+    expect(result?.options.map((option) => option.label)).toEqual(['critical']);
+  });
+
   it('shows the field type in completion details', () => {
     const doc = '{"';
     const result = getOverrideCompletionResult({ doc, pos: doc.length, explicit: true, rootSchema: webhookRootSchema });

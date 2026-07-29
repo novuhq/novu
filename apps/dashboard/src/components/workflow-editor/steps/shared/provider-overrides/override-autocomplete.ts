@@ -369,7 +369,6 @@ export function getOverrideCompletionResult({
       to: pos,
       options,
       filter: false,
-      validFor: /[\w-]*/,
     };
   }
 
@@ -394,7 +393,6 @@ export function getOverrideCompletionResult({
       to: getKeyReplacementTo(doc, pos),
       options,
       filter: false,
-      validFor: /"[^"\\]*/,
     };
   }
 
