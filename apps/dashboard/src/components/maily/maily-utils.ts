@@ -24,7 +24,7 @@ export const isEmptyMailyJson = (value: unknown): boolean => {
  * paragraph; empty lines are preserved as empty paragraphs.
  */
 export const plainTextToMailyJson = (value: string): string => {
-  const content = value.split('\n').map((line) => ({
+  const content = value.replace(/\r\n/g, '\n').split('\n').map((line) => ({
     type: 'paragraph',
     content: line.length > 0 ? [{ type: 'text', text: line }] : [],
   }));
