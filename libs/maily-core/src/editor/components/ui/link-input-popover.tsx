@@ -17,6 +17,7 @@ type LinkInputPopoverProps = {
 
   icon?: LucideIcon;
   tooltip?: string;
+  placeholder?: string;
 
   editor: Editor;
 };
@@ -28,6 +29,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
     tooltip,
     icon: Icon = Link,
     editor,
+    placeholder,
 
     isVariable,
   } = props;
@@ -129,7 +131,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
             {isEditing && (
               <div className="mly-relative">
                 <div className="mly-absolute mly-inset-y-0 mly-left-1.5 mly-z-10 mly-flex mly-items-center">
-                  <LinkIcon className="mly-h-3 mly-w-3 mly-stroke-[2.5] mly-text-midnight-gray" />
+                  <Icon className="mly-h-3 mly-w-3 mly-stroke-[2.5] mly-text-midnight-gray" />
                 </div>
 
                 <InputAutocomplete
@@ -140,7 +142,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                   }}
                   autoCompleteOptions={autoCompleteOptions}
                   ref={linkInputRef}
-                  placeholder={placeholderUrl}
+                  placeholder={placeholder ?? placeholderUrl}
                   className="-mly-ms-px mly-block mly-h-8 mly-w-56 mly-rounded-lg mly-border mly-border-gray-300 mly-px-2 mly-py-1.5 mly-pl-6 mly-pr-6 mly-text-sm mly-shadow-sm mly-outline-none placeholder:mly-text-gray-400"
                   triggerChar={variableTriggerCharacter}
                   onSelectOption={(value) => {

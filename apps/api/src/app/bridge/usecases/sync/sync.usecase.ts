@@ -27,7 +27,6 @@ import {
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
-  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
@@ -84,9 +83,10 @@ export class Sync {
   // the API process leak the discovery response or the persisted URL to other
   // tenants.
   //
-  // The synchronous `assertSafeOutboundUrl` check rejects the obvious vectors
-  // (non-http schemes, embedded credentials, blocked hostnames). The
-  // connect-time DNS-pinned guard against IP-literal private addresses is
+  // The synchronous `assertSafeOutboundUrl` check rejects non-http schemes,
+  // embedded credentials, blocked hostnames, and private/link-local IP
+  // literals (unless allow-listed via NOVU_SAFE_OUTBOUND_ALLOW). The
+  // connect-time DNS-pinned guard against hostname→private resolution is
   // applied later via `enforceSsrfProtection: true` on the actual outbound
   // request — see `executeDiscover`.
   private assertSafeBridgeUrl(bridgeUrl: string | undefined): void {
@@ -126,10 +126,10 @@ export class Sync {
         action: GetActionEnum.DISCOVER,
         retriesLimit: 1,
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
-        // User-supplied bridgeUrl: pin the connection to a validated public
-        // IP and re-validate on every redirect, so IP literals like
-        // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
-        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+        // User-supplied bridgeUrl: always pin the connection to a validated
+        // public IP and re-validate on every redirect. Self-hosted internal
+        // bridges must be allow-listed via NOVU_SAFE_OUTBOUND_ALLOW.
+        enforceSsrfProtection: true,
       })) as DiscoverOutput;
     } catch (error) {
       if (error instanceof HttpException) {

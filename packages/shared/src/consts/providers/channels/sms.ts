@@ -48,7 +48,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Novu SMS',
     channel: ChannelTypeEnum.SMS,
     credentials: [],
-    docReference: `https://docs.novu.co/integrations/providers/default-providers${UTM_CAMPAIGN_QUERY_PARAM}#novu-sms-provider`,
+    docReference: `https://docs.novu.co/platform/integrations/demo-integration${UTM_CAMPAIGN_QUERY_PARAM}#novu-sms-provider`,
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
   {
@@ -56,7 +56,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Nexmo',
     channel: ChannelTypeEnum.SMS,
     credentials: nexmoConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/nexmo${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/nexmo${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'nexmo.png', dark: 'nexmo.png' },
   },
   {
@@ -64,7 +64,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Plivo',
     channel: ChannelTypeEnum.SMS,
     credentials: plivoConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/plivo${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/plivo${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'plivo.png', dark: 'plivo.png' },
   },
 
@@ -73,7 +73,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'sms77',
     channel: ChannelTypeEnum.SMS,
     credentials: sms77Config,
-    docReference: `https://docs.novu.co/integrations/providers/sms/sms77${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/sms77${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sms77.svg', dark: 'sms77.svg' },
   },
   {
@@ -81,7 +81,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'SNS',
     channel: ChannelTypeEnum.SMS,
     credentials: snsConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/aws-sns${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/aws-sns${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sns.svg', dark: 'sns.svg' },
   },
   {
@@ -89,7 +89,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Telnyx',
     channel: ChannelTypeEnum.SMS,
     credentials: telnyxConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/telnyx${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/telnyx${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
   },
   {
@@ -97,7 +97,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'MessageBird',
     channel: ChannelTypeEnum.SMS,
     credentials: messagebirdConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/messagebird${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/messagebird${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'messagebird.png', dark: 'messagebird.png' },
   },
   {
@@ -105,7 +105,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Twilio',
     channel: ChannelTypeEnum.SMS,
     credentials: twilioConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/twilio${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/twilio${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
   },
   {
@@ -129,7 +129,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Infobip',
     channel: ChannelTypeEnum.SMS,
     credentials: infobipSMSConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/infobip${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/infobip${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },
   {
@@ -162,7 +162,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: clickatellConfig,
     betaVersion: true,
-    docReference: `https://docs.novu.co/integrations/providers/sms/clickatell${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/clickatell${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
   },
   {
@@ -203,7 +203,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Termii',
     channel: ChannelTypeEnum.SMS,
     credentials: termiiConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/termii${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/termii${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'termii.png', dark: 'termii.png' },
   },
   {
@@ -211,7 +211,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Africa's Talking`,
     channel: ChannelTypeEnum.SMS,
     credentials: africasTalkingConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/africas-talking${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/africas-talking${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'africas-talking.svg', dark: 'africas-talking.svg' },
   },
   {
@@ -219,7 +219,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: `Sendchamp`,
     channel: ChannelTypeEnum.SMS,
     credentials: sendchampConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/sendchamp${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/sendchamp${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sendchamp.svg', dark: 'sendchamp.svg' },
   },
   {
@@ -300,7 +300,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: 'Sinch',
     channel: ChannelTypeEnum.SMS,
     credentials: sinchConfig,
-    docReference: `https://docs.novu.co/integrations/providers/sms/sinch${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/sms/sinch${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'sinch.png', dark: 'sinch.png' },
   },
   {

@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "composite": false,
+    // The scripts run through Node's TypeScript stripping as ES modules, which the package's
+    // CommonJS-oriented base config would reject on `import.meta`.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["scripts/**/*"]
+}

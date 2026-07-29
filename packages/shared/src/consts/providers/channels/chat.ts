@@ -6,6 +6,7 @@ import {
   grafanaOnCallConfig,
   lineConfig,
   msTeamsConfig,
+  novuWebChatConfig,
   rocketChatConfig,
   sendblueConfig,
   slackConfigLegacy,
@@ -114,7 +115,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'WhatsApp Business',
     channel: ChannelTypeEnum.CHAT,
     credentials: whatsAppBusinessConfig,
-    docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
+    docReference: `https://docs.novu.co/platform/integrations/chat/whats-app${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
   {
@@ -149,5 +150,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: sendblueConfig,
     docReference: 'https://docs.sendblue.com',
     logoFileName: { light: 'sendblue.svg', dark: 'sendblue.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.NovuWebChat,
+    displayName: 'Novu Web Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: novuWebChatConfig,
+    docReference: `https://docs.novu.co/platform/integrations/chat/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
 ];

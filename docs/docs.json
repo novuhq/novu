@@ -27,7 +27,10 @@
   },
   "thumbnails": {
     "appearance": "dark",
-    "background": "/images/og/og-background.png"
+    "background": "/images/og/og-image-docs-v2.jpg",
+    "fonts": {
+      "family": "Inter"
+    }
   },
   "interaction": {
     "drilldown": true

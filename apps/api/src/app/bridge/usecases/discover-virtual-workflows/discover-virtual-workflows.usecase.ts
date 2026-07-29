@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ExecuteBridgeRequest, WorkflowResponseDto } from '@novu/application-generic';
 import { DiscoverOutput, GetActionEnum } from '@novu/framework/internal';
-import { isOutboundSsrfProtectionEnabled, ResourceOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 import { BuildVirtualWorkflows } from '../build-virtual-workflows';
 import { DiscoverVirtualWorkflowsCommand } from './discover-virtual-workflows.command';
 
@@ -13,7 +13,7 @@ import { DiscoverVirtualWorkflowsCommand } from './discover-virtual-workflows.co
  *
  * The bridge URL is user input on every request — callers must run
  * `assertSafeOutboundUrl` first (see `BridgeController`), and the outbound
- * request itself runs with the DNS-pinned SSRF guard enforced.
+ * request itself always runs with the DNS-pinned SSRF guard enforced.
  */
 @Injectable()
 export class DiscoverVirtualWorkflows {
@@ -46,7 +46,7 @@ export class DiscoverVirtualWorkflows {
       action: GetActionEnum.DISCOVER,
       retriesLimit: 1,
       workflowOrigin: ResourceOriginEnum.EXTERNAL,
-      enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+      enforceSsrfProtection: true,
     })) as DiscoverOutput;
 
     if (!discover) {

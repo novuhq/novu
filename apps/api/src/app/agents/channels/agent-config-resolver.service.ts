@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptChannelConnectionAuth, decryptCredentials, PinoLogger } from '@novu/application-generic';
+import {
+  decryptChannelConnectionAuth,
+  decryptCredentials,
+  PinoLogger,
+  RotatingConnectionTokenService,
+} from '@novu/application-generic';
 import {
   AgentIntegrationEntity,
   AgentIntegrationRepository,
@@ -11,7 +16,7 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
+import { type AgentAnalyticsSource, AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
 import axios from 'axios';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
@@ -82,6 +87,8 @@ export interface ResolvedAgentConfig {
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
+  /** Where the agent was created from; drives CLI vs dashboard no-bridge replies. */
+  creationSource?: AgentAnalyticsSource;
 }
 
 const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
@@ -132,6 +139,7 @@ export class AgentConfigResolver {
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
+    private readonly rotatingConnectionTokenService: RotatingConnectionTokenService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -319,6 +327,7 @@ export class AgentConfigResolver {
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
+      creationSource: agent.creationSource,
     };
   }
 
@@ -353,6 +362,9 @@ export class AgentConfigResolver {
    *  2. Otherwise — or when no per-workspace connection matches — fall back to the first connection
    *     that carries a token. This preserves the historical single-workspace behavior and heals
    *     legacy connections created before `workspace.id` was persisted.
+   *
+   * Rotation-enabled apps get the resolved connection's token refreshed by
+   * `RotatingConnectionTokenService` before it expires; legacy long-lived tokens pass through unchanged.
    */
   async resolveSlackBotToken(
     environmentId: string,
@@ -360,14 +372,18 @@ export class AgentConfigResolver {
     integrationIdentifier: string,
     workspaceId?: string
   ): Promise<string | undefined> {
-    const resolved = await this.findSlackConnectionWithToken(
+    const connection = await this.findSlackConnectionWithToken(
       environmentId,
       organizationId,
       integrationIdentifier,
       workspaceId
     );
 
-    return resolved?.token;
+    if (!connection) {
+      return undefined;
+    }
+
+    return await this.rotatingConnectionTokenService.getConnectionToken(connection);
   }
 
   /**
@@ -389,18 +405,23 @@ export class AgentConfigResolver {
     integrationIdentifier: string,
     workspaceId?: string
   ): Promise<{ token: string; botUserId?: string } | undefined> {
-    const resolved = await this.findSlackConnectionWithToken(
+    const connection = await this.findSlackConnectionWithToken(
       environmentId,
       organizationId,
       integrationIdentifier,
       workspaceId
     );
 
-    if (!resolved) {
+    if (!connection) {
       return undefined;
     }
 
-    const { connection, token } = resolved;
+    const token = await this.rotatingConnectionTokenService.getConnectionToken(connection);
+
+    if (!token) {
+      return undefined;
+    }
+
     const botUserId =
       connection.workspace?.botUserId ??
       (await this.backfillSlackBotUserId(environmentId, organizationId, connection, token));
@@ -408,12 +429,20 @@ export class AgentConfigResolver {
     return { token, botUserId };
   }
 
+  /**
+   * Select the Slack channel connection whose stored auth carries an access token, preferring the
+   * connection bound to `workspaceId` when provided. Token rotation/refresh is applied by the caller
+   * via `RotatingConnectionTokenService`, so the projection includes the fields that service needs
+   * (`providerId`, `_environmentId`, `_organizationId`).
+   */
   private async findSlackConnectionWithToken(
     environmentId: string,
     organizationId: string,
     integrationIdentifier: string,
     workspaceId?: string
-  ): Promise<{ connection: ChannelConnectionEntity; token: string } | undefined> {
+  ): Promise<ChannelConnectionEntity | undefined> {
+    const projection = 'auth workspace identifier integrationIdentifier providerId _environmentId _organizationId';
+
     if (workspaceId) {
       const connection = await this.channelConnectionRepository.findOne(
         {
@@ -422,12 +451,12 @@ export class AgentConfigResolver {
           integrationIdentifier,
           'workspace.id': workspaceId,
         },
-        'auth workspace identifier integrationIdentifier'
+        projection
       );
 
       const decryptedAuth = connection ? decryptChannelConnectionAuth(connection.auth) : undefined;
       if (connection && decryptedAuth?.accessToken) {
-        return { connection, token: decryptedAuth.accessToken };
+        return connection;
       }
     }
 
@@ -437,13 +466,13 @@ export class AgentConfigResolver {
         _organizationId: organizationId,
         integrationIdentifier,
       },
-      'auth workspace identifier integrationIdentifier'
+      projection
     );
 
     for (const connection of connections) {
       const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
       if (decryptedAuth?.accessToken) {
-        return { connection, token: decryptedAuth.accessToken };
+        return connection;
       }
     }
 

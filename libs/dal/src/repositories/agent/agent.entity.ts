@@ -1,4 +1,10 @@
-import type { AgentRuntime, AgentSubscriberAccessEnum, AgentVisibility, ManagedRuntimeConfigDto } from '@novu/shared';
+import type {
+  AgentAnalyticsSource,
+  AgentRuntime,
+  AgentSubscriberAccessEnum,
+  AgentVisibility,
+  ManagedRuntimeConfigDto,
+} from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -65,6 +71,12 @@ export class AgentEntity {
    * (model, systemPrompt, MCP servers, tools) is fetched from the provider on demand.
    */
   managedRuntime?: ManagedRuntimeConfig;
+
+  /**
+   * Where the agent was created from (CLI, dashboard, API). Used for product
+   * behaviour such as the no-bridge onboarding reply; also powers analytics.
+   */
+  creationSource?: AgentAnalyticsSource;
 
   _environmentId: EnvironmentId;
 

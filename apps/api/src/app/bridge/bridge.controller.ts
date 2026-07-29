@@ -32,7 +32,6 @@ import { HealthCheck, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
   ControlValuesLevelEnum,
-  isOutboundSsrfProtectionEnabled,
   PermissionsEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -229,10 +228,11 @@ export class BridgeController {
     @UserSession() user: UserSessionData,
     @Body() body: ValidateBridgeUrlRequestDto
   ): Promise<ValidateBridgeUrlResponseDto> {
-    // Reject SSRF candidates (loopback, link-local, cloud metadata, non-http
-    // schemes, embedded credentials) before issuing the outbound health-check.
-    // The endpoint is gated by BRIDGE_WRITE, but an authenticated operator can
-    // otherwise probe internal hosts via the API process.
+    // Reject SSRF candidates (blocked hostnames, private/link-local IP
+    // literals, non-http schemes, embedded credentials) before issuing the
+    // outbound health-check. The endpoint is gated by BRIDGE_WRITE, but an
+    // authenticated operator can otherwise probe internal hosts via the API
+    // process.
     try {
       assertSafeOutboundUrl(body.bridgeUrl);
     } catch (err) {
@@ -247,9 +247,11 @@ export class BridgeController {
         GetBridgeStatusCommand.create({
           environmentId: user.environmentId,
           statelessBridgeUrl: body.bridgeUrl,
-          // User-supplied bridgeUrl: enforce DNS-pinned SSRF guard at connect
-          // time so IP-literal private addresses cannot reach internal hosts.
-          enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+          // User-supplied bridgeUrl: always enforce DNS-pinned SSRF guard at
+          // connect time so IP-literal private addresses cannot reach internal
+          // hosts. Self-hosted internal bridges must be allow-listed via
+          // NOVU_SAFE_OUTBOUND_ALLOW.
+          enforceSsrfProtection: true,
         })
       );
 
@@ -286,7 +288,7 @@ export class BridgeController {
       GetBridgeStatusCommand.create({
         environmentId: user.environmentId,
         statelessBridgeUrl: body.bridgeUrl,
-        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+        enforceSsrfProtection: true,
       })
     );
   }
@@ -335,7 +337,7 @@ export class BridgeController {
         userId: user._id,
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
         statelessBridgeUrl: body.bridgeUrl,
-        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+        enforceSsrfProtection: true,
       })
     );
 
@@ -348,9 +350,10 @@ export class BridgeController {
     } as GeneratePreviewResponseDto;
   }
 
-  // Reject SSRF candidates (loopback, link-local, cloud metadata, non-http
-  // schemes, embedded credentials) before issuing any outbound request; the
-  // connect-time DNS-pinned guard is enforced on the request itself.
+  // Reject SSRF candidates (blocked hostnames, private/link-local IP literals,
+  // non-http schemes, embedded credentials) before issuing any outbound
+  // request; the connect-time DNS-pinned guard is always enforced on the
+  // request itself.
   private assertSafeStatelessBridgeUrl(bridgeUrl: string): void {
     try {
       assertSafeOutboundUrl(bridgeUrl);

@@ -1667,6 +1667,131 @@ describe('Novu Client', () => {
       });
     });
 
+    it('should pass Liquid-compiled control values to the provider resolver on execute', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+            controlSchema: {
+              type: 'object',
+              properties: {
+                foo: { type: 'string' },
+              },
+              required: ['foo'],
+              additionalProperties: false,
+            } as const,
+            providers: {
+              sendgrid: async ({ controls }) => ({
+                ipPoolName: controls.foo,
+              }),
+            },
+          });
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              pool: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        payload: { pool: 'transactional' },
+        controls: {
+          foo: '{{payload.pool}}',
+        },
+        context: {},
+        env: testEventEnv,
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({
+        sendgrid: {
+          ipPoolName: 'transactional',
+        },
+      });
+    });
+
+    it('should execute the provider resolver on preview when it succeeds', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          providers: {
+            sendgrid: async ({ outputs }) => ({
+              ipPoolName: `preview-${outputs.subject}`,
+            }),
+          },
+        });
+      });
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.PREVIEW,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        payload: {},
+        controls: {},
+        context: {},
+        env: testEventEnv,
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({
+        sendgrid: {
+          ipPoolName: 'preview-Subject',
+        },
+      });
+    });
+
+    it('should fall back to mocked provider output on preview when the resolver throws', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          providers: {
+            sendgrid: () => {
+              throw new Error('Preview resolver failed');
+            },
+          },
+        });
+      });
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.PREVIEW,
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        payload: {},
+        controls: {},
+        context: {},
+        env: testEventEnv,
+      };
+
+      await expect(client.executeWorkflow(event)).resolves.toEqual(
+        expect.objectContaining({
+          providers: expect.objectContaining({
+            sendgrid: expect.any(Object),
+          }),
+        })
+      );
+    });
+
     it('should execute a tool-webhook provider resolver', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.tool('send-webhook', async () => ({ body: 'Default body' }), {
@@ -2281,12 +2406,13 @@ describe('Novu Client', () => {
         env: testEventEnv,
       };
 
+      await expect(client.executeWorkflow(event)).rejects.toThrow(StepExecutionFailedError);
       await expect(client.executeWorkflow(event)).rejects.toThrow(
-        new StepExecutionFailedError('send-email', PostActionEnum.EXECUTE, new Error('Step execution failed'))
+        'Failed to execute Step with id: `send-email`: Step execution failed'
       );
     });
 
-    it('should throw a ProviderExecutionFailed error when preview execution fails', async () => {
+    it('should throw a ProviderExecutionFailed error when provider execution fails', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email(
           'send-email',
@@ -2299,7 +2425,7 @@ describe('Novu Client', () => {
           {
             providers: {
               sendgrid: () => {
-                throw new Error('Preview execution failed');
+                throw new Error('Provider execution failed');
               },
             },
           }
@@ -2320,8 +2446,9 @@ describe('Novu Client', () => {
         env: testEventEnv,
       };
 
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ProviderExecutionFailedError);
       await expect(client.executeWorkflow(event)).rejects.toThrow(
-        new ProviderExecutionFailedError('sendgrid', PostActionEnum.EXECUTE, new Error('Preview execution failed'))
+        'Failed to execute Provider with id: `sendgrid`: Provider execution failed'
       );
     });
 
