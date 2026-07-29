@@ -4,12 +4,14 @@
  *
  * - `restricted`: unknown/anonymous senders are rejected with a managed denial
  *   reply (any runtime) and no LLM dispatch fires. Self-hosted agent create
- *   defaults to restricted; unset `subscriberAccess` also resolves as restricted.
+ *   defaults to restricted.
  * - `open`: on managed agents, unknown senders are auto-provisioned as
  *   lightweight subscribers (marked with agent-platform provenance) so the
  *   agent can reply; on custom-code / self-hosted agents, the turn is forwarded
  *   to the bridge with a null subscriber. Managed agent create defaults to open.
  *   Abuse mitigation is the customer's responsibility in this mode.
+ *
+ * Always persisted on agents (create sets it; legacy rows were backfilled).
  */
 export enum AgentSubscriberAccessEnum {
   OPEN = 'open',

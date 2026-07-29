@@ -68,8 +68,14 @@ export const isClerkEnabled = () => isEEAuthEnabled() && getEEAuthProvider() ===
 export const isBetterAuthEnabled = () => isEEAuthEnabled() && getEEAuthProvider() === 'better-auth';
 
 /**
- * Outbound SSRF pinning applies only on Novu Cloud Enterprise builds.
- * Self-hosted and community deployments may intentionally target internal URLs.
+ * Outbound SSRF DNS-pinning for non-bridge paths (HTTP request steps, provider
+ * webhooks, etc.) applies on Novu Cloud Enterprise builds.
+ *
+ * Bridge user-supplied URLs always enforce DNS pinning regardless of
+ * deployment mode — see ExecuteFrameworkRequest. Self-hosted operators who
+ * need private/internal bridge targets must allow-list them via
+ * NOVU_SAFE_OUTBOUND_ALLOW (link-local / cloud-metadata ranges are never
+ * allow-listed).
  */
 export const isOutboundSsrfProtectionEnabled = (): boolean => {
   const isEnterprise = getEnvVariable('NOVU_ENTERPRISE') === 'true' || getEnvVariable('CI_EE_TEST') === 'true';

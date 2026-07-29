@@ -30,7 +30,12 @@ import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-
 import TruncatedText from '@/components/truncated-text';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { stepSchema } from '@/components/workflow-editor/schema';
-import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
+import {
+  flattenIssues,
+  getFirstErrorMessage,
+  removeStepFromWorkflow,
+  updateStepInWorkflow,
+} from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
 import {
   ConfigureStepTemplateIssueCta,
@@ -180,10 +185,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
 
   const onDeleteStep = () => {
     update(
-      {
-        ...workflow,
-        steps: workflow.steps.filter((s) => s._id !== step._id),
-      },
+      removeStepFromWorkflow(workflow, (s) => s._id !== step._id),
       {
         onSuccess: () => {
           navigate(buildRoute(editWorkflowRoute, { environmentSlug: environment.slug!, workflowSlug: workflow.slug }));

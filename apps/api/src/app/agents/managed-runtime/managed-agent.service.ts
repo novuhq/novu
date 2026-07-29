@@ -20,6 +20,7 @@ import { AgentConversationService } from '../conversation-runtime/conversation/a
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
+import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
@@ -86,7 +87,7 @@ export class ManagedAgentService implements OnModuleInit {
   ): Promise<ManagedAgentDispatchResult> {
     await this.demoQuota.assertAllowed(context, agent);
 
-    // Backfill Novu-owned platform config (e.g. novu_tools) on agents created before the
+    // Backfill Novu-owned platform config (e.g. novu_tool_catalog) on agents created before the
     // current definition version. Fail-open: never blocks the message.
     await this.agentRuntimeDefinition.reconcileIfStale({
       agentId: agent._id,
@@ -408,8 +409,8 @@ export class ManagedAgentService implements OnModuleInit {
       String(context.conversation._id)
     );
 
+    // TODO: should we persist just message activities? or all activities (tool calls, approvals, signals, etc.)?
     const messages: Message[] = history
-      // TODO: should we persist just message activities? or all activities (tool calls, approvals, signals, etc.)?
       .filter((entry) => entry.type === ConversationActivityTypeEnum.MESSAGE)
       .reverse()
       .map((entry) => ({
@@ -417,7 +418,9 @@ export class ManagedAgentService implements OnModuleInit {
         content: entry.content,
       }));
 
-    return messages;
+    // New Anthropic session (no externalSessionId) — collapse so Thalamus does not
+    // re-run every historical USER turn as a live event on reopen after resolve.
+    return collapseHistoryForNewSession(messages, context.userMessageText);
   }
 
   private async resolveVaultIdsForTurn(

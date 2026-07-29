@@ -34,7 +34,6 @@ import {
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   FeatureFlagsKeysEnum,
-  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
@@ -306,12 +305,12 @@ export class ParseEventRequest {
         environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
-        // User-supplied stateless bridgeUrl: pin the connection to a validated
-        // public IP and re-validate every redirect so IP literals like
-        // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
+        // User-supplied stateless bridgeUrl: always pin the connection to a
+        // validated public IP and re-validate every redirect. Self-hosted
+        // internal bridges must be allow-listed via NOVU_SAFE_OUTBOUND_ALLOW.
         // The downstream EXECUTE call from the worker enforces the same guard
         // — see `apps/worker/src/app/workflow/usecases/execute-bridge-job`.
-        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+        enforceSsrfProtection: true,
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
@@ -326,9 +325,10 @@ export class ParseEventRequest {
   // hosts (loopback, RFC1918, link-local 169.254.169.254, cloud metadata)
   // and have the API + worker process fan out to those targets.
   //
-  // The synchronous `assertSafeOutboundUrl` check rejects the obvious vectors
-  // (non-http schemes, embedded credentials, blocked hostnames). The
-  // connect-time DNS-pinned guard against IP-literal private addresses is
+  // The synchronous `assertSafeOutboundUrl` check rejects non-http schemes,
+  // embedded credentials, blocked hostnames, and private/link-local IP
+  // literals (unless allow-listed via NOVU_SAFE_OUTBOUND_ALLOW). The
+  // connect-time DNS-pinned guard against hostname→private resolution is
   // applied via `enforceSsrfProtection: true` on the actual outbound request.
   private assertSafeBridgeUrl(bridgeUrl: string): void {
     try {

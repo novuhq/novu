@@ -104,6 +104,12 @@ export enum FeatureFlagsKeysEnum {
   IS_DEMO_MANAGED_CLAUDE_ENABLED = 'IS_DEMO_MANAGED_CLAUDE_ENABLED',
   /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
   IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
+  /**
+   * Enable the agent web-chat channel (subscriber `/v1/web-chat/*`, useAgentChat wayfinder).
+   * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
+   * `IS_AGENT_WEB_CHAT_ENABLED` when self-hosted (`VITE_IS_AGENT_WEB_CHAT_ENABLED` for dashboard).
+   */
+  IS_AGENT_WEB_CHAT_ENABLED = 'IS_AGENT_WEB_CHAT_ENABLED',
   /** Enable the "What's next" section on the agent overview. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_WHATS_NEXT_ENABLED` when self-hosted. */
   IS_AGENT_WHATS_NEXT_ENABLED = 'IS_AGENT_WHATS_NEXT_ENABLED',
   /** Enable the MS Teams subscriber-rollout "What's next" guide (distribute the bot + connect end users) and its post-connect "Continue" CTA. When off, MS Teams shows the generic continue note and hides the rollout guide. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED` when self-hosted. */
@@ -161,6 +167,15 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
   /**
+   * Emit a "step conditions matched" execution detail when a step's conditions
+   * pass and the step executes (v2 skip conditions, HTTP Request steps, and
+   * legacy v1 filters including webhook filters). When off, condition results
+   * are only persisted when a step is skipped. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED`
+   * when self-hosted.
+   */
+  IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED = 'IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED',
+  /**
    * Stop embedding the fully populated workflow step (message template
    * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
    * schemas, etc.) onto every job's `step`. When enabled, new jobs persist a
@@ -175,12 +190,15 @@ export enum FeatureFlagsKeysEnum {
   IS_JOB_STEP_DEDUP_ENABLED = 'IS_JOB_STEP_DEDUP_ENABLED',
   /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
+
   /**
-   * Enable the Tool webhook provider in the integrations catalog. Keep off until
-   * the provider UX/send path is polished. Create the boolean in LaunchDarkly for
-   * cloud, or set `VITE_IS_TOOL_WEBHOOK_PROVIDER_ENABLED` when self-hosted.
+   * When true (default), the deprecated per-subscriber chat OAuth routes require
+   * HMAC to be enabled on the Slack integration and a valid subscriber HMAC hash.
+   * Target legacy organizations to false in LaunchDarkly so they can keep the
+   * historical behavior during migration. Self-hosted: set
+   * `IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED=false` to disable enforcement.
    */
-  IS_TOOL_WEBHOOK_PROVIDER_ENABLED = 'IS_TOOL_WEBHOOK_PROVIDER_ENABLED',
+  IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

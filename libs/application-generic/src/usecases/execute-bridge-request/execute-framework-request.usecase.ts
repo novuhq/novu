@@ -7,7 +7,7 @@ import {
   isFrameworkError,
   PostActionEnum,
 } from '@novu/framework/internal';
-import { isOutboundSsrfProtectionEnabled, ResourceOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
@@ -106,11 +106,16 @@ export class ExecuteFrameworkRequest {
 
     this.logger.debug(`Making bridge request to \`${url}\``);
 
+    // Always DNS-pin user- or environment-controlled bridge targets (stateless
+    // bridgeUrl, EXTERNAL origin, or explicit opt-in). Previously this was gated
+    // behind isOutboundSsrfProtectionEnabled() (Cloud EE only), which left
+    // self-hosted deployments with only the incomplete sync hostname denylist.
+    // Legitimate private/internal bridges must be allow-listed via
+    // NOVU_SAFE_OUTBOUND_ALLOW.
     const enforceSsrfProtection =
-      isOutboundSsrfProtectionEnabled() &&
-      (command.enforceSsrfProtection === true ||
-        !!command.statelessBridgeUrl ||
-        command.workflowOrigin === ResourceOriginEnum.EXTERNAL);
+      command.enforceSsrfProtection === true ||
+      !!command.statelessBridgeUrl ||
+      command.workflowOrigin === ResourceOriginEnum.EXTERNAL;
 
     try {
       const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({

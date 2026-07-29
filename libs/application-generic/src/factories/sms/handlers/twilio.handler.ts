@@ -11,6 +11,7 @@ export class TwilioHandler extends BaseSmsHandler {
       accountSid: credentials.accountSid,
       authToken: credentials.token,
       from: credentials.from,
+      region: credentials.region,
     });
   }
 }

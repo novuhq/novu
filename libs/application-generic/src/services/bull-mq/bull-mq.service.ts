@@ -13,6 +13,7 @@ import {
   ConnectionOptions as RedisConnectionOptions,
   Worker,
   WorkerOptions,
+  UnrecoverableError,
 } from 'bullmq';
 
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
@@ -37,6 +38,7 @@ export {
   Worker,
   WorkerOptions,
   BulkJobOptions,
+  UnrecoverableError,
 };
 
 export class BullMqService {

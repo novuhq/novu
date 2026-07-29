@@ -4,9 +4,11 @@ import {
   buildNovuSignatureHeader,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  CreateStepConditionsPassedDetail,
   DetailEnum,
   dashboardSanitizeControlValues,
   evaluateRules,
+  extractRuleVariables,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   HttpClientService,
@@ -50,6 +52,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     private logger: PinoLogger,
     private getDecryptedSecretKey: GetDecryptedSecretKey,
     private executeBridgeJob: ExecuteBridgeJob,
+    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail,
     protected messageRepository: MessageRepository,
     protected createExecutionDetails: CreateExecutionDetails
   ) {
@@ -61,7 +64,8 @@ export class ExecuteHttpRequestStep extends SendMessageType {
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     const controlValues = await this.fetchControlValues(command);
     const compileContext = await this.buildCompileContext(command);
-    const shouldSkip = this.evaluateSkipCondition(controlValues, compileContext);
+    const skipRules = getSkipRules(controlValues);
+    const shouldSkip = skipRules ? this.evaluateSkipCondition(skipRules, compileContext) : false;
 
     if (shouldSkip) {
       await this.createExecutionDetails.execute(
@@ -83,6 +87,14 @@ export class ExecuteHttpRequestStep extends SendMessageType {
           detail: DeliveryLifecycleDetail.USER_STEP_CONDITION,
         },
       };
+    }
+
+    if (skipRules) {
+      await this.createStepConditionsPassedDetail.execute({
+        job: command.job,
+        conditions: skipRules,
+        evaluatedValues: extractRuleVariables(skipRules, compileContext),
+      });
     }
 
     const { skip: _skip, ...controlValuesWithoutSkip } = controlValues;
@@ -370,15 +382,9 @@ export class ExecuteHttpRequestStep extends SendMessageType {
   }
 
   private evaluateSkipCondition(
-    controlValues: Record<string, unknown>,
+    skipRules: RulesLogic<AdditionalOperation>,
     compileContext: Record<string, unknown>
   ): boolean {
-    const skipRules = controlValues.skip as RulesLogic<AdditionalOperation> | undefined;
-
-    if (!skipRules || (typeof skipRules === 'object' && Object.keys(skipRules).length === 0)) {
-      return false;
-    }
-
     const { result, error } = evaluateRules(skipRules, compileContext);
 
     if (error) {
@@ -418,6 +424,16 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     return rawControls;
   }
+}
+
+function getSkipRules(controlValues: Record<string, unknown>): RulesLogic<AdditionalOperation> | undefined {
+  const skipRules = controlValues.skip as RulesLogic<AdditionalOperation> | undefined;
+
+  if (!skipRules || (typeof skipRules === 'object' && Object.keys(skipRules).length === 0)) {
+    return undefined;
+  }
+
+  return skipRules;
 }
 
 function tryParseJson(text: string): unknown {

@@ -1,4 +1,4 @@
-import { ContentIssueEnum, getToolProviderPrimaryContentKey, type ToolContentOverrideProviderId } from '@novu/shared';
+import { ContentIssueEnum, getToolProviderPrimaryContentKey } from '@novu/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
@@ -8,11 +8,17 @@ import { SectionHeader } from '@/components/workflow-editor/steps/http-request/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { getUnsupportedToolOverrideKeys, type ToolProviderOverrides } from './tool-content-source';
+import {
+  type DashboardToolContentOverrideProviderId,
+  getUnsupportedToolOverrideKeys,
+  type ToolProviderOverrides,
+  WEBHOOK_TOOL_PROVIDER_ID,
+} from './tool-content-source';
 import { createToolOverrideCompletionSource } from './tool-override-autocomplete';
-import { getToolOverrideFieldDefaultValue } from './tool-override-field-schema';
+import { getToolOverrideFieldDefaultValue, type OverrideFieldSchema } from './tool-override-field-schema';
 import { findDuplicateRootKey } from './tool-override-json';
 import { ToolOverrideSupportedFields } from './tool-override-supported-fields';
+import { formatWebhookSchemaSourceLabel, type WebhookSchemaSourceRef } from './webhook-payload-schema';
 
 const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
@@ -43,19 +49,24 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
 }
 
 type ToolProviderOverrideEditorProps = {
-  providerId: ToolContentOverrideProviderId;
-  onDraftParseValidityChange?: (providerId: ToolContentOverrideProviderId, isParseValid: boolean) => void;
+  providerId: DashboardToolContentOverrideProviderId;
+  fieldSchemas?: Record<string, OverrideFieldSchema>;
+  ignoredSchemaSources?: WebhookSchemaSourceRef[];
+  onDraftParseValidityChange?: (providerId: DashboardToolContentOverrideProviderId, isParseValid: boolean) => void;
 };
 
 export function ToolProviderOverrideEditor({
   providerId,
+  fieldSchemas,
+  ignoredSchemaSources = [],
   onDraftParseValidityChange,
 }: ToolProviderOverrideEditorProps) {
   const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const primaryKey = getToolProviderPrimaryContentKey(providerId);
+  const isWebhook = providerId === WEBHOOK_TOOL_PROVIDER_ID;
+  const primaryKey = isWebhook ? undefined : getToolProviderPrimaryContentKey(providerId);
 
   const [draft, setDraft] = useState(() =>
     formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined)?.[providerId])
@@ -116,7 +127,10 @@ export function ToolProviderOverrideEditor({
 
   const usedDraftKeys = useMemo(() => new Set(Object.keys(parsedDraft ?? {})), [parsedDraft]);
 
-  const completionSources = useMemo(() => [createToolOverrideCompletionSource(providerId)], [providerId]);
+  const completionSources = useMemo(
+    () => [createToolOverrideCompletionSource(providerId, fieldSchemas)],
+    [fieldSchemas, providerId]
+  );
 
   useEffect(() => {
     onDraftParseValidityChange?.(providerId, !parseError);
@@ -146,7 +160,10 @@ export function ToolProviderOverrideEditor({
               return;
             }
 
-            const next = { ...parsedDraft, [key]: getToolOverrideFieldDefaultValue(providerId, key) };
+            const next = {
+              ...parsedDraft,
+              [key]: getToolOverrideFieldDefaultValue(providerId, key, fieldSchemas),
+            };
             setDraft(formatOverrideJson(next));
             writeProviderOverride(next);
           };
@@ -155,10 +172,15 @@ export function ToolProviderOverrideEditor({
             <>
               <SectionHeader
                 label="Override fields"
-                tooltip={`These fields merge over your default content. "${primaryKey}" falls back to the default message unless set here. Supports Liquid variables inside string values.`}
+                tooltip={
+                  isWebhook
+                    ? 'Webhook overrides replace default content and accept arbitrary JSON object keys.'
+                    : `These fields merge over your default content. "${primaryKey}" falls back to the default message unless set here. Supports Liquid variables inside string values.`
+                }
                 rightSlot={
                   <ToolOverrideSupportedFields
                     providerId={providerId}
+                    fieldSchemas={fieldSchemas}
                     usedKeys={usedDraftKeys}
                     canInsert={!parseError}
                     onInsertField={handleInsertField}
@@ -170,7 +192,9 @@ export function ToolProviderOverrideEditor({
                   size="2xs"
                   multiline={true}
                   indentWithTab={true}
-                  placeholder={`{\n  "${primaryKey}": "{{payload.title}}"\n}`}
+                  placeholder={
+                    isWebhook ? '{\n  "event": "{{payload.title}}"\n}' : `{\n  "${primaryKey}": "{{payload.title}}"\n}`
+                  }
                   value={draft}
                   isAllowedVariable={isAllowedVariable}
                   variables={variables}
@@ -210,15 +234,30 @@ export function ToolProviderOverrideEditor({
                       <span className="text-destructive text-xs">{message}</span>
                     </div>
                   ))}
-                  <div className="text-text-soft flex items-start gap-1 px-1 py-0.5">
-                    <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
-                    <span className="text-xs">
-                      Fields merge over default content. <code className="text-[11px]">{primaryKey}</code> falls back to
-                      your default message unless set here.
-                    </span>
-                  </div>
                 </>
               )}
+              <div className="text-text-soft flex items-start gap-1 px-1 py-0.5">
+                <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
+                {isWebhook ? (
+                  <span className="text-xs">
+                    Non-empty JSON replaces default content and is sent to every active webhook integration. Each
+                    integration merges its own body template beneath this payload. Empty <code>{'{}'}</code> uses
+                    default content.
+                    {ignoredSchemaSources.length > 0 && (
+                      <>
+                        {' '}
+                        Autocomplete is unavailable for:{' '}
+                        {ignoredSchemaSources.map(formatWebhookSchemaSourceLabel).join(', ')}.
+                      </>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-xs">
+                    Fields merge over default content. <code className="text-[11px]">{primaryKey}</code> falls back to
+                    your default message unless set here.
+                  </span>
+                )}
+              </div>
             </>
           );
         }}

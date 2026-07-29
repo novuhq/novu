@@ -413,6 +413,7 @@ export class HandleAgentReply {
         channel,
         agentIdentifier: command.agentIdentifier,
         agentName,
+        activityIdentifier: command.activityIdentifier,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
