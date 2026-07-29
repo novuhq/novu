@@ -4,13 +4,6 @@ const toolOutputSchema = {
   type: 'object',
   properties: {
     body: { type: 'string' },
-    providerOverrides: {
-      type: 'object',
-      additionalProperties: {
-        type: 'object',
-        additionalProperties: true,
-      },
-    },
   },
   required: ['body'],
   additionalProperties: false,

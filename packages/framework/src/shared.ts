@@ -170,6 +170,7 @@ export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  WebexMessaging = 'webex-messaging',
   Mattermost = 'mattermost',
   Ryver = 'ryver',
   Zulip = 'zulip',
@@ -177,7 +178,9 @@ export enum ChatProviderIdEnum {
   GetStream = 'getstream',
   RocketChat = 'rocket-chat',
   WhatsAppBusiness = 'whatsapp-business',
+  Line = 'line',
   ChatWebhook = 'chat-webhook',
+  Novu = 'novu-slack',
   Telegram = 'telegram',
   Sendblue = 'sendblue',
 }
