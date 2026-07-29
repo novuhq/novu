@@ -60,6 +60,7 @@ export class NotificationEntity {
   critical?: boolean;
   contextKeys?: string[];
   lastEmittedDeliveryEvent?: DeliveryLifecycleEventType;
+  lastEmittedWorkflowStatusEvent?: 'workflow_run_status_completed' | 'workflow_run_status_error';
 }
 
 export type NotificationDBModel = ChangePropsValueType<

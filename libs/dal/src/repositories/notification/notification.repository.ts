@@ -415,4 +415,37 @@ export class NotificationRepository extends BaseRepository<
       previousEvent: result?.lastEmittedDeliveryEvent as DeliveryLifecycleEventType | undefined,
     };
   }
+
+  /**
+   * Atomically records the first terminal workflow status event for a notification.
+   * Once completed or error is set, neither is emitted again.
+   */
+  async tryWorkflowStatusTransition(
+    notificationId: string,
+    organizationId: string,
+    environmentId: string,
+    targetEvent: 'workflow_run_status_completed' | 'workflow_run_status_error'
+  ): Promise<{
+    isUpdated: boolean;
+    previousEvent?: 'workflow_run_status_completed' | 'workflow_run_status_error';
+  }> {
+    const result = await this.findOneAndUpdate(
+      {
+        _id: notificationId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        $or: [{ lastEmittedWorkflowStatusEvent: { $exists: false } }, { lastEmittedWorkflowStatusEvent: null }],
+      },
+      { $set: { lastEmittedWorkflowStatusEvent: targetEvent } },
+      { returnDocument: 'before' }
+    );
+
+    return {
+      isUpdated: result !== null,
+      previousEvent: result?.lastEmittedWorkflowStatusEvent as
+        | 'workflow_run_status_completed'
+        | 'workflow_run_status_error'
+        | undefined,
+    };
+  }
 }
