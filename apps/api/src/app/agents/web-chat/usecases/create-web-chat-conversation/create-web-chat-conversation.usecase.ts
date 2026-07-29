@@ -5,8 +5,8 @@ import { AgentConversationService } from '../../../conversation-runtime/conversa
 import { AgentInboundHandler } from '../../../conversation-runtime/ingress/inbound-turn.handler';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
-import { WebChatPublicationService } from '../../web-chat-publication.service';
 import { buildWebChatMessage, buildWebChatThread } from '../../web-chat-inbound.adapter';
+import { WebChatPublicationService } from '../../web-chat-publication.service';
 import { CreateWebChatConversationCommand } from './create-web-chat-conversation.command';
 
 @Injectable()

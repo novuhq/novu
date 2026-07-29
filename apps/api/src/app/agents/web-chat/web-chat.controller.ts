@@ -1,7 +1,10 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { SubscriberSession, type SubscriberSession as SubscriberSessionData } from '../../shared/framework/user.decorator';
+import {
+  SubscriberSession,
+  type SubscriberSession as SubscriberSessionData,
+} from '../../shared/framework/user.decorator';
 import { AgentConversationEnabledGuard } from '../shared/agent-conversation-enabled.guard';
 import {
   CreateWebChatConversationRequestDto,

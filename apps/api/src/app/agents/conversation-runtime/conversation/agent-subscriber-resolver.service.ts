@@ -424,10 +424,7 @@ export class AgentSubscriberResolver {
     environmentId: string;
     platformUserId: string;
   }): Promise<SubscriberResolution> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(
-      params.environmentId,
-      params.platformUserId
-    );
+    const subscriber = await this.subscriberRepository.findBySubscriberId(params.environmentId, params.platformUserId);
 
     if (!subscriber) {
       this.logger.debug(`No subscriber found for web chat identity ${params.platformUserId}`);

@@ -36,8 +36,6 @@ import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
 import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
-import { WebChatController } from './web-chat/web-chat.controller';
-import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -88,6 +86,8 @@ import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.fi
 import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
 import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
 import { USE_CASES } from './usecases';
+import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
 
 @Module({
   imports: [

@@ -1,6 +1,6 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 
 export class ListWebChatConversationEventsQueryDto {
   @IsOptional()

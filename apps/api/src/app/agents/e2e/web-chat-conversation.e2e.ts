@@ -10,8 +10,8 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
-  activityRepository,
   AgentTestContext,
+  activityRepository,
   conversationRepository,
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
@@ -57,10 +57,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   }
 
   function createConversation(body: { agentId: string; text: string }, token = subscriberToken) {
-    return ctx.session.testAgent
-      .post('/v1/web-chat/conversations')
-      .set('Authorization', `Bearer ${token}`)
-      .send(body);
+    return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
   }
 
   function getEvents(conversationIdentifier: string, token = subscriberToken) {
@@ -105,15 +102,13 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       '*'
     );
     expect(conversation).to.exist;
-    expect(conversation!.participants.some(
-      (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER && p.id === ctx.session.subscriberId
-    )).to.equal(true);
+    expect(
+      conversation!.participants.some(
+        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER && p.id === ctx.session.subscriberId
+      )
+    ).to.equal(true);
 
-    const activities = await activityRepository.findByConversation(
-      ctx.session.environment._id,
-      conversation!._id,
-      20
-    );
+    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id, 20);
     const subscriberMessage = activities.find(
       (a) =>
         a.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER &&
@@ -169,8 +164,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(eventsRes.body.events.length).to.be.greaterThan(0);
 
     const agentMessageEvent = eventsRes.body.events.find(
-      (envelope: AgentEventEnvelope) =>
-        envelope.event.type === 'message' && envelope.event.messageId === messageId
+      (envelope: AgentEventEnvelope) => envelope.event.type === 'message' && envelope.event.messageId === messageId
     );
     expect(agentMessageEvent).to.exist;
     expect(agentMessageEvent.event.content.markdown).to.equal(`Agent reply ${messageId}`);

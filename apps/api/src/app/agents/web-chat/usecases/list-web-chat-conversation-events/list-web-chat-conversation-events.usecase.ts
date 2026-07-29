@@ -35,8 +35,7 @@ export class ListWebChatConversationEvents {
 
     const isParticipant = conversation.participants.some(
       (participant) =>
-        participant.type === ConversationParticipantTypeEnum.SUBSCRIBER &&
-        participant.id === command.subscriberId
+        participant.type === ConversationParticipantTypeEnum.SUBSCRIBER && participant.id === command.subscriberId
     );
 
     if (!isParticipant) {
