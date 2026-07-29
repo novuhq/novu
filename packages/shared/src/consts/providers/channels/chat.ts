@@ -6,6 +6,7 @@ import {
   grafanaOnCallConfig,
   lineConfig,
   msTeamsConfig,
+  novuWebChatConfig,
   rocketChatConfig,
   sendblueConfig,
   slackConfigLegacy,
@@ -144,5 +145,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: sendblueConfig,
     docReference: 'https://docs.sendblue.com',
     logoFileName: { light: 'sendblue.svg', dark: 'sendblue.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.NovuWebChat,
+    displayName: 'Novu Web Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: novuWebChatConfig,
+    docReference: `https://docs.novu.co/platform/integrations/chat/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
 ];

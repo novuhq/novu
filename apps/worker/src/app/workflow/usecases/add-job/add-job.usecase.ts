@@ -425,6 +425,16 @@ export class AddJob {
 
     await this.queueJob({ job, delay: 0, untilDate: null });
 
+    /*
+     * The message now exists, so the claim-to-enqueue crash window is over: without
+     * this, a redelivered parent would treat a backlogged-but-live child as stranded
+     * and enqueue a duplicate message. Only claimed children carry the flag — chain
+     * roots enter as PENDING and skip the write.
+     */
+    if (job.awaitingEnqueue) {
+      await this.jobRepository.markEnqueued(command.environmentId, job._id);
+    }
+
     return {
       workflowStatus: null,
       deliveryLifecycleStatus: null,

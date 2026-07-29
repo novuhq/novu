@@ -56,6 +56,11 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       error: sinon.stub(),
     };
 
+    const createStepConditionsPassedDetail = {
+      execute: sinon.stub().resolves(undefined),
+      isEnabled: sinon.stub().resolves(false),
+    };
+
     const usecase = new ExecuteHttpRequestStep(
       jobRepository as never,
       httpClientService as never,
@@ -64,6 +69,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       logger as never,
       getDecryptedSecretKey as never,
       executeBridgeJob as never,
+      createStepConditionsPassedDetail as never,
       {} as never,
       createExecutionDetails as never
     );

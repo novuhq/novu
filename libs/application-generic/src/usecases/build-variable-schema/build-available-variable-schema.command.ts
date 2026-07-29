@@ -10,6 +10,15 @@ import { WorkflowForVariableSchema } from '../../types/workflow-mapper.types';
 export interface IOptimisticStepInfo {
   stepId: string;
   type: StepTypeEnum;
+  /**
+   * In-flight control values from the upsert/sync payload.
+   * Needed so HTTP response schemas are available before control values are persisted.
+   */
+  controlValues?: Record<string, unknown>;
+  /**
+   * Persisted step template id in the target environment (when updating an existing workflow).
+   */
+  _id?: string;
 }
 
 export class BuildVariableSchemaCommand extends EnvironmentWithUserCommand {

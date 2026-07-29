@@ -5,6 +5,7 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  CreateStepConditionsPassedDetail,
   DetailEnum,
   GetPreferences,
   GetSubscriberTemplatePreference,
@@ -85,7 +86,8 @@ export class SendMessage {
     private environmentVariableRepository: EnvironmentVariableRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail
   ) {}
 
   @InstrumentUsecase()
@@ -143,6 +145,16 @@ export class SendMessage {
             : DeliveryLifecycleDetail.USER_STEP_CONDITION,
         },
       };
+    }
+
+    // Emitted only after every skip gate (conditions, preferences, bridge skip)
+    // has passed. Channel-level skips further down (e.g. missing email or push
+    // token) are reported by their own execution details.
+    if (command.job.step.filters?.length) {
+      await this.createStepConditionsPassedDetail.execute({
+        job: command.job,
+        conditions: stepCondition.conditions,
+      });
     }
 
     let severity = command.severity;
