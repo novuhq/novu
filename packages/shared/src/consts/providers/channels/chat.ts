@@ -109,7 +109,8 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'WhatsApp Business',
     channel: ChannelTypeEnum.CHAT,
     credentials: whatsAppBusinessConfig,
-    docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
+    docReference:
+      'https://docs.novu.co/platform/integrations/chat/whats-app#whatsapp-business-chat-integration-with-novu',
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
   {
