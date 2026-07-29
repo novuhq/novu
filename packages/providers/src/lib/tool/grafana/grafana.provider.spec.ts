@@ -49,12 +49,28 @@ test('posts an alerting event with defaults to the endpoint webhook URL', async 
     },
     body: JSON.stringify({
       title: 'Disk usage above threshold',
-      message: 'Disk usage above threshold',
       state: 'alerting',
       alert_uid: 'novu:txn-1:sub-1:step-1',
     }),
   });
   expect(result.id).toBe('novu:txn-1:sub-1:step-1');
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('a message override leaves the default content on the title', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new GrafanaProvider();
+  await provider.sendMessage(
+    { content: 'Disk usage above threshold', channelData: channelData() },
+    { message: 'Node db-1 is at 94% of its volume' }
+  );
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body.title).toBe('Disk usage above threshold');
+  expect(body.message).toBe('Node db-1 is at 94% of its volume');
 
   safeOutboundSpy.mockRestore();
 });
@@ -133,8 +149,19 @@ test('truncates title to the defensive 1024-character cap', async () => {
   const body = JSON.parse(call.body as string);
   expect(body.title).toHaveLength(1024);
   expect(body.title.endsWith('…')).toBe(true);
-  // The message field is not truncated.
-  expect(body.message).toHaveLength(1100);
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('omits message entirely when the override does not set it', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new GrafanaProvider();
+  await provider.sendMessage({ content: 'ping', channelData: channelData() }, { state: 'ok' });
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body).not.toHaveProperty('message');
 
   safeOutboundSpy.mockRestore();
 });

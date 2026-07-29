@@ -10,12 +10,12 @@ export const grafanaOverrideJsonSchema = {
   properties: {
     message: {
       type: 'string',
-      description: 'Alert details. Falls back to the default message content when omitted.',
+      description: 'Alert details rendered below the title. Only sent when set.',
     },
     title: {
       type: 'string',
       maxLength: 1024,
-      description: 'Title of the alert group. Falls back to the message content when omitted.',
+      description: 'Title of the alert group. Falls back to the default content when omitted.',
     },
     alert_uid: {
       type: 'string',

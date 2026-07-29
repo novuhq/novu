@@ -85,12 +85,14 @@ describe('tool provider override schemas', () => {
     expect(pagerdutyOverrideJsonSchema.properties?.severity).toBeDefined();
     expect(opsgenieOverrideJsonSchema.properties?.message).toBeDefined();
     expect(opsgenieOverrideJsonSchema.properties?.priority).toBeDefined();
+    expect(grafanaOverrideJsonSchema.properties?.title).toBeDefined();
+    expect(grafanaOverrideJsonSchema.properties?.message).toBeDefined();
   });
 
   it('maps each override provider to its primary content key', () => {
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.PagerDuty]).toBe('summary');
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Opsgenie]).toBe('message');
-    expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Grafana]).toBe('message');
+    expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Grafana]).toBe('title');
     expect(getToolProviderPrimaryContentKey(ToolProviderIdEnum.PagerDuty)).toBe('summary');
   });
 });

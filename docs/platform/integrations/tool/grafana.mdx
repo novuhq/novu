@@ -21,7 +21,7 @@ Every subscriber routes to their own Grafana OnCall integration, so each subscri
 
 <Steps>
   <Step title="Open Integrations in Grafana IRM">
-    In Grafana IRM (or OnCall), go to the **Integrations** tab and click **New integration**.
+    In Grafana IRM, go to the **Integrations** tab and click **New integration**.
   </Step>
 
   <Step title="Create a Formatted Webhook integration">
@@ -270,8 +270,8 @@ Once a subscriber has a Grafana endpoint, add a **Tool** step with Grafana to yo
     In the workflow editor, add a step and select **Tool** as the channel. Choose the Grafana integration you created.
   </Step>
 
-  <Step title="Write the alert message">
-    The step content becomes the alert `message` (and default `title`) in the Formatted Webhook request. Use dynamic placeholders such as `{{payload.orderNumber}}` or `{{subscriber.firstName}}`.
+  <Step title="Write the alert title">
+    The step content becomes the alert group `title` in the Formatted Webhook request. Use dynamic placeholders such as `{{payload.orderNumber}}` or `{{subscriber.firstName}}`. To add detail below the title, set a `message` override on the step.
   </Step>
 
   <Step title="Trigger the workflow">
@@ -415,8 +415,8 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 
 | Field | Default | Override with |
 | --- | --- | --- |
-| `message` | Step content | Step content or a `message` override on the step. |
 | `title` | Step content (truncated to 1024 characters) | `title` step override. |
+| `message` | Not sent | `message` override on the step. |
 | `state` | `alerting` | `state` step override (`alerting`, `ok`). Send `ok` with the same `alert_uid` to auto-resolve. |
 | `alert_uid` | Deterministic, derived from the workflow `transactionId`, `subscriberId`, and step ID. | Explicit `alert_uid` step override. |
 | `link_to_upstream_details` | Not sent | `link_to_upstream_details` step override. |

@@ -22,7 +22,7 @@ const DEFAULT_STATE: GrafanaAlertState = 'alerting';
 // Grafana documents no hard limit on the formatted-webhook title; cap defensively.
 const TITLE_MAX_LENGTH = 1024;
 
-const OPTIONAL_STRING_FIELDS = ['link_to_upstream_details', 'image_url'] as const;
+const OPTIONAL_STRING_FIELDS = ['message', 'link_to_upstream_details', 'image_url'] as const;
 
 /**
  * Keys consumed by explicit Formatted Webhook mapping. Extras pass through
@@ -56,7 +56,6 @@ export class GrafanaProvider extends BaseProvider implements IToolProvider {
     const overrides = data.body;
     const content = overrides.content as string;
 
-    const message = (overrides.message as string) || content;
     const title = this.truncateTitle((overrides.title as string) || content);
     const state = this.resolveState(overrides.state);
     const alertUid = this.resolveAlertUid(overrides.alert_uid, options);
@@ -65,7 +64,6 @@ export class GrafanaProvider extends BaseProvider implements IToolProvider {
     const body: Record<string, unknown> = {
       ...this.extractExtras(overrides),
       title,
-      message,
       state,
       ...(alertUid ? { alert_uid: alertUid } : {}),
     };

@@ -10,7 +10,11 @@ import { useMemo } from 'react';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { DEFAULT_CONTENT_SOURCE, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
+import {
+  DEFAULT_CONTENT_SOURCE,
+  type ToolOverrideProviderOption,
+  WEBHOOK_TOOL_PROVIDER_ID,
+} from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
@@ -32,6 +36,17 @@ const EMPTY_BODY_PLACEHOLDER = 'Default content will be delivered to enabled too
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
+
+function formatConnectedPrimaryContentHints(providerOptions: ToolOverrideProviderOption[]): string {
+  return providerOptions
+    .filter((option) => option.isConnected)
+    .flatMap((option) => {
+      const primaryKey = getToolProviderPrimaryContentKey(option.providerId);
+
+      return primaryKey ? [`${option.displayName}: ${primaryKey}`] : [];
+    })
+    .join(' · ');
+}
 
 function extractToolPreview(previewData?: GeneratePreviewResponseDto): ToolRenderOutput | undefined {
   const previewResult = previewData?.result as ToolPreviewResult | undefined;
@@ -108,7 +123,13 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
 
   const getHintText = () => {
     if (!activeProviderId) {
-      return "This message is delivered to every enabled tool provider, mapped to each provider's primary content field.";
+      const defaultContentMapping = formatConnectedPrimaryContentHints(providerOptions);
+
+      if (!defaultContentMapping) {
+        return 'Delivered to every enabled tool provider.';
+      }
+
+      return `Delivered to every enabled tool provider — ${defaultContentMapping}.`;
     }
 
     if (activeProviderId === WEBHOOK_TOOL_PROVIDER_ID) {
@@ -121,15 +142,15 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       }
 
       if (!body) {
-        return `Override merged over the default content. "${defaultContentKey}" is taken from your default message (currently empty).`;
+        return `Override merged over the default content. "${defaultContentKey}" is taken from your default content (currently empty).`;
       }
 
-      return `Override merged over the default content. "${defaultContentKey}" is taken from your default message.`;
+      return `Override merged over the default content. "${defaultContentKey}" is taken from your default content.`;
     }
 
     const primaryKey = getToolProviderPrimaryContentKey(activeProviderId);
 
-    return `No override for this provider. Default message maps to "${primaryKey}".`;
+    return `No override for this provider. Default content maps to "${primaryKey}".`;
   };
 
   const renderPanel = () => {
@@ -165,7 +186,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     return <div className={`${PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
   };
 
-  let previewLabel = 'Message';
+  let previewLabel = 'Default content';
   if (activeProviderId) {
     previewLabel = 'Merged override fields';
   }
