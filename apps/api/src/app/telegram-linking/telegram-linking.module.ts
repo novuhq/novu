@@ -21,6 +21,7 @@ import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/g
 import { IssueTelegramMobileLink } from './issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
 import { IssueTelegramSubscriberLink } from './issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { LinkTelegramChatToSubscriber } from './link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { ProcessIntegrationTelegramWebhook } from './process-integration-telegram-webhook/process-integration-telegram-webhook.usecase';
 import { TelegramAgentLinkResolver } from './telegram-agent-link.resolver';
 import { TelegramMobileLinkTokenService } from './telegram-mobile-link-token.service';
 import { TelegramStartCodeService } from './telegram-start-code.service';
@@ -32,6 +33,7 @@ const USE_CASES = [
   IssueTelegramMobileLink,
   IssueTelegramSubscriberLink,
   LinkTelegramChatToSubscriber,
+  ProcessIntegrationTelegramWebhook,
 ];
 
 const SERVICES = [TelegramAgentLinkResolver, TelegramMobileLinkTokenService, TelegramStartCodeService];

@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { TELEGRAM_INTEGRATION_LINK_SCOPE } from '../telegram-linking.constants';
 import { LinkTelegramChatToSubscriberCommand } from './link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from './link-telegram-chat-to-subscriber.usecase';
 
@@ -93,6 +94,28 @@ describe('LinkTelegramChatToSubscriber', () => {
     expect(cmd.endpoint).to.deep.equal({ chatId: '99999' });
     expect(cmd.subscriberId).to.equal('subscriber-1');
     expect(cmd.integrationIdentifier).to.equal('telegram-main');
+  });
+
+  it('creates an endpoint without agent validation in integration-only mode', async () => {
+    const agentFindOne = sinon.stub();
+    const agentIntegrationFindOne = sinon.stub();
+    const { usecase, createChannelEndpoint } = makeUsecase({
+      agentFindOne,
+      agentIntegrationFindOne,
+    });
+
+    const result = await usecase.execute(
+      LinkTelegramChatToSubscriberCommand.create({
+        ...baseCommand,
+        agentIdentifier: TELEGRAM_INTEGRATION_LINK_SCOPE,
+      })
+    );
+
+    expect(result.created).to.equal(true);
+    expect(result.agentIdentifier).to.equal(TELEGRAM_INTEGRATION_LINK_SCOPE);
+    expect(agentFindOne.called).to.equal(false);
+    expect(agentIntegrationFindOne.called).to.equal(false);
+    expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
   });
 
   it('is idempotent when the same chatId is already mapped to the same subscriber', async () => {

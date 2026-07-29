@@ -16,6 +16,10 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
 import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
+import { TELEGRAM_INTEGRATION_LINK_SCOPE } from '../telegram-linking.constants';
+import { buildTelegramBotApiUrl } from '../telegram-webhook.utils';
+import { ConfigureTelegramWebhookCommand } from '../configure-telegram-webhook/configure-telegram-webhook.command';
+import { ConfigureTelegramWebhook } from '../configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { TelegramStartCodeService } from '../telegram-start-code.service';
 import { IssueTelegramSubscriberLinkCommand } from './issue-telegram-subscriber-link.command';
 
@@ -44,7 +48,8 @@ export class IssueTelegramSubscriberLink {
     private readonly integrationRepository: IntegrationRepository,
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private readonly startCodeService: TelegramStartCodeService,
-    private readonly agentLinkResolver: TelegramAgentLinkResolver
+    private readonly agentLinkResolver: TelegramAgentLinkResolver,
+    private readonly configureTelegramWebhook: ConfigureTelegramWebhook
   ) {}
 
   async execute(command: IssueTelegramSubscriberLinkCommand): Promise<IssueTelegramSubscriberLinkResult> {
@@ -76,12 +81,25 @@ export class IssueTelegramSubscriberLink {
       );
     }
 
-    const agent = await this.agentLinkResolver.resolve({
+    const agent = await this.agentLinkResolver.resolveOptional({
       integrationId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       botToken,
     });
+
+    const linkScope = agent?.agentIdentifier ?? TELEGRAM_INTEGRATION_LINK_SCOPE;
+
+    if (!agent && !decrypted.token) {
+      await this.configureTelegramWebhook.execute(
+        ConfigureTelegramWebhookCommand.create({
+          userId: 'telegram-subscriber-link',
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          integrationIdentifier: command.integrationIdentifier,
+        })
+      );
+    }
 
     await this.createOrUpdateSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -100,7 +118,7 @@ export class IssueTelegramSubscriberLink {
       const issued = await this.startCodeService.issue({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        agentIdentifier: agent.agentIdentifier,
+        agentIdentifier: linkScope,
         integrationId,
         subscriberId: command.subscriberId,
         context: command.context,
@@ -125,7 +143,7 @@ export class IssueTelegramSubscriberLink {
   }
 
   private async callGetMe(botToken: string): Promise<string> {
-    const telegramUrl = `https://api.telegram.org/bot${botToken}/getMe`;
+    const telegramUrl = buildTelegramBotApiUrl(botToken, 'getMe');
     let lastError: unknown;
 
     for (let attempt = 0; attempt < TELEGRAM_MAX_RETRIES; attempt++) {

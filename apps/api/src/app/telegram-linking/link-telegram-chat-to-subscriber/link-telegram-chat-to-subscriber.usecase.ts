@@ -10,6 +10,7 @@ import {
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { TELEGRAM_INTEGRATION_LINK_SCOPE } from '../telegram-linking.constants';
 import { LinkTelegramChatToSubscriberCommand } from './link-telegram-chat-to-subscriber.command';
 
 export interface LinkTelegramChatToSubscriberResult {
@@ -50,31 +51,38 @@ export class LinkTelegramChatToSubscriber {
       throw new NotFoundException('Telegram integration not found for this link.');
     }
 
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id', 'identifier']
-    );
+    const isIntegrationOnlyLink = command.agentIdentifier === TELEGRAM_INTEGRATION_LINK_SCOPE;
+    let agentIdentifier = command.agentIdentifier;
 
-    if (!agent) {
-      throw new NotFoundException('Agent not found for this link.');
-    }
+    if (!isIntegrationOnlyLink) {
+      const agent = await this.agentRepository.findOne(
+        {
+          identifier: command.agentIdentifier,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_id', 'identifier']
+      );
 
-    const agentLink = await this.agentIntegrationRepository.findOne(
-      {
-        _agentId: agent._id,
-        _integrationId: integration._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
+      if (!agent) {
+        throw new NotFoundException('Agent not found for this link.');
+      }
 
-    if (!agentLink) {
-      throw new NotFoundException('Integration is not linked to this agent.');
+      const agentLink = await this.agentIntegrationRepository.findOne(
+        {
+          _agentId: agent._id,
+          _integrationId: integration._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_id']
+      );
+
+      if (!agentLink) {
+        throw new NotFoundException('Integration is not linked to this agent.');
+      }
+
+      agentIdentifier = agent.identifier;
     }
 
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
@@ -96,7 +104,7 @@ export class LinkTelegramChatToSubscriber {
         return {
           created: false,
           subscriberId: subscriber.subscriberId,
-          agentIdentifier: agent.identifier,
+          agentIdentifier,
         };
       }
 
@@ -124,7 +132,7 @@ export class LinkTelegramChatToSubscriber {
     return {
       created: true,
       subscriberId: subscriber.subscriberId,
-      agentIdentifier: agent.identifier,
+      agentIdentifier,
     };
   }
 }

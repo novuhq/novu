@@ -2,6 +2,8 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
 import Axios from 'axios';
 
+import { buildTelegramBotApiUrl } from './telegram-webhook.utils';
+
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
 const WEBHOOK_AGENT_ID_PATTERN = /\/v1\/agents\/([^/]+)\/webhook\//;
 
@@ -31,13 +33,13 @@ export class TelegramAgentLinkResolver {
     private readonly agentIntegrationRepository: AgentIntegrationRepository
   ) {}
 
-  async resolve(params: {
+  async resolveOptional(params: {
     integrationId: string;
     environmentId: string;
     organizationId: string;
     /** Bot token, supplied only when the caller already decrypted it (configure). */
     botToken?: string;
-  }): Promise<ResolvedTelegramAgent> {
+  }): Promise<ResolvedTelegramAgent | null> {
     const links = await this.agentIntegrationRepository.find(
       {
         _integrationId: params.integrationId,
@@ -48,17 +50,41 @@ export class TelegramAgentLinkResolver {
     );
 
     if (links.length === 0) {
+      return null;
+    }
+
+    return this.resolveFromLinks(links.map((link) => link._agentId), params);
+  }
+
+  async resolve(params: {
+    integrationId: string;
+    environmentId: string;
+    organizationId: string;
+    /** Bot token, supplied only when the caller already decrypted it (configure). */
+    botToken?: string;
+  }): Promise<ResolvedTelegramAgent> {
+    const agent = await this.resolveOptional(params);
+
+    if (!agent) {
       throw new NotFoundException('This Telegram integration is not linked to any agent.');
     }
 
+    return agent;
+  }
+
+  private async resolveFromLinks(
+    candidateAgentIds: string[],
+    params: {
+      environmentId: string;
+      organizationId: string;
+      botToken?: string;
+    }
+  ): Promise<ResolvedTelegramAgent> {
     let agentId: string;
-    if (links.length === 1) {
-      agentId = links[0]._agentId;
+    if (candidateAgentIds.length === 1) {
+      agentId = candidateAgentIds[0];
     } else {
-      agentId = await this.disambiguateByWebhookOwner(
-        links.map((link) => link._agentId),
-        params.botToken
-      );
+      agentId = await this.disambiguateByWebhookOwner(candidateAgentIds, params.botToken);
     }
 
     const agent = await this.agentRepository.findOne(
@@ -87,7 +113,7 @@ export class TelegramAgentLinkResolver {
     let configuredAgentId: string | null = null;
     try {
       const { data } = await Axios.get<TelegramGetWebhookInfoResponse>(
-        `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
+        buildTelegramBotApiUrl(botToken, 'getWebhookInfo'),
         { timeout: TELEGRAM_API_TIMEOUT_MS, maxRedirects: 0, validateStatus: () => true }
       );
       const match = data.result?.url ? WEBHOOK_AGENT_ID_PATTERN.exec(data.result.url) : null;
