@@ -132,7 +132,7 @@ export class UpdateSubscriptionUsecase {
       command.environmentId,
       command.organizationId,
       workflows,
-      command.contextKeys
+      subscription.contextKeys
     );
 
     return this.mapSubscriptionToDto(updatedSubscription, subscriber, topic, preferences);
@@ -143,7 +143,7 @@ export class UpdateSubscriptionUsecase {
     subscription: TopicSubscribersEntity,
     workflows: NotificationTemplateEntity[]
   ): Promise<void> {
-    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId);
+    const contextQuery = await this.buildContextQuery(subscription.contextKeys, command.organizationId);
 
     await this.preferencesRepository.delete({
       _environmentId: command.environmentId,
@@ -406,6 +406,11 @@ export class UpdateSubscriptionUsecase {
 
   private async buildContextQuery(contextKeys?: string[], organizationId?: string): Promise<Record<string, unknown>> {
     if (!organizationId) {
+      return {};
+    }
+
+    // Admin API: contextKeys undefined → no context filtering (identifier is sufficient)
+    if (contextKeys === undefined) {
       return {};
     }
 
