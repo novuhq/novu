@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { ConversationChannel, ConversationEntity, ConversationRepository } from '@novu/dal';
+import {
+  ConversationActivityRepository,
+  ConversationChannel,
+  ConversationEntity,
+  ConversationRepository,
+} from '@novu/dal';
 import { AGENT_AUTH_METADATA_KEYS } from '@novu/shared';
 import type { CardElement } from 'chat';
 import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
@@ -23,6 +28,7 @@ import { ConfirmLinkedAuthCardsCommand } from './confirm-linked-auth-cards.comma
 export class ConfirmLinkedAuthCards {
   constructor(
     private readonly conversationRepository: ConversationRepository,
+    private readonly conversationActivityRepository: ConversationActivityRepository,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,
@@ -74,6 +80,20 @@ export class ConfirmLinkedAuthCards {
       return;
     }
 
+    // The auth gate persists whatever id `ctx.reply()` returned. On the SDK event-outbox
+    // path that is a client-minted id (`msg_…`), not a platform message id — the real
+    // platform `ts` lives on the delivered activity keyed by that minted id. Resolve it
+    // before editing, otherwise the platform edit fails with `message_not_found`.
+    const platformMessageId = await this.resolvePlatformMessageId(command.environmentId, conversation._id, messageId);
+    if (!platformMessageId) {
+      this.logger.warn(
+        { conversationId: conversation._id, messageId },
+        'Could not resolve platform message id for pending auth card; skipping edit'
+      );
+
+      return;
+    }
+
     const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
 
     await this.outboundGateway.edit(
@@ -84,7 +104,7 @@ export class ConfirmLinkedAuthCards {
         platformThreadId: channel.platformThreadId,
         workspaceId: channel.workspace?.id,
       },
-      messageId,
+      platformMessageId,
       { card: linkedCard },
       {
         conversationId: conversation._id,
@@ -107,6 +127,32 @@ export class ConfirmLinkedAuthCards {
         { action: 'delete', key: AGENT_AUTH_METADATA_KEYS.authLinkedCard },
       ],
     });
+  }
+
+  /**
+   * Translates the persisted auth-card id into the platform message id the edit needs.
+   *
+   * - SDK event-outbox path: `ctx.reply()` returns a client-minted id and the sink records
+   *   it as the delivered activity's `identifier`, with the real platform `ts` on
+   *   `platformMessageId`. We look that up here.
+   * - HTTP-bridge path: `ctx.reply()` already returns the platform id, so there is no
+   *   activity keyed by it — fall back to the stored value unchanged.
+   */
+  private async resolvePlatformMessageId(
+    environmentId: string,
+    conversationId: string,
+    storedMessageId: string
+  ): Promise<string | undefined> {
+    const activity = await this.conversationActivityRepository.findOne(
+      { _environmentId: environmentId, _conversationId: conversationId, identifier: storedMessageId },
+      ['platformMessageId']
+    );
+
+    if (activity?.platformMessageId) {
+      return activity.platformMessageId;
+    }
+
+    return storedMessageId;
   }
 
   /**
