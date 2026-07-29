@@ -549,12 +549,7 @@ export class WorkflowRunService {
     }
   }
 
-  /**
-   * Emits a terminal workflow status trace when allowed. Shared by legacy and
-   * transition delivery-lifecycle paths so the gate/status mapping stays in one place.
-   * Inbox interactions pass emitStatusTrace: false — they update delivery lifecycle
-   * only and must not claim or emit terminal status.
-   */
+  /** Shared gate for legacy/transition paths; Inbox passes emitStatusTrace: false. */
   private async maybeEmitTerminalStatusTrace(params: {
     emitStatusTrace: boolean;
     workflowStatus: WorkflowRunStatusEnum;
