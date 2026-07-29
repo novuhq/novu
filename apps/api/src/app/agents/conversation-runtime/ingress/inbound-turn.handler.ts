@@ -245,14 +245,6 @@ export interface InboundReactionEvent {
   raw?: unknown;
 }
 
-export type WebChatInboundOptions = {
-  /**
-   * @deprecated Adapter-minted `thread.id` is the conversation identifier for web_chat.
-   * Kept optional for call-site compatibility; prefer omitting.
-   */
-  conversationIdentifier?: string;
-};
-
 @Injectable()
 export class AgentInboundHandler implements OnModuleInit {
   constructor(
@@ -295,8 +287,7 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     message: Message,
-    event: AgentEventEnum,
-    options?: WebChatInboundOptions
+    event: AgentEventEnum
   ): Promise<void> {
     if (await this.consumeTelegramStartLink(agentId, config, thread, message)) {
       return;
@@ -439,7 +430,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       thread.isDM,
       extractWorkspaceId(config.platform, message.raw) ?? undefined,
-      options?.conversationIdentifier ?? this.webChatConversationIdentifier(config.platform, platformThreadId)
+      this.webChatConversationIdentifier(config.platform, platformThreadId)
     );
 
     if (config.isKeyless) {

@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   HttpException,
-  NotFoundException,
   Param,
   Post,
   Query,
@@ -14,14 +13,13 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import {
   SubscriberSession,
   type SubscriberSession as SubscriberSessionData,
 } from '../../shared/framework/user.decorator';
 import { InboundDispatcher } from '../conversation-runtime/ingress/inbound.dispatcher';
-import { AgentConversationEnabledGuard } from '../shared/agent-conversation-enabled.guard';
+import { assertWebChatEnabled } from '../shared/assert-web-chat-enabled';
 import { toWebRequest } from '../shared/util/express-to-web-request';
 import { WebChatEnabledGuard } from '../shared/web-chat-enabled.guard';
 import {
@@ -45,9 +43,9 @@ export class WebChatController {
   ) {}
 
   /**
-   * POST auth is adapter `verifySession` only (NV-8448). Nest JWT remains on GET.
-   * Session is read here solely for feature flags + publication gate (needs env/org
-   * before `InboundDispatcher` / registry `getOrCreate`).
+   * POST auth boundary is adapter `verifySession` (inside `handleWebhook`).
+   * Session is read here only for `assertWebChatEnabled` + publication resolve
+   * before `InboundDispatcher` / registry `getOrCreate`.
    */
   @Post('/conversations')
   async createConversation(@Req() req: ExpressRequest, @Res() res: ExpressResponse): Promise<void> {
@@ -59,25 +57,7 @@ export class WebChatController {
         return;
       }
 
-      const webChatEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_AGENT_WEB_CHAT_ENABLED,
-        defaultValue: false,
-        organization: { _id: session.organizationId },
-        environment: { _id: session.environmentId },
-      });
-      if (!webChatEnabled) {
-        throw new NotFoundException();
-      }
-
-      const conversationalEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED,
-        defaultValue: false,
-        organization: { _id: session.organizationId },
-        environment: { _id: session.environmentId },
-      });
-      if (!conversationalEnabled) {
-        throw new NotFoundException();
-      }
+      await assertWebChatEnabled(this.featureFlagsService, session.organizationId, session.environmentId);
 
       const agentIdentifier = typeof req.body?.agentId === 'string' ? req.body.agentId.trim() : '';
       if (!agentIdentifier) {
@@ -105,7 +85,7 @@ export class WebChatController {
   }
 
   @Get('/conversations/:identifier/events')
-  @UseGuards(AuthGuard('subscriberJwt'), AgentConversationEnabledGuard, WebChatEnabledGuard)
+  @UseGuards(AuthGuard('subscriberJwt'), WebChatEnabledGuard)
   async listConversationEvents(
     @SubscriberSession() subscriberSession: SubscriberSessionData,
     @Param('identifier') identifier: string,

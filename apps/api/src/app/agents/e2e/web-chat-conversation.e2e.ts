@@ -43,7 +43,6 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   let subscriberToken: string;
 
   before(() => {
-    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
     process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED = 'true';
     process.env.IS_AGENT_WEB_CHAT_ENABLED = 'true';
   });
