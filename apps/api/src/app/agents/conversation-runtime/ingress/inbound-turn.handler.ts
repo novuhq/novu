@@ -245,6 +245,11 @@ export interface InboundReactionEvent {
   raw?: unknown;
 }
 
+export type WebChatInboundOptions = {
+  /** Pre-minted conversation identifier; `platformThreadId` for the first web-chat turn. */
+  conversationIdentifier?: string;
+};
+
 @Injectable()
 export class AgentInboundHandler implements OnModuleInit {
   constructor(
@@ -287,7 +292,8 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     message: Message,
-    event: AgentEventEnum
+    event: AgentEventEnum,
+    options?: WebChatInboundOptions
   ): Promise<void> {
     if (await this.consumeTelegramStartLink(agentId, config, thread, message)) {
       return;
@@ -429,7 +435,8 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       platformThreadId,
       thread.isDM,
-      extractWorkspaceId(config.platform, message.raw) ?? undefined
+      extractWorkspaceId(config.platform, message.raw) ?? undefined,
+      options?.conversationIdentifier
     );
 
     if (config.isKeyless) {
@@ -610,7 +617,8 @@ export class AgentInboundHandler implements OnModuleInit {
     subscriberId: string | null,
     platformThreadId: string,
     isDirectMessage: boolean,
-    workspaceId?: string
+    workspaceId?: string,
+    conversationIdentifier?: string
   ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -630,6 +638,7 @@ export class AgentInboundHandler implements OnModuleInit {
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
       isDirectMessage,
       workspaceId,
+      identifier: conversationIdentifier,
     });
   }
 

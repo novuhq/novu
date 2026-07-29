@@ -158,15 +158,13 @@ export class NovuWebChatProvisioningService {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
-    const link = await this.agentIntegrationRepository.createOrReviveLink(
-      {
-        agentId: agent._id,
-        integrationId: integration._id,
-        environmentId,
-        organizationId,
-      },
-      { session }
-    );
+    const link = await this.agentIntegrationRepository.createOrReviveLink({
+      agentId: agent._id,
+      integrationId: integration._id,
+      environmentId,
+      organizationId,
+      session,
+    });
 
     return toAgentIntegrationResponse(link, integration, agent);
   }

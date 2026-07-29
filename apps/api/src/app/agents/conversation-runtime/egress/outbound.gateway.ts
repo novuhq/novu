@@ -28,6 +28,17 @@ import {
 
 export type { SlackNativeDelivery } from './slack-native-delivery';
 
+function isWebChatPlatform(platform: string): boolean {
+  return platform === AgentPlatformEnum.WEB_CHAT;
+}
+
+function webChatSentMessageInfo(platformThreadId: string, messageId?: string): SentMessageInfo {
+  return {
+    messageId: messageId ?? `msg_${Date.now()}`,
+    platformThreadId,
+  };
+}
+
 /** The subset of the resolved config that drives outbound watermarking. */
 type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
 
@@ -215,6 +226,10 @@ export class OutboundGateway {
     options?: OutboundDeliveryOptions,
     workspaceId?: string
   ): Promise<SentMessageInfo> {
+    if (isWebChatPlatform(platform)) {
+      return webChatSentMessageInfo(platformThreadId);
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
     if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
@@ -268,6 +283,11 @@ export class OutboundGateway {
     }
 
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+    if (isWebChatPlatform(config.platform)) {
+      return;
+    }
+
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
     const thread = chat.thread(platformThreadId);
@@ -293,6 +313,10 @@ export class OutboundGateway {
     workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+    if (isWebChatPlatform(config.platform)) {
+      return;
+    }
 
     if (config.platform === AgentPlatformEnum.SLACK) {
       await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId, workspaceId);
@@ -428,6 +452,10 @@ export class OutboundGateway {
     options?: OutboundDeliveryOptions,
     workspaceId?: string
   ): Promise<SentMessageInfo> {
+    if (isWebChatPlatform(platform)) {
+      return webChatSentMessageInfo(platformThreadId, platformMessageId);
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
     if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
@@ -484,6 +512,10 @@ export class OutboundGateway {
     platformMessageId: string,
     workspaceId?: string
   ): Promise<void> {
+    if (isWebChatPlatform(platform)) {
+      return;
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);

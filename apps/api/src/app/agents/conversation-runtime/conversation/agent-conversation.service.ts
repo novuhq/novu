@@ -70,6 +70,8 @@ export interface CreateOrGetConversationParams {
    * installs. Absent for single-workspace platforms.
    */
   workspaceId?: string;
+  /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
+  identifier?: string;
 }
 
 export interface PersistInboundMessageParams {
@@ -203,7 +205,7 @@ export class AgentConversationService {
     }
 
     const conversation = await this.conversationRepository.create({
-      identifier: `conv_${shortId(12)}`,
+      identifier: params.identifier ?? `conv_${shortId(12)}`,
       _agentId: params.agentId,
       participants: [
         { type: params.participantType, id: params.participantId },
