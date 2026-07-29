@@ -8,6 +8,7 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  TerminalWorkflowStatusEvent,
 } from '@novu/dal';
 import {
   DeliveryLifecycleDetail,
@@ -18,7 +19,6 @@ import {
 } from '@novu/shared';
 import { PinoLogger } from '../logging';
 import {
-  EventType,
   TraceLogRepository,
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
@@ -37,8 +37,6 @@ const DELIVERY_STATUS_TO_EVENT: Record<DeliveryLifecycleStatusEnum, DeliveryLife
   [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivery_delivered',
   [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
 };
-
-export type WorkflowRunStatusEventType = Extract<EventType, `workflow_run_status_${string}`>;
 
 export type NotificationForTrace = {
   _id: string;
@@ -583,7 +581,7 @@ export class WorkflowRunService {
 
   async createWorkflowStatusTrace(
     notificationId: string,
-    status: WorkflowRunStatusEventType,
+    status: TerminalWorkflowStatusEvent,
     context: { organizationId: string; environmentId: string; userId?: string },
     passedNotification?: NotificationForTrace | null,
     passedWorkflow?: WorkflowForTrace | null
@@ -601,28 +599,6 @@ export class WorkflowRunService {
         return;
       }
 
-      const { isUpdated, previousEvent } = await this.notificationRepository.tryWorkflowStatusTransition(
-        notificationId,
-        context.organizationId,
-        context.environmentId,
-        status as 'workflow_run_status_completed' | 'workflow_run_status_error'
-      );
-
-      if (!isUpdated) {
-        this.logger.trace(
-          {
-            notificationId,
-            status,
-            previousEvent,
-            organizationId: context.organizationId,
-            environmentId: context.environmentId,
-          },
-          'Skipped workflow status trace - already emitted for this run'
-        );
-
-        return;
-      }
-
       const { notification, workflow } = await this.getNotificationAndWorkflow(
         notificationId,
         context.organizationId,
@@ -632,6 +608,27 @@ export class WorkflowRunService {
       );
 
       if (!notification || !workflow) {
+        return;
+      }
+
+      const { isUpdated } = await this.notificationRepository.tryWorkflowStatusTransition(
+        notificationId,
+        context.organizationId,
+        context.environmentId,
+        status
+      );
+
+      if (!isUpdated) {
+        this.logger.trace(
+          {
+            notificationId,
+            status,
+            organizationId: context.organizationId,
+            environmentId: context.environmentId,
+          },
+          'Skipped workflow status trace - already emitted for this run'
+        );
+
         return;
       }
 

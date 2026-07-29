@@ -129,7 +129,6 @@ describe('WorkflowRunService', () => {
     it('writes zero additional status traces when tryWorkflowStatusTransition returns isUpdated false', async () => {
       notificationRepository.tryWorkflowStatusTransition.mockResolvedValue({
         isUpdated: false,
-        previousEvent: 'workflow_run_status_completed',
       });
 
       await service.createWorkflowStatusTrace(
@@ -148,7 +147,6 @@ describe('WorkflowRunService', () => {
     it('writes zero status traces for ERROR after COMPLETED was already recorded', async () => {
       notificationRepository.tryWorkflowStatusTransition.mockResolvedValue({
         isUpdated: false,
-        previousEvent: 'workflow_run_status_completed',
       });
 
       await service.createWorkflowStatusTrace(

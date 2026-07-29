@@ -23,6 +23,8 @@ export type NotificationTopic = {
   preferenceEvaluation?: TopicPreferenceEvaluation;
 };
 
+export type TerminalWorkflowStatusEvent = 'workflow_run_status_completed' | 'workflow_run_status_error';
+
 export class NotificationEntity {
   _id: string;
 
@@ -60,7 +62,7 @@ export class NotificationEntity {
   critical?: boolean;
   contextKeys?: string[];
   lastEmittedDeliveryEvent?: DeliveryLifecycleEventType;
-  lastEmittedWorkflowStatusEvent?: 'workflow_run_status_completed' | 'workflow_run_status_error';
+  lastEmittedWorkflowStatusEvent?: TerminalWorkflowStatusEvent;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

@@ -5,7 +5,7 @@ import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
 import { EnvironmentId } from '../environment';
-import { NotificationDBModel, NotificationEntity } from './notification.entity';
+import { NotificationDBModel, NotificationEntity, TerminalWorkflowStatusEvent } from './notification.entity';
 import { NotificationFeedItemEntity } from './notification.feed.Item.entity';
 import { Notification } from './notification.schema';
 
@@ -424,11 +424,8 @@ export class NotificationRepository extends BaseRepository<
     notificationId: string,
     organizationId: string,
     environmentId: string,
-    targetEvent: 'workflow_run_status_completed' | 'workflow_run_status_error'
-  ): Promise<{
-    isUpdated: boolean;
-    previousEvent?: 'workflow_run_status_completed' | 'workflow_run_status_error';
-  }> {
+    targetEvent: TerminalWorkflowStatusEvent
+  ): Promise<{ isUpdated: boolean }> {
     const result = await this.findOneAndUpdate(
       {
         _id: notificationId,
@@ -442,10 +439,6 @@ export class NotificationRepository extends BaseRepository<
 
     return {
       isUpdated: result !== null,
-      previousEvent: result?.lastEmittedWorkflowStatusEvent as
-        | 'workflow_run_status_completed'
-        | 'workflow_run_status_error'
-        | undefined,
     };
   }
 }
