@@ -81,11 +81,15 @@ export function buildProviderOverrideOptions({
         isConnected: activeProviderIds.has(providerId),
         isEscapeHatch: isEscapeHatchProvider(providerId),
       }))
-      // Configured overrides first (selectable / hold data); alphabetical within each group so the
-      // menu stays stable across registry edits and selection changes.
+      // Configured overrides first (selectable / hold data), then schema-backed providers before
+      // escape-hatch ("no schema") ones; alphabetical within each group for stable ordering.
       .sort((left, right) => {
         if (left.hasOverride !== right.hasOverride) {
           return left.hasOverride ? -1 : 1;
+        }
+
+        if (left.isEscapeHatch !== right.isEscapeHatch) {
+          return left.isEscapeHatch ? 1 : -1;
         }
 
         return left.displayName.localeCompare(right.displayName);

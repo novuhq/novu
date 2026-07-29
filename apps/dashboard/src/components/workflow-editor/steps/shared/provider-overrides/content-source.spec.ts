@@ -71,7 +71,7 @@ describe('isEscapeHatchProvider', () => {
 });
 
 describe('buildProviderOverrideOptions', () => {
-  it('lists configured overrides first, then alphabetically by display name', () => {
+  it('lists configured overrides first, then schema-backed before escape-hatch, then alphabetically', () => {
     const options = buildProviderOverrideOptions({
       channel: ChannelTypeEnum.CHAT,
       activeProviderIds: new Set([
@@ -79,19 +79,22 @@ describe('buildProviderOverrideOptions', () => {
         ChatProviderIdEnum.Discord,
         ChatProviderIdEnum.Slack,
         ChatProviderIdEnum.Mattermost,
+        ChatProviderIdEnum.WhatsAppBusiness,
       ]),
       providerOverrides: {
+        [ChatProviderIdEnum.Discord]: { text: 'hi' },
         [ChatProviderIdEnum.Telegram]: { text: 'hi' },
-        [ChatProviderIdEnum.Slack]: { text: 'hi' },
       },
     });
 
     expect(options.map((option) => option.providerId)).toEqual([
-      ChatProviderIdEnum.Slack,
       ChatProviderIdEnum.Telegram,
       ChatProviderIdEnum.Discord,
+      ChatProviderIdEnum.Slack,
+      ChatProviderIdEnum.WhatsAppBusiness,
       ChatProviderIdEnum.Mattermost,
     ]);
-    expect(options.map((option) => option.hasOverride)).toEqual([true, true, false, false]);
+    expect(options.map((option) => option.hasOverride)).toEqual([true, true, false, false, false]);
+    expect(options.map((option) => option.isEscapeHatch)).toEqual([false, true, false, false, true]);
   });
 });
