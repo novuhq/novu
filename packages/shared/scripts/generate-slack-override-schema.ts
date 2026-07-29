@@ -55,6 +55,14 @@ export const SLACK_OVERRIDE_ARRAY_SIZE_LIMITS: SlackOverrideArraySizeLimit[] = [
   { definition: 'SectionBlock', property: 'fields', maxItems: 10 },
 ];
 
+/**
+ * Text composition objects Slack documents as min-length 1, but TypeScript types as plain
+ * `string`. Empty `text` (e.g. a Card block title left blank) satisfies the SDK types yet
+ * `chat.postMessage` returns `invalid_blocks`. Applied on the shared definitions so every
+ * consumer rejects `""` before a trigger reaches Slack; omit the field instead of clearing it.
+ */
+export const SLACK_OVERRIDE_TEXT_MIN_LENGTH_DEFINITIONS = ['MrkdwnElement', 'PlainTextElement'] as const;
+
 function definitionKeyOf(ref: string): string {
   return decodeURIComponent(ref.replace('#/definitions/', ''));
 }
@@ -238,6 +246,44 @@ function applyArraySizeLimits(schema: JSONSchemaDto): JSONSchemaDto {
   return { ...root, definitions };
 }
 
+/**
+ * Throwing when `text` is missing or no longer a string keeps the floor from silently going
+ * unenforced after the Slack SDK renames or restructures the composition object.
+ */
+function constrainTextMinLength(definition: JSONSchemaDto, definitionName: string): JSONSchemaDto {
+  const property = definition.properties?.text;
+
+  if (property === undefined || typeof property === 'boolean' || property.type !== 'string') {
+    throw new Error(`Expected \`${definitionName}.text\` to be a string schema to apply minLength.`);
+  }
+
+  return {
+    ...definition,
+    properties: {
+      ...definition.properties,
+      text: {
+        ...property,
+        minLength: 1,
+      },
+    },
+  };
+}
+
+function applyTextMinLength(schema: JSONSchemaDto): JSONSchemaDto {
+  const definitions = { ...(schema.definitions ?? {}) };
+
+  for (const definitionName of SLACK_OVERRIDE_TEXT_MIN_LENGTH_DEFINITIONS) {
+    const definition = definitions[definitionName];
+    if (definition === undefined || typeof definition === 'boolean') {
+      throw new Error(`Expected definition \`${definitionName}\` to be an object schema to apply minLength.`);
+    }
+
+    definitions[definitionName] = constrainTextMinLength(definition, definitionName);
+  }
+
+  return { ...schema, definitions };
+}
+
 function assertRoutingKeysAreAbsent(schema: JSONSchemaDto): void {
   for (const key of NON_OVERRIDABLE_SLACK_KEYS) {
     if (schema.properties?.[key] !== undefined) {
@@ -272,6 +318,7 @@ export function buildSlackOverrideSchemas(): {
     makeEveryTopLevelKeyOptional,
     annotateWebhookUnsupportedKeys,
     applyArraySizeLimits,
+    applyTextMinLength,
   ].reduce<JSONSchemaDto>((current, step) => step(current), generated);
 
   assertRoutingKeysAreAbsent(schema);

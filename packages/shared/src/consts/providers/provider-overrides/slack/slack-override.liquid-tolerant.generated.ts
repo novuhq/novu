@@ -936,8 +936,17 @@ export const slackOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
               ]
             },
             "text": {
-              "type": "string",
-              "description": "The text for the block. The minimum length is 1 and maximum length is 3000 characters."
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "The text for the block. The minimum length is 1 and maximum length is 3000 characters.",
+                  "minLength": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\{\\{|\\{%"
+                }
+              ]
             },
             "emoji": {
               "anyOf": [
@@ -1036,8 +1045,17 @@ export const slackOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
               ]
             },
             "text": {
-              "type": "string",
-              "description": "The text for the block. This field accepts any of the standard text formatting markup.\nThe minimum length is 1 and maximum length is 3000 characters."
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "The text for the block. This field accepts any of the standard text formatting markup.\nThe minimum length is 1 and maximum length is 3000 characters.",
+                  "minLength": 1
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\{\\{|\\{%"
+                }
+              ]
             },
             "verbatim": {
               "anyOf": [

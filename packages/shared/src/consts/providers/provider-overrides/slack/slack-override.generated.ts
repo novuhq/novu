@@ -503,7 +503,8 @@ export const slackOverrideJsonSchema: JSONSchemaDto = {
         },
         "text": {
           "type": "string",
-          "description": "The text for the block. The minimum length is 1 and maximum length is 3000 characters."
+          "description": "The text for the block. The minimum length is 1 and maximum length is 3000 characters.",
+          "minLength": 1
         },
         "emoji": {
           "type": "boolean",
@@ -563,7 +564,8 @@ export const slackOverrideJsonSchema: JSONSchemaDto = {
         },
         "text": {
           "type": "string",
-          "description": "The text for the block. This field accepts any of the standard text formatting markup.\nThe minimum length is 1 and maximum length is 3000 characters."
+          "description": "The text for the block. This field accepts any of the standard text formatting markup.\nThe minimum length is 1 and maximum length is 3000 characters.",
+          "minLength": 1
         },
         "verbatim": {
           "type": "boolean",
