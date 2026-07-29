@@ -93,6 +93,8 @@ export function useAnnotatedOverridePreview({
   }, [body, providerId, formOverrides, previewOverrides]);
 }
 
+type MergedOverrideHintVariant = 'chat' | 'push';
+
 /** Explains, under the merged JSON, where each half of the payload came from. */
 export function getMergedOverrideHint({
   hasOverride,
@@ -100,15 +102,22 @@ export function getMergedOverrideHint({
   body,
   providerId,
   displayName,
+  variant = 'chat',
 }: {
   hasOverride: boolean;
   defaultContentKey: string | undefined;
   body: string;
   providerId: string;
   displayName: string;
+  /** Push escape-hatch providers have no primary content key — use push-aware copy. */
+  variant?: MergedOverrideHintVariant;
 }): string {
   if (hasOverride) {
     if (!defaultContentKey) {
+      if (variant === 'push') {
+        return `This override is deep-merged over the payload ${displayName} builds from your subject and body.`;
+      }
+
       return 'Override merged over the default content.';
     }
 
@@ -121,6 +130,10 @@ export function getMergedOverrideHint({
 
   const primaryKey = getProviderPrimaryContentKey(providerId);
   if (!primaryKey) {
+    if (variant === 'push') {
+      return `No override for this provider. When you add one, it is deep-merged over the payload ${displayName} builds from your subject and body.`;
+    }
+
     return `No override for this provider. ${displayName} nests its message content, so the default message is not merged in.`;
   }
 
