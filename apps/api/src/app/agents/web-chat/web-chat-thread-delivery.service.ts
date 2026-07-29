@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { shortId } from '@novu/application-generic';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import type { WebChatDeliverMessage } from './web-chat-inbound.adapter';
@@ -26,7 +26,7 @@ export class WebChatThreadDeliveryService {
       );
 
       if (!conversation) {
-        return { id: `msg_${threadId}`, threadId };
+        throw new NotFoundException('Web chat conversation not found');
       }
 
       const channel = this.conversationService.getPrimaryChannel(conversation);

@@ -98,12 +98,37 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
   }
 }
 
+function buildEnvelope(
+  activity: ConversationActivityEntity,
+  event: AgentEvent,
+  sequence: number,
+  context: { conversationId: string; agentIdentifier: string }
+): AgentEventEnvelope {
+  return {
+    version: AGENT_EVENT_PROTOCOL_VERSION,
+    conversationId: context.conversationId,
+    agentId: context.agentIdentifier,
+    runId: 'history',
+    turnId: activity.identifier,
+    sequence,
+    timestamp: activity.createdAt,
+    event,
+  };
+}
+
+export function isMappableActivity(activity: ConversationActivityEntity): boolean {
+  const event = mapActivityToEvent(activity);
+
+  return event !== null && !isDeltaEvent(event);
+}
+
 export function activityToEvents(
   activities: ConversationActivityEntity[],
-  context: { conversationId: string; agentIdentifier: string }
+  context: { conversationId: string; agentIdentifier: string },
+  sequenceOffset = 0
 ): AgentEventEnvelope[] {
   const envelopes: AgentEventEnvelope[] = [];
-  let sequence = 0;
+  let sequence = sequenceOffset;
 
   for (const activity of activities) {
     const event = mapActivityToEvent(activity);
@@ -112,17 +137,60 @@ export function activityToEvents(
     }
 
     sequence += 1;
-    envelopes.push({
-      version: AGENT_EVENT_PROTOCOL_VERSION,
-      conversationId: context.conversationId,
-      agentId: context.agentIdentifier,
-      runId: 'history',
-      turnId: activity.identifier,
-      sequence,
-      timestamp: activity.createdAt,
-      event,
-    });
+    envelopes.push(buildEnvelope(activity, event, sequence, context));
   }
 
   return envelopes;
+}
+
+export function mapActivitiesToEventPage(
+  activities: ConversationActivityEntity[],
+  context: { conversationId: string; agentIdentifier: string },
+  options: {
+    sequenceOffset?: number;
+    afterSequence?: number;
+    limit: number;
+  }
+): {
+  events: AgentEventEnvelope[];
+  lastActivityId?: string;
+  hasMoreActivities: boolean;
+  nextSequence: number;
+} {
+  const events: AgentEventEnvelope[] = [];
+  let sequence = options.sequenceOffset ?? 0;
+  let lastActivityId: string | undefined;
+
+  for (const activity of activities) {
+    const event = mapActivityToEvent(activity);
+    if (!event || isDeltaEvent(event)) {
+      continue;
+    }
+
+    sequence += 1;
+
+    if (options.afterSequence !== undefined && sequence <= options.afterSequence) {
+      lastActivityId = activity._id;
+      continue;
+    }
+
+    events.push(buildEnvelope(activity, event, sequence, context));
+    lastActivityId = activity._id;
+
+    if (events.length > options.limit) {
+      return {
+        events: events.slice(0, options.limit),
+        lastActivityId,
+        hasMoreActivities: true,
+        nextSequence: sequence,
+      };
+    }
+  }
+
+  return {
+    events,
+    lastActivityId,
+    hasMoreActivities: false,
+    nextSequence: sequence,
+  };
 }

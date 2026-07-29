@@ -1,13 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import {
   AgentRepository,
+  ConversationActivityEntity,
   ConversationActivityRepository,
   ConversationParticipantTypeEnum,
   ConversationRepository,
 } from '@novu/dal';
-import { activityToEvents } from '../../activity-to-events';
+import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import { isMappableActivity, mapActivitiesToEventPage } from '../../activity-to-events';
 import { ListWebChatConversationEventsCommand } from './list-web-chat-conversation-events.command';
+
+const ACTIVITY_FETCH_BATCH_SIZE = 100;
+
+type EventPageResult = {
+  events: AgentEventEnvelope[];
+  hasMore: boolean;
+  next: string | null;
+  previous: string | null;
+};
 
 @Injectable()
 export class ListWebChatConversationEvents {
@@ -17,9 +28,15 @@ export class ListWebChatConversationEvents {
     private readonly agentRepository: AgentRepository
   ) {}
 
-  async execute(
-    command: ListWebChatConversationEventsCommand
-  ): Promise<{ events: AgentEventEnvelope[]; hasMore: boolean }> {
+  async execute(command: ListWebChatConversationEventsCommand): Promise<EventPageResult> {
+    if (command.after && command.before) {
+      throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
+    if ((command.after || command.before) && command.afterSequence > 0) {
+      throw new BadRequestException('Use either cursor pagination (after/before) or afterSequence, not both.');
+    }
+
     const conversation = await this.conversationRepository.findOne(
       {
         identifier: command.conversationIdentifier,
@@ -42,6 +59,14 @@ export class ListWebChatConversationEvents {
       throw new NotFoundException('Conversation not found');
     }
 
+    const isWebChatConversation = conversation.channels.some(
+      (channel) => channel.platform === AgentPlatformEnum.WEB_CHAT
+    );
+
+    if (!isWebChatConversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
     const agent = await this.agentRepository.findOne(
       { _id: conversation._agentId, _environmentId: command.environmentId },
       ['identifier']
@@ -51,27 +76,135 @@ export class ListWebChatConversationEvents {
       throw new NotFoundException('Conversation not found');
     }
 
-    const activities = await this.activityRepository.find(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _conversationId: conversation._id,
-      },
-      '*',
-      { sort: { createdAt: 1 } }
-    );
-
-    const allEvents = activityToEvents(activities, {
+    const mapContext = {
       conversationId: conversation._id,
       agentIdentifier: agent.identifier,
-    });
-
-    const filtered = allEvents.filter((envelope) => envelope.sequence > command.afterSequence);
-    const page = filtered.slice(0, command.limit);
-
-    return {
-      events: page,
-      hasMore: filtered.length > command.limit,
     };
+
+    if (command.afterSequence > 0) {
+      return this.fetchEventPage(command, conversation._id, mapContext, {
+        afterSequence: command.afterSequence,
+        sequenceOffset: 0,
+      });
+    }
+
+    const sequenceOffset = command.after
+      ? await this.countMappableEventsUpToActivity(
+          command.environmentId,
+          command.organizationId,
+          conversation._id,
+          command.after
+        )
+      : 0;
+
+    return this.fetchEventPage(command, conversation._id, mapContext, {
+      activityCursor: command.after ?? command.before,
+      before: command.before,
+      sequenceOffset,
+    });
+  }
+
+  private async fetchEventPage(
+    command: ListWebChatConversationEventsCommand,
+    conversationId: string,
+    mapContext: { conversationId: string; agentIdentifier: string },
+    options: {
+      activityCursor?: string;
+      before?: string;
+      sequenceOffset?: number;
+      afterSequence?: number;
+    }
+  ): Promise<EventPageResult> {
+    const sortDirection = options.before ? -1 : 1;
+    let activityCursor = options.activityCursor;
+    let dbNext: string | null = null;
+    let dbPrevious: string | null = null;
+    const collected: ConversationActivityEntity[] = [];
+
+    while (true) {
+      const page = await this.activityRepository.listActivities({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        conversationId,
+        after: options.before ? undefined : activityCursor,
+        before: options.before ? activityCursor : undefined,
+        limit: ACTIVITY_FETCH_BATCH_SIZE,
+        sortDirection,
+      });
+
+      if (page.data.length === 0) {
+        break;
+      }
+
+      collected.push(...page.data);
+      dbNext = page.next;
+      dbPrevious = page.previous;
+
+      const mapped = mapActivitiesToEventPage(collected, mapContext, {
+        sequenceOffset: options.sequenceOffset ?? 0,
+        afterSequence: options.afterSequence,
+        limit: command.limit,
+      });
+
+      if (mapped.events.length >= command.limit || mapped.hasMoreActivities || !page.next) {
+        const events = options.before ? [...mapped.events].reverse() : mapped.events;
+
+        return {
+          events,
+          hasMore: mapped.hasMoreActivities || Boolean(page.next),
+          next: options.before ? dbPrevious : mapped.hasMoreActivities ? (mapped.lastActivityId ?? dbNext) : dbNext,
+          previous: options.before
+            ? mapped.hasMoreActivities
+              ? (mapped.lastActivityId ?? dbNext)
+              : dbNext
+            : dbPrevious,
+        };
+      }
+
+      activityCursor = page.next ?? undefined;
+    }
+
+    return { events: [], hasMore: false, next: null, previous: dbPrevious };
+  }
+
+  private async countMappableEventsUpToActivity(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    activityId: string
+  ): Promise<number> {
+    let offset = 0;
+    let cursor: string | undefined;
+
+    while (true) {
+      const page = await this.activityRepository.listActivities({
+        environmentId,
+        organizationId,
+        conversationId,
+        after: cursor,
+        limit: ACTIVITY_FETCH_BATCH_SIZE,
+        sortDirection: 1,
+      });
+
+      if (page.data.length === 0) {
+        return offset;
+      }
+
+      for (const activity of page.data) {
+        if (activity._id === activityId) {
+          return isMappableActivity(activity) ? offset + 1 : offset;
+        }
+
+        if (isMappableActivity(activity)) {
+          offset += 1;
+        }
+      }
+
+      if (!page.next) {
+        return offset;
+      }
+
+      cursor = page.next;
+    }
   }
 }

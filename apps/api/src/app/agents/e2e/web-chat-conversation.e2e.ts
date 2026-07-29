@@ -23,10 +23,12 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   before(() => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
     process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED = 'true';
+    process.env.IS_AGENT_WEB_CHAT_ENABLED = 'true';
   });
 
   after(() => {
     delete process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED;
+    delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
   });
 
   beforeEach(async () => {
@@ -60,9 +62,14 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
   }
 
-  function getEvents(conversationIdentifier: string, token = subscriberToken) {
+  function getEvents(
+    conversationIdentifier: string,
+    token = subscriberToken,
+    query: { after?: string; before?: string; afterSequence?: number; limit?: number } = {}
+  ) {
     return ctx.session.testAgent
       .get(`/v1/web-chat/conversations/${conversationIdentifier}/events`)
+      .query(query)
       .set('Authorization', `Bearer ${token}`);
   }
 
@@ -116,6 +123,9 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     );
     expect(subscriberMessage).to.exist;
     expect(subscriberMessage!.content).to.equal('Hello from web chat');
+    expect(subscriberMessage!.identifier).to.match(/^msg_/);
+    expect(conversation!.channels.some((channel) => channel.platform === 'web_chat')).to.equal(true);
+    expect(conversation!.channels[0]?.platformThreadId).to.equal(res.body.identifier);
   });
 
   it('should reject unpublished agents with 400', async () => {
@@ -132,6 +142,28 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     expect(res.status).to.equal(400);
     expect(res.body.message).to.equal('This agent is not available on web chat');
+  });
+
+  it('should return 404 when IS_AGENT_WEB_CHAT_ENABLED is off', async () => {
+    const previousFlag = process.env.IS_AGENT_WEB_CHAT_ENABLED;
+    delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
+
+    try {
+      await linkWebChat();
+
+      const res = await createConversation({
+        agentId: ctx.agentIdentifier,
+        text: 'Should be hidden',
+      });
+
+      expect(res.status).to.equal(404);
+    } finally {
+      if (previousFlag === undefined) {
+        delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
+      } else {
+        process.env.IS_AGENT_WEB_CHAT_ENABLED = previousFlag;
+      }
+    }
   });
 
   it('should return durable agent message events on GET .../events', async () => {
@@ -161,6 +193,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     const eventsRes = await getEvents(createRes.body.identifier);
     expect(eventsRes.status).to.equal(200);
     expect(eventsRes.body.hasMore).to.equal(false);
+    expect(eventsRes.body.next).to.equal(null);
     expect(eventsRes.body.events.length).to.be.greaterThan(0);
 
     const agentMessageEvent = eventsRes.body.events.find(
@@ -168,5 +201,98 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     );
     expect(agentMessageEvent).to.exist;
     expect(agentMessageEvent.event.content.markdown).to.equal(`Agent reply ${messageId}`);
+
+    const subscriberMessageEvent = eventsRes.body.events.find(
+      (envelope: AgentEventEnvelope) =>
+        envelope.event.type === 'custom' &&
+        envelope.event.name === 'subscriber.message' &&
+        envelope.event.data.content.markdown === 'Start thread'
+    );
+    expect(subscriberMessageEvent).to.exist;
+    expect(subscriberMessageEvent.event.data.messageId).to.match(/^msg_/);
+  });
+
+  it('should paginate events with activity cursor', async () => {
+    await linkWebChat();
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Page one',
+    });
+    expect(createRes.status).to.equal(201);
+
+    const conversation = await conversationRepository.findOne(
+      {
+        identifier: createRes.body.identifier,
+        _environmentId: ctx.session.environment._id,
+      },
+      '*'
+    );
+    expect(conversation).to.exist;
+
+    await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
+      events: [messageEnvelope(conversation!._id, `msg-page-${Date.now()}`)],
+    });
+
+    const firstPage = await getEvents(createRes.body.identifier, subscriberToken, { limit: 1 });
+    expect(firstPage.status).to.equal(200);
+    expect(firstPage.body.events).to.have.length(1);
+    expect(firstPage.body.hasMore).to.equal(true);
+    expect(firstPage.body.next).to.be.a('string');
+
+    const secondPage = await ctx.session.testAgent
+      .get(`/v1/web-chat/conversations/${createRes.body.identifier}/events`)
+      .query({ after: firstPage.body.next, limit: 50 })
+      .set('Authorization', `Bearer ${subscriberToken}`);
+    expect(secondPage.status).to.equal(200);
+    expect(secondPage.body.events.length).to.be.greaterThan(0);
+    expect(secondPage.body.events[0].sequence).to.be.greaterThan(firstPage.body.events[0].sequence);
+  });
+
+  it('should reject GET events for another subscriber', async () => {
+    await linkWebChat();
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Private thread',
+    });
+    expect(createRes.status).to.equal(201);
+
+    const otherSubscriberId = `other-sub-${Date.now()}`;
+    const otherSession = await ctx.session.testAgent.post('/v1/inbox/session').send({
+      applicationIdentifier: ctx.session.environment.identifier,
+      subscriberId: otherSubscriberId,
+    });
+    expect(otherSession.status).to.equal(201);
+
+    const eventsRes = await getEvents(createRes.body.identifier, otherSession.body.data.token);
+    expect(eventsRes.status).to.equal(404);
+  });
+
+  it('should reject GET events for non-web-chat conversations', async () => {
+    const slackConversation = await conversationRepository.create({
+      identifier: `conv_e2e_slack_${Date.now()}`,
+      _agentId: ctx.agentId,
+      participants: [
+        { type: ConversationParticipantTypeEnum.AGENT, id: ctx.agentId },
+        { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: ctx.session.subscriberId },
+      ],
+      channels: [
+        {
+          platform: 'slack',
+          _integrationId: ctx.integrationId,
+          platformThreadId: `thread-${Date.now()}`,
+        },
+      ],
+      status: 'active',
+      title: 'Slack thread',
+      metadata: {},
+      _environmentId: ctx.session.environment._id,
+      _organizationId: ctx.session.organization._id,
+      lastActivityAt: new Date().toISOString(),
+    });
+
+    const eventsRes = await getEvents(slackConversation.identifier);
+    expect(eventsRes.status).to.equal(404);
   });
 });

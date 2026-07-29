@@ -35,7 +35,7 @@ function isWebChatPlatform(platform: string): boolean {
 
 function webChatSentMessageInfo(platformThreadId: string, messageId?: string): SentMessageInfo {
   return {
-    messageId: messageId ?? `msg_${Date.now()}`,
+    messageId: messageId ?? `act_${shortId(12)}`,
     platformThreadId,
   };
 }

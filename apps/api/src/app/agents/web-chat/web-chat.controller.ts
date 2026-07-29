@@ -6,6 +6,7 @@ import {
   type SubscriberSession as SubscriberSessionData,
 } from '../../shared/framework/user.decorator';
 import { AgentConversationEnabledGuard } from '../shared/agent-conversation-enabled.guard';
+import { WebChatEnabledGuard } from '../shared/web-chat-enabled.guard';
 import {
   CreateWebChatConversationRequestDto,
   CreateWebChatConversationResponseDto,
@@ -21,7 +22,7 @@ import { ListWebChatConversationEvents } from './usecases/list-web-chat-conversa
 
 @Controller('/web-chat')
 @ApiExcludeController()
-@UseGuards(AuthGuard('subscriberJwt'), AgentConversationEnabledGuard)
+@UseGuards(AuthGuard('subscriberJwt'), AgentConversationEnabledGuard, WebChatEnabledGuard)
 export class WebChatController {
   constructor(
     private readonly createWebChatConversation: CreateWebChatConversation,
@@ -57,6 +58,8 @@ export class WebChatController {
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
         conversationIdentifier: identifier,
+        after: query.after,
+        before: query.before,
         afterSequence: query.afterSequence ?? 0,
         limit: query.limit ?? 50,
       })

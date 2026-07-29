@@ -81,10 +81,12 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
+import { AgentConversationEnabledGuard } from './shared/agent-conversation-enabled.guard';
 import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
 import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
+import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
 import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
@@ -181,6 +183,8 @@ import { WebChatThreadDeliveryService } from './web-chat/web-chat-thread-deliver
     UpdateSubscriberChannel,
     AgentEntitlementsService,
     PlanLimitGateService,
+    AgentConversationEnabledGuard,
+    WebChatEnabledGuard,
   ],
   exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway, ConfirmLinkedAuthCards],
 })

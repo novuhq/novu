@@ -702,6 +702,7 @@ export class AgentInboundHandler implements OnModuleInit {
       richContent,
       hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
+      identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
