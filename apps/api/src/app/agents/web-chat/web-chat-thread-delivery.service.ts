@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { shortId } from '@novu/application-generic';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import type { WebChatDeliverMessage } from './web-chat-inbound.adapter';
@@ -26,7 +26,9 @@ export class WebChatThreadDeliveryService {
       );
 
       if (!conversation) {
-        throw new NotFoundException('Web chat conversation not found');
+        // Gate/limit replies can post before openConversation creates the thread.
+        // Ephemeral ack only — durable agent messages use OutboundGateway.deliver().
+        return { id: `act_${shortId(12)}`, threadId };
       }
 
       const channel = this.conversationService.getPrimaryChannel(conversation);
