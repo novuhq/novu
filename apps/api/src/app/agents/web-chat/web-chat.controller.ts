@@ -1,52 +1,91 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  HttpException,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { FeatureFlagsService } from '@novu/application-generic';
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import {
   SubscriberSession,
   type SubscriberSession as SubscriberSessionData,
 } from '../../shared/framework/user.decorator';
-import { AgentConversationEnabledGuard } from '../shared/agent-conversation-enabled.guard';
+import { InboundDispatcher } from '../conversation-runtime/ingress/inbound.dispatcher';
+import { assertWebChatEnabled } from '../shared/assert-web-chat-enabled';
+import { toWebRequest } from '../shared/util/express-to-web-request';
 import { WebChatEnabledGuard } from '../shared/web-chat-enabled.guard';
-import {
-  CreateWebChatConversationRequestDto,
-  CreateWebChatConversationResponseDto,
-} from './dtos/create-web-chat-conversation.dto';
 import {
   ListWebChatConversationEventsQueryDto,
   ListWebChatConversationEventsResponseDto,
 } from './dtos/list-web-chat-conversation-events.dto';
-import { CreateWebChatConversationCommand } from './usecases/create-web-chat-conversation/create-web-chat-conversation.command';
-import { CreateWebChatConversation } from './usecases/create-web-chat-conversation/create-web-chat-conversation.usecase';
 import { ListWebChatConversationEventsCommand } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.command';
 import { ListWebChatConversationEvents } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
+import { WebChatPublicationService } from './web-chat-publication.service';
+import { WebChatSessionVerifier } from './web-chat-session.verifier';
 
 @Controller('/web-chat')
 @ApiExcludeController()
-@UseGuards(AuthGuard('subscriberJwt'), AgentConversationEnabledGuard, WebChatEnabledGuard)
 export class WebChatController {
   constructor(
-    private readonly createWebChatConversation: CreateWebChatConversation,
+    private readonly sessionVerifier: WebChatSessionVerifier,
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly publicationService: WebChatPublicationService,
+    private readonly inboundDispatcher: InboundDispatcher,
     private readonly listWebChatConversationEvents: ListWebChatConversationEvents
   ) {}
 
+  /**
+   * POST auth boundary is adapter `verifySession` (inside `handleWebhook`).
+   * Session is read here only for `assertWebChatEnabled` + publication resolve
+   * before `InboundDispatcher` / registry `getOrCreate`.
+   */
   @Post('/conversations')
-  @HttpCode(HttpStatus.CREATED)
-  async createConversation(
-    @SubscriberSession() subscriberSession: SubscriberSessionData,
-    @Body() body: CreateWebChatConversationRequestDto
-  ): Promise<CreateWebChatConversationResponseDto> {
-    return this.createWebChatConversation.execute(
-      CreateWebChatConversationCommand.create({
-        environmentId: subscriberSession.environmentId,
-        organizationId: subscriberSession.organizationId,
-        subscriberId: subscriberSession.subscriberId,
-        agentIdentifier: body.agentId,
-        text: body.text,
-      })
-    );
+  async createConversation(@Req() req: ExpressRequest, @Res() res: ExpressResponse): Promise<void> {
+    try {
+      const session = await this.sessionVerifier.verifySession(toWebRequest(req));
+      if (!session) {
+        res.status(401).json({ message: 'Unauthorized' });
+
+        return;
+      }
+
+      await assertWebChatEnabled(this.featureFlagsService, session.organizationId, session.environmentId);
+
+      const agentIdentifier = typeof req.body?.agentId === 'string' ? req.body.agentId.trim() : '';
+      if (!agentIdentifier) {
+        throw new BadRequestException('agentId is required');
+      }
+
+      const published = await this.publicationService.resolvePublishedAgent(
+        agentIdentifier,
+        session.environmentId,
+        session.organizationId
+      );
+
+      await this.inboundDispatcher.handleWebhook(published.agentId, published.integrationIdentifier, req, res, {
+        source: 'webhook_message',
+      });
+    } catch (err) {
+      if (err instanceof HttpException) {
+        res.status(err.getStatus()).json(err.getResponse());
+
+        return;
+      }
+
+      throw err;
+    }
   }
 
   @Get('/conversations/:identifier/events')
+  @UseGuards(AuthGuard('subscriberJwt'), WebChatEnabledGuard)
   async listConversationEvents(
     @SubscriberSession() subscriberSession: SubscriberSessionData,
     @Param('identifier') identifier: string,
