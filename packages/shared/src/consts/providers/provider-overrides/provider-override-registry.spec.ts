@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ChatProviderIdEnum, ToolProviderIdEnum } from '../../../types';
+import { ChatProviderIdEnum, PushProviderIdEnum, ToolProviderIdEnum } from '../../../types';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -18,7 +18,9 @@ import {
   PROVIDER_OVERRIDE_KEYS,
   PROVIDER_OVERRIDE_SCHEMAS,
   PROVIDER_PRIMARY_CONTENT_KEY,
+  PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
   pagerdutyOverrideJsonSchema,
+  supportsContentProviderOverrides,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   TOOL_PROVIDER_OVERRIDE_KEYS,
   TOOL_PROVIDER_OVERRIDE_SCHEMAS,
@@ -29,6 +31,21 @@ import {
 describe('provider override registry', () => {
   it('registers every chat provider so a new one cannot ship unconfigured', () => {
     expect([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(ChatProviderIdEnum).sort());
+  });
+
+  it('registers every push provider as an escape hatch with no primary content key', () => {
+    expect([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(PushProviderIdEnum).sort());
+
+    for (const providerId of PUSH_CONTENT_OVERRIDE_PROVIDER_IDS) {
+      const config = getProviderOverrideConfig(providerId);
+
+      expect(config?.schema).toBeUndefined();
+      expect(config?.schemaSubpath).toBeUndefined();
+      expect(config?.keys).toBeUndefined();
+      expect(config?.primaryContentKey).toBeNull();
+    }
+
+    expect(supportsContentProviderOverrides('push')).toBe(true);
   });
 
   it('exposes every tool provider, including the schema-less webhook', () => {

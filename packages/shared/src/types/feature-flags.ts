@@ -192,6 +192,8 @@ export enum FeatureFlagsKeysEnum {
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
   /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
   IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
+  /** Enable per-provider content overrides on push steps (escape-hatch free-form for all push providers). */
+  IS_PUSH_PROVIDER_OVERRIDES_ENABLED = 'IS_PUSH_PROVIDER_OVERRIDES_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require

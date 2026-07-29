@@ -3,6 +3,8 @@ import { providerSchemas } from '@novu/framework';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   ChatProviderIdEnum,
+  PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
+  PushProviderIdEnum,
   ResourceOriginEnum,
   StepTypeEnum,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -84,6 +86,14 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
     expect(options.providers[ChatProviderIdEnum.Slack]).to.equal(undefined);
   });
 
+  it('gives a push step exactly the push providers, and no chat or tool providers', () => {
+    const options = buildOptions(StepTypeEnum.PUSH);
+
+    expect(Object.keys(options.providers).sort()).to.deep.equal([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS].sort());
+    expect(options.providers[ChatProviderIdEnum.Slack]).to.equal(undefined);
+    expect(options.providers[ToolProviderIdEnum.PagerDuty]).to.equal(undefined);
+  });
+
   it('shares one translation across step resolve and provider resolvers', async () => {
     let translationCalls = 0;
     usecase.controlsTranslationService = {
@@ -120,9 +130,11 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
   it('only registers provider ids the framework has schemas for', () => {
     const chatSchemaIds = Object.keys(providerSchemas.chat);
     const toolSchemaIds = Object.keys(providerSchemas.tool);
+    const pushSchemaIds = Object.keys(providerSchemas.push);
 
     expect(chatSchemaIds).to.include.members([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS]);
     expect(toolSchemaIds).to.include.members([...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS]);
+    expect(pushSchemaIds).to.include.members([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS]);
   });
 
   it('accepts the stitched providerOverrides field the framework would otherwise strip', () => {
@@ -133,5 +145,15 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
 
     expect(options.controlSchema.properties?.body, 'the step\u2019s own controls must survive').to.exist;
     expect(providerOverrides?.additionalProperties?.additionalProperties).to.equal(true);
+  });
+
+  it('accepts stitched providerOverrides on a push step control schema', () => {
+    const options = buildOptions(StepTypeEnum.PUSH);
+    const providerOverrides = options.controlSchema.properties?.providerOverrides as {
+      additionalProperties?: { additionalProperties?: boolean };
+    };
+
+    expect(providerOverrides?.additionalProperties?.additionalProperties).to.equal(true);
+    expect(options.providers[PushProviderIdEnum.FCM]).to.be.a('function');
   });
 });
