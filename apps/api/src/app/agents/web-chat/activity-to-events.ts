@@ -174,17 +174,17 @@ export function mapActivitiesToEventPage(
       continue;
     }
 
-    events.push(buildEnvelope(activity, event, sequence, context));
-    lastActivityId = activity._id;
-
-    if (events.length > options.limit) {
+    if (events.length >= options.limit) {
       return {
-        events: events.slice(0, options.limit),
+        events,
         lastActivityId,
         hasMoreActivities: true,
-        nextSequence: sequence,
+        nextSequence: sequence - 1,
       };
     }
+
+    events.push(buildEnvelope(activity, event, sequence, context));
+    lastActivityId = activity._id;
   }
 
   return {
