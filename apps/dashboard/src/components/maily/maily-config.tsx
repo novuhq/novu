@@ -4,6 +4,7 @@ import {
   blockquote,
   bulletList,
   button,
+  cardButton,
   columns,
   divider,
   hardBreak,
@@ -69,6 +70,7 @@ type BlockType =
   | 'blockquote'
   | 'bulletList'
   | 'button'
+  | 'cardButton'
   | 'columns'
   | 'divider'
   | 'hardBreak'
@@ -224,6 +226,7 @@ export const createEditorBlocks = (props: {
     blockquote: () => blockquote,
     bulletList: () => bulletList,
     button: () => button,
+    cardButton: () => cardButton,
     columns: () => columns,
     divider: () => divider,
     hardBreak: () => hardBreak,
@@ -316,6 +319,8 @@ export const useCreateExtensions = ({
   blocks: BlockGroupItem[];
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   isTranslationEnabled?: boolean;
+  /** Extra editor extensions to register, e.g. opt-in nodes not part of the default maily editor. */
+  additionalExtensions?: AnyExtension[];
   translationKeys?: TranslationKey[];
   resourceId: string;
   resourceType: LocalizationResourceEnum;
@@ -593,6 +598,11 @@ export const useCreateExtensions = ({
         },
       })
     );
+
+    const additionalExtensions = propsRef.current.additionalExtensions;
+    if (additionalExtensions?.length) {
+      extensions.push(...additionalExtensions);
+    }
 
     return extensions;
   }, [propsRef, translationExtension, isTranslationEnabled]);

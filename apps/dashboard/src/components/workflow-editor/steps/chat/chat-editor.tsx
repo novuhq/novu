@@ -12,10 +12,8 @@ import {
   ContentOverridePanel,
   type ProviderOverrideEditorExtras,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
-import { DefaultContentCard } from '@/components/workflow-editor/steps/shared/provider-overrides/default-content-card';
 import { SlackBlockKitBuilderHint } from '@/components/workflow-editor/steps/shared/provider-overrides/slack-block-kit-builder-hint';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
-import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
@@ -64,11 +62,5 @@ export const ChatEditor = (props: ChatEditorProps) => {
     return <ChatOverrideEditor defaultContent={defaultContent} />;
   }
 
-  return (
-    <div className="flex h-full flex-col">
-      <TabsSection className="p-0 pb-3">
-        <DefaultContentCard>{defaultContent}</DefaultContentCard>
-      </TabsSection>
-    </div>
-  );
+  return <div className="flex h-full flex-col">{defaultContent}</div>;
 };
