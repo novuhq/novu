@@ -1,14 +1,17 @@
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import {
+  CardElement,
   ChannelTypeEnum,
   IChatOptions,
   IChatProvider,
+  IChatRenderResult,
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
 import Axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { cardToWhatsAppText } from './card-render.utils';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
 
@@ -33,6 +36,18 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
         'Content-Type': 'application/json',
       },
     });
+  }
+
+  /**
+   * Rich Chat: WhatsApp has no native card payload, so degrade the `CardElement` to WhatsApp-flavored
+   * text (`*bold*`, `_italic_`, `~strike~`; links rendered as `label (url)` since it has no link markup).
+   */
+  async render(card: CardElement): Promise<IChatRenderResult> {
+    return {
+      nativePayload: {},
+      content: cardToWhatsAppText(card),
+      validation: [],
+    };
   }
 
   async sendMessage(

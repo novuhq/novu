@@ -1,9 +1,11 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
+  CardElement,
   ChannelTypeEnum,
   ENDPOINT_TYPES,
   IChatOptions,
   IChatProvider,
+  IChatRenderResult,
   ISendMessageSuccessResponse,
   isChannelDataOfType,
   MsTeamsChannelData,
@@ -11,14 +13,23 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { esmImport } from '../../../utils/esm-import';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
+import { toTeamsFlavoredCard, validateTeamsCard } from './card-render.utils';
 
 interface CreateConversationResponse {
   id: string;
   serviceUrl?: string;
   activityId?: string;
 }
+
+type TeamsCardsModule = {
+  cardToAdaptiveCard: (card: unknown) => Record<string, unknown>;
+  cardToFallbackText: (card: unknown) => string;
+};
+
+const ADAPTIVE_CARD_CONTENT_TYPE = 'application/vnd.microsoft.card.adaptive';
 
 export class MsTeamsProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -32,26 +43,45 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
     super();
   }
 
+  /**
+   * Rich Chat: serialize a `CardElement` to a Teams Adaptive Card attachment + fallback text.
+   */
+  async render(card: CardElement): Promise<IChatRenderResult> {
+    const { cardToAdaptiveCard, cardToFallbackText } = await esmImport<TeamsCardsModule>('@chat-adapter/teams');
+
+    // Teams Adaptive Card TextBlocks render standard markdown for bold/italic/links, but not
+    // strikethrough or inline code — strip those markers so they don't show as literal `~~`/backticks.
+    const teamsCard = toTeamsFlavoredCard(card);
+
+    return {
+      nativePayload: {
+        attachments: [{ contentType: ADAPTIVE_CARD_CONTENT_TYPE, content: cardToAdaptiveCard(teamsCard) }],
+      },
+      content: cardToFallbackText(teamsCard),
+      validation: validateTeamsCard(card),
+    };
+  }
+
   async sendMessage(
     data: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const { channelData, content } = data;
+    const { channelData } = data;
 
     if (!channelData) {
       throw new Error('Channel data is required for MS Teams provider');
     }
 
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.WEBHOOK)) {
-      return await this.sendWebhookMessage(channelData.endpoint.url, content, bridgeProviderData);
+      return await this.sendWebhookMessage(channelData.endpoint.url, data, bridgeProviderData);
     }
 
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.MS_TEAMS_CHANNEL)) {
-      return await this.sendChannelMessage(channelData, content);
+      return await this.sendChannelMessage(channelData, data);
     }
 
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.MS_TEAMS_USER)) {
-      return await this.sendUserMessage(channelData, content);
+      return await this.sendUserMessage(channelData, data);
     }
 
     throw new Error(`Invalid channel data type for MsTeams provider`);
@@ -59,15 +89,19 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
 
   private async sendWebhookMessage(
     webhookUrl: string,
-    content: string,
+    data: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>>
   ): Promise<ISendMessageSuccessResponse> {
     let payload: Record<string, unknown>;
 
-    try {
-      payload = { ...JSON.parse(content) };
-    } catch {
-      payload = { text: content };
+    if (data.nativePayload) {
+      payload = { type: 'message', ...data.nativePayload };
+    } else {
+      try {
+        payload = { ...JSON.parse(data.content) };
+      } catch {
+        payload = { text: data.content };
+      }
     }
 
     payload = this.transform(bridgeProviderData, payload).body;
@@ -85,14 +119,14 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
 
   private async sendChannelMessage(
     channelData: MsTeamsChannelData,
-    content: string
+    data: IChatOptions
   ): Promise<ISendMessageSuccessResponse> {
     const { endpoint, subscriberTenantId, token } = channelData;
     const { teamId, channelId } = endpoint;
 
     const payload = {
       type: 'message',
-      text: content,
+      ...(data.nativePayload ?? { text: data.content }),
       channelData: {
         tenant: { id: subscriberTenantId },
         team: { id: teamId },
@@ -122,7 +156,10 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
     }
   }
 
-  private async sendUserMessage(channelData: MsTeamsUserData, content: string): Promise<ISendMessageSuccessResponse> {
+  private async sendUserMessage(
+    channelData: MsTeamsUserData,
+    data: IChatOptions
+  ): Promise<ISendMessageSuccessResponse> {
     const { endpoint, subscriberTenantId, token, clientId } = channelData;
     const { userId } = endpoint;
 
@@ -153,7 +190,7 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
       // Step 2: Send message to the conversation
       const messagePayload = {
         type: 'message',
-        text: content,
+        ...(data.nativePayload ?? { text: data.content }),
       };
 
       const messageResponse = await this.axiosInstance.post(

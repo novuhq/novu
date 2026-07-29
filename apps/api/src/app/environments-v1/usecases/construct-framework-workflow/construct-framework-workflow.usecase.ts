@@ -22,6 +22,7 @@ import { workflow } from '@novu/framework/express';
 import {
   ActionStep,
   ChannelStep,
+  ChatOutputUnvalidated,
   PostActionEnum,
   Schema,
   Step,
@@ -298,13 +299,15 @@ export class ConstructFrameworkWorkflow {
         return step.chat(
           stepId,
           async (controlValues) => {
+            // The renderer yields either `{ body }` or `{ card }`; cast to the schema's
+            // body-or-card union (`ChatOutputUnvalidated`) that the resolver signature expects.
             return this.chatOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
               organization,
               locale,
-            });
+            }) as Promise<ChatOutputUnvalidated>;
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );

@@ -1,7 +1,7 @@
 import { jsonrepair } from 'jsonrepair';
 import { Liquid } from 'liquidjs';
 
-import { PostActionEnum } from './constants';
+import { ChannelStepEnum, PostActionEnum } from './constants';
 import {
   ExecutionEventControlsInvalidError,
   ExecutionEventPayloadInvalidError,
@@ -20,6 +20,7 @@ import {
 } from './errors';
 import { mockSchema } from './jsonSchemaFaker';
 import type { Agent } from './resources/agent';
+import { resolveCardContent } from './resources/agent/resolve-card-content';
 import { prettyPrintDiscovery } from './resources/workflow/pretty-print-discovery';
 import type {
   ActionStep,
@@ -676,8 +677,9 @@ export class Client {
         const templateControls = await this.createStepControls(step, event);
         const controls = await this.compileControls(templateControls, event);
         const output = await step.resolve(controls);
+        const normalizedOutput = await this.normalizeChatCardOutput(step, output);
         const validatedOutput = await this.validate(
-          output,
+          normalizedOutput,
           step.outputs.unknownSchema,
           'step',
           'output',
@@ -729,6 +731,29 @@ export class Client {
         throw error;
       }
     }
+  }
+
+  /**
+   * Code-first chat steps may return `card` as a `chat` JSX element (e.g. `Card(...)`) or a plain
+   * `CardElement`. Normalize it to plain `CardElement` JSON before validation so it matches the
+   * chat output schema and can cross the bridge unchanged. Non-chat steps and card-less outputs
+   * pass through untouched.
+   */
+  private async normalizeChatCardOutput(
+    step: DiscoverStepOutput,
+    output: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
+    if (step.type !== ChannelStepEnum.CHAT || output?.card == null) {
+      return output;
+    }
+
+    const resolvedCard = await resolveCardContent(output.card);
+
+    if (!resolvedCard) {
+      return output;
+    }
+
+    return { ...output, card: resolvedCard };
   }
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
@@ -870,8 +895,9 @@ export class Client {
     const controls = await this.compileControls(templateControls, event);
 
     const previewOutput = await step.resolve(controls);
+    const normalizedOutput = await this.normalizeChatCardOutput(step, previewOutput);
     const validatedOutput = await this.validate(
-      previewOutput,
+      normalizedOutput,
       step.outputs.unknownSchema,
       'step',
       'output',
