@@ -431,6 +431,9 @@ importers:
       '@novu/chat-adapter-sendblue':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-sendblue
+      '@novu/chat-adapter-web':
+        specifier: workspace:*
+        version: link:../../packages/chat-adapter-web
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -3492,6 +3495,25 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0(chat@4.31.0(zod@4.3.6))
     devDependencies:
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/chat-adapter-web:
+    dependencies:
+      nanoid:
+        specifier: ^3.3.8
+        version: 3.3.16
+    devDependencies:
+      chat:
+        specifier: ^4.33.0
+        version: 4.33.0(zod@4.3.6)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -8355,9 +8377,6 @@ packages:
 
   '@jridgewell/source-map@0.3.6':
     resolution: {integrity: sha512-1ZJTZebgqllO79ue2bm3rIGud/bOe0pP5BjSRCRxxYkEZS8STV7zN84UBbiYu7jy+eCKSnVIUgoWWE/tt+shMQ==}
-
-  '@jridgewell/sourcemap-codec@1.5.0':
-    resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -22523,11 +22542,6 @@ packages:
   nanoclone@0.2.1:
     resolution: {integrity: sha512-wynEP02LmIbLpcYw8uBKpcfF6dmg2vcpKqxeH5UcoKEYdExslsdUA4ugFauuaeYdTB76ez6gJW8XAZ6CgkXYxA==}
 
-  nanoid@3.3.11:
-    resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   nanoid@3.3.16:
     resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -34273,8 +34287,6 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.30
 
-  '@jridgewell/sourcemap-codec@1.5.0': {}
-
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
   '@jridgewell/trace-mapping@0.3.25':
@@ -39595,7 +39607,7 @@ snapshots:
       lodash: 4.18.1
       lodash-es: 4.18.1
       markdown-to-jsx: 7.4.1(react@19.2.3)
-      nanoid: 3.3.8
+      nanoid: 3.3.16
       prop-types: 15.8.1
       react: 19.2.3
 
@@ -39735,7 +39747,7 @@ snapshots:
     dependencies:
       '@sanity/eventsource': 5.0.2
       get-it: 8.7.3
-      nanoid: 3.3.11
+      nanoid: 3.3.16
       rxjs: 7.8.2
 
   '@sanity/eventsource@5.0.2':
@@ -42682,7 +42694,7 @@ snapshots:
     dependencies:
       minimatch: 9.0.9
       path-browserify: 1.0.1
-      tinyglobby: 0.2.14
+      tinyglobby: 0.2.16
 
   '@tsconfig/node10@1.0.9': {}
 
@@ -52205,7 +52217,7 @@ snapshots:
 
   magic-string@0.30.17:
     dependencies:
-      '@jridgewell/sourcemap-codec': 1.5.0
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   magic-string@0.30.21:
     dependencies:
@@ -53027,7 +53039,7 @@ snapshots:
       log-symbols: 4.1.0
       minimatch: 5.1.9
       ms: 2.1.3
-      nanoid: 3.3.8
+      nanoid: 3.3.16
       serialize-javascript: 7.0.5
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
@@ -53053,7 +53065,7 @@ snapshots:
       log-symbols: 4.0.0
       minimatch: 3.1.5
       ms: 2.1.3
-      nanoid: 3.3.8
+      nanoid: 3.3.16
       serialize-javascript: 7.0.5
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
@@ -53240,8 +53252,6 @@ snapshots:
     optional: true
 
   nanoclone@0.2.1: {}
-
-  nanoid@3.3.11: {}
 
   nanoid@3.3.16: {}
 
@@ -56618,7 +56628,7 @@ snapshots:
 
   shortid@2.2.17:
     dependencies:
-      nanoid: 3.3.8
+      nanoid: 3.3.16
 
   side-channel-list@1.0.0:
     dependencies:
@@ -59129,7 +59139,7 @@ snapshots:
       '@vitest/snapshot': 4.1.9
       '@vitest/spy': 4.1.9
       '@vitest/utils': 4.1.9
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.3.0
       expect-type: 1.3.0
       magic-string: 0.30.21
       obug: 2.1.1
@@ -59313,7 +59323,7 @@ snapshots:
       browserslist: 4.28.1
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.23.0
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.3.0
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
