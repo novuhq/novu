@@ -1,6 +1,6 @@
 import { type ContentOverrideProviderId } from '@novu/shared';
-import { Undo2 } from 'lucide-react';
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { Braces, Undo2 } from 'lucide-react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiErrorWarningFill } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -21,12 +21,15 @@ import {
 } from './content-source';
 import { useContentSource } from './content-source-context';
 import { ContentSourceSelector } from './content-source-selector';
-import { DefaultContentCard } from './default-content-card';
-import { ProviderOverrideEditor } from './provider-override-editor';
+import {
+  ProviderOverrideEditor,
+  type ProviderOverrideEditorHandle,
+  type ProviderOverrideEditorProps,
+} from './provider-override-editor';
 
 /** Per-provider customizations a channel can layer onto the generic override editor. */
 export type ProviderOverrideEditorExtras = Pick<
-  Parameters<typeof ProviderOverrideEditor>[0],
+  ProviderOverrideEditorProps,
   'notice' | 'headerTooltip' | 'placeholder' | 'rootSchemaOverride' | 'describeField' | 'annotateField'
 >;
 
@@ -54,6 +57,7 @@ export function ContentOverridePanel({
   // Only one override editor is mounted at a time, so at most one provider can have an uncommitted parse error.
   const [draftParseErrorProviderId, setDraftParseErrorProviderId] = useState<string | null>(null);
   const [pendingResetProviderId, setPendingResetProviderId] = useState<ContentOverrideProviderId | null>(null);
+  const overrideEditorRef = useRef<ProviderOverrideEditorHandle>(null);
 
   useEffect(() => {
     if (selectedSource !== DEFAULT_CONTENT_SOURCE && !(selectedSource in (providerOverrides ?? {}))) {
@@ -239,12 +243,28 @@ export function ContentOverridePanel({
             <span>Reset to default</span>
           </button>
         )}
+        {overrideProviderId && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Format JSON"
+                className="border-stroke-soft bg-bg-white text-text-sub hover:bg-bg-weak flex h-7 items-center justify-center border-r pl-1.5 pr-2 transition-colors"
+                onClick={() => overrideEditorRef.current?.formatJson()}
+              >
+                <Braces className="size-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Format JSON</TooltipContent>
+          </Tooltip>
+        )}
         <div className="h-full flex-1" />
       </div>
 
       <TabsSection className="p-3">
         {overrideProviderId ? (
           <ProviderOverrideEditor
+            ref={overrideEditorRef}
             providerId={overrideProviderId}
             displayName={selectedOption?.displayName ?? getContentSourceLabel(overrideProviderId)}
             onDraftParseValidityChange={handleDraftParseValidityChange}
