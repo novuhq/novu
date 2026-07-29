@@ -91,6 +91,7 @@ import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
 import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
 import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
+import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
 
 @Module({
@@ -168,6 +169,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     NovuWebChatProvisioningService,
     WebChatPublicationService,
     WebChatSessionVerifier,
+    WebChatResumeAuthorizationService,
     WebChatPlatformDeliveryService,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
