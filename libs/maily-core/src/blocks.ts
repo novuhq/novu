@@ -1,4 +1,5 @@
 export * from './blocks/button';
+export * from './blocks/card-button';
 export * from './blocks/code';
 export * from './blocks/image';
 export * from './blocks/layout';
