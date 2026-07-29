@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PinoLogger, shortId } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
@@ -10,7 +10,6 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
-import { isWebChatThread } from '../../web-chat/web-chat-inbound.adapter';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -28,17 +27,6 @@ import {
 } from './slack-native-delivery';
 
 export type { SlackNativeDelivery } from './slack-native-delivery';
-
-function isWebChatPlatform(platform: string): boolean {
-  return platform === AgentPlatformEnum.WEB_CHAT;
-}
-
-function webChatSentMessageInfo(platformThreadId: string, messageId?: string): SentMessageInfo {
-  return {
-    messageId: messageId ?? `act_${shortId(12)}`,
-    platformThreadId,
-  };
-}
 
 /** The subset of the resolved config that drives outbound watermarking. */
 type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
@@ -119,17 +107,6 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
-    if (isWebChatPlatform(target.platform)) {
-      const messageId = persist.activityIdentifier ?? `act_${shortId(12)}`;
-      const sent: SentMessageInfo = {
-        messageId,
-        platformThreadId: target.platformThreadId,
-      };
-      await this.persistDelivered({ ...persist, activityIdentifier: messageId }, sent, msg);
-
-      return sent;
-    }
-
     const sent = await this.postToConversation(
       target.agentId,
       target.integrationIdentifier,
@@ -139,7 +116,24 @@ export class OutboundGateway {
       options,
       target.workspaceId
     );
-    await this.persistDelivered(persist, sent, msg);
+
+    // Web chat has no external platform id — durable activity id ≡ platformMessageId.
+    // Prefer the caller's activityIdentifier (AgentEvent messageId) so event→activity
+    // idempotency and history rehydration share one id; otherwise use the id minted
+    // by adapter deliverMessage.
+    if (target.platform === AgentPlatformEnum.WEB_CHAT) {
+      const messageId = persist.activityIdentifier ?? sent.messageId;
+      const aligned = { ...sent, messageId };
+      await this.persistDelivered({ ...persist, activityIdentifier: messageId }, aligned, msg);
+
+      return aligned;
+    }
+
+    await this.persistDelivered(
+      { ...persist, activityIdentifier: persist.activityIdentifier ?? sent.messageId },
+      sent,
+      msg
+    );
 
     return sent;
   }
@@ -213,11 +207,12 @@ export class OutboundGateway {
       throw err;
     }
 
-    if (opts?.persist && !isWebChatThread(thread)) {
+    if (opts?.persist) {
       await this.conversation.persistAgentMessage({
         conversationId: opts.persist.conversationId,
         channel: opts.persist.channel,
         platformMessageId: sent.id,
+        identifier: sent.id,
         agentIdentifier: opts.persist.agentIdentifier,
         content: opts.persist.content,
         richContent: opts.persist.richContent,
@@ -238,10 +233,6 @@ export class OutboundGateway {
     options?: OutboundDeliveryOptions,
     workspaceId?: string
   ): Promise<SentMessageInfo> {
-    if (isWebChatPlatform(platform)) {
-      return webChatSentMessageInfo(platformThreadId);
-    }
-
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
     if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
@@ -295,11 +286,6 @@ export class OutboundGateway {
     }
 
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
-
-    if (isWebChatPlatform(config.platform)) {
-      return;
-    }
-
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
     const thread = chat.thread(platformThreadId);
@@ -326,7 +312,7 @@ export class OutboundGateway {
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
-    if (isWebChatPlatform(config.platform)) {
+    if (config.platform === AgentPlatformEnum.WEB_CHAT) {
       return;
     }
 
@@ -464,10 +450,6 @@ export class OutboundGateway {
     options?: OutboundDeliveryOptions,
     workspaceId?: string
   ): Promise<SentMessageInfo> {
-    if (isWebChatPlatform(platform)) {
-      return webChatSentMessageInfo(platformThreadId, platformMessageId);
-    }
-
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
     if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
@@ -524,10 +506,6 @@ export class OutboundGateway {
     platformMessageId: string,
     workspaceId?: string
   ): Promise<void> {
-    if (isWebChatPlatform(platform)) {
-      return;
-    }
-
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);

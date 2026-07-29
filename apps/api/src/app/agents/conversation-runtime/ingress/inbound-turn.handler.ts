@@ -246,7 +246,10 @@ export interface InboundReactionEvent {
 }
 
 export type WebChatInboundOptions = {
-  /** Pre-minted conversation identifier; `platformThreadId` for the first web-chat turn. */
+  /**
+   * @deprecated Adapter-minted `thread.id` is the conversation identifier for web_chat.
+   * Kept optional for call-site compatibility; prefer omitting.
+   */
   conversationIdentifier?: string;
 };
 
@@ -436,14 +439,14 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       thread.isDM,
       extractWorkspaceId(config.platform, message.raw) ?? undefined,
-      options?.conversationIdentifier
+      options?.conversationIdentifier ?? this.webChatConversationIdentifier(config.platform, platformThreadId)
     );
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
 
       if (!aiEnabled) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -453,7 +456,7 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       if (await this.isKeylessDemoCapReached(config, conversation._id)) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -608,6 +611,18 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     return this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
+  }
+
+  /**
+   * Public conversation identifier is bare `conv_*`; chat-sdk thread ids are
+   * `web_chat:conv_*` so the registry can resolve the adapter by prefix.
+   */
+  private webChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
+    if (platform !== AgentPlatformEnum.WEB_CHAT) {
+      return undefined;
+    }
+
+    return platformThreadId.startsWith('web_chat:') ? platformThreadId.slice('web_chat:'.length) : platformThreadId;
   }
 
   private async openConversation(
@@ -944,10 +959,10 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    conversationId: string
+    conversation: ConversationEntity
   ): Promise<void> {
     try {
-      if (await this.connectClaimTokenService.isSignupCtaPosted(conversationId)) {
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
         return;
       }
 
@@ -956,10 +971,22 @@ export class AgentInboundHandler implements OnModuleInit {
         org: config.organizationId,
       });
       const claimUrl = buildConnectClaimUrl(token);
+      const channel = this.conversationService.getPrimaryChannel(conversation);
+      const card = buildKeylessSignupCard(claimUrl);
 
-      await this.outboundGateway.replyOnThreadWithCard(thread, buildKeylessSignupCard(claimUrl));
+      await this.outboundGateway.replyOnThreadWithCard(thread, card, {
+        persist: {
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: config.agentIdentifier,
+          content: card.title ?? '[Card]',
+          richContent: { card },
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        },
+      });
 
-      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversation._id);
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post keyless signup CTA`);
       captureAgentWarning(err, {

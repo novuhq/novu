@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import {
   SubscriberSession,
   type SubscriberSession as SubscriberSessionData,
@@ -8,45 +9,31 @@ import {
 import { AgentConversationEnabledGuard } from '../shared/agent-conversation-enabled.guard';
 import { WebChatEnabledGuard } from '../shared/web-chat-enabled.guard';
 import {
-  CreateWebChatConversationRequestDto,
-  CreateWebChatConversationResponseDto,
-} from './dtos/create-web-chat-conversation.dto';
-import {
   ListWebChatConversationEventsQueryDto,
   ListWebChatConversationEventsResponseDto,
 } from './dtos/list-web-chat-conversation-events.dto';
-import { CreateWebChatConversationCommand } from './usecases/create-web-chat-conversation/create-web-chat-conversation.command';
-import { CreateWebChatConversation } from './usecases/create-web-chat-conversation/create-web-chat-conversation.usecase';
 import { ListWebChatConversationEventsCommand } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.command';
 import { ListWebChatConversationEvents } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
+import { WebChatIngressService } from './web-chat-ingress.service';
 
 @Controller('/web-chat')
 @ApiExcludeController()
-@UseGuards(AuthGuard('subscriberJwt'), AgentConversationEnabledGuard, WebChatEnabledGuard)
 export class WebChatController {
   constructor(
-    private readonly createWebChatConversation: CreateWebChatConversation,
+    private readonly webChatIngress: WebChatIngressService,
     private readonly listWebChatConversationEvents: ListWebChatConversationEvents
   ) {}
 
+  /**
+   * POST auth is adapter `verifySession` only (NV-8448). Nest JWT remains on GET.
+   */
   @Post('/conversations')
-  @HttpCode(HttpStatus.CREATED)
-  async createConversation(
-    @SubscriberSession() subscriberSession: SubscriberSessionData,
-    @Body() body: CreateWebChatConversationRequestDto
-  ): Promise<CreateWebChatConversationResponseDto> {
-    return this.createWebChatConversation.execute(
-      CreateWebChatConversationCommand.create({
-        environmentId: subscriberSession.environmentId,
-        organizationId: subscriberSession.organizationId,
-        subscriberId: subscriberSession.subscriberId,
-        agentIdentifier: body.agentId,
-        text: body.text,
-      })
-    );
+  async createConversation(@Req() req: ExpressRequest, @Res() res: ExpressResponse): Promise<void> {
+    await this.webChatIngress.handleCreateConversation(req, res);
   }
 
   @Get('/conversations/:identifier/events')
+  @UseGuards(AuthGuard('subscriberJwt'), AgentConversationEnabledGuard, WebChatEnabledGuard)
   async listConversationEvents(
     @SubscriberSession() subscriberSession: SubscriberSessionData,
     @Param('identifier') identifier: string,
