@@ -24,11 +24,6 @@ type PushPreviewPanelProps = {
   previewData?: GeneratePreviewResponseDto;
 };
 
-/** Push preview DTO may omit `providerOverrides` until the shared type catches up — read safely. */
-type PushRenderOutputWithOverrides = PushRenderOutput & {
-  providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
-};
-
 const MOBILE_PREVIEW_DESCRIPTION =
   'This preview shows how your message will appear on mobile. Actual rendering may vary by device.';
 
@@ -41,10 +36,10 @@ function MobilePushPreview({ children }: { children: ReactNode }) {
   );
 }
 
-function extractPushPreview(previewData?: GeneratePreviewResponseDto): PushRenderOutputWithOverrides | undefined {
+function extractPushPreview(previewData?: GeneratePreviewResponseDto): PushRenderOutput | undefined {
   const result = previewData?.result;
 
-  return result?.type === ChannelTypeEnum.PUSH ? (result.preview as PushRenderOutputWithOverrides) : undefined;
+  return result?.type === ChannelTypeEnum.PUSH ? (result.preview as PushRenderOutput) : undefined;
 }
 
 /**
@@ -97,7 +92,6 @@ function PushOverridePreview({ isPreviewPending, previewData }: PushPreviewPanel
             body,
             providerId: activeProviderId,
             displayName,
-            variant: 'push',
           })}
         </div>
       </div>
