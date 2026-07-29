@@ -826,6 +826,7 @@ export class SubscribersV1Controller {
         hmacHash: query?.hmacHash,
         environmentId: query?.environmentId,
         integrationIdentifier: query?.integrationIdentifier,
+        state: query?.state,
         subscriberId,
         providerId,
       })

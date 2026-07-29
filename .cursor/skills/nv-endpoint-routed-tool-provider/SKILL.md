@@ -2,13 +2,13 @@
 name: nv-endpoint-routed-tool-provider
 description: >-
   Build or refactor a Tool-channel provider (PagerDuty, Opsgenie, future
-  incident/alerting tools) to be endpoint-routed: per-subscriber secrets stored
-  encrypted on a ChannelConnection behind a typed channel endpoint, a stateless
-  provider that resolves routing from channelData at send time, SKIPPED steps
-  when no endpoint exists, and the full API/worker/dashboard/docs/playground
-  surface. Starts with a mandatory provider-docs discovery gate. Use when
-  refactoring Opsgenie to the PagerDuty model, adding a new tool provider, or
-  touching pagerduty_service channel endpoints.
+  incident/alerting tools) to be endpoint-routed: per-subscriber secrets
+  encrypted on the channel endpoint resource, a stateless provider that resolves
+  routing from channelData at send time, SKIPPED steps when no endpoint exists,
+  and the full API/worker/dashboard/docs/playground surface. Starts with a
+  mandatory provider-docs discovery gate. Use when refactoring Opsgenie to the
+  PagerDuty model, adding a new tool provider, or touching pagerduty_service
+  channel endpoints.
 ---
 
 # Endpoint-Routed Tool Provider (the PagerDuty model)
@@ -49,28 +49,30 @@ Then apply the gate:
 
 ## Architecture invariants (do not renegotiate these)
 
-1. **Secret lives on the connection, not the endpoint.** The wire shape (e.g.
-   `{ routingKey, region }`) is accepted and returned by the API, but persisted
-   encrypted on a dedicated `ChannelConnection.auth` (1:1 owned by the
-   endpoint). The stored `ChannelEndpoint.endpoint` document is `{}`. Read
-   paths re-hydrate the wire shape by decrypting the linked connection.
+1. **Sensitive routing fields encrypt on `ChannelEndpoint.endpoint`; connections
+   are OAuth-only.** The wire shape (e.g. `{ routingKey, region }`) is accepted
+   and returned by the API. Sensitive fields (routing key, API key, webhook URL
+   and header values) are persisted encrypted on the endpoint document via
+   `encryptChannelEndpoint`. Non-sensitive companions (`region`, `method`) stay
+   plaintext. No synthetic `ChannelConnection` is created for these types.
 2. **Exactly one endpoint per (environment, subscriber, integration)**,
    enforced by a Mongo partial unique index on the endpoint `type`. Duplicate
    `POST` → `409 Conflict`; rotation is a `PATCH` on the existing endpoint.
+   (`tool_webhook` is the exception: many endpoints per subscriber are allowed.)
 3. **The provider is stateless.** Constructor takes no credentials. Routing is
    resolved inside `sendMessage` from `options.channelData.endpoint`, guarded
    by `isChannelDataOfType(channelData, ENDPOINT_TYPES.X)`. Missing/wrong
    channelData throws.
 4. **No endpoint → step is SKIPPED**, never errored. The worker send loop
    checks `ENDPOINT_ROUTED_TOOL_PROVIDERS` (a `Set` in
-   `send-message-tool.usecase.ts`); credential-routed tool providers
-   (tool-webhook, Opsgenie today) still fall back to `integration.credentials`.
+   `send-message-tool.usecase.ts`); credential-routed tool providers still fall
+   back to `integration.credentials` when that pattern applies.
 5. **Deterministic `dedup_key`** from `transactionId + subscriberId + stepId`
    so worker retries update the same incident instead of duplicating it. An
    explicit override wins.
 6. **Secrets never leak**: not in logs, execution details, or message
-   documents. The routing key is added to `SECURE_AUTH_FIELDS` in
-   `encrypt-channel-connection-auth.ts` so it is encrypted at rest.
+   documents. Sensitive endpoint fields are encrypted at rest by
+   `encryptChannelEndpoint`.
 7. **`createSubscriberIfMissing`** (optional boolean on the create-endpoint
    body) JIT-creates the subscriber via `CreateOrUpdateSubscriberUseCase` with
    `allowUpdate: false` (create-only, never mutates). Without it, unknown
@@ -85,8 +87,8 @@ must build before the next (see Build order below).
 **A. Foundations (`packages/shared`, `packages/stateless`, `libs/dal`, `libs/application-generic`)**
 - [ ] Add `X_TYPE` to `ENDPOINT_TYPES` + wire shape in `ChannelEndpointByType` — `packages/shared/src/types/channel-endpoint.ts`
 - [ ] Mirror both in `packages/stateless/src/lib/provider/channel-data.type.ts`; add the `XData` type to `ChannelData` and to `ENDPOINT_TYPES_REQUIRING_TOKEN`
-- [ ] Partial unique index in `libs/dal/src/repositories/channel-endpoint/channel-endpoint.schema.ts` (`{ _environmentId, subscriberId, integrationIdentifier, type }`, `partialFilterExpression: { type }`)
-- [ ] Add secret field(s) to `SECURE_AUTH_FIELDS` + `ChannelConnectionAuth` in `libs/application-generic/src/encryption/encrypt-channel-connection-auth.ts` (+ spec)
+- [ ] Partial unique index in `libs/dal/src/repositories/channel-endpoint/channel-endpoint.schema.ts` (`{ _environmentId, subscriberId, integrationIdentifier, type }`, `partialFilterExpression: { type }`) when cardinality is 1:1
+- [ ] Extend `encryptChannelEndpoint` / decrypt helpers in `libs/application-generic/src/encryption/` so sensitive endpoint fields encrypt at rest (+ spec)
 - [ ] Validator entry in `libs/application-generic/src/schemas/channel-endpoint/channel-endpoint.schema.ts` (format-validate the secret, e.g. `/^[a-zA-Z0-9]{32}$/`, and reject extra keys)
 
 **B. Provider (`packages/providers`, `libs/application-generic`)**
@@ -97,11 +99,11 @@ must build before the next (see Build order below).
 **C. API (`apps/api/src/app/channel-endpoints`)**
 - [ ] Endpoint DTO in `dtos/endpoint-types.dto.ts` (regex-validate the secret) + `Create<X>EndpointDto` in `dtos/create-channel-endpoint-variants.dto.ts`
 - [ ] Controller: `@ApiExtraModels` + `oneOf` + discriminator mapping for the new DTO
-- [ ] Create usecase: connection-first then endpoint, compensating delete on failure, duplicate-key → 409; update usecase rotates on the connection; delete cascades the connection; get/list hydrate the wire shape (batch `$in` for list)
+- [ ] Create usecase: persist the endpoint directly with `encryptChannelEndpoint` (no connection create); duplicate-key → 409; update usecase re-encrypts rotated secrets on the endpoint; delete removes the endpoint document; get/list decrypt sensitive fields for the wire response
 - [ ] e2e in `e2e/create-channel-endpoint.e2e.ts`: happy path, 409, rotation, `createSubscriberIfMissing` (404 hint / JIT create / no-mutation)
 
 **D. Worker (`apps/worker/src/app/workflow/usecases/send-message`)**
-- [ ] `resolve-channel-endpoints.usecase.ts`: extract + decrypt the secret from the connection into `channelData.endpoint`
+- [ ] `resolve-channel-endpoints.usecase.ts`: decrypt the endpoint document into `channelData.endpoint`
 - [ ] `send-message-tool.usecase.ts`: add the provider id to `ENDPOINT_ROUTED_TOOL_PROVIDERS`; verify SKIPPED + execution detail on missing endpoint (+ spec for the predicate)
 
 **E. Surface (dashboard, docs, playground)**
@@ -150,9 +152,10 @@ pnpm exec cross-env NODE_ENV=test CI_EE_TEST=true CLERK_ENABLED=true \
 - **Module DI**: JIT subscriber creation needs `SharedModule` +
   `CreateOrUpdateSubscriberUseCase` + `UpdateSubscriber` +
   `UpdateSubscriberChannel` as providers in `channel-endpoints.module.ts`
-  (mirror `channel-connections.module.ts`).
+  (mirror `channel-connections.module.ts` for the DI pattern only; these tool
+  endpoints do not create connections).
 - **Worker/app-generic specs need `STORE_ENCRYPTION_KEY`** (32 chars) in the
-  env or `encryptChannelConnectionAuth` throws a Buffer TypeError.
+  env or `encryptChannelEndpoint` throws a Buffer TypeError.
 - **`@novu/api` SDK lags**: until the OpenAPI regen runs, the internal SDK's
   create-endpoint union won't include the new DTO — playground/demo code calls
   the raw REST endpoint (`novuFetch` pattern) and swaps to the SDK later.

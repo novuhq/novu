@@ -1667,6 +1667,42 @@ describe('Novu Client', () => {
       });
     });
 
+    it('should execute a tool-webhook provider resolver', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.tool('send-webhook', async () => ({ body: 'Default body' }), {
+          providers: {
+            'tool-webhook': async ({ outputs }) => ({
+              alert_type: 'incident',
+              title: outputs.body,
+            }),
+          },
+        });
+      });
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'send-webhook',
+        subscriber: {},
+        state: [],
+        payload: {},
+        controls: {},
+        context: {},
+        env: testEventEnv,
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({
+        'tool-webhook': {
+          alert_type: 'incident',
+          title: 'Default body',
+        },
+      });
+    });
+
     it('should support a passthrough object for the provider execution', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {

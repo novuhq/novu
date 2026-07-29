@@ -208,7 +208,13 @@ export class SnoozeNotification {
     const newJobData = {
       ...originalJob,
       transactionId: uuidv4(),
-      status: JobStatusEnum.PENDING,
+      /*
+       * DELAYED (not PENDING): this job is enqueued directly below with a
+       * delay, bypassing AddJob. RunJob's atomic claim only accepts
+       * QUEUED/DELAYED, so a PENDING unsnooze job would be unclaimable and
+       * the unsnooze delivery silently dropped.
+       */
+      status: JobStatusEnum.DELAYED,
       delay,
       createdAt: Date.now().toString(),
       _id: JobRepository.createObjectId(),

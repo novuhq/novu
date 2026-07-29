@@ -1,6 +1,12 @@
 import { ConflictException } from '@nestjs/common';
 import type { AgentEntity, IntegrationEntity } from '@novu/dal';
-import { ApiServiceLevelEnum, ChannelTypeEnum, EmailProviderIdEnum, NOVU_PROVIDERS } from '@novu/shared';
+import {
+  AgentSubscriberAccessEnum,
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  NOVU_PROVIDERS,
+} from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
@@ -16,7 +22,7 @@ function makeAgent(overrides: Partial<AgentEntity> = {}): AgentEntity {
     name: 'My Agent',
     identifier: 'my-agent',
     description: '',
-    behavior: undefined,
+    behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
     active: true,
     _environmentId: ENV_ID,
     _organizationId: ORG_ID,

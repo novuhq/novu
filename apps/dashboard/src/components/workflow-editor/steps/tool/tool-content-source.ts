@@ -5,10 +5,13 @@ import {
   providers,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
+  ToolProviderIdEnum,
 } from '@novu/shared';
 
 export const DEFAULT_CONTENT_SOURCE = 'default' as const;
+export const WEBHOOK_TOOL_PROVIDER_ID = ToolProviderIdEnum.Webhook;
 
+export type DashboardToolContentOverrideProviderId = ToolContentOverrideProviderId;
 export type ToolContentSource = typeof DEFAULT_CONTENT_SOURCE | ToolContentOverrideProviderId;
 
 export type ToolProviderOverrides = Partial<Record<ToolContentOverrideProviderId, Record<string, unknown>>>;
@@ -65,7 +68,12 @@ export function getUnsupportedToolOverrideKeys(
   providerId: ToolContentOverrideProviderId,
   override: Record<string, unknown> | undefined
 ): string[] {
-  const allowedKeys = new Set(getToolProviderOverrideKeys(providerId) ?? []);
+  const allowedKeys = getToolProviderOverrideKeys(providerId);
+  if (!allowedKeys) {
+    return [];
+  }
 
-  return Object.keys(override ?? {}).filter((key) => !allowedKeys.has(key));
+  const allowedKeySet = new Set(allowedKeys);
+
+  return Object.keys(override ?? {}).filter((key) => !allowedKeySet.has(key));
 }

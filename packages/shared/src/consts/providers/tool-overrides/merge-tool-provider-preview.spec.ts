@@ -35,6 +35,18 @@ describe('mergeToolProviderPreview', () => {
     expect(result.defaultContentKey).toBeUndefined();
   });
 
+  it('keeps webhook overrides unchanged when no primary content key exists', () => {
+    expect(
+      mergeToolProviderPreview({
+        body: 'Default webhook body',
+        providerId: ToolProviderIdEnum.Webhook,
+        override: { event: 'incident.created' },
+      })
+    ).toEqual({
+      merged: { event: 'incident.created' },
+    });
+  });
+
   it('treats empty-string primary key as missing and fills from body', () => {
     const result = mergeToolProviderPreview({
       body: 'Default incident message',

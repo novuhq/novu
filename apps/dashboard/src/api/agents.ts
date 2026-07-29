@@ -67,9 +67,9 @@ export type AgentBehavior = {
    * subscriber from an anonymous sender; on custom-code agents the turn is
    * forwarded to the bridge with a null subscriber. `restricted` rejects
    * anonymous senders. Managed creates default to `open`; self-hosted to
-   * `restricted`. Unset resolves as `restricted`.
+   * `restricted`. Always present on persisted agents.
    */
-  subscriberAccess?: AgentSubscriberAccess;
+  subscriberAccess: AgentSubscriberAccess;
 };
 
 export type ManagedRuntimeResponse = {
@@ -90,7 +90,7 @@ export type AgentResponse = {
   identifier: string;
   description?: string;
   active: boolean;
-  behavior?: AgentBehavior;
+  behavior: AgentBehavior;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -157,7 +157,7 @@ export type UpdateAgentBody = {
   name?: string;
   description?: string;
   active?: boolean;
-  behavior?: AgentBehavior;
+  behavior?: Partial<AgentBehavior>;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;

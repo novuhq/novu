@@ -6,6 +6,7 @@ import {
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
   CreateTelegramChatEndpointDto,
+  CreateToolWebhookEndpointDto,
   CreateWebexPersonEndpointDto,
   CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
@@ -21,4 +22,5 @@ export type CreateChannelEndpointRequest =
   | CreateTelegramChatEndpointDto
   | CreateWebexRoomEndpointDto
   | CreateWebexPersonEndpointDto
-  | CreateLineUserEndpointDto;
+  | CreateLineUserEndpointDto
+  | CreateToolWebhookEndpointDto;

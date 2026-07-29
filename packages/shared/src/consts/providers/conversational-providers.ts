@@ -14,6 +14,7 @@ export const CONVERSATIONAL_PROVIDERS: ConversationalProvider[] = [
   { providerId: ChatProviderIdEnum.Sendblue, displayName: 'Sendblue' },
   { providerId: ChatProviderIdEnum.WhatsAppBusiness, displayName: 'WhatsApp Business' },
   { providerId: ChatProviderIdEnum.MsTeams, displayName: 'MS Teams' },
+  { providerId: ChatProviderIdEnum.NovuWebChat, displayName: 'Web Chat' },
   { providerId: ChatProviderIdEnum.Discord, displayName: 'Discord', comingSoon: true },
   { providerId: 'google-chat', displayName: 'Google Chat', comingSoon: true },
   { providerId: 'linear', displayName: 'Linear', comingSoon: true },

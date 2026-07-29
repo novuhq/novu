@@ -491,6 +491,18 @@ export const twilioConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Data residency region',
+    description: 'Select EU if your Twilio account uses EU data residency (IE1). Use region-specific credentials.',
+    type: 'dropdown',
+    required: false,
+    value: 'us',
+    dropdown: [
+      { name: 'US (default)', value: 'us' },
+      { name: 'EU (Ireland)', value: 'eu' },
+    ],
+  },
   ...smsConfigBase,
 ];
 
@@ -1031,6 +1043,9 @@ export const novuInAppConfig: IConfigCredential[] = [
     },
   },
 ];
+
+/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for web chat. */
+export const novuWebChatConfig: IConfigCredential[] = novuInAppConfig;
 
 export const sendchampConfig: IConfigCredential[] = [
   {
@@ -1643,6 +1658,18 @@ export const opsgenieConfig: IConfigCredential[] = [];
 
 export const toolWebhookConfig: IConfigCredential[] = [
   {
+    key: CredentialsKeyEnum.RoutingMode,
+    displayName: 'Routing Mode',
+    type: 'dropdown',
+    description: 'Static delivers to one integration URL; dynamic routes per subscriber endpoint',
+    required: false,
+    value: 'static',
+    dropdown: [
+      { name: 'Static', value: 'static' },
+      { name: 'Dynamic', value: 'dynamic' },
+    ],
+  },
+  {
     key: CredentialsKeyEnum.Method,
     displayName: 'HTTP Method',
     type: 'dropdown',
@@ -1658,28 +1685,28 @@ export const toolWebhookConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.WebhookUrl,
     displayName: 'Endpoint URL',
     type: 'string',
-    description: 'The webhook URL to call when delivering a tool payload',
-    required: true,
+    description: 'Webhook URL used in static routing mode',
+    required: false,
   },
   {
     key: CredentialsKeyEnum.Headers,
     displayName: 'Headers',
     type: 'textarea',
-    description: 'Request headers as JSON object',
+    description: 'Default request headers as a JSON key/value object string',
     required: false,
   },
   {
     key: CredentialsKeyEnum.Body,
-    displayName: 'Body Template',
+    displayName: 'Body',
     type: 'textarea',
-    description: 'Request body template for the webhook call',
+    description: 'Default request body as a JSON key/value object string',
     required: false,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
-    displayName: 'Secret Hmac Key',
+    displayName: 'Signing Secret',
     type: 'string',
-    description: 'Optional secret used to sign webhook calls',
+    description: 'Optional HMAC secret used to sign webhook calls (X-Novu-Signature)',
     required: false,
   },
 ];

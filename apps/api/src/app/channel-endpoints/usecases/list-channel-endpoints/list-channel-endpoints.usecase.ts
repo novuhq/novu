@@ -1,24 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { decryptChannelEndpoint, InstrumentUsecase } from '@novu/application-generic';
 import type { EnforceEnvOrOrgIds } from '@novu/dal';
-import {
-  ChannelConnectionEntity,
-  ChannelConnectionRepository,
-  ChannelEndpointDBModel,
-  ChannelEndpointEntity,
-  ChannelEndpointRepository,
-} from '@novu/dal';
+import { ChannelEndpointDBModel, ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-import { hydrateEndpointFromConnection, isConnectionBackedEndpoint } from '../../connection-backed-endpoints';
 import { ListChannelEndpointsCommand } from './list-channel-endpoints.command';
 
 @Injectable()
 export class ListChannelEndpoints {
-  constructor(
-    private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly channelConnectionRepository: ChannelConnectionRepository
-  ) {}
+  constructor(private readonly channelEndpointRepository: ChannelEndpointRepository) {}
 
   @InstrumentUsecase()
   async execute(command: ListChannelEndpointsCommand) {
@@ -109,57 +99,17 @@ export class ListChannelEndpoints {
       includeCursor: command.includeCursor,
     });
 
-    const hydratedData = await this.hydrateConnectionBackedEndpoints(
-      pagination.data as ChannelEndpointEntity[],
-      command.user.environmentId,
-      command.user.organizationId
-    );
+    const decryptedData = (pagination.data as ChannelEndpointEntity[]).map((endpoint) => ({
+      ...endpoint,
+      endpoint: decryptChannelEndpoint(endpoint.type, endpoint.endpoint),
+    }));
 
     return {
-      data: hydratedData,
+      data: decryptedData,
       next: pagination.next,
       previous: pagination.previous,
       totalCount: pagination.totalCount,
       totalCountCapped: pagination.totalCountCapped,
     };
-  }
-
-  /**
-   * Batch-hydrate connection-backed endpoint wire shapes (pagerduty_service,
-   * opsgenie_integration) from their linked connections in a single `$in`
-   * query so a page of N such rows costs one extra roundtrip instead of N.
-   * See `hydrateEndpointFromConnection` for the underlying rationale.
-   */
-  private async hydrateConnectionBackedEndpoints(
-    endpoints: ChannelEndpointEntity[],
-    environmentId: string,
-    organizationId: string
-  ): Promise<ChannelEndpointEntity[]> {
-    const connectionIdentifiers = endpoints
-      .filter((endpoint) => isConnectionBackedEndpoint(endpoint.type))
-      .map((endpoint) => endpoint.connectionIdentifier)
-      .filter((identifier): identifier is string => Boolean(identifier));
-
-    if (connectionIdentifiers.length === 0) {
-      return endpoints;
-    }
-
-    const connections = await this.channelConnectionRepository.find({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      identifier: { $in: connectionIdentifiers },
-    });
-
-    const connectionsByIdentifier = new Map<string, ChannelConnectionEntity>(
-      connections.map((connection) => [connection.identifier, connection])
-    );
-
-    return endpoints.map((endpoint) => {
-      if (!isConnectionBackedEndpoint(endpoint.type) || !endpoint.connectionIdentifier) {
-        return endpoint;
-      }
-
-      return hydrateEndpointFromConnection(endpoint, connectionsByIdentifier.get(endpoint.connectionIdentifier));
-    });
   }
 }

@@ -12,6 +12,7 @@ import {
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  isRetryableWebhookFilterError,
   NotificationPayloadService,
   PinoLogger,
   StepRunRepository,
@@ -29,6 +30,7 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  RUNNING_CLAIM_RENEW_INTERVAL_MS,
   SubscriberRepository,
 } from '@novu/dal';
 import {
@@ -41,7 +43,7 @@ import {
 import { setUser } from '@sentry/node';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
+import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { PartialNotificationEntity } from '../add-job/add-job.command';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
@@ -100,10 +102,6 @@ export class RunJob {
       throw new PlatformException(`Job with id ${command.jobId} not found`);
     }
 
-    await this.stepRunRepository.create(job, {
-      status: JobStatusEnum.RUNNING,
-    });
-
     this.assignLogger(job);
 
     const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
@@ -125,6 +123,23 @@ export class RunJob {
       this.assignLogger(job);
     }
 
+    const claimed = await this.jobRepository.claimAsRunning(job._environmentId, job._id);
+    if (!claimed) {
+      this.logger.info(
+        { nv: { jobId: job._id, currentStatus: job.status } },
+        'Skipping job: could not atomically claim (freshly running, completed, or canceled by another worker)'
+      );
+
+      await this.resumeChainIfStrandedAfterCompletion(job);
+
+      return;
+    }
+    job = claimed;
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.RUNNING,
+    });
+
     nr.addCustomAttributes({
       transactionId: job.transactionId,
       environmentId: job._environmentId,
@@ -138,32 +153,25 @@ export class RunJob {
     let error: Error | undefined;
     let notification: PartialNotificationEntity | null = null;
 
+    /*
+     * Heartbeat: keep the RUNNING claim's lease fresh while this worker is
+     * alive, so a slow-but-healthy execution that outlives the SQS visibility
+     * timeout / BullMQ lock cannot be reclaimed by a redelivered message and
+     * run twice. A stale lease then always means the claiming worker died.
+     *
+     * Created immediately before the try block — nothing throwable may sit
+     * between here and the `finally` that clears it, or a failure would leak
+     * the interval and renew the claim forever.
+     */
+    const claimHeartbeat = setInterval(() => {
+      this.jobRepository.renewRunningClaim(claimed._environmentId, claimed._id).catch((renewError: unknown) => {
+        this.logger.warn({ err: renewError, nv: { jobId: claimed._id } }, 'Failed to renew running claim lease');
+      });
+    }, RUNNING_CLAIM_RENEW_INTERVAL_MS);
+    claimHeartbeat.unref();
+
     try {
-      notification = await this.notificationRepository.findOne(
-        {
-          _id: job._notificationId,
-          _environmentId: job._environmentId,
-        },
-        {
-          _id: 1,
-          _templateId: 1,
-          _organizationId: 1,
-          _environmentId: 1,
-          _subscriberId: 1,
-          transactionId: 1,
-          channels: 1,
-          to: 1,
-          payload: 1,
-          controls: 1,
-          topics: 1,
-          _digestedNotificationId: 1,
-          createdAt: 1,
-          severity: 1,
-          critical: 1,
-          contextKeys: 1,
-          tags: 1,
-        }
-      );
+      notification = await this.findNotification(job);
 
       if (!notification) {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
@@ -274,8 +282,6 @@ export class RunJob {
 
         return;
       }
-
-      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
@@ -427,8 +433,13 @@ export class RunJob {
       if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
+
+      if (this.shouldBackoff(error)) {
+        await this.jobRepository.releaseRunningClaim(job._environmentId, job._id);
+      }
       throw caughtError;
     } finally {
+      clearInterval(claimHeartbeat);
       if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
         await this.tryQueueNextJobs(job, notification, !!error);
       } else if (!isJobExtendedToSubscriberSchedule && !error) {
@@ -449,6 +460,75 @@ export class RunJob {
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
     }
+  }
+
+  @Instrument()
+  private async findNotification(job: JobEntity): Promise<PartialNotificationEntity | null> {
+    return this.notificationRepository.findOne(
+      {
+        _id: job._notificationId,
+        _environmentId: job._environmentId,
+      },
+      {
+        _id: 1,
+        _templateId: 1,
+        _organizationId: 1,
+        _environmentId: 1,
+        _subscriberId: 1,
+        transactionId: 1,
+        channels: 1,
+        to: 1,
+        payload: 1,
+        controls: 1,
+        topics: 1,
+        _digestedNotificationId: 1,
+        createdAt: 1,
+        severity: 1,
+        critical: 1,
+        contextKeys: 1,
+        tags: 1,
+      }
+    );
+  }
+
+  /**
+   * If a completed job still has a stranded child, resume the chain. Two crash
+   * windows leave a child stranded:
+   * - PENDING child: the worker died after COMPLETED but before claiming the child.
+   * - stale QUEUED child: the worker died after claimNextChildAsQueued but before
+   *   AddJob enqueued it, so the child has no queue message. Staleness (lease TTL)
+   *   distinguishes this from a child whose AddJob is still in flight; releasing it
+   *   back to PENDING funnels both windows through the same recovery path.
+   * No-op when there is no stranded child.
+   */
+  @Instrument()
+  private async resumeChainIfStrandedAfterCompletion(job: JobEntity): Promise<void> {
+    const currentJob = await this.jobRepository.findOne({ _id: job._id, _environmentId: job._environmentId }, 'status');
+    if (currentJob?.status !== JobStatusEnum.COMPLETED) {
+      return;
+    }
+
+    const strandedChild =
+      (await this.jobRepository.findOne(
+        {
+          _environmentId: job._environmentId,
+          _parentId: job._id,
+          status: JobStatusEnum.PENDING,
+        },
+        '_id'
+      )) ?? (await this.jobRepository.releaseStaleQueuedChildToPending(job._environmentId, job._id));
+    if (!strandedChild) {
+      return;
+    }
+
+    this.logger.info(
+      { nv: { jobId: job._id, strandedChildJobId: strandedChild._id } },
+      'Redelivered completed job still has a stranded child: resuming the workflow chain'
+    );
+
+    const notification = await this.findNotification(job);
+
+    await this.tryQueueNextJobs(job, notification);
   }
 
   @Instrument()
@@ -540,10 +620,7 @@ export class RunJob {
           return;
         }
 
-        nextJob = await this.jobRepository.findOne({
-          _environmentId: currentJob._environmentId,
-          _parentId: currentJob._id,
-        });
+        nextJob = await this.jobRepository.claimNextChildAsQueued(currentJob._environmentId, currentJob._id);
 
         if (!nextJob) {
           if (!hasCurrentJobError) {
@@ -790,7 +867,7 @@ export class RunJob {
   }
 
   public shouldBackoff(error: Error): boolean {
-    return error?.message?.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
+    return isRetryableWebhookFilterError(error);
   }
 
   /**

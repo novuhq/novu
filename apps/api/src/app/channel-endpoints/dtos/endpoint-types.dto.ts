@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OPSGENIE_API_KEY_PATTERN } from '@novu/shared';
-import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
+import { IsIn, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 export class SlackChannelEndpointDto {
   @ApiProperty({
@@ -139,7 +139,7 @@ export class LineUserEndpointDto {
 export class PagerDutyServiceEndpointDto {
   @ApiProperty({
     description:
-      'PagerDuty Events API v2 integration key (32-character alphanumeric string). Stored encrypted on the linked channel connection.',
+      'PagerDuty Events API v2 integration key (32-character alphanumeric string). Encrypted at rest on the channel endpoint (`endpoint` field).',
     example: 'R0UTINGK3YEXAMPLE000000000000000',
     type: String,
     minLength: 32,
@@ -160,10 +160,40 @@ export class PagerDutyServiceEndpointDto {
   region: 'us' | 'eu';
 }
 
+export class ToolWebhookEndpointDto {
+  @ApiProperty({
+    description:
+      'Destination webhook URL (often a per-subscriber capability URL). Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'https://example.com/tools/incoming',
+    type: String,
+  })
+  @IsString()
+  url: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Optional headers (e.g. auth tokens) sent with every request to this webhook. Header values are encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: { Authorization: 'Bearer <token>' },
+    type: Object,
+  })
+  @IsOptional()
+  @IsObject()
+  headers?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'Optional HTTP method override for this webhook. Defaults to the integration-level method.',
+    enum: ['POST', 'PUT', 'PATCH'],
+    example: 'POST',
+  })
+  @IsOptional()
+  @IsIn(['POST', 'PUT', 'PATCH'])
+  method?: 'POST' | 'PUT' | 'PATCH';
+}
+
 export class OpsgenieIntegrationEndpointDto {
   @ApiProperty({
     description:
-      'Opsgenie API integration key (GenieKey) in UUID format. Stored encrypted on the linked channel connection.',
+      'Opsgenie API integration key (GenieKey) in UUID format. Encrypted at rest on the channel endpoint (`endpoint` field).',
     example: 'abcdefg-a25a-4652-883c-73703b12345',
     type: String,
   })
