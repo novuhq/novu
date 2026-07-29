@@ -136,6 +136,10 @@ export class AgentSubscriberResolver {
       });
     }
 
+    if (platform === AgentPlatformEnum.WEB_CHAT) {
+      return this.resolveWebChatSubscriber({ environmentId, platformUserId });
+    }
+
     const endpointConfig = PLATFORM_ENDPOINT_CONFIG[platform];
 
     if (!endpointConfig) {
@@ -414,6 +418,23 @@ export class AgentSubscriberResolver {
     );
 
     return subscriberId;
+  }
+
+  private async resolveWebChatSubscriber(params: {
+    environmentId: string;
+    platformUserId: string;
+  }): Promise<SubscriberResolution> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(params.environmentId, params.platformUserId);
+
+    if (!subscriber) {
+      this.logger.debug(`No subscriber found for web chat identity ${params.platformUserId}`);
+
+      return { outcome: 'not_found' };
+    }
+
+    this.logger.debug(`Resolved web chat identity ${params.platformUserId} → subscriber ${subscriber.subscriberId}`);
+
+    return { outcome: 'resolved', subscriberId: subscriber.subscriberId };
   }
 
   private async resolvePhoneSubscriber(params: {
