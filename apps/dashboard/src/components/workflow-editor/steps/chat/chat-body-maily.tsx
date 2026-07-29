@@ -49,6 +49,7 @@ const MailyVariablesListViewForWorkflows = React.forwardRef<
 
   return <MailyVariablesListView {...props} ref={ref} digestStepName={digestStepBeforeCurrent?.stepId} />;
 });
+MailyVariablesListViewForWorkflows.displayName = 'MailyVariablesListViewForWorkflows';
 
 const BubbleMenuVariablePillForWorkflows = ({
   opts,
