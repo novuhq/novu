@@ -32,6 +32,11 @@ const STYLE_LABELS: Record<AllowedCardButtonStyle, string> = {
   danger: 'Danger',
 };
 
+// Card buttons only support link buttons for now. The Action ID input (for
+// future interactive/postback buttons) stays wired up but hidden until we add
+// a button `type` toggle — flip this to re-expose it.
+const SHOW_ACTION_ID_INPUT = false;
+
 export function CardButtonView(props: NodeViewProps) {
   const { node, editor, getPos } = props;
   const { label, isLabelVariable, style, url, isUrlVariable, actionId, isActionIdVariable } =
@@ -133,20 +138,22 @@ export function CardButtonView(props: NodeViewProps) {
                   isVariable={isUrlVariable}
                 />
 
-                <LinkInputPopover
-                  defaultValue={actionId || ''}
-                  onValueChange={(value, isVariable) => {
-                    editor.commands.updateCardButtonAttributes({
-                      actionId: value,
-                      isActionIdVariable: isVariable ?? false,
-                    });
-                  }}
-                  tooltip="Action ID"
-                  placeholder="Enter action ID"
-                  icon={Zap}
-                  editor={editor}
-                  isVariable={isActionIdVariable}
-                />
+                {SHOW_ACTION_ID_INPUT && (
+                  <LinkInputPopover
+                    defaultValue={actionId || ''}
+                    onValueChange={(value, isVariable) => {
+                      editor.commands.updateCardButtonAttributes({
+                        actionId: value,
+                        isActionIdVariable: isVariable ?? false,
+                      });
+                    }}
+                    tooltip="Action ID"
+                    placeholder="Enter action ID"
+                    icon={Zap}
+                    editor={editor}
+                    isVariable={isActionIdVariable}
+                  />
+                )}
               </div>
             </div>
           </TooltipProvider>
