@@ -4,6 +4,7 @@ import {
   CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
+  RotatingConnectionTokenService,
   UpdateSubscriber,
   UpdateSubscriberChannel,
 } from '@novu/application-generic';
@@ -34,6 +35,7 @@ import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.modu
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
+import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -79,9 +81,16 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
+import { AgentConversationEnabledGuard } from './shared/agent-conversation-enabled.guard';
 import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
+import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
+import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
+import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
+import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
+import { WebChatThreadDeliveryService } from './web-chat/web-chat-thread-delivery.service';
 
 @Module({
   imports: [
@@ -103,8 +112,10 @@ import { USE_CASES } from './usecases';
     AgentInboundController,
     AgentReplyController,
     ManagedRuntimeController,
+    AgentEventsIngestController,
     AgentEmailActionsController,
     AgentsMcpOAuthController,
+    WebChatController,
   ],
   providers: [
     ...USE_CASES,
@@ -124,6 +135,7 @@ import { USE_CASES } from './usecases';
     SubscriberRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
+    RotatingConnectionTokenService,
     AgentSubscriberResolver,
     AgentSubscriberAdoptionService,
     AgentConversationService,
@@ -142,6 +154,7 @@ import { USE_CASES } from './usecases';
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
     AgentEventSink,
+    McpConnectionErrorHandler,
     ManagedAgentService,
     ToolTrustService,
     McpConnectionVaultService,
@@ -151,6 +164,9 @@ import { USE_CASES } from './usecases';
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
+    NovuWebChatProvisioningService,
+    WebChatPublicationService,
+    WebChatThreadDeliveryService,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
@@ -167,6 +183,8 @@ import { USE_CASES } from './usecases';
     UpdateSubscriberChannel,
     AgentEntitlementsService,
     PlanLimitGateService,
+    AgentConversationEnabledGuard,
+    WebChatEnabledGuard,
   ],
   exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway, ConfirmLinkedAuthCards],
 })

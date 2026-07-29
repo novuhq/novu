@@ -5,6 +5,7 @@ export enum AgentPlatformEnum {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
   SENDBLUE = 'sendblue',
+  WEB_CHAT = 'web_chat',
 }
 
 export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
@@ -49,6 +50,7 @@ const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapa
     nativeUrlButtons: false,
     interactiveButtons: false,
   },
+  [AgentPlatformEnum.WEB_CHAT]: DEFAULT_EGRESS_CAPABILITIES,
 };
 
 function resolvePlatformEgressCapabilities(platform: string): PlatformEgressCapabilities {

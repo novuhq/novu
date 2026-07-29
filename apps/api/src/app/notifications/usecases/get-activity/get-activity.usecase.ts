@@ -34,6 +34,7 @@ import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
 import { GetActivityCommand } from './get-activity.command';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
+const EXECUTION_DETAILS_TRACE_LIMIT = 200;
 
 const workflowRunSelectColumns = [
   'workflow_run_id',
@@ -197,6 +198,7 @@ export class GetActivity {
       where: traceQueryBuilder.build(),
       orderBy: 'created_at',
       orderDirection: 'ASC',
+      limit: EXECUTION_DETAILS_TRACE_LIMIT,
       select: traceSelectColumns,
     });
 

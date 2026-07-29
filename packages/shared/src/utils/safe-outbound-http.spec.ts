@@ -200,6 +200,22 @@ describe('safe-outbound-http', () => {
       expect(response.statusCode).toBe(200);
       expect(response.body).toEqual({ ok: true, path: '/ping' });
     });
+
+    it('never allows link-local or IMDS addresses even when allow-listed', async () => {
+      process.env.NOVU_SAFE_OUTBOUND_ALLOW = '169.254.169.254,.metadata.internal';
+      resetOutboundSsrfAllowListCacheForTests();
+
+      await expect(safeOutboundRequest({ url: 'http://169.254.169.254/latest/meta-data/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+      });
+
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '169.254.169.254', family: 4 }] as never);
+
+      await expect(safeOutboundRequest({ url: 'http://imds.metadata.internal/' })).rejects.toMatchObject({
+        reason: 'PRIVATE_IP',
+        resolvedAddress: '169.254.169.254',
+      });
+    });
   });
 
   describe('DNS rebinding defense', () => {

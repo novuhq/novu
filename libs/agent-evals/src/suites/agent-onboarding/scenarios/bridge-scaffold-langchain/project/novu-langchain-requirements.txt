@@ -1,0 +1,12 @@
+# Novu LangChain connect requirements
+
+Project: /fixture/scaffold-lc
+
+- [x] env: NOVU_SECRET_KEY set
+- [x] package: @novu/framework and langchain installed
+- [x] dev-script: dev:novu present
+- [x] code-wiring: Scaffolded bridge route and agent handler
+
+## Agent prompt
+
+Scaffold complete — no further wiring required.

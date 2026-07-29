@@ -48,3 +48,4 @@ export * from './subscription';
 export * from './template-parser';
 export * from './timestamp-hex';
 export * from './variants';
+export * from './webhook-filter-errors';

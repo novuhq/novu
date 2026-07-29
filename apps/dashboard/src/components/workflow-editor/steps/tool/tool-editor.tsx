@@ -1,4 +1,4 @@
-import { ContentIssueEnum, EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
+import { ContentIssueEnum, EnvironmentTypeEnum, type UiSchema } from '@novu/shared';
 import { Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -12,11 +12,13 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
 import {
+  type DashboardToolContentOverrideProviderId,
   DEFAULT_CONTENT_SOURCE,
   getContentSourceLabel,
   getUnsupportedToolOverrideKeys,
   isToolContentOverrideProviderId,
   type ToolProviderOverrides,
+  WEBHOOK_TOOL_PROVIDER_ID,
 } from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
@@ -34,14 +36,14 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { setValue, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step } = useWorkflow();
-  const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
+  const { providerOptions, providerOverrides, webhookPayloadSchema } = useToolOverrideProviderOptions();
 
   const { selectedSource, setSelectedSource } = useToolContentSource();
   // Only one override editor is mounted at a time, so at most one provider can have an uncommitted parse error.
   const [draftParseErrorProviderId, setDraftParseErrorProviderId] = useState<string | null>(null);
-  const [pendingResetProviderId, setPendingResetProviderId] = useState<
-    (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number] | null
-  >(null);
+  const [pendingResetProviderId, setPendingResetProviderId] = useState<DashboardToolContentOverrideProviderId | null>(
+    null
+  );
 
   useEffect(() => {
     if (selectedSource !== DEFAULT_CONTENT_SOURCE && !(selectedSource in (providerOverrides ?? {}))) {
@@ -115,7 +117,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
   }, []);
 
   const handleAddOverride = useCallback(
-    (providerId: (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number]) => {
+    (providerId: DashboardToolContentOverrideProviderId) => {
       const current = (getValues(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined) ?? {};
       if (providerId in current) {
         setSelectedSource(providerId);
@@ -135,7 +137,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
   );
 
   const handleRemoveOverride = useCallback(
-    (providerId: (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number]) => {
+    (providerId: DashboardToolContentOverrideProviderId) => {
       const current = (getValues(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined) ?? {};
       if (!(providerId in current)) {
         return;
@@ -227,6 +229,10 @@ export const ToolEditor = (props: ToolEditorProps) => {
         {showingOverride ? (
           <ToolProviderOverrideEditor
             providerId={selectedSource}
+            fieldSchemas={selectedSource === WEBHOOK_TOOL_PROVIDER_ID ? webhookPayloadSchema.properties : undefined}
+            ignoredSchemaSources={
+              selectedSource === WEBHOOK_TOOL_PROVIDER_ID ? webhookPayloadSchema.ignoredSources : undefined
+            }
             onDraftParseValidityChange={handleDraftParseValidityChange}
           />
         ) : (

@@ -55,6 +55,66 @@ export function findUnresolvedToolApprovalRequests(
 }
 
 /**
+ * Scans a conversation's activity ledger (newest-first) and returns the
+ * tool-approval requests that were approved but whose tool never produced a
+ * result — a resume turn that crashed or never ran (e.g. the approved tool
+ * was not registered on the resume `generateText` call). Left as-is, such a
+ * cycle replays as a dangling `tool_use` and poisons every later model turn,
+ * so callers auto-deny these when a new user message supersedes them.
+ */
+export function findOrphanedApprovedToolApprovalRequests(
+  activities: ConversationActivityEntity[]
+): ConversationActivityEntity[] {
+  const chronological = [...activities].reverse();
+  const approvedApprovalIds = new Set<string>();
+  const deniedApprovalIds = new Set<string>();
+  const resultToolCallIds = new Set<string>();
+
+  for (const activity of chronological) {
+    if (activity.type === ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION) {
+      const approvalId = activity.toolData?.approvalId;
+      if (typeof approvalId !== 'string') {
+        continue;
+      }
+
+      if (activity.toolData?.approved === true) {
+        approvedApprovalIds.add(approvalId);
+      } else {
+        deniedApprovalIds.add(approvalId);
+      }
+    } else if (activity.type === ConversationActivityTypeEnum.TOOL_RESULT) {
+      const toolCallId = activity.toolData?.toolCallId;
+      if (typeof toolCallId === 'string') {
+        resultToolCallIds.add(toolCallId);
+      }
+    }
+  }
+
+  const orphaned: ConversationActivityEntity[] = [];
+
+  for (const activity of chronological) {
+    if (activity.type !== ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST) {
+      continue;
+    }
+
+    const approvalId = activity.toolData?.approvalId;
+    const toolCallId = activity.toolData?.toolCallId;
+    if (typeof approvalId !== 'string' || typeof toolCallId !== 'string') {
+      continue;
+    }
+
+    const isOrphaned =
+      approvedApprovalIds.has(approvalId) && !deniedApprovalIds.has(approvalId) && !resultToolCallIds.has(toolCallId);
+
+    if (isOrphaned) {
+      orphaned.push(activity);
+    }
+  }
+
+  return orphaned;
+}
+
+/**
  * Resolves the human participant whose message the agent was reacting to when
  * it proposed a given pending tool-approval request — i.e. whichever
  * participant's turn caused the tool call to be proposed in the first place.

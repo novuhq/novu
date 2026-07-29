@@ -5,3 +5,4 @@ export * from './in-app';
 export * from './push';
 export * from './sms';
 export * from './tool';
+export * from './tool-routing';

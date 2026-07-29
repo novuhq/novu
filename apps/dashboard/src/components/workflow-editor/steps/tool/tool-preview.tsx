@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { DEFAULT_CONTENT_SOURCE } from './tool-content-source';
+import { DEFAULT_CONTENT_SOURCE, WEBHOOK_TOOL_PROVIDER_ID } from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
@@ -82,9 +82,10 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const { providerOptions } = useToolOverrideProviderOptions();
   const { previewSource, setPreviewSource } = useToolContentSource();
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
+  const isWebhookPreview = activeProviderId === WEBHOOK_TOOL_PROVIDER_ID;
 
   const { annotatedLines, defaultContentKey } = useMemo(() => {
-    if (!activeProviderId) {
+    if (!activeProviderId || activeProviderId === WEBHOOK_TOOL_PROVIDER_ID) {
       return { annotatedLines: undefined, defaultContentKey: undefined };
     }
 
@@ -101,10 +102,17 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   }, [activeProviderId, body, previewProviderOverrides]);
 
   const hasOverride = !!activeProviderId && activeProviderId in previewProviderOverrides;
+  const webhookPreviewJson = isWebhookPreview
+    ? JSON.stringify(previewProviderOverrides[WEBHOOK_TOOL_PROVIDER_ID] ?? {}, null, 2)
+    : undefined;
 
   const getHintText = () => {
     if (!activeProviderId) {
       return "This message is delivered to every enabled tool provider, mapped to each provider's primary content field.";
+    }
+
+    if (activeProviderId === WEBHOOK_TOOL_PROVIDER_ID) {
+      return 'Each webhook integration merges its own body template beneath this payload.';
     }
 
     if (hasOverride) {
@@ -125,6 +133,10 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   };
 
   const renderPanel = () => {
+    if (webhookPreviewJson !== undefined) {
+      return <pre className={PANEL_CLASS}>{webhookPreviewJson}</pre>;
+    }
+
     if (annotatedLines) {
       return (
         <pre className={PANEL_CLASS}>
@@ -153,6 +165,14 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     return <div className={`${PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
   };
 
+  let previewLabel = 'Message';
+  if (activeProviderId) {
+    previewLabel = 'Merged override fields';
+  }
+  if (isWebhookPreview) {
+    previewLabel = 'Rendered override JSON';
+  }
+
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
@@ -179,7 +199,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
                 <Skeleton className="h-3 w-40" />
               ) : (
                 <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-                  {activeProviderId ? 'Merged override fields' : 'Message'}
+                  {previewLabel}
                 </span>
               )}
             </div>

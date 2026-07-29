@@ -18,6 +18,7 @@ export function computeResultSchema({
     [ChannelStepEnum.PUSH]: channelStepSchemas[ChannelStepEnum.PUSH].result,
     [ChannelStepEnum.CHAT]: channelStepSchemas[ChannelStepEnum.CHAT].result,
     [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].result,
+    [ChannelStepEnum.TOOL]: channelStepSchemas[ChannelStepEnum.TOOL].result,
     [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].result,
     [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema }),
     [ActionStepEnum.HTTP_REQUEST]: responseBodySchema ?? {

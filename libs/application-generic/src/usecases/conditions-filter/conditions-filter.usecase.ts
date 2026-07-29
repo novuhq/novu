@@ -30,11 +30,16 @@ import { buildSubscriberKey, CachedResponse, safeOutboundJsonRequest } from '../
 import {
   assertSafeOutboundUrl,
   createHash,
+  createWebhookFilterError,
   Filter,
   FilterProcessingDetails,
   IFilterVariables,
   PlatformException,
+  shouldPropagateWebhookFilterFailure,
   SsrfBlockedError,
+  WEBHOOK_FILTER_ERROR_CODE,
+  WEBHOOK_FILTER_REQUEST_FAILED_DATA,
+  WEBHOOK_FILTER_SSRF_BLOCKED_DATA,
 } from '../../utils';
 import { CompileTemplate } from '../compile-template';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
@@ -258,7 +263,11 @@ export class ConditionsFilter extends Filter {
       assertSafeOutboundUrl(child.webhookUrl);
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
+        throw createWebhookFilterError({
+          code: WEBHOOK_FILTER_ERROR_CODE.SSRF_BLOCKED,
+          message: err.message,
+          data: WEBHOOK_FILTER_SSRF_BLOCKED_DATA,
+        });
       }
       throw err;
     }
@@ -280,10 +289,18 @@ export class ConditionsFilter extends Filter {
       return response.body;
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
+        throw createWebhookFilterError({
+          code: WEBHOOK_FILTER_ERROR_CODE.SSRF_BLOCKED,
+          message: err.message,
+          data: WEBHOOK_FILTER_SSRF_BLOCKED_DATA,
+        });
       }
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(JSON.stringify({ message, data: 'Exception while performing webhook request.' }));
+      throw createWebhookFilterError({
+        code: WEBHOOK_FILTER_ERROR_CODE.REQUEST_FAILED,
+        message,
+        data: WEBHOOK_FILTER_REQUEST_FAILED_DATA,
+      });
     }
   }
 
@@ -376,7 +393,7 @@ export class ConditionsFilter extends Filter {
 
       return passed;
     } catch (error) {
-      if (this.isRetryableWebhookFilterError(error)) {
+      if (shouldPropagateWebhookFilterFailure(error)) {
         throw error;
       }
 
@@ -384,15 +401,6 @@ export class ConditionsFilter extends Filter {
 
       return false;
     }
-  }
-
-  private isRetryableWebhookFilterError(error: unknown): boolean {
-    const message = error instanceof Error ? error.message : String(error);
-
-    return (
-      message.includes('Exception while performing webhook request.') ||
-      message.includes('Webhook URL blocked by SSRF protection.')
-    );
   }
 
   private async recordFilterEvaluationError(

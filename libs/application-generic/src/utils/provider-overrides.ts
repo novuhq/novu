@@ -63,9 +63,18 @@ function buildProviderOverridesIssueSchema(): JSONSchemaDto {
   const properties: Record<string, JSONSchemaDto> = {};
 
   for (const providerId of TOOL_CONTENT_OVERRIDE_PROVIDER_IDS) {
+    if (providerId === ToolProviderIdEnum.Webhook) {
+      properties[providerId] = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        additionalProperties: true,
+      };
+
+      continue;
+    }
+
     const keys = getToolProviderOverrideKeys(providerId);
     if (!keys) {
-      continue;
+      throw new Error(`Missing override key metadata for provider: ${providerId}`);
     }
 
     properties[providerId] = {
