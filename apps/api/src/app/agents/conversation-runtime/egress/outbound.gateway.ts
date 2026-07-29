@@ -129,11 +129,7 @@ export class OutboundGateway {
       return aligned;
     }
 
-    await this.persistDelivered(
-      { ...persist, activityIdentifier: persist.activityIdentifier ?? sent.messageId },
-      sent,
-      msg
-    );
+    await this.persistDelivered(persist, sent, msg);
 
     return sent;
   }

@@ -45,14 +45,6 @@ export function conversationIdFromThreadId(threadId: string): string {
   return threadId;
 }
 
-export function resolveMessageId(clientMessageId: unknown): string {
-  if (typeof clientMessageId === 'string' && isValidMessageId(clientMessageId)) {
-    return clientMessageId;
-  }
-
-  return mintMessageId();
-}
-
 export function parsePostableMessage(message: AdapterPostableMessage): {
   content: string;
   richContent?: Record<string, unknown>;

@@ -106,21 +106,13 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(processMessage.mock.calls[0]?.[2].author.userId).toBe('sub_1');
   });
 
-  it('uses valid client messageId as processMessage id for idempotency', async () => {
-    const { adapter, processMessage } = await createAdapter();
-    const messageId = 'msg_abcdefghijkl';
-
-    await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId }));
-
-    expect(processMessage.mock.calls[0]?.[2].id).toBe(messageId);
-  });
-
-  it('mints messageId when client messageId is invalid', async () => {
+  it('ignores client messageId and always mints server message id (create-only)', async () => {
     const { adapter, processMessage } = await createAdapter();
 
-    await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'hi', messageId: 'bad' }));
+    await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }));
 
     expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
+    expect(processMessage.mock.calls[0]?.[2].id).not.toBe('msg_abcdefghijkl');
   });
 
   it('postMessage delegates to deliverMessage without inventing mongo semantics', async () => {

@@ -21,6 +21,7 @@ APIs require a live HTTP request (ALS-bound SSE writer). See NV-8414 / NV-8448.
 | Message history | `persistMessageHistory: false` — Mongo via `GET .../events` |
 | Lock scope | `thread` |
 | Resume by client `id` | Shape-validate only this ticket; full resume → NV-8441 |
+| Client `messageId` idempotency | Deferred to NV-8441 (create-only mint would ack a ghost `conv_*` on retry) |
 
 ## Injected callbacks
 

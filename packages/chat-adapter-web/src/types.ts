@@ -52,6 +52,9 @@ export type WebChatRequestBody = {
   text?: string;
   /** Optional client conversation id — shape-validated; ignored for create-only routing. */
   id?: string;
-  /** Optional client idempotency key (`msg_<shortId>`). */
+  /**
+   * Reserved: client idempotency key (`msg_<shortId>`).
+   * Ignored until resume (NV-8441) — create-only mint + dedupe would return a ghost `conv_*`.
+   */
   messageId?: string;
 };

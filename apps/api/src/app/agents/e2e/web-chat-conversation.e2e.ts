@@ -80,10 +80,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     return res.body.data;
   }
 
-  function createConversation(
-    body: { agentId: string; text: string; messageId?: string; id?: string },
-    token = subscriberToken
-  ) {
+  function createConversation(body: { agentId: string; text: string; id?: string }, token = subscriberToken) {
     return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
   }
 
@@ -204,61 +201,6 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     });
 
     expect(res.status).to.equal(401);
-  });
-
-  it('should not create a second turn when the same client messageId is retried', async () => {
-    await linkWebChat();
-    const messageId = 'msg_retryidem012';
-
-    const first = await createConversation({
-      agentId: ctx.agentIdentifier,
-      text: 'Retry me',
-      messageId,
-    });
-    expect(first.status).to.equal(201);
-
-    const conversation = await pollFor(() =>
-      conversationRepository.findOne(
-        {
-          identifier: first.body.data.identifier,
-          _environmentId: ctx.session.environment._id,
-        },
-        '*'
-      )
-    );
-
-    await pollFor(async () => {
-      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id, 20);
-      const subscriberMessage = activities.find(
-        (a) =>
-          a.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER &&
-          a.type === ConversationActivityTypeEnum.MESSAGE &&
-          a.identifier === messageId
-      );
-
-      return subscriberMessage ?? null;
-    });
-
-    const second = await createConversation({
-      agentId: ctx.agentIdentifier,
-      text: 'Retry me',
-      messageId,
-    });
-    expect(second.status).to.equal(201);
-    // Create-only routing mints a new conv_ id, but chat-sdk dedupe on messageId
-    // prevents a second agent turn / inbound activity for the same message id.
-    expect(second.body.data.identifier).to.match(/^conv_/);
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const allActivities = await activityRepository.find(
-      {
-        _environmentId: ctx.session.environment._id,
-        identifier: messageId,
-      },
-      '*'
-    );
-    expect(allActivities).to.have.length(1);
   });
 
   it('should return durable agent message events on GET .../events', async () => {

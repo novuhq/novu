@@ -17,8 +17,8 @@ import {
   isValidConversationId,
   mintActivityId,
   mintConversationId,
+  mintMessageId,
   parsePostableMessage,
-  resolveMessageId,
   toThreadId,
 } from './utils.js';
 
@@ -128,11 +128,13 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       // Create-only this ticket: validate shape, ignore for routing (NV-8441).
     }
 
+    // Always mint conversation + message ids. Client `messageId` idempotency is
+    // deferred until resume (NV-8441): create-only mint-before-dedupe would ack a
+    // ghost `conv_*` on retry while suppressing the turn.
     const conversationId = mintConversationId();
     const threadId = this.encodeThreadId({ conversationId });
-    const messageId = resolveMessageId(body.messageId);
     const raw: WebChatRawMessage = {
-      id: messageId,
+      id: mintMessageId(),
       text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
