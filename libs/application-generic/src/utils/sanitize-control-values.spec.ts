@@ -6,7 +6,7 @@ import { dashboardSanitizeControlValues } from './sanitize-control-values';
 const logger = { error: () => {} } as unknown as PinoLogger;
 
 describe('dashboardSanitizeControlValues', () => {
-  it.each([StepTypeEnum.CHAT, StepTypeEnum.TOOL])(
+  it.each([StepTypeEnum.CHAT, StepTypeEnum.TOOL, StepTypeEnum.PUSH])(
     'keeps providerOverrides stitched into %s control values',
     (stepType) => {
       const sanitized = dashboardSanitizeControlValues(
@@ -19,9 +19,12 @@ describe('dashboardSanitizeControlValues', () => {
     }
   );
 
-  it.each([StepTypeEnum.CHAT, StepTypeEnum.TOOL])('omits providerOverrides from %s when absent', (stepType) => {
-    const sanitized = dashboardSanitizeControlValues(logger, { body: 'hello' }, stepType);
+  it.each([StepTypeEnum.CHAT, StepTypeEnum.TOOL, StepTypeEnum.PUSH])(
+    'omits providerOverrides from %s when absent',
+    (stepType) => {
+      const sanitized = dashboardSanitizeControlValues(logger, { body: 'hello' }, stepType);
 
-    expect(sanitized).not.toHaveProperty('providerOverrides');
-  });
+      expect(sanitized).not.toHaveProperty('providerOverrides');
+    }
+  );
 });

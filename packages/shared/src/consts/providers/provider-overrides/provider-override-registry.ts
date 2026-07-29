@@ -1,5 +1,11 @@
 import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
-import { ChannelTypeEnum, ChatProviderIdEnum, StepTypeEnum, ToolProviderIdEnum } from '../../../types';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  PushProviderIdEnum,
+  StepTypeEnum,
+  ToolProviderIdEnum,
+} from '../../../types';
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
@@ -158,14 +164,34 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
+/**
+ * Every push provider is an escape hatch for v1: free-form JSON with no primary content key.
+ * `satisfies Record<...>` fails the build when a provider joins the enum without a decision.
+ */
+const PUSH_PROVIDER_OVERRIDE_CONFIGS = {
+  [PushProviderIdEnum.FCM]: escapeHatch(null),
+  [PushProviderIdEnum.APNS]: escapeHatch(null),
+  [PushProviderIdEnum.EXPO]: escapeHatch(null),
+  [PushProviderIdEnum.OneSignal]: escapeHatch(null),
+  [PushProviderIdEnum.Pushpad]: escapeHatch(null),
+  [PushProviderIdEnum.PushWebhook]: escapeHatch(null),
+  [PushProviderIdEnum.PusherBeams]: escapeHatch(null),
+  [PushProviderIdEnum.AppIO]: escapeHatch(null),
+} satisfies Record<PushProviderIdEnum, ProviderOverrideConfig>;
+
 export const PROVIDER_OVERRIDE_CONFIGS = {
   ...TOOL_PROVIDER_OVERRIDE_CONFIGS,
   ...CHAT_PROVIDER_OVERRIDE_CONFIGS,
+  ...PUSH_PROVIDER_OVERRIDE_CONFIGS,
 };
 
 export type ToolContentOverrideProviderId = keyof typeof TOOL_PROVIDER_OVERRIDE_CONFIGS;
 export type ChatContentOverrideProviderId = keyof typeof CHAT_PROVIDER_OVERRIDE_CONFIGS;
-export type ContentOverrideProviderId = ToolContentOverrideProviderId | ChatContentOverrideProviderId;
+export type PushContentOverrideProviderId = keyof typeof PUSH_PROVIDER_OVERRIDE_CONFIGS;
+export type ContentOverrideProviderId =
+  | ToolContentOverrideProviderId
+  | ChatContentOverrideProviderId
+  | PushContentOverrideProviderId;
 
 export const TOOL_CONTENT_OVERRIDE_PROVIDER_IDS = Object.keys(
   TOOL_PROVIDER_OVERRIDE_CONFIGS
@@ -175,9 +201,14 @@ export const CHAT_CONTENT_OVERRIDE_PROVIDER_IDS = Object.keys(
   CHAT_PROVIDER_OVERRIDE_CONFIGS
 ) as ChatContentOverrideProviderId[];
 
+export const PUSH_CONTENT_OVERRIDE_PROVIDER_IDS = Object.keys(
+  PUSH_PROVIDER_OVERRIDE_CONFIGS
+) as PushContentOverrideProviderId[];
+
 export const CONTENT_OVERRIDE_PROVIDER_IDS: ContentOverrideProviderId[] = [
   ...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   ...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
+  ...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
 ];
 
 /**
@@ -185,11 +216,18 @@ export const CONTENT_OVERRIDE_PROVIDER_IDS: ContentOverrideProviderId[] = [
  * because their members share string values and each layer keys by whichever one it speaks:
  * the dashboard by `ChannelTypeEnum`, step construction by `StepTypeEnum`.
  */
-export type OverrideChannelType = ChannelTypeEnum.CHAT | ChannelTypeEnum.TOOL | StepTypeEnum.CHAT | StepTypeEnum.TOOL;
+export type OverrideChannelType =
+  | ChannelTypeEnum.CHAT
+  | ChannelTypeEnum.TOOL
+  | ChannelTypeEnum.PUSH
+  | StepTypeEnum.CHAT
+  | StepTypeEnum.TOOL
+  | StepTypeEnum.PUSH;
 
 const CONTENT_OVERRIDE_PROVIDER_IDS_BY_CHANNEL = {
   [ChannelTypeEnum.CHAT]: CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   [ChannelTypeEnum.TOOL]: TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
+  [ChannelTypeEnum.PUSH]: PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
 } as const satisfies Record<OverrideChannelType, readonly ContentOverrideProviderId[]>;
 
 export function getContentOverrideProviderIds(channel: OverrideChannelType): readonly ContentOverrideProviderId[] {

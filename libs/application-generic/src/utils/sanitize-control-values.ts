@@ -108,16 +108,6 @@ function sanitizeSms(controlValues: SmsControlType) {
   return filterNullishValues(mappedValues);
 }
 
-function sanitizePush(controlValues: PushControlType) {
-  const mappedValues: PushControlType = {
-    subject: sanitizeEmptyInput(controlValues.subject),
-    body: sanitizeEmptyInput(controlValues.body),
-    skip: controlValues.skip,
-  };
-
-  return filterNullishValues(mappedValues);
-}
-
 type WithProviderOverrides<T> = T & { providerOverrides?: Record<string, unknown> };
 
 /**
@@ -133,6 +123,16 @@ function keepProviderOverrides(
   }
 
   return { ...sanitized, providerOverrides: controlValues.providerOverrides };
+}
+
+function sanitizePush(controlValues: WithProviderOverrides<PushControlType>) {
+  const mappedValues: PushControlType = {
+    subject: sanitizeEmptyInput(controlValues.subject),
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+  };
+
+  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
 function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
@@ -341,7 +341,7 @@ export function dashboardSanitizeControlValues(
         normalizedValues = sanitizeSms(controlValues as SmsControlType);
         break;
       case StepTypeEnum.PUSH:
-        normalizedValues = sanitizePush(controlValues as PushControlType);
+        normalizedValues = sanitizePush(controlValues as WithProviderOverrides<PushControlType>);
         break;
       case StepTypeEnum.CHAT:
         normalizedValues = sanitizeChat(controlValues as WithProviderOverrides<ChatControlType>);

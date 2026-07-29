@@ -3,6 +3,7 @@ import {
   CONTENT_OVERRIDE_PROVIDER_IDS,
   ContentIssueEnum,
   getProviderOverrideConfig,
+  PushProviderIdEnum,
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
@@ -258,6 +259,25 @@ describe('processProviderOverridesIssues', () => {
     });
 
     expect(issues.controls).toBeUndefined();
+  });
+
+  it('accepts free-form objects for escape-hatch push providers', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        data: { orderId: '{{payload.orderId}}' },
+        android: { priority: 'high' },
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
+  });
+
+  it.each([null, [], 'not-an-object'])('rejects malformed fcm override value %j', (override) => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: override,
+    } as never);
+
+    expect(issues.controls?.[`providerOverrides.${PushProviderIdEnum.FCM}`]).toBeDefined();
   });
 
   it('validates Telegram overrides against the generated sendMessage schema', () => {

@@ -42,6 +42,8 @@ export {
   PROVIDER_PRIMARY_CONTENT_KEY,
   type ProviderOverrideConfig,
   type ProviderOverrideSeedWhenAbsent,
+  PUSH_CONTENT_OVERRIDE_PROVIDER_IDS,
+  type PushContentOverrideProviderId,
   supportsContentProviderOverrides,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
