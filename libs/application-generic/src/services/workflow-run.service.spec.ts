@@ -168,7 +168,35 @@ describe('WorkflowRunService', () => {
   });
 
   describe('updateDeliveryLifecycle', () => {
-    it('writes zero status traces when emitStatusTrace is false', async () => {
+    it('writes zero status traces when emitStatusTrace is false (legacy path)', async () => {
+      await service.updateDeliveryLifecycle({
+        workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+        notificationId,
+        environmentId,
+        organizationId,
+        _subscriberId: subscriberId,
+        deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.INTERACTED,
+        notification,
+        workflow,
+        emitStatusTrace: false,
+      });
+
+      expect(notificationRepository.tryWorkflowStatusTransition).not.toHaveBeenCalled();
+      expect(statusTraceCalls()).toHaveLength(0);
+    });
+
+    it('writes zero status traces when emitStatusTrace is false (transition path)', async () => {
+      featureFlagsService.getFlag.mockImplementation(({ key }) => {
+        if (
+          key === FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_TRACES_WRITE_ENABLED ||
+          key === FeatureFlagsKeysEnum.IS_DELIVERY_LIFECYCLE_TRANSITION_ENABLED
+        ) {
+          return Promise.resolve(true);
+        }
+
+        return Promise.resolve(false);
+      });
+
       await service.updateDeliveryLifecycle({
         workflowStatus: WorkflowRunStatusEnum.COMPLETED,
         notificationId,

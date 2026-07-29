@@ -274,36 +274,15 @@ export class WorkflowRunService {
         );
       }
 
-      if (
-        emitStatusTrace &&
-        (workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
-          workflowStatus === WorkflowRunStatusEnum.ERROR ||
-          workflowStatus === WorkflowRunStatusEnum.SUCCESS)
-      ) {
-        if (!notification || !workflow) {
-          const result = await this.getNotificationAndWorkflow(
-            notificationId,
-            organizationId,
-            environmentId,
-            notification,
-            workflow
-          );
-          notification = result.notification;
-          workflow = result.workflow;
-        }
-
-        const statusToEmit =
-          workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS
-            ? ('workflow_run_status_completed' as const)
-            : ('workflow_run_status_error' as const);
-        await this.createWorkflowStatusTrace(
-          notificationId,
-          statusToEmit,
-          { organizationId, environmentId },
-          notification,
-          workflow
-        );
-      }
+      await this.maybeEmitTerminalStatusTrace({
+        emitStatusTrace,
+        workflowStatus,
+        notificationId,
+        organizationId,
+        environmentId,
+        notification,
+        workflow,
+      });
     } catch (error) {
       this.logger.error(
         {
@@ -428,24 +407,15 @@ export class WorkflowRunService {
         );
       }
 
-      if (
-        emitStatusTrace &&
-        (workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
-          workflowStatus === WorkflowRunStatusEnum.ERROR ||
-          workflowStatus === WorkflowRunStatusEnum.SUCCESS)
-      ) {
-        const statusToEmit =
-          workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS
-            ? ('workflow_run_status_completed' as const)
-            : ('workflow_run_status_error' as const);
-        await this.createWorkflowStatusTrace(
-          notificationId,
-          statusToEmit,
-          { organizationId, environmentId },
-          notification,
-          workflow
-        );
-      }
+      await this.maybeEmitTerminalStatusTrace({
+        emitStatusTrace,
+        workflowStatus,
+        notificationId,
+        organizationId,
+        environmentId,
+        notification,
+        workflow,
+      });
 
       this.seedDeliveryLifecycleState({
         notificationId,
@@ -579,6 +549,63 @@ export class WorkflowRunService {
     }
   }
 
+  /**
+   * Emits a terminal workflow status trace when allowed. Shared by legacy and
+   * transition delivery-lifecycle paths so the gate/status mapping stays in one place.
+   * Inbox interactions pass emitStatusTrace: false — they update delivery lifecycle
+   * only and must not claim or emit terminal status.
+   */
+  private async maybeEmitTerminalStatusTrace(params: {
+    emitStatusTrace: boolean;
+    workflowStatus: WorkflowRunStatusEnum;
+    notificationId: string;
+    organizationId: string;
+    environmentId: string;
+    notification: NotificationForTrace | null;
+    workflow: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | WorkflowForTrace | null;
+  }): Promise<void> {
+    if (!params.emitStatusTrace) {
+      return;
+    }
+
+    if (
+      params.workflowStatus !== WorkflowRunStatusEnum.COMPLETED &&
+      params.workflowStatus !== WorkflowRunStatusEnum.ERROR &&
+      params.workflowStatus !== WorkflowRunStatusEnum.SUCCESS
+    ) {
+      return;
+    }
+
+    let notification = params.notification;
+    let workflow = params.workflow;
+
+    if (!notification || !workflow) {
+      const result = await this.getNotificationAndWorkflow(
+        params.notificationId,
+        params.organizationId,
+        params.environmentId,
+        notification,
+        workflow
+      );
+      notification = result.notification;
+      workflow = result.workflow;
+    }
+
+    const statusToEmit: TerminalWorkflowStatusEvent =
+      params.workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
+      params.workflowStatus === WorkflowRunStatusEnum.SUCCESS
+        ? 'workflow_run_status_completed'
+        : 'workflow_run_status_error';
+
+    await this.createWorkflowStatusTrace(
+      params.notificationId,
+      statusToEmit,
+      { organizationId: params.organizationId, environmentId: params.environmentId },
+      notification,
+      workflow
+    );
+  }
+
   async createWorkflowStatusTrace(
     notificationId: string,
     status: TerminalWorkflowStatusEvent,
@@ -611,6 +638,8 @@ export class WorkflowRunService {
         return;
       }
 
+      // Claim before write: same at-most-once tradeoff as delivery-lifecycle transitions —
+      // prefer undercount over duplicate ClickHouse status counts if the write fails after claim.
       const { isUpdated } = await this.notificationRepository.tryWorkflowStatusTransition(
         notificationId,
         context.organizationId,
