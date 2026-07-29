@@ -7,6 +7,7 @@ import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { buildWebChatMessage, buildWebChatThread } from '../../web-chat-inbound.adapter';
 import { WebChatPublicationService } from '../../web-chat-publication.service';
+import { WebChatThreadDeliveryService } from '../../web-chat-thread-delivery.service';
 import { CreateWebChatConversationCommand } from './create-web-chat-conversation.command';
 
 @Injectable()
@@ -15,7 +16,8 @@ export class CreateWebChatConversation {
     private readonly publicationService: WebChatPublicationService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly inboundHandler: AgentInboundHandler,
-    private readonly conversationService: AgentConversationService
+    private readonly conversationService: AgentConversationService,
+    private readonly threadDelivery: WebChatThreadDeliveryService
   ) {}
 
   async execute(command: CreateWebChatConversationCommand): Promise<{ identifier: string }> {
@@ -37,7 +39,14 @@ export class CreateWebChatConversation {
     }
 
     const conversationIdentifier = `conv_${shortId(12)}`;
-    const thread = buildWebChatThread(conversationIdentifier);
+    const deliverMessage = this.threadDelivery.createDeliverMessage({
+      agentId: published.agentId,
+      integrationId: config.integrationId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentIdentifier: published.agentIdentifier,
+    });
+    const thread = buildWebChatThread(conversationIdentifier, deliverMessage);
     const message = buildWebChatMessage(command.subscriberId, text);
 
     await this.inboundHandler.handle(published.agentId, config, thread, message, AgentEventEnum.ON_MESSAGE, {

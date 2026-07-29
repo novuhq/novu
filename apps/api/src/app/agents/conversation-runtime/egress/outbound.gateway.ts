@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { PinoLogger, shortId } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
@@ -10,6 +10,7 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { isWebChatThread } from '../../web-chat/web-chat-inbound.adapter';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -118,6 +119,17 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
+    if (isWebChatPlatform(target.platform)) {
+      const messageId = persist.activityIdentifier ?? `act_${shortId(12)}`;
+      const sent: SentMessageInfo = {
+        messageId,
+        platformThreadId: target.platformThreadId,
+      };
+      await this.persistDelivered({ ...persist, activityIdentifier: messageId }, sent, msg);
+
+      return sent;
+    }
+
     const sent = await this.postToConversation(
       target.agentId,
       target.integrationIdentifier,
@@ -201,7 +213,7 @@ export class OutboundGateway {
       throw err;
     }
 
-    if (opts?.persist) {
+    if (opts?.persist && !isWebChatThread(thread)) {
       await this.conversation.persistAgentMessage({
         conversationId: opts.persist.conversationId,
         channel: opts.persist.channel,

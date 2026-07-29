@@ -88,6 +88,7 @@ import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
 import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
+import { WebChatThreadDeliveryService } from './web-chat/web-chat-thread-delivery.service';
 
 @Module({
   imports: [
@@ -163,6 +164,7 @@ import { WebChatPublicationService } from './web-chat/web-chat-publication.servi
     NovuEmailProvisioningService,
     NovuWebChatProvisioningService,
     WebChatPublicationService,
+    WebChatThreadDeliveryService,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
