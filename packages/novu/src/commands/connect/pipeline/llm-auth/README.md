@@ -9,9 +9,10 @@ empty dir detected
   → resolveLlmAuthChoice()     picker or --llm-auth flags
   → ensureSubscriptionAuth()   CLI OAuth when subscription kind (releases Ink TUI)
   → confirmScaffold()          Ink or console prompt if terminal was released
-  → installTemplate()          registry deps/env + codegen → .env.local + agent handler
+  → installTemplate()          registry deps/env + codegen → package.json provider deps + .env.local + agent handler + next.config
 ```
 
+`installTemplate` installs provider packages from `registry.ts` based on the LLM choice (e.g. OpenAI → `@langchain/openai`, Anthropic → `@langchain/anthropic`). LangChain scaffolds also list those packages in `serverExternalPackages` so Turbopack can resolve them.
 Entry point: `bridge-adapter/engine.ts` calls `resolveLlmAuthChoice` before scaffold confirm.
 
 ## Files

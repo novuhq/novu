@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
-import { evaluateRules } from './query-parser.service';
+import { evaluateRules, extractRuleVariables } from './query-parser.service';
 
 describe('QueryParserService', () => {
   describe('Smoke Tests', () => {
@@ -741,6 +741,47 @@ describe('QueryParserService', () => {
           expect(result).to.be.true;
         });
       });
+    });
+  });
+
+  describe('extractRuleVariables', () => {
+    it('should resolve referenced variable values from data', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        and: [
+          { '=': [{ var: 'payload.tier' }, 'pro'] },
+          { '>': [{ var: 'payload.count' }, 5] },
+          { contains: [{ var: 'subscriber.data.plan' }, 'monthly'] },
+        ],
+      };
+      const data = {
+        payload: { tier: 'free', count: 10 },
+        subscriber: { data: { plan: 'monthly-basic' } },
+      };
+
+      const variables = extractRuleVariables(rule, data);
+
+      expect(variables).to.deep.equal({
+        'payload.tier': 'free',
+        'payload.count': 10,
+        'subscriber.data.plan': 'monthly-basic',
+      });
+    });
+
+    it('should return undefined for paths missing from data', () => {
+      const rule: RulesLogic<AdditionalOperation> = { '=': [{ var: 'payload.missing.deep' }, 'x'] };
+      const data = { payload: {} };
+
+      const variables = extractRuleVariables(rule, data);
+
+      expect(variables).to.have.property('payload.missing.deep', undefined);
+    });
+
+    it('should return an empty object when the rule references no variables', () => {
+      const rule: RulesLogic<AdditionalOperation> = { '=': [1, 1] };
+
+      const variables = extractRuleVariables(rule, { payload: { value: 1 } });
+
+      expect(variables).to.deep.equal({});
     });
   });
 });

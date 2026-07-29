@@ -62,6 +62,8 @@ export const supportAgent = agent('support-bot', {
 
 Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route - see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
 
+On Next.js, model strings need LangChain listed in `serverExternalPackages` — see [Next.js and Turbopack](#next-js-and-turbopack). `npx novu connect --runtime langchain` configures this for you.
+
 For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to the LangChain adapter.
 
 ## Returning from `onMessage`
@@ -84,6 +86,33 @@ const supportAgent = agent('support-bot', async (message, ctx) => ({
   tools: [lookupOrder],
 }));
 ```
+
+## Next.js and Turbopack
+
+LangChain resolves provider packages for model strings via a runtime dynamic `import()`. Next.js Turbopack cannot analyze that expression and fails with:
+
+```text
+Cannot find module as expression is too dynamic
+```
+
+Keep model strings and externalize LangChain in `next.config.mjs`:
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  serverExternalPackages: [
+    'langchain',
+    '@langchain/core',
+    '@langchain/langgraph',
+    '@langchain/langgraph-checkpoint',
+    '@langchain/openai', // plus any other @langchain/* provider you use
+  ],
+};
+
+export default nextConfig;
+```
+
+`npx novu connect --runtime langchain` scaffolds this for you (and adds the provider package you selected).
 
 ## `toLangChainMessages()`
 
