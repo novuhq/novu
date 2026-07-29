@@ -1,8 +1,19 @@
-import { ChannelTypeEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
-import { type ReactNode } from 'react';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  type ContentOverrideProviderId,
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  type UiSchema,
+} from '@novu/shared';
+import { type ReactNode, useCallback } from 'react';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
-import { ContentOverridePanel } from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
+import {
+  ContentOverridePanel,
+  type ProviderOverrideEditorExtras,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
 import { DefaultContentCard } from '@/components/workflow-editor/steps/shared/provider-overrides/default-content-card';
+import { SlackBlockKitBuilderHint } from '@/components/workflow-editor/steps/shared/provider-overrides/slack-block-kit-builder-hint';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -15,6 +26,16 @@ type ChatEditorProps = { uiSchema: UiSchema };
 function ChatOverrideEditor({ defaultContent }: { defaultContent: ReactNode }) {
   const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
 
+  const getEditorExtras = useCallback((providerId: ContentOverrideProviderId): ProviderOverrideEditorExtras => {
+    if (providerId !== ChatProviderIdEnum.Slack) {
+      return {};
+    }
+
+    return {
+      notice: ({ parsedDraft }) => <SlackBlockKitBuilderHint override={parsedDraft} />,
+    };
+  }, []);
+
   return (
     <ContentOverridePanel
       channel={ChannelTypeEnum.CHAT}
@@ -22,6 +43,7 @@ function ChatOverrideEditor({ defaultContent }: { defaultContent: ReactNode }) {
       providerOverrides={providerOverrides}
       defaultContent={defaultContent}
       showEscapeHatchBadge
+      getEditorExtras={getEditorExtras}
     />
   );
 }

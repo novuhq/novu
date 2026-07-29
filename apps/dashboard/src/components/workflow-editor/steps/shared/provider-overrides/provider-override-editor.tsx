@@ -105,11 +105,20 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
   }
 }
 
+export type ProviderOverrideNoticeContext = {
+  parsedDraft?: Record<string, unknown>;
+};
+
+export type ProviderOverrideNotice = ReactNode | ((context: ProviderOverrideNoticeContext) => ReactNode);
+
 export type ProviderOverrideEditorProps = {
   providerId: ContentOverrideProviderId;
   displayName: string;
-  /** Replaces both the schema-less callout and the default hint with channel-specific copy. */
-  notice?: ReactNode;
+  /**
+   * Replaces both the schema-less callout and the default hint with channel-specific copy. Rendered
+   * into a bare padded block, so it owns its own icon and row layout.
+   */
+  notice?: ProviderOverrideNotice;
   headerTooltip?: string;
   placeholder?: string;
   /** Takes the place of the registry schema, e.g. the tool webhook's merged payload schemas. */
@@ -247,6 +256,8 @@ export const ProviderOverrideEditor = forwardRef<ProviderOverrideEditorHandle, P
         2
       );
 
+    const resolvedNotice = typeof notice === 'function' ? notice({ parsedDraft }) : notice;
+
     return (
       <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
         <Controller
@@ -360,14 +371,16 @@ export const ProviderOverrideEditor = forwardRef<ProviderOverrideEditorHandle, P
                     ))}
                   </>
                 )}
-                {(notice || primaryKey) && (
-                  <div className="text-text-soft flex items-start gap-1 px-1 py-0.5">
-                    <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
-                    {notice ?? (
-                      <span className="text-xs">
-                        Fields merge over default content. <code className="text-[11px]">{primaryKey}</code> falls back
-                        to your default message unless set here.
-                      </span>
+                {(resolvedNotice || primaryKey) && (
+                  <div className="px-1 py-0.5">
+                    {resolvedNotice ?? (
+                      <div className="text-text-soft flex items-start gap-1">
+                        <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
+                        <span className="min-w-0 flex-1 text-xs">
+                          Fields merge over default content. <code className="text-[11px]">{primaryKey}</code> falls
+                          back to your default message unless set here.
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}

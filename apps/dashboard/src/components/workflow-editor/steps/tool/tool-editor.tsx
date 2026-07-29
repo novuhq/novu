@@ -6,6 +6,7 @@ import {
   type UiSchema,
 } from '@novu/shared';
 import { useCallback } from 'react';
+import { RiLightbulbLine } from 'react-icons/ri';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import {
   ContentOverridePanel,
@@ -41,13 +42,16 @@ export const ToolEditor = (props: ToolEditorProps) => {
         headerTooltip: 'Webhook overrides replace default content and accept arbitrary JSON object keys.',
         placeholder: '{\n  "event": "{{payload.title}}"\n}',
         notice: (
-          <span className="text-xs">
-            Non-empty JSON replaces default content and is sent to every active webhook integration. Each integration
-            merges its own body template beneath this payload. Empty <code>{'{}'}</code> uses default content.
-            {ignoredSources.length > 0 && (
-              <> Autocomplete is unavailable for: {ignoredSources.map(formatWebhookSchemaSourceLabel).join(', ')}.</>
-            )}
-          </span>
+          <div className="text-text-soft flex items-start gap-1">
+            <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
+            <span className="min-w-0 flex-1 text-xs">
+              Non-empty JSON replaces default content and is sent to every active webhook integration. Each integration
+              merges its own body template beneath this payload. Empty <code>{'{}'}</code> uses default content.
+              {ignoredSources.length > 0 && (
+                <> Autocomplete is unavailable for: {ignoredSources.map(formatWebhookSchemaSourceLabel).join(', ')}.</>
+              )}
+            </span>
+          </div>
         ),
       };
     },
