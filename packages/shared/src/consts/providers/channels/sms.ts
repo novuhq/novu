@@ -37,6 +37,7 @@ import {
   snsConfig,
   telnyxConfig,
   termiiConfig,
+  textLkConfig,
   twilioConfig,
   unifonicConfig,
 } from '../credentials';
@@ -197,6 +198,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: smsCentralConfig,
     docReference: 'https://www.smscentral.com.au/sms-api/',
     logoFileName: { light: 'sms-central.png', dark: 'sms-central.png' },
+  },
+  {
+    id: SmsProviderIdEnum.TextLk,
+    displayName: 'Text.lk',
+    channel: ChannelTypeEnum.SMS,
+    credentials: textLkConfig,
+    docReference: 'https://docs.text.lk/',
+    logoFileName: { light: 'textlk.svg', dark: 'textlk.svg' },
   },
   {
     id: SmsProviderIdEnum.Termii,

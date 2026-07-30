@@ -373,6 +373,16 @@ export const termiiConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
+export const textLkConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const burstSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
