@@ -26,9 +26,7 @@ export function assertAllowedTwilioSmsRegion(region: string | undefined): Twilio
   return normalized as TwilioSmsRegion;
 }
 
-export function getTwilioSmsClientRegionConfig(
-  region: string | undefined
-): TwilioSmsClientRegionConfig | undefined {
+export function getTwilioSmsClientRegionConfig(region: string | undefined): TwilioSmsClientRegionConfig | undefined {
   const normalizedRegion = assertAllowedTwilioSmsRegion(region);
 
   if (normalizedRegion === 'us') {

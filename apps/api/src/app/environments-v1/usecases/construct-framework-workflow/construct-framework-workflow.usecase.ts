@@ -16,6 +16,7 @@ import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
   JobRepository,
+  LocalizationResourceEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -30,21 +31,22 @@ import {
   Schema,
   Step,
   StepOutput,
-  ToolOutputUnvalidated,
   Workflow,
 } from '@novu/framework/internal';
 import {
+  type ContentOverrideProviderId,
   EnvironmentTypeEnum,
+  getContentOverrideProviderIds,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
   StepTypeEnum,
-  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
-  type ToolContentOverrideProviderId,
+  withProviderOverridesRuntimeSchema,
 } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import {
   ChatOutputRendererUsecase,
+  ControlsTranslationService,
   EmailOutputRendererUsecase,
   FullPayloadForRender,
   InAppOutputRendererUsecase,
@@ -59,6 +61,8 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
+type ProviderOverrideStepType = StepTypeEnum.CHAT | StepTypeEnum.TOOL;
+
 interface ISkipEvaluationContext {
   jobId?: string;
   organizationId: string;
@@ -71,6 +75,7 @@ type SkipFunction = (controlValues: Record<string, unknown>) => Promise<boolean>
 export class ConstructFrameworkWorkflow {
   constructor(
     private logger: PinoLogger,
+    private controlsTranslationService: ControlsTranslationService,
     private workflowsRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
@@ -328,7 +333,15 @@ export class ConstructFrameworkWorkflow {
               locale,
             }) as Promise<ChatOutputUnvalidated>;
           },
-          this.constructChannelStepOptions(staticStep, skip)
+          this.constructProviderOverrideStepOptions(
+            staticStep,
+            skip,
+            fullPayloadForRender,
+            dbWorkflow,
+            StepTypeEnum.CHAT,
+            organization,
+            locale
+          )
         );
       case StepTypeEnum.PUSH:
         return step.push(
@@ -348,15 +361,24 @@ export class ConstructFrameworkWorkflow {
         return step.tool(
           stepId,
           async (controlValues) => {
-            return this.toolOutputRendererUseCase.execute({
-              controlValues,
-              fullPayloadForRender,
-              dbWorkflow,
-              organization,
-              locale,
-            }) as Promise<ToolOutputUnvalidated>;
+            return this.toolOutputRendererUseCase.execute(
+              await this.translateContentOverrideControls(controlValues, {
+                fullPayloadForRender,
+                dbWorkflow,
+                organization,
+                locale,
+              })
+            );
           },
-          this.constructToolStepOptions(staticStep, skip, dbWorkflow)
+          this.constructProviderOverrideStepOptions(
+            staticStep,
+            skip,
+            fullPayloadForRender,
+            dbWorkflow,
+            StepTypeEnum.TOOL,
+            organization,
+            locale
+          )
         );
       case StepTypeEnum.DIGEST:
         return step.digest(
@@ -422,61 +444,97 @@ export class ConstructFrameworkWorkflow {
     };
   }
 
+  /** One translation per controls object for chat/tool resolve + provider resolvers. */
+  private contentOverrideTranslationCache?: WeakMap<object, Promise<Record<string, unknown>>>;
+
+  private translateContentOverrideControls(
+    controls: Record<string, unknown>,
+    {
+      fullPayloadForRender,
+      dbWorkflow,
+      organization,
+      locale,
+    }: {
+      fullPayloadForRender: FullPayloadForRender;
+      dbWorkflow: NotificationTemplateEntity;
+      organization?: OrganizationEntity;
+      locale?: string;
+    }
+  ): Promise<Record<string, unknown>> {
+    this.contentOverrideTranslationCache ??= new WeakMap();
+
+    const cached = this.contentOverrideTranslationCache.get(controls);
+    if (cached) {
+      return cached;
+    }
+
+    const { skip: _skip, ...rest } = controls;
+    const translatedControlsPromise = this.controlsTranslationService.processTranslations({
+      controls: rest,
+      variables: fullPayloadForRender,
+      environmentId: dbWorkflow._environmentId,
+      organizationId: dbWorkflow._organizationId,
+      resourceId: dbWorkflow._id,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale,
+      resourceEntity: dbWorkflow,
+      organization,
+    });
+
+    this.contentOverrideTranslationCache.set(controls, translatedControlsPromise);
+
+    return translatedControlsPromise;
+  }
+
   /**
-   * Provider resolvers read liquid-compiled overrides from outputs (not controls),
-   * because framework provider resolvers receive uncompiled controls.
-   *
-   * Control schema is resolved via the canonical policy helper so dashboard-cloud
-   * tool steps are not validated against a persisted keys-only schema that Mongoose
-   * minimize may have stripped of property entries.
+   * Chat/tool step options: canonical control schema plus runtime `providerOverrides`,
+   * and resolvers that project a provider slice from the shared translated controls.
    */
   @Instrument()
-  private constructToolStepOptions(
+  private constructProviderOverrideStepOptions(
     staticStep: NotificationStepEntity,
     skip: SkipFunction,
-    dbWorkflow: NotificationTemplateEntity
-  ) {
+    fullPayloadForRender: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity,
+    stepType: ProviderOverrideStepType,
+    organization?: OrganizationEntity,
+    locale?: string
+  ): Required<Parameters<ChannelStep>[2]> {
     const controlSchema = dbWorkflow.origin
       ? resolveStepControlSchemas({
-          stepType: StepTypeEnum.TOOL,
+          stepType,
           workflowOrigin: dbWorkflow.origin,
           existingControls: staticStep.template?.controls,
           stepResolverHash: staticStep.template?.stepResolverHash,
         }).schema
       : staticStep.template!.controls!.schema;
 
-    /*
-     * providerOverrides are persisted as STEP_PROVIDER_CONTROLS docs and stitched back
-     * into controls at read time. The persisted main control schema intentionally omits
-     * them, but the framework validates controls with removeAdditional:'failing' — so
-     * the runtime control schema must still accept the stitched field.
-     */
-    const runtimeControlSchema = {
-      ...controlSchema,
-      properties: {
-        ...(controlSchema as { properties?: Record<string, unknown> }).properties,
-        providerOverrides: {
-          type: 'object',
-          additionalProperties: {
-            type: 'object',
-            additionalProperties: true,
-          },
-        },
-      },
-    };
-
     const resolveProviderOverride =
-      (providerId: ToolContentOverrideProviderId) =>
-      async ({ outputs }: { outputs: ToolOutputUnvalidated }) =>
-        outputs.providerOverrides?.[providerId] ?? {};
+      (providerId: ContentOverrideProviderId) =>
+      async ({ controls }: { controls: Record<string, unknown> }) => {
+        const translated = await this.translateContentOverrideControls(controls, {
+          fullPayloadForRender,
+          dbWorkflow,
+          organization,
+          locale,
+        });
+        const blob = (translated.providerOverrides as Record<string, unknown> | undefined)?.[providerId];
+        if (!blob || typeof blob !== 'object' || Array.isArray(blob)) {
+          return {};
+        }
+
+        return blob as Record<string, unknown>;
+      };
 
     const providers = Object.fromEntries(
-      TOOL_CONTENT_OVERRIDE_PROVIDER_IDS.map((providerId) => [providerId, resolveProviderOverride(providerId)])
+      getContentOverrideProviderIds(stepType).map((providerId) => [providerId, resolveProviderOverride(providerId)])
     );
 
     return {
       skip,
-      controlSchema: runtimeControlSchema as unknown as Schema,
+      controlSchema: withProviderOverridesRuntimeSchema(
+        controlSchema as { properties?: Record<string, unknown> }
+      ) as unknown as Schema,
       disableOutputSanitization: true,
       providers,
     } as Required<Parameters<ChannelStep>[2]>;

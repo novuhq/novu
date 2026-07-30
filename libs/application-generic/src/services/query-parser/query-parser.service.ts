@@ -454,10 +454,7 @@ export function extractFieldsFromRules(rules: RulesLogic<AdditionalOperation>): 
  * rule against the provided data, so condition evaluation results can be
  * persisted with expected-vs-actual context without dumping the whole payload.
  */
-export function extractRuleVariables(
-  rules: RulesLogic<AdditionalOperation>,
-  data: unknown
-): Record<string, unknown> {
+export function extractRuleVariables(rules: RulesLogic<AdditionalOperation>, data: unknown): Record<string, unknown> {
   const fields = extractFieldsFromRules(rules);
 
   return fields.reduce<Record<string, unknown>>((acc, field) => {

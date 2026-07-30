@@ -8,10 +8,12 @@ import { isEndpointRoutedToolProvider, SendMessageTool } from './send-message-to
 import { SendMessageStatus } from './send-message-type.usecase';
 
 describe('SendMessageTool - endpoint-routed providers', () => {
-  it('classifies PagerDuty and Opsgenie as endpoint-routed regardless of credentials', () => {
+  it('classifies PagerDuty, Opsgenie, and Grafana as endpoint-routed regardless of credentials', () => {
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.PagerDuty)).to.equal(true);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Opsgenie)).to.equal(true);
+    expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Grafana)).to.equal(true);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.PagerDuty, { routingMode: 'static' })).to.equal(true);
+    expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Grafana, { routingMode: 'static' })).to.equal(true);
   });
 
   it('treats the tool webhook as credential-routed when routingMode is missing or static', () => {

@@ -1,8 +1,10 @@
-import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChatFactory } from '@novu/application-generic';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, TriggerOverrides } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageChat } from './send-message-chat.usecase';
+import { SendMessageStatus } from './send-message-type.usecase';
 
 describe('SendMessageChat - phone-based channel de-duplication', () => {
   function buildUsecase(
@@ -129,5 +131,176 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
     expect(channels[0].type).to.equal('legacy');
     expect(channels[0].data.providerId).to.equal(ChatProviderIdEnum.WhatsAppBusiness);
     expect(channels[0].data.credentials.phoneNumber).to.equal('+15551234567');
+  });
+});
+
+describe('SendMessageChat - Slack provider content overrides', () => {
+  const slackIntegration = {
+    _id: 'integration_1',
+    identifier: 'slack-main',
+    providerId: ChatProviderIdEnum.Slack,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: {},
+  };
+
+  const slackChannelData = {
+    identifier: 'slack-endpoint',
+    type: ENDPOINT_TYPES.SLACK_CHANNEL,
+    endpoint: { channelId: 'C123' },
+    token: 'xoxb-token',
+  };
+
+  const persistedBlocks = [
+    { type: 'section', text: { type: 'mrkdwn', text: 'persisted section' } },
+    { type: 'divider' },
+    { type: 'context', elements: [{ type: 'mrkdwn', text: 'persisted context' }] },
+  ];
+
+  let originalNodeEnv: typeof process.env.NODE_ENV;
+
+  /**
+   * `BaseChatHandler.send` no-ops under `NODE_ENV=test` so suites never reach a provider API. These
+   * cases assert on the exact `chat.postMessage` body, so the handler has to run for real against a
+   * stubbed transport.
+   */
+  beforeEach(() => {
+    originalNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+  });
+
+  afterEach(() => {
+    process.env.NODE_ENV = originalNodeEnv;
+    sinon.restore();
+  });
+
+  function stubSlackTransport() {
+    const handler = new ChatFactory().getHandler(slackIntegration as never);
+    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
+    // Fail here rather than silently letting the suite make a real request to slack.com.
+    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+
+    const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
+    provider.axiosInstance = { post };
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns(handler);
+
+    return post;
+  }
+
+  function buildUsecase() {
+    const usecase = new SendMessageChat(
+      {} as never, // subscriberRepository
+      { create: sinon.stub().resolves({ _id: 'message_1' }) } as never,
+      {} as never, // compileTemplate
+      { execute: sinon.stub().resolves(slackIntegration) } as never,
+      {} as never, // getNovuProviderCredentials
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      {
+        execute: sinon.stub().resolves([
+          {
+            integrationIdentifier: 'slack-main',
+            providerId: ChatProviderIdEnum.Slack,
+            channelData: [slackChannelData],
+          },
+        ]),
+      } as never
+    );
+
+    return usecase;
+  }
+
+  function buildCommand(options: { providerOverrides?: Record<string, unknown>; overrides?: TriggerOverrides } = {}) {
+    const { providerOverrides, overrides = {} } = options;
+
+    return SendMessageChannelCommand.create({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      payload: {},
+      overrides: overrides as never,
+      transactionId: 'txn_1',
+      notificationId: 'notif_1',
+      _templateId: 'tpl_1',
+      subscriberId: 'sub_1',
+      _subscriberId: '_sub_1',
+      jobId: 'job_1',
+      tags: [],
+      contextKeys: [],
+      compileContext: {
+        subscriber: { subscriberId: 'sub_1', locale: 'en', channels: [] },
+      } as never,
+      bridgeData: {
+        outputs: { body: 'compiled step body' },
+        ...(providerOverrides && { providers: { [ChatProviderIdEnum.Slack]: providerOverrides } }),
+      } as never,
+      step: {
+        stepId: 'step_1',
+        template: {
+          _id: 'mt_1',
+          type: ChannelTypeEnum.CHAT,
+          content: 'compiled step body',
+        },
+      } as never,
+      job: {
+        _id: 'job_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        _subscriberId: '_sub_1',
+        subscriberId: 'sub_1',
+        _notificationId: 'notif_1',
+        _templateId: 'tpl_1',
+        transactionId: 'txn_1',
+        identifier: 'wf-identifier',
+        type: ChannelTypeEnum.CHAT,
+        step: { stepId: 'step_1' },
+      } as never,
+    });
+  }
+
+  it('delivers persisted Slack provider overrides to chat.postMessage with their blocks intact', async () => {
+    const post = stubSlackTransport();
+
+    const result = await buildUsecase().execute(buildCommand({ providerOverrides: { blocks: persistedBlocks } }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(post);
+
+    const [url, body] = post.firstCall.args;
+    expect(url).to.equal('https://slack.com/api/chat.postMessage');
+    expect(body.channel).to.equal('C123');
+    expect(body.blocks).to.deep.equal(persistedBlocks);
+  });
+
+  it('lets a step-scoped trigger override replace the persisted blocks instead of merging them by index', async () => {
+    const post = stubSlackTransport();
+    const triggerBlocks = [{ type: 'header', text: { type: 'plain_text', text: 'trigger header' } }];
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        providerOverrides: { blocks: persistedBlocks },
+        overrides: {
+          steps: { step_1: { providers: { [ChatProviderIdEnum.Slack]: { blocks: triggerBlocks } } } },
+        } as unknown as TriggerOverrides,
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(post.firstCall.args[1].blocks).to.deep.equal(triggerBlocks);
+  });
+
+  it('falls back to the compiled step body as the Slack notification text when the override omits it', async () => {
+    const post = stubSlackTransport();
+
+    const result = await buildUsecase().execute(buildCommand({ providerOverrides: { blocks: persistedBlocks } }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    expect(post.firstCall.args[1].text).to.equal('compiled step body');
   });
 });

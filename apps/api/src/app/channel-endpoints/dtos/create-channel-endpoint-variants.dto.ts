@@ -4,6 +4,7 @@ import { ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
+  GrafanaOnCallIntegrationEndpointDto,
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
@@ -332,6 +333,27 @@ export class CreateOpsgenieIntegrationEndpointDto extends CreateChannelEndpointB
   @ValidateNested()
   @Type(() => OpsgenieIntegrationEndpointDto)
   endpoint: OpsgenieIntegrationEndpointDto;
+}
+
+export class CreateGrafanaOnCallIntegrationEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION],
+    example: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION])
+  type: typeof ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION;
+
+  @ApiProperty({
+    description:
+      'Grafana OnCall integration endpoint data. `url` and `authToken` are encrypted at rest on the channel endpoint (`endpoint` field). No linked channel connection.',
+    type: GrafanaOnCallIntegrationEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => GrafanaOnCallIntegrationEndpointDto)
+  endpoint: GrafanaOnCallIntegrationEndpointDto;
 }
 
 export class CreateToolWebhookEndpointDto extends CreateChannelEndpointBaseDto {

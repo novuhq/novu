@@ -114,11 +114,7 @@ export class ActiveJobsMetricService {
           this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
           this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
         } catch (error) {
-          Logger.error(
-            error,
-            `Failed to collect metrics for queue: ${queueService.topic}`,
-            LOG_CONTEXT
-          );
+          Logger.error(error, `Failed to collect metrics for queue: ${queueService.topic}`, LOG_CONTEXT);
           fatalError = error;
         }
       }

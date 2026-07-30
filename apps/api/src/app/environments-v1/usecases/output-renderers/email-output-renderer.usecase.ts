@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -40,6 +39,7 @@ import { Liquid } from 'liquidjs';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { ControlsTranslationService } from './controls-translation.service';
 import { NOVU_BRANDING_HTML } from './novu-branding-html';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 
@@ -75,14 +75,14 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
   constructor(
     private getOrganizationSettings: GetOrganizationSettings,
-    protected moduleRef: ModuleRef,
-    protected logger: PinoLogger,
+    logger: PinoLogger,
+    controlsTranslationService: ControlsTranslationService,
     private controlValuesRepository: ControlValuesRepository,
     private getLayoutUseCase: GetLayoutUseCase,
     private jobRepository: JobRepository,
     private createExecutionDetails: CreateExecutionDetails
   ) {
-    super(moduleRef, logger);
+    super(logger, controlsTranslationService);
     /**
      * Custom outputEscape function for email rendering that handles object serialization
      * without escaping HTML content.

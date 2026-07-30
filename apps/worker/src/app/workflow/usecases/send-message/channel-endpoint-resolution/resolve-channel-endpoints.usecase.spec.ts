@@ -339,6 +339,104 @@ describe('ResolveChannelEndpoints - Opsgenie', () => {
   });
 });
 
+describe('ResolveChannelEndpoints - Grafana', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      { findOne: sandbox.stub() } as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      { refreshAccessToken: sandbox.stub() } as any
+    );
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('decrypts url and authToken from endpoint.endpoint and returns channelData without a connection', async () => {
+    channelEndpointRepository.find.resolves([
+      buildGrafanaEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, {
+          url: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/',
+          authToken: 'glsa_secret123',
+        }),
+      }),
+    ]);
+
+    const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
+
+    expect(result).to.deep.equal([
+      {
+        integrationIdentifier: GRAFANA_INTEGRATION_IDENTIFIER,
+        providerId: ToolProviderIdEnum.Grafana,
+        channelData: [
+          {
+            type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+            identifier: 'grafana-endpoint',
+            endpoint: {
+              url: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/',
+              authToken: 'glsa_secret123',
+            },
+          },
+        ],
+      },
+    ]);
+    sinon.assert.notCalled(channelConnectionRepository.find);
+  });
+
+  it('decrypts url-only endpoint without authToken', async () => {
+    channelEndpointRepository.find.resolves([
+      buildGrafanaEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, {
+          url: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/',
+        }),
+      }),
+    ]);
+
+    const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
+
+    expect(result[0].channelData).to.deep.equal([
+      {
+        type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+        identifier: 'grafana-endpoint',
+        endpoint: { url: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/' },
+      },
+    ]);
+    sinon.assert.notCalled(channelConnectionRepository.find);
+  });
+
+  it('throws when url is missing after decrypt', async () => {
+    channelEndpointRepository.find.resolves([
+      buildGrafanaEndpoint({
+        endpoint: encryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, { url: '' }),
+      }),
+    ]);
+
+    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
+
+    expect(error).to.be.instanceOf(Error);
+    expect(error.message).to.contain('grafana-endpoint');
+    expect(error.message).to.contain('missing url');
+  });
+});
+
 describe('ResolveChannelEndpoints - Tool Webhook', () => {
   let sandbox: sinon.SinonSandbox;
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
@@ -550,6 +648,24 @@ function buildOpsgenieEndpoint(overrides: Record<string, unknown> = {}) {
     subscriberId: SUBSCRIBER_ID,
     contextKeys: [],
     type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+    endpoint: {},
+    ...overrides,
+  };
+}
+
+const GRAFANA_INTEGRATION_IDENTIFIER = 'grafana-integration';
+
+function buildGrafanaEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'grafana-endpoint',
+    integrationIdentifier: GRAFANA_INTEGRATION_IDENTIFIER,
+    providerId: ToolProviderIdEnum.Grafana,
+    channel: ChannelTypeEnum.TOOL,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
     endpoint: {},
     ...overrides,
   };

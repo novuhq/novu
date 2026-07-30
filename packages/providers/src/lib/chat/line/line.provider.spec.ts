@@ -169,6 +169,81 @@ test('should override scalar fields via _passthrough', async () => {
   expect(res.id).toBe(messageId);
 });
 
+test('should replace the step-body text message when bridgeProviderData supplies messages', async () => {
+  const messageId = nanoid();
+  const { mockPost } = axiosSpy(buildResponse(messageId));
+
+  const provider = new LineChatProvider(mockProviderConfig);
+  const flexMessage = {
+    type: 'flex',
+    altText: 'Card',
+    contents: { type: 'bubble', body: { type: 'box', layout: 'vertical', contents: [] } },
+  };
+
+  await provider.sendMessage(
+    {
+      content: 'Hello from Novu',
+      channelData: buildChannelData(),
+    },
+    { messages: [flexMessage] }
+  );
+
+  expect(mockPost).toHaveBeenCalledWith('/push', {
+    to: lineUserId,
+    messages: [flexMessage],
+  });
+});
+
+test('should replace the step-body text message when _passthrough.body supplies messages', async () => {
+  const messageId = nanoid();
+  const { mockPost } = axiosSpy(buildResponse(messageId));
+
+  const provider = new LineChatProvider(mockProviderConfig);
+  const imageMessage = {
+    type: 'image',
+    originalContentUrl: 'https://example.com/image.jpg',
+    previewImageUrl: 'https://example.com/preview.jpg',
+  };
+
+  await provider.sendMessage(
+    {
+      content: 'Hello from Novu',
+      channelData: buildChannelData(),
+    },
+    {
+      _passthrough: {
+        body: { messages: [imageMessage] },
+      },
+    }
+  );
+
+  expect(mockPost).toHaveBeenCalledWith('/push', {
+    to: lineUserId,
+    messages: [imageMessage],
+  });
+});
+
+test('should keep the step-body text message when override omits messages', async () => {
+  const messageId = nanoid();
+  const { mockPost } = axiosSpy(buildResponse(messageId));
+
+  const provider = new LineChatProvider(mockProviderConfig);
+
+  await provider.sendMessage(
+    {
+      content: 'Hello from Novu',
+      channelData: buildChannelData(),
+    },
+    { notificationDisabled: true }
+  );
+
+  expect(mockPost).toHaveBeenCalledWith('/push', {
+    to: lineUserId,
+    messages: [{ type: 'text', text: 'Hello from Novu' }],
+    notificationDisabled: true,
+  });
+});
+
 test('should throw on invalid channel data', async () => {
   const provider = new LineChatProvider(mockProviderConfig);
 

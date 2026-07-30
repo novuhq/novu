@@ -23,6 +23,7 @@ import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
+import { ProviderDeprecationNotice } from './provider-deprecation';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
 import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
 import { ToolWebhookSettings } from './tool-webhook-settings';
@@ -202,6 +203,7 @@ export function IntegrationSettings({
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col"
       >
+        <ProviderDeprecationNotice provider={provider} replaceOnNavigate={mode === 'create'} />
         <div className="flex items-center justify-between gap-2 p-3">
           <Label className="text-sm" htmlFor="environmentId">
             Environment

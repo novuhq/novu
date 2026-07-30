@@ -154,6 +154,14 @@ const OPSGENIE_INTEGRATION: ChatEndpointTypeOption = {
   requiresConnection: false,
 };
 
+const GRAFANA_ONCALL_INTEGRATION: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+  label: 'Grafana OnCall webhook',
+  icon: RiKey2Line,
+  skeleton: { url: '', authToken: '' },
+  requiresConnection: false,
+};
+
 /**
  * Tool-webhook per-subscriber endpoint, used only in dynamic routing mode (static mode
  * delivers to the integration-level URL and has no subscriber endpoints).
@@ -170,6 +178,7 @@ const TOOL_WEBHOOK: ChatEndpointTypeOption = {
 const SUPPORTED_TOOL_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
   [ToolProviderIdEnum.PagerDuty]: [PAGERDUTY_SERVICE],
   [ToolProviderIdEnum.Opsgenie]: [OPSGENIE_INTEGRATION],
+  [ToolProviderIdEnum.Grafana]: [GRAFANA_ONCALL_INTEGRATION],
   [ToolProviderIdEnum.Webhook]: [TOOL_WEBHOOK],
 };
 

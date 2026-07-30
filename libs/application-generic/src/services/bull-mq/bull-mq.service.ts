@@ -11,9 +11,9 @@ import {
   QueueBaseOptions,
   QueueOptions,
   ConnectionOptions as RedisConnectionOptions,
+  UnrecoverableError,
   Worker,
   WorkerOptions,
-  UnrecoverableError,
 } from 'bullmq';
 
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';

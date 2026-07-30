@@ -15,6 +15,7 @@ import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import { ChatRenderOutput, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Liquid } from 'liquidjs';
 import { BaseTranslationRendererUsecase, TranslationContext } from './base-translation-renderer.usecase';
+import { ControlsTranslationService } from './controls-translation.service';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 
 export class ChatOutputRendererCommand extends RenderCommand {
@@ -22,6 +23,7 @@ export class ChatOutputRendererCommand extends RenderCommand {
   locale?: string;
 }
 
+/** Maps already-translated chat controls to the body-only step output. */
 @Injectable()
 export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
   private readonly liquidEngine: Liquid;
@@ -29,9 +31,10 @@ export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
     protected logger: PinoLogger,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    controlsTranslationService: ControlsTranslationService
   ) {
-    super(moduleRef, logger);
+    super(logger, controlsTranslationService);
     /*
      * The card body is a Maily document rendered into a stringified JSON blob, so the payload
      * strings are pre-escaped once (see `deepEscapePayloadStrings`) and this engine must NOT

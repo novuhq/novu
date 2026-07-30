@@ -50,7 +50,7 @@ import {
   IntegrationEndpoints,
   ResolveChannelEndpoints,
 } from './channel-endpoint-resolution/resolve-channel-endpoints.usecase';
-import { SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -463,7 +463,7 @@ export class SendMessageChat extends SendMessageBase {
     );
     if (error) return error;
 
-    const combinedOverrides = this.combineOverrides(
+    const combinedOverrides = combineProviderOverrides(
       command.bridgeData,
       command.overrides,
       command.step.stepId,
@@ -623,7 +623,7 @@ export class SendMessageChat extends SendMessageBase {
     const chatHandler = this.setupChatHandler(integration);
     const overrides = this.buildMessageOverrides(command, integration);
 
-    const combinedOverrides = this.combineOverrides(
+    const combinedOverrides = combineProviderOverrides(
       command.bridgeData,
       command.overrides,
       command.step.stepId,

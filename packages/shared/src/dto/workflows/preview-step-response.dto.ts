@@ -1,6 +1,7 @@
 import { ActionTypeEnum, CardElement, ChannelTypeEnum, ContextPayload } from '../../types';
 import { SubscriberDto } from '../subscriber';
 import { JSONSchemaDto } from './json-schema-dto';
+import type { StepProviderOverrides } from './step.dto';
 
 export class RenderOutput {}
 
@@ -11,11 +12,12 @@ export class ChatRenderOutput extends RenderOutput {
    * code-first `card`). `body` and `card` are mutually exclusive.
    */
   card?: CardElement;
+  providerOverrides?: StepProviderOverrides;
 }
 
 export class ToolRenderOutput extends RenderOutput {
   body: string;
-  providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
+  providerOverrides?: StepProviderOverrides;
 }
 
 export class SmsRenderOutput extends RenderOutput {
