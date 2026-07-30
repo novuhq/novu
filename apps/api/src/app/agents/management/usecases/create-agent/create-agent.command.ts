@@ -44,7 +44,7 @@ export class CreateAgentCommand extends EnvironmentWithUserCommand {
   @Type(() => ManagedRuntimeDto)
   managedRuntime?: ManagedRuntimeDto;
 
-  /** Funnel attribution only — not stored on the agent. */
+  /** Attribution for funnel analytics and product behaviour (e.g. CLI onboarding replies). */
   @IsOptional()
   @IsIn(['cli', 'dashboard_onboarding', 'dashboard', 'api'])
   analyticsSource?: AgentAnalyticsSource;

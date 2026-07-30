@@ -1,6 +1,7 @@
 import { IProviderConfig } from '@novu/shared';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
+import { ProviderDeprecatedBadge } from './provider-deprecation';
 import { ProviderIcon } from './provider-icon';
 
 type IntegrationListItemProps = {
@@ -21,6 +22,7 @@ export function IntegrationListItem({ integration, onClick }: IntegrationListIte
           <ProviderIcon providerId={integration.id} providerDisplayName={integration.displayName} />
         </div>
         <div className="text-md text-foreground-950 leading-6">{integration.displayName}</div>
+        <ProviderDeprecatedBadge provider={integration} className="self-center" />
         <Button
           variant="secondary"
           mode="outline"

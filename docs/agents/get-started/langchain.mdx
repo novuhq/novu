@@ -150,6 +150,8 @@ export { supportBot } from './support-bot';
 ```
 
 Match `agent('...')` to the dashboard **Identifier**. Returning `{ model, system }` is a `LangChainAgentConfig` — Novu calls `createAgent().invoke()` and delivers the final text. Novu maps `ctx.history` for you on this path.
+
+On Next.js, add LangChain packages to `serverExternalPackages` so model strings work with Turbopack — see [Next.js and Turbopack](/agents/custom-code-agent/frameworks/langchain#next-js-and-turbopack).
   </Accordion>
   <Accordion title="Add a tool (optional)">
 ```typescript
@@ -208,6 +210,9 @@ Then run `npx novu dev` (or `npm run dev:novu`) and message the bot. For Express
   </Accordion>
   <Accordion title="I skipped LLM auth in the CLI. What now?">
     Add `OPENAI_API_KEY` (or your provider key) to `.env.local`, then update `app/novu/agents/` so `onMessage` returns a LangChain config (`model`, `system`, optional `tools`). Restart `npm run dev:novu`.
+  </Accordion>
+  <Accordion title='I get "Cannot find module as expression is too dynamic"'>
+    Next.js Turbopack cannot resolve LangChain's dynamic provider imports for model strings. Add LangChain packages to `serverExternalPackages` in `next.config.mjs`. See [Next.js and Turbopack](/agents/custom-code-agent/frameworks/langchain#next-js-and-turbopack).
   </Accordion>
 </AccordionGroup>
 

@@ -14,6 +14,7 @@ import {
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { createGrafanaIntegration, VALID_GRAFANA_WEBHOOK_URL } from './helpers/grafana-helpers';
 import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
 import { createToolWebhookIntegration, VALID_TOOL_WEBHOOK_URL } from './helpers/tool-webhook-helpers';
 
@@ -161,6 +162,70 @@ describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu
     const updateRes = await session.testAgent
       .patch(`/v1/channel-endpoints/${createRes.body.data.identifier}`)
       .send({ endpoint: { apiKey: 'not-a-uuid', region: 'us' } });
+
+    expect(updateRes.status).to.equal(400);
+  });
+
+  it('should rotate the grafana url and authToken on the endpoint document', async () => {
+    const integration = await createGrafanaIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const rotatedUrl = 'https://acme.grafana.net/integrations/v1/formatted_webhook/r0tatedT0kenXyz123/';
+
+    const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL },
+    });
+    expect(createRes.status).to.equal(201);
+
+    const updateRes = await session.testAgent
+      .patch(`/v1/channel-endpoints/${createRes.body.data.identifier}`)
+      .send({ endpoint: { url: rotatedUrl, authToken: 'glsa_rotated456' } });
+
+    expect(updateRes.status).to.equal(200);
+    expect(updateRes.body.data.endpoint.url).to.equal(rotatedUrl);
+    expect(updateRes.body.data.endpoint.authToken).to.equal('glsa_rotated456');
+    expect(updateRes.body.data.connectionIdentifier).to.be.null;
+
+    // The rotated secrets are re-encrypted on the endpoint document.
+    const storedEndpoint = await channelEndpointRepository.findOne({
+      identifier: createRes.body.data.identifier,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    const storedUrl = (storedEndpoint?.endpoint as { url?: string })?.url;
+    expect(storedUrl).to.be.a('string');
+    expect(storedUrl).to.not.equal(rotatedUrl);
+    expect(storedUrl?.startsWith('nvsk.')).to.be.true;
+    const storedAuthToken = (storedEndpoint?.endpoint as { authToken?: string })?.authToken;
+    expect(storedAuthToken?.startsWith('nvsk.')).to.be.true;
+
+    // A follow-up GET returns the rotated wire shape.
+    const getRes = await session.testAgent.get(`/v1/channel-endpoints/${createRes.body.data.identifier}`);
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.endpoint.url).to.equal(rotatedUrl);
+    expect(getRes.body.data.endpoint.authToken).to.equal('glsa_rotated456');
+  });
+
+  it('should reject a grafana rotation with a non-formatted-webhook url', async () => {
+    const integration = await createGrafanaIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL },
+    });
+    expect(createRes.status).to.equal(201);
+
+    const updateRes = await session.testAgent
+      .patch(`/v1/channel-endpoints/${createRes.body.data.identifier}`)
+      .send({ endpoint: { url: 'https://acme.grafana.net/some/other/path' } });
 
     expect(updateRes.status).to.equal(400);
   });

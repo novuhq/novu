@@ -11,7 +11,8 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { ContentIssueEnum, StepTypeEnum, ToolProviderIdEnum } from '@novu/shared';
+import { ControlValuesRepository } from '@novu/dal';
+import { ContentIssueEnum, ControlValuesLevelEnum, StepTypeEnum, ToolProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
@@ -25,12 +26,55 @@ interface ITestStepConfig {
 describe('Upsert Workflow #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
+  const controlValuesRepository = new ControlValuesRepository();
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
   });
+
+  async function createToolWorkflow(options: {
+    name: string;
+    workflowId: string;
+    includeEmail?: boolean;
+  }): Promise<WorkflowResponseDto> {
+    const steps: Array<Record<string, unknown>> = [
+      {
+        name: 'Tool Step',
+        type: StepTypeEnum.TOOL,
+        controlValues: {
+          body: 'default alert',
+        },
+        providerOverrides: {
+          [ToolProviderIdEnum.PagerDuty]: { severity: 'info' },
+        },
+      },
+    ];
+
+    if (options.includeEmail) {
+      steps.push({
+        name: 'Email Step',
+        type: StepTypeEnum.EMAIL,
+        controlValues: {
+          subject: 'hello',
+          body: 'world',
+        },
+      });
+    }
+
+    const createResponse = await session.testAgent.post('/v2/workflows').send({
+      __source: WorkflowCreationSourceEnum.Editor,
+      name: options.name,
+      workflowId: options.workflowId,
+      active: true,
+      steps,
+    });
+
+    expect(createResponse.status).to.equal(201);
+
+    return createResponse.body.data;
+  }
 
   describe('POST /v2/workflows/:workflowId', () => {
     it('should throw error when workflowId is not a valid slug', async () => {
@@ -215,6 +259,120 @@ describe('Upsert Workflow #novu-v2', () => {
 
       expect(updateResponse.status).to.equal(200);
       expect(updateResponse.body.data.steps[0].providerOverrides).to.not.exist;
+    });
+
+    it('should delete a tool step from the workflow', async () => {
+      const workflow = await createToolWorkflow({
+        name: 'Tool Step Delete Workflow',
+        workflowId: `tool-step-delete-${randomUUID()}`,
+        includeEmail: true,
+      });
+      expect(workflow.steps).to.have.length(2);
+
+      const emailStep = workflow.steps.find((s) => s.type === StepTypeEnum.EMAIL);
+      expect(emailStep).to.exist;
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [
+          {
+            _id: emailStep!._id,
+            stepId: emailStep!.stepId,
+            name: emailStep!.name,
+            type: emailStep!.type,
+            controlValues: emailStep!.controls.values,
+          },
+        ],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps).to.have.length(1);
+      expect(updateResponse.body.data.steps[0].type).to.equal(StepTypeEnum.EMAIL);
+      expect(updateResponse.body.data.steps[0].controls.values.subject).to.equal('hello');
+      expect(updateResponse.body.data.steps[0].controls.values.body).to.equal('world');
+    });
+
+    it('should delete a tool step when it is the only step', async () => {
+      const workflow = await createToolWorkflow({
+        name: 'Solo Tool Step Delete Workflow',
+        workflowId: `solo-tool-step-delete-${randomUUID()}`,
+      });
+      const toolStep = workflow.steps[0];
+      expect(toolStep).to.exist;
+
+      const overrideDocsBefore = await controlValuesRepository.find({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _workflowId: workflow._id,
+        _stepId: toolStep._id,
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      });
+      expect(overrideDocsBefore.length).to.be.greaterThan(0);
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps).to.have.length(0);
+
+      const overrideDocsAfter = await controlValuesRepository.find({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _workflowId: workflow._id,
+        _stepId: toolStep._id,
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      });
+      expect(overrideDocsAfter).to.have.length(0);
+    });
+
+    it('should keep provider overrides when omitted from the remaining tool step', async () => {
+      const workflow = await createToolWorkflow({
+        name: 'Keep Tool Step Workflow',
+        workflowId: `keep-tool-step-${randomUUID()}`,
+        includeEmail: true,
+      });
+      const toolStep = workflow.steps.find((s) => s.type === StepTypeEnum.TOOL);
+      expect(toolStep).to.exist;
+
+      // Dashboard delete omits providerOverrides on remaining steps (leave unchanged).
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        steps: [
+          {
+            _id: toolStep!._id,
+            stepId: toolStep!.stepId,
+            name: toolStep!.name,
+            type: toolStep!.type,
+            controlValues: toolStep!.controls.values,
+          },
+        ],
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps).to.have.length(1);
+      expect(updateResponse.body.data.steps[0].type).to.equal(StepTypeEnum.TOOL);
+      expect(updateResponse.body.data.steps[0].providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({
+        severity: 'info',
+      });
+    });
+
+    it('should round-trip a tool step on PUT', async () => {
+      const workflow = await createToolWorkflow({
+        name: 'Round Trip Tool Workflow',
+        workflowId: `round-trip-tool-${randomUUID()}`,
+      });
+
+      const updateResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+      });
+
+      expect(updateResponse.status).to.equal(200);
+      expect(updateResponse.body.data.steps[0].type).to.equal(StepTypeEnum.TOOL);
+      expect(updateResponse.body.data.steps[0].providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({
+        severity: 'info',
+      });
     });
   });
 

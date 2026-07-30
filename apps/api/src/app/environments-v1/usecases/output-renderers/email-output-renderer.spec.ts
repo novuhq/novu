@@ -13,6 +13,7 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { ControlsTranslationService } from './controls-translation.service';
 import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 
@@ -101,10 +102,15 @@ describe('EmailOutputRendererUsecase', () => {
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
 
+    const controlsTranslationService = new ControlsTranslationService(
+      moduleRef as unknown as ModuleRef,
+      pinoLoggerMock as unknown as PinoLogger
+    );
+
     emailOutputRendererUsecase = new EmailOutputRendererUsecase(
       getOrganizationSettingsMock as any,
-      moduleRef as any,
       pinoLoggerMock as any,
+      controlsTranslationService,
       controlValuesRepositoryMock as any,
       getLayoutUseCaseV0 as any,
       jobRepositoryMock as any,

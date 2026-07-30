@@ -158,6 +158,7 @@ export enum ChatProviderIdEnum {
   Novu = 'novu-slack',
   Telegram = 'telegram',
   Sendblue = 'sendblue',
+  NovuWebChat = 'novu-web-chat',
 }
 
 export enum PushProviderIdEnum {
@@ -184,6 +185,7 @@ export enum AgentRuntimeProviderIdEnum {
 export enum ToolProviderIdEnum {
   PagerDuty = 'pagerduty',
   Opsgenie = 'opsgenie',
+  Grafana = 'grafana',
   Webhook = 'tool-webhook',
 }
 

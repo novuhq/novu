@@ -1,6 +1,6 @@
-import { SVGProps } from 'react';
+import { ReactElement, SVGProps } from 'react';
 
-export type SVGIcon = (props: SVGProps<SVGSVGElement>) => JSX.Element;
+export type SVGIcon = (props: SVGProps<SVGSVGElement>) => ReactElement;
 
 export function GridLines(props: SVGProps<SVGSVGElement>) {
   return (

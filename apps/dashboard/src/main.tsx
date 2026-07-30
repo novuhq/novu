@@ -418,37 +418,32 @@ const router = createBrowserRouter([
                 ],
               },
               {
-                element: <ConnectSubscriberProvider />,
-                children: [
-                  {
-                    path: ROUTES.AGENTS,
-                    element: <AgentsPage />,
-                  },
-                  {
-                    path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                        <AgentDetailsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.AGENT_DETAILS_TAB,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                        <AgentDetailsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.AGENT_DETAILS,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                        <AgentDetailsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
+                path: ROUTES.AGENTS,
+                element: <AgentsPage />,
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS_TAB,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.AGENT_DETAILS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                    <AgentDetailsPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.DOMAINS,

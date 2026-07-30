@@ -18,6 +18,23 @@ export const isEmptyMailyJson = (value: unknown): boolean => {
   }
 };
 
+/**
+ * Wraps a legacy plain-string body into a minimal Maily/TipTap document so it
+ * can be opened in the block editor as text blocks. Each line becomes its own
+ * paragraph; empty lines are preserved as empty paragraphs.
+ */
+export const plainTextToMailyJson = (value: string): string => {
+  const content = value
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => ({
+      type: 'paragraph',
+      content: line.length > 0 ? [{ type: 'text', text: line }] : [],
+    }));
+
+  return JSON.stringify({ type: 'doc', content });
+};
+
 export const isMailyJson = (value: unknown): boolean => {
   if (typeof value !== 'string') return false;
 

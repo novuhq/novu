@@ -10,6 +10,7 @@ export {
   Queue,
   QueueBaseOptions,
   QueueOptions,
+  UnrecoverableError,
   Worker,
   WorkerOptions,
 } from './bull-mq';

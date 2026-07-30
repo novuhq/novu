@@ -491,6 +491,18 @@ export const twilioConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Data residency region',
+    description: 'Select EU if your Twilio account uses EU data residency (IE1). Use region-specific credentials.',
+    type: 'dropdown',
+    required: false,
+    value: 'us',
+    dropdown: [
+      { name: 'US (default)', value: 'us' },
+      { name: 'EU (Ireland)', value: 'eu' },
+    ],
+  },
   ...smsConfigBase,
 ];
 
@@ -1031,6 +1043,9 @@ export const novuInAppConfig: IConfigCredential[] = [
     },
   },
 ];
+
+/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for web chat. */
+export const novuWebChatConfig: IConfigCredential[] = novuInAppConfig;
 
 export const sendchampConfig: IConfigCredential[] = [
   {
@@ -1640,6 +1655,16 @@ export const pagerdutyConfig: IConfigCredential[] = [];
  * configured on the integration itself.
  */
 export const opsgenieConfig: IConfigCredential[] = [];
+
+/**
+ * Grafana is routed per subscriber: the IRM/OnCall incoming-webhook URL and
+ * optional bearer token live encrypted on the per-subscriber
+ * `ChannelEndpoint.endpoint`, provisioned via `POST /v1/channel-endpoints`
+ * with `type: grafana_oncall_integration`. The env-level integration record
+ * is an anchor only (identifier + name); no fields are configured on the
+ * integration itself.
+ */
+export const grafanaConfig: IConfigCredential[] = [];
 
 export const toolWebhookConfig: IConfigCredential[] = [
   {

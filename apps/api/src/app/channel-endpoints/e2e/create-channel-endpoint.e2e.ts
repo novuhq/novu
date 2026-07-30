@@ -18,6 +18,7 @@ import {
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { createGrafanaIntegration, VALID_GRAFANA_WEBHOOK_URL } from './helpers/grafana-helpers';
 import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
 import { createPagerDutyIntegration, VALID_PAGERDUTY_ROUTING_KEY } from './helpers/pagerduty-helpers';
 import { createToolWebhookIntegration, VALID_TOOL_WEBHOOK_URL } from './helpers/tool-webhook-helpers';
@@ -598,6 +599,146 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
 
     expect(res.status).to.equal(400);
     expect(res.body.message).to.include('requires a PagerDuty integration');
+  });
+
+  it('should create a grafana_oncall_integration endpoint with url and authToken persisted encrypted', async () => {
+    const integration = await createGrafanaIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL, authToken: 'glsa_secret123' },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.type).to.equal(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION);
+    expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
+    expect(res.body.data.connectionIdentifier).to.be.null;
+    // The response returns the plaintext wire shape.
+    expect(res.body.data.endpoint.url).to.equal(VALID_GRAFANA_WEBHOOK_URL);
+    expect(res.body.data.endpoint.authToken).to.equal('glsa_secret123');
+
+    // Secret fields are encrypted on the endpoint document at rest.
+    const storedEndpoint = await channelEndpointRepository.findOne({
+      identifier: res.body.data.identifier,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    expect(storedEndpoint).to.exist;
+    const storedUrl = (storedEndpoint?.endpoint as { url?: string })?.url;
+    expect(storedUrl).to.be.a('string');
+    expect(storedUrl).to.not.equal(VALID_GRAFANA_WEBHOOK_URL);
+    expect(storedUrl?.startsWith('nvsk.')).to.be.true;
+    const storedAuthToken = (storedEndpoint?.endpoint as { authToken?: string })?.authToken;
+    expect(storedAuthToken?.startsWith('nvsk.')).to.be.true;
+  });
+
+  it('should create a grafana_oncall_integration endpoint without an authToken', async () => {
+    const integration = await createGrafanaIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.endpoint.url).to.equal(VALID_GRAFANA_WEBHOOK_URL);
+    expect(res.body.data.endpoint.authToken).to.be.undefined;
+  });
+
+  it('should reject a grafana endpoint when the url is not a formatted-webhook url', async () => {
+    const integration = await createGrafanaIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: 'https://acme.grafana.net/some/other/path' },
+    });
+
+    // Command-level schema validation rejects malformed wire shapes with 422,
+    // matching the pagerduty_service/opsgenie_integration behavior.
+    expect(res.status).to.equal(422);
+  });
+
+  it('should fail with 409 when a grafana endpoint already exists for the subscriber and integration', async () => {
+    const integration = await createGrafanaIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const payload = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL },
+    };
+
+    const firstRes = await session.testAgent.post('/v1/channel-endpoints').send(payload);
+    expect(firstRes.status).to.equal(201);
+
+    const duplicateRes = await session.testAgent.post('/v1/channel-endpoints').send(payload);
+    expect(duplicateRes.status).to.equal(409);
+    expect(duplicateRes.body.message).to.include(subscriber.subscriberId);
+  });
+
+  it('should fail when creating a grafana endpoint for a non-Grafana integration', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL },
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('requires a Grafana integration');
+  });
+
+  it('should fail with 404 for grafana when the subscriber does not exist and createSubscriberIfMissing is not set', async () => {
+    const integration = await createGrafanaIntegration(session);
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: 'ghost-grafana-subscriber',
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL },
+    });
+
+    expect(res.status).to.equal(404);
+    expect(res.body.message).to.include('Subscriber not found: ghost-grafana-subscriber');
+    expect(res.body.message).to.include('createSubscriberIfMissing');
+  });
+
+  it('should create the subscriber on the fly for grafana when createSubscriberIfMissing is true', async () => {
+    const integration = await createGrafanaIntegration(session);
+    const subscriberId = `jit-grafana-subscriber-${Date.now()}`;
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+      endpoint: { url: VALID_GRAFANA_WEBHOOK_URL },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.subscriberId).to.equal(subscriberId);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.subscriberId).to.equal(subscriberId);
   });
 
   it('should create a tool_webhook endpoint with the secret persisted encrypted on the endpoint document', async () => {

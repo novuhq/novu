@@ -21,10 +21,13 @@ import { useTextMenuState } from './use-text-menu-state';
 type TextBubbleContentProps = {
   editor: Editor;
   showListMenu?: boolean;
+  showUnderline?: boolean;
+  showAlignment?: boolean;
+  showTextColor?: boolean;
 };
 
 export function TextBubbleContent(props: TextBubbleContentProps) {
-  const { editor, showListMenu = true } = props;
+  const { editor, showListMenu = true, showUnderline = true, showAlignment = true, showTextColor = true } = props;
 
   const state = useTextMenuState(editor);
   const colors = editor?.storage.color.colors as Set<string>;
@@ -45,13 +48,17 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       icon: ItalicIcon,
       tooltip: 'Italic',
     },
-    {
-      name: 'underline',
-      isActive: () => editor?.isActive('underline')!,
-      command: () => editor?.chain().focus().toggleUnderline().run()!,
-      icon: UnderlineIcon,
-      tooltip: 'Underline',
-    },
+    ...(showUnderline
+      ? [
+          {
+            name: 'underline',
+            isActive: () => editor?.isActive('underline')!,
+            command: () => editor?.chain().focus().toggleUnderline().run()!,
+            icon: UnderlineIcon,
+            tooltip: 'Underline',
+          },
+        ]
+      : []),
     {
       name: 'strike',
       isActive: () => editor?.isActive('strike')!,
@@ -74,12 +81,14 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         <BubbleMenuButton key={index} {...item} />
       ))}
 
-      <AlignmentSwitch
-        alignment={state.textAlign}
-        onAlignmentChange={(alignment) => {
-          editor?.chain().focus().setTextAlign(alignment).run();
-        }}
-      />
+      {showAlignment && (
+        <AlignmentSwitch
+          alignment={state.textAlign}
+          onAlignmentChange={(alignment) => {
+            editor?.chain().focus().setTextAlign(alignment).run();
+          }}
+        />
+      )}
 
       {!state.isListActive && showListMenu && (
         <>
@@ -113,23 +122,27 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         isVariable={state.isUrlVariable}
       />
 
-      <Divider />
+      {showTextColor && (
+        <>
+          <Divider />
 
-      <ColorPicker
-        color={state.currentTextColor}
-        onColorChange={(color) => {
-          editor?.chain().setColor(color).run();
-        }}
-        tooltip="Text Color"
-        suggestedColors={suggestedColors}
-      >
-        <BaseButton variant="ghost" size="sm" type="button" className="!mly-h-7 mly-w-7 mly-shrink-0 mly-p-0">
-          <div className="mly-flex mly-flex-col mly-items-center mly-justify-center mly-gap-[1px]">
-            <span className="mly-font-bolder mly-font-mono mly-text-xs mly-text-slate-700">A</span>
-            <div className="mly-h-[2px] mly-w-3" style={{ backgroundColor: state.currentTextColor }} />
-          </div>
-        </BaseButton>
-      </ColorPicker>
+          <ColorPicker
+            color={state.currentTextColor}
+            onColorChange={(color) => {
+              editor?.chain().setColor(color).run();
+            }}
+            tooltip="Text Color"
+            suggestedColors={suggestedColors}
+          >
+            <BaseButton variant="ghost" size="sm" type="button" className="!mly-h-7 mly-w-7 mly-shrink-0 mly-p-0">
+              <div className="mly-flex mly-flex-col mly-items-center mly-justify-center mly-gap-[1px]">
+                <span className="mly-font-bolder mly-font-mono mly-text-xs mly-text-slate-700">A</span>
+                <div className="mly-h-[2px] mly-w-3" style={{ backgroundColor: state.currentTextColor }} />
+              </div>
+            </BaseButton>
+          </ColorPicker>
+        </>
+      )}
     </>
   );
 }

@@ -30,7 +30,7 @@ import {
   IntegrationEndpoints,
   ResolveChannelEndpoints,
 } from './channel-endpoint-resolution/resolve-channel-endpoints.usecase';
-import { SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -324,7 +324,7 @@ export class SendMessageTool extends SendMessageBase {
         transactionId: command.transactionId,
         subscriberId: command.subscriberId,
         stepId: command.step.stepId,
-        bridgeProviderData: this.combineOverrides(
+        bridgeProviderData: combineProviderOverrides(
           command.bridgeData,
           command.overrides,
           command.step.stepId,

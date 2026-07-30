@@ -30,7 +30,7 @@ import { EmailControlType } from '../../schemas/control';
 import { AnalyticsService } from '../../services';
 import {
   computeWorkflowStatus,
-  isSupportedToolProviderOverrideId,
+  isSupportedProviderOverrideId,
   removeBrandingFromHtml,
   resolveStepControlSchemas,
   shortId,
@@ -296,6 +296,8 @@ export class UpsertWorkflowUseCase {
     const optimisticSteps = command.workflowDto.steps.map((step, index) => ({
       stepId: stepIds[index],
       type: step.type,
+      ...(step.controlValues ? { controlValues: step.controlValues } : {}),
+      ...(step._id ? { _id: step._id } : {}),
     }));
 
     const optimisticPayloadSchema = command.workflowDto.payloadSchema as JSONSchemaDto | undefined;
@@ -582,7 +584,7 @@ export class UpsertWorkflowUseCase {
       return this.controlValuesRepository.deleteMany(baseQuery, { session: command.session });
     }
 
-    const desiredProviderIds = Object.keys(providerOverrides).filter(isSupportedToolProviderOverrideId);
+    const desiredProviderIds = Object.keys(providerOverrides).filter(isSupportedProviderOverrideId);
 
     const existingDocs = await this.controlValuesRepository.find(
       baseQuery,

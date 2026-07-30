@@ -77,6 +77,8 @@ return {
 };
 ```
 
+This scaffold lists LangChain packages in `serverExternalPackages` in `next.config.mjs` so model strings work with Next.js Turbopack.
+
 The scaffold includes a `searchNovuDocs` tool gated behind approval — it fetches the live Novu docs index. Uncomment the config return to wire your LLM, then try asking "how does tool approval work in Novu?" to see the approval card flow.
 
 ## Learn More

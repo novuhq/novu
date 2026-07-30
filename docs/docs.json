@@ -27,7 +27,10 @@
   },
   "thumbnails": {
     "appearance": "dark",
-    "background": "/images/og/og-background.png"
+    "background": "/images/og/og-image-docs-v2.jpg",
+    "fonts": {
+      "family": "Inter"
+    }
   },
   "interaction": {
     "drilldown": true
@@ -293,6 +296,7 @@
                 "pages": [
                   "platform/integrations/tool/pagerduty",
                   "platform/integrations/tool/opsgenie",
+                  "platform/integrations/tool/grafana",
                   "platform/integrations/tool/webhook"
                 ]
               },

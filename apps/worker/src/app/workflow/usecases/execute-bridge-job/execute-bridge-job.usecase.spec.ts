@@ -1,4 +1,10 @@
-import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum, ToolProviderIdEnum } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  ControlValuesLevelEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  ToolProviderIdEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ExecuteBridgeJob } from './execute-bridge-job.usecase';
@@ -232,6 +238,65 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
       providerOverrides: {
         [ToolProviderIdEnum.PagerDuty]: { severity: 'warning', summary: 'db down' },
         [ToolProviderIdEnum.Webhook]: { alert_type: 'incident', priority: 'high' },
+      },
+    });
+  });
+
+  it('stitches STEP_PROVIDER_CONTROLS docs for a chat step, not only for tool steps', async () => {
+    const { usecase, executeBridgeRequest, controlValuesRepository } = buildUsecase();
+
+    controlValuesRepository.findOne.resolves({
+      controls: { body: 'default chat body' },
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+    controlValuesRepository.find.resolves([
+      {
+        providerId: ChatProviderIdEnum.Slack,
+        controls: { blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'from the editor' } }] },
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      },
+    ]);
+
+    const command = {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: {
+          stepId: 'step_1',
+          uuid: 'step_1',
+          _id: 'step_tpl_1',
+          template: { type: 'chat' },
+        },
+      },
+      variables: {
+        payload: {},
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+
+    await usecase.execute(command);
+
+    const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
+    expect(bridgeRequest.event.controls).to.deep.equal({
+      body: 'default chat body',
+      providerOverrides: {
+        [ChatProviderIdEnum.Slack]: {
+          blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'from the editor' } }],
+        },
       },
     });
   });

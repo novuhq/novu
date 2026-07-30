@@ -1,7 +1,7 @@
-import { Editor as MailyEditor } from '@novu/maily-core';
+import { Editor as MailyEditor, type MenuConfig } from '@novu/maily-core';
 import { BlockGroupItem } from '@novu/maily-core/blocks';
 import { Variable } from '@novu/maily-core/extensions';
-import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
+import type { AnyExtension, Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
 import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo } from 'react';
 import { useDataRef } from '@/hooks/use-data-ref';
@@ -24,6 +24,8 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
   children?: React.ReactNode;
   variables?: EnhancedParsedVariables;
   blocks?: BlockGroupItem[];
+  menuConfig?: MenuConfig;
+  additionalExtensions?: AnyExtension[];
   addDigestVariables?: boolean;
   onCreateNewVariable?: (variable: string) => Promise<void>;
   onCreateNewTranslationKey?: (translationKey: string) => Promise<void>;
@@ -68,6 +70,8 @@ export const Maily = ({
     isAllowedVariable: () => false,
   },
   blocks,
+  menuConfig,
+  additionalExtensions,
   isPayloadSchemaEnabled,
   isTranslationEnabled,
   isContextEnabled = false,
@@ -126,6 +130,7 @@ export const Maily = ({
     blocks: blocks ?? [],
     onCreateNewVariable,
     isTranslationEnabled,
+    additionalExtensions,
     translationKeys,
     onCreateNewTranslationKey,
     variableSuggestionsPopover,
@@ -203,6 +208,7 @@ export const Maily = ({
           contentJson={value ? JSON.parse(value) : undefined}
           onUpdate={onUpdate}
           repeatMenuConfig={repeatMenuConfig}
+          menuConfig={menuConfig}
         />
       </div>
       {children}

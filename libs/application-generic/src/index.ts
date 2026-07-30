@@ -15,6 +15,7 @@ export * from './oauth';
 export * from './pipes';
 export * from './resilience';
 export * from './schemas/channel-endpoint';
+export * from './schemas/chat';
 export * from './schemas/control';
 export * from './services';
 export * from './services/agent-entitlements.service';

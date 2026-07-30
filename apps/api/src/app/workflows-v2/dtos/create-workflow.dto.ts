@@ -10,6 +10,7 @@ import {
   PushControlDto,
   SmsControlDto,
   ThrottleControlDto,
+  ToolControlDto,
   WorkflowCommonsFields,
 } from '@novu/application-generic';
 import {
@@ -33,6 +34,7 @@ import {
   PushStepUpsertDto,
   SmsStepUpsertDto,
   ThrottleStepUpsertDto,
+  ToolStepUpsertDto,
 } from './create-step.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
 
@@ -45,6 +47,7 @@ export type StepCreateDto =
   | DelayStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto
+  | ToolStepUpsertDto
   | CustomStepUpsertDto
   | HttpRequestStepUpsertDto;
 
@@ -57,6 +60,7 @@ export type StepCreateDto =
   DelayStepUpsertDto,
   DigestStepUpsertDto,
   ThrottleStepUpsertDto,
+  ToolStepUpsertDto,
   CustomStepUpsertDto,
   HttpRequestStepUpsertDto,
   InAppControlDto,
@@ -67,6 +71,7 @@ export type StepCreateDto =
   DelayControlDto,
   DigestControlDto,
   ThrottleControlDto,
+  ToolControlDto,
   CustomControlDto,
   HttpRequestControlDto
 )
@@ -91,6 +96,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(DelayStepUpsertDto) },
         { $ref: getSchemaPath(DigestStepUpsertDto) },
         { $ref: getSchemaPath(ThrottleStepUpsertDto) },
+        { $ref: getSchemaPath(ToolStepUpsertDto) },
         { $ref: getSchemaPath(CustomStepUpsertDto) },
         { $ref: getSchemaPath(HttpRequestStepUpsertDto) },
       ],
@@ -105,6 +111,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
           [StepTypeEnum.DELAY]: getSchemaPath(DelayStepUpsertDto),
           [StepTypeEnum.DIGEST]: getSchemaPath(DigestStepUpsertDto),
           [StepTypeEnum.THROTTLE]: getSchemaPath(ThrottleStepUpsertDto),
+          [StepTypeEnum.TOOL]: getSchemaPath(ToolStepUpsertDto),
           [StepTypeEnum.CUSTOM]: getSchemaPath(CustomStepUpsertDto),
           [StepTypeEnum.HTTP_REQUEST]: getSchemaPath(HttpRequestStepUpsertDto),
         },
@@ -125,6 +132,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.DELAY, value: DelayStepUpsertDto },
         { name: StepTypeEnum.DIGEST, value: DigestStepUpsertDto },
         { name: StepTypeEnum.THROTTLE, value: ThrottleStepUpsertDto },
+        { name: StepTypeEnum.TOOL, value: ToolStepUpsertDto },
         { name: StepTypeEnum.CUSTOM, value: CustomStepUpsertDto },
         { name: StepTypeEnum.HTTP_REQUEST, value: HttpRequestStepUpsertDto },
       ],
@@ -140,6 +148,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
     | DelayStepUpsertDto
     | DigestStepUpsertDto
     | ThrottleStepUpsertDto
+    | ToolStepUpsertDto
     | CustomStepUpsertDto
     | HttpRequestStepUpsertDto
   )[];

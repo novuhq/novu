@@ -7,6 +7,7 @@ import {
   ProvidersIdEnumConst,
 } from '@novu/shared';
 import {
+  GrafanaOnCallIntegrationEndpointDto,
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
@@ -94,6 +95,7 @@ export class GetChannelEndpointResponseDto {
       { $ref: getSchemaPath(LineUserEndpointDto) },
       { $ref: getSchemaPath(PagerDutyServiceEndpointDto) },
       { $ref: getSchemaPath(OpsgenieIntegrationEndpointDto) },
+      { $ref: getSchemaPath(GrafanaOnCallIntegrationEndpointDto) },
       { $ref: getSchemaPath(ToolWebhookEndpointDto) },
     ],
   })
@@ -110,6 +112,7 @@ export class GetChannelEndpointResponseDto {
     | LineUserEndpointDto
     | PagerDutyServiceEndpointDto
     | OpsgenieIntegrationEndpointDto
+    | GrafanaOnCallIntegrationEndpointDto
     | ToolWebhookEndpointDto;
 
   @ApiProperty({

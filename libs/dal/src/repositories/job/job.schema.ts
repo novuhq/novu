@@ -11,6 +11,9 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.String,
       default: JobStatusEnum.PENDING,
     },
+    awaitingEnqueue: {
+      type: Schema.Types.Boolean,
+    },
     deliveryLifecycleState: {
       type: {
         status: {

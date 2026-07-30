@@ -134,6 +134,9 @@ describe('UnsnoozeNotification', () => {
 
     expect(result).to.deep.equal(mockNotification);
     expect(jobRepositoryMock.findOneAndDelete.calledOnce).to.be.true;
+    // Matches DELAYED (current) and PENDING (unsnooze jobs created before the DELAYED switch)
+    const deleteQuery = jobRepositoryMock.findOneAndDelete.firstCall.args[0];
+    expect(deleteQuery.status).to.deep.equal({ $in: [JobStatusEnum.DELAYED, JobStatusEnum.PENDING] });
     expect(markNotificationAsMock.execute.calledOnce).to.be.true;
 
     // Verify that markNotificationAs was called with the correct args
