@@ -3,6 +3,7 @@ import { ChatProviderIdEnum, PushProviderIdEnum, ToolProviderIdEnum } from '../.
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   CONTENT_OVERRIDE_PROVIDER_IDS,
+  expoOverrideJsonSchema,
   getProviderOverrideConfig,
   getProviderOverrideKeys,
   getProviderOverrideKeysOnlySchema,
@@ -33,10 +34,24 @@ describe('provider override registry', () => {
     expect([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(ChatProviderIdEnum).sort());
   });
 
-  it('registers every push provider as an escape hatch with no primary content key', () => {
+  it('registers Expo as a schema-backed push provider with body as the primary content key', () => {
+    const config = getProviderOverrideConfig(PushProviderIdEnum.EXPO);
+    const keys = getProviderOverrideKeys(PushProviderIdEnum.EXPO) ?? [];
+
+    expect(config?.schema).toBeDefined();
+    expect(config?.primaryContentKey).toBe('body');
+    expect(keys).toEqual(expect.arrayContaining(['body', 'channelId', 'interruptionLevel', 'tag']));
+    expect(keys).not.toContain('to');
+  });
+
+  it('keeps non-Expo push providers as escape hatches with no primary content key', () => {
     expect([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(PushProviderIdEnum).sort());
 
     for (const providerId of PUSH_CONTENT_OVERRIDE_PROVIDER_IDS) {
+      if (providerId === PushProviderIdEnum.EXPO) {
+        continue;
+      }
+
       const config = getProviderOverrideConfig(providerId);
 
       expect(config?.schema).toBeUndefined();
@@ -46,6 +61,18 @@ describe('provider override registry', () => {
     }
 
     expect(supportsContentProviderOverrides('push')).toBe(true);
+  });
+
+  it('keeps Expo schema strict with a liquid-tolerant twin and matching key inventory', () => {
+    const config = getProviderOverrideConfig(PushProviderIdEnum.EXPO);
+
+    expect(expoOverrideJsonSchema.additionalProperties).toBe(false);
+    expect(expoOverrideJsonSchema.properties.data.additionalProperties).toBe(true);
+    expect(config?.schema).toBe(expoOverrideJsonSchema);
+    expect(config?.liquidTolerantSchema).toEqual(toLiquidTolerantSchema(expoOverrideJsonSchema));
+    expect(PROVIDER_OVERRIDE_SCHEMAS[PushProviderIdEnum.EXPO]).toBe(expoOverrideJsonSchema);
+    expect(PROVIDER_OVERRIDE_KEYS[PushProviderIdEnum.EXPO]).toEqual(Object.keys(expoOverrideJsonSchema.properties));
+    expect(config?.keys).toEqual(PROVIDER_OVERRIDE_KEYS[PushProviderIdEnum.EXPO]);
   });
 
   it('exposes every tool provider, including the schema-less webhook', () => {

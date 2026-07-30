@@ -6,6 +6,7 @@ import {
   StepTypeEnum,
   ToolProviderIdEnum,
 } from '../../../types';
+import { expoOverrideJsonSchema } from './expo-override.schema';
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
@@ -73,7 +74,8 @@ export type ProviderOverrideConfig = {
 export const PROVIDER_OVERRIDE_SCHEMAS = {
   [ToolProviderIdEnum.PagerDuty]: pagerdutyOverrideJsonSchema,
   [ToolProviderIdEnum.Opsgenie]: opsgenieOverrideJsonSchema,
-} as const satisfies Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum, JSONSchemaDto>>;
+  [PushProviderIdEnum.EXPO]: expoOverrideJsonSchema,
+} as const satisfies Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum | PushProviderIdEnum, JSONSchemaDto>>;
 
 /** Top-level override keys for each provider — shared by validation and UI. */
 export const PROVIDER_OVERRIDE_KEYS = {
@@ -82,7 +84,8 @@ export const PROVIDER_OVERRIDE_KEYS = {
   [ChatProviderIdEnum.Slack]: SLACK_OVERRIDE_KEYS,
   [ChatProviderIdEnum.Telegram]: TELEGRAM_OVERRIDE_KEYS,
   [ChatProviderIdEnum.WhatsAppBusiness]: WHATSAPP_OVERRIDE_KEYS,
-} as const satisfies Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum, readonly string[]>>;
+  [PushProviderIdEnum.EXPO]: Object.keys(expoOverrideJsonSchema.properties),
+} as const satisfies Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum | PushProviderIdEnum, readonly string[]>>;
 
 function schemaBacked(schema: JSONSchemaDto, keys: readonly string[], primaryContentKey: string) {
   return {
@@ -165,13 +168,18 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 /**
- * Every push provider is an escape hatch for v1: free-form JSON with no primary content key.
+ * Push providers default to escape-hatch free-form JSON until a schema is hand-written.
+ * Expo is the first schema-backed push provider (`primaryContentKey: body`).
  * `satisfies Record<...>` fails the build when a provider joins the enum without a decision.
  */
 const PUSH_PROVIDER_OVERRIDE_CONFIGS = {
   [PushProviderIdEnum.FCM]: escapeHatch(null),
   [PushProviderIdEnum.APNS]: escapeHatch(null),
-  [PushProviderIdEnum.EXPO]: escapeHatch(null),
+  [PushProviderIdEnum.EXPO]: schemaBacked(
+    expoOverrideJsonSchema,
+    PROVIDER_OVERRIDE_KEYS[PushProviderIdEnum.EXPO],
+    'body'
+  ),
   [PushProviderIdEnum.OneSignal]: escapeHatch(null),
   [PushProviderIdEnum.Pushpad]: escapeHatch(null),
   [PushProviderIdEnum.PushWebhook]: escapeHatch(null),
