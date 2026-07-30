@@ -272,35 +272,6 @@ describe('processProviderOverridesIssues', () => {
     expect(issues.controls).toBeUndefined();
   });
 
-  it('accepts known Expo override keys without control issues', () => {
-    const issues = processProviderOverridesIssues({
-      [PushProviderIdEnum.EXPO]: {
-        priority: 'high',
-        channelId: 'orders',
-        interruptionLevel: 'time-sensitive',
-      },
-    });
-
-    expect(issues.controls).toBeUndefined();
-  });
-
-  it('flags a typo in an Expo override key with a namespaced path', () => {
-    const issues = processProviderOverridesIssues({
-      [PushProviderIdEnum.EXPO]: {
-        priority: 'high',
-        chanelId: 'orders',
-      },
-    });
-
-    expect(issues.controls?.['providerOverrides.expo.chanelId']).toEqual([
-      {
-        message: '"chanelId" is not a supported property',
-        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
-        variableName: 'providerOverrides.expo.chanelId',
-      },
-    ]);
-  });
-
   it.each([null, [], 'not-an-object'])('rejects malformed fcm override value %j', (override) => {
     const issues = processProviderOverridesIssues({
       [PushProviderIdEnum.FCM]: override,
@@ -329,6 +300,33 @@ describe('processProviderOverridesIssues', () => {
         message: '"whatever" is not a supported property',
         issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.telegram.whatever',
+      },
+    ]);
+  });
+
+  it('validates Expo overrides against the schema', () => {
+    const valid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        channelId: 'orders',
+        interruptionLevel: 'time-sensitive',
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        chanelId: 'orders',
+      },
+    });
+
+    expect(invalid.controls?.['providerOverrides.expo.chanelId']).toEqual([
+      {
+        message: '"chanelId" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.expo.chanelId',
       },
     ]);
   });
