@@ -17,7 +17,7 @@ export class UpsertTopicUseCase {
       throw new ConflictException(`Topic with key "${command.key}" already exists`);
     }
 
-    const created = !topic;
+    let created = !topic;
 
     if (!topic) {
       this.isValidTopicKey(command.key);
@@ -33,40 +33,53 @@ export class UpsertTopicUseCase {
       } catch (error: unknown) {
         if (this.isDuplicateKeyError(error)) {
           topic = await this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
+          created = false;
         } else {
           throw error;
         }
       }
     } else {
-      const updateBody: Record<string, unknown> = {};
-
-      if (command.name !== undefined) {
-        updateBody.name = command.name;
-      }
-
-      if (command.data !== undefined) {
-        updateBody.data = command.data;
-      }
-
-      if (Object.keys(updateBody).length > 0) {
-        topic = await this.topicRepository.findOneAndUpdate(
-          {
-            _id: topic._id,
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-          },
-          {
-            $set: updateBody,
-          },
-          { new: true }
-        );
-      }
+      topic = await this.applyTopicUpdate(topic._id, command);
     }
 
     return {
       topic: mapTopicEntityToDto(topic!),
       created,
     };
+  }
+
+  private async applyTopicUpdate(topicId: string, command: UpsertTopicCommand) {
+    const setBody: Record<string, unknown> = {};
+    const unsetBody: Record<string, ''> = {};
+
+    if (command.name !== undefined) {
+      setBody.name = command.name;
+    }
+
+    if (command.data !== undefined) {
+      if (command.data === null) {
+        unsetBody.data = '';
+      } else {
+        setBody.data = command.data;
+      }
+    }
+
+    if (Object.keys(setBody).length === 0 && Object.keys(unsetBody).length === 0) {
+      return this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
+    }
+
+    return await this.topicRepository.findOneAndUpdate(
+      {
+        _id: topicId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      {
+        ...(Object.keys(setBody).length > 0 ? { $set: setBody } : {}),
+        ...(Object.keys(unsetBody).length > 0 ? { $unset: unsetBody } : {}),
+      },
+      { new: true }
+    );
   }
 
   private isValidTopicKey(key: string): void {

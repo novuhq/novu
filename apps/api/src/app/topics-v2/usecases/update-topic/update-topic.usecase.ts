@@ -25,14 +25,19 @@ export class UpdateTopicUseCase {
       throw new BadRequestException('At least one of name or data must be provided');
     }
 
-    const updateBody: Record<string, unknown> = {};
+    const setBody: Record<string, unknown> = {};
+    const unsetBody: Record<string, ''> = {};
 
     if (command.name !== undefined) {
-      updateBody.name = command.name;
+      setBody.name = command.name;
     }
 
     if (command.data !== undefined) {
-      updateBody.data = command.data;
+      if (command.data === null) {
+        unsetBody.data = '';
+      } else {
+        setBody.data = command.data;
+      }
     }
 
     const updatedTopic = await this.topicRepository.findOneAndUpdate(
@@ -42,7 +47,8 @@ export class UpdateTopicUseCase {
         _organizationId: command.organizationId,
       },
       {
-        $set: updateBody,
+        ...(Object.keys(setBody).length > 0 ? { $set: setBody } : {}),
+        ...(Object.keys(unsetBody).length > 0 ? { $unset: unsetBody } : {}),
       },
       { new: true }
     );

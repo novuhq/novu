@@ -7,7 +7,7 @@ export function mapTopicEntityToDto(topicEntity: TopicEntity): TopicResponseDto 
     _id: String(topicEntity._id),
     name: topicEntity.name,
     key: topicEntity.key,
-    data: topicEntity.data,
+    ...(topicEntity.data != null ? { data: topicEntity.data } : {}),
     createdAt: topicEntity.createdAt,
     updatedAt: topicEntity.updatedAt,
   };

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsValidContextData } from '@novu/application-generic';
+import { IsValidContextData, IsValidCustomData } from '@novu/application-generic';
 import { TopicCustomData } from '@novu/shared';
 import { IsNotEmpty, IsObject, IsOptional, IsString, Length, ValidateIf } from 'class-validator';
 
@@ -34,6 +34,7 @@ export class CreateUpdateTopicRequestDto {
   @IsOptional()
   @ValidateIf((obj) => obj.data !== null)
   @IsObject()
+  @IsValidCustomData()
   @IsValidContextData()
   data?: TopicCustomData | null;
 }

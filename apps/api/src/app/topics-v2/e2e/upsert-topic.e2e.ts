@@ -58,6 +58,19 @@ describe('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
     expect(JSON.stringify(body)).to.match(/too large|Data is too large|Validation Error/i);
   });
 
+  it('should reject nested objects in topic data', async () => {
+    const key = `topic-key-nested-${Date.now()}`;
+
+    const { body } = await session.testAgent.post('/v2/topics').send({
+      key,
+      name: 'Nested',
+      data: { nested: { not: 'allowed' } },
+    });
+
+    expect(body.statusCode).to.equal(422);
+    expect(JSON.stringify(body)).to.match(/must be a string, number, boolean, or string\[\]/i);
+  });
+
   it('should update an existing topic when it already exists', async () => {
     const key = `topic-key-${Date.now()}`;
     const originalName = 'Original Name';

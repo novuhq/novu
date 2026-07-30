@@ -1,4 +1,4 @@
-import { EnvironmentCommand, IsValidContextData } from '@novu/application-generic';
+import { EnvironmentCommand, IsValidContextData, IsValidCustomData } from '@novu/application-generic';
 import { TopicCustomData } from '@novu/shared';
 import { IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, Length, ValidateIf } from 'class-validator';
 
@@ -16,6 +16,7 @@ export class UpsertTopicCommand extends EnvironmentCommand {
   @IsOptional()
   @ValidateIf((obj) => obj.data !== null)
   @IsObject()
+  @IsValidCustomData()
   @IsValidContextData()
   data?: TopicCustomData | null;
 

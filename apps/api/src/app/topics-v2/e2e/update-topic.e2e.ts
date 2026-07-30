@@ -59,6 +59,25 @@ describe('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', async ()
     expect(body.data.data).to.deep.equal({ category: 'new', featured: true });
   });
 
+  it('should clear topic data when patching with null', async () => {
+    const dataKey = `topic-key-clear-data-${Date.now()}`;
+    await session.testAgent.post('/v2/topics').send({
+      key: dataKey,
+      name: 'Clear Data',
+      data: { category: 'old' },
+    });
+
+    const { body } = await session.testAgent.patch(`/v2/topics/${dataKey}`).send({
+      data: null,
+    });
+
+    expect(body.data.name).to.equal('Clear Data');
+    expect(body.data.data).to.be.undefined;
+
+    const getResponse = await session.testAgent.get(`/v2/topics/${dataKey}`);
+    expect(getResponse.body.data.data).to.be.undefined;
+  });
+
   it('should return 404 for updating a non-existent topic key', async () => {
     const nonExistentKey = 'non-existent-topic-key';
     try {
