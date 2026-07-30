@@ -17,10 +17,9 @@ export class DeleteMessageTemplateCommand extends EnvironmentWithUserCommand {
   workflowType: ResourceTypeEnum;
 
   /**
-   * Intentionally undecorated and assigned after `BaseCommand.create`.
-   * Any decorator emits `design:type = ClientSession`, and even without metadata
-   * `plainToInstance` will call `new ClientSession()` when given a session instance —
-   * which throws `MongoRuntimeError: ClientSession requires a MongoClient` (NV-8457).
+   * Intentionally undecorated. Pass via `BaseCommand.create(data, { session })` —
+   * putting a ClientSession through `plainToInstance` calls `new ClientSession()` and
+   * throws `MongoRuntimeError: ClientSession requires a MongoClient` (NV-8457).
    */
   session?: ClientSession | null;
 }

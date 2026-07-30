@@ -37,20 +37,20 @@ export class DeleteMessageTemplate {
       );
 
       if (!isBridgeWorkflow(command.workflowType)) {
-        const changeCommand = CreateChangeCommand.create({
-          changeId,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          item: deletedMessageTemplate[0],
-          type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-          parentChangeId: command.parentChangeId,
-        });
-        // Assign after create — passing ClientSession through plainToInstance throws
-        // `MongoRuntimeError: ClientSession requires a MongoClient` (NV-8457).
-        changeCommand.session = command.session;
-
-        await this.createChange.execute(changeCommand);
+        await this.createChange.execute(
+          CreateChangeCommand.create(
+            {
+              changeId,
+              organizationId: command.organizationId,
+              environmentId: command.environmentId,
+              userId: command.userId,
+              item: deletedMessageTemplate[0],
+              type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+              parentChangeId: command.parentChangeId,
+            },
+            { session: command.session }
+          )
+        );
       }
 
       return true;

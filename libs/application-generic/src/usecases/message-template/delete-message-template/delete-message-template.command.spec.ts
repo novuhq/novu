@@ -5,7 +5,8 @@ import { DeleteMessageTemplateCommand } from './delete-message-template.command'
 /**
  * Regression for NV-8457: passing a ClientSession-like instance through
  * `BaseCommand.create` / `plainToInstance` calls `new ClientSession()` and throws
- * `MongoRuntimeError: ClientSession requires a MongoClient`. Assign session after create.
+ * `MongoRuntimeError: ClientSession requires a MongoClient`. Pass session as the
+ * second `extras` argument instead.
  */
 describe('Mongo ClientSession on BaseCommand.create', () => {
   class ThrowsWithoutClient {
@@ -33,29 +34,33 @@ describe('Mongo ClientSession on BaseCommand.create', () => {
     ).toThrow('ClientSession requires a MongoClient');
   });
 
-  it('DeleteMessageTemplateCommand preserves session when assigned after create', () => {
-    const command = DeleteMessageTemplateCommand.create({
-      organizationId: 'aaaaaaaaaaaaaaaaaaaaaaa1',
-      environmentId: 'aaaaaaaaaaaaaaaaaaaaaaa2',
-      userId: 'aaaaaaaaaaaaaaaaaaaaaaa3',
-      messageTemplateId: 'aaaaaaaaaaaaaaaaaaaaaaa4',
-      workflowType: ResourceTypeEnum.REGULAR,
-    });
-    command.session = fakeSession;
+  it('DeleteMessageTemplateCommand preserves session via create extras', () => {
+    const command = DeleteMessageTemplateCommand.create(
+      {
+        organizationId: 'aaaaaaaaaaaaaaaaaaaaaaa1',
+        environmentId: 'aaaaaaaaaaaaaaaaaaaaaaa2',
+        userId: 'aaaaaaaaaaaaaaaaaaaaaaa3',
+        messageTemplateId: 'aaaaaaaaaaaaaaaaaaaaaaa4',
+        workflowType: ResourceTypeEnum.REGULAR,
+      },
+      { session: fakeSession }
+    );
 
     expect(command.session).toBe(fakeSession);
   });
 
-  it('CreateChangeCommand preserves session when assigned after create', () => {
-    const command = CreateChangeCommand.create({
-      organizationId: 'aaaaaaaaaaaaaaaaaaaaaaa1',
-      environmentId: 'aaaaaaaaaaaaaaaaaaaaaaa2',
-      userId: 'aaaaaaaaaaaaaaaaaaaaaaa3',
-      changeId: 'aaaaaaaaaaaaaaaaaaaaaaa4',
-      type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-      item: { _id: 'aaaaaaaaaaaaaaaaaaaaaaa5' },
-    });
-    command.session = fakeSession;
+  it('CreateChangeCommand preserves session via create extras', () => {
+    const command = CreateChangeCommand.create(
+      {
+        organizationId: 'aaaaaaaaaaaaaaaaaaaaaaa1',
+        environmentId: 'aaaaaaaaaaaaaaaaaaaaaaa2',
+        userId: 'aaaaaaaaaaaaaaaaaaaaaaa3',
+        changeId: 'aaaaaaaaaaaaaaaaaaaaaaa4',
+        type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+        item: { _id: 'aaaaaaaaaaaaaaaaaaaaaaa5' },
+      },
+      { session: fakeSession }
+    );
 
     expect(command.session).toBe(fakeSession);
   });
