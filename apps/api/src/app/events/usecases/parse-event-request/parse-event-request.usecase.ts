@@ -449,8 +449,12 @@ export class ParseEventRequest {
 
   private async validateTriggerAgent(command: ParseEventRequestCommand): Promise<void> {
     const agentIdentifier = command.agent?.identifier;
-    if (!agentIdentifier) {
-      return;
+    /*
+     * The command shape alone does not guarantee a primitive here, so a non-string identifier would
+     * reach Mongo as a query operator (e.g. `{ $ne: '...' }`) and match an arbitrary agent.
+     */
+    if (typeof agentIdentifier !== 'string' || agentIdentifier.trim().length === 0) {
+      throw new BadRequestException('Agent identifier must be a non-empty string.');
     }
 
     const agent = await this.agentRepository.findOne(

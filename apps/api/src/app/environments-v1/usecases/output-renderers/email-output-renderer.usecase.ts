@@ -1034,5 +1034,6 @@ function injectRenderedPreheader(html: string, preheader: string | undefined): s
     return `${block}${html}`;
   }
 
-  return html.replace(/<body\b[^<>]*?>/i, `$&${block}`);
+  // Replacer function, not a string: the block carries user content and `$&`/`$'` would otherwise be expanded.
+  return html.replace(/<body\b[^<>]*?>/i, (bodyTag) => `${bodyTag}${block}`);
 }

@@ -1,6 +1,12 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { AddressingTypeEnum, TriggerRecipients, TriggerRequestCategoryEnum } from '@novu/shared';
+import { AgentRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  AddressingTypeEnum,
+  AgentSubscriberAccessEnum,
+  TriggerRecipients,
+  TriggerRequestCategoryEnum,
+} from '@novu/shared';
 
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -347,6 +353,47 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     const result = await parseEventRequestUsecase.execute(command);
 
     expect(result.acknowledged).to.be.true;
+  });
+
+  describe('trigger agent validation', () => {
+    const agentRepository = new AgentRepository();
+
+    const buildAgentCommand = (agent: unknown): ParseEventRequestCommand => {
+      const command = buildCommand(session, uuid(), [{ subscriberId: uuid() }], template.triggers[0].identifier);
+      command.agent = agent as ParseEventRequestCommand['agent'];
+
+      return command;
+    };
+
+    beforeEach(async () => {
+      await agentRepository.create({
+        name: 'Support Agent',
+        identifier: `support-agent-${uuid()}`,
+        behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+    });
+
+    it('should reject a Mongo query operator as the agent identifier', async () => {
+      try {
+        await parseEventRequestUsecase.execute(buildAgentCommand({ identifier: { $ne: uuid() } }));
+        expect.fail('expected BadRequestException');
+      } catch (error) {
+        expect(error).to.be.instanceOf(BadRequestException);
+        expect((error as BadRequestException).message).to.equal('Agent identifier must be a non-empty string.');
+      }
+    });
+
+    it('should reject an empty agent identifier', async () => {
+      try {
+        await parseEventRequestUsecase.execute(buildAgentCommand({ identifier: '  ' }));
+        expect.fail('expected BadRequestException');
+      } catch (error) {
+        expect(error).to.be.instanceOf(BadRequestException);
+        expect((error as BadRequestException).message).to.equal('Agent identifier must be a non-empty string.');
+      }
+    });
   });
 });
 
