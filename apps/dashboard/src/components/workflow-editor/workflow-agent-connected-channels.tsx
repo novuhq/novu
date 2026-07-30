@@ -6,9 +6,9 @@ import { type AgentIntegrationLink, getAgentIntegrationsQueryKey, listAgentInteg
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { WORKFLOW_AGENT_CHANNEL_LABEL } from '@/components/workflow-editor/workflow-agent-channels';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { CHANNEL_TYPE_TO_STRING } from '@/utils/channels';
 
 type WorkflowAgentConnectedChannelsProps = {
   agentIdentifier: string | null | undefined;
@@ -115,7 +115,7 @@ export function WorkflowAgentConnectedChannels({ agentIdentifier }: WorkflowAgen
     <div className="flex flex-col gap-4 px-3 py-4">
       {grouped.map(({ channel, items }) => (
         <div key={channel} className="flex flex-col gap-3">
-          <p className="text-text-soft text-label-xs font-medium leading-4">{WORKFLOW_AGENT_CHANNEL_LABEL[channel]}</p>
+          <p className="text-text-soft text-label-xs font-medium leading-4">{CHANNEL_TYPE_TO_STRING[channel]}</p>
           {items.map((link) => {
             const integration = link.integration;
             const providerMeta = novuProviders.find((provider) => provider.id === integration.providerId);
