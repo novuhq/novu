@@ -958,13 +958,23 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/subscriberId/credentials' \
 
 The Push step editor covers subject and body. When you need provider-specific fields — sounds, data payloads, platform options, or routing keys — configure a **provider content override** on the Push step in the workflow editor.
 
-An override is a free-form JSON object that Novu deep-merges over the payload the provider builds from the step's subject and body. It is saved on the step, so it is versioned and promoted between environments with the rest of the workflow, and it applies to every trigger without any change to your trigger call.
+An override is a JSON object that Novu deep-merges over the payload the provider builds from the step's subject and body. It is saved on the step, so it is versioned and promoted between environments with the rest of the workflow, and it applies to every trigger without any change to your trigger call.
 
 <Note>
   Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Push step yet. [Trigger overrides](/platform/integrations/trigger-overrides) work regardless.
 </Note>
 
-All push providers — FCM, APNS, Expo, OneSignal, Pushpad, Push Webhook, Pusher Beams, and AppIO — use the same unvalidated escape hatch. There is no schema autocomplete: whatever JSON object you save is merged into that provider's outbound payload as-is.
+### Expo is schema-backed
+
+Expo overrides are validated against the [Expo Push message](https://docs.expo.dev/push-notifications/sending-notifications) request format (minus `to`, which Novu fills from the subscriber's device tokens). The editor autocompletes supported field names, validates the JSON, and flags unsupported fields.
+
+<Card title="Configure Expo overrides" icon="smartphone" href="/platform/integrations/push/expo-push#configure-expo-overrides">
+  Schema-backed Expo override fields, body fallback, and title behavior.
+</Card>
+
+### Every other push provider is a raw passthrough
+
+For FCM, APNS, OneSignal, Pushpad, Push Webhook, Pusher Beams, and AppIO, the override is an unvalidated escape hatch. Whatever JSON object you save is merged into that provider's outbound payload as-is.
 
 That means:
 
