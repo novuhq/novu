@@ -968,9 +968,7 @@ An override is a JSON object that Novu deep-merges over the payload the provider
 
 Expo overrides are validated against the [Expo Push message](https://docs.expo.dev/push-notifications/sending-notifications) request format (minus `to`, which Novu fills from the subscriber's device tokens). The editor autocompletes supported field names, validates the JSON, and flags unsupported fields.
 
-If your override omits `body`, Novu fills it from the Push step body. `title` is not seeded automatically — set it in the override when you want one.
-
-<Card title="Configure Expo overrides" icon="smartphone" href="/platform/integrations/push/expo-push#provider-content-overrides">
+<Card title="Configure Expo overrides" icon="smartphone" href="/platform/integrations/push/expo-push#configure-expo-overrides">
   Schema-backed Expo override fields, body fallback, and title behavior.
 </Card>
 
@@ -989,7 +987,7 @@ Use this when a provider supports something Novu's step editor does not expose, 
 
 ### Liquid and precedence
 
-Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time. For Expo, if your override omits `body`, Novu fills it with the rendered Push step body. `title` must be set explicitly in the override if you want one.
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time.
 
 When the same field is set both on the step and at trigger time, the trigger value wins, and arrays replace rather than merge. Precedence from lowest to highest: persisted dashboard override, then trigger workflow-level `overrides.providers`, then trigger step-level. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
 
