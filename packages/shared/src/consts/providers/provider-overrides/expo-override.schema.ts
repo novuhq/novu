@@ -1,10 +1,11 @@
 import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
 
 /**
- * Hand-written Expo push message override schema (Pattern B), transcribed from
- * https://docs.expo.dev/push-notifications/sending-notifications — not generated
- * from expo-server-sdk. `to` is omitted so autocomplete never suggests device tokens
- * (Novu resolves them); send paths must not strip a caller-supplied `to`.
+ * Hand-written Expo push message override schema (Pattern B). Top-level fields follow
+ * https://docs.expo.dev/push-notifications/sending-notifications; `sound` also accepts the
+ * critical-alert object form used by expo-server-sdk (docs list only `string | null`).
+ * `to` is omitted so autocomplete never suggests device tokens (Novu resolves them); send
+ * paths must not strip a caller-supplied `to`.
  */
 export const expoOverrideJsonSchema = {
   type: 'object',
