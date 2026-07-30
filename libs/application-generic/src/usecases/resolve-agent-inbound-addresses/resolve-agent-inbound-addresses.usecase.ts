@@ -37,12 +37,6 @@ type AgentEmailContextByIdParams = {
   agentId: string;
   environmentId: string;
   organizationId: string;
-  /**
-   * Optional workflow-level provider overrides (e.g. saved replyTo).
-   * Used when inheriting the workflow agent via ObjectId is not applicable —
-   * trigger overrides do not carry provider config.
-   */
-  providers?: WorkflowAgentConfig['providers'];
 };
 
 type AgentIdentity = Pick<AgentEntity, '_id' | 'identifier' | 'name'>;
@@ -99,7 +93,7 @@ export class ResolveAgentInboundAddresses {
   }
 
   /**
-   * Resolve reply-to and sender defaults for a workflow agent in a single pass.
+   * Resolve reply-to / sender defaults for a workflow agent.
    */
   async resolveAgentEmailContext(params: AgentEmailContextParams): Promise<AgentEmailContext> {
     const agent = await this.findAgent(params.agent.identifier, params.environmentId, params.organizationId);
@@ -111,9 +105,6 @@ export class ResolveAgentInboundAddresses {
     return this.buildEmailContext(agent, params.agent, params.environmentId, params.organizationId);
   }
 
-  /**
-   * Resolve reply-to and sender defaults for an agent looked up by ObjectId.
-   */
   async resolveAgentEmailContextById(params: AgentEmailContextByIdParams): Promise<AgentEmailContext> {
     const agent = await this.findAgentById(params.agentId, params.environmentId, params.organizationId);
 
@@ -121,12 +112,12 @@ export class ResolveAgentInboundAddresses {
       return {};
     }
 
-    const agentConfig: WorkflowAgentConfig = {
-      identifier: agent.identifier,
-      ...(params.providers ? { providers: params.providers } : {}),
-    };
-
-    return this.buildEmailContext(agent, agentConfig, params.environmentId, params.organizationId);
+    return this.buildEmailContext(
+      agent,
+      { identifier: agent.identifier },
+      params.environmentId,
+      params.organizationId
+    );
   }
 
   /**

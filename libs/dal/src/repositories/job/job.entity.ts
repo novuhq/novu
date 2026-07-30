@@ -27,10 +27,7 @@ export class JobEntity {
   payload: any;
   overrides: TriggerOverrides;
   /**
-   * Selected Agent ObjectId for this execution.
-   * - omitted → inherit workflow-assigned agent
-   * - null → opt out of agent-derived defaults
-   * - string → use that trigger-selected agent
+   * Trigger-selected agent ObjectId. Omitted inherits the workflow agent; null opts out.
    */
   _agentId?: string | null;
   step: NotificationStepEntity;

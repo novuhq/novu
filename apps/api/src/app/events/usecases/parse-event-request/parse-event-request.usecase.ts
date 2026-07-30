@@ -363,7 +363,7 @@ export class ParseEventRequest {
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
   }): Promise<ParseEventRequestResult> {
-    // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue — agentId is resolved to `_agentId` before enqueue
+    // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue
     const { workflow, agentId, ...commandArgs } = command;
 
     const isDryRun = await this.featureFlagService.getFlag({
@@ -453,10 +453,6 @@ export class ParseEventRequest {
 
   private async validateTriggerAgent(command: ParseEventRequestCommand): Promise<string> {
     const agentIdentifier = command.agentId;
-    /*
-     * The command shape alone does not guarantee a primitive here, so a non-string identifier would
-     * reach Mongo as a query operator (e.g. `{ $ne: '...' }`) and match an arbitrary agent.
-     */
     if (typeof agentIdentifier !== 'string' || agentIdentifier.trim().length === 0) {
       throw new BadRequestException('Agent identifier must be a non-empty string.');
     }

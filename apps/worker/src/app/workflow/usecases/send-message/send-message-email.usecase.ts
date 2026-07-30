@@ -232,7 +232,6 @@ export class SendMessageEmail extends SendMessageBase {
       }
     }
 
-    // Step control takes precedence over agent defaults; overrides are applied later on mailData.
     if (!replyToAddress && !command.overrides?.email?.replyTo && stepReplyTo) {
       replyToAddress = stepReplyTo;
     }
@@ -418,8 +417,7 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   /**
-   * Single fetch for workflow-agent reply-to + sender defaults.
-   * Precedence of who the agent is: job `_agentId` override → workflow assignment.
+   * Resolve reply-to / sender defaults: job `_agentId` override, else workflow agent.
    */
   private async resolveWorkflowAgentEmailContext(command: SendMessageChannelCommand): Promise<AgentEmailContext> {
     if (command.job._agentId !== undefined) {

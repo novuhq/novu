@@ -24,12 +24,6 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   overrides: TriggerOverrides;
 
-  /**
-   * Resolved Agent ObjectId for this trigger execution.
-   * - omitted → inherit workflow-assigned agent
-   * - null → opt out of agent-derived defaults
-   * - string → use that trigger-selected agent
-   */
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsString()

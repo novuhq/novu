@@ -1,10 +1,5 @@
 import { IsValidContextPayload } from '@novu/application-generic';
-import {
-  ContextPayload,
-  TriggerOverrides,
-  TriggerRecipientSubscriber,
-  TriggerTenantContext,
-} from '@novu/shared';
+import { ContextPayload, TriggerOverrides, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 import { IsDefined, IsNotEmpty, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -25,12 +20,6 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   overrides?: TriggerOverrides;
 
-  /**
-   * Public agent identifier override for this trigger.
-   * - omitted → inherit workflow-assigned agent
-   * - null → opt out of agent-derived defaults
-   * - string → resolve to that agent's ObjectId
-   */
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsString()

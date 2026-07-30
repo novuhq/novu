@@ -24,23 +24,11 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   overrides: TriggerOverrides;
 
-  /**
-   * Public agent identifier override for this trigger.
-   * - omitted → inherit workflow-assigned agent
-   * - null → opt out of agent-derived defaults
-   * - string → resolve to that agent's ObjectId
-   */
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsString()
   agentId?: string | null;
 
-  /**
-   * Resolved Agent ObjectId for this trigger execution.
-   * - omitted → inherit workflow-assigned agent
-   * - null → opt out of agent-derived defaults
-   * - string → use that trigger-selected agent
-   */
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsString()
