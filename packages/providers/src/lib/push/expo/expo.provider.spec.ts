@@ -215,4 +215,57 @@ describe('Expo', () => {
 
     expect(result.id).toEqual('501b1c08-292a-41d7-a36e-461c223e4744');
   });
+
+  test('should pass schema-era bridgeProviderData keys through to Expo unchanged', async () => {
+    const provider = new ExpoPushProvider({
+      accessToken: 'access-token',
+    });
+
+    const spy = vi
+
+      // @ts-expect-error
+      .spyOn(provider.expo, 'sendPushNotificationsAsync')
+      .mockImplementation(async () => {
+        return [{ status: 'ok', id: '501b1c08-292a-41d7-a36e-461c223e4744' }];
+      });
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {
+          sound: 'test_sound',
+        },
+        subscriber: {},
+        step: {
+          digest: false,
+          events: [{}],
+          total_count: 1,
+        },
+      },
+      {
+        tag: 'order-42',
+        collapseId: 'orders',
+        interruptionLevel: 'time-sensitive',
+        badge: 3,
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith([
+      {
+        badge: 3,
+        body: 'Test push',
+        data: {
+          sound: 'test_sound',
+        },
+        sound: null,
+        title: 'Test',
+        to: ['tester'],
+        tag: 'order-42',
+        collapseId: 'orders',
+        interruptionLevel: 'time-sensitive',
+      },
+    ]);
+  });
 });
