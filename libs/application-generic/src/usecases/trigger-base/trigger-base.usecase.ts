@@ -7,7 +7,6 @@ import {
   ResourceEnum,
   StatelessControls,
   SubscriberSourceEnum,
-  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
@@ -30,7 +29,13 @@ export type BaseTriggerCommand = {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
-  agent?: TriggerAgentOverride;
+  /**
+   * Resolved Agent ObjectId for this trigger execution.
+   * - omitted → inherit workflow-assigned agent
+   * - null → opt out of agent-derived defaults
+   * - string → use that trigger-selected agent
+   */
+  _agentId?: string | null;
   template: NotificationTemplateEntity;
   actor?: SubscriberEntity | undefined;
   contextKeys: string[];

@@ -145,36 +145,37 @@ describe('CreateNotificationJobs', () => {
     expect(Logger.error).not.toHaveBeenCalled();
   });
 
-  it('should persist explicit null agent on jobs', async () => {
+  it('should persist explicit null _agentId on jobs', async () => {
     const { usecase } = buildUsecase();
     const command = {
       ...buildCommand([buildEmailStep()]),
-      agent: null,
+      _agentId: null,
     } as CreateNotificationJobsCommand;
 
     const jobs = await usecase.execute(command);
 
-    expect(jobs.every((job) => job.agent === null)).toBe(true);
+    expect(jobs.every((job) => job._agentId === null)).toBe(true);
   });
 
-  it('should omit agent from jobs when not provided', async () => {
+  it('should omit _agentId from jobs when not provided', async () => {
     const { usecase } = buildUsecase();
     const command = buildCommand([buildEmailStep()]);
 
     const jobs = await usecase.execute(command);
 
-    expect(jobs.every((job) => !Object.prototype.hasOwnProperty.call(job, 'agent'))).toBe(true);
+    expect(jobs.every((job) => !Object.prototype.hasOwnProperty.call(job, '_agentId'))).toBe(true);
   });
 
-  it('should persist trigger agent override on jobs', async () => {
+  it('should persist trigger agent ObjectId on jobs', async () => {
     const { usecase } = buildUsecase();
+    const agentObjectId = 'bbbbbbbbbbbbbbbbbbbbbbb1';
     const command = {
       ...buildCommand([buildEmailStep()]),
-      agent: { identifier: 'trigger-agent' },
+      _agentId: agentObjectId,
     } as CreateNotificationJobsCommand;
 
     const jobs = await usecase.execute(command);
 
-    expect(jobs.every((job) => job.agent?.identifier === 'trigger-agent')).toBe(true);
+    expect(jobs.every((job) => job._agentId === agentObjectId)).toBe(true);
   });
 });

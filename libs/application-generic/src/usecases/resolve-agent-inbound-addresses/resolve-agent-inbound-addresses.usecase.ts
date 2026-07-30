@@ -33,6 +33,18 @@ type AgentEmailContextParams = {
   organizationId: string;
 };
 
+type AgentEmailContextByIdParams = {
+  agentId: string;
+  environmentId: string;
+  organizationId: string;
+  /**
+   * Optional workflow-level provider overrides (e.g. saved replyTo).
+   * Used when inheriting the workflow agent via ObjectId is not applicable —
+   * trigger overrides do not carry provider config.
+   */
+  providers?: WorkflowAgentConfig['providers'];
+};
+
 type AgentIdentity = Pick<AgentEntity, '_id' | 'identifier' | 'name'>;
 
 /**
@@ -96,25 +108,25 @@ export class ResolveAgentInboundAddresses {
       return {};
     }
 
-    const { hasConnectedIntegrations, novuAgent, inboundAddresses } = await this.loadAgentInboundContext(
-      agent,
-      params.environmentId,
-      params.organizationId
-    );
+    return this.buildEmailContext(agent, params.agent, params.environmentId, params.organizationId);
+  }
 
-    const senderDefaults = await this.buildSenderDefaults({
-      agent,
-      hasConnectedIntegrations,
-      novuAgent,
-      inboundAddresses,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
+  /**
+   * Resolve reply-to and sender defaults for an agent looked up by ObjectId.
+   */
+  async resolveAgentEmailContextById(params: AgentEmailContextByIdParams): Promise<AgentEmailContext> {
+    const agent = await this.findAgentById(params.agentId, params.environmentId, params.organizationId);
 
-    return {
-      replyTo: pickEffectiveReplyTo(params.agent, inboundAddresses),
-      ...senderDefaults,
+    if (!agent) {
+      return {};
+    }
+
+    const agentConfig: WorkflowAgentConfig = {
+      identifier: agent.identifier,
+      ...(params.providers ? { providers: params.providers } : {}),
     };
+
+    return this.buildEmailContext(agent, agentConfig, params.environmentId, params.organizationId);
   }
 
   /**
@@ -139,6 +151,33 @@ export class ResolveAgentInboundAddresses {
     return { senderName, senderEmail };
   }
 
+  private async buildEmailContext(
+    agent: AgentIdentity,
+    agentConfig: WorkflowAgentConfig,
+    environmentId: string,
+    organizationId: string
+  ): Promise<AgentEmailContext> {
+    const { hasConnectedIntegrations, novuAgent, inboundAddresses } = await this.loadAgentInboundContext(
+      agent,
+      environmentId,
+      organizationId
+    );
+
+    const senderDefaults = await this.buildSenderDefaults({
+      agent,
+      hasConnectedIntegrations,
+      novuAgent,
+      inboundAddresses,
+      environmentId,
+      organizationId,
+    });
+
+    return {
+      replyTo: pickEffectiveReplyTo(agentConfig, inboundAddresses),
+      ...senderDefaults,
+    };
+  }
+
   private async findAgent(
     agentIdentifier: string,
     environmentId: string,
@@ -147,6 +186,21 @@ export class ResolveAgentInboundAddresses {
     return this.agentRepository.findOne(
       {
         identifier: agentIdentifier,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      ['_id', 'identifier', 'name']
+    );
+  }
+
+  private async findAgentById(
+    agentId: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<AgentIdentity | null> {
+    return this.agentRepository.findOne(
+      {
+        _id: agentId,
         _environmentId: environmentId,
         _organizationId: organizationId,
       },

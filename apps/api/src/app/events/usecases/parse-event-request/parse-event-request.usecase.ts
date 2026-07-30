@@ -94,8 +94,12 @@ export class ParseEventRequest {
     const requestId = command.requestId;
 
     try {
-      if (command.agent != null) {
-        await this.validateTriggerAgent(command);
+      if (command.agentId !== undefined) {
+        if (command.agentId === null) {
+          command._agentId = null;
+        } else {
+          command._agentId = await this.validateTriggerAgent(command);
+        }
       }
 
       const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
@@ -359,8 +363,8 @@ export class ParseEventRequest {
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
   }): Promise<ParseEventRequestResult> {
-    // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue
-    const { workflow, ...commandArgs } = command;
+    // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue — agentId is resolved to `_agentId` before enqueue
+    const { workflow, agentId, ...commandArgs } = command;
 
     const isDryRun = await this.featureFlagService.getFlag({
       environment: { _id: command.environmentId },
@@ -447,8 +451,8 @@ export class ParseEventRequest {
     };
   }
 
-  private async validateTriggerAgent(command: ParseEventRequestCommand): Promise<void> {
-    const agentIdentifier = command.agent?.identifier;
+  private async validateTriggerAgent(command: ParseEventRequestCommand): Promise<string> {
+    const agentIdentifier = command.agentId;
     /*
      * The command shape alone does not guarantee a primitive here, so a non-string identifier would
      * reach Mongo as a query operator (e.g. `{ $ne: '...' }`) and match an arbitrary agent.
@@ -469,6 +473,8 @@ export class ParseEventRequest {
     if (!agent) {
       throw new BadRequestException(`Agent with identifier "${agentIdentifier}" was not found.`);
     }
+
+    return agent._id;
   }
 
   private isStatelessWorkflowAllowed(bridgeUrl: string | undefined) {

@@ -96,13 +96,28 @@ export class CreateNotificationJobs {
       }),
     ]);
 
-    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification, isPayloadDedupEnabled);
+    const adhocTriggerJob = this.createATriggerJobIfMissing(
+      steps,
+      command,
+      notification,
+      isPayloadDedupEnabled,
+      command._agentId
+    );
     if (adhocTriggerJob) {
       jobs.push(adhocTriggerJob);
     }
 
     for (const step of steps) {
-      jobs.push(this.buildJobFromStep(step, command, notification, isPayloadDedupEnabled, isJobStepDedupEnabled));
+      jobs.push(
+        this.buildJobFromStep(
+          step,
+          command,
+          notification,
+          isPayloadDedupEnabled,
+          isJobStepDedupEnabled,
+          command._agentId
+        )
+      );
     }
 
     return jobs;
@@ -209,7 +224,8 @@ export class CreateNotificationJobs {
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
     isPayloadDedupEnabled: boolean,
-    isJobStepDedupEnabled: boolean
+    isJobStepDedupEnabled: boolean,
+    agentId: string | null | undefined
   ): NotificationJob {
     const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
     const providerId = command.templateProviderIds[channel];
@@ -218,7 +234,7 @@ export class CreateNotificationJobs {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
-      ...(command.agent !== undefined && { agent: command.agent }),
+      ...(agentId !== undefined && { _agentId: agentId }),
       tenant: command.tenant,
       step: this.buildStepForJob(step, command, isJobStepDedupEnabled),
       transactionId: command.transactionId,
@@ -313,7 +329,8 @@ export class CreateNotificationJobs {
     steps: NotificationStepWithTemplate[],
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
-    isPayloadDedupEnabled = false
+    isPayloadDedupEnabled = false,
+    agentId?: string | null
   ): NotificationJob | undefined {
     const triggerStepExist = steps.some((step) => step.template.type === StepTypeEnum.TRIGGER);
 
@@ -325,7 +342,7 @@ export class CreateNotificationJobs {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
-      ...(command.agent !== undefined && { agent: command.agent }),
+      ...(agentId !== undefined && { _agentId: agentId }),
       tenant: command.tenant,
       step: {
         bridgeUrl: command.bridgeUrl,

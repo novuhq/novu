@@ -7,7 +7,6 @@ import {
   ITenantDefine,
   StatelessControls,
   SubscriberSourceEnum,
-  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
@@ -33,10 +32,16 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   overrides: TriggerOverrides;
 
+  /**
+   * Resolved Agent ObjectId for this trigger execution.
+   * - omitted → inherit workflow-assigned agent
+   * - null → opt out of agent-derived defaults
+   * - string → use that trigger-selected agent
+   */
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
-  @ValidateNested()
-  agent?: TriggerAgentOverride;
+  @IsMongoId()
+  _agentId?: string | null;
 
   @IsOptional()
   @ValidateNested()

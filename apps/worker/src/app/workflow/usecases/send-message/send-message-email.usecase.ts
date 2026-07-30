@@ -16,7 +16,6 @@ import {
   MailFactory,
   messageWebhookMapper,
   ResolveAgentInboundAddresses,
-  resolveEffectiveTriggerAgent,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -420,11 +419,32 @@ export class SendMessageEmail extends SendMessageBase {
 
   /**
    * Single fetch for workflow-agent reply-to + sender defaults.
-   * Precedence of who the agent is: trigger override → workflow assignment.
+   * Precedence of who the agent is: job `_agentId` override → workflow assignment.
    */
   private async resolveWorkflowAgentEmailContext(command: SendMessageChannelCommand): Promise<AgentEmailContext> {
-    const workflowAgent = resolveEffectiveTriggerAgent(command.job.agent, command.workflow?.agent);
+    if (command.job._agentId !== undefined) {
+      if (command.job._agentId === null) {
+        return {};
+      }
 
+      try {
+        return await this.resolveAgentInboundAddresses.resolveAgentEmailContextById({
+          agentId: command.job._agentId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
+      } catch (error) {
+        Logger.warn(
+          { error, agentId: command.job._agentId },
+          'Failed to resolve workflow agent email context by ObjectId',
+          LOG_CONTEXT
+        );
+
+        return {};
+      }
+    }
+
+    const workflowAgent = command.workflow?.agent;
     if (!workflowAgent) {
       return {};
     }

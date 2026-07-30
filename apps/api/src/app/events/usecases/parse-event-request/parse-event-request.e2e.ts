@@ -358,9 +358,9 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
   describe('trigger agent validation', () => {
     const agentRepository = new AgentRepository();
 
-    const buildAgentCommand = (agent: unknown): ParseEventRequestCommand => {
+    const buildAgentCommand = (agentId: unknown): ParseEventRequestCommand => {
       const command = buildCommand(session, uuid(), [{ subscriberId: uuid() }], template.triggers[0].identifier);
-      command.agent = agent as ParseEventRequestCommand['agent'];
+      command.agentId = agentId as ParseEventRequestCommand['agentId'];
 
       return command;
     };
@@ -377,7 +377,7 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
 
     it('should reject a Mongo query operator as the agent identifier', async () => {
       try {
-        await parseEventRequestUsecase.execute(buildAgentCommand({ identifier: { $ne: uuid() } }));
+        await parseEventRequestUsecase.execute(buildAgentCommand({ $ne: uuid() }));
         expect.fail('expected BadRequestException');
       } catch (error) {
         expect(error).to.be.instanceOf(BadRequestException);
@@ -387,7 +387,7 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
 
     it('should reject an empty agent identifier', async () => {
       try {
-        await parseEventRequestUsecase.execute(buildAgentCommand({ identifier: '  ' }));
+        await parseEventRequestUsecase.execute(buildAgentCommand('  '));
         expect.fail('expected BadRequestException');
       } catch (error) {
         expect(error).to.be.instanceOf(BadRequestException);

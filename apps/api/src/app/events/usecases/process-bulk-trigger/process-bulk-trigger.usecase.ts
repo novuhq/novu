@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IWorkflowBulkJobDto, toTriggerAgentOverride, WorkflowQueueService } from '@novu/application-generic';
+import { IWorkflowBulkJobDto, WorkflowQueueService } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { AddressingTypeEnum, TriggerEventStatusEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { TriggerEventResponseDto } from '../../dtos';
@@ -63,7 +63,7 @@ export class ProcessBulkTrigger {
                 requestId: command.requestId,
                 workflow,
                 skipQueueInsertion: true,
-                ...(event.agentId !== undefined && { agent: toTriggerAgentOverride(event.agentId) }),
+                ...(event.agentId !== undefined && { agentId: event.agentId }),
               })
             )) as unknown as TriggerEventResponseDto;
 

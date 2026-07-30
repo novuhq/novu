@@ -4,7 +4,6 @@ import {
   FeatureFlagsService,
   RequirePermissions,
   ResourceCategory,
-  toTriggerAgentOverride,
 } from '@novu/application-generic';
 import {
   AddressingTypeEnum,
@@ -132,7 +131,7 @@ export class EventsController {
         bridgeUrl: body.bridgeUrl,
         controls: body.controls,
         requestId: req._nvRequestId,
-        ...(body.agentId !== undefined && { agent: toTriggerAgentOverride(body.agentId) }),
+        ...(body.agentId !== undefined && { agentId: body.agentId }),
       })
     );
 
@@ -220,7 +219,7 @@ export class EventsController {
         actor: body.actor,
         context: body.context,
         requestId: req._nvRequestId,
-        ...(body.agentId !== undefined && { agent: toTriggerAgentOverride(body.agentId) }),
+        ...(body.agentId !== undefined && { agentId: body.agentId }),
       })
     );
   }

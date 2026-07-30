@@ -195,6 +195,11 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
         senderName: agentStubs?.senderName,
         senderEmail: agentStubs?.senderEmail,
       }),
+      resolveAgentEmailContextById: sinon.stub().resolves({
+        replyTo: agentStubs?.replyTo,
+        senderName: agentStubs?.senderName,
+        senderEmail: agentStubs?.senderEmail,
+      }),
     };
 
     const usecase = new SendMessageEmail(
@@ -234,7 +239,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
 
   function buildCommand(
     outputs: Record<string, unknown> = {},
-    options: { jobAgent?: { identifier: string } | null; overrides?: Record<string, unknown> } = {}
+    options: { jobAgentId?: string | null; overrides?: Record<string, unknown> } = {}
   ) {
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
@@ -286,7 +291,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
         identifier: 'wf-identifier',
         type: ChannelTypeEnum.EMAIL,
         step: { stepId: 'email-step' },
-        ...(options.jobAgent !== undefined && { agent: options.jobAgent }),
+        ...(options.jobAgentId !== undefined && { _agentId: options.jobAgentId }),
       } as never,
     });
   }
@@ -315,7 +320,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     expect(sendStub.firstCall.args[0].replyTo).to.equal('agent@inbox.com');
   });
 
-  it('uses trigger agent override over workflow agent', async () => {
+  it('uses trigger agent ObjectId override over workflow agent', async () => {
     const { usecase, resolveAgentInboundAddresses } = buildUsecase({
       senderName: 'Trigger Agent',
       senderEmail: 'trigger@inbox.com',
@@ -324,17 +329,18 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     const sendStub = sinon.stub().resolves({ id: 'msg_1' });
     sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
 
-    await usecase.execute(buildCommand({}, { jobAgent: { identifier: 'trigger-agent' } }));
+    await usecase.execute(buildCommand({}, { jobAgentId: 'bbbbbbbbbbbbbbbbbbbbbbb1' }));
 
-    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
-    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.firstCall.args[0].agent).to.deep.equal({
-      identifier: 'trigger-agent',
-    });
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContextById.calledOnce).to.equal(true);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContextById.firstCall.args[0].agentId).to.equal(
+      'bbbbbbbbbbbbbbbbbbbbbbb1'
+    );
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
     expect(sendStub.firstCall.args[0].from).to.equal('trigger@inbox.com');
     expect(sendStub.firstCall.args[0].replyTo).to.equal('trigger@inbox.com');
   });
 
-  it('opts out of agent defaults when job agent is explicitly null', async () => {
+  it('opts out of agent defaults when job _agentId is explicitly null', async () => {
     const { usecase, resolveAgentInboundAddresses } = buildUsecase({
       senderName: 'Support Agent',
       senderEmail: 'agent@inbox.com',
@@ -343,9 +349,10 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     const sendStub = sinon.stub().resolves({ id: 'msg_1' });
     sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
 
-    await usecase.execute(buildCommand({}, { jobAgent: null }));
+    await usecase.execute(buildCommand({}, { jobAgentId: null }));
 
     expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContextById.called).to.equal(false);
     expect(sendStub.firstCall.args[0].from).to.equal('integration@test.com');
     expect(sendStub.firstCall.args[0].replyTo).to.equal(undefined);
   });

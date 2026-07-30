@@ -3,7 +3,6 @@ import {
   AddressingTypeEnum,
   ContextPayload,
   StatelessControls,
-  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
@@ -32,7 +31,13 @@ export type IWorkflowDataDto = {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
-  agent?: TriggerAgentOverride;
+  /**
+   * Resolved Agent ObjectId for this trigger execution.
+   * - omitted → inherit workflow-assigned agent
+   * - null → opt out of agent-derived defaults
+   * - string → use that trigger-selected agent
+   */
+  _agentId?: string | null;
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;
