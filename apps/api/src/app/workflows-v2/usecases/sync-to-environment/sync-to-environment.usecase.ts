@@ -6,6 +6,7 @@ import {
   GetWorkflowUseCase,
   Instrument,
   InstrumentUsecase,
+  ResolveAgentInboundAddresses,
   SendWebhookMessage,
   StepResponseDto,
   UpsertStepDataCommand,
@@ -73,6 +74,7 @@ export class SyncToEnvironmentUseCase {
     private moduleRef: ModuleRef,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
+    private resolveAgentInboundAddresses: ResolveAgentInboundAddresses,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -139,6 +141,12 @@ export class SyncToEnvironmentUseCase {
           userId: command.user._id,
         })
       );
+
+      await this.resolveAgentInboundAddresses.validateWorkflowAgentConfig({
+        agent: workflowDto.agent,
+        environmentId: command.targetEnvironmentId,
+        organizationId: command.user.organizationId,
+      });
     }
 
     const upsertedWorkflow = await this.upsertWorkflowUseCase.execute(

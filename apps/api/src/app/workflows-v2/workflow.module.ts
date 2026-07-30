@@ -16,8 +16,8 @@ import {
   PreviewErrorHandler,
   PreviewPayloadProcessorService,
   PreviewUsecase,
-  ResourceValidatorService,
   ResolveAgentInboundAddresses,
+  ResourceValidatorService,
   TierRestrictionsValidateUsecase,
   UpdateWorkflowV0,
   UpsertControlValuesUseCase,
@@ -42,6 +42,7 @@ import {
   ListWorkflowsUseCase,
   SyncToEnvironmentUseCase,
   TestHttpEndpointUsecase,
+  UpsertWorkflow,
 } from './usecases';
 
 import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
@@ -71,6 +72,7 @@ const MODULES = [
     CreateWorkflowV0,
     UpdateWorkflowV0,
     UpsertWorkflowUseCase,
+    UpsertWorkflow,
     ResolveAgentInboundAddresses,
     ListWorkflowsUseCase,
     DeleteWorkflowUseCase,
