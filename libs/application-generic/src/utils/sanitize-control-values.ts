@@ -94,6 +94,9 @@ function sanitizeEmail(controlValues: EmailControlType) {
     disableOutputSanitization: controlValues.disableOutputSanitization,
     layoutId: controlValues.layoutId,
     from: controlValues.from,
+    useProviderDefaults: controlValues.useProviderDefaults,
+    replyTo: controlValues.replyTo,
+    preheader: controlValues.preheader,
   };
 
   return filterNullishValues(emailControls);

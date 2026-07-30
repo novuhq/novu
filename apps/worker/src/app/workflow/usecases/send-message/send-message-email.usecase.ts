@@ -177,12 +177,16 @@ export class SendMessageEmail extends SendMessageBase {
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
-    const bridgeFrom = (bridgeOutputs as EmailOutput)?.from;
+    const bridgeEmailOutput = bridgeOutputs as EmailOutput | undefined;
+    const bridgeFrom = bridgeEmailOutput?.from;
+    const useProviderDefaults = bridgeEmailOutput?.useProviderDefaults === true;
+    const stepReplyTo = bridgeEmailOutput?.replyTo?.trim() || undefined;
+    const controlPreheader = bridgeEmailOutput?.preheader?.trim() || undefined;
 
     const payload = {
       senderName: step.template.senderName,
       subject,
-      preheader: step.template.preheader,
+      preheader: controlPreheader || step.template.preheader,
       content: step.template.content,
       layoutId: overrideLayoutId || (overrideLayoutId === null ? null : step.template._layoutId),
       contentType: step.template.contentType ? step.template.contentType : 'editor',
@@ -228,25 +232,29 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (!replyToAddress && !command.overrides?.email?.replyTo) {
-      const workflowAgent = command.workflow?.agent ?? null;
+      if (stepReplyTo) {
+        replyToAddress = stepReplyTo;
+      } else {
+        const workflowAgent = command.workflow?.agent ?? null;
 
-      if (workflowAgent) {
-        try {
-          const agentReplyTo = await this.resolveAgentInboundAddresses.resolveEffectiveReplyTo({
-            agent: workflowAgent,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-          });
+        if (workflowAgent) {
+          try {
+            const agentReplyTo = await this.resolveAgentInboundAddresses.resolveEffectiveReplyTo({
+              agent: workflowAgent,
+              environmentId: command.environmentId,
+              organizationId: command.organizationId,
+            });
 
-          if (agentReplyTo) {
-            replyToAddress = agentReplyTo;
+            if (agentReplyTo) {
+              replyToAddress = agentReplyTo;
+            }
+          } catch (error) {
+            Logger.warn(
+              { error, agentIdentifier: workflowAgent.identifier },
+              'Failed to resolve workflow agent reply-to address',
+              LOG_CONTEXT
+            );
           }
-        } catch (error) {
-          Logger.warn(
-            { error, agentIdentifier: workflowAgent.identifier },
-            'Failed to resolve workflow agent reply-to address',
-            LOG_CONTEXT
-          );
         }
       }
     }
@@ -374,15 +382,43 @@ export class SendMessageEmail extends SendMessageBase {
       return await this.sendErrors(email, integration, message, command);
     }
 
+    let resolvedFromEmail = bridgeFrom?.email || undefined;
+    let resolvedSenderName = bridgeFrom?.name || senderName;
+
+    if ((!resolvedFromEmail || !resolvedSenderName) && !useProviderDefaults) {
+      const workflowAgent = command.workflow?.agent ?? null;
+
+      if (workflowAgent) {
+        try {
+          const agentSender = await this.resolveAgentInboundAddresses.resolveAgentSenderDefaults({
+            agent: workflowAgent,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+          });
+
+          resolvedFromEmail = resolvedFromEmail || agentSender.senderEmail;
+          resolvedSenderName = resolvedSenderName || agentSender.senderName;
+        } catch (error) {
+          Logger.warn(
+            { error, agentIdentifier: workflowAgent.identifier },
+            'Failed to resolve workflow agent sender defaults',
+            LOG_CONTEXT
+          );
+        }
+      }
+    }
+
+    resolvedFromEmail = resolvedFromEmail || integration?.credentials.from || 'no-reply@novu.co';
+
     const mailData: IEmailOptions = createMailData(
       {
         // @ts-expect-error
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
-        from: bridgeFrom?.email || integration?.credentials.from || 'no-reply@novu.co',
+        from: resolvedFromEmail,
         attachments,
-        senderName: bridgeFrom?.name || senderName,
+        senderName: resolvedSenderName,
         id: message._id,
         replyTo: replyToAddress,
         notificationDetails: {

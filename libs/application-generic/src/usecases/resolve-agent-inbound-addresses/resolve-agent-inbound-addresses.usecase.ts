@@ -136,6 +136,84 @@ export class ResolveAgentInboundAddresses {
     return addresses[0];
   }
 
+  /**
+   * Default From display name / address for a workflow-assigned agent.
+   * Mirrors agent email outbound precedence: override → inbound → outbound provider From.
+   */
+  async resolveAgentSenderDefaults(params: {
+    agent: WorkflowAgentConfig;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<{ senderName?: string; senderEmail?: string }> {
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: params.agent.identifier,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      '*'
+    );
+
+    if (!agent) {
+      return {};
+    }
+
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _agentId: agent._id,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        disconnectedAt: null,
+      },
+      ['_integrationId']
+    );
+
+    if (links.length === 0) {
+      return { senderName: agent.name };
+    }
+
+    const novuAgentIntegrations = await this.integrationRepository.find(
+      {
+        _id: { $in: links.map((link) => link._integrationId) },
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        providerId: EmailProviderIdEnum.NovuAgent,
+      },
+      '_id credentials providerId'
+    );
+
+    const novuAgent = novuAgentIntegrations[0];
+    const credentials = novuAgent?.credentials;
+    const senderName = credentials?.senderName?.trim() || agent.name;
+
+    const useOverride = Boolean(credentials?.useFromAddressOverride);
+    const overrideFrom = credentials?.fromAddressOverride?.trim() || '';
+    const outboundId = credentials?.outboundIntegrationId;
+    let outboundFrom = '';
+
+    if (outboundId) {
+      const outbound = await this.integrationRepository.findOne(
+        {
+          _id: outboundId,
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+        },
+        'credentials'
+      );
+      outboundFrom = outbound?.credentials?.from?.trim() || '';
+    }
+
+    const inboundAddresses = await this.execute({
+      agentIdentifier: params.agent.identifier,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+    const agentInbound = inboundAddresses[0] || '';
+    const senderEmail = (useOverride && overrideFrom ? overrideFrom : '') || agentInbound || outboundFrom || undefined;
+
+    return { senderName, senderEmail };
+  }
+
   private async resolveSharedInbox(params: {
     agentId: string;
     agentIdentifier: string;
