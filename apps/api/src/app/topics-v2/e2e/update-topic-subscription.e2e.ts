@@ -376,4 +376,109 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
     expect(updateResponse.result.identifier).to.equal(longIdentifier);
     expect(updateResponse.result.name).to.equal('Updated Legacy Subscription');
   });
+
+  describe('Context-aware subscriptions', () => {
+    before(async () => {
+      (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
+    });
+
+    it('should update subscription with auto-generated identifier and context', async () => {
+      const topicKey = `topic-key-update-context-auto-${Date.now()}`;
+
+      await novuClient.topics.create({
+        key: topicKey,
+        name: 'Test Topic',
+      });
+
+      const subscriptionResponse = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+          context: { tenant: 'org-123', project: 'proj-456' },
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-1'] },
+              enabled: true,
+            },
+          ],
+        },
+        topicKey
+      );
+
+      expect(subscriptionResponse.result.data.length).to.equal(1);
+      const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+      expect(subscriptionIdentifier).to.include(':ctx_');
+      expect(subscriptionResponse.result.data[0].contextKeys).to.have.members(['project:proj-456', 'tenant:org-123']);
+
+      const updateResponse = await novuClient.topics.subscriptions.update({
+        topicKey,
+        identifier: subscriptionIdentifier,
+        updateTopicSubscriptionRequestDto: {
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-2'] },
+              enabled: false,
+            },
+          ],
+        },
+      });
+
+      expect(updateResponse.result.identifier).to.equal(subscriptionIdentifier);
+      expect(updateResponse.result.contextKeys).to.have.members(['project:proj-456', 'tenant:org-123']);
+      expect(updateResponse.result.preferences?.length).to.be.greaterThan(0);
+      expect(updateResponse.result.preferences?.[0].enabled).to.equal(false);
+    });
+
+    it('should update subscription with custom identifier and context', async () => {
+      const topicKey = `topic-key-update-context-custom-${Date.now()}`;
+      const customIdentifier = `custom-sub-${Date.now()}`;
+
+      await novuClient.topics.create({
+        key: topicKey,
+        name: 'Test Topic',
+      });
+
+      const subscriptionResponse = await novuClient.topics.subscriptions.create(
+        {
+          subscriptions: [
+            {
+              identifier: customIdentifier,
+              subscriberId: subscriber1.subscriberId,
+            },
+          ],
+          context: { tenant: 'org-abc' },
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-1'] },
+              enabled: true,
+            },
+          ],
+        },
+        topicKey
+      );
+
+      expect(subscriptionResponse.result.data.length).to.equal(1);
+      expect(subscriptionResponse.result.data[0].identifier).to.equal(customIdentifier);
+      expect(subscriptionResponse.result.data[0].contextKeys).to.deep.equal(['tenant:org-abc']);
+
+      const updateResponse = await novuClient.topics.subscriptions.update({
+        topicKey,
+        identifier: customIdentifier,
+        updateTopicSubscriptionRequestDto: {
+          name: 'Updated Context Subscription',
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-2'] },
+              enabled: false,
+            },
+          ],
+        },
+      });
+
+      expect(updateResponse.result.identifier).to.equal(customIdentifier);
+      expect(updateResponse.result.name).to.equal('Updated Context Subscription');
+      expect(updateResponse.result.contextKeys).to.deep.equal(['tenant:org-abc']);
+      expect(updateResponse.result.preferences?.length).to.be.greaterThan(0);
+      expect(updateResponse.result.preferences?.[0].enabled).to.equal(false);
+    });
+  });
 });
