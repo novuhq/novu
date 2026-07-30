@@ -5,6 +5,33 @@ import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { ApiContextPayload, IsValidContextPayload } from '../../decorators';
 import { SubscriberResponseDtoOptional } from '../subscribers/subscriber-response.dto';
 
+export class PreviewTopicDto {
+  @ApiPropertyOptional({
+    description: 'Topic key',
+    type: String,
+    example: 'product-updates',
+  })
+  @IsOptional()
+  key?: string;
+
+  @ApiPropertyOptional({
+    description: 'Topic name',
+    type: String,
+    example: 'Product Updates',
+  })
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Topic custom data',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  data?: Record<string, unknown>;
+}
+
 export class PreviewPayloadDto {
   @ApiPropertyOptional({
     description: 'Partial subscriber information',
@@ -23,6 +50,15 @@ export class PreviewPayloadDto {
   @ValidateNested()
   @Type(() => SubscriberResponseDtoOptional)
   actor?: SubscriberResponseDtoOptional;
+
+  @ApiPropertyOptional({
+    description: 'Primary topic information for topic-triggered workflows',
+    type: PreviewTopicDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PreviewTopicDto)
+  topic?: PreviewTopicDto;
 
   @ApiPropertyOptional({
     description: 'Payload data',

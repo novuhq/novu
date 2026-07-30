@@ -64,11 +64,20 @@ export function TestWorkflowContent({
       <div className="bg-bg-weak flex-1 min-h-0 overflow-auto">
         <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
           <PreviewPayloadSection
-            errors={{ payload: null, subscriber: null, actor: null, steps: null, context: null, env: null }}
+            errors={{
+              payload: null,
+              subscriber: null,
+              actor: null,
+              topic: null,
+              steps: null,
+              context: null,
+              env: null,
+            }}
             localParsedData={{
               payload: payloadData,
               subscriber: subscriberData ?? {},
               actor: {},
+              topic: {},
               steps: {},
               context: contextData ?? {},
               env: {},

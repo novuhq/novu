@@ -27,6 +27,7 @@ export interface CompletionOption {
 const PAYLOAD_NAMESPACE = 'payload';
 const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
 const ACTOR_DATA_NAMESPACE = 'actor.data';
+const TOPIC_DATA_NAMESPACE = 'topic.data';
 const CONTEXT_NAMESPACE = 'context';
 const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
 
@@ -441,8 +442,14 @@ function getMatchingVariables(
     return acc;
   }, []);
 
-  // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events.0.payload.foo
-  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ACTOR_DATA_NAMESPACE, ...stepPayloadNamespaces];
+  // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, topic.data.foo, context.tenant.data, steps.digest-step.events.0.payload.foo
+  const baseNamespaces = [
+    PAYLOAD_NAMESPACE,
+    SUBSCRIBER_DATA_NAMESPACE,
+    ACTOR_DATA_NAMESPACE,
+    TOPIC_DATA_NAMESPACE,
+    ...stepPayloadNamespaces,
+  ];
   const namespaces = isContextEnabled ? [...baseNamespaces, CONTEXT_NAMESPACE] : baseNamespaces;
 
   const jitVariables = createJitVariables({

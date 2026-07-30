@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsValidContextData } from '@novu/application-generic';
+import { TopicCustomData } from '@novu/shared';
+import { IsNotEmpty, IsObject, IsOptional, IsString, Length, ValidateIf } from 'class-validator';
 
 export class CreateUpdateTopicRequestDto {
   @ApiProperty({
@@ -19,5 +21,19 @@ export class CreateUpdateTopicRequestDto {
   @IsString()
   @IsOptional()
   @Length(0, 100)
-  name: string;
+  name?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Additional custom data associated with the topic. Flat key-value pairs of scalars (string, number, boolean, string[]). Maximum size: 64KB.',
+    type: Object,
+    nullable: true,
+    additionalProperties: true,
+    example: { category: 'product', priority: 1 },
+  })
+  @IsOptional()
+  @ValidateIf((obj) => obj.data !== null)
+  @IsObject()
+  @IsValidContextData()
+  data?: TopicCustomData | null;
 }

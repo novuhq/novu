@@ -35,6 +35,7 @@ export const DIGEST_EVENTS_PAYLOAD_VARIABLE_PATTERN = /^steps\.[^.]+\.events\.pa
 export const VALID_DYNAMIC_PATHS = [
   'subscriber.data.',
   'actor.data.',
+  'topic.data.',
   'payload.',
   'context.',
   'env.',

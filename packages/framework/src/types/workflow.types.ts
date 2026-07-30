@@ -4,6 +4,7 @@ import type { EnvironmentSystemVariables } from './environment.types';
 import type { Schema } from './schema.types';
 import type { Step } from './step.types';
 import type { Subscriber } from './subscriber.types';
+import type { Topic } from './topic.types';
 import type { DeepPartial, Prettify } from './util.types';
 
 /**
@@ -43,6 +44,8 @@ export type ExecuteInput<
   controls: T_Controls;
   /** The resolved context for the event. */
   context: ContextResolved;
+  /** The primary topic for the event when triggered via a topic recipient. */
+  topic?: Topic;
 };
 
 /**

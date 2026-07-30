@@ -17,6 +17,8 @@ export class UpsertTopicUseCase {
       throw new ConflictException(`Topic with key "${command.key}" already exists`);
     }
 
+    const created = !topic;
+
     if (!topic) {
       this.isValidTopicKey(command.key);
 
@@ -26,6 +28,7 @@ export class UpsertTopicUseCase {
           _organizationId: command.organizationId,
           key: command.key,
           name: command.name,
+          data: command.data ?? undefined,
         });
       } catch (error: unknown) {
         if (this.isDuplicateKeyError(error)) {
@@ -37,25 +40,31 @@ export class UpsertTopicUseCase {
     } else {
       const updateBody: Record<string, unknown> = {};
 
-      if (command.name) {
+      if (command.name !== undefined) {
         updateBody.name = command.name;
       }
 
-      topic = await this.topicRepository.findOneAndUpdate(
-        {
-          _id: topic._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        {
-          $set: updateBody,
-        }
-      );
+      if (command.data !== undefined) {
+        updateBody.data = command.data;
+      }
+
+      if (Object.keys(updateBody).length > 0) {
+        topic = await this.topicRepository.findOneAndUpdate(
+          {
+            _id: topic._id,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          {
+            $set: updateBody,
+          }
+        );
+      }
     }
 
     return {
       topic: mapTopicEntityToDto(topic!),
-      created: !topic,
+      created,
     };
   }
 

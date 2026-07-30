@@ -141,6 +141,9 @@ export function PreviewContextPanel({
     loadPersistedActor,
     savePersistedActor,
     clearPersistedActor,
+    loadPersistedTopic,
+    savePersistedTopic,
+    clearPersistedTopic,
     loadPersistedContext,
     savePersistedContext,
     clearPersistedContext,
@@ -158,6 +161,7 @@ export function PreviewContextPanel({
       defaultErrors: {
         subscriber: null,
         actor: null,
+        topic: null,
         payload: null,
         steps: null,
         context: null,
@@ -175,6 +179,10 @@ export function PreviewContextPanel({
 
         if (data.actor !== undefined) {
           savePersistedActor(data.actor);
+        }
+
+        if (data.topic !== undefined) {
+          savePersistedTopic(data.topic);
         }
 
         if (data.context !== undefined) {
@@ -198,6 +206,7 @@ export function PreviewContextPanel({
     loadPersistedPayload,
     loadPersistedSubscriber,
     loadPersistedActor,
+    loadPersistedTopic,
     loadPersistedContext,
   });
 

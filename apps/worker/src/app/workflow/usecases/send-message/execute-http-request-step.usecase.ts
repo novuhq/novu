@@ -373,6 +373,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       payload: compileContext.payload ?? {},
       actor: compileContext.actor ?? {},
       tenant: compileContext.tenant ?? {},
+      topic: compileContext.topic ?? {},
       context: compileContext.context ?? {},
       step: compileContext.step,
       steps,

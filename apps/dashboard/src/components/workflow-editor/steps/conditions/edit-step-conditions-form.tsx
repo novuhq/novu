@@ -35,6 +35,7 @@ import { EditStepConditionsLayout } from './edit-step-conditions-layout';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
+const TOPIC_DATA_FIELD_PREFIX = 'topic.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
 
 const CONTAINS_ANY_OPERATORS = ['containsAny', 'doesNotContainAny'] as const;
@@ -145,6 +146,8 @@ const getRuleSchema = (
         const isPayloadField = field.startsWith(PAYLOAD_FIELD_PREFIX) && field.length > PAYLOAD_FIELD_PREFIX.length;
         const isSubscriberDataField =
           field.startsWith(SUBSCRIBER_DATA_FIELD_PREFIX) && field.length > SUBSCRIBER_DATA_FIELD_PREFIX.length;
+        const isTopicDataField =
+          field.startsWith(TOPIC_DATA_FIELD_PREFIX) && field.length > TOPIC_DATA_FIELD_PREFIX.length;
         const isContextField = field.startsWith(CONTEXT_FIELD_PREFIX) && field.length > CONTEXT_FIELD_PREFIX.length;
 
         // Context fields use additionalProperties schema pattern instead of explicit properties,
@@ -153,7 +156,11 @@ const getRuleSchema = (
         const isValidContextField = isContextField ? isAllowedVariableFn({ name: field }) : false;
 
         const shouldAddError =
-          !allowedFields.includes(field) && !isPayloadField && !isSubscriberDataField && !isValidContextField;
+          !allowedFields.includes(field) &&
+          !isPayloadField &&
+          !isSubscriberDataField &&
+          !isTopicDataField &&
+          !isValidContextField;
 
         if (shouldAddError) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });

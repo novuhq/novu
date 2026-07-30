@@ -15,7 +15,6 @@ describe('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', async ()
     await session.initialize();
     novuClient = initNovuClassSdk(session);
 
-    // Create a topic to update later
     const createResponse = await novuClient.topics.create({
       key: topicKey,
       name: initialName,
@@ -39,10 +38,25 @@ describe('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', async ()
     expect(response.result).to.have.property('createdAt');
     expect(response.result).to.have.property('updatedAt');
 
-    // Verify the update persisted by fetching the topic
     const getResponse = await novuClient.topics.get(topicKey);
     expect(getResponse.result).to.exist;
     expect(getResponse.result.name).to.equal(updatedName);
+  });
+
+  it('should update topic data without changing name', async () => {
+    const dataKey = `topic-key-patch-data-${Date.now()}`;
+    await session.testAgent.post('/v2/topics').send({
+      key: dataKey,
+      name: 'Keep Name',
+      data: { category: 'old' },
+    });
+
+    const { body } = await session.testAgent.patch(`/v2/topics/${dataKey}`).send({
+      data: { category: 'new', featured: true },
+    });
+
+    expect(body.data.name).to.equal('Keep Name');
+    expect(body.data.data).to.deep.equal({ category: 'new', featured: true });
   });
 
   it('should return 404 for updating a non-existent topic key', async () => {
@@ -55,7 +69,6 @@ describe('Update topic by key - /v2/topics/:topicKey (PATCH) #novu-v2', async ()
         nonExistentKey
       );
 
-      /* If we reach here, the test failed */
       expect.fail('Should have thrown an error for non-existent topic');
     } catch (error) {
       expect(error.statusCode).to.equal(404);

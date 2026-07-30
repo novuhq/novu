@@ -30,6 +30,7 @@ import { BuildStepIssuesCommand } from './build-step-issues.command';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
+const TOPIC_DATA_FIELD_PREFIX = 'topic.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
 
 @Injectable()
@@ -280,7 +281,12 @@ export class BuildStepIssuesUsecase {
     const issues: StepIssuesDto = {};
     const { primitives } = parseStepVariables(variableSchema);
     const allowedVariables = primitives.map((variable) => variable.name);
-    const allowedNamespaces = [PAYLOAD_FIELD_PREFIX, SUBSCRIBER_DATA_FIELD_PREFIX, CONTEXT_FIELD_PREFIX];
+    const allowedNamespaces = [
+      PAYLOAD_FIELD_PREFIX,
+      SUBSCRIBER_DATA_FIELD_PREFIX,
+      TOPIC_DATA_FIELD_PREFIX,
+      CONTEXT_FIELD_PREFIX,
+    ];
 
     const queryValidatorService = new QueryValidatorService(allowedVariables, allowedNamespaces);
     const skipRulesIssues = queryValidatorService.validateQueryRules(skipLogic);

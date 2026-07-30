@@ -12,6 +12,7 @@ export class FullPayloadForRender {
   workflow?: Record<string, unknown>;
   subscriber: Record<string, unknown>;
   payload: Record<string, unknown>;
+  topic?: Record<string, unknown>;
   context?: ContextResolved;
   steps: Record<string, unknown>; // step.stepId.unknown
   /**

@@ -12,6 +12,7 @@ Topic is a collection of subscribers that share a common interest. Subscriber ca
 | `id` | `string` | The identifier of the topic |
 | `key` | `string` | The unique key of the topic |
 | `name` | `string` | The name of the topic |
+| `data` | `object` | Optional flat custom data (string, number, boolean, or string[] values). Maximum serialized size: 64KB. Available in workflow templates as `{{topic.data.field}}`. |
 | `createdAt` | `string` | The date the topic was created |
 | `updatedAt` | `string` | The date the topic was last updated |
 

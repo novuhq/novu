@@ -1,6 +1,6 @@
 import { ContextPayload, WorkflowResponseDto } from '@novu/shared';
 import { useCallback, useEffect, useRef } from 'react';
-import { PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
+import { PayloadData, PreviewSubscriberData, PreviewTopicData } from '../types/preview-context.types';
 import { parseJsonValue } from '../utils/preview-context.utils';
 import { mergePreviewContextData } from '../utils/preview-context-storage.utils';
 
@@ -15,6 +15,7 @@ type InitializationProps = {
   loadPersistedPayload: () => PayloadData | null;
   loadPersistedSubscriber: () => PreviewSubscriberData | null;
   loadPersistedActor: () => PreviewSubscriberData | null;
+  loadPersistedTopic: () => PreviewTopicData | null;
   loadPersistedContext: () => ContextPayload | null;
 };
 
@@ -29,6 +30,7 @@ export function usePreviewDataInitialization({
   loadPersistedPayload,
   loadPersistedSubscriber,
   loadPersistedActor,
+  loadPersistedTopic,
   loadPersistedContext,
 }: InitializationProps) {
   const isInitializedRef = useRef(false);
@@ -55,6 +57,7 @@ export function usePreviewDataInitialization({
             payload: persistedPayload,
             subscriber: {},
             actor: {},
+            topic: {},
             steps: {},
             context: {},
             env: {},
@@ -63,6 +66,7 @@ export function usePreviewDataInitialization({
             payload: workflow.payloadExample as PayloadData,
             subscriber: {},
             actor: {},
+            topic: {},
             steps: {},
             context: {},
             env: {},
@@ -97,6 +101,13 @@ export function usePreviewDataInitialization({
         hasChanges = true;
       }
 
+      const persistedTopic = loadPersistedTopic();
+
+      if (persistedTopic) {
+        finalData.topic = persistedTopic;
+        hasChanges = true;
+      }
+
       // Load and apply persisted context
       const persistedContext = loadPersistedContext();
 
@@ -126,6 +137,7 @@ export function usePreviewDataInitialization({
     loadPersistedPayload,
     loadPersistedSubscriber,
     loadPersistedActor,
+    loadPersistedTopic,
     loadPersistedContext,
     onChange,
   ]);

@@ -11,6 +11,7 @@ export * from './server.types';
 export * from './skip.types';
 export * from './step.types';
 export * from './subscriber.types';
+export * from './topic.types';
 export * from './util.types';
 export * from './validator.types';
 export * from './workflow.types';

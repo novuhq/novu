@@ -3,6 +3,7 @@ import type { ContextResolved } from './context.types';
 import type { EnvironmentSystemVariables } from './environment.types';
 import { WithPassthrough } from './provider.types';
 import type { Subscriber } from './subscriber.types';
+import type { Topic } from './topic.types';
 
 export type Event = {
   payload: Record<string, unknown>;
@@ -13,6 +14,7 @@ export type Event = {
   action: Exclude<PostActionEnum, PostActionEnum.TRIGGER>;
   subscriber: Subscriber;
   actor?: Subscriber;
+  topic?: Topic;
   context: ContextResolved;
   /** User-defined env vars merged with environment system variables (name, type). */
   env: EnvironmentSystemVariables & Record<string, string>;

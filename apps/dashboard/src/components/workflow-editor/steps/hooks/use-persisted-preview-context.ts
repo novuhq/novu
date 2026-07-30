@@ -1,20 +1,23 @@
 import { ContextPayload } from '@novu/shared';
 import { useEffect } from 'react';
-import { PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
+import { PayloadData, PreviewSubscriberData, PreviewTopicData } from '../types/preview-context.types';
 import {
   cleanupExpiredPreviewData,
   clearActorData,
   clearContextData,
   clearPayloadData,
   clearSubscriberData,
+  clearTopicData,
   loadActorData,
   loadContextData,
   loadPayloadData,
   loadSubscriberData,
+  loadTopicData,
   saveActorData,
   saveContextData,
   savePayloadData,
   saveSubscriberData,
+  saveTopicData,
 } from '../utils/preview-context-storage.utils';
 
 type UsePersistedPreviewContextProps = {
@@ -81,6 +84,24 @@ export function usePersistedPreviewContext({ workflowId, environmentId }: UsePer
     clearActorData(workflowId, environmentId);
   };
 
+  const loadPersistedTopic = (): PreviewTopicData | null => {
+    if (!workflowId || !environmentId) return null;
+
+    return loadTopicData(workflowId, environmentId);
+  };
+
+  const savePersistedTopic = (topic: PreviewTopicData) => {
+    if (!workflowId || !environmentId) return;
+
+    saveTopicData(workflowId, environmentId, topic);
+  };
+
+  const clearPersistedTopic = () => {
+    if (!workflowId || !environmentId) return;
+
+    clearTopicData(workflowId, environmentId);
+  };
+
   const loadPersistedContext = (): ContextPayload | null => {
     if (!workflowId || !environmentId) return null;
 
@@ -109,6 +130,9 @@ export function usePersistedPreviewContext({ workflowId, environmentId }: UsePer
     loadPersistedActor,
     savePersistedActor,
     clearPersistedActor,
+    loadPersistedTopic,
+    savePersistedTopic,
+    clearPersistedTopic,
     loadPersistedContext,
     savePersistedContext,
     clearPersistedContext,

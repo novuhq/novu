@@ -167,12 +167,13 @@ export class ConstructFrameworkWorkflow {
   }): Workflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
-      async ({ step, payload, subscriber, context, env }) => {
+      async ({ step, payload, subscriber, context, env, topic }) => {
         const fullPayloadForRender: FullPayloadForRender = {
           workflow: dbWorkflow as unknown as Record<string, unknown>,
           payload,
           subscriber,
           context,
+          ...(topic && { topic }),
           steps: {},
           env,
         };

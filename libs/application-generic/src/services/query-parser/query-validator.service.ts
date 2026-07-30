@@ -32,7 +32,7 @@ export class QueryValidatorService {
     const rawVar = (field as { var: unknown })?.var;
     const fieldValue = typeof rawVar === 'string' ? rawVar : '';
 
-    if (fieldValue === 'subscriber.data') {
+    if (fieldValue === 'subscriber.data' || fieldValue === 'topic.data') {
       return false;
     }
 

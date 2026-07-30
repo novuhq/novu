@@ -1,6 +1,6 @@
 import { ContextPayload, WorkflowResponseDto } from '@novu/shared';
 import { clearFromStorage, loadFromStorage, saveToStorage } from '@/utils/local-storage';
-import { ParsedData, PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
+import { ParsedData, PayloadData, PreviewSubscriberData, PreviewTopicData } from '../types/preview-context.types';
 
 export type PersistedPreviewData = {
   data: ParsedData;
@@ -23,6 +23,10 @@ function getActorStorageKey(workflowId: string, environmentId: string): string {
   return `preview-actor-${workflowId}-${environmentId}`;
 }
 
+function getTopicStorageKey(workflowId: string, environmentId: string): string {
+  return `preview-topic-${workflowId}-${environmentId}`;
+}
+
 function getContextStorageKey(workflowId: string, environmentId: string): string {
   return `preview-context-data-${workflowId}-${environmentId}`;
 }
@@ -42,6 +46,11 @@ export function saveActorData(workflowId: string, environmentId: string, actor: 
   saveToStorage(storageKey, actor, 'actor');
 }
 
+export function saveTopicData(workflowId: string, environmentId: string, topic: PreviewTopicData): void {
+  const storageKey = getTopicStorageKey(workflowId, environmentId);
+  saveToStorage(storageKey, topic, 'topic');
+}
+
 export function saveContextData(workflowId: string, environmentId: string, context: ContextPayload): void {
   const storageKey = getContextStorageKey(workflowId, environmentId);
   saveToStorage(storageKey, context, 'context');
@@ -49,21 +58,31 @@ export function saveContextData(workflowId: string, environmentId: string, conte
 
 export function loadPayloadData(workflowId: string, environmentId: string): PayloadData | null {
   const storageKey = getPayloadStorageKey(workflowId, environmentId);
+
   return loadFromStorage<PayloadData>(storageKey, 'payload');
 }
 
 export function loadSubscriberData(workflowId: string, environmentId: string): PreviewSubscriberData | null {
   const storageKey = getSubscriberStorageKey(workflowId, environmentId);
+
   return loadFromStorage<PreviewSubscriberData>(storageKey, 'subscriber');
 }
 
 export function loadActorData(workflowId: string, environmentId: string): PreviewSubscriberData | null {
   const storageKey = getActorStorageKey(workflowId, environmentId);
+
   return loadFromStorage<PreviewSubscriberData>(storageKey, 'actor');
+}
+
+export function loadTopicData(workflowId: string, environmentId: string): PreviewTopicData | null {
+  const storageKey = getTopicStorageKey(workflowId, environmentId);
+
+  return loadFromStorage<PreviewTopicData>(storageKey, 'topic');
 }
 
 export function loadContextData(workflowId: string, environmentId: string): ContextPayload | null {
   const storageKey = getContextStorageKey(workflowId, environmentId);
+
   return loadFromStorage<ContextPayload>(storageKey, 'context');
 }
 
@@ -72,6 +91,7 @@ export function mergePreviewContextData(persistedData: ParsedData, serverDefault
     payload: mergeObjectData(persistedData.payload, serverDefaults.payload),
     subscriber: mergeObjectData(persistedData.subscriber, serverDefaults.subscriber),
     actor: mergeObjectData(persistedData.actor, serverDefaults.actor),
+    topic: mergeObjectData(persistedData.topic, serverDefaults.topic),
     steps: mergeObjectData(persistedData.steps, serverDefaults.steps),
     context: mergeObjectData(persistedData.context, serverDefaults.context),
     env: mergeObjectData(persistedData.env, serverDefaults.env),
@@ -123,6 +143,11 @@ export function clearActorData(workflowId: string, environmentId: string): void 
   clearFromStorage(storageKey, 'actor data');
 }
 
+export function clearTopicData(workflowId: string, environmentId: string): void {
+  const storageKey = getTopicStorageKey(workflowId, environmentId);
+  clearFromStorage(storageKey, 'topic data');
+}
+
 export function clearContextData(workflowId: string, environmentId: string): void {
   const storageKey = getContextStorageKey(workflowId, environmentId);
   clearFromStorage(storageKey, 'context data');
@@ -131,7 +156,13 @@ export function clearContextData(workflowId: string, environmentId: string): voi
 export function cleanupExpiredPreviewData(): void {
   try {
     const keysToRemove: string[] = [];
-    const prefixes = ['preview-context-data-', 'preview-payload-', 'preview-subscriber-', 'preview-actor-'];
+    const prefixes = [
+      'preview-context-data-',
+      'preview-payload-',
+      'preview-subscriber-',
+      'preview-actor-',
+      'preview-topic-',
+    ];
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);

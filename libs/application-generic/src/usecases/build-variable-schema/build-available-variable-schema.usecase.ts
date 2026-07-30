@@ -17,6 +17,7 @@ import {
   buildContextSchema,
   buildEnvSchema,
   buildSubscriberSchema,
+  buildTopicSchema,
   buildVariablesSchema,
   buildWorkflowSchema,
 } from '../../utils/create-schema';
@@ -86,6 +87,7 @@ export class BuildVariableSchemaUsecase {
       subscriber: finalSubscriber,
       actor: finalActor,
       context: finalContext,
+      topic: finalTopic,
     } = previewData
       ? this.mergePreviewData({ payload, subscriber, actor, context }, previewData)
       : {
@@ -93,6 +95,7 @@ export class BuildVariableSchemaUsecase {
           subscriber: subscriber || {},
           actor: actor || {},
           context: context || {},
+          topic: {},
         };
 
     const effectiveSteps = this.buildEffectiveSteps(workflow, optimisticSteps);
@@ -117,6 +120,7 @@ export class BuildVariableSchemaUsecase {
         workflow: buildWorkflowSchema(),
         subscriber: buildSubscriberSchema(finalSubscriber),
         actor: buildActorSchema(finalActor),
+        topic: buildTopicSchema(finalTopic),
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: effectivePayloadSchema,
@@ -212,12 +216,14 @@ export class BuildVariableSchemaUsecase {
     subscriber: Record<string, unknown>;
     actor: Record<string, unknown>;
     context: Record<string, unknown>;
+    topic: Record<string, unknown>;
   } {
     return {
       payload: { ...((extracted.payload as Record<string, unknown>) || {}), ...(previewData?.payload || {}) },
       subscriber: { ...((extracted.subscriber as Record<string, unknown>) || {}), ...(previewData?.subscriber || {}) },
       actor: { ...((extracted.actor as Record<string, unknown>) || {}), ...(previewData?.actor || {}) },
       context: { ...((extracted.context as Record<string, unknown>) || {}), ...(previewData?.context || {}) },
+      topic: { ...(previewData?.topic || {}) },
     };
   }
 }
