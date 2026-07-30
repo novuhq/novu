@@ -325,6 +325,39 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
     expect(subscriptionsAfterDuplicate.length, 'expect subscriptionsAfterDuplicate.length to be 2').to.equal(2);
   });
 
+  it('should preserve enabled=false when preferences use the workflowId shape', async () => {
+    const topicKey = `topic-key-enabled-false-${Date.now()}`;
+
+    await novuClient.topics.create({
+      key: topicKey,
+      name: 'Test Topic for Enabled Flag',
+    });
+
+    const workflow = await session.createTemplate({
+      name: 'Workflow Enabled False',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test content',
+        },
+      ],
+    });
+
+    const response = await session.testAgent.post(`/v2/topics/${topicKey}/subscriptions`).send({
+      subscriptions: [
+        {
+          identifier: `${subscriber1.subscriberId}-disabled-pref`,
+          subscriberId: subscriber1.subscriberId,
+        },
+      ],
+      preferences: [{ workflowId: workflow._id, enabled: false }],
+    });
+
+    expect(response.status, 'Should create the subscription').to.equal(201);
+    expect(response.body.data[0].preferences, 'Should return preferences').to.exist;
+    expect(response.body.data[0].preferences[0].enabled, 'Should preserve enabled=false').to.equal(false);
+  });
+
   it('should enforce subscription limit of 10 per subscriber per topic', async () => {
     try {
       const topicKey = `topic-key-limit-${Date.now()}`;
