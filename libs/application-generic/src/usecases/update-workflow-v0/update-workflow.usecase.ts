@@ -758,17 +758,19 @@ export class UpdateWorkflowV0 {
 
     // Sequential on purpose: parallel operations inside a transaction are undefined behaviour in Mongoose.
     for (const id of removedStepsIds) {
-      const deleted = await this.deleteMessageTemplate.execute(
-        DeleteMessageTemplateCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          messageTemplateId: id,
-          parentChangeId,
-          workflowType: command.type,
-          session,
-        })
-      );
+      const deleteCommand = DeleteMessageTemplateCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        messageTemplateId: id,
+        parentChangeId,
+        workflowType: command.type,
+      });
+      // Assign after create — passing ClientSession through plainToInstance throws
+      // `MongoRuntimeError: ClientSession requires a MongoClient` (NV-8457).
+      deleteCommand.session = session;
+
+      const deleted = await this.deleteMessageTemplate.execute(deleteCommand);
 
       // Abort the transaction if the template was not deleted, so we never commit a
       // workflow that dropped the step and its controls while leaving the template behind.
