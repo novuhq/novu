@@ -441,11 +441,11 @@ describe('workflow function', () => {
         payload: {
           free: 'field',
         },
-        agent: { identifier: 'support-agent' },
+        agentId: 'support-agent',
       });
 
       const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-      expect(body.agent).toEqual({ identifier: 'support-agent' });
+      expect(body.agentId).toEqual('support-agent');
     });
 
     it('should include explicit null agent in trigger payload', async () => {
@@ -470,11 +470,11 @@ describe('workflow function', () => {
         payload: {
           free: 'field',
         },
-        agent: null,
+        agentId: null,
       });
 
       const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-      expect(body.agent).toBeNull();
+      expect(body.agentId).toBeNull();
     });
 
     it('should make an API call when provided with a valid payload', async () => {

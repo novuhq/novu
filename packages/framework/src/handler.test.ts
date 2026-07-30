@@ -96,11 +96,11 @@ describe('NovuRequestHandler', () => {
         workflowId: 'test-workflow',
         to: 'test@example.com',
         payload: {},
-        agent: { identifier: 'support-agent' },
+        agentId: 'support-agent',
       })();
 
       const parsedCalledBody = JSON.parse(postMock.mock.calls[0][1].body);
-      expect(parsedCalledBody.agent).toEqual({ identifier: 'support-agent' });
+      expect(parsedCalledBody.agentId).toEqual('support-agent');
     });
 
     it('should include explicit null agent in trigger payload', async () => {
@@ -121,11 +121,11 @@ describe('NovuRequestHandler', () => {
         workflowId: 'test-workflow',
         to: 'test@example.com',
         payload: {},
-        agent: null,
+        agentId: null,
       })();
 
       const parsedCalledBody = JSON.parse(postMock.mock.calls[0][1].body);
-      expect(parsedCalledBody.agent).toBeNull();
+      expect(parsedCalledBody.agentId).toBeNull();
     });
   });
 

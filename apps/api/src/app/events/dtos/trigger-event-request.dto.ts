@@ -120,17 +120,6 @@ export class ChannelOverrides {
   email?: EmailChannelOverrides;
 }
 
-export class TriggerAgentConfigDto {
-  @ApiProperty({
-    description: 'Public agent identifier (slug) to route this execution through.',
-    type: 'string',
-    example: 'support-agent',
-  })
-  @IsString()
-  @IsNotEmpty()
-  identifier: string;
-}
-
 export class TriggerOverrides {
   @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations or layout at the step level',
@@ -230,8 +219,7 @@ export class TriggerOverrides {
   TopicPayloadDto,
   StepsOverrides,
   EmailChannelOverrides,
-  ChannelOverrides,
-  TriggerAgentConfigDto
+  ChannelOverrides
 )
 export class TriggerEventRequestDto {
   @SdkApiProperty(
@@ -292,16 +280,16 @@ export class TriggerEventRequestDto {
 
   @ApiPropertyOptional({
     description:
-      'Override the workflow-assigned agent for this trigger. Omit to use the workflow default; pass null to disable agent routing for this execution.',
-    type: () => TriggerAgentConfigDto,
+      'Override the workflow-assigned agent for this trigger using the public agent identifier. Omit to use the workflow default; pass null to disable agent routing for this execution.',
+    type: 'string',
     nullable: true,
-    example: { identifier: 'support-agent' },
+    example: 'support-agent',
   })
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
-  @ValidateNested()
-  @Type(() => TriggerAgentConfigDto)
-  agent?: TriggerAgentConfigDto | null;
+  @IsString()
+  @IsNotEmpty()
+  agentId?: string | null;
 
   @ApiProperty({
     description:
