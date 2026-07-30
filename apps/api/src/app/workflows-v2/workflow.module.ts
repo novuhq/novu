@@ -101,7 +101,13 @@ const MODULES = [
     PreviewErrorHandler,
     TestHttpEndpointUsecase,
   ],
-  exports: [UpsertWorkflowUseCase, SyncToEnvironmentUseCase, GetWorkflowUseCase, DeleteWorkflowUseCase],
+  exports: [
+    UpsertWorkflowUseCase,
+    SyncToEnvironmentUseCase,
+    GetWorkflowUseCase,
+    DeleteWorkflowUseCase,
+    ResolveAgentInboundAddresses,
+  ],
 })
 export class WorkflowModule implements NestModule {
   configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {}
