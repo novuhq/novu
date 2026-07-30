@@ -394,6 +394,27 @@ export function deleteAgent(
   return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
 }
 
+export type AgentWorkflowUsageInfo = {
+  name: string;
+  workflowId: string;
+};
+
+export type GetAgentUsageResponse = {
+  workflows: AgentWorkflowUsageInfo[];
+};
+
+export async function getAgentUsage(
+  environment: IEnvironment,
+  identifier: string
+): Promise<GetAgentUsageResponse> {
+  const response = await get<{ data: GetAgentUsageResponse } | GetAgentUsageResponse>(
+    `/agents/${encodeURIComponent(identifier)}/usage`,
+    { environment }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
 /** Picked integration fields on an agent–integration link (matches API `integration`). */
 export type AgentIntegrationEmbedded = {
   _id: string;

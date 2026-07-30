@@ -574,7 +574,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         const workflowDependency = agentResource.dependencies.find((dep: any) => dep.resourceType === 'workflow');
 
         expect(workflowDependency.resourceName).to.equal('Test Workflow with Agent Dependency');
-        expect(workflowDependency.isBlocking).to.equal(true);
+        expect(workflowDependency.isBlocking).to.equal(false);
         expect(workflowDependency.reason).to.equal('AGENT_REQUIRED_FOR_WORKFLOW');
       });
     });

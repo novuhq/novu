@@ -330,12 +330,13 @@ export class DependencyAnalyzerService {
           resourceType: ResourceTypeEnum.WORKFLOW,
           resourceId: workflow.triggers?.[0]?.identifier!,
           resourceName: workflow.name,
-          isBlocking: true,
+          // Non-blocking: deleting an agent clears workflow.agent assignments.
+          isBlocking: false,
           reason: DependencyReasonEnum.AGENT_REQUIRED_FOR_WORKFLOW,
         };
 
         this.logger.debug(
-          `Created blocking dependency: agent ${agentIdentifier} -> workflow ${workflow.triggers?.[0]?.identifier} (agent cannot be deleted)`
+          `Created non-blocking dependency: agent ${agentIdentifier} -> workflow ${workflow.triggers?.[0]?.identifier} (agent delete clears assignment)`
         );
         reverseDependencies.push(dependency);
       }

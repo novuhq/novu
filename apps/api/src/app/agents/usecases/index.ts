@@ -24,6 +24,7 @@ import { GenerateManagedAgent } from '../management/usecases/generate-managed-ag
 import { GetAgent } from '../management/usecases/get-agent/get-agent.usecase';
 import { GetAgentDemoQuota } from '../management/usecases/get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { GetAgentRuntimeConfig } from '../management/usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
+import { GetAgentUsage } from '../management/usecases/get-agent-usage/get-agent-usage.usecase';
 import { ListAgents } from '../management/usecases/list-agents/list-agents.usecase';
 import { MigrateAgentRuntime } from '../management/usecases/migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { ProvisionManagedAgent } from '../management/usecases/provision-managed-agent/provision-managed-agent.usecase';
@@ -53,6 +54,7 @@ export const USE_CASES = [
   ConsumeSlackSetupLink,
   GetAgent,
   GetAgentRuntimeConfig,
+  GetAgentUsage,
   GetSlackSetupLinkStatus,
   ListAgents,
   UpdateAgent,

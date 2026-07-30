@@ -10,6 +10,7 @@ export * from './agent-runtime-config.dto';
 export * from './conversation-usage-response.dto';
 export * from './create-agent-request.dto';
 export * from './generate-managed-agent.dto';
+export * from './get-agent-usage-response.dto';
 export * from './list-agent-integrations-query.dto';
 export * from './list-agent-integrations-response.dto';
 export * from './list-agents-query.dto';
