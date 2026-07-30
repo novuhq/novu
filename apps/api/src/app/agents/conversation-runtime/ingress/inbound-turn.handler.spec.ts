@@ -83,6 +83,7 @@ describe('AgentInboundHandler', () => {
       persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
+      findActivityByIdentifier: sinon.stub().resolves(null),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
       findSourceActivity: sinon
         .stub()

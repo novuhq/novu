@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
+import { extractCardPlainText, NovuWebChatAdapterImpl } from '@novu/chat-adapter-web';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
@@ -10,6 +12,7 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import type { WebChatLiveContext } from '../../web-chat/web-chat-platform-delivery.service';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -51,6 +54,8 @@ export interface OutboundPersistContext {
   agentName?: string;
   /** Caller-supplied activity identifier for idempotent message persist */
   activityIdentifier?: string;
+  /** Web delivery sequence captured from live emit context */
+  sequence?: number;
   environmentId: string;
   organizationId: string;
 }
@@ -71,6 +76,8 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
+  /** Source runtime envelope carried through web adapter `withEventContext`. */
+  eventContext?: AgentEventEnvelope;
 };
 
 /**
@@ -107,6 +114,15 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
+    const webLive: WebChatLiveContext | undefined =
+      target.platform === AgentPlatformEnum.WEB_CHAT
+        ? {
+            envelope: options?.eventContext,
+            platformMessageId: persist.activityIdentifier,
+            conversationMongoId: persist.conversationId,
+          }
+        : undefined;
+
     const sent = await this.postToConversation(
       target.agentId,
       target.integrationIdentifier,
@@ -114,7 +130,8 @@ export class OutboundGateway {
       target.platformThreadId,
       msg,
       options,
-      target.workspaceId
+      target.workspaceId,
+      webLive
     );
 
     // Web chat has no external platform id — durable activity id ≡ platformMessageId.
@@ -122,9 +139,13 @@ export class OutboundGateway {
     // idempotency and history rehydration share one id; otherwise use the id minted
     // by adapter deliverMessage.
     if (target.platform === AgentPlatformEnum.WEB_CHAT) {
-      const messageId = persist.activityIdentifier ?? sent.messageId;
+      const messageId = persist.activityIdentifier ?? webLive?.platformMessageId ?? sent.messageId;
       const aligned = { ...sent, messageId };
-      await this.persistDelivered({ ...persist, activityIdentifier: messageId }, aligned, msg);
+      await this.persistDelivered(
+        { ...persist, activityIdentifier: messageId, sequence: webLive?.sequence },
+        aligned,
+        msg
+      );
 
       return aligned;
     }
@@ -141,6 +162,15 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
+    const webLive: WebChatLiveContext | undefined =
+      target.platform === AgentPlatformEnum.WEB_CHAT
+        ? {
+            envelope: options?.eventContext,
+            platformMessageId: messageId,
+            conversationMongoId: persist.conversationId,
+          }
+        : undefined;
+
     const sent = await this.editInConversation(
       target.agentId,
       target.integrationIdentifier,
@@ -149,7 +179,8 @@ export class OutboundGateway {
       messageId,
       msg,
       options,
-      target.workspaceId
+      target.workspaceId,
+      webLive
     );
     await this.conversation.persistAgentEdit({
       conversationId: persist.conversationId,
@@ -160,6 +191,7 @@ export class OutboundGateway {
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
       richContent: extractReplyRichContent(msg),
+      sequence: webLive?.sequence,
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -190,11 +222,18 @@ export class OutboundGateway {
     }
   ): Promise<SentMessageInfo | null> {
     let sent: { id: string; threadId: string };
+    const webLive: WebChatLiveContext = {
+      conversationMongoId: opts?.persist?.conversationId,
+    };
+
     try {
       const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
-      sent = await (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(
-        postArg
-      );
+      const post = () =>
+        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg);
+
+      sent = thread.id.startsWith('web_chat:')
+        ? await NovuWebChatAdapterImpl.withEventContext(webLive, post)
+        : await post();
     } catch (err) {
       if (opts?.failSoft) {
         return null;
@@ -212,6 +251,7 @@ export class OutboundGateway {
         agentIdentifier: opts.persist.agentIdentifier,
         content: opts.persist.content,
         richContent: opts.persist.richContent,
+        sequence: webLive.sequence,
         environmentId: opts.persist.environmentId,
         organizationId: opts.persist.organizationId,
       });
@@ -227,7 +267,8 @@ export class OutboundGateway {
     platformThreadId: string,
     content: ReplyContentDto,
     options?: OutboundDeliveryOptions,
-    workspaceId?: string
+    workspaceId?: string,
+    webLive?: WebChatLiveContext
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
@@ -262,7 +303,9 @@ export class OutboundGateway {
     const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      thread.post(postArg)
+      this.runWithWebEventContext(chat, platform, webLive ?? { envelope: options?.eventContext }, () =>
+        thread.post(postArg)
+      )
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
@@ -273,10 +316,19 @@ export class OutboundGateway {
     integrationIdentifier: string,
     platformThreadId: string,
     status = 'Thinking...',
-    workspaceId?: string
+    workspaceId?: string,
+    eventContext?: AgentEventEnvelope,
+    conversationMongoId?: string
   ): Promise<void> {
     if (!status.trim()) {
-      await this.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId, workspaceId);
+      await this.stopTypingInConversation(
+        agentId,
+        integrationIdentifier,
+        platformThreadId,
+        workspaceId,
+        eventContext,
+        conversationMongoId
+      );
 
       return;
     }
@@ -290,8 +342,11 @@ export class OutboundGateway {
       return;
     }
 
+    const webLive: WebChatLiveContext | undefined =
+      config.platform === AgentPlatformEnum.WEB_CHAT ? { envelope: eventContext, conversationMongoId } : undefined;
+
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      thread.startTyping(status)
+      this.runWithWebEventContext(chat, config.platform, webLive, () => thread.startTyping(status))
     ).catch((err) => {
       this.logger.warn(
         { err, platformThreadId, agentId, integrationIdentifier },
@@ -304,11 +359,27 @@ export class OutboundGateway {
     agentId: string,
     integrationIdentifier: string,
     platformThreadId: string,
-    workspaceId?: string
+    workspaceId?: string,
+    eventContext?: AgentEventEnvelope,
+    conversationMongoId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
     if (config.platform === AgentPlatformEnum.WEB_CHAT) {
+      const instanceKey = `${agentId}:${integrationIdentifier}`;
+      const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+      const thread = chat.thread(platformThreadId);
+      if (typeof thread.startTyping !== 'function') {
+        return;
+      }
+
+      // Empty status → delivery emits ephemeral channel.typing state=off.
+      await this.runWithWebEventContext(chat, config.platform, { envelope: eventContext, conversationMongoId }, () =>
+        thread.startTyping('')
+      ).catch((err) => {
+        this.logger.warn({ err, platformThreadId, agentId }, 'Failed to stop web chat typing');
+      });
+
       return;
     }
 
@@ -444,7 +515,8 @@ export class OutboundGateway {
     platformMessageId: string,
     content: ReplyContentDto,
     options?: OutboundDeliveryOptions,
-    workspaceId?: string
+    workspaceId?: string,
+    webLive?: WebChatLiveContext
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
@@ -488,7 +560,9 @@ export class OutboundGateway {
     const editPayload = this.buildAdapterPostableMessage(tokenizedContent, config);
 
     const edited = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      adapter.editMessage(platformThreadId, platformMessageId, editPayload)
+      this.runWithWebEventContext(chat, platform, webLive ?? { envelope: options?.eventContext }, () =>
+        adapter.editMessage(platformThreadId, platformMessageId, editPayload)
+      )
     ).catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
@@ -500,7 +574,9 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    workspaceId?: string
+    workspaceId?: string,
+    persist?: OutboundPersistContext,
+    eventContext?: AgentEventEnvelope
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -511,9 +587,35 @@ export class OutboundGateway {
       return;
     }
 
+    const webLive: WebChatLiveContext | undefined =
+      platform === AgentPlatformEnum.WEB_CHAT
+        ? {
+            envelope: eventContext,
+            platformMessageId,
+            conversationMongoId: persist?.conversationId,
+          }
+        : undefined;
+
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      adapter.deleteMessage(platformThreadId, platformMessageId)
+      this.runWithWebEventContext(chat, platform, webLive, () =>
+        adapter.deleteMessage(platformThreadId, platformMessageId)
+      )
     ).catch(toDeliveryError);
+
+    if (platform === AgentPlatformEnum.WEB_CHAT && persist) {
+      await this.conversation.persistAgentDelete({
+        conversationId: persist.conversationId,
+        channel: persist.channel,
+        platformThreadId,
+        platformMessageId,
+        agentIdentifier: persist.agentIdentifier,
+        agentName: persist.agentName,
+        content: '',
+        sequence: webLive?.sequence,
+        environmentId: persist.environmentId,
+        organizationId: persist.organizationId,
+      });
+    }
   }
 
   async postPlanObject(
@@ -836,9 +938,28 @@ export class OutboundGateway {
       identifier: persist.activityIdentifier,
       content: this.extractTextFallback(msg),
       richContent: extractReplyRichContent(msg),
+      sequence: persist.sequence,
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
+  }
+
+  private async runWithWebEventContext<T>(
+    chat: Chat,
+    platform: string,
+    webLive: WebChatLiveContext | undefined,
+    operation: () => T | Promise<T>
+  ): Promise<T> {
+    if (platform !== AgentPlatformEnum.WEB_CHAT || !webLive) {
+      return operation();
+    }
+
+    const adapter = chat.getAdapter(platform);
+    if (adapter instanceof NovuWebChatAdapterImpl) {
+      return adapter.withEventContext(webLive, operation);
+    }
+
+    return NovuWebChatAdapterImpl.withEventContext(webLive, operation);
   }
 
   private async buildThreadPostArg(
@@ -893,7 +1014,7 @@ export class OutboundGateway {
       return msg.markdown;
     }
     if (msg.card) {
-      return msg.card.title ?? '[Card]';
+      return extractCardPlainText(msg.card);
     }
 
     return '';

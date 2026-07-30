@@ -110,19 +110,19 @@ export class AgentEventSink {
 
     switch (event.type) {
       case 'message':
-        return this.handleMessageEvent(event, baseFields, context, envelope.runId);
+        return this.handleMessageEvent(event, baseFields, context, envelope);
 
       case 'channel.edit':
-        return this.handleChannelEdit(event, baseFields, context, envelope.runId);
+        return this.handleChannelEdit(event, baseFields, context, envelope);
 
       case 'channel.delete':
-        return this.handleChannelDelete(event, baseFields, context, envelope.runId);
+        return this.handleChannelDelete(event, baseFields, context, envelope);
 
       case 'channel.reaction':
         return this.handleChannelReaction(event, baseFields, context, envelope.runId);
 
       case 'channel.typing':
-        return this.handleChannelTyping(event, baseFields, context, envelope.runId);
+        return this.handleChannelTyping(event, baseFields, context, envelope);
 
       case 'signal':
         return this.handleSignal(event, baseFields, context, envelope.runId);
@@ -268,7 +268,7 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'message' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string
+    envelope: AgentEventEnvelope
   ): Promise<IngestOutcome> {
     if (context.suppressReply) {
       return 'accepted';
@@ -287,10 +287,15 @@ export class AgentEventSink {
     }
 
     return this.dispatchReply(
-      HandleAgentReplyCommand.create({ ...baseFields, reply, activityIdentifier: event.messageId }),
+      HandleAgentReplyCommand.create({
+        ...baseFields,
+        reply,
+        activityIdentifier: event.messageId,
+        sourceEnvelope: envelope,
+      }),
       context,
       'message',
-      runId
+      envelope.runId
     );
   }
 
@@ -298,7 +303,7 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'channel.edit' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string
+    envelope: AgentEventEnvelope
   ): Promise<IngestOutcome> {
     const activity = await this.resolveActivityByClientId(
       context.environmentId,
@@ -308,7 +313,7 @@ export class AgentEventSink {
 
     if (!activity?.platformMessageId) {
       this.logger.warn(
-        { runId, messageId: event.messageId },
+        { runId: envelope.runId, messageId: event.messageId },
         'channel.edit could not resolve client message id — skipping'
       );
 
@@ -325,10 +330,11 @@ export class AgentEventSink {
       HandleAgentReplyCommand.create({
         ...baseFields,
         edit: { messageId: activity.platformMessageId, content },
+        sourceEnvelope: envelope,
       }),
       context,
       'channel.edit',
-      runId
+      envelope.runId
     );
   }
 
@@ -336,7 +342,7 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'channel.delete' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string
+    envelope: AgentEventEnvelope
   ): Promise<IngestOutcome> {
     const activity = await this.resolveActivityByClientId(
       context.environmentId,
@@ -346,7 +352,7 @@ export class AgentEventSink {
 
     if (!activity?.platformMessageId) {
       this.logger.warn(
-        { runId, messageId: event.messageId },
+        { runId: envelope.runId, messageId: event.messageId },
         'channel.delete could not resolve client message id — skipping'
       );
 
@@ -354,10 +360,14 @@ export class AgentEventSink {
     }
 
     return this.dispatchReply(
-      HandleAgentReplyCommand.create({ ...baseFields, deleteMessages: [{ messageId: activity.platformMessageId }] }),
+      HandleAgentReplyCommand.create({
+        ...baseFields,
+        deleteMessages: [{ messageId: activity.platformMessageId }],
+        sourceEnvelope: envelope,
+      }),
       context,
       'channel.delete',
-      runId
+      envelope.runId
     );
   }
 
@@ -422,15 +432,15 @@ export class AgentEventSink {
     event: Extract<AgentEvent, { type: 'channel.typing' }>,
     baseFields: BaseCommandFields,
     context: AgentEventContext,
-    runId: string
+    envelope: AgentEventEnvelope
   ): Promise<IngestOutcome> {
     const typing = event.state === 'off' ? 'stop' : { status: event.status };
 
     return this.dispatchReply(
-      HandleAgentReplyCommand.create({ ...baseFields, typing }),
+      HandleAgentReplyCommand.create({ ...baseFields, typing, sourceEnvelope: envelope }),
       context,
       'channel.typing',
-      runId
+      envelope.runId
     );
   }
 

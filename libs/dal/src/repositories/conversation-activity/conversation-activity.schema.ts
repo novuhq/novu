@@ -51,6 +51,9 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
     platformMessageId: {
       type: Schema.Types.String,
     },
+    sequence: {
+      type: Schema.Types.Number,
+    },
     senderName: {
       type: Schema.Types.String,
     },

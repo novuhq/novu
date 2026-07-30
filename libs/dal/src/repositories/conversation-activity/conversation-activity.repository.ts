@@ -109,6 +109,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     richContent?: Record<string, unknown>;
     platformMessageId?: string;
     senderName?: string;
+    sequence?: number;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -125,6 +126,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       richContent: params.richContent,
       platformMessageId: params.platformMessageId,
       senderName: params.senderName,
+      sequence: params.sequence,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
@@ -143,6 +145,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     type?: ConversationActivityTypeEnum;
     senderName?: string;
     platformMessageId?: string;
+    sequence?: number;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -162,6 +165,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       toolData: params.toolData,
       senderName: params.senderName,
       platformMessageId: params.platformMessageId,
+      sequence: params.sequence,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });

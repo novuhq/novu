@@ -473,6 +473,28 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Atomically advances the web-chat delivery high-watermark and returns the
+   * allocated sequence number (1-based).
+   */
+  async allocateWebDeliverySequence(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string
+  ): Promise<number> {
+    const updated = await this.findOneAndUpdate(
+      {
+        _id: conversationId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      { $inc: { webDeliverySequence: 1 } },
+      { new: true }
+    );
+
+    return updated?.webDeliverySequence ?? 1;
+  }
+
   async incrementTokenUsage(
     environmentId: string,
     organizationId: string,

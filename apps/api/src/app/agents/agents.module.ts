@@ -89,6 +89,8 @@ import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler
 import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
+import { WebChatInboundProvisionService } from './web-chat/web-chat-inbound-provision.service';
 import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
 import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
 import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
@@ -170,6 +172,8 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WebChatPublicationService,
     WebChatSessionVerifier,
     WebChatResumeAuthorizationService,
+    WebChatEventFactory,
+    WebChatInboundProvisionService,
     WebChatPlatformDeliveryService,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,

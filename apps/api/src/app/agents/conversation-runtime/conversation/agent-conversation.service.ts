@@ -88,6 +88,8 @@ export interface PersistInboundMessageParams {
   platformMessageId?: string;
   /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
   identifier?: string;
+  /** Web delivery sequence allocated at provision / live emit time */
+  sequence?: number;
   environmentId: string;
   organizationId: string;
 }
@@ -109,6 +111,8 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   agentName?: string;
   content: string;
   richContent?: Record<string, unknown>;
+  /** Web delivery sequence allocated at live emit time */
+  sequence?: number;
 }
 
 export interface PersistToolApprovalRequestParams extends ConversationActivityContext {
@@ -275,32 +279,61 @@ export class AgentConversationService {
       richContent: params.richContent,
       hasPlatformAttachments: params.hasPlatformAttachments,
     });
+    const identifier = params.identifier ?? `act_${shortId(12)}`;
 
-    const [activity] = await Promise.all([
-      this.activityRepository.createUserActivity({
-        identifier: params.identifier ?? `act_${shortId(12)}`,
-        conversationId: params.conversationId,
-        platform: params.platform,
-        integrationId: params.integrationId,
-        platformThreadId: params.platformThreadId,
-        senderType: params.senderType,
-        senderId: params.senderId,
-        senderName: params.senderName,
-        content,
-        richContent: params.richContent,
-        platformMessageId: params.platformMessageId,
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-      }),
-      this.conversationRepository.touchActivity(
-        params.environmentId,
-        params.organizationId,
-        params.conversationId,
-        preview
-      ),
-    ]);
+    try {
+      const [activity] = await Promise.all([
+        this.activityRepository.createUserActivity({
+          identifier,
+          conversationId: params.conversationId,
+          platform: params.platform,
+          integrationId: params.integrationId,
+          platformThreadId: params.platformThreadId,
+          senderType: params.senderType,
+          senderId: params.senderId,
+          senderName: params.senderName,
+          content,
+          richContent: params.richContent,
+          platformMessageId: params.platformMessageId,
+          sequence: params.sequence,
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+        }),
+        this.conversationRepository.touchActivity(
+          params.environmentId,
+          params.organizationId,
+          params.conversationId,
+          preview
+        ),
+      ]);
 
-    return activity;
+      return activity;
+    } catch (err) {
+      if (params.identifier && isDuplicateKeyError(err)) {
+        const existing = await this.activityRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _conversationId: params.conversationId,
+            identifier: params.identifier,
+          },
+          '*'
+        );
+
+        if (existing) {
+          return existing;
+        }
+      }
+
+      throw err;
+    }
+  }
+
+  async allocateWebDeliverySequence(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string
+  ): Promise<number> {
+    return this.conversationRepository.allocateWebDeliverySequence(environmentId, organizationId, conversationId);
   }
 
   async getHistory(
@@ -318,6 +351,21 @@ export class AgentConversationService {
     platformMessageId: string
   ): Promise<ConversationActivityEntity | null> {
     return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
+  }
+
+  async findActivityByIdentifier(
+    environmentId: string,
+    conversationId: string,
+    identifier: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.activityRepository.findOne(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        identifier,
+      },
+      '*'
+    );
   }
 
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
@@ -348,6 +396,21 @@ export class AgentConversationService {
       agentId,
       integrationId,
       platformThreadId
+    );
+  }
+
+  async findByPublicIdentifier(
+    environmentId: string,
+    organizationId: string,
+    identifier: string
+  ): Promise<ConversationEntity | null> {
+    return this.conversationRepository.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        identifier,
+      },
+      '*'
     );
   }
 
@@ -465,6 +528,10 @@ export class AgentConversationService {
     return this.persistAgentActivity(params, ConversationActivityTypeEnum.EDIT, 'preview');
   }
 
+  async persistAgentDelete(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
+    return this.persistAgentActivity(params, ConversationActivityTypeEnum.DELETE, 'preview');
+  }
+
   private async persistAgentActivity(
     params: PersistAgentActivityParams & { toolData?: ConversationActivityToolData },
     type: ConversationActivityTypeEnum,
@@ -491,6 +558,7 @@ export class AgentConversationService {
         richContent: params.richContent,
         toolData: params.toolData,
         type,
+        sequence: params.sequence,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       }),

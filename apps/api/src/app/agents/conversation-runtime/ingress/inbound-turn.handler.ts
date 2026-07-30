@@ -696,22 +696,32 @@ export class AgentInboundHandler implements OnModuleInit {
         }
       : undefined;
 
-    await this.conversationService.persistInboundMessage({
-      conversationId: conversation._id,
-      platform: config.platform,
-      integrationId: config.integrationId,
-      platformThreadId,
-      senderType,
-      senderId: subscriberId ?? `${config.platform}:${message.author.userId}`,
-      senderName: message.author.fullName,
-      content: message.text,
-      richContent,
-      hasPlatformAttachments: Boolean(message.attachments?.length),
-      platformMessageId: message.id,
-      identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-    });
+    // Web chat provisions the user activity before 201; skip a second write when
+    // the same identifier already exists (attachments/rich content still absent on
+    // that first-write path in v1).
+    const alreadyProvisioned =
+      config.platform === AgentPlatformEnum.WEB_CHAT &&
+      Boolean(message.id) &&
+      (await this.conversationService.findActivityByIdentifier(config.environmentId, conversation._id, message.id!));
+
+    if (!alreadyProvisioned) {
+      await this.conversationService.persistInboundMessage({
+        conversationId: conversation._id,
+        platform: config.platform,
+        integrationId: config.integrationId,
+        platformThreadId,
+        senderType,
+        senderId: subscriberId ?? `${config.platform}:${message.author.userId}`,
+        senderName: message.author.fullName,
+        content: message.text,
+        richContent,
+        hasPlatformAttachments: Boolean(message.attachments?.length),
+        platformMessageId: message.id,
+        identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    }
 
     trackAgentInboundMessage(this.analyticsService, {
       organizationId: config.organizationId,
@@ -925,7 +935,36 @@ export class AgentInboundHandler implements OnModuleInit {
     const platform = config.platform as AutoProvisionPlatform;
 
     try {
-      await this.outboundGateway.replyOnThreadWithCard(thread, buildCapacityReachedCard(platform));
+      const card = buildCapacityReachedCard(platform);
+      // Web chat may already have provisioned the conversation before the gate.
+      const conversation =
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? await this.conversationService.findByPlatformThread(
+              config.environmentId,
+              config.organizationId,
+              agentId,
+              config.integrationId,
+              getInboundPlatformThreadId(config.platform, thread, message)
+            )
+          : null;
+
+      await this.outboundGateway.replyOnThreadWithCard(
+        thread,
+        card,
+        conversation
+          ? {
+              persist: {
+                conversationId: conversation._id,
+                channel: this.conversationService.getPrimaryChannel(conversation),
+                agentIdentifier: config.agentIdentifier,
+                content: card.title ?? '[Card]',
+                richContent: { card },
+                environmentId: config.environmentId,
+                organizationId: config.organizationId,
+              },
+            }
+          : undefined
+      );
     } catch (err) {
       this.logger.warn(
         err,

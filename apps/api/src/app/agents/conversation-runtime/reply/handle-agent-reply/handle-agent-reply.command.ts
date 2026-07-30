@@ -1,3 +1,4 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type { Signal, ToolResult } from '@novu/framework/internal';
 import type { PlanModel } from 'chat';
 import { Type } from 'class-transformer';
@@ -92,4 +93,9 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoolean()
   error?: boolean;
+
+  /** Source runtime envelope for web-chat live identity (runId/turnId). */
+  @IsOptional()
+  @IsObject()
+  sourceEnvelope?: AgentEventEnvelope;
 }

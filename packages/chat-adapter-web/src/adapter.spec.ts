@@ -32,6 +32,7 @@ function createConfig(overrides: Partial<WebChatAdapterConfig> = {}): WebChatAda
     deliverMessage: vi.fn(async ({ threadId }) => ({ id: 'act_delivered1ab', threadId })),
     editMessage: vi.fn(async ({ threadId, messageId }) => ({ id: messageId, threadId })),
     deleteMessage: vi.fn(async () => undefined),
+    startTyping: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -91,19 +92,35 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(badId.status).toBe(400);
   });
 
-  it('acks fast with minted conv_ id and dispatches processMessage on prefixed thread id', async () => {
-    const { adapter, processMessage } = await createAdapter();
+  it('awaits provisionInbound before 201 then dispatches processMessage', async () => {
+    const order: string[] = [];
+    const provisionInbound = vi.fn(async () => {
+      order.push('provision');
+    });
+    const { adapter, processMessage } = await createAdapter(createConfig({ provisionInbound }));
+    processMessage.mockImplementation(() => {
+      order.push('process');
+    });
 
     const response = await adapter.handleWebhook(jsonRequest({ agentId: 'agent_1', text: 'Hello' }));
     const body = await response.json();
 
     expect(response.status).toBe(201);
     expect(body.data.identifier).toMatch(/^conv_[0-9a-z]{12}$/);
+    expect(provisionInbound).toHaveBeenCalledOnce();
+    expect(provisionInbound.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        conversationId: body.data.identifier,
+        threadId: `web_chat:${body.data.identifier}`,
+        text: 'Hello',
+        session: SESSION,
+      })
+    );
+    expect(provisionInbound.mock.calls[0]?.[0].messageId).toMatch(/^msg_[0-9a-z]{12}$/);
     expect(processMessage).toHaveBeenCalledOnce();
     expect(processMessage.mock.calls[0]?.[1]).toBe(`web_chat:${body.data.identifier}`);
-    expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
-    expect(processMessage.mock.calls[0]?.[2].text).toBe('Hello');
-    expect(processMessage.mock.calls[0]?.[2].author.userId).toBe('sub_1');
+    expect(processMessage.mock.calls[0]?.[2].id).toBe(provisionInbound.mock.calls[0]?.[0].messageId);
+    expect(order).toEqual(['provision', 'process']);
   });
 
   it('ignores client messageId and always mints server message id', async () => {
@@ -184,6 +201,27 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(sent.id).toBe('act_delivered1ab');
   });
 
+  it('postMessage extracts plain text from bare CardElement posts', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
+
+    await adapter.postMessage('web_chat:conv_abcdefghijkl', {
+      type: 'card',
+      children: [{ type: 'text', content: 'Upgrade your plan to activate it.' }],
+    } as never);
+
+    expect(config.deliverMessage).toHaveBeenCalledWith({
+      threadId: 'web_chat:conv_abcdefghijkl',
+      content: 'Upgrade your plan to activate it.',
+      richContent: {
+        card: {
+          type: 'card',
+          children: [{ type: 'text', content: 'Upgrade your plan to activate it.' }],
+        },
+      },
+    });
+  });
+
   it('editMessage and deleteMessage delegate to injected callbacks', async () => {
     const config = createConfig();
     const { adapter } = await createAdapter(config);
@@ -203,14 +241,68 @@ describe('NovuWebChatAdapterImpl', () => {
     });
   });
 
-  it('declares history off, thread lock scope, and no-op startTyping', async () => {
-    const { adapter } = await createAdapter();
+  it('declares history off, thread lock scope, and typing via injected callback', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
 
     expect(adapter.persistMessageHistory).toBe(false);
     expect(adapter.persistThreadHistory).toBe(false);
     expect(adapter.lockScope).toBe('thread');
-    await expect(adapter.startTyping('web_chat:conv_abcdefghijkl')).resolves.toBeUndefined();
+    await adapter.startTyping('web_chat:conv_abcdefghijkl', 'Thinking...');
+    expect(config.startTyping).toHaveBeenCalledWith({
+      threadId: 'web_chat:conv_abcdefghijkl',
+      status: 'Thinking...',
+    });
     expect(adapter.encodeThreadId({ conversationId: 'conv_abcdefghijkl' })).toBe('web_chat:conv_abcdefghijkl');
     expect(adapter.decodeThreadId('web_chat:conv_abcdefghijkl')).toEqual({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('withEventContext exposes source envelope to all four live ops concurrently', async () => {
+    const seen: Array<{ op: string; context: unknown }> = [];
+    const config = createConfig({
+      deliverMessage: vi.fn(async ({ threadId }) => {
+        seen.push({ op: 'post', context: NovuWebChatAdapterImpl.getEventContext() });
+
+        return { id: 'act_post0000001', threadId };
+      }),
+      editMessage: vi.fn(async ({ threadId, messageId }) => {
+        seen.push({ op: 'edit', context: NovuWebChatAdapterImpl.getEventContext() });
+
+        return { id: messageId, threadId };
+      }),
+      deleteMessage: vi.fn(async () => {
+        seen.push({ op: 'delete', context: NovuWebChatAdapterImpl.getEventContext() });
+      }),
+      startTyping: vi.fn(async () => {
+        seen.push({ op: 'typing', context: NovuWebChatAdapterImpl.getEventContext() });
+      }),
+    });
+    const { adapter } = await createAdapter(config);
+
+    const envelopeA = { runId: 'run-a', event: { type: 'message' } };
+    const envelopeB = { runId: 'run-b', event: { type: 'channel.typing' } };
+
+    await Promise.all([
+      adapter.withEventContext(envelopeA, async () => {
+        await new Promise((r) => setTimeout(r, 15));
+        await adapter.postMessage('web_chat:conv_abcdefghijkl', { markdown: 'hi' });
+        await adapter.editMessage('web_chat:conv_abcdefghijkl', 'act_1', { markdown: 'edited' });
+        await adapter.deleteMessage('web_chat:conv_abcdefghijkl', 'act_1');
+      }),
+      adapter.withEventContext(envelopeB, async () => {
+        await new Promise((r) => setTimeout(r, 5));
+        await adapter.startTyping('web_chat:conv_abcdefghijkl', '…');
+      }),
+    ]);
+
+    expect(seen).toEqual(
+      expect.arrayContaining([
+        { op: 'typing', context: envelopeB },
+        { op: 'post', context: envelopeA },
+        { op: 'edit', context: envelopeA },
+        { op: 'delete', context: envelopeA },
+      ])
+    );
+    expect(NovuWebChatAdapterImpl.getEventContext()).toBeUndefined();
   });
 });

@@ -45,6 +45,28 @@ export function conversationIdFromThreadId(threadId: string): string {
   return threadId;
 }
 
+/** Flatten card title + text children for live/history markdown parity. */
+export function extractCardPlainText(card: CardElement): string {
+  const title = typeof card.title === 'string' ? card.title.trim() : '';
+  const childText = Array.isArray(card.children)
+    ? card.children
+        .flatMap((child) => {
+          if (!child || typeof child !== 'object') {
+            return [];
+          }
+          const node = child as { type?: string; content?: unknown };
+          if (node.type === 'text' && typeof node.content === 'string' && node.content.trim()) {
+            return [node.content.trim()];
+          }
+
+          return [];
+        })
+        .join('\n')
+    : '';
+
+  return childText || title || '[Card]';
+}
+
 export function parsePostableMessage(message: AdapterPostableMessage): {
   content: string;
   richContent?: Record<string, unknown>;
@@ -54,7 +76,23 @@ export function parsePostableMessage(message: AdapterPostableMessage): {
   }
 
   if (message && typeof message === 'object') {
-    const record = message as { markdown?: string; card?: CardElement; files?: unknown[]; raw?: string };
+    const record = message as {
+      type?: string;
+      title?: string;
+      children?: CardElement['children'];
+      markdown?: string;
+      card?: CardElement;
+      files?: unknown[];
+      raw?: string;
+    };
+
+    // chat-sdk `thread.post(card)` passes a bare CardElement for gate replies.
+    if (record.type === 'card') {
+      const card = message as CardElement;
+
+      return { content: extractCardPlainText(card), richContent: { card } };
+    }
+
     const richContent: Record<string, unknown> = {};
     if (record.card) {
       richContent.card = record.card;
@@ -72,7 +110,7 @@ export function parsePostableMessage(message: AdapterPostableMessage): {
     }
 
     if (record.card) {
-      return { content: record.card.title ?? '[Card]', richContent };
+      return { content: extractCardPlainText(record.card), richContent };
     }
   }
 
