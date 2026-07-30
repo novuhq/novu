@@ -314,6 +314,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
         ...(triggerEvent.controls && { controls: triggerEvent.controls }),
         ...(triggerEvent.context && { context: triggerEvent.context }),
+        ...(triggerEvent.agent !== undefined && { agent: triggerEvent.agent }),
       };
 
       const result = await this.http.post('/events/trigger', requestPayload);

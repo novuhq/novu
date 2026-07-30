@@ -49,6 +49,11 @@ export type EventTriggerParams<T_Payload = EventPayload> = {
    */
   overrides?: Record<string, unknown>;
   /**
+   * Override the workflow-assigned agent for this trigger.
+   * Omit to use the workflow default; pass null to disable agent routing for this execution.
+   */
+  agent?: { identifier: string } | null;
+  /**
    * Controls for the step execution
    */
   controls?: {

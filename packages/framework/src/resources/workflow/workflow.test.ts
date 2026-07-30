@@ -419,6 +419,64 @@ describe('workflow function', () => {
       );
     });
 
+    it('should include agent override in trigger payload', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      const fetchMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => {
+          return Promise.resolve({
+            transactionId: '123',
+          });
+        },
+      });
+      global.fetch = fetchMock;
+
+      await testWorkflow.trigger({
+        to: 'test@test.com',
+        payload: {
+          free: 'field',
+        },
+        agent: { identifier: 'support-agent' },
+      });
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.agent).toEqual({ identifier: 'support-agent' });
+    });
+
+    it('should include explicit null agent in trigger payload', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      const fetchMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => {
+          return Promise.resolve({
+            transactionId: '123',
+          });
+        },
+      });
+      global.fetch = fetchMock;
+
+      await testWorkflow.trigger({
+        to: 'test@test.com',
+        payload: {
+          free: 'field',
+        },
+        agent: null,
+      });
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.agent).toBeNull();
+    });
+
     it('should make an API call when provided with a valid payload', async () => {
       const testWorkflow = workflow(
         'test-workflow',

@@ -3,7 +3,12 @@ import { ApiContextPayload, IsValidContextPayload } from '@novu/application-gene
 import { ContextPayload, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
-import { SubscriberPayloadDto, TenantPayloadDto, TriggerOverrides } from './trigger-event-request.dto';
+import {
+  SubscriberPayloadDto,
+  TenantPayloadDto,
+  TriggerAgentConfigDto,
+  TriggerOverrides,
+} from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
   @ApiProperty({
@@ -50,6 +55,19 @@ export class TriggerEventToAllRequestDto {
   @IsObject()
   @IsOptional()
   overrides?: TriggerOverrides;
+
+  @ApiPropertyOptional({
+    description:
+      'Override the workflow-assigned agent for this trigger. Omit to use the workflow default; pass null to disable agent routing for this execution.',
+    type: () => TriggerAgentConfigDto,
+    nullable: true,
+    example: { identifier: 'support-agent' },
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  @Type(() => TriggerAgentConfigDto)
+  agent?: TriggerAgentConfigDto | null;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',

@@ -77,6 +77,56 @@ describe('NovuRequestHandler', () => {
       const calledWithHeaders = postMock.mock.calls[0][1].headers;
       expect(calledWithHeaders).toEqual(expectedPayload.headers);
     });
+
+    it('should include agent override in trigger payload', async () => {
+      const requestHandler = new NovuRequestHandler({
+        frameworkName: 'test-framework',
+        workflows: [],
+        handler: vi.fn(),
+        client,
+      });
+
+      const postMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ acknowledged: true }),
+      });
+      global.fetch = postMock;
+
+      await requestHandler.triggerAction({
+        workflowId: 'test-workflow',
+        to: 'test@example.com',
+        payload: {},
+        agent: { identifier: 'support-agent' },
+      })();
+
+      const parsedCalledBody = JSON.parse(postMock.mock.calls[0][1].body);
+      expect(parsedCalledBody.agent).toEqual({ identifier: 'support-agent' });
+    });
+
+    it('should include explicit null agent in trigger payload', async () => {
+      const requestHandler = new NovuRequestHandler({
+        frameworkName: 'test-framework',
+        workflows: [],
+        handler: vi.fn(),
+        client,
+      });
+
+      const postMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ acknowledged: true }),
+      });
+      global.fetch = postMock;
+
+      await requestHandler.triggerAction({
+        workflowId: 'test-workflow',
+        to: 'test@example.com',
+        payload: {},
+        agent: null,
+      })();
+
+      const parsedCalledBody = JSON.parse(postMock.mock.calls[0][1].body);
+      expect(parsedCalledBody.agent).toBeNull();
+    });
   });
 
   describe('validateHmac', () => {

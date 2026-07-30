@@ -3,6 +3,7 @@ import {
   AddressingTypeEnum,
   ContextPayload,
   StatelessControls,
+  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
@@ -23,6 +24,11 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   overrides: TriggerOverrides;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  agent?: TriggerAgentOverride;
 
   @IsString()
   @IsDefined()

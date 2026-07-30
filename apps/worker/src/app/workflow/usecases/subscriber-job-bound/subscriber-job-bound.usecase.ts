@@ -212,6 +212,7 @@ export class SubscriberJobBound {
       identifier,
       organizationId,
       overrides: command.overrides,
+      ...(command.agent !== undefined && { agent: command.agent }),
       payload: command.payload,
       subscriber: subscriberProcessed,
       template,

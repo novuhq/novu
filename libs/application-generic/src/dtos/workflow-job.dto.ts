@@ -3,6 +3,7 @@ import {
   AddressingTypeEnum,
   ContextPayload,
   StatelessControls,
+  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
@@ -31,6 +32,7 @@ export type IWorkflowDataDto = {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  agent?: TriggerAgentOverride;
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;

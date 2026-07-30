@@ -23,6 +23,7 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
+  AgentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
@@ -81,7 +82,8 @@ export class ParseEventRequest {
     private featureFlagService: FeatureFlagsService,
     private traceLogRepository: TraceLogRepository,
     protected moduleRef: ModuleRef,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private agentRepository: AgentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -92,6 +94,10 @@ export class ParseEventRequest {
     const requestId = command.requestId;
 
     try {
+      if (command.agent != null) {
+        await this.validateTriggerAgent(command);
+      }
+
       const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
 
       if (statelessWorkflowAllowed) {
@@ -439,6 +445,26 @@ export class ParseEventRequest {
       ...(activityFeedLink ? { activityFeedLink } : {}),
       jobData: command.skipQueueInsertion ? jobData : undefined,
     };
+  }
+
+  private async validateTriggerAgent(command: ParseEventRequestCommand): Promise<void> {
+    const agentIdentifier = command.agent?.identifier;
+    if (!agentIdentifier) {
+      return;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: agentIdentifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    if (!agent) {
+      throw new BadRequestException(`Agent with identifier "${agentIdentifier}" was not found.`);
+    }
   }
 
   private isStatelessWorkflowAllowed(bridgeUrl: string | undefined) {

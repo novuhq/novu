@@ -63,6 +63,7 @@ export class ProcessBulkTrigger {
                 requestId: command.requestId,
                 workflow,
                 skipQueueInsertion: true,
+                ...(event.agent !== undefined && { agent: event.agent }),
               })
             )) as unknown as TriggerEventResponseDto;
 

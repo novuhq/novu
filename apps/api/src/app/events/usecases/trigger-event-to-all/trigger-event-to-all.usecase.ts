@@ -24,6 +24,7 @@ export class TriggerEventToAll {
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
         bridgeUrl: command.bridgeUrl,
         requestId: command.requestId,
+        ...(command.agent !== undefined && { agent: command.agent }),
       })
     );
 

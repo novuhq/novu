@@ -218,6 +218,7 @@ export class CreateNotificationJobs {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
+      ...(command.agent !== undefined && { agent: command.agent }),
       tenant: command.tenant,
       step: this.buildStepForJob(step, command, isJobStepDedupEnabled),
       transactionId: command.transactionId,
@@ -324,6 +325,7 @@ export class CreateNotificationJobs {
       identifier: command.identifier,
       payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
+      ...(command.agent !== undefined && { agent: command.agent }),
       tenant: command.tenant,
       step: {
         bridgeUrl: command.bridgeUrl,

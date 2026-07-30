@@ -6,6 +6,7 @@ import {
   ITenantDefine,
   StatelessControls,
   SubscriberSourceEnum,
+  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
@@ -22,6 +23,7 @@ export interface IProcessSubscriberDataDto {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  agent?: TriggerAgentOverride;
   tenant?: ITenantDefine;
   actor?: SubscriberEntity;
   contextKeys: string[];

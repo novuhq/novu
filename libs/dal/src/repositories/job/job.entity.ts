@@ -5,6 +5,7 @@ import {
   IWorkflowStepMetadata,
   JobStatusEnum,
   StepTypeEnum,
+  TriggerAgentOverride,
   TriggerOverrides,
   WorkflowPreferences,
 } from '@novu/shared';
@@ -26,6 +27,7 @@ export class JobEntity {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  agent?: TriggerAgentOverride;
   step: NotificationStepEntity;
   tenant?: ITenantDefine;
   transactionId: string;

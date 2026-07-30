@@ -27,6 +27,9 @@ const jobSchema = new Schema<JobDBModel>(
     overrides: {
       type: Schema.Types.Mixed,
     },
+    agent: {
+      type: Schema.Types.Mixed,
+    },
     tenant: {
       type: Schema.Types.Mixed,
     },

@@ -6,10 +6,11 @@ import {
   ProvidersIdEnum,
   SeverityLevelEnum,
   StatelessControls,
+  TriggerAgentOverride,
   TriggerOverrides,
   WorkflowPreferences,
 } from '@novu/shared';
-import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 import { SubscriberTopicPreference } from '../../dtos';
@@ -21,6 +22,11 @@ export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   overrides: TriggerOverrides;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  agent?: TriggerAgentOverride;
 
   @IsDefined()
   payload: any;

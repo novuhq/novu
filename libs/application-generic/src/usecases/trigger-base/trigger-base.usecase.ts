@@ -7,6 +7,7 @@ import {
   ResourceEnum,
   StatelessControls,
   SubscriberSourceEnum,
+  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
@@ -29,6 +30,7 @@ export type BaseTriggerCommand = {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  agent?: TriggerAgentOverride;
   template: NotificationTemplateEntity;
   actor?: SubscriberEntity | undefined;
   contextKeys: string[];

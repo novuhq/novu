@@ -15,6 +15,7 @@ import {
   MailFactory,
   messageWebhookMapper,
   ResolveAgentInboundAddresses,
+  resolveEffectiveTriggerAgent,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -235,7 +236,7 @@ export class SendMessageEmail extends SendMessageBase {
       if (stepReplyTo) {
         replyToAddress = stepReplyTo;
       } else {
-        const workflowAgent = command.workflow?.agent ?? null;
+        const workflowAgent = resolveEffectiveTriggerAgent(command.job.agent, command.workflow?.agent);
 
         if (workflowAgent) {
           try {
@@ -386,7 +387,7 @@ export class SendMessageEmail extends SendMessageBase {
     let resolvedSenderName = bridgeFrom?.name || senderName;
 
     if ((!resolvedFromEmail || !resolvedSenderName) && !useProviderDefaults) {
-      const workflowAgent = command.workflow?.agent ?? null;
+      const workflowAgent = resolveEffectiveTriggerAgent(command.job.agent, command.workflow?.agent);
 
       if (workflowAgent) {
         try {

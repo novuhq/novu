@@ -7,10 +7,11 @@ import {
   ITenantDefine,
   StatelessControls,
   SubscriberSourceEnum,
+  TriggerAgentOverride,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
-import { IsArray, IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 
 export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -31,6 +32,11 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   overrides: TriggerOverrides;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  agent?: TriggerAgentOverride;
 
   @IsOptional()
   @ValidateNested()
