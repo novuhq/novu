@@ -35,6 +35,22 @@ describe('mergeProviderPreview', () => {
     expect(result.defaultContentKey).toBeUndefined();
   });
 
+  it('fills the grafana title from body when only message is overridden', () => {
+    const result = mergeProviderPreview({
+      body: 'Disk usage above threshold',
+      providerId: ToolProviderIdEnum.Grafana,
+      override: { message: 'Node db-1 is at 94% of its volume' },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        message: 'Node db-1 is at 94% of its volume',
+        title: 'Disk usage above threshold',
+      },
+      defaultContentKey: 'title',
+    });
+  });
+
   it('keeps webhook overrides unchanged when no primary content key exists', () => {
     expect(
       mergeProviderPreview({

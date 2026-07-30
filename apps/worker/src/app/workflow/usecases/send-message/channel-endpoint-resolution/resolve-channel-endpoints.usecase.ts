@@ -32,6 +32,8 @@ type EndpointStoredSecretConfig = {
 const ENDPOINT_STORED_SECRET_CONFIGS: Partial<Record<string, EndpointStoredSecretConfig>> = {
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', requiredFields: ['routingKey', 'region'] },
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', requiredFields: ['apiKey', 'region'] },
+  // authToken is optional and therefore not listed as required.
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: { providerLabel: 'Grafana', requiredFields: ['url'] },
   [ENDPOINT_TYPES.TOOL_WEBHOOK]: { providerLabel: 'Tool Webhook', requiredFields: ['url'] },
 };
 
@@ -190,7 +192,7 @@ export class ResolveChannelEndpoints {
    * Extracts token / hydrated endpoint data based on type
    * - MS Teams: Fetches Bot Framework token from Microsoft
    * - Slack / Webex: Reads the OAuth token from the connection, refreshing rotation-enabled tokens
-   * - PagerDuty / Opsgenie / Tool Webhook: Decrypts secrets from endpoint.endpoint and hydrates the endpoint wire shape
+   * - PagerDuty / Opsgenie / Grafana / Tool Webhook: Decrypts secrets from endpoint.endpoint and hydrates the endpoint wire shape
    */
   private async extractToken(
     endpoint: ChannelEndpointEntity,

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OPSGENIE_API_KEY_PATTERN } from '@novu/shared';
-import { IsIn, IsObject, IsOptional, IsString, Matches } from 'class-validator';
+import { GRAFANA_ONCALL_WEBHOOK_URL_PATTERN, OPSGENIE_API_KEY_PATTERN } from '@novu/shared';
+import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 export class SlackChannelEndpointDto {
   @ApiProperty({
@@ -158,6 +158,32 @@ export class PagerDutyServiceEndpointDto {
   })
   @IsIn(['us', 'eu'])
   region: 'us' | 'eu';
+}
+
+export class GrafanaOnCallIntegrationEndpointDto {
+  @ApiProperty({
+    description:
+      'Grafana IRM/OnCall incoming-webhook (Formatted Webhook) integration URL. The routing secret is embedded in the URL path. Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/',
+    type: String,
+  })
+  @IsString()
+  @Matches(GRAFANA_ONCALL_WEBHOOK_URL_PATTERN, {
+    message:
+      'url must be an HTTPS Grafana IRM/OnCall Formatted Webhook URL ending in /integrations/v1/formatted_webhook/<token>/',
+  })
+  url: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Optional Grafana service account bearer token, required when the integration enforces authenticated ingestion. Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'glsa_abc123...',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  authToken?: string;
 }
 
 export class ToolWebhookEndpointDto {

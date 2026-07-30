@@ -1656,6 +1656,16 @@ export const pagerdutyConfig: IConfigCredential[] = [];
  */
 export const opsgenieConfig: IConfigCredential[] = [];
 
+/**
+ * Grafana is routed per subscriber: the IRM/OnCall incoming-webhook URL and
+ * optional bearer token live encrypted on the per-subscriber
+ * `ChannelEndpoint.endpoint`, provisioned via `POST /v1/channel-endpoints`
+ * with `type: grafana_oncall_integration`. The env-level integration record
+ * is an anchor only (identifier + name); no fields are configured on the
+ * integration itself.
+ */
+export const grafanaConfig: IConfigCredential[] = [];
+
 export const toolWebhookConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.RoutingMode,

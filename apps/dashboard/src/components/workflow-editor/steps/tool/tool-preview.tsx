@@ -1,13 +1,17 @@
 import {
   ChannelTypeEnum,
   type GeneratePreviewResponseDto,
+  getProviderPrimaryContentKey,
   ToolProviderIdEnum,
   type ToolRenderOutput,
 } from '@novu/shared';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
-import { DEFAULT_CONTENT_SOURCE } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
+import {
+  DEFAULT_CONTENT_SOURCE,
+  type ProviderOverrideOption,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import { ContentSourceSelector } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-selector';
 import {
@@ -28,6 +32,17 @@ type ToolPreviewProps = {
 };
 
 const EMPTY_BODY_PLACEHOLDER = 'Default content will be delivered to enabled tools';
+
+function formatConnectedPrimaryContentHints(providerOptions: ProviderOverrideOption[]): string {
+  return providerOptions
+    .filter((option) => option.isConnected)
+    .flatMap((option) => {
+      const primaryKey = getProviderPrimaryContentKey(option.providerId);
+
+      return primaryKey ? [`${option.displayName}: ${primaryKey}`] : [];
+    })
+    .join(' · ');
+}
 
 function extractToolPreview(previewData?: GeneratePreviewResponseDto): ToolRenderOutput | undefined {
   const previewResult = previewData?.result as ToolPreviewResult | undefined;
@@ -91,7 +106,13 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
 
   const getHintText = () => {
     if (!activeProviderId) {
-      return "This message is delivered to every enabled tool provider, mapped to each provider's primary content field.";
+      const defaultContentMapping = formatConnectedPrimaryContentHints(providerOptions);
+
+      if (!defaultContentMapping) {
+        return 'Delivered to every enabled tool provider.';
+      }
+
+      return `Delivered to every enabled tool provider — ${defaultContentMapping}.`;
     }
 
     if (isWebhookPreview) {
@@ -120,7 +141,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     return <div className={`${PREVIEW_PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
   };
 
-  let previewLabel = 'Message';
+  let previewLabel = 'Default content';
   if (activeProviderId) {
     previewLabel = 'Merged override fields';
   }

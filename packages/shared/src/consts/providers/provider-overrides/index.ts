@@ -11,6 +11,7 @@ import {
 } from './provider-override-registry';
 
 export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
+export { grafanaOverrideJsonSchema } from './grafana-override.schema';
 export { LIQUID_TEMPLATE_PATTERN, toLiquidTolerantSchema } from './liquid-tolerant';
 export {
   type MergedProviderPreview,

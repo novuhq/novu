@@ -1,5 +1,6 @@
 import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
 import { ChannelTypeEnum, ChatProviderIdEnum, StepTypeEnum, ToolProviderIdEnum } from '../../../types';
+import { grafanaOverrideJsonSchema } from './grafana-override.schema';
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
@@ -67,12 +68,14 @@ export type ProviderOverrideConfig = {
 export const PROVIDER_OVERRIDE_SCHEMAS = {
   [ToolProviderIdEnum.PagerDuty]: pagerdutyOverrideJsonSchema,
   [ToolProviderIdEnum.Opsgenie]: opsgenieOverrideJsonSchema,
+  [ToolProviderIdEnum.Grafana]: grafanaOverrideJsonSchema,
 } as const satisfies Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum, JSONSchemaDto>>;
 
 /** Top-level override keys for each provider — shared by validation and UI. */
 export const PROVIDER_OVERRIDE_KEYS = {
   [ToolProviderIdEnum.PagerDuty]: Object.keys(pagerdutyOverrideJsonSchema.properties),
   [ToolProviderIdEnum.Opsgenie]: Object.keys(opsgenieOverrideJsonSchema.properties),
+  [ToolProviderIdEnum.Grafana]: Object.keys(grafanaOverrideJsonSchema.properties),
   [ChatProviderIdEnum.Slack]: SLACK_OVERRIDE_KEYS,
   [ChatProviderIdEnum.Telegram]: TELEGRAM_OVERRIDE_KEYS,
   [ChatProviderIdEnum.WhatsAppBusiness]: WHATSAPP_OVERRIDE_KEYS,
@@ -102,6 +105,11 @@ const TOOL_PROVIDER_OVERRIDE_CONFIGS = {
     opsgenieOverrideJsonSchema,
     PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie],
     'message'
+  ),
+  [ToolProviderIdEnum.Grafana]: schemaBacked(
+    grafanaOverrideJsonSchema,
+    PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Grafana],
+    'title'
   ),
   [ToolProviderIdEnum.Webhook]: escapeHatch(null),
 } satisfies Record<ToolProviderIdEnum, ProviderOverrideConfig>;

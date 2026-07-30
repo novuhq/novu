@@ -12,6 +12,7 @@ import {
   getToolProviderOverrideKeysOnlySchema,
   getToolProviderOverrideSchema,
   getToolProviderPrimaryContentKey,
+  grafanaOverrideJsonSchema,
   mergeProviderPreview,
   mergeToolProviderPreview,
   opsgenieOverrideJsonSchema,
@@ -35,6 +36,7 @@ describe('provider override registry', () => {
     expect(TOOL_CONTENT_OVERRIDE_PROVIDER_IDS).toEqual([
       ToolProviderIdEnum.PagerDuty,
       ToolProviderIdEnum.Opsgenie,
+      ToolProviderIdEnum.Grafana,
       ToolProviderIdEnum.Webhook,
     ]);
   });
@@ -48,8 +50,10 @@ describe('provider override registry', () => {
   it('maps each tool provider to a strict object schema', () => {
     expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.PagerDuty]).toBe(pagerdutyOverrideJsonSchema);
     expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Opsgenie]).toBe(opsgenieOverrideJsonSchema);
+    expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Grafana]).toBe(grafanaOverrideJsonSchema);
     expect(pagerdutyOverrideJsonSchema.additionalProperties).toBe(false);
     expect(opsgenieOverrideJsonSchema.additionalProperties).toBe(false);
+    expect(grafanaOverrideJsonSchema.additionalProperties).toBe(false);
   });
 
   it('keeps documented free-form maps permissive', () => {
@@ -62,6 +66,8 @@ describe('provider override registry', () => {
     expect(pagerdutyOverrideJsonSchema.properties?.severity).toBeDefined();
     expect(opsgenieOverrideJsonSchema.properties?.message).toBeDefined();
     expect(opsgenieOverrideJsonSchema.properties?.priority).toBeDefined();
+    expect(grafanaOverrideJsonSchema.properties?.title).toBeDefined();
+    expect(grafanaOverrideJsonSchema.properties?.message).toBeDefined();
   });
 
   it('exposes a key inventory that matches each eager schema property set', () => {
@@ -70,6 +76,9 @@ describe('provider override registry', () => {
     );
     expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie]).toEqual(
       Object.keys(opsgenieOverrideJsonSchema.properties)
+    );
+    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Grafana]).toEqual(
+      Object.keys(grafanaOverrideJsonSchema.properties)
     );
     expect(getProviderOverrideKeys(ToolProviderIdEnum.PagerDuty)).toEqual(
       PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]
@@ -109,6 +118,7 @@ describe('provider override registry', () => {
     expect(getProviderPrimaryContentKey(ChatProviderIdEnum.GrafanaOnCall)).toBe('message');
     expect(getProviderPrimaryContentKey(ToolProviderIdEnum.PagerDuty)).toBe('summary');
     expect(getProviderPrimaryContentKey(ToolProviderIdEnum.Opsgenie)).toBe('message');
+    expect(getProviderPrimaryContentKey(ToolProviderIdEnum.Grafana)).toBe('title');
   });
 
   it('uses dotted paths for providers that nest their content under a stable object key', () => {
@@ -189,9 +199,11 @@ describe('provider override registry', () => {
     expect(Object.keys(TOOL_PROVIDER_PRIMARY_CONTENT_KEY)).toEqual([
       ToolProviderIdEnum.PagerDuty,
       ToolProviderIdEnum.Opsgenie,
+      ToolProviderIdEnum.Grafana,
     ]);
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.PagerDuty]).toBe('summary');
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Opsgenie]).toBe('message');
+    expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Grafana]).toBe('title');
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Webhook]).toBeUndefined();
     expect(getToolProviderPrimaryContentKey(ChatProviderIdEnum.Line)).toBeUndefined();
     expect(PROVIDER_PRIMARY_CONTENT_KEY[ChatProviderIdEnum.Line]).toBeNull();
