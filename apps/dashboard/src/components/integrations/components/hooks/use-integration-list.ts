@@ -2,7 +2,6 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
-  FeatureFlagsKeysEnum,
   IProviderConfig,
   NOVU_PROVIDERS,
   ProvidersIdEnum,
@@ -12,21 +11,15 @@ import {
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { useMemo } from 'react';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export function useIntegrationList(searchQuery: string = '') {
   const normalizedSearchQuery = searchQuery.trim();
-  const isToolWebhookProviderEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_WEBHOOK_PROVIDER_ENABLED);
 
   const catalogProviders = useMemo(() => {
     if (!providers) return [];
 
-    return providers.filter(
-      (provider: IProviderConfig) =>
-        !NOVU_PROVIDERS.includes(provider.id) &&
-        (isToolWebhookProviderEnabled || provider.id !== ToolProviderIdEnum.Webhook)
-    );
-  }, [isToolWebhookProviderEnabled]);
+    return providers.filter((provider: IProviderConfig) => !NOVU_PROVIDERS.includes(provider.id));
+  }, []);
 
   const filteredIntegrations = useMemo(() => {
     const filtered = catalogProviders.filter((provider: IProviderConfig) =>
@@ -67,7 +60,12 @@ export function useIntegrationList(searchQuery: string = '') {
         ChatProviderIdEnum.Mattermost,
         ChatProviderIdEnum.ChatWebhook,
       ],
-      [ChannelTypeEnum.TOOL]: [ToolProviderIdEnum.PagerDuty, ToolProviderIdEnum.Opsgenie, ToolProviderIdEnum.Webhook],
+      [ChannelTypeEnum.TOOL]: [
+        ToolProviderIdEnum.PagerDuty,
+        ToolProviderIdEnum.Opsgenie,
+        ToolProviderIdEnum.Grafana,
+        ToolProviderIdEnum.Webhook,
+      ],
       [ChannelTypeEnum.IN_APP]: [],
     };
 

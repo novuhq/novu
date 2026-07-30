@@ -1,42 +1,31 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { type OverrideFieldSchema } from '@/components/workflow-editor/steps/shared/provider-overrides/override-field-schema';
+import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import {
-  buildToolOverrideProviderOptions,
-  isToolContentOverrideProviderId,
-  type ToolProviderOverrides,
-} from './tool-content-source';
-
-const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
+import { getActiveWebhookSchemaSources, mergeWebhookPayloadSchemas } from './webhook-payload-schema';
 
 export function useToolOverrideProviderOptions() {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
-  const { watch } = useFormContext();
-  const providerOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined;
+  const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.TOOL);
 
-  const providerOptions = useMemo(() => {
-    const activeProviderIds = new Set<string>();
+  const webhookPayloadSchema = useMemo(() => {
+    const environmentIntegrations = (integrations ?? []).filter(
+      (integration) =>
+        integration.channel === ChannelTypeEnum.TOOL && integration._environmentId === currentEnvironment?._id
+    );
 
-    for (const integration of integrations ?? []) {
-      if (
-        integration.active &&
-        !integration.deleted &&
-        integration.channel === ChannelTypeEnum.TOOL &&
-        integration._environmentId === currentEnvironment?._id &&
-        isToolContentOverrideProviderId(integration.providerId)
-      ) {
-        activeProviderIds.add(integration.providerId);
-      }
-    }
+    return mergeWebhookPayloadSchemas(getActiveWebhookSchemaSources(environmentIntegrations));
+  }, [currentEnvironment?._id, integrations]);
 
-    return buildToolOverrideProviderOptions({
-      activeProviderIds,
-      providerOverrides,
-    });
-  }, [integrations, currentEnvironment?._id, providerOverrides]);
+  // Stable identity: the override editor memoizes its completion source and supported-field rows
+  // on this object, so a fresh wrapper per render would invalidate both on every keystroke.
+  const webhookRootSchema = useMemo(
+    (): OverrideFieldSchema => ({ type: 'object', properties: webhookPayloadSchema.properties }),
+    [webhookPayloadSchema]
+  );
 
-  return { providerOptions, providerOverrides };
+  return { providerOptions, providerOverrides, webhookPayloadSchema, webhookRootSchema };
 }

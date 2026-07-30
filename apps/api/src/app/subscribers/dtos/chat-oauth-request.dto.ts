@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
 export class ChatOauthRequestDto {
@@ -33,4 +33,12 @@ export class ChatOauthCallbackRequestDto extends ChatOauthRequestDto {
   })
   @IsString()
   code: string; // Make sure to define code as optional
+
+  @ApiPropertyOptional({
+    description: 'Signed state issued by the chat OAuth endpoint and echoed back by the provider',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  state?: string;
 }

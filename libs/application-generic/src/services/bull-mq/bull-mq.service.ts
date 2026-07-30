@@ -11,6 +11,7 @@ import {
   QueueBaseOptions,
   QueueOptions,
   ConnectionOptions as RedisConnectionOptions,
+  UnrecoverableError,
   Worker,
   WorkerOptions,
 } from 'bullmq';
@@ -37,6 +38,7 @@ export {
   Worker,
   WorkerOptions,
   BulkJobOptions,
+  UnrecoverableError,
 };
 
 export class BullMqService {

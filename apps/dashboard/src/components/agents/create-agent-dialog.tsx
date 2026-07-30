@@ -743,6 +743,7 @@ export function CreateAgentDialog({
                 integrations={integrations}
                 status={dropdownStatus}
                 showStatusBadge={showSavedBadge}
+                disabled={isSubmitBusy}
                 onSelectConnector={handleSelectConnector}
                 onSelectIntegration={handleSelectIntegration}
                 onRequestSetupCredentials={handleRequestSetupCredentials}

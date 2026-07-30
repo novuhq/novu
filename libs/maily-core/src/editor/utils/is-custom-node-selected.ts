@@ -3,6 +3,7 @@ import Image from '@tiptap/extension-image';
 import { HorizontalRule } from '../extensions/horizontal-rule';
 import { LinkCardExtension } from '../extensions/link-card';
 import { ButtonExtension } from '../nodes/button/button';
+import { CardButtonExtension } from '../nodes/card-button/card-button';
 import { HTMLCodeBlockExtension } from '../nodes/html/html';
 import { ImageExtension } from '../nodes/image/image';
 import { InlineImageExtension } from '../nodes/inline-image/inline-image';
@@ -20,6 +21,7 @@ export const isCustomNodeSelected = (editor: Editor, node: HTMLElement) => {
     LinkCardExtension.name,
     LogoExtension.name,
     ButtonExtension.name,
+    CardButtonExtension.name,
     HTMLCodeBlockExtension.name,
     InlineImageExtension.name,
   ];

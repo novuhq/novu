@@ -116,6 +116,19 @@ export class OutboundGateway {
       options,
       target.workspaceId
     );
+
+    // Web chat has no external platform id — durable activity id ≡ platformMessageId.
+    // Prefer the caller's activityIdentifier (AgentEvent messageId) so event→activity
+    // idempotency and history rehydration share one id; otherwise use the id minted
+    // by adapter deliverMessage.
+    if (target.platform === AgentPlatformEnum.WEB_CHAT) {
+      const messageId = persist.activityIdentifier ?? sent.messageId;
+      const aligned = { ...sent, messageId };
+      await this.persistDelivered({ ...persist, activityIdentifier: messageId }, aligned, msg);
+
+      return aligned;
+    }
+
     await this.persistDelivered(persist, sent, msg);
 
     return sent;
@@ -195,6 +208,7 @@ export class OutboundGateway {
         conversationId: opts.persist.conversationId,
         channel: opts.persist.channel,
         platformMessageId: sent.id,
+        identifier: sent.id,
         agentIdentifier: opts.persist.agentIdentifier,
         content: opts.persist.content,
         richContent: opts.persist.richContent,
@@ -293,6 +307,10 @@ export class OutboundGateway {
     workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+    if (config.platform === AgentPlatformEnum.WEB_CHAT) {
+      return;
+    }
 
     if (config.platform === AgentPlatformEnum.SLACK) {
       await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId, workspaceId);

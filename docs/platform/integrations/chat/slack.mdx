@@ -19,12 +19,12 @@ This guide walks you through setting up Slack chat, connect workspaces, and deli
     Trigger a workflow to deliver a message to a subscriber's Slack channel, DM, or webhook.
   </Card>
   <Card title="Format with Block Kit" icon="layout-template" href="#format-messages-with-block-kit">
-    Send rich Slack messages with sections, buttons, and context blocks using trigger overrides or Framework.
+    Send rich Slack messages with sections, buttons, and context blocks from the workflow editor or at trigger time.
   </Card>
 </CardGroup>
 
 <Note>
-  The Chat step in the dashboard sends plain text by default. To send [Slack Block Kit](https://api.slack.com/block-kit) messages from a dashboard workflow, pass `blocks` in [trigger overrides](/platform/integrations/trigger-overrides) when you call the API. See [Format messages with Block Kit](#format-messages-with-block-kit) for examples, including `_passthrough` for raw Slack API fields.
+  The Chat step body is plain text. To send [Slack Block Kit](https://api.slack.com/block-kit) messages, either save a Slack content override on the Chat step in the workflow editor (rolling out gradually — see [Configure Slack overrides in the dashboard](#configure-slack-overrides-in-the-dashboard)), or pass `blocks` in [trigger overrides](/platform/integrations/trigger-overrides) when you call the API.
 </Note>
 
 <Note>
@@ -34,11 +34,6 @@ This guide walks you through setting up Slack chat, connect workspaces, and deli
 ## Configure a Slack app
 
 Before integrating Slack chat with Novu, you must create and configure a Slack app. The Slack app manages the OAuth permissions, bot token scopes, and redirect URLs needed for Novu to connect to your users' workspaces securely.
-
-<Warning>
-  **Token rotation is not supported.** Novu does not currently support Slack apps with **token rotation** enabled. If token rotation is turned on in your Slack app settings, bot tokens expire after about 12 hours and message delivery fails with errors such as `token_revoked` or `invalid_auth` until the workspace is manually reconnected.
-  Keep token rotation **disabled** on your Slack app until this is supported. Reach out to support@novu.co if this is a blocker for your usecase.
-</Warning>
 
 ### Create a Slack app
 First, you need to create a Slack app. This provides you with the credential you need to create a Slack integration in Novu.
@@ -358,6 +353,8 @@ await novu.channelConnections.create({
   },
 });
 ```
+
+  If your app uses short-lived tokens, see [Token rotation](#token-rotation) for the additional credentials to register.
 </Note>
 
 ## Choose delivery destinations
@@ -875,21 +872,21 @@ When the workflow is triggered, Novu will:
   </Step>
 </Steps>
 
-<Note>
-  **Message formatting:** The dashboard Chat step editor supports a plain text `body`. For rich Slack messages (sections, buttons, context blocks), use trigger overrides at send time or Framework provider overrides in code-first workflows. Digest summaries in the dashboard work as plain text using [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables).
-</Note>
-
 ## Format messages with Block Kit
 
-The Chat step in the Novu dashboard sends a plain text message body to Slack. There is no Block Kit editor in the workflow UI today.
+The Chat step body itself is plain text. To send richer Slack messages, layer a **Slack content override** on top of it. An override is a JSON object whose keys map to [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) arguments, and Novu merges it into the request it sends to Slack.
 
-You still have a few ways to send richer Slack messages:
+You can supply that object from three places:
 
 | Approach | Best for |
 | --- | --- |
-| **Chat step body (dashboard)** | Plain text summaries, including [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) |
-| **Trigger overrides (API)** | Block Kit sections, buttons, and context blocks built from your trigger payload |
-| **Framework provider overrides** | Full Block Kit control in code-first workflows, including dynamic digest formatting |
+| **Slack overrides on the step (dashboard)** | Block Kit that is part of the workflow itself, saved and versioned with the step |
+| **Trigger overrides (API)** | Block Kit that only your calling code can build, decided per trigger |
+| **Framework provider overrides** | Full control in code-first workflows, including dynamic digest formatting |
+
+If you send no override at all, Slack receives the rendered Chat step body as plain text, which is enough for summaries built from [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables).
+
+Step overrides and trigger overrides are combined rather than chosen between. See [How Slack overrides are combined](#how-slack-overrides-are-combined).
 
 ### Plain text and digest summaries
 
@@ -905,9 +902,103 @@ For digest workflows built in the dashboard, use digest variables in the Chat st
 
 This renders as plain text in Slack. It does not produce Block Kit formatting such as buttons or styled sections.
 
+### Configure Slack overrides in the dashboard
+
+Save a Slack override on the Chat step and every trigger of that workflow sends it, with no change to your trigger call. The override is stored on the step, so it is versioned and promoted between environments along with the rest of the workflow.
+
+<Note>
+  Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Chat step yet. Overrides passed at trigger time work regardless.
+</Note>
+
+<Steps>
+  <Step title="Open the Chat step">
+    In the [Novu Dashboard](https://dashboard.novu.co), open your workflow and select the Chat step that uses the Slack integration.
+  </Step>
+
+  <Step title="Open the Slack overrides editor">
+    In the step editor, open the content source dropdown — it reads **Default content** until you switch it — and pick **Slack** under **Overrides**. If Slack has no override yet, use the **+** beside it to add one.
+  </Step>
+
+  <Step title="Write the override JSON">
+    Enter a JSON object of `chat.postMessage` fields. The editor autocompletes the supported field names, including inside `blocks[].elements[]`, validates the JSON, and flags unsupported fields.
+  </Step>
+
+  <Step title="Save the workflow">
+    The override applies on the next trigger.
+  </Step>
+</Steps>
+
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time, so `{{payload.*}}` and `{{subscriber.*}}` resolve the same way they do in the step body:
+
+```json
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": { "type": "plain_text", "text": "Deploy {{payload.status}}" }
+    },
+    {
+      "type": "section",
+      "fields": [
+        { "type": "mrkdwn", "text": "*Service*\n{{payload.serviceName}}" },
+        { "type": "mrkdwn", "text": "*Version*\n`{{payload.version}}`" }
+      ]
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": { "type": "plain_text", "text": "View run" },
+          "url": "{{payload.runUrl}}"
+        }
+      ]
+    }
+  ],
+  "unfurl_links": false
+}
+```
+
+#### The step body is the fallback `text`
+
+`text` is Slack's primary content field. If your override does not set `text`, Novu fills it with the rendered Chat step body.
+
+This matters because Slack uses `text` as the notification preview in the sidebar, in push notifications, and in any client that cannot render blocks. The example above sets no `text`, so the step body still travels with the message as that fallback. Write a step body that reads well on its own, and only set `text` in the override when you want the fallback to differ from the body.
+
+#### Overridable fields
+
+Every [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argument is available:
+
+| Field | Notes |
+| --- | --- |
+| `text` | Falls back to the rendered step body when omitted. |
+| `blocks` | [Block Kit](https://api.slack.com/block-kit) layout blocks. |
+| `attachments` | Legacy secondary attachments. |
+| `thread_ts` | Post as a threaded reply. |
+| `reply_broadcast` | Also surface a threaded reply in the channel. |
+| `unfurl_links` | Toggle link previews. |
+| `unfurl_media` | Toggle media previews. |
+| `mrkdwn` | Toggle Slack markdown parsing of `text`. |
+| `parse` | Slack's `none` or `full` text parsing mode. |
+| `link_names` | Auto-link channel names and usernames. |
+| `icon_emoji` | Override the bot avatar with an emoji. |
+| `icon_url` | Override the bot avatar with an image URL. |
+| `username` | Override the displayed bot name. |
+| `metadata` | Slack message metadata for event subscriptions. |
+
+By default, Novu resolves `channel` and `token` from the subscriber's Slack endpoint and workspace connection. Novu does not set `as_user` — Slack deprecated it, and Novu posts as the installed bot.
+
+If you pass `channel`, `token`, or `as_user` in step or trigger overrides (including `_passthrough.body`), Novu applies them as sent. You own the destination when you set these fields. Prefer addressing a different subscriber or topic when you want a different destination, rather than overriding routing keys.
+
+<Warning>
+  **Incoming webhook endpoints ignore some fields.** Slack's incoming webhook API is narrower than `chat.postMessage`: `thread_ts`, `metadata`, `username`, `icon_emoji`, and `icon_url` have no effect on messages delivered through a webhook URL.
+
+  Which API is used depends on how each subscriber connected — a `slack_channel` or `slack_user` endpoint posts through `chat.postMessage`, while a `webhook` endpoint, the type Slack's channel picker creates, posts through an incoming webhook. You cannot know that when authoring the workflow, so avoid depending on these five fields unless you control how every subscriber connects.
+</Warning>
+
 ### Send Block Kit with trigger overrides
 
-To send [Slack Block Kit](https://api.slack.com/block-kit) messages from a dashboard workflow, pass `blocks` in the `overrides` object when you trigger the workflow. The Chat step `body` from your template is still sent as the fallback `text` field unless you override it.
+When the message depends on data only your application has at send time, pass `blocks` in the `overrides` object when you trigger the workflow instead of saving it on the step. The Chat step `body` from your template is still sent as the fallback `text` field unless you override it.
 
 Copy the **step identifier** from your workflow in the dashboard and use it under `overrides.steps`.
 
@@ -1273,7 +1364,7 @@ If your workflow has a single Slack Chat step, you can apply Block Kit to all Sl
 
 ### Send extra Slack fields with `_passthrough`
 
-Use `_passthrough` when you need raw [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) fields that are not exposed in the dashboard. Values in `_passthrough.body` are merged last and take priority over other override fields.
+Use `_passthrough` when you need a value to win unconditionally, or to reach a [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) field Novu has not yet surfaced. Values in `_passthrough.body` are merged last and take priority over other override fields.
 
 <Tabs>
   <Tab title="Node.js">
@@ -1568,11 +1659,80 @@ curl -X POST 'https://api.novu.co/v1/events/trigger' \
   For a full guide on how overrides work, including workflow-level and step-level scopes, see [Trigger overrides](/platform/integrations/trigger-overrides).
 </Note>
 
+### How Slack overrides are combined
+
+When a Slack override exists in more than one place, Novu merges them in this order, lowest priority first:
+
+1. **Slack overrides saved on the step** — the JSON you configured in the workflow editor
+2. **Workflow-level trigger overrides** — `overrides.providers.slack` from the trigger call
+3. **Step-scoped trigger overrides** — `overrides.steps.<step-id>.providers.slack` from the trigger call
+
+Runtime always wins: an override sent at trigger time replaces the value saved on the step for the same field. Fields you do not send at trigger time keep their configured values, so you can save a full Block Kit layout on the step and override only `unfurl_links` per trigger.
+
+`_passthrough.body` sits outside this ordering. Wherever it appears, it is merged last and takes priority over every field above. See [Send extra Slack fields with `_passthrough`](#send-extra-slack-fields-with-_passthrough).
+
+<Warning>
+  **Arrays replace, they do not merge.** When the same array key appears at two levels, the higher-priority array is used whole. A trigger override of `blocks` with one block replaces a configured `blocks` array of three blocks — the result is a one-block message, not a three-block message with the first one patched.
+
+  This is a change from earlier behavior, where arrays were merged element by element and a partial `blocks` array could silently corrupt a Block Kit layout. If you relied on index-wise merging, send the complete array at trigger time instead.
+</Warning>
+
 ### Block Kit with digest workflows
 
 Trigger overrides are set when you call the trigger API. They work well when each trigger carries the data you need to build the message.
 
-For [digest workflows](/platform/workflow/add-and-configure-steps/configure-action-steps/digest), Novu batches multiple triggers into one notification. The Chat step body can use [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) to summarize batched events, but `overrides` are not re-evaluated with that aggregated data. To build Block Kit dynamically from a digest batch, use [Framework provider overrides](/framework/typescript/steps#provider-overrides) in a code-first workflow.
+For [digest workflows](/platform/workflow/add-and-configure-steps/configure-action-steps/digest), Novu batches multiple triggers into one notification. The Chat step body can use [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) to summarize batched events, but trigger `overrides` are fixed when you call the API and are not re-evaluated against that aggregated data. To build Block Kit dynamically from a digest batch, use [Framework provider overrides](/framework/typescript/steps#providers-overrides-object) in a code-first workflow.
+
+## Token rotation
+
+Slack token rotation replaces long-lived bot tokens with short-lived access tokens and single-use refresh tokens. Novu stores the credentials returned during OAuth and refreshes the bot token automatically before it expires.
+
+Apps created through Novu's **quick setup** (App Configuration Token) or the setup guide's manifest have token rotation enabled by default. Enabling token rotation on a Slack app is irreversible. Apps without token rotation continue to work with their long-lived bot tokens.
+
+### How token rotation works
+
+When a user connects a workspace, Slack's `oauth.v2.access` response includes:
+
+- `access_token`: the short-lived bot token used to call Slack APIs
+- `refresh_token`: a single-use token used to request the next access token
+- `expires_in`: the access token lifetime in seconds
+
+Novu converts the lifetime into an expiry time and refreshes the access token before it expires. Slack returns a new access token and refresh token after each successful refresh, and Novu stores the new pair for the next rotation.
+
+### Register rotated credentials when handling OAuth yourself
+
+If you handle OAuth yourself and create the channel connection through the API, pass the access token, refresh token, and expiry time:
+
+```tsx
+await novu.channelConnections.create({
+  integrationIdentifier: 'slack',
+  subscriberId: 'user-123',
+  context: { tenant: 'acme' },
+  workspace: {
+    id: authData.team.id,
+    name: authData.team.name,
+  },
+  auth: {
+    accessToken: authData.access_token,
+    refreshToken: authData.refresh_token,
+    expiresAt: new Date(Date.now() + authData.expires_in * 1000).toISOString(),
+  },
+});
+```
+
+Your Novu Slack integration must have the same **Client ID** and **Client Secret** that issued the token. Novu uses these credentials during refresh, and rejects the request if they are missing. If you omit `expiresAt`, Novu treats the token as expiring and refreshes it on the first send.
+
+Slack refresh tokens are single-use, so only pass a token that has not already been exchanged elsewhere.
+
+### Troubleshoot token rotation
+
+If deliveries fail with `token_revoked` or `invalid_auth`, reconnect the workspace through OAuth. Reconnecting captures a new refresh token and is required when:
+
+- The workspace was connected before token rotation was enabled
+- The workspace was connected before Novu supported token rotation
+- The refresh token was regenerated in Slack
+
+Reconnect using the same [`SlackConnectButton`](/agents/custom-code-agent/connect-components) (or the agent's install control) that created the connection: click the connected control to disconnect, then click again to run OAuth and store a fresh access token and refresh token pair. This applies equally to a workflow subscriber's connection and to an agent's own workspace connection — each is reconnected from wherever it was originally installed.
 
 ## Using Slack with agents
 

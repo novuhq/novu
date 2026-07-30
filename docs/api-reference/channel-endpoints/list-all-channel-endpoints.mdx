@@ -2,3 +2,18 @@
 title: "List all channel endpoints"
 openapi: "GET /v1/channel-endpoints"
 ---
+
+List channel endpoints for your environment. Filter by `subscriberId`, `integrationIdentifier`, `channel`, `providerId`, and other query parameters supported by the API.
+
+## List `tool_webhook` endpoints
+
+Fetch every Tool Webhook destination registered for a subscriber on a dynamic integration:
+
+```bash
+curl -L 'https://api.novu.co/v1/channel-endpoints?subscriberId=user-123&integrationIdentifier=tool-webhook' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+
+Each item with `type: "tool_webhook"` includes the decrypted wire shape `{ url, headers?, method? }`. A subscriber may have **multiple** rows for the same integration — one per registered destination URL.
+
+See the [Tool Webhook setup guide](/platform/integrations/tool/webhook) for creating and managing dynamic endpoints.

@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ToolProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
-import { opsgenieConfig, pagerdutyConfig, toolWebhookConfig } from '../credentials';
+import { grafanaConfig, opsgenieConfig, pagerdutyConfig, toolWebhookConfig } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 
 export const toolProviders: IProviderConfig[] = [
@@ -23,11 +23,20 @@ export const toolProviders: IProviderConfig[] = [
     betaVersion: true,
   },
   {
+    id: ToolProviderIdEnum.Grafana,
+    displayName: 'Grafana',
+    channel: ChannelTypeEnum.TOOL,
+    credentials: grafanaConfig,
+    docReference: `https://docs.novu.co/platform/integrations/tool/grafana${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'grafana-on-call.svg', dark: 'grafana-on-call.svg' },
+    betaVersion: true,
+  },
+  {
     id: ToolProviderIdEnum.Webhook,
     displayName: 'Tool webhook',
     channel: ChannelTypeEnum.TOOL,
     credentials: toolWebhookConfig,
-    docReference: `https://docs.novu.co/platform/integrations${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/tool/webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'tool-webhook.svg', dark: 'tool-webhook.svg' },
     betaVersion: true,
   },

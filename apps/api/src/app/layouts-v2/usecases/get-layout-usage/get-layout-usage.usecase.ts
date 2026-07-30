@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GetLayoutCommand, GetLayoutUseCase, InstrumentUsecase } from '@novu/application-generic';
+import { GetLayoutCommand, GetLayoutUseCase, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
 import { GetLayoutUsageResponseDto, WorkflowInfoDto } from '../../dtos';
@@ -10,8 +10,11 @@ export class GetLayoutUsageUseCase {
   constructor(
     private controlValuesRepository: ControlValuesRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private getLayoutUseCase: GetLayoutUseCase
-  ) {}
+    private getLayoutUseCase: GetLayoutUseCase,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: GetLayoutUsageCommand): Promise<GetLayoutUsageResponseDto> {
@@ -43,13 +46,15 @@ export class GetLayoutUsageUseCase {
       try {
         const workflow = await this.notificationTemplateRepository.findById(workflowId, command.environmentId);
 
-        if (workflow && workflow.triggers && workflow.triggers.length > 0) {
+        if (workflow?.triggers && workflow.triggers.length > 0) {
           workflows.push({
             name: workflow.name,
             workflowId: workflow.triggers[0].identifier,
           });
         }
-      } catch (error) {}
+      } catch (error) {
+        this.logger.error({ err: error }, `Failed to fetch workflow ${workflowId} for layout usage lookup`);
+      }
     }
 
     return {

@@ -1,4 +1,6 @@
+import { ClientSession } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { Exclude } from 'class-transformer';
 import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../commands';
 
@@ -21,4 +23,13 @@ export class CreateChangeCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   @IsOptional()
   parentChangeId?: string;
+
+  /**
+   * Exclude session from serialized output only (`toPlainOnly`). A bare
+   * `@Exclude()` would also strip it during `plainToInstance` inside
+   * `BaseCommand.create`, silently losing the transaction session.
+   */
+  @Exclude({ toPlainOnly: true })
+  @IsOptional()
+  session?: ClientSession | null;
 }

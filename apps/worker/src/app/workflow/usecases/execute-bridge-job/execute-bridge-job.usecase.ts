@@ -8,6 +8,7 @@ import {
   EnvironmentCacheData,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
+  enhanceStepsMap,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
@@ -16,7 +17,6 @@ import {
   PinoLogger,
   stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
-  enhanceStepsMap,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -42,7 +42,6 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ITriggerPayload,
-  isOutboundSsrfProtectionEnabled,
   JobStatusEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -211,10 +210,7 @@ export class ExecuteBridgeJob {
     return payload;
   }
 
-  public async buildStepsMap(
-    job: JobEntity,
-    environmentId: string
-  ): Promise<Record<string, Record<string, unknown>>> {
+  public async buildStepsMap(job: JobEntity, environmentId: string): Promise<Record<string, Record<string, unknown>>> {
     const state = await this.generateStateForJob(job, environmentId);
 
     const stepsMap = state.reduce<Record<string, Record<string, unknown>>>((acc, stepState) => {
@@ -285,8 +281,7 @@ export class ExecuteBridgeJob {
       // (stateless bridgeUrl on the job, or the environment's stored bridge
       // URL). This blocks internal hosts even if a malicious URL was persisted
       // before validation landed or queued by an older API release.
-      enforceSsrfProtection:
-        isOutboundSsrfProtectionEnabled() && (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
+      enforceSsrfProtection: !!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL,
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

@@ -271,3 +271,15 @@ npx novu translations push
 - Use variables and translation keys consistently.
 - Set subscriber locale properly to deliver notifications in the correct language.
 - Ensure subscriber locales are mapped to a supported `language_REGION` format before sending them to Novu.
+
+## Frequently asked questions
+
+Here are some frequently asked questions about translations.
+
+<AccordionGroup>
+  <Accordion title="Is translation resolved when the notification is fetched, or when it is sent?">
+    Translation is resolved when the channel step executes, using the subscriber's locale at that moment (not at trigger time, and not when the Inbox loads the message). For delayed or digest workflows, a locale update before the channel step runs is reflected in that notification.
+
+    Once the step has executed, the translated in-app notification content is stored with the message. Novu does not re-translate existing in-app notifications when they are fetched. Historical messages keep the locale they were created with.
+  </Accordion>
+</AccordionGroup>

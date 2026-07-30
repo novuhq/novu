@@ -70,6 +70,8 @@ export interface CreateOrGetConversationParams {
    * installs. Absent for single-workspace platforms.
    */
   workspaceId?: string;
+  /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
+  identifier?: string;
 }
 
 export interface PersistInboundMessageParams {
@@ -84,6 +86,8 @@ export interface PersistInboundMessageParams {
   richContent?: Record<string, unknown>;
   hasPlatformAttachments?: boolean;
   platformMessageId?: string;
+  /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
+  identifier?: string;
   environmentId: string;
   organizationId: string;
 }
@@ -203,7 +207,7 @@ export class AgentConversationService {
     }
 
     const conversation = await this.conversationRepository.create({
-      identifier: `conv_${shortId(12)}`,
+      identifier: params.identifier ?? `conv_${shortId(12)}`,
       _agentId: params.agentId,
       participants: [
         { type: params.participantType, id: params.participantId },
@@ -274,7 +278,7 @@ export class AgentConversationService {
 
     const [activity] = await Promise.all([
       this.activityRepository.createUserActivity({
-        identifier: `act_${shortId(12)}`,
+        identifier: params.identifier ?? `act_${shortId(12)}`,
         conversationId: params.conversationId,
         platform: params.platform,
         integrationId: params.integrationId,
