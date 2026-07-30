@@ -4,7 +4,6 @@ import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiExternalLinkLine, R
 import { Link } from 'react-router-dom';
 import { PageMeta } from '@/components/page-meta';
 import { CompactButton } from '@/components/primitives/button-compact';
-import { Separator } from '@/components/primitives/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { WorkflowAgentConnectedChannels } from '@/components/workflow-editor/workflow-agent-connected-channels';
@@ -126,8 +125,7 @@ export function WorkflowAgentAssignmentForm({ workflow, update, isReadOnly }: Wo
           ) : null}
         </SidebarContent>
 
-        <Separator />
-        <div className="bg-bg-weak flex items-center px-3 py-0.5">
+        <div className="bg-bg-weak border-stroke-weak flex items-center border-t px-3 py-0.5">
           <p className="text-text-soft flex-1 text-[10px] font-normal leading-3.5 tracking-wide uppercase">
             Connected channels
           </p>

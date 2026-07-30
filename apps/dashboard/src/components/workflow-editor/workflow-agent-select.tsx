@@ -1,7 +1,7 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiCloseLine, RiExpandUpDownLine, RiLoader4Line, RiRobot2Line } from 'react-icons/ri';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RiCheckLine, RiCloseLine, RiExpandUpDownLine, RiLoader4Line, RiRobot2Line, RiSearchLine } from 'react-icons/ri';
 import {
   type AgentResponse,
   getAgent,
@@ -38,6 +38,8 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const scrollId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -87,6 +89,21 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
     },
     [onChange]
   );
+
+  const handleSearchChange = useCallback((nextSearch: string) => {
+    setSearch(nextSearch);
+
+    if (scrollId.current) {
+      clearTimeout(scrollId.current);
+    }
+
+    /**
+     * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
+     */
+    scrollId.current = setTimeout(() => {
+      listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
+  }, []);
 
   const agents = useMemo(() => {
     const seenIds = new Set<string>();
@@ -139,10 +156,22 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
             {!value || disabled ? <RiExpandUpDownLine className="text-text-soft size-3 shrink-0" /> : null}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+        <PopoverContent
+          portal={false}
+          className="w-[var(--radix-popover-trigger-width)] rounded-lg p-0"
+          side="bottom"
+          align="start"
+        >
           <Command shouldFilter={false}>
-            <CommandInput placeholder="Search agents..." value={search} onValueChange={setSearch} />
-            <CommandList>
+            <CommandInput
+              placeholder="Search agents..."
+              value={search}
+              onValueChange={handleSearchChange}
+              inputRootClassName="rounded-b-none before:ring-0 before:border-b before:border-gray-200 has-[input:focus]:shadow-none focus-within:shadow-none"
+              inlineLeadingNode={<RiSearchLine className="size-4 text-neutral-400" />}
+              autoComplete="off"
+            />
+            <CommandList ref={listRef}>
               {listQuery.isLoading ? (
                 <div className="text-text-soft flex items-center justify-center gap-2 py-6 text-label-xs">
                   <RiLoader4Line className="size-4 animate-spin" />
@@ -151,19 +180,24 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
               ) : (
                 <>
                   <CommandEmpty>No agents found.</CommandEmpty>
-                  <CommandGroup>
+                  <CommandGroup className="rounded-md p-2">
                     {agents.map((agent) => (
                       <CommandItem
                         key={agent._id}
                         value={agent.identifier}
                         onSelect={() => handleSelect(agent.identifier)}
-                        className="gap-1.5"
+                        className={cn('cursor-pointer gap-1.5', {
+                          'bg-accent': value === agent.identifier,
+                        })}
                       >
                         <RiRobot2Line className="text-text-soft size-4 shrink-0" />
                         <span className="min-w-0 flex-1 truncate">{agent.name}</span>
                         {!agent.active ? (
                           <span className="text-text-soft shrink-0 text-[10px] font-medium uppercase">Paused</span>
                         ) : null}
+                        <RiCheckLine
+                          className={cn('ml-auto size-4 shrink-0', value === agent.identifier ? 'opacity-100' : 'opacity-0')}
+                        />
                       </CommandItem>
                     ))}
                   </CommandGroup>
