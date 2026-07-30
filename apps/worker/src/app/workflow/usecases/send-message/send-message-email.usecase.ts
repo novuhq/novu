@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  type AgentEmailContext,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CreateExecutionDetails,
@@ -232,32 +233,9 @@ export class SendMessageEmail extends SendMessageBase {
       }
     }
 
-    if (!replyToAddress && !command.overrides?.email?.replyTo) {
-      if (stepReplyTo) {
-        replyToAddress = stepReplyTo;
-      } else {
-        const workflowAgent = resolveEffectiveTriggerAgent(command.job.agent, command.workflow?.agent);
-
-        if (workflowAgent) {
-          try {
-            const agentReplyTo = await this.resolveAgentInboundAddresses.resolveEffectiveReplyTo({
-              agent: workflowAgent,
-              environmentId: command.environmentId,
-              organizationId: command.organizationId,
-            });
-
-            if (agentReplyTo) {
-              replyToAddress = agentReplyTo;
-            }
-          } catch (error) {
-            Logger.warn(
-              { error, agentIdentifier: workflowAgent.identifier },
-              'Failed to resolve workflow agent reply-to address',
-              LOG_CONTEXT
-            );
-          }
-        }
-      }
+    // Step control takes precedence over agent defaults; overrides are applied later on mailData.
+    if (!replyToAddress && !command.overrides?.email?.replyTo && stepReplyTo) {
+      replyToAddress = stepReplyTo;
     }
 
     try {
@@ -386,26 +364,19 @@ export class SendMessageEmail extends SendMessageBase {
     let resolvedFromEmail = bridgeFrom?.email || undefined;
     let resolvedSenderName = bridgeFrom?.name || senderName;
 
-    if ((!resolvedFromEmail || !resolvedSenderName) && !useProviderDefaults) {
-      const workflowAgent = resolveEffectiveTriggerAgent(command.job.agent, command.workflow?.agent);
+    const needsAgentReplyTo = !replyToAddress && !command.overrides?.email?.replyTo;
+    const needsAgentSender = (!resolvedFromEmail || !resolvedSenderName) && !useProviderDefaults;
 
-      if (workflowAgent) {
-        try {
-          const agentSender = await this.resolveAgentInboundAddresses.resolveAgentSenderDefaults({
-            agent: workflowAgent,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-          });
+    if (needsAgentReplyTo || needsAgentSender) {
+      const agentEmailContext = await this.resolveWorkflowAgentEmailContext(command);
 
-          resolvedFromEmail = resolvedFromEmail || agentSender.senderEmail;
-          resolvedSenderName = resolvedSenderName || agentSender.senderName;
-        } catch (error) {
-          Logger.warn(
-            { error, agentIdentifier: workflowAgent.identifier },
-            'Failed to resolve workflow agent sender defaults',
-            LOG_CONTEXT
-          );
-        }
+      if (needsAgentReplyTo) {
+        replyToAddress = agentEmailContext.replyTo;
+      }
+
+      if (needsAgentSender) {
+        resolvedFromEmail = resolvedFromEmail || agentEmailContext.senderEmail;
+        resolvedSenderName = resolvedSenderName || agentEmailContext.senderName;
       }
     }
 
@@ -445,6 +416,34 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     return await this.sendMessage(integration, mailData, message, command);
+  }
+
+  /**
+   * Single fetch for workflow-agent reply-to + sender defaults.
+   * Precedence of who the agent is: trigger override → workflow assignment.
+   */
+  private async resolveWorkflowAgentEmailContext(command: SendMessageChannelCommand): Promise<AgentEmailContext> {
+    const workflowAgent = resolveEffectiveTriggerAgent(command.job.agent, command.workflow?.agent);
+
+    if (!workflowAgent) {
+      return {};
+    }
+
+    try {
+      return await this.resolveAgentInboundAddresses.resolveAgentEmailContext({
+        agent: workflowAgent,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+    } catch (error) {
+      Logger.warn(
+        { error, agentIdentifier: workflowAgent.identifier },
+        'Failed to resolve workflow agent email context',
+        LOG_CONTEXT
+      );
+
+      return {};
+    }
   }
 
   private async getReplyTo(command: SendMessageChannelCommand, messageId: string): Promise<string | null> {

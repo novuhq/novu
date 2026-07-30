@@ -35,7 +35,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       featureFlagService as never,
       {} as never,
       sendWebhookMessage as never,
-      { resolveEffectiveReplyTo: sinon.stub().resolves(undefined), resolveAgentSenderDefaults: sinon.stub().resolves({}) } as never
+      { resolveAgentEmailContext: sinon.stub().resolves({}) } as never
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
@@ -190,8 +190,8 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
       update: sinon.stub().resolves(undefined),
     };
     const resolveAgentInboundAddresses = {
-      resolveEffectiveReplyTo: sinon.stub().resolves(agentStubs?.replyTo),
-      resolveAgentSenderDefaults: sinon.stub().resolves({
+      resolveAgentEmailContext: sinon.stub().resolves({
+        replyTo: agentStubs?.replyTo,
         senderName: agentStubs?.senderName,
         senderEmail: agentStubs?.senderEmail,
       }),
@@ -306,8 +306,8 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
 
     await usecase.execute(buildCommand());
 
-    expect(resolveAgentInboundAddresses.resolveAgentSenderDefaults.calledOnce).to.equal(true);
-    expect(resolveAgentInboundAddresses.resolveAgentSenderDefaults.firstCall.args[0].agent).to.deep.equal({
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.firstCall.args[0].agent).to.deep.equal({
       identifier: 'support-bot',
     });
     expect(sendStub.firstCall.args[0].from).to.equal('agent@inbox.com');
@@ -326,11 +326,8 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
 
     await usecase.execute(buildCommand({}, { jobAgent: { identifier: 'trigger-agent' } }));
 
-    expect(resolveAgentInboundAddresses.resolveAgentSenderDefaults.calledOnce).to.equal(true);
-    expect(resolveAgentInboundAddresses.resolveAgentSenderDefaults.firstCall.args[0].agent).to.deep.equal({
-      identifier: 'trigger-agent',
-    });
-    expect(resolveAgentInboundAddresses.resolveEffectiveReplyTo.firstCall.args[0].agent).to.deep.equal({
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.firstCall.args[0].agent).to.deep.equal({
       identifier: 'trigger-agent',
     });
     expect(sendStub.firstCall.args[0].from).to.equal('trigger@inbox.com');
@@ -348,8 +345,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
 
     await usecase.execute(buildCommand({}, { jobAgent: null }));
 
-    expect(resolveAgentInboundAddresses.resolveAgentSenderDefaults.called).to.equal(false);
-    expect(resolveAgentInboundAddresses.resolveEffectiveReplyTo.called).to.equal(false);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
     expect(sendStub.firstCall.args[0].from).to.equal('integration@test.com');
     expect(sendStub.firstCall.args[0].replyTo).to.equal(undefined);
   });
@@ -370,7 +366,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
       })
     );
 
-    expect(resolveAgentInboundAddresses.resolveAgentSenderDefaults.called).to.equal(false);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
     expect(sendStub.firstCall.args[0].from).to.equal('step@acme.com');
     expect(sendStub.firstCall.args[0].senderName).to.equal('Step Sender');
     expect(sendStub.firstCall.args[0].replyTo).to.equal('step-reply@acme.com');
@@ -386,7 +382,8 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
 
     await usecase.execute(buildCommand({ useProviderDefaults: true }));
 
-    expect(resolveAgentInboundAddresses.resolveAgentSenderDefaults.called).to.equal(false);
+    // Still resolves once for reply-to (sender is skipped via useProviderDefaults)
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
     expect(sendStub.firstCall.args[0].from).to.equal('integration@test.com');
   });
 });

@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
   DomainRepository,
   DomainRouteRepository,
+  IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import {
@@ -24,6 +26,18 @@ export type ResolveAgentInboundAddressesParams = {
   organizationId: string;
 };
 
+export type AgentEmailContext = {
+  replyTo?: string;
+  senderName?: string;
+  senderEmail?: string;
+};
+
+type AgentEmailContextParams = {
+  agent: WorkflowAgentConfig;
+  environmentId: string;
+  organizationId: string;
+};
+
 /**
  * Collect Novu-digestible inbound addresses for an agent, ordered by
  * preference: shared inbox first (when enabled), then custom-domain agent routes.
@@ -40,46 +54,13 @@ export class ResolveAgentInboundAddresses {
   ) {}
 
   async execute(params: ResolveAgentInboundAddressesParams): Promise<string[]> {
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: params.agentIdentifier,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      '*'
-    );
+    const agent = await this.findAgent(params.agentIdentifier, params.environmentId, params.organizationId);
 
     if (!agent) {
       throw new NotFoundException(`Agent with identifier "${params.agentIdentifier}" was not found.`);
     }
 
-    const addresses: string[] = [];
-
-    const sharedInbox = await this.resolveSharedInbox({
-      agentId: agent._id,
-      agentIdentifier: agent.identifier,
-      agentName: agent.name,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
-
-    if (sharedInbox) {
-      addresses.push(sharedInbox);
-    }
-
-    const customAddresses = await this.resolveCustomDomainAddresses({
-      agentId: agent._id,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
-
-    for (const address of customAddresses) {
-      if (!addresses.includes(address)) {
-        addresses.push(address);
-      }
-    }
-
-    return addresses;
+    return this.resolveInboundAddresses(agent, params.environmentId, params.organizationId);
   }
 
   /**
@@ -109,82 +90,151 @@ export class ResolveAgentInboundAddresses {
   }
 
   /**
-   * Effective Reply-To for outbound email: prefer a still-valid saved value,
-   * otherwise the primary inbound address (first in preference order).
+   * Resolve reply-to and sender defaults for a workflow agent in a single pass.
    */
-  async resolveEffectiveReplyTo(params: {
-    agent: WorkflowAgentConfig;
-    environmentId: string;
-    organizationId: string;
-  }): Promise<string | undefined> {
-    const addresses = await this.execute({
-      agentIdentifier: params.agent.identifier,
+  async resolveAgentEmailContext(params: AgentEmailContextParams): Promise<AgentEmailContext> {
+    const agent = await this.findAgent(params.agent.identifier, params.environmentId, params.organizationId);
+
+    if (!agent) {
+      return {};
+    }
+
+    const { hasConnectedIntegrations, novuAgent, inboundAddresses } = await this.loadAgentInboundContext(
+      agent,
+      params.environmentId,
+      params.organizationId
+    );
+
+    const senderDefaults = await this.buildSenderDefaults({
+      agent,
+      hasConnectedIntegrations,
+      novuAgent,
+      inboundAddresses,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
 
-    if (addresses.length === 0) {
-      return undefined;
-    }
+    return {
+      replyTo: pickEffectiveReplyTo(params.agent, inboundAddresses),
+      ...senderDefaults,
+    };
+  }
 
-    const saved = params.agent.providers?.[EmailProviderIdEnum.NovuAgent]?.replyTo?.trim();
+  /**
+   * Effective Reply-To for outbound email: prefer a still-valid saved value,
+   * otherwise the primary inbound address (first in preference order).
+   */
+  async resolveEffectiveReplyTo(params: AgentEmailContextParams): Promise<string | undefined> {
+    const { replyTo } = await this.resolveAgentEmailContext(params);
 
-    if (saved && addresses.includes(saved)) {
-      return saved;
-    }
-
-    return addresses[0];
+    return replyTo;
   }
 
   /**
    * Default From display name / address for a workflow-assigned agent.
    * Mirrors agent email outbound precedence: override → inbound → outbound provider From.
    */
-  async resolveAgentSenderDefaults(params: {
-    agent: WorkflowAgentConfig;
-    environmentId: string;
-    organizationId: string;
-  }): Promise<{ senderName?: string; senderEmail?: string }> {
-    const agent = await this.agentRepository.findOne(
+  async resolveAgentSenderDefaults(
+    params: AgentEmailContextParams
+  ): Promise<{ senderName?: string; senderEmail?: string }> {
+    const { senderName, senderEmail } = await this.resolveAgentEmailContext(params);
+
+    return { senderName, senderEmail };
+  }
+
+  private async findAgent(
+    agentIdentifier: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<AgentEntity | null> {
+    return this.agentRepository.findOne(
       {
-        identifier: params.agent.identifier,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
+        identifier: agentIdentifier,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
       },
       '*'
     );
+  }
 
-    if (!agent) {
-      return {};
-    }
-
-    const links = await this.agentIntegrationRepository.find(
-      {
-        _agentId: agent._id,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        disconnectedAt: null,
-      },
-      ['_integrationId']
+  private async loadAgentInboundContext(
+    agent: AgentEntity,
+    environmentId: string,
+    organizationId: string
+  ): Promise<{
+    hasConnectedIntegrations: boolean;
+    novuAgent?: IntegrationEntity;
+    inboundAddresses: string[];
+  }> {
+    const { hasConnectedIntegrations, novuAgent } = await this.findConnectedNovuAgentIntegration(
+      agent._id,
+      environmentId,
+      organizationId
+    );
+    const inboundAddresses = await this.resolveInboundAddresses(
+      agent,
+      environmentId,
+      organizationId,
+      novuAgent ?? null
     );
 
-    if (links.length === 0) {
-      return { senderName: agent.name };
+    return { hasConnectedIntegrations, novuAgent, inboundAddresses };
+  }
+
+  private async resolveInboundAddresses(
+    agent: AgentEntity,
+    environmentId: string,
+    organizationId: string,
+    /**
+     * `undefined` = not loaded yet (fetch inside shared-inbox).
+     * `null` = already looked up, no Novu Agent integration.
+     */
+    preloadedNovuAgent?: IntegrationEntity | null
+  ): Promise<string[]> {
+    const addresses: string[] = [];
+
+    const sharedInbox = await this.resolveSharedInbox({
+      agentId: agent._id,
+      agentIdentifier: agent.identifier,
+      agentName: agent.name,
+      environmentId,
+      organizationId,
+      preloadedNovuAgent,
+    });
+
+    if (sharedInbox) {
+      addresses.push(sharedInbox);
     }
 
-    const novuAgentIntegrations = await this.integrationRepository.find(
-      {
-        _id: { $in: links.map((link) => link._integrationId) },
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
-      },
-      '_id credentials providerId'
-    );
+    const customAddresses = await this.resolveCustomDomainAddresses({
+      agentId: agent._id,
+      environmentId,
+      organizationId,
+    });
 
-    const novuAgent = novuAgentIntegrations[0];
-    const credentials = novuAgent?.credentials;
-    const senderName = credentials?.senderName?.trim() || agent.name;
+    for (const address of customAddresses) {
+      if (!addresses.includes(address)) {
+        addresses.push(address);
+      }
+    }
+
+    return addresses;
+  }
+
+  private async buildSenderDefaults(params: {
+    agent: AgentEntity;
+    hasConnectedIntegrations: boolean;
+    novuAgent?: IntegrationEntity;
+    inboundAddresses: string[];
+    environmentId: string;
+    organizationId: string;
+  }): Promise<{ senderName?: string; senderEmail?: string }> {
+    if (!params.hasConnectedIntegrations) {
+      return { senderName: params.agent.name };
+    }
+
+    const credentials = params.novuAgent?.credentials;
+    const senderName = credentials?.senderName?.trim() || params.agent.name;
 
     const useOverride = Boolean(credentials?.useFromAddressOverride);
     const overrideFrom = credentials?.fromAddressOverride?.trim() || '';
@@ -203,15 +253,42 @@ export class ResolveAgentInboundAddresses {
       outboundFrom = outbound?.credentials?.from?.trim() || '';
     }
 
-    const inboundAddresses = await this.execute({
-      agentIdentifier: params.agent.identifier,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
-    const agentInbound = inboundAddresses[0] || '';
+    const agentInbound = params.inboundAddresses[0] || '';
     const senderEmail = (useOverride && overrideFrom ? overrideFrom : '') || agentInbound || outboundFrom || undefined;
 
     return { senderName, senderEmail };
+  }
+
+  private async findConnectedNovuAgentIntegration(
+    agentId: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<{ hasConnectedIntegrations: boolean; novuAgent?: IntegrationEntity }> {
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _agentId: agentId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        disconnectedAt: null,
+      },
+      ['_integrationId']
+    );
+
+    if (links.length === 0) {
+      return { hasConnectedIntegrations: false };
+    }
+
+    const integrations = await this.integrationRepository.find(
+      {
+        _id: { $in: links.map((link) => link._integrationId) },
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        providerId: EmailProviderIdEnum.NovuAgent,
+      },
+      '_id credentials providerId'
+    );
+
+    return { hasConnectedIntegrations: true, novuAgent: integrations[0] };
   }
 
   private async resolveSharedInbox(params: {
@@ -220,36 +297,28 @@ export class ResolveAgentInboundAddresses {
     agentName: string;
     environmentId: string;
     organizationId: string;
+    /**
+     * `undefined` = not loaded yet (fetch).
+     * `null` = already looked up, no Novu Agent integration.
+     */
+    preloadedNovuAgent?: IntegrationEntity | null;
   }): Promise<string | undefined> {
     if (!isAgentSharedInboxEnabled()) {
       return undefined;
     }
 
-    const links = await this.agentIntegrationRepository.find(
-      {
-        _agentId: params.agentId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        disconnectedAt: null,
-      },
-      ['_integrationId']
-    );
+    let novuAgent: IntegrationEntity | undefined;
 
-    if (links.length === 0) {
-      return undefined;
+    if (params.preloadedNovuAgent !== undefined) {
+      novuAgent = params.preloadedNovuAgent ?? undefined;
+    } else {
+      ({ novuAgent } = await this.findConnectedNovuAgentIntegration(
+        params.agentId,
+        params.environmentId,
+        params.organizationId
+      ));
     }
 
-    const integrations = await this.integrationRepository.find(
-      {
-        _id: { $in: links.map((link) => link._integrationId) },
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        providerId: EmailProviderIdEnum.NovuAgent,
-      },
-      '_id credentials providerId'
-    );
-
-    const novuAgent = integrations[0];
     if (!novuAgent) {
       return undefined;
     }
@@ -319,6 +388,20 @@ export class ResolveAgentInboundAddresses {
       })
       .filter((address): address is string => Boolean(address));
   }
+}
+
+function pickEffectiveReplyTo(agent: WorkflowAgentConfig, addresses: string[]): string | undefined {
+  if (addresses.length === 0) {
+    return undefined;
+  }
+
+  const saved = agent.providers?.[EmailProviderIdEnum.NovuAgent]?.replyTo?.trim();
+
+  if (saved && addresses.includes(saved)) {
+    return saved;
+  }
+
+  return addresses[0];
 }
 
 function deriveFallbackSlug(identifier: string, name: string): string | undefined {
