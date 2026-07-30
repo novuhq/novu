@@ -122,6 +122,7 @@ export class MessageInteractionService {
         _subscriberId: trace.subscriber_id,
         deliveryLifecycleStatus,
         ...(deliveryLifecycleDetail && { deliveryLifecycleDetail }),
+        emitStatusTrace: false,
       });
     }
   }
