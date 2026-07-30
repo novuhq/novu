@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, WorkflowDataContainer, WorkflowResponseDto } from '@novu/application-generic';
-import {
-  AgentRepository,
-  ControlValuesRepository,
-  LayoutRepository,
-  NotificationTemplateRepository,
-} from '@novu/dal';
+import { AgentRepository, ControlValuesRepository, LayoutRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
 import {
   DependencyReasonEnum,
@@ -113,11 +108,7 @@ export class DependencyAnalyzerService {
         }
       }
 
-      if (
-        resource.resourceType === ResourceTypeEnum.AGENT &&
-        resource.targetResource?.id &&
-        !resource.sourceResource
-      ) {
+      if (resource.resourceType === ResourceTypeEnum.AGENT && resource.targetResource?.id && !resource.sourceResource) {
         this.logger.debug(
           `Analyzing reverse dependencies for deleted agent: ${resource.targetResource.name} (${resource.targetResource.id})`
         );
@@ -315,11 +306,14 @@ export class DependencyAnalyzerService {
         `Checking if deleted agent ${agentIdentifier} is still used by workflows in target environment`
       );
 
-      const workflows = await this.workflowRepository.find({
-        _environmentId: targetEnvId,
-        _organizationId: organizationId,
-        'agent.identifier': agentIdentifier,
-      });
+      const workflows = await this.workflowRepository.find(
+        {
+          _environmentId: targetEnvId,
+          _organizationId: organizationId,
+          'agent.identifier': agentIdentifier,
+        },
+        { name: 1, 'triggers.identifier': 1 }
+      );
 
       this.logger.debug(
         `Found ${workflows.length} workflows using deleted agent ${agentIdentifier} in target environment`
@@ -435,7 +429,7 @@ export class DependencyAnalyzerService {
         _organizationId: organizationId,
         identifier: agentIdentifier,
       },
-      '*'
+      ['name']
     );
 
     this.logger.debug(`Agent ${agentIdentifier} exists in target environment: ${!!targetAgent}`);

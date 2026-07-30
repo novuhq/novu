@@ -8,12 +8,7 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import {
-  DomainRouteTypeEnum,
-  EmailProviderIdEnum,
-  type WorkflowAgentConfig,
-  slugify,
-} from '@novu/shared';
+import { DomainRouteTypeEnum, EmailProviderIdEnum, slugify, type WorkflowAgentConfig } from '@novu/shared';
 import {
   buildAgentSharedInbox,
   isAgentSharedInboxEnabled,
@@ -37,6 +32,8 @@ type AgentEmailContextParams = {
   environmentId: string;
   organizationId: string;
 };
+
+type AgentIdentity = Pick<AgentEntity, '_id' | 'identifier' | 'name'>;
 
 /**
  * Collect Novu-digestible inbound addresses for an agent, ordered by
@@ -146,19 +143,19 @@ export class ResolveAgentInboundAddresses {
     agentIdentifier: string,
     environmentId: string,
     organizationId: string
-  ): Promise<AgentEntity | null> {
+  ): Promise<AgentIdentity | null> {
     return this.agentRepository.findOne(
       {
         identifier: agentIdentifier,
         _environmentId: environmentId,
         _organizationId: organizationId,
       },
-      '*'
+      ['_id', 'identifier', 'name']
     );
   }
 
   private async loadAgentInboundContext(
-    agent: AgentEntity,
+    agent: AgentIdentity,
     environmentId: string,
     organizationId: string
   ): Promise<{
@@ -182,7 +179,7 @@ export class ResolveAgentInboundAddresses {
   }
 
   private async resolveInboundAddresses(
-    agent: AgentEntity,
+    agent: AgentIdentity,
     environmentId: string,
     organizationId: string,
     /**
@@ -222,7 +219,7 @@ export class ResolveAgentInboundAddresses {
   }
 
   private async buildSenderDefaults(params: {
-    agent: AgentEntity;
+    agent: AgentIdentity;
     hasConnectedIntegrations: boolean;
     novuAgent?: IntegrationEntity;
     inboundAddresses: string[];
@@ -285,7 +282,7 @@ export class ResolveAgentInboundAddresses {
         _organizationId: organizationId,
         providerId: EmailProviderIdEnum.NovuAgent,
       },
-      '_id credentials providerId'
+      '_id credentials'
     );
 
     return { hasConnectedIntegrations: true, novuAgent: integrations[0] };
