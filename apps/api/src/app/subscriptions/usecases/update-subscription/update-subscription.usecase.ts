@@ -73,7 +73,9 @@ export class UpdateSubscriptionUsecase {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
     }
 
-    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId);
+    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId, {
+      skipContextFilterWhenUndefined: !command._subscriberId,
+    });
 
     const subscription = await this.topicSubscribersRepository.findOne({
       identifier: command.identifier,
@@ -404,13 +406,17 @@ export class UpdateSubscriptionUsecase {
     };
   }
 
-  private async buildContextQuery(contextKeys?: string[], organizationId?: string): Promise<Record<string, unknown>> {
+  private async buildContextQuery(
+    contextKeys?: string[],
+    organizationId?: string,
+    options?: { skipContextFilterWhenUndefined?: boolean }
+  ): Promise<Record<string, unknown>> {
     if (!organizationId) {
       return {};
     }
 
     // Admin API: contextKeys undefined → no context filtering (identifier is sufficient)
-    if (contextKeys === undefined) {
+    if (contextKeys === undefined && options?.skipContextFilterWhenUndefined) {
       return {};
     }
 
