@@ -57,7 +57,8 @@ export class UpsertTopicUseCase {
           },
           {
             $set: updateBody,
-          }
+          },
+          { new: true }
         );
       }
     }

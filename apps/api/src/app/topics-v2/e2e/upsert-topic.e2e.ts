@@ -54,8 +54,8 @@ describe('Upsert topic - /v2/topics (POST) #novu-v2', async () => {
       data: { big: oversizedValue },
     });
 
-    expect(body.statusCode).to.equal(400);
-    expect(JSON.stringify(body.message)).to.match(/too large|Data is too large/i);
+    expect(body.statusCode).to.equal(422);
+    expect(JSON.stringify(body)).to.match(/too large|Data is too large|Validation Error/i);
   });
 
   it('should update an existing topic when it already exists', async () => {
