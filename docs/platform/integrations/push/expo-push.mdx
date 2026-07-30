@@ -332,6 +332,23 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
+
+## Provider content overrides
+
+Save an Expo override on the Push step when you need Expo Push fields beyond the step subject and body — for example `data`, `sound`, `priority`, or `ttl`. The override is stored on the step, so it is versioned and promoted with the workflow, and every trigger sends it without changing your trigger call.
+
+<Note>
+  Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Push step yet. Overrides passed at trigger time work regardless. See [provider content overrides](/platform/integrations/push#provider-content-overrides).
+</Note>
+
+Expo overrides are validated against the [Expo Push message](https://docs.expo.dev/push-notifications/sending-notifications) request format. The editor autocompletes supported field names, validates the JSON, and flags unsupported fields.
+
+- **`to` is managed by Novu.** Novu fills device tokens from the subscriber's credentials — do not set `to` in the override.
+- **`body` falls back from the step.** If your override omits `body`, Novu uses the rendered Push step body.
+- **`title` is not seeded.** Set `title` in the override when you want one; Novu does not copy the step subject automatically.
+
+See the [Expo Push message format](https://docs.expo.dev/push-notifications/sending-notifications) for the full field list.
+
 ## Using overrides to customize notifications
 
 <Tabs>
