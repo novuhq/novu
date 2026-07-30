@@ -17,10 +17,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Response } from 'express';
 import { SubscriptionDetailsResponseDto } from '../shared/dtos/subscription-details-response.dto';
-import {
-  GroupPreferenceFilterDto,
-  WorkflowPreferenceRequestDto,
-} from '../shared/dtos/subscriptions/create-subscriptions.dto';
 import { UpdateSubscriptionRequestDto } from '../shared/dtos/subscriptions/update-subscription.dto';
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
@@ -29,6 +25,7 @@ import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subsc
 import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
 import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
+import { convertPreferencesToGroupFilters } from '../subscriptions/utils/subscriptions';
 import { CreateTopicSubscriptionRequestDto } from './dtos/create-topic-subscription-request.dto';
 import { ContextCompatibilityInterceptor } from './interceptors/context-compatibility.interceptor';
 import { DeleteTopicSubscriptionCommand } from './usecases/delete-subscription/delete-subscription.command';
@@ -124,7 +121,7 @@ export class InboxTopicController {
           },
         ],
         name: body.topic?.name,
-        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
         contextKeys: subscriberSession.contextKeys,
       })
     );
@@ -164,7 +161,7 @@ export class InboxTopicController {
         identifier,
         _subscriberId: subscriberSession._id,
         name: body.name,
-        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
         contextKeys: subscriberSession.contextKeys,
       })
     );
@@ -195,37 +192,5 @@ export class InboxTopicController {
         contextKeys: subscriberSession.contextKeys,
       })
     );
-  }
-
-  private convertPreferencesToGroupFilters(
-    preferences: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>
-  ): Array<GroupPreferenceFilterDto> {
-    return preferences.map((preference) => {
-      if (typeof preference === 'string') {
-        return {
-          filter: {
-            workflowIds: [preference],
-          },
-        };
-      }
-
-      if (this.isGroupPreferenceFilter(preference)) {
-        return preference;
-      }
-
-      return {
-        filter: {
-          workflowIds: [preference.workflowId],
-        },
-        condition: preference.condition,
-        enabled: preference.enabled,
-      };
-    });
-  }
-
-  private isGroupPreferenceFilter(
-    preference: WorkflowPreferenceRequestDto | GroupPreferenceFilterDto
-  ): preference is GroupPreferenceFilterDto {
-    return 'filter' in preference;
   }
 }

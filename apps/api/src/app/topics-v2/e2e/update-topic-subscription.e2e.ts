@@ -306,6 +306,34 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
     expect(updateResponse.result.preferences?.length).to.be.greaterThan(0);
   });
 
+  it('should preserve enabled=false when updating preferences with the workflowId shape', async () => {
+    const topicKey = `topic-key-enabled-false-${Date.now()}`;
+
+    await novuClient.topics.create({
+      key: topicKey,
+      name: 'Test Topic',
+    });
+
+    const subscriptionResponse = await novuClient.topics.subscriptions.create(
+      {
+        subscriberIds: [subscriber1.subscriberId],
+      },
+      topicKey
+    );
+
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+
+    const response = await session.testAgent
+      .patch(`/v2/topics/${topicKey}/subscriptions/${subscriptionIdentifier}`)
+      .send({
+        preferences: [{ workflowId: 'workflow-1', enabled: false }],
+      });
+
+    expect(response.status, 'Should update the subscription').to.equal(200);
+    expect(response.body.data.preferences, 'Should return preferences').to.exist;
+    expect(response.body.data.preferences[0].enabled, 'Should preserve enabled=false').to.equal(false);
+  });
+
   it('should update subscription name', async () => {
     const topicKey = `topic-key-name-${Date.now()}`;
 
