@@ -304,6 +304,33 @@ describe('processProviderOverridesIssues', () => {
     ]);
   });
 
+  it('validates Expo overrides against the schema', () => {
+    const valid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        channelId: 'orders',
+        interruptionLevel: 'time-sensitive',
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalid = processProviderOverridesIssues({
+      [PushProviderIdEnum.EXPO]: {
+        priority: 'high',
+        chanelId: 'orders',
+      },
+    });
+
+    expect(invalid.controls?.['providerOverrides.expo.chanelId']).toEqual([
+      {
+        message: '"chanelId" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.expo.chanelId',
+      },
+    ]);
+  });
+
   it('reports the provider schema error rather than the step-control URL message', () => {
     const issues = processProviderOverridesIssues({
       [ChatProviderIdEnum.Slack]: {
