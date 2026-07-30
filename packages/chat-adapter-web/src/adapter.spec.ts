@@ -106,13 +106,68 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(processMessage.mock.calls[0]?.[2].author.userId).toBe('sub_1');
   });
 
-  it('ignores client messageId and always mints server message id (create-only)', async () => {
+  it('ignores client messageId and always mints server message id', async () => {
     const { adapter, processMessage } = await createAdapter();
 
     await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }));
 
     expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
     expect(processMessage.mock.calls[0]?.[2].id).not.toBe('msg_abcdefghijkl');
+  });
+
+  it('resumes with conversationIdentifier when authorizeResume allows', async () => {
+    const authorizeResume = vi.fn(async () => true);
+    const { adapter, processMessage } = await createAdapter(createConfig({ authorizeResume }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        text: 'follow up',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(authorizeResume).toHaveBeenCalledWith({
+      conversationId: 'conv_abcdefghijkl',
+      session: SESSION,
+    });
+    expect(processMessage.mock.calls[0]?.[1]).toBe('web_chat:conv_abcdefghijkl');
+  });
+
+  it('resumes with id alias when authorizeResume allows', async () => {
+    const { adapter, processMessage } = await createAdapter(createConfig({ authorizeResume: async () => true }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'follow up', id: 'conv_abcdefghijkl' })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(processMessage.mock.calls[0]?.[1]).toBe('web_chat:conv_abcdefghijkl');
+  });
+
+  it('returns 404 when authorizeResume denies resume', async () => {
+    const { adapter, processMessage } = await createAdapter(createConfig({ authorizeResume: async () => false }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'nope', conversationIdentifier: 'conv_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(404);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when resume id is present but authorizeResume is not configured', async () => {
+    const { adapter, processMessage } = await createAdapter();
+
+    const response = await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'nope', id: 'conv_abcdefghijkl' }));
+
+    expect(response.status).toBe(404);
+    expect(processMessage).not.toHaveBeenCalled();
   });
 
   it('postMessage delegates to deliverMessage without inventing mongo semantics', async () => {

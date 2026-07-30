@@ -118,20 +118,32 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       });
     }
 
-    if (body.id !== undefined && body.id !== null) {
-      if (typeof body.id !== 'string' || !isValidConversationId(body.id)) {
-        return new Response(JSON.stringify({ message: 'Invalid conversation id' }), {
-          status: 400,
+    const resumeId = this.resolveResumeConversationId(body);
+    if (resumeId === 'invalid') {
+      return new Response(JSON.stringify({ message: 'Invalid conversation id' }), {
+        status: 400,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
+    let conversationId: string;
+    if (resumeId) {
+      const allowed = this.config.authorizeResume
+        ? await this.config.authorizeResume({ conversationId: resumeId, session })
+        : false;
+      if (!allowed) {
+        return new Response(JSON.stringify({ message: 'Conversation not found' }), {
+          status: 404,
           headers: { 'content-type': 'application/json' },
         });
       }
-      // Create-only this ticket: validate shape, ignore for routing (NV-8441).
+      conversationId = resumeId;
+    } else {
+      conversationId = mintConversationId();
     }
 
-    // Always mint conversation + message ids. Client `messageId` idempotency is
-    // deferred until resume (NV-8441): create-only mint-before-dedupe would ack a
-    // ghost `conv_*` on retry while suppressing the turn.
-    const conversationId = mintConversationId();
+    // Always mint message ids. Client `messageId` idempotency would ack a ghost
+    // turn if checked before durable create; keep server-minted ids for now.
     const threadId = this.encodeThreadId({ conversationId });
     const raw: WebChatRawMessage = {
       id: mintMessageId(),
@@ -149,6 +161,25 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       status: 201,
       headers: { 'content-type': 'application/json' },
     });
+  }
+
+  /** Prefer `conversationIdentifier`, fall back to `id`. */
+  private resolveResumeConversationId(body: WebChatRequestBody): string | null | 'invalid' {
+    const raw =
+      body.conversationIdentifier !== undefined && body.conversationIdentifier !== null
+        ? body.conversationIdentifier
+        : body.id !== undefined && body.id !== null
+          ? body.id
+          : null;
+
+    if (raw === null) {
+      return null;
+    }
+    if (typeof raw !== 'string' || !isValidConversationId(raw)) {
+      return 'invalid';
+    }
+
+    return raw;
   }
 
   parseMessage(raw: WebChatRawMessage): Message<WebChatRawMessage> {
