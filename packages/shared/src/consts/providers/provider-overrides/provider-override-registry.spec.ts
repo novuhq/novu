@@ -3,6 +3,7 @@ import { ChatProviderIdEnum, PushProviderIdEnum, ToolProviderIdEnum } from '../.
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   CONTENT_OVERRIDE_PROVIDER_IDS,
+  expoOverrideJsonSchema,
   getProviderOverrideConfig,
   getProviderOverrideKeys,
   getProviderOverrideKeysOnlySchema,
@@ -33,10 +34,26 @@ describe('provider override registry', () => {
     expect([...CHAT_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(ChatProviderIdEnum).sort());
   });
 
-  it('registers every push provider as an escape hatch with no primary content key', () => {
+  it('registers Expo as a schema-backed push provider with body as the primary content key', () => {
+    const config = getProviderOverrideConfig(PushProviderIdEnum.EXPO);
+    const keys = getProviderOverrideKeys(PushProviderIdEnum.EXPO) ?? [];
+
+    expect(config?.schema).toBeDefined();
+    expect(config?.primaryContentKey).toBe('body');
+    expect(keys).toEqual(expect.arrayContaining(['body', 'channelId', 'interruptionLevel', 'tag']));
+    expect(keys).not.toContain('to');
+  });
+
+  it('keeps schema-less push providers as escape hatches with no primary content key', () => {
+    const schemaBackedPushProviderIds = new Set([PushProviderIdEnum.EXPO]);
+
     expect([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(PushProviderIdEnum).sort());
 
     for (const providerId of PUSH_CONTENT_OVERRIDE_PROVIDER_IDS) {
+      if (schemaBackedPushProviderIds.has(providerId)) {
+        continue;
+      }
+
       const config = getProviderOverrideConfig(providerId);
 
       expect(config?.schema).toBeUndefined();
@@ -62,16 +79,20 @@ describe('provider override registry', () => {
     }
   });
 
-  it('maps each tool provider to a strict object schema', () => {
+  it('maps each eager schema to a strict object schema', () => {
     expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.PagerDuty]).toBe(pagerdutyOverrideJsonSchema);
     expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Opsgenie]).toBe(opsgenieOverrideJsonSchema);
-    expect(pagerdutyOverrideJsonSchema.additionalProperties).toBe(false);
-    expect(opsgenieOverrideJsonSchema.additionalProperties).toBe(false);
+    expect(PROVIDER_OVERRIDE_SCHEMAS[PushProviderIdEnum.EXPO]).toBe(expoOverrideJsonSchema);
+
+    for (const schema of Object.values(PROVIDER_OVERRIDE_SCHEMAS)) {
+      expect(schema.additionalProperties).toBe(false);
+    }
   });
 
   it('keeps documented free-form maps permissive', () => {
     expect(pagerdutyOverrideJsonSchema.properties.custom_details.additionalProperties).toBe(true);
     expect(opsgenieOverrideJsonSchema.properties.details.additionalProperties).toBe(true);
+    expect(expoOverrideJsonSchema.properties.data.additionalProperties).toBe(true);
   });
 
   it('documents the primary content fields for each tool provider', () => {
@@ -82,15 +103,14 @@ describe('provider override registry', () => {
   });
 
   it('exposes a key inventory that matches each eager schema property set', () => {
-    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]).toEqual(
-      Object.keys(pagerdutyOverrideJsonSchema.properties)
-    );
-    expect(PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie]).toEqual(
-      Object.keys(opsgenieOverrideJsonSchema.properties)
-    );
-    expect(getProviderOverrideKeys(ToolProviderIdEnum.PagerDuty)).toEqual(
-      PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]
-    );
+    for (const [providerId, schema] of Object.entries(PROVIDER_OVERRIDE_SCHEMAS)) {
+      expect(PROVIDER_OVERRIDE_KEYS[providerId as keyof typeof PROVIDER_OVERRIDE_KEYS]).toEqual(
+        Object.keys(schema.properties ?? {})
+      );
+      expect(getProviderOverrideKeys(providerId)).toEqual(
+        PROVIDER_OVERRIDE_KEYS[providerId as keyof typeof PROVIDER_OVERRIDE_KEYS]
+      );
+    }
   });
 
   it('derives keys-only schemas that are strict on names and permissive on values', () => {
@@ -186,11 +206,12 @@ describe('provider override registry', () => {
   });
 
   it('pairs every eager schema with a liquid-tolerant twin', () => {
-    const config = getProviderOverrideConfig(ToolProviderIdEnum.PagerDuty);
+    for (const [providerId, schema] of Object.entries(PROVIDER_OVERRIDE_SCHEMAS)) {
+      const config = getProviderOverrideConfig(providerId);
 
-    expect(config?.schema).toBe(pagerdutyOverrideJsonSchema);
-    expect(config?.liquidTolerantSchema).toEqual(toLiquidTolerantSchema(pagerdutyOverrideJsonSchema));
-    expect(PROVIDER_OVERRIDE_SCHEMAS[ToolProviderIdEnum.Opsgenie]).toBe(opsgenieOverrideJsonSchema);
+      expect(config?.schema).toBe(schema);
+      expect(config?.liquidTolerantSchema).toEqual(toLiquidTolerantSchema(schema));
+    }
   });
 
   it('keeps the deprecated tool-scoped names pointing at the same registry', () => {
