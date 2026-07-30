@@ -8,6 +8,13 @@ import { PushBaseProvider } from '../push.base-provider';
 export class ExpoPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.EXPO;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
+  /**
+   * CAMEL_CASE strips the leading underscore from `_contentAvailable`. Remap
+   * after casing so the Expo Push API still receives the documented key.
+   */
+  protected override keyCaseObject: Record<string, string> = {
+    contentAvailable: '_contentAvailable',
+  };
   private readonly INVALID_TOKEN_ERRORS = ['not a valid Expo push token'];
 
   private expo: Expo;

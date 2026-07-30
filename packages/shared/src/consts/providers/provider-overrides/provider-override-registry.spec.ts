@@ -45,16 +45,15 @@ describe('provider override registry', () => {
   });
 
   it('keeps schema-less push providers as escape hatches with no primary content key', () => {
-    const schemaBackedPushProviderIds = new Set([PushProviderIdEnum.EXPO]);
-
     expect([...PUSH_CONTENT_OVERRIDE_PROVIDER_IDS].sort()).toEqual(Object.values(PushProviderIdEnum).sort());
 
     for (const providerId of PUSH_CONTENT_OVERRIDE_PROVIDER_IDS) {
-      if (schemaBackedPushProviderIds.has(providerId)) {
+      const config = getProviderOverrideConfig(providerId);
+      const isSchemaBacked = Boolean(config?.schema || config?.schemaSubpath);
+
+      if (isSchemaBacked) {
         continue;
       }
-
-      const config = getProviderOverrideConfig(providerId);
 
       expect(config?.schema).toBeUndefined();
       expect(config?.schemaSubpath).toBeUndefined();

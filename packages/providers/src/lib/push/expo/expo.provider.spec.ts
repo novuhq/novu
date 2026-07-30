@@ -129,6 +129,7 @@ describe('Expo', () => {
       collapseId: 'orders',
       interruptionLevel: 'time-sensitive',
       badge: 3,
+      _contentAvailable: true,
     });
 
     expect(spy).toHaveBeenCalledWith([
@@ -137,6 +138,7 @@ describe('Expo', () => {
         tag: 'order-42',
         collapseId: 'orders',
         interruptionLevel: 'time-sensitive',
+        _contentAvailable: true,
       }),
     ]);
   });
