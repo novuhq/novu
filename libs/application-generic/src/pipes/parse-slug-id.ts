@@ -1,9 +1,11 @@
 import { BaseRepository } from '@novu/dal';
+import { ShortIsPrefixEnum } from '@novu/shared';
 import { decodeBase62 } from '../utils/base62';
 
 export type InternalId = string;
 const INTERNAL_ID_LENGTH = 24;
 const ENCODED_ID_LENGTH = 16;
+const SLUG_ENCODED_SUFFIX_MARKERS = Object.values(ShortIsPrefixEnum).map((prefix) => `_${prefix}`);
 
 /**
  * Checks if the value is a short resource identifier (less than encoded ID length)
@@ -38,6 +40,28 @@ function lookoutForResourceId(value: string): string | null {
 }
 
 /**
+ * Checks if the value ends with a slug-encoded internal ID suffix.
+ * Examples: 'welcome-email_wf_1A2B3C4D5E6F7890', 'my-step_st_AbC1Xyz9KlmNOpQr'
+ */
+function hasSlugEncodedSuffix(value: string): boolean {
+  return SLUG_ENCODED_SUFFIX_MARKERS.some((marker) => {
+    const markerIndex = value.lastIndexOf(marker);
+
+    if (markerIndex === -1) {
+      return false;
+    }
+
+    const encodedPart = value.slice(markerIndex + marker.length);
+
+    return encodedPart.length === ENCODED_ID_LENGTH;
+  });
+}
+
+function shouldAttemptSlugDecode(value: string): boolean {
+  return value.length === ENCODED_ID_LENGTH || hasSlugEncodedSuffix(value);
+}
+
+/**
  * Parses a slug ID and returns the internal resource ID
  *
  * Handles multiple input formats:
@@ -58,6 +82,10 @@ export function parseSlugId(value: string): InternalId {
   const validId = lookoutForResourceId(value);
   if (validId) {
     return validId;
+  }
+
+  if (!shouldAttemptSlugDecode(value)) {
+    return value;
   }
 
   // Try to extract and decode the base62 encoded part from the end
