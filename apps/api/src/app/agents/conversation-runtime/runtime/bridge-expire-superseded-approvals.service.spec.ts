@@ -59,7 +59,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
       outboundGateway.deleteInConversation.calledOnceWithExactly(
         'agent-id',
         'slack-int',
-        'slack',
         'thread-1',
         'msg-approval',
         undefined,

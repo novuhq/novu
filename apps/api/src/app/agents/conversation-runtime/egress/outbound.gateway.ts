@@ -3,7 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
-import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, Thread } from 'chat';
+import type { Adapter, AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -13,7 +13,7 @@ import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
+import { ChatInstanceRegistry, type ChatWithAdapters, type PlatformAdapters } from '../ingress/chat-instance.registry';
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
 import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
@@ -335,7 +335,7 @@ export class OutboundGateway {
 
     const postArg = this.withPreferredMessageId(
       this.buildAdapterPostableMessage(tokenizedContent, config),
-      chat.getAdapter(platform),
+      chat.getAdapter(config.platform),
       preferredMessageId
     );
 
@@ -353,10 +353,10 @@ export class OutboundGateway {
    */
   private withPreferredMessageId(
     postArg: AdapterPostableMessage,
-    adapter: unknown,
+    adapter: PlatformAdapters[keyof PlatformAdapters],
     preferredMessageId?: string
   ): AdapterPostableMessage {
-    const supportsClientMessageIds = (adapter as { supportsClientMessageIds?: boolean }).supportsClientMessageIds;
+    const supportsClientMessageIds = 'supportsClientMessageIds' in adapter && adapter.supportsClientMessageIds;
     if (!preferredMessageId || !supportsClientMessageIds) {
       return postArg;
     }
@@ -415,11 +415,11 @@ export class OutboundGateway {
 
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-    const adapter = chat.getAdapter(config.platform) as { stopTyping?: (threadId: string) => Promise<void> };
+    const adapter = chat.getAdapter(config.platform);
 
     // Most platforms have no explicit stop API — indicators expire or clear on
     // post. Adapters with in-process delivery (web) expose `stopTyping`.
-    if (typeof adapter.stopTyping !== 'function') {
+    if (!('stopTyping' in adapter)) {
       return;
     }
 
@@ -450,9 +450,7 @@ export class OutboundGateway {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
-      setAssistantStatus?: (channelId: string, threadTs: string, status: string) => Promise<void>;
-    };
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
     const setAssistantStatus = adapter.setAssistantStatus?.bind(adapter);
 
     if (typeof setAssistantStatus !== 'function') {
@@ -512,14 +510,7 @@ export class OutboundGateway {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
-      setSuggestedPrompts?: (
-        channelId: string,
-        threadTs: string,
-        promptList: SlackAgentSuggestedPrompt[],
-        promptTitle?: string
-      ) => Promise<void>;
-    };
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
     const setSuggestedPrompts = adapter.setSuggestedPrompts?.bind(adapter);
 
     if (typeof setSuggestedPrompts !== 'function') {
@@ -583,7 +574,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter = chat.getAdapter(platform);
+    const adapter: Adapter = chat.getAdapter(config.platform);
     if (typeof adapter.editMessage !== 'function') {
       throw new BadRequestException(`Platform ${platform} does not support editing messages`);
     }
@@ -607,7 +598,6 @@ export class OutboundGateway {
   async deleteInConversation(
     agentId: string,
     integrationIdentifier: string,
-    platform: string,
     platformThreadId: string,
     platformMessageId: string,
     workspaceId?: string,
@@ -617,7 +607,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter = chat.getAdapter(platform);
+    const adapter: Adapter = chat.getAdapter(config.platform);
     if (typeof adapter.deleteMessage !== 'function') {
       return;
     }
@@ -654,7 +644,7 @@ export class OutboundGateway {
     phase: PlanPhase,
     workspaceId?: string
   ): Promise<SentMessageInfo | null> {
-    const { chat, config, adapter } = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
+    const { chat, config, adapter } = await this.resolvePlanAdapter(agentId, integrationIdentifier);
     const mode = resolvePlanDeliveryMode(platform, adapter);
 
     if (!mode) {
@@ -692,7 +682,7 @@ export class OutboundGateway {
     phase: PlanPhase,
     workspaceId?: string
   ): Promise<void> {
-    const { chat, config, adapter } = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
+    const { chat, config, adapter } = await this.resolvePlanAdapter(agentId, integrationIdentifier);
     const mode = resolvePlanDeliveryMode(platform, adapter);
 
     if (!mode) {
@@ -721,18 +711,19 @@ export class OutboundGateway {
     );
   }
 
-  private async resolvePlanAdapter(agentId: string, integrationIdentifier: string, platform: string) {
+  private async resolvePlanAdapter(agentId: string, integrationIdentifier: string) {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    return { chat, config, adapter: chat.getAdapter(platform) };
+    const adapter: Adapter = chat.getAdapter(config.platform);
+
+    return { chat, config, adapter };
   }
 
   async reactToMessage(
     agentId: string,
     integrationIdentifier: string,
-    platform: string,
     platformThreadId: string,
     platformMessageId: string,
     emojiName: string,
@@ -742,7 +733,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter = chat.getAdapter(platform);
+    const adapter: Adapter = chat.getAdapter(config.platform);
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.addReaction(platformThreadId, platformMessageId, resolved)
@@ -752,7 +743,6 @@ export class OutboundGateway {
   async removeReaction(
     agentId: string,
     integrationIdentifier: string,
-    platform: string,
     platformThreadId: string,
     platformMessageId: string,
     emojiName: string,
@@ -762,7 +752,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const adapter = chat.getAdapter(platform);
+    const adapter: Adapter = chat.getAdapter(config.platform);
     const resolved = await this.resolveEmoji(emojiName);
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       adapter.removeReaction(platformThreadId, platformMessageId, resolved)
@@ -825,7 +815,7 @@ export class OutboundGateway {
    * without a resolvable token — runs the operation unchanged.
    */
   private async runWithPlatformToken<T>(
-    chat: Chat,
+    chat: ChatWithAdapters,
     config: ResolvedAgentConfig,
     agentId: string,
     platformThreadId: string,
@@ -844,9 +834,7 @@ export class OutboundGateway {
       resolvedWorkspaceId
     );
 
-    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as unknown as {
-      withBotToken?<R>(token: string, fn: () => Promise<R>): Promise<R>;
-    };
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK);
 
     if (!token || typeof adapter?.withBotToken !== 'function') {
       return fn();
@@ -882,8 +870,12 @@ export class OutboundGateway {
     return token;
   }
 
-  private async openDirectMessageThread(chat: Chat, platform: string, platformUserId: string): Promise<Thread> {
-    const adapter = chat.getAdapter(platform);
+  private async openDirectMessageThread(
+    chat: ChatWithAdapters,
+    platform: AgentPlatformEnum,
+    platformUserId: string
+  ): Promise<Thread> {
+    const adapter: Adapter = chat.getAdapter(platform);
 
     if (typeof adapter.openDM === 'function') {
       const threadId = await adapter.openDM(platformUserId);

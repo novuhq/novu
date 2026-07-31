@@ -1,6 +1,5 @@
-import type { Adapter } from 'chat';
 import { NovuWebChatAdapterImpl } from './adapter.js';
-import type { WebChatAdapterConfig, WebChatRawMessage, WebChatThreadId } from './types.js';
+import type { WebChatAdapterConfig } from './types.js';
 
 export type {
   WebChatAdapterConfig,
@@ -28,6 +27,8 @@ export {
   toThreadId,
 } from './utils.js';
 
-export function createWebChatAdapter(config: WebChatAdapterConfig): Adapter<WebChatThreadId, WebChatRawMessage> {
+export type NovuWebChatAdapter = NovuWebChatAdapterImpl;
+
+export function createWebChatAdapter(config: WebChatAdapterConfig): NovuWebChatAdapter {
   return new NovuWebChatAdapterImpl(config);
 }

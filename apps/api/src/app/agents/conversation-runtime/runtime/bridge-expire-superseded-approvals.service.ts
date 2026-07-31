@@ -104,7 +104,6 @@ export class BridgeExpireSupersededApprovalsService {
       await this.outboundGateway.deleteInConversation(
         turn.agentId,
         config.integrationIdentifier,
-        channel.platform,
         channel.platformThreadId,
         platformMessageId,
         channel.workspace?.id,
