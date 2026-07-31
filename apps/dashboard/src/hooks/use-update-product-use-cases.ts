@@ -9,8 +9,8 @@ export function useUpdateProductUseCases() {
   return useMutation<unknown, Error, ProductUseCases>({
     mutationFn: async (productUseCases) => updateExternalOrganization({ productUseCases }),
     onSuccess: async () => {
-      // The org's productUseCases live in Clerk's publicMetadata, which the API just updated.
-      // Reload the Clerk resource so useAuth().currentOrganization reflects the change.
+      // The API persists productUseCases to Clerk publicMetadata (and Mongo). Reload Clerk so
+      // useAuth().currentOrganization reflects the change.
       await organization?.reload();
     },
   });

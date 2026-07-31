@@ -73,6 +73,9 @@ const notificationSchema = new Schema<NotificationDBModel>(
     lastEmittedDeliveryEvent: {
       type: Schema.Types.String,
     },
+    lastEmittedWorkflowStatusEvent: {
+      type: Schema.Types.String,
+    },
   },
   schemaOptions
 );

@@ -27,9 +27,19 @@ export type WebChatDeleteMessageParams = {
   messageId: string;
 };
 
+export type WebChatAuthorizeResumeParams = {
+  conversationId: string;
+  session: WebChatSession;
+};
+
 export type WebChatAdapterConfig = {
   userName?: string;
   verifySession: (request: Request) => Promise<WebChatSession | null>;
+  /**
+   * When the client supplies a conversation id, Nest ACL decides whether that
+   * thread may be resumed (participant + web_chat + agent). Denied → adapter 404.
+   */
+  authorizeResume?: (params: WebChatAuthorizeResumeParams) => Promise<boolean>;
   deliverMessage: (params: WebChatDeliverMessageParams) => Promise<WebChatDeliverMessageResult>;
   editMessage: (params: WebChatEditMessageParams) => Promise<WebChatDeliverMessageResult>;
   deleteMessage: (params: WebChatDeleteMessageParams) => Promise<void>;
@@ -50,11 +60,13 @@ export type WebChatRawMessage = {
 export type WebChatRequestBody = {
   agentId?: string;
   text?: string;
-  /** Optional client conversation id — shape-validated; ignored for create-only routing. */
+  /** Resume an existing conversation (`conv_*`). Alias of `conversationIdentifier`. */
   id?: string;
+  /** Preferred resume field (NV-8441); same semantics as `id`. */
+  conversationIdentifier?: string;
   /**
    * Reserved: client idempotency key (`msg_<shortId>`).
-   * Ignored until resume (NV-8441) — create-only mint + dedupe would return a ghost `conv_*`.
+   * Still ignored — minting a server message id avoids ghost acks on retries.
    */
   messageId?: string;
 };

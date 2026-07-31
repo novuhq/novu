@@ -4,6 +4,7 @@ import type { WebChatAdapterConfig, WebChatRawMessage, WebChatThreadId } from '.
 
 export type {
   WebChatAdapterConfig,
+  WebChatAuthorizeResumeParams,
   WebChatDeleteMessageParams,
   WebChatDeliverMessageParams,
   WebChatDeliverMessageResult,

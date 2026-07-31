@@ -23,10 +23,6 @@ import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { DirectionEnum } from '../shared/dtos/base-responses';
 import { SubscriptionDetailsResponseDto } from '../shared/dtos/subscription-details-response.dto';
 import {
-  GroupPreferenceFilterDto,
-  WorkflowPreferenceRequestDto,
-} from '../shared/dtos/subscriptions/create-subscriptions.dto';
-import {
   CreateSubscriptionsResponseDto,
   SubscriptionResponseDto,
 } from '../shared/dtos/subscriptions/create-subscriptions-response.dto';
@@ -37,6 +33,7 @@ import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subsc
 import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
 import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
+import { convertPreferencesToGroupFilters } from '../subscriptions/utils/subscriptions';
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
@@ -300,7 +297,7 @@ export class TopicsController {
         topicKey,
         subscriptions: this.mapSubscriptions(body.subscriptions || body.subscriberIds || []),
         name: body.name,
-        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
         context: body.context,
       })
     );
@@ -442,7 +439,7 @@ export class TopicsController {
         topicKey,
         identifier,
         name: body.name,
-        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
       })
     );
   }
@@ -473,36 +470,5 @@ export class TopicsController {
 
       return subscription;
     });
-  }
-
-  private convertPreferencesToGroupFilters(
-    preferences: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>
-  ): Array<GroupPreferenceFilterDto> {
-    return preferences.map((preference) => {
-      if (typeof preference === 'string') {
-        return {
-          filter: {
-            workflowIds: [preference],
-          },
-        };
-      }
-
-      if (this.isGroupPreferenceFilter(preference)) {
-        return preference;
-      }
-
-      return {
-        filter: {
-          workflowIds: [preference.workflowId],
-        },
-        condition: preference.condition,
-      };
-    });
-  }
-
-  private isGroupPreferenceFilter(
-    preference: WorkflowPreferenceRequestDto | GroupPreferenceFilterDto
-  ): preference is GroupPreferenceFilterDto {
-    return 'filter' in preference;
   }
 }
