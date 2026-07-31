@@ -72,7 +72,14 @@ export type WebChatRawMessage = {
 
 export type WebChatRequestBody = {
   agentId?: string;
+  /** Exactly one of `text` | `actionId` per request. */
   text?: string;
+  /** Interactive / approval button id (e.g. `tool-approval:approve:…`). XOR with `text`. */
+  actionId?: string;
+  /** Platform message id of the clicked card/button; required with `actionId`. */
+  sourceMessageId?: string;
+  /** Optional button/select value alongside `actionId`. */
+  value?: string;
   /** Resume an existing conversation (`conv_*`). Alias of `conversationIdentifier`. */
   id?: string;
   /** Preferred resume field (NV-8441); same semantics as `id`. */

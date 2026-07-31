@@ -40,9 +40,10 @@ function createConfig(overrides: Partial<WebChatAdapterConfig> = {}): WebChatAda
 async function createAdapter(config: WebChatAdapterConfig = createConfig()) {
   const adapter = new NovuWebChatAdapterImpl(config);
   const processMessage = vi.fn();
-  await adapter.initialize({ processMessage, getState: () => ({}) } as never);
+  const processAction = vi.fn();
+  await adapter.initialize({ processMessage, processAction, getState: () => ({}) } as never);
 
-  return { adapter, processMessage, config };
+  return { adapter, processMessage, processAction, config };
 }
 
 function jsonRequest(body: unknown, headers?: Record<string, string>): Request {
@@ -89,7 +90,26 @@ describe('NovuWebChatAdapterImpl', () => {
     const badId = await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'hi', id: 'not-a-conv' }));
 
     expect(empty.status).toBe(400);
+    expect(await empty.json()).toEqual({ message: 'text or actionId is required' });
     expect(badId.status).toBe(400);
+  });
+
+  it('returns 400 when both text and actionId are provided', async () => {
+    const { adapter, processMessage, processAction } = await createAdapter();
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        text: 'hi',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(processAction).not.toHaveBeenCalled();
   });
 
   it('dispatches processMessage then returns 201', async () => {
@@ -167,6 +187,57 @@ describe('NovuWebChatAdapterImpl', () => {
 
     expect(response.status).toBe(404);
     expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('dispatches processAction then returns 200 for actionId ingress', async () => {
+    const authorizeResume = vi.fn(async () => true);
+    const { adapter, processMessage, processAction } = await createAdapter(createConfig({ authorizeResume }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        value: 'Approve once',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(processAction).toHaveBeenCalledOnce();
+    expect(processAction.mock.calls[0]?.[0]).toMatchObject({
+      actionId: 'tool-approval:approve:tc1',
+      messageId: 'act_card0000001',
+      value: 'Approve once',
+      threadId: 'web_chat:conv_abcdefghijkl',
+      user: { userId: 'sub_1' },
+    });
+  });
+
+  it('returns 400 when actionId is missing conversationIdentifier or sourceMessageId', async () => {
+    const { adapter, processAction } = await createAdapter(createConfig({ authorizeResume: async () => true }));
+
+    const missingConv = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+      })
+    );
+    const missingSource = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+
+    expect(missingConv.status).toBe(400);
+    expect(missingSource.status).toBe(400);
+    expect(processAction).not.toHaveBeenCalled();
   });
 
   it('postMessage delegates to deliverMessage without inventing mongo semantics', async () => {
