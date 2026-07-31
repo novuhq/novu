@@ -82,7 +82,7 @@ describe('Expo', () => {
       {
         status: 'unknown-status',
         message: 'We changed our API',
-      } as ExpoPushTicket,
+      } as unknown as ExpoPushTicket,
     ]);
 
     try {
