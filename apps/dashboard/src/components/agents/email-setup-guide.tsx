@@ -1,12 +1,9 @@
 import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiInformation2Line, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
-import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail } from '@/api/agents';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { RiInformation2Line, RiKey2Line } from 'react-icons/ri';
+import { type AgentIntegrationLink, type AgentResponse } from '@/api/agents';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED_EE } from '@/config';
-import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { InboundAddressConfig } from './inbound-address-config';
@@ -21,27 +18,7 @@ import {
 } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SharedInboundAddressField } from './shared-inbound-address-field';
-import { type ConfiguredAddress, useEmailSetupCredentials } from './use-email-setup-credentials';
-
-function resolveTestEmailTarget(
-  customTarget: ConfiguredAddress | undefined,
-  sharedInboundAddress: string | undefined,
-  hasSharedInbox: boolean
-): string | undefined {
-  if (customTarget) {
-    if (customTarget.address === '*') {
-      return `test@${customTarget.domain}`;
-    }
-
-    return `${customTarget.address}@${customTarget.domain}`;
-  }
-
-  if (hasSharedInbox) {
-    return sharedInboundAddress;
-  }
-
-  return undefined;
-}
+import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
 export type EmailSetupGuideProps = {
   agent: AgentResponse;
@@ -52,9 +29,8 @@ export type EmailSetupGuideProps = {
   /**
    * Optional agent–integration link, populated by callers that already have
    * it. When present, the wizard counts the Novu shared inbox as a valid
-   * inbound address and uses it as the test-email target if no custom-domain
-   * routes are configured. When absent (legacy callers), the wizard falls
-   * back to the previous behavior of requiring a custom address.
+   * inbound address. When absent (legacy callers), the wizard falls back to
+   * the previous behavior of requiring a custom address.
    */
   integrationLink?: AgentIntegrationLink;
   /** Onboarding hides the custom-address add-form; the shared inbox is enough to get started. */
@@ -70,7 +46,6 @@ export function EmailSetupGuide({
   integrationLink,
   isOnboarding = false,
 }: EmailSetupGuideProps) {
-  const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
   const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
 
@@ -103,7 +78,6 @@ export function EmailSetupGuide({
   const sharedInboundAddress = integrationLink?.integration?.sharedInboundAddress;
   const sharedInboxDisabled = Boolean(integrationLink?.integration?.sharedInboxDisabled);
   const hasSharedInbox = Boolean(sharedInboundAddress) && !sharedInboxDisabled;
-  const isManagedAgent = agent.runtime === 'managed';
 
   // Layer-1 simplification: on cloud (a shared inbox is provisioned), the agent works out of the
   // box on the Novu demo sender + shared inbox, so setup collapses to "see your address + test".
@@ -111,21 +85,6 @@ export function EmailSetupGuide({
   // "What's next" guide; custom From lives in the EMAIL card below. Self-hosted EE has no demo/shared inbox, so it keeps the full
   // provider + domain flow as a hard prerequisite. Flag off = unchanged behavior.
   const simplifiedSetup = isEmailWhatsNextEnabled && hasSharedInbox && !IS_SELF_HOSTED_EE;
-
-  const testEmailMutation = useMutation({
-    mutationFn: async () => {
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const customTarget = configuredAddresses[0];
-      const targetAddress = resolveTestEmailTarget(customTarget, sharedInboundAddress, hasSharedInbox);
-      if (!targetAddress) throw new Error('No inbound address configured.');
-      await sendAgentTestEmail(environment, agent.identifier, targetAddress);
-    },
-    onSuccess: () => showSuccessToast('Test email sent.'),
-    onError: (err) => {
-      const message = err instanceof Error ? err.message : 'Could not send test email.';
-      showErrorToast(message, 'Test email failed');
-    },
-  });
 
   // Step indices: credentials step is conditionally inserted
   const base = stepOffset;
@@ -268,11 +227,7 @@ export function EmailSetupGuide({
         index={testStepIndex}
         status={deriveStepStatus(testStepIndex, firstIncompleteStep)}
         title="Test connection"
-        description={
-          isManagedAgent
-            ? 'Send an email to your configured inbound address. We will detect when it arrives.'
-            : 'Send an email to your configured inbound address and verify it reaches your agent handler.'
-        }
+        description="Send an email to your configured inbound address. We will detect when it arrives."
         extraContent={
           <div className="flex w-full flex-col gap-4">
             {showInboundAddressOnTestStep ? (
@@ -287,30 +242,9 @@ export function EmailSetupGuide({
                 onStepsCompleted?.();
               }}
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
-              listeningMessage={
-                isManagedAgent
-                  ? 'Waiting for your email: send a message to your configured inbound address.'
-                  : 'Send a test email to verify the inbound pipeline reaches your agent.'
-              }
+              listeningMessage="Waiting for your email: send a message to your configured inbound address."
             />
           </div>
-        }
-        rightContent={
-          isManagedAgent ? undefined : (
-            <SetupButton
-              leadingIcon={
-                testEmailMutation.isPending ? (
-                  <RiLoader4Line className="size-3.5 animate-spin" />
-                ) : (
-                  <RiMailSendLine className="size-3.5" />
-                )
-              }
-              disabled={firstIncompleteStep < testStepIndex || testEmailMutation.isPending}
-              onClick={() => testEmailMutation.mutate()}
-            >
-              {testEmailMutation.isPending ? 'Sending...' : 'Send test email'}
-            </SetupButton>
-          )
         }
       />
     </>
@@ -337,11 +271,7 @@ export function EmailSetupGuide({
         index={base + 1}
         status={deriveStepStatus(base + 1, simplifiedFirstIncompleteStep)}
         title="Test connection"
-        description={
-          isManagedAgent
-            ? 'Send an email to your inbound address. We will detect when it arrives.'
-            : 'Send an email to your inbound address and verify it reaches your agent handler.'
-        }
+        description="Send an email to your inbound address. We will detect when it arrives."
         extraContent={
           <div className="flex w-full flex-col gap-4">
             <ListeningStatus
@@ -353,30 +283,9 @@ export function EmailSetupGuide({
                 onStepsCompleted?.();
               }}
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
-              listeningMessage={
-                isManagedAgent
-                  ? 'Waiting for your email: send a message to your inbound address.'
-                  : 'Send a test email to verify the inbound pipeline reaches your agent.'
-              }
+              listeningMessage="Waiting for your email: send a message to your inbound address."
             />
           </div>
-        }
-        rightContent={
-          isManagedAgent ? undefined : (
-            <SetupButton
-              leadingIcon={
-                testEmailMutation.isPending ? (
-                  <RiLoader4Line className="size-3.5 animate-spin" />
-                ) : (
-                  <RiMailSendLine className="size-3.5" />
-                )
-              }
-              disabled={testEmailMutation.isPending}
-              onClick={() => testEmailMutation.mutate()}
-            >
-              {testEmailMutation.isPending ? 'Sending...' : 'Send test email'}
-            </SetupButton>
-          )
         }
       />
     </>
