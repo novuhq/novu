@@ -1,6 +1,6 @@
 import { EventHandler, Events, SocketEventNames } from '@novu/js';
 import { useEffect } from 'react';
-import { requestLock } from '../../utils/requestLock';
+import { isWebLocksSupported, requestLock } from '../../utils/requestLock';
 import { useNovu } from '../NovuProvider';
 import { useBrowserTabsChannel } from './useBrowserTabsChannel';
 
@@ -22,9 +22,16 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
     enabled,
   });
 
+  // When Web Locks are unavailable, requestLock runs the callback in every tab,
+  // so each tab already receives the event through its own socket. Re-broadcasting
+  // in that case would duplicate the event across tabs (count multiplied by tab
+  // count). Only the exclusive lock owner should fan out to the other tabs.
+  const shouldBroadcast = isWebLocksSupported();
   const updateReadCount: EventHandler<Events[E]> = (data) => {
     onMessage(data);
-    postMessage(data);
+    if (shouldBroadcast) {
+      postMessage(data);
+    }
   };
 
   useEffect(() => {
