@@ -280,6 +280,37 @@ describe('Context-aware topic subscriptions - /inbox/topics (with context) #novu
       const getB = await getSubscription(session, topicKey, identifierB, contextBToken);
       expect(getB.body.data.name).to.not.equal('Updated A');
     });
+
+    it('should not update a subscription from another context by identifier', async () => {
+      const topicKey = generateUniqueId('topic');
+      const identifierA = `${generateUniqueId('sub')}-a`;
+      const identifierB = `${generateUniqueId('sub')}-b`;
+
+      await createSubscription(session, topicKey, { identifier: identifierA }, contextAToken);
+      await createSubscription(session, topicKey, { identifier: identifierB }, contextBToken);
+
+      const crossContextUpdate = await updateSubscription(
+        session,
+        topicKey,
+        identifierA,
+        { name: 'Cross-context update' },
+        contextBToken
+      );
+      expect(crossContextUpdate.status).to.equal(404);
+
+      const noContextUpdate = await updateSubscription(
+        session,
+        topicKey,
+        identifierA,
+        { name: 'No-context update' },
+        noContextToken
+      );
+      expect(noContextUpdate.status).to.equal(404);
+
+      const getA = await getSubscription(session, topicKey, identifierA, contextAToken);
+      expect(getA.body.data.name).to.not.equal('Cross-context update');
+      expect(getA.body.data.name).to.not.equal('No-context update');
+    });
   });
 
   describe('DELETE /inbox/topics/:topicKey/subscriptions/:identifier', () => {

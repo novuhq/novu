@@ -21,6 +21,7 @@ const LINKS: LinkType[] = [
   { href: '/connect-telegram', label: 'Connect Telegram', category: 'Components' },
   { href: '/connect-telegram-end-user', label: 'Connect Telegram (End User)', category: 'Components' },
   { href: '/connect-pagerduty-end-user', label: 'Connect PagerDuty (End User)', category: 'Components' },
+  { href: '/connect-grafana-end-user', label: 'Connect Grafana (End User)', category: 'Components' },
   { href: '/connect-opsgenie-end-user', label: 'Connect Opsgenie (End User)', category: 'Components' },
   { href: '/subscription', label: 'Subscription', category: 'Components' },
   { href: '/subscription-components', label: 'Subscription Components', category: 'Components' },

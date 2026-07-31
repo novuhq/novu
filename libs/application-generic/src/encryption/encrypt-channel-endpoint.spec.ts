@@ -75,6 +75,35 @@ describe('encryptChannelEndpoint / decryptChannelEndpoint', () => {
     expect(decrypted.region).toEqual('eu');
   });
 
+  it('encrypts grafana_oncall_integration url and authToken and round-trips', () => {
+    const endpoint = {
+      url: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/',
+      authToken: 'glsa_abc123',
+    };
+    const encrypted = encryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, endpoint);
+
+    expect(encrypted.url.startsWith(novuSubMask)).toBe(true);
+    expect(encrypted.url).not.toEqual(endpoint.url);
+    expect(encrypted.authToken?.startsWith(novuSubMask)).toBe(true);
+    expect(encrypted.authToken).not.toEqual(endpoint.authToken);
+
+    const decrypted = decryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, encrypted);
+    expect(decrypted).toEqual(endpoint);
+  });
+
+  it('encrypts grafana_oncall_integration url when authToken is omitted', () => {
+    const endpoint = {
+      url: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/',
+    };
+    const encrypted = encryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, endpoint);
+
+    expect(encrypted.url.startsWith(novuSubMask)).toBe(true);
+    expect(encrypted.authToken).toBeUndefined();
+
+    const decrypted = decryptChannelEndpoint(ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION, encrypted);
+    expect(decrypted).toEqual(endpoint);
+  });
+
   it('passes through unknown endpoint types unchanged (e.g. chat webhook)', () => {
     const endpoint = { url: 'https://hooks.slack.com/services/T/B/X', channel: '#alerts' };
     const encrypted = encryptChannelEndpoint(ENDPOINT_TYPES.WEBHOOK, endpoint);

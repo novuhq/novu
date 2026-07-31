@@ -100,12 +100,7 @@ function expandIpv6Hextets(ip: string): Ipv6Hextets | null {
 }
 
 function hextetsToIpv4(highHextet: number, lowHextet: number): string {
-  return [
-    (highHextet >> 8) & 0xff,
-    highHextet & 0xff,
-    (lowHextet >> 8) & 0xff,
-    lowHextet & 0xff,
-  ].join('.');
+  return [(highHextet >> 8) & 0xff, highHextet & 0xff, (lowHextet >> 8) & 0xff, lowHextet & 0xff].join('.');
 }
 
 function looksLikeTransitionEncoding(ip: string): boolean {
@@ -223,7 +218,15 @@ export function isLinkLocalIp(ip: string): boolean {
     return true;
   }
 
-  if (hextets && hextets[0] === 0 && hextets[1] === 0 && hextets[2] === 0 && hextets[3] === 0 && hextets[4] === 0 && hextets[5] === 0xffff) {
+  if (
+    hextets &&
+    hextets[0] === 0 &&
+    hextets[1] === 0 &&
+    hextets[2] === 0 &&
+    hextets[3] === 0 &&
+    hextets[4] === 0 &&
+    hextets[5] === 0xffff
+  ) {
     return hextetsToIpv4(hextets[6], hextets[7]).startsWith('169.254.');
   }
 

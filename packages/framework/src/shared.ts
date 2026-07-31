@@ -203,6 +203,7 @@ export enum InAppProviderIdEnum {
 export enum ToolProviderIdEnum {
   PagerDuty = 'pagerduty',
   Opsgenie = 'opsgenie',
+  Grafana = 'grafana',
   Webhook = 'tool-webhook',
 }
 

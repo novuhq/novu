@@ -11,6 +11,7 @@ export type ChannelData =
   | LineUserData
   | PagerDutyServiceData
   | OpsgenieIntegrationData
+  | GrafanaOnCallIntegrationData
   | ToolWebhookData;
 
 export const ENDPOINT_TYPES = {
@@ -26,6 +27,7 @@ export const ENDPOINT_TYPES = {
   LINE_USER: 'line_user',
   PAGERDUTY_SERVICE: 'pagerduty_service',
   OPSGENIE_INTEGRATION: 'opsgenie_integration',
+  GRAFANA_ONCALL_INTEGRATION: 'grafana_oncall_integration',
   TOOL_WEBHOOK: 'tool_webhook',
 } as const;
 
@@ -44,6 +46,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: { url: string; authToken?: string };
   [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
     url: string;
     headers?: Record<string, string>;
@@ -149,6 +152,18 @@ export type OpsgenieIntegrationData = {
 };
 
 /**
+ * Per-subscriber Grafana routing resolved at send time. The resolver decrypts
+ * `endpoint` from `ChannelEndpoint.endpoint` (which stores the webhook URL and
+ * optional bearer token encrypted at rest); at send time the provider
+ * destructures directly off `endpoint`, matching the wire shape on write/read.
+ */
+export type GrafanaOnCallIntegrationData = {
+  type: typeof ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION];
+  identifier: string;
+};
+
+/**
  * Per-subscriber tool-webhook routing resolved at send time. The resolver
  * hydrates `endpoint` from the linked `ChannelConnection.auth` (which stores
  * url/headers/method encrypted at rest); at send time the provider
@@ -176,5 +191,6 @@ export const ENDPOINT_TYPES_REQUIRING_TOKEN = [
   ENDPOINT_TYPES.WEBEX_PERSON,
   ENDPOINT_TYPES.PAGERDUTY_SERVICE,
   ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
   ENDPOINT_TYPES.TOOL_WEBHOOK,
 ] as const;

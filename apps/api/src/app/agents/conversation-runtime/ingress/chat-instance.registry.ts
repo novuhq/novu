@@ -10,6 +10,7 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
 import { WebChatPlatformDeliveryService } from '../../web-chat/web-chat-platform-delivery.service';
+import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
@@ -85,7 +86,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentActionTokenService: AgentActionTokenService,
     private readonly agentEmailSender: AgentEmailSender,
     private readonly webChatSessionVerifier: WebChatSessionVerifier,
-    private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService
+    private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
+    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -451,6 +453,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           web_chat: createWebChatAdapter({
             userName: config.agentName,
             verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
+            authorizeResume: ({ conversationId, session }) =>
+              this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),

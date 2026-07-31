@@ -30,6 +30,7 @@ import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.dec
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
 import {
+  CreateGrafanaOnCallIntegrationEndpointDto,
   CreateLineUserEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
@@ -46,6 +47,7 @@ import {
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
 import {
+  GrafanaOnCallIntegrationEndpointDto,
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
@@ -91,6 +93,7 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreateLineUserEndpointDto,
   CreatePagerDutyServiceEndpointDto,
   CreateOpsgenieIntegrationEndpointDto,
+  CreateGrafanaOnCallIntegrationEndpointDto,
   CreateToolWebhookEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
@@ -104,6 +107,7 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   LineUserEndpointDto,
   PagerDutyServiceEndpointDto,
   OpsgenieIntegrationEndpointDto,
+  GrafanaOnCallIntegrationEndpointDto,
   ToolWebhookEndpointDto
 )
 @ExternalApiAccessible()
@@ -206,6 +210,7 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreateLineUserEndpointDto) },
         { $ref: getSchemaPath(CreatePagerDutyServiceEndpointDto) },
         { $ref: getSchemaPath(CreateOpsgenieIntegrationEndpointDto) },
+        { $ref: getSchemaPath(CreateGrafanaOnCallIntegrationEndpointDto) },
         { $ref: getSchemaPath(CreateToolWebhookEndpointDto) },
       ],
       discriminator: {
@@ -223,6 +228,7 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.LINE_USER]: getSchemaPath(CreateLineUserEndpointDto),
           [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: getSchemaPath(CreatePagerDutyServiceEndpointDto),
           [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: getSchemaPath(CreateOpsgenieIntegrationEndpointDto),
+          [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: getSchemaPath(CreateGrafanaOnCallIntegrationEndpointDto),
           [ENDPOINT_TYPES.TOOL_WEBHOOK]: getSchemaPath(CreateToolWebhookEndpointDto),
         },
       },

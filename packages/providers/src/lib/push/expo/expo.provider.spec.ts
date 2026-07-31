@@ -52,8 +52,6 @@ describe('Expo', () => {
 
     const result = await provider.sendMessage(basePushOptions());
 
-    // @ts-expect-error
-    expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith([baseExpectedMessage()]);
 
@@ -75,8 +73,6 @@ describe('Expo', () => {
       expect(error.message).toEqual('"invalidDeviceToken" is not a registered push notification recipient');
     }
 
-    // @ts-expect-error
-    expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith([baseExpectedMessage({ to: ['invalidDeviceToken'] })]);
   });
@@ -86,7 +82,7 @@ describe('Expo', () => {
       {
         status: 'unknown-status',
         message: 'We changed our API',
-      } as any as ExpoPushTicket,
+      } as ExpoPushTicket,
     ]);
 
     try {
@@ -96,8 +92,6 @@ describe('Expo', () => {
       expect(error.message).toEqual('Unexpected Expo status');
     }
 
-    // @ts-expect-error
-    expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith([baseExpectedMessage({ to: ['deviceToken'] })]);
   });
@@ -113,8 +107,6 @@ describe('Expo', () => {
       },
     });
 
-    // @ts-expect-error
-    expect(provider.expo).toBeDefined();
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith([baseExpectedMessage({ badge: '_passthrough' })]);
 
