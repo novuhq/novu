@@ -26,6 +26,7 @@ type RequestBody = {
   integrationIdentifier?: string;
   emailOverride?: string;
   slackUserIdOverride?: string;
+  context?: Record<string, string>;
 };
 
 type ResponseData = { slackUserId: string } | { error: string };
@@ -65,6 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       integrationIdentifier,
       emailOverride: typeof body.emailOverride === 'string' ? body.emailOverride : undefined,
       slackUserIdOverride: typeof body.slackUserIdOverride === 'string' ? body.slackUserIdOverride : undefined,
+      context: body.context,
     });
 
     if (!result.ok) {

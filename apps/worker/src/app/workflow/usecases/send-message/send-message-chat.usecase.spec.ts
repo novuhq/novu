@@ -41,7 +41,8 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
       { execute: sinon.stub().resolves(undefined) } as never, // createExecutionDetails
       {} as never, // moduleRef
       {} as never, // sendWebhookMessage
-      resolveChannelEndpoints as never
+      resolveChannelEndpoints as never,
+      { getFlag: sinon.stub().resolves(true) } as never // featureFlagsService
     );
 
     return { usecase, resolveChannelEndpoints, selectIntegration };

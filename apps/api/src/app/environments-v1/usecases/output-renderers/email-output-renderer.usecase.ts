@@ -6,19 +6,13 @@ import {
   EmailControlType,
   GetLayoutCommand,
   GetLayoutUseCase,
-  hasShow,
   InstrumentUsecase,
-  isButtonNode,
-  isImageNode,
-  isLinkNode,
-  isRepeatNode,
-  isVariableNode,
   LayoutControlType,
-  MailyAttrsEnum,
   PinoLogger,
   removeBrandingFromHtml,
   replaceMailyNodesByCondition,
   sanitizeHTML,
+  transformMailyContent,
   wrapMailyInLiquid,
 } from '@novu/application-generic';
 import {
@@ -55,8 +49,6 @@ type TranslationContext = {
   locale: string;
   resourceId: string;
 };
-
-type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
   dbWorkflow: NotificationTemplateEntity;
@@ -457,7 +449,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       const unescapedPayload = this.deepUnescapeTranslationStrings(payload) as FullPayloadForRender;
       const escapedPayloadForJson = this.deepEscapePayloadStrings(unescapedPayload);
       const liquifiedMaily = wrapMailyInLiquid(this.enhanceContentVariable(body));
-      const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
+      const transformedMaily = await transformMailyContent(liquifiedMaily, escapedPayloadForJson, this.liquidEngine);
       const translatedMaily = await this.processMailyTranslations({
         mailyContent: transformedMaily,
         variables: escapedPayloadForJson,
@@ -521,54 +513,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     return decodeHTML(this.unescapeJsonString(translatedSubject));
   }
 
-  private async processMailyTranslations({
-    mailyContent,
-    variables,
-    environmentId,
-    organizationId,
-    resourceId,
-    resourceType,
-    locale,
-    organization,
-    translationContext,
-  }: {
-    mailyContent: MailyJSONContent;
-    variables: FullPayloadForRender;
-    environmentId: string;
-    organizationId: string;
-    resourceId?: string;
-    resourceType?: LocalizationResourceEnum;
-    locale?: string;
-    organization?: OrganizationEntity;
-    translationContext?: TranslationContext | null;
-  }): Promise<MailyJSONContent> {
-    const contentString = JSON.stringify(mailyContent);
-    const translatedContent = translationContext
-      ? await this.processStringWithContext({
-          context: translationContext,
-          content: contentString,
-          variables,
-        })
-      : await this.processStringTranslations({
-          content: contentString,
-          variables,
-          environmentId,
-          organizationId,
-          resourceId,
-          resourceType,
-          locale,
-          organization,
-        });
-
-    try {
-      return JSON.parse(translatedContent);
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Translated Maily content is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
   private async processTextTranslations({
     text,
     variables,
@@ -628,252 +572,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     }
   }
 
-  private async transformMailyContent(
-    node: MailyJSONContent,
-    variables: FullPayloadForRender,
-    parent?: MailyJSONContent
-  ) {
-    const queue: Array<{ node: MailyJSONContent; parent?: MailyJSONContent }> = [{ node, parent }];
-
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-
-      if (hasShow(current.node)) {
-        const shouldShow = await this.handleShowNode(current.node, variables, current.parent);
-
-        if (!shouldShow) {
-          continue;
-        }
-      }
-
-      if (isRepeatNode(current.node)) {
-        await this.handleEachNode(current.node, variables, current.parent);
-      }
-
-      if (isVariableNode(current.node)) {
-        this.processVariableNodeTypes(current.node);
-      }
-
-      if (current.node.content) {
-        for (const childNode of current.node.content) {
-          queue.push({ node: childNode, parent: current.node });
-        }
-      }
-    }
-
-    return node;
-  }
-
-  private async handleShowNode(
-    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
-    variables: FullPayloadForRender,
-    parent?: MailyJSONContent
-  ): Promise<boolean> {
-    const shouldShow = await this.evaluateShowCondition(variables, node);
-    if (!shouldShow && parent?.content) {
-      parent.content = parent.content.filter((pNode) => pNode !== node);
-    }
-
-    delete (node.attrs as Record<string, string>)[MailyAttrsEnum.SHOW_IF_KEY];
-
-    return shouldShow;
-  }
-
-  private async handleEachNode(
-    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
-    variables: FullPayloadForRender,
-    parent?: MailyJSONContent
-  ): Promise<void> {
-    const newContent = await this.multiplyForEachNode(node, variables);
-
-    if (parent?.content) {
-      const nodeIndex = parent.content.indexOf(node);
-      parent.content = [...parent.content.slice(0, nodeIndex), ...newContent, ...parent.content.slice(nodeIndex + 1)];
-    } else {
-      node.content = newContent;
-    }
-  }
-
-  private async evaluateShowCondition(
-    variables: FullPayloadForRender,
-    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } }
-  ): Promise<boolean> {
-    const { [MailyAttrsEnum.SHOW_IF_KEY]: showIfKey } = node.attrs;
-    const parsedShowIfValue = await this.liquidEngine.parseAndRender(showIfKey, variables);
-
-    return this.stringToBoolean(parsedShowIfValue);
-  }
-
-  private processVariableNodeTypes(node: MailyJSONContent) {
-    node.type = 'text'; // set 'variable' to 'text' to for Liquid to recognize it
-    node.text = node.attrs?.id || '';
-  }
-
-  /**
-   * For 'each' node, multiply the content by the number of items in the iterable array
-   * and add indexes to the placeholders. If iterations attribute is set, limits the number
-   * of iterations to that value, otherwise renders all items.
-   *
-   * @example
-   * node:
-   * {
-   *   type: 'each',
-   *   attrs: {
-   *     each: '{{ payload.comments }}',
-   *     iterations: 2 // Optional - limits to first 2 items only
-   *   },
-   *   content: [
-   *     { type: 'variable', text: '{{ payload.comments.author }}' }
-   *   ]
-   * }
-   *
-   * variables:
-   * { payload: { comments: [{ author: 'John Doe' }, { author: 'Jane Doe' }] } }
-   *
-   * result:
-   * [
-   *   { type: 'text', text: '{{ payload.comments[0].author }}' },
-   *   { type: 'text', text: '{{ payload.comments[1].author }}' }
-   * ]
-   *
-   */
-  private async multiplyForEachNode(
-    node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
-    variables: FullPayloadForRender
-  ): Promise<MailyJSONContent[]> {
-    const iterablePath = node.attrs[MailyAttrsEnum.EACH_KEY];
-    const iterations = node.attrs[MailyAttrsEnum.ITERATIONS_KEY];
-    const forEachNodes = node.content || [];
-    const iterableArray = await this.getIterableArray(iterablePath, variables);
-    const limitedIterableArray = iterations ? iterableArray.slice(0, iterations) : iterableArray;
-
-    return limitedIterableArray.flatMap((_, index) => this.processForEachNodes(forEachNodes, iterablePath, index));
-  }
-
-  private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
-    // evalValue returns the real JS array; avoids a lossy " <-> ' JSON round-trip that
-    // breaks on apostrophes in string values (e.g. digest events with `John's order`).
-    const cleanPath = iterablePath.replace(/\{\{|\}\}/g, '').trim();
-
-    let value: unknown;
-    try {
-      value = await this.liquidEngine.evalValue(cleanPath, variables);
-    } catch (error) {
-      throw new Error(
-        `Failed to resolve iterable value for "${iterablePath}": ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-
-    if (!Array.isArray(value)) {
-      throw new Error(`Iterable "${iterablePath}" is not an array`);
-    }
-
-    return value;
-  }
-
-  private processForEachNodes(
-    nodes: MailyJSONContent[],
-    iterablePath: string,
-    index: number
-  ): Array<MailyJSONContent | MailyJSONMarks> {
-    return nodes.map((node) => {
-      const processedNode = structuredClone(node);
-
-      if (isVariableNode(processedNode)) {
-        this.processVariableNodeTypes(processedNode);
-        if (processedNode.text) {
-          processedNode.text = this.addIndexToLiquidExpression(processedNode.text, iterablePath, index);
-        }
-
-        return processedNode;
-      }
-
-      if (isButtonNode(processedNode)) {
-        if (processedNode.attrs?.text) {
-          processedNode.attrs.text = this.addIndexToLiquidExpression(processedNode.attrs.text, iterablePath, index);
-        }
-
-        if (processedNode.attrs?.url) {
-          processedNode.attrs.url = this.addIndexToLiquidExpression(processedNode.attrs.url, iterablePath, index);
-        }
-
-        return processedNode;
-      }
-
-      if (isImageNode(processedNode)) {
-        if (processedNode.attrs?.src) {
-          processedNode.attrs.src = this.addIndexToLiquidExpression(processedNode.attrs.src, iterablePath, index);
-        }
-
-        if (processedNode.attrs?.externalLink) {
-          processedNode.attrs.externalLink = this.addIndexToLiquidExpression(
-            processedNode.attrs.externalLink,
-            iterablePath,
-            index
-          );
-        }
-
-        return processedNode;
-      }
-
-      if (isLinkNode(processedNode)) {
-        if (processedNode.attrs?.href) {
-          processedNode.attrs.href = this.addIndexToLiquidExpression(processedNode.attrs.href, iterablePath, index);
-        }
-
-        return processedNode;
-      }
-
-      if (processedNode.content?.length) {
-        processedNode.content = this.processForEachNodes(processedNode.content, iterablePath, index);
-      }
-
-      if (processedNode.marks?.length) {
-        processedNode.marks = this.processForEachNodes(
-          processedNode.marks,
-          iterablePath,
-          index
-        ) as Array<MailyJSONMarks>;
-      }
-
-      return processedNode;
-    });
-  }
-
-  /**
-   * Add the index to the liquid expression if it doesn't already have an array index
-   *
-   * @example
-   * text: '{{ payload.comments.author }}'
-   * iterablePath: '{{ payload.comments }}'
-   * index: 0
-   * result: '{{ payload.comments[0].author }}'
-   */
-  private addIndexToLiquidExpression(text: string, iterablePath: string, index: number): string {
-    const cleanPath = iterablePath.replace(/\{\{|\}\}/g, '').trim();
-    const liquidMatch = text.match(/\{\{\s*(.*?)\s*\}\}/);
-
-    if (!liquidMatch) return text;
-
-    const [path, ...filters] = liquidMatch[1].split('|').map((part) => part.trim());
-    if (path.includes('[')) return text;
-
-    const newPath = path.replace(cleanPath, `${cleanPath}[${index}]`);
-
-    return filters.length ? `{{ ${newPath} | ${filters.join(' | ')} }}` : `{{ ${newPath} }}`;
-  }
-
-  private stringToBoolean(value: string): boolean {
-    const normalized = value.toLowerCase().trim();
-    if (normalized === 'false' || normalized === 'null' || normalized === 'undefined') return false;
-
-    try {
-      return Boolean(JSON.parse(normalized));
-    } catch {
-      return Boolean(normalized);
-    }
-  }
-
   private async appendNovuBranding(
     html: string,
     organizationId: string,
@@ -912,87 +610,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const lastIndex = matches[matches.length - 1].index!;
 
     return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
-  }
-
-  private deepEscapePayloadStrings(payload: FullPayloadForRender): FullPayloadForRender {
-    return this.deepEscapeObject(payload) as FullPayloadForRender;
-  }
-
-  private deepEscapeObject(obj: unknown): unknown {
-    if (obj === null || obj === undefined) {
-      return obj;
-    }
-
-    if (typeof obj === 'string') {
-      return this.escapeStringForJson(obj);
-    }
-
-    if (typeof obj === 'number' || typeof obj === 'boolean') {
-      return obj;
-    }
-
-    if (Array.isArray(obj)) {
-      return obj.map((item) => this.deepEscapeObject(item));
-    }
-
-    if (typeof obj === 'object') {
-      const escapedObj: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(obj)) {
-        escapedObj[key] = this.deepEscapeObject(value);
-      }
-
-      return escapedObj;
-    }
-
-    return obj;
-  }
-
-  private escapeStringForJson(str: string): string {
-    return str
-      .replace(/\\/g, '\\\\') // Escape backslashes
-      .replace(/"/g, '\\"') // Escape quotes
-      .replace(/\n/g, '\\n') // Escape newlines
-      .replace(/\r/g, '\\r') // Escape carriage returns
-      .replace(/\t/g, '\\t'); // Escape tabs
-  }
-
-  private unescapeJsonString(str: string): string {
-    return str
-      .replace(/\\t/g, '\t')
-      .replace(/\\r/g, '\r')
-      .replace(/\\n/g, '\n')
-      .replace(/\\"/g, '"')
-      .replace(/\\'/g, "'")
-      .replace(/\\\\/g, '\\');
-  }
-
-  private deepUnescapeTranslationStrings(obj: unknown): unknown {
-    if (obj === null || obj === undefined) {
-      return obj;
-    }
-
-    if (typeof obj === 'string') {
-      return this.unescapeJsonString(obj);
-    }
-
-    if (typeof obj === 'number' || typeof obj === 'boolean') {
-      return obj;
-    }
-
-    if (Array.isArray(obj)) {
-      return obj.map((item) => this.deepUnescapeTranslationStrings(item));
-    }
-
-    if (typeof obj === 'object') {
-      const unescapedObj: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(obj)) {
-        unescapedObj[key] = this.deepUnescapeTranslationStrings(value);
-      }
-
-      return unescapedObj;
-    }
-
-    return obj;
   }
 
   private cleanupRenderedHtml(html: string): string {

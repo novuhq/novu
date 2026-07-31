@@ -28,6 +28,7 @@ const cardElementLinkButtonZodSchema = z
     label: z.string(),
     url: z.string(),
     style: z.enum(['primary', 'danger', 'default']).optional(),
+    id: z.string().optional(),
   })
   .strict();
 

@@ -4011,6 +4011,12 @@ importers:
       '@bandwidth/messaging':
         specifier: ^4.1.3
         version: 4.1.3
+      '@chat-adapter/slack':
+        specifier: 4.33.0
+        version: 4.33.0(zod@4.3.6)
+      '@chat-adapter/teams':
+        specifier: 4.33.0
+        version: 4.33.0(zod@4.3.6)
       '@infobip-api/sdk':
         specifier: ^0.3.2
         version: 0.3.2
@@ -31869,6 +31875,20 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@chat-adapter/slack@4.33.0(zod@4.3.6)':
+    dependencies:
+      '@chat-adapter/shared': 4.33.0(zod@4.3.6)
+      '@slack/socket-mode': 2.0.7
+      '@slack/web-api': 7.17.0
+      chat: 4.33.0(zod@4.3.6)
+    transitivePeerDependencies:
+      - ai
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+      - zod
+
   '@chat-adapter/state-ioredis@4.33.0(zod@3.25.20)':
     dependencies:
       chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
@@ -31902,6 +31922,20 @@ snapshots:
       '@microsoft/teams.cards': 2.0.11
       '@microsoft/teams.graph-endpoints': 2.0.11
       chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+    transitivePeerDependencies:
+      - ai
+      - debug
+      - supports-color
+      - zod
+
+  '@chat-adapter/teams@4.33.0(zod@4.3.6)':
+    dependencies:
+      '@chat-adapter/shared': 4.33.0(zod@4.3.6)
+      '@microsoft/teams.api': 2.0.11
+      '@microsoft/teams.apps': 2.0.11
+      '@microsoft/teams.cards': 2.0.11
+      '@microsoft/teams.graph-endpoints': 2.0.11
+      chat: 4.33.0(zod@4.3.6)
     transitivePeerDependencies:
       - ai
       - debug

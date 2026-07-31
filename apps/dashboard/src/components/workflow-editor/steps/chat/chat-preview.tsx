@@ -16,7 +16,7 @@ export const ChatPreview = ({
 }) => {
   const isValidChatPreview =
     previewData?.result?.type === ChannelTypeEnum.CHAT &&
-    (previewData?.result?.preview as ChatRenderOutput)?.body?.length > 0;
+    ((previewData?.result?.preview as ChatRenderOutput)?.body?.length ?? 0) > 0;
   const rawBody = isValidChatPreview ? ((previewData?.result?.preview as ChatRenderOutput)?.body ?? '') : '';
 
   /**
