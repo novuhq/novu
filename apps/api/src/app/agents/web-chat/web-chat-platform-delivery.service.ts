@@ -58,6 +58,34 @@ export class WebChatPlatformDeliveryService {
       // idempotency and history rehydration on one id; otherwise mint.
       const platformMessageId = messageId ?? `act_${shortId(12)}`;
       const conversation = await this.resolveConversation(context, threadId);
+
+      if (messageId && conversation) {
+        const reserved = await this.conversationService.findAgentMessageByIdentifier(
+          context.config.environmentId,
+          conversation._id,
+          messageId
+        );
+        if (reserved) {
+          const sequence =
+            reserved.sequence ?? (await this.mintSequence(context, conversation, threadId, 'deliverMessage'));
+          this.deliveryInfo.report({ messageId: reserved.platformMessageId ?? platformMessageId, sequence });
+
+          if (sequence !== undefined) {
+            const markdown = this.markdownForLiveEnvelope(content, richContent);
+            const envelope = this.eventFactory.createMessageEnvelope({
+              conversationId: conversation._id,
+              agentId: context.config.agentIdentifier,
+              platformMessageId: reserved.platformMessageId ?? platformMessageId,
+              content: { markdown },
+              sequence,
+            });
+            await this.emitBestEffort(context, conversation, envelope);
+          }
+
+          return { id: reserved.platformMessageId ?? platformMessageId, threadId };
+        }
+      }
+
       const sequence = await this.mintSequence(context, conversation, threadId, 'deliverMessage');
       this.deliveryInfo.report({ messageId: platformMessageId, sequence });
 

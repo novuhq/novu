@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationChannel } from '@novu/dal';
+import { ConversationActivityEntity, ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, Thread } from 'chat';
@@ -112,6 +112,32 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
+    let deliveryClaimed: ConversationActivityEntity | undefined;
+
+    if (persist.activityIdentifier) {
+      const claim = await this.conversation.claimAgentMessageForDelivery({
+        conversationId: persist.conversationId,
+        channel: persist.channel,
+        agentIdentifier: persist.agentIdentifier,
+        agentName: persist.agentName,
+        identifier: persist.activityIdentifier,
+        platformMessageId: persist.activityIdentifier,
+        content: this.extractTextFallback(msg),
+        richContent: extractReplyRichContent(msg),
+        environmentId: persist.environmentId,
+        organizationId: persist.organizationId,
+      });
+
+      if (!claim.created) {
+        return {
+          messageId: claim.activity.platformMessageId ?? claim.activity.identifier,
+          platformThreadId: claim.activity.platformThreadId ?? target.platformThreadId,
+        };
+      }
+
+      deliveryClaimed = claim.activity;
+    }
+
     const { result: sent, info } = await this.deliveryInfo.collect(() =>
       this.postToConversation(
         target.agentId,
@@ -124,6 +150,20 @@ export class OutboundGateway {
         persist.activityIdentifier
       )
     );
+
+    if (deliveryClaimed) {
+      const platformMessageId = info.messageId ?? sent.messageId;
+      if (platformMessageId !== deliveryClaimed.platformMessageId) {
+        await this.conversation.updateAgentMessagePlatformMessageId({
+          environmentId: persist.environmentId,
+          organizationId: persist.organizationId,
+          activityId: deliveryClaimed._id,
+          platformMessageId,
+        });
+      }
+
+      return sent;
+    }
 
     // In-process deliveries (web) report the authoritative message id so the
     // durable activity, live envelope, and platform message id stay one

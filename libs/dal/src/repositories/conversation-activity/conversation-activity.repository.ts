@@ -178,6 +178,81 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     return result.modified;
   }
 
+  /**
+   * Atomically insert a MESSAGE activity keyed by runtime `identifier`, or return
+   * the pre-existing row when a concurrent retry wins the race first.
+   */
+  async claimAgentMessageActivity(params: {
+    identifier: string;
+    conversationId: string;
+    platform: string;
+    integrationId: string;
+    platformThreadId: string;
+    platformMessageId?: string;
+    agentId: string;
+    senderName?: string;
+    content: string;
+    richContent?: Record<string, unknown>;
+    sequence: number;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<{ created: boolean; activity: ConversationActivityEntity }> {
+    const filter = {
+      _environmentId: params.environmentId,
+      identifier: params.identifier,
+    };
+    const prior = await this.findOneAndUpdate(
+      filter,
+      {
+        $setOnInsert: {
+          identifier: params.identifier,
+          _conversationId: params.conversationId,
+          type: ConversationActivityTypeEnum.MESSAGE,
+          platform: params.platform,
+          _integrationId: params.integrationId,
+          platformThreadId: params.platformThreadId,
+          senderType: ConversationActivitySenderTypeEnum.AGENT,
+          senderId: params.agentId,
+          content: params.content,
+          richContent: params.richContent,
+          platformMessageId: params.platformMessageId,
+          senderName: params.senderName,
+          sequence: params.sequence,
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+        },
+      },
+      { upsert: true, new: false }
+    );
+
+    if (prior) {
+      return { created: false, activity: prior };
+    }
+
+    const activity = await this.findOne(filter, '*');
+    if (!activity) {
+      throw new Error('claimAgentMessageActivity upsert failed to materialize activity');
+    }
+
+    return { created: true, activity };
+  }
+
+  async updatePlatformMessageId(params: {
+    environmentId: string;
+    organizationId: string;
+    activityId: string;
+    platformMessageId: string;
+  }): Promise<void> {
+    await this.update(
+      {
+        _id: params.activityId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      { $set: { platformMessageId: params.platformMessageId } }
+    );
+  }
+
   async createUserActivity(params: {
     identifier: string;
     conversationId: string;
