@@ -323,12 +323,12 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect((outboundGateway.reactToMessage as sinon.SinonStub).callCount).to.equal(2);
 
       const firstCall = (outboundGateway.reactToMessage as sinon.SinonStub).getCall(0).args;
-      expect(firstCall[4]).to.equal('msg-abc');
-      expect(firstCall[5]).to.equal('thumbs_up');
+      expect(firstCall[3]).to.equal('msg-abc');
+      expect(firstCall[4]).to.equal('thumbs_up');
 
       const secondCall = (outboundGateway.reactToMessage as sinon.SinonStub).getCall(1).args;
-      expect(secondCall[4]).to.equal('msg-def');
-      expect(secondCall[5]).to.equal('check');
+      expect(secondCall[3]).to.equal('msg-def');
+      expect(secondCall[4]).to.equal('check');
     });
 
     it('should return 400 when edit and addReactions are combined', async () => {
