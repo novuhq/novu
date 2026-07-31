@@ -3,6 +3,10 @@ import { NotificationTemplateEntity, PreferencesEntity, TopicSubscribersEntity }
 import { SeverityLevelEnum } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
 import { SubscriptionDetailsResponseDto } from '../../shared/dtos/subscription-details-response.dto';
+import {
+  GroupPreferenceFilterDto,
+  WorkflowPreferenceRequestDto,
+} from '../../shared/dtos/subscriptions/create-subscriptions.dto';
 import { SubscriptionPreferenceDto } from '../../shared/dtos/subscriptions/create-subscriptions-response.dto';
 
 export type SelectedWorkflowFields = Pick<
@@ -91,3 +95,39 @@ export const SELECTED_WORKFLOW_FIELDS_PROJECTION: Record<keyof SelectedWorkflowF
   data: 1,
   severity: 1,
 } as const;
+
+function isGroupPreferenceFilter(
+  preference: WorkflowPreferenceRequestDto | GroupPreferenceFilterDto
+): preference is GroupPreferenceFilterDto {
+  return 'filter' in preference;
+}
+
+/**
+ * Normalizes subscription preference request shapes (string workflow id,
+ * `{ workflowId, enabled, condition }`, or group filter) into group filters.
+ */
+export function convertPreferencesToGroupFilters(
+  preferences: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>
+): Array<GroupPreferenceFilterDto> {
+  return preferences.map((preference) => {
+    if (typeof preference === 'string') {
+      return {
+        filter: {
+          workflowIds: [preference],
+        },
+      };
+    }
+
+    if (isGroupPreferenceFilter(preference)) {
+      return preference;
+    }
+
+    return {
+      filter: {
+        workflowIds: [preference.workflowId],
+      },
+      condition: preference.condition,
+      enabled: preference.enabled,
+    };
+  });
+}

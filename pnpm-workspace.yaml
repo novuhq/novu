@@ -209,6 +209,10 @@ overrides:
   vitest@<4.1.0: ^4.1.0
   react-router@>=6.0.0 <7.18.0: ^7.18.0
   js-cookie@<3.0.7: ^3.0.7
+  # GHSA-77c7-pq4r-6mcq: degit command injection via unsanitised git repo name.
+  # Transitive dev-only dep via hygen. Stay on the 2.x patch (^2.8.6) since
+  # hygen pins the 2.x line; a 3.x jump would be unnecessary.
+  degit@<2.8.6: ^2.8.6
   liquidjs@<10.26.0: ^10.27.0
   linkify-it@<5.0.2: ^5.0.2
   # Force single instances of @codemirror/state and @codemirror/autocomplete.
