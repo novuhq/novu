@@ -42,6 +42,11 @@ describe('ParseSlugIdPipe', () => {
       const identifier = 'sendgrid-prod';
       expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
     });
+
+    it('should return long workflow identifiers unchanged', () => {
+      const identifier = 'dailyDigestPatient';
+      expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
+    });
   });
 
   describe('Slug IDs with various prefixes', () => {
