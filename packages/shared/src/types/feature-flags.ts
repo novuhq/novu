@@ -45,7 +45,10 @@ export enum FeatureFlagsKeysEnum {
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
   /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
   IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
-  /** Chat channel Agent Card block editor in the workflow editor (server render path is always on and format-sniffed). */
+  /**
+   * Rich Chat: gates the block editor in the dashboard, Maily→card compilation in the API renderer,
+   * and native card delivery in the worker.
+   */
   IS_CHAT_BLOCK_EDITOR_ENABLED = 'IS_CHAT_BLOCK_EDITOR_ENABLED',
   IS_KEYLESS_AGENT_AI_ENABLED = 'IS_KEYLESS_AGENT_AI_ENABLED',
   /** When enabled, API-key auth on GET /v1/environments returns decrypted apiKeys for every environment in the org (pre-NV-7641 opt-in behavior). */
@@ -190,6 +193,8 @@ export enum FeatureFlagsKeysEnum {
   IS_JOB_STEP_DEDUP_ENABLED = 'IS_JOB_STEP_DEDUP_ENABLED',
   /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
+  /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
+  IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require

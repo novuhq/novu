@@ -1,22 +1,21 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
+import { InternalServerErrorException } from '@nestjs/common';
 import { LayoutDto, PinoLogger } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
-import { createLiquidEngine } from '@novu/framework/internal';
+import { JSONContent as MailyJSONContent } from '@novu/maily-render';
+import { ControlsTranslationService } from './controls-translation.service';
 import { FullPayloadForRender } from './render-command';
 
-type TranslationContext = {
+export type TranslationContext = {
   i18nInstance: unknown;
   liquidEngine: unknown;
   locale: string;
   resourceId: string;
 };
 
-@Injectable()
 export abstract class BaseTranslationRendererUsecase {
   constructor(
-    protected moduleRef: ModuleRef,
-    protected logger: PinoLogger
+    protected logger: PinoLogger,
+    protected controlsTranslationService: ControlsTranslationService
   ) {}
 
   protected async processTranslations({
@@ -40,12 +39,8 @@ export abstract class BaseTranslationRendererUsecase {
     resourceEntity?: NotificationTemplateEntity | LayoutDto;
     organization?: OrganizationEntity;
   }): Promise<Record<string, unknown>> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
-      return controls;
-    }
-
-    return this.executeTranslation({
-      content: controls,
+    return this.controlsTranslationService.processTranslations({
+      controls,
       variables,
       environmentId,
       organizationId,
@@ -54,7 +49,7 @@ export abstract class BaseTranslationRendererUsecase {
       locale,
       resourceEntity,
       organization,
-    }) as Promise<Record<string, unknown>>;
+    });
   }
 
   protected async processStringTranslations({
@@ -76,11 +71,7 @@ export abstract class BaseTranslationRendererUsecase {
     locale?: string;
     organization?: OrganizationEntity;
   }): Promise<string> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
-      return content;
-    }
-
-    return this.executeTranslation({
+    return this.controlsTranslationService.processStringTranslations({
       content,
       variables,
       environmentId,
@@ -89,7 +80,7 @@ export abstract class BaseTranslationRendererUsecase {
       resourceType,
       locale,
       organization,
-    }) as Promise<string>;
+    });
   }
 
   protected async createTranslationContext({
@@ -109,51 +100,15 @@ export abstract class BaseTranslationRendererUsecase {
     organization?: OrganizationEntity;
     resourceEntity?: NotificationTemplateEntity | LayoutDto;
   }): Promise<TranslationContext | null> {
-    if (process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') {
-      return null;
-    }
-
-    if (!resourceId) {
-      return null;
-    }
-
-    try {
-      const translate = this.getTranslationModule();
-      const liquidEngine = createLiquidEngine();
-
-      return await translate.createContext({
-        resourceId,
-        resourceType,
-        organizationId,
-        environmentId,
-        userId: 'system',
-        locale,
-        liquidEngine,
-        organization,
-        resourceEntity,
-      });
-    } catch (error) {
-      const errorMessage = error?.message || String(error);
-      const isExpectedError =
-        error?.status === 402 ||
-        errorMessage.includes('Translation is not enabled') ||
-        errorMessage.includes('Translation feature is not available on your plan') ||
-        errorMessage.includes('No translation found');
-
-      if (!isExpectedError) {
-        this.logger.error({
-          error: errorMessage,
-          resourceId,
-          resourceType,
-          organizationId,
-          environmentId,
-          locale,
-          stack: error?.stack,
-        }, 'Unexpected error during translation context creation');
-      }
-
-      return null;
-    }
+    return this.controlsTranslationService.createTranslationContext({
+      environmentId,
+      organizationId,
+      resourceId,
+      resourceType,
+      locale,
+      organization,
+      resourceEntity,
+    });
   }
 
   protected async processStringWithContext({
@@ -165,114 +120,151 @@ export abstract class BaseTranslationRendererUsecase {
     content: string;
     variables: FullPayloadForRender;
   }): Promise<string> {
-    if ((process.env.NOVU_ENTERPRISE !== 'true' && process.env.CI_EE_TEST !== 'true') || !context) {
-      return content;
-    }
-
-    try {
-      const translate = this.getTranslationModule();
-
-      return await translate.executeWithContext(context, content, variables);
-    } catch (error) {
-      this.logger.error({
-        error: error?.message || error,
-        resourceId: context.resourceId,
-        locale: context.locale,
-        stack: error?.stack,
-      }, 'Translation with context failed');
-
-      throw new InternalServerErrorException(
-        `Translation processing failed for resource ${context.resourceId}: ${error?.message || String(error)}`
-      );
-    }
+    return this.controlsTranslationService.processStringWithContext({
+      context,
+      content,
+      variables,
+    });
   }
 
-  private async executeTranslation({
-    content,
+  /**
+   * Resolves translation keys inside a (liquid-wrapped) Maily document. The document is
+   * stringified, run through the translation module (which resolves `{t.key}` nodes), and
+   * re-parsed. In non-enterprise builds the translation calls are no-ops, so the document
+   * round-trips unchanged.
+   */
+  protected async processMailyTranslations({
+    mailyContent,
     variables,
     environmentId,
     organizationId,
     resourceId,
     resourceType,
     locale,
-    resourceEntity,
     organization,
+    translationContext,
   }: {
-    content: string | Record<string, unknown>;
+    mailyContent: MailyJSONContent;
     variables: FullPayloadForRender;
     environmentId: string;
     organizationId: string;
     resourceId?: string;
     resourceType?: LocalizationResourceEnum;
     locale?: string;
-    resourceEntity?: NotificationTemplateEntity | LayoutDto;
     organization?: OrganizationEntity;
-  }): Promise<string | Record<string, unknown>> {
-    if (!resourceId) {
-      this.logger.warn({
-        resourceId,
-        resourceType,
-        organizationId,
-        environmentId,
-        locale,
-      }, 'Resource ID is required for translation module');
-
-      return content;
-    }
+    translationContext?: TranslationContext | null;
+  }): Promise<MailyJSONContent> {
+    const contentString = JSON.stringify(mailyContent);
+    const translatedContent = translationContext
+      ? await this.processStringWithContext({
+          context: translationContext,
+          content: contentString,
+          variables,
+        })
+      : await this.processStringTranslations({
+          content: contentString,
+          variables,
+          environmentId,
+          organizationId,
+          resourceId,
+          resourceType,
+          locale,
+          organization,
+        });
 
     try {
-      const translate = this.getTranslationModule();
-
-      const contentString = typeof content === 'string' ? content : JSON.stringify(content);
-      const liquidEngine = createLiquidEngine();
-
-      const translatedContent = await translate.execute({
-        resourceId,
-        resourceType,
-        organizationId,
-        environmentId,
-        userId: 'system',
-        locale,
-        content: contentString,
-        payload: variables,
-        liquidEngine,
-        resourceEntity,
-        organization,
-      });
-
-      return typeof content === 'string' ? translatedContent : JSON.parse(translatedContent);
+      return JSON.parse(translatedContent);
     } catch (error) {
-      this.logger.error({
-        error: error?.message || error,
-        resourceId,
-        resourceType,
-        organizationId,
-        environmentId,
-        locale,
-        stack: error?.stack,
-      }, 'Translation processing failed');
-
       throw new InternalServerErrorException(
-        `Translation processing failed for resource ${resourceId}: ${error?.message || String(error)}`
+        `Translated Maily content is not valid JSON: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
 
-  private getTranslationModule() {
-    try {
-      const translationModule = require('@novu/ee-translation')?.Translate;
-      if (!translationModule) {
-        throw new Error('Translation module (@novu/ee-translation) not found or Translate class not exported');
+  /**
+   * Escapes every string in the payload so it can be safely liquid-rendered into a stringified
+   * Maily JSON document and re-parsed with `JSON.parse`. Without this, a payload value containing
+   * a quote, backslash, newline or tab produces invalid JSON. Backslashes are escaped first, so
+   * literal sequences (e.g. `C:\node`) and real newlines round-trip correctly through `JSON.parse`.
+   */
+  protected deepEscapePayloadStrings(payload: FullPayloadForRender): FullPayloadForRender {
+    return this.deepEscapeObject(payload) as FullPayloadForRender;
+  }
+
+  private deepEscapeObject(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.escapeStringForJson(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepEscapeObject(item));
+    }
+
+    if (typeof obj === 'object') {
+      const escapedObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        escapedObj[key] = this.deepEscapeObject(value);
       }
 
-      return this.moduleRef.get(translationModule, { strict: false });
-    } catch (error) {
-      this.logger.error({
-        error: error?.message || error,
-        stack: error?.stack,
-      }, 'Translation module loading failed');
-
-      throw new InternalServerErrorException(`Unable to load Translation module: ${error?.message || String(error)}`);
+      return escapedObj;
     }
+
+    return obj;
+  }
+
+  protected escapeStringForJson(str: string): string {
+    return str
+      .replace(/\\/g, '\\\\') // Escape backslashes
+      .replace(/"/g, '\\"') // Escape quotes
+      .replace(/\n/g, '\\n') // Escape newlines
+      .replace(/\r/g, '\\r') // Escape carriage returns
+      .replace(/\t/g, '\\t'); // Escape tabs
+  }
+
+  protected unescapeJsonString(str: string): string {
+    return str
+      .replace(/\\t/g, '\t')
+      .replace(/\\r/g, '\r')
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'")
+      .replace(/\\\\/g, '\\');
+  }
+
+  protected deepUnescapeTranslationStrings(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.unescapeJsonString(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepUnescapeTranslationStrings(item));
+    }
+
+    if (typeof obj === 'object') {
+      const unescapedObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        unescapedObj[key] = this.deepUnescapeTranslationStrings(value);
+      }
+
+      return unescapedObj;
+    }
+
+    return obj;
   }
 }

@@ -44,8 +44,9 @@ import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generat
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { IngestAgentEvents } from '../shared/ingest-agent-events/ingest-agent-events.usecase';
-import { CreateWebChatConversation } from '../web-chat/usecases/create-web-chat-conversation/create-web-chat-conversation.usecase';
+import { GetWebChatConversation } from '../web-chat/usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
 import { ListWebChatConversationEvents } from '../web-chat/usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
+import { ListWebChatConversations } from '../web-chat/usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
 
 export { ConsumeSlackSetupLink, GetSlackSetupLinkStatus, IssueSlackSetupLink };
 
@@ -96,6 +97,7 @@ export const USE_CASES = [
   HandleNovuTools,
   HandleNovuResolve,
   IngestAgentEvents,
-  CreateWebChatConversation,
+  GetWebChatConversation,
+  ListWebChatConversations,
   ListWebChatConversationEvents,
 ];

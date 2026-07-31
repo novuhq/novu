@@ -116,6 +116,23 @@ channelEndpointSchema.index(
   }
 );
 
+/*
+ * Enforces one Grafana endpoint per (env, subscriber, integration). Grafana
+ * routing is 1:1 with a subscriber's target OnCall incoming-webhook integration;
+ * a duplicate would silently fan out to two alerts per trigger. Partial index
+ * keeps other endpoint types free to repeat these tuples.
+ */
+channelEndpointSchema.index(
+  { _environmentId: 1, subscriberId: 1, integrationIdentifier: 1, type: 1 },
+  {
+    name: 'unique_grafana_oncall_integration_per_subscriber_integration',
+    unique: true,
+    partialFilterExpression: {
+      type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+    },
+  }
+);
+
 export const ChannelEndpoint =
   (mongoose.models.ChannelEndpoint as mongoose.Model<ChannelEndpointDBModel>) ||
   mongoose.model<ChannelEndpointDBModel>('ChannelEndpoint', channelEndpointSchema);

@@ -30,6 +30,11 @@ export type CardElementLinkButtonElement = {
   label: string;
   url: string;
   style?: 'primary' | 'danger' | 'default';
+  /**
+   * Optional stable identifier authored in the editor. Platform serializers that require a
+   * per-button id (e.g. Slack's `action_id`) use it; when omitted they derive one from the URL.
+   */
+  id?: string;
 };
 
 export type CardElementActionsElement = {

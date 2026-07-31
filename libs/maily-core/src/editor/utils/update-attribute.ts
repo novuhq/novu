@@ -51,7 +51,7 @@ export function updateAttributes(type: string, attrs: Record<string, any>): Comm
           }
         }
 
-        if (type === 'button') {
+        if (type === 'button' || type === 'cardButton') {
           tr.setSelection(tr.selection);
         }
       }

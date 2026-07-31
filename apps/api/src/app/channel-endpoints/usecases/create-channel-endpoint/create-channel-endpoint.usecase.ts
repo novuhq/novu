@@ -43,6 +43,7 @@ const MONGO_DUPLICATE_KEY_CODE = 11000;
 const ENDPOINT_STORED_SECRET_LABELS: Partial<Record<ChannelEndpointType, string>> = {
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: 'PagerDuty',
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: 'Opsgenie',
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: 'Grafana',
   [ENDPOINT_TYPES.TOOL_WEBHOOK]: 'Tool webhook',
 };
 
@@ -76,6 +77,7 @@ function deriveLinkedPlatformUser(
     case ENDPOINT_TYPES.LINE_USER:
     case ENDPOINT_TYPES.OPSGENIE_INTEGRATION:
     case ENDPOINT_TYPES.PAGERDUTY_SERVICE:
+    case ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION:
     case ENDPOINT_TYPES.TOOL_WEBHOOK:
       return null;
     default: {
@@ -357,6 +359,10 @@ export class CreateChannelEndpoint {
 
     if (type === ENDPOINT_TYPES.OPSGENIE_INTEGRATION && integration.providerId !== ToolProviderIdEnum.Opsgenie) {
       throw new BadRequestException(`Channel endpoint type "${type}" requires an Opsgenie integration`);
+    }
+
+    if (type === ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION && integration.providerId !== ToolProviderIdEnum.Grafana) {
+      throw new BadRequestException(`Channel endpoint type "${type}" requires a Grafana integration`);
     }
 
     if (type === ENDPOINT_TYPES.TOOL_WEBHOOK) {

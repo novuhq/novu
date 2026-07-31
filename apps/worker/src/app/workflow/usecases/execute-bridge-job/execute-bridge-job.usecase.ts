@@ -8,6 +8,7 @@ import {
   EnvironmentCacheData,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
+  enhanceStepsMap,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
@@ -16,7 +17,6 @@ import {
   PinoLogger,
   stitchProviderOverridesFromDocs,
   withStitchedProviderOverrides,
-  enhanceStepsMap,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -210,10 +210,7 @@ export class ExecuteBridgeJob {
     return payload;
   }
 
-  public async buildStepsMap(
-    job: JobEntity,
-    environmentId: string
-  ): Promise<Record<string, Record<string, unknown>>> {
+  public async buildStepsMap(job: JobEntity, environmentId: string): Promise<Record<string, Record<string, unknown>>> {
     const state = await this.generateStateForJob(job, environmentId);
 
     const stepsMap = state.reduce<Record<string, Record<string, unknown>>>((acc, stepState) => {

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ChatRenderOutput, GeneratePreviewResponseDto } from '@novu/shared';
+import { ChannelTypeEnum, ChatRenderOutput, GeneratePreviewResponseDto, isMailyChatBody } from '@novu/shared';
 import { RiSendPlane2Fill } from 'react-icons/ri';
 
 import { LogoCircle } from '@/components/icons';
@@ -16,8 +16,41 @@ export const ChatPreview = ({
 }) => {
   const isValidChatPreview =
     previewData?.result?.type === ChannelTypeEnum.CHAT &&
-    (previewData?.result?.preview as ChatRenderOutput)?.body?.length > 0;
-  const body = isValidChatPreview ? ((previewData?.result?.preview as ChatRenderOutput)?.body ?? '') : '';
+    ((previewData?.result?.preview as ChatRenderOutput)?.body?.length ?? 0) > 0;
+  const rawBody = isValidChatPreview ? ((previewData?.result?.preview as ChatRenderOutput)?.body ?? '') : '';
+
+  /**
+   * Block-editor bodies are stored as Maily JSON. Per-platform rendering of that
+   * content is delivered in M3; until then we avoid dumping raw JSON into the
+   * preview bubble and show a neutral placeholder instead.
+   */
+  const isBlockBody = isMailyChatBody(rawBody);
+  const body = isBlockBody ? '' : rawBody;
+
+  const renderMessage = () => {
+    if (isPreviewPending) {
+      return <Skeleton className="h-4 w-1/2" />;
+    }
+
+    if (isBlockBody) {
+      return (
+        <span className="text-foreground-400 min-h-4 text-xs font-normal italic">
+          Rich message preview coming soon.
+        </span>
+      );
+    }
+
+    return (
+      <span
+        className={cn('text-foreground-950 min-h-4 whitespace-pre-wrap text-xs font-normal', {
+          'line-clamp-3': variant === 'mini',
+        })}
+        title={variant === 'mini' ? body : undefined}
+      >
+        {body}
+      </span>
+    );
+  };
 
   return (
     <div className="relative w-full rounded-xl border border-dashed border-[#E1E4EA] p-3">
@@ -34,18 +67,7 @@ export const ChatPreview = ({
               </span>
               <span className="text-foreground-600 text-2xs opacity-70">12:45</span>
             </div>
-            {isPreviewPending ? (
-              <Skeleton className="h-4 w-1/2" />
-            ) : (
-              <span
-                className={cn('text-foreground-950 min-h-4 whitespace-pre-wrap text-xs font-normal', {
-                  'line-clamp-3': variant === 'mini',
-                })}
-                title={variant === 'mini' ? body : undefined}
-              >
-                {body}
-              </span>
-            )}
+            {renderMessage()}
           </div>
         </div>
         <div

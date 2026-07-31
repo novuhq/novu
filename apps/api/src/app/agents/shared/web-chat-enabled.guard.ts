@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import type { SubscriberSession } from '../../shared/framework/user.decorator';
+import { assertWebChatEnabled } from './assert-web-chat-enabled';
 
 /**
  * Gates the subscriber web-chat API (`/v1/web-chat/*`).
@@ -20,16 +20,7 @@ export class WebChatEnabledGuard implements CanActivate {
       throw new NotFoundException();
     }
 
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_WEB_CHAT_ENABLED,
-      defaultValue: false,
-      organization: { _id: session.organizationId },
-      environment: { _id: session.environmentId },
-    });
-
-    if (!isEnabled) {
-      throw new NotFoundException();
-    }
+    await assertWebChatEnabled(this.featureFlagsService, session.organizationId, session.environmentId);
 
     return true;
   }

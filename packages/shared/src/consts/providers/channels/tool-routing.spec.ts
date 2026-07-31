@@ -7,11 +7,13 @@ import {
 } from './tool-routing';
 
 describe('tool routing policy', () => {
-  it('treats PagerDuty and Opsgenie as always endpoint-routed', () => {
+  it('treats PagerDuty, Opsgenie, and Grafana as always endpoint-routed', () => {
     expect(ENDPOINT_ROUTED_TOOL_PROVIDERS.has(ToolProviderIdEnum.PagerDuty)).toBe(true);
     expect(ENDPOINT_ROUTED_TOOL_PROVIDERS.has(ToolProviderIdEnum.Opsgenie)).toBe(true);
+    expect(ENDPOINT_ROUTED_TOOL_PROVIDERS.has(ToolProviderIdEnum.Grafana)).toBe(true);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.PagerDuty)).toBe(true);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Opsgenie)).toBe(true);
+    expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Grafana)).toBe(true);
   });
 
   it('routes tool-webhook by routingMode only', () => {

@@ -16,12 +16,33 @@ import {
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
 
+const POLL_TIMEOUT_MS = 10_000;
+const POLL_INTERVAL_MS = 50;
+
+async function pollFor<T>(fn: () => Promise<T | null | undefined>, timeoutMs = POLL_TIMEOUT_MS): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+
+  while (Date.now() < deadline) {
+    try {
+      const result = await fn();
+      if (result) return result;
+    } catch (err) {
+      lastError = err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+
+  throw new Error(
+    `pollFor timed out after ${timeoutMs}ms${lastError ? `; last error: ${(lastError as Error).message}` : ''}`
+  );
+}
+
 describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   let ctx: AgentTestContext;
   let subscriberToken: string;
 
   before(() => {
-    process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
     process.env.IS_AGENT_EVENT_PROTOCOL_ENABLED = 'true';
     process.env.IS_AGENT_WEB_CHAT_ENABLED = 'true';
   });
@@ -58,8 +79,21 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     return res.body.data;
   }
 
-  function createConversation(body: { agentId: string; text: string }, token = subscriberToken) {
+  function createConversation(
+    body: { agentId: string; text: string; id?: string; conversationIdentifier?: string },
+    token = subscriberToken
+  ) {
     return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
+  }
+
+  function listConversations(token = subscriberToken, query: { after?: string; before?: string; limit?: number } = {}) {
+    return ctx.session.testAgent.get('/v1/web-chat/conversations').query(query).set('Authorization', `Bearer ${token}`);
+  }
+
+  function getConversation(conversationIdentifier: string, token = subscriberToken) {
+    return ctx.session.testAgent
+      .get(`/v1/web-chat/conversations/${conversationIdentifier}`)
+      .set('Authorization', `Bearer ${token}`);
   }
 
   function getEvents(
@@ -71,6 +105,29 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       .get(`/v1/web-chat/conversations/${conversationIdentifier}/events`)
       .query(query)
       .set('Authorization', `Bearer ${token}`);
+  }
+
+  async function createOtherSubscriberToken() {
+    const otherSubscriberId = `other-sub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const otherSession = await ctx.session.testAgent.post('/v1/inbox/session').send({
+      applicationIdentifier: ctx.session.environment.identifier,
+      subscriberId: otherSubscriberId,
+    });
+    expect(otherSession.status).to.equal(201);
+
+    return otherSession.body.data.token as string;
+  }
+
+  async function waitForConversation(identifier: string) {
+    return pollFor(() =>
+      conversationRepository.findOne(
+        {
+          identifier,
+          _environmentId: ctx.session.environment._id,
+        },
+        '*'
+      )
+    );
   }
 
   function messageEnvelope(conversationId: string, messageId: string): AgentEventEnvelope {
@@ -101,31 +158,35 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(res.status).to.equal(201);
     expect(res.body.data.identifier).to.match(/^conv_/);
 
-    const conversation = await conversationRepository.findOne(
-      {
-        identifier: res.body.data.identifier,
-        _environmentId: ctx.session.environment._id,
-      },
-      '*'
+    const conversation = await pollFor(() =>
+      conversationRepository.findOne(
+        {
+          identifier: res.body.data.identifier,
+          _environmentId: ctx.session.environment._id,
+        },
+        '*'
+      )
     );
-    expect(conversation).to.exist;
     expect(
-      conversation!.participants.some(
+      conversation.participants.some(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER && p.id === ctx.session.subscriberId
       )
     ).to.equal(true);
 
-    const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id, 20);
-    const subscriberMessage = activities.find(
-      (a) =>
-        a.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER &&
-        a.type === ConversationActivityTypeEnum.MESSAGE
-    );
-    expect(subscriberMessage).to.exist;
-    expect(subscriberMessage!.content).to.equal('Hello from web chat');
-    expect(subscriberMessage!.identifier).to.match(/^msg_/);
-    expect(conversation!.channels.some((channel) => channel.platform === 'web_chat')).to.equal(true);
-    expect(conversation!.channels[0]?.platformThreadId).to.equal(res.body.data.identifier);
+    const activities = await pollFor(async () => {
+      const found = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id, 20);
+      const subscriberMessage = found.find(
+        (a) =>
+          a.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER &&
+          a.type === ConversationActivityTypeEnum.MESSAGE
+      );
+
+      return subscriberMessage ?? null;
+    });
+    expect(activities.content).to.equal('Hello from web chat');
+    expect(activities.identifier).to.match(/^msg_/);
+    expect(conversation.channels.some((channel) => channel.platform === 'web_chat')).to.equal(true);
+    expect(conversation.channels[0]?.platformThreadId).to.equal(`web_chat:${res.body.data.identifier}`);
   });
 
   it('should reject unpublished agents with 400', async () => {
@@ -166,6 +227,17 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     }
   });
 
+  it('should return 401 when Authorization is missing on POST', async () => {
+    await linkWebChat();
+
+    const res = await ctx.session.testAgent.post('/v1/web-chat/conversations').send({
+      agentId: ctx.agentIdentifier,
+      text: 'No auth',
+    });
+
+    expect(res.status).to.equal(401);
+  });
+
   it('should return durable agent message events on GET .../events', async () => {
     await linkWebChat();
 
@@ -175,20 +247,35 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     });
     expect(createRes.status).to.equal(201);
 
-    const conversation = await conversationRepository.findOne(
-      {
-        identifier: createRes.body.data.identifier,
-        _environmentId: ctx.session.environment._id,
-      },
-      '*'
+    const conversation = await pollFor(() =>
+      conversationRepository.findOne(
+        {
+          identifier: createRes.body.data.identifier,
+          _environmentId: ctx.session.environment._id,
+        },
+        '*'
+      )
     );
-    expect(conversation).to.exist;
 
     const messageId = `msg-e2e-${Date.now()}`;
     const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
-      events: [messageEnvelope(conversation!._id, messageId)],
+      events: [messageEnvelope(conversation._id, messageId)],
     });
     expect(ingestRes.status).to.equal(200);
+
+    // platformMessageId ≡ durable activity identifier (web chat has no external id).
+    const agentActivity = await pollFor(() =>
+      activityRepository.findOne(
+        {
+          _conversationId: conversation._id,
+          _environmentId: ctx.session.environment._id,
+          identifier: messageId,
+        },
+        '*'
+      )
+    );
+    expect(agentActivity.platformMessageId).to.equal(messageId);
+    expect(agentActivity.identifier).to.equal(messageId);
 
     const eventsRes = await getEvents(createRes.body.data.identifier);
     expect(eventsRes.status).to.equal(200);
@@ -202,14 +289,17 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(agentMessageEvent).to.exist;
     expect(agentMessageEvent.event.content.markdown).to.equal(`Agent reply ${messageId}`);
 
-    const subscriberMessageEvent = eventsRes.body.data.events.find(
-      (envelope: AgentEventEnvelope) =>
-        envelope.event.type === 'custom' &&
-        envelope.event.name === 'subscriber.message' &&
-        envelope.event.data.content.markdown === 'Start thread'
-    );
+    const subscriberMessageEvent = eventsRes.body.data.events.find((envelope: AgentEventEnvelope) => {
+      if (envelope.event.type !== 'custom' || envelope.event.name !== 'subscriber.message') {
+        return false;
+      }
+      const data = envelope.event.data as { content?: { markdown?: string }; messageId?: string };
+
+      return data.content?.markdown === 'Start thread';
+    });
     expect(subscriberMessageEvent).to.exist;
-    expect(subscriberMessageEvent.event.data.messageId).to.match(/^msg_/);
+    const subscriberData = subscriberMessageEvent.event.data as { messageId?: string };
+    expect(subscriberData.messageId).to.match(/^msg_/);
   });
 
   it('should paginate events with activity cursor', async () => {
@@ -221,17 +311,18 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     });
     expect(createRes.status).to.equal(201);
 
-    const conversation = await conversationRepository.findOne(
-      {
-        identifier: createRes.body.data.identifier,
-        _environmentId: ctx.session.environment._id,
-      },
-      '*'
+    const conversation = await pollFor(() =>
+      conversationRepository.findOne(
+        {
+          identifier: createRes.body.data.identifier,
+          _environmentId: ctx.session.environment._id,
+        },
+        '*'
+      )
     );
-    expect(conversation).to.exist;
 
     await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
-      events: [messageEnvelope(conversation!._id, `msg-page-${Date.now()}`)],
+      events: [messageEnvelope(conversation._id, `msg-page-${Date.now()}`)],
     });
 
     const firstPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 1 });
@@ -258,14 +349,18 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     });
     expect(createRes.status).to.equal(201);
 
-    const otherSubscriberId = `other-sub-${Date.now()}`;
-    const otherSession = await ctx.session.testAgent.post('/v1/inbox/session').send({
-      applicationIdentifier: ctx.session.environment.identifier,
-      subscriberId: otherSubscriberId,
-    });
-    expect(otherSession.status).to.equal(201);
+    await pollFor(() =>
+      conversationRepository.findOne(
+        {
+          identifier: createRes.body.data.identifier,
+          _environmentId: ctx.session.environment._id,
+        },
+        '*'
+      )
+    );
 
-    const eventsRes = await getEvents(createRes.body.data.identifier, otherSession.body.data.token);
+    const otherToken = await createOtherSubscriberToken();
+    const eventsRes = await getEvents(createRes.body.data.identifier, otherToken);
     expect(eventsRes.status).to.equal(404);
   });
 
@@ -294,5 +389,186 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     const eventsRes = await getEvents(slackConversation.identifier);
     expect(eventsRes.status).to.equal(404);
+  });
+
+  it('should list only the subscriber web-chat conversations', async () => {
+    await linkWebChat();
+
+    const mineA = await createConversation({ agentId: ctx.agentIdentifier, text: 'Mine A' });
+    const mineB = await createConversation({ agentId: ctx.agentIdentifier, text: 'Mine B' });
+    expect(mineA.status).to.equal(201);
+    expect(mineB.status).to.equal(201);
+    await waitForConversation(mineA.body.data.identifier);
+    await waitForConversation(mineB.body.data.identifier);
+
+    const otherToken = await createOtherSubscriberToken();
+    const otherRes = await createConversation(
+      { agentId: ctx.agentIdentifier, text: 'Other subscriber thread' },
+      otherToken
+    );
+    expect(otherRes.status).to.equal(201);
+    await waitForConversation(otherRes.body.data.identifier);
+
+    await conversationRepository.create({
+      identifier: `conv_e2e_slack_list_${Date.now()}`,
+      _agentId: ctx.agentId,
+      participants: [
+        { type: ConversationParticipantTypeEnum.AGENT, id: ctx.agentId },
+        { type: ConversationParticipantTypeEnum.SUBSCRIBER, id: ctx.session.subscriberId },
+      ],
+      channels: [
+        {
+          platform: 'slack',
+          _integrationId: ctx.integrationId,
+          platformThreadId: `thread-list-${Date.now()}`,
+        },
+      ],
+      status: 'active',
+      title: 'Slack should be hidden',
+      metadata: {},
+      _environmentId: ctx.session.environment._id,
+      _organizationId: ctx.session.organization._id,
+      lastActivityAt: new Date().toISOString(),
+    });
+
+    const listRes = await listConversations();
+    expect(listRes.status).to.equal(200);
+    expect(listRes.body.data).to.be.an('array');
+
+    const identifiers = listRes.body.data.map((item: { identifier: string }) => item.identifier);
+    expect(identifiers).to.include(mineA.body.data.identifier);
+    expect(identifiers).to.include(mineB.body.data.identifier);
+    expect(identifiers).to.not.include(otherRes.body.data.identifier);
+
+    const first = listRes.body.data.find(
+      (item: { identifier: string }) => item.identifier === mineA.body.data.identifier
+    );
+    expect(first).to.include.keys('identifier', 'title', 'status', 'agentIdentifier', 'lastActivityAt', 'createdAt');
+    expect(first.agentIdentifier).to.equal(ctx.agentIdentifier);
+    expect(first).to.not.have.property('participants');
+  });
+
+  it('should return conversation metadata for participants and 404 for others', async () => {
+    await linkWebChat();
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Metadata thread',
+    });
+    expect(createRes.status).to.equal(201);
+    await waitForConversation(createRes.body.data.identifier);
+
+    const getRes = await getConversation(createRes.body.data.identifier);
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.identifier).to.equal(createRes.body.data.identifier);
+    expect(getRes.body.data.agentIdentifier).to.equal(ctx.agentIdentifier);
+    expect(getRes.body.data).to.include.keys('title', 'status', 'lastActivityAt', 'createdAt');
+
+    const otherToken = await createOtherSubscriberToken();
+    const denied = await getConversation(createRes.body.data.identifier, otherToken);
+    expect(denied.status).to.equal(404);
+  });
+
+  it('should resume an existing conversation when conversationIdentifier ACL passes', async () => {
+    await linkWebChat();
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Original message',
+    });
+    expect(createRes.status).to.equal(201);
+    const identifier = createRes.body.data.identifier as string;
+    const conversation = await waitForConversation(identifier);
+
+    const resumeRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Follow-up message',
+      conversationIdentifier: identifier,
+    });
+    expect(resumeRes.status).to.equal(201);
+    expect(resumeRes.body.data.identifier).to.equal(identifier);
+
+    const subscriberMessages = await pollFor(async () => {
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation._id, 50);
+      const messages = activities.filter(
+        (a) =>
+          a.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER &&
+          a.type === ConversationActivityTypeEnum.MESSAGE
+      );
+
+      return messages.length >= 2 ? messages : null;
+    });
+    expect(subscriberMessages.map((a) => a.content)).to.include.members(['Original message', 'Follow-up message']);
+  });
+
+  it('should reject resume when conversationIdentifier ACL fails', async () => {
+    await linkWebChat();
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Owner only',
+    });
+    expect(createRes.status).to.equal(201);
+    await waitForConversation(createRes.body.data.identifier);
+
+    const otherToken = await createOtherSubscriberToken();
+    const denied = await createConversation(
+      {
+        agentId: ctx.agentIdentifier,
+        text: 'Should fail',
+        conversationIdentifier: createRes.body.data.identifier,
+      },
+      otherToken
+    );
+    expect(denied.status).to.equal(404);
+  });
+
+  it('should still create a new conversation when conversationIdentifier is omitted', async () => {
+    await linkWebChat();
+
+    const first = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'First thread',
+    });
+    const second = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Second thread',
+    });
+
+    expect(first.status).to.equal(201);
+    expect(second.status).to.equal(201);
+    expect(second.body.data.identifier).to.not.equal(first.body.data.identifier);
+    expect(second.body.data.identifier).to.match(/^conv_/);
+  });
+
+  it('should paginate durable history with afterSequence', async () => {
+    await linkWebChat();
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Sequence start',
+    });
+    expect(createRes.status).to.equal(201);
+
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+
+    await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
+      events: [messageEnvelope(conversation._id, `msg-seq-${Date.now()}`)],
+    });
+
+    const fullPage = await getEvents(createRes.body.data.identifier);
+    expect(fullPage.status).to.equal(200);
+    expect(fullPage.body.data.events.length).to.be.greaterThan(1);
+
+    const firstSequence = fullPage.body.data.events[0].sequence as number;
+    const gapFill = await getEvents(createRes.body.data.identifier, subscriberToken, {
+      afterSequence: firstSequence,
+      limit: 50,
+    });
+    expect(gapFill.status).to.equal(200);
+    expect(gapFill.body.data.events.length).to.be.greaterThan(0);
+    for (const envelope of gapFill.body.data.events) {
+      expect(envelope.sequence).to.be.greaterThan(firstSequence);
+    }
   });
 });

@@ -123,10 +123,7 @@ describe('installTemplate langchain package wiring', () => {
     const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
-    const agentSource = fs.readFileSync(
-      path.join(root, 'app/novu/agents/langchain-checl-demo.tsx'),
-      'utf8'
-    );
+    const agentSource = fs.readFileSync(path.join(root, 'app/novu/agents/langchain-checl-demo.tsx'), 'utf8');
     const nextConfig = fs.readFileSync(path.join(root, 'next.config.mjs'), 'utf8');
     const envLocal = fs.readFileSync(path.join(root, '.env.local'), 'utf8');
 

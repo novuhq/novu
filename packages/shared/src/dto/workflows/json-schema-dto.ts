@@ -29,6 +29,7 @@ export type JSONSchemaDefinition = JSONSchemaDto | boolean;
  * Json schema version 7.
  */
 export type JSONSchemaDto = {
+  $ref?: string | undefined;
   type?: JSONSchemaTypeName | JSONSchemaTypeName[] | undefined;
   enum?: unknown | undefined;
   const?: unknown | undefined;
