@@ -231,8 +231,7 @@ export class HandleAgentReply {
               agentName,
               environmentId: command.environmentId,
               organizationId: command.organizationId,
-            },
-            command.sourceEnvelope
+            }
           )
         )
       );
@@ -426,7 +425,7 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
-      { slackNative, eventContext: command.sourceEnvelope }
+      { slackNative }
     );
   }
 
@@ -455,7 +454,7 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
-      { slackNative: command.slackNative, eventContext: command.sourceEnvelope }
+      { slackNative: command.slackNative }
     );
   }
 
@@ -503,9 +502,7 @@ export class HandleAgentReply {
           conversation._agentId,
           command.integrationIdentifier,
           channel.platformThreadId,
-          channel.workspace?.id,
-          command.sourceEnvelope,
-          conversation._id
+          channel.workspace?.id
         );
 
         return;
@@ -516,9 +513,7 @@ export class HandleAgentReply {
         command.integrationIdentifier,
         channel.platformThreadId,
         typing.status ?? 'Thinking...',
-        channel.workspace?.id,
-        command.sourceEnvelope,
-        conversation._id
+        channel.workspace?.id
       );
     } catch (err) {
       this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to set typing status`);

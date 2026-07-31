@@ -9,7 +9,6 @@ import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
-import { WebChatInboundProvisionService } from '../../web-chat/web-chat-inbound-provision.service';
 import { WebChatPlatformDeliveryService } from '../../web-chat/web-chat-platform-delivery.service';
 import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
@@ -88,7 +87,6 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentEmailSender: AgentEmailSender,
     private readonly webChatSessionVerifier: WebChatSessionVerifier,
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
-    private readonly webChatInboundProvision: WebChatInboundProvisionService,
     private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -457,7 +455,6 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
             authorizeResume: ({ conversationId, session }) =>
               this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
-            provisionInbound: this.webChatInboundProvision.createProvisionInbound(deliveryContext),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),

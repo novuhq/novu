@@ -8,7 +8,10 @@ export interface IWebSocketDataDto {
   _environmentId: string;
   _organizationId?: string;
   subscriberId?: string;
-  /** Inbox notification payload or agent `AgentEventEnvelope` for AGENT_EVENT. */
+  /**
+   * Inbox jobs use `{ messageId }` (and related count fields).
+   * `AGENT_EVENT` jobs carry an `AgentEventEnvelope`.
+   */
   payload?: Record<string, unknown>;
   contextKeys: string[];
 }

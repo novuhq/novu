@@ -130,7 +130,7 @@ const conversationSchema = new Schema<ConversationDBModel>(
     isDirectMessage: {
       type: Schema.Types.Boolean,
     },
-    webDeliverySequence: {
+    eventSequence: {
       type: Schema.Types.Number,
       default: 0,
     },

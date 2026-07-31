@@ -31,8 +31,9 @@ export type WebChatFactoryTypingInput = WebChatFactoryBaseInput & {
 };
 
 /**
- * Nest-owned factory for server-originated web-chat envelopes that have no
- * runtime AgentEventEnvelope (gate replies, errors, Nest typing).
+ * Nest-owned factory for live web-chat envelopes. Run/turn ids are synthetic
+ * (`web_*` / `turn_*`) — clients correlate live vs history by
+ * `messageId` + `sequence`, not by run identity.
  */
 @Injectable()
 export class WebChatEventFactory {
@@ -65,25 +66,6 @@ export class WebChatEventFactory {
       state: input.state,
       ...(input.status !== undefined ? { status: input.status } : {}),
     });
-  }
-
-  /**
-   * Prefer a source runtime envelope's identity fields; fill event/sequence from
-   * the live delivery inputs when Nest originates the payload.
-   */
-  mergeSourceEnvelope(source: AgentEventEnvelope | undefined, envelope: AgentEventEnvelope): AgentEventEnvelope {
-    if (!source) {
-      return envelope;
-    }
-
-    return {
-      ...envelope,
-      runId: source.runId || envelope.runId,
-      turnId: source.turnId || envelope.turnId,
-      agentId: source.agentId || envelope.agentId,
-      conversationId: source.conversationId || envelope.conversationId,
-      version: source.version || envelope.version,
-    };
   }
 
   private build(

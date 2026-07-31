@@ -21,7 +21,7 @@ export class ExternalServicesRouteCommand extends BaseCommand {
     messageId?: string;
     unreadCount?: number;
     unseenCount?: number;
-    /** AGENT_EVENT and other passthrough payloads */
+    /** Agent envelopes and other passthrough payloads beyond inbox fields. */
     [key: string]: unknown;
   };
 

@@ -54,10 +54,9 @@ export class WebChatController {
   ) {}
 
   /**
-   * POST auth boundary is adapter `verifySession` (inside `handleWebhook`).
-   * Session is read here only for `assertWebChatEnabled` + publication resolve
-   * before `InboundDispatcher` / registry `getOrCreate`.
-   * Optional body `conversationIdentifier` / `id` resumes via adapter ACL.
+   * Adapter webhook ingress (same spine as other channels). Plan limits are
+   * enforced mid-turn by `PlanLimitGateService` in inbound-turn. Optional body
+   * `conversationIdentifier` / `id` resumes via ACL.
    */
   @Post('/conversations')
   async createConversation(@Req() req: ExpressRequest, @Res() res: ExpressResponse): Promise<void> {

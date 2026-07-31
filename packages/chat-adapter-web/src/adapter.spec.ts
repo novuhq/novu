@@ -92,35 +92,17 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(badId.status).toBe(400);
   });
 
-  it('awaits provisionInbound before 201 then dispatches processMessage', async () => {
-    const order: string[] = [];
-    const provisionInbound = vi.fn(async () => {
-      order.push('provision');
-    });
-    const { adapter, processMessage } = await createAdapter(createConfig({ provisionInbound }));
-    processMessage.mockImplementation(() => {
-      order.push('process');
-    });
+  it('dispatches processMessage then returns 201', async () => {
+    const { adapter, processMessage } = await createAdapter();
 
     const response = await adapter.handleWebhook(jsonRequest({ agentId: 'agent_1', text: 'Hello' }));
     const body = await response.json();
 
     expect(response.status).toBe(201);
     expect(body.data.identifier).toMatch(/^conv_[0-9a-z]{12}$/);
-    expect(provisionInbound).toHaveBeenCalledOnce();
-    expect(provisionInbound.mock.calls[0]?.[0]).toEqual(
-      expect.objectContaining({
-        conversationId: body.data.identifier,
-        threadId: `web_chat:${body.data.identifier}`,
-        text: 'Hello',
-        session: SESSION,
-      })
-    );
-    expect(provisionInbound.mock.calls[0]?.[0].messageId).toMatch(/^msg_[0-9a-z]{12}$/);
     expect(processMessage).toHaveBeenCalledOnce();
     expect(processMessage.mock.calls[0]?.[1]).toBe(`web_chat:${body.data.identifier}`);
-    expect(processMessage.mock.calls[0]?.[2].id).toBe(provisionInbound.mock.calls[0]?.[0].messageId);
-    expect(order).toEqual(['provision', 'process']);
+    expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
   });
 
   it('ignores client messageId and always mints server message id', async () => {
@@ -257,52 +239,33 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(adapter.decodeThreadId('web_chat:conv_abcdefghijkl')).toEqual({ conversationId: 'conv_abcdefghijkl' });
   });
 
-  it('withEventContext exposes source envelope to all four live ops concurrently', async () => {
-    const seen: Array<{ op: string; context: unknown }> = [];
-    const config = createConfig({
-      deliverMessage: vi.fn(async ({ threadId }) => {
-        seen.push({ op: 'post', context: NovuWebChatAdapterImpl.getEventContext() });
-
-        return { id: 'act_post0000001', threadId };
-      }),
-      editMessage: vi.fn(async ({ threadId, messageId }) => {
-        seen.push({ op: 'edit', context: NovuWebChatAdapterImpl.getEventContext() });
-
-        return { id: messageId, threadId };
-      }),
-      deleteMessage: vi.fn(async () => {
-        seen.push({ op: 'delete', context: NovuWebChatAdapterImpl.getEventContext() });
-      }),
-      startTyping: vi.fn(async () => {
-        seen.push({ op: 'typing', context: NovuWebChatAdapterImpl.getEventContext() });
-      }),
-    });
+  it('declares supportsClientMessageIds and forwards an embedded messageId to deliverMessage', async () => {
+    const config = createConfig();
     const { adapter } = await createAdapter(config);
 
-    const envelopeA = { runId: 'run-a', event: { type: 'message' } };
-    const envelopeB = { runId: 'run-b', event: { type: 'channel.typing' } };
+    expect(adapter.supportsClientMessageIds).toBe(true);
 
-    await Promise.all([
-      adapter.withEventContext(envelopeA, async () => {
-        await new Promise((r) => setTimeout(r, 15));
-        await adapter.postMessage('web_chat:conv_abcdefghijkl', { markdown: 'hi' });
-        await adapter.editMessage('web_chat:conv_abcdefghijkl', 'act_1', { markdown: 'edited' });
-        await adapter.deleteMessage('web_chat:conv_abcdefghijkl', 'act_1');
-      }),
-      adapter.withEventContext(envelopeB, async () => {
-        await new Promise((r) => setTimeout(r, 5));
-        await adapter.startTyping('web_chat:conv_abcdefghijkl', '…');
-      }),
-    ]);
+    const sent = await adapter.postMessage('web_chat:conv_abcdefghijkl', {
+      markdown: 'Agent hi',
+      messageId: 'msg_fromruntime1',
+    } as never);
 
-    expect(seen).toEqual(
-      expect.arrayContaining([
-        { op: 'typing', context: envelopeB },
-        { op: 'post', context: envelopeA },
-        { op: 'edit', context: envelopeA },
-        { op: 'delete', context: envelopeA },
-      ])
-    );
-    expect(NovuWebChatAdapterImpl.getEventContext()).toBeUndefined();
+    expect(config.deliverMessage).toHaveBeenCalledWith({
+      threadId: 'web_chat:conv_abcdefghijkl',
+      content: 'Agent hi',
+      richContent: undefined,
+      messageId: 'msg_fromruntime1',
+    });
+    // The delivery callback owns the final id (hint honored or minted).
+    expect(sent.id).toBe('act_delivered1ab');
+  });
+
+  it('stopTyping delegates to startTyping callback without a status', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
+
+    await adapter.stopTyping('web_chat:conv_abcdefghijkl');
+
+    expect(config.startTyping).toHaveBeenCalledWith({ threadId: 'web_chat:conv_abcdefghijkl' });
   });
 });

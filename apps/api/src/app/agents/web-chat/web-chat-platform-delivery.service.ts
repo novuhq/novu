@@ -4,18 +4,19 @@ import { PinoLogger, shortId, WebSocketsQueueService } from '@novu/application-g
 import {
   conversationIdFromThreadId,
   extractCardPlainText,
-  NovuWebChatAdapterImpl,
   type WebChatDeleteMessageParams,
   type WebChatDeliverMessageParams,
   type WebChatDeliverMessageResult,
   type WebChatEditMessageParams,
   type WebChatStartTypingParams,
 } from '@novu/chat-adapter-web';
-import { ConversationParticipantTypeEnum, ConversationRepository, SubscriberRepository } from '@novu/dal';
+import { type ConversationEntity, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 import type { CardElement } from 'chat';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import { ConversationEventSequenceService } from '../conversation-runtime/conversation/conversation-event-sequence.service';
+import { OutboundDeliveryInfo } from '../conversation-runtime/egress/outbound-delivery-info.service';
 import { WebChatEventFactory } from './web-chat-event.factory';
 
 export type WebChatPlatformDeliveryContext = {
@@ -23,26 +24,24 @@ export type WebChatPlatformDeliveryContext = {
   config: ResolvedAgentConfig;
 };
 
-export type WebChatLiveContext = {
-  envelope?: AgentEventEnvelope;
-  platformMessageId?: string;
-  sequence?: number;
-  conversationMongoId?: string;
-};
-
 /**
- * Nest-owned platform callbacks for `@novu/chat-adapter-web`.
- * Live fan-out only (no Mongo). Nest `persistDelivered` / `persistAgentEdit` /
- * `persistAgentDelete` own durable activities.
+ * Nest-owned platform callbacks for `@novu/chat-adapter-web`. Web has no
+ * external platform, so this layer *is* the platform: it resolves the
+ * conversation from the thread id, mints the conversation event sequence,
+ * emits the live WS envelope, and reports `{ messageId, sequence }` upward
+ * through {@link OutboundDeliveryInfo} so the channel-agnostic gateway can
+ * persist the durable activity with the same identity — the way Slack returns
+ * its `ts`.
  */
 @Injectable()
 export class WebChatPlatformDeliveryService {
   constructor(
     private readonly conversationService: AgentConversationService,
-    private readonly conversationRepository: ConversationRepository,
+    private readonly eventSequenceService: ConversationEventSequenceService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly webSocketsQueueService: WebSocketsQueueService,
     private readonly eventFactory: WebChatEventFactory,
+    private readonly deliveryInfo: OutboundDeliveryInfo,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -53,23 +52,28 @@ export class WebChatPlatformDeliveryService {
       threadId,
       content,
       richContent,
+      messageId,
     }: WebChatDeliverMessageParams): Promise<WebChatDeliverMessageResult> => {
-      const { conversation, platformMessageId, sequence, merge } = await this.beginLiveDelivery(context, threadId);
-      const markdown = this.markdownForLiveEnvelope(content, richContent);
+      // Caller-supplied id (AgentEvent messageId) keeps event→activity
+      // idempotency and history rehydration on one id; otherwise mint.
+      const platformMessageId = messageId ?? `act_${shortId(12)}`;
+      const conversation = await this.resolveConversation(context, threadId);
+      const sequence = await this.mintSequence(context, conversation, threadId, 'deliverMessage');
+      this.deliveryInfo.report({ messageId: platformMessageId, sequence });
 
-      const envelope = merge(
-        this.eventFactory.createMessageEnvelope({
-          conversationId: this.conversationIdForEnvelope(conversation, threadId),
+      if (conversation && sequence !== undefined) {
+        const markdown = this.markdownForLiveEnvelope(content, richContent);
+        const envelope = this.eventFactory.createMessageEnvelope({
+          conversationId: conversation._id,
           agentId: context.config.agentIdentifier,
           platformMessageId,
           content: { markdown },
           sequence,
-        })
-      );
+        });
+        await this.emitBestEffort(context, conversation, envelope);
+      }
 
-      await this.emitBestEffort(context, conversation, envelope);
-
-      return { id: platformMessageId, threadId, sequence };
+      return { id: platformMessageId, threadId };
     };
   }
 
@@ -80,95 +84,111 @@ export class WebChatPlatformDeliveryService {
       content,
       richContent,
     }: WebChatEditMessageParams): Promise<WebChatDeliverMessageResult> => {
-      const { conversation, sequence, merge } = await this.beginLiveDelivery(context, threadId, {
-        platformMessageId: messageId,
-      });
-      const markdown = this.markdownForLiveEnvelope(content, richContent);
+      const conversation = await this.resolveConversation(context, threadId);
+      const sequence = await this.mintSequence(context, conversation, threadId, 'editMessage');
+      this.deliveryInfo.report({ sequence });
 
-      const envelope = merge(
-        this.eventFactory.createEditEnvelope({
-          conversationId: this.conversationIdForEnvelope(conversation, threadId),
+      if (conversation && sequence !== undefined) {
+        const markdown = this.markdownForLiveEnvelope(content, richContent);
+        const envelope = this.eventFactory.createEditEnvelope({
+          conversationId: conversation._id,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
           content: { markdown },
           sequence,
-        })
-      );
+        });
+        await this.emitBestEffort(context, conversation, envelope);
+      }
 
-      await this.emitBestEffort(context, conversation, envelope);
-
-      return { id: messageId, threadId, sequence };
+      return { id: messageId, threadId };
     };
   }
 
   createDeleteMessage(context: WebChatPlatformDeliveryContext) {
     return async ({ threadId, messageId }: WebChatDeleteMessageParams): Promise<void> => {
-      const { conversation, sequence, merge } = await this.beginLiveDelivery(context, threadId, {
-        platformMessageId: messageId,
-      });
+      const conversation = await this.resolveConversation(context, threadId);
+      const sequence = await this.mintSequence(context, conversation, threadId, 'deleteMessage');
+      this.deliveryInfo.report({ sequence });
 
-      const envelope = merge(
-        this.eventFactory.createDeleteEnvelope({
-          conversationId: this.conversationIdForEnvelope(conversation, threadId),
+      if (conversation && sequence !== undefined) {
+        const envelope = this.eventFactory.createDeleteEnvelope({
+          conversationId: conversation._id,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
           sequence,
-        })
-      );
-
-      await this.emitBestEffort(context, conversation, envelope);
+        });
+        await this.emitBestEffort(context, conversation, envelope);
+      }
     };
   }
 
   createStartTyping(context: WebChatPlatformDeliveryContext) {
     return async ({ threadId, status }: WebChatStartTypingParams): Promise<void> => {
-      const { conversation, sequence, merge } = await this.beginLiveDelivery(context, threadId);
+      const conversation = await this.resolveConversation(context, threadId);
+      // Typing is ephemeral: it consumes a sequence (intentional gap in durable
+      // history) but never persists, so nothing is reported upward.
+      const sequence = await this.mintSequence(context, conversation, threadId, 'startTyping');
+
+      if (!conversation || sequence === undefined) {
+        return;
+      }
+
       const typingState = status?.trim() ? 'on' : 'off';
-
-      const envelope = merge(
-        this.eventFactory.createTypingEnvelope({
-          conversationId: this.conversationIdForEnvelope(conversation, threadId),
-          agentId: context.config.agentIdentifier,
-          sequence,
-          state: typingState,
-          ...(typingState === 'on' ? { status } : {}),
-        })
-      );
-
+      const envelope = this.eventFactory.createTypingEnvelope({
+        conversationId: conversation._id,
+        agentId: context.config.agentIdentifier,
+        sequence,
+        state: typingState,
+        ...(typingState === 'on' ? { status } : {}),
+      });
       await this.emitBestEffort(context, conversation, envelope);
     };
   }
 
-  private readLiveContext(): WebChatLiveContext {
-    const store = NovuWebChatAdapterImpl.getEventContext();
-    if (!store || typeof store !== 'object') {
-      return {};
-    }
-
-    return store as WebChatLiveContext;
-  }
-
-  private writeBackLiveContext(live: WebChatLiveContext, patch: Partial<WebChatLiveContext>): void {
-    Object.assign(live, patch);
-  }
-
-  private async resolveConversation(context: WebChatPlatformDeliveryContext, threadId: string) {
-    return this.conversationService.findByPlatformThread(
+  private async resolveConversation(
+    context: WebChatPlatformDeliveryContext,
+    threadId: string
+  ): Promise<ConversationEntity | null> {
+    const byThread = await this.conversationService.findByPlatformThread(
       context.config.environmentId,
       context.config.organizationId,
       context.agentId,
       context.config.integrationId,
       threadId
     );
+    if (byThread) {
+      return byThread;
+    }
+
+    // Thread ids embed the public conversation identifier (`web_chat:conv_*`),
+    // so gate replies posted before the channel is attached still resolve.
+    return this.conversationService.findByPublicIdentifier(
+      context.config.environmentId,
+      context.config.organizationId,
+      conversationIdFromThreadId(threadId)
+    );
   }
 
-  private conversationIdForEnvelope(
-    conversation: Awaited<ReturnType<AgentConversationService['findByPlatformThread']>>,
-    threadId: string
-  ): string {
-    const live = this.readLiveContext();
+  private async mintSequence(
+    context: WebChatPlatformDeliveryContext,
+    conversation: ConversationEntity | null,
+    threadId: string,
+    op: string
+  ): Promise<number | undefined> {
+    if (!conversation) {
+      this.logger.warn(
+        { threadId, agentId: context.agentId, op },
+        'web chat live emit skipped: conversation not found for thread'
+      );
 
-    return conversation?._id ?? live.conversationMongoId ?? conversationIdFromThreadId(threadId);
+      return undefined;
+    }
+
+    return this.eventSequenceService.mint({
+      environmentId: context.config.environmentId,
+      organizationId: context.config.organizationId,
+      conversationId: conversation._id,
+    });
   }
 
   private markdownForLiveEnvelope(content: string, richContent?: Record<string, unknown>): string {
@@ -185,51 +205,19 @@ export class WebChatPlatformDeliveryService {
     return trimmed || '[Card]';
   }
 
-  private async beginLiveDelivery(
-    context: WebChatPlatformDeliveryContext,
-    threadId: string,
-    ids: { platformMessageId?: string } = {}
-  ): Promise<{
-    conversation: Awaited<ReturnType<AgentConversationService['findByPlatformThread']>>;
-    platformMessageId: string;
-    sequence: number;
-    merge: (built: AgentEventEnvelope) => AgentEventEnvelope;
-  }> {
-    const live = this.readLiveContext();
-    const conversation = await this.resolveConversation(context, threadId);
-    const platformMessageId = ids.platformMessageId ?? live.platformMessageId ?? `act_${shortId(12)}`;
-    const sequence =
-      live.sequence ??
-      (conversation
-        ? await this.conversationRepository.allocateWebDeliverySequence(
-            context.config.environmentId,
-            context.config.organizationId,
-            conversation._id
-          )
-        : 1);
-    this.writeBackLiveContext(live, { platformMessageId, sequence });
-
-    return {
-      conversation,
-      platformMessageId,
-      sequence,
-      merge: (built) => this.eventFactory.mergeSourceEnvelope(live.envelope, built),
-    };
-  }
-
   private async emitBestEffort(
     context: WebChatPlatformDeliveryContext,
-    conversation: Awaited<ReturnType<AgentConversationService['findByPlatformThread']>>,
+    conversation: ConversationEntity,
     envelope: AgentEventEnvelope
   ): Promise<void> {
     try {
-      const subscriberExternalId = conversation?.participants.find(
+      const subscriberExternalId = conversation.participants.find(
         (participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER
       )?.id;
 
       if (!subscriberExternalId) {
         this.logger.warn(
-          { conversationId: conversation?._id, agentId: context.agentId },
+          { conversationId: conversation._id, agentId: context.agentId },
           'web chat live emit skipped: no subscriber participant'
         );
 
@@ -264,9 +252,9 @@ export class WebChatPlatformDeliveryService {
         groupId: context.config.organizationId,
       });
     } catch (err) {
-      // WS is best-effort — durable persistence must continue.
+      // WS is best-effort — durable persistence continues in OutboundGateway.
       this.logger.warn(
-        { err, conversationId: conversation?._id, sequence: envelope.sequence },
+        { err, conversationId: conversation._id, sequence: envelope.sequence },
         'web chat live WS enqueue failed'
       );
     }

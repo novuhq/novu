@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
 import type {
   Adapter,
   AdapterPostableMessage,
@@ -11,13 +10,7 @@ import type {
   ThreadInfo,
   WebhookOptions,
 } from 'chat';
-import type {
-  WebChatAdapterConfig,
-  WebChatEventContext,
-  WebChatRawMessage,
-  WebChatRequestBody,
-  WebChatThreadId,
-} from './types.js';
+import type { WebChatAdapterConfig, WebChatRawMessage, WebChatRequestBody, WebChatThreadId } from './types.js';
 import {
   ADAPTER_NAME,
   conversationIdFromThreadId,
@@ -38,14 +31,17 @@ class NotImplementedError extends Error {
 
 type MessageConstructor = new (data: unknown) => Message<WebChatRawMessage>;
 
-const eventContextStorage = new AsyncLocalStorage<WebChatEventContext>();
-
 export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatRawMessage> {
   readonly name = ADAPTER_NAME;
   readonly userName: string;
   readonly persistMessageHistory = false;
   readonly persistThreadHistory = false;
   readonly lockScope = 'thread' as const;
+  /**
+   * Capability flag: callers may embed a `messageId` in the postable message
+   * and this adapter will use it as the platform message id (idempotent posts).
+   */
+  readonly supportsClientMessageIds = true;
 
   private readonly config: WebChatAdapterConfig;
   private chat: ChatInstance | null = null;
@@ -55,27 +51,6 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   constructor(config: WebChatAdapterConfig) {
     this.config = config;
     this.userName = config.userName ?? 'web-chat-agent';
-  }
-
-  /**
-   * Carry a source runtime envelope (or Nest factory inputs) through post /
-   * edit / delete / typing. Uses AsyncLocalStorage so concurrent turns do not
-   * cross-contaminate context.
-   */
-  withEventContext<T>(context: WebChatEventContext, operation: () => T | Promise<T>): T | Promise<T> {
-    return NovuWebChatAdapterImpl.withEventContext(context, operation);
-  }
-
-  static withEventContext<T>(context: WebChatEventContext, operation: () => T | Promise<T>): T | Promise<T> {
-    return eventContextStorage.run(context, operation);
-  }
-
-  static getEventContext(): WebChatEventContext | undefined {
-    return eventContextStorage.getStore();
-  }
-
-  getEventContext(): WebChatEventContext | undefined {
-    return NovuWebChatAdapterImpl.getEventContext();
   }
 
   async initialize(chat: ChatInstance): Promise<void> {
@@ -184,17 +159,6 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     };
     const message = this.parseMessage(raw);
 
-    // Provision before ack so the room is addressable even if a later gate blocks.
-    if (this.config.provisionInbound) {
-      await this.config.provisionInbound({
-        conversationId,
-        threadId,
-        messageId,
-        text,
-        session,
-      });
-    }
-
     this.chat.processMessage(this, threadId, message, options);
 
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
@@ -252,8 +216,8 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   }
 
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<WebChatRawMessage>> {
-    const { content, richContent } = parsePostableMessage(message);
-    const delivered = await this.config.deliverMessage({ threadId, content, richContent });
+    const { content, richContent, messageId } = parsePostableMessage(message);
+    const delivered = await this.config.deliverMessage({ threadId, content, richContent, messageId });
 
     return {
       id: delivered.id,
@@ -293,6 +257,11 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
 
   async startTyping(threadId: string, status?: string): Promise<void> {
     await this.config.startTyping({ threadId, status });
+  }
+
+  /** No-status typing → delivery emits an ephemeral `channel.typing` state=off. */
+  async stopTyping(threadId: string): Promise<void> {
+    await this.config.startTyping({ threadId });
   }
 
   async fetchThread(threadId: string): Promise<ThreadInfo> {

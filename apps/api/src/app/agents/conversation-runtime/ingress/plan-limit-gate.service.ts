@@ -20,7 +20,7 @@ export function isLinkButtonActionId(id: string | undefined): boolean {
 }
 
 /** Which plan entitlement caused an over-limit agent/channel/conversation to be soft-blocked at runtime. */
-type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
+export type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
 
 const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
   agents:
@@ -183,39 +183,18 @@ export class PlanLimitGateService {
   ): Promise<void> {
     try {
       const card = buildUpgradeRequiredCard(reason, config.agentIdentifier, config.platform);
-      // Web chat provisions conversation+user activity before 201, so look up the
-      // thread when the caller did not pass an entity — gate replies must land in
-      // durable history. Other platforms remain ephemeral when no conversation yet.
-      let durableConversation = conversation;
-      if (!durableConversation && thread.id.startsWith('web_chat:')) {
-        durableConversation =
-          (await this.conversationService.findByPlatformThread(
-            config.environmentId,
-            config.organizationId,
-            agentId,
-            config.integrationId,
-            thread.id
-          )) ?? undefined;
-
-        if (!durableConversation) {
-          const publicId = thread.id.slice('web_chat:'.length);
-          durableConversation =
-            (await this.conversationService.findByPublicIdentifier(
-              config.environmentId,
-              config.organizationId,
-              publicId
-            )) ?? undefined;
-        }
-      }
-
+      // Pre-conversation gates (agents/channels, brand-new thread at conversations
+      // limit) have nothing to attach history to — ephemeral platform delivery only.
+      // When an existing conversation is blocked from a new activation, persist so
+      // the upgrade card appears in durable web-chat history.
       await this.outboundGateway.replyOnThreadWithCard(
         thread,
         card,
-        durableConversation
+        conversation
           ? {
               persist: {
-                conversationId: durableConversation._id,
-                channel: this.conversationService.getPrimaryChannel(durableConversation),
+                conversationId: conversation._id,
+                channel: this.conversationService.getPrimaryChannel(conversation),
                 agentIdentifier: config.agentIdentifier,
                 content: PLAN_LIMIT_BLOCK_MESSAGES[reason],
                 richContent: { card },

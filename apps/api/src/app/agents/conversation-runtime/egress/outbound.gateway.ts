@@ -1,7 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
-import { extractCardPlainText, NovuWebChatAdapterImpl } from '@novu/chat-adapter-web';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
@@ -9,15 +7,16 @@ import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, 
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
-import type { WebChatLiveContext } from '../../web-chat/web-chat-platform-delivery.service';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
+import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
 import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
@@ -54,7 +53,7 @@ export interface OutboundPersistContext {
   agentName?: string;
   /** Caller-supplied activity identifier for idempotent message persist */
   activityIdentifier?: string;
-  /** Web delivery sequence captured from live emit context */
+  /** Conversation event sequence reported by in-process delivery (web) */
   sequence?: number;
   environmentId: string;
   organizationId: string;
@@ -76,8 +75,6 @@ function extractReplyRichContent(content: OutboundMessage): Record<string, unkno
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
-  /** Source runtime envelope carried through web adapter `withEventContext`. */
-  eventContext?: AgentEventEnvelope;
 };
 
 /**
@@ -103,6 +100,7 @@ export class OutboundGateway {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
     private readonly actionTokenService: AgentActionTokenService,
+    private readonly deliveryInfo: OutboundDeliveryInfo,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -114,43 +112,27 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
-    const webLive: WebChatLiveContext | undefined =
-      target.platform === AgentPlatformEnum.WEB_CHAT
-        ? {
-            envelope: options?.eventContext,
-            platformMessageId: persist.activityIdentifier,
-            conversationMongoId: persist.conversationId,
-          }
-        : undefined;
-
-    const sent = await this.postToConversation(
-      target.agentId,
-      target.integrationIdentifier,
-      target.platform,
-      target.platformThreadId,
-      msg,
-      options,
-      target.workspaceId,
-      webLive
+    const { result: sent, info } = await this.deliveryInfo.collect(() =>
+      this.postToConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        msg,
+        options,
+        target.workspaceId,
+        persist.activityIdentifier
+      )
     );
 
-    // Web chat has no external platform id — durable activity id ≡ platformMessageId.
-    // Prefer the caller's activityIdentifier (AgentEvent messageId) so event→activity
-    // idempotency and history rehydration share one id; otherwise use the id minted
-    // by adapter deliverMessage.
-    if (target.platform === AgentPlatformEnum.WEB_CHAT) {
-      const messageId = persist.activityIdentifier ?? webLive?.platformMessageId ?? sent.messageId;
-      const aligned = { ...sent, messageId };
-      await this.persistDelivered(
-        { ...persist, activityIdentifier: messageId, sequence: webLive?.sequence },
-        aligned,
-        msg
-      );
-
-      return aligned;
-    }
-
-    await this.persistDelivered(persist, sent, msg);
+    // In-process deliveries (web) report the authoritative message id so the
+    // durable activity, live envelope, and platform message id stay one
+    // identity. External platforms never report — the caller's id stands.
+    await this.persistDelivered(
+      { ...persist, activityIdentifier: info.messageId ?? persist.activityIdentifier, sequence: info.sequence },
+      sent,
+      msg
+    );
 
     return sent;
   }
@@ -162,25 +144,17 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
-    const webLive: WebChatLiveContext | undefined =
-      target.platform === AgentPlatformEnum.WEB_CHAT
-        ? {
-            envelope: options?.eventContext,
-            platformMessageId: messageId,
-            conversationMongoId: persist.conversationId,
-          }
-        : undefined;
-
-    const sent = await this.editInConversation(
-      target.agentId,
-      target.integrationIdentifier,
-      target.platform,
-      target.platformThreadId,
-      messageId,
-      msg,
-      options,
-      target.workspaceId,
-      webLive
+    const { result: sent, info } = await this.deliveryInfo.collect(() =>
+      this.editInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        messageId,
+        msg,
+        options,
+        target.workspaceId
+      )
     );
     await this.conversation.persistAgentEdit({
       conversationId: persist.conversationId,
@@ -191,7 +165,7 @@ export class OutboundGateway {
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
       richContent: extractReplyRichContent(msg),
-      sequence: webLive?.sequence,
+      sequence: info.sequence,
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -222,18 +196,14 @@ export class OutboundGateway {
     }
   ): Promise<SentMessageInfo | null> {
     let sent: { id: string; threadId: string };
-    const webLive: WebChatLiveContext = {
-      conversationMongoId: opts?.persist?.conversationId,
-    };
-
+    let sequence: number | undefined;
     try {
       const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
-      const post = () =>
-        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg);
-
-      sent = thread.id.startsWith('web_chat:')
-        ? await NovuWebChatAdapterImpl.withEventContext(webLive, post)
-        : await post();
+      const collected = await this.deliveryInfo.collect(() =>
+        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg)
+      );
+      sent = collected.result;
+      sequence = collected.info.sequence;
     } catch (err) {
       if (opts?.failSoft) {
         return null;
@@ -251,7 +221,7 @@ export class OutboundGateway {
         agentIdentifier: opts.persist.agentIdentifier,
         content: opts.persist.content,
         richContent: opts.persist.richContent,
-        sequence: webLive.sequence,
+        sequence,
         environmentId: opts.persist.environmentId,
         organizationId: opts.persist.organizationId,
       });
@@ -268,7 +238,7 @@ export class OutboundGateway {
     content: ReplyContentDto,
     options?: OutboundDeliveryOptions,
     workspaceId?: string,
-    webLive?: WebChatLiveContext
+    preferredMessageId?: string
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
@@ -300,15 +270,38 @@ export class OutboundGateway {
       this.toActionTokenBinding(agentId, config)
     );
 
-    const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
+    const postArg = this.withPreferredMessageId(
+      this.buildAdapterPostableMessage(tokenizedContent, config),
+      chat.getAdapter(platform),
+      preferredMessageId
+    );
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      this.runWithWebEventContext(chat, platform, webLive ?? { envelope: options?.eventContext }, () =>
-        thread.post(postArg)
-      )
+      thread.post(postArg)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /**
+   * Adapters that declare `supportsClientMessageIds` accept a caller-supplied
+   * idempotent message id embedded in the postable message (a capability, not
+   * a platform branch). All other adapters never see the field.
+   */
+  private withPreferredMessageId(
+    postArg: AdapterPostableMessage,
+    adapter: unknown,
+    preferredMessageId?: string
+  ): AdapterPostableMessage {
+    const supportsClientMessageIds = (adapter as { supportsClientMessageIds?: boolean }).supportsClientMessageIds;
+    if (!preferredMessageId || !supportsClientMessageIds) {
+      return postArg;
+    }
+
+    return {
+      ...(postArg as unknown as Record<string, unknown>),
+      messageId: preferredMessageId,
+    } as unknown as AdapterPostableMessage;
   }
 
   async startTypingInConversation(
@@ -316,19 +309,10 @@ export class OutboundGateway {
     integrationIdentifier: string,
     platformThreadId: string,
     status = 'Thinking...',
-    workspaceId?: string,
-    eventContext?: AgentEventEnvelope,
-    conversationMongoId?: string
+    workspaceId?: string
   ): Promise<void> {
     if (!status.trim()) {
-      await this.stopTypingInConversation(
-        agentId,
-        integrationIdentifier,
-        platformThreadId,
-        workspaceId,
-        eventContext,
-        conversationMongoId
-      );
+      await this.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId, workspaceId);
 
       return;
     }
@@ -342,11 +326,8 @@ export class OutboundGateway {
       return;
     }
 
-    const webLive: WebChatLiveContext | undefined =
-      config.platform === AgentPlatformEnum.WEB_CHAT ? { envelope: eventContext, conversationMongoId } : undefined;
-
     await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      this.runWithWebEventContext(chat, config.platform, webLive, () => thread.startTyping(status))
+      thread.startTyping(status)
     ).catch((err) => {
       this.logger.warn(
         { err, platformThreadId, agentId, integrationIdentifier },
@@ -359,29 +340,9 @@ export class OutboundGateway {
     agentId: string,
     integrationIdentifier: string,
     platformThreadId: string,
-    workspaceId?: string,
-    eventContext?: AgentEventEnvelope,
-    conversationMongoId?: string
+    workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
-
-    if (config.platform === AgentPlatformEnum.WEB_CHAT) {
-      const instanceKey = `${agentId}:${integrationIdentifier}`;
-      const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-      const thread = chat.thread(platformThreadId);
-      if (typeof thread.startTyping !== 'function') {
-        return;
-      }
-
-      // Empty status → delivery emits ephemeral channel.typing state=off.
-      await this.runWithWebEventContext(chat, config.platform, { envelope: eventContext, conversationMongoId }, () =>
-        thread.startTyping('')
-      ).catch((err) => {
-        this.logger.warn({ err, platformThreadId, agentId }, 'Failed to stop web chat typing');
-      });
-
-      return;
-    }
 
     if (config.platform === AgentPlatformEnum.SLACK) {
       await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId, workspaceId);
@@ -389,7 +350,22 @@ export class OutboundGateway {
       return;
     }
 
-    // Teams, Telegram, and WhatsApp typing indicators expire or clear on post — no explicit stop API.
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const adapter = chat.getAdapter(config.platform) as { stopTyping?: (threadId: string) => Promise<void> };
+
+    // Most platforms have no explicit stop API — indicators expire or clear on
+    // post. Adapters with in-process delivery (web) expose `stopTyping`.
+    if (typeof adapter.stopTyping !== 'function') {
+      return;
+    }
+
+    await adapter.stopTyping(platformThreadId).catch((err) => {
+      this.logger.warn(
+        { err, platformThreadId, agentId, integrationIdentifier },
+        'Failed to stop typing in conversation'
+      );
+    });
   }
 
   private async clearSlackAssistantStatus(
@@ -515,8 +491,7 @@ export class OutboundGateway {
     platformMessageId: string,
     content: ReplyContentDto,
     options?: OutboundDeliveryOptions,
-    workspaceId?: string,
-    webLive?: WebChatLiveContext
+    workspaceId?: string
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
@@ -560,9 +535,7 @@ export class OutboundGateway {
     const editPayload = this.buildAdapterPostableMessage(tokenizedContent, config);
 
     const edited = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      this.runWithWebEventContext(chat, platform, webLive ?? { envelope: options?.eventContext }, () =>
-        adapter.editMessage(platformThreadId, platformMessageId, editPayload)
-      )
+      adapter.editMessage(platformThreadId, platformMessageId, editPayload)
     ).catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
@@ -575,8 +548,7 @@ export class OutboundGateway {
     platformThreadId: string,
     platformMessageId: string,
     workspaceId?: string,
-    persist?: OutboundPersistContext,
-    eventContext?: AgentEventEnvelope
+    persist?: OutboundPersistContext
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -587,22 +559,14 @@ export class OutboundGateway {
       return;
     }
 
-    const webLive: WebChatLiveContext | undefined =
-      platform === AgentPlatformEnum.WEB_CHAT
-        ? {
-            envelope: eventContext,
-            platformMessageId,
-            conversationMongoId: persist?.conversationId,
-          }
-        : undefined;
-
-    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      this.runWithWebEventContext(chat, platform, webLive, () =>
+    const { info } = await this.deliveryInfo.collect(() =>
+      this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
         adapter.deleteMessage(platformThreadId, platformMessageId)
-      )
-    ).catch(toDeliveryError);
+      ).catch(toDeliveryError)
+    );
 
-    if (platform === AgentPlatformEnum.WEB_CHAT && persist) {
+    // Same as EDIT: append a durable tombstone for every channel when asked.
+    if (persist) {
       await this.conversation.persistAgentDelete({
         conversationId: persist.conversationId,
         channel: persist.channel,
@@ -611,7 +575,7 @@ export class OutboundGateway {
         agentIdentifier: persist.agentIdentifier,
         agentName: persist.agentName,
         content: '',
-        sequence: webLive?.sequence,
+        sequence: info.sequence,
         environmentId: persist.environmentId,
         organizationId: persist.organizationId,
       });
@@ -942,24 +906,6 @@ export class OutboundGateway {
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
-  }
-
-  private async runWithWebEventContext<T>(
-    chat: Chat,
-    platform: string,
-    webLive: WebChatLiveContext | undefined,
-    operation: () => T | Promise<T>
-  ): Promise<T> {
-    if (platform !== AgentPlatformEnum.WEB_CHAT || !webLive) {
-      return operation();
-    }
-
-    const adapter = chat.getAdapter(platform);
-    if (adapter instanceof NovuWebChatAdapterImpl) {
-      return adapter.withEventContext(webLive, operation);
-    }
-
-    return NovuWebChatAdapterImpl.withEventContext(webLive, operation);
   }
 
   private async buildThreadPostArg(

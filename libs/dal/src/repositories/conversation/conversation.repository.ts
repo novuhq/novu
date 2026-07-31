@@ -474,25 +474,34 @@ export class ConversationRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Atomically advances the web-chat delivery high-watermark and returns the
+   * Atomically advances the conversation event high-watermark and returns the
    * allocated sequence number (1-based).
    */
-  async allocateWebDeliverySequence(
+  async allocateEventSequence(
     environmentId: string,
     organizationId: string,
-    conversationId: string
+    conversationId: string,
+    minimum = 0
   ): Promise<number> {
-    const updated = await this.findOneAndUpdate(
-      {
-        _id: conversationId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      { $inc: { webDeliverySequence: 1 } },
-      { new: true }
-    );
+    const filter = {
+      _id: conversationId,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
 
-    return updated?.webDeliverySequence ?? 1;
+    if (minimum > 0) {
+      await this.update(
+        {
+          ...filter,
+          $or: [{ eventSequence: { $lt: minimum } }, { eventSequence: { $exists: false } }],
+        },
+        { $set: { eventSequence: minimum } }
+      );
+    }
+
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+
+    return updated?.eventSequence ?? 1;
   }
 
   async incrementTokenUsage(

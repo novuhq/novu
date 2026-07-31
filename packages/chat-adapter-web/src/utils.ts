@@ -70,6 +70,8 @@ export function extractCardPlainText(card: CardElement): string {
 export function parsePostableMessage(message: AdapterPostableMessage): {
   content: string;
   richContent?: Record<string, unknown>;
+  /** Caller-supplied idempotent id (`supportsClientMessageIds`), stripped from content. */
+  messageId?: string;
 } {
   if (typeof message === 'string') {
     return { content: message };
@@ -84,13 +86,15 @@ export function parsePostableMessage(message: AdapterPostableMessage): {
       card?: CardElement;
       files?: unknown[];
       raw?: string;
+      messageId?: string;
     };
+    const messageId = typeof record.messageId === 'string' ? record.messageId : undefined;
 
     // chat-sdk `thread.post(card)` passes a bare CardElement for gate replies.
     if (record.type === 'card') {
       const card = message as CardElement;
 
-      return { content: extractCardPlainText(card), richContent: { card } };
+      return { content: extractCardPlainText(card), richContent: { card }, messageId };
     }
 
     const richContent: Record<string, unknown> = {};
@@ -102,15 +106,23 @@ export function parsePostableMessage(message: AdapterPostableMessage): {
     }
 
     if (typeof record.markdown === 'string') {
-      return { content: record.markdown, richContent: Object.keys(richContent).length ? richContent : undefined };
+      return {
+        content: record.markdown,
+        richContent: Object.keys(richContent).length ? richContent : undefined,
+        messageId,
+      };
     }
 
     if (typeof record.raw === 'string') {
-      return { content: record.raw, richContent: Object.keys(richContent).length ? richContent : undefined };
+      return {
+        content: record.raw,
+        richContent: Object.keys(richContent).length ? richContent : undefined,
+        messageId,
+      };
     }
 
     if (record.card) {
-      return { content: extractCardPlainText(record.card), richContent };
+      return { content: extractCardPlainText(record.card), richContent, messageId };
     }
   }
 

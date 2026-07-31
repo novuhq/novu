@@ -9,7 +9,23 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
+  type ConversationEventActivityFilter,
 } from '@novu/dal';
+
+/**
+ * Which durable activities the web-chat history surface exposes as events.
+ * Must stay in lockstep with `mapActivityToEvent` below.
+ */
+export const WEB_CHAT_EVENT_ACTIVITY_FILTER: ConversationEventActivityFilter = {
+  messageSenderTypes: [ConversationActivitySenderTypeEnum.AGENT, ConversationActivitySenderTypeEnum.SUBSCRIBER],
+  eventTypes: [
+    ConversationActivityTypeEnum.EDIT,
+    ConversationActivityTypeEnum.DELETE,
+    ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+    ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+    ConversationActivityTypeEnum.TOOL_RESULT,
+  ],
+};
 
 function filesFromRichContent(richContent?: Record<string, unknown>) {
   const files = richContent?.files;

@@ -18,6 +18,7 @@ describe('BridgeExpireSupersededApprovalsService', () => {
         environmentId: 'env-id',
         organizationId: 'org-id',
         agentIdentifier: 'billing-agent',
+        agentName: 'Billing Agent',
         integrationIdentifier: 'slack-int',
       },
       conversation: { _id: 'conv-id' },
@@ -60,7 +61,16 @@ describe('BridgeExpireSupersededApprovalsService', () => {
         'slack-int',
         'slack',
         'thread-1',
-        'msg-approval'
+        'msg-approval',
+        undefined,
+        {
+          conversationId: 'conv-id',
+          channel,
+          agentIdentifier: 'billing-agent',
+          agentName: 'Billing Agent',
+          environmentId: 'env-id',
+          organizationId: 'org-id',
+        }
       )
     ).to.equal(true);
     expect(outboundGateway.edit.called).to.equal(false);

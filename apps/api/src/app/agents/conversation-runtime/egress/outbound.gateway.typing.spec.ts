@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { OutboundGateway } from './outbound.gateway';
+import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
 
 describe('OutboundGateway typing', () => {
   const agentId = 'agent1';
@@ -9,7 +10,12 @@ describe('OutboundGateway typing', () => {
   const platformThreadId = 'slack:C123:1783695626.846689';
 
   function makeGateway(
-    options: { platform?: AgentPlatformEnum; setAssistantStatus?: sinon.SinonStub; startTyping?: sinon.SinonStub } = {}
+    options: {
+      platform?: AgentPlatformEnum;
+      setAssistantStatus?: sinon.SinonStub;
+      startTyping?: sinon.SinonStub;
+      stopTyping?: sinon.SinonStub;
+    } = {}
   ) {
     const platform = options.platform ?? AgentPlatformEnum.SLACK;
     const setAssistantStatus = options.setAssistantStatus ?? sinon.stub().resolves();
@@ -29,7 +35,11 @@ describe('OutboundGateway typing', () => {
     const registry = {
       getOrCreate: sinon.stub().resolves({
         thread: () => ({ startTyping }),
-        getAdapter: () => ({ setAssistantStatus, withBotToken }),
+        getAdapter: () => ({
+          setAssistantStatus,
+          withBotToken,
+          ...(options.stopTyping ? { stopTyping: options.stopTyping } : {}),
+        }),
       }),
     };
     const logger = {
@@ -48,6 +58,7 @@ describe('OutboundGateway typing', () => {
       agentConfigResolver as any,
       {} as any,
       {} as any,
+      new OutboundDeliveryInfo(),
       logger as any
     );
 
@@ -64,13 +75,23 @@ describe('OutboundGateway typing', () => {
     expect(startTyping.called).to.equal(false);
   });
 
-  it('no-ops stop on non-Slack typing platforms', async () => {
+  it('no-ops stop on platforms whose adapter has no stopTyping', async () => {
     const { gateway, setAssistantStatus, startTyping } = makeGateway({ platform: AgentPlatformEnum.TEAMS });
 
     await gateway.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId);
 
     expect(setAssistantStatus.called).to.equal(false);
     expect(startTyping.called).to.equal(false);
+  });
+
+  it('delegates stop to the adapter stopTyping capability when present', async () => {
+    const stopTyping = sinon.stub().resolves();
+    const { gateway, setAssistantStatus } = makeGateway({ platform: AgentPlatformEnum.WEB_CHAT, stopTyping });
+
+    await gateway.stopTypingInConversation(agentId, integrationIdentifier, 'web_chat:conv_abc123def456');
+
+    expect(stopTyping.calledOnceWithExactly('web_chat:conv_abc123def456')).to.equal(true);
+    expect(setAssistantStatus.called).to.equal(false);
   });
 
   it('routes empty startTyping status to Slack stop', async () => {
@@ -88,9 +109,7 @@ describe('OutboundGateway typing', () => {
 
     await gateway.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId);
 
-    expect(
-      logger.warn.calledWithMatch(sinon.match.object, 'Failed to clear Slack assistant status')
-    ).to.equal(true);
+    expect(logger.warn.calledWithMatch(sinon.match.object, 'Failed to clear Slack assistant status')).to.equal(true);
   });
 
   it('warns and does not throw when startTyping fails', async () => {

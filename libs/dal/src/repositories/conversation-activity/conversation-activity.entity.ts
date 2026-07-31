@@ -7,7 +7,8 @@ export enum ConversationActivityTypeEnum {
   /** In-place edit of a previously sent agent message, via replyHandle.edit() */
   EDIT = 'edit',
   /**
-   * Immutable delete tombstone for a previously sent agent message (web chat ledger).
+   * Immutable delete tombstone for a previously sent agent message.
+   * Append-only ledger for all channels (dashboard timeline + web history).
    * Does not hard-delete the original MESSAGE activity.
    */
   DELETE = 'delete',
@@ -83,7 +84,7 @@ export class ConversationActivityEntity {
   platformMessageId?: string;
 
   /**
-   * Conversation-global web delivery sequence when allocated at live emit time.
+   * Conversation event sequence when allocated at live emit / durable persist.
    * Ephemeral typing sequences create intentional gaps in durable history.
    */
   sequence?: number;

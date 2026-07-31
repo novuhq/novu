@@ -8,13 +8,17 @@ export type WebChatDeliverMessageParams = {
   threadId: string;
   content: string;
   richContent?: Record<string, unknown>;
+  /**
+   * Caller-supplied idempotent message id (embedded in the postable message by
+   * callers that saw `supportsClientMessageIds`). Delivery uses it as the
+   * platform message id; absent → delivery mints one.
+   */
+  messageId?: string;
 };
 
 export type WebChatDeliverMessageResult = {
   id: string;
   threadId: string;
-  /** Conversation-global delivery sequence allocated at live emit time. */
-  sequence?: number;
 };
 
 export type WebChatEditMessageParams = {
@@ -39,21 +43,6 @@ export type WebChatAuthorizeResumeParams = {
   session: WebChatSession;
 };
 
-export type WebChatProvisionInboundParams = {
-  conversationId: string;
-  threadId: string;
-  messageId: string;
-  text: string;
-  session: WebChatSession;
-};
-
-/**
- * Opaque source-event context carried through adapter egress ops.
- * Nest stores an `AgentEventEnvelope` (or factory inputs); the package stays
- * free of protocol / Nest dependencies.
- */
-export type WebChatEventContext = unknown;
-
 export type WebChatAdapterConfig = {
   userName?: string;
   verifySession: (request: Request) => Promise<WebChatSession | null>;
@@ -62,11 +51,6 @@ export type WebChatAdapterConfig = {
    * thread may be resumed (participant + web_chat + agent). Denied → adapter 404.
    */
   authorizeResume?: (params: WebChatAuthorizeResumeParams) => Promise<boolean>;
-  /**
-   * Awaited before `201` so conversation, participant, and user activity are
-   * durable (and the room addressable) even when a later policy gate blocks.
-   */
-  provisionInbound?: (params: WebChatProvisionInboundParams) => Promise<void>;
   deliverMessage: (params: WebChatDeliverMessageParams) => Promise<WebChatDeliverMessageResult>;
   editMessage: (params: WebChatEditMessageParams) => Promise<WebChatDeliverMessageResult>;
   deleteMessage: (params: WebChatDeleteMessageParams) => Promise<void>;

@@ -14,6 +14,7 @@ import {
   isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
+import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
 export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
@@ -88,7 +89,7 @@ export interface PersistInboundMessageParams {
   platformMessageId?: string;
   /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
   identifier?: string;
-  /** Web delivery sequence allocated at provision / live emit time */
+  /** Pre-allocated conversation event sequence; minted at persist time when absent */
   sequence?: number;
   environmentId: string;
   organizationId: string;
@@ -111,7 +112,7 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   agentName?: string;
   content: string;
   richContent?: Record<string, unknown>;
-  /** Web delivery sequence allocated at live emit time */
+  /** Pre-allocated conversation event sequence; minted at persist time when absent */
   sequence?: number;
 }
 
@@ -169,6 +170,7 @@ export class AgentConversationService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
+    private readonly eventSequenceService: ConversationEventSequenceService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -280,6 +282,12 @@ export class AgentConversationService {
       hasPlatformAttachments: params.hasPlatformAttachments,
     });
     const identifier = params.identifier ?? `act_${shortId(12)}`;
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId,
+      params.sequence
+    );
 
     try {
       const [activity] = await Promise.all([
@@ -295,7 +303,7 @@ export class AgentConversationService {
           content,
           richContent: params.richContent,
           platformMessageId: params.platformMessageId,
-          sequence: params.sequence,
+          sequence,
           environmentId: params.environmentId,
           organizationId: params.organizationId,
         }),
@@ -326,14 +334,6 @@ export class AgentConversationService {
 
       throw err;
     }
-  }
-
-  async allocateWebDeliverySequence(
-    environmentId: string,
-    organizationId: string,
-    conversationId: string
-  ): Promise<number> {
-    return this.conversationRepository.allocateWebDeliverySequence(environmentId, organizationId, conversationId);
   }
 
   async getHistory(
@@ -482,6 +482,11 @@ export class AgentConversationService {
 
   async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
     const toolName = params.toolName;
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
 
     return this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
@@ -499,6 +504,7 @@ export class AgentConversationService {
         toolName: params.toolName,
         input: params.input,
       },
+      sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
@@ -538,6 +544,12 @@ export class AgentConversationService {
     touch: 'activity' | 'preview'
   ): Promise<ConversationActivityEntity> {
     const threadId = params.platformThreadId ?? params.channel.platformThreadId;
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId,
+      params.sequence
+    );
 
     const touchFn =
       touch === 'activity'
@@ -558,7 +570,7 @@ export class AgentConversationService {
         richContent: params.richContent,
         toolData: params.toolData,
         type,
-        sequence: params.sequence,
+        sequence,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       }),
@@ -656,6 +668,11 @@ export class AgentConversationService {
    */
   async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<void> {
     const toolName = params.toolName ?? 'tool call';
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
 
     await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
@@ -668,12 +685,19 @@ export class AgentConversationService {
       content: params.approved ? `Approved ${toolName}` : `Denied ${toolName}`,
       type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
       toolData: { approvalId: params.approvalId, approved: params.approved, toolName: params.toolName },
+      sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+
     await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: params.conversationId,
@@ -685,8 +709,31 @@ export class AgentConversationService {
       content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
       type: ConversationActivityTypeEnum.TOOL_RESULT,
       toolData: { toolCallId: params.toolCallId, toolName: params.toolName, output: params.output },
+      sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
+    });
+  }
+
+  /**
+   * Whoever makes the event real first mints its sequence: live delivery paths
+   * (web) mint before emitting and pass the value here; everything else gets
+   * one at persist time. Channel-agnostic — every conversation is sequenced.
+   */
+  private async resolveEventSequence(
+    conversationId: string,
+    environmentId: string,
+    organizationId: string,
+    sequence?: number
+  ): Promise<number> {
+    if (sequence !== undefined) {
+      return sequence;
+    }
+
+    return this.eventSequenceService.mint({
+      environmentId,
+      organizationId,
+      conversationId,
     });
   }
 

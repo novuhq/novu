@@ -2,7 +2,6 @@ import type { Adapter } from 'chat';
 import { NovuWebChatAdapterImpl } from './adapter.js';
 import type { WebChatAdapterConfig, WebChatRawMessage, WebChatThreadId } from './types.js';
 
-export { NovuWebChatAdapterImpl } from './adapter.js';
 export type {
   WebChatAdapterConfig,
   WebChatAuthorizeResumeParams,
@@ -10,8 +9,6 @@ export type {
   WebChatDeliverMessageParams,
   WebChatDeliverMessageResult,
   WebChatEditMessageParams,
-  WebChatEventContext,
-  WebChatProvisionInboundParams,
   WebChatRawMessage,
   WebChatRequestBody,
   WebChatSession,
@@ -26,6 +23,8 @@ export {
   isValidConversationId,
   isValidMessageId,
   MESSAGE_ID_PATTERN,
+  mintConversationId,
+  mintMessageId,
   toThreadId,
 } from './utils.js';
 
