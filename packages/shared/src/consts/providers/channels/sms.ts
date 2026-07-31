@@ -3,6 +3,7 @@ import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
   africasTalkingConfig,
   afroSmsConfig,
+  aliyunConfig,
   azureSmsConfig,
   bandwidthConfig,
   brevoSmsConfig,
@@ -43,6 +44,14 @@ import {
 import { IProviderConfig } from '../provider.interface';
 
 export const smsProviders: IProviderConfig[] = [
+  {
+    id: SmsProviderIdEnum.Aliyun,
+    displayName: 'Aliyun SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: aliyunConfig,
+    docReference: 'https://www.alibabacloud.com/help/en/sms/',
+    logoFileName: { light: 'aliyun.svg', dark: 'aliyun.svg' },
+  },
   {
     id: SmsProviderIdEnum.Novu,
     displayName: 'Novu SMS',

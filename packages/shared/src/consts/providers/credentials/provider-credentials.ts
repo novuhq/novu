@@ -380,6 +380,27 @@ export const termiiConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
+export const aliyunConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Access Key ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Access Key Secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Signature Name (SignName)',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const burstSmsConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
