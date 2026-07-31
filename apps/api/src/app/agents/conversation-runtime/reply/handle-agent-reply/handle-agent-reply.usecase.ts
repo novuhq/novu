@@ -223,7 +223,15 @@ export class HandleAgentReply {
             channel.platform,
             channel.platformThreadId,
             d.messageId,
-            channel.workspace?.id
+            channel.workspace?.id,
+            {
+              conversationId: conversation._id,
+              channel,
+              agentIdentifier: command.agentIdentifier,
+              agentName,
+              environmentId: command.environmentId,
+              organizationId: command.organizationId,
+            }
           )
         )
       );

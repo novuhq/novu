@@ -8,6 +8,12 @@ export type WebChatDeliverMessageParams = {
   threadId: string;
   content: string;
   richContent?: Record<string, unknown>;
+  /**
+   * Caller-supplied idempotent message id (embedded in the postable message by
+   * callers that saw `supportsClientMessageIds`). Delivery uses it as the
+   * platform message id; absent → delivery mints one.
+   */
+  messageId?: string;
 };
 
 export type WebChatDeliverMessageResult = {
@@ -27,6 +33,11 @@ export type WebChatDeleteMessageParams = {
   messageId: string;
 };
 
+export type WebChatStartTypingParams = {
+  threadId: string;
+  status?: string;
+};
+
 export type WebChatAuthorizeResumeParams = {
   conversationId: string;
   session: WebChatSession;
@@ -43,6 +54,8 @@ export type WebChatAdapterConfig = {
   deliverMessage: (params: WebChatDeliverMessageParams) => Promise<WebChatDeliverMessageResult>;
   editMessage: (params: WebChatEditMessageParams) => Promise<WebChatDeliverMessageResult>;
   deleteMessage: (params: WebChatDeleteMessageParams) => Promise<void>;
+  /** Live typing egress — Nest emits an ephemeral `channel.typing` envelope. */
+  startTyping: (params: WebChatStartTypingParams) => Promise<void>;
 };
 
 /** Thread id is the durable conversation identifier (`conv_<shortId>`). */

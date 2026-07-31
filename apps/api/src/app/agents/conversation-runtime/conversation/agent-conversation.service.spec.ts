@@ -13,6 +13,7 @@ import {
   getInboundActivityPreview,
   INBOUND_ATTACHMENT_ONLY_PREVIEW,
 } from './agent-conversation.service';
+import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 describe('AgentConversationService', () => {
   function makeLogger() {
@@ -63,8 +64,22 @@ describe('AgentConversationService', () => {
     };
   }
 
-  function makeService(conversationRepository: ConversationRepository, activityRepository = makeActivityRepository()) {
-    return new AgentConversationService(conversationRepository, activityRepository as any, makeLogger() as any);
+  function makeEventSequenceService(mint = sinon.stub().resolves(undefined)) {
+    return { mint } as unknown as ConversationEventSequenceService;
+  }
+
+  function makeService(
+    conversationRepository: ConversationRepository,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    activityRepository: any = makeActivityRepository(),
+    eventSequenceService = makeEventSequenceService()
+  ) {
+    return new AgentConversationService(
+      conversationRepository,
+      activityRepository as any,
+      eventSequenceService,
+      makeLogger() as any
+    );
   }
 
   describe('persistAgentMessage', () => {
@@ -75,11 +90,12 @@ describe('AgentConversationService', () => {
       } as unknown as ConversationRepository;
       const service = makeService(conversationRepository, activityRepository);
 
-      await service.persistAgentMessage({
+      const result = await service.persistAgentMessage({
         ...basePersistParams(),
         identifier: 'client-msg-123',
       });
 
+      expect(result.created).to.equal(true);
       expect(activityRepository.createAgentActivity.calledOnce).to.equal(true);
       expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('client-msg-123');
       expect(activityRepository.createAgentActivity.firstCall.args[0].type).to.equal(
@@ -112,15 +128,55 @@ describe('AgentConversationService', () => {
         touchActivity: sinon.stub().resolves(undefined),
       } as unknown as ConversationRepository;
       const logger = makeLogger();
-      const service = new AgentConversationService(conversationRepository, activityRepository as any, logger as any);
+      const service = new AgentConversationService(
+        conversationRepository,
+        activityRepository as any,
+        makeEventSequenceService(),
+        logger as any
+      );
 
       const result = await service.persistAgentMessage({
         ...basePersistParams(),
         identifier: 'client-msg-123',
       });
 
-      expect(result).to.equal(existingActivity);
+      expect(result.activity).to.equal(existingActivity);
+      expect(result.created).to.equal(false);
       expect(logger.warn.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('event sequencing', () => {
+    it('allocates a sequence for durable tool activities on any channel', async () => {
+      const conversationRepository = {} as unknown as ConversationRepository;
+      const activityRepository = {
+        createToolActivity: sinon.stub().resolves({ _id: 'tool-activity' }),
+      };
+      const mint = sinon.stub().resolves(4);
+      const service = makeService(conversationRepository, activityRepository, makeEventSequenceService(mint));
+
+      await service.persistToolResult({
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'slack',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        toolCallId: 'tool-call-1',
+        output: 'done',
+      });
+
+      expect(activityRepository.createToolActivity.firstCall.args[0].sequence).to.equal(4);
+      expect(
+        mint.calledOnceWithExactly({
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+          conversationId: 'conv-1',
+        })
+      ).to.equal(true);
     });
   });
 
@@ -164,7 +220,12 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      makeLogger() as any
+    );
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
@@ -191,7 +252,12 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      makeLogger() as any
+    );
 
     await service.createOrGetConversation(baseCreateParams());
 
@@ -214,7 +280,12 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      makeLogger() as any
+    );
 
     await service.findByPlatformThread('e', 'o', 'agent-x', 'int-x', 'thread-z');
 

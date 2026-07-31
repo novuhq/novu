@@ -6,6 +6,12 @@ export enum ConversationActivityTypeEnum {
   MESSAGE = 'message',
   /** In-place edit of a previously sent agent message, via replyHandle.edit() */
   EDIT = 'edit',
+  /**
+   * Immutable delete tombstone for a previously sent agent message.
+   * Append-only ledger for all channels (dashboard timeline + web history).
+   * Does not hard-delete the original MESSAGE activity.
+   */
+  DELETE = 'delete',
   /** System-generated timeline event (e.g. workflow triggered, conversation resolved) */
   SIGNAL = 'signal',
   /** Agent proposed a tool call that requires human approval before it runs. Carries `{ approvalId, toolCallId, toolName, input }` in `toolData`. */
@@ -76,6 +82,12 @@ export class ConversationActivityEntity {
 
   /** Platform-native message ID (e.g. Slack ts) — used for deduplication */
   platformMessageId?: string;
+
+  /**
+   * Conversation event sequence when allocated at live emit / durable persist.
+   * Ephemeral typing sequences create intentional gaps in durable history.
+   */
+  sequence?: number;
 
   /** Structured content for markdown, card, or file messages — absent for plain text */
   richContent?: Record<string, unknown>;

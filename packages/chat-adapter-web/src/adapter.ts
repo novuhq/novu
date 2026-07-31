@@ -37,6 +37,11 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   readonly persistMessageHistory = false;
   readonly persistThreadHistory = false;
   readonly lockScope = 'thread' as const;
+  /**
+   * Capability flag: callers may embed a `messageId` in the postable message
+   * and this adapter will use it as the platform message id (idempotent posts).
+   */
+  readonly supportsClientMessageIds = true;
 
   private readonly config: WebChatAdapterConfig;
   private chat: ChatInstance | null = null;
@@ -145,8 +150,9 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     // Always mint message ids. Client `messageId` idempotency would ack a ghost
     // turn if checked before durable create; keep server-minted ids for now.
     const threadId = this.encodeThreadId({ conversationId });
+    const messageId = mintMessageId();
     const raw: WebChatRawMessage = {
-      id: mintMessageId(),
+      id: messageId,
       text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
@@ -210,8 +216,8 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   }
 
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<WebChatRawMessage>> {
-    const { content, richContent } = parsePostableMessage(message);
-    const delivered = await this.config.deliverMessage({ threadId, content, richContent });
+    const { content, richContent, messageId } = parsePostableMessage(message);
+    const delivered = await this.config.deliverMessage({ threadId, content, richContent, messageId });
 
     return {
       id: delivered.id,
@@ -249,11 +255,14 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     await this.config.deleteMessage({ threadId, messageId });
   }
 
-  /**
-   * No-op: web typing indicators are ephemeral AgentEvents (`channel.typing`),
-   * not chat-sdk thread typing state.
-   */
-  async startTyping(_threadId: string): Promise<void> {}
+  async startTyping(threadId: string, status?: string): Promise<void> {
+    await this.config.startTyping({ threadId, status });
+  }
+
+  /** No-status typing → delivery emits an ephemeral `channel.typing` state=off. */
+  async stopTyping(threadId: string): Promise<void> {
+    await this.config.startTyping({ threadId });
+  }
 
   async fetchThread(threadId: string): Promise<ThreadInfo> {
     return {

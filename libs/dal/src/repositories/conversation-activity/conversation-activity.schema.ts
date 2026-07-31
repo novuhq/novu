@@ -51,6 +51,9 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
     platformMessageId: {
       type: Schema.Types.String,
     },
+    sequence: {
+      type: Schema.Types.Number,
+    },
     senderName: {
       type: Schema.Types.String,
     },
@@ -79,6 +82,13 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
 
 conversationActivitySchema.index({ _conversationId: 1, createdAt: 1 });
 conversationActivitySchema.index({ _conversationId: 1, platformMessageId: 1 }, { sparse: true });
+conversationActivitySchema.index(
+  { _environmentId: 1, _organizationId: 1, _conversationId: 1, sequence: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { sequence: { $exists: true, $type: 'number' } },
+  }
+);
 conversationActivitySchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
 
 export const ConversationActivity =

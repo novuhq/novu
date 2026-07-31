@@ -12,16 +12,19 @@ export type {
   WebChatRawMessage,
   WebChatRequestBody,
   WebChatSession,
+  WebChatStartTypingParams,
   WebChatThreadId,
 } from './types.js';
-
 export {
   ADAPTER_NAME,
   CONVERSATION_ID_PATTERN,
   conversationIdFromThreadId,
+  extractCardPlainText,
   isValidConversationId,
   isValidMessageId,
   MESSAGE_ID_PATTERN,
+  mintConversationId,
+  mintMessageId,
   toThreadId,
 } from './utils.js';
 

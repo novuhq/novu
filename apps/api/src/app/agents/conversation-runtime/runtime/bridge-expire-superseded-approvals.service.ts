@@ -107,7 +107,15 @@ export class BridgeExpireSupersededApprovalsService {
         channel.platform,
         channel.platformThreadId,
         platformMessageId,
-        channel.workspace?.id
+        channel.workspace?.id,
+        {
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: config.agentIdentifier,
+          agentName: config.agentName,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        }
       );
     } catch (err) {
       this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to delete superseded tool-approval card`);

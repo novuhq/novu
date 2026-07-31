@@ -17,6 +17,32 @@ import { ConversationActivity } from './conversation-activity.schema';
 const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
 type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
 
+/**
+ * Which activity rows count as conversation events for a caller's read model.
+ * The policy (types + sender types) is owned by the caller — e.g. the web-chat
+ * module decides what its history surface exposes.
+ */
+export interface ConversationEventActivityFilter {
+  /** MESSAGE rows count as events only for these sender types. */
+  messageSenderTypes: ConversationActivitySenderTypeEnum[];
+  /** Non-message activity types that count as events. */
+  eventTypes: ConversationActivityTypeEnum[];
+}
+
+function eventActivityQuery(filter: ConversationEventActivityFilter) {
+  return {
+    $or: [
+      {
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: { $in: filter.messageSenderTypes },
+      },
+      {
+        type: { $in: filter.eventTypes },
+      },
+    ],
+  };
+}
+
 function resolveListActivitiesSortBy(sortBy?: string): ListActivitiesSortField {
   if (sortBy && (LIST_ACTIVITIES_SORT_FIELDS as readonly string[]).includes(sortBy)) {
     return sortBy as ListActivitiesSortField;
@@ -71,6 +97,61 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  async countActivities(environmentId: string, organizationId: string, conversationId: string): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _conversationId: conversationId,
+    });
+  }
+
+  async listEventActivitiesAfterSequence(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    afterSequence: number;
+    limit: number;
+    filter: ConversationEventActivityFilter;
+  }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
+    const baseQuery = {
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+      ...eventActivityQuery(params.filter),
+    };
+    const fetchLimit = params.limit + 1;
+    const legacyCount = await this.count({ ...baseQuery, sequence: { $exists: false } });
+    const legacy =
+      params.afterSequence < legacyCount
+        ? await this.find({ ...baseQuery, sequence: { $exists: false } }, '*', {
+            sort: { createdAt: 1, _id: 1 },
+            skip: params.afterSequence,
+            limit: fetchLimit,
+          })
+        : [];
+    const remaining = fetchLimit - legacy.length;
+    const sequenced =
+      remaining > 0
+        ? await this.find(
+            {
+              ...baseQuery,
+              sequence: { $gt: Math.max(params.afterSequence, legacyCount) },
+            },
+            '*',
+            {
+              sort: { sequence: 1, _id: 1 },
+              limit: remaining,
+            }
+          )
+        : [];
+    const data = [...legacy, ...sequenced];
+
+    return {
+      data: data.slice(0, params.limit),
+      hasMore: data.length > params.limit,
+    };
+  }
+
   /**
    * Repoint SUBSCRIBER-authored activities from `fromSubscriberId` to
    * `toSubscriberId` (both external `subscriberId` strings, stored in
@@ -109,6 +190,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     richContent?: Record<string, unknown>;
     platformMessageId?: string;
     senderName?: string;
+    sequence?: number;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -125,6 +207,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       richContent: params.richContent,
       platformMessageId: params.platformMessageId,
       senderName: params.senderName,
+      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
@@ -143,6 +226,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     type?: ConversationActivityTypeEnum;
     senderName?: string;
     platformMessageId?: string;
+    sequence?: number;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -161,7 +245,8 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       richContent: params.richContent,
       toolData: params.toolData,
       senderName: params.senderName,
-      platformMessageId: params.platformMessageId,
+      ...(params.platformMessageId !== undefined ? { platformMessageId: params.platformMessageId } : {}),
+      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
@@ -208,6 +293,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     content: string;
     type: ConversationActivityTypeEnum;
     toolData: ConversationActivityToolData;
+    sequence?: number;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -222,6 +308,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderId: params.senderId,
       content: params.content,
       toolData: params.toolData,
+      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });

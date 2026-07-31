@@ -7,6 +7,7 @@ import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, 
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
@@ -15,6 +16,7 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
+import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
 import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
@@ -51,6 +53,8 @@ export interface OutboundPersistContext {
   agentName?: string;
   /** Caller-supplied activity identifier for idempotent message persist */
   activityIdentifier?: string;
+  /** Conversation event sequence reported by in-process delivery (web) */
+  sequence?: number;
   environmentId: string;
   organizationId: string;
 }
@@ -96,6 +100,7 @@ export class OutboundGateway {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
     private readonly actionTokenService: AgentActionTokenService,
+    private readonly deliveryInfo: OutboundDeliveryInfo,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -107,31 +112,92 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
-    const sent = await this.postToConversation(
-      target.agentId,
-      target.integrationIdentifier,
-      target.platform,
-      target.platformThreadId,
-      msg,
-      options,
-      target.workspaceId
-    );
+    // Gate replies and other server posts without a runtime message id:
+    // post first, then persist with the delivered message id.
+    if (!persist.activityIdentifier) {
+      const { result: sent, info } = await this.deliveryInfo.collect(() =>
+        this.postToConversation(
+          target.agentId,
+          target.integrationIdentifier,
+          target.platform,
+          target.platformThreadId,
+          msg,
+          options,
+          target.workspaceId,
+          persist.activityIdentifier
+        )
+      );
 
-    // Web chat has no external platform id — durable activity id ≡ platformMessageId.
-    // Prefer the caller's activityIdentifier (AgentEvent messageId) so event→activity
-    // idempotency and history rehydration share one id; otherwise use the id minted
-    // by adapter deliverMessage.
-    if (target.platform === AgentPlatformEnum.WEB_CHAT) {
-      const messageId = persist.activityIdentifier ?? sent.messageId;
-      const aligned = { ...sent, messageId };
-      await this.persistDelivered({ ...persist, activityIdentifier: messageId }, aligned, msg);
+      // In-process deliveries (web) report the authoritative message id so the
+      // durable activity, live envelope, and platform message id stay one
+      // identity. External platforms never report — the caller's id stands.
+      await this.persistDelivered(
+        { ...persist, activityIdentifier: info.messageId ?? persist.activityIdentifier, sequence: info.sequence },
+        sent,
+        msg
+      );
 
-      return aligned;
+      return sent;
     }
 
-    await this.persistDelivered(persist, sent, msg);
+    // Runtime messages carry an idempotent identifier: persist first so the
+    // timeline exists even when the platform is down. The unique index on the
+    // activity identifier is the concurrent-delivery claim — only the creator
+    // posts to the platform.
+    const { activity, created } = await this.conversation.persistAgentMessage({
+      conversationId: persist.conversationId,
+      channel: persist.channel,
+      agentIdentifier: persist.agentIdentifier,
+      agentName: persist.agentName,
+      identifier: persist.activityIdentifier,
+      content: this.extractTextFallback(msg),
+      richContent: extractReplyRichContent(msg),
+      environmentId: persist.environmentId,
+      organizationId: persist.organizationId,
+    });
 
-    return sent;
+    if (!created) {
+      return {
+        messageId: activity.platformMessageId ?? activity.identifier,
+        platformThreadId: activity.platformThreadId ?? target.platformThreadId,
+      };
+    }
+
+    try {
+      const { result: sent, info } = await this.deliveryInfo.collect(() =>
+        this.postToConversation(
+          target.agentId,
+          target.integrationIdentifier,
+          target.platform,
+          target.platformThreadId,
+          msg,
+          options,
+          target.workspaceId,
+          persist.activityIdentifier
+        )
+      );
+      const platformMessageId = info.messageId ?? sent.messageId;
+
+      await this.conversation.setAgentMessagePlatformMessageId({
+        environmentId: persist.environmentId,
+        organizationId: persist.organizationId,
+        conversationId: persist.conversationId,
+        activityId: activity._id,
+        platformMessageId,
+      });
+
+      return sent;
+    } catch (err) {
+      // Compensating delete so a retry can re-claim the identifier.
+      await this.conversation.deleteAgentMessage({
+        environmentId: persist.environmentId,
+        organizationId: persist.organizationId,
+        conversationId: persist.conversationId,
+        activityId: activity._id,
+      });
+
+      throw err;
+    }
   }
 
   async edit(
@@ -141,15 +207,17 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
-    const sent = await this.editInConversation(
-      target.agentId,
-      target.integrationIdentifier,
-      target.platform,
-      target.platformThreadId,
-      messageId,
-      msg,
-      options,
-      target.workspaceId
+    const { result: sent, info } = await this.deliveryInfo.collect(() =>
+      this.editInConversation(
+        target.agentId,
+        target.integrationIdentifier,
+        target.platform,
+        target.platformThreadId,
+        messageId,
+        msg,
+        options,
+        target.workspaceId
+      )
     );
     await this.conversation.persistAgentEdit({
       conversationId: persist.conversationId,
@@ -160,6 +228,7 @@ export class OutboundGateway {
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
       richContent: extractReplyRichContent(msg),
+      sequence: info.sequence,
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -190,11 +259,14 @@ export class OutboundGateway {
     }
   ): Promise<SentMessageInfo | null> {
     let sent: { id: string; threadId: string };
+    let sequence: number | undefined;
     try {
       const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
-      sent = await (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(
-        postArg
+      const collected = await this.deliveryInfo.collect(() =>
+        (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(postArg)
       );
+      sent = collected.result;
+      sequence = collected.info.sequence;
     } catch (err) {
       if (opts?.failSoft) {
         return null;
@@ -212,6 +284,7 @@ export class OutboundGateway {
         agentIdentifier: opts.persist.agentIdentifier,
         content: opts.persist.content,
         richContent: opts.persist.richContent,
+        sequence,
         environmentId: opts.persist.environmentId,
         organizationId: opts.persist.organizationId,
       });
@@ -227,7 +300,8 @@ export class OutboundGateway {
     platformThreadId: string,
     content: ReplyContentDto,
     options?: OutboundDeliveryOptions,
-    workspaceId?: string
+    workspaceId?: string,
+    preferredMessageId?: string
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
@@ -259,13 +333,38 @@ export class OutboundGateway {
       this.toActionTokenBinding(agentId, config)
     );
 
-    const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
+    const postArg = this.withPreferredMessageId(
+      this.buildAdapterPostableMessage(tokenizedContent, config),
+      chat.getAdapter(platform),
+      preferredMessageId
+    );
 
     const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
       thread.post(postArg)
     ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  /**
+   * Adapters that declare `supportsClientMessageIds` accept a caller-supplied
+   * idempotent message id embedded in the postable message (a capability, not
+   * a platform branch). All other adapters never see the field.
+   */
+  private withPreferredMessageId(
+    postArg: AdapterPostableMessage,
+    adapter: unknown,
+    preferredMessageId?: string
+  ): AdapterPostableMessage {
+    const supportsClientMessageIds = (adapter as { supportsClientMessageIds?: boolean }).supportsClientMessageIds;
+    if (!preferredMessageId || !supportsClientMessageIds) {
+      return postArg;
+    }
+
+    return {
+      ...(postArg as unknown as Record<string, unknown>),
+      messageId: preferredMessageId,
+    } as unknown as AdapterPostableMessage;
   }
 
   async startTypingInConversation(
@@ -308,17 +407,28 @@ export class OutboundGateway {
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
-    if (config.platform === AgentPlatformEnum.WEB_CHAT) {
-      return;
-    }
-
     if (config.platform === AgentPlatformEnum.SLACK) {
       await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId, workspaceId);
 
       return;
     }
 
-    // Teams, Telegram, and WhatsApp typing indicators expire or clear on post — no explicit stop API.
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const adapter = chat.getAdapter(config.platform) as { stopTyping?: (threadId: string) => Promise<void> };
+
+    // Most platforms have no explicit stop API — indicators expire or clear on
+    // post. Adapters with in-process delivery (web) expose `stopTyping`.
+    if (typeof adapter.stopTyping !== 'function') {
+      return;
+    }
+
+    await adapter.stopTyping(platformThreadId).catch((err) => {
+      this.logger.warn(
+        { err, platformThreadId, agentId, integrationIdentifier },
+        'Failed to stop typing in conversation'
+      );
+    });
   }
 
   private async clearSlackAssistantStatus(
@@ -500,7 +610,8 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    workspaceId?: string
+    workspaceId?: string,
+    persist?: OutboundPersistContext
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -511,9 +622,27 @@ export class OutboundGateway {
       return;
     }
 
-    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
-      adapter.deleteMessage(platformThreadId, platformMessageId)
-    ).catch(toDeliveryError);
+    const { info } = await this.deliveryInfo.collect(() =>
+      this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+        adapter.deleteMessage(platformThreadId, platformMessageId)
+      ).catch(toDeliveryError)
+    );
+
+    // Same as EDIT: append a durable tombstone for every channel when asked.
+    if (persist) {
+      await this.conversation.persistAgentDelete({
+        conversationId: persist.conversationId,
+        channel: persist.channel,
+        platformThreadId,
+        platformMessageId,
+        agentIdentifier: persist.agentIdentifier,
+        agentName: persist.agentName,
+        content: '',
+        sequence: info.sequence,
+        environmentId: persist.environmentId,
+        organizationId: persist.organizationId,
+      });
+    }
   }
 
   async postPlanObject(
@@ -836,6 +965,7 @@ export class OutboundGateway {
       identifier: persist.activityIdentifier,
       content: this.extractTextFallback(msg),
       richContent: extractReplyRichContent(msg),
+      sequence: persist.sequence,
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -893,7 +1023,7 @@ export class OutboundGateway {
       return msg.markdown;
     }
     if (msg.card) {
-      return msg.card.title ?? '[Card]';
+      return extractCardPlainText(msg.card);
     }
 
     return '';
