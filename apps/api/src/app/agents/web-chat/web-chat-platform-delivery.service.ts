@@ -27,11 +27,10 @@ export type WebChatPlatformDeliveryContext = {
 /**
  * Nest-owned platform callbacks for `@novu/chat-adapter-web`. Web has no
  * external platform, so this layer *is* the platform: it resolves the
- * conversation from the thread id, mints the conversation event sequence,
- * emits the live WS envelope, and reports `{ messageId, sequence }` upward
- * through {@link OutboundDeliveryInfo} so the channel-agnostic gateway can
- * persist the durable activity with the same identity — the way Slack returns
- * its `ts`.
+ * conversation from the thread id, emits the live WS envelope, and reports
+ * `{ messageId, sequence }` upward through {@link OutboundDeliveryInfo}.
+ * For runtime-identified messages the gateway persists first, so sequence is
+ * read from the saved activity rather than minted here.
  */
 @Injectable()
 export class WebChatPlatformDeliveryService {
@@ -58,35 +57,7 @@ export class WebChatPlatformDeliveryService {
       // idempotency and history rehydration on one id; otherwise mint.
       const platformMessageId = messageId ?? `act_${shortId(12)}`;
       const conversation = await this.resolveConversation(context, threadId);
-
-      if (messageId && conversation) {
-        const reserved = await this.conversationService.findAgentMessageByIdentifier(
-          context.config.environmentId,
-          conversation._id,
-          messageId
-        );
-        if (reserved) {
-          const sequence =
-            reserved.sequence ?? (await this.mintSequence(context, conversation, threadId, 'deliverMessage'));
-          this.deliveryInfo.report({ messageId: reserved.platformMessageId ?? platformMessageId, sequence });
-
-          if (sequence !== undefined) {
-            const markdown = this.markdownForLiveEnvelope(content, richContent);
-            const envelope = this.eventFactory.createMessageEnvelope({
-              conversationId: conversation._id,
-              agentId: context.config.agentIdentifier,
-              platformMessageId: reserved.platformMessageId ?? platformMessageId,
-              content: { markdown },
-              sequence,
-            });
-            await this.emitBestEffort(context, conversation, envelope);
-          }
-
-          return { id: reserved.platformMessageId ?? platformMessageId, threadId };
-        }
-      }
-
-      const sequence = await this.mintSequence(context, conversation, threadId, 'deliverMessage');
+      const sequence = await this.resolveLiveSequence(context, conversation, threadId, messageId, 'deliverMessage');
       this.deliveryInfo.report({ messageId: platformMessageId, sequence });
 
       if (conversation && sequence !== undefined) {
@@ -195,6 +166,27 @@ export class WebChatPlatformDeliveryService {
       context.config.organizationId,
       conversationIdFromThreadId(threadId)
     );
+  }
+
+  private async resolveLiveSequence(
+    context: WebChatPlatformDeliveryContext,
+    conversation: ConversationEntity | null,
+    threadId: string,
+    runtimeMessageId: string | undefined,
+    op: string
+  ): Promise<number | undefined> {
+    if (runtimeMessageId && conversation) {
+      const persisted = await this.conversationService.findAgentMessageByIdentifier(
+        context.config.environmentId,
+        conversation._id,
+        runtimeMessageId
+      );
+      if (persisted?.sequence !== undefined) {
+        return persisted.sequence;
+      }
+    }
+
+    return this.mintSequence(context, conversation, threadId, op);
   }
 
   private async mintSequence(

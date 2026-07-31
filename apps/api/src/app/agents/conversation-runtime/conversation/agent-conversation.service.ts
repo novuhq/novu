@@ -12,6 +12,7 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
   isDuplicateKeyError,
+  type PlatformDeliveryClaim,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
@@ -104,7 +105,7 @@ export interface ConversationActivityContext {
 }
 
 export interface PersistAgentActivityParams extends ConversationActivityContext {
-  platformMessageId: string;
+  platformMessageId?: string;
   /** Overrides channel.platformThreadId when delivery returns a different thread ID */
   platformThreadId?: string;
   /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
@@ -468,59 +469,29 @@ export class AgentConversationService {
     );
   }
 
-  /**
-   * Reserve a runtime message activity before live platform delivery so
-   * concurrent ingest retries lose the race without emitting a second live copy.
-   */
-  async claimAgentMessageForDelivery(
-    params: PersistAgentActivityParams
-  ): Promise<{ created: boolean; activity: ConversationActivityEntity }> {
-    if (!params.identifier) {
-      throw new BadRequestException('claimAgentMessageForDelivery requires identifier');
-    }
-
-    const threadId = params.platformThreadId ?? params.channel.platformThreadId;
-    const sequence = await this.resolveEventSequence(
-      params.conversationId,
-      params.environmentId,
-      params.organizationId,
-      params.sequence
-    );
-    const claim = await this.activityRepository.claimAgentMessageActivity({
-      identifier: params.identifier,
-      conversationId: params.conversationId,
-      platform: params.channel.platform,
-      integrationId: params.channel._integrationId,
-      platformThreadId: threadId,
-      platformMessageId: params.platformMessageId,
-      agentId: params.agentIdentifier,
-      senderName: params.agentName,
-      content: params.content,
-      richContent: params.richContent,
-      sequence,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
-
-    if (claim.created) {
-      await this.conversationRepository.touchActivity(
-        params.environmentId,
-        params.organizationId,
-        params.conversationId,
-        params.content
-      );
-    }
-
-    return claim;
+  async claimPlatformDelivery(params: {
+    environmentId: string;
+    organizationId: string;
+    activityId: string;
+  }): Promise<PlatformDeliveryClaim> {
+    return this.activityRepository.claimPlatformDelivery(params);
   }
 
-  async updateAgentMessagePlatformMessageId(params: {
+  async completePlatformDelivery(params: {
     environmentId: string;
     organizationId: string;
     activityId: string;
     platformMessageId: string;
   }): Promise<void> {
-    await this.activityRepository.updatePlatformMessageId(params);
+    await this.activityRepository.completePlatformDelivery(params);
+  }
+
+  async releasePlatformDeliveryClaim(params: {
+    environmentId: string;
+    organizationId: string;
+    activityId: string;
+  }): Promise<void> {
+    await this.activityRepository.releasePlatformDeliveryClaim(params);
   }
 
   async persistAgentMessage(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {

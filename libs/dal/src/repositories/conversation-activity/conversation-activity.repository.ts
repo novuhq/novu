@@ -14,6 +14,14 @@ import {
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
 
+/** Stored in `platformMessageId` while {@link claimPlatformDelivery} owns the post. */
+export const PLATFORM_DELIVERY_PENDING = '__platform_delivery_pending__';
+
+export type PlatformDeliveryClaim =
+  | { status: 'claimed' }
+  | { status: 'already_delivered'; platformMessageId: string }
+  | { status: 'in_flight' };
+
 const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
 type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
 
@@ -178,78 +186,68 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     return result.modified;
   }
 
-  /**
-   * Atomically insert a MESSAGE activity keyed by runtime `identifier`, or return
-   * the pre-existing row when a concurrent retry wins the race first.
-   */
-  async claimAgentMessageActivity(params: {
-    identifier: string;
-    conversationId: string;
-    platform: string;
-    integrationId: string;
-    platformThreadId: string;
-    platformMessageId?: string;
-    agentId: string;
-    senderName?: string;
-    content: string;
-    richContent?: Record<string, unknown>;
-    sequence: number;
+  async claimPlatformDelivery(params: {
     environmentId: string;
     organizationId: string;
-  }): Promise<{ created: boolean; activity: ConversationActivityEntity }> {
-    const filter = {
+    activityId: string;
+  }): Promise<PlatformDeliveryClaim> {
+    const scope = {
+      _id: params.activityId,
       _environmentId: params.environmentId,
-      identifier: params.identifier,
+      _organizationId: params.organizationId,
     };
-    const prior = await this.findOneAndUpdate(
-      filter,
-      {
-        $setOnInsert: {
-          identifier: params.identifier,
-          _conversationId: params.conversationId,
-          type: ConversationActivityTypeEnum.MESSAGE,
-          platform: params.platform,
-          _integrationId: params.integrationId,
-          platformThreadId: params.platformThreadId,
-          senderType: ConversationActivitySenderTypeEnum.AGENT,
-          senderId: params.agentId,
-          content: params.content,
-          richContent: params.richContent,
-          platformMessageId: params.platformMessageId,
-          senderName: params.senderName,
-          sequence: params.sequence,
-          _environmentId: params.environmentId,
-          _organizationId: params.organizationId,
-        },
-      },
-      { upsert: true, new: false }
+    const claimResult = await this.MongooseModel.updateOne(
+      { ...scope, platformMessageId: { $exists: false } },
+      { $set: { platformMessageId: PLATFORM_DELIVERY_PENDING } }
     );
 
-    if (prior) {
-      return { created: false, activity: prior };
+    if (claimResult.modifiedCount === 1) {
+      return { status: 'claimed' };
     }
 
-    const activity = await this.findOne(filter, '*');
-    if (!activity) {
-      throw new Error('claimAgentMessageActivity upsert failed to materialize activity');
+    const activity = await this.findOne(scope, 'platformMessageId identifier');
+
+    if (!activity?.platformMessageId) {
+      return { status: 'in_flight' };
     }
 
-    return { created: true, activity };
+    if (activity.platformMessageId === PLATFORM_DELIVERY_PENDING) {
+      return { status: 'in_flight' };
+    }
+
+    return { status: 'already_delivered', platformMessageId: activity.platformMessageId };
   }
 
-  async updatePlatformMessageId(params: {
+  async completePlatformDelivery(params: {
     environmentId: string;
     organizationId: string;
     activityId: string;
     platformMessageId: string;
   }): Promise<void> {
-    await this.update(
+    await this.MongooseModel.updateOne(
       {
         _id: params.activityId,
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
+        platformMessageId: PLATFORM_DELIVERY_PENDING,
       },
       { $set: { platformMessageId: params.platformMessageId } }
+    );
+  }
+
+  async releasePlatformDeliveryClaim(params: {
+    environmentId: string;
+    organizationId: string;
+    activityId: string;
+  }): Promise<void> {
+    await this.MongooseModel.updateOne(
+      {
+        _id: params.activityId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        platformMessageId: PLATFORM_DELIVERY_PENDING,
+      },
+      { $unset: { platformMessageId: 1 } }
     );
   }
 
@@ -320,7 +318,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       richContent: params.richContent,
       toolData: params.toolData,
       senderName: params.senderName,
-      platformMessageId: params.platformMessageId,
+      ...(params.platformMessageId !== undefined ? { platformMessageId: params.platformMessageId } : {}),
       ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,

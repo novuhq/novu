@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationChannel } from '@novu/dal';
+import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, Thread } from 'chat';
@@ -112,32 +112,96 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
-    let deliveryClaimed: ConversationActivityEntity | undefined;
-
-    if (persist.activityIdentifier) {
-      const claim = await this.conversation.claimAgentMessageForDelivery({
-        conversationId: persist.conversationId,
-        channel: persist.channel,
-        agentIdentifier: persist.agentIdentifier,
-        agentName: persist.agentName,
-        identifier: persist.activityIdentifier,
-        platformMessageId: persist.activityIdentifier,
-        content: this.extractTextFallback(msg),
-        richContent: extractReplyRichContent(msg),
-        environmentId: persist.environmentId,
-        organizationId: persist.organizationId,
-      });
-
-      if (!claim.created) {
-        return {
-          messageId: claim.activity.platformMessageId ?? claim.activity.identifier,
-          platformThreadId: claim.activity.platformThreadId ?? target.platformThreadId,
-        };
-      }
-
-      deliveryClaimed = claim.activity;
+    if (!persist.activityIdentifier) {
+      return this.deliverPostThenPersist(target, msg, persist, options);
     }
 
+    return this.deliverPersistThenPost(target, msg, persist, options);
+  }
+
+  /**
+   * Runtime messages carry an idempotent identifier: persist first so the
+   * timeline exists even when the platform is down, then post once per row.
+   */
+  private async deliverPersistThenPost(
+    target: ConversationTarget,
+    msg: OutboundMessage,
+    persist: OutboundPersistContext,
+    options?: OutboundDeliveryOptions
+  ): Promise<SentMessageInfo> {
+    const activity = await this.conversation.persistAgentMessage({
+      conversationId: persist.conversationId,
+      channel: persist.channel,
+      agentIdentifier: persist.agentIdentifier,
+      agentName: persist.agentName,
+      identifier: persist.activityIdentifier,
+      content: this.extractTextFallback(msg),
+      richContent: extractReplyRichContent(msg),
+      environmentId: persist.environmentId,
+      organizationId: persist.organizationId,
+    });
+
+    const claim = await this.conversation.claimPlatformDelivery({
+      environmentId: persist.environmentId,
+      organizationId: persist.organizationId,
+      activityId: activity._id,
+    });
+
+    if (claim.status === 'already_delivered') {
+      return {
+        messageId: claim.platformMessageId,
+        platformThreadId: activity.platformThreadId ?? target.platformThreadId,
+      };
+    }
+
+    if (claim.status === 'in_flight') {
+      return {
+        messageId: activity.identifier,
+        platformThreadId: activity.platformThreadId ?? target.platformThreadId,
+      };
+    }
+
+    try {
+      const { result: sent, info } = await this.deliveryInfo.collect(() =>
+        this.postToConversation(
+          target.agentId,
+          target.integrationIdentifier,
+          target.platform,
+          target.platformThreadId,
+          msg,
+          options,
+          target.workspaceId,
+          persist.activityIdentifier
+        )
+      );
+      const platformMessageId = info.messageId ?? sent.messageId;
+
+      await this.conversation.completePlatformDelivery({
+        environmentId: persist.environmentId,
+        organizationId: persist.organizationId,
+        activityId: activity._id,
+        platformMessageId,
+      });
+
+      return sent;
+    } catch (err) {
+      await this.conversation.releasePlatformDeliveryClaim({
+        environmentId: persist.environmentId,
+        organizationId: persist.organizationId,
+        activityId: activity._id,
+      });
+
+      throw err;
+    }
+  }
+
+  /** Gate replies and other server posts without a runtime message id. */
+  private async deliverPostThenPersist(
+    target: ConversationTarget,
+    msg: OutboundMessage,
+    persist: OutboundPersistContext,
+    options?: OutboundDeliveryOptions
+  ): Promise<SentMessageInfo> {
     const { result: sent, info } = await this.deliveryInfo.collect(() =>
       this.postToConversation(
         target.agentId,
@@ -150,20 +214,6 @@ export class OutboundGateway {
         persist.activityIdentifier
       )
     );
-
-    if (deliveryClaimed) {
-      const platformMessageId = info.messageId ?? sent.messageId;
-      if (platformMessageId !== deliveryClaimed.platformMessageId) {
-        await this.conversation.updateAgentMessagePlatformMessageId({
-          environmentId: persist.environmentId,
-          organizationId: persist.organizationId,
-          activityId: deliveryClaimed._id,
-          platformMessageId,
-        });
-      }
-
-      return sent;
-    }
 
     // In-process deliveries (web) report the authoritative message id so the
     // durable activity, live envelope, and platform message id stay one
