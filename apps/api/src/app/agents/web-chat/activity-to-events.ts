@@ -149,31 +149,6 @@ export function isMappableActivity(activity: ConversationActivityEntity): boolea
   return event !== null && !isDeltaEvent(event);
 }
 
-export function activityToEvents(
-  activities: ConversationActivityEntity[],
-  context: { conversationId: string; agentIdentifier: string },
-  sequenceOffset = 0
-): AgentEventEnvelope[] {
-  const envelopes: AgentEventEnvelope[] = [];
-  let computed = sequenceOffset;
-
-  for (const activity of activities) {
-    const event = mapActivityToEvent(activity);
-    if (!event || isDeltaEvent(event)) {
-      continue;
-    }
-
-    computed += 1;
-    const sequence = resolveSequence(activity, computed);
-    if (typeof activity.sequence === 'number') {
-      computed = Math.max(computed, activity.sequence);
-    }
-    envelopes.push(buildEnvelope(activity, event, sequence, context));
-  }
-
-  return envelopes;
-}
-
 export function mapActivitiesToEventPage(
   activities: ConversationActivityEntity[],
   context: { conversationId: string; agentIdentifier: string },

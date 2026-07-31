@@ -359,21 +359,6 @@ export class AgentConversationService {
     return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
   }
 
-  async findActivityByIdentifier(
-    environmentId: string,
-    conversationId: string,
-    identifier: string
-  ): Promise<ConversationActivityEntity | null> {
-    return this.activityRepository.findOne(
-      {
-        _environmentId: environmentId,
-        _conversationId: conversationId,
-        identifier,
-      },
-      '*'
-    );
-  }
-
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
     return this.activityRepository.countAgentMessages(environmentId, conversationId);
   }
