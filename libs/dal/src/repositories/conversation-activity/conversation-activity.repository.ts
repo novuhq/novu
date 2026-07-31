@@ -14,14 +14,6 @@ import {
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
 
-/** Stored in `platformMessageId` while {@link claimPlatformDelivery} owns the post. */
-export const PLATFORM_DELIVERY_PENDING = '__platform_delivery_pending__';
-
-export type PlatformDeliveryClaim =
-  | { status: 'claimed' }
-  | { status: 'already_delivered'; platformMessageId: string }
-  | { status: 'in_flight' };
-
 const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
 type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
 
@@ -184,71 +176,6 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     );
 
     return result.modified;
-  }
-
-  async claimPlatformDelivery(params: {
-    environmentId: string;
-    organizationId: string;
-    activityId: string;
-  }): Promise<PlatformDeliveryClaim> {
-    const scope = {
-      _id: params.activityId,
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-    };
-    const claimResult = await this.MongooseModel.updateOne(
-      { ...scope, platformMessageId: { $exists: false } },
-      { $set: { platformMessageId: PLATFORM_DELIVERY_PENDING } }
-    );
-
-    if (claimResult.modifiedCount === 1) {
-      return { status: 'claimed' };
-    }
-
-    const activity = await this.findOne(scope, 'platformMessageId identifier');
-
-    if (!activity?.platformMessageId) {
-      return { status: 'in_flight' };
-    }
-
-    if (activity.platformMessageId === PLATFORM_DELIVERY_PENDING) {
-      return { status: 'in_flight' };
-    }
-
-    return { status: 'already_delivered', platformMessageId: activity.platformMessageId };
-  }
-
-  async completePlatformDelivery(params: {
-    environmentId: string;
-    organizationId: string;
-    activityId: string;
-    platformMessageId: string;
-  }): Promise<void> {
-    await this.MongooseModel.updateOne(
-      {
-        _id: params.activityId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        platformMessageId: PLATFORM_DELIVERY_PENDING,
-      },
-      { $set: { platformMessageId: params.platformMessageId } }
-    );
-  }
-
-  async releasePlatformDeliveryClaim(params: {
-    environmentId: string;
-    organizationId: string;
-    activityId: string;
-  }): Promise<void> {
-    await this.MongooseModel.updateOne(
-      {
-        _id: params.activityId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        platformMessageId: PLATFORM_DELIVERY_PENDING,
-      },
-      { $unset: { platformMessageId: 1 } }
-    );
   }
 
   async createUserActivity(params: {

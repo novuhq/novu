@@ -12,7 +12,6 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
   isDuplicateKeyError,
-  type PlatformDeliveryClaim,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
@@ -102,6 +101,12 @@ export interface ConversationActivityContext {
   agentIdentifier: string;
   environmentId: string;
   organizationId: string;
+}
+
+export interface PersistAgentMessageResult {
+  activity: ConversationActivityEntity;
+  /** `false` when the identifier already existed — the caller lost the persist race. */
+  created: boolean;
 }
 
 export interface PersistAgentActivityParams extends ConversationActivityContext {
@@ -469,34 +474,11 @@ export class AgentConversationService {
     );
   }
 
-  async claimPlatformDelivery(params: {
-    environmentId: string;
-    organizationId: string;
-    activityId: string;
-  }): Promise<PlatformDeliveryClaim> {
-    return this.activityRepository.claimPlatformDelivery(params);
-  }
-
-  async completePlatformDelivery(params: {
-    environmentId: string;
-    organizationId: string;
-    activityId: string;
-    platformMessageId: string;
-  }): Promise<void> {
-    await this.activityRepository.completePlatformDelivery(params);
-  }
-
-  async releasePlatformDeliveryClaim(params: {
-    environmentId: string;
-    organizationId: string;
-    activityId: string;
-  }): Promise<void> {
-    await this.activityRepository.releasePlatformDeliveryClaim(params);
-  }
-
-  async persistAgentMessage(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
+  async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {
     try {
-      return await this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
+      const activity = await this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
+
+      return { activity, created: true };
     } catch (err) {
       if (params.identifier && isDuplicateKeyError(err)) {
         this.logger.warn(
@@ -514,12 +496,46 @@ export class AgentConversationService {
         );
 
         if (existing) {
-          return existing;
+          return { activity: existing, created: false };
         }
       }
 
       throw err;
     }
+  }
+
+  /** Records the platform-native message id after a successful post on a persist-first delivery. */
+  async setAgentMessagePlatformMessageId(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+    platformMessageId: string;
+  }): Promise<void> {
+    await this.activityRepository.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        _id: params.activityId,
+      },
+      { $set: { platformMessageId: params.platformMessageId } }
+    );
+  }
+
+  /** Compensating delete when the platform post fails, so a retry can re-claim the identifier. */
+  async deleteAgentMessage(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+  }): Promise<void> {
+    await this.activityRepository.findOneAndDelete({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+      _id: params.activityId,
+    });
   }
 
   async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {

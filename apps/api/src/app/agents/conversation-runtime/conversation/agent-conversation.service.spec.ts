@@ -90,11 +90,12 @@ describe('AgentConversationService', () => {
       } as unknown as ConversationRepository;
       const service = makeService(conversationRepository, activityRepository);
 
-      await service.persistAgentMessage({
+      const result = await service.persistAgentMessage({
         ...basePersistParams(),
         identifier: 'client-msg-123',
       });
 
+      expect(result.created).to.equal(true);
       expect(activityRepository.createAgentActivity.calledOnce).to.equal(true);
       expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('client-msg-123');
       expect(activityRepository.createAgentActivity.firstCall.args[0].type).to.equal(
@@ -139,7 +140,8 @@ describe('AgentConversationService', () => {
         identifier: 'client-msg-123',
       });
 
-      expect(result).to.equal(existingActivity);
+      expect(result.activity).to.equal(existingActivity);
+      expect(result.created).to.equal(false);
       expect(logger.warn.calledOnce).to.equal(true);
     });
   });

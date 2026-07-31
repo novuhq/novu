@@ -112,24 +112,39 @@ export class OutboundGateway {
     persist: OutboundPersistContext,
     options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
+    // Gate replies and other server posts without a runtime message id:
+    // post first, then persist with the delivered message id.
     if (!persist.activityIdentifier) {
-      return this.deliverPostThenPersist(target, msg, persist, options);
+      const { result: sent, info } = await this.deliveryInfo.collect(() =>
+        this.postToConversation(
+          target.agentId,
+          target.integrationIdentifier,
+          target.platform,
+          target.platformThreadId,
+          msg,
+          options,
+          target.workspaceId,
+          persist.activityIdentifier
+        )
+      );
+
+      // In-process deliveries (web) report the authoritative message id so the
+      // durable activity, live envelope, and platform message id stay one
+      // identity. External platforms never report — the caller's id stands.
+      await this.persistDelivered(
+        { ...persist, activityIdentifier: info.messageId ?? persist.activityIdentifier, sequence: info.sequence },
+        sent,
+        msg
+      );
+
+      return sent;
     }
 
-    return this.deliverPersistThenPost(target, msg, persist, options);
-  }
-
-  /**
-   * Runtime messages carry an idempotent identifier: persist first so the
-   * timeline exists even when the platform is down, then post once per row.
-   */
-  private async deliverPersistThenPost(
-    target: ConversationTarget,
-    msg: OutboundMessage,
-    persist: OutboundPersistContext,
-    options?: OutboundDeliveryOptions
-  ): Promise<SentMessageInfo> {
-    const activity = await this.conversation.persistAgentMessage({
+    // Runtime messages carry an idempotent identifier: persist first so the
+    // timeline exists even when the platform is down. The unique index on the
+    // activity identifier is the concurrent-delivery claim — only the creator
+    // posts to the platform.
+    const { activity, created } = await this.conversation.persistAgentMessage({
       conversationId: persist.conversationId,
       channel: persist.channel,
       agentIdentifier: persist.agentIdentifier,
@@ -141,22 +156,9 @@ export class OutboundGateway {
       organizationId: persist.organizationId,
     });
 
-    const claim = await this.conversation.claimPlatformDelivery({
-      environmentId: persist.environmentId,
-      organizationId: persist.organizationId,
-      activityId: activity._id,
-    });
-
-    if (claim.status === 'already_delivered') {
+    if (!created) {
       return {
-        messageId: claim.platformMessageId,
-        platformThreadId: activity.platformThreadId ?? target.platformThreadId,
-      };
-    }
-
-    if (claim.status === 'in_flight') {
-      return {
-        messageId: activity.identifier,
+        messageId: activity.platformMessageId ?? activity.identifier,
         platformThreadId: activity.platformThreadId ?? target.platformThreadId,
       };
     }
@@ -176,55 +178,26 @@ export class OutboundGateway {
       );
       const platformMessageId = info.messageId ?? sent.messageId;
 
-      await this.conversation.completePlatformDelivery({
+      await this.conversation.setAgentMessagePlatformMessageId({
         environmentId: persist.environmentId,
         organizationId: persist.organizationId,
+        conversationId: persist.conversationId,
         activityId: activity._id,
         platformMessageId,
       });
 
       return sent;
     } catch (err) {
-      await this.conversation.releasePlatformDeliveryClaim({
+      // Compensating delete so a retry can re-claim the identifier.
+      await this.conversation.deleteAgentMessage({
         environmentId: persist.environmentId,
         organizationId: persist.organizationId,
+        conversationId: persist.conversationId,
         activityId: activity._id,
       });
 
       throw err;
     }
-  }
-
-  /** Gate replies and other server posts without a runtime message id. */
-  private async deliverPostThenPersist(
-    target: ConversationTarget,
-    msg: OutboundMessage,
-    persist: OutboundPersistContext,
-    options?: OutboundDeliveryOptions
-  ): Promise<SentMessageInfo> {
-    const { result: sent, info } = await this.deliveryInfo.collect(() =>
-      this.postToConversation(
-        target.agentId,
-        target.integrationIdentifier,
-        target.platform,
-        target.platformThreadId,
-        msg,
-        options,
-        target.workspaceId,
-        persist.activityIdentifier
-      )
-    );
-
-    // In-process deliveries (web) report the authoritative message id so the
-    // durable activity, live envelope, and platform message id stay one
-    // identity. External platforms never report — the caller's id stands.
-    await this.persistDelivered(
-      { ...persist, activityIdentifier: info.messageId ?? persist.activityIdentifier, sequence: info.sequence },
-      sent,
-      msg
-    );
-
-    return sent;
   }
 
   async edit(
