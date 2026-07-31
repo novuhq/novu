@@ -207,7 +207,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       richContent: params.richContent,
       platformMessageId: params.platformMessageId,
       senderName: params.senderName,
-      sequence: params.sequence,
+      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
@@ -246,7 +246,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       toolData: params.toolData,
       senderName: params.senderName,
       platformMessageId: params.platformMessageId,
-      sequence: params.sequence,
+      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
@@ -308,7 +308,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderId: params.senderId,
       content: params.content,
       toolData: params.toolData,
-      sequence: params.sequence,
+      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });

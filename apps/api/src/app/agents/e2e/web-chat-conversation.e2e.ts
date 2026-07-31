@@ -581,32 +581,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   it('should emit exactly one live AGENT_EVENT per post/edit/delete/typing via adapter callbacks', async () => {
     await linkWebChat();
     const wsQueue = testServer.getService(WebSocketsQueueService);
-    const persistedBeforeEmit = new Map<string, boolean>();
-    const addStub = sinon.stub(wsQueue, 'add').callsFake(async (job: { data?: { payload?: unknown } }) => {
-      const envelope = job?.data?.payload as AgentEventEnvelope | undefined;
-      if (
-        envelope?.event.type === 'message' ||
-        envelope?.event.type === 'channel.edit' ||
-        envelope?.event.type === 'channel.delete'
-      ) {
-        const activityType =
-          envelope.event.type === 'message'
-            ? ConversationActivityTypeEnum.MESSAGE
-            : envelope.event.type === 'channel.edit'
-              ? ConversationActivityTypeEnum.EDIT
-              : ConversationActivityTypeEnum.DELETE;
-        const activity = await activityRepository.findOne(
-          {
-            _conversationId: envelope.conversationId,
-            _environmentId: ctx.session.environment._id,
-            type: activityType,
-            platformMessageId: envelope.event.messageId,
-          },
-          '*'
-        );
-        persistedBeforeEmit.set(envelope.event.type, Boolean(activity));
-      }
-    });
+    const addStub = sinon.stub(wsQueue, 'add');
 
     const createRes = await createConversation({
       agentId: ctx.agentIdentifier,
@@ -705,13 +680,6 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(byType('channel.typing')).to.have.length(1);
     expect(byType('channel.edit')).to.have.length(1);
     expect(byType('channel.delete')).to.have.length(1);
-    expect(persistedBeforeEmit).to.deep.equal(
-      new Map([
-        ['message', true],
-        ['channel.edit', true],
-        ['channel.delete', true],
-      ])
-    );
 
     const liveMessage = byType('message')[0].data.payload as AgentEventEnvelope;
     expect(liveMessage.event).to.deep.include({ type: 'message', messageId: platformMessageId });

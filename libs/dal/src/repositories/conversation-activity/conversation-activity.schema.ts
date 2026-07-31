@@ -84,7 +84,10 @@ conversationActivitySchema.index({ _conversationId: 1, createdAt: 1 });
 conversationActivitySchema.index({ _conversationId: 1, platformMessageId: 1 }, { sparse: true });
 conversationActivitySchema.index(
   { _environmentId: 1, _organizationId: 1, _conversationId: 1, sequence: 1 },
-  { unique: true, sparse: true }
+  {
+    unique: true,
+    partialFilterExpression: { sequence: { $exists: true, $type: 'number' } },
+  }
 );
 conversationActivitySchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
 
