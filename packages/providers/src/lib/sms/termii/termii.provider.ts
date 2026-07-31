@@ -43,7 +43,7 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
       'Content-Type': 'application/json',
       ...params.headers,
     };
-    const opts: RequestInit = {
+    const opts = {
       agent: undefined,
       cache: undefined,
       credentials: undefined,
@@ -54,7 +54,7 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
       method: 'POST',
       headers,
       body: JSON.stringify(params.body),
-    };
+    } as RequestInit;
 
     const response = await fetch(TermiiSmsProvider.BASE_URL, opts);
     const body = (await response.json()) as SmsJsonResponse;
