@@ -361,8 +361,8 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
       const stub = outboundGateway.deleteInConversation as sinon.SinonStub;
       expect(stub.callCount).to.equal(2);
-      expect(stub.getCall(0).args[4]).to.equal('msg-abc');
-      expect(stub.getCall(1).args[4]).to.equal('msg-def');
+      expect(stub.getCall(0).args[3]).to.equal('msg-abc');
+      expect(stub.getCall(1).args[3]).to.equal('msg-def');
     });
 
     it('should return 400 when edit and deleteMessages are combined', async () => {

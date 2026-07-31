@@ -589,7 +589,6 @@ export class McpOAuthCallback {
       .deleteInConversation(
         stateData.agentId,
         stateData.integrationIdentifier ?? '',
-        connectCardPlatform,
         connectCardThreadId,
         connectCardMessageId
       )
