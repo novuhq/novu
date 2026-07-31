@@ -21,7 +21,7 @@ import {
 import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 import { createHash } from 'crypto';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, mergeMap } from 'rxjs/operators';
 import { EXCLUDE_FROM_IDEMPOTENCY } from './exclude-from-idempotency';
 
 const IDEMPOTENCY_CACHE_TTL = 60 * 60 * 24; // 24h
@@ -245,7 +245,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const idempotencyKey = this.getIdempotencyKey(context)!;
 
     return next.handle().pipe(
-      map(async (response) => {
+      mergeMap(async (response) => {
         const httpResponse = context.switchToHttp().getResponse();
         const { statusCode } = httpResponse;
 
