@@ -10,7 +10,7 @@ export type ChannelEndpointDto = {
   integrationIdentifier: string | null;
   /** Set when the endpoint was created through an OAuth connect flow (connect button), null for bot-DM auto-provision. */
   connectionIdentifier: string | null;
-  /** Subscriber the endpoint is linked to. Dashboard onboarding uses a `connect:` prefixed id. */
+  /** Subscriber the endpoint is linked to. Dashboard onboarding uses the logged-in user id. */
   subscriberId: string | null;
   contextKeys: string[];
   type: ChannelEndpointType;

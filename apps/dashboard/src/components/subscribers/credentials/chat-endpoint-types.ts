@@ -1,7 +1,7 @@
 import type { ChannelEndpointType } from '@novu/shared';
-import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, isToolWebhookDynamicRouting, ToolProviderIdEnum } from '@novu/shared';
 import type { IconType } from 'react-icons';
-import { RiAtLine, RiHashtag, RiLinksLine, RiTelegramLine } from 'react-icons/ri';
+import { RiAtLine, RiHashtag, RiKey2Line, RiLinksLine, RiTelegramLine } from 'react-icons/ri';
 
 /** A chat endpoint type a user can manually add for an integration. */
 export type ChatEndpointTypeOption = {
@@ -136,4 +136,62 @@ export function getAddableEndpointTypes(providerId: string, hasConnection: boole
   const supported = SUPPORTED_TYPES_BY_PROVIDER[providerId] ?? [WEBHOOK];
 
   return supported.filter((option) => !option.requiresConnection || hasConnection);
+}
+
+const PAGERDUTY_SERVICE: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+  label: 'PagerDuty service',
+  icon: RiKey2Line,
+  skeleton: { routingKey: '', region: 'us' },
+  requiresConnection: false,
+};
+
+const OPSGENIE_INTEGRATION: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  label: 'Opsgenie integration',
+  icon: RiKey2Line,
+  skeleton: { apiKey: '', region: 'us' },
+  requiresConnection: false,
+};
+
+const GRAFANA_ONCALL_INTEGRATION: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+  label: 'Grafana OnCall webhook',
+  icon: RiKey2Line,
+  skeleton: { url: '', authToken: '' },
+  requiresConnection: false,
+};
+
+/**
+ * Tool-webhook per-subscriber endpoint, used only in dynamic routing mode (static mode
+ * delivers to the integration-level URL and has no subscriber endpoints).
+ */
+const TOOL_WEBHOOK: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+  label: 'Webhook',
+  icon: RiLinksLine,
+  skeleton: { url: '' },
+  requiresConnection: false,
+};
+
+/** Endpoint types each tool provider consumes for per-subscriber routing. */
+const SUPPORTED_TOOL_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
+  [ToolProviderIdEnum.PagerDuty]: [PAGERDUTY_SERVICE],
+  [ToolProviderIdEnum.Opsgenie]: [OPSGENIE_INTEGRATION],
+  [ToolProviderIdEnum.Grafana]: [GRAFANA_ONCALL_INTEGRATION],
+  [ToolProviderIdEnum.Webhook]: [TOOL_WEBHOOK],
+};
+
+/** Resolves endpoint types a user may manually add for a tool integration. */
+export function getAddableToolEndpointTypes(
+  providerId: string,
+  credentials?: { routingMode?: string }
+): ChatEndpointTypeOption[] {
+  const types = SUPPORTED_TOOL_TYPES_BY_PROVIDER[providerId] ?? [];
+
+  if (providerId === ToolProviderIdEnum.Webhook && !isToolWebhookDynamicRouting(credentials)) {
+    return [];
+  }
+
+  return types;
 }

@@ -20,7 +20,13 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum, MessageActionStatusEnum, PreferenceLevelEnum, UserSessionData } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  ConnectionMode,
+  MessageActionStatusEnum,
+  PreferenceLevelEnum,
+  UserSessionData,
+} from '@novu/shared';
 import type { Request } from 'express';
 import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
@@ -59,6 +65,7 @@ import { IssueTelegramSubscriberLinkCommand } from '../telegram-linking/issue-te
 import { IssueTelegramSubscriberLink } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
 import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
+import { GetChannelConnectionQueryDto } from './dtos/get-channel-connection-query.dto';
 import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
 import { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
 import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
@@ -689,6 +696,7 @@ export class InboxController {
           organizationId: subscriberSession._organizationId,
         } as UserSessionData,
         subscriberId: subscriberSession.subscriberId,
+        connectionMode: query.connectionMode,
         limit: query.limit || 10,
         after: query.after,
         before: query.before,
@@ -713,9 +721,14 @@ export class InboxController {
   @Get('/channel-connections/:identifier')
   async getChannelConnection(
     @SubscriberSession() subscriberSession: SubscriberSession,
-    @Param('identifier') identifier: string
+    @Param('identifier') identifier: string,
+    @Query() query: GetChannelConnectionQueryDto
   ): Promise<InboxChannelConnectionResponseDto> {
-    const channelConnection = await this.loadChannelConnectionForSubscriber(subscriberSession, identifier);
+    const channelConnection = await this.loadChannelConnectionForSubscriber(
+      subscriberSession,
+      identifier,
+      query.connectionMode
+    );
 
     return mapChannelConnectionToInboxDto(channelConnection);
   }
@@ -738,7 +751,11 @@ export class InboxController {
     );
   }
 
-  private async loadChannelConnectionForSubscriber(subscriberSession: SubscriberSession, identifier: string) {
+  private async loadChannelConnectionForSubscriber(
+    subscriberSession: SubscriberSession,
+    identifier: string,
+    connectionMode?: ConnectionMode
+  ) {
     try {
       return await this.getChannelConnectionUsecase.execute(
         GetChannelConnectionCommand.create({
@@ -747,6 +764,7 @@ export class InboxController {
           identifier,
           subscriberId: subscriberSession.subscriberId,
           contextKeys: subscriberSession.contextKeys,
+          connectionMode,
         })
       );
     } catch (error) {
@@ -837,7 +855,13 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
+        // A session that already carries resolved `contextKeys` is the trusted
+        // context source; the raw `body.context` is only used (and re-verified via
+        // `contextHash`) when the session has none.
         context: body.context,
+        contextKeys: subscriberSession.contextKeys,
+        contextHash: body.contextHash,
+        isContextValidated: !!subscriberSession.contextKeys?.length,
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
@@ -860,7 +884,13 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
+        // A session that already carries resolved `contextKeys` is the trusted
+        // context source; the raw `body.context` is only used (and re-verified via
+        // `contextHash`) when the session has none.
         context: body.context,
+        contextKeys: subscriberSession.contextKeys,
+        contextHash: body.contextHash,
+        isContextValidated: !!subscriberSession.contextKeys?.length,
         userScope: body.userScope,
       })
     );

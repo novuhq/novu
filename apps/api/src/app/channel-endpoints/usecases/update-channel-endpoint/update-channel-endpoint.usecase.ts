@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, validateEndpointForType } from '@novu/application-generic';
+import {
+  decryptChannelEndpoint,
+  encryptChannelEndpoint,
+  InstrumentUsecase,
+  validateEndpointForType,
+} from '@novu/application-generic';
 import { ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
 import { UpdateChannelEndpointCommand } from './update-channel-endpoint.command';
 
@@ -25,12 +30,15 @@ export class UpdateChannelEndpoint {
     // Validate that the new endpoint matches the existing type
     validateEndpointForType(existingChannelEndpoint.type, command.endpoint);
 
-    const updatedChannelEndpoint = await this.updateChannelEndpoint(command);
+    const updatedChannelEndpoint = await this.updateChannelEndpoint(command, existingChannelEndpoint);
 
     return updatedChannelEndpoint;
   }
 
-  private async updateChannelEndpoint(command: UpdateChannelEndpointCommand): Promise<ChannelEndpointEntity> {
+  private async updateChannelEndpoint(
+    command: UpdateChannelEndpointCommand,
+    existing: ChannelEndpointEntity
+  ): Promise<ChannelEndpointEntity> {
     const channelEndpoint = await this.channelEndpointRepository.findOneAndUpdate(
       {
         identifier: command.identifier,
@@ -38,7 +46,7 @@ export class UpdateChannelEndpoint {
         _environmentId: command.environmentId,
       },
       {
-        endpoint: command.endpoint,
+        endpoint: encryptChannelEndpoint(existing.type, command.endpoint),
       },
       {
         new: true,
@@ -49,6 +57,9 @@ export class UpdateChannelEndpoint {
       throw new NotFoundException(`Channel endpoint with identifier "${command.identifier}" not found`);
     }
 
-    return channelEndpoint;
+    return {
+      ...channelEndpoint,
+      endpoint: decryptChannelEndpoint(existing.type, channelEndpoint.endpoint),
+    };
   }
 }

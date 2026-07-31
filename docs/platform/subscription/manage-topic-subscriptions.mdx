@@ -659,29 +659,32 @@ See the [quickstart](/platform/subscription/quickstart) for setup steps. For Con
 
 ## JSON Logic conditions
 
-Subscription conditions use [JSON Logic](https://jsonlogic.com/), the same rule format as [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). Reference trigger payload fields with `{ "var": "payload.<path>" }`.
+Subscription conditions use [JSON Logic](https://jsonlogic.com/), the same rule format as [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). Reference trigger data with `{ "var": "<namespace>.<path>" }`.
 
 ### Condition variables
 
-Topic subscription conditions are evaluated against the workflow trigger **payload** only. Reference fields with `{ "var": "payload.<path>" }`.
+Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. The following namespaces are in scope:
 
 | Namespace | Source | Examples |
 | --- | --- | --- |
 | `payload.*` | Trigger [payload](/platform/concepts/trigger) | `payload.tier`, `payload.status`, `payload.category` |
+| `subscriber.*` | Recipient [subscriber](/platform/concepts/subscribers) profile | `subscriber.email`, `subscriber.locale`, `subscriber.data.plan` |
+| `actor.*` | Optional [trigger actor](/platform/concepts/topics#exclude-actor) (who performed the action) | `actor.subscriberId`, `actor.email`, `actor.data.role` |
+| `context.*` | [Context](/platform/concepts/contexts) passed on the trigger | `context.tenant.id`, `context.tenant.data.plan` |
 
 <Note>
-  Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. Only `payload.*` is in scope. For rules that depend on subscriber profile, workflow metadata, Context, or prior step results, use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) instead.
+  Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. Context **matching** (which subscriptions are candidates) still happens before JSON Logic runs via exact-match Context filtering. Condition rules can additionally read resolved Context fields under `context.*`, and the optional trigger actor under `actor.*`.
 </Note>
 
 <Warning>
-  Do not confuse **Context** (the Novu feature used to scope subscriptions and Inbox sessions) with condition variables. Context matching happens before JSON Logic runs: Novu selects subscriptions whose stored Context exactly matches the trigger Context. [Payload](/platform/concepts/contexts#context-vs-payload) holds event-specific data for a single run and is what conditions read.
+  Do not confuse **Context matching** with condition variables. Exact-match Context filtering selects which subscriptions are evaluated. JSON Logic can then read resolved Context values (for example `context.tenant.id`) along with payload, subscriber, and actor data.
 </Warning>
 
 ### Syntax rules
 
-- Use dot paths in `{ "var": "..." }`. For example, `{ "var": "payload.tier" }`.
+- Use dot paths in `{ "var": "..." }`. For example, `{ "var": "payload.tier" }`, `{ "var": "subscriber.data.plan" }`, or `{ "var": "context.tenant.id" }`.
 - Do **not** use Liquid/template syntax (`{{payload.tier}}`) in conditions. That syntax is for workflow step content, not JSON Logic rules.
-- Do **not** omit the `payload.` prefix (for example `{ "var": "tier" }`). Always use the full path such as `payload.tier`.
+- Always use the full namespace prefix (`payload.`, `subscriber.`, `actor.`, or `context.`). For example, use `payload.tier` rather than `tier`.
 
 ### Examples
 
@@ -690,6 +693,32 @@ Topic subscription conditions are evaluated against the workflow trigger **paylo
 ```json
 {
   "===": [{ "var": "payload.tier" }, "premium"]
+}
+```
+
+**Subscriber custom data:**
+
+```json
+{
+  "===": [{ "var": "subscriber.data.plan" }, "enterprise"]
+}
+```
+
+**Trigger actor:**
+
+```json
+{
+  "===": [{ "var": "actor.data.role" }, "admin"]
+}
+```
+
+Only subscriptions whose condition passes are delivered when the trigger includes a matching actor. If the trigger omits `actor`, conditions that reference `actor.*` evaluate against missing data and typically do not match.
+
+**Context tenant:**
+
+```json
+{
+  "===": [{ "var": "context.tenant.id" }, "acme-corp"]
 }
 ```
 
@@ -723,7 +752,7 @@ Topic subscription conditions are evaluated against the workflow trigger **paylo
 
 | Field | Behavior |
 | --- | --- |
-| `condition` | JSON Logic rule evaluated against the trigger payload. When present, **`enabled` is ignored** during evaluation. |
+| `condition` | JSON Logic rule evaluated against trigger payload, subscriber profile, actor, and context. When present, **`enabled` is ignored** during evaluation. |
 | `enabled` | Simple on/off toggle. Used only when no `condition` is set. Defaults to `true` if omitted. |
 
 ### Preference filter formats
@@ -774,7 +803,7 @@ await novu.trigger({
 ```
   </Step>
   <Step title="Novu matches Context, then evaluates conditions">
-    Novu first selects topic subscriptions whose stored Context exactly matches the trigger Context (including the default/no-Context case). For each matching subscription, Novu evaluates the JSON Logic condition against the trigger **payload** only. Subscriptions that pass receive the notification; others are skipped.
+    Novu first selects topic subscriptions whose stored Context exactly matches the trigger Context (including the default/no-Context case). For each matching subscription, Novu evaluates the JSON Logic condition against the trigger **payload**, **subscriber** profile, optional **actor**, and resolved **context**. Subscriptions that pass receive the notification; others are skipped.
   </Step>
 </Steps>
 
@@ -789,7 +818,7 @@ Novu Cloud bills by [workflow runs](/platform/account/billing#what-is-a-workflow
 Topic subscription filtering happens **before** that point, during topic fan-out:
 
 1. Novu looks up subscriptions on the topic (including [Context](/platform/concepts/contexts) exact-match filtering).
-2. For each candidate subscription, Novu evaluates JSON Logic conditions against the trigger **payload**.
+2. For each candidate subscription, Novu evaluates JSON Logic conditions against the trigger **payload**, **subscriber** profile, optional **actor**, and resolved **context**.
 3. Only subscriptions that pass proceed to workflow run creation.
 
 If a subscriber is filtered out because their Context does not match the trigger, or because their subscription condition evaluates to `false`, **no workflow run is created** for that subscriber and **it does not count toward usage**.

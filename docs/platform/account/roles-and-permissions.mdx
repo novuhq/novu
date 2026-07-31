@@ -4,7 +4,7 @@ description: "Learn how roles and permissions work in Novu organizations. Assign
 ---
 export const AccessWrite = () => <Badge icon="check" color="green" size="sm">Write</Badge>;
 export const AccessRead = () => <Badge icon="eye" color="blue" size="sm" stroke>Read</Badge>;
-export const AccessNone = () => <Badge icon="ban" color="gray" size="sm" stroke disabled>—</Badge>;
+export const AccessNone = () => <Badge icon="ban" color="gray" size="sm" stroke disabled>-</Badge>;
 
 Novu uses a role-based access control (RBAC) model at the [organization level](/platform/account/organizations). Each member in the organization is assigned a role that determines the actions they can perform within the Novu dashboard. Every user can belong to more than one organization, each with separate configurations and permissions.
 
@@ -55,3 +55,9 @@ Compare access across roles at a glance.
 | Manage organization profile | <AccessNone /> | <AccessNone /> | <AccessWrite /> | <AccessWrite /> |
 | View and manage team members | <AccessRead /> | <AccessRead /> | <AccessWrite /> | <AccessWrite /> |
 | Manage billing | <AccessNone /> | <AccessNone /> | <AccessNone /> | <AccessWrite /> |
+
+## Billing access
+
+On Novu Cloud, every member can open **Settings → Billing**, but only **Owners** can view plans, change subscriptions, and manage payment methods. Other roles see a restricted-state message with links to team settings and this permissions matrix.
+
+If you need someone on your team to manage invoices or payment methods, assign them the **Owner** role from [Team settings](https://dashboard.novu.co/settings/team). See [Billing](/platform/account/billing) for plan management and invoice FAQs.

@@ -124,4 +124,15 @@ export interface ICredentials {
   externalWorkspaceId?: string;
   /** When true, WhatsApp credentials were provisioned via Novu Tech Provider Embedded Signup; app secret is resolved from platform env. */
   isNovuManaged?: boolean;
+  /** HTTP method for custom webhook delivery (e.g. POST, PUT). */
+  method?: string;
+  /** Custom webhook request headers as JSON. */
+  headers?: string;
+  /** Custom webhook request body template. */
+  body?: string;
+  /**
+   * Tool-webhook routing mode. `'static'` sends to the integration `webhookUrl`;
+   * `'dynamic'` fans out to per-subscriber `tool_webhook` endpoints. Missing = static.
+   */
+  routingMode?: 'static' | 'dynamic';
 }

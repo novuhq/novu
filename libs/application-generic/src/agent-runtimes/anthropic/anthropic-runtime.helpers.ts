@@ -1,6 +1,11 @@
 import { APIError } from '@anthropic-ai/sdk';
 import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto, McpTokenEndpointAuthMethod } from '@novu/shared';
-import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA, resolvePersistedMcpTokenEndpointAuthMethod } from '@novu/shared';
+import {
+  CLAUDE_BUILTIN_TOOLS,
+  NOVU_RESOLVE_SCHEMA,
+  NOVU_TOOL_CATALOG_SCHEMA,
+  resolvePersistedMcpTokenEndpointAuthMethod,
+} from '@novu/shared';
 import {
   AgentRuntimeNetworkError,
   AgentRuntimeOverloadedError,
@@ -247,7 +252,10 @@ export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
  * Novu-owned tools always attached to managed agents (independent of user tool/MCP selections).
  */
 export function buildPlatformToolsPayload(): Record<string, unknown>[] {
-  return [{ type: 'custom', ...NOVU_TOOLS_SCHEMA }];
+  return [
+    { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+    { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+  ];
 }
 
 function buildUserToolsetPayload(
@@ -278,6 +286,29 @@ function buildUserToolsetPayload(
 }
 
 /**
+ * Anthropic Managed Agents require the `read` builtin to be enabled (and not
+ * `always_deny`) whenever skills are attached — skills are loaded by reading
+ * their bundle files. Omitting it yields a 400:
+ *   "Missing required tool: skills require the read tool…"
+ */
+export const SKILL_REQUIRED_BUILTIN_TOOL = 'read';
+
+/**
+ * Ensures `read` is present in the tool-type list when the agent has skills.
+ * Idempotent — returns `toolTypes` unchanged when skills are absent or `read`
+ * is already selected.
+ */
+export function ensureSkillRequiredTools(toolTypes: string[] | undefined, hasSkills: boolean): string[] {
+  const tools = [...(toolTypes ?? [])];
+
+  if (hasSkills && !tools.includes(SKILL_REQUIRED_BUILTIN_TOOL)) {
+    tools.push(SKILL_REQUIRED_BUILTIN_TOOL);
+  }
+
+  return tools;
+}
+
+/**
  * Build the Anthropic `tools` payload array from builtin tool type strings
  * and optional MCP server entries.
  *
@@ -286,14 +317,21 @@ function buildUserToolsetPayload(
  * API to default all omitted tools to enabled, which means the agent ends up
  * with every tool regardless of what the user selected.
  *
- * Platform tools (e.g. `novu_tools`) are always included, even when the user
+ * Platform tools (e.g. `novu_tool_catalog`, `novu_resolve`) are always included, even when the user
  * has no builtin tools or MCP servers enabled.
+ *
+ * When `hasSkills` is true, `read` is force-enabled — Anthropic rejects skill
+ * attachments without a usable read tool on the agent toolset.
  */
 export function buildToolsPayload(
   toolTypes?: string[],
-  mcpServers?: Array<{ name: string; url: string }>
+  mcpServers?: Array<{ name: string; url: string }>,
+  hasSkills = false
 ): Record<string, unknown>[] {
-  return [...buildUserToolsetPayload(toolTypes, mcpServers), ...buildPlatformToolsPayload()];
+  return [
+    ...buildUserToolsetPayload(ensureSkillRequiredTools(toolTypes, hasSkills), mcpServers),
+    ...buildPlatformToolsPayload(),
+  ];
 }
 
 /**

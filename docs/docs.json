@@ -16,7 +16,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://novu.co"
+    "href": "https://docs.novu.co"
   },
   "seo": {
     "indexing": "all",
@@ -27,7 +27,10 @@
   },
   "thumbnails": {
     "appearance": "dark",
-    "background": "/images/og/og-background.png"
+    "background": "/images/og/og-image-docs-v2.jpg",
+    "fonts": {
+      "family": "Inter"
+    }
   },
   "interaction": {
     "drilldown": true
@@ -288,6 +291,15 @@
                   "platform/integrations/sms/termii"
                 ]
               },
+              {
+                "group": "Tool",
+                "pages": [
+                  "platform/integrations/tool/pagerduty",
+                  "platform/integrations/tool/opsgenie",
+                  "platform/integrations/tool/grafana",
+                  "platform/integrations/tool/webhook"
+                ]
+              },
               "platform/integrations/trigger-overrides"
             ],
             "icon": "plug-zap"
@@ -417,7 +429,11 @@
               "agents",
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
-              "agents/get-started/agents-and-providers"
+              "agents/get-started/agents-and-providers",
+              {
+                "group": "Quickstart",
+                "pages": ["agents/get-started/ai-sdk", "agents/get-started/langchain", "agents/get-started/mastra"]
+              }
             ]
           },
           {
@@ -1552,6 +1568,11 @@
     {
       "source": "/docs/platform/workflow/layouts",
       "destination": "/platform/workflow/add-notification-content/channels-template-editors#email-layouts",
+      "permanent": true
+    },
+    {
+      "source": "/agents/get-started/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {

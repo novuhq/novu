@@ -36,6 +36,7 @@ import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
+import { extractWorkspaceId } from '../../shared/util/workspace-id';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
@@ -50,6 +51,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
+import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
 
@@ -239,6 +241,8 @@ export interface InboundReactionEvent {
   message?: Message;
   thread?: Thread;
   user?: { userId: string; fullName?: string; userName?: string };
+  /** Raw platform payload, used to resolve the connect-time context (e.g. Slack `team_id`). */
+  raw?: unknown;
 }
 
 @Injectable()
@@ -262,6 +266,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
     private readonly inboundAck: InboundAckService,
+    private readonly connectionContextResolver: InboundConnectionContextResolver,
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor
   ) {
     this.logger.setContext(this.constructor.name);
@@ -271,7 +276,8 @@ export class AgentInboundHandler implements OnModuleInit {
     this.inboundDispatcher.registerInboundCallbacks({
       onMessage: (agentId, config, thread, message) =>
         this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE),
-      onAction: (agentId, config, thread, action, userId) => this.handleAction(agentId, config, thread, action, userId),
+      onAction: (agentId, config, thread, action, userId, rawEvent) =>
+        this.handleAction(agentId, config, thread, action, userId, rawEvent),
       onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
     });
   }
@@ -343,7 +349,13 @@ export class AgentInboundHandler implements OnModuleInit {
             config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
         });
       } else {
-        resolution = await this.resolveSubscriber(agentId, config, message.author.userId, 'resolve-subscriber');
+        resolution = await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId: message.author.userId,
+          operation: 'resolve-subscriber',
+          authorIsBot: message.author.isBot === true,
+        });
       }
     } catch (err) {
       if (err instanceof BotAuthorSkippedError) {
@@ -416,14 +428,16 @@ export class AgentInboundHandler implements OnModuleInit {
       message,
       subscriberId,
       platformThreadId,
-      thread.isDM
+      thread.isDM,
+      extractWorkspaceId(config.platform, message.raw) ?? undefined,
+      this.webChatConversationIdentifier(config.platform, platformThreadId)
     );
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
 
       if (!aiEnabled) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -433,7 +447,7 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       if (await this.isKeylessDemoCapReached(config, conversation._id)) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -471,6 +485,8 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
+    const context = await this.connectionContextResolver.resolve(config, message.raw, message.author?.userId);
+
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -478,6 +494,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
       subscriberResolution: resolution,
       message,
       event,
@@ -587,13 +604,27 @@ export class AgentInboundHandler implements OnModuleInit {
     return this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
   }
 
+  /**
+   * Public conversation identifier is bare `conv_*`; chat-sdk thread ids are
+   * `web_chat:conv_*` so the registry can resolve the adapter by prefix.
+   */
+  private webChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
+    if (platform !== AgentPlatformEnum.WEB_CHAT) {
+      return undefined;
+    }
+
+    return platformThreadId.startsWith('web_chat:') ? platformThreadId.slice('web_chat:'.length) : platformThreadId;
+  }
+
   private async openConversation(
     agentId: string,
     config: ResolvedAgentConfig,
     message: Message,
     subscriberId: string | null,
     platformThreadId: string,
-    isDirectMessage: boolean
+    isDirectMessage: boolean,
+    workspaceId?: string,
+    conversationIdentifier?: string
   ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -612,6 +643,8 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId: message.author.userId,
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
       isDirectMessage,
+      workspaceId,
+      identifier: conversationIdentifier,
     });
   }
 
@@ -675,6 +708,7 @@ export class AgentInboundHandler implements OnModuleInit {
       richContent,
       hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
+      identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
@@ -724,12 +758,30 @@ export class AgentInboundHandler implements OnModuleInit {
    * `error` outcome instead of being flattened to `null`, so downstream gates
    * (and their logs) can tell "no such subscriber" apart from "resolution broke".
    */
-  private async resolveSubscriber(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    platformUserId: string,
-    operation: string
-  ): Promise<SubscriberResolution> {
+  private async resolveSubscriber({
+    agentId,
+    config,
+    platformUserId,
+    operation,
+    authorIsBot,
+  }: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    platformUserId: string;
+    operation: string;
+    authorIsBot: boolean;
+  }): Promise<SubscriberResolution> {
+    if (authorIsBot) {
+      this.analyticsService.track('[Agent Platform] - Bot author inbound skipped', config.organizationId, {
+        _organization: config.organizationId,
+        environmentId: config.environmentId,
+        platform: config.platform,
+        agentIdentifier: config.agentIdentifier,
+      });
+
+      throw new BotAuthorSkippedError(config.platform, platformUserId);
+    }
+
     try {
       return await this.subscriberResolver.resolveSubscriber({
         environmentId: config.environmentId,
@@ -793,6 +845,7 @@ export class AgentInboundHandler implements OnModuleInit {
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
+            context: payload.context,
           })
         );
 
@@ -897,10 +950,10 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    conversationId: string
+    conversation: ConversationEntity
   ): Promise<void> {
     try {
-      if (await this.connectClaimTokenService.isSignupCtaPosted(conversationId)) {
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
         return;
       }
 
@@ -909,10 +962,22 @@ export class AgentInboundHandler implements OnModuleInit {
         org: config.organizationId,
       });
       const claimUrl = buildConnectClaimUrl(token);
+      const channel = this.conversationService.getPrimaryChannel(conversation);
+      const card = buildKeylessSignupCard(claimUrl);
 
-      await this.outboundGateway.replyOnThreadWithCard(thread, buildKeylessSignupCard(claimUrl));
+      await this.outboundGateway.replyOnThreadWithCard(thread, card, {
+        persist: {
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: config.agentIdentifier,
+          content: card.title ?? '[Card]',
+          richContent: { card },
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        },
+      });
 
-      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversation._id);
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post keyless signup CTA`);
       captureAgentWarning(err, {
@@ -956,7 +1021,13 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformUserId = event.user?.userId;
 
     const reactionResolution = platformUserId
-      ? await this.resolveSubscriber(agentId, config, platformUserId, 'resolve-subscriber-reaction')
+      ? await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId,
+          operation: 'resolve-subscriber-reaction',
+          authorIsBot: false,
+        })
       : undefined;
     const subscriberId = getResolvedSubscriberId(reactionResolution);
 
@@ -994,6 +1065,7 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
+    const context = await this.connectionContextResolver.resolve(config, event.raw, platformUserId);
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -1001,6 +1073,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
       subscriberResolution: reactionResolution,
       message: null,
       event: AgentEventEnum.ON_REACTION,
@@ -1024,7 +1097,8 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     action: AgentAction,
-    userId: string
+    userId: string,
+    rawEvent?: unknown
   ): Promise<void> {
     // The gate suppresses its reply for link-button actions (e.g. the upgrade
     // card's own CTA) so a blocked click can never spawn another card.
@@ -1032,7 +1106,13 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const actionResolution = await this.resolveSubscriber(agentId, config, userId, 'resolve-subscriber-action');
+    const actionResolution = await this.resolveSubscriber({
+      agentId,
+      config,
+      platformUserId: userId,
+      operation: 'resolve-subscriber-action',
+      authorIsBot: false,
+    });
     const subscriberId = getResolvedSubscriberId(actionResolution);
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;
@@ -1052,6 +1132,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
       isDirectMessage: thread.isDM,
+      workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
     });
 
     trackAgentInboundAction(this.analyticsService, {
@@ -1090,6 +1171,8 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
+    const context = await this.connectionContextResolver.resolve(config, rawEvent, userId);
+
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -1097,6 +1180,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
       subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { GRAFANA_ONCALL_WEBHOOK_URL_PATTERN, OPSGENIE_API_KEY_PATTERN } from '@novu/shared';
+import { IsIn, IsNotEmpty, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 export class SlackChannelEndpointDto {
   @ApiProperty({
@@ -133,4 +134,106 @@ export class LineUserEndpointDto {
   })
   @IsString()
   userId: string;
+}
+
+export class PagerDutyServiceEndpointDto {
+  @ApiProperty({
+    description:
+      'PagerDuty Events API v2 integration key (32-character alphanumeric string). Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'R0UTINGK3YEXAMPLE000000000000000',
+    type: String,
+    minLength: 32,
+    maxLength: 32,
+  })
+  @IsString()
+  @Matches(/^[a-zA-Z0-9]{32}$/, {
+    message: 'routingKey must be a 32-character alphanumeric PagerDuty Events API v2 integration key',
+  })
+  routingKey: string;
+
+  @ApiProperty({
+    description: 'PagerDuty account region — determines the events API data-center endpoint.',
+    enum: ['us', 'eu'],
+    example: 'us',
+  })
+  @IsIn(['us', 'eu'])
+  region: 'us' | 'eu';
+}
+
+export class GrafanaOnCallIntegrationEndpointDto {
+  @ApiProperty({
+    description:
+      'Grafana IRM/OnCall incoming-webhook (Formatted Webhook) integration URL. The routing secret is embedded in the URL path. Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'https://acme.grafana.net/integrations/v1/formatted_webhook/m12xmIjOcgwH74UF8CN4dk0Dh/',
+    type: String,
+  })
+  @IsString()
+  @Matches(GRAFANA_ONCALL_WEBHOOK_URL_PATTERN, {
+    message:
+      'url must be an HTTPS Grafana IRM/OnCall Formatted Webhook URL ending in /integrations/v1/formatted_webhook/<token>/',
+  })
+  url: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Optional Grafana service account bearer token, required when the integration enforces authenticated ingestion. Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'glsa_abc123...',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  authToken?: string;
+}
+
+export class ToolWebhookEndpointDto {
+  @ApiProperty({
+    description:
+      'Destination webhook URL (often a per-subscriber capability URL). Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'https://example.com/tools/incoming',
+    type: String,
+  })
+  @IsString()
+  url: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Optional headers (e.g. auth tokens) sent with every request to this webhook. Header values are encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: { Authorization: 'Bearer <token>' },
+    type: Object,
+  })
+  @IsOptional()
+  @IsObject()
+  headers?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    description: 'Optional HTTP method override for this webhook. Defaults to the integration-level method.',
+    enum: ['POST', 'PUT', 'PATCH'],
+    example: 'POST',
+  })
+  @IsOptional()
+  @IsIn(['POST', 'PUT', 'PATCH'])
+  method?: 'POST' | 'PUT' | 'PATCH';
+}
+
+export class OpsgenieIntegrationEndpointDto {
+  @ApiProperty({
+    description:
+      'Opsgenie API integration key (GenieKey) in UUID format. Encrypted at rest on the channel endpoint (`endpoint` field).',
+    example: 'abcdefg-a25a-4652-883c-73703b12345',
+    type: String,
+  })
+  @IsString()
+  @Matches(OPSGENIE_API_KEY_PATTERN, {
+    message: 'apiKey must be a UUID-format Opsgenie API integration key (GenieKey)',
+  })
+  apiKey: string;
+
+  @ApiProperty({
+    description: 'Opsgenie account region that determines the alert API data-center endpoint.',
+    enum: ['us', 'eu'],
+    example: 'us',
+  })
+  @IsIn(['us', 'eu'])
+  region: 'us' | 'eu';
 }

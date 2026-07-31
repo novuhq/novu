@@ -4,7 +4,11 @@ import {
   ConversationActivityTypeEnum,
 } from '@novu/dal';
 import { expect } from 'chai';
-import { findUnresolvedToolApprovalRequests, resolveApprovalRequesterId } from './unresolved-approvals';
+import {
+  findOrphanedApprovedToolApprovalRequests,
+  findUnresolvedToolApprovalRequests,
+  resolveApprovalRequesterId,
+} from './unresolved-approvals';
 
 function activity(overrides: Partial<ConversationActivityEntity>): ConversationActivityEntity {
   return {
@@ -118,5 +122,42 @@ describe('findUnresolvedToolApprovalRequests', () => {
     });
 
     expect(findUnresolvedToolApprovalRequests([decision, request])).to.deep.equal([]);
+  });
+});
+
+describe('findOrphanedApprovedToolApprovalRequests', () => {
+  const request = activity({
+    type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+    toolData: { approvalId: 'approval-1', toolCallId: 'tc-1', toolName: 'launchConfetti' },
+  });
+  const approvedDecision = activity({
+    type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+    toolData: { approvalId: 'approval-1', approved: true },
+  });
+
+  it('returns requests approved without a tool result', () => {
+    expect(findOrphanedApprovedToolApprovalRequests([approvedDecision, request])).to.deep.equal([request]);
+  });
+
+  it('excludes requests whose tool produced a result', () => {
+    const result = activity({
+      type: ConversationActivityTypeEnum.TOOL_RESULT,
+      toolData: { toolCallId: 'tc-1', toolName: 'launchConfetti', output: { ok: true } },
+    });
+
+    expect(findOrphanedApprovedToolApprovalRequests([result, approvedDecision, request])).to.deep.equal([]);
+  });
+
+  it('excludes requests that already carry a denial', () => {
+    const denial = activity({
+      type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+      toolData: { approvalId: 'approval-1', approved: false },
+    });
+
+    expect(findOrphanedApprovedToolApprovalRequests([denial, approvedDecision, request])).to.deep.equal([]);
+  });
+
+  it('excludes undecided requests (those belong to the pending finder)', () => {
+    expect(findOrphanedApprovedToolApprovalRequests([request])).to.deep.equal([]);
   });
 });

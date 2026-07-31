@@ -9,4 +9,5 @@ export enum WhatsAppMessageTypeEnum {
   LOCATION = 'location',
   CONTACTS = 'contacts',
   STICKER = 'sticker',
+  REACTION = 'reaction',
 }

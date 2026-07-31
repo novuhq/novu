@@ -13,7 +13,12 @@ import { InlineImageBubbleMenu } from './components/inline-image-menu/inline-ima
 import { RepeatBubbleMenu } from './components/repeat-menu/repeat-bubble-menu';
 import { SectionBubbleMenu } from './components/section-menu/section-bubble-menu';
 import { SpacerBubbleMenu } from './components/spacer-menu/spacer-bubble-menu';
-import { TextBubbleMenu } from './components/text-menu/text-bubble-menu';
+import {
+  type ImageMenuConfig,
+  type MenuConfig,
+  TextBubbleMenu,
+  type TextMenuConfig,
+} from './components/text-menu/text-bubble-menu';
 import { VariableBubbleMenu } from './components/variable-menu/variable-bubble-menu';
 import { extensions as defaultExtensions } from './extensions';
 import { DEFAULT_SLASH_COMMANDS } from './extensions/slash-command/default-slash-commands';
@@ -42,8 +47,11 @@ export type EditorProps = {
   repeatMenuConfig?: {
     description?: (editor: TiptapEditor) => React.ReactNode;
   };
+  menuConfig?: MenuConfig;
   editable?: boolean;
 } & PartialMailyContextType;
+
+export type { TextMenuConfig, ImageMenuConfig, MenuConfig };
 
 export function Editor(props: EditorProps) {
   const {
@@ -65,6 +73,7 @@ export function Editor(props: EditorProps) {
     editable = true,
     placeholderUrl = DEFAULT_PLACEHOLDER_URL,
     repeatMenuConfig,
+    menuConfig,
   } = props;
 
   const formattedContent = useMemo(() => {
@@ -133,8 +142,8 @@ export function Editor(props: EditorProps) {
       >
         {hasMenuBar && <EditorMenuBar config={props.config} editor={editor} />}
         <div className={cn('mly-mt-4 mly-rounded mly-border mly-border-gray-200 mly-bg-white mly-p-4', bodyClassName)}>
-          <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
+          <TextBubbleMenu editor={editor} appendTo={menuContainerRef} textMenuConfig={menuConfig?.text} />
+          <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} imageMenuConfig={menuConfig?.image} />
           <SpacerBubbleMenu editor={editor} appendTo={menuContainerRef} />
           <EditorContent editor={editor} />
           <SectionBubbleMenu editor={editor} appendTo={menuContainerRef} />

@@ -33,6 +33,7 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  TOOL = 'tool',
 }
 
 export interface IAttachmentOptions {
@@ -162,12 +163,14 @@ export enum SmsProviderIdEnum {
   IMedia = 'imedia',
   Sinch = 'sinch',
   ISendProSms = 'isendpro-sms',
+  RuachSms = 'ruach-sms',
 }
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  WebexMessaging = 'webex-messaging',
   Mattermost = 'mattermost',
   Ryver = 'ryver',
   Zulip = 'zulip',
@@ -175,7 +178,9 @@ export enum ChatProviderIdEnum {
   GetStream = 'getstream',
   RocketChat = 'rocket-chat',
   WhatsAppBusiness = 'whatsapp-business',
+  Line = 'line',
   ChatWebhook = 'chat-webhook',
+  Novu = 'novu-slack',
   Telegram = 'telegram',
   Sendblue = 'sendblue',
 }
@@ -193,6 +198,13 @@ export enum PushProviderIdEnum {
 
 export enum InAppProviderIdEnum {
   Novu = 'novu',
+}
+
+export enum ToolProviderIdEnum {
+  PagerDuty = 'pagerduty',
+  Opsgenie = 'opsgenie',
+  Grafana = 'grafana',
+  Webhook = 'tool-webhook',
 }
 
 /**

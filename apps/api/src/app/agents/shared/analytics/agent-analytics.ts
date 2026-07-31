@@ -1,9 +1,5 @@
 import type { AnalyticsService } from '@novu/application-generic';
-import {
-  AGENTS_ORG_FUNNEL_EVENTS,
-  type AgentAnalyticsSource,
-  type AgentsUsecaseSource,
-} from '@novu/shared';
+import { AGENTS_ORG_FUNNEL_EVENTS, type AgentAnalyticsSource, type AgentsUsecaseSource } from '@novu/shared';
 
 const AGENT_SEGMENT_CATEGORY = '[Agents]';
 
@@ -70,7 +66,7 @@ export function trackAgentIntegrationConnected(
     integrationIdentifier: string;
     providerId: string;
     channel?: string;
-    connectionSource: 'existing_integration' | 'novu_email_provisioned';
+    connectionSource: 'existing_integration' | 'novu_email_provisioned' | 'novu_web_chat_provisioned';
   }
 ): void {
   analytics.track(`Agent Integration Connected - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {

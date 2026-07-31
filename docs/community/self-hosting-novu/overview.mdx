@@ -1,5 +1,5 @@
 ---
-title: 'Self-Host Novu — Open-Source Notification Infrastructure'
+title: 'Self-Host Novu - Open-Source Notification Infrastructure'
 sidebarTitle: 'Self-hosting'
 description: 'Self-host Novu for full control over your notification infrastructure. Covers system requirements, VMs, Redis, MongoDB, and storage.'
 ---
@@ -10,6 +10,10 @@ When self-hosting Novu, you take full control over your communication infrastruc
   Self-hosting Novu does not support social login (GitHub, Google, etc.). To access your account,
   please use the email and password associated with your Novu account.
 </Warning>
+
+<Info>
+  For a side-by-side breakdown of what is included in the Community self-hosted edition versus Novu Cloud — including Inbox features, email activity tracking, SSO, RBAC, and compliance certifications — see [Self-Hosted and Novu Cloud](/community/self-hosted-and-novu-cloud). The API reference is the same across both editions; self-hosted deployments simply point at your own API hostname instead of `https://api.novu.co`.
+</Info>
 
 ## System requirements overview
 
@@ -23,7 +27,7 @@ For optimal performance, host Novu's core services across multiple virtual machi
 | Dashboard | 1 VM | 2 vCPUs, 4 GB RAM |
 | Redis | 2 clusters (one for queues with AOF enabled) | 8 GB RAM per cluster |
 | MongoDB | 1 cluster | M20 or higher (MongoDB Atlas) |
-| S3 storage | — | 10 GB minimum |
+| S3 storage | - | 10 GB minimum |
 
 ### Single-VM deployment
 

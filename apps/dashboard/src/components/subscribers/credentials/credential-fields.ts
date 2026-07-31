@@ -32,10 +32,14 @@ const CREDENTIAL_FIELD_LABELS: Record<string, string> = {
   phoneNumber: 'Phone number',
   phone: 'Phone number',
   deviceToken: 'Device token',
+  routingKey: 'Routing key',
+  apiKey: 'API key',
+  region: 'Region',
+  authToken: 'Auth token',
 };
 
 /** Payload keys that are not required when saving. */
-const OPTIONAL_FIELD_KEYS = new Set<string>(['channel']);
+const OPTIONAL_FIELD_KEYS = new Set<string>(['channel', 'authToken']);
 
 /** Falls back to a humanized version of the key when no explicit label exists. */
 export function getFieldLabel(key: string): string {

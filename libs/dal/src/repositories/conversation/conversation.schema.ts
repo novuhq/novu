@@ -51,6 +51,14 @@ const conversationSchema = new Schema<ConversationDBModel>(
             firstPlatformMessageId: {
               type: Schema.Types.String,
             },
+            workspace: {
+              type: new Schema(
+                {
+                  id: { type: Schema.Types.String, required: true },
+                },
+                { _id: false }
+              ),
+            },
           },
           { _id: false }
         ),

@@ -4,6 +4,7 @@ import {
   MAX_NAME_LENGTH,
   ResourceOriginEnum,
   SeverityLevelEnum,
+  type StepProviderOverrides,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
@@ -75,6 +76,10 @@ export class UpsertStepDataCommand {
   controlValues?: Record<string, unknown> | null;
 
   @IsOptional()
+  @IsObject()
+  providerOverrides?: StepProviderOverrides | null;
+
+  @IsOptional()
   @IsString()
   _id?: string;
 
@@ -89,8 +94,8 @@ export class UpsertWorkflowDataCommand {
   workflowId?: string;
 
   @IsEnum(ResourceOriginEnum)
-  @IsDefined()
-  origin: ResourceOriginEnum;
+  @IsOptional()
+  origin?: ResourceOriginEnum;
 
   @IsArray()
   @ValidateNested({ each: true })

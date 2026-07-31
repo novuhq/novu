@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { decryptChannelEndpoint, InstrumentUsecase } from '@novu/application-generic';
 import {
   ChannelEndpointDBModel,
   ChannelEndpointEntity,
@@ -35,6 +35,9 @@ export class GetChannelEndpoint {
       throw new NotFoundException(`Channel endpoint with identifier '${command.identifier}' not found`);
     }
 
-    return channelEndpoint;
+    return {
+      ...channelEndpoint,
+      endpoint: decryptChannelEndpoint(channelEndpoint.type, channelEndpoint.endpoint),
+    };
   }
 }

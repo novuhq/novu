@@ -6,7 +6,7 @@ description: Connect Cursor, Claude, ChatGPT, and other AI tools to the Novu MCP
 The Novu MCP Server exposes Novu's notification infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to manage subscribers, workflows, integrations, and delivery activity from natural-language prompts.
 
 <Note>
-  Novu also hosts a separate **documentation MCP server** at [docs.novu.co/mcp](https://docs.novu.co/mcp) that lets AI tools search and read this documentation site. The Novu MCP Server described on this page manages your Novu account — triggers, workflows, subscribers, and more.
+  Novu also hosts a separate **documentation MCP server** at [docs.novu.co/mcp](https://docs.novu.co/mcp) that lets AI tools search and read this documentation site. The Novu MCP Server described on this page manages your Novu account - triggers, workflows, subscribers, and more.
 </Note>
 
 ## About the Novu MCP server
@@ -20,12 +20,12 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
 - Analyze notification activity and logs
 - Create and manage workflows
 
-Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills). MCP gives your assistant live access to your Novu account, while skills instruct agents how to use Novu APIs and SDKs effectively. They're complementary — connect the MCP server for account operations and install skills for implementation guidance.
+Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills). MCP gives your assistant live access to your Novu account, while skills instruct agents how to use Novu APIs and SDKs effectively. They're complementary - connect the MCP server for account operations and install skills for implementation guidance.
 
 ## Prerequisites
 
 - A Novu Cloud account (to sign in with OAuth), or a [Novu API key](https://dashboard.novu.co/settings/api-keys)
-- An MCP-compatible AI tool — Cursor, Claude Code, ChatGPT, Claude Desktop, VS Code, Codex, or similar
+- An MCP-compatible AI tool - Cursor, Claude Code, ChatGPT, Claude Desktop, VS Code, Codex, or similar
 
 ## Endpoints
 
@@ -36,11 +36,11 @@ Novu Cloud has one MCP endpoint per region:
 | US | `https://mcp.novu.co/` |
 | EU | `https://eu.mcp.novu.co/` |
 
-Use the URL that matches your dashboard region — `eu.dashboard.novu.co` pairs with the EU endpoint, everything else uses US.
+Use the URL that matches your dashboard region - `eu.dashboard.novu.co` pairs with the EU endpoint, everything else uses US.
 
 ## Connect your AI tool
 
-Connecting with **OAuth** is recommended — you don't copy or paste a key; your client signs you in and picks up your organization automatically. If your client doesn't support OAuth, or you're on self-hosted Novu, use an [API key](#api-key-fallback) instead.
+Connecting with **OAuth** is recommended - you don't copy or paste a key; your client signs you in and picks up your organization automatically. If your client doesn't support OAuth, or you're on self-hosted Novu, use an [API key](#api-key-fallback) instead.
 
 <Tabs>
   <Tab title="Cursor">
@@ -221,7 +221,7 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Category | Tool | Description |
 | --- | --- | --- |
 | Auth | `whoami` | Verify the current credential and show your identity and region |
-| Environments | `get_environments` | List environments — use an `_id` as the `environmentId` parameter on other tools |
+| Environments | `get_environments` | List environments - use an `_id` as the `environmentId` parameter on other tools |
 | Subscribers | `create_subscriber` | Create a subscriber with name, email, phone, and custom data |
 | Subscribers | `get_subscriber` | Retrieve a subscriber by `subscriberId` |
 | Subscribers | `update_subscriber` | Update a subscriber's attributes |
@@ -245,7 +245,7 @@ Your AI assistant discovers these tools automatically when it connects, and call
 | Integrations | `set_primary_integration` | Set an integration as primary for its channel |
 
 <Note>
-  Every tool accepts an optional `environmentId` parameter — see [Environments](#environments).
+  Every tool accepts an optional `environmentId` parameter - see [Environments](#environments).
 </Note>
 
 ## Use multiple MCP servers
@@ -254,16 +254,16 @@ You can connect both the Novu MCP server and the [Novu documentation MCP server]
 
 | Server | URL | Purpose |
 | --- | --- | --- |
-| Novu MCP | `https://mcp.novu.co/` (US) / `https://eu.mcp.novu.co/` (EU) | Manage your Novu account — workflows, subscribers, triggers |
+| Novu MCP | `https://mcp.novu.co/` (US) / `https://eu.mcp.novu.co/` (EU) | Manage your Novu account - workflows, subscribers, triggers |
 | Novu Docs MCP | `https://docs.novu.co/mcp` | Search and read Novu documentation |
 
-Connected MCP servers don't consume context until the AI calls a tool. Be specific in your prompts so the assistant uses the most relevant server — for example, "trigger my welcome workflow" uses the Novu MCP, while "how do I configure digest steps?" uses the Docs MCP.
+Connected MCP servers don't consume context until the AI calls a tool. Be specific in your prompts so the assistant uses the most relevant server - for example, "trigger my welcome workflow" uses the Novu MCP, while "how do I configure digest steps?" uses the Docs MCP.
 
 ## Troubleshooting
 
 <AccordionGroup>
   <Accordion title="OAuth sign-in loop or never connects">
-    Confirm the URL matches your region, and that you haven't also set an `Authorization` header — presenting a credential skips OAuth entirely. Restart your AI assistant after changing the config.
+    Confirm the URL matches your region, and that you haven't also set an `Authorization` header - presenting a credential skips OAuth entirely. Restart your AI assistant after changing the config.
   </Accordion>
 
   <Accordion title="Wrong environment data">
@@ -271,7 +271,7 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
   </Accordion>
 
   <Accordion title="401 after previously working">
-    Your OAuth token expired or was revoked — reconnect through your client to sign in again.
+    Your OAuth token expired or was revoked - reconnect through your client to sign in again.
   </Accordion>
 
   <Accordion title="Empty results or authentication errors">
@@ -279,7 +279,7 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
   </Accordion>
 
   <Accordion title="Self-hosted Novu">
-    OAuth isn't available on self-hosted deployments — connect with an [API key](#api-key-fallback) from your instance. See [API keys](/platform/developer/api-keys).
+    OAuth isn't available on self-hosted deployments - connect with an [API key](#api-key-fallback) from your instance. See [API keys](/platform/developer/api-keys).
   </Accordion>
 
   <Accordion title="Still not connecting">
@@ -289,7 +289,7 @@ Connected MCP servers don't consume context until the AI calls a tool. Be specif
 
 ## Security
 
-- Prefer OAuth over long-lived API keys for interactive clients — OAuth tokens are short-lived and revocable.
+- Prefer OAuth over long-lived API keys for interactive clients - OAuth tokens are short-lived and revocable.
 - The server never puts credentials in URLs, and holds no ambient credentials between sessions.
 - Rotate an API key from the Dashboard immediately if you suspect it's been exposed.
 - Self-hosted Novu always uses API keys; OAuth is available for Novu Cloud only.

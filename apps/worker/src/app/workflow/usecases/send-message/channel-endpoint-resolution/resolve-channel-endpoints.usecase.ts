@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
-  type ChannelConnectionAuth,
   decryptChannelConnectionAuth,
+  decryptChannelEndpoint,
   decryptCredentials,
-  encryptChannelConnectionAuth,
   InstrumentUsecase,
   MsTeamsTokenService,
-  type WebexTokenRefreshResponse,
-  WebexTokenService,
+  RotatingConnectionTokenService,
 } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -20,7 +18,24 @@ import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
 
-const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
+type EndpointStoredSecretConfig = {
+  providerLabel: string;
+  /** Fields that must all be present (non-empty) after decrypt; missing any triggers one combined error. */
+  requiredFields: string[];
+};
+
+/**
+ * Tool endpoint types whose per-subscriber routing secret lives on the
+ * `ChannelEndpoint.endpoint` document. The resolver decrypts secret fields and
+ * returns the decrypted wire shape at send time — no channel connection lookup.
+ */
+const ENDPOINT_STORED_SECRET_CONFIGS: Partial<Record<string, EndpointStoredSecretConfig>> = {
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', requiredFields: ['routingKey', 'region'] },
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', requiredFields: ['apiKey', 'region'] },
+  // authToken is optional and therefore not listed as required.
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: { providerLabel: 'Grafana', requiredFields: ['url'] },
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: { providerLabel: 'Tool Webhook', requiredFields: ['url'] },
+};
 
 export type IntegrationEndpoints = {
   integrationIdentifier: string;
@@ -51,14 +66,12 @@ export type IntegrationEndpoints = {
  */
 @Injectable()
 export class ResolveChannelEndpoints {
-  private readonly webexRefreshPromises = new Map<string, Promise<Record<string, unknown>>>();
-
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly msTeamsTokenService: MsTeamsTokenService,
-    private readonly webexTokenService: WebexTokenService
+    private readonly rotatingConnectionTokenService: RotatingConnectionTokenService
   ) {}
 
   @InstrumentUsecase()
@@ -176,9 +189,10 @@ export class ResolveChannelEndpoints {
   }
 
   /**
-   * Extracts token for endpoint based on type
+   * Extracts token / hydrated endpoint data based on type
    * - MS Teams: Fetches Bot Framework token from Microsoft
-   * - Slack: Extracts OAuth token from connection
+   * - Slack / Webex: Reads the OAuth token from the connection, refreshing rotation-enabled tokens
+   * - PagerDuty / Opsgenie / Grafana / Tool Webhook: Decrypts secrets from endpoint.endpoint and hydrates the endpoint wire shape
    */
   private async extractToken(
     endpoint: ChannelEndpointEntity,
@@ -189,13 +203,44 @@ export class ResolveChannelEndpoints {
       return await this.extractMsTeamsToken(endpoint, connectionMap);
     }
 
-    if (endpoint.type === ENDPOINT_TYPES.WEBEX_ROOM || endpoint.type === ENDPOINT_TYPES.WEBEX_PERSON) {
-      return await this.extractWebexToken(endpoint, connectionMap);
+    if (
+      endpoint.type === ENDPOINT_TYPES.SLACK_CHANNEL ||
+      endpoint.type === ENDPOINT_TYPES.SLACK_USER ||
+      endpoint.type === ENDPOINT_TYPES.WEBEX_ROOM ||
+      endpoint.type === ENDPOINT_TYPES.WEBEX_PERSON
+    ) {
+      return await this.extractRotatingConnectionToken(endpoint, connectionMap);
     }
 
-    // Slack and other connection-based tokens
+    const endpointStoredSecretConfig = ENDPOINT_STORED_SECRET_CONFIGS[endpoint.type];
+    if (endpointStoredSecretConfig) {
+      return this.extractEndpointStoredSecrets(endpoint, endpointStoredSecretConfig);
+    }
+
+    // Other connection-based tokens
     const token = this.extractConnectionToken(endpoint, connectionMap);
     return { token: token || '' };
+  }
+
+  /**
+   * Decrypts tool routing secrets from `ChannelEndpoint.endpoint` and returns
+   * an `endpoint` override so `buildChannelData`'s spread replaces the
+   * encrypted stored document with the plaintext wire shape providers read.
+   * `requiredFields` must all be present or the whole endpoint is rejected.
+   */
+  private extractEndpointStoredSecrets(
+    endpoint: ChannelEndpointEntity,
+    config: EndpointStoredSecretConfig
+  ): Record<string, unknown> {
+    const { providerLabel, requiredFields } = config;
+    const decrypted = decryptChannelEndpoint(endpoint.type, endpoint.endpoint);
+    const decryptedFields = decrypted as Record<string, unknown>;
+
+    if (requiredFields.some((field) => !decryptedFields[field])) {
+      throw new Error(`${providerLabel} endpoint ${endpoint.identifier} is missing ${requiredFields.join(' or ')}`);
+    }
+
+    return { endpoint: decrypted };
   }
 
   /**
@@ -250,7 +295,28 @@ export class ResolveChannelEndpoints {
   }
 
   /**
-   * Extracts OAuth token from connection (Slack, etc.)
+   * Extracts the bot token from the linked connection for providers with rotating OAuth
+   * tokens (Slack, Webex), refreshing it first when the app uses token rotation
+   * (refreshToken + expiresAt persisted by the OAuth callback).
+   */
+  private async extractRotatingConnectionToken(
+    endpoint: ChannelEndpointEntity,
+    connectionMap: Map<string, ChannelConnectionEntity>
+  ): Promise<Record<string, unknown>> {
+    const connection = endpoint.connectionIdentifier ? connectionMap.get(endpoint.connectionIdentifier) : undefined;
+
+    if (!connection?.auth) {
+      return { token: '' };
+    }
+
+    const token = await this.rotatingConnectionTokenService.getConnectionToken(connection);
+
+    return { token: token || '' };
+  }
+
+  /**
+   * Extracts a plain OAuth access token from the linked connection (fallback for
+   * endpoint types without dedicated token handling).
    */
   private extractConnectionToken(
     endpoint: ChannelEndpointEntity,
@@ -272,130 +338,5 @@ export class ResolveChannelEndpoints {
     const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
 
     return decryptedAuth?.accessToken;
-  }
-
-  private async extractWebexToken(
-    endpoint: ChannelEndpointEntity,
-    connectionMap: Map<string, ChannelConnectionEntity>
-  ): Promise<Record<string, unknown>> {
-    const connection = endpoint.connectionIdentifier ? connectionMap.get(endpoint.connectionIdentifier) : undefined;
-
-    if (!connection?.auth) {
-      throw new Error(`Webex endpoint ${endpoint.identifier} requires a channel connection`);
-    }
-
-    const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
-    const accessToken = decryptedAuth?.accessToken;
-
-    if (!accessToken) {
-      throw new Error(`Webex channel connection ${connection.identifier} is missing an access token`);
-    }
-
-    if (!this.shouldRefreshToken(decryptedAuth.expiresAt)) {
-      return { token: accessToken };
-    }
-
-    if (!decryptedAuth.refreshToken) {
-      throw new Error(`Webex channel connection ${connection.identifier} is missing a refresh token`);
-    }
-
-    const refreshKey = this.buildWebexRefreshKey(connection);
-    const existingRefresh = this.webexRefreshPromises.get(refreshKey);
-
-    if (existingRefresh) {
-      return await existingRefresh;
-    }
-
-    const refreshPromise = this.refreshWebexConnectionToken(endpoint, connection, decryptedAuth);
-    this.webexRefreshPromises.set(refreshKey, refreshPromise);
-
-    try {
-      return await refreshPromise;
-    } finally {
-      this.webexRefreshPromises.delete(refreshKey);
-    }
-  }
-
-  private async refreshWebexConnectionToken(
-    endpoint: ChannelEndpointEntity,
-    connection: ChannelConnectionEntity,
-    decryptedAuth: ChannelConnectionAuth
-  ): Promise<Record<string, unknown>> {
-    if (!decryptedAuth.refreshToken) {
-      throw new Error(`Webex channel connection ${connection.identifier} is missing a refresh token`);
-    }
-
-    const integration = await this.integrationRepository.findOne({
-      identifier: endpoint.integrationIdentifier,
-      _environmentId: endpoint._environmentId,
-      _organizationId: endpoint._organizationId,
-    });
-
-    if (!integration?.credentials) {
-      throw new Error(`Integration ${endpoint.integrationIdentifier} missing credentials for Webex Messaging`);
-    }
-
-    const credentials = decryptCredentials(integration.credentials);
-    const { clientId, secretKey } = credentials;
-
-    if (!clientId || !secretKey) {
-      throw new Error(`Integration ${endpoint.integrationIdentifier} missing required Webex OAuth credentials`);
-    }
-
-    const refreshed = await this.webexTokenService.refreshAccessToken(decryptedAuth.refreshToken, clientId, secretKey);
-
-    if (!refreshed.access_token) {
-      throw new Error(`Webex token refresh did not return an access token for connection ${connection.identifier}`);
-    }
-
-    const refreshedAuth = {
-      ...decryptedAuth,
-      accessToken: refreshed.access_token,
-      refreshToken: refreshed.refresh_token ?? decryptedAuth.refreshToken,
-      expiresAt: this.buildExpiresAt(refreshed.expires_in) ?? decryptedAuth.expiresAt,
-      refreshTokenExpiresAt:
-        this.buildExpiresAt(refreshed.refresh_token_expires_in) ?? decryptedAuth.refreshTokenExpiresAt,
-    };
-
-    await this.channelConnectionRepository.findOneAndUpdate(
-      {
-        _environmentId: endpoint._environmentId,
-        _organizationId: endpoint._organizationId,
-        identifier: connection.identifier,
-      },
-      {
-        $set: {
-          auth: encryptChannelConnectionAuth(refreshedAuth),
-        },
-      }
-    );
-
-    return { token: refreshedAuth.accessToken };
-  }
-
-  private buildWebexRefreshKey(connection: ChannelConnectionEntity): string {
-    return `${connection._organizationId}:${connection._environmentId}:${connection.identifier}`;
-  }
-
-  private shouldRefreshToken(expiresAt?: string): boolean {
-    if (!expiresAt) {
-      return false;
-    }
-
-    const expiresAtTime = new Date(expiresAt).getTime();
-
-    if (Number.isNaN(expiresAtTime)) {
-      return false;
-    }
-
-    return expiresAtTime - Date.now() <= TOKEN_REFRESH_WINDOW_MS;
-  }
-
-  private buildExpiresAt(expiresInSeconds?: WebexTokenRefreshResponse['expires_in']): string | undefined {
-    if (!expiresInSeconds) {
-      return undefined;
-    }
-
-    return new Date(Date.now() + expiresInSeconds * 1000).toISOString();
   }
 }

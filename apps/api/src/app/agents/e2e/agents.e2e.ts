@@ -1,5 +1,5 @@
 import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { AGENT_IDENTIFIER_MAX_LENGTH, ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -36,7 +36,7 @@ describe('Agents API - /agents #novu-v2', () => {
     // tests in managed-agent.e2e.ts for the populated-view contract.
     expect(createRes.body.data.managedRuntime).to.equal(undefined);
     expect(createRes.body.data.createdBy).to.equal(session.user._id);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const listRes = await session.testAgent.get('/v1/agents');
 
@@ -80,7 +80,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const patchRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { acknowledgeOnReceived: false },
@@ -114,7 +114,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const setRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { reactionOnResolved: 'thumbs_up' },
@@ -148,7 +148,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+    expect(createRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const persisted = await agentRepository.findOne(
       {
@@ -158,7 +158,7 @@ describe('Agents API - /agents #novu-v2', () => {
       },
       '*'
     );
-    expect(persisted?.behavior?.subscriberAccess).to.equal('restricted');
+    expect(persisted?.behavior.subscriberAccess).to.equal('restricted');
 
     const openRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { subscriberAccess: 'open' },
@@ -459,6 +459,46 @@ describe('Agents API - /agents #novu-v2', () => {
       expect(res.body.data.name.length).to.equal(MAX);
 
       await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+  });
+
+  describe('Identifier length validation', () => {
+    const MAX = AGENT_IDENTIFIER_MAX_LENGTH;
+
+    it('should reject creating an agent with an identifier longer than the limit', async () => {
+      const identifier = `e2e-id-too-long-${Date.now()}`;
+
+      const res = await session.testAgent.post('/v1/agents').send({
+        name: 'Valid Name',
+        identifier: `${identifier}-${'a'.repeat(Math.max(0, MAX - identifier.length - 1))}a`,
+      });
+
+      expect(res.status).to.equal(422);
+      const messages = res.body?.errors?.general?.messages;
+      const text = Array.isArray(messages) ? messages.join(' ') : String(messages ?? '');
+      expect(text.toLowerCase()).to.contain(`${MAX} characters`);
+    });
+
+    it('should allow creating an agent with an identifier exactly at the limit', async () => {
+      const base = `e2e-id-exact-${Date.now()}`;
+      const identifier = `${base}${'a'.repeat(Math.max(0, MAX - base.length))}`;
+
+      const res = await session.testAgent.post('/v1/agents').send({ name: 'Valid Name', identifier });
+
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+      expect(res.body.data.identifier).to.equal(identifier);
+      expect(res.body.data.identifier.length).to.equal(MAX);
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should reject creating an agent with an identifier far exceeding the limit', async () => {
+      const res = await session.testAgent.post('/v1/agents').send({
+        name: 'Valid Name',
+        identifier: 'a'.repeat(5000),
+      });
+
+      expect(res.status).to.equal(422);
     });
   });
 

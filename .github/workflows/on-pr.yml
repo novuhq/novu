@@ -1,6 +1,6 @@
 name: Check pull request
 concurrency:
-  group: '${{ github.workflow }}-${{ github.ref }}'
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 env:
@@ -16,9 +16,9 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     environment: Linting
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-      - name: 'Dependency Review'
+      - name: "Dependency Review"
         uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4
 
   find-flags:
@@ -46,6 +46,7 @@ jobs:
     name: Get Affected Packages
     runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
+      docs-only: ${{ steps.detect-docs.outputs.docs-only }}
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
       test-e2e-ee: ${{ steps.get-projects-arrays.outputs.test-e2e-ee }}
@@ -55,6 +56,7 @@ jobs:
       test-libs: ${{ steps.get-projects-arrays.outputs.test-libs }}
     permissions:
       contents: read
+      pull-requests: read
       packages: write
       deployments: write
       id-token: write
@@ -85,6 +87,39 @@ jobs:
         if: github.event.pull_request.base.ref != ''
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=50
+
+      # Detect PRs that only touch the Mintlify docs site (docs/). Such PRs are
+      # documentation-only and don't need the E2E / code test suites to run.
+      # `docs/` is not a pnpm workspace package, so `nx affected` already skips
+      # the unit/lib/package/openapi jobs for it; this output additionally gates
+      # the E2E suite, which otherwise always runs.
+      - name: Detect docs-only changes
+        id: detect-docs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Use the GitHub API for the PR file list so detection doesn't depend
+          # on the shallow local merge base (the depth-50 fetches above may not
+          # reach it, which would make a local `git diff` fail). `--paginate`
+          # walks every page so large PRs (>100 files) aren't misclassified as
+          # docs-only. Non-PR runs (e.g. workflow_dispatch) have no PR number, so
+          # run the full suite.
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "docs-only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/files" --jq '.[].path')
+          echo "Changed files:"
+          echo "$changed"
+          non_docs=$(echo "$changed" | grep -v '^docs/' || true)
+          if [ -n "$changed" ] && [ -z "$non_docs" ]; then
+            echo "docs-only=true" >> "$GITHUB_OUTPUT"
+            echo "Only docs/ changed — E2E and code tests will be skipped."
+          else
+            echo "docs-only=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: ./.github/actions/setup-project-minimal
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
@@ -127,7 +162,7 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: ./.github/actions/setup-project
         with:
-          slim: 'true'
+          slim: "true"
       - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
@@ -155,21 +190,21 @@ jobs:
 
       - uses: ./.github/actions/setup-project
         with:
-          slim: 'true'
+          slim: "true"
 
       - name: Build
         uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
-          LOG_LEVEL: 'info'
+          LOG_LEVEL: "info"
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
-          projects: '@novu/api'
+          projects: "@novu/api"
 
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
-          LOG_LEVEL: 'info'
+          LOG_LEVEL: "info"
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: lint,build,test
@@ -231,8 +266,8 @@ jobs:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
           targets: build
-          projects: '@novu/api'
-          args: ''
+          projects: "@novu/api"
+          args: ""
 
       - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         name: Lint and build and test
@@ -241,7 +276,7 @@ jobs:
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
-          args: ''
+          args: ""
 
   validate_openapi:
     name: Validate OpenAPI
@@ -267,6 +302,8 @@ jobs:
   test_e2e_api:
     name: E2E test API
     needs: [get-affected]
+    # Skip the E2E suite for documentation-only PRs (docs/ changes only).
+    if: ${{ needs.get-affected.outputs.docs-only != 'true' }}
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       # PRs opened from forks (community contributions) do not receive repo

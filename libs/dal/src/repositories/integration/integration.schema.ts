@@ -46,6 +46,10 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       serviceAccount: Schema.Types.String,
       baseUrl: Schema.Types.String,
       webhookUrl: Schema.Types.String,
+      method: Schema.Types.String,
+      headers: Schema.Types.String,
+      body: Schema.Types.String,
+      routingMode: Schema.Types.String,
       requireTls: Schema.Types.Boolean,
       ignoreTls: Schema.Types.Boolean,
       tlsOptions: Schema.Types.Mixed,
@@ -96,6 +100,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       inboundWebhookSigningKey: Schema.Types.String,
       configurationSetName: Schema.Types.String,
       inboxCount: Schema.Types.String,
+      payloadSchema: Schema.Types.String,
     },
     provisioning: {
       status: {

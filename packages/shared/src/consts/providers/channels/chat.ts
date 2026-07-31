@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ChatProviderIdEnum } from '../../../types';
+import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
   chatWebhookConfig,
@@ -6,6 +6,7 @@ import {
   grafanaOnCallConfig,
   lineConfig,
   msTeamsConfig,
+  novuWebChatConfig,
   rocketChatConfig,
   sendblueConfig,
   slackConfigLegacy,
@@ -47,6 +48,11 @@ export const chatProviders: IProviderConfig[] = [
     credentials: grafanaOnCallConfig,
     docReference: 'https://grafana.com/docs/oncall/latest/integrations/webhook/',
     logoFileName: { light: 'grafana-on-call.png', dark: 'grafana-on-call.png' },
+    deprecated: {
+      replacedBy: ToolProviderIdEnum.Grafana,
+      reason:
+        "Use the Grafana integration on the Tool channel instead — it delivers alerts to each subscriber's own Grafana IRM/OnCall stack and supports alert grouping and auto-resolve.",
+    },
   },
   {
     id: ChatProviderIdEnum.MsTeams,
@@ -109,7 +115,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'WhatsApp Business',
     channel: ChannelTypeEnum.CHAT,
     credentials: whatsAppBusinessConfig,
-    docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
+    docReference: `https://docs.novu.co/platform/integrations/chat/whats-app${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
   {
@@ -144,6 +150,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: sendblueConfig,
     docReference: 'https://docs.sendblue.com',
     logoFileName: { light: 'sendblue.svg', dark: 'sendblue.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.NovuWebChat,
+    displayName: 'Novu Web Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: novuWebChatConfig,
+    docReference: `https://docs.novu.co/platform/integrations/chat/web-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
   {
     id: ChatProviderIdEnum.GoogleChat,

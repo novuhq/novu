@@ -1,15 +1,17 @@
 ---
 title: "Other frameworks"
-description: "Build custom code agents with @novu/framework and any LLM stack — OpenAI SDK, Anthropic SDK, or your own integration."
+description: "Build custom code agents with @novu/framework and any LLM stack - OpenAI SDK, Anthropic SDK, or your own integration."
 sidebarTitle: Other
 ---
 
 
-Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk` or `@novu/framework/langchain`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for.
+Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk` or `@novu/framework/langchain`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for Mastra, the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for.
+
+For a full walkthrough with Mastra, see the [Mastra quickstart](/agents/get-started/mastra).
 
 ## Before you start
 
-Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up — [jump to Minimal agent](#minimal-agent).
+Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up - [jump to Minimal agent](#minimal-agent).
 
 Otherwise start with the [Quickstart](/agents/custom-code-agent/quickstart) first. All three onboarding paths (dashboard, CLI, AI assistant) walk you through creating the agent and wiring the bridge.
 
@@ -23,7 +25,7 @@ Install the framework package:
 npm install @novu/framework
 ```
 
-Bring your own LLM or agent library — Novu does not require a specific one.
+Bring your own LLM or agent library - Novu does not require a specific one.
 
 ## Minimal agent
 
@@ -43,18 +45,18 @@ export const supportAgent = agent('support-bot', {
 });
 ```
 
-Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route — see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
+Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route - see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
 
-For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to wiring your own LLM stack — return types and manual tool approval.
+For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to wiring your own LLM stack - return types and manual tool approval.
 
 ## Returning from `onMessage`
 
-On this path, `onMessage` accepts the standard reply types — not AI SDK results:
+On this path, `onMessage` accepts the standard reply types - not AI SDK results:
 
 | Return | Behavior |
 | --- | --- |
-| `string` / JSX `Card` | Delivered as a reply — see [Reply](/agents/custom-code-agent/building-blocks/reply) |
-| `ctx.toolApproval.request(...)` | Posts the Approve / Deny card and pauses the turn — see [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) |
+| `string` / JSX `Card` | Delivered as a reply - see [Reply](/agents/custom-code-agent/building-blocks/reply) |
+| `ctx.toolApproval.request(...)` | Posts the Approve / Deny card and pauses the turn - see [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) |
 | nothing | After you call `ctx.reply()` yourself |
 
 Other handlers (`onAction`, `onReaction`, `onResolve`) accept `string`, `Card`, or nothing.
@@ -107,6 +109,9 @@ See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for
 ## Related
 
 <Columns cols={2}>
+  <Card icon="boxes" href="/agents/get-started/mastra" title="Mastra quickstart">
+    Call Mastra generate() from a Novu handler.
+  </Card>
   <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
     Return AI SDK results from handlers with automatic tool approval resume.
   </Card>

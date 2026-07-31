@@ -9,6 +9,7 @@ import { WorkflowDataContainer } from '../../services';
 import { StepForResponseMapper, WorkflowForResponseMapper } from '../../types/workflow-mapper.types';
 import { buildSlug } from '../../utils';
 import { InvalidStepException } from '../../utils/exceptions';
+import { type StepProviderOverrides, stitchProviderOverridesFromDocs } from '../../utils/provider-overrides';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { GetWorkflowByIdsUseCase } from '../workflow';
 import { BuildStepDataCommand } from './build-step-data.command';
@@ -46,16 +47,18 @@ export class BuildStepDataUsecase {
     }
 
     const controlValues = await this.getControlValues(command, currentStep, workflow._id);
+    const providerOverrides = await this.getProviderOverrides(command, currentStep, workflow._id);
     const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow, command.previewPayload);
 
-    return BuildStepDataUsecase.mapToStepResponse(workflow, currentStep, controlValues, variables);
+    return BuildStepDataUsecase.mapToStepResponse(workflow, currentStep, controlValues, variables, providerOverrides);
   }
 
   static mapToStepResponse(
     workflow: WorkflowForResponseMapper,
     currentStep: StepForResponseMapper,
     controlValues: Record<string, unknown>,
-    variables: JSONSchemaDto
+    variables: JSONSchemaDto,
+    providerOverrides?: StepProviderOverrides
   ): StepResponseDto {
     const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
     const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, currentStep._templateId);
@@ -67,6 +70,7 @@ export class BuildStepDataUsecase {
         values: controlValues,
       },
       controlValues,
+      ...(providerOverrides ? { providerOverrides } : {}),
       variables,
       name: stepName,
       slug,
@@ -121,6 +125,23 @@ export class BuildStepDataUsecase {
     });
 
     return controlValuesEntity?.controls || {};
+  }
+
+  @Instrument()
+  private async getProviderOverrides(
+    command: BuildStepDataCommand,
+    currentStep: NotificationStepEntity,
+    _workflowId: string
+  ): Promise<StepProviderOverrides | undefined> {
+    const providerDocs = await this.controlValuesRepository.find({
+      _environmentId: command.user.environmentId,
+      _organizationId: command.user.organizationId,
+      _workflowId,
+      _stepId: currentStep._templateId,
+      level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+    });
+
+    return stitchProviderOverridesFromDocs(providerDocs);
   }
 
   @Instrument()

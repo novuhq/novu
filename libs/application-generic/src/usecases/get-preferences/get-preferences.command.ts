@@ -12,4 +12,10 @@ export class GetPreferencesCommand extends EnvironmentCommand {
    */
   excludeSubscriberPreferences?: boolean = false;
   contextKeys?: string[];
+  /**
+   * Bypasses the WORKFLOW_PREFERENCES LRU cache for this read so it is served
+   * directly from the database. Used by interactive dashboard (JWT) reads that
+   * require read-your-own-write consistency across API instances.
+   */
+  skipCache?: boolean = false;
 }

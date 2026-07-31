@@ -8,6 +8,7 @@ import {
   DetailEnum,
   DurationUtils,
   getDigestType,
+  getEffectiveJobPayload,
   getNestedValue,
   IFilterVariables,
   InstrumentUsecase,
@@ -133,6 +134,11 @@ export class AddJob {
         _id: job._notificationId,
         _environmentId: job._environmentId,
       }));
+
+    // Payload-dedup: hydrate the trigger payload from the parent notification
+    // when the job doesn't carry one, so delay/throttle/digest key resolution
+    // below keeps working. A present job.payload is authoritative.
+    job.payload = getEffectiveJobPayload(job, notification);
 
     const topicsContext =
       notification?.topics && notification.topics.length > 0
@@ -418,6 +424,16 @@ export class AddJob {
     });
 
     await this.queueJob({ job, delay: 0, untilDate: null });
+
+    /*
+     * The message now exists, so the claim-to-enqueue crash window is over: without
+     * this, a redelivered parent would treat a backlogged-but-live child as stranded
+     * and enqueue a duplicate message. Only claimed children carry the flag — chain
+     * roots enter as PENDING and skip the write.
+     */
+    if (job.awaitingEnqueue) {
+      await this.jobRepository.markEnqueued(command.environmentId, job._id);
+    }
 
     return {
       workflowStatus: null,
@@ -1158,6 +1174,7 @@ const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
   [StepTypeEnum.SMS]: false,
   [StepTypeEnum.CHAT]: false,
   [StepTypeEnum.PUSH]: false,
+  [StepTypeEnum.TOOL]: false,
 };
 
 function isJobDeferredType(jobType: StepTypeEnum | undefined): boolean {

@@ -26,8 +26,8 @@ import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversatio
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
-import { beginOnboardingProvisioning } from '@/utils/connect/onboarding-session';
 import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
+import { beginOnboardingProvisioning } from '@/utils/connect/onboarding-session';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 

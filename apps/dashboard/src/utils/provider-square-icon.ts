@@ -4,6 +4,8 @@ const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   'novu-anthropic': 'novu',
   email: 'novu-email',
   teams: 'msteams',
+  pagerduty: 'pager-duty',
+  grafana: 'grafana-on-call',
 };
 
 export function getProviderSquareIconFileName(platform: string): string {

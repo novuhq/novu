@@ -130,6 +130,34 @@ export const flattenIssues = (controlIssues?: Record<string, RuntimeIssue[]>): R
   }, {});
 };
 
+function splitProviderOverridesFromControlValues(controlValues: Record<string, unknown> | null | undefined): {
+  controlValues: Record<string, unknown> | null | undefined;
+  providerOverrides: StepUpdateDto['providerOverrides'] | undefined;
+} {
+  if (!controlValues || typeof controlValues !== 'object') {
+    return { controlValues, providerOverrides: undefined };
+  }
+
+  const { providerOverrides, ...rest } = controlValues as Record<string, unknown> & {
+    providerOverrides?: StepUpdateDto['providerOverrides'];
+  };
+
+  return {
+    controlValues: rest,
+    providerOverrides: providerOverrides === undefined ? undefined : (providerOverrides ?? null),
+  };
+}
+
+function toStepUpsertShape(step: StepResponseDto): StepUpdateDto {
+  // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
+  const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+
+  return {
+    ...stepWithoutProviderOverrides,
+    controlValues: step.controls?.values || {},
+  };
+}
+
 export const updateStepInWorkflow = (
   workflow: WorkflowResponseDto,
   stepId: string,
@@ -138,23 +166,51 @@ export const updateStepInWorkflow = (
   return {
     ...workflow,
     steps: workflow.steps.map((step) => {
+      const stepWithoutProviderOverrides = toStepUpsertShape(step);
+
       if (step.stepId === stepId) {
         const existingControlValues = step.controls?.values || {};
-        const updatedControlValues =
+        const incomingControlValues =
           updateStep.controlValues !== undefined ? updateStep.controlValues : existingControlValues;
 
+        // Deleting control values also clears per-provider override docs (server cascade).
+        if (incomingControlValues === null) {
+          return {
+            ...stepWithoutProviderOverrides,
+            ...updateStep,
+            controlValues: null,
+            providerOverrides: null,
+          };
+        }
+
+        // Form state nests providerOverrides beside control fields; lift to the step DTO sibling.
+        const splitFromForm =
+          updateStep.providerOverrides === undefined
+            ? splitProviderOverridesFromControlValues(incomingControlValues as Record<string, unknown>)
+            : { controlValues: incomingControlValues, providerOverrides: updateStep.providerOverrides };
+
         return {
-          ...step,
+          ...stepWithoutProviderOverrides,
           ...updateStep,
-          controlValues: updatedControlValues,
+          controlValues: splitFromForm.controlValues,
+          ...(splitFromForm.providerOverrides !== undefined
+            ? { providerOverrides: splitFromForm.providerOverrides }
+            : {}),
         };
       }
 
-      return {
-        ...step,
-        controlValues: step.controls?.values || {},
-      };
+      return stepWithoutProviderOverrides;
     }),
+  };
+};
+
+export const removeStepFromWorkflow = (
+  workflow: WorkflowResponseDto,
+  shouldKeep: (step: StepResponseDto) => boolean
+): UpdateWorkflowDto => {
+  return {
+    ...workflow,
+    steps: workflow.steps.filter(shouldKeep).map(toStepUpsertShape),
   };
 };
 

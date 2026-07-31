@@ -332,6 +332,7 @@ export class SyncToEnvironmentUseCase {
       name: sourceStep.name ?? '',
       type: sourceStep.type,
       controlValues: sourceStep.controls?.values ?? {},
+      providerOverrides: sourceStep.providerOverrides ?? null,
     };
   }
 

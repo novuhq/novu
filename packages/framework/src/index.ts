@@ -7,6 +7,8 @@ export type {
   AgentActionContext,
   AgentAttachment,
   AgentContext,
+  AgentContextPayload,
+  AgentContextValue,
   AgentConversation,
   AgentHandlerContext,
   AgentHandlers,
@@ -19,6 +21,7 @@ export type {
   AgentReactionContext,
   AgentResolveContext,
   AgentSubscriber,
+  AgentSubscriberAccess,
   AgentToolCall,
   CardChild,
   CardElement,
@@ -53,6 +56,7 @@ export type {
   PushStepResolver,
   SmsStepResolver,
   StepResolverContext,
+  ToolStepResolver,
 } from './resources/step-resolver/step';
 export { step } from './resources/step-resolver/step';
 export { providerSchemas } from './schemas';

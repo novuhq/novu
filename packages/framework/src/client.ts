@@ -508,6 +508,7 @@ export class Client {
             chat: this.executeStepFactory(validatedEvent, setResult, hasResult),
             custom: this.executeStepFactory(validatedEvent, setResult, hasResult),
             throttle: this.executeStepFactory(validatedEvent, setResult, hasResult),
+            tool: this.executeStepFactory(validatedEvent, setResult, hasResult),
           },
         }),
       ]);
@@ -592,16 +593,13 @@ export class Client {
   private async executeProviders(
     event: Event,
     step: DiscoverStepOutput,
-    outputs: Record<string, unknown>
+    outputs: Record<string, unknown>,
+    controls: Record<string, unknown>
   ): Promise<Record<string, WithPassthrough<Record<string, unknown>>>> {
     return step.providers.reduce(
       async (acc, provider) => {
         const result = await acc;
-        const previewProviderHandler = this.previewProvider.bind(this);
-        const executeProviderHandler = this.executeProvider.bind(this);
-        const handler = event.action === PostActionEnum.PREVIEW ? previewProviderHandler : executeProviderHandler;
-
-        const providerResult = await handler(event, step, provider, outputs);
+        const providerResult = await this.runProvider(event, step, provider, outputs, controls);
 
         return {
           ...result,
@@ -612,58 +610,69 @@ export class Client {
     );
   }
 
-  private previewProvider(
+  private async runProvider(
     event: Event,
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
-
-    outputs: Record<string, unknown>
-  ): Record<string, unknown> {
-    this.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
-    const mockOutput = this.mock(provider.outputs.schema);
-
-    return mockOutput;
-  }
-
-  private async executeProvider(
-    event: Event,
-    step: DiscoverStepOutput,
-    provider: DiscoverProviderOutput,
-    outputs: Record<string, unknown>
+    outputs: Record<string, unknown>,
+    controls: Record<string, unknown>
   ): Promise<WithPassthrough<Record<string, unknown>>> {
-    try {
-      if (event.stepId === step.stepId) {
-        const controls = await this.createStepControls(step, event);
-        const result = await provider.resolve({
-          controls,
-          outputs,
-        });
-        const validatedOutput = await this.validate(
-          result,
-          provider.outputs.unknownSchema,
-          'step',
-          'output',
-          event.workflowId,
-          step.stepId,
-          provider.type
-        );
-        this.log(`  ${EMOJI.SUCCESS} Executed provider: \`${provider.type}\``);
+    const isPreview = event.action === PostActionEnum.PREVIEW;
 
-        return {
-          ...validatedOutput,
-          _passthrough: result._passthrough,
-        };
-      } else {
-        // No-op. We don't execute providers for hydrated steps
-        this.log(`  ${EMOJI.HYDRATED} Hydrated provider: \`${provider.type}\``);
+    if (event.stepId !== step.stepId) {
+      if (isPreview) {
+        this.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
 
-        return {};
+        return this.mock(provider.outputs.schema);
       }
+
+      // No-op. We don't execute providers for hydrated steps
+      this.log(`  ${EMOJI.HYDRATED} Hydrated provider: \`${provider.type}\``);
+
+      return {};
+    }
+
+    try {
+      return await this.resolveProviderOutput(event, step, provider, controls, outputs);
     } catch (error) {
       this.log(`  ${EMOJI.ERROR} Failed to execute provider: \`${provider.type}\``);
 
+      if (isPreview) {
+        this.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
+
+        return this.mock(provider.outputs.schema);
+      }
+
       throw new ProviderExecutionFailedError(provider.type, event.action, error);
     }
+  }
+
+  private async resolveProviderOutput(
+    event: Event,
+    step: DiscoverStepOutput,
+    provider: DiscoverProviderOutput,
+    controls: Record<string, unknown>,
+    outputs: Record<string, unknown>
+  ): Promise<WithPassthrough<Record<string, unknown>>> {
+    const result = await provider.resolve({
+      controls,
+      outputs,
+    });
+    const validatedOutput = await this.validate(
+      result,
+      provider.outputs.unknownSchema,
+      'step',
+      'output',
+      event.workflowId,
+      step.stepId,
+      provider.type
+    );
+    this.log(`  ${EMOJI.SUCCESS} Executed provider: \`${provider.type}\``);
+
+    return {
+      ...validatedOutput,
+      _passthrough: result._passthrough,
+    };
   }
 
   private async executeStep(
@@ -684,7 +693,7 @@ export class Client {
           step.stepId
         );
 
-        const providers = await this.executeProviders(event, step, validatedOutput);
+        const providers = await this.executeProviders(event, step, validatedOutput, controls);
 
         this.log(`  ${EMOJI.SUCCESS} Executed stepId: \`${step.stepId}\``);
 
@@ -717,7 +726,7 @@ export class Client {
 
           return {
             outputs: validatedOutput,
-            providers: await this.executeProviders(event, step, validatedOutput),
+            providers: await this.executeProviders(event, step, validatedOutput, {}),
           };
         } else {
           throw new ExecutionStateCorruptError(event.workflowId, step.stepId);
@@ -860,7 +869,7 @@ export class Client {
 
     return {
       outputs: mergedOutput,
-      providers: await this.executeProviders(event, step, outputs),
+      providers: await this.executeProviders(event, step, outputs, {}),
     };
   }
 
@@ -882,7 +891,7 @@ export class Client {
 
     return {
       outputs: validatedOutput,
-      providers: await this.executeProviders(event, step, validatedOutput),
+      providers: await this.executeProviders(event, step, validatedOutput, controls),
     };
   }
 

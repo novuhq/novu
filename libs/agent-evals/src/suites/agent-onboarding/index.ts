@@ -1,6 +1,14 @@
 import { resolvePackageFile } from '../../core/resolve-package-file.js';
 import type { Suite } from '../../core/types.js';
 import { type ConnectFlags, connectParser } from './connect-parser.js';
+import { graders as bridgeExistingAiSdkGraders } from './scenarios/bridge-existing-ai-sdk/graders.js';
+import { scenario as bridgeExistingAiSdkScenario } from './scenarios/bridge-existing-ai-sdk/scenario.js';
+import { graders as bridgeExistingLangchainGraders } from './scenarios/bridge-existing-langchain/graders.js';
+import { scenario as bridgeExistingLangchainScenario } from './scenarios/bridge-existing-langchain/scenario.js';
+import { graders as bridgeScaffoldAiSdkGraders } from './scenarios/bridge-scaffold-ai-sdk/graders.js';
+import { scenario as bridgeScaffoldAiSdkScenario } from './scenarios/bridge-scaffold-ai-sdk/scenario.js';
+import { graders as bridgeScaffoldLangchainGraders } from './scenarios/bridge-scaffold-langchain/graders.js';
+import { scenario as bridgeScaffoldLangchainScenario } from './scenarios/bridge-scaffold-langchain/scenario.js';
 import { graders as dashboardPromptLoginGraders } from './scenarios/dashboard-prompt-login/graders.js';
 import { scenario as dashboardPromptLoginScenario } from './scenarios/dashboard-prompt-login/scenario.js';
 import { graders as disciplineNoTimersGraders } from './scenarios/discipline-no-timers/graders.js';
@@ -11,8 +19,10 @@ import { graders as keylessSendblueGraders } from './scenarios/keyless-sendblue/
 import { scenario as keylessSendblueScenario } from './scenarios/keyless-sendblue/scenario.js';
 import { graders as keylessSlackSecureGraders } from './scenarios/keyless-slack-secure/graders.js';
 import { scenario as keylessSlackSecureScenario } from './scenarios/keyless-slack-secure/scenario.js';
-import { graders as keylessWhatsappRedirectGraders } from './scenarios/keyless-whatsapp-redirect/graders.js';
-import { scenario as keylessWhatsappRedirectScenario } from './scenarios/keyless-whatsapp-redirect/scenario.js';
+import { graders as keylessTeamsRedirectGraders } from './scenarios/keyless-teams-redirect/graders.js';
+import { scenario as keylessTeamsRedirectScenario } from './scenarios/keyless-teams-redirect/scenario.js';
+import { graders as keylessWhatsappConnectGraders } from './scenarios/keyless-whatsapp-connect/graders.js';
+import { scenario as keylessWhatsappConnectScenario } from './scenarios/keyless-whatsapp-connect/scenario.js';
 import { graders as personaInfraExclusionGraders } from './scenarios/persona-infra-exclusion/graders.js';
 import { scenario as personaInfraExclusionScenario } from './scenarios/persona-infra-exclusion/scenario.js';
 import { graders as slackInChatRerunGraders } from './scenarios/slack-in-chat-rerun/graders.js';
@@ -25,7 +35,7 @@ export const AGENT_ONBOARDING_DOC_PATH = resolvePackageFile('@novu/shared/docs/a
 const SYSTEM_PROMPT_PREAMBLE = [
   'You are an AI coding agent executing the Novu agent onboarding playbook exactly.',
   'Follow the playbook precisely. Use the provided tools.',
-  'You are running in a Claude Code-like environment with Bash, BashOutput, AskUserQuestion, and Read tools.',
+  'You are running in a Claude Code-like environment with Bash, BashOutput, AskUserQuestion, Read, and Write tools.',
   'The project fixture files are in the current workspace; read README.md and package.json before drafting the agent description.',
 ].join('\n');
 
@@ -53,7 +63,12 @@ export const agentOnboardingSuite: Suite<ConnectFlags> = {
     { scenario: keylessSlackSecureScenario, graders: keylessSlackSecureGraders },
     { scenario: keylessSendblueScenario, graders: keylessSendblueGraders },
     { scenario: dashboardPromptLoginScenario, graders: dashboardPromptLoginGraders },
-    { scenario: keylessWhatsappRedirectScenario, graders: keylessWhatsappRedirectGraders },
+    { scenario: bridgeExistingAiSdkScenario, graders: bridgeExistingAiSdkGraders },
+    { scenario: bridgeExistingLangchainScenario, graders: bridgeExistingLangchainGraders },
+    { scenario: bridgeScaffoldAiSdkScenario, graders: bridgeScaffoldAiSdkGraders },
+    { scenario: bridgeScaffoldLangchainScenario, graders: bridgeScaffoldLangchainGraders },
+    { scenario: keylessTeamsRedirectScenario, graders: keylessTeamsRedirectGraders },
+    { scenario: keylessWhatsappConnectScenario, graders: keylessWhatsappConnectGraders },
     { scenario: emailHandoffScenario, graders: emailHandoffGraders },
     { scenario: telegramSecureQrScenario, graders: telegramSecureQrGraders },
     { scenario: slackInChatRerunScenario, graders: slackInChatRerunGraders },

@@ -17,6 +17,7 @@ import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../s
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
+const EXECUTION_DETAILS_TRACE_LIMIT = 200;
 
 const workflowRunSelectColumns = [
   'workflow_run_id',
@@ -295,6 +296,7 @@ export class GetWorkflowRun {
         where: traceQueryBuilder.build(),
         orderBy: 'created_at',
         orderDirection: 'ASC',
+        limit: EXECUTION_DETAILS_TRACE_LIMIT,
         select: traceSelectColumns,
       });
 

@@ -57,4 +57,11 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   workflow?: NotificationTemplateEntity;
+
+  /**
+   * Payload-dedup: when true, channel usecases must not persist the trigger
+   * payload on the message (email/SMS/push). In-app keeps its payload.
+   */
+  @IsOptional()
+  isPayloadDedupEnabled?: boolean;
 }

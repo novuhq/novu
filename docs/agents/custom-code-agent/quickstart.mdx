@@ -7,6 +7,8 @@ boost: 3
 
 In about 10 minutes you can have an agent that receives Slack messages and replies from your code.
 
+Looking for a stack-specific walkthrough? Start with the [AI SDK](/agents/get-started/ai-sdk), [LangChain](/agents/get-started/langchain), or [Mastra](/agents/get-started/mastra) quickstart. This page covers the shared onboarding paths (CLI, dashboard, and AI assistant).
+
 **Prerequisites:**
 
 - A [Novu account](https://dashboard.novu.co).
@@ -35,7 +37,7 @@ npx novu connect
 You'll be asked to:
 
 1. Sign in to Novu (or paste your secret key).
-2. Pick a runtime — **AI SDK**, **LangChain**, **Custom code**, or a managed option like Claude.
+2. Pick a runtime - **AI SDK**, **LangChain**, **Custom code**, or a managed option like Claude.
 3. Name your agent and connect Slack (or another channel).
 4. Confirm creating a starter project, if prompted.
 
@@ -61,7 +63,7 @@ Use the Novu dashboard to create the agent and connect Slack, then run a small l
 
  ![Add agent](/images/agents/quickstart/add-agent.png)
 
-Keep the **Identifier** — your code will use the same value.
+Keep the **Identifier** - your code will use the same value.
 
 </Step>
 
@@ -111,7 +113,7 @@ You'll receive a welcome message from the agent when installation completes.
 ## Set up your local project
 
 1. On the setup page, find **Scaffold your agent project**.
-2. Copy the command shown there — it already includes your secret key, API URL, and runtime.
+2. Copy the command shown there - it already includes your secret key, API URL, and runtime.
 3. Run it in an empty folder on your machine.
 
 When the CLI asks which agent to use, pick the one you created above.
@@ -166,14 +168,14 @@ Reference: https://docs.novu.co/agents/custom-code-agent/quickstart
 ## Next steps
 
 <Columns cols={2}>
-  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="Build with the AI SDK">
-    End-to-end guide with Vercel AI SDK.
+  <Card icon="sparkles" href="/agents/get-started/ai-sdk" title="AI SDK quickstart">
+    Minimal generateText handler for Slack.
   </Card>
-  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="Build with LangChain">
-    End-to-end guide with LangChain agents.
+  <Card icon="link" href="/agents/get-started/langchain" title="LangChain quickstart">
+    Minimal LangChain config for Slack.
   </Card>
-  <Card icon="code" href="/agents/custom-code-agent/frameworks/other" title="Other frameworks">
-    OpenAI SDK, Anthropic SDK, or your own stack.
+  <Card icon="boxes" href="/agents/get-started/mastra" title="Mastra quickstart">
+    Call Mastra generate() from a Novu handler.
   </Card>
   <Card icon="book-open" href="/agents/custom-code-agent/concepts" title="Concepts">
     How agents, handlers, and Novu fit together.

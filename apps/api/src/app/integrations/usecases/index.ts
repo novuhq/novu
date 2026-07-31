@@ -18,6 +18,7 @@ import { ConsumeIntegrationStoreTelegramMobileLink } from './consume-integration
 import { CreateIntegration } from './create-integration/create-integration.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
 import { GenerateAzureSetupOauthUrl } from './generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
+import { ConnectContextVerifier } from './generate-chat-oath-url/connect-context-verifier.service';
 import { GenerateChatOauthUrl } from './generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { GenerateConnectOauthUrl } from './generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { GenerateLinkUserOauthUrl } from './generate-chat-oath-url/generate-link-user-oauth-url.usecase';
@@ -36,8 +37,12 @@ import { RemoveIntegration } from './remove-integration/remove-integration.useca
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
-import { WhatsAppValidateToken } from './whatsapp/whatsapp-validate-token.usecase';
+import { CompleteWhatsAppSignupLink } from './whatsapp/complete-whatsapp-signup-link.usecase';
+import { GetWhatsAppSignupLinkStatus } from './whatsapp/get-whatsapp-signup-link-status.usecase';
+import { IssueWhatsAppSignupLink } from './whatsapp/issue-whatsapp-signup-link.usecase';
 import { WhatsAppEmbeddedSignup } from './whatsapp/whatsapp-embedded-signup.usecase';
+import { WhatsAppEmbeddedSignupAvailability } from './whatsapp/whatsapp-embedded-signup-availability.usecase';
+import { WhatsAppValidateToken } from './whatsapp/whatsapp-validate-token.usecase';
 
 export const USE_CASES = [
   GetInAppActivated,
@@ -58,6 +63,7 @@ export const USE_CASES = [
   CreateNovuIntegrations,
   NormalizeVariables,
   GenerateChatOauthUrl,
+  ConnectContextVerifier,
   GenerateConnectOauthUrl,
   GenerateLinkUserOauthUrl,
   GenerateSlackOauthUrl,
@@ -75,6 +81,10 @@ export const USE_CASES = [
   SlackQuickSetup,
   WhatsAppValidateToken,
   WhatsAppEmbeddedSignup,
+  WhatsAppEmbeddedSignupAvailability,
+  IssueWhatsAppSignupLink,
+  GetWhatsAppSignupLinkStatus,
+  CompleteWhatsAppSignupLink,
   IssueIntegrationStoreTelegramMobileLink,
   GetIntegrationStoreTelegramMobileLinkStatus,
   ConsumeIntegrationStoreTelegramMobileLink,

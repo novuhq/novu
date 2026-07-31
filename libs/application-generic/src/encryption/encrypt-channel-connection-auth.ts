@@ -1,13 +1,14 @@
 import { decryptApiKey, encryptApiKey } from './encrypt-provider';
 
 /**
- * Fields inside a `ChannelConnection.auth` object that must be encrypted at rest.
+ * String fields inside a `ChannelConnection.auth` object that must be encrypted at rest.
  *
  * Secret fields inside connection auth are encrypted/decrypted automatically by the
  * same helper. Unknown keys, such as token expiry timestamps, are passed through
- * unchanged.
+ * unchanged. Tool-channel secrets live on the endpoint document and are handled by
+ * `encryptChannelEndpoint` / `decryptChannelEndpoint`.
  */
-const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
+const SECURE_AUTH_STRING_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
 
 export interface ChannelConnectionAuth {
   accessToken?: string;
@@ -22,7 +23,7 @@ export interface ChannelConnectionAuth {
 function transformSecureFields<T extends object>(auth: T, transform: (value: string) => string): T {
   const result: Record<string, unknown> = { ...(auth as Record<string, unknown>) };
 
-  for (const key of SECURE_AUTH_FIELDS) {
+  for (const key of SECURE_AUTH_STRING_FIELDS) {
     const value = result[key];
     if (typeof value === 'string' && value.length > 0) {
       result[key] = transform(value);

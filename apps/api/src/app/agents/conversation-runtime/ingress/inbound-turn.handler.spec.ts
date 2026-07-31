@@ -182,6 +182,9 @@ describe('AgentInboundHandler', () => {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
     };
+    const connectionContextResolver = {
+      resolve: sinon.stub().resolves(null),
+    };
     const replyApprovalInterceptor = {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),
       tryHandleAsApprovalReaction: sinon.stub().resolves(false),
@@ -205,6 +208,7 @@ describe('AgentInboundHandler', () => {
       keylessAbuseGuard as any,
       planLimitGate as any,
       inboundAck as any,
+      connectionContextResolver as any,
       replyApprovalInterceptor as any
     );
 
@@ -481,7 +485,7 @@ describe('AgentInboundHandler', () => {
       });
     });
 
-    it('should reply with access-denied for custom-code restricted agents and not forward to the bridge', async () => {
+    it('should dispatch custom-code restricted agents so the framework posts the auth card when the sender is unknown', async () => {
       const restrictedConfig = {
         ...config,
         isManaged: false,
@@ -497,21 +501,35 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
+      // Bypass the plain API reply: the framework's auth gate builds the CTA card on the bridge.
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
+    });
+
+    it('should still reply for custom-code restricted agents when subscriber resolution errors', async () => {
+      const restrictedConfig = {
+        ...config,
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const { handler, bridgeExecutor, outboundGateway, inboundAck } = makeHandler({
+        subscriberResolve: sinon.stub().rejects(new Error('mongo timeout')),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      // Transient failures are not the unlinked-sender case — keep the plain reply and never dispatch.
       expect(bridgeExecutor.execute.called).to.equal(false);
       expect(inboundAck.showWorkingSignal.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
-        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
-      });
-      expect(outboundGateway.replyOnThread.firstCall.args[2]).to.deep.include({
-        persist: {
-          conversationId: conversation._id,
-          channel: conversation.channels[0],
-          agentIdentifier: 'support-agent',
-          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
-          environmentId: 'env1',
-          organizationId: 'org1',
-        },
+        markdown: UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY,
       });
     });
 
@@ -1202,12 +1220,12 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark the integration connected on /start alone for the dashboard test identity (connect:)', async () => {
-      const connectPayload = { ...matchingStartPayload, subscriberId: 'connect:user-123' };
+    it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
+      const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
       const { handler, agentIntegrationRepository } = makeHandler({
         linkTelegramExecute: sinon
           .stub()
-          .resolves({ created: true, subscriberId: 'connect:user-123', agentIdentifier: 'support-agent' }),
+          .resolves({ created: true, subscriberId: 'user-123', agentIdentifier: 'support-agent' }),
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
       });
       const thread = makeTelegramThread();
@@ -1296,10 +1314,10 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard (connect:) endpoint', async () => {
+    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard endpoint', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
         startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
-        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'connect:user-123' }),
+        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'user-123' }),
       });
       const thread = makeTelegramThread();
       const message = makeStartMessage('/start reused');

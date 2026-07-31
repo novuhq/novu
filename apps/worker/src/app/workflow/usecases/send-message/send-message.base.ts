@@ -33,10 +33,44 @@ import {
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
-import { merge } from 'lodash';
+import { cloneDeep, mergeWith } from 'lodash';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
+
+/**
+ * Never replace this with a plain `merge`: lodash merges arrays element-by-element, so a
+ * higher-priority `blocks: [x]` layered over a persisted `blocks: [a, b, c]` would yield
+ * `[merge(a, x), b, c]` — a corrupted first element plus two stale ones. An override array is a
+ * complete replacement of the list it overrides, so the higher-priority array wins whole.
+ *
+ * The clone keeps the result detached from the command the way `merge` used to: the merged blob
+ * leaves the worker as `bridgeProviderData`, and it is reused across every endpoint of a fan-out.
+ */
+function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] | undefined {
+  if (Array.isArray(sourceValue)) {
+    return cloneDeep(sourceValue);
+  }
+
+  return undefined;
+}
+
+/**
+ * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
+ * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ */
+export function combineProviderOverrides(
+  bridgeData: Record<string, any> | null | undefined,
+  overrides: TriggerOverrides | undefined,
+  stepId: string | undefined,
+  integrationId: string
+): Record<string, unknown> {
+  const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
+  const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
+  const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
+
+  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
+}
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -50,19 +84,6 @@ export abstract class SendMessageBase extends SendMessageType {
     protected moduleRef: ModuleRef
   ) {
     super(messageRepository, createExecutionDetails);
-  }
-
-  protected combineOverrides(
-    bridgeData: Record<string, any> | null | undefined,
-    overrides: TriggerOverrides | undefined,
-    stepId: string | undefined,
-    integrationId: string
-  ): Record<string, unknown> {
-    const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
-    const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
-    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
-
-    return merge({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides);
   }
 
   @Instrument()
@@ -105,6 +126,16 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+  }
+
+  /**
+   * Payload-dedup write policy for a stored message: when enabled, the payload
+   * is not persisted on the message and is resolved from the parent
+   * notification at read time. When off, the channel's payload is persisted as
+   * before. In-app messages keep their own payload and don't use this.
+   */
+  protected payloadToPersist<T>(command: SendMessageChannelCommand, payload: T): T | undefined {
+    return command.isPayloadDedupEnabled ? undefined : payload;
   }
 
   protected getCompilePayload(compileContext) {

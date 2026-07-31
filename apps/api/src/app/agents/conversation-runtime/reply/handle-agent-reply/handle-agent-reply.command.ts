@@ -32,6 +32,10 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   reply?: ReplyContentDto;
 
   @IsOptional()
+  @IsString()
+  activityIdentifier?: string;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => ToolApprovalRequestPayloadDto)
   toolApprovalRequest?: ToolApprovalRequestPayloadDto;

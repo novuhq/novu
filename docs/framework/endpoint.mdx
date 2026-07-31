@@ -10,6 +10,20 @@ You can view the Bridge Endpoint as a webhook endpoint that Novu will call when 
 
 Using the `npx novu init` command creates a Bridge application for you with a Bridge Endpoint ready to go.
 
+## View your bridge URL
+
+After you [sync](/framework/deployment/cli) a bridge URL to an environment, Novu shows it in the Dashboard header.
+
+1. Open the [Novu Dashboard](https://dashboard.novu.co) and select the environment you synced (Development or Production).
+2. In the top-right navigation bar, look for the glowing status orb next to **Publish changes**.
+3. Click the orb to open the **Bridge Endpoint URL** popover. You can view the current URL there, or update it and click **Update endpoint**.
+
+The orb only appears when a bridge URL is set for the selected environment. Its color reflects connection health: green when the endpoint responds successfully, and red when it is unreachable.
+
+<Frame caption="Click the glowing orb in the top-right navigation bar to view or update your Bridge Endpoint URL.">
+  ![Bridge Endpoint URL popover in the Dashboard header](/images/framework/bridge-endpoint-url-dashboard.png)
+</Frame>
+
 ## The `serve` function
 
 We offer framework specific wrappers in form of an exported `serve` function that abstracts away:
@@ -46,7 +60,7 @@ Retries are triggered for these **HTTP status codes**: `408`, `429`, `500`, `503
 
 Retries are also triggered for transient **network error codes** such as `EAI_AGAIN`, `ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT`, and `ENOTFOUND`.
 
-Other responses — for example most `4xx` errors outside `408` and `429` — are not retried. Each bridge request has a **5 second** timeout.
+Other responses - for example most `4xx` errors outside `408` and `429` - are not retried. Each bridge request has a **5 second** timeout.
 
 ## Writing a custom `serve` function
 
@@ -90,6 +104,10 @@ export const serve = (options: ServeHandlerOptions) => {
 <AccordionGroup>
   <Accordion title="What is the difference between tunnel url and bridge url?">
     The tunnel url is the url that is generated when you run the `npx novu@latest dev` command. It is used to test your notifications by triggering them from the Dashboard's Local environment. For local development and testing, you can use the tunnel url as bridge url. For production, you should use deployed application url with bridge endpoint as the bridge url.
+  </Accordion>
+
+  <Accordion title="How can I see my deployed bridge URL?">
+    When a bridge URL is set for an environment, open the Novu Dashboard and click the glowing status orb in the top-right navigation bar. The popover shows the current **Bridge Endpoint URL**. See [View your bridge URL](/framework/endpoint#view-your-bridge-url).
   </Accordion>
   
   <Accordion title="Is it necessary to have bridge url publicly accessible?">

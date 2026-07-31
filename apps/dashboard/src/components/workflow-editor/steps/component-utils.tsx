@@ -22,6 +22,7 @@ import { useWorkflow } from '../workflow-provider';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
 import { DataObject } from './base/data-object';
+import { ChatBody } from './chat/chat-body';
 import { LayoutSelect } from './email/layout-select';
 import { useSaveForm } from './save-form-context';
 import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
@@ -124,6 +125,10 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
     }
 
     case UiComponentEnum.CHAT_BODY: {
+      return <ChatBody />;
+    }
+
+    case UiComponentEnum.TOOL_BODY: {
       return <BaseBody />;
     }
 

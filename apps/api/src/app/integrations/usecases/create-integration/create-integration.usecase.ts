@@ -5,7 +5,6 @@ import {
   areNovuManagedClaudeCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
-  decryptCredentials,
   encryptCredentials,
   PinoLogger,
   resolveAgentRuntime,

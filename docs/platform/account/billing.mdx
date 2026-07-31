@@ -15,7 +15,7 @@ Novu Cloud subscriptions are billed at the **organization** level. Each organiza
 
 ## How Novu bills
 
-Novu Cloud pricing is based on **workflow runs** — not subscribers, messages, or channels.
+Novu Cloud pricing is based on **workflow runs** - not subscribers, messages, or channels.
 
 | What we bill | What we do not bill |
 | ------------ | ------------------- |
@@ -40,11 +40,15 @@ Novu Cloud measures usage on a **monthly billing cycle** tied to your organizati
 
 - **Included workflow runs** reset at the start of each billing cycle.
 - **Usage is aggregated** across every environment in the organization during that cycle.
-- **Paid plans** are billed monthly by default. Annual billing and volume discounts are available — see the [pricing page](https://novu.co/pricing) or contact sales for Enterprise.
+- **Paid plans** are billed monthly by default. Annual billing and volume discounts are available - see the [pricing page](https://novu.co/pricing) or contact sales for Enterprise.
 
 If you exceed the workflow runs included in your plan, Novu does **not** stop or throttle your notifications. Additional usage rolls into on-demand pricing on paid plans, or is billed at your contract rate on Enterprise. See [What happens when I exceed my limit?](#what-happens-when-i-exceed-my-monthly-workflow-run-limit) below.
 
-Only **organization Owners** can view billing details, change plans, and manage payment methods.
+Only **organization Owners** can view billing details, change plans, and manage payment methods. Admins, Authors, and Viewers can use the dashboard for workflows, subscribers, and integrations, but they cannot open billing settings or complete checkout. See the [roles and permissions matrix](/platform/account/roles-and-permissions#permissions-matrix) for the full breakdown.
+
+<Note>
+  If you need billing access, ask an organization **Owner** to update your role from **Settings → Team** in the dashboard. The Billing tab remains visible for all members, but only Owners can manage subscriptions.
+</Note>
 
 ## Plans at a glance
 
@@ -57,17 +61,17 @@ For full feature comparisons, visit the [Novu pricing page](https://novu.co/pric
 | **Team** | $250 | 250,000+ |
 | **Enterprise** | Custom | 10M+ (custom volume tiers) |
 
-Higher tiers add capabilities such as custom environments, longer activity feed retention, RBAC, SSO, and advanced compliance. Plan-specific feature gates are noted throughout the docs — for example, [custom environments](/platform/developer/environments), [webhooks](/platform/developer/webhooks), and [SAML SSO](/platform/account/sso).
+Higher tiers add capabilities such as custom environments, longer activity feed retention, RBAC, SSO, and advanced compliance. Plan-specific feature gates are noted throughout the docs - for example, [custom environments](/platform/developer/environments), [webhooks](/platform/developer/webhooks), and [SAML SSO](/platform/account/sso).
 
 ## Enterprise Edition on-premises
 
-In addition to Novu Cloud, Novu offers an **Enterprise Edition** that you can deploy on your own infrastructure. Enterprise on-premises includes the same capabilities available on Novu Cloud — SSO, RBAC, audit controls, compliance features, and priority support — while keeping data and workloads inside your environment.
+In addition to Novu Cloud, Novu offers an **Enterprise Edition** that you can deploy on your own infrastructure. Enterprise on-premises includes the same capabilities available on Novu Cloud - SSO, RBAC, audit controls, compliance features, and priority support - while keeping data and workloads inside your environment.
 
 This option is a strong fit when you need:
 
-- **Local data residency** — Keep subscriber data, notification content, and activity logs within your network or region.
-- **Strict compliance requirements** — Meet regulatory and security standards common in banking, finance, healthcare, government, and other regulated industries.
-- **Operational control** — Run Novu alongside your existing infrastructure, security policies, and deployment processes.
+- **Local data residency** - Keep subscriber data, notification content, and activity logs within your network or region.
+- **Strict compliance requirements** - Meet regulatory and security standards common in banking, finance, healthcare, government, and other regulated industries.
+- **Operational control** - Run Novu alongside your existing infrastructure, security policies, and deployment processes.
 
 Enterprise on-premises is licensed separately from Novu Cloud subscriptions. Pricing is based on your deployment size, support needs, and contract terms.
 
@@ -79,9 +83,11 @@ For a full comparison of Novu Cloud, Community self-hosted, and Enterprise optio
 
 ## Manage billing in the dashboard
 
-Organization Owners can manage subscriptions from **Settings** > **Billing** in the Novu dashboard, or go directly to [dashboard.novu.co/settings/billing](https://dashboard.novu.co/settings/billing).
+Organization Owners can manage subscriptions from **Settings → Billing** in the Novu dashboard, or go directly to [dashboard.novu.co/settings/billing](https://dashboard.novu.co/settings/billing).
 
-From billing settings you can:
+Members without the Owner role still see the **Billing** tab, but the page explains that billing is restricted and links to [team settings](https://dashboard.novu.co/settings/team) and the [roles and permissions](/platform/account/roles-and-permissions) docs.
+
+From billing settings, Owners can:
 
 - View your current plan and usage for the billing period
 - Upgrade or change subscription tiers
@@ -90,6 +96,12 @@ From billing settings you can:
 ## Frequently asked questions
 
 <AccordionGroup>
+  <Accordion title="Which roles can access billing?">
+    Only the **Owner** role can view billing, change plans, open the billing portal, and manage payment methods. **Admin**, **Author**, and **Viewer** roles do not have billing access.
+
+    If you upgraded to a paid plan but cannot see billing options, check your role on **Settings → Team**. An Owner can promote you to Owner if you should manage subscriptions. See [Roles and permissions](/platform/account/roles-and-permissions#permissions-matrix).
+  </Accordion>
+
   <Accordion title="How to purchase a paid plan?">
     Paid plans can be purchased from billing settings in the Novu dashboard. Click on the avatar icon in the top right corner of the dashboard, then click on **Billing Plans** in the left side menu to access the billing settings. From there, you can select the desired subscription tier and complete the purchase.
 
@@ -121,7 +133,7 @@ From billing settings you can:
   </Accordion>
 
   <Accordion title="Can I use Novu free of charge?">
-    Yes. Novu Cloud includes a Free plan with 10,000 workflow runs per month — no credit card required. You can also self-host the open-source Novu Project. See [Novu Cloud vs self-hosted](/community/self-hosted-and-novu-cloud).
+    Yes. Novu Cloud includes a Free plan with 10,000 workflow runs per month - no credit card required. You can also self-host the open-source Novu Project. See [Novu Cloud vs self-hosted](/community/self-hosted-and-novu-cloud).
   </Accordion>
 
   <Accordion title="Do you offer annual or volume discounts?">

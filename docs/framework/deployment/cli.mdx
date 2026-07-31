@@ -44,7 +44,17 @@ You may also see the following message printed alongside a successful sync:
 Could not discover agents for bridge URL sync (bridge may not expose agents yet).
 ```
 
-This is an informational notice, not an error. It only indicates that your bridge does not expose any [Agents](/agents/get-started/what-is-aci) at the sync endpoint. If you are only syncing workflows, you can safely ignore this message — your workflows and steps have still been synced.
+This is an informational notice, not an error. It only indicates that your bridge does not expose any [Agents](/agents/get-started/what-is-aci) at the sync endpoint. If you are only syncing workflows, you can safely ignore this message - your workflows and steps have still been synced.
+
+## View your synced bridge URL
+
+After a successful sync, the bridge URL is stored on the environment you synced to. In the Novu Dashboard, open that environment and click the glowing status orb in the top-right navigation bar to view or update the **Bridge Endpoint URL**.
+
+<Frame caption="The glowing orb in the Dashboard header shows the bridge URL for the selected environment.">
+  ![Bridge Endpoint URL popover in the Dashboard header](/images/framework/bridge-endpoint-url-dashboard.png)
+</Frame>
+
+For more detail, see [View your bridge URL](/framework/endpoint#view-your-bridge-url).
 
 ## Using vercel preview url
 

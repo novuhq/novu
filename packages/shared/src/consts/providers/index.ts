@@ -8,4 +8,5 @@ export * from './managed-agent-spec';
 export * from './mcp-servers';
 export * from './novu-internal-tools';
 export * from './provider.interface';
+export * from './provider-overrides';
 export * from './providers';

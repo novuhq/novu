@@ -1,5 +1,7 @@
 import jsonLogic, { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
+import { getNestedValue } from '../../utils/object';
+
 type RangeValidation =
   | {
       isValid: true;
@@ -445,4 +447,19 @@ export function extractFieldsFromRules(rules: RulesLogic<AdditionalOperation>): 
   collectVariables(rules);
 
   return Array.from(variables);
+}
+
+/**
+ * Resolves the actual values of every `{"var": path}` reference in a json-logic
+ * rule against the provided data, so condition evaluation results can be
+ * persisted with expected-vs-actual context without dumping the whole payload.
+ */
+export function extractRuleVariables(rules: RulesLogic<AdditionalOperation>, data: unknown): Record<string, unknown> {
+  const fields = extractFieldsFromRules(rules);
+
+  return fields.reduce<Record<string, unknown>>((acc, field) => {
+    acc[field] = getNestedValue(data as Record<string, unknown>, field);
+
+    return acc;
+  }, {});
 }

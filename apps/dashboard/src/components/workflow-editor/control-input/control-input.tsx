@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { type CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useMemo, useRef } from 'react';
@@ -9,7 +9,6 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { cn } from '@/utils/ui';
 import { LocalizationResourceEnum } from '../../../types/translations';
@@ -44,6 +43,7 @@ type ControlInputProps = {
   enableTranslations?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
+  completionSources?: CompletionSource[];
 };
 
 export function ControlInput({
@@ -62,6 +62,7 @@ export function ControlInput({
   enableTranslations = false,
   disabled = false,
   readOnly = false,
+  completionSources,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -109,6 +110,11 @@ export function ControlInput({
     return [translationPluginExtension];
   }, [translationPluginExtension]);
 
+  const mergedCompletionSources = useMemo(
+    () => [...(translationCompletionSource ?? []), ...(completionSources ?? [])],
+    [translationCompletionSource, completionSources]
+  );
+
   return (
     <VariableEditor
       viewRef={viewRef}
@@ -125,7 +131,7 @@ export function ControlInput({
       multiline={multiline}
       indentWithTab={indentWithTab}
       size={size}
-      completionSources={translationCompletionSource}
+      completionSources={mergedCompletionSources}
       isPayloadSchemaEnabled={isPayloadSchemaEnabled}
       isTranslationEnabled={shouldEnableTranslations}
       isContextEnabled={true}

@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { defineGraders, fail, judge, labeled, toolCallsNamed, transcriptText } from '../../core/graders.js';
 import { isForbiddenWatcherCommand } from '../../core/recorder.js';
 import type { GraderOutcome, RunResult } from '../../core/types.js';
@@ -125,9 +127,9 @@ export const catalog = {
         : fail(`description is missing all expected tokens: ${tokens.join(', ')}`);
     },
 
-  noConnectOnKeylessWhatsapp: (result: RunResult): GraderOutcome | 'pass' => {
+  noConnectOnKeylessTeams: (result: RunResult): GraderOutcome | 'pass' => {
     if (connectCommands(result).length > 0) {
-      return fail('ran a connect command on a keyless WhatsApp flow that should redirect to the dashboard');
+      return fail('ran a connect command on a keyless MS Teams flow that should redirect to the dashboard');
     }
 
     const text = transcriptText(result);
@@ -255,8 +257,118 @@ export const catalog = {
       : fail('bridge path connect command is missing --runtime ai-sdk or langchain');
   },
 
+  usedRuntime:
+    (expected: 'ai-sdk' | 'langchain') =>
+    (result: RunResult): GraderOutcome | 'pass' => {
+      const commands = connectCommands(result);
+
+      if (commands.length === 0) {
+        return fail(`expected connect with --runtime ${expected}`);
+      }
+
+      return commands.every((cmd) => new RegExp(`--runtime\\s+${expected}\\b`).test(cmd))
+        ? 'pass'
+        : fail(`connect command did not use --runtime ${expected}`);
+    },
+
+  usedLlmAuth:
+    (expected: string) =>
+    (result: RunResult): GraderOutcome | 'pass' => {
+      const commands = connectCommands(result);
+
+      if (commands.length === 0) {
+        return fail(`expected connect with --llm-auth ${expected}`);
+      }
+
+      return commands.every((cmd) => new RegExp(`--llm-auth\\s+${expected}\\b`).test(cmd))
+        ? 'pass'
+        : fail(`connect command did not use --llm-auth ${expected}`);
+    },
+
+  noLlmAuthFlag: (result: RunResult): GraderOutcome | 'pass' =>
+    connectCommands(result).every((cmd) => !/--llm-auth\b/.test(cmd))
+      ? 'pass'
+      : fail('passed --llm-auth on an existing-project reconcile (scaffold-only flag)'),
+
+  /** Empty-dir demo echo: omit --llm-auth or pass --llm-auth skip. Fail on real providers. */
+  usedDemoEchoLlmAuth: (result: RunResult): GraderOutcome | 'pass' => {
+    const commands = connectCommands(result);
+
+    if (commands.length === 0) {
+      return fail('expected a connect command');
+    }
+
+    for (const cmd of commands) {
+      const match = cmd.match(/--llm-auth\s+(\S+)/);
+
+      if (!match) {
+        continue;
+      }
+
+      if (match[1] === 'skip') {
+        continue;
+      }
+
+      return fail(`expected demo echo (omit --llm-auth or --llm-auth skip), got --llm-auth ${match[1]}`);
+    }
+
+    return 'pass';
+  },
+
+  wroteBridgeWiring:
+    (opts: { runtime: 'ai-sdk' | 'langchain'; agentId: string }) =>
+    (result: RunResult): GraderOutcome | 'pass' => {
+      const writePaths =
+        result.writtenFiles.length > 0
+          ? result.writtenFiles
+          : result.toolCalls
+              .filter((call) => call.name === 'Write')
+              .map((call) => String(call.args.file_path ?? ''))
+              .filter(Boolean);
+
+      if (writePaths.length === 0) {
+        return fail('never used Write to create bridge route or agent handler');
+      }
+
+      if (!result.projectRoot) {
+        return fail('missing projectRoot on RunResult; cannot re-read written files');
+      }
+
+      const importNeedle = opts.runtime === 'ai-sdk' ? '@novu/framework/ai-sdk' : '@novu/framework/langchain';
+      const agentCall = new RegExp(`agent\\(['\\\`]${opts.agentId}['\\\`]`);
+
+      const files = writePaths.map((filePath) => {
+        try {
+          return {
+            filePath,
+            content: fs.readFileSync(path.join(result.projectRoot, filePath), 'utf8'),
+          };
+        } catch {
+          return { filePath, content: '' };
+        }
+      });
+
+      const wroteRoute = files.some(
+        ({ filePath, content }) => /api\/novu\/route\.(ts|js|tsx)$/.test(filePath) || /serve\s*\(/.test(content)
+      );
+      const wroteAgent = files.some(({ content }) => content.includes(importNeedle) && agentCall.test(content));
+
+      if (!wroteRoute) {
+        return fail('did not Write a bridge route (app/api/novu/route.ts with serve())');
+      }
+
+      if (!wroteAgent) {
+        return fail(`did not Write an agent handler using ${importNeedle} for agent('${opts.agentId}')`);
+      }
+
+      return 'pass';
+    },
+
   readRequirementsFile: (result: RunResult): GraderOutcome | 'pass' => {
-    if (!/add an agent to my app/i.test(result.userPrompt)) {
+    if (
+      !/add an agent to my app/i.test(result.userPrompt) &&
+      !/wire.*(ai-?sdk|langchain)|langchain|ai sdk/i.test(result.userPrompt)
+    ) {
       return 'pass';
     }
 

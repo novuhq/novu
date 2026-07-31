@@ -45,6 +45,8 @@ export enum FeatureFlagsKeysEnum {
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
   /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
   IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
+  /** Chat channel Agent Card block editor in the workflow editor (server render path is always on and format-sniffed). */
+  IS_CHAT_BLOCK_EDITOR_ENABLED = 'IS_CHAT_BLOCK_EDITOR_ENABLED',
   IS_KEYLESS_AGENT_AI_ENABLED = 'IS_KEYLESS_AGENT_AI_ENABLED',
   /** When enabled, API-key auth on GET /v1/environments returns decrypted apiKeys for every environment in the org (pre-NV-7641 opt-in behavior). */
   IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED = 'IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED',
@@ -100,6 +102,14 @@ export enum FeatureFlagsKeysEnum {
   IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
   /** Enable Novu-managed demo Claude provider auto-provisioned on dev environments. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_DEMO_MANAGED_CLAUDE_ENABLED` when self-hosted. */
   IS_DEMO_MANAGED_CLAUDE_ENABLED = 'IS_DEMO_MANAGED_CLAUDE_ENABLED',
+  /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
+  IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
+  /**
+   * Enable the agent web-chat channel (subscriber `/v1/web-chat/*`, useAgentChat wayfinder).
+   * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
+   * `IS_AGENT_WEB_CHAT_ENABLED` when self-hosted (`VITE_IS_AGENT_WEB_CHAT_ENABLED` for dashboard).
+   */
+  IS_AGENT_WEB_CHAT_ENABLED = 'IS_AGENT_WEB_CHAT_ENABLED',
   /** Enable the "What's next" section on the agent overview. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_WHATS_NEXT_ENABLED` when self-hosted. */
   IS_AGENT_WHATS_NEXT_ENABLED = 'IS_AGENT_WHATS_NEXT_ENABLED',
   /** Enable the MS Teams subscriber-rollout "What's next" guide (distribute the bot + connect end users) and its post-connect "Continue" CTA. When off, MS Teams shows the generic continue note and hides the rollout guide. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED` when self-hosted. */
@@ -110,6 +120,11 @@ export enum FeatureFlagsKeysEnum {
   IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
   /** Enable Slack Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_SLACK_QUICK_SETUP_ENABLED` when self-hosted. */
   IS_SLACK_QUICK_SETUP_ENABLED = 'IS_SLACK_QUICK_SETUP_ENABLED',
+  /**
+   * Enable NovuCopilot on Slack — the Novu-hosted Slack agent that lets a customer create Novu
+   * workflows by chatting in Slack.
+   */
+  IS_NOVU_COPILOT_SLACK_ENABLED = 'IS_NOVU_COPILOT_SLACK_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
   /** Enable Domain Connect auto-configuration for inbound email domains. */
@@ -140,6 +155,52 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
+  /**
+   * Stop duplicating the trigger payload onto every job and every non-in-app
+   * message. When enabled, new jobs and email/SMS/push messages no longer
+   * persist `payload`; readers resolve it from the parent notification via
+   * `_notificationId`. In-app messages keep their payload for legacy feed
+   * filtering. Read paths handle both shapes regardless of this flag, so it can
+   * be toggled off at any time (forward-only, no data migration). Create the
+   * boolean in LaunchDarkly for cloud, or set `IS_PAYLOAD_DEDUP_ENABLED` when
+   * self-hosted.
+   */
+  IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
+  /**
+   * Emit a "step conditions matched" execution detail when a step's conditions
+   * pass and the step executes (v2 skip conditions, HTTP Request steps, and
+   * legacy v1 filters including webhook filters). When off, condition results
+   * are only persisted when a step is skipped. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED`
+   * when self-hosted.
+   */
+  IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED = 'IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED',
+  /**
+   * Stop embedding the fully populated workflow step (message template
+   * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
+   * schemas, etc.) onto every job's `step`. When enabled, new jobs persist a
+   * lean step (ids, filters, metadata, a `{ _id, type }` template stub) and the
+   * worker rehydrates the full template at execution time (see
+   * StepTemplateHydrationService for the resolution/fallback order). Jobs
+   * written while the flag is off (and all pre-existing jobs) carry the full
+   * snapshot and skip hydration entirely, so the flag is forward-only and safe
+   * to toggle off at any time (no data migration). Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_JOB_STEP_DEDUP_ENABLED` when self-hosted.
+   */
+  IS_JOB_STEP_DEDUP_ENABLED = 'IS_JOB_STEP_DEDUP_ENABLED',
+  /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
+  IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
+  /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
+  IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
+
+  /**
+   * When true (default), the deprecated per-subscriber chat OAuth routes require
+   * HMAC to be enabled on the Slack integration and a valid subscriber HMAC hash.
+   * Target legacy organizations to false in LaunchDarkly so they can keep the
+   * historical behavior during migration. Self-hosted: set
+   * `IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED=false` to disable enforcement.
+   */
+  IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

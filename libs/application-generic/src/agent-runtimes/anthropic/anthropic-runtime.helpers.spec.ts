@@ -1,10 +1,17 @@
-import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA } from '@novu/shared';
+import {
+  CLAUDE_BUILTIN_TOOLS,
+  isNovuInternalToolName,
+  NOVU_RESOLVE_SCHEMA,
+  NOVU_TOOL_CATALOG_SCHEMA,
+} from '@novu/shared';
 import { expect } from 'chai';
 import {
   buildPlatformToolsPayload,
   buildToolsPayload,
+  ensureSkillRequiredTools,
   MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
   mapToolset,
+  SKILL_REQUIRED_BUILTIN_TOOL,
 } from './anthropic-runtime.helpers';
 
 describe('mapToolset', () => {
@@ -67,13 +74,57 @@ describe('buildToolsPayload', () => {
     const toolset = payload.find((entry) => entry.type === 'agent_toolset_20260401') as {
       configs: Array<{ name: string; enabled: boolean }>;
     };
-    const platformTool = payload.find((entry) => entry.type === 'custom');
+    const platformTools = payload.filter((entry) => entry.type === 'custom');
 
     expect(toolset.configs.every((c) => c.enabled === false)).to.equal(true);
-    expect(platformTool).to.deep.equal({ type: 'custom', ...NOVU_TOOLS_SCHEMA });
+    expect(platformTools).to.deep.equal([
+      { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+      { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+    ]);
   });
 
-  it('buildPlatformToolsPayload returns novu_tools only', () => {
-    expect(buildPlatformToolsPayload()).to.deep.equal([{ type: 'custom', ...NOVU_TOOLS_SCHEMA }]);
+  it('buildPlatformToolsPayload returns novu_tool_catalog and novu_resolve', () => {
+    expect(buildPlatformToolsPayload()).to.deep.equal([
+      { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+      { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+    ]);
+  });
+
+  it('isNovuInternalToolName recognizes platform tools only', () => {
+    expect(isNovuInternalToolName('novu_tool_catalog')).to.equal(true);
+    expect(isNovuInternalToolName('novu_tools')).to.equal(true);
+    expect(isNovuInternalToolName('novu_resolve')).to.equal(true);
+    expect(isNovuInternalToolName('customer_tool')).to.equal(false);
+    expect(isNovuInternalToolName(undefined)).to.equal(false);
+  });
+
+  it('force-enables read when hasSkills is true', () => {
+    const payload = buildToolsPayload(['web_search'], undefined, true);
+    const toolset = payload[0] as { configs: Array<{ name: string; enabled: boolean }> };
+    const readConfig = toolset.configs.find((c) => c.name === SKILL_REQUIRED_BUILTIN_TOOL);
+
+    expect(readConfig?.enabled).to.equal(true);
+  });
+
+  it('does not enable read when hasSkills is false', () => {
+    const payload = buildToolsPayload(['web_search'], undefined, false);
+    const toolset = payload[0] as { configs: Array<{ name: string; enabled: boolean }> };
+    const readConfig = toolset.configs.find((c) => c.name === SKILL_REQUIRED_BUILTIN_TOOL);
+
+    expect(readConfig?.enabled).to.equal(false);
+  });
+});
+
+describe('ensureSkillRequiredTools', () => {
+  it('appends read when skills are present and read is missing', () => {
+    expect(ensureSkillRequiredTools(['web_search'], true)).to.deep.equal(['web_search', 'read']);
+  });
+
+  it('is idempotent when read is already selected', () => {
+    expect(ensureSkillRequiredTools(['read', 'web_search'], true)).to.deep.equal(['read', 'web_search']);
+  });
+
+  it('returns the input unchanged when skills are absent', () => {
+    expect(ensureSkillRequiredTools(['web_search'], false)).to.deep.equal(['web_search']);
   });
 });

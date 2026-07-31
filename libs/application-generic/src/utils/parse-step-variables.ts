@@ -12,6 +12,8 @@ export type ParsedVariables = {
   namespaces: LiquidVariable[];
 };
 
+const MAX_SCHEMA_TRAVERSAL_DEPTH = 10;
+
 /**
  * Parse JSON Schema and extract variables for Liquid autocompletion.
  * @param schema - The JSON Schema to parse.
@@ -24,8 +26,10 @@ export function parseStepVariables(schema: JSONSchemaDto): ParsedVariables {
     namespaces: [],
   };
 
-  function extractProperties(obj: JSONSchemaDto, path = ''): void {
-    if (typeof obj === 'boolean') return;
+  function extractProperties(obj: JSONSchemaDto, path = '', depth = 0): void {
+    if (typeof obj === 'boolean' || depth >= MAX_SCHEMA_TRAVERSAL_DEPTH) {
+      return;
+    }
 
     if (obj.type === 'object') {
       // Handle object with additionalProperties
@@ -46,14 +50,14 @@ export function parseStepVariables(schema: JSONSchemaDto): ParsedVariables {
               name: fullPath,
             });
             if (value.properties) {
-              extractProperties({ type: JsonSchemaTypeEnum.OBJECT, properties: value.properties }, fullPath);
+              extractProperties({ type: JsonSchemaTypeEnum.OBJECT, properties: value.properties }, fullPath, depth + 1);
             }
             if (value.items) {
               const items = Array.isArray(value.items) ? value.items[0] : value.items;
-              extractProperties(items, `${fullPath}.0`);
+              extractProperties(items, `${fullPath}.0`, depth + 1);
             }
           } else if (value.type === 'object') {
-            extractProperties(value, fullPath);
+            extractProperties(value, fullPath, depth + 1);
           } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
             result.primitives.push({
               name: fullPath,
@@ -67,15 +71,15 @@ export function parseStepVariables(schema: JSONSchemaDto): ParsedVariables {
     ['allOf', 'anyOf', 'oneOf'].forEach((combiner) => {
       if (Array.isArray(obj[combiner as keyof typeof obj])) {
         for (const subSchema of obj[combiner as keyof typeof obj] as JSONSchemaDto[]) {
-          extractProperties(subSchema, path);
+          extractProperties(subSchema, path, depth + 1);
         }
       }
     });
 
     // Handle conditional schemas (if/then/else)
-    if (obj.if) extractProperties(obj.if, path);
-    if (obj.then) extractProperties(obj.then, path);
-    if (obj.else) extractProperties(obj.else, path);
+    if (obj.if) extractProperties(obj.if, path, depth + 1);
+    if (obj.then) extractProperties(obj.then, path, depth + 1);
+    if (obj.else) extractProperties(obj.else, path, depth + 1);
   }
 
   extractProperties(schema);

@@ -4,12 +4,14 @@ import {
   FeatureFlagsService,
   getStandardWorkerOptions,
   IStandardDataDto,
+  isWebhookFilterSsrfBlockedError,
   Job,
   PinoLogger,
   SqsService,
   StandardWorkerService,
   Store,
   storage,
+  UnrecoverableError,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
@@ -186,6 +188,10 @@ export class StandardWorker extends StandardWorkerService {
                     `Failed to run the job ${minimalJobData.jobId} during worker processing`,
                     LOG_CONTEXT
                   );
+
+                  if (isWebhookFilterSsrfBlockedError(error)) {
+                    return reject(new UnrecoverableError((error as Error).message));
+                  }
 
                   return reject(error);
                 })

@@ -21,7 +21,7 @@ import {
   SLACK_AGENT_OAUTH_SCOPES,
 } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
-import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
+import { ensureSubscriberProvisioned } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
@@ -33,6 +33,8 @@ export type StateData = {
   identifier?: string;
   subscriberId?: string;
   context?: ContextPayload;
+  /** Trusted, session-validated context keys. When present the callback persists these directly. */
+  contextKeys?: string[];
   environmentId: string;
   organizationId: string;
   integrationIdentifier: string;
@@ -81,7 +83,8 @@ export class GenerateSlackOauthUrl {
       command.connectionIdentifier,
       command.mode,
       command.connectionMode,
-      command.autoLinkUser
+      command.autoLinkUser,
+      command.contextKeys
     );
 
     const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
@@ -117,7 +120,7 @@ export class GenerateSlackOauthUrl {
   }
 
   private validateSubscriberIdOrContext(command: GenerateSlackOauthUrlCommand): void {
-    const { subscriberId, scope, connectionMode, context } = command;
+    const { subscriberId, scope, connectionMode, context, contextKeys } = command;
 
     if (scope?.includes('incoming-webhook')) {
       if (!subscriberId) {
@@ -125,7 +128,7 @@ export class GenerateSlackOauthUrl {
       }
     }
 
-    validateConnectionMode({ connectionMode, subscriberId, context });
+    validateConnectionMode({ connectionMode, subscriberId, context, contextKeys });
   }
 
   private async assertResourceExists(command: GenerateSlackOauthUrlCommand) {
@@ -135,7 +138,7 @@ export class GenerateSlackOauthUrl {
       return;
     }
 
-    await ensureConnectDashboardSubscriber({
+    await ensureSubscriberProvisioned({
       subscriberId,
       environmentId,
       organizationId,
@@ -174,14 +177,20 @@ export class GenerateSlackOauthUrl {
     connectionIdentifier?: string,
     mode?: OAuthMode,
     connectionMode?: ConnectionMode,
-    autoLinkUser?: boolean
+    autoLinkUser?: boolean,
+    contextKeys?: string[]
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
+
+    // A session-validated context is carried as trusted keys; drop the raw payload
+    // so a mismatched body.context can never ride along in the signed state.
+    const hasContextKeys = Boolean(contextKeys?.length);
 
     const stateData: StateData = {
       identifier: connectionIdentifier,
       subscriberId,
-      context,
+      context: hasContextKeys ? undefined : context,
+      contextKeys: hasContextKeys ? contextKeys : undefined,
       environmentId: _environmentId,
       organizationId: _organizationId,
       integrationIdentifier: identifier,
@@ -202,7 +211,20 @@ export class GenerateSlackOauthUrl {
 
     const base64EncodedState = encodeOAuthState(payload, signature);
 
-    this.logger.info({ stateData, base64EncodedState }, 'Slack OAuth secure state generated');
+    // Never log the full state or context — it can carry tenant identifiers and
+    // is signing material. Log only non-sensitive routing fields for tracing.
+    this.logger.info(
+      {
+        integrationIdentifier: stateData.integrationIdentifier,
+        providerId: stateData.providerId,
+        mode: stateData.mode,
+        connectionMode: stateData.connectionMode,
+        autoLinkUser: stateData.autoLinkUser,
+        hasContext: Boolean(stateData.context),
+        hasContextKeys: Boolean(stateData.contextKeys?.length),
+      },
+      'Slack OAuth secure state generated'
+    );
 
     return base64EncodedState;
   }
