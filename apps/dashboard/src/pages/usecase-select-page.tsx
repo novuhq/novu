@@ -2,7 +2,7 @@ import { ProductUseCasesEnum } from '@novu/shared';
 import { Bot, ChevronDown, Mail, MessageCircle, MoreHorizontal, Settings, Smartphone } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { RiArrowLeftSLine, RiCheckLine } from 'react-icons/ri';
+import { RiCheckLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { Notification5Fill } from '@/components/icons/notification-5-fill';
@@ -10,6 +10,7 @@ import { AgentPreviewFeatureList } from '@/components/onboarding/agent-preview-f
 import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
 import { OnboardingContinueFooter } from '@/components/onboarding/onboarding-continue-footer';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
+import { OnboardingStepHeader } from '@/components/onboarding/step-header';
 import { PageMeta } from '@/components/page-meta';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
@@ -327,10 +328,7 @@ export function UsecaseSelectPage() {
   const leftContent = (
     <>
       <PageMeta title="Get started with Novu" />
-      <div className="mb-5 flex items-center gap-0.5">
-        <RiArrowLeftSLine className="text-text-sub size-4" />
-        <span className="text-text-sub text-xs">1/3</span>
-      </div>
+      <OnboardingStepHeader current={1} />
       <h1 className="text-foreground text-xl font-normal text-label-lg">Get started with Novu</h1>
       <p className="text-text-soft text-label-xs font-normal mt-2">
         Pick what you would like to start with, you can always set up the other path anytime.

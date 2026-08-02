@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { type ReactNode, useEffect, useId, useState } from 'react';
-import { RiArrowLeftSLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiExpandUpDownLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { AgentPreviewFeatureList } from '@/components/onboarding/agent-preview-feature-list';
 import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
@@ -12,16 +12,19 @@ import {
   AGENT_CHANNEL_OPTIONS,
   AGENT_READINESS_OPTIONS,
   type AgentAudience,
+  type AgentChannel,
   type AgentReadiness,
   type PersonalizeOption,
 } from '@/components/onboarding/personalize/personalize-options';
+import { OnboardingStepHeader } from '@/components/onboarding/step-header';
 import { PageMeta } from '@/components/page-meta';
 import { Label } from '@/components/primitives/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { beginOnboardingProvisioning } from '@/utils/connect/onboarding-session';
+import { beginOnboardingProvisioning, isOnboardingProvisioningActive } from '@/utils/connect/onboarding-session';
+import { readPendingProductType } from '@/utils/product-type-pending';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -79,7 +82,13 @@ function QuestionSelect<TValue extends string>({
   );
 }
 
-function ChannelQuestion({ selected, onToggle }: { selected: string[]; onToggle: (value: string) => void }) {
+function ChannelQuestion({
+  selected,
+  onToggle,
+}: {
+  selected: AgentChannel[];
+  onToggle: (value: AgentChannel) => void;
+}) {
   const labelId = useId();
 
   return (
@@ -111,10 +120,16 @@ export function AgentsPersonalizePage() {
 
   const [readiness, setReadiness] = useState<AgentReadiness | undefined>(undefined);
   const [audience, setAudience] = useState<AgentAudience | undefined>(undefined);
-  const [channels, setChannels] = useState<string[]>([]);
+  const [channels, setChannels] = useState<AgentChannel[]>([]);
 
-  // Clears any loader left running by a preceding step — this page has no data dependency.
-  useOnboardingProvisioningDismiss({ isReady: true, fallbackVariant: 'agents' });
+  // `product_type=agents` signups land here without ever seeing the picker, so sending them "back"
+  // to it would push them into a screen that defaults to Inbox and reverses their choice.
+  const [canGoBack] = useState(() => readPendingProductType() !== 'agents');
+  // Only wind down a loader we inherited. Arming this for the loader `handleContinue` starts would
+  // race the navigation and could clear it while this page is still mounted.
+  const [inheritedLoader] = useState(isOnboardingProvisioningActive);
+
+  useOnboardingProvisioningDismiss({ isReady: inheritedLoader, fallbackVariant: 'agents' });
 
   useEffect(() => {
     telemetry(TelemetryEvent.ONBOARDING_PERSONALIZE_PAGE_VIEWED);
@@ -130,10 +145,12 @@ export function AgentsPersonalizePage() {
     telemetry(TelemetryEvent.ONBOARDING_PERSONALIZE_ANSWERED, { question: 'agent_audience', value });
   };
 
-  const handleChannelToggle = (value: string) => {
+  const handleChannelToggle = (value: AgentChannel) => {
     const isSelected = channels.includes(value);
 
-    setChannels(isSelected ? channels.filter((item) => item !== value) : [...channels, value]);
+    setChannels((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value]
+    );
     telemetry(TelemetryEvent.ONBOARDING_PERSONALIZE_ANSWERED, {
       question: 'agent_channels',
       value,
@@ -152,25 +169,21 @@ export function AgentsPersonalizePage() {
     void navigate(ROUTES.AGENTS_SETUP);
   };
 
-  if (!areAgentsAvailable) {
-    return <Navigate to={ROUTES.INBOX_USECASE} replace />;
-  }
-
+  // Provisioning is checked first: the agents flag reads false until LaunchDarkly resolves against
+  // the new org, so redirecting ahead of the loader could yank the user into the inbox flow while
+  // the agents loader is still on screen.
   if (provisioningActive) {
     return null;
+  }
+
+  if (!areAgentsAvailable) {
+    return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 
   const leftContent = (
     <>
       <PageMeta title={PAGE_TITLE} />
-      <button
-        type="button"
-        onClick={() => navigate(ROUTES.USECASE_SELECT)}
-        className="mb-5 flex cursor-pointer items-center gap-0.5"
-      >
-        <RiArrowLeftSLine className="text-text-sub size-4" />
-        <span className="text-text-sub text-xs">2/3</span>
-      </button>
+      <OnboardingStepHeader current={2} onBack={canGoBack ? () => navigate(ROUTES.USECASE_SELECT) : undefined} />
 
       <h1 className="text-foreground text-label-lg text-xl font-normal">{PAGE_TITLE}</h1>
       <p className="text-text-soft text-label-xs mt-2 max-w-[340px] font-normal">

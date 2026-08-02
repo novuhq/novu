@@ -1,6 +1,7 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { Laptop, Mails } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent-channel-branding';
 
 /**
  * Answers to the onboarding personalize step. The values are stable identifiers reported to
@@ -10,6 +11,9 @@ import type { ReactNode } from 'react';
 export type AgentReadiness = 'live_in_production' | 'in_development' | 'planned_not_started' | 'just_exploring';
 
 export type AgentAudience = 'customers_end_users' | 'employees_internal_teams' | 'both' | 'not_sure_yet';
+
+/** Channel answers carry real provider ids, so they join against the rest of the agent funnel. */
+export type AgentChannel = ChatProviderIdEnum | EmailProviderIdEnum;
 
 export type PersonalizeOption<TValue extends string> = {
   value: TValue;
@@ -31,20 +35,24 @@ export const AGENT_AUDIENCE_OPTIONS: PersonalizeOption<AgentAudience>[] = [
 ];
 
 export type ChannelOption = {
-  /** Real provider id, so this answer joins against the rest of the agent funnel. */
-  value: string;
+  value: AgentChannel;
   label: string;
   icon: ReactNode;
   /** Brand colour the chip tints itself with while selected. */
   accent: string;
 };
 
-const providerIcon = (file: string) => (
-  <img src={`/images/providers/light/square/${file}.svg`} alt="" className="size-4" />
+const providerIcon = (providerId: AgentChannel) => (
+  <img
+    src={`/images/providers/light/square/${getAgentChannelIconFileName(providerId)}.svg`}
+    alt=""
+    className="size-4"
+  />
 );
 
 export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
   {
+    // Agent email and web chat have no square brand asset — they use a generic glyph, per the design.
     value: EmailProviderIdEnum.NovuAgent,
     label: 'Email',
     icon: <Mails className="size-4" strokeWidth={1.5} />,
@@ -53,38 +61,37 @@ export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
   {
     value: ChatProviderIdEnum.Slack,
     label: 'Slack',
-    icon: providerIcon('slack'),
+    icon: providerIcon(ChatProviderIdEnum.Slack),
     accent: '#2eb67d',
   },
   {
     value: ChatProviderIdEnum.MsTeams,
     label: 'MS Teams',
-    icon: providerIcon('msteams'),
+    icon: providerIcon(ChatProviderIdEnum.MsTeams),
     accent: '#6264a7',
   },
   {
     value: ChatProviderIdEnum.WhatsAppBusiness,
     label: 'WhatsApp',
-    icon: providerIcon('whatsapp-business'),
+    icon: providerIcon(ChatProviderIdEnum.WhatsAppBusiness),
     accent: '#25d366',
   },
   {
-    // Sendblue is branded as iMessage on user-facing surfaces, matching the channel carousel.
     value: ChatProviderIdEnum.Sendblue,
-    label: 'iMessage',
-    icon: providerIcon('imessages'),
+    label: AGENT_IMESSAGE_LABEL,
+    icon: providerIcon(ChatProviderIdEnum.Sendblue),
     accent: '#34c759',
   },
   {
     value: ChatProviderIdEnum.Telegram,
     label: 'Telegram',
-    icon: providerIcon('telegram'),
+    icon: providerIcon(ChatProviderIdEnum.Telegram),
     accent: '#229ed9',
   },
   {
     value: ChatProviderIdEnum.Discord,
     label: 'Discord',
-    icon: providerIcon('discord'),
+    icon: providerIcon(ChatProviderIdEnum.Discord),
     accent: '#5865f2',
   },
   {

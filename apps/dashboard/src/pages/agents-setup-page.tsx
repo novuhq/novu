@@ -2,7 +2,7 @@ import { ProductUseCasesEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AgentResponse, getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
@@ -14,6 +14,7 @@ import { getConnectorById } from '@/components/onboarding/connect-agent/connecto
 // import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
+import { OnboardingStepHeader } from '@/components/onboarding/step-header';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { useAuth } from '@/context/auth/hooks';
@@ -102,25 +103,6 @@ function ShowAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
         </button>
       </div>
     </div>
-  );
-}
-
-type StepHeaderProps = {
-  current: 1 | 2 | 3 | undefined;
-  onBack?: () => void;
-};
-
-function StepHeader({ current, onBack }: StepHeaderProps) {
-  return (
-    <button
-      type="button"
-      onClick={onBack}
-      disabled={!onBack}
-      className="mb-5 flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
-    >
-      <RiArrowLeftSLine className="text-text-sub size-4" />
-      {typeof current === 'number' ? <span className="text-text-sub text-xs">{current}/3</span> : null}
-    </button>
   );
 }
 
@@ -330,7 +312,7 @@ export function AgentsSetupPage() {
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      <StepHeader current={3} onBack={handleBackStep} />
+      <OnboardingStepHeader current={3} onBack={handleBackStep} />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
