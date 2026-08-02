@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useId, useState } from 'react';
 import { RiArrowLeftSLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { AgentPreviewFeatureList } from '@/components/onboarding/agent-preview-feature-list';
@@ -51,11 +51,20 @@ function QuestionSelect<TValue extends string>({
   value: TValue | undefined;
   onChange: (value: TValue) => void;
 }) {
+  // The trigger is a button, not a form control, so the label has to be associated explicitly.
+  const labelId = useId();
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-text-sub font-normal">{label}</Label>
+    <div className="flex max-w-[350px] flex-col gap-1.5">
+      <Label id={labelId} className="text-text-sub cursor-default font-normal">
+        {label}
+      </Label>
       <Select value={value} onValueChange={(next) => onChange(next as TValue)}>
-        <SelectTrigger size="2xs" rightIcon={<RiExpandUpDownLine className="text-text-soft size-4" />}>
+        <SelectTrigger
+          size="2xs"
+          aria-labelledby={labelId}
+          rightIcon={<RiExpandUpDownLine className="text-text-soft size-4" />}
+        >
           <SelectValue placeholder="Select an option" />
         </SelectTrigger>
         <SelectContent>
@@ -67,6 +76,30 @@ function QuestionSelect<TValue extends string>({
         </SelectContent>
       </Select>
     </div>
+  );
+}
+
+function ChannelQuestion({ selected, onToggle }: { selected: string[]; onToggle: (value: string) => void }) {
+  const labelId = useId();
+
+  return (
+    <fieldset aria-labelledby={labelId} className="flex flex-col gap-2 border-0 p-0">
+      <Label id={labelId} className="text-text-sub cursor-default font-normal">
+        Where do you want to connect your agent?
+      </Label>
+      <div className="flex max-w-[400px] flex-wrap gap-2">
+        {AGENT_CHANNEL_OPTIONS.map((option) => (
+          <ChannelChip
+            key={option.value}
+            label={option.label}
+            icon={option.icon}
+            accent={option.accent}
+            isSelected={selected.includes(option.value)}
+            onToggle={() => onToggle(option.value)}
+          />
+        ))}
+      </div>
+    </fieldset>
   );
 }
 
@@ -100,7 +133,7 @@ export function AgentsPersonalizePage() {
   const handleChannelToggle = (value: string) => {
     const isSelected = channels.includes(value);
 
-    setChannels((current) => (isSelected ? current.filter((item) => item !== value) : [...current, value]));
+    setChannels(isSelected ? channels.filter((item) => item !== value) : [...channels, value]);
     telemetry(TelemetryEvent.ONBOARDING_PERSONALIZE_ANSWERED, {
       question: 'agent_channels',
       value,
@@ -144,7 +177,7 @@ export function AgentsPersonalizePage() {
         Tell us about the agent you want to connect and how it should reach users.
       </p>
 
-      <div className="mt-6 flex max-w-[350px] flex-col gap-7">
+      <div className="mt-6 flex max-w-[400px] flex-col gap-7">
         <QuestionSelect
           label="Do you already have an agent to connect?"
           options={AGENT_READINESS_OPTIONS}
@@ -165,21 +198,7 @@ export function AgentsPersonalizePage() {
 
         {audience ? (
           <RevealedField>
-            <div className="flex flex-col gap-2">
-              <Label className="text-text-sub font-normal">Where do you want to connect your agent?</Label>
-              <div className="flex max-w-[400px] flex-wrap gap-2">
-                {AGENT_CHANNEL_OPTIONS.map((option) => (
-                  <ChannelChip
-                    key={option.value}
-                    label={option.label}
-                    icon={option.icon}
-                    accent={option.accent}
-                    isSelected={channels.includes(option.value)}
-                    onToggle={() => handleChannelToggle(option.value)}
-                  />
-                ))}
-              </div>
-            </div>
+            <ChannelQuestion selected={channels} onToggle={handleChannelToggle} />
           </RevealedField>
         ) : null}
       </div>
