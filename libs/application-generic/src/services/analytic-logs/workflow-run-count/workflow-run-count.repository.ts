@@ -172,6 +172,47 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     };
   }
 
+  async getPlatformUsageByDateRange(
+    startDate: Date,
+    endDate: Date,
+    organizationId?: string
+  ): Promise<Array<{ organization_id: string; count: string }>> {
+    const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
+
+    const query = `
+      SELECT
+        organization_id,
+        sum(count) as count
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE
+        date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_status_processing'
+        ${organizationFilter}
+      GROUP BY organization_id
+      ORDER BY organization_id
+    `;
+
+    const params: Record<string, unknown> = {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+
+    if (organizationId) {
+      params.organizationId = organizationId;
+    }
+
+    const result = await this.clickhouseService.query<{
+      organization_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
   async getActiveOrganizationIds(
     startDate: Date,
     endDate: Date,
