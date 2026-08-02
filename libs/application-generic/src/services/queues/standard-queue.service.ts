@@ -54,7 +54,7 @@ export class StandardQueueService extends QueueBaseService {
     const organization = await this._organizationRepository.findOne(
       { _id: data.data._organizationId },
       'apiServiceLevel',
-      { readPreference: 'secondaryPreferred' }
+      { readPreference: 'primary' }
     );
     if (!organization) {
       throw new Error(`Organization ${data.data._organizationId} not found`);
