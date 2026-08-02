@@ -106,7 +106,7 @@ function ShowAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
 }
 
 type StepHeaderProps = {
-  current: 1 | 2 | undefined;
+  current: 1 | 2 | 3 | undefined;
   onBack?: () => void;
 };
 
@@ -119,7 +119,7 @@ function StepHeader({ current, onBack }: StepHeaderProps) {
       className="mb-5 flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
     >
       <RiArrowLeftSLine className="text-text-sub size-4" />
-      {typeof current === 'number' ? <span className="text-text-sub text-xs">{current}/2</span> : null}
+      {typeof current === 'number' ? <span className="text-text-sub text-xs">{current}/3</span> : null}
     </button>
   );
 }
@@ -299,7 +299,7 @@ export function AgentsSetupPage() {
   }, [activeAgent, agentRoutes.detailsTab, currentEnvironment?.slug, navigate]);
 
   const handleBackStep = useCallback(() => {
-    void navigate(ROUTES.USECASE_SELECT);
+    void navigate(ROUTES.AGENTS_PERSONALIZE);
   }, [navigate]);
 
   if (!areAgentsAvailable) {
@@ -330,7 +330,7 @@ export function AgentsSetupPage() {
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      <StepHeader current={2} onBack={handleBackStep} />
+      <StepHeader current={3} onBack={handleBackStep} />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
