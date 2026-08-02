@@ -172,6 +172,12 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     };
   }
 
+  /**
+   * Platform usage from the `workflow_run_count` MV, bucketed by calendar day.
+   * Unlike `WorkflowRunRepository.getPlatformUsageByDateRange` (half-open DateTime64),
+   * both bounds are truncated to UTC `YYYY-MM-DD` and applied inclusively:
+   * `date >= startDay AND date <= endDay`.
+   */
   async getPlatformUsageByDateRange(
     startDate: Date,
     endDate: Date,
