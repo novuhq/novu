@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { type ReactNode, useEffect, useId, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AgentOnboardingPreview } from '@/components/onboarding/agent-onboarding-preview';
 import { OnboardingContinueFooter } from '@/components/onboarding/onboarding-continue-footer';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
@@ -29,7 +29,15 @@ import { readPendingProductType } from '@/utils/product-type-pending';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
-const AGENTS_SETUP_FROM_PERSONALIZE = { from: 'personalize' } as const;
+type PersonalizeLocationState = {
+  /** Set when setup returns a `product_type=agents` user whose pending marker was already cleared. */
+  suppressBack?: boolean;
+};
+
+type SetupHandoffState = {
+  from: 'personalize';
+  suppressPersonalizeBack: boolean;
+};
 
 const PAGE_TITLE = 'Help us personalize your experience';
 
@@ -120,6 +128,7 @@ export function AgentsPersonalizePage() {
   const isLaunchDarklyReady = useLaunchDarklyReady();
   const { currentOrganization } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const telemetry = useTelemetry();
   const provisioningActive = useOnboardingProvisioningActive();
 
@@ -128,9 +137,12 @@ export function AgentsPersonalizePage() {
   const [channels, setChannels] = useState<AgentChannel[]>([]);
 
   // `product_type=agents` signups land here without ever seeing the picker, so sending them "back"
-  // to it would push them into a screen that defaults to Inbox and reverses their choice.
+  // to it would push them into a screen that defaults to Inbox and reverses their choice. Setup may
+  // clear the pending marker before returning here — `suppressBack` keeps that provenance.
   const [pendingAgentsProduct] = useState(() => readPendingProductType() === 'agents');
-  const canGoBack = !pendingAgentsProduct;
+  const suppressBack =
+    pendingAgentsProduct || (location.state as PersonalizeLocationState | null)?.suppressBack === true;
+  const canGoBack = !suppressBack;
   // Only wind down a loader we inherited. Arming this for the loader `handleContinue` starts would
   // race the navigation and could clear it while this page is still mounted.
   const [inheritedLoader] = useState(isOnboardingProvisioningActive);
@@ -172,7 +184,11 @@ export function AgentsPersonalizePage() {
     });
     // The agents setup page waits on the org, so the loader plays across that hand-off.
     beginOnboardingProvisioning('agents');
-    void navigate(ROUTES.AGENTS_SETUP, { state: AGENTS_SETUP_FROM_PERSONALIZE });
+    const setupState: SetupHandoffState = {
+      from: 'personalize',
+      suppressPersonalizeBack: suppressBack,
+    };
+    void navigate(ROUTES.AGENTS_SETUP, { state: setupState });
   };
 
   // Hold before redirecting: the agents flag defaults to false until LaunchDarkly finishes its

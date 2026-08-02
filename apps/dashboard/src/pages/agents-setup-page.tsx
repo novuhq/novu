@@ -116,7 +116,9 @@ export function AgentsSetupPage() {
   const agentRoutes = useAgentRoutes();
   const updateProductUseCases = useUpdateProductUseCases();
   const productUseCasesPersistedRef = useRef(false);
-  const arrivedFromPersonalize = (location.state as { from?: string } | null)?.from === 'personalize';
+  const setupArrivalState = location.state as { from?: string; suppressPersonalizeBack?: boolean } | null;
+  const arrivedFromPersonalize = setupArrivalState?.from === 'personalize';
+  const suppressPersonalizeBack = setupArrivalState?.suppressPersonalizeBack === true;
 
   const [searchParams] = useSearchParams();
   const agentTemplateId = useMemo(
@@ -285,9 +287,13 @@ export function AgentsSetupPage() {
   const handleBackStep = useCallback(() => {
     // Onboarding funnel: personalize stamps router state so back returns to the survey.
     // Welcome / agents-list entry points have no stamp — restore the previous screen instead of
-    // forcing users through a fresh personalize step.
+    // forcing users through a fresh personalize step. Carry `suppressBack` so deeplinked agents
+    // signups don't regain a path into the Inbox-default usecase picker after setup clears the
+    // pending product marker.
     if (arrivedFromPersonalize) {
-      void navigate(ROUTES.AGENTS_PERSONALIZE);
+      void navigate(ROUTES.AGENTS_PERSONALIZE, {
+        state: suppressPersonalizeBack ? { suppressBack: true } : undefined,
+      });
 
       return;
     }
@@ -300,7 +306,7 @@ export function AgentsSetupPage() {
     }
 
     void navigate(ROUTES.AGENTS_PERSONALIZE);
-  }, [arrivedFromPersonalize, navigate]);
+  }, [arrivedFromPersonalize, navigate, suppressPersonalizeBack]);
 
   if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
