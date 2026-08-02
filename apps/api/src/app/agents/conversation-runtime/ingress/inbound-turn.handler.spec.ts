@@ -481,6 +481,48 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
+    it('should retry workflow dispatch hydration on later replies when the conversation already exists', async () => {
+      const {
+        handler,
+        conversationService,
+        workflowAgentDispatchRepository,
+        notificationRepository,
+        messageRepository,
+      } = makeHandler();
+
+      conversationService.findByPlatformThread.resolves(conversation);
+      workflowAgentDispatchRepository.findByPlatformThread.resolves({
+        _id: 'dispatch1',
+        _notificationId: 'notif1',
+        _jobId: 'job1',
+        _messageId: 'msg1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        transactionId: 'txn1',
+        workflowIdentifier: 'order-alerts',
+        stepId: 'chat-1',
+        subscriberId: 'sub1',
+        platformMessageId: '1777837477.371619',
+        platformThreadId: 'slack:D123:1777837477.371619',
+      });
+      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+      messageRepository.findOne.resolves({ content: 'Order ORD-1 shipped' });
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        {
+          ...makeSlackDmMessage(),
+          id: '1777837480.1',
+          raw: { thread_ts: '1777837477.371619' },
+        } as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+    });
+
     it('should store and forward inbound WhatsApp attachments', async () => {
       const storedAttachments = [
         {

@@ -223,6 +223,20 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
     });
   });
 
+  it('rethrows when delivery identifiers cannot be persisted after Slack accepts the message', async () => {
+    workflowAgentDispatchRepository.markSent.rejects(new Error('mongo down'));
+    workflowAgentDispatchRepository.persistDeliveryIdentifiers.rejects(new Error('mongo still down'));
+
+    try {
+      await buildUsecase().execute(buildCommand());
+      expect.fail('expected error');
+    } catch (error) {
+      expect((error as Error).message).to.equal('mongo still down');
+    }
+
+    expect(workflowAgentDispatchRepository.markFailed.called).to.equal(false);
+  });
+
   it('treats a SENDING dispatch with platform ids as already sent', async () => {
     workflowAgentDispatchRepository.reservePending.resolves(
       buildDispatch({

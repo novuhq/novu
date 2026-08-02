@@ -164,6 +164,9 @@ export class NotifyWorkflowAgentDispatch {
           platformMessageId: sent.messageId,
         });
       } catch (persistError) {
+        // Do not report SENT when identifiers never landed — that strands hydration
+        // and makes retries look successful to the worker. Leave status as SENDING
+        // (no reclaim / no double-post) and surface the failure.
         this.logger.error(
           {
             err: persistError,
@@ -176,6 +179,8 @@ export class NotifyWorkflowAgentDispatch {
           },
           'Workflow agent dispatch was delivered but persisting its delivery identifiers failed'
         );
+
+        throw persistError;
       }
     }
 

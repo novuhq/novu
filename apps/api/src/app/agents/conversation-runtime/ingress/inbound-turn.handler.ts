@@ -455,9 +455,10 @@ export class AgentInboundHandler implements OnModuleInit {
       this.webChatConversationIdentifier(config.platform, platformThreadId)
     );
 
-    if (!existingConversation) {
-      await this.maybeHydrateWorkflowDispatchSeed(agentId, config, conversation, platformThreadId);
-    }
+    // Always attempt seed hydration — persistWorkflowOriginHydration is idempotent
+    // via stable activity identifiers, so later replies can recover if the first
+    // attempt failed after the conversation was already created.
+    await this.maybeHydrateWorkflowDispatchSeed(agentId, config, conversation, platformThreadId);
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
