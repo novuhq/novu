@@ -148,22 +148,34 @@ export class QueueBaseService implements OnModuleDestroy {
   }
 
   private async getQueueBackendMode(organizationId: string): Promise<string | null> {
+    if (!this.organizationRepository) {
+      Logger.warn({ topic: this.topic }, 'Organization repository unavailable, routing to BullMQ fallback', LOG_CONTEXT);
+
+      return QueueBackendMode.BULLMQ;
+    }
+
     let organization: { _id: string; apiServiceLevel?: ApiServiceLevelEnum } | undefined;
     try {
-      organization = await this.organizationRepository?.findOne({ _id: organizationId }, 'apiServiceLevel', {
-        readPreference: 'secondaryPreferred',
+      organization = await this.organizationRepository.findOne({ _id: organizationId }, 'apiServiceLevel', {
+        readPreference: 'primary',
       });
     } catch (error) {
-      Logger.warn(
+      /*
+       * A transient lookup failure must not be treated as "organization absent".
+       * Fall back to BullMQ so the job is durably enqueued instead of silently dropped.
+       */
+      Logger.error(
         { organizationId, error: error instanceof Error ? error.message : String(error) },
-        'Failed to fetch organization for queue backend mode flag',
+        'Failed to fetch organization for queue backend mode flag, falling back to BullMQ',
         LOG_CONTEXT
       );
+
+      return QueueBackendMode.BULLMQ;
     }
 
     /*
-     * If the organization is not found, we return null to indicate that the job should be skipped.
-     * There is no point in trying to route the job to SQS or BullMQ if the organization is not found.
+     * The job should only be skipped when the organization is confirmed absent on a primary read.
+     * A stale secondary read can no longer misreport a recently created organization as missing.
      */
 
     if (!organization) {
