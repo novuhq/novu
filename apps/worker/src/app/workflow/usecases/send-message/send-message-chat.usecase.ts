@@ -7,9 +7,13 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  GetDecryptedSecretKey,
+  GetDecryptedSecretKeyCommand,
   GetNovuProviderCredentials,
   InstrumentUsecase,
   messageWebhookMapper,
+  NotifyWorkflowAgentDispatchClient,
+  NotifyWorkflowAgentDispatchClientCommand,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
@@ -17,6 +21,8 @@ import {
   validateEndpointForType,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   IntegrationEntity,
   MessageEntity,
   MessageRepository,
@@ -34,6 +40,7 @@ import {
   ExecutionDetailsStatusEnum,
   IChannelSettings,
   ProvidersIdEnum,
+  WorkflowAgentDispatchDestination,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
@@ -70,7 +77,10 @@ type MessageContext = {
   step: NotificationStepEntity;
   content: string;
   i18nInstance: unknown;
+  assignedAgentId: string | null;
 };
+
+const AGENT_SLACK_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -86,7 +96,11 @@ export class SendMessageChat extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     protected moduleRef: ModuleRef,
     private sendWebhookMessage: SendWebhookMessage,
-    private resolveChannelEndpoints: ResolveChannelEndpoints
+    private resolveChannelEndpoints: ResolveChannelEndpoints,
+    private notifyWorkflowAgentDispatchClient: NotifyWorkflowAgentDispatchClient,
+    private getDecryptedSecretKey: GetDecryptedSecretKey,
+    private agentRepository: AgentRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository
   ) {
     super(
       messageRepository,
@@ -103,10 +117,11 @@ export class SendMessageChat extends SendMessageBase {
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     try {
       // Phase 1: Prepare message context (template processing, content compilation)
-      const messageContext = await this.prepareMessageContext(command);
+      const assignedAgentId = await this.resolveAssignedAgentId(command);
+      const messageContext = await this.prepareMessageContext(command, assignedAgentId);
 
       // Phase 2: Resolve all channels into unified format
-      const channels = await this.resolveAllChannels(command);
+      let channels = await this.resolveAllChannels(command);
 
       if (channels.length === 0) {
         if (command.contextKeys.length > 0) {
@@ -132,6 +147,14 @@ export class SendMessageChat extends SendMessageBase {
         };
       }
 
+      if (assignedAgentId) {
+        const gated = await this.gateChannelsForAssignedAgent(channels, assignedAgentId, command);
+        if (gated.error) {
+          return gated.error;
+        }
+        channels = gated.channels;
+      }
+
       // Phase 3: Send to all channels using unified pipeline
       const status = await this.sendToAllChannels(channels, messageContext);
 
@@ -151,7 +174,10 @@ export class SendMessageChat extends SendMessageBase {
   /**
    * Prepares the message context by handling template processing, variant resolution, and content compilation
    */
-  private async prepareMessageContext(command: SendMessageChannelCommand): Promise<MessageContext> {
+  private async prepareMessageContext(
+    command: SendMessageChannelCommand,
+    assignedAgentId: string | null
+  ): Promise<MessageContext> {
     addBreadcrumb({
       message: 'Sending Chat',
     });
@@ -189,7 +215,7 @@ export class SendMessageChat extends SendMessageBase {
       throw new PlatformException(DetailEnum.MESSAGE_CONTENT_NOT_GENERATED);
     }
 
-    return { command, step, content, i18nInstance };
+    return { command, step, content, i18nInstance, assignedAgentId };
   }
 
   /**
@@ -238,14 +264,16 @@ export class SendMessageChat extends SendMessageBase {
             messageContext.command,
             channel.data as IntegrationEndpoints,
             messageContext.step,
-            messageContext.content
+            messageContext.content,
+            messageContext.assignedAgentId
           );
         } else {
           result = await this.sendChannelMessageLegacy(
             messageContext.command,
             channel.data as IChannelSettings,
             messageContext.step,
-            messageContext.content
+            messageContext.content,
+            messageContext.assignedAgentId
           );
         }
 
@@ -376,7 +404,8 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageChannelCommand,
     integrationChannelData: IntegrationEndpoints,
     step: NotificationStepEntity,
-    content: string
+    content: string,
+    assignedAgentId: string | null
   ): Promise<SendMessageResult> {
     const { integration, error } = await this.getAndValidateIntegration(
       command,
@@ -400,7 +429,9 @@ export class SendMessageChat extends SendMessageBase {
 
     for (const channelData of integrationChannelData.channelData) {
       try {
-        const result = await this.sendMessage(channelData, integration, content, message, command);
+        const result = assignedAgentId
+          ? await this.sendViaAgentNotify(channelData, integration, content, message, command, assignedAgentId)
+          : await this.sendMessage(channelData, integration, content, message, command);
 
         if (result.status === SendMessageStatus.SUCCESS) {
           status = SendMessageStatus.SUCCESS;
@@ -428,8 +459,24 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageChannelCommand,
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
-    content: string
+    content: string,
+    assignedAgentId: string | null
   ): Promise<SendMessageResult> {
+    if (assignedAgentId) {
+      await this.createExecutionDetail(
+        command,
+        DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
+        ExecutionDetailsStatusEnum.FAILED,
+        undefined,
+        'Legacy chat channels are not supported for agent-assigned delivery'
+      );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
+      };
+    }
+
     /**
      * Workaround: phone-based chat providers (WhatsApp, Sendblue) behave more like SMS than our
      * webhook-based chat implementation, so they select their integration by providerId rather
@@ -628,6 +675,204 @@ export class SendMessageChat extends SendMessageBase {
     } catch (error) {
       return await this.handleMessageSendError(error, message, command, overriddenChannelData);
     }
+  }
+
+  private async resolveAssignedAgentId(command: SendMessageChannelCommand): Promise<string | null> {
+    if (command.job._agentId !== undefined) {
+      if (command.job._agentId === null) {
+        return null;
+      }
+
+      return String(command.job._agentId);
+    }
+
+    const workflowAgent = command.workflow?.agent;
+    if (!workflowAgent?.identifier) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: workflowAgent.identifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    return agent?._id ? String(agent._id) : null;
+  }
+
+  private async gateChannelsForAssignedAgent(
+    channels: UnifiedChannel[],
+    assignedAgentId: string,
+    command: SendMessageChannelCommand
+  ): Promise<{ channels: UnifiedChannel[]; error?: never } | { channels?: never; error: SendMessageResult }> {
+    const gated: UnifiedChannel[] = [];
+    let sawUnsupportedEndpoint = false;
+    let sawUnlinkedIntegration = false;
+
+    for (const channel of channels) {
+      if (channel.type !== 'new') {
+        sawUnsupportedEndpoint = true;
+        continue;
+      }
+
+      const group = channel.data as IntegrationEndpoints;
+      const { integration, error } = await this.getAndValidateIntegration(
+        command,
+        group.providerId,
+        undefined,
+        group.integrationIdentifier
+      );
+
+      if (error || !integration) {
+        sawUnlinkedIntegration = true;
+        continue;
+      }
+
+      const link = await this.agentIntegrationRepository.findOne(
+        {
+          _agentId: assignedAgentId,
+          _integrationId: integration._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_id']
+      );
+
+      if (!link) {
+        sawUnlinkedIntegration = true;
+        continue;
+      }
+
+      const slackEndpoints = group.channelData.filter((endpoint) => AGENT_SLACK_ENDPOINT_TYPES.has(endpoint.type));
+
+      if (slackEndpoints.length === 0) {
+        if (group.channelData.length > 0) {
+          sawUnsupportedEndpoint = true;
+        }
+        continue;
+      }
+
+      if (slackEndpoints.length < group.channelData.length) {
+        sawUnsupportedEndpoint = true;
+      }
+
+      gated.push({
+        type: 'new',
+        data: {
+          ...group,
+          channelData: slackEndpoints,
+        },
+      });
+    }
+
+    if (gated.length > 0) {
+      return { channels: gated };
+    }
+
+    let detail = DetailEnum.CHAT_AGENT_NO_ELIGIBLE_CHANNELS;
+    if (sawUnlinkedIntegration) {
+      detail = DetailEnum.CHAT_AGENT_INTEGRATION_NOT_LINKED;
+    } else if (sawUnsupportedEndpoint) {
+      detail = DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT;
+    }
+
+    await this.createExecutionDetail(command, detail, ExecutionDetailsStatusEnum.FAILED);
+
+    return {
+      error: {
+        status: SendMessageStatus.FAILED,
+        errorMessage: detail,
+      },
+    };
+  }
+
+  private async sendViaAgentNotify(
+    channelData: ChannelData,
+    integration: IntegrationEntity,
+    content: string,
+    message: MessageEntity,
+    command: SendMessageChannelCommand,
+    assignedAgentId: string
+  ): Promise<SendMessageResult> {
+    const destination = this.mapChannelDataToAgentDestination(channelData);
+
+    if (!destination) {
+      await this.createExecutionDetail(
+        command,
+        DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
+        ExecutionDetailsStatusEnum.FAILED,
+        message._id,
+        `Unsupported endpoint type for agent dispatch: ${channelData.type}`
+      );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
+      };
+    }
+
+    try {
+      const apiKey = await this.getDecryptedSecretKey.execute(
+        GetDecryptedSecretKeyCommand.create({
+          environmentId: command.environmentId,
+        })
+      );
+
+      const dispatch = await this.notifyWorkflowAgentDispatchClient.execute(
+        NotifyWorkflowAgentDispatchClientCommand.create({
+          agentId: assignedAgentId,
+          apiKey,
+          integrationIdentifier: integration.identifier,
+          destination,
+          content,
+          idempotencyKey: `${message._id}:${channelData.identifier}`,
+          origin: {
+            notificationId: command.notificationId,
+            jobId: command.jobId,
+            messageId: message._id,
+            transactionId: command.transactionId,
+            workflowIdentifier: command.identifier,
+            stepId: command.step.stepId,
+            subscriberId: command.subscriberId,
+          },
+        })
+      );
+
+      return await this.handleMessageSendSuccess(
+        {
+          id: dispatch.platformMessageId,
+          date: new Date().toISOString(),
+          platformMessageId: dispatch.platformMessageId,
+          platformThreadId: dispatch.platformThreadId,
+        } as ISendMessageSuccessResponse,
+        message,
+        command,
+        channelData
+      );
+    } catch (error) {
+      return await this.handleMessageSendError(error, message, command, channelData);
+    }
+  }
+
+  private mapChannelDataToAgentDestination(channelData: ChannelData): WorkflowAgentDispatchDestination | null {
+    if (channelData.type === ENDPOINT_TYPES.SLACK_USER) {
+      return {
+        type: ENDPOINT_TYPES.SLACK_USER,
+        userId: channelData.endpoint.userId,
+      };
+    }
+
+    if (channelData.type === ENDPOINT_TYPES.SLACK_CHANNEL) {
+      return {
+        type: ENDPOINT_TYPES.SLACK_CHANNEL,
+        channelId: channelData.endpoint.channelId,
+      };
+    }
+
+    return null;
   }
 
   private updateStatus(currentStatus: SendMessageStatus, newStatus: SendMessageStatus): SendMessageStatus {

@@ -164,3 +164,57 @@ describe('OutboundGateway sendDirectMessage', () => {
     expect(result).to.deep.equal({ messageId: 'msg-3', platformThreadId: 'slack:D123:msg-3' });
   });
 });
+
+describe('OutboundGateway sendChannelMessage', () => {
+  it('posts to slack:{channelId}: and normalizes empty-root thread ids', async () => {
+    const threadPost = sinon.stub().resolves({ id: '1777837478.111111', threadId: 'slack:C123:' });
+    const withBotToken = sinon.stub().callsFake(async (_token: string, fn: () => Promise<unknown>) => fn());
+    const agentConfigResolver = {
+      resolve: sinon.stub().resolves({
+        platform: AgentPlatformEnum.SLACK,
+        removeNovuBranding: true,
+        agentIdentifier: 'my-agent',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        integrationIdentifier: 'slack-main',
+        integrationId: 'integration-1',
+      }),
+      resolveSlackBotToken: sinon.stub().resolves('xoxb-test'),
+    };
+    const chatThread = sinon.stub().returns({ post: threadPost });
+    const registry = {
+      getOrCreate: sinon.stub().resolves({
+        thread: chatThread,
+        getAdapter: sinon.stub().returns({ withBotToken }),
+      }),
+    };
+    const fileMaterializer = {
+      prepareContentForDelivery: sinon.stub().callsFake(async (content: unknown) => content),
+    };
+    const actionTokenService = {
+      applyActionTokens: sinon.stub().callsFake(async (content: unknown) => content),
+    };
+    const logger = {
+      setContext: sinon.stub(),
+      warn: sinon.stub(),
+      error: sinon.stub(),
+    };
+
+    const gateway = new OutboundGateway(
+      registry as any,
+      {} as any,
+      agentConfigResolver as any,
+      fileMaterializer as any,
+      actionTokenService as any,
+      logger as any
+    );
+
+    const result = await gateway.sendChannelMessage('agent1', 'slack-main', 'C123', { markdown: 'hi' }, 'T1');
+
+    expect(chatThread.calledWith('slack:C123:')).to.equal(true);
+    expect(result).to.deep.equal({
+      messageId: '1777837478.111111',
+      platformThreadId: 'slack:C123:1777837478.111111',
+    });
+  });
+});

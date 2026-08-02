@@ -43,6 +43,7 @@ export * from './repositories/topic';
 export * from './repositories/translation-group';
 export * from './repositories/translations';
 export * from './repositories/user';
+export * from './repositories/workflow-agent-dispatch';
 export * from './repositories/workflow-override';
 export * from './shared';
 export * from './types';

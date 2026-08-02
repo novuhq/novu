@@ -41,7 +41,11 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
       { execute: sinon.stub().resolves(undefined) } as never, // createExecutionDetails
       {} as never, // moduleRef
       {} as never, // sendWebhookMessage
-      resolveChannelEndpoints as never
+      resolveChannelEndpoints as never,
+      {} as never, // notifyWorkflowAgentDispatchClient
+      {} as never, // getDecryptedSecretKey
+      {} as never, // agentRepository
+      {} as never // agentIntegrationRepository
     );
 
     return { usecase, resolveChannelEndpoints, selectIntegration };
@@ -208,7 +212,11 @@ describe('SendMessageChat - Slack provider content overrides', () => {
             channelData: [slackChannelData],
           },
         ]),
-      } as never
+      } as never,
+      {} as never, // notifyWorkflowAgentDispatchClient
+      {} as never, // getDecryptedSecretKey
+      {} as never, // agentRepository
+      {} as never // agentIntegrationRepository
     );
 
     return usecase;
@@ -301,5 +309,228 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     expect(post.firstCall.args[1].text).to.equal('compiled step body');
+  });
+});
+
+describe('SendMessageChat - agent notify path', () => {
+  const slackUserData = {
+    type: ENDPOINT_TYPES.SLACK_USER,
+    identifier: 'ep_user_1',
+    token: 'xoxb-test',
+    endpoint: { userId: 'U123' },
+  };
+
+  const slackIntegration = {
+    _id: 'integration_1',
+    identifier: 'slack-main',
+    providerId: ChatProviderIdEnum.Slack,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: {},
+  };
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  function buildAgentUsecase(options: {
+    channelData?: unknown[];
+    linked?: boolean;
+    notifyExecute?: sinon.SinonStub;
+    jobAgentId?: string | null;
+    workflowAgentIdentifier?: string;
+  } = {}) {
+    const {
+      channelData = [slackUserData],
+      linked = true,
+      notifyExecute = sinon.stub().resolves({
+        dispatchId: 'dispatch_1',
+        platformMessageId: '1777837477.371619',
+        platformThreadId: 'slack:D123:1777837477.371619',
+        status: 'sent',
+      }),
+      jobAgentId,
+      workflowAgentIdentifier,
+    } = options;
+
+    const chatHandlerSend = sinon.stub().resolves({ id: 'chat_factory_id', date: new Date().toISOString() });
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({ send: chatHandlerSend } as never);
+
+    const notifyClient = { execute: notifyExecute };
+    const getDecryptedSecretKey = { execute: sinon.stub().resolves('api-key-secret') };
+    const agentRepository = {
+      findOne: sinon.stub().resolves(workflowAgentIdentifier ? { _id: 'agent_from_workflow' } : null),
+    };
+    const agentIntegrationRepository = {
+      findOne: sinon.stub().resolves(linked ? { _id: 'link_1' } : null),
+    };
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+    };
+    const selectIntegration = {
+      execute: sinon.stub().resolves(slackIntegration),
+    };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      sendWebhookMessage as never,
+      {
+        execute: sinon.stub().resolves([
+          {
+            integrationIdentifier: 'slack-main',
+            providerId: ChatProviderIdEnum.Slack,
+            channelData,
+          },
+        ]),
+      } as never,
+      notifyClient as never,
+      getDecryptedSecretKey as never,
+      agentRepository as never,
+      agentIntegrationRepository as never
+    );
+
+    return {
+      usecase,
+      notifyExecute,
+      chatHandlerSend,
+      createExecutionDetails,
+      sendWebhookMessage,
+      messageRepository,
+      agentIntegrationRepository,
+      jobAgentId,
+      workflowAgentIdentifier,
+    };
+  }
+
+  function buildAgentCommand(options: { jobAgentId?: string | null; workflowAgentIdentifier?: string } = {}) {
+    const { jobAgentId, workflowAgentIdentifier } = options;
+
+    return SendMessageChannelCommand.create({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      payload: {},
+      overrides: {},
+      transactionId: 'txn_1',
+      notificationId: 'notif_1',
+      _templateId: 'tpl_1',
+      subscriberId: 'sub_1',
+      _subscriberId: '_sub_1',
+      jobId: 'job_1',
+      tags: [],
+      contextKeys: [],
+      compileContext: {
+        subscriber: { subscriberId: 'sub_1', locale: 'en', channels: [] },
+      } as never,
+      bridgeData: { outputs: { body: 'agent hello' } } as never,
+      step: {
+        stepId: 'step_1',
+        template: {
+          _id: 'mt_1',
+          type: ChannelTypeEnum.CHAT,
+          content: 'agent hello',
+        },
+      } as never,
+      workflow: workflowAgentIdentifier
+        ? ({ agent: { identifier: workflowAgentIdentifier } } as never)
+        : undefined,
+      job: {
+        _id: 'job_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        _subscriberId: '_sub_1',
+        subscriberId: 'sub_1',
+        _notificationId: 'notif_1',
+        _templateId: 'tpl_1',
+        transactionId: 'txn_1',
+        identifier: 'wf-identifier',
+        type: ChannelTypeEnum.CHAT,
+        step: { stepId: 'step_1' },
+        ...(jobAgentId !== undefined ? { _agentId: jobAgentId } : {}),
+      } as never,
+    });
+  }
+
+  it('routes agent-assigned Slack delivery through the notify client and skips ChatFactory', async () => {
+    const { usecase, notifyExecute, chatHandlerSend } = buildAgentUsecase({ jobAgentId: 'agent_1' });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(notifyExecute);
+    expect(notifyExecute.firstCall.args[0].idempotencyKey).to.equal('message_1:ep_user_1');
+    expect(notifyExecute.firstCall.args[0].destination).to.deep.equal({
+      type: ENDPOINT_TYPES.SLACK_USER,
+      userId: 'U123',
+    });
+    sinon.assert.notCalled(chatHandlerSend);
+  });
+
+  it('uses ChatFactory when job._agentId is explicitly null (opt out)', async () => {
+    const { usecase, notifyExecute, chatHandlerSend } = buildAgentUsecase({ jobAgentId: null });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: null }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(notifyExecute);
+    sinon.assert.calledOnce(chatHandlerSend);
+  });
+
+  it('fails when the integration is not linked to the assigned agent', async () => {
+    const { usecase, notifyExecute, chatHandlerSend } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      linked: false,
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+    sinon.assert.notCalled(notifyExecute);
+    sinon.assert.notCalled(chatHandlerSend);
+  });
+
+  it('fails agent-assigned non-Slack endpoints', async () => {
+    const { usecase, notifyExecute } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.PHONE,
+          identifier: 'ep_phone',
+          endpoint: { phoneNumber: '+15551234567' },
+        },
+      ],
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+    sinon.assert.notCalled(notifyExecute);
+  });
+
+  it('resolves workflow.agent when job._agentId is unset', async () => {
+    const { usecase, notifyExecute } = buildAgentUsecase({
+      workflowAgentIdentifier: 'support-agent',
+    });
+
+    const result = await usecase.execute(
+      buildAgentCommand({ workflowAgentIdentifier: 'support-agent' })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(notifyExecute);
+    expect(notifyExecute.firstCall.args[0].agentId).to.equal('agent_from_workflow');
   });
 });

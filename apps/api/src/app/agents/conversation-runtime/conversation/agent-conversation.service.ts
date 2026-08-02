@@ -140,6 +140,13 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
   transactionId: string;
 }
 
+export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
+  platformMessageId: string;
+  platformThreadId: string;
+  content: string;
+  originPayload: Record<string, unknown>;
+}
+
 export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
   approvalId: string;
   approved: boolean;
@@ -642,5 +649,51 @@ export class AgentConversationService {
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
+  }
+
+  async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
+    await this.persistAgentMessage({
+      conversationId: params.conversationId,
+      channel: params.channel,
+      agentIdentifier: params.agentIdentifier,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      platformMessageId: params.platformMessageId,
+      platformThreadId: params.platformThreadId,
+      identifier: `workflow-dispatch-msg:${params.platformMessageId}`,
+      content: params.content,
+    });
+
+    const signalIdentifier = `workflow-dispatch-origin:${params.platformMessageId}`;
+
+    try {
+      await this.activityRepository.createSignalActivity({
+        identifier: signalIdentifier,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: params.platformThreadId,
+        agentId: params.agentIdentifier,
+        content: `Workflow origin: ${String(params.originPayload.workflowIdentifier ?? 'unknown')}`,
+        signalData: {
+          type: 'workflow_origin',
+          payload: params.originPayload,
+        },
+        platformMessageId: params.platformMessageId,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        this.logger.warn(
+          { identifier: signalIdentifier, conversationId: params.conversationId },
+          'Workflow origin signal already recorded (duplicate identifier)'
+        );
+
+        return;
+      }
+
+      throw err;
+    }
   }
 }

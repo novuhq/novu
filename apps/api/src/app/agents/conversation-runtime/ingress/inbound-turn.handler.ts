@@ -8,7 +8,11 @@ import {
   ConversationActivitySenderTypeEnum,
   ConversationEntity,
   ConversationParticipantTypeEnum,
+  MessageRepository,
+  NotificationRepository,
   SubscriberRepository,
+  WorkflowAgentDispatchEntity,
+  WorkflowAgentDispatchRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
@@ -77,6 +81,21 @@ function extractTelegramChatId(thread: Thread): string | null {
   // `telegram:` prefix before persistence so the value we store matches what
   // `TelegramChatProvider.sendMessage` will POST to the bot API.
   return raw.startsWith('telegram:') ? raw.slice('telegram:'.length) : raw;
+}
+
+const WORKFLOW_ORIGIN_CONTENT_MAX_CHARS = 2_000;
+
+function buildWorkflowOriginSummary(
+  workflowIdentifier: string,
+  messageContent: string,
+  payload: Record<string, unknown>
+): string {
+  const message =
+    messageContent.length > 0 ? messageContent : `A notification was sent by the ${workflowIdentifier} workflow.`;
+  const additionalData =
+    Object.keys(payload).length > 0 ? `\n\nAdditional data for this message:\n${JSON.stringify(payload, null, 2)}` : '';
+
+  return `${message}${additionalData}`.slice(0, WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
 }
 
 const SUBSCRIBER_LINK_SUCCESS_REPLY = "You're connected. Notifications from this agent will now reach you here.";
@@ -267,7 +286,10 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly planLimitGate: PlanLimitGateService,
     private readonly inboundAck: InboundAckService,
     private readonly connectionContextResolver: InboundConnectionContextResolver,
-    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor
+    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
+    private readonly workflowAgentDispatchRepository: WorkflowAgentDispatchRepository,
+    private readonly notificationRepository: NotificationRepository,
+    private readonly messageRepository: MessageRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -432,6 +454,10 @@ export class AgentInboundHandler implements OnModuleInit {
       extractWorkspaceId(config.platform, message.raw) ?? undefined,
       this.webChatConversationIdentifier(config.platform, platformThreadId)
     );
+
+    if (!existingConversation) {
+      await this.maybeHydrateWorkflowDispatchSeed(agentId, config, conversation, platformThreadId);
+    }
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
@@ -646,6 +672,92 @@ export class AgentInboundHandler implements OnModuleInit {
       workspaceId,
       identifier: conversationIdentifier,
     });
+  }
+
+  private async maybeHydrateWorkflowDispatchSeed(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    platformThreadId: string
+  ): Promise<void> {
+    const seed = await this.workflowAgentDispatchRepository.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      config.integrationId,
+      platformThreadId
+    );
+
+    if (!seed?.platformMessageId) {
+      return;
+    }
+
+    try {
+      const { content, originPayload } = await this.buildWorkflowOriginHydration(seed);
+
+      await this.conversationService.persistWorkflowOriginHydration({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        platformMessageId: seed.platformMessageId,
+        platformThreadId: seed.platformThreadId ?? platformThreadId,
+        content,
+        originPayload,
+      });
+    } catch (err) {
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'hydrate-workflow-dispatch-seed',
+        agentId,
+      });
+      this.logger.warn(
+        { err, agentId, platformThreadId, dispatchId: seed._id },
+        'Failed to hydrate workflow agent dispatch seed into conversation history'
+      );
+    }
+  }
+
+  private async buildWorkflowOriginHydration(seed: WorkflowAgentDispatchEntity): Promise<{
+    content: string;
+    originPayload: Record<string, unknown>;
+  }> {
+    const [notification, message] = await Promise.all([
+      this.notificationRepository.findOne({
+        _id: seed._notificationId,
+        _environmentId: seed._environmentId,
+        _organizationId: seed._organizationId,
+      }),
+      this.messageRepository.findOne({
+        _id: seed._messageId,
+        _environmentId: seed._environmentId,
+        _organizationId: seed._organizationId,
+      }),
+    ]);
+
+    const payload =
+      notification?.payload && typeof notification.payload === 'object' && !Array.isArray(notification.payload)
+        ? (notification.payload as Record<string, unknown>)
+        : {};
+
+    const storedContent = typeof message?.content === 'string' ? message.content.trim() : '';
+    const content = buildWorkflowOriginSummary(seed.workflowIdentifier, storedContent, payload);
+
+    return {
+      content,
+      originPayload: {
+        notificationId: seed._notificationId,
+        jobId: seed._jobId,
+        messageId: seed._messageId,
+        transactionId: seed.transactionId,
+        workflowIdentifier: seed.workflowIdentifier,
+        stepId: seed.stepId,
+        subscriberId: seed.subscriberId,
+        dispatchId: seed._id,
+        payload,
+      },
+    };
   }
 
   private async storeInboundAttachments(

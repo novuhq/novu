@@ -81,6 +81,7 @@ describe('AgentInboundHandler', () => {
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
       persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
+      persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
@@ -189,6 +190,15 @@ describe('AgentInboundHandler', () => {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),
       tryHandleAsApprovalReaction: sinon.stub().resolves(false),
     };
+    const workflowAgentDispatchRepository = {
+      findByPlatformThread: sinon.stub().resolves(null),
+    };
+    const notificationRepository = {
+      findOne: sinon.stub().resolves(null),
+    };
+    const messageRepository = {
+      findOne: sinon.stub().resolves(null),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -209,7 +219,10 @@ describe('AgentInboundHandler', () => {
       planLimitGate as any,
       inboundAck as any,
       connectionContextResolver as any,
-      replyApprovalInterceptor as any
+      replyApprovalInterceptor as any,
+      workflowAgentDispatchRepository as any,
+      notificationRepository as any,
+      messageRepository as any
     );
 
     return {
@@ -219,6 +232,9 @@ describe('AgentInboundHandler', () => {
       attachmentStorage,
       bridgeExecutor,
       conversationService,
+      workflowAgentDispatchRepository,
+      notificationRepository,
+      messageRepository,
       linkTelegramChatToSubscriber,
       subscriberResolver,
       startCodeService,
@@ -399,6 +415,70 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(thread.post.calledOnce).to.equal(true);
+    });
+
+    it('should hydrate workflow dispatch seed into conversation history on first reply', async () => {
+      const {
+        handler,
+        conversationService,
+        workflowAgentDispatchRepository,
+        notificationRepository,
+        messageRepository,
+      } = makeHandler();
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowAgentDispatchRepository.findByPlatformThread.resolves({
+        _id: 'dispatch1',
+        _notificationId: 'notif1',
+        _jobId: 'job1',
+        _messageId: 'msg1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        transactionId: 'txn1',
+        workflowIdentifier: 'order-alerts',
+        stepId: 'chat-1',
+        subscriberId: 'sub1',
+        platformMessageId: '1777837477.371619',
+        platformThreadId: 'slack:D123:1777837477.371619',
+      });
+      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+      messageRepository.findOne.resolves({ content: 'Order ORD-1 shipped' });
+
+      const thread = makeSlackDmThread();
+      const message = {
+        ...makeSlackDmMessage(),
+        id: '1777837480.1',
+        raw: { thread_ts: '1777837477.371619' },
+      };
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(workflowAgentDispatchRepository.findByPlatformThread.calledOnce).to.equal(true);
+      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+      const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
+      expect(hydrateArgs.content).to.equal(
+        'Order ORD-1 shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-1"\n}'
+      );
+      expect(hydrateArgs.platformMessageId).to.equal('1777837477.371619');
+      expect(hydrateArgs.originPayload.payload).to.deep.equal({ orderId: 'ORD-1' });
+      expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
+    });
+
+    it('should not hydrate when no workflow dispatch seed exists', async () => {
+      const { handler, conversationService, workflowAgentDispatchRepository } = makeHandler();
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowAgentDispatchRepository.findByPlatformThread.resolves(null);
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
     it('should store and forward inbound WhatsApp attachments', async () => {

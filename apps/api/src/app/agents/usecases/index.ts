@@ -12,6 +12,7 @@ import { ConfigureWhatsAppWebhook } from '../channels/whatsapp/configure-whatsap
 import { SendWhatsAppTestTemplate } from '../channels/whatsapp/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
+import { NotifyWorkflowAgentDispatch } from '../conversation-runtime/reply/notify-workflow-agent-dispatch/notify-workflow-agent-dispatch.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
 import { HandleNovuResolve } from '../managed-runtime/novu-resolve/handle-novu-resolve.usecase';
@@ -76,6 +77,7 @@ export const USE_CASES = [
   RemoveSendblueWebhooks,
   HandleAgentReply,
   HandlePlanProgress,
+  NotifyWorkflowAgentDispatch,
   ProvisionManagedAgent,
   SendAgentSendblueTestMessage,
   SendAgentTestEmail,

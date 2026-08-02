@@ -390,6 +390,38 @@ export class OutboundGateway {
     return { messageId: sent.id, platformThreadId };
   }
 
+  async sendChannelMessage(
+    agentId: string,
+    integrationIdentifier: string,
+    channelId: string,
+    content: ReplyContentDto,
+    workspaceId?: string
+  ): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+    if (config.platform !== AgentPlatformEnum.SLACK) {
+      throw new BadRequestException(`sendChannelMessage is only supported for Slack (got platform=${config.platform})`);
+    }
+
+    const emptyRootThreadId = `slack:${channelId}:`;
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
+    const tokenizedContent = await this.applyActionTokensForDelivery(
+      deliveryContent,
+      this.toActionTokenBinding(agentId, config)
+    );
+    const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
+
+    const sent = await this.runWithPlatformToken(chat, config, agentId, emptyRootThreadId, workspaceId, () =>
+      chat.thread(emptyRootThreadId).post(postArg)
+    ).catch(toDeliveryError);
+
+    const normalizedThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
+
+    return { messageId: sent.id, platformThreadId: normalizedThreadId };
+  }
+
   async setSlackSuggestedPrompts(
     agentId: string,
     integrationIdentifier: string,

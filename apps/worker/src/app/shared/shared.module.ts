@@ -27,6 +27,7 @@ import {
   LoggerModule,
   MetricsModule,
   NotificationPayloadService,
+  NotifyWorkflowAgentDispatchClient,
   ProcessTenant,
   QueuesModule,
   RequestLogRepository,
@@ -150,6 +151,7 @@ const PROVIDERS = [
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   HttpClientService,
+  NotifyWorkflowAgentDispatchClient,
   SafeOutboundHttpService,
   ...ANALYTICS_PROVIDERS,
 ];
