@@ -1,7 +1,14 @@
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiCheckLine, RiCloseLine, RiExpandUpDownLine, RiLoader4Line, RiRobot2Line, RiSearchLine } from 'react-icons/ri';
+import {
+  RiCheckLine,
+  RiCloseLine,
+  RiExpandUpDownLine,
+  RiLoader4Line,
+  RiRobot2Line,
+  RiSearchLine,
+} from 'react-icons/ri';
 import {
   type AgentResponse,
   getAgent,
@@ -28,10 +35,12 @@ type WorkflowAgentSelectProps = {
   value: string | null | undefined;
   onChange: (agentIdentifier: string | null) => void;
   disabled?: boolean;
+  /** The environment has no agents at all, so there is nothing to pick from. */
+  empty?: boolean;
   className?: string;
 };
 
-export function WorkflowAgentSelect({ value, onChange, disabled, className }: WorkflowAgentSelectProps) {
+export function WorkflowAgentSelect({ value, onChange, disabled, empty, className }: WorkflowAgentSelectProps) {
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
@@ -134,6 +143,21 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
     );
   }
 
+  if (empty) {
+    return (
+      <div
+        className={cn(
+          'bg-bg-white border-stroke-soft shadow-xs flex h-7 w-full items-center gap-1.5 rounded-md border px-2 text-label-xs',
+          className
+        )}
+      >
+        <RiRobot2Line className="text-text-soft size-4 shrink-0" />
+        <span className="text-text-soft min-w-0 flex-1 truncate">No agents available</span>
+        <RiExpandUpDownLine className="text-text-soft size-3 shrink-0" />
+      </div>
+    );
+  }
+
   return (
     <div className={cn('relative', className)}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -196,7 +220,10 @@ export function WorkflowAgentSelect({ value, onChange, disabled, className }: Wo
                           <span className="text-text-soft shrink-0 text-[10px] font-medium uppercase">Paused</span>
                         ) : null}
                         <RiCheckLine
-                          className={cn('ml-auto size-4 shrink-0', value === agent.identifier ? 'opacity-100' : 'opacity-0')}
+                          className={cn(
+                            'ml-auto size-4 shrink-0',
+                            value === agent.identifier ? 'opacity-100' : 'opacity-0'
+                          )}
                         />
                       </CommandItem>
                     ))}
