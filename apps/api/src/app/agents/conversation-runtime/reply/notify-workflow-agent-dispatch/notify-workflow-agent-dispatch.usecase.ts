@@ -101,14 +101,14 @@ export class NotifyWorkflowAgentDispatch {
               integrationIdentifier,
               destination.userId,
               { markdown: content },
-              command.workspaceId
+              dispatch.workspaceId
             )
           : await this.outboundGateway.sendChannelMessage(
               agentId,
               integrationIdentifier,
               destination.channelId,
               { markdown: content },
-              command.workspaceId
+              dispatch.workspaceId
             );
     } catch (error) {
       await this.workflowAgentDispatchRepository.markFailed({
@@ -140,7 +140,8 @@ export class NotifyWorkflowAgentDispatch {
         platformMessageId: sent.messageId,
       });
     } catch (error) {
-      // Delivered on the platform; leave status as SENDING so retries do not double-post.
+      // Delivered on the platform — keep SENDING so claimForSend cannot re-send, but still
+      // persist thread/message ids so inbound hydration and idempotent replays can succeed.
       this.logger.error(
         {
           err: error,
@@ -151,8 +152,31 @@ export class NotifyWorkflowAgentDispatch {
           platformMessageId: sent.messageId,
           platformThreadId: sent.platformThreadId,
         },
-        'Workflow agent dispatch was delivered but persisting its delivery identifiers failed'
+        'Workflow agent dispatch was delivered but markSent failed; persisting delivery identifiers'
       );
+
+      try {
+        await this.workflowAgentDispatchRepository.persistDeliveryIdentifiers({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          dispatchId: dispatch._id,
+          platformThreadId: sent.platformThreadId,
+          platformMessageId: sent.messageId,
+        });
+      } catch (persistError) {
+        this.logger.error(
+          {
+            err: persistError,
+            dispatchId: dispatch._id,
+            agentId,
+            integrationIdentifier,
+            idempotencyKey: command.idempotencyKey,
+            platformMessageId: sent.messageId,
+            platformThreadId: sent.platformThreadId,
+          },
+          'Workflow agent dispatch was delivered but persisting its delivery identifiers failed'
+        );
+      }
     }
 
     return {
@@ -181,11 +205,9 @@ export class NotifyWorkflowAgentDispatch {
   }
 
   private toSentResponse(dispatch: WorkflowAgentDispatchEntity): NotifyWorkflowAgentDispatchResponseDto | null {
-    if (
-      dispatch.status !== WorkflowAgentDispatchStatusEnum.SENT ||
-      !dispatch.platformMessageId ||
-      !dispatch.platformThreadId
-    ) {
+    // Platform ids are the source of truth for "already delivered" — status may remain SENDING
+    // if markSent failed after Slack accepted the message.
+    if (!dispatch.platformMessageId || !dispatch.platformThreadId) {
       return null;
     }
 

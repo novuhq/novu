@@ -157,6 +157,32 @@ export class WorkflowAgentDispatchRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Best-effort write of platform delivery ids without flipping status.
+   * Used when markSent fails after the platform already accepted the message.
+   */
+  async persistDeliveryIdentifiers(params: {
+    environmentId: string;
+    organizationId: string;
+    dispatchId: string;
+    platformThreadId: string;
+    platformMessageId: string;
+  }): Promise<void> {
+    await this.update(
+      {
+        _id: params.dispatchId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      {
+        $set: {
+          platformThreadId: params.platformThreadId,
+          platformMessageId: params.platformMessageId,
+        },
+      }
+    );
+  }
+
   async markFailed(params: { environmentId: string; organizationId: string; dispatchId: string }): Promise<void> {
     await this.update(
       {

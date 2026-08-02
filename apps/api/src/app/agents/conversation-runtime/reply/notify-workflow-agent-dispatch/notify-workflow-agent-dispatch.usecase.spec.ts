@@ -53,6 +53,7 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
     claimForSend: sinon.SinonStub;
     findByIdempotencyKey: sinon.SinonStub;
     markSent: sinon.SinonStub;
+    persistDeliveryIdentifiers: sinon.SinonStub;
     markFailed: sinon.SinonStub;
   };
   let outboundGateway: {
@@ -93,6 +94,7 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
       claimForSend: stub().resolves(buildDispatch({ status: WorkflowAgentDispatchStatusEnum.SENDING })),
       findByIdempotencyKey: stub().resolves(null),
       markSent: stub().resolves(undefined),
+      persistDeliveryIdentifiers: stub().resolves(undefined),
       markFailed: stub().resolves(undefined),
     };
     outboundGateway = {
@@ -163,6 +165,19 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
     expect(outboundGateway.sendDirectMessage.firstCall.args[2]).to.equal('U_ORIGINAL');
   });
 
+  it('uses the reserved workspaceId when a key is replayed with a different one', async () => {
+    workflowAgentDispatchRepository.claimForSend.resolves(
+      buildDispatch({
+        status: WorkflowAgentDispatchStatusEnum.SENDING,
+        workspaceId: 'T_ORIGINAL',
+      })
+    );
+
+    await buildUsecase().execute(buildCommand({ workspaceId: 'T_ATTACKER' }));
+
+    expect(outboundGateway.sendDirectMessage.firstCall.args[4]).to.equal('T_ORIGINAL');
+  });
+
   it('does not send when another request already owns the dispatch', async () => {
     workflowAgentDispatchRepository.claimForSend.resolves(null);
 
@@ -192,7 +207,7 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
     expect(outboundGateway.sendDirectMessage.called).to.equal(false);
   });
 
-  it('reports success and keeps the dispatch unfailed when persisting delivery ids fails', async () => {
+  it('persists delivery identifiers when markSent fails after Slack accepts the message', async () => {
     workflowAgentDispatchRepository.markSent.rejects(new Error('mongo down'));
 
     const result = await buildUsecase().execute(buildCommand());
@@ -200,6 +215,29 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
     expect(result.platformMessageId).to.equal('ts-1');
     expect(result.status).to.equal(WorkflowAgentDispatchStatusEnum.SENT);
     expect(workflowAgentDispatchRepository.markFailed.called).to.equal(false);
+    expect(workflowAgentDispatchRepository.persistDeliveryIdentifiers.calledOnce).to.equal(true);
+    expect(workflowAgentDispatchRepository.persistDeliveryIdentifiers.firstCall.args[0]).to.include({
+      dispatchId: 'dispatch-1',
+      platformMessageId: 'ts-1',
+      platformThreadId: 'slack:D123:ts-1',
+    });
+  });
+
+  it('treats a SENDING dispatch with platform ids as already sent', async () => {
+    workflowAgentDispatchRepository.reservePending.resolves(
+      buildDispatch({
+        status: WorkflowAgentDispatchStatusEnum.SENDING,
+        platformMessageId: 'ts-recovered',
+        platformThreadId: 'slack:D123:ts-recovered',
+      })
+    );
+
+    const result = await buildUsecase().execute(buildCommand());
+
+    expect(result.platformMessageId).to.equal('ts-recovered');
+    expect(result.status).to.equal(WorkflowAgentDispatchStatusEnum.SENT);
+    expect(outboundGateway.sendDirectMessage.called).to.equal(false);
+    expect(workflowAgentDispatchRepository.claimForSend.called).to.equal(false);
   });
 
   it('returns existing sent dispatch without re-sending (idempotent)', async () => {
