@@ -19,13 +19,17 @@ import { OnboardingStepHeader } from '@/components/onboarding/step-header';
 import { PageMeta } from '@/components/page-meta';
 import { Label } from '@/components/primitives/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { useAuth } from '@/context/auth/hooks';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
+import { useLaunchDarklyReady } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { beginOnboardingProvisioning, isOnboardingProvisioningActive } from '@/utils/connect/onboarding-session';
 import { readPendingProductType } from '@/utils/product-type-pending';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+const AGENTS_SETUP_FROM_PERSONALIZE = { from: 'personalize' } as const;
 
 const PAGE_TITLE = 'Help us personalize your experience';
 
@@ -113,6 +117,8 @@ function ChannelQuestion({
 
 export function AgentsPersonalizePage() {
   const areAgentsAvailable = useAreConversationalAgentsAvailable();
+  const isLaunchDarklyReady = useLaunchDarklyReady();
+  const { currentOrganization } = useAuth();
   const navigate = useNavigate();
   const telemetry = useTelemetry();
   const provisioningActive = useOnboardingProvisioningActive();
@@ -123,7 +129,8 @@ export function AgentsPersonalizePage() {
 
   // `product_type=agents` signups land here without ever seeing the picker, so sending them "back"
   // to it would push them into a screen that defaults to Inbox and reverses their choice.
-  const [canGoBack] = useState(() => readPendingProductType() !== 'agents');
+  const [pendingAgentsProduct] = useState(() => readPendingProductType() === 'agents');
+  const canGoBack = !pendingAgentsProduct;
   // Only wind down a loader we inherited. Arming this for the loader `handleContinue` starts would
   // race the navigation and could clear it while this page is still mounted.
   const [inheritedLoader] = useState(isOnboardingProvisioningActive);
@@ -165,13 +172,15 @@ export function AgentsPersonalizePage() {
     });
     // The agents setup page waits on the org, so the loader plays across that hand-off.
     beginOnboardingProvisioning('agents');
-    void navigate(ROUTES.AGENTS_SETUP);
+    void navigate(ROUTES.AGENTS_SETUP, { state: AGENTS_SETUP_FROM_PERSONALIZE });
   };
 
-  // Provisioning is checked first: the agents flag reads false until LaunchDarkly resolves against
-  // the new org, so redirecting ahead of the loader could yank the user into the inbox flow while
-  // the agents loader is still on screen.
-  if (provisioningActive) {
+  // Hold before redirecting: the agents flag defaults to false until LaunchDarkly finishes its
+  // first load, and `product_type=agents` landings have no provisioning overlay to cover that gap.
+  // Also wait for the org so LD can identify against it before a false flag is treated as final.
+  const awaitingAgentsGate = !areAgentsAvailable && pendingAgentsProduct && !currentOrganization?._id;
+
+  if (provisioningActive || !isLaunchDarklyReady || awaitingAgentsGate) {
     return null;
   }
 

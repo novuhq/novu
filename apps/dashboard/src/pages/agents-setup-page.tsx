@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AgentResponse, getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
 import { AgentSetupSteps, ManagedAgentRecap } from '@/components/agents/agent-setup-steps';
@@ -109,12 +109,14 @@ function ShowAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
 export function AgentsSetupPage() {
   const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const navigate = useNavigate();
+  const location = useLocation();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
   const updateProductUseCases = useUpdateProductUseCases();
   const productUseCasesPersistedRef = useRef(false);
+  const arrivedFromPersonalize = (location.state as { from?: string } | null)?.from === 'personalize';
 
   const [searchParams] = useSearchParams();
   const agentTemplateId = useMemo(
@@ -281,8 +283,24 @@ export function AgentsSetupPage() {
   }, [activeAgent, agentRoutes.detailsTab, currentEnvironment?.slug, navigate]);
 
   const handleBackStep = useCallback(() => {
+    // Onboarding funnel: personalize stamps router state so back returns to the survey.
+    // Welcome / agents-list entry points have no stamp — restore the previous screen instead of
+    // forcing users through a fresh personalize step.
+    if (arrivedFromPersonalize) {
+      void navigate(ROUTES.AGENTS_PERSONALIZE);
+
+      return;
+    }
+
+    const historyIdx = (window.history.state as { idx?: number } | null)?.idx;
+    if (typeof historyIdx === 'number' && historyIdx > 0) {
+      void navigate(-1);
+
+      return;
+    }
+
     void navigate(ROUTES.AGENTS_PERSONALIZE);
-  }, [navigate]);
+  }, [arrivedFromPersonalize, navigate]);
 
   if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
