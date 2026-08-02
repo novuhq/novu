@@ -1,15 +1,14 @@
 import { RiArrowLeftSLine } from 'react-icons/ri';
 
-/** Conversations onboarding: pick a path, personalize, then connect the agent. */
-const ONBOARDING_TOTAL_STEPS = 3;
-
 type OnboardingStepHeaderProps = {
   current: number;
+  /** Path-specific total — agents is 3 steps, inbox fork is 2. */
+  total: number;
   /** Omit where there is no previous step to return to — the arrow then renders inert. */
   onBack?: () => void;
 };
 
-export function OnboardingStepHeader({ current, onBack }: OnboardingStepHeaderProps) {
+export function OnboardingStepHeader({ current, total, onBack }: OnboardingStepHeaderProps) {
   return (
     <button
       type="button"
@@ -19,7 +18,7 @@ export function OnboardingStepHeader({ current, onBack }: OnboardingStepHeaderPr
     >
       <RiArrowLeftSLine className="text-text-sub size-4" />
       <span className="text-text-sub text-xs">
-        {current}/{ONBOARDING_TOTAL_STEPS}
+        {current}/{total}
       </span>
     </button>
   );

@@ -6,8 +6,7 @@ import { RiCheckLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { Notification5Fill } from '@/components/icons/notification-5-fill';
-import { AgentPreviewFeatureList } from '@/components/onboarding/agent-preview-feature-list';
-import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
+import { AgentOnboardingPreview } from '@/components/onboarding/agent-onboarding-preview';
 import { OnboardingContinueFooter } from '@/components/onboarding/onboarding-continue-footer';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { OnboardingStepHeader } from '@/components/onboarding/step-header';
@@ -328,7 +327,7 @@ export function UsecaseSelectPage() {
   const leftContent = (
     <>
       <PageMeta title="Get started with Novu" />
-      <OnboardingStepHeader current={1} />
+      <OnboardingStepHeader current={1} total={selected === 'agents' ? 3 : 2} />
       <h1 className="text-foreground text-xl font-normal text-label-lg">Get started with Novu</h1>
       <p className="text-text-soft text-label-xs font-normal mt-2">
         Pick what you would like to start with, you can always set up the other path anytime.
@@ -348,14 +347,7 @@ export function UsecaseSelectPage() {
         transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
       >
         {selected === 'agents' ? (
-          <>
-            <div className="self-center">
-              <AgentUsecasePreviewIllustration />
-            </div>
-            <div className="mt-10">
-              <AgentPreviewFeatureList />
-            </div>
-          </>
+          <AgentOnboardingPreview />
         ) : (
           <>
             <div className="self-center">

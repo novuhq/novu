@@ -12,8 +12,19 @@ export type AgentReadiness = 'live_in_production' | 'in_development' | 'planned_
 
 export type AgentAudience = 'customers_end_users' | 'employees_internal_teams' | 'both' | 'not_sure_yet';
 
-/** Channel answers carry real provider ids, so they join against the rest of the agent funnel. */
-export type AgentChannel = ChatProviderIdEnum | EmailProviderIdEnum;
+/** Survey channel ids only — real provider ids so they join the rest of the agent funnel. */
+export const AGENT_CHANNEL_VALUES = [
+  EmailProviderIdEnum.NovuAgent,
+  ChatProviderIdEnum.Slack,
+  ChatProviderIdEnum.MsTeams,
+  ChatProviderIdEnum.WhatsAppBusiness,
+  ChatProviderIdEnum.Sendblue,
+  ChatProviderIdEnum.Telegram,
+  ChatProviderIdEnum.Discord,
+  ChatProviderIdEnum.NovuWebChat,
+] as const;
+
+export type AgentChannel = (typeof AGENT_CHANNEL_VALUES)[number];
 
 export type PersonalizeOption<TValue extends string> = {
   value: TValue;

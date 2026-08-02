@@ -2,8 +2,7 @@ import { motion } from 'motion/react';
 import { type ReactNode, useEffect, useId, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { AgentPreviewFeatureList } from '@/components/onboarding/agent-preview-feature-list';
-import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
+import { AgentOnboardingPreview } from '@/components/onboarding/agent-onboarding-preview';
 import { OnboardingContinueFooter } from '@/components/onboarding/onboarding-continue-footer';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { ChannelChip } from '@/components/onboarding/personalize/channel-chip';
@@ -183,7 +182,11 @@ export function AgentsPersonalizePage() {
   const leftContent = (
     <>
       <PageMeta title={PAGE_TITLE} />
-      <OnboardingStepHeader current={2} onBack={canGoBack ? () => navigate(ROUTES.USECASE_SELECT) : undefined} />
+      <OnboardingStepHeader
+        current={2}
+        total={3}
+        onBack={canGoBack ? () => navigate(ROUTES.USECASE_SELECT) : undefined}
+      />
 
       <h1 className="text-foreground text-label-lg text-xl font-normal">{PAGE_TITLE}</h1>
       <p className="text-text-soft text-label-xs mt-2 max-w-[340px] font-normal">
@@ -224,16 +227,5 @@ export function AgentsPersonalizePage() {
     </>
   );
 
-  const rightContent = (
-    <div className="flex flex-col items-start">
-      <div className="self-center">
-        <AgentUsecasePreviewIllustration />
-      </div>
-      <div className="mt-10">
-        <AgentPreviewFeatureList />
-      </div>
-    </div>
-  );
-
-  return <OnboardingShell left={leftContent} right={rightContent} />;
+  return <OnboardingShell left={leftContent} right={<AgentOnboardingPreview />} />;
 }
