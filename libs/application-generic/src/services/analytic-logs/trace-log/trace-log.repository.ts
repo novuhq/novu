@@ -522,6 +522,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Chat phone missing';
     case 'chat_some_channels_skipped':
       return 'Chat some channels skipped';
+    case 'chat_agent_integration_not_linked':
+      return 'Chat integration not linked to the assigned agent';
+    case 'chat_agent_unsupported_endpoint':
+      return 'Chat agent unsupported endpoint';
+    case 'chat_agent_no_eligible_channels':
+      return 'Chat agent has no eligible channels';
 
     // MS Teams events
     case 'msteams_bot_not_installed':

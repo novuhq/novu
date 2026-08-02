@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -7,6 +7,7 @@ import {
   WorkflowAgentDispatchEntity,
   WorkflowAgentDispatchRepository,
 } from '@novu/dal';
+import type { SentMessageInfo } from '@novu/framework/internal';
 import {
   ENDPOINT_TYPES,
   NotifyWorkflowAgentDispatchResponseDto,
@@ -63,33 +64,37 @@ export class NotifyWorkflowAgentDispatch {
       content: command.content,
     });
 
-    if (
-      dispatch.status === WorkflowAgentDispatchStatusEnum.SENT &&
-      dispatch.platformMessageId &&
-      dispatch.platformThreadId
-    ) {
-      return {
-        dispatchId: dispatch._id,
-        platformMessageId: dispatch.platformMessageId,
-        platformThreadId: dispatch.platformThreadId,
-        status: WorkflowAgentDispatchStatusEnum.SENT,
-      };
+    const alreadySent = this.toSentResponse(dispatch);
+
+    if (alreadySent) {
+      return alreadySent;
     }
 
-    return this.sendAndComplete(command, agent._id, integration.identifier, dispatch, destination);
+    const claimed = await this.workflowAgentDispatchRepository.claimForSend({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      dispatchId: dispatch._id,
+    });
+
+    if (!claimed) {
+      return this.resolveConcurrentSend(command);
+    }
+
+    return this.sendAndComplete(command, agent._id, integration.identifier, claimed);
   }
 
   private async sendAndComplete(
     command: NotifyWorkflowAgentDispatchCommand,
     agentId: string,
     integrationIdentifier: string,
-    dispatch: WorkflowAgentDispatchEntity,
-    destination: WorkflowAgentDispatchDestination
+    dispatch: WorkflowAgentDispatchEntity
   ): Promise<NotifyWorkflowAgentDispatchResponseDto> {
     const content = dispatch.content ?? command.content;
+    const { destination } = dispatch;
+    let sent: SentMessageInfo;
 
     try {
-      const sent =
+      sent =
         destination.type === ENDPOINT_TYPES.SLACK_USER
           ? await this.outboundGateway.sendDirectMessage(
               agentId,
@@ -105,21 +110,6 @@ export class NotifyWorkflowAgentDispatch {
               { markdown: content },
               command.workspaceId
             );
-
-      await this.workflowAgentDispatchRepository.markSent({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        dispatchId: dispatch._id,
-        platformThreadId: sent.platformThreadId,
-        platformMessageId: sent.messageId,
-      });
-
-      return {
-        dispatchId: dispatch._id,
-        platformMessageId: sent.messageId,
-        platformThreadId: sent.platformThreadId,
-        status: WorkflowAgentDispatchStatusEnum.SENT,
-      };
     } catch (error) {
       await this.workflowAgentDispatchRepository.markFailed({
         environmentId: command.environmentId,
@@ -140,6 +130,71 @@ export class NotifyWorkflowAgentDispatch {
 
       throw error;
     }
+
+    try {
+      await this.workflowAgentDispatchRepository.markSent({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        dispatchId: dispatch._id,
+        platformThreadId: sent.platformThreadId,
+        platformMessageId: sent.messageId,
+      });
+    } catch (error) {
+      // Delivered on the platform; leave status as SENDING so retries do not double-post.
+      this.logger.error(
+        {
+          err: error,
+          dispatchId: dispatch._id,
+          agentId,
+          integrationIdentifier,
+          idempotencyKey: command.idempotencyKey,
+          platformMessageId: sent.messageId,
+          platformThreadId: sent.platformThreadId,
+        },
+        'Workflow agent dispatch was delivered but persisting its delivery identifiers failed'
+      );
+    }
+
+    return {
+      dispatchId: dispatch._id,
+      platformMessageId: sent.messageId,
+      platformThreadId: sent.platformThreadId,
+      status: WorkflowAgentDispatchStatusEnum.SENT,
+    };
+  }
+
+  private async resolveConcurrentSend(
+    command: NotifyWorkflowAgentDispatchCommand
+  ): Promise<NotifyWorkflowAgentDispatchResponseDto> {
+    const current = await this.workflowAgentDispatchRepository.findByIdempotencyKey(
+      command.environmentId,
+      command.organizationId,
+      command.idempotencyKey
+    );
+    const sent = current && this.toSentResponse(current);
+
+    if (sent) {
+      return sent;
+    }
+
+    throw new ConflictException(`Workflow agent dispatch ${command.idempotencyKey} is already in flight`);
+  }
+
+  private toSentResponse(dispatch: WorkflowAgentDispatchEntity): NotifyWorkflowAgentDispatchResponseDto | null {
+    if (
+      dispatch.status !== WorkflowAgentDispatchStatusEnum.SENT ||
+      !dispatch.platformMessageId ||
+      !dispatch.platformThreadId
+    ) {
+      return null;
+    }
+
+    return {
+      dispatchId: dispatch._id,
+      platformMessageId: dispatch.platformMessageId,
+      platformThreadId: dispatch.platformThreadId,
+      status: WorkflowAgentDispatchStatusEnum.SENT,
+    };
   }
 
   private parseDestination(command: NotifyWorkflowAgentDispatchCommand): WorkflowAgentDispatchDestination {

@@ -117,6 +117,9 @@ const mapDetailToEventType = {
   [DetailEnum.CHAT_ALL_CHANNELS_FAILED]: 'chat_all_channels_failed',
   [DetailEnum.CHAT_MISSING_PHONE_NUMBER]: 'chat_phone_missing',
   [DetailEnum.CHAT_SOME_CHANNELS_SKIPPED]: 'chat_some_channels_skipped',
+  [DetailEnum.CHAT_AGENT_INTEGRATION_NOT_LINKED]: 'chat_agent_integration_not_linked',
+  [DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT]: 'chat_agent_unsupported_endpoint',
+  [DetailEnum.CHAT_AGENT_NO_ELIGIBLE_CHANNELS]: 'chat_agent_no_eligible_channels',
 
   // MS Teams events
   [DetailEnum.MSTEAMS_BOT_NOT_INSTALLED]: 'msteams_bot_not_installed',

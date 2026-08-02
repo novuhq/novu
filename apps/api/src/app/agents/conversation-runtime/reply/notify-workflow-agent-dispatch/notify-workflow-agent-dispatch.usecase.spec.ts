@@ -34,12 +34,24 @@ function buildCommand(overrides: Partial<NotifyWorkflowAgentDispatchCommand> = {
   });
 }
 
+function buildDispatch(overrides: Record<string, unknown> = {}) {
+  return {
+    _id: 'dispatch-1',
+    status: WorkflowAgentDispatchStatusEnum.PENDING,
+    content: 'Hello from workflow',
+    destination: { type: ENDPOINT_TYPES.SLACK_USER, userId: 'U123' },
+    ...overrides,
+  };
+}
+
 describe('NotifyWorkflowAgentDispatch usecase', () => {
   let agentRepository: { findOne: sinon.SinonStub };
   let integrationRepository: { findOne: sinon.SinonStub };
   let agentIntegrationRepository: { findOne: sinon.SinonStub };
   let workflowAgentDispatchRepository: {
     reservePending: sinon.SinonStub;
+    claimForSend: sinon.SinonStub;
+    findByIdempotencyKey: sinon.SinonStub;
     markSent: sinon.SinonStub;
     markFailed: sinon.SinonStub;
   };
@@ -77,11 +89,9 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
       findOne: stub().resolves({ _id: 'link-id' }),
     };
     workflowAgentDispatchRepository = {
-      reservePending: stub().resolves({
-        _id: 'dispatch-1',
-        status: WorkflowAgentDispatchStatusEnum.PENDING,
-        content: 'Hello from workflow',
-      }),
+      reservePending: stub().resolves(buildDispatch()),
+      claimForSend: stub().resolves(buildDispatch({ status: WorkflowAgentDispatchStatusEnum.SENDING })),
+      findByIdempotencyKey: stub().resolves(null),
       markSent: stub().resolves(undefined),
       markFailed: stub().resolves(undefined),
     };
@@ -120,6 +130,13 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
   });
 
   it('sends a Slack channel message via sendChannelMessage', async () => {
+    const channelDispatch = buildDispatch({
+      status: WorkflowAgentDispatchStatusEnum.SENDING,
+      destination: { type: ENDPOINT_TYPES.SLACK_CHANNEL, channelId: 'C123' },
+    });
+    workflowAgentDispatchRepository.reservePending.resolves(channelDispatch);
+    workflowAgentDispatchRepository.claimForSend.resolves(channelDispatch);
+
     const result = await buildUsecase().execute(
       buildCommand({
         destination: { type: ENDPOINT_TYPES.SLACK_CHANNEL, channelId: 'C123' },
@@ -129,6 +146,60 @@ describe('NotifyWorkflowAgentDispatch usecase', () => {
     expect(result.platformThreadId).to.equal('slack:C123:ts-2');
     expect(outboundGateway.sendChannelMessage.calledOnce).to.equal(true);
     expect(outboundGateway.sendDirectMessage.called).to.equal(false);
+  });
+
+  it('delivers to the reserved destination when a key is replayed with a different one', async () => {
+    workflowAgentDispatchRepository.claimForSend.resolves(
+      buildDispatch({
+        status: WorkflowAgentDispatchStatusEnum.SENDING,
+        destination: { type: ENDPOINT_TYPES.SLACK_USER, userId: 'U_ORIGINAL' },
+      })
+    );
+
+    await buildUsecase().execute(
+      buildCommand({ destination: { type: ENDPOINT_TYPES.SLACK_USER, userId: 'U_ATTACKER' } })
+    );
+
+    expect(outboundGateway.sendDirectMessage.firstCall.args[2]).to.equal('U_ORIGINAL');
+  });
+
+  it('does not send when another request already owns the dispatch', async () => {
+    workflowAgentDispatchRepository.claimForSend.resolves(null);
+
+    try {
+      await buildUsecase().execute(buildCommand());
+      expect.fail('expected ConflictException');
+    } catch (error) {
+      expect((error as Error).message).to.include('already in flight');
+    }
+
+    expect(outboundGateway.sendDirectMessage.called).to.equal(false);
+  });
+
+  it('returns the completed dispatch when the concurrent owner finished sending', async () => {
+    workflowAgentDispatchRepository.claimForSend.resolves(null);
+    workflowAgentDispatchRepository.findByIdempotencyKey.resolves(
+      buildDispatch({
+        status: WorkflowAgentDispatchStatusEnum.SENT,
+        platformMessageId: 'ts-winner',
+        platformThreadId: 'slack:D123:ts-winner',
+      })
+    );
+
+    const result = await buildUsecase().execute(buildCommand());
+
+    expect(result.platformMessageId).to.equal('ts-winner');
+    expect(outboundGateway.sendDirectMessage.called).to.equal(false);
+  });
+
+  it('reports success and keeps the dispatch unfailed when persisting delivery ids fails', async () => {
+    workflowAgentDispatchRepository.markSent.rejects(new Error('mongo down'));
+
+    const result = await buildUsecase().execute(buildCommand());
+
+    expect(result.platformMessageId).to.equal('ts-1');
+    expect(result.status).to.equal(WorkflowAgentDispatchStatusEnum.SENT);
+    expect(workflowAgentDispatchRepository.markFailed.called).to.equal(false);
   });
 
   it('returns existing sent dispatch without re-sending (idempotent)', async () => {

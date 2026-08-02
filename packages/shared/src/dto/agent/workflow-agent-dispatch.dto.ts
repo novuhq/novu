@@ -2,6 +2,7 @@ import { ENDPOINT_TYPES } from '../../types/channel-endpoint';
 
 export enum WorkflowAgentDispatchStatusEnum {
   PENDING = 'pending',
+  SENDING = 'sending',
   SENT = 'sent',
   FAILED = 'failed',
 }
