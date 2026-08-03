@@ -47,8 +47,8 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
         <span className="mly-text-sm mly-font-medium">Actions</span>
       </div>
 
-      <div className="mly-flex mly-items-center mly-gap-1">
-        <div className="mly-flex mly-min-w-0 mly-flex-1 mly-items-center mly-gap-0.5 mly-overflow-x-auto mly-rounded-md mly-bg-soft-gray mly-p-0.5">
+      <div className="mly-flex mly-flex-wrap mly-items-center mly-gap-1">
+        <div className="mly-flex mly-flex-wrap mly-items-center mly-gap-0.5 mly-rounded-md mly-bg-soft-gray mly-p-0.5">
           {state.buttons.map((_, index) => (
             <button
               key={index}
@@ -68,7 +68,7 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
         <button
           type="button"
           disabled={!state.canAddButton}
-          className="mly-flex mly-shrink-0 mly-items-center mly-gap-1 mly-rounded-md mly-px-1.5 mly-py-1 mly-text-xs mly-font-medium mly-text-slate-600 hover:mly-bg-soft-gray disabled:mly-cursor-not-allowed disabled:mly-opacity-50"
+          className="mly-flex mly-shrink-0 mly-items-center mly-gap-1 mly-rounded-md mly-px-1.5 mly-py-1 mly-text-xs mly-font-medium mly-text-slate-600 hover:mly-bg-soft-gray disabled:mly-cursor-not-allowed disabled:mly-text-slate-300 disabled:hover:mly-bg-transparent"
           onClick={() => editor.commands.addCardButton()}
         >
           <Plus className="mly-size-3.5 mly-stroke-[2.5]" />

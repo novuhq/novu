@@ -176,8 +176,9 @@ export const CardActionsExtension = Node.create({
   },
 
   addNodeView() {
+    // No `contentDOMElementTag`: NodeViewContent is the content DOM directly, so the
+    // inline flex layout applies to the element that actually holds the buttons.
     return ReactNodeViewRenderer(CardActionsView, {
-      contentDOMElementTag: 'div',
       className: 'mly-relative',
     });
   },

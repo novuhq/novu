@@ -29,10 +29,12 @@ export function CardButtonView(props: NodeViewProps) {
 
   return (
     <NodeViewWrapper data-type="cardButton" data-selected={selected ? 'true' : undefined} className="mly-inline-flex">
-      <button
-        className="mly-inline-flex mly-items-center mly-justify-center mly-rounded-md mly-px-3 mly-py-1 mly-text-sm mly-font-semibold mly-no-underline mly-transition-colors data-[selected=true]:mly-ring-2 data-[selected=true]:mly-ring-gray-400 data-[selected=true]:mly-ring-offset-1 disabled:mly-pointer-events-none disabled:mly-opacity-50"
-        tabIndex={-1}
+      {/* A non-focusable div (not a <button>) so clicking selects the node without
+          stealing focus from the editor — keeping the actions bubble menu visible. */}
+      <div
+        role="button"
         data-selected={selected ? 'true' : undefined}
+        className="mly-inline-flex mly-cursor-pointer mly-select-none mly-items-center mly-justify-center mly-rounded-md mly-px-3 mly-py-1 mly-text-sm mly-font-semibold mly-no-underline mly-transition-colors data-[selected=true]:mly-ring-2 data-[selected=true]:mly-ring-gray-400 data-[selected=true]:mly-ring-offset-1"
         style={
           {
             backgroundColor: preset.backgroundColor,
@@ -42,8 +44,7 @@ export function CardButtonView(props: NodeViewProps) {
             borderColor: preset.borderColor,
           } as CSSProperties
         }
-        onClick={(e) => {
-          e.preventDefault();
+        onClick={() => {
           if (!editor.isEditable) {
             return;
           }
@@ -52,7 +53,7 @@ export function CardButtonView(props: NodeViewProps) {
         }}
       >
         {matchingProvider ? matchingProvider.renderValue(label, editor, 'button-variable') : label}
-      </button>
+      </div>
     </NodeViewWrapper>
   );
 }

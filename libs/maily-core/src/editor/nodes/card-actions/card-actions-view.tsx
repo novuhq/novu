@@ -11,7 +11,8 @@ export function CardActionsView(props: NodeViewProps) {
       className="mly-relative mly-my-1"
     >
       <NodeViewContent
-        className="mly-flex mly-flex-wrap mly-items-center mly-gap-2"
+        as="div"
+        className="mly-w-full"
         onClick={(event: React.MouseEvent<HTMLDivElement>) => {
           if (!editor.isEditable) {
             return;

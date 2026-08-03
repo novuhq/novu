@@ -512,3 +512,17 @@
 .mly-drag-handle {
   animation: mly-fade-in 250ms ease;
 }
+
+/*
+ * Card actions row: render its `cardButton` children inline (max 3 per row).
+ * TipTap injects the real content DOM as a full-width block child inside the
+ * React NodeViewContent wrapper; that inner element is the flex row that keeps
+ * the buttons side by side. The wrapper stays a full-width block so the row has
+ * the full editor width to lay out in (avoiding premature wrapping).
+ */
+[data-type="cardActions"] > [data-node-view-content] > div {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 8px;
+}

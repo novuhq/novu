@@ -2,7 +2,6 @@ import { BubbleMenu } from '@tiptap/react';
 import { useCallback } from 'react';
 import { sticky } from 'tippy.js';
 import { findCardActions } from '@/editor/nodes/card-actions/card-actions';
-import { isTextSelected } from '@/editor/utils/is-text-selected';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { TooltipProvider } from '../ui/tooltip';
@@ -15,7 +14,7 @@ export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
   }
 
   const getReferenceClientRect = useCallback(() => {
-    const renderContainer = getRenderContainer(editor!, 'cardActions');
+    const renderContainer = getRenderContainer(editor, 'cardActions');
     const rect = renderContainer?.getBoundingClientRect() || new DOMRect(-1000, -1000, 0, 0);
 
     return rect;
@@ -29,17 +28,15 @@ export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
         return false;
       }
 
-      if (isTextSelected(editor)) {
-        return false;
-      }
-
+      // A `cardActions` row (or one of its buttons) must be selected. Note: a
+      // NodeSelection is not a text selection, so `isTextSelected` is not used here.
       return !!findCardActions(editor);
     },
     tippyOptions: {
+      // The actions form opens below the row (per design). Flip stays enabled so it
+      // moves above when there isn't enough room below.
+      placement: 'bottom-start',
       offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
       getReferenceClientRect,
       appendTo: () => appendTo?.current,
       plugins: [sticky],
