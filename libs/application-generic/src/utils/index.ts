@@ -25,6 +25,7 @@ export * from './issues';
 export * from './json-schema-mock';
 export * from './json-schema-utils';
 export * from './jsonToSchema';
+export * from './maily-to-card';
 export * from './maily-utils';
 export * from './map-step-type-to-result.mapper';
 export * from './notification-template-mapper';

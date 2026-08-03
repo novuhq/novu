@@ -38,6 +38,22 @@ function lookoutForResourceId(value: string): string | null {
 }
 
 /**
+ * Slug IDs always end with `_` followed by a 16-character base62-encoded internal ID.
+ * Examples: 'welcome-email_wf_1A2B3C4D5E6F7890', 'email-template_et_1A2B3C4D5E6F7890'
+ */
+function shouldAttemptSlugDecode(value: string): boolean {
+  if (value.length === ENCODED_ID_LENGTH) {
+    return true;
+  }
+
+  if (value.length < ENCODED_ID_LENGTH) {
+    return false;
+  }
+
+  return value[value.length - ENCODED_ID_LENGTH - 1] === '_';
+}
+
+/**
  * Parses a slug ID and returns the internal resource ID
  *
  * Handles multiple input formats:
@@ -58,6 +74,10 @@ export function parseSlugId(value: string): InternalId {
   const validId = lookoutForResourceId(value);
   if (validId) {
     return validId;
+  }
+
+  if (!shouldAttemptSlugDecode(value)) {
+    return value;
   }
 
   // Try to extract and decode the base62 encoded part from the end

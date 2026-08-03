@@ -278,6 +278,19 @@ export class TriggerEventRequestDto {
   @IsOptional()
   overrides?: TriggerOverrides;
 
+  @ApiPropertyOptional({
+    description:
+      'Override the workflow-assigned agent for this trigger using the public agent identifier. Omit to use the workflow default; pass null to disable agent routing for this execution.',
+    type: 'string',
+    nullable: true,
+    example: 'support-agent',
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @IsNotEmpty()
+  agentId?: string | null;
+
   @ApiProperty({
     description:
       'The recipients list of people who will receive the notification. Maximum number of recipients can be 100.',

@@ -80,7 +80,7 @@ describe('AgentInboundHandler', () => {
       createOrGetConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
-      persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
+      persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),

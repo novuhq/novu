@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { OutboundGateway } from './outbound.gateway';
+import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
 
 describe('OutboundGateway sendDirectMessage', () => {
   const agentId = 'agent1';
@@ -27,14 +28,10 @@ describe('OutboundGateway sendDirectMessage', () => {
     const threadPost = options.threadPost ?? sinon.stub().resolves({ id: 'msg-1', threadId });
     const thread = { post: threadPost };
     const adapterOpenDM =
-      options.adapterOpenDM === null
-        ? undefined
-        : (options.adapterOpenDM ?? sinon.stub().resolves(threadId));
-    const chatOpenDM =
-      options.chatOpenDM ?? sinon.stub().rejects(new Error('chat.openDM should not be called'));
+      options.adapterOpenDM === null ? undefined : (options.adapterOpenDM ?? sinon.stub().resolves(threadId));
+    const chatOpenDM = options.chatOpenDM ?? sinon.stub().rejects(new Error('chat.openDM should not be called'));
     const withBotToken =
-      options.withBotToken ??
-      sinon.stub().callsFake(async (_token: string, fn: () => Promise<unknown>) => fn());
+      options.withBotToken ?? sinon.stub().callsFake(async (_token: string, fn: () => Promise<unknown>) => fn());
     const resolveSlackBotToken = options.resolveSlackBotToken ?? sinon.stub().resolves('xoxb-test-token');
 
     const agentConfigResolver = {
@@ -77,6 +74,7 @@ describe('OutboundGateway sendDirectMessage', () => {
       agentConfigResolver as any,
       fileMaterializer as any,
       actionTokenService as any,
+      new OutboundDeliveryInfo(),
       logger as any
     );
 

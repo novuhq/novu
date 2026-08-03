@@ -1,6 +1,11 @@
+import type { SlackAdapter } from '@chat-adapter/slack';
+import type { TeamsAdapter } from '@chat-adapter/teams';
+import type { TelegramAdapter } from '@chat-adapter/telegram';
+import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
+import type { NovuWebChatAdapter } from '@novu/chat-adapter-web';
+import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
@@ -14,6 +19,32 @@ import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resum
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
+
+/**
+ * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
+ * value. Declaring the full map is what lets `chat.getAdapter('slack')` resolve
+ * to the concrete adapter type rather than the base `Adapter` interface, so
+ * platform-specific members are visible without casting.
+ *
+ * A given instance only ever holds one adapter (see `buildAdapters`), so callers
+ * must still guard on `config.platform` before reaching for a platform's adapter
+ * — exactly as they do today. Email and Sendblue expose no members beyond the
+ * base interface, so they stay as `Adapter`.
+ *
+ * Written as a type alias rather than an interface because `Chat`'s parameter is
+ * constrained to `Record<string, Adapter>`, which interfaces do not satisfy.
+ */
+export type PlatformAdapters = {
+  slack: SlackAdapter;
+  teams: TeamsAdapter;
+  telegram: TelegramAdapter;
+  whatsapp: WhatsAppAdapter;
+  web_chat: NovuWebChatAdapter;
+  email: Adapter;
+  sendblue: Adapter;
+};
+
+export type ChatWithAdapters = Chat<PlatformAdapters>;
 
 interface ChatStateLogger {
   debug: (msg: string, ctx?: Record<string, unknown>) => void;
@@ -49,7 +80,7 @@ export interface InboundCallbacks {
  * the cached instance is dropped and rebuilt — see getOrCreate().
  */
 export interface CachedChat {
-  chat: Chat;
+  chat: ChatWithAdapters;
   config: ResolvedAgentConfig;
   adapterFingerprint: string;
 }
@@ -75,7 +106,7 @@ const INSTANCE_TTL_MS = 1000 * 60 * 30;
 @Injectable()
 export class ChatInstanceRegistry implements OnModuleDestroy {
   readonly instances: LRUCache<string, CachedChat>;
-  private readonly pendingCreations = new Map<string, Promise<Chat>>();
+  private readonly pendingCreations = new Map<string, Promise<ChatWithAdapters>>();
   private inboundCallbacks: InboundCallbacks | null = null;
 
   constructor(
@@ -115,7 +146,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
-  ): Promise<Chat> {
+  ): Promise<ChatWithAdapters> {
     const freshFingerprint = this.adapterFingerprint(config);
     const existing = this.instances.get(instanceKey);
 
@@ -167,7 +198,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig,
     adapterFingerprint: string
-  ): Promise<Chat> {
+  ): Promise<ChatWithAdapters> {
     const chat = await this.createChatInstance(instanceKey, agentId, platform, config);
     await chat.initialize();
     const cached: CachedChat = { chat, config, adapterFingerprint };
@@ -208,7 +239,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
-  ): Promise<Chat> {
+  ): Promise<ChatWithAdapters> {
     const [{ Chat: ChatCtor }, { createIoRedisState }] = await Promise.all([
       esmImport('chat'),
       esmImport('@chat-adapter/state-ioredis'),
@@ -458,6 +489,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
+            startTyping: this.webChatPlatformDelivery.createStartTyping(deliveryContext),
           }),
         };
       }

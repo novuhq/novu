@@ -86,7 +86,6 @@ export class InboundAckService {
       this.outboundGateway.reactToMessage(
         agentId,
         config.integrationIdentifier,
-        config.platform,
         platformThreadId,
         platformMessageId,
         INBOUND_ACK_EMOJI.receipt
@@ -106,7 +105,6 @@ export class InboundAckService {
       this.outboundGateway.reactToMessage(
         agentId,
         config.integrationIdentifier,
-        config.platform,
         platformThreadId,
         platformMessageId,
         INBOUND_ACK_EMOJI.queued
@@ -130,7 +128,6 @@ export class InboundAckService {
       this.outboundGateway.removeReaction(
         agentId,
         config.integrationIdentifier,
-        config.platform,
         platformThreadId,
         firstPlatformMessageId,
         INBOUND_ACK_EMOJI.receipt
@@ -205,7 +202,6 @@ export class InboundAckService {
       this.outboundGateway.removeReaction(
         target.agentId,
         target.integrationIdentifier,
-        target.platform,
         target.platformThreadId,
         messageId,
         emoji
