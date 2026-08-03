@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGenerator } from 'ts-json-schema-generator';
+import { FCM_ROUTING_KEYS } from '../src/consts/providers/provider-overrides/fcm/keys.ts';
 import { toLiquidTolerantSchema } from '../src/consts/providers/provider-overrides/liquid-tolerant.ts';
 import type { JSONSchemaDto } from '../src/dto/workflows/json-schema-dto.ts';
 
@@ -14,9 +15,6 @@ const typeFile = join(scriptDir, 'fcm-override.type.ts');
 
 const ROOT_TYPE = 'FcmOverride';
 const GENERATE_COMMAND = 'pnpm --filter @novu/shared generate:fcm-schema';
-
-/** Routing keys exposed on `FcmOverride`; at most one may appear in a single content override. */
-const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
 
 function definitionKeyOf(ref: string): string {
   return decodeURIComponent(ref.replace('#/definitions/', ''));

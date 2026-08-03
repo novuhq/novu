@@ -65,7 +65,6 @@ export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
       "$ref": "#/definitions/FcmOptions"
     }
   },
-  "description": "Strategy 1: generate from firebase-admin `BaseMessage` plus the four routing fields Novu exposes in content overrides. At most one routing key may be set per override — the generator appends pairwise JSON Schema mutual-exclusion (`allOf` / `not.required`) after generation.",
   "definitions": {
     "AndroidConfig": {
       "anyOf": [

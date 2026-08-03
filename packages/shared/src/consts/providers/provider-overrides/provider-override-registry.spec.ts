@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ChatProviderIdEnum, PushProviderIdEnum, ToolProviderIdEnum } from '../../../types';
+import { FCM_ROUTING_KEYS } from './fcm/keys';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -231,7 +232,7 @@ describe('provider override registry', () => {
         'condition',
       ])
     );
-    expect(config?.exclusiveKeyGroups).toEqual([['token', 'tokens', 'topic', 'condition']]);
+    expect(config?.exclusiveKeyGroups).toEqual([FCM_ROUTING_KEYS]);
     expect(getProviderOverrideKeysOnlySchema(PushProviderIdEnum.FCM)?.properties?.notification).toBe(true);
     expect(getProviderOverrideKeysOnlySchema(PushProviderIdEnum.FCM)?.properties?.topic).toBe(true);
   });

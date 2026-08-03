@@ -7,7 +7,7 @@ import {
   ToolProviderIdEnum,
 } from '../../../types';
 import { expoOverrideJsonSchema } from './expo-override.schema';
-import { FCM_OVERRIDE_KEYS, FCM_OVERRIDE_SCHEMA_SUBPATH, FCM_PRIMARY_CONTENT_KEY } from './fcm/keys';
+import { FCM_OVERRIDE_KEYS, FCM_OVERRIDE_SCHEMA_SUBPATH, FCM_PRIMARY_CONTENT_KEY, FCM_ROUTING_KEYS } from './fcm/keys';
 import { grafanaOverrideJsonSchema } from './grafana-override.schema';
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
@@ -194,7 +194,7 @@ const PUSH_PROVIDER_OVERRIDE_CONFIGS = {
     schemaSubpath: FCM_OVERRIDE_SCHEMA_SUBPATH,
     keys: PROVIDER_OVERRIDE_KEYS[PushProviderIdEnum.FCM],
     primaryContentKey: FCM_PRIMARY_CONTENT_KEY,
-    exclusiveKeyGroups: [['token', 'tokens', 'topic', 'condition']],
+    exclusiveKeyGroups: [FCM_ROUTING_KEYS],
   },
   [PushProviderIdEnum.APNS]: escapeHatch(null),
   [PushProviderIdEnum.EXPO]: schemaBacked(

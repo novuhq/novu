@@ -1,10 +1,8 @@
 import type { BaseMessage } from 'firebase-admin/messaging';
 
-/**
- * Strategy 1: generate from firebase-admin `BaseMessage` plus the four routing fields Novu
- * exposes in content overrides. At most one routing key may be set per override — the generator
- * appends pairwise JSON Schema mutual-exclusion (`allOf` / `not.required`) after generation.
- */
+// Generator input for `generate:fcm-schema`: BaseMessage plus Novu-exposed routing fields.
+// Mutual exclusion among routing keys is appended by the generator after schema generation.
+
 export type FcmOverride = BaseMessage & {
   /** Registration token that identifies a single device. */
   token?: string;

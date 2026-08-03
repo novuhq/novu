@@ -6,11 +6,12 @@
  * Order matches the generator's property emission order exactly
  * (`Object.keys(fcmOverrideJsonSchema.properties)`).
  */
+
+/** At most one of these may appear in a single FCM content override. */
+export const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
+
 export const FCM_OVERRIDE_KEYS = [
-  'token',
-  'tokens',
-  'topic',
-  'condition',
+  ...FCM_ROUTING_KEYS,
   'data',
   'notification',
   'android',
