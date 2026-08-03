@@ -7,7 +7,7 @@ import {
   ToolProviderIdEnum,
 } from '../../../types';
 import { expoOverrideJsonSchema } from './expo-override.schema';
-import { FCM_OVERRIDE_KEYS, FCM_OVERRIDE_SCHEMA_SUBPATH, FCM_PRIMARY_CONTENT_KEY } from './fcm/keys';
+import { FCM_OVERRIDE_KEYS, FCM_OVERRIDE_SCHEMA_SUBPATH, FCM_PRIMARY_CONTENT_KEY, FCM_ROUTING_KEYS } from './fcm/keys';
 import { grafanaOverrideJsonSchema } from './grafana-override.schema';
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
@@ -63,6 +63,12 @@ export type ProviderOverrideConfig = {
    * Used when content lives in an array element (LINE `messages[].text`) rather than a scalar path.
    */
   seedWhenAbsent?: ProviderOverrideSeedWhenAbsent;
+  /**
+   * Groups of top-level keys that are mutually exclusive within a single content override.
+   * Enforced in the full JSON Schema via pairwise `allOf` / `not.required` constraints; exposed
+   * here so UI and key-level validation can surface the same rule without loading the schema.
+   */
+  exclusiveKeyGroups?: readonly (readonly string[])[];
 };
 
 /**
@@ -188,6 +194,7 @@ const PUSH_PROVIDER_OVERRIDE_CONFIGS = {
     schemaSubpath: FCM_OVERRIDE_SCHEMA_SUBPATH,
     keys: PROVIDER_OVERRIDE_KEYS[PushProviderIdEnum.FCM],
     primaryContentKey: FCM_PRIMARY_CONTENT_KEY,
+    exclusiveKeyGroups: [FCM_ROUTING_KEYS],
   },
   [PushProviderIdEnum.APNS]: escapeHatch(null),
   [PushProviderIdEnum.EXPO]: schemaBacked(

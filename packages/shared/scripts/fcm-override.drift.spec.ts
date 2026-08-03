@@ -4,13 +4,22 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { fcmOverrideJsonSchema } from '../src/consts/providers/provider-overrides/fcm/fcm-override.generated';
 import { fcmOverrideLiquidTolerantJsonSchema } from '../src/consts/providers/provider-overrides/fcm/fcm-override.liquid-tolerant.generated';
-import { FCM_OVERRIDE_KEYS } from '../src/consts/providers/provider-overrides/fcm/keys';
-import { NON_OVERRIDABLE_FCM_KEYS } from './fcm-override.type';
+import { FCM_OVERRIDE_KEYS, FCM_ROUTING_KEYS } from '../src/consts/providers/provider-overrides/fcm/keys';
 import { buildFcmOverrideSchemas } from './generate-fcm-override-schema';
 
 const REGENERATE_HINT = 'Run `pnpm --filter @novu/shared generate:fcm-schema` and commit the result.';
 const DRIFT_ENV_VAR = 'NOVU_TEST_FCM_SCHEMA_DRIFT';
 const sharedRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/** Literal fixtures for the six pairwise exclusions — not derived from the generator helper. */
+const ROUTING_KEY_PAIR_EXCLUSIONS = [
+  { not: { required: ['token', 'tokens'] } },
+  { not: { required: ['token', 'topic'] } },
+  { not: { required: ['token', 'condition'] } },
+  { not: { required: ['tokens', 'topic'] } },
+  { not: { required: ['tokens', 'condition'] } },
+  { not: { required: ['topic', 'condition'] } },
+] as const;
 
 /**
  * Comparing against a freshly generated schema means running ts-json-schema-generator over the
@@ -74,14 +83,32 @@ describe('regenerated FCM override schema', () => {
 });
 
 describe('committed FCM override schema', () => {
+  it('exposes all four routing fields in schema properties', () => {
+    for (const key of FCM_ROUTING_KEYS) {
+      expect(fcmOverrideJsonSchema.properties?.[key]).toBeDefined();
+      expect(fcmOverrideLiquidTolerantJsonSchema.properties?.[key]).toBeDefined();
+    }
+  });
+
+  it('encodes pairwise mutual exclusion among routing keys on both schemas', () => {
+    for (const schema of [fcmOverrideJsonSchema, fcmOverrideLiquidTolerantJsonSchema]) {
+      expect(schema.allOf).toEqual(expect.arrayContaining([...ROUTING_KEY_PAIR_EXCLUSIONS]));
+    }
+  });
+
   it('keeps the hand-written key list in step with the schema', () => {
     expect([...FCM_OVERRIDE_KEYS]).toEqual(Object.keys(fcmOverrideJsonSchema.properties ?? {}));
   });
 
-  it('never exposes the routing fields Novu resolves itself', () => {
-    for (const key of NON_OVERRIDABLE_FCM_KEYS) {
-      expect(fcmOverrideJsonSchema.properties?.[key]).toBeUndefined();
-    }
+  it('documents fan-out duplication risk on topic and condition', () => {
+    expect(fcmOverrideJsonSchema.properties?.topic).toMatchObject({
+      type: 'string',
+      description: expect.stringMatching(/Warning:.*separate topic broadcast/i),
+    });
+    expect(fcmOverrideJsonSchema.properties?.condition).toMatchObject({
+      type: 'string',
+      description: expect.stringMatching(/Warning:.*separate condition broadcast/i),
+    });
   });
 
   it('keeps notification.body available and top-level required absent for partial patches', () => {

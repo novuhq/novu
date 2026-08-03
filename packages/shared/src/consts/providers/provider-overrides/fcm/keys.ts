@@ -3,21 +3,22 @@
  * the provider registry never have to pull the generated artifact into a bundle.
  * `fcm-override.drift.spec.ts` fails if these drift apart.
  *
- * Order matches firebase-admin `BaseMessage` property declaration order (what the generator emits).
+ * Order matches the generator's property emission order exactly
+ * (`Object.keys(fcmOverrideJsonSchema.properties)`).
  */
-export const FCM_OVERRIDE_KEYS = ['data', 'notification', 'android', 'webpush', 'apns', 'fcmOptions'] as const;
 
-/**
- * Excluded from the generated FCM override schema / editor autocomplete only. These keys are
- * resolved from Novu's subscriber routing at send time; omitting them from the schema keeps
- * autocomplete from suggesting them, but overrides may still set them (typed or `_passthrough`)
- * and they are not stripped on the send path.
- *
- * `BaseMessage` itself does not declare them — they live on `TokenMessage` / `TopicMessage` /
- * `ConditionMessage` / `MulticastMessage` — but listing them here documents the product rule and
- * feeds `assertRoutingKeysAreAbsent`.
- */
-export const NON_OVERRIDABLE_FCM_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
+/** At most one of these may appear in a single FCM content override. */
+export const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
+
+export const FCM_OVERRIDE_KEYS = [
+  ...FCM_ROUTING_KEYS,
+  'data',
+  'notification',
+  'android',
+  'webpush',
+  'apns',
+  'fcmOptions',
+] as const;
 
 /** FCM puts the compiled step body into `notification.body`. */
 export const FCM_PRIMARY_CONTENT_KEY = 'notification.body';
