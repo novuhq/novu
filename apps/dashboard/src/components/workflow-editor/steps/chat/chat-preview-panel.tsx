@@ -37,7 +37,7 @@ function extractChatPreview(previewData?: GeneratePreviewResponseDto): ChatRende
  */
 function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanelProps) {
   const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
-  const { previewSource, setPreviewSource } = useContentSource();
+  const { selectedSource, previewSource, setPreviewSource } = useContentSource();
 
   const preview = extractChatPreview(previewData);
   const body = preview?.body ?? '';
@@ -49,6 +49,8 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
     formOverrides: providerOverrides,
     previewOverrides: preview?.providerOverrides,
   });
+
+  const isViewingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE;
 
   const renderBody = () => {
     if (!activeProviderId || !annotatedPreview) {
@@ -83,15 +85,17 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
 
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
-      <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
-        <ContentSourceSelector
-          selectedSource={previewSource}
-          providers={providerOptions}
-          showEscapeHatchBadge
-          onSelectSource={setPreviewSource}
-        />
-        <div className="h-full flex-1" />
-      </div>
+      {!isViewingOverride && (
+        <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
+          <ContentSourceSelector
+            selectedSource={previewSource}
+            providers={providerOptions}
+            showEscapeHatchBadge
+            onSelectSource={setPreviewSource}
+          />
+          <div className="h-full flex-1" />
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col p-3">{renderBody()}</div>
     </div>

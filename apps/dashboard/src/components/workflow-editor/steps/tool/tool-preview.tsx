@@ -92,7 +92,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const body = preview?.body ?? '';
 
   const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
-  const { previewSource, setPreviewSource } = useContentSource();
+  const { selectedSource, previewSource, setPreviewSource } = useContentSource();
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
   const isWebhookPreview = activeProviderId === ToolProviderIdEnum.Webhook;
 
@@ -159,16 +159,20 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     previewLabel = 'Rendered override JSON';
   }
 
+  const isViewingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE;
+
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
-      <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
-        <ContentSourceSelector
-          selectedSource={previewSource}
-          providers={providerOptions}
-          onSelectSource={setPreviewSource}
-        />
-        <div className="h-full flex-1" />
-      </div>
+      {!isViewingOverride && (
+        <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
+          <ContentSourceSelector
+            selectedSource={previewSource}
+            providers={providerOptions}
+            onSelectSource={setPreviewSource}
+          />
+          <div className="h-full flex-1" />
+        </div>
+      )}
 
       <div className="relative flex min-h-0 flex-1 flex-col gap-3 p-3">
         <div className="flex h-full min-h-0 w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
