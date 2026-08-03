@@ -347,6 +347,7 @@ export class CreateWorkflowV0 {
       status: command.status,
       issues: command.issues,
       severity: command.severity,
+      ...(command.agent !== undefined ? { agent: command.agent } : {}),
       ...(command.updatedBy ? { _updatedBy: command.updatedBy } : {}),
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema ? { payloadSchema: command.payloadSchema } : {}),

@@ -39,6 +39,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { QueryKeys } from '@/utils/query-keys';
 import {
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
@@ -125,6 +126,8 @@ export function AgentDetailsPage() {
       showSuccessToast(`Deleted agent: ${name.length > 40 ? `${name.slice(0, 40)}…` : name}`);
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
       navigate(agentsListPath);
     },
     onError: (err: Error) => {

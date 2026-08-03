@@ -24,6 +24,16 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   overrides: TriggerOverrides;
 
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  agentId?: string | null;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  _agentId?: string | null;
+
   @IsString()
   @IsOptional()
   transactionId?: string;

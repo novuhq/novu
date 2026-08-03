@@ -284,6 +284,47 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
+  describe('preheader injection', () => {
+    const buildPreheaderCommand = (preheader: string): EmailOutputRendererCommand => ({
+      dbWorkflow: mockDbWorkflow,
+      controlValues: {
+        subject: 'Welcome Email',
+        preheader,
+        body: JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: 'Unique body marker' }],
+            },
+          ],
+        } satisfies MailyJSONContent),
+      },
+      fullPayloadForRender: mockFullPayload,
+      stepId: 'fake_step_id',
+    });
+
+    it('should render the preheader once', async () => {
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand('Peek inside'));
+
+      expect(result.body.split('Peek inside')).to.have.lengthOf(2);
+    });
+
+    it('should not expand $& as a special replacement pattern', async () => {
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand('$&'));
+
+      expect(result.body).to.include('$&');
+      expect(result.body.match(/<body\b/gi) || []).to.have.lengthOf(1);
+    });
+
+    it("should not expand $' as a special replacement pattern", async () => {
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand("$'"));
+
+      expect(result.body).to.include("$'");
+      expect(result.body.split('Unique body marker')).to.have.lengthOf(2);
+    });
+  });
+
   describe('variable node transformation to text', () => {
     it('should handle maily variables', async () => {
       const mockTipTapNode: MailyJSONContent = {

@@ -144,4 +144,38 @@ describe('CreateNotificationJobs', () => {
     expect(jobs.map((job) => job.type)).toEqual([StepTypeEnum.TRIGGER, StepTypeEnum.EMAIL]);
     expect(Logger.error).not.toHaveBeenCalled();
   });
+
+  it('should persist explicit null _agentId on jobs', async () => {
+    const { usecase } = buildUsecase();
+    const command = {
+      ...buildCommand([buildEmailStep()]),
+      _agentId: null,
+    } as CreateNotificationJobsCommand;
+
+    const jobs = await usecase.execute(command);
+
+    expect(jobs.every((job) => job._agentId === null)).toBe(true);
+  });
+
+  it('should omit _agentId from jobs when not provided', async () => {
+    const { usecase } = buildUsecase();
+    const command = buildCommand([buildEmailStep()]);
+
+    const jobs = await usecase.execute(command);
+
+    expect(jobs.every((job) => !Object.prototype.hasOwnProperty.call(job, '_agentId'))).toBe(true);
+  });
+
+  it('should persist trigger agent ObjectId on jobs', async () => {
+    const { usecase } = buildUsecase();
+    const agentObjectId = 'bbbbbbbbbbbbbbbbbbbbbbb1';
+    const command = {
+      ...buildCommand([buildEmailStep()]),
+      _agentId: agentObjectId,
+    } as CreateNotificationJobsCommand;
+
+    const jobs = await usecase.execute(command);
+
+    expect(jobs.every((job) => job._agentId === agentObjectId)).toBe(true);
+  });
 });

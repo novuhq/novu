@@ -9,7 +9,7 @@ import {
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsEnum, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { UserResponseDto } from '../user-response.dto';
 import { WorkflowPreferencesResponseDto } from './preferences.response.dto';
 import { RuntimeIssueDto } from './runtime-issue.dto';
@@ -25,6 +25,7 @@ import { PushStepResponseDto } from './step-responses/push-step.response.dto';
 import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
 import { ThrottleStepResponseDto } from './step-responses/throttle-step.response.dto';
 import { ToolStepResponseDto } from './step-responses/tool-step.response.dto';
+import { WorkflowAgentConfigDto } from './workflow-agent-config.dto';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 @ApiExtraModels(
@@ -41,7 +42,8 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
   HttpRequestStepResponseDto,
   InAppStepResponseDto,
   ToolStepResponseDto,
-  UserResponseDto
+  UserResponseDto,
+  WorkflowAgentConfigDto
 )
 export class WorkflowResponseDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Database identifier of the workflow' })
@@ -211,6 +213,18 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   })
   @IsEnum(SeverityLevelEnum)
   severity: SeverityLevelEnum;
+
+  @ApiPropertyOptional({
+    description:
+      "Optional agent assignment used to route this workflow through an agent's connected channels. Null when unassigned.",
+    type: () => WorkflowAgentConfigDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  @Type(() => WorkflowAgentConfigDto)
+  agent?: WorkflowAgentConfigDto | null;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

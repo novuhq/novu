@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { IsDefined, IsNotEmpty, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { SubscriberPayloadDto, TenantPayloadDto, TriggerOverrides } from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
@@ -50,6 +50,19 @@ export class TriggerEventToAllRequestDto {
   @IsObject()
   @IsOptional()
   overrides?: TriggerOverrides;
+
+  @ApiPropertyOptional({
+    description:
+      'Override the workflow-assigned agent for this trigger using the public agent identifier. Omit to use the workflow default; pass null to disable agent routing for this execution.',
+    type: 'string',
+    nullable: true,
+    example: 'support-agent',
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @IsNotEmpty()
+  agentId?: string | null;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',

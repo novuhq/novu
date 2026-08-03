@@ -40,6 +40,7 @@ import { ConnectSubscriberProvider } from './components/connect/connect-subscrib
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
+import { WorkflowAgentAssignment } from './components/workflow-editor/workflow-agent-assignment';
 import { EE_AUTH_PROVIDER, IS_CLOUD, IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
@@ -565,6 +566,10 @@ const router = createBrowserRouter([
                     path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
                   },
                   {
+                    element: <WorkflowAgentAssignment />,
+                    path: ROUTES.EDIT_WORKFLOW_AGENT,
+                  },
+                  {
                     path: ROUTES.LOCAL_TRIGGER_WORKFLOW,
                     element: (
                       <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
@@ -602,6 +607,10 @@ const router = createBrowserRouter([
                   {
                     element: <ChannelPreferences />,
                     path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
+                  },
+                  {
+                    element: <WorkflowAgentAssignment />,
+                    path: ROUTES.EDIT_WORKFLOW_AGENT,
                   },
                   {
                     path: ROUTES.TRIGGER_WORKFLOW,

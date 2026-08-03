@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import { IsValidJsonSchema } from '../../decorators/json-schema.validator';
+import { WorkflowAgentConfigDto } from './workflow-agent-config.dto';
 
 export class WorkflowCommonsFields {
   @ApiProperty({ description: 'Name of the workflow' })
@@ -60,4 +62,16 @@ export class WorkflowCommonsFields {
   @IsOptional()
   @IsBoolean()
   isTranslationEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      "Optional agent assignment used to route this workflow through an agent's connected channels. Pass null to clear.",
+    type: () => WorkflowAgentConfigDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  @Type(() => WorkflowAgentConfigDto)
+  agent?: WorkflowAgentConfigDto | null;
 }
