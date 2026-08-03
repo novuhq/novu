@@ -94,7 +94,9 @@ describe('select integration', () => {
     new JobRepository(),
     new EnvironmentRepository(),
     new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any, new FeatureFlagsService()),
-    new CompileTemplate()
+    new CompileTemplate(),
+    new FeatureFlagsService(),
+    { setContext: jest.fn(), info: jest.fn() } as any
   );
   beforeEach(async () => {
     // @ts-expect-error
