@@ -28,6 +28,23 @@ export function compileMailyToCard(doc: MailyJSONContent): CardElement {
   };
 
   for (const node of topLevelNodes) {
+    // Current model: buttons live inside a `cardActions` row.
+    if (node.type === 'cardActions') {
+      flushButtons();
+
+      const buttons = (node.content ?? [])
+        .map(toLinkButton)
+        .filter((button): button is CardElementLinkButtonElement => button !== null)
+        .slice(0, MAX_BUTTONS_PER_ACTIONS);
+
+      if (buttons.length > 0) {
+        children.push({ type: 'actions', children: buttons });
+      }
+
+      continue;
+    }
+
+    // Legacy fallback: bare top-level `cardButton` nodes are grouped by adjacency.
     if (node.type === 'cardButton') {
       const button = toLinkButton(node);
 
