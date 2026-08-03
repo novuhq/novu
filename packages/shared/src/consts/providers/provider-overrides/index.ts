@@ -12,6 +12,12 @@ import {
 
 export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
 export { expoOverrideJsonSchema } from './expo-override.schema';
+export {
+  FCM_OVERRIDE_KEYS,
+  FCM_OVERRIDE_SCHEMA_SUBPATH,
+  FCM_PRIMARY_CONTENT_KEY,
+  NON_OVERRIDABLE_FCM_KEYS,
+} from './fcm/keys';
 export { grafanaOverrideJsonSchema } from './grafana-override.schema';
 export { LIQUID_TEMPLATE_PATTERN, toLiquidTolerantSchema } from './liquid-tolerant';
 export {

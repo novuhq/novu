@@ -210,6 +210,19 @@ describe('provider override registry', () => {
     expect(getProviderOverrideKeysOnlySchema(ChatProviderIdEnum.WhatsAppBusiness)?.properties?.template).toBe(true);
   });
 
+  it('exposes FCM keys eagerly while its schema stays behind a package subpath', () => {
+    const config = getProviderOverrideConfig(PushProviderIdEnum.FCM);
+    const keys = getProviderOverrideKeys(PushProviderIdEnum.FCM) ?? [];
+
+    expect(config?.schema).toBeUndefined();
+    expect(config?.schemaSubpath).toBe('@novu/shared/provider-overrides/fcm');
+    expect(config?.primaryContentKey).toBe('notification.body');
+    expect(keys).toEqual(expect.arrayContaining(['notification', 'data', 'android', 'apns', 'webpush', 'fcmOptions']));
+    expect(keys).not.toContain('topic');
+    expect(keys).not.toContain('token');
+    expect(getProviderOverrideKeysOnlySchema(PushProviderIdEnum.FCM)?.properties?.notification).toBe(true);
+  });
+
   it('pairs every eager schema with a liquid-tolerant twin', () => {
     for (const [providerId, schema] of Object.entries(PROVIDER_OVERRIDE_SCHEMAS)) {
       const config = getProviderOverrideConfig(providerId);
