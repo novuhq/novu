@@ -25,9 +25,9 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FCM_ROUTING_KEYS,
   getProviderOverrideConfig,
   ITenantDefine,
-  NON_OVERRIDABLE_FCM_KEYS,
   ProvidersIdEnum,
   PushProviderIdEnum,
   providers,
@@ -98,21 +98,16 @@ function applyExclusiveKeyGroups(
   return result;
 }
 
-/**
- * Prefer `exclusiveKeyGroups` from the shared registry when present (schema slice); fall back to
- * FCM's canonical routing-key list so this worker slice stays correct before that field lands.
- */
+/** Prefer registry `exclusiveKeyGroups`; FCM keeps a local fallback if the config omits them. */
 function resolveExclusiveKeyGroups(integrationId: string): readonly (readonly string[])[] {
-  const fromRegistry = (
-    getProviderOverrideConfig(integrationId) as { exclusiveKeyGroups?: readonly (readonly string[])[] } | undefined
-  )?.exclusiveKeyGroups;
+  const fromRegistry = getProviderOverrideConfig(integrationId)?.exclusiveKeyGroups;
 
   if (fromRegistry?.length) {
     return fromRegistry;
   }
 
   if (integrationId === PushProviderIdEnum.FCM) {
-    return [NON_OVERRIDABLE_FCM_KEYS];
+    return [FCM_ROUTING_KEYS];
   }
 
   return [];

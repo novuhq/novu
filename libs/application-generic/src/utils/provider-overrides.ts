@@ -4,6 +4,7 @@ import {
   ContentIssueEnum,
   type ContentOverrideProviderId,
   FCM_OVERRIDE_SCHEMA_SUBPATH,
+  FCM_ROUTING_KEYS,
   getProviderOverrideConfig,
   type ProviderOverrideConfig,
   PushProviderIdEnum,
@@ -26,8 +27,6 @@ export type { StepProviderOverrides };
 
 const SUPPORTED_PROVIDER_IDS = new Set<string>(CONTENT_OVERRIDE_PROVIDER_IDS);
 
-/** Same-layer FCM content overrides may set at most one of these routing keys. */
-const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
 const FCM_ROUTING_KEY_SET = new Set<string>(FCM_ROUTING_KEYS);
 const FCM_ROUTING_MUTUAL_EXCLUSION_MESSAGE = 'Only one of token, tokens, topic, condition is allowed';
 
