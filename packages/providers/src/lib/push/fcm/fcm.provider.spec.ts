@@ -119,10 +119,6 @@ describe('FcmPushProvider', () => {
       },
       tokens: ['tester'],
       registrationIds: ['test'],
-      android: undefined,
-      apns: undefined,
-      fcmOptions: undefined,
-      webpush: undefined,
       data: {},
     });
   });
@@ -158,8 +154,6 @@ describe('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
-      android: undefined,
-      webpush: undefined,
       fcmOptions: {
         analyticsLabel: 'checkout',
       },
@@ -287,9 +281,6 @@ describe('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
-      android: undefined,
-      fcmOptions: undefined,
-      webpush: undefined,
       data: {},
       apns: {
         payload: {
@@ -526,10 +517,6 @@ describe('FcmPushProvider', () => {
       },
       tokens: ['tester', 'tokens'],
       registrationIds: ['test'],
-      android: undefined,
-      apns: undefined,
-      fcmOptions: undefined,
-      webpush: undefined,
       data: {},
     });
   });

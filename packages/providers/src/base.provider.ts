@@ -9,9 +9,10 @@ export enum CasingEnum {
   KEBAB_CASE = 'kebab-case',
   CONSTANT_CASE = 'CONSTANT_CASE',
   /**
-   * Identity transform — leave keys and nested maps unchanged.
-   * Use when the provider SDK expects the framework's native casing
-   * (e.g. firebase-admin v1 camelCase) and performs its own wire renames.
+   * Identity transform — return data unchanged (no deep key rename).
+   * Prefer over CAMEL_CASE when nested wire keys must stay intact
+   * (e.g. APNs `apns-priority`, opaque FCM `data` map keys); firebase-admin
+   * v1 expects SDK camelCase and applies its own wire renames.
    */
   NONE = 'none',
 }
@@ -33,7 +34,7 @@ export abstract class BaseProvider {
    * - snake_case
    * - kebab-case
    * - CONSTANT_CASE
-   * - none (identity — no key rename)
+   * - none (identity — no deep key rename; preserves kebab-case / opaque keys)
    */
   protected abstract casing: CasingEnum;
 
