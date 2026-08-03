@@ -1,11 +1,11 @@
-import { CardButtonExtension, Variable } from '@novu/maily-core/extensions';
+import { CardActionsExtension, CardButtonExtension, Variable } from '@novu/maily-core/extensions';
 import { Editor, NodeViewProps } from '@tiptap/core';
 import React, { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { EditorOverlays } from '@/components/editor-overlays';
 import { createChatEditorBlocks } from '@/components/maily/chat-blocks';
 import { Maily } from '@/components/maily/maily';
-import { isMailyJson, plainTextToMailyJson } from '@/components/maily/maily-utils';
+import { isMailyJson, plainTextToMailyJson, wrapLegacyCardButtons } from '@/components/maily/maily-utils';
 import { VariableFrom } from '@/components/maily/types';
 import {
   MailyVariablesListView,
@@ -36,7 +36,7 @@ const CHAT_MENU_CONFIG = {
   },
 } as const;
 
-const CHAT_ADDITIONAL_EXTENSIONS = [CardButtonExtension];
+const CHAT_ADDITIONAL_EXTENSIONS = [CardActionsExtension, CardButtonExtension];
 
 const MailyVariablesListViewForWorkflows = React.forwardRef<
   VariableSuggestionsPopoverRef,
@@ -203,7 +203,7 @@ export const ChatBodyMaily = () => {
         // text blocks; an empty body starts a fresh block editor.
         const getEditorValue = () => {
           if (isMailyJson(rawBody)) {
-            return rawBody;
+            return wrapLegacyCardButtons(rawBody);
           }
 
           return rawBody.length > 0 ? plainTextToMailyJson(rawBody) : '';
