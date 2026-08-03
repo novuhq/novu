@@ -16,6 +16,7 @@ import {
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ChatPreview } from './chat-preview';
+import { ChatBlockEditorPreview } from './preview/chat-block-editor-preview';
 
 type ChatPreviewPanelProps = {
   isPreviewPending: boolean;
@@ -51,7 +52,7 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
 
   const renderBody = () => {
     if (!activeProviderId || !annotatedPreview) {
-      return <ChatPreview isPreviewPending={isPreviewPending} previewData={previewData} />;
+      return <ChatPreview isPreviewPending={isPreviewPending} previewData={previewData} showPlatformSelector={false} />;
     }
 
     if (isPreviewPending) {
@@ -98,11 +99,16 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
 }
 
 export const ChatPreviewPanel = (props: ChatPreviewPanelProps) => {
+  const isBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
   const areProviderOverridesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_PROVIDER_OVERRIDES_ENABLED);
 
-  if (!areProviderOverridesEnabled) {
-    return <ChatPreview {...props} />;
+  if (isBlockEditorEnabled) {
+    return <ChatBlockEditorPreview {...props} />;
   }
 
-  return <ChatOverridePreview {...props} />;
+  if (areProviderOverridesEnabled) {
+    return <ChatOverridePreview {...props} />;
+  }
+
+  return <ChatPreview {...props} showPlatformSelector={false} />;
 };

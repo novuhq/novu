@@ -529,17 +529,6 @@ export function removeAgentIntegration(
   });
 }
 
-export async function sendAgentTestEmail(
-  environment: IEnvironment,
-  agentIdentifier: string,
-  targetAddress: string
-): Promise<{ success: boolean }> {
-  return post<{ success: boolean }>(`/agents/${encodeURIComponent(agentIdentifier)}/test-email`, {
-    environment,
-    body: { targetAddress },
-  });
-}
-
 export type AgentMcpServer = {
   externalId: string;
   name: string;

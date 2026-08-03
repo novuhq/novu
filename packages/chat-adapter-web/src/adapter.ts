@@ -10,7 +10,13 @@ import type {
   ThreadInfo,
   WebhookOptions,
 } from 'chat';
-import type { WebChatAdapterConfig, WebChatRawMessage, WebChatRequestBody, WebChatThreadId } from './types.js';
+import type {
+  WebChatAdapterConfig,
+  WebChatRawMessage,
+  WebChatRequestBody,
+  WebChatSession,
+  WebChatThreadId,
+} from './types.js';
 import {
   ADAPTER_NAME,
   conversationIdFromThreadId,
@@ -31,12 +37,31 @@ class NotImplementedError extends Error {
 
 type MessageConstructor = new (data: unknown) => Message<WebChatRawMessage>;
 
+const JSON_HEADERS = { 'content-type': 'application/json' } as const;
+
+type IngressKind =
+  | { type: 'message'; text: string }
+  | { type: 'action'; actionId: string; sourceMessageId: string; value?: string };
+
+function jsonResponse(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
+
+/**
+ * Telegram/WhatsApp-style demux: thin `handleWebhook` → private ingress
+ * handlers that call `processMessage` / `processAction`.
+ */
 export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatRawMessage> {
   readonly name = ADAPTER_NAME;
   readonly userName: string;
   readonly persistMessageHistory = false;
   readonly persistThreadHistory = false;
   readonly lockScope = 'thread' as const;
+  /**
+   * Capability flag: callers may embed a `messageId` in the postable message
+   * and this adapter will use it as the platform message id (idempotent posts).
+   */
+  readonly supportsClientMessageIds = true;
 
   private readonly config: WebChatAdapterConfig;
   private chat: ChatInstance | null = null;
@@ -81,74 +106,201 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       throw new Error('Adapter not initialized. Call initialize() first.');
     }
 
-    let session;
+    const session = await this.verifySession(request);
+    if (session instanceof Response) {
+      return session;
+    }
+
+    const body = await this.parseRequestBody(request);
+    if (body instanceof Response) {
+      return body;
+    }
+
+    const kind = this.resolveIngressKind(body);
+    if (kind instanceof Response) {
+      return kind;
+    }
+
+    switch (kind.type) {
+      case 'message':
+        return this.handleMessageIngress(kind, session, body, options);
+      case 'action':
+        return this.handleActionIngress(kind, session, body, options);
+      default: {
+        const _exhaustive: never = kind;
+
+        return _exhaustive;
+      }
+    }
+  }
+
+  /** Auth edge — same role as Slack signature / Telegram secret token checks. */
+  private async verifySession(request: Request): Promise<WebChatSession | Response> {
     try {
-      session = await this.config.verifySession(request);
+      const session = await this.config.verifySession(request);
+      if (!session) {
+        return jsonResponse({ message: 'Unauthorized' }, 401);
+      }
+
+      return session;
     } catch (err) {
       console.error('[chat-adapter-web] verifySession threw', err);
 
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'content-type': 'application/json' },
-      });
+      return jsonResponse({ message: 'Unauthorized' }, 401);
     }
+  }
 
-    if (!session) {
-      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'content-type': 'application/json' },
-      });
-    }
-
-    let body: WebChatRequestBody;
+  private async parseRequestBody(request: Request): Promise<WebChatRequestBody | Response> {
     try {
-      body = (await request.json()) as WebChatRequestBody;
+      return (await request.json()) as WebChatRequestBody;
     } catch {
-      return new Response(JSON.stringify({ message: 'Invalid JSON body' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json' },
-      });
+      return jsonResponse({ message: 'Invalid JSON body' }, 400);
     }
+  }
 
+  /** Exactly one of `text` | `actionId` (WhatsApp-style type demux). */
+  private resolveIngressKind(body: WebChatRequestBody): IngressKind | Response {
     const text = typeof body.text === 'string' ? body.text.trim() : '';
-    if (!text) {
-      return new Response(JSON.stringify({ message: 'text is required' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json' },
-      });
+    const actionId = typeof body.actionId === 'string' ? body.actionId.trim() : '';
+    const hasText = text.length > 0;
+    const hasAction = actionId.length > 0;
+
+    if (hasText && hasAction) {
+      return jsonResponse({ message: 'Provide exactly one of text or actionId' }, 400);
     }
 
-    if (body.id !== undefined && body.id !== null) {
-      if (typeof body.id !== 'string' || !isValidConversationId(body.id)) {
-        return new Response(JSON.stringify({ message: 'Invalid conversation id' }), {
-          status: 400,
-          headers: { 'content-type': 'application/json' },
-        });
+    if (hasText) {
+      return { type: 'message', text };
+    }
+
+    if (hasAction) {
+      const sourceMessageId = typeof body.sourceMessageId === 'string' ? body.sourceMessageId.trim() : '';
+      if (!sourceMessageId) {
+        return jsonResponse({ message: 'sourceMessageId is required with actionId' }, 400);
       }
-      // Create-only this ticket: validate shape, ignore for routing (NV-8441).
+
+      const value = typeof body.value === 'string' ? body.value : undefined;
+
+      return { type: 'action', actionId, sourceMessageId, value };
     }
 
-    // Always mint conversation + message ids. Client `messageId` idempotency is
-    // deferred until resume (NV-8441): create-only mint-before-dedupe would ack a
-    // ghost `conv_*` on retry while suppressing the turn.
-    const conversationId = mintConversationId();
+    return jsonResponse({ message: 'text or actionId is required' }, 400);
+  }
+
+  private async handleMessageIngress(
+    kind: Extract<IngressKind, { type: 'message' }>,
+    session: WebChatSession,
+    body: WebChatRequestBody,
+    options?: WebhookOptions
+  ): Promise<Response> {
+    const conversationId = await this.resolveConversationId(body, session, { requireExisting: false });
+    if (conversationId instanceof Response) {
+      return conversationId;
+    }
+
+    // Always mint message ids. Client `messageId` idempotency would ack a ghost
+    // turn if checked before durable create; keep server-minted ids for now.
     const threadId = this.encodeThreadId({ conversationId });
-    const raw: WebChatRawMessage = {
+    const message = this.parseMessage({
       id: mintMessageId(),
-      text,
+      text: kind.text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
-    };
-    const message = this.parseMessage(raw);
+    });
 
-    this.chat.processMessage(this, threadId, message, options);
+    this.chat!.processMessage(this, threadId, message, options);
 
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
     // `web_chat:conv_*` so `chat.thread()` can resolve this adapter by prefix.
-    return new Response(JSON.stringify({ data: { identifier: conversationId } }), {
-      status: 201,
-      headers: { 'content-type': 'application/json' },
-    });
+    return jsonResponse({ data: { identifier: conversationId } }, 201);
+  }
+
+  /** Button / approval click — mirrors Telegram `handleCallbackQuery`. */
+  private async handleActionIngress(
+    kind: Extract<IngressKind, { type: 'action' }>,
+    session: WebChatSession,
+    body: WebChatRequestBody,
+    options?: WebhookOptions
+  ): Promise<Response> {
+    const conversationId = await this.resolveConversationId(body, session, { requireExisting: true });
+    if (conversationId instanceof Response) {
+      return conversationId;
+    }
+
+    const threadId = this.encodeThreadId({ conversationId });
+    const user = {
+      userId: session.subscriberId,
+      userName: session.subscriberId,
+      fullName: session.subscriberId,
+      isBot: false,
+      isMe: false,
+    };
+
+    this.chat!.processAction(
+      {
+        adapter: this,
+        actionId: kind.actionId,
+        value: kind.value,
+        messageId: kind.sourceMessageId,
+        threadId,
+        user,
+        raw: body,
+      },
+      options
+    );
+
+    return jsonResponse({ data: { identifier: conversationId } }, 200);
+  }
+
+  /**
+   * Resolve / mint conversation id + resume ACL.
+   * Actions always require an existing conversation (no mint).
+   */
+  private async resolveConversationId(
+    body: WebChatRequestBody,
+    session: WebChatSession,
+    opts: { requireExisting: boolean }
+  ): Promise<string | Response> {
+    const resumeId = this.resolveResumeConversationId(body);
+    if (resumeId === 'invalid') {
+      return jsonResponse({ message: 'Invalid conversation id' }, 400);
+    }
+
+    if (!resumeId) {
+      if (opts.requireExisting) {
+        return jsonResponse({ message: 'conversationIdentifier is required with actionId' }, 400);
+      }
+
+      return mintConversationId();
+    }
+
+    const allowed = this.config.authorizeResume
+      ? await this.config.authorizeResume({ conversationId: resumeId, session })
+      : false;
+    if (!allowed) {
+      return jsonResponse({ message: 'Conversation not found' }, 404);
+    }
+
+    return resumeId;
+  }
+
+  /** Prefer `conversationIdentifier`, fall back to `id`. */
+  private resolveResumeConversationId(body: WebChatRequestBody): string | null | 'invalid' {
+    const raw =
+      body.conversationIdentifier !== undefined && body.conversationIdentifier !== null
+        ? body.conversationIdentifier
+        : body.id !== undefined && body.id !== null
+          ? body.id
+          : null;
+
+    if (raw === null) {
+      return null;
+    }
+    if (typeof raw !== 'string' || !isValidConversationId(raw)) {
+      return 'invalid';
+    }
+
+    return raw;
   }
 
   parseMessage(raw: WebChatRawMessage): Message<WebChatRawMessage> {
@@ -179,8 +331,8 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
   }
 
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<WebChatRawMessage>> {
-    const { content, richContent } = parsePostableMessage(message);
-    const delivered = await this.config.deliverMessage({ threadId, content, richContent });
+    const { content, richContent, messageId } = parsePostableMessage(message);
+    const delivered = await this.config.deliverMessage({ threadId, content, richContent, messageId });
 
     return {
       id: delivered.id,
@@ -218,11 +370,14 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     await this.config.deleteMessage({ threadId, messageId });
   }
 
-  /**
-   * No-op: web typing indicators are ephemeral AgentEvents (`channel.typing`),
-   * not chat-sdk thread typing state.
-   */
-  async startTyping(_threadId: string): Promise<void> {}
+  async startTyping(threadId: string, status?: string): Promise<void> {
+    await this.config.startTyping({ threadId, status });
+  }
+
+  /** No-status typing → delivery emits an ephemeral `channel.typing` state=off. */
+  async stopTyping(threadId: string): Promise<void> {
+    await this.config.startTyping({ threadId });
+  }
 
   async fetchThread(threadId: string): Promise<ThreadInfo> {
     return {

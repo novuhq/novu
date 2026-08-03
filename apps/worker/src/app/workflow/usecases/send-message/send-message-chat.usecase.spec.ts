@@ -45,7 +45,8 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
       {} as never, // notifyWorkflowAgentDispatchClient
       {} as never, // getDecryptedSecretKey
       {} as never, // agentRepository
-      {} as never // agentIntegrationRepository
+      {} as never, // agentIntegrationRepository
+      { getFlag: sinon.stub().resolves(true) } as never // featureFlagsService
     );
 
     return { usecase, resolveChannelEndpoints, selectIntegration };

@@ -24,6 +24,7 @@ type RequestBody = {
   subscriberId?: string;
   integrationIdentifier?: string;
   aadObjectIdOverride?: string;
+  context?: Record<string, string>;
 };
 
 type ResponseData = { aadObjectId: string } | { error: string };
@@ -62,6 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       subscriberId,
       integrationIdentifier,
       aadObjectIdOverride: typeof body.aadObjectIdOverride === 'string' ? body.aadObjectIdOverride : undefined,
+      context: body.context,
     });
 
     if (!result.ok) {

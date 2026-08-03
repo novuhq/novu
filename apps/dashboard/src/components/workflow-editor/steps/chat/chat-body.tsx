@@ -14,9 +14,9 @@ const LegacyChatBody = () => (
 
 /**
  * Chat step body editor. Behind `IS_CHAT_BLOCK_EDITOR_ENABLED` the step is
- * always authored with the restricted Maily block editor, which handles
- * back-compat internally (Maily JSON loads as-is; a legacy plain string opens
- * as text blocks). Without the flag the legacy plain-text editor is used.
+ * authored with the restricted Maily block editor, which handles back-compat internally
+ * (Maily JSON loads as-is; a legacy plain string opens as text blocks). Without the flag
+ * the legacy plain-text editor is used. The same flag gates rich-chat delivery server-side.
  */
 export const ChatBody = () => {
   const isBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);

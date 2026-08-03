@@ -32,6 +32,7 @@ function createConfig(overrides: Partial<WebChatAdapterConfig> = {}): WebChatAda
     deliverMessage: vi.fn(async ({ threadId }) => ({ id: 'act_delivered1ab', threadId })),
     editMessage: vi.fn(async ({ threadId, messageId }) => ({ id: messageId, threadId })),
     deleteMessage: vi.fn(async () => undefined),
+    startTyping: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -39,9 +40,10 @@ function createConfig(overrides: Partial<WebChatAdapterConfig> = {}): WebChatAda
 async function createAdapter(config: WebChatAdapterConfig = createConfig()) {
   const adapter = new NovuWebChatAdapterImpl(config);
   const processMessage = vi.fn();
-  await adapter.initialize({ processMessage, getState: () => ({}) } as never);
+  const processAction = vi.fn();
+  await adapter.initialize({ processMessage, processAction, getState: () => ({}) } as never);
 
-  return { adapter, processMessage, config };
+  return { adapter, processMessage, processAction, config };
 }
 
 function jsonRequest(body: unknown, headers?: Record<string, string>): Request {
@@ -88,10 +90,29 @@ describe('NovuWebChatAdapterImpl', () => {
     const badId = await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'hi', id: 'not-a-conv' }));
 
     expect(empty.status).toBe(400);
+    expect(await empty.json()).toEqual({ message: 'text or actionId is required' });
     expect(badId.status).toBe(400);
   });
 
-  it('acks fast with minted conv_ id and dispatches processMessage on prefixed thread id', async () => {
+  it('returns 400 when both text and actionId are provided', async () => {
+    const { adapter, processMessage, processAction } = await createAdapter();
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        text: 'hi',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(processAction).not.toHaveBeenCalled();
+  });
+
+  it('dispatches processMessage then returns 201', async () => {
     const { adapter, processMessage } = await createAdapter();
 
     const response = await adapter.handleWebhook(jsonRequest({ agentId: 'agent_1', text: 'Hello' }));
@@ -102,17 +123,121 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(processMessage).toHaveBeenCalledOnce();
     expect(processMessage.mock.calls[0]?.[1]).toBe(`web_chat:${body.data.identifier}`);
     expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
-    expect(processMessage.mock.calls[0]?.[2].text).toBe('Hello');
-    expect(processMessage.mock.calls[0]?.[2].author.userId).toBe('sub_1');
   });
 
-  it('ignores client messageId and always mints server message id (create-only)', async () => {
+  it('ignores client messageId and always mints server message id', async () => {
     const { adapter, processMessage } = await createAdapter();
 
     await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }));
 
     expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
     expect(processMessage.mock.calls[0]?.[2].id).not.toBe('msg_abcdefghijkl');
+  });
+
+  it('resumes with conversationIdentifier when authorizeResume allows', async () => {
+    const authorizeResume = vi.fn(async () => true);
+    const { adapter, processMessage } = await createAdapter(createConfig({ authorizeResume }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        text: 'follow up',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(authorizeResume).toHaveBeenCalledWith({
+      conversationId: 'conv_abcdefghijkl',
+      session: SESSION,
+    });
+    expect(processMessage.mock.calls[0]?.[1]).toBe('web_chat:conv_abcdefghijkl');
+  });
+
+  it('resumes with id alias when authorizeResume allows', async () => {
+    const { adapter, processMessage } = await createAdapter(createConfig({ authorizeResume: async () => true }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'follow up', id: 'conv_abcdefghijkl' })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(processMessage.mock.calls[0]?.[1]).toBe('web_chat:conv_abcdefghijkl');
+  });
+
+  it('returns 404 when authorizeResume denies resume', async () => {
+    const { adapter, processMessage } = await createAdapter(createConfig({ authorizeResume: async () => false }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'nope', conversationIdentifier: 'conv_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(404);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when resume id is present but authorizeResume is not configured', async () => {
+    const { adapter, processMessage } = await createAdapter();
+
+    const response = await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'nope', id: 'conv_abcdefghijkl' }));
+
+    expect(response.status).toBe(404);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('dispatches processAction then returns 200 for actionId ingress', async () => {
+    const authorizeResume = vi.fn(async () => true);
+    const { adapter, processMessage, processAction } = await createAdapter(createConfig({ authorizeResume }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        value: 'Approve once',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(processAction).toHaveBeenCalledOnce();
+    expect(processAction.mock.calls[0]?.[0]).toMatchObject({
+      actionId: 'tool-approval:approve:tc1',
+      messageId: 'act_card0000001',
+      value: 'Approve once',
+      threadId: 'web_chat:conv_abcdefghijkl',
+      user: { userId: 'sub_1' },
+    });
+  });
+
+  it('returns 400 when actionId is missing conversationIdentifier or sourceMessageId', async () => {
+    const { adapter, processAction } = await createAdapter(createConfig({ authorizeResume: async () => true }));
+
+    const missingConv = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+      })
+    );
+    const missingSource = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+
+    expect(missingConv.status).toBe(400);
+    expect(missingSource.status).toBe(400);
+    expect(processAction).not.toHaveBeenCalled();
   });
 
   it('postMessage delegates to deliverMessage without inventing mongo semantics', async () => {
@@ -127,6 +252,27 @@ describe('NovuWebChatAdapterImpl', () => {
       richContent: undefined,
     });
     expect(sent.id).toBe('act_delivered1ab');
+  });
+
+  it('postMessage extracts plain text from bare CardElement posts', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
+
+    await adapter.postMessage('web_chat:conv_abcdefghijkl', {
+      type: 'card',
+      children: [{ type: 'text', content: 'Upgrade your plan to activate it.' }],
+    } as never);
+
+    expect(config.deliverMessage).toHaveBeenCalledWith({
+      threadId: 'web_chat:conv_abcdefghijkl',
+      content: 'Upgrade your plan to activate it.',
+      richContent: {
+        card: {
+          type: 'card',
+          children: [{ type: 'text', content: 'Upgrade your plan to activate it.' }],
+        },
+      },
+    });
   });
 
   it('editMessage and deleteMessage delegate to injected callbacks', async () => {
@@ -148,14 +294,49 @@ describe('NovuWebChatAdapterImpl', () => {
     });
   });
 
-  it('declares history off, thread lock scope, and no-op startTyping', async () => {
-    const { adapter } = await createAdapter();
+  it('declares history off, thread lock scope, and typing via injected callback', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
 
     expect(adapter.persistMessageHistory).toBe(false);
     expect(adapter.persistThreadHistory).toBe(false);
     expect(adapter.lockScope).toBe('thread');
-    await expect(adapter.startTyping('web_chat:conv_abcdefghijkl')).resolves.toBeUndefined();
+    await adapter.startTyping('web_chat:conv_abcdefghijkl', 'Thinking...');
+    expect(config.startTyping).toHaveBeenCalledWith({
+      threadId: 'web_chat:conv_abcdefghijkl',
+      status: 'Thinking...',
+    });
     expect(adapter.encodeThreadId({ conversationId: 'conv_abcdefghijkl' })).toBe('web_chat:conv_abcdefghijkl');
     expect(adapter.decodeThreadId('web_chat:conv_abcdefghijkl')).toEqual({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('declares supportsClientMessageIds and forwards an embedded messageId to deliverMessage', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
+
+    expect(adapter.supportsClientMessageIds).toBe(true);
+
+    const sent = await adapter.postMessage('web_chat:conv_abcdefghijkl', {
+      markdown: 'Agent hi',
+      messageId: 'msg_fromruntime1',
+    } as never);
+
+    expect(config.deliverMessage).toHaveBeenCalledWith({
+      threadId: 'web_chat:conv_abcdefghijkl',
+      content: 'Agent hi',
+      richContent: undefined,
+      messageId: 'msg_fromruntime1',
+    });
+    // The delivery callback owns the final id (hint honored or minted).
+    expect(sent.id).toBe('act_delivered1ab');
+  });
+
+  it('stopTyping delegates to startTyping callback without a status', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
+
+    await adapter.stopTyping('web_chat:conv_abcdefghijkl');
+
+    expect(config.startTyping).toHaveBeenCalledWith({ threadId: 'web_chat:conv_abcdefghijkl' });
   });
 });

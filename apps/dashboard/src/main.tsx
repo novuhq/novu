@@ -48,6 +48,7 @@ import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
 import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { AgentWhatsAppSignupPage } from './pages/agent-whatsapp-signup-page';
 import { AgentsPage } from './pages/agents';
+import { AgentsPersonalizePage } from './pages/agents-personalize-page';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { CliAuthPage } from './pages/cli-auth';
 import { ConnectClaimPage } from './pages/connect-claim';
@@ -189,6 +190,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.USECASE_SELECT,
             element: <UsecaseSelectPage />,
+          },
+          {
+            path: ROUTES.AGENTS_PERSONALIZE,
+            element: <AgentsPersonalizePage />,
           },
           {
             path: ROUTES.AGENTS_SETUP,

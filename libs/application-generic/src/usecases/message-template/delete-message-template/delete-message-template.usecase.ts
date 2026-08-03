@@ -38,16 +38,18 @@ export class DeleteMessageTemplate {
 
       if (!isBridgeWorkflow(command.workflowType)) {
         await this.createChange.execute(
-          CreateChangeCommand.create({
-            changeId,
-            organizationId: command.organizationId,
-            environmentId: command.environmentId,
-            userId: command.userId,
-            item: deletedMessageTemplate[0],
-            type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-            parentChangeId: command.parentChangeId,
-            session: command.session,
-          })
+          CreateChangeCommand.create(
+            {
+              changeId,
+              organizationId: command.organizationId,
+              environmentId: command.environmentId,
+              userId: command.userId,
+              item: deletedMessageTemplate[0],
+              type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+              parentChangeId: command.parentChangeId,
+            },
+            { session: command.session }
+          )
         );
       }
 

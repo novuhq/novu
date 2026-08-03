@@ -7,6 +7,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  FeatureFlagsService,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   GetNovuProviderCredentials,
@@ -23,11 +24,14 @@ import {
 import {
   AgentIntegrationRepository,
   AgentRepository,
+  EnvironmentEntity,
   IntegrationEntity,
   MessageEntity,
   MessageRepository,
   NotificationStepEntity,
+  OrganizationEntity,
   SubscriberRepository,
+  UserEntity,
 } from '@novu/dal';
 import { ChatOutput } from '@novu/framework/internal';
 import {
@@ -38,13 +42,14 @@ import {
   ENDPOINT_TYPES,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   IChannelSettings,
   ProvidersIdEnum,
   WorkflowAgentDispatchDestination,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { ChannelData, ISendMessageSuccessResponse } from '@novu/stateless';
+import { CardElement, ChannelData, IChatRenderValidation, ISendMessageSuccessResponse } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { ResolveChannelEndpointsCommand } from './channel-endpoint-resolution/resolve-channel-endpoints.command';
@@ -76,6 +81,11 @@ type MessageContext = {
   command: SendMessageChannelCommand;
   step: NotificationStepEntity;
   content: string;
+  /**
+   * Rich Chat: the compiled card (from a Maily block body or a code-first `card` output),
+   * resolved once from the bridge output. Its absence keeps the legacy plain-text `content` path.
+   */
+  card?: CardElement;
   i18nInstance: unknown;
   assignedAgentId: string | null;
 };
@@ -100,7 +110,8 @@ export class SendMessageChat extends SendMessageBase {
     private notifyWorkflowAgentDispatchClient: NotifyWorkflowAgentDispatchClient,
     private getDecryptedSecretKey: GetDecryptedSecretKey,
     private agentRepository: AgentRepository,
-    private agentIntegrationRepository: AgentIntegrationRepository
+    private agentIntegrationRepository: AgentIntegrationRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {
     super(
       messageRepository,
@@ -199,6 +210,7 @@ export class SendMessageChat extends SendMessageBase {
 
     const bridgeOutput = command.bridgeData?.outputs as ChatOutput | undefined;
     let content: string = bridgeOutput?.body || '';
+    const card = bridgeOutput?.card as CardElement | undefined;
 
     try {
       if (!command.bridgeData) {
@@ -215,7 +227,7 @@ export class SendMessageChat extends SendMessageBase {
       throw new PlatformException(DetailEnum.MESSAGE_CONTENT_NOT_GENERATED);
     }
 
-    return { command, step, content, i18nInstance, assignedAgentId };
+    return { command, step, content, card, i18nInstance, assignedAgentId };
   }
 
   /**
@@ -265,7 +277,8 @@ export class SendMessageChat extends SendMessageBase {
             channel.data as IntegrationEndpoints,
             messageContext.step,
             messageContext.content,
-            messageContext.assignedAgentId
+            messageContext.assignedAgentId,
+            messageContext.card
           );
         } else {
           result = await this.sendChannelMessageLegacy(
@@ -273,7 +286,8 @@ export class SendMessageChat extends SendMessageBase {
             channel.data as IChannelSettings,
             messageContext.step,
             messageContext.content,
-            messageContext.assignedAgentId
+            messageContext.assignedAgentId,
+            messageContext.card
           );
         }
 
@@ -405,7 +419,8 @@ export class SendMessageChat extends SendMessageBase {
     integrationChannelData: IntegrationEndpoints,
     step: NotificationStepEntity,
     content: string,
-    assignedAgentId: string | null
+    assignedAgentId: string | null,
+    card?: CardElement
   ): Promise<SendMessageResult> {
     const { integration, error } = await this.getAndValidateIntegration(
       command,
@@ -431,7 +446,7 @@ export class SendMessageChat extends SendMessageBase {
       try {
         const result = assignedAgentId
           ? await this.sendViaAgentNotify(channelData, integration, content, message, command, assignedAgentId)
-          : await this.sendMessage(channelData, integration, content, message, command);
+          : await this.sendMessage(channelData, integration, content, card, message, command);
 
         if (result.status === SendMessageStatus.SUCCESS) {
           status = SendMessageStatus.SUCCESS;
@@ -460,7 +475,8 @@ export class SendMessageChat extends SendMessageBase {
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
     content: string,
-    assignedAgentId: string | null
+    assignedAgentId: string | null,
+    card?: CardElement
   ): Promise<SendMessageResult> {
     if (assignedAgentId) {
       await this.createExecutionDetail(
@@ -522,7 +538,7 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     if (channelData) {
-      return await this.sendMessage(channelData, integration, content, message, command);
+      return await this.sendMessage(channelData, integration, content, card, message, command);
     }
 
     return await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
@@ -647,6 +663,7 @@ export class SendMessageChat extends SendMessageBase {
     channelData: ChannelData,
     integration: IntegrationEntity,
     content: string,
+    card: CardElement | undefined,
     message: MessageEntity,
     command: SendMessageChannelCommand
   ): Promise<SendMessageResult> {
@@ -664,11 +681,27 @@ export class SendMessageChat extends SendMessageBase {
     const overriddenChannelData = this.applyEndpointSpecificOverrides(channelData, combinedOverrides);
 
     try {
+      // Rich Chat: resolve the compiled card into transport-ready fields once, here — before
+      // `send` — so the provider stays a pure transport and the editor preview can reuse the
+      // same `render()`. Gated by `IS_CHAT_BLOCK_EDITOR_ENABLED`; when off, the legacy plain-text
+      // `content` path is used unchanged.
+      let messageContent = content;
+      let nativePayload: Record<string, unknown> | undefined;
+      const isRichChatEnabled = await this.isRichChatEnabled(command);
+
+      if (card && isRichChatEnabled) {
+        const resolved = await chatHandler.resolveCardContent(card);
+        messageContent = resolved.content;
+        nativePayload = resolved.nativePayload;
+        this.logCardRenderWarnings(resolved.validation, command);
+      }
+
       const result = await chatHandler.send({
         channelData: overriddenChannelData,
         bridgeProviderData: combinedOverrides,
         customData: overrides,
-        content,
+        content: messageContent,
+        nativePayload,
       });
 
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
@@ -873,6 +906,32 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     return null;
+  }
+
+  private async isRichChatEnabled(command: SendMessageChannelCommand): Promise<boolean> {
+    return await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      user: { _id: command.userId } as UserEntity,
+    });
+  }
+
+  /**
+   * Rich Chat: surface the deterministic, non-blocking post-render platform-limit warnings
+   * (e.g. Slack block/char caps) produced while resolving the card into the execution log.
+   */
+  private logCardRenderWarnings(validation: IChatRenderValidation[], command: SendMessageChannelCommand): void {
+    if (validation.length === 0) {
+      return;
+    }
+
+    Logger.warn(
+      { jobId: command.jobId, warnings: validation },
+      `Chat card render produced ${validation.length} platform-limit warning(s)`,
+      LOG_CONTEXT
+    );
   }
 
   private updateStatus(currentStatus: SendMessageStatus, newStatus: SendMessageStatus): SendMessageStatus {

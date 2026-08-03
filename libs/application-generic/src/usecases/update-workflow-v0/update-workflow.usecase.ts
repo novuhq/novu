@@ -186,8 +186,11 @@ export class UpdateWorkflowV0 {
         updatePayload.validatePayload = command.validatePayload;
       }
 
-      if (command.active !== undefined) {
-        updatePayload.status = computeWorkflowStatus(command.active, updatePayload.steps || existingTemplate.steps);
+      if (command.active !== undefined || command.steps) {
+        const active = command.active ?? existingTemplate.active ?? false;
+        const steps = updatePayload.steps ?? existingTemplate.steps;
+
+        updatePayload.status = computeWorkflowStatus(active, steps);
       }
 
       if (command.issues) {
@@ -644,7 +647,7 @@ export class UpdateWorkflowV0 {
       partialNotificationStep.variants = updatedVariants;
     }
 
-    if (message.issues) {
+    if (message.issues !== undefined) {
       partialNotificationStep.issues = message.issues;
     }
 
@@ -763,15 +766,17 @@ export class UpdateWorkflowV0 {
     // Sequential on purpose: parallel operations inside a transaction are undefined behaviour in Mongoose.
     for (const id of removedStepsIds) {
       const deleted = await this.deleteMessageTemplate.execute(
-        DeleteMessageTemplateCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          messageTemplateId: id,
-          parentChangeId,
-          workflowType: command.type,
-          session,
-        })
+        DeleteMessageTemplateCommand.create(
+          {
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            userId: command.userId,
+            messageTemplateId: id,
+            parentChangeId,
+            workflowType: command.type,
+          },
+          { session }
+        )
       );
 
       // Abort the transaction if the template was not deleted, so we never commit a

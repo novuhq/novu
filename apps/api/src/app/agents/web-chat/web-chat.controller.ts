@@ -26,8 +26,17 @@ import {
   ListWebChatConversationEventsQueryDto,
   ListWebChatConversationEventsResponseDto,
 } from './dtos/list-web-chat-conversation-events.dto';
+import {
+  ListWebChatConversationsQueryDto,
+  ListWebChatConversationsResponseDto,
+  WebChatConversationMetadataDto,
+} from './dtos/web-chat-conversation.dto';
+import { GetWebChatConversationCommand } from './usecases/get-web-chat-conversation/get-web-chat-conversation.command';
+import { GetWebChatConversation } from './usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
 import { ListWebChatConversationEventsCommand } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.command';
 import { ListWebChatConversationEvents } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
+import { ListWebChatConversationsCommand } from './usecases/list-web-chat-conversations/list-web-chat-conversations.command';
+import { ListWebChatConversations } from './usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
 import { WebChatPublicationService } from './web-chat-publication.service';
 import { WebChatSessionVerifier } from './web-chat-session.verifier';
 
@@ -39,13 +48,15 @@ export class WebChatController {
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly publicationService: WebChatPublicationService,
     private readonly inboundDispatcher: InboundDispatcher,
+    private readonly listWebChatConversations: ListWebChatConversations,
+    private readonly getWebChatConversation: GetWebChatConversation,
     private readonly listWebChatConversationEvents: ListWebChatConversationEvents
   ) {}
 
   /**
-   * POST auth boundary is adapter `verifySession` (inside `handleWebhook`).
-   * Session is read here only for `assertWebChatEnabled` + publication resolve
-   * before `InboundDispatcher` / registry `getOrCreate`.
+   * Adapter webhook ingress (same spine as other channels). Plan limits are
+   * enforced mid-turn by `PlanLimitGateService` in inbound-turn. Optional body
+   * `conversationIdentifier` / `id` resumes via ACL.
    */
   @Post('/conversations')
   async createConversation(@Req() req: ExpressRequest, @Res() res: ExpressResponse): Promise<void> {
@@ -82,6 +93,40 @@ export class WebChatController {
 
       throw err;
     }
+  }
+
+  @Get('/conversations')
+  @UseGuards(AuthGuard('subscriberJwt'), WebChatEnabledGuard)
+  async listConversations(
+    @SubscriberSession() subscriberSession: SubscriberSessionData,
+    @Query() query: ListWebChatConversationsQueryDto
+  ): Promise<ListWebChatConversationsResponseDto> {
+    return this.listWebChatConversations.execute(
+      ListWebChatConversationsCommand.create({
+        environmentId: subscriberSession.environmentId,
+        organizationId: subscriberSession.organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        after: query.after,
+        before: query.before,
+        limit: query.limit ?? 50,
+      })
+    );
+  }
+
+  @Get('/conversations/:identifier')
+  @UseGuards(AuthGuard('subscriberJwt'), WebChatEnabledGuard)
+  async getConversation(
+    @SubscriberSession() subscriberSession: SubscriberSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<WebChatConversationMetadataDto> {
+    return this.getWebChatConversation.execute(
+      GetWebChatConversationCommand.create({
+        environmentId: subscriberSession.environmentId,
+        organizationId: subscriberSession.organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        conversationIdentifier: identifier,
+      })
+    );
   }
 
   @Get('/conversations/:identifier/events')
