@@ -3,28 +3,11 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { IS_SELF_HOSTED_EE } from '@/config';
-import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
+import { readClerkRedirectUrlParam, resolveSameOriginRedirectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { buildSsoSignInPath } from '../sso-redirect';
 import { useAuthConfig } from '../use-auth-config';
-
-function resolveSameOriginRedirectUrl(redirectUrl: string | null): string | null {
-  if (!redirectUrl) {
-    return null;
-  }
-
-  try {
-    const parsed = new URL(redirectUrl, window.location.origin);
-
-    if (parsed.origin !== window.location.origin) {
-      return null;
-    }
-
-    return parsed.href;
-  } catch {
-    return null;
-  }
-}
 
 export function SignIn() {
   const navigate = useNavigate();
@@ -113,7 +96,7 @@ export function SignIn() {
   }
 
   if (!emailPasswordAuthEnabled) {
-    return <Navigate to={ROUTES.SSO_SIGN_IN} replace />;
+    return <Navigate to={buildSsoSignInPath(searchParams)} replace />;
   }
 
   return (
@@ -206,7 +189,12 @@ export function SignIn() {
               <span className="bg-white px-2 text-foreground-500">Or</span>
             </div>
           </div>
-          <Button variant="secondary" mode="outline" className="w-full" onClick={() => navigate(ROUTES.SSO_SIGN_IN)}>
+          <Button
+            variant="secondary"
+            mode="outline"
+            className="w-full"
+            onClick={() => navigate(buildSsoSignInPath(searchParams))}
+          >
             Sign in with SSO
           </Button>
         </>

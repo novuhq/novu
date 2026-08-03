@@ -5,6 +5,7 @@ import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 import { useAuth } from '../index';
+import { buildSsoSignInPath } from '../sso-redirect';
 import { useAuthConfig } from '../use-auth-config';
 
 function extractInvitationIdFromRedirect(redirectUrl: string | null): string | null {
@@ -136,7 +137,7 @@ export function SignUp() {
 
   // SSO provisions accounts on first successful login, so there is nothing to sign up for here.
   if (!emailPasswordAuthEnabled) {
-    return <Navigate to={ROUTES.SSO_SIGN_IN} replace />;
+    return <Navigate to={buildSsoSignInPath(searchParams)} replace />;
   }
 
   return (

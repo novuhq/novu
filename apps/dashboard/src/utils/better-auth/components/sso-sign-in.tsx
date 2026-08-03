@@ -2,14 +2,19 @@ import { useEffect, useId, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
+import { readClerkRedirectUrlParam, resolveSameOriginRedirectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { withRedirectUrl } from '../sso-redirect';
 import { useAuthConfig } from '../use-auth-config';
 
 export function SSOSignIn() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { emailPasswordAuthEnabled } = useAuthConfig();
+  const postSignInRedirectUrl = resolveSameOriginRedirectUrl(readClerkRedirectUrlParam(searchParams));
+  const signInPath = withRedirectUrl(ROUTES.SIGN_IN, postSignInRedirectUrl);
+  const ssoRetryPath = withRedirectUrl(ROUTES.SSO_SIGN_IN, postSignInRedirectUrl);
   const ssoEmailId = useId();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -41,12 +46,12 @@ export function SSOSignIn() {
       await authClient.signIn.sso(
         {
           domain,
-          callbackURL: window.location.origin + ROUTES.SIGNUP_ORGANIZATION_LIST,
-          errorCallbackURL: window.location.origin + ROUTES.SSO_SIGN_IN,
+          callbackURL: postSignInRedirectUrl ?? window.location.origin + ROUTES.SIGNUP_ORGANIZATION_LIST,
+          errorCallbackURL: window.location.origin + ssoRetryPath,
         },
         {
           onSuccess: () => {
-            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
+            window.location.href = postSignInRedirectUrl ?? ROUTES.SIGNUP_ORGANIZATION_LIST;
           },
           onError: (ctx: any) => {
             throw new Error(ctx.error.message || 'SSO sign in failed');
@@ -91,9 +96,9 @@ export function SSOSignIn() {
               role="button"
               tabIndex={0}
               className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
-              onClick={() => navigate(ROUTES.SIGN_IN)}
+              onClick={() => navigate(signInPath)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.SIGN_IN);
+                if (e.key === 'Enter' || e.key === ' ') navigate(signInPath);
               }}
             >
               Back to sign in
