@@ -315,6 +315,43 @@ describe('processProviderOverridesIssues', () => {
     expect(issues.controls?.[`providerOverrides.${PushProviderIdEnum.FCM}`]).toBeDefined();
   });
 
+  it.each([
+    { topic: 't', token: 'x' },
+    { topic: 'orders', condition: "'stock' in topics" },
+    { token: 'a', tokens: ['b'], topic: 'c' },
+  ])('reports a friendly mutual-exclusion message when FCM override sets multiple routing keys %j', (override) => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: override,
+    });
+
+    expect(issues.controls?.['providerOverrides.fcm']).toEqual([
+      {
+        message: 'Only one of token, tokens, topic, condition is allowed',
+        issueType: ContentIssueEnum.MISSING_VALUE,
+        variableName: 'providerOverrides.fcm',
+      },
+    ]);
+  });
+
+  it('keeps unrelated FCM schema issues when routing keys conflict', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        topic: 'orders',
+        token: 'device-token',
+        data: { orderId: 123 },
+      },
+    });
+
+    expect(issues.controls?.['providerOverrides.fcm']).toEqual([
+      {
+        message: 'Only one of token, tokens, topic, condition is allowed',
+        issueType: ContentIssueEnum.MISSING_VALUE,
+        variableName: 'providerOverrides.fcm',
+      },
+    ]);
+    expect(issues.controls?.['providerOverrides.fcm.data.orderId']).toBeDefined();
+  });
+
   it('validates Telegram overrides against the generated sendMessage schema', () => {
     const valid = processProviderOverridesIssues({
       [ChatProviderIdEnum.Telegram]: {
