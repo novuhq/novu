@@ -8,13 +8,9 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   FeatureFlagsService,
-  GetDecryptedSecretKey,
-  GetDecryptedSecretKeyCommand,
   GetNovuProviderCredentials,
   InstrumentUsecase,
   messageWebhookMapper,
-  NotifyWorkflowAgentDispatchClient,
-  NotifyWorkflowAgentDispatchClientCommand,
   SelectIntegration,
   SelectIntegrationCommand,
   SelectVariant,
@@ -32,6 +28,7 @@ import {
   OrganizationEntity,
   SubscriberRepository,
   UserEntity,
+  WorkflowAgentDispatchRepository,
 } from '@novu/dal';
 import { ChatOutput } from '@novu/framework/internal';
 import {
@@ -45,7 +42,6 @@ import {
   FeatureFlagsKeysEnum,
   IChannelSettings,
   ProvidersIdEnum,
-  WorkflowAgentDispatchDestination,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
@@ -90,7 +86,22 @@ type MessageContext = {
   assignedAgentId: string | null;
 };
 
-const AGENT_SLACK_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
+type AgentDispatchSeedContext = {
+  assignedAgentId: string;
+  integrationId: string;
+};
+
+/**
+ * Endpoint types eligible for agent-assigned workflow chat delivery.
+ * Currently Slack-only; extend this set when other agent platforms gain send support.
+ *
+ * Bot-identity invariant: the ChannelEndpoint token used for send must belong to the same
+ * Slack app that serves the agent's inbound webhook — implied by the AgentIntegration link,
+ * not by types.
+ */
+const AGENT_SUPPORTED_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
+
+const AGENT_PLATFORM_SLACK = 'slack';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -107,10 +118,9 @@ export class SendMessageChat extends SendMessageBase {
     protected moduleRef: ModuleRef,
     private sendWebhookMessage: SendWebhookMessage,
     private resolveChannelEndpoints: ResolveChannelEndpoints,
-    private notifyWorkflowAgentDispatchClient: NotifyWorkflowAgentDispatchClient,
-    private getDecryptedSecretKey: GetDecryptedSecretKey,
     private agentRepository: AgentRepository,
     private agentIntegrationRepository: AgentIntegrationRepository,
+    private workflowAgentDispatchRepository: WorkflowAgentDispatchRepository,
     private featureFlagsService: FeatureFlagsService
   ) {
     super(
@@ -208,9 +218,9 @@ export class SendMessageChat extends SendMessageBase {
       step.template = template;
     }
 
-    const bridgeOutput = command.bridgeData?.outputs as ChatOutput | undefined;
+    const bridgeOutput = command.bridgeData?.outputs as (ChatOutput & { card?: CardElement }) | undefined;
     let content: string = bridgeOutput?.body || '';
-    const card = bridgeOutput?.card as CardElement | undefined;
+    const card = bridgeOutput?.card;
 
     try {
       if (!command.bridgeData) {
@@ -444,9 +454,19 @@ export class SendMessageChat extends SendMessageBase {
 
     for (const channelData of integrationChannelData.channelData) {
       try {
-        const result = assignedAgentId
-          ? await this.sendViaAgentNotify(channelData, integration, content, message, command, assignedAgentId)
-          : await this.sendMessage(channelData, integration, content, card, message, command);
+        const agentSeedContext: AgentDispatchSeedContext | undefined = assignedAgentId
+          ? { assignedAgentId, integrationId: integration._id }
+          : undefined;
+
+        const result = await this.sendMessage(
+          channelData,
+          integration,
+          content,
+          card,
+          message,
+          command,
+          agentSeedContext
+        );
 
         if (result.status === SendMessageStatus.SUCCESS) {
           status = SendMessageStatus.SUCCESS;
@@ -665,7 +685,8 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     card: CardElement | undefined,
     message: MessageEntity,
-    command: SendMessageChannelCommand
+    command: SendMessageChannelCommand,
+    agentSeedContext?: AgentDispatchSeedContext
   ): Promise<SendMessageResult> {
     const chatHandler = this.setupChatHandler(integration);
     const overrides = this.buildMessageOverrides(command, integration);
@@ -704,9 +725,81 @@ export class SendMessageChat extends SendMessageBase {
         nativePayload,
       });
 
+      if (agentSeedContext) {
+        await this.persistAgentDispatchSeed(agentSeedContext, result, message, command);
+      }
+
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
     } catch (error) {
       return await this.handleMessageSendError(error, message, command, overriddenChannelData);
+    }
+  }
+
+  /**
+   * Fail-soft post-send seed so inbound replies can hydrate workflow origin.
+   * Delivery already succeeded — seed failures must not flip the send to FAILED.
+   */
+  private async persistAgentDispatchSeed(
+    agentSeedContext: AgentDispatchSeedContext,
+    result: ISendMessageSuccessResponse,
+    message: MessageEntity,
+    command: SendMessageChannelCommand
+  ): Promise<void> {
+    if (!result.platformThreadId || !result.platformMessageId) {
+      Logger.warn(
+        {
+          jobId: command.jobId,
+          messageId: message._id,
+          agentId: agentSeedContext.assignedAgentId,
+        },
+        'Agent-assigned chat send succeeded without platform thread ids — skipping dispatch seed',
+        LOG_CONTEXT
+      );
+
+      return;
+    }
+
+    try {
+      await this.workflowAgentDispatchRepository.createSeed({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentId: agentSeedContext.assignedAgentId,
+        integrationId: agentSeedContext.integrationId,
+        platform: AGENT_PLATFORM_SLACK,
+        platformThreadId: result.platformThreadId,
+        platformMessageId: result.platformMessageId,
+        notificationId: command.notificationId,
+        jobId: command.jobId,
+        messageId: message._id,
+        transactionId: command.transactionId,
+        workflowIdentifier: command.identifier,
+        stepId: command.step.stepId,
+        subscriberId: command.subscriberId,
+      });
+    } catch (error) {
+      Logger.error(
+        {
+          err: error,
+          jobId: command.jobId,
+          messageId: message._id,
+          agentId: agentSeedContext.assignedAgentId,
+          platformThreadId: result.platformThreadId,
+        },
+        'Failed to persist workflow agent dispatch seed after successful send',
+        LOG_CONTEXT
+      );
+
+      await this.createExecutionDetail(
+        command,
+        DetailEnum.CHAT_AGENT_DISPATCH_SEED_FAILED,
+        ExecutionDetailsStatusEnum.WARNING,
+        message._id,
+        {
+          platformThreadId: result.platformThreadId,
+          platformMessageId: result.platformMessageId,
+          message: this.getErrorMessage(error),
+        }
+      );
     }
   }
 
@@ -764,6 +857,8 @@ export class SendMessageChat extends SendMessageBase {
         continue;
       }
 
+      // AgentIntegration link implies the endpoint token belongs to the same Slack app
+      // that serves this agent's inbound webhook — required for replies to reach the agent.
       const link = await this.agentIntegrationRepository.findOne(
         {
           _agentId: assignedAgentId,
@@ -779,16 +874,24 @@ export class SendMessageChat extends SendMessageBase {
         continue;
       }
 
-      const slackEndpoints = group.channelData.filter((endpoint) => AGENT_SLACK_ENDPOINT_TYPES.has(endpoint.type));
+      const supportedEndpoints = group.channelData.filter((endpoint) => {
+        if (!AGENT_SUPPORTED_ENDPOINT_TYPES.has(endpoint.type)) {
+          return false;
+        }
 
-      if (slackEndpoints.length === 0) {
+        const token = 'token' in endpoint ? endpoint.token : undefined;
+
+        return typeof token === 'string' && token.length > 0;
+      });
+
+      if (supportedEndpoints.length === 0) {
         if (group.channelData.length > 0) {
           sawUnsupportedEndpoint = true;
         }
         continue;
       }
 
-      if (slackEndpoints.length < group.channelData.length) {
+      if (supportedEndpoints.length < group.channelData.length) {
         sawUnsupportedEndpoint = true;
       }
 
@@ -796,7 +899,7 @@ export class SendMessageChat extends SendMessageBase {
         type: 'new',
         data: {
           ...group,
-          channelData: slackEndpoints,
+          channelData: supportedEndpoints,
         },
       });
     }
@@ -820,92 +923,6 @@ export class SendMessageChat extends SendMessageBase {
         errorMessage: detail,
       },
     };
-  }
-
-  private async sendViaAgentNotify(
-    channelData: ChannelData,
-    integration: IntegrationEntity,
-    content: string,
-    message: MessageEntity,
-    command: SendMessageChannelCommand,
-    assignedAgentId: string
-  ): Promise<SendMessageResult> {
-    const destination = this.mapChannelDataToAgentDestination(channelData);
-
-    if (!destination) {
-      await this.createExecutionDetail(
-        command,
-        DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
-        ExecutionDetailsStatusEnum.FAILED,
-        message._id,
-        `Unsupported endpoint type for agent dispatch: ${channelData.type}`
-      );
-
-      return {
-        status: SendMessageStatus.FAILED,
-        errorMessage: DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
-      };
-    }
-
-    try {
-      const apiKey = await this.getDecryptedSecretKey.execute(
-        GetDecryptedSecretKeyCommand.create({
-          environmentId: command.environmentId,
-        })
-      );
-
-      const dispatch = await this.notifyWorkflowAgentDispatchClient.execute(
-        NotifyWorkflowAgentDispatchClientCommand.create({
-          agentId: assignedAgentId,
-          apiKey,
-          integrationIdentifier: integration.identifier,
-          destination,
-          content,
-          idempotencyKey: `${message._id}:${channelData.identifier}`,
-          origin: {
-            notificationId: command.notificationId,
-            jobId: command.jobId,
-            messageId: message._id,
-            transactionId: command.transactionId,
-            workflowIdentifier: command.identifier,
-            stepId: command.step.stepId,
-            subscriberId: command.subscriberId,
-          },
-        })
-      );
-
-      return await this.handleMessageSendSuccess(
-        {
-          id: dispatch.platformMessageId,
-          date: new Date().toISOString(),
-          platformMessageId: dispatch.platformMessageId,
-          platformThreadId: dispatch.platformThreadId,
-        } as ISendMessageSuccessResponse,
-        message,
-        command,
-        channelData
-      );
-    } catch (error) {
-      return await this.handleMessageSendError(error, message, command, channelData);
-    }
-  }
-
-  private mapChannelDataToAgentDestination(channelData: ChannelData): WorkflowAgentDispatchDestination | null {
-    if (channelData.type === ENDPOINT_TYPES.SLACK_USER) {
-      return {
-        type: ENDPOINT_TYPES.SLACK_USER,
-        userId: channelData.endpoint.userId,
-      };
-    }
-
-    if (channelData.type === ENDPOINT_TYPES.SLACK_CHANNEL) {
-      return {
-        type: ENDPOINT_TYPES.SLACK_CHANNEL,
-        channelId: channelData.endpoint.channelId,
-      };
-    }
-
-    return null;
   }
 
   private async isRichChatEnabled(command: SendMessageChannelCommand): Promise<boolean> {

@@ -42,7 +42,6 @@ export * from './layout-variables-schema';
 export * from './merge-preferences';
 export * from './message-template';
 export * from './normalize-variables';
-export * from './notify-workflow-agent-dispatch';
 export * from './preview';
 export * from './preview-step';
 export * from './process-tenant';

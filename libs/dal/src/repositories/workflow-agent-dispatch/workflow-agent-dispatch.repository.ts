@@ -1,18 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { WorkflowAgentDispatchDestination, WorkflowAgentDispatchStatusEnum } from '@novu/shared';
-import { DalException } from '../../shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { WorkflowAgentDispatchDBModel, WorkflowAgentDispatchEntity } from './workflow-agent-dispatch.entity';
 import { WorkflowAgentDispatch } from './workflow-agent-dispatch.schema';
 
-export type ReserveWorkflowAgentDispatchParams = {
+export type CreateWorkflowAgentDispatchParams = {
   environmentId: string;
   organizationId: string;
   agentId: string;
   integrationId: string;
-  idempotencyKey: string;
   platform: string;
+  platformThreadId: string;
+  platformMessageId: string;
   notificationId: string;
   jobId: string;
   messageId: string;
@@ -20,9 +19,6 @@ export type ReserveWorkflowAgentDispatchParams = {
   workflowIdentifier: string;
   stepId?: string;
   subscriberId: string;
-  destination: WorkflowAgentDispatchDestination;
-  workspaceId?: string;
-  content: string;
 };
 
 @Injectable()
@@ -33,21 +29,6 @@ export class WorkflowAgentDispatchRepository extends BaseRepositoryV2<
 > {
   constructor() {
     super(WorkflowAgentDispatch, WorkflowAgentDispatchEntity);
-  }
-
-  async findByIdempotencyKey(
-    environmentId: string,
-    organizationId: string,
-    idempotencyKey: string
-  ): Promise<WorkflowAgentDispatchEntity | null> {
-    return this.findOne(
-      {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        idempotencyKey,
-      },
-      '*'
-    );
   }
 
   async findByPlatformThread(
@@ -69,22 +50,26 @@ export class WorkflowAgentDispatchRepository extends BaseRepositoryV2<
     );
   }
 
-  async reservePending(params: ReserveWorkflowAgentDispatchParams): Promise<WorkflowAgentDispatchEntity> {
-    let reserved: WorkflowAgentDispatchEntity | null = null;
+  /**
+   * Upsert a post-send hydration seed keyed by agent + integration + platform thread.
+   * Duplicate key from a concurrent/retry write re-reads the existing seed.
+   */
+  async createSeed(params: CreateWorkflowAgentDispatchParams): Promise<WorkflowAgentDispatchEntity> {
+    let seed: WorkflowAgentDispatchEntity | null = null;
 
     try {
-      reserved = await this.findOneAndUpdate(
+      seed = await this.findOneAndUpdate(
         {
           _environmentId: params.environmentId,
           _organizationId: params.organizationId,
-          idempotencyKey: params.idempotencyKey,
+          _agentId: params.agentId,
+          _integrationId: params.integrationId,
+          platformThreadId: params.platformThreadId,
         },
         {
           $setOnInsert: {
-            _agentId: params.agentId,
-            _integrationId: params.integrationId,
-            status: WorkflowAgentDispatchStatusEnum.PENDING,
             platform: params.platform,
+            platformMessageId: params.platformMessageId,
             _notificationId: params.notificationId,
             _jobId: params.jobId,
             _messageId: params.messageId,
@@ -92,109 +77,30 @@ export class WorkflowAgentDispatchRepository extends BaseRepositoryV2<
             workflowIdentifier: params.workflowIdentifier,
             stepId: params.stepId,
             subscriberId: params.subscriberId,
-            destination: params.destination,
-            workspaceId: params.workspaceId,
-            content: params.content,
           },
         },
         { upsert: true, new: true }
       );
     } catch (error) {
-      reserved = await this.findByIdempotencyKey(params.environmentId, params.organizationId, params.idempotencyKey);
+      seed = await this.findByPlatformThread(
+        params.environmentId,
+        params.organizationId,
+        params.agentId,
+        params.integrationId,
+        params.platformThreadId
+      );
 
-      if (!reserved) {
+      if (!seed) {
         throw error;
       }
     }
 
-    if (!reserved) {
-      throw new DalException(`Failed to reserve workflow agent dispatch for idempotency key ${params.idempotencyKey}`);
+    if (!seed) {
+      throw new Error(
+        `Failed to create workflow agent dispatch seed for platformThreadId ${params.platformThreadId}`
+      );
     }
 
-    return reserved;
-  }
-
-  async claimForSend(params: {
-    environmentId: string;
-    organizationId: string;
-    dispatchId: string;
-  }): Promise<WorkflowAgentDispatchEntity | null> {
-    return this.findOneAndUpdate(
-      {
-        _id: params.dispatchId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        status: { $in: [WorkflowAgentDispatchStatusEnum.PENDING, WorkflowAgentDispatchStatusEnum.FAILED] },
-      },
-      {
-        $set: { status: WorkflowAgentDispatchStatusEnum.SENDING },
-      },
-      { new: true }
-    );
-  }
-
-  async markSent(params: {
-    environmentId: string;
-    organizationId: string;
-    dispatchId: string;
-    platformThreadId: string;
-    platformMessageId: string;
-  }): Promise<void> {
-    await this.update(
-      {
-        _id: params.dispatchId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      {
-        $set: {
-          status: WorkflowAgentDispatchStatusEnum.SENT,
-          platformThreadId: params.platformThreadId,
-          platformMessageId: params.platformMessageId,
-        },
-        $unset: { content: 1 },
-      }
-    );
-  }
-
-  /**
-   * Best-effort write of platform delivery ids without flipping status.
-   * Used when markSent fails after the platform already accepted the message.
-   */
-  async persistDeliveryIdentifiers(params: {
-    environmentId: string;
-    organizationId: string;
-    dispatchId: string;
-    platformThreadId: string;
-    platformMessageId: string;
-  }): Promise<void> {
-    await this.update(
-      {
-        _id: params.dispatchId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      {
-        $set: {
-          platformThreadId: params.platformThreadId,
-          platformMessageId: params.platformMessageId,
-        },
-      }
-    );
-  }
-
-  async markFailed(params: { environmentId: string; organizationId: string; dispatchId: string }): Promise<void> {
-    await this.update(
-      {
-        _id: params.dispatchId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      {
-        $set: {
-          status: WorkflowAgentDispatchStatusEnum.FAILED,
-        },
-      }
-    );
+    return seed;
   }
 }

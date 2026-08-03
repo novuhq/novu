@@ -1,8 +1,11 @@
-import { WorkflowAgentDispatchDestination, WorkflowAgentDispatchStatusEnum } from '@novu/shared';
 import { ChangePropsValueType } from '../../types/helpers';
 import { EnvironmentId } from '../environment';
 import { OrganizationId } from '../organization';
 
+/**
+ * Post-send seed linking a Slack (or future) platform thread to the Novu workflow
+ * message that opened it. Used by inbound hydration before a Conversation exists.
+ */
 export class WorkflowAgentDispatchEntity {
   _id: string;
 
@@ -14,16 +17,11 @@ export class WorkflowAgentDispatchEntity {
 
   _integrationId: string;
 
-  /** Unique per environment — `${messageId}:${endpointIdentifier}`. */
-  idempotencyKey: string;
-
-  status: WorkflowAgentDispatchStatusEnum;
-
   platform: string;
 
-  platformThreadId?: string;
+  platformThreadId: string;
 
-  platformMessageId?: string;
+  platformMessageId: string;
 
   _notificationId: string;
 
@@ -38,12 +36,6 @@ export class WorkflowAgentDispatchEntity {
   stepId?: string;
 
   subscriberId: string;
-
-  destination: WorkflowAgentDispatchDestination;
-
-  workspaceId?: string;
-
-  content?: string;
 
   createdAt: string;
 

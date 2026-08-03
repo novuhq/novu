@@ -10,6 +10,7 @@ export enum DetailEnum {
   CHAT_AGENT_INTEGRATION_NOT_LINKED = 'Chat integration is not linked to the assigned agent',
   CHAT_AGENT_UNSUPPORTED_ENDPOINT = 'Agent-assigned chat only supports Slack user and channel endpoints',
   CHAT_AGENT_NO_ELIGIBLE_CHANNELS = 'No agent-linked Slack channels available for delivery',
+  CHAT_AGENT_DISPATCH_SEED_FAILED = 'Failed to persist agent dispatch seed for conversation hydration',
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',

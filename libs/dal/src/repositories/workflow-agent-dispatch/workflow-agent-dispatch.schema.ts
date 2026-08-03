@@ -1,20 +1,6 @@
-import { ENDPOINT_TYPES, WorkflowAgentDispatchStatusEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { WorkflowAgentDispatchDBModel } from './workflow-agent-dispatch.entity';
-
-const destinationSchema = new Schema(
-  {
-    type: {
-      type: Schema.Types.String,
-      enum: [ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL],
-      required: true,
-    },
-    userId: { type: Schema.Types.String, required: false },
-    channelId: { type: Schema.Types.String, required: false },
-  },
-  { _id: false }
-);
 
 const workflowAgentDispatchSchema = new Schema<WorkflowAgentDispatchDBModel>(
   {
@@ -38,26 +24,17 @@ const workflowAgentDispatchSchema = new Schema<WorkflowAgentDispatchDBModel>(
       ref: 'Integration',
       required: true,
     },
-    idempotencyKey: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    status: {
-      type: Schema.Types.String,
-      enum: Object.values(WorkflowAgentDispatchStatusEnum),
-      required: true,
-    },
     platform: {
       type: Schema.Types.String,
       required: true,
     },
     platformThreadId: {
       type: Schema.Types.String,
-      required: false,
+      required: true,
     },
     platformMessageId: {
       type: Schema.Types.String,
-      required: false,
+      required: true,
     },
     _notificationId: {
       type: Schema.Types.ObjectId,
@@ -87,29 +64,19 @@ const workflowAgentDispatchSchema = new Schema<WorkflowAgentDispatchDBModel>(
       type: Schema.Types.String,
       required: true,
     },
-    destination: {
-      type: destinationSchema,
-      required: true,
-    },
-    workspaceId: {
-      type: Schema.Types.String,
-      required: false,
-    },
-    content: {
-      type: Schema.Types.String,
-      required: false,
-    },
   },
   schemaOptions
 );
 
-workflowAgentDispatchSchema.index({ _environmentId: 1, idempotencyKey: 1 }, { unique: true });
-workflowAgentDispatchSchema.index({
-  _environmentId: 1,
-  _agentId: 1,
-  _integrationId: 1,
-  platformThreadId: 1,
-});
+workflowAgentDispatchSchema.index(
+  {
+    _environmentId: 1,
+    _agentId: 1,
+    _integrationId: 1,
+    platformThreadId: 1,
+  },
+  { unique: true }
+);
 
 export const WorkflowAgentDispatch =
   (mongoose.models.WorkflowAgentDispatch as mongoose.Model<WorkflowAgentDispatchDBModel>) ||

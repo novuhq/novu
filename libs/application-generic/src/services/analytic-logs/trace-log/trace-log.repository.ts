@@ -528,6 +528,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Chat agent unsupported endpoint';
     case 'chat_agent_no_eligible_channels':
       return 'Chat agent has no eligible channels';
+    case 'chat_agent_dispatch_seed_failed':
+      return 'Chat agent dispatch seed failed';
 
     // MS Teams events
     case 'msteams_bot_not_installed':

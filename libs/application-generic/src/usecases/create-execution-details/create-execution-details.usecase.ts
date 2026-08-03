@@ -120,6 +120,7 @@ const mapDetailToEventType = {
   [DetailEnum.CHAT_AGENT_INTEGRATION_NOT_LINKED]: 'chat_agent_integration_not_linked',
   [DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT]: 'chat_agent_unsupported_endpoint',
   [DetailEnum.CHAT_AGENT_NO_ELIGIBLE_CHANNELS]: 'chat_agent_no_eligible_channels',
+  [DetailEnum.CHAT_AGENT_DISPATCH_SEED_FAILED]: 'chat_agent_dispatch_seed_failed',
 
   // MS Teams events
   [DetailEnum.MSTEAMS_BOT_NOT_INSTALLED]: 'msteams_bot_not_installed',

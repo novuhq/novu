@@ -200,6 +200,10 @@ export interface ISendMessageSuccessResponse {
   id?: string;
   ids?: string[];
   date?: string;
+  /** Provider-native message id (e.g. Slack `ts`) used for agent thread hydration. */
+  platformMessageId?: string;
+  /** Provider-native thread id (e.g. `slack:{channel}:{ts}`) used for agent thread hydration. */
+  platformThreadId?: string;
 }
 
 export enum EmailEventStatusEnum {
