@@ -16,3 +16,4 @@ export * from './telegram/telegram.provider';
 export * from './webex-messaging/webex-messaging.provider';
 export * from './whatsapp-business/whatsapp-business.provider';
 export * from './zulip/zulip.provider';
+export * from './8x8-whatsapp/8x8-whatsapp.provider';

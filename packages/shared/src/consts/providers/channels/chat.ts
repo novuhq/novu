@@ -3,6 +3,7 @@ import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import { photonImessageGroupConfigurations } from '../configurations/provider-configuration';
 import {
   chatWebhookConfig,
+  eightByEightWhatsAppConfig,
   getstreamConfig,
   grafanaOnCallConfig,
   lineConfig,
@@ -119,6 +120,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: whatsAppBusinessConfig,
     docReference: `https://docs.novu.co/platform/integrations/chat/whats-app${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.EightByEightWhatsApp,
+    displayName: '8x8 WhatsApp',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: eightByEightWhatsAppConfig,
+    docReference: 'https://developer.8x8.com/connect/docs/messaging-apps-api-get-started',
+    logoFileName: { light: '8x8.svg', dark: '8x8.svg' },
   },
   {
     id: ChatProviderIdEnum.Line,

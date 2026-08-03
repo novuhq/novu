@@ -100,6 +100,7 @@ const PHONE_BASED_CHAT_PROVIDERS: ChatProviderIdEnum[] = [
   ChatProviderIdEnum.WhatsAppBusiness,
   ChatProviderIdEnum.Sendblue,
   ChatProviderIdEnum.PhotonImessage,
+  ChatProviderIdEnum.EightByEightWhatsApp,
 ];
 
 type UnifiedChannel = {
@@ -655,7 +656,11 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageChannelCommand,
     phoneNumber?: string
   ): Promise<SendMessageResult> {
-    if (integration?.providerId === ChatProviderIdEnum.WhatsAppBusiness && !phoneNumber) {
+    if (
+      integration &&
+      PHONE_BASED_CHAT_PROVIDERS.includes(integration.providerId as ChatProviderIdEnum) &&
+      !phoneNumber
+    ) {
       return await this.handleMissingResourceError(
         command,
         message,
