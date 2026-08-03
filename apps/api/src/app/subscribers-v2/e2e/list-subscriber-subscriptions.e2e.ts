@@ -199,27 +199,26 @@ describe('List subscriber subscriptions - /v2/subscribers/:subscriberId/subscrip
       topicKey
     );
 
-    const response = await novuClient.subscribers.topics.list({
-      subscriberId: subscriber.subscriberId,
-      key: topicKey,
-    });
+    const response = await session.testAgent
+      .get(`/v2/subscribers/${subscriber.subscriberId}/subscriptions`)
+      .query({ key: topicKey });
 
-    expect(response).to.exist;
-    expect(response.result.data.length).to.equal(1);
+    expect(response.status).to.equal(200);
+    expect(response.body.data.length).to.equal(1);
 
-    const subscription = response.result.data[0];
+    const subscription = response.body.data[0];
     expect(subscription.preferences, 'Should include preferences').to.exist;
-    expect(subscription.preferences?.length, 'Should have at least one preference').to.be.greaterThan(0);
-    expect(subscription.preferences?.[0].enabled, 'Preference should be enabled').to.equal(true);
-    expect(subscription.preferences?.[0].workflow?.id, 'Should include workflow id').to.equal(workflow._id);
+    expect(subscription.preferences.length, 'Should have at least one preference').to.be.greaterThan(0);
+    expect(subscription.preferences[0].enabled, 'Preference should be enabled').to.equal(true);
+    expect(subscription.preferences[0].workflow.id, 'Should include workflow id').to.equal(workflow._id);
 
     const getResponse = await novuClient.topics.subscriptions.getSubscription(
       topicKey,
       subscription.identifier as string
     );
 
-    expect(getResponse.result.preferences?.length).to.equal(subscription.preferences?.length);
-    expect(getResponse.result.preferences?.[0].workflow?.id).to.equal(subscription.preferences?.[0].workflow?.id);
-    expect(getResponse.result.preferences?.[0].enabled).to.equal(subscription.preferences?.[0].enabled);
+    expect(getResponse.result.preferences?.length).to.equal(subscription.preferences.length);
+    expect(getResponse.result.preferences?.[0].workflow?.id).to.equal(subscription.preferences[0].workflow.id);
+    expect(getResponse.result.preferences?.[0].enabled).to.equal(subscription.preferences[0].enabled);
   });
 });
