@@ -43,6 +43,7 @@ import {
   AgentResponseDto,
   ConversationUsageResponseDto,
   CreateAgentRequestDto,
+  GetAgentUsageResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
   UpdateAgentBridgeRequestDto,
@@ -55,6 +56,8 @@ import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
+import { GetAgentUsageCommand } from './usecases/get-agent-usage/get-agent-usage.command';
+import { GetAgentUsage } from './usecases/get-agent-usage/get-agent-usage.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
@@ -72,6 +75,7 @@ export class AgentsController {
     private readonly createAgentUsecase: CreateAgent,
     private readonly listAgentsUsecase: ListAgents,
     private readonly getAgentUsecase: GetAgent,
+    private readonly getAgentUsageUsecase: GetAgentUsage,
     private readonly updateAgentUsecase: UpdateAgent,
     private readonly deleteAgentUsecase: DeleteAgent,
     private readonly listAgentEmojiUsecase: ListAgentEmoji,
@@ -232,6 +236,31 @@ export class AgentsController {
     );
   }
 
+  @Get('/:identifier/usage')
+  @ApiExcludeEndpoint()
+  @ApiResponse(GetAgentUsageResponseDto)
+  @ApiOperation({
+    summary: 'Get agent usage',
+    description: 'Returns workflows in the current environment that have this agent assigned.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getAgentUsage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<GetAgentUsageResponseDto> {
+    return this.getAgentUsageUsecase.execute(
+      GetAgentUsageCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+      })
+    );
+  }
+
   @Patch('/:identifier')
   @ExternalApiAccessible()
   @SdkGroupName('Agents')
@@ -275,7 +304,7 @@ export class AgentsController {
   @ApiOperation({
     summary: 'Delete an agent',
     description:
-      'Delete an agent by identifier and remove all agent-integration links. ' +
+      'Delete an agent by identifier, remove all agent-integration links, and clear the agent assignment from any workflows that reference it. ' +
       'For managed-runtime agents, pass `deleteFromProvider=true` to also archive the agent on the provider side (e.g. Anthropic). ' +
       'By default only the Novu record is deleted and the provider agent is left intact.',
   })

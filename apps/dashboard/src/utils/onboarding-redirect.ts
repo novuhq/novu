@@ -36,11 +36,12 @@ export function stripOnboardingSource(search: URLSearchParams): URLSearchParams 
   return next;
 }
 
-// `product_type=agents` skips the usecase picker and lands directly on the agents setup page. The
-// EU/feature-flag gating on the agents setup page still redirects to the inbox path when needed.
+// `product_type=agents` skips the usecase picker and lands on the personalize step, so deeplinked
+// signups are surveyed like everyone else on the agents path. The EU/feature-flag gating on that
+// page still redirects to the inbox path when needed.
 export function getPostOrgCreateRoute(productType?: ProductType | null): string {
   if (productType === 'agents') {
-    return ROUTES.AGENTS_SETUP;
+    return ROUTES.AGENTS_PERSONALIZE;
   }
 
   return ROUTES.USECASE_SELECT;

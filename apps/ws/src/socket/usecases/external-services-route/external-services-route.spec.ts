@@ -96,5 +96,37 @@ describe('ExternalServicesRoute', () => {
         hasMore: false,
       });
     });
+
+    it('should forward agent event envelopes without inbox count side effects', async () => {
+      const payload = {
+        version: '1',
+        conversationId: 'conversation-id',
+        agentId: 'agent-id',
+        runId: 'run-id',
+        turnId: 'turn-id',
+        sequence: 3,
+        timestamp: new Date().toISOString(),
+        event: { type: 'channel.typing', state: 'on' },
+      };
+      const command = ExternalServicesRouteCommand.create({
+        event: WebSocketEventEnum.AGENT_EVENT,
+        userId,
+        _environmentId: environmentId,
+        contextKeys: [],
+        payload,
+      });
+
+      await externalServicesRoute.execute(command);
+
+      sinon.assert.calledOnceWithExactly(
+        wsGatewayStub.sendMessage,
+        userId,
+        WebSocketEventEnum.AGENT_EVENT,
+        payload,
+        []
+      );
+      sinon.assert.notCalled(getCountStub);
+      sinon.assert.notCalled(findOneStub);
+    });
   });
 });

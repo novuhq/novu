@@ -20,7 +20,7 @@ export function isLinkButtonActionId(id: string | undefined): boolean {
 }
 
 /** Which plan entitlement caused an over-limit agent/channel/conversation to be soft-blocked at runtime. */
-type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
+export type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
 
 const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
   agents:

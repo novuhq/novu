@@ -1,10 +1,12 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
+  CardElement,
   ChannelData,
   ChannelTypeEnum,
   ENDPOINT_TYPES,
   IChatOptions,
   IChatProvider,
+  IChatRenderResult,
   ISendMessageSuccessResponse,
   SlackChannelData,
   SlackUserData,
@@ -12,8 +14,15 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { esmImport } from '../../../utils/esm-import';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
+import { dedupeSlackActionIds, toSlackFlavoredCard, validateSlackCard } from './card-render.utils';
+
+type SlackBlocksModule = {
+  cardToBlockKit: (card: unknown) => unknown[];
+  cardToFallbackText: (card: unknown) => string;
+};
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -21,6 +30,23 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
   public id = ChatProviderIdEnum.Slack;
   private slackAPI = 'https://slack.com/api';
   private axiosInstance = axios.create();
+
+  /**
+   * Rich Chat: serialize a `CardElement` to Slack Block Kit + mrkdwn fallback text.
+   */
+  async render(card: CardElement): Promise<IChatRenderResult> {
+    const { cardToBlockKit, cardToFallbackText } = await esmImport<SlackBlocksModule>('@chat-adapter/slack');
+
+    // Translate the card's provider-agnostic markdown into Slack mrkdwn (links `<url|label>`,
+    // strikethrough `~x~`) before serializing; the adapter only converts `**bold**` on its own.
+    const slackCard = toSlackFlavoredCard(card);
+
+    return {
+      nativePayload: { blocks: dedupeSlackActionIds(cardToBlockKit(slackCard)) },
+      content: cardToFallbackText(slackCard),
+      validation: validateSlackCard(card),
+    };
+  }
 
   async sendMessage(
     data: IChatOptions,
@@ -73,7 +99,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       `${this.slackAPI}/chat.postMessage`,
       this.transform(bridgeProviderData, {
         text: data.content,
-        blocks: data.blocks,
+        ...data.nativePayload,
         channel: endpoint.channelId,
         ...(data.customData || {}),
       }).body,
@@ -99,7 +125,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       `${this.slackAPI}/chat.postMessage`,
       this.transform(bridgeProviderData, {
         text: data.content,
-        blocks: data.blocks,
+        ...data.nativePayload,
         channel: endpoint.userId,
         ...(data.customData || {}),
       }).body,
@@ -125,7 +151,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       url: endpoint.url,
       body: this.transform(bridgeProviderData, {
         text: data.content,
-        blocks: data.blocks,
+        ...data.nativePayload,
         ...(data.customData || {}),
       }).body,
     });

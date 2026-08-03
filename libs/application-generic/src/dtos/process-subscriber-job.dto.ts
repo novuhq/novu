@@ -22,6 +22,7 @@ export interface IProcessSubscriberDataDto {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  _agentId?: string | null;
   tenant?: ITenantDefine;
   actor?: SubscriberEntity;
   contextKeys: string[];
