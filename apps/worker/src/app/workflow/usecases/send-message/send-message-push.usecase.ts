@@ -178,18 +178,30 @@ export class SendMessagePush extends SendMessageBase {
         Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
       ) || [];
 
-    const pushProviderOverrides = this.getPushProviderOverrides(command.overrides, command.step?.stepId || '');
+    const pushProviderOverrides = this.getPushProviderOverrides(command);
     const providersWithCredentialOverrides = this.filterProvidersWithCredentialOverrides(pushProviderOverrides);
-
     const channelsFromOverrides = await this.constructChannelSettingsFromOverrides(
       providersWithCredentialOverrides,
       command
     );
-    const existingProviderIds = pushChannels.map((channel) => channel.providerId);
-    const uniqueOverrideChannels = channelsFromOverrides.filter(
-      (channel) => !existingProviderIds.includes(channel.providerId)
-    );
-    const allPushChannels = [...pushChannels, ...uniqueOverrideChannels];
+
+    /*
+     * Prefer a synthetic override channel when the subscriber already has the provider
+     * channel but no device tokens — otherwise routing overrides (topic/condition/token)
+     * are dropped and the send is skipped.
+     */
+    const channelsByProvider = new Map(pushChannels.map((channel) => [channel.providerId, channel]));
+    const tokenlessRoutingProviderIds = new Set<string>();
+
+    for (const overrideChannel of channelsFromOverrides) {
+      const existing = channelsByProvider.get(overrideChannel.providerId);
+      if (!existing || this.channelMissingDeviceTokens(existing)) {
+        channelsByProvider.set(overrideChannel.providerId, overrideChannel);
+        tokenlessRoutingProviderIds.add(overrideChannel.providerId);
+      }
+    }
+
+    const allPushChannels = [...channelsByProvider.values()];
 
     if (!allPushChannels.length) {
       await this.createExecutionDetails.execute(
@@ -219,8 +231,10 @@ export class SendMessagePush extends SendMessageBase {
     for (const channel of allPushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
-      const isChannelMissingDeviceTokens = await this.isChannelMissingDeviceTokens(channel);
-      if (isChannelMissingDeviceTokens && !deviceTokens && !uniqueOverrideChannels?.length) {
+      const isChannelMissingDeviceTokens = this.channelMissingDeviceTokens(channel);
+      const hasTokenlessRoutingOverride = tokenlessRoutingProviderIds.has(channel.providerId);
+
+      if (isChannelMissingDeviceTokens && !hasTokenlessRoutingOverride) {
         await this.createExecutionDetails.execute(
           CreateExecutionDetailsCommand.create({
             ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -251,7 +265,7 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const noDeviceTokensAndNoOverrides = !deviceTokens && !uniqueOverrideChannels?.length;
+      const noDeviceTokensAndNoOverrides = isChannelMissingDeviceTokens && !hasTokenlessRoutingOverride;
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if (noDeviceTokensAndNoOverrides || !integration) {
         continue;
@@ -278,7 +292,7 @@ export class SendMessagePush extends SendMessageBase {
       /**
        * There are no targets available for the subscriber, but credentials provided in the overrides
        */
-      if (!target?.length && uniqueOverrideChannels?.length) {
+      if (!target?.length && hasTokenlessRoutingOverride) {
         const message = await this.createMessage({
           command,
           integration,
@@ -454,14 +468,15 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   /**
-   * Collects all push provider IDs and their overrides from the TriggerOverrides structure
+   * Collects push provider overrides from trigger overrides and merged bridge data
+   * (content overrides carry FCM routing keys on bridgeData.providers).
    */
-  private getPushProviderOverrides(overrides: TriggerOverrides, stepId: string): IPushProviderOverride[] {
-    if (!overrides) return [];
-
+  private getPushProviderOverrides(command: SendMessageChannelCommand): IPushProviderOverride[] {
+    const overrides = command.overrides;
+    const stepId = command.step?.stepId || '';
     const result: IPushProviderOverride[] = [];
 
-    if (overrides.providers) {
+    if (overrides?.providers) {
       for (const providerId of Object.keys(overrides.providers)) {
         if (this.pushProviderIds.includes(providerId as PushProviderIdEnum)) {
           result.push({
@@ -474,7 +489,7 @@ export class SendMessagePush extends SendMessageBase {
       }
     }
 
-    if (overrides.steps?.[stepId]?.providers) {
+    if (overrides?.steps?.[stepId]?.providers) {
       for (const providerId of Object.keys(overrides.steps[stepId].providers)) {
         if (this.pushProviderIds.includes(providerId as PushProviderIdEnum)) {
           const existingIndex = result.findIndex((item) => item.providerId === providerId);
@@ -499,6 +514,26 @@ export class SendMessagePush extends SendMessageBase {
       }
     }
 
+    const mergedFcmOverrides = combineProviderOverrides(
+      command.bridgeData,
+      command.overrides,
+      command.step?.stepId,
+      PushProviderIdEnum.FCM
+    );
+
+    if (this.hasProviderSpecificOverrides(PushProviderIdEnum.FCM, mergedFcmOverrides)) {
+      const existingIndex = result.findIndex((item) => item.providerId === PushProviderIdEnum.FCM);
+
+      if (existingIndex >= 0) {
+        result[existingIndex].overrides = mergedFcmOverrides;
+      } else {
+        result.push({
+          providerId: PushProviderIdEnum.FCM,
+          overrides: mergedFcmOverrides,
+        });
+      }
+    }
+
     return result;
   }
 
@@ -512,7 +547,7 @@ export class SendMessagePush extends SendMessageBase {
 
     switch (providerId) {
       case PushProviderIdEnum.FCM:
-        return 'tokens' in overrides || 'topic' in overrides;
+        return 'token' in overrides || 'tokens' in overrides || 'topic' in overrides || 'condition' in overrides;
       default:
         return false;
     }
@@ -530,7 +565,7 @@ export class SendMessagePush extends SendMessageBase {
     );
   }
 
-  private async isChannelMissingDeviceTokens(channel: IChannelSettings): Promise<boolean> {
+  private channelMissingDeviceTokens(channel: IChannelSettings): boolean {
     const { deviceTokens } = channel.credentials || {};
 
     return !deviceTokens || (Array.isArray(deviceTokens) && deviceTokens.length === 0);
@@ -870,9 +905,16 @@ export class SendMessagePush extends SendMessageBase {
           };
         }
 
-        if (overrides.topic) {
+        if (typeof overrides.topic === 'string') {
           return {
-            topic: overrides.topic as string,
+            topic: overrides.topic,
+          };
+        }
+
+        // token / condition route via bridgeProviderData; empty tokens mark tokenless send
+        if (typeof overrides.token === 'string' || typeof overrides.condition === 'string') {
+          return {
+            deviceTokens: [],
           };
         }
 

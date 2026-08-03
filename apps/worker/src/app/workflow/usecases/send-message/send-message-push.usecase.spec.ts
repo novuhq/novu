@@ -68,6 +68,18 @@ describe('SendMessagePush - provider content overrides', () => {
     android: { priority: 'normal' },
   };
 
+  const fcmChannelWithTokens = {
+    _integrationId: fcmIntegration._id,
+    providerId: PushProviderIdEnum.FCM,
+    credentials: { deviceTokens: ['device-token-1'] },
+  };
+
+  const fcmChannelWithEmptyTokens = {
+    _integrationId: fcmIntegration._id,
+    providerId: PushProviderIdEnum.FCM,
+    credentials: { deviceTokens: [] as string[] },
+  };
+
   afterEach(() => {
     sinon.restore();
   });
@@ -97,8 +109,18 @@ describe('SendMessagePush - provider content overrides', () => {
     return usecase;
   }
 
-  function buildCommand(options: { providerOverrides?: Record<string, unknown>; overrides?: TriggerOverrides } = {}) {
-    const { providerOverrides, overrides = {} } = options;
+  function buildCommand(
+    options: {
+      providerOverrides?: Record<string, unknown>;
+      overrides?: TriggerOverrides;
+      channels?: Array<{
+        _integrationId: string;
+        providerId: PushProviderIdEnum;
+        credentials: { deviceTokens?: string[] };
+      }>;
+    } = {}
+  ) {
+    const { providerOverrides, overrides = {}, channels = [fcmChannelWithTokens] } = options;
 
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
@@ -119,13 +141,7 @@ describe('SendMessagePush - provider content overrides', () => {
         subscriber: {
           subscriberId: 'sub_1',
           locale: 'en',
-          channels: [
-            {
-              _integrationId: fcmIntegration._id,
-              providerId: PushProviderIdEnum.FCM,
-              credentials: { deviceTokens: ['device-token-1'] },
-            },
-          ],
+          channels,
         },
       } as never,
       bridgeData: {
@@ -188,5 +204,92 @@ describe('SendMessagePush - provider content overrides', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal(triggerFcmOverride);
+  });
+
+  describe('token-less FCM routing overrides', () => {
+    it('sends when bridge content override has topic and subscriber has no FCM channel', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [],
+          providerOverrides: { topic: 'orders' },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ topic: 'orders' });
+    });
+
+    it('sends when subscriber FCM channel has empty deviceTokens and bridge has topic', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [fcmChannelWithEmptyTokens],
+          providerOverrides: { topic: 'orders' },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ topic: 'orders' });
+    });
+
+    it('sends when bridge content override has condition and subscriber has no FCM channel', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [],
+          providerOverrides: { condition: "'stock' in topics" },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({
+        condition: "'stock' in topics",
+      });
+    });
+
+    it('sends when subscriber FCM channel has empty deviceTokens and bridge has token', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [fcmChannelWithEmptyTokens],
+          providerOverrides: { token: 'routing-token-1' },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ token: 'routing-token-1' });
+    });
+
+    it('skips when subscriber FCM channel has empty deviceTokens and no routing override', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [fcmChannelWithEmptyTokens],
+          providerOverrides: persistedFcmOverride,
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SKIPPED);
+      sinon.assert.notCalled(sendStub);
+    });
   });
 });
