@@ -217,10 +217,23 @@ describe('provider override registry', () => {
     expect(config?.schema).toBeUndefined();
     expect(config?.schemaSubpath).toBe('@novu/shared/provider-overrides/fcm');
     expect(config?.primaryContentKey).toBe('notification.body');
-    expect(keys).toEqual(expect.arrayContaining(['notification', 'data', 'android', 'apns', 'webpush', 'fcmOptions']));
-    expect(keys).not.toContain('topic');
-    expect(keys).not.toContain('token');
+    expect(keys).toEqual(
+      expect.arrayContaining([
+        'notification',
+        'data',
+        'android',
+        'apns',
+        'webpush',
+        'fcmOptions',
+        'token',
+        'tokens',
+        'topic',
+        'condition',
+      ])
+    );
+    expect(config?.exclusiveKeyGroups).toEqual([['token', 'tokens', 'topic', 'condition']]);
     expect(getProviderOverrideKeysOnlySchema(PushProviderIdEnum.FCM)?.properties?.notification).toBe(true);
+    expect(getProviderOverrideKeysOnlySchema(PushProviderIdEnum.FCM)?.properties?.topic).toBe(true);
   });
 
   it('pairs every eager schema with a liquid-tolerant twin', () => {

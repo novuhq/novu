@@ -5,12 +5,13 @@ import { describe, expect, it } from 'vitest';
 import { fcmOverrideJsonSchema } from '../src/consts/providers/provider-overrides/fcm/fcm-override.generated';
 import { fcmOverrideLiquidTolerantJsonSchema } from '../src/consts/providers/provider-overrides/fcm/fcm-override.liquid-tolerant.generated';
 import { FCM_OVERRIDE_KEYS } from '../src/consts/providers/provider-overrides/fcm/keys';
-import { NON_OVERRIDABLE_FCM_KEYS } from './fcm-override.type';
 import { buildFcmOverrideSchemas } from './generate-fcm-override-schema';
 
 const REGENERATE_HINT = 'Run `pnpm --filter @novu/shared generate:fcm-schema` and commit the result.';
 const DRIFT_ENV_VAR = 'NOVU_TEST_FCM_SCHEMA_DRIFT';
 const sharedRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
 
 /**
  * Comparing against a freshly generated schema means running ts-json-schema-generator over the
@@ -59,6 +60,18 @@ function modulesReachableFrom(entry: string): Set<string> {
   return seen;
 }
 
+function pairwiseRequiredExclusions(keys: readonly string[]): Array<{ not: { required: string[] } }> {
+  const constraints: Array<{ not: { required: string[] } }> = [];
+
+  for (let i = 0; i < keys.length; i++) {
+    for (let j = i + 1; j < keys.length; j++) {
+      constraints.push({ not: { required: [keys[i] as string, keys[j] as string] } });
+    }
+  }
+
+  return constraints;
+}
+
 describe('regenerated FCM override schema', () => {
   it(`matches the committed artifact. ${REGENERATE_HINT}`, (ctx) => {
     ctx.skip(!isDriftCheckEnabled, SKIP_HINT);
@@ -74,14 +87,43 @@ describe('regenerated FCM override schema', () => {
 });
 
 describe('committed FCM override schema', () => {
+  it('exposes all four routing fields in schema properties', () => {
+    for (const key of FCM_ROUTING_KEYS) {
+      expect(fcmOverrideJsonSchema.properties?.[key]).toBeDefined();
+      expect(fcmOverrideLiquidTolerantJsonSchema.properties?.[key]).toBeDefined();
+    }
+  });
+
+  it('encodes pairwise mutual exclusion among routing keys on both schemas', () => {
+    const expected = pairwiseRequiredExclusions(FCM_ROUTING_KEYS);
+
+    for (const schema of [fcmOverrideJsonSchema, fcmOverrideLiquidTolerantJsonSchema]) {
+      expect(schema.allOf).toEqual(expect.arrayContaining(expected));
+      expect(schema.allOf).toHaveLength(expected.length);
+    }
+  });
+
   it('keeps the hand-written key list in step with the schema', () => {
     expect([...FCM_OVERRIDE_KEYS]).toEqual(Object.keys(fcmOverrideJsonSchema.properties ?? {}));
   });
 
-  it('never exposes the routing fields Novu resolves itself', () => {
-    for (const key of NON_OVERRIDABLE_FCM_KEYS) {
-      expect(fcmOverrideJsonSchema.properties?.[key]).toBeUndefined();
-    }
+  it('documents fan-out duplication risk on topic and condition', () => {
+    expect(fcmOverrideJsonSchema.properties?.topic).toMatchObject({
+      type: 'string',
+      description: expect.stringMatching(/Warning:.*separate topic broadcast/i),
+    });
+    expect(fcmOverrideJsonSchema.properties?.condition).toMatchObject({
+      type: 'string',
+      description: expect.stringMatching(/Warning:.*separate condition broadcast/i),
+    });
+    expect(fcmOverrideJsonSchema.properties?.token).toMatchObject({
+      type: 'string',
+      description: expect.any(String),
+    });
+    expect(fcmOverrideJsonSchema.properties?.tokens).toMatchObject({
+      type: 'array',
+      description: expect.any(String),
+    });
   });
 
   it('keeps notification.body available and top-level required absent for partial patches', () => {
@@ -109,5 +151,11 @@ describe('committed FCM override schema', () => {
 
     expect(reachable.filter((file) => file.includes('/fcm/') && file.endsWith('.generated.ts'))).toEqual([]);
     expect(reachable).toContain(join(sharedRoot, 'src/consts/providers/provider-overrides/fcm/keys.ts'));
+  });
+
+  it('no longer exports NON_OVERRIDABLE_FCM_KEYS from the fcm keys module', async () => {
+    const keysModule = await import('../src/consts/providers/provider-overrides/fcm/keys');
+
+    expect(keysModule).not.toHaveProperty('NON_OVERRIDABLE_FCM_KEYS');
   });
 });

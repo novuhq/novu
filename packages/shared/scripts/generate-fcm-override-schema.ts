@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { createGenerator } from 'ts-json-schema-generator';
 import { toLiquidTolerantSchema } from '../src/consts/providers/provider-overrides/liquid-tolerant.ts';
 import type { JSONSchemaDto } from '../src/dto/workflows/json-schema-dto.ts';
-import { NON_OVERRIDABLE_FCM_KEYS } from './fcm-override.type.ts';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(scriptDir, '..');
@@ -15,6 +14,9 @@ const typeFile = join(scriptDir, 'fcm-override.type.ts');
 
 const ROOT_TYPE = 'FcmOverride';
 const GENERATE_COMMAND = 'pnpm --filter @novu/shared generate:fcm-schema';
+
+/** Routing keys exposed on `FcmOverride`; at most one may appear in a single content override. */
+const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
 
 function definitionKeyOf(ref: string): string {
   return decodeURIComponent(ref.replace('#/definitions/', ''));
@@ -50,12 +52,39 @@ function makeEveryTopLevelKeyOptional(schema: JSONSchemaDto): JSONSchemaDto {
   return rest;
 }
 
-function assertRoutingKeysAreAbsent(schema: JSONSchemaDto): void {
-  for (const key of NON_OVERRIDABLE_FCM_KEYS) {
-    if (schema.properties?.[key] !== undefined) {
-      throw new Error(`\`${key}\` must not be overridable — it is resolved from subscriber routing.`);
+function assertRoutingKeysArePresent(schema: JSONSchemaDto): void {
+  for (const key of FCM_ROUTING_KEYS) {
+    if (schema.properties?.[key] === undefined) {
+      throw new Error(
+        `\`${key}\` must be present on the FCM override schema — routing fields are content-overridable.`
+      );
     }
   }
+}
+
+function pairwiseMutualExclusion(keys: readonly string[]): JSONSchemaDto[] {
+  const constraints: JSONSchemaDto[] = [];
+
+  for (let i = 0; i < keys.length; i++) {
+    for (let j = i + 1; j < keys.length; j++) {
+      constraints.push({
+        not: { required: [keys[i] as string, keys[j] as string] },
+      });
+    }
+  }
+
+  return constraints;
+}
+
+/** At most one of token / tokens / topic / condition in a single content override. */
+function appendRoutingKeyMutualExclusion(schema: JSONSchemaDto): JSONSchemaDto {
+  const constraints = pairwiseMutualExclusion(FCM_ROUTING_KEYS);
+  const existing = Array.isArray(schema.allOf) ? schema.allOf : [];
+
+  return {
+    ...schema,
+    allOf: [...existing, ...constraints],
+  };
 }
 
 /**
@@ -175,16 +204,18 @@ export function buildFcmOverrideSchemas(): {
   };
 
   const generated = createGenerator(config).createSchema(ROOT_TYPE) as JSONSchemaDto;
-  const schema = [inlineRootNode, makeEveryTopLevelKeyOptional, pruneUnreferencedDefinitions].reduce<JSONSchemaDto>(
+  const prepared = [inlineRootNode, makeEveryTopLevelKeyOptional, pruneUnreferencedDefinitions].reduce<JSONSchemaDto>(
     (current, step) => step(current),
     generated
   );
 
-  assertRoutingKeysAreAbsent(schema);
+  assertRoutingKeysArePresent(prepared);
 
-  if (!schema.properties || Object.keys(schema.properties).length === 0) {
+  if (!prepared.properties || Object.keys(prepared.properties).length === 0) {
     throw new Error('Generated FCM override schema has no properties — generator input likely collapsed.');
   }
+
+  const schema = appendRoutingKeyMutualExclusion(prepared);
 
   return { schema, liquidTolerantSchema: toLiquidTolerantSchema(schema) };
 }
@@ -209,7 +240,7 @@ function main(): void {
     renderModule(
       'fcmOverrideJsonSchema',
       schema,
-      'Mirrors firebase-admin `BaseMessage` minus the routing fields Novu owns.'
+      'Mirrors firebase-admin `BaseMessage` plus optional routing fields (token/tokens/topic/condition).'
     )
   );
   writeFileSync(

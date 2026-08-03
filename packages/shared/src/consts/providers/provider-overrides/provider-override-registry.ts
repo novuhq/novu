@@ -63,6 +63,12 @@ export type ProviderOverrideConfig = {
    * Used when content lives in an array element (LINE `messages[].text`) rather than a scalar path.
    */
   seedWhenAbsent?: ProviderOverrideSeedWhenAbsent;
+  /**
+   * Groups of top-level keys that are mutually exclusive within a single content override.
+   * Enforced in the full JSON Schema via pairwise `allOf` / `not.required` constraints; exposed
+   * here so UI and key-level validation can surface the same rule without loading the schema.
+   */
+  exclusiveKeyGroups?: readonly (readonly string[])[];
 };
 
 /**
@@ -188,6 +194,7 @@ const PUSH_PROVIDER_OVERRIDE_CONFIGS = {
     schemaSubpath: FCM_OVERRIDE_SCHEMA_SUBPATH,
     keys: PROVIDER_OVERRIDE_KEYS[PushProviderIdEnum.FCM],
     primaryContentKey: FCM_PRIMARY_CONTENT_KEY,
+    exclusiveKeyGroups: [['token', 'tokens', 'topic', 'condition']],
   },
   [PushProviderIdEnum.APNS]: escapeHatch(null),
   [PushProviderIdEnum.EXPO]: schemaBacked(

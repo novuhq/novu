@@ -1,12 +1,23 @@
 import type { BaseMessage } from 'firebase-admin/messaging';
-import { NON_OVERRIDABLE_FCM_KEYS } from '../src/consts/providers/provider-overrides/fcm/keys.ts';
-
-export { NON_OVERRIDABLE_FCM_KEYS };
 
 /**
- * Strategy 1: generate from firebase-admin `BaseMessage` (pure content + platform configs).
- * Routing fields (`token` / `tokens` / `topic` / `condition`) live on extending message types
- * (`TokenMessage`, `TopicMessage`, …), not on `BaseMessage`. `NON_OVERRIDABLE_FCM_KEYS` documents
- * that product rule and feeds `assertRoutingKeysAreAbsent`.
+ * Strategy 1: generate from firebase-admin `BaseMessage` plus the four routing fields Novu
+ * exposes in content overrides. At most one routing key may be set per override — the generator
+ * appends pairwise JSON Schema mutual-exclusion (`allOf` / `not.required`) after generation.
  */
-export type FcmOverride = BaseMessage;
+export type FcmOverride = BaseMessage & {
+  /** Registration token that identifies a single device. */
+  token?: string;
+  /** Registration tokens for a multicast send (Novu multicast extension). */
+  tokens?: string[];
+  /**
+   * Firebase topic name. Warning: when set in a step content override, every subscriber matching
+   * the workflow receives a separate topic broadcast.
+   */
+  topic?: string;
+  /**
+   * Firebase condition expression. Warning: when set in a step content override, every subscriber
+   * matching the workflow receives a separate condition broadcast.
+   */
+  condition?: string;
+};

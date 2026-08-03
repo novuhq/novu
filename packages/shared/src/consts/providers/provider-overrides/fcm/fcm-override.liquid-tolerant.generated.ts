@@ -6,7 +6,35 @@ import type { JSONSchemaDto } from '../../../../dto/workflows/json-schema-dto';
 
 export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
   "type": "object",
+  "additionalProperties": false,
   "properties": {
+    "token": {
+      "type": "string",
+      "description": "Registration token that identifies a single device."
+    },
+    "tokens": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Registration tokens for a multicast send (Novu multicast extension)."
+        },
+        {
+          "type": "string",
+          "pattern": "\\{\\{|\\{%"
+        }
+      ]
+    },
+    "topic": {
+      "type": "string",
+      "description": "Firebase topic name. Warning: when set in a step content override, every subscriber matching the workflow receives a separate topic broadcast."
+    },
+    "condition": {
+      "type": "string",
+      "description": "Firebase condition expression. Warning: when set in a step content override, every subscriber matching the workflow receives a separate condition broadcast."
+    },
     "data": {
       "anyOf": [
         {
@@ -37,7 +65,7 @@ export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
       "$ref": "#/definitions/FcmOptions"
     }
   },
-  "additionalProperties": false,
+  "description": "Strategy 1: generate from firebase-admin `BaseMessage` plus the four routing fields Novu exposes in content overrides. At most one routing key may be set per override — the generator appends pairwise JSON Schema mutual-exclusion (`allOf` / `not.required`) after generation.",
   "definitions": {
     "AndroidConfig": {
       "anyOf": [
@@ -1062,5 +1090,55 @@ export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
         }
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "not": {
+        "required": [
+          "token",
+          "tokens"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "token",
+          "topic"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "token",
+          "condition"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "tokens",
+          "topic"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "tokens",
+          "condition"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "topic",
+          "condition"
+        ]
+      }
+    }
+  ]
 };

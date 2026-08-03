@@ -9,9 +9,4 @@
 
 export { fcmOverrideJsonSchema } from './fcm-override.generated';
 export { fcmOverrideLiquidTolerantJsonSchema } from './fcm-override.liquid-tolerant.generated';
-export {
-  FCM_OVERRIDE_KEYS,
-  FCM_OVERRIDE_SCHEMA_SUBPATH,
-  FCM_PRIMARY_CONTENT_KEY,
-  NON_OVERRIDABLE_FCM_KEYS,
-} from './keys';
+export { FCM_OVERRIDE_KEYS, FCM_OVERRIDE_SCHEMA_SUBPATH, FCM_PRIMARY_CONTENT_KEY } from './keys';
