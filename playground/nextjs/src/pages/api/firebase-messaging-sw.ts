@@ -69,6 +69,30 @@ async function log(message) {
   await broadcast({ type: FCM_SW_LOG_TYPE, message: message, at: new Date().toISOString() });
 }
 
+function extractTopic(payload) {
+  const from = payload && typeof payload.from === 'string' ? payload.from.trim() : '';
+
+  if (from.indexOf('/topics/') === 0) {
+    const topic = from.slice('/topics/'.length).trim();
+
+    if (topic) {
+      return topic;
+    }
+  }
+
+  const data = (payload && payload.data) || {};
+  const rawTopic =
+    (typeof data.topic === 'string' && data.topic.trim()) ||
+    (typeof data.__nvTopic === 'string' && data.__nvTopic.trim()) ||
+    '';
+
+  if (!rawTopic) {
+    return undefined;
+  }
+
+  return rawTopic.indexOf('/topics/') === 0 ? rawTopic.slice('/topics/'.length) : rawTopic;
+}
+
 async function handlePush(event) {
   let payload = {};
 
@@ -78,6 +102,7 @@ async function handlePush(event) {
     await log('Failed to parse push payload: ' + String(error));
   }
 
+  const topic = extractTopic(payload);
   const clients = await broadcast({
     type: FCM_SW_MESSAGE_TYPE,
     payload: payload,
@@ -90,11 +115,17 @@ async function handlePush(event) {
   await self.registration.showNotification(content.title, {
     body: content.body,
     icon: content.icon,
-    tag: data.__nvMessageId || 'novu-fcm',
+    tag: data.__nvMessageId || (topic ? 'novu-fcm-topic-' + topic : 'novu-fcm'),
     data: data,
   });
 
-  await log('Push displayed. openTabs=' + clients.length + ' title=' + JSON.stringify(content.title));
+  await log(
+    'Push displayed. openTabs=' +
+      clients.length +
+      ' title=' +
+      JSON.stringify(content.title) +
+      (topic ? ' topic=' + JSON.stringify(topic) : '')
+  );
 }
 
 // Registered before firebase.messaging() so this listener runs first. Firebase's

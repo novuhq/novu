@@ -11,9 +11,14 @@ export type FcmPushMessage = {
   receivedAt: string;
   title?: string;
   body?: string;
+  /** FCM topic name when the push was delivered via topic messaging. */
+  topic?: string;
   data?: Record<string, string>;
   raw: unknown;
 };
+
+/** Playground topic inbox — subscribe the web token to this FCM topic to receive broadcasts. */
+export const FCM_TOPIC_NEWS_UPDATES = 'news_updates';
 
 export type FcmSwLogEntry = {
   at: string;
@@ -40,7 +45,7 @@ export const FCM_SW_SKIP_WAITING_TYPE = 'NOVU_FCM_SKIP_WAITING';
 export const FCM_SW_PING_TYPE = 'NOVU_FCM_PING';
 
 /** Bump when the generated service worker script changes. */
-export const FCM_SW_VERSION = '2026-08-03.3';
+export const FCM_SW_VERSION = '2026-08-03.4';
 
 const FIREBASE_COMPAT_VERSION = '11.10.0';
 const SW_URL = '/firebase-messaging-sw.js';
@@ -54,9 +59,34 @@ type FirebaseCompat = {
 };
 
 export type PushPayload = {
+  from?: string;
   notification?: { title?: string; body?: string; icon?: string };
   data?: Record<string, string>;
 };
+
+/**
+ * Topic messages may set `from` to `/topics/<name>`. Web payloads often omit that,
+ * so also accept common data keys (`topic`, `__nvTopic`) for playground routing.
+ */
+export function extractFcmTopic(payload: PushPayload): string | undefined {
+  const from = payload.from?.trim();
+
+  if (from?.startsWith('/topics/')) {
+    const topic = from.slice('/topics/'.length).trim();
+
+    if (topic) {
+      return topic;
+    }
+  }
+
+  const dataTopic = payload.data?.topic?.trim() || payload.data?.__nvTopic?.trim();
+
+  if (dataTopic) {
+    return dataTopic.startsWith('/topics/') ? dataTopic.slice('/topics/'.length) : dataTopic;
+  }
+
+  return undefined;
+}
 
 declare global {
   interface Window {
@@ -115,6 +145,7 @@ export function toFcmPushMessage(payload: PushPayload, receivedAt = new Date().t
     receivedAt,
     title,
     body,
+    topic: extractFcmTopic(payload),
     data: payload.data,
     raw: payload,
   };

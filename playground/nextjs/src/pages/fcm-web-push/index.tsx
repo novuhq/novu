@@ -4,6 +4,7 @@ import Title from '@/components/Title';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import {
   FCM_SW_VERSION,
+  FCM_TOPIC_NEWS_UPDATES,
   type FcmPushMessage,
   type FcmSwDiagnostics,
   type FcmSwLogEntry,
@@ -77,20 +78,59 @@ function ReceivedPayloadHover({ raw }: { raw: unknown }) {
   );
 }
 
+function MessageInboxList({
+  messages,
+  emptyLabel,
+  showTopic = false,
+}: {
+  messages: FcmPushMessage[];
+  emptyLabel: string;
+  showTopic?: boolean;
+}) {
+  if (messages.length === 0) {
+    return <p className="mt-3 text-sm text-muted-foreground">{emptyLabel}</p>;
+  }
+
+  return (
+    <ul className="mt-3 space-y-2">
+      {messages.map((message) => (
+        <li
+          key={`${message.receivedAt}-${message.title ?? ''}-${message.topic ?? ''}`}
+          className="rounded-md bg-muted p-3 text-sm"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              {showTopic && message.topic && (
+                <div className="mb-1 font-mono text-xs text-muted-foreground">topic: {message.topic}</div>
+              )}
+              <div className="font-medium">{message.title || '(no title)'}</div>
+              <div className="text-muted-foreground">{message.body || '(no body)'}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{message.receivedAt}</div>
+            </div>
+            <ReceivedPayloadHover raw={message.raw} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function FcmWebPushPage() {
   const formId = useId();
   const subscriberIdFieldId = `${formId}-subscriber-id`;
   const [tokenStatus, setTokenStatus] = useState<ActionStatus>({ type: 'idle' });
   const [registerStatus, setRegisterStatus] = useState<ActionStatus>({ type: 'idle' });
+  const [topicStatus, setTopicStatus] = useState<ActionStatus>({ type: 'idle' });
   const [token, setToken] = useState('');
   const [copied, setCopied] = useState(false);
   const [subscriberId, setSubscriberId] = useState(novuConfig.subscriberId);
   const [messages, setMessages] = useState<FcmPushMessage[]>([]);
+  const [topicMessages, setTopicMessages] = useState<FcmPushMessage[]>([]);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default');
   const [diagnostics, setDiagnostics] = useState<FcmSwDiagnostics | null>(null);
   const [swLogs, setSwLogs] = useState<FcmSwLogEntry[]>([]);
   const [testStatus, setTestStatus] = useState<ActionStatus>({ type: 'idle' });
-  const isBusy = tokenStatus.type === 'loading' || registerStatus.type === 'loading';
+  const isBusy = tokenStatus.type === 'loading' || registerStatus.type === 'loading' || topicStatus.type === 'loading';
 
   const missingEnv = useMemo(() => {
     const missing = getMissingFirebaseConfigKeys(getFirebaseWebConfig());
@@ -126,6 +166,12 @@ export default function FcmWebPushPage() {
     const unsubscribe = listenForPushMessages({
       onMessage: (message) => {
         if (cancelled) {
+          return;
+        }
+
+        if (message.topic === FCM_TOPIC_NEWS_UPDATES) {
+          setTopicMessages((prev) => [message, ...prev].slice(0, 20));
+
           return;
         }
 
@@ -194,6 +240,47 @@ export default function FcmWebPushPage() {
     }
   }
 
+  async function subscribeTokenToNewsUpdates(deviceToken: string): Promise<void> {
+    setTopicStatus({ type: 'loading', label: `Subscribing token to topic “${FCM_TOPIC_NEWS_UPDATES}”…` });
+
+    try {
+      const response = await fetch('/api/fcm-subscribe-topic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceToken,
+          topic: FCM_TOPIC_NEWS_UPDATES,
+        }),
+      });
+      const data = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        const message = data.error || `Topic subscribe failed (${response.status})`;
+
+        if (message.includes('FIREBASE_CLIENT_EMAIL')) {
+          setTopicStatus({
+            type: 'error',
+            message: `${message} Use “Subscribe token to topic” after adding the service account env vars.`,
+          });
+
+          return;
+        }
+
+        throw new Error(message);
+      }
+
+      setTopicStatus({
+        type: 'success',
+        message: `Subscribed to FCM topic “${FCM_TOPIC_NEWS_UPDATES}”. Topic broadcasts will appear in the topic inbox below.`,
+      });
+    } catch (error) {
+      setTopicStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to subscribe to FCM topic',
+      });
+    }
+  }
+
   async function handleGetToken() {
     setTokenStatus({ type: 'loading', label: 'Requesting permission and FCM token…' });
     setRegisterStatus({ type: 'idle' });
@@ -205,12 +292,23 @@ export default function FcmWebPushPage() {
       setPermission(Notification.permission);
       await refreshDiagnostics();
       setTokenStatus({ type: 'success', message: 'FCM web token ready.' });
+      await subscribeTokenToNewsUpdates(result.token);
     } catch (error) {
       setTokenStatus({
         type: 'error',
         message: error instanceof Error ? error.message : 'Failed to obtain FCM token',
       });
     }
+  }
+
+  async function handleSubscribeTopic() {
+    if (!token) {
+      setTopicStatus({ type: 'error', message: 'Get an FCM token first.' });
+
+      return;
+    }
+
+    await subscribeTokenToNewsUpdates(token);
   }
 
   async function handleCopy() {
@@ -523,31 +621,45 @@ export default function FcmWebPushPage() {
         </section>
 
         <section className={cardClass}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Topic inbox</h3>
+            <code className="rounded bg-muted px-2 py-1 font-mono text-xs">{FCM_TOPIC_NEWS_UPDATES}</code>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Same message list as device pushes below, but only for FCM topic{' '}
+            <code className="text-xs">{FCM_TOPIC_NEWS_UPDATES}</code>. Getting a token also subscribes it to this topic
+            (needs <code className="text-xs">FIREBASE_CLIENT_EMAIL</code> /{' '}
+            <code className="text-xs">FIREBASE_PRIVATE_KEY</code>). Trigger a Novu push with an FCM{' '}
+            <code className="text-xs">topic</code> override to test.
+          </p>
+          <div className="mt-3">
+            <button
+              type="button"
+              className={secondaryButtonClass}
+              onClick={handleSubscribeTopic}
+              disabled={isBusy || !token}
+            >
+              Subscribe token to topic
+            </button>
+          </div>
+          <ActionFeedback status={topicStatus} />
+          <MessageInboxList
+            messages={topicMessages}
+            emptyLabel={`No “${FCM_TOPIC_NEWS_UPDATES}” topic messages yet.`}
+            showTopic
+          />
+        </section>
+
+        <section className={cardClass}>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Received messages</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            The service worker displays an OS notification for every push and forwards the payload here, so this works
-            whether or not the playground is the focused tab. Hover the{' '}
+            Device-token pushes (not topic <code className="text-xs">{FCM_TOPIC_NEWS_UPDATES}</code>). The service
+            worker displays an OS notification for every push and forwards the payload here, so this works whether or
+            not the playground is the focused tab. Hover the{' '}
             <Braces className="inline h-3.5 w-3.5 align-text-bottom" aria-hidden /> icon on a message to inspect the
             full payload received on the device.
           </p>
-          {messages.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">No messages received yet.</p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {messages.map((message) => (
-                <li key={`${message.receivedAt}-${message.title ?? ''}`} className="rounded-md bg-muted p-3 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium">{message.title || '(no title)'}</div>
-                      <div className="text-muted-foreground">{message.body || '(no body)'}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{message.receivedAt}</div>
-                    </div>
-                    <ReceivedPayloadHover raw={message.raw} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <MessageInboxList messages={messages} emptyLabel="No messages received yet." />
         </section>
       </div>
     </>
