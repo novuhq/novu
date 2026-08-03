@@ -520,4 +520,165 @@ describe('FcmPushProvider', () => {
       data: {},
     });
   });
+
+  test('should send via messaging.send when bridgeProviderData has topic', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/topic-1');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        topic: 'news',
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/topic-1']);
+  });
+
+  test('should send via messaging.send when bridgeProviderData has condition', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/condition-1');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        condition: "'stocks' in topics && 'tech' in topics",
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      condition: "'stocks' in topics && 'tech' in topics",
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/condition-1']);
+  });
+
+  test('should send via messaging.send when bridgeProviderData has token', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/token-1');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        token: 'device-token-abc',
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      token: 'device-token-abc',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/token-1']);
+  });
+
+  test('should prefer token send path over topic when both are present in bridgeProviderData', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/token-wins');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        token: 'device-token-abc',
+        topic: 'news',
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      token: 'device-token-abc',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('should use multicast when bridgeProviderData has tokens and strip competing routing keys', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('should-not-be-used');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        tokens: ['bridge-token-1', 'bridge-token-2'],
+        topic: 'news',
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      // deepMerge concatenates array values from trigger + bridge
+      tokens: ['tester', 'bridge-token-1', 'bridge-token-2'],
+      data: {},
+    });
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
 });
