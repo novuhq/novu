@@ -47,19 +47,13 @@ export function buildTelegramBotApiUrl(botToken: string, method: string): string
 }
 
 export function buildIntegrationTelegramWebhookUrl(environmentId: string, integrationIdentifier: string): string {
-  const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(
-    /\/$/,
-    ''
-  );
+  const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
 
-  return `${base}/v1/integrations/webhook/${environmentId}/${integrationIdentifier}`;
+  return `${base}/v1/integrations/${integrationIdentifier}/${environmentId}/webhook`;
 }
 
 export function buildAgentTelegramWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(
-    /\/$/,
-    ''
-  );
+  const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
 
   return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }

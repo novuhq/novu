@@ -2,7 +2,6 @@ import { NotFoundException } from '@nestjs/common';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { TELEGRAM_INTEGRATION_LINK_SCOPE } from '../telegram-linking.constants';
 import { LinkTelegramChatToSubscriberCommand } from './link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from './link-telegram-chat-to-subscriber.usecase';
 
@@ -73,7 +72,7 @@ describe('LinkTelegramChatToSubscriber', () => {
   const baseCommand = {
     environmentId: 'env-1',
     organizationId: 'org-1',
-    agentIdentifier: 'support-agent',
+    linkScope: { mode: 'agent' as const, agentIdentifier: 'support-agent' },
     integrationId: 'integration-1',
     subscriberId: 'subscriber-1',
     chatId: '99999',
@@ -86,7 +85,7 @@ describe('LinkTelegramChatToSubscriber', () => {
 
     expect(result.created).to.equal(true);
     expect(result.subscriberId).to.equal('subscriber-1');
-    expect(result.agentIdentifier).to.equal('support-agent');
+    expect(result.linkScope).to.deep.equal({ mode: 'agent', agentIdentifier: 'support-agent' });
     expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
 
     const cmd = createChannelEndpoint.execute.firstCall.args[0];
@@ -94,6 +93,20 @@ describe('LinkTelegramChatToSubscriber', () => {
     expect(cmd.endpoint).to.deep.equal({ chatId: '99999' });
     expect(cmd.subscriberId).to.equal('subscriber-1');
     expect(cmd.integrationIdentifier).to.equal('telegram-main');
+  });
+
+  it('passes pre-resolved contextKeys through to CreateChannelEndpoint', async () => {
+    const { usecase, createChannelEndpoint } = makeUsecase();
+
+    await usecase.execute(
+      LinkTelegramChatToSubscriberCommand.create({
+        ...baseCommand,
+        contextKeys: ['key:value2'],
+      })
+    );
+
+    const cmd = createChannelEndpoint.execute.firstCall.args[0];
+    expect(cmd.contextKeys).to.deep.equal(['key:value2']);
   });
 
   it('creates an endpoint without agent validation in integration-only mode', async () => {
@@ -107,12 +120,12 @@ describe('LinkTelegramChatToSubscriber', () => {
     const result = await usecase.execute(
       LinkTelegramChatToSubscriberCommand.create({
         ...baseCommand,
-        agentIdentifier: TELEGRAM_INTEGRATION_LINK_SCOPE,
+        linkScope: { mode: 'integration' },
       })
     );
 
     expect(result.created).to.equal(true);
-    expect(result.agentIdentifier).to.equal(TELEGRAM_INTEGRATION_LINK_SCOPE);
+    expect(result.linkScope).to.deep.equal({ mode: 'integration' });
     expect(agentFindOne.called).to.equal(false);
     expect(agentIntegrationFindOne.called).to.equal(false);
     expect(createChannelEndpoint.execute.calledOnce).to.equal(true);

@@ -14,13 +14,13 @@ import {
 import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
-
-import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
-import { TELEGRAM_INTEGRATION_LINK_SCOPE } from '../telegram-linking.constants';
-import { buildTelegramBotApiUrl } from '../telegram-webhook.utils';
+import { ConnectContextVerifier } from '../../integrations/usecases/generate-chat-oath-url/connect-context-verifier.service';
 import { ConfigureTelegramWebhookCommand } from '../configure-telegram-webhook/configure-telegram-webhook.command';
 import { ConfigureTelegramWebhook } from '../configure-telegram-webhook/configure-telegram-webhook.usecase';
+import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
+import { agentTelegramLinkScope, integrationTelegramLinkScope } from '../telegram-link-scope';
 import { TelegramStartCodeService } from '../telegram-start-code.service';
+import { buildTelegramBotApiUrl } from '../telegram-webhook.utils';
 import { IssueTelegramSubscriberLinkCommand } from './issue-telegram-subscriber-link.command';
 
 export interface IssueTelegramSubscriberLinkResult {
@@ -49,7 +49,8 @@ export class IssueTelegramSubscriberLink {
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private readonly startCodeService: TelegramStartCodeService,
     private readonly agentLinkResolver: TelegramAgentLinkResolver,
-    private readonly configureTelegramWebhook: ConfigureTelegramWebhook
+    private readonly configureTelegramWebhook: ConfigureTelegramWebhook,
+    private readonly connectContextVerifier: ConnectContextVerifier
   ) {}
 
   async execute(command: IssueTelegramSubscriberLinkCommand): Promise<IssueTelegramSubscriberLinkResult> {
@@ -70,6 +71,13 @@ export class IssueTelegramSubscriberLink {
       throw new BadRequestException('Subscriber-link is only available for Telegram integrations.');
     }
 
+    await this.connectContextVerifier.verify({
+      integration,
+      context: command.context,
+      contextHash: command.contextHash,
+      isContextValidated: command.isContextValidated,
+    });
+
     const integrationId = String(integration._id);
 
     const decrypted = decryptCredentials(integration.credentials as Record<string, string>);
@@ -88,7 +96,7 @@ export class IssueTelegramSubscriberLink {
       botToken,
     });
 
-    const linkScope = agent?.agentIdentifier ?? TELEGRAM_INTEGRATION_LINK_SCOPE;
+    const linkScope = agent ? agentTelegramLinkScope(agent.agentIdentifier) : integrationTelegramLinkScope();
 
     if (!agent && !decrypted.token) {
       await this.configureTelegramWebhook.execute(
@@ -111,6 +119,10 @@ export class IssueTelegramSubscriberLink {
 
     const botUsername = await this.callGetMe(botToken);
 
+    // Session-validated keys are trusted; drop the raw payload so a mismatched
+    // body.context can never ride along in the start-code (same as Slack OAuth state).
+    const hasContextKeys = Boolean(command.contextKeys?.length);
+
     let code: string;
     let expiresAt: string;
 
@@ -118,10 +130,11 @@ export class IssueTelegramSubscriberLink {
       const issued = await this.startCodeService.issue({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        agentIdentifier: linkScope,
+        linkScope,
         integrationId,
         subscriberId: command.subscriberId,
-        context: command.context,
+        contextKeys: hasContextKeys ? command.contextKeys : undefined,
+        context: hasContextKeys ? undefined : command.context,
       });
       code = issued.code;
       expiresAt = issued.expiresAt;

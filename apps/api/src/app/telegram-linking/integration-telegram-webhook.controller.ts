@@ -9,16 +9,16 @@ import { ProcessIntegrationTelegramWebhook } from './process-integration-telegra
  * Public Telegram webhook for integrations that are not linked to an agent.
  * Only handles `/start <code>` subscriber-link control messages.
  */
-@Controller('/integrations/webhook')
+@Controller('/integrations')
 @ApiExcludeController()
 export class IntegrationTelegramWebhookController {
   constructor(private readonly processIntegrationTelegramWebhook: ProcessIntegrationTelegramWebhook) {}
 
-  @Post('/:environmentId/:integrationIdentifier')
+  @Post('/:integrationIdentifier/:environmentId/webhook')
   @HttpCode(HttpStatus.OK)
   async handleInboundWebhook(
-    @Param('environmentId') environmentId: string,
     @Param('integrationIdentifier') integrationIdentifier: string,
+    @Param('environmentId') environmentId: string,
     @Req() req: Request,
     @Body() body: Record<string, unknown>
   ): Promise<Record<string, never>> {

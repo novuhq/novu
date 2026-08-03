@@ -3,9 +3,9 @@ import { ChannelEndpointRepository, IntegrationRepository, SubscriberRepository 
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
-import { TELEGRAM_INTEGRATION_LINK_SCOPE } from '../../telegram-linking/telegram-linking.constants';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
+import { integrationTelegramLinkScope } from '../../telegram-linking/telegram-link-scope';
+import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
 
 const integrationRepository = new IntegrationRepository();
 const subscriberRepository = new SubscriberRepository();
@@ -94,7 +94,7 @@ describe('Telegram integration-only subscriber link #novu-v2', () => {
 
   async function postIntegrationTelegramWebhook(update: Record<string, unknown>) {
     const res = await session.testAgent
-      .post(`/v1/integrations/webhook/${session.environment._id}/${integrationIdentifier}`)
+      .post(`/v1/integrations/${integrationIdentifier}/${session.environment._id}/webhook`)
       .set('x-telegram-bot-api-secret-token', TELEGRAM_WEBHOOK_SECRET)
       .set('content-type', 'application/json')
       .send(update);
@@ -107,7 +107,7 @@ describe('Telegram integration-only subscriber link #novu-v2', () => {
     const { code } = await startCodeService.issue({
       environmentId: session.environment._id,
       organizationId: session.organization._id,
-      agentIdentifier: TELEGRAM_INTEGRATION_LINK_SCOPE,
+      linkScope: integrationTelegramLinkScope(),
       integrationId,
       subscriberId,
     });
@@ -128,9 +128,7 @@ describe('Telegram integration-only subscriber link #novu-v2', () => {
     expect(created.subscriberId).to.equal(subscriberId);
 
     const confirmation = await pollFor(async () =>
-      telegramApiStub.calls.find(
-        (call) => call.method === 'sendMessage' && String(call.payload.chat_id) === '888001'
-      )
+      telegramApiStub.calls.find((call) => call.method === 'sendMessage' && String(call.payload.chat_id) === '888001')
     );
 
     expect(String(confirmation.payload.text)).to.match(/connected/i);

@@ -6,20 +6,20 @@ import Axios from 'axios';
 
 import { LinkTelegramChatToSubscriberCommand } from '../link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { integrationTelegramLinkScope } from '../telegram-link-scope';
 import {
   SUBSCRIBER_LINK_DUPLICATE_REPLY,
   SUBSCRIBER_LINK_EXPIRED_REPLY,
   SUBSCRIBER_LINK_INVALID_REPLY,
   SUBSCRIBER_LINK_SUCCESS_REPLY,
   SUBSCRIBER_LINK_WRONG_BOT_REPLY,
-  TELEGRAM_INTEGRATION_LINK_SCOPE,
 } from '../telegram-linking.constants';
 import { TelegramStartCodeService } from '../telegram-start-code.service';
 import {
+  buildTelegramBotApiUrl,
   extractTelegramChatIdFromUpdate,
   extractTelegramMessageText,
   extractTelegramStartToken,
-  buildTelegramBotApiUrl,
 } from '../telegram-webhook.utils';
 import { ProcessIntegrationTelegramWebhookCommand } from './process-integration-telegram-webhook.command';
 
@@ -85,7 +85,7 @@ export class ProcessIntegrationTelegramWebhook {
       environmentId: command.environmentId,
       organizationId,
       integrationId,
-      agentIdentifier: TELEGRAM_INTEGRATION_LINK_SCOPE,
+      linkScope: integrationTelegramLinkScope(),
     });
 
     if (result.status === 'mismatch') {
@@ -102,11 +102,12 @@ export class ProcessIntegrationTelegramWebhook {
           LinkTelegramChatToSubscriberCommand.create({
             environmentId: payload._environmentId,
             organizationId: payload._organizationId,
-            agentIdentifier: payload.agentIdentifier,
+            linkScope: payload.linkScope,
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
             context: payload.context,
+            contextKeys: payload.contextKeys,
           })
         );
 

@@ -133,7 +133,7 @@ describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
     const { code } = await startCodeService.issue({
       environmentId: session.environment._id,
       organizationId: session.organization._id,
-      agentIdentifier,
+      linkScope: { mode: 'agent', agentIdentifier },
       integrationId,
       subscriberId,
     });
@@ -231,7 +231,7 @@ describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
       const { code } = await startCodeService.issue({
         environmentId: session.environment._id,
         organizationId: session.organization._id,
-        agentIdentifier,
+        linkScope: { mode: 'agent', agentIdentifier },
         integrationId,
         subscriberId,
       });

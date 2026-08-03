@@ -14,6 +14,7 @@ import {
 } from '@novu/dal';
 
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
+import { ConnectContextVerifier } from '../integrations/usecases/generate-chat-oath-url/connect-context-verifier.service';
 import { SharedModule } from '../shared/shared.module';
 import { ConfigureTelegramWebhook } from './configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { ConsumeTelegramMobileLink } from './consume-telegram-mobile-link/consume-telegram-mobile-link.usecase';
@@ -36,7 +37,12 @@ const USE_CASES = [
   ProcessIntegrationTelegramWebhook,
 ];
 
-const SERVICES = [TelegramAgentLinkResolver, TelegramMobileLinkTokenService, TelegramStartCodeService];
+const SERVICES = [
+  TelegramAgentLinkResolver,
+  TelegramMobileLinkTokenService,
+  TelegramStartCodeService,
+  ConnectContextVerifier,
+];
 
 const REPOSITORIES = [
   AgentRepository,
