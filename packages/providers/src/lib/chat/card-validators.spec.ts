@@ -13,7 +13,7 @@ describe('getChatCardValidator', () => {
     const validate = getChatCardValidator(ChatProviderIdEnum.Slack);
 
     expect(validate).toBeDefined();
-    const findings = validate!(cardWithBlocks(51));
+    const findings = validate?.(cardWithBlocks(51)) ?? [];
     expect(findings.map((finding) => finding.code)).toContain('BLOCK_LIMIT_EXCEEDED');
   });
 
@@ -21,7 +21,7 @@ describe('getChatCardValidator', () => {
     const validate = getChatCardValidator(ChatProviderIdEnum.MsTeams);
 
     expect(validate).toBeDefined();
-    expect(validate!(cardWithBlocks(1))).toEqual([]);
+    expect(validate?.(cardWithBlocks(1))).toEqual([]);
   });
 
   test('returns undefined for providers without platform-limit validators', () => {
