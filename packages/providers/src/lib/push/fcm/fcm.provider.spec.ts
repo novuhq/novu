@@ -638,15 +638,18 @@ describe('FcmPushProvider', () => {
       }
     );
 
-    expect(sendSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        token: 'device-token-abc',
-      })
-    );
+    expect(sendSpy).toHaveBeenCalledWith({
+      token: 'device-token-abc',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
     expect(spy).not.toHaveBeenCalled();
   });
 
-  test('should use multicast when bridgeProviderData has tokens', async () => {
+  test('should use multicast when bridgeProviderData has tokens and strip competing routing keys', async () => {
     const sendSpy = vi
       // @ts-expect-error
       .spyOn(provider.messaging, 'send')
@@ -674,7 +677,6 @@ describe('FcmPushProvider', () => {
       },
       // deepMerge concatenates array values from trigger + bridge
       tokens: ['tester', 'bridge-token-1', 'bridge-token-2'],
-      topic: 'news',
       data: {},
     });
     expect(sendSpy).not.toHaveBeenCalled();

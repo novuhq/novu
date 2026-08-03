@@ -13,7 +13,14 @@ import {
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-type FcmRoutingBody = Partial<TokenMessage & MulticastMessage & TopicMessage & ConditionMessage>;
+type FcmRouting = {
+  token?: string;
+  tokens?: string[];
+  topic?: string;
+  condition?: string;
+};
+
+type FcmSingleTarget = Pick<TokenMessage, 'token'> | Pick<TopicMessage, 'topic'> | Pick<ConditionMessage, 'condition'>;
 
 export class FcmPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.FCM;
@@ -67,49 +74,33 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     const payload = this.cleanPayload(options.payload);
     const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
-    const transformedBase = this.transform<FcmRoutingBody>(bridgeProviderData, {});
-    const routing = (transformedBase?.body ?? {}) as FcmRoutingBody;
+    const routing = (this.transform<FcmRouting>(bridgeProviderData, {}).body ?? {}) as FcmRouting;
+    const singleTarget = this.resolveSingleSendTarget(routing);
 
-    const commonProps: Partial<MulticastMessage & TopicMessage & TokenMessage & ConditionMessage> = {
+    const commonProps = {
       android,
       apns,
       fcmOptions,
       webpush,
     };
 
-    const notificationPayload = {
-      notification: {
-        title: options.title,
-        body: options.content,
-      },
-      data: { ...novuData, ...data },
-      ...commonProps,
-    };
-
     let res;
 
-    // Defensive precedence: token > tokens > topic > condition
-    if (routing.token) {
-      const tokenMessage = this.transform<TokenMessage>(bridgeProviderData, {
-        token: routing.token,
-        ...notificationPayload,
-      }).body;
+    if (singleTarget) {
+      const message = this.transform<TokenMessage | TopicMessage | ConditionMessage>(
+        this.omitRoutingKeys(bridgeProviderData),
+        {
+          ...singleTarget,
+          notification: {
+            title: options.title,
+            body: options.content,
+          },
+          data: { ...novuData, ...data },
+          ...commonProps,
+        }
+      ).body;
 
-      res = await this.messaging.send(tokenMessage);
-    } else if (!routing.tokens && routing.topic) {
-      const topicMessage = this.transform<TopicMessage>(bridgeProviderData, {
-        topic: routing.topic,
-        ...notificationPayload,
-      }).body;
-
-      res = await this.messaging.send(topicMessage);
-    } else if (!routing.tokens && routing.condition) {
-      const conditionMessage = this.transform<ConditionMessage>(bridgeProviderData, {
-        condition: routing.condition,
-        ...notificationPayload,
-      }).body;
-
-      res = await this.messaging.send(conditionMessage);
+      res = await this.messaging.send(message);
     } else {
       const multicastConfig: Partial<MulticastMessage> = {
         tokens: options.target,
@@ -134,7 +125,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       }
 
       const multicastMessage = this.transform<MulticastMessage>(
-        bridgeProviderData,
+        this.omitRoutingKeys(bridgeProviderData, { keepTokens: true }),
         multicastConfig as Record<string, unknown>
       ).body;
 
@@ -144,7 +135,6 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     const app = getApp(this.appName);
     await deleteApp(app);
 
-    // MulticastBatchResponse only; string message ids from send() leave successCount undefined
     if (typeof res !== 'string' && res.successCount === 0) {
       throw new Error(
         `Sending message failed due to "${res.responses.find((i) => i.success === false).error.message}"`
@@ -166,6 +156,40 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
   isTokenInvalid(errorMessage: string): boolean {
     return this.INVALID_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
+  }
+
+  /** Precedence: token > tokens (multicast) > topic > condition > default multicast */
+  private resolveSingleSendTarget(routing: FcmRouting): FcmSingleTarget | null {
+    if (routing.token) {
+      return { token: routing.token };
+    }
+
+    if (routing.tokens) {
+      return null;
+    }
+
+    if (routing.topic) {
+      return { topic: routing.topic };
+    }
+
+    if (routing.condition) {
+      return { condition: routing.condition };
+    }
+
+    return null;
+  }
+
+  private omitRoutingKeys(
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>,
+    options: { keepTokens?: boolean } = {}
+  ): WithPassthrough<Record<string, unknown>> {
+    const { token: _token, tokens, topic: _topic, condition: _condition, ...rest } = bridgeProviderData;
+
+    if (options.keepTokens && tokens !== undefined) {
+      return { ...rest, tokens };
+    }
+
+    return rest;
   }
 
   private cleanPayload(payload: object): Record<string, string> {
