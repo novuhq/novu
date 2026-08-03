@@ -25,8 +25,11 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  getProviderOverrideConfig,
   ITenantDefine,
+  NON_OVERRIDABLE_FCM_KEYS,
   ProvidersIdEnum,
+  PushProviderIdEnum,
   providers,
   SmsProviderIdEnum,
   TriggerOverrides,
@@ -55,9 +58,72 @@ function replaceArrays(_targetValue: unknown, sourceValue: unknown): unknown[] |
   return undefined;
 }
 
+function layerHasGroupKey(layer: Record<string, unknown>, group: readonly string[]): boolean {
+  return group.some((key) => Object.prototype.hasOwnProperty.call(layer, key) && layer[key] !== undefined);
+}
+
+/**
+ * For each exclusive key group, once a higher-precedence layer sets any key in the group, strip
+ * every group key from lower layers so a deep-merge cannot leave a mixed destination (e.g. FCM
+ * `topic` from bridge + `tokens` from trigger).
+ *
+ * `layers` is ordered low → high precedence. Returns shallow-cloned layers; originals are untouched.
+ */
+function applyExclusiveKeyGroups(
+  layers: readonly Record<string, unknown>[],
+  exclusiveKeyGroups: readonly (readonly string[])[]
+): Record<string, unknown>[] {
+  if (exclusiveKeyGroups.length === 0) {
+    return [...layers];
+  }
+
+  const result = layers.map((layer) => ({ ...layer }));
+
+  for (const group of exclusiveKeyGroups) {
+    let claimedByHigher = false;
+
+    for (let i = result.length - 1; i >= 0; i -= 1) {
+      const layer = result[i];
+
+      if (claimedByHigher) {
+        for (const key of group) {
+          delete layer[key];
+        }
+      } else if (layerHasGroupKey(layer, group)) {
+        claimedByHigher = true;
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Prefer `exclusiveKeyGroups` from the shared registry when present (schema slice); fall back to
+ * FCM's canonical routing-key list so this worker slice stays correct before that field lands.
+ */
+function resolveExclusiveKeyGroups(integrationId: string): readonly (readonly string[])[] {
+  const fromRegistry = (
+    getProviderOverrideConfig(integrationId) as { exclusiveKeyGroups?: readonly (readonly string[])[] } | undefined
+  )?.exclusiveKeyGroups;
+
+  if (fromRegistry?.length) {
+    return fromRegistry;
+  }
+
+  if (integrationId === PushProviderIdEnum.FCM) {
+    return [NON_OVERRIDABLE_FCM_KEYS];
+  }
+
+  return [];
+}
+
 /**
  * Resolves one provider's overrides from lowest to highest precedence: what the bridge or the
  * dashboard persisted, then the workflow-global trigger override, then the step-scoped one.
+ *
+ * When the provider declares exclusive key groups (e.g. FCM routing destinations), a higher layer
+ * that sets any key in a group evicts all group keys contributed by lower layers before merge.
  */
 export function combineProviderOverrides(
   bridgeData: Record<string, any> | null | undefined,
@@ -69,7 +135,12 @@ export function combineProviderOverrides(
   const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
   const stepScopedOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
-  return mergeWith({}, bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides, replaceArrays);
+  const [bridgeLayer, workflowLayer, stepLayer] = applyExclusiveKeyGroups(
+    [bridgeProviderData, workflowGlobalProviderOverrides, stepScopedOverrides],
+    resolveExclusiveKeyGroups(integrationId)
+  );
+
+  return mergeWith({}, bridgeLayer, workflowLayer, stepLayer, replaceArrays);
 }
 
 export abstract class SendMessageBase extends SendMessageType {
