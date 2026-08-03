@@ -88,7 +88,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
       }),
       findByAgentIntegrationParticipant: stub().resolves(null),
       getPrimaryChannel: stub().returns({ platform: AgentPlatformEnum.EMAIL, platformThreadId: 'thread-1' }),
-      persistAgentMessage: stub().resolves(undefined),
+      persistAgentMessage: stub().resolves({ activity: { _id: 'activity-1' }, created: true }),
     };
     analyticsService = {
       track: stub(),

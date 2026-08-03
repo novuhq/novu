@@ -21,6 +21,13 @@
  */
 
 import { Novu } from '@novu/api';
+import type { ContextPayload } from '@novu/shared';
+import {
+  findConnectionForProvider,
+  findMatchingUserEndpoint,
+  hasConnectContext,
+  mismatchedContextEndpointMessage,
+} from '@/lib/dm-endpoint-context';
 
 const SLACK_LOOKUP_BY_EMAIL_URL = 'https://slack.com/api/users.lookupByEmail';
 const SLACK_USER_TYPE = 'slack_user' as const;
@@ -81,12 +88,14 @@ export async function lookupSlackUserIdByEmail(botAccessToken: string, email: st
  * @param integrationIdentifier The Novu Slack integration identifier
  * @param emailOverride         Use this email instead of the subscriber profile email
  * @param slackUserIdOverride   Skip the Slack API lookup and use this Slack user ID directly
+ * @param context               Must match NovuProvider context and trigger context when using multi-context routing
  */
 export async function ensureSlackUserDmEndpoint(args: {
   subscriberId: string;
   integrationIdentifier: string;
   emailOverride?: string;
   slackUserIdOverride?: string;
+  context?: ContextPayload;
 }): Promise<EnsureSlackUserDmEndpointResult> {
   const novu = getNovuClient();
   const { subscriberId, integrationIdentifier } = args;
@@ -131,14 +140,20 @@ export async function ensureSlackUserDmEndpoint(args: {
     limit: 100,
   });
 
-  const alreadyLinked = endpoints.result.data.some((ep) => {
+  const matchingEndpoint = findMatchingUserEndpoint(endpoints.result.data, SLACK_USER_TYPE, slackUserId, args.context);
+
+  if (matchingEndpoint) {
+    return { ok: true, slackUserId };
+  }
+
+  const conflictingEndpoint = endpoints.result.data.find((ep) => {
     const endpointData = ep.endpoint as Record<string, string>;
 
     return ep.type === SLACK_USER_TYPE && endpointData.userId === slackUserId;
   });
 
-  if (alreadyLinked) {
-    return { ok: true, slackUserId };
+  if (conflictingEndpoint) {
+    return { ok: false, error: mismatchedContextEndpointMessage(hasConnectContext(args.context)) };
   }
 
   const connections = await novu.channelConnections.list({
@@ -147,9 +162,7 @@ export async function ensureSlackUserDmEndpoint(args: {
     limit: 100,
   });
 
-  const connectionIdentifier = connections.result.data.find(
-    (c) => c.identifier && c.providerId === 'slack'
-  )?.identifier;
+  const connectionIdentifier = findConnectionForProvider(connections.result.data, 'slack', args.context);
 
   if (!connectionIdentifier) {
     return {
@@ -166,6 +179,7 @@ export async function ensureSlackUserDmEndpoint(args: {
       connectionIdentifier,
       type: SLACK_USER_TYPE,
       endpoint: { userId: slackUserId },
+      ...(args.context && { context: args.context }),
     });
 
     return { ok: true, slackUserId };

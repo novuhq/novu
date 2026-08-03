@@ -1,7 +1,15 @@
 import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
-import { AGENT_IDENTIFIER_MAX_LENGTH, ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import {
+  AGENT_IDENTIFIER_MAX_LENGTH,
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  SmsProviderIdEnum,
+  StepTypeEnum,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { randomUUID } from 'node:crypto';
 
 describe('Agents API - /agents #novu-v2', () => {
   let session: UserSession;
@@ -367,6 +375,56 @@ describe('Agents API - /agents #novu-v2', () => {
     );
 
     expect(agentAfter).to.equal(null);
+  });
+
+  it('should list assigned workflows in usage and clear them on delete', async () => {
+    const identifier = `e2e-wf-assign-${Date.now()}`;
+
+    const createAgentRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Workflow Assign Agent',
+      identifier,
+    });
+
+    expect(createAgentRes.status).to.equal(201);
+
+    const createWorkflowRes = await session.testAgent.post('/v2/workflows').send({
+      __source: WorkflowCreationSourceEnum.Editor,
+      name: 'Agent Assigned Workflow',
+      workflowId: `agent-assigned-${randomUUID()}`,
+      active: true,
+      agent: { identifier },
+      steps: [
+        {
+          name: 'Chat Step',
+          type: StepTypeEnum.CHAT,
+          controlValues: {
+            body: 'hello',
+          },
+        },
+      ],
+    });
+
+    expect(createWorkflowRes.status).to.equal(201);
+    expect(createWorkflowRes.body.data.agent).to.deep.include({ identifier });
+
+    const workflowId = createWorkflowRes.body.data._id as string;
+    const workflowTriggerId = createWorkflowRes.body.data.workflowId as string;
+
+    const usageRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/usage`);
+
+    expect(usageRes.status).to.equal(200);
+    expect(usageRes.body.data.workflows).to.be.an('array').with.lengthOf(1);
+    expect(usageRes.body.data.workflows[0].name).to.equal('Agent Assigned Workflow');
+    expect(usageRes.body.data.workflows[0].workflowId).to.equal(workflowTriggerId);
+
+    const deleteRes = await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(deleteRes.status).to.equal(204);
+
+    const getWorkflowRes = await session.testAgent.get(`/v2/workflows/${workflowId}`);
+
+    expect(getWorkflowRes.status).to.equal(200);
+    expect(getWorkflowRes.body.data.agent).to.equal(null);
   });
 
   describe('Name length validation', () => {

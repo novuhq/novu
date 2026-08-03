@@ -18,6 +18,9 @@ export const emailControlZodSchema = z
         name: z.string().optional(),
       })
       .optional(),
+    useProviderDefaults: z.boolean().optional(),
+    replyTo: z.string().optional(),
+    preheader: z.string().max(84).optional(),
   })
   .strict();
 

@@ -8,7 +8,7 @@ import {
   ConversationRepository,
 } from '@novu/dal';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
-import { isMappableActivity, mapActivitiesToEventPage } from '../../activity-to-events';
+import { isMappableActivity, mapActivitiesToEventPage, WEB_CHAT_EVENT_ACTIVITY_FILTER } from '../../activity-to-events';
 import { ListWebChatConversationEventsCommand } from './list-web-chat-conversation-events.command';
 
 const ACTIVITY_FETCH_BATCH_SIZE = 100;
@@ -82,10 +82,7 @@ export class ListWebChatConversationEvents {
     };
 
     if (command.afterSequence > 0) {
-      return this.fetchEventPage(command, conversation._id, mapContext, {
-        afterSequence: command.afterSequence,
-        sequenceOffset: 0,
-      });
+      return this.fetchAfterSequenceEventPage(command, conversation._id, mapContext);
     }
 
     const sequenceOffset = command.after
@@ -104,6 +101,32 @@ export class ListWebChatConversationEvents {
     });
   }
 
+  private async fetchAfterSequenceEventPage(
+    command: ListWebChatConversationEventsCommand,
+    conversationId: string,
+    mapContext: { conversationId: string; agentIdentifier: string }
+  ): Promise<EventPageResult> {
+    const page = await this.activityRepository.listEventActivitiesAfterSequence({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      conversationId,
+      afterSequence: command.afterSequence,
+      limit: command.limit,
+      filter: WEB_CHAT_EVENT_ACTIVITY_FILTER,
+    });
+    const events = mapActivitiesToEventPage(page.data, mapContext, {
+      sequenceOffset: command.afterSequence,
+      limit: command.limit,
+    }).events;
+
+    return {
+      events,
+      hasMore: page.hasMore,
+      next: null,
+      previous: null,
+    };
+  }
+
   private async fetchEventPage(
     command: ListWebChatConversationEventsCommand,
     conversationId: string,
@@ -112,7 +135,6 @@ export class ListWebChatConversationEvents {
       activityCursor?: string;
       before?: string;
       sequenceOffset?: number;
-      afterSequence?: number;
     }
   ): Promise<EventPageResult> {
     const sortDirection = options.before ? -1 : 1;
@@ -142,7 +164,6 @@ export class ListWebChatConversationEvents {
 
       const mapped = mapActivitiesToEventPage(collected, mapContext, {
         sequenceOffset: options.sequenceOffset ?? 0,
-        afterSequence: options.afterSequence,
         limit: command.limit,
       });
 

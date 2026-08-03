@@ -1,8 +1,67 @@
-import { ENDPOINT_TYPES } from '@novu/stateless';
-import { expect, test } from 'vitest';
+import { CardElement, ENDPOINT_TYPES } from '@novu/stateless';
+import { describe, expect, test, vi } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { SlackProvider } from './slack.provider';
+
+// The runtime `esmImport` uses `new Function('return import(...)')` so the CJS build can load
+// the ESM-only chat adapter. That indirection has no dynamic-import callback under Vitest, so
+// swap it for a transform-aware dynamic import that resolves the real adapter.
+vi.mock('../../../utils/esm-import', () => ({
+  esmImport: (specifier: string) => import(/* @vite-ignore */ specifier),
+}));
+
+const richCard: CardElement = {
+  type: 'card',
+  children: [
+    { type: 'text', content: 'Deployment succeeded', style: 'bold' },
+    { type: 'divider' },
+    {
+      type: 'actions',
+      children: [{ type: 'link-button', label: 'View run', url: 'https://novu.co/run/1' }],
+    },
+  ],
+};
+
+describe('SlackProvider.render', () => {
+  test('serializes a CardElement to Block Kit blocks + fallback text', async () => {
+    const provider = new SlackProvider();
+    const result = await provider.render(richCard);
+
+    expect(Array.isArray(result.nativePayload.blocks)).toBe(true);
+    expect((result.nativePayload.blocks as unknown[]).length).toBeGreaterThan(0);
+    expect(typeof result.content).toBe('string');
+    expect(result.content.length).toBeGreaterThan(0);
+    expect(result.validation).toEqual([]);
+  });
+});
+
+test('should deliver a rendered card as Block Kit blocks over webhook', async () => {
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    body: 'ok',
+  });
+
+  const provider = new SlackProvider();
+  // The worker renders the card once, before send, and hands the native payload to the provider.
+  const rendered = await provider.render(richCard);
+  await provider.sendMessage({
+    channelData: {
+      endpoint: {
+        url: 'https://hooks.slack.com/services/test',
+      },
+      type: ENDPOINT_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
+    content: rendered.content,
+    nativePayload: rendered.nativePayload,
+  });
+
+  const call = mockSafeOutboundJsonRequest.mock.calls[0][0];
+  expect(call.url).toBe('https://hooks.slack.com/services/test');
+  expect(Array.isArray(call.body.blocks)).toBe(true);
+  expect((call.body.blocks as unknown[]).length).toBeGreaterThan(0);
+  expect(typeof call.body.text).toBe('string');
+});
 
 test('should trigger Slack webhook correctly', async () => {
   const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({

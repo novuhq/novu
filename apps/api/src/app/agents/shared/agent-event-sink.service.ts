@@ -395,7 +395,6 @@ export class AgentEventSink {
         await this.outboundGateway.removeReaction(
           agentId,
           context.integrationIdentifier,
-          context.platform,
           context.platformThreadId,
           activity.platformMessageId,
           event.emoji

@@ -107,6 +107,10 @@ export class UpdateWorkflowV0 {
       updatePayload.severity = command.severity;
     }
 
+    if (command.agent !== undefined) {
+      updatePayload.agent = command.agent;
+    }
+
     if (command.description !== undefined && command.description !== null) {
       updatePayload.description = command.description;
     }
@@ -182,8 +186,11 @@ export class UpdateWorkflowV0 {
         updatePayload.validatePayload = command.validatePayload;
       }
 
-      if (command.active !== undefined) {
-        updatePayload.status = computeWorkflowStatus(command.active, updatePayload.steps || existingTemplate.steps);
+      if (command.active !== undefined || command.steps) {
+        const active = command.active ?? existingTemplate.active ?? false;
+        const steps = updatePayload.steps ?? existingTemplate.steps;
+
+        updatePayload.status = computeWorkflowStatus(active, steps);
       }
 
       if (command.issues) {
@@ -640,7 +647,7 @@ export class UpdateWorkflowV0 {
       partialNotificationStep.variants = updatedVariants;
     }
 
-    if (message.issues) {
+    if (message.issues !== undefined) {
       partialNotificationStep.issues = message.issues;
     }
 

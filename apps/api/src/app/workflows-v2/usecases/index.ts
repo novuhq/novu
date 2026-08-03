@@ -3,3 +3,4 @@ export * from './duplicate-workflow';
 export * from './list-workflows';
 export * from './sync-to-environment';
 export * from './test-http-endpoint';
+export * from './upsert-workflow';

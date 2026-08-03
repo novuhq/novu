@@ -31,6 +31,7 @@ export type IWorkflowDataDto = {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  _agentId?: string | null;
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;
