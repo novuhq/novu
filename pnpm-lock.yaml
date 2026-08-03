@@ -3464,38 +3464,41 @@ importers:
       '@react-email/render':
         specifier: 2.0.7
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      chat:
-        specifier: '>=4.33.0'
-        version: 4.33.0(zod@4.3.6)
       hast-util-to-html:
         specifier: 9.0.5
         version: 9.0.5
       mdast-util-to-hast:
         specifier: 13.2.1
         version: 13.2.1
-      react:
-        specifier: '>=18.0.0 || >=19.0.0'
-        version: 19.2.3
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.8
+      chat:
+        specifier: ^4.33.0
+        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      react:
+        specifier: ^19.2.3
+        version: 19.2.3
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
       typescript:
         specifier: 5.6.2
         version: 5.6.2
+      zod:
+        specifier: 3.25.20
+        version: 3.25.20
 
   packages/chat-adapter-sendblue:
     dependencies:
-      chat:
-        specifier: '>=4.31.0'
-        version: 4.31.0(zod@4.3.6)
       chat-adapter-sendblue:
         specifier: ^0.2.0
-        version: 0.2.0(chat@4.31.0(zod@4.3.6))
+        version: 0.2.0(chat@4.33.0(zod@3.25.20))
     devDependencies:
+      chat:
+        specifier: ^4.33.0
+        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3505,6 +3508,9 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      zod:
+        specifier: 3.25.20
+        version: 3.25.20
 
   packages/chat-adapter-web:
     dependencies:
@@ -3514,7 +3520,7 @@ importers:
     devDependencies:
       chat:
         specifier: ^4.33.0
-        version: 4.33.0(zod@4.3.6)
+        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -3524,6 +3530,9 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      zod:
+        specifier: 3.25.20
+        version: 3.25.20
 
   packages/framework:
     dependencies:
@@ -4011,6 +4020,12 @@ importers:
       '@bandwidth/messaging':
         specifier: ^4.1.3
         version: 4.1.3
+      '@chat-adapter/slack':
+        specifier: 4.33.0
+        version: 4.33.0(zod@4.3.6)
+      '@chat-adapter/teams':
+        specifier: 4.33.0
+        version: 4.33.0(zod@4.3.6)
       '@infobip-api/sdk':
         specifier: ^0.3.2
         version: 0.3.2
@@ -16821,18 +16836,6 @@ packages:
     resolution: {integrity: sha512-JKqRa5KyoBsndRrq2LuGhob1uCdO1goWAbqaSLCld3KE9q288CnEo999GdWuDVWa9yqt1uf5F9/Oe3iFkSrW2w==}
     peerDependencies:
       chat: '>=4.0.0'
-
-  chat@4.31.0:
-    resolution: {integrity: sha512-F6oJq9JUraLFkITS96/NKgwZwBfZX8aOwOj5qMs5NNwnOGHrSXZ5+osK+EA4HjzfyUEDfFTNiOSmyzgtFLpuWg==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      ai: ^6.0.182
-      zod: ^3.0.0 || ^4.0.0
-    peerDependenciesMeta:
-      ai:
-        optional: true
-      zod:
-        optional: true
 
   chat@4.33.0:
     resolution: {integrity: sha512-qaQyr6Nm7gLEPkYpfjlZzCxKKjvDyRe3GoVA5++RrzW9po5fe3ddH4l9JkGaFsTvSiRGAzuz12WJj/BB5+A6Hw==}
@@ -31872,6 +31875,20 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@chat-adapter/slack@4.33.0(zod@4.3.6)':
+    dependencies:
+      '@chat-adapter/shared': 4.33.0(zod@4.3.6)
+      '@slack/socket-mode': 2.0.7
+      '@slack/web-api': 7.17.0
+      chat: 4.33.0(zod@4.3.6)
+    transitivePeerDependencies:
+      - ai
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+      - zod
+
   '@chat-adapter/state-ioredis@4.33.0(zod@3.25.20)':
     dependencies:
       chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
@@ -31905,6 +31922,20 @@ snapshots:
       '@microsoft/teams.cards': 2.0.11
       '@microsoft/teams.graph-endpoints': 2.0.11
       chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+    transitivePeerDependencies:
+      - ai
+      - debug
+      - supports-color
+      - zod
+
+  '@chat-adapter/teams@4.33.0(zod@4.3.6)':
+    dependencies:
+      '@chat-adapter/shared': 4.33.0(zod@4.3.6)
+      '@microsoft/teams.api': 2.0.11
+      '@microsoft/teams.apps': 2.0.11
+      '@microsoft/teams.cards': 2.0.11
+      '@microsoft/teams.graph-endpoints': 2.0.11
+      chat: 4.33.0(zod@4.3.6)
     transitivePeerDependencies:
       - ai
       - debug
@@ -44031,7 +44062,7 @@ snapshots:
 
   '@vitest-evals/core@0.12.0':
     dependencies:
-      zod: 3.25.76
+      zod: 3.25.20
 
   '@vitest-evals/report-ui@0.12.0':
     dependencies:
@@ -45903,24 +45934,10 @@ snapshots:
 
   chardet@2.1.1: {}
 
-  chat-adapter-sendblue@0.2.0(chat@4.31.0(zod@4.3.6)):
+  chat-adapter-sendblue@0.2.0(chat@4.33.0(zod@3.25.20)):
     dependencies:
-      chat: 4.31.0(zod@4.3.6)
+      chat: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       sendblue: 3.10.1
-
-  chat@4.31.0(zod@4.3.6):
-    dependencies:
-      '@workflow/serde': 4.1.0-beta.2
-      mdast-util-to-string: 4.0.0
-      remark-gfm: 4.0.1
-      remark-parse: 11.0.0
-      remark-stringify: 11.0.0
-      remend: 1.3.0
-      unified: 11.0.5
-    optionalDependencies:
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - supports-color
 
   chat@4.33.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5):
     dependencies:
@@ -55451,7 +55468,7 @@ snapshots:
       quick-lru: 7.0.0
       url-join: 5.0.0
       validate-npm-package-name: 5.0.1
-      zod: 3.25.76
+      zod: 3.25.20
       zod-package-json: 1.0.3
 
   query-string@9.1.0:
@@ -59836,7 +59853,7 @@ snapshots:
 
   zod-package-json@1.0.3:
     dependencies:
-      zod: 3.25.76
+      zod: 3.25.20
 
   zod-to-json-schema@3.23.3(zod@3.25.20):
     dependencies:

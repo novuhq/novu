@@ -9,7 +9,23 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
+  type ConversationEventActivityFilter,
 } from '@novu/dal';
+
+/**
+ * Which durable activities the web-chat history surface exposes as events.
+ * Must stay in lockstep with `mapActivityToEvent` below.
+ */
+export const WEB_CHAT_EVENT_ACTIVITY_FILTER: ConversationEventActivityFilter = {
+  messageSenderTypes: [ConversationActivitySenderTypeEnum.AGENT, ConversationActivitySenderTypeEnum.SUBSCRIBER],
+  eventTypes: [
+    ConversationActivityTypeEnum.EDIT,
+    ConversationActivityTypeEnum.DELETE,
+    ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+    ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+    ConversationActivityTypeEnum.TOOL_RESULT,
+  ],
+};
 
 function filesFromRichContent(richContent?: Record<string, unknown>) {
   const files = richContent?.files;
@@ -26,7 +42,8 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
       if (activity.senderType === ConversationActivitySenderTypeEnum.AGENT) {
         return {
           type: 'message',
-          messageId: activity.identifier,
+          // Browser-visible id is platformMessageId (aligned with live WS envelopes).
+          messageId: activity.platformMessageId ?? activity.identifier,
           content: { markdown: activity.content },
           files: filesFromRichContent(activity.richContent),
         };
@@ -93,6 +110,12 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         content: { markdown: activity.content },
       };
 
+    case ConversationActivityTypeEnum.DELETE:
+      return {
+        type: 'channel.delete',
+        messageId: activity.platformMessageId ?? activity.identifier,
+      };
+
     default:
       return null;
   }
@@ -116,31 +139,14 @@ function buildEnvelope(
   };
 }
 
+function resolveSequence(activity: ConversationActivityEntity, computed: number): number {
+  return typeof activity.sequence === 'number' ? activity.sequence : computed;
+}
+
 export function isMappableActivity(activity: ConversationActivityEntity): boolean {
   const event = mapActivityToEvent(activity);
 
   return event !== null && !isDeltaEvent(event);
-}
-
-export function activityToEvents(
-  activities: ConversationActivityEntity[],
-  context: { conversationId: string; agentIdentifier: string },
-  sequenceOffset = 0
-): AgentEventEnvelope[] {
-  const envelopes: AgentEventEnvelope[] = [];
-  let sequence = sequenceOffset;
-
-  for (const activity of activities) {
-    const event = mapActivityToEvent(activity);
-    if (!event || isDeltaEvent(event)) {
-      continue;
-    }
-
-    sequence += 1;
-    envelopes.push(buildEnvelope(activity, event, sequence, context));
-  }
-
-  return envelopes;
 }
 
 export function mapActivitiesToEventPage(
@@ -158,8 +164,9 @@ export function mapActivitiesToEventPage(
   nextSequence: number;
 } {
   const events: AgentEventEnvelope[] = [];
-  let sequence = options.sequenceOffset ?? 0;
+  let computed = options.sequenceOffset ?? 0;
   let lastActivityId: string | undefined;
+  let lastSequence = computed;
 
   for (const activity of activities) {
     const event = mapActivityToEvent(activity);
@@ -167,7 +174,12 @@ export function mapActivitiesToEventPage(
       continue;
     }
 
-    sequence += 1;
+    computed += 1;
+    const sequence = resolveSequence(activity, computed);
+    if (typeof activity.sequence === 'number') {
+      computed = Math.max(computed, activity.sequence);
+    }
+    lastSequence = sequence;
 
     if (options.afterSequence !== undefined && sequence <= options.afterSequence) {
       lastActivityId = activity._id;
@@ -179,7 +191,7 @@ export function mapActivitiesToEventPage(
         events,
         lastActivityId,
         hasMoreActivities: true,
-        nextSequence: sequence - 1,
+        nextSequence: lastSequence,
       };
     }
 
@@ -191,6 +203,6 @@ export function mapActivitiesToEventPage(
     events,
     lastActivityId,
     hasMoreActivities: false,
-    nextSequence: sequence,
+    nextSequence: lastSequence,
   };
 }

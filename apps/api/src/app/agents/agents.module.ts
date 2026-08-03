@@ -43,8 +43,10 @@ import { AgentConversationService } from './conversation-runtime/conversation/ag
 import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
+import { ConversationEventSequenceService } from './conversation-runtime/conversation/conversation-event-sequence.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
+import { OutboundDeliveryInfo } from './conversation-runtime/egress/outbound-delivery-info.service';
 import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
@@ -89,6 +91,7 @@ import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler
 import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
+import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
 import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
 import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
 import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
@@ -141,6 +144,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentSubscriberResolver,
     AgentSubscriberAdoptionService,
     AgentConversationService,
+    ConversationEventSequenceService,
     ConfirmLinkedAuthCards,
     ConversationActivationService,
     InboundAckService,
@@ -170,7 +174,9 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WebChatPublicationService,
     WebChatSessionVerifier,
     WebChatResumeAuthorizationService,
+    WebChatEventFactory,
     WebChatPlatformDeliveryService,
+    OutboundDeliveryInfo,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,

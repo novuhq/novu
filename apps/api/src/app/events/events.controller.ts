@@ -1,6 +1,10 @@
 import { Body, Controller, Delete, Param, Post, Req, Scope, ServiceUnavailableException } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { FeatureFlagsService, RequirePermissions, ResourceCategory } from '@novu/application-generic';
+import {
+  FeatureFlagsService,
+  RequirePermissions,
+  ResourceCategory,
+} from '@novu/application-generic';
 import {
   AddressingTypeEnum,
   ApiRateLimitCategoryEnum,
@@ -127,6 +131,7 @@ export class EventsController {
         bridgeUrl: body.bridgeUrl,
         controls: body.controls,
         requestId: req._nvRequestId,
+        ...(body.agentId !== undefined && { agentId: body.agentId }),
       })
     );
 
@@ -214,6 +219,7 @@ export class EventsController {
         actor: body.actor,
         context: body.context,
         requestId: req._nvRequestId,
+        ...(body.agentId !== undefined && { agentId: body.agentId }),
       })
     );
   }

@@ -23,12 +23,14 @@
     "chat-adapter-sendblue": "^0.2.0"
   },
   "peerDependencies": {
-    "chat": ">=4.31.0"
+    "chat": ">=4.33.0"
   },
   "devDependencies": {
+    "chat": "^4.33.0",
     "rimraf": "~3.0.2",
     "typescript": "5.6.2",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "zod": "3.25.20"
   },
   "nx": {
     "tags": [

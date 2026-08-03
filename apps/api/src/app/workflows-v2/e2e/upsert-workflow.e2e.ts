@@ -815,6 +815,148 @@ describe('Upsert Workflow #novu-v2', () => {
     });
   });
 
+  describe('workflow agent assignment', () => {
+    async function createTestAgent(identifier: string, name = identifier) {
+      const response = await session.testAgent.post('/v1/agents').send({ name, identifier });
+      expect(response.status).to.equal(201);
+
+      return response.body.data;
+    }
+
+    it('should set, return, and clear workflow agent', async () => {
+      await createTestAgent('devops-agent', 'DevOps Agent');
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Agent Assignment Workflow',
+        workflowId: `agent-assignment-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: {
+              body: 'hello',
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+      expect(workflow.agent ?? null).to.equal(null);
+
+      const setResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...workflow,
+        agent: { identifier: 'devops-agent' },
+        steps: [
+          {
+            _id: workflow.steps[0]._id,
+            stepId: workflow.steps[0].stepId,
+            name: workflow.steps[0].name,
+            type: workflow.steps[0].type,
+            controlValues: workflow.steps[0].controls.values,
+          },
+        ],
+      });
+
+      expect(setResponse.status).to.equal(200);
+      expect(setResponse.body.data.agent).to.deep.include({ identifier: 'devops-agent' });
+
+      const getResponse = await session.testAgent.get(`/v2/workflows/${workflow._id}`);
+      expect(getResponse.status).to.equal(200);
+      expect(getResponse.body.data.agent).to.deep.include({ identifier: 'devops-agent' });
+
+      const clearResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}`).send({
+        ...getResponse.body.data,
+        agent: null,
+        steps: [
+          {
+            _id: getResponse.body.data.steps[0]._id,
+            stepId: getResponse.body.data.steps[0].stepId,
+            name: getResponse.body.data.steps[0].name,
+            type: getResponse.body.data.steps[0].type,
+            controlValues: getResponse.body.data.steps[0].controls.values,
+          },
+        ],
+      });
+
+      expect(clearResponse.status).to.equal(200);
+      expect(clearResponse.body.data.agent).to.equal(null);
+    });
+
+    it('should retain agent when duplicating a workflow', async () => {
+      await createTestAgent('support-agent', 'Support Agent');
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Agent Duplicate Source',
+        workflowId: `agent-duplicate-source-${randomUUID()}`,
+        active: true,
+        agent: { identifier: 'support-agent' },
+        steps: [
+          {
+            name: 'Email Step',
+            type: StepTypeEnum.EMAIL,
+            controlValues: {
+              subject: 'hi',
+              body: 'hello',
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+      expect(workflow.agent).to.deep.include({ identifier: 'support-agent' });
+
+      const duplicateResponse = await session.testAgent.post(`/v2/workflows/${workflow._id}/duplicate`).send({
+        name: 'Agent Duplicate Copy',
+      });
+
+      expect(duplicateResponse.status).to.equal(201);
+      expect(duplicateResponse.body.data.agent).to.deep.include({ identifier: 'support-agent' });
+      expect(duplicateResponse.body.data._id).to.not.equal(workflow._id);
+    });
+
+    it('should carry agent when syncing a workflow to another environment', async () => {
+      await createTestAgent('ops-agent', 'Ops Agent');
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Agent Sync Source',
+        workflowId: `agent-sync-source-${randomUUID()}`,
+        active: true,
+        agent: { identifier: 'ops-agent' },
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: {
+              body: 'hello',
+            },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      const workflow = createResponse.body.data;
+
+      await session.switchToProdEnvironment();
+      const prodEnvironmentId = session.environment._id;
+      await session.switchToDevEnvironment();
+
+      const syncResponse = await session.testAgent.put(`/v2/workflows/${workflow._id}/sync`).send({
+        targetEnvironmentId: prodEnvironmentId,
+      });
+
+      expect(syncResponse.status).to.equal(200);
+      expect(syncResponse.body.data.agent).to.deep.include({ identifier: 'ops-agent' });
+      expect(syncResponse.body.data.workflowId).to.equal(workflow.workflowId);
+      expect(syncResponse.body.data._id).to.not.equal(workflow._id);
+    });
+  });
+
   async function createLayout(layout: CreateLayoutDto): Promise<LayoutResponseDto> {
     const { result: createLayoutBody } = await novuClient.layouts.create(layout);
 

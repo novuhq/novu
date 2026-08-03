@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   BuildStepIssuesUsecase,
+  computeWorkflowStatus,
   GetWorkflowUseCase,
   GetWorkflowWithPreferencesUseCase,
   Instrument,
@@ -13,7 +14,7 @@ import {
   WorkflowWithPreferencesResponseDto,
 } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { UserSessionData, WebhookEventEnum, WebhookObjectTypeEnum, WorkflowStatusEnum } from '@novu/shared';
+import { UserSessionData, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { MANAGE_TRANSLATIONS } from '../../../shared/constants';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 
@@ -46,6 +47,8 @@ export class PatchWorkflowUsecase {
     if (command.isTranslationEnabled !== undefined) {
       await this.toggleV2TranslationsForWorkflow(persistedWorkflow.triggers[0].identifier, command);
     }
+
+    transientWorkflow.status = computeWorkflowStatus(transientWorkflow.active ?? false, transientWorkflow.steps);
 
     await this.persistWorkflow(transientWorkflow, command.user);
 
@@ -136,10 +139,6 @@ export class PatchWorkflowUsecase {
 
     if (command.tags !== undefined && command.tags !== null) {
       transientWorkflow.tags = command.tags;
-    }
-
-    if (command.active !== undefined && command.active !== null) {
-      transientWorkflow.status = command.active ? WorkflowStatusEnum.ACTIVE : WorkflowStatusEnum.INACTIVE;
     }
 
     return transientWorkflow;

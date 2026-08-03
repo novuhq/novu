@@ -160,8 +160,8 @@ export class BullMqService {
     return this._worker;
   }
 
-  public add(name: string, data: BullMqJobData, options: JobsOptions = {}, groupId?: string) {
-    this._queue.add(name, data, {
+  public async add(name: string, data: BullMqJobData, options: JobsOptions = {}, groupId?: string): Promise<Job> {
+    return this._queue.add(name, data, {
       ...options,
       ...(BullMqService.pro && groupId
         ? {
