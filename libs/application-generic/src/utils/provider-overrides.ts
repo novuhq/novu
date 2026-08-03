@@ -160,11 +160,16 @@ function isExclusiveGroupAjvError(error: ErrorObject, groupKeys: ReadonlySet<str
   }
 
   const negated = error.schema;
-  if (!negated || typeof negated !== 'object' || !Array.isArray(negated.required)) {
+  if (!negated || typeof negated !== 'object' || Array.isArray(negated)) {
     return false;
   }
 
-  return negated.required.length >= 2 && negated.required.every((key) => typeof key === 'string' && groupKeys.has(key));
+  const required = 'required' in negated ? negated.required : undefined;
+  if (!Array.isArray(required) || required.length < 2) {
+    return false;
+  }
+
+  return required.every((key) => typeof key === 'string' && groupKeys.has(key));
 }
 
 function exclusiveGroupMessage(group: readonly string[]): string {

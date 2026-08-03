@@ -8,12 +8,7 @@ export enum CasingEnum {
   SNAKE_CASE = 'snake_case',
   KEBAB_CASE = 'kebab-case',
   CONSTANT_CASE = 'CONSTANT_CASE',
-  /**
-   * Identity transform — return data unchanged (no deep key rename).
-   * Prefer over CAMEL_CASE when nested wire keys must stay intact
-   * (e.g. APNs `apns-priority`, opaque FCM `data` map keys); firebase-admin
-   * v1 expects SDK camelCase and applies its own wire renames.
-   */
+  /** Identity — no deep key rename (APNs kebab-case, opaque FCM `data` keys). */
   NONE = 'none',
 }
 

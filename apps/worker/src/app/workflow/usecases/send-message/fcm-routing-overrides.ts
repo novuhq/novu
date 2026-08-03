@@ -1,4 +1,4 @@
-import { FCM_ROUTING_KEYS, getProviderOverrideConfig, PushProviderIdEnum, type TriggerOverrides } from '@novu/shared';
+import { getProviderOverrideConfig, PushProviderIdEnum, type TriggerOverrides } from '@novu/shared';
 import { combineProviderOverrides } from './send-message.base';
 
 export type PushProviderOverride = {
@@ -11,7 +11,6 @@ export type PushRoutingCredentials = {
   topic?: string;
 };
 
-/** True when overrides set any key from the provider's exclusive routing groups (FCM: token/tokens/topic/condition). */
 export function hasTokenlessRoutingOverride(
   providerId: PushProviderIdEnum,
   overrides: Record<string, unknown> | null | undefined
@@ -20,23 +19,21 @@ export function hasTokenlessRoutingOverride(
     return false;
   }
 
-  const groups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups;
-  let keys: readonly string[] = [];
-
-  if (groups?.length) {
-    keys = groups.flat();
-  } else if (providerId === PushProviderIdEnum.FCM) {
-    keys = FCM_ROUTING_KEYS;
-  }
+  const keys = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups?.flat() ?? [];
 
   return keys.some((key) => key in overrides);
 }
 
 /**
  * Maps FCM routing overrides onto channel credentials used for token-less send selection.
+ * Precedence matches the provider send plan: token > tokens > topic > condition.
  * `token` / `condition` only need an empty deviceTokens marker — the provider reads them from bridge data.
  */
 export function extractFcmRoutingCredentials(overrides: Record<string, unknown>): PushRoutingCredentials | null {
+  if (typeof overrides.token === 'string') {
+    return { deviceTokens: [] };
+  }
+
   if (Array.isArray(overrides.tokens)) {
     return { deviceTokens: overrides.tokens };
   }
@@ -45,7 +42,7 @@ export function extractFcmRoutingCredentials(overrides: Record<string, unknown>)
     return { topic: overrides.topic };
   }
 
-  if (typeof overrides.token === 'string' || typeof overrides.condition === 'string') {
+  if (typeof overrides.condition === 'string') {
     return { deviceTokens: [] };
   }
 
@@ -69,36 +66,45 @@ export function extractPushRoutingCredentials(
 }
 
 /**
- * Upserts fully-merged FCM overrides (bridge + trigger) so content-override routing keys
- * participate in synthetic channel construction.
+ * Upserts fully-merged overrides for push providers with exclusive routing key groups
+ * so content-override routing keys participate in synthetic channel construction.
  */
-export function upsertMergedFcmRoutingOverride(
+export function upsertMergedRoutingOverrides(
   result: PushProviderOverride[],
   command: {
     bridgeData?: Record<string, unknown> | null;
     overrides?: TriggerOverrides;
     step?: { stepId?: string };
-  }
+  },
+  pushProviderIds: readonly PushProviderIdEnum[]
 ): void {
-  const mergedFcmOverrides = combineProviderOverrides(
-    command.bridgeData,
-    command.overrides,
-    command.step?.stepId,
-    PushProviderIdEnum.FCM
-  );
+  for (const providerId of pushProviderIds) {
+    const exclusiveKeyGroups = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups;
 
-  if (!hasTokenlessRoutingOverride(PushProviderIdEnum.FCM, mergedFcmOverrides)) {
-    return;
-  }
+    if (!exclusiveKeyGroups?.length) {
+      continue;
+    }
 
-  const existingIndex = result.findIndex((item) => item.providerId === PushProviderIdEnum.FCM);
+    const mergedOverrides = combineProviderOverrides(
+      command.bridgeData,
+      command.overrides,
+      command.step?.stepId,
+      providerId
+    );
 
-  if (existingIndex >= 0) {
-    result[existingIndex].overrides = mergedFcmOverrides;
-  } else {
-    result.push({
-      providerId: PushProviderIdEnum.FCM,
-      overrides: mergedFcmOverrides,
-    });
+    if (!hasTokenlessRoutingOverride(providerId, mergedOverrides)) {
+      continue;
+    }
+
+    const existingIndex = result.findIndex((item) => item.providerId === providerId);
+
+    if (existingIndex >= 0) {
+      result[existingIndex].overrides = mergedOverrides;
+    } else {
+      result.push({
+        providerId,
+        overrides: mergedOverrides,
+      });
+    }
   }
 }

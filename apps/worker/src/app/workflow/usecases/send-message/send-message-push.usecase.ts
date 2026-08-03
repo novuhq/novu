@@ -51,7 +51,7 @@ import {
   extractPushRoutingCredentials,
   hasTokenlessRoutingOverride,
   type PushProviderOverride,
-  upsertMergedFcmRoutingOverride,
+  upsertMergedRoutingOverrides,
 } from './fcm-routing-overrides';
 import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
@@ -233,9 +233,9 @@ export class SendMessagePush extends SendMessageBase {
       const { deviceTokens } = channel.credentials || {};
 
       const isChannelMissingDeviceTokens = this.channelMissingDeviceTokens(channel);
-      const hasTokenlessRoutingOverride = tokenlessRoutingProviderIds.has(channel.providerId);
+      const channelAllowsTokenlessRouting = tokenlessRoutingProviderIds.has(channel.providerId);
 
-      if (isChannelMissingDeviceTokens && !hasTokenlessRoutingOverride) {
+      if (isChannelMissingDeviceTokens && !channelAllowsTokenlessRouting) {
         await this.createExecutionDetails.execute(
           CreateExecutionDetailsCommand.create({
             ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -266,7 +266,7 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const noDeviceTokensAndNoOverrides = isChannelMissingDeviceTokens && !hasTokenlessRoutingOverride;
+      const noDeviceTokensAndNoOverrides = isChannelMissingDeviceTokens && !channelAllowsTokenlessRouting;
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if (noDeviceTokensAndNoOverrides || !integration) {
         continue;
@@ -293,7 +293,7 @@ export class SendMessagePush extends SendMessageBase {
       /**
        * There are no targets available for the subscriber, but credentials provided in the overrides
        */
-      if (!target?.length && hasTokenlessRoutingOverride) {
+      if (!target?.length && channelAllowsTokenlessRouting) {
         const message = await this.createMessage({
           command,
           integration,
@@ -515,15 +515,12 @@ export class SendMessagePush extends SendMessageBase {
       }
     }
 
-    upsertMergedFcmRoutingOverride(result, command);
+    upsertMergedRoutingOverrides(result, command, this.pushProviderIds);
 
     return result;
   }
 
-  /**
-   * Filters the provided array of push provider overrides and returns only those
-   * that contain provider-specific credential keys
-   */
+  /** Keeps overrides that set a tokenless routing key (e.g. FCM topic/condition/token). */
   private filterProvidersWithCredentialOverrides(providerOverrides: PushProviderOverride[]): PushProviderOverride[] {
     if (!providerOverrides?.length) return [];
 
