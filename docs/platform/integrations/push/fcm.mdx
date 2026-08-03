@@ -383,7 +383,7 @@ Supported top-level keys: `notification`, `data`, `android`, `apns`, `webpush`, 
 
 `notification.body` is the primary content key. If your override omits it, Novu uses the rendered Push step body.
 
-Topic and token routing belong on the trigger. Do not set `topic`, `token`, or `condition` in a step content override — pass those under `overrides.providers.fcm` at [trigger time](/platform/integrations/trigger-overrides) instead. Novu fills device tokens from the subscriber's credentials for normal deliveries.
+Topic and token routing belong on the trigger. Do not set `topic`, `token`, `tokens`, or `condition` in a step content override — pass those under `overrides.providers.fcm` at [trigger time](/platform/integrations/trigger-overrides) instead. Novu fills device tokens from the subscriber's credentials for normal deliveries.
 
 See the [FCM HTTP v1 Message reference](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) for the full field list.
 

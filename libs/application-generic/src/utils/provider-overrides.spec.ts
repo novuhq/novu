@@ -263,13 +263,48 @@ describe('processProviderOverridesIssues', () => {
 
   it('accepts free-form objects for escape-hatch push providers', () => {
     const issues = processProviderOverridesIssues({
-      [PushProviderIdEnum.FCM]: {
-        data: { orderId: '{{payload.orderId}}' },
-        android: { priority: 'high' },
+      [PushProviderIdEnum.APNS]: {
+        aps: { alert: { body: '{{payload.body}}' } },
+        whatever: true,
       },
     });
 
     expect(issues.controls).toBeUndefined();
+  });
+
+  it('validates FCM overrides against the generated BaseMessage schema', () => {
+    const valid = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        data: { orderId: '{{payload.orderId}}' },
+        android: { priority: 'high' },
+        fcmOptions: { analyticsLabel: 'orders' },
+      },
+    });
+
+    expect(valid.controls).toBeUndefined();
+
+    const invalidKey = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        android: { priority: 'high' },
+        topíc: 'orders',
+      },
+    });
+
+    expect(invalidKey.controls?.['providerOverrides.fcm.topíc']).toEqual([
+      {
+        message: '"topíc" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'providerOverrides.fcm.topíc',
+      },
+    ]);
+
+    const invalidData = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        data: { orderId: 123 },
+      },
+    });
+
+    expect(invalidData.controls?.['providerOverrides.fcm.data.orderId']).toBeDefined();
   });
 
   it.each([null, [], 'not-an-object'])('rejects malformed fcm override value %j', (override) => {
