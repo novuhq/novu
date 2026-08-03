@@ -96,6 +96,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       externalVaultId: Schema.Types.String,
       externalWorkspaceId: Schema.Types.String,
       isNovuManaged: Schema.Types.Boolean,
+      subAccountId: Schema.Types.String,
     },
     configurations: {
       inboundWebhookEnabled: Schema.Types.Boolean,
