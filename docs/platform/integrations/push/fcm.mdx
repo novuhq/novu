@@ -369,6 +369,30 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
   </Tab>
 </Tabs>
 
+## Configure FCM overrides
+
+Save an FCM override on the Push step when you need Firebase [HTTP v1 Message](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) fields beyond the step subject and body — for example `data`, platform payloads (`android`, `apns`, `webpush`), or `fcmOptions`. The override is stored on the step, so it is versioned and promoted with the workflow, and every trigger sends it without changing your trigger call.
+
+<Note>
+  Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Push step yet. Overrides passed at trigger time work regardless. See [provider content overrides](/platform/integrations/push#provider-content-overrides).
+</Note>
+
+FCM overrides are validated against the FCM HTTP v1 `Message` shape (minus routing keys). The editor autocompletes supported field names, validates the JSON, and flags unsupported fields.
+
+Supported top-level keys:
+
+- `notification`
+- `data`
+- `android`
+- `apns`
+- `webpush`
+- `fcmOptions`
+
+- **`notification.body` is the primary content key.** If your override omits `notification.body`, Novu uses the rendered Push step body.
+- **Topic and token routing belong on the trigger.** Do not set `topic`, `token`, or `condition` in a step content override — pass those under `overrides.providers.fcm` at [trigger time](/platform/integrations/trigger-overrides) instead. Novu fills device tokens from the subscriber's credentials for normal deliveries.
+
+See the [FCM HTTP v1 Message reference](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) for the full field list.
+
 ## Web push with relative links
 
 Suppose you're using the Firebase (FCM) provider to send push notifications to web browsers via Novu and want users to be returned to the website after clicking the notification.

@@ -3,6 +3,7 @@ import {
   CONTENT_OVERRIDE_PROVIDER_IDS,
   ContentIssueEnum,
   type ContentOverrideProviderId,
+  FCM_OVERRIDE_SCHEMA_SUBPATH,
   getProviderOverrideConfig,
   type ProviderOverrideConfig,
   type RuntimeIssue,
@@ -11,6 +12,7 @@ import {
   TELEGRAM_OVERRIDE_SCHEMA_SUBPATH,
   WHATSAPP_OVERRIDE_SCHEMA_SUBPATH,
 } from '@novu/shared';
+import { fcmOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/fcm';
 import { slackOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/slack';
 import { telegramOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/telegram';
 import { whatsappOverrideLiquidTolerantJsonSchema } from '@novu/shared/provider-overrides/whatsapp';
@@ -39,6 +41,7 @@ export const LIQUID_TOLERANT_SCHEMAS_BY_SUBPATH: Readonly<Record<string, JSONSch
   [SLACK_OVERRIDE_SCHEMA_SUBPATH]: slackOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
   [TELEGRAM_OVERRIDE_SCHEMA_SUBPATH]: telegramOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
   [WHATSAPP_OVERRIDE_SCHEMA_SUBPATH]: whatsappOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
+  [FCM_OVERRIDE_SCHEMA_SUBPATH]: fcmOverrideLiquidTolerantJsonSchema as unknown as JSONSchemaDto,
 };
 
 export function isSupportedProviderOverrideId(providerId: string): providerId is ContentOverrideProviderId {
