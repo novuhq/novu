@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ErrorCodesEnum, TopicRepository } from '@novu/dal';
 import { VALID_ID_REGEX } from '@novu/shared';
@@ -39,20 +39,29 @@ export class UpsertTopicUseCase {
           throw new ConflictException(`Topic with key "${command.key}" already exists`);
         }
 
-        const existingTopic = await this.topicRepository.findTopicByKey(
+        const winningTopic = await this.topicRepository.findTopicByKey(
           command.key,
           command.organizationId,
           command.environmentId
         );
+
+        if (!winningTopic) {
+          throw error;
+        }
+
         created = false;
-        topic = existingTopic ? await this.applyTopicUpdate(existingTopic._id, command) : existingTopic;
+        topic = await this.applyTopicUpdate(winningTopic._id, command);
       }
     } else {
       topic = await this.applyTopicUpdate(topic._id, command);
     }
 
+    if (!topic) {
+      throw new NotFoundException(`Topic with key "${command.key}" not found`);
+    }
+
     return {
-      topic: mapTopicEntityToDto(topic!),
+      topic: mapTopicEntityToDto(topic),
       created,
     };
   }
