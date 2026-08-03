@@ -28,8 +28,8 @@ const SUPPORTED_PROVIDER_IDS = new Set<string>(CONTENT_OVERRIDE_PROVIDER_IDS);
 
 /** Same-layer FCM content overrides may set at most one of these routing keys. */
 const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
-const FCM_ROUTING_MUTUAL_EXCLUSION_MESSAGE = 'Only one of token, tokens, topic, condition is allowed';
 const FCM_ROUTING_KEY_SET = new Set<string>(FCM_ROUTING_KEYS);
+const FCM_ROUTING_MUTUAL_EXCLUSION_MESSAGE = 'Only one of token, tokens, topic, condition is allowed';
 
 /** Escape-hatch providers accept keys we cannot describe up front: well-formedness only. */
 const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
@@ -139,31 +139,41 @@ function unsupportedProviderIssue(path: string, providerId: string): RuntimeIssu
   };
 }
 
-function fcmRoutingMutualExclusionIssue(providerPath: string): RuntimeIssue {
-  return {
-    message: FCM_ROUTING_MUTUAL_EXCLUSION_MESSAGE,
-    issueType: ContentIssueEnum.MISSING_VALUE,
-    variableName: providerPath,
-  };
-}
-
-function countPresentFcmRoutingKeys(override: unknown): number {
+function hasMultipleFcmRoutingKeys(override: unknown): boolean {
   if (!override || typeof override !== 'object' || Array.isArray(override)) {
-    return 0;
+    return false;
   }
 
   const record = override as Record<string, unknown>;
+  let present = 0;
 
-  return FCM_ROUTING_KEYS.filter((key) => key in record).length;
+  for (const key of FCM_ROUTING_KEYS) {
+    if (key in record) {
+      present += 1;
+      if (present > 1) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
-/**
- * Pairwise `allOf` / `not.required` constraints emit AJV `not` errors at the document root.
- * Those have an empty `instancePath` and are dropped by `mapSchemaErrorsToControlIssues`, so we
- * detect them here before mapping.
- */
+/** Pairwise `allOf`/`not.required` constraints report as root `not` errors with message "must NOT be valid". */
 function isFcmRoutingMutualExclusionAjvError(error: ErrorObject): boolean {
-  return error.keyword === 'not' && error.schemaPath.includes('/allOf/');
+  if (error.keyword !== 'not' || !error.schemaPath.includes('/allOf/')) {
+    return false;
+  }
+
+  const negated = error.schema;
+  if (!negated || typeof negated !== 'object' || !Array.isArray(negated.required)) {
+    return false;
+  }
+
+  return (
+    negated.required.length >= 2 &&
+    negated.required.every((key) => typeof key === 'string' && FCM_ROUTING_KEY_SET.has(key))
+  );
 }
 
 function isFcmRoutingAdditionalPropertyError(error: ErrorObject): boolean {
@@ -171,29 +181,23 @@ function isFcmRoutingAdditionalPropertyError(error: ErrorObject): boolean {
 }
 
 /**
- * Surfaces one friendly mutual-exclusion issue for FCM routing keys. Schema-backed `not` failures
- * and a defensive multi-key check both produce the same message; routing-key `additionalProperties`
- * noise is suppressed when a conflict is already reported so the user sees one clear issue.
+ * Rewrites FCM routing mutual-exclusion failures to one friendly issue. Covers both the defensive
+ * multi-key check (works before the schema lands) and AJV `not`/`allOf` errors once it does;
+ * suppresses routing-key `additionalProperties` noise when a conflict is already reported.
  */
 function mapFcmProviderOverrideIssues(
   override: unknown,
   providerPath: string,
   errors: ErrorObject[]
 ): Record<string, RuntimeIssue[]> {
-  const hasExplicitConflict = countPresentFcmRoutingKeys(override) > 1;
-  const hasSchemaConflict = errors.some(isFcmRoutingMutualExclusionAjvError);
-  const hasConflict = hasExplicitConflict || hasSchemaConflict;
+  const hasConflict = hasMultipleFcmRoutingKeys(override) || errors.some(isFcmRoutingMutualExclusionAjvError);
 
   const filteredErrors = errors.filter((error) => {
     if (isFcmRoutingMutualExclusionAjvError(error)) {
       return false;
     }
 
-    if (hasConflict && isFcmRoutingAdditionalPropertyError(error)) {
-      return false;
-    }
-
-    return true;
+    return !(hasConflict && isFcmRoutingAdditionalPropertyError(error));
   });
 
   const controls =
@@ -203,7 +207,14 @@ function mapFcmProviderOverrideIssues(
     }).controls ?? {};
 
   if (hasConflict) {
-    controls[providerPath] = [...(controls[providerPath] ?? []), fcmRoutingMutualExclusionIssue(providerPath)];
+    controls[providerPath] = [
+      ...(controls[providerPath] ?? []),
+      {
+        message: FCM_ROUTING_MUTUAL_EXCLUSION_MESSAGE,
+        issueType: ContentIssueEnum.MISSING_VALUE,
+        variableName: providerPath,
+      },
+    ];
   }
 
   return controls;

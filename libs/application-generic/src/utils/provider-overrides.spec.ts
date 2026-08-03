@@ -333,6 +333,25 @@ describe('processProviderOverridesIssues', () => {
     ]);
   });
 
+  it('keeps unrelated FCM schema issues when routing keys conflict', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        topic: 'orders',
+        token: 'device-token',
+        data: { orderId: 123 },
+      },
+    });
+
+    expect(issues.controls?.['providerOverrides.fcm']).toEqual([
+      {
+        message: 'Only one of token, tokens, topic, condition is allowed',
+        issueType: ContentIssueEnum.MISSING_VALUE,
+        variableName: 'providerOverrides.fcm',
+      },
+    ]);
+    expect(issues.controls?.['providerOverrides.fcm.data.orderId']).toBeDefined();
+  });
+
   it('validates Telegram overrides against the generated sendMessage schema', () => {
     const valid = processProviderOverridesIssues({
       [ChatProviderIdEnum.Telegram]: {
