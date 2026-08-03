@@ -583,9 +583,13 @@ When a subscriber logs out of a device, remove that device token from the subscr
 #### Remove a specific token
 
 To remove device tokens from subscriber credentials, follow this process:
-1. Fetch the subscriber's current token list.
+1. Fetch the subscriber and read `deviceTokens` from the matching entry in `channels`.
 2. Filter out the token you want to remove.
 3. Update the subscriber with the new, filtered list.
+
+<Note>
+  Device tokens live on `channels[]`, not a top-level `credentials` map. When you have multiple active integrations for the same provider, match and update with `integrationIdentifier` so you do not replace tokens on a different integration. See [Add device tokens for specific integrations](#add-device-tokens-for-specific-integrations).
+</Note>
 
 <Tabs>
   <Tab title="Node.js">
@@ -599,18 +603,25 @@ const novu = new Novu({
 
 const subscriberId = "subscriberId";
 const providerId = ChatOrPushProviderEnum.Fcm;
+const integrationIdentifier = "fcm-MnGLxp8uy";
 
-// 1. Fetch current credentials
-const { data: subscriber } = await novu.subscribers.get(subscriberId);
-const currentTokens = subscriber.credentials[providerId]?.deviceTokens || [];
+// 1. Fetch current credentials from channels
+const { result: subscriber } = await novu.subscribers.retrieve(subscriberId);
+const currentTokens =
+  subscriber.channels?.find(
+    (channel) =>
+      channel.providerId === providerId &&
+      channel.integrationIdentifier === integrationIdentifier
+  )?.credentials?.deviceTokens ?? [];
 
 // 2. Remove the specific token
 const filteredTokens = currentTokens.filter(token => token !== "token_to_remove");
 
-// 3. Update subscriber
+// 3. Update subscriber for the same integration
 await novu.subscribers.credentials.update(
   {
     providerId,
+    integrationIdentifier,
     credentials: {
       deviceTokens: filteredTokens,
     },
@@ -627,20 +638,31 @@ from novu_py import Novu
 
 subscriber_id = "subscriberId"
 provider_id = novu_py.ChatOrPushProviderEnum.FCM
+integration_identifier = "fcm-MnGLxp8uy"
 
 with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
-    # 1. Fetch current credentials
-    subscriber = novu.subscribers.retrieve(subscriber_id=subscriber_id)
-    current_tokens = subscriber.subscriber_response_dto.credentials.get("fcm", {}).get("device_tokens", [])
+    # 1. Fetch current credentials from channels
+    response = novu.subscribers.retrieve(subscriber_id=subscriber_id)
+    subscriber = response.subscriber_response_dto
+    current_tokens = next(
+        (
+            channel.credentials.device_tokens or []
+            for channel in (subscriber.channels or [])
+            if channel.provider_id == provider_id
+            and channel.integration_identifier == integration_identifier
+        ),
+        [],
+    )
 
     # 2. Remove the specific token
     filtered_tokens = [token for token in current_tokens if token != "token_to_remove"]
 
-    # 3. Update subscriber
+    # 3. Update subscriber for the same integration
     novu.subscribers.credentials.update(
         subscriber_id=subscriber_id,
         update_subscriber_channel_request_dto={
             "provider_id": provider_id,
+            "integration_identifier": integration_identifier,
             "credentials": {
                 "device_tokens": filtered_tokens,
             },
@@ -660,18 +682,26 @@ import (
 
 subscriberID := "subscriberId"
 providerID := components.ChatOrPushProviderEnumFcm
+integrationIdentifier := "fcm-MnGLxp8uy"
 
 s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
 
-// 1. Fetch current credentials
+// 1. Fetch current credentials from channels
 res, err := s.Subscribers.Retrieve(context.Background(), subscriberID, nil)
 if err != nil {
     panic(err)
 }
 
 currentTokens := []string{}
-if credentials, ok := res.SubscriberResponseDto.Credentials["fcm"]; ok {
-    currentTokens = credentials.DeviceTokens
+if res.SubscriberResponseDto != nil {
+    for _, channel := range res.SubscriberResponseDto.Channels {
+        if channel.ProviderID == providerID &&
+            channel.IntegrationIdentifier != nil &&
+            *channel.IntegrationIdentifier == integrationIdentifier {
+            currentTokens = channel.Credentials.DeviceTokens
+            break
+        }
+    }
 }
 
 // 2. Remove the specific token
@@ -682,9 +712,10 @@ for _, token := range currentTokens {
     }
 }
 
-// 3. Update subscriber
+// 3. Update subscriber for the same integration
 _, err = s.Subscribers.Credentials.Update(context.Background(), subscriberID, components.UpdateSubscriberChannelRequestDto{
     ProviderID: providerID,
+    IntegrationIdentifier: &integrationIdentifier,
     Credentials: components.ChannelCredentials{
         DeviceTokens: filteredTokens,
     },
@@ -698,14 +729,25 @@ use novu\Models\Components;
 
 $subscriberId = 'subscriberId';
 $providerId = Components\ChatOrPushProviderEnum::Fcm;
+$integrationIdentifier = 'fcm-MnGLxp8uy';
 
 $sdk = novu\Novu::builder()
     ->setSecurity('<NOVU_SECRET_KEY>')
     ->build();
 
-// 1. Fetch current credentials
-$response = $sdk->subscribers->get(subscriberId: $subscriberId);
-$currentTokens = $response->subscriberResponseDto->credentials['fcm']['deviceTokens'] ?? [];
+// 1. Fetch current credentials from channels
+$response = $sdk->subscribers->retrieve(subscriberId: $subscriberId);
+$currentTokens = [];
+
+foreach ($response->subscriberResponseDto->channels ?? [] as $channel) {
+    if (
+        $channel->providerId === $providerId &&
+        ($channel->integrationIdentifier ?? null) === $integrationIdentifier
+    ) {
+        $currentTokens = $channel->credentials->deviceTokens ?? [];
+        break;
+    }
+}
 
 // 2. Remove the specific token
 $filteredTokens = array_values(array_filter(
@@ -713,11 +755,12 @@ $filteredTokens = array_values(array_filter(
     fn (string $token): bool => $token !== 'token_to_remove',
 ));
 
-// 3. Update subscriber
+// 3. Update subscriber for the same integration
 $sdk->subscribers->updateCredentials(
     subscriberId: $subscriberId,
     updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
         providerId: $providerId,
+        integrationIdentifier: $integrationIdentifier,
         credentials: new Components\ChannelCredentials(
             deviceTokens: $filteredTokens,
         ),
@@ -736,21 +779,27 @@ var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
 
 var subscriberId = "subscriberId";
 var providerId = ChatOrPushProviderEnum.Fcm;
+var integrationIdentifier = "fcm-MnGLxp8uy";
 
-// 1. Fetch current credentials
-var subscriber = await sdk.Subscribers.RetrieveAsync(subscriberId: subscriberId);
-var currentTokens = subscriber.SubscriberResponseDto.Credentials["fcm"].DeviceTokens;
+// 1. Fetch current credentials from channels
+var response = await sdk.Subscribers.RetrieveAsync(subscriberId: subscriberId);
+var currentTokens = response.SubscriberResponseDto.Channels?
+    .FirstOrDefault(channel =>
+        channel.ProviderId == providerId &&
+        channel.IntegrationIdentifier == integrationIdentifier
+    )?.Credentials?.DeviceTokens ?? new List<string>();
 
 // 2. Remove the specific token
 var filteredTokens = currentTokens
     .Where(token => token != "token_to_remove")
     .ToList();
 
-// 3. Update subscriber
+// 3. Update subscriber for the same integration
 await sdk.Subscribers.UpdateCredentialsAsync(
     subscriberId: subscriberId,
     updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
         ProviderId = providerId,
+        IntegrationIdentifier = integrationIdentifier,
         Credentials = new ChannelCredentials() {
             DeviceTokens = filteredTokens,
         },
@@ -762,6 +811,7 @@ await sdk.Subscribers.UpdateCredentialsAsync(
 ```java
 import co.novu.Novu;
 import co.novu.models.components.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -770,26 +820,33 @@ Novu novu = Novu.builder()
     .build();
 
 String subscriberId = "subscriberId";
+String integrationIdentifier = "fcm-MnGLxp8uy";
 
-// 1. Fetch current credentials
-var subscriber = novu.subscribers().get()
+// 1. Fetch current credentials from channels
+var subscriber = novu.subscribers().retrieve()
     .subscriberId(subscriberId)
     .call()
     .subscriberResponseDto()
     .orElseThrow();
 
-List<String> currentTokens = subscriber.credentials().get("fcm").deviceTokens();
+List<String> currentTokens = subscriber.channels().orElse(Collections.emptyList()).stream()
+    .filter(channel -> channel.providerId() == ChatOrPushProviderEnum.FCM
+        && integrationIdentifier.equals(channel.integrationIdentifier().orElse(null)))
+    .findFirst()
+    .map(channel -> channel.credentials().deviceTokens().orElse(Collections.emptyList()))
+    .orElse(Collections.emptyList());
 
 // 2. Remove the specific token
 List<String> filteredTokens = currentTokens.stream()
     .filter(token -> !token.equals("token_to_remove"))
     .collect(Collectors.toList());
 
-// 3. Update subscriber
+// 3. Update subscriber for the same integration
 novu.subscribers().updateCredentials()
     .subscriberId(subscriberId)
     .body(UpdateSubscriberChannelRequestDto.builder()
         .providerId(ChatOrPushProviderEnum.FCM)
+        .integrationIdentifier(integrationIdentifier)
         .credentials(ChannelCredentials.builder()
             .deviceTokens(filteredTokens)
             .build())
@@ -799,18 +856,19 @@ novu.subscribers().updateCredentials()
   </Tab>
   <Tab title="cURL">
 ```bash
-# 1. Fetch current credentials
+# 1. Fetch current credentials (read deviceTokens from channels[] for the target integration)
 curl -L -X GET 'https://api.novu.co/v2/subscribers/subscriberId' \
 -H 'Accept: application/json' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
 
-# 2. Remove the specific token from the response, then update credentials
+# 2. Remove the specific token from that channel's deviceTokens, then update credentials
 curl -L -X PUT 'https://api.novu.co/v1/subscribers/subscriberId/credentials' \
 -H 'Content-Type: application/json' \
 -H 'Accept: application/json' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "providerId": "fcm",
+  "integrationIdentifier": "fcm-MnGLxp8uy",
   "credentials": {
     "deviceTokens": ["remaining-token-1", "remaining-token-2"]
   }
