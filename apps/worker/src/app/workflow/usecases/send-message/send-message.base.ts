@@ -27,6 +27,7 @@ import {
   ExecutionDetailsStatusEnum,
   getProviderOverrideConfig,
   ITenantDefine,
+  NON_OVERRIDABLE_FCM_KEYS,
   ProvidersIdEnum,
   PushProviderIdEnum,
   providers,
@@ -39,9 +40,6 @@ import { cloneDeep, mergeWith } from 'lodash';
 import { PlatformException, TRANSLATIONS_SERVICE } from '../../../shared/utils';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus, SendMessageType } from './send-message-type.usecase';
-
-/** FCM routing destinations are mutually exclusive; fallback until shared registry ships `exclusiveKeyGroups`. */
-const FCM_EXCLUSIVE_ROUTING_KEY_GROUP = ['token', 'tokens', 'topic', 'condition'] as const;
 
 /**
  * Never replace this with a plain `merge`: lodash merges arrays element-by-element, so a
@@ -71,7 +69,7 @@ function layerHasGroupKey(layer: Record<string, unknown>, group: readonly string
  *
  * `layers` is ordered low → high precedence. Returns shallow-cloned layers; originals are untouched.
  */
-export function applyExclusiveKeyGroups(
+function applyExclusiveKeyGroups(
   layers: readonly Record<string, unknown>[],
   exclusiveKeyGroups: readonly (readonly string[])[]
 ): Record<string, unknown>[] {
@@ -100,6 +98,10 @@ export function applyExclusiveKeyGroups(
   return result;
 }
 
+/**
+ * Prefer `exclusiveKeyGroups` from the shared registry when present (schema slice); fall back to
+ * FCM's canonical routing-key list so this worker slice stays correct before that field lands.
+ */
 function resolveExclusiveKeyGroups(integrationId: string): readonly (readonly string[])[] {
   const fromRegistry = (
     getProviderOverrideConfig(integrationId) as { exclusiveKeyGroups?: readonly (readonly string[])[] } | undefined
@@ -110,7 +112,7 @@ function resolveExclusiveKeyGroups(integrationId: string): readonly (readonly st
   }
 
   if (integrationId === PushProviderIdEnum.FCM) {
-    return [FCM_EXCLUSIVE_ROUTING_KEY_GROUP];
+    return [NON_OVERRIDABLE_FCM_KEYS];
   }
 
   return [];
