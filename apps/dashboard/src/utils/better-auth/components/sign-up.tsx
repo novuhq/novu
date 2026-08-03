@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 import { useAuth } from '../index';
+import { useAuthConfig } from '../use-auth-config';
 
 function extractInvitationIdFromRedirect(redirectUrl: string | null): string | null {
   if (!redirectUrl) return null;
@@ -28,6 +29,7 @@ export function SignUp() {
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { emailPasswordAuthEnabled, isLoading: isAuthConfigLoading } = useAuthConfig();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -127,6 +129,15 @@ export function SignUp() {
       setIsLoading(false);
     }
   };
+
+  if (isAuthConfigLoading) {
+    return null;
+  }
+
+  // SSO provisions accounts on first successful login, so there is nothing to sign up for here.
+  if (!emailPasswordAuthEnabled) {
+    return <Navigate to={ROUTES.SSO_SIGN_IN} replace />;
+  }
 
   return (
     <div className="mx-auto max-w-md pt-12">

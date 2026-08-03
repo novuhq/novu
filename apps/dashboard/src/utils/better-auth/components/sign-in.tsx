@@ -1,11 +1,12 @@
 import { useId, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { useAuthConfig } from '../use-auth-config';
 
 function resolveSameOriginRedirectUrl(redirectUrl: string | null): string | null {
   if (!redirectUrl) {
@@ -28,6 +29,7 @@ function resolveSameOriginRedirectUrl(redirectUrl: string | null): string | null
 export function SignIn() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { emailPasswordAuthEnabled, isLoading: isAuthConfigLoading } = useAuthConfig();
   const postSignInRedirectUrl = resolveSameOriginRedirectUrl(readClerkRedirectUrlParam(searchParams));
   const emailId = useId();
   const passwordId = useId();
@@ -105,6 +107,14 @@ export function SignIn() {
       setIsLoading(false);
     }
   };
+
+  if (isAuthConfigLoading) {
+    return null;
+  }
+
+  if (!emailPasswordAuthEnabled) {
+    return <Navigate to={ROUTES.SSO_SIGN_IN} replace />;
+  }
 
   return (
     <div className="mx-auto w-full max-w-md pt-12">

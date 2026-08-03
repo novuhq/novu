@@ -4,10 +4,12 @@ import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { useAuthConfig } from '../use-auth-config';
 
 export function SSOSignIn() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { emailPasswordAuthEnabled } = useAuthConfig();
   const ssoEmailId = useId();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -83,19 +85,21 @@ export function SSOSignIn() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Redirecting...' : 'Continue with SSO'}
         </Button>
-        <p className="mt-4 text-center text-sm text-foreground-600">
-          <span
-            role="button"
-            tabIndex={0}
-            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
-            onClick={() => navigate(ROUTES.SIGN_IN)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.SIGN_IN);
-            }}
-          >
-            Back to sign in
-          </span>
-        </p>
+        {emailPasswordAuthEnabled && (
+          <p className="mt-4 text-center text-sm text-foreground-600">
+            <span
+              role="button"
+              tabIndex={0}
+              className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
+              onClick={() => navigate(ROUTES.SIGN_IN)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.SIGN_IN);
+              }}
+            >
+              Back to sign in
+            </span>
+          </p>
+        )}
       </form>
     </div>
   );
