@@ -26,6 +26,7 @@ import {
   TimeOperatorEnum,
 } from '@novu/shared';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
+import { get as lodashGet } from 'lodash';
 import { decryptApiKey } from '../../encryption';
 import { PinoLogger } from '../../logging';
 import { buildSubscriberKey, CachedResponse, FeatureFlagsService, safeOutboundJsonRequest } from '../../services';
@@ -67,7 +68,7 @@ export class ConditionsFilter extends Filter {
     private logger: PinoLogger
   ) {
     super();
-    this.logger.setContext(this.constructor.name);
+    this.logger?.setContext(this.constructor.name);
   }
 
   public async filter(command: ConditionsFilterCommand): Promise<IConditionsFilterResponse> {
@@ -291,7 +292,7 @@ export class ConditionsFilter extends Filter {
         body: payload,
       });
 
-      await this.maybeLogWebhookFilterResponse(command, child.webhookUrl, response);
+      await this.maybeLogWebhookFilterResponse(command, child, response);
 
       return response.body;
     } catch (err) {
@@ -312,13 +313,14 @@ export class ConditionsFilter extends Filter {
   }
 
   /**
-   * Best-effort pino log of the exact webhook filter POST response. Gated by the
-   * same flag as step-conditions-passed execution details so response bodies are
-   * only emitted when that diagnostics path is intentionally enabled.
+   * Best-effort pino log for webhook filter diagnostics. Gated by the same flag
+   * as step-conditions-passed execution details. Logs only the HTTP status and
+   * the field value used by the filter comparison — never the full response body,
+   * which may contain subscriber PII or credentials outside path-based redaction.
    */
   private async maybeLogWebhookFilterResponse(
     command: ConditionsFilterCommand,
-    webhookUrl: string,
+    child: IWebhookFilterPart,
     response: { statusCode: number; statusMessage: string; body: Record<string, unknown> | undefined }
   ): Promise<void> {
     try {
@@ -335,10 +337,10 @@ export class ConditionsFilter extends Filter {
 
       this.logger.info(
         {
-          webhookUrl,
           statusCode: response.statusCode,
           statusMessage: response.statusMessage,
-          body: response.body,
+          field: child.field,
+          fieldValue: lodashGet(response.body, child.field),
           jobId: command.job?._id,
           transactionId: command.job?.transactionId,
         },
