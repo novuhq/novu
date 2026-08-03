@@ -7,6 +7,7 @@ import {
   CachedResponse,
   InvalidateCacheService,
   messageWebhookMapper,
+  PinoLogger,
   SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
@@ -31,8 +32,11 @@ export class MarkMessageAsByMark {
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private sendWebhookMessage: SendWebhookMessage,
-    private environmentRepository: EnvironmentRepository
-  ) {}
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: MarkMessageAsByMarkCommand): Promise<MessageResponseDto[]> {
     const subscriber = await this.fetchSubscriber({
@@ -96,7 +100,7 @@ export class MarkMessageAsByMark {
   }
 
   private async updateServices(command: MarkMessageAsByMarkCommand, subscriber, messages, markAs: MessagesStatusEnum) {
-    this.updateSocketCount(subscriber, markAs);
+    await this.updateSocketCount(subscriber, markAs);
     const analyticMessage =
       command.__source === 'notification_center'
         ? `Mark as ${markAs} - [Notification Center]`
@@ -111,23 +115,27 @@ export class MarkMessageAsByMark {
     }
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, markAs: MessagesStatusEnum) {
+  private async updateSocketCount(subscriber: SubscriberEntity, markAs: MessagesStatusEnum) {
     const eventMessage = mapMarkMessageToWebSocketEvent(markAs);
 
     if (eventMessage === undefined) {
       return;
     }
 
-    this.webSocketsQueueService.add({
-      name: 'sendMessage',
-      data: {
-        event: eventMessage,
-        userId: subscriber._id,
-        _environmentId: subscriber._environmentId,
-        contextKeys: [],
-      },
-      groupId: subscriber._organizationId,
-    });
+    try {
+      await this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: eventMessage,
+          userId: subscriber._id,
+          _environmentId: subscriber._environmentId,
+          contextKeys: [],
+        },
+        groupId: subscriber._organizationId,
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to enqueue mark-message-as-by-mark websocket event');
+    }
   }
 
   @CachedResponse({

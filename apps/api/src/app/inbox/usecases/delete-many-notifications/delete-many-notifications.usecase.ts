@@ -76,16 +76,20 @@ export class DeleteManyNotifications {
 
     await this.processWebhooksInBatches([WebhookEventEnum.MESSAGE_DELETED], deletedMessages, command, environment);
 
-    this.webSocketsQueueService.add({
-      name: 'sendMessage',
-      data: {
-        event: WebSocketEventEnum.UNREAD,
-        userId: subscriber._id,
-        _environmentId: subscriber._environmentId,
-        contextKeys: command.contextKeys ?? [],
-      },
-      groupId: subscriber._organizationId,
-    });
+    try {
+      await this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: WebSocketEventEnum.UNREAD,
+          userId: subscriber._id,
+          _environmentId: subscriber._environmentId,
+          contextKeys: command.contextKeys ?? [],
+        },
+        groupId: subscriber._organizationId,
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to enqueue delete-many websocket event');
+    }
   }
 
   private async processWebhooksInBatches(

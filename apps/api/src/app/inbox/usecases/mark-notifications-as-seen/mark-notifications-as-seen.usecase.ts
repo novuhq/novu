@@ -159,16 +159,20 @@ export class MarkNotificationsAsSeen {
       }),
     ]);
 
-    this.webSocketsQueueService.add({
-      name: 'sendMessage',
-      data: {
-        event: WebSocketEventEnum.UNSEEN,
-        userId: subscriber._id,
-        _environmentId: command.environmentId,
-        contextKeys: contextKeys ?? [],
-      },
-      groupId: subscriber._organizationId,
-    });
+    try {
+      await this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: WebSocketEventEnum.UNSEEN,
+          userId: subscriber._id,
+          _environmentId: command.environmentId,
+          contextKeys: contextKeys ?? [],
+        },
+        groupId: subscriber._organizationId,
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to enqueue mark-as-seen websocket event');
+    }
   }
 
   private async processWebhooksInBatches(

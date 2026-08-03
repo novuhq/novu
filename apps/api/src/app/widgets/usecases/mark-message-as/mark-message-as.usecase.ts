@@ -147,7 +147,7 @@ export class MarkMessageAs {
   }
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
-    this.updateSocketCount(subscriber, marked);
+    await this.updateSocketCount(subscriber, marked);
 
     for (const message of messages) {
       this.analyticsService.mixpanelTrack(`Mark as ${marked} - [Notification Center]`, '', {
@@ -158,19 +158,23 @@ export class MarkMessageAs {
     }
   }
 
-  private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
+  private async updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add({
-      name: 'sendMessage',
-      data: {
-        event: eventMessage,
-        userId: subscriber._id,
-        _environmentId: subscriber._environmentId,
-        contextKeys: [],
-      },
-      groupId: subscriber._organizationId,
-    });
+    try {
+      await this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: eventMessage,
+          userId: subscriber._id,
+          _environmentId: subscriber._environmentId,
+          contextKeys: [],
+        },
+        groupId: subscriber._organizationId,
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to enqueue mark-message-as websocket event');
+    }
   }
 
   private async sendWebhookForMessages(

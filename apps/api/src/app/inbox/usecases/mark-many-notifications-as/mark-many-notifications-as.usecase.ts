@@ -98,16 +98,20 @@ export class MarkManyNotificationsAs {
 
     await this.processWebhooksInBatches(eventTypes, updatedMessages, command, environment);
 
-    this.webSocketsQueueService.add({
-      name: 'sendMessage',
-      data: {
-        event: WebSocketEventEnum.UNREAD,
-        userId: subscriber._id,
-        _environmentId: subscriber._environmentId,
-        contextKeys: command.contextKeys ?? [],
-      },
-      groupId: subscriber._organizationId,
-    });
+    try {
+      await this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: WebSocketEventEnum.UNREAD,
+          userId: subscriber._id,
+          _environmentId: subscriber._environmentId,
+          contextKeys: command.contextKeys ?? [],
+        },
+        groupId: subscriber._organizationId,
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to enqueue mark-many websocket event');
+    }
   }
 
   private async processWebhooksInBatches(

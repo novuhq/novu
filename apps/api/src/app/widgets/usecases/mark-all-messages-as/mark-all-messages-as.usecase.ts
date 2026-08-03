@@ -5,6 +5,7 @@ import {
   buildMessageCountKey,
   InvalidateCacheService,
   messageWebhookMapper,
+  PinoLogger,
   SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
@@ -23,8 +24,11 @@ export class MarkAllMessagesAs {
     private subscriberRepository: SubscriberRepository,
     private analyticsService: AnalyticsService,
     private sendWebhookMessage: SendWebhookMessage,
-    private environmentRepository: EnvironmentRepository
-  ) {}
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: MarkAllMessagesAsCommand): Promise<number> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
@@ -86,16 +90,20 @@ export class MarkAllMessagesAs {
     const eventMessage = mapMarkMessageToWebSocketEvent(command.markAs);
 
     if (eventMessage !== undefined) {
-      this.webSocketsQueueService.add({
-        name: 'sendMessage',
-        data: {
-          event: eventMessage,
-          userId: subscriber._id,
-          _environmentId: command.environmentId,
-          contextKeys: [],
-        },
-        groupId: subscriber._organizationId,
-      });
+      try {
+        await this.webSocketsQueueService.add({
+          name: 'sendMessage',
+          data: {
+            event: eventMessage,
+            userId: subscriber._id,
+            _environmentId: command.environmentId,
+            contextKeys: [],
+          },
+          groupId: subscriber._organizationId,
+        });
+      } catch (error) {
+        this.logger.error({ err: error }, 'Failed to enqueue mark-all-messages websocket event');
+      }
     }
 
     this.analyticsService.track(

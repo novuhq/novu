@@ -5,6 +5,7 @@ import {
   buildMessageCountKey,
   InvalidateCacheService,
   messageWebhookMapper,
+  PinoLogger,
   SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
@@ -25,8 +26,11 @@ export class DeleteAllNotifications {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private sendWebhookMessage: SendWebhookMessage,
-    private environmentRepository: EnvironmentRepository
-  ) {}
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: DeleteAllNotificationsCommand): Promise<void> {
     const subscriber = await this.getSubscriber.execute({
@@ -89,16 +93,20 @@ export class DeleteAllNotifications {
       contextKeys: command.contextKeys,
     });
 
-    this.webSocketsQueueService.add({
-      name: 'sendMessage',
-      data: {
-        event: WebSocketEventEnum.UNREAD,
-        userId: subscriber._id,
-        _environmentId: command.environmentId,
-        contextKeys: command.contextKeys ?? [],
-      },
-      groupId: subscriber._organizationId,
-    });
+    try {
+      await this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: WebSocketEventEnum.UNREAD,
+          userId: subscriber._id,
+          _environmentId: command.environmentId,
+          contextKeys: command.contextKeys ?? [],
+        },
+        groupId: subscriber._organizationId,
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to enqueue delete-all websocket event');
+    }
   }
 
   private async sendWebhookEvents(command: DeleteAllNotificationsCommand, deletedMessages: MessageEntity[]) {
