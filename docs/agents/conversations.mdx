@@ -35,16 +35,11 @@ Navigate to your agent's detail page to see all conversations, their status, and
 
 ## Supported platforms
 
-Both managed agents and custom code agents support the same set of chat providers:
+Both managed agents and custom code agents support the same live channels. Capability details (typing, plan cards, buttons, approvals, edits) live in one place:
 
-| Platform | Status | Notes |
-| --- | --- | --- |
-| Slack | Available | Text, markdown, files, interactive cards, reactions, typing indicators. File uploads require the `files:write` bot scope. |
-| Microsoft Teams | Available | Text, markdown, files, and cards via Bot Framework. Dashboard includes a guided onboarding flow with one-click app package download. |
-| WhatsApp | Available | Text, markdown, interactive buttons. Inbound media is surfaced via attachments; outbound file attachments are not supported yet. |
-| Email | Available | Text, markdown, files, interactive cards, emoji reactions (Gmail only). |
-| Telegram | Available | Text, markdown, files, reactions, typing indicators. |
+- [Channels overview](/agents/channels/overview) (full matrix)
+- [Slack](/agents/channels/slack) · [Microsoft Teams](/agents/channels/microsoft-teams) · [WhatsApp](/agents/channels/whatsapp) · [Telegram](/agents/channels/telegram) · [Email](/agents/channels/email)
 
 <Note>
-  Platform capabilities might vary. For example, typing indicators are only shown on platforms that support them, and message editing depends on platform adapter support.
+  Platform capabilities vary. For example, typing indicators and message edits are unavailable on email, and outbound file sharing is not supported on any live channel yet.
 </Note>

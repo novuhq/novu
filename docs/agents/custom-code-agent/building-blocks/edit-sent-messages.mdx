@@ -8,6 +8,15 @@ description: "Update, edit, or delete a message in place after sending it from a
 
 That is not a [reply type](/agents/custom-code-agent/building-blocks/reply); it updates a message you already sent.
 
+## Channel support
+
+| Capability | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| Message edits in place | Yes | Yes | Yes | Yes | No |
+| Plan card via edit-in-place | Native plan card | Markdown edit-in-place | No | Markdown edit-in-place | No |
+
+See [Channels overview](/agents/channels/overview) for the full matrix.
+
 ## Basic edit
 
 The following example sends a placeholder message, does work, then updates the same message in place:
@@ -28,7 +37,7 @@ await sentMessage.edit('Updated report attached.', {
 });
 ```
 
-Edits update the existing platform message rather than posting a new one. Not every provider supports message editing. For which capabilities each provider supports, see [Agents and providers](/agents/get-started/agents-and-providers#provider-connections).
+Edits update the existing platform message rather than posting a new one. Not every provider supports message editing. See [Channels overview](/agents/channels/overview) and the [Channel support](#channel-support) strip above.
 
 ## Related
 

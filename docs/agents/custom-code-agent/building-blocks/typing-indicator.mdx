@@ -12,9 +12,18 @@ await ctx.typing();                       // reset to the default "Thinking…"
 await ctx.typing.stop();                  // clear it for this turn
 ```
 
+## Channel support
+
+| Capability | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| Live typing indicator | Yes (custom text) | Yes (custom text) | Yes (fixed) | Yes (custom text) | No |
+| Eyes reaction as ack | Yes | Yes | Yes | Yes | Yes |
+
+See [Channels overview](/agents/channels/overview) for the full matrix.
+
 ## Platform behavior
 
-- Custom text shows on Slack-like platforms; a generic typing bubble appears on others; it is a no-op where there is no typing channel (for example email).
+- Custom text shows on Slack, Teams, and Telegram; a fixed typing bubble appears on WhatsApp; it is a no-op on email.
 - The typing status clears automatically when the turn delivers a reply - whether you call `ctx.reply()`, return a string or card from the handler, or return an AI SDK result that Novu maps to a reply. You do not need `ctx.typing.stop()` unless you want to clear the indicator without sending a message.
 - When a turn fails, Novu clears the typing indicator even if no reply is sent - including when [`onError`](/agents/custom-code-agent/building-blocks/handle-events#onerror) suppresses the user-visible message.
 

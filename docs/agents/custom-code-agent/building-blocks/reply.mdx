@@ -16,7 +16,17 @@ The public API is `ctx.reply(content, options?)`. You can also return a string o
 
 To send a reply from your backend without going through the bridge handler, use the [Send an agent reply](/api-reference/agents/send-an-agent-reply) API.
 
-## Reply types at a glance
+## Channel support
+
+| Capability | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| Plain / rich text | Yes | Yes | Bold / italics | Yes | HTML |
+| Tap-to-respond buttons | Yes | Yes | Yes (up to 3) | Yes | Action links |
+| Outbound file attachments | Not yet | Not yet | Not yet | Not yet | Not yet |
+
+See [Channels overview](/agents/channels/overview) for the full matrix.
+
+## Reply types
 
 The following table summarizes the reply types your agent can send:
 
