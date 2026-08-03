@@ -974,7 +974,7 @@ Expo overrides are validated against the [Expo Push message](https://docs.expo.d
 
 ### FCM is schema-backed
 
-FCM overrides are validated against the FCM HTTP v1 [`Message`](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) shape (`notification`, `data`, `android`, `apns`, `webpush`, `fcmOptions`, `token`, `tokens`, `topic`, `condition`). The editor autocompletes supported field names, validates the JSON, and flags unsupported fields. You may set exactly one of `token`, `tokens`, `topic`, or `condition` for routing; [trigger overrides](/platform/integrations/trigger-overrides) for those keys still take precedence. See [Configure FCM overrides](/platform/integrations/push/fcm#configure-fcm-overrides) for Liquid support and fan-out guidance.
+FCM overrides are validated against the FCM HTTP v1 [`Message`](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) shape, plus Novu's multicast `tokens` key. The editor autocompletes supported field names, validates the JSON, and flags unsupported fields. Routing keys (`token`, `tokens`, `topic`, `condition`) are allowed in step content overrides — see [Configure FCM overrides](/platform/integrations/push/fcm#configure-fcm-overrides) for exclusive-or rules, Liquid, fan-out, and trigger precedence.
 
 <Card title="Configure FCM overrides" icon="smartphone" href="/platform/integrations/push/fcm#configure-fcm-overrides">
   Schema-backed FCM override fields, `notification.body` fallback, and routing in content or trigger overrides.
