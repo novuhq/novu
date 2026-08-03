@@ -175,8 +175,11 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
   /**
    * Platform usage from `workflow_run_count`, filtered to
    * `event_type = workflow_run_status_processing`.
-   * Bounds are UTC calendar days, inclusive: `date >= startDay AND date <= endDay`
-   * (params truncated via `toISOString().split('T')[0]`).
+   *
+   * Callers pass a half-open Date range `[startDate, endDate)`. That maps to
+   * inclusive UTC calendar days: `date >= toDate(start) AND date <= toDate(end - 1ms)`,
+   * so a midnight exclusive period end (e.g. Stripe `current_period_end`) does not
+   * pull in the next period's first day.
    */
   async getPlatformUsageByDateRange(
     startDate: Date,
@@ -184,6 +187,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     organizationId?: string
   ): Promise<Array<{ organization_id: string; count: string }>> {
     const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
+    const startDay = startDate.toISOString().split('T')[0];
+    const endDayInclusive = new Date(endDate.getTime() - 1).toISOString().split('T')[0];
 
     const query = `
       SELECT
@@ -200,8 +205,8 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     `;
 
     const params: Record<string, unknown> = {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
+      startDate: startDay,
+      endDate: endDayInclusive,
     };
 
     if (organizationId) {

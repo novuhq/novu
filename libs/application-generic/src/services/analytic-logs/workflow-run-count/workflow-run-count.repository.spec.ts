@@ -64,9 +64,24 @@ describe('WorkflowRunCountRepository', () => {
       expect(call.params).to.not.have.property('organizationId');
     });
 
+    it('maps a midnight exclusive endDate to the previous calendar day', async () => {
+      queryStub.resolves({ data: [{ organization_id: 'org-a', count: '3' }] });
+
+      await repository.getPlatformUsageByDateRange(
+        new Date('2024-01-01T00:00:00.000Z'),
+        new Date('2024-02-01T00:00:00.000Z')
+      );
+
+      expect(queryStub.firstCall.args[0].params).to.deep.equal({
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+      });
+    });
+
     it('adds organization_id filter and param when organizationId is provided', async () => {
       const startDate = new Date('2024-02-01T00:00:00.000Z');
-      const endDate = new Date('2024-02-28T00:00:00.000Z');
+      // Half-open end at start of March → last included day is Feb 29 2024
+      const endDate = new Date('2024-03-01T00:00:00.000Z');
       const rows = [{ organization_id: 'org-only', count: '7' }];
 
       queryStub.resolves({ data: rows });
@@ -79,7 +94,7 @@ describe('WorkflowRunCountRepository', () => {
       expect(call.query).to.include('organization_id = {organizationId:String}');
       expect(call.params).to.deep.equal({
         startDate: '2024-02-01',
-        endDate: '2024-02-28',
+        endDate: '2024-02-29',
         organizationId: 'org-only',
       });
     });
@@ -89,7 +104,7 @@ describe('WorkflowRunCountRepository', () => {
 
       const result = await repository.getPlatformUsageByDateRange(
         new Date('2024-03-01T00:00:00.000Z'),
-        new Date('2024-03-31T00:00:00.000Z')
+        new Date('2024-04-01T00:00:00.000Z')
       );
 
       expect(result).to.deep.equal([]);
