@@ -379,17 +379,11 @@ Save an FCM override on the Push step when you need Firebase [HTTP v1 Message](h
 
 FCM overrides are validated against the FCM HTTP v1 `Message` shape (minus routing keys). The editor autocompletes supported field names, validates the JSON, and flags unsupported fields.
 
-Supported top-level keys:
+Supported top-level keys: `notification`, `data`, `android`, `apns`, `webpush`, and `fcmOptions`. Step content overrides use the HTTP v1 field names (including `webpush`); trigger examples elsewhere on this page may still show Novu's `webPush` alias.
 
-- `notification`
-- `data`
-- `android`
-- `apns`
-- `webpush`
-- `fcmOptions`
+`notification.body` is the primary content key. If your override omits it, Novu uses the rendered Push step body.
 
-- **`notification.body` is the primary content key.** If your override omits `notification.body`, Novu uses the rendered Push step body.
-- **Topic and token routing belong on the trigger.** Do not set `topic`, `token`, or `condition` in a step content override — pass those under `overrides.providers.fcm` at [trigger time](/platform/integrations/trigger-overrides) instead. Novu fills device tokens from the subscriber's credentials for normal deliveries.
+Topic and token routing belong on the trigger. Do not set `topic`, `token`, or `condition` in a step content override — pass those under `overrides.providers.fcm` at [trigger time](/platform/integrations/trigger-overrides) instead. Novu fills device tokens from the subscriber's credentials for normal deliveries.
 
 See the [FCM HTTP v1 Message reference](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) for the full field list.
 
