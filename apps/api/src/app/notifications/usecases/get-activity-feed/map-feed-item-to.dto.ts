@@ -156,6 +156,10 @@ function mapStepFilterToDto(stepFilter: StepFilter): StepFilterDto[] {
     directChildren.push(mapChildFilterToDto(child));
   }
 
+  if (directChildren.length === 0 && nestedFilters.length > 0) {
+    return nestedFilters;
+  }
+
   const currentFilter: StepFilterDto = {
     children: directChildren,
     isNegated: stepFilter.isNegated,
