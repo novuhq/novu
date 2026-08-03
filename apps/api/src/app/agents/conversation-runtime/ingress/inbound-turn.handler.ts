@@ -681,19 +681,21 @@ export class AgentInboundHandler implements OnModuleInit {
     conversation: ConversationEntity,
     platformThreadId: string
   ): Promise<void> {
-    const seed = await this.workflowAgentDispatchRepository.findByPlatformThread(
-      config.environmentId,
-      config.organizationId,
-      agentId,
-      config.integrationId,
-      platformThreadId
-    );
-
-    if (!seed?.platformMessageId) {
-      return;
-    }
+    let seed: WorkflowAgentDispatchEntity | null = null;
 
     try {
+      seed = await this.workflowAgentDispatchRepository.findByPlatformThread(
+        config.environmentId,
+        config.organizationId,
+        agentId,
+        config.integrationId,
+        platformThreadId
+      );
+
+      if (!seed?.platformMessageId) {
+        return;
+      }
+
       const { content, originPayload } = await this.buildWorkflowOriginHydration(seed);
 
       await this.conversationService.persistWorkflowOriginHydration({
@@ -714,7 +716,7 @@ export class AgentInboundHandler implements OnModuleInit {
         agentId,
       });
       this.logger.warn(
-        { err, agentId, platformThreadId, dispatchId: seed._id },
+        { err, agentId, platformThreadId, dispatchId: seed?._id },
         'Failed to hydrate workflow agent dispatch seed into conversation history'
       );
     }

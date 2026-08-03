@@ -481,6 +481,25 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
+    it('should still dispatch the reply when the workflow dispatch seed lookup fails', async () => {
+      const { handler, conversationService, workflowAgentDispatchRepository, bridgeExecutor } = makeHandler();
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowAgentDispatchRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      // Workflow origin context is optional enrichment — losing it must not drop the user's reply.
+      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
+
     it('should retry workflow dispatch hydration on later replies when the conversation already exists', async () => {
       const {
         handler,
