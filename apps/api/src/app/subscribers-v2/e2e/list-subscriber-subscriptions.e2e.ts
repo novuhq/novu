@@ -1,5 +1,6 @@
 import { Novu } from '@novu/api';
 import { SubscriberEntity, TopicSubscribersRepository } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -165,5 +166,60 @@ describe('List subscriber subscriptions - /v2/subscribers/:subscriberId/subscrip
     expect(response.result.data).to.be.an('array').that.is.empty;
     expect(response.result.next).to.be.null;
     expect(response.result.previous).to.be.null;
+  });
+
+  it('should include preferences in subscription response', async () => {
+    const topicKey = `topic-key-preferences-${Date.now()}`;
+
+    await novuClient.topics.create({
+      key: topicKey,
+      name: 'Preferences Test Topic',
+    });
+
+    const workflow = await session.createTemplate({
+      name: 'List Subscriptions Workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test content',
+        },
+      ],
+    });
+
+    await novuClient.topics.subscriptions.create(
+      {
+        subscriberIds: [subscriber.subscriberId],
+        preferences: [
+          {
+            filter: { workflowIds: [workflow._id] },
+            enabled: true,
+          },
+        ],
+      },
+      topicKey
+    );
+
+    const response = await novuClient.subscribers.topics.list({
+      subscriberId: subscriber.subscriberId,
+      key: topicKey,
+    });
+
+    expect(response).to.exist;
+    expect(response.result.data.length).to.equal(1);
+
+    const subscription = response.result.data[0];
+    expect(subscription.preferences, 'Should include preferences').to.exist;
+    expect(subscription.preferences?.length, 'Should have at least one preference').to.be.greaterThan(0);
+    expect(subscription.preferences?.[0].enabled, 'Preference should be enabled').to.equal(true);
+    expect(subscription.preferences?.[0].workflow?.id, 'Should include workflow id').to.equal(workflow._id);
+
+    const getResponse = await novuClient.topics.subscriptions.getSubscription(
+      topicKey,
+      subscription.identifier as string
+    );
+
+    expect(getResponse.result.preferences?.length).to.equal(subscription.preferences?.length);
+    expect(getResponse.result.preferences?.[0].workflow?.id).to.equal(subscription.preferences?.[0].workflow?.id);
+    expect(getResponse.result.preferences?.[0].enabled).to.equal(subscription.preferences?.[0].enabled);
   });
 });
