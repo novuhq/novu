@@ -1,13 +1,18 @@
-import { TriggerOverrides } from '@novu/shared';
+import { PushProviderIdEnum, TriggerOverrides } from '@novu/shared';
 import { expect } from 'chai';
 import { combineProviderOverrides } from './send-message.base';
 
 const PROVIDER_ID = 'slack';
+const FCM_PROVIDER_ID = PushProviderIdEnum.FCM;
 
 type ProviderData = Record<string, unknown>;
 
+function bridgeFor(providerId: string, providerData: ProviderData) {
+  return { providers: { [providerId]: providerData } };
+}
+
 function bridge(providerData: ProviderData) {
-  return { providers: { [PROVIDER_ID]: providerData } };
+  return bridgeFor(PROVIDER_ID, providerData);
 }
 
 /** `TriggerOverrides.providers` is a total record over every provider id, so one-provider literals need the cast. */
@@ -208,6 +213,94 @@ describe('combineProviderOverrides', () => {
     expect(combined).to.deep.equal({
       channel: 'C_ATTACKER',
       _passthrough: { body: { channel: 'C_SMUGGLED', unfurl_links: false } },
+    });
+  });
+
+  describe('exclusive FCM routing-key groups', () => {
+    it('evicts bridge topic when trigger providers set tokens', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'a', notification: { body: 'x' } }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'] } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ tokens: ['t1'], notification: { body: 'x' } });
+    });
+
+    it('evicts workflow-global tokens and bridge topic when step-scoped sets topic', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'bridge-topic', notification: { title: 'hi' } }),
+        triggerOverrides({
+          providers: { [FCM_PROVIDER_ID]: { tokens: ['t1'], data: { from: 'global' } } },
+          steps: { step_1: { providers: { [FCM_PROVIDER_ID]: { topic: 'step-topic' } } } },
+        }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({
+        topic: 'step-topic',
+        notification: { title: 'hi' },
+        data: { from: 'global' },
+      });
+    });
+
+    it('keeps bridge topic when the trigger has no routing keys', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, { topic: 'a' }),
+        triggerOverrides({ providers: { [FCM_PROVIDER_ID]: { data: { k: 'v' } } } }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({ topic: 'a', data: { k: 'v' } });
+    });
+
+    it('still deep-merges non-routing keys across layers', () => {
+      const combined = combineProviderOverrides(
+        bridgeFor(FCM_PROVIDER_ID, {
+          topic: 'a',
+          notification: { title: 'bridge', body: 'bridge-body' },
+          data: { keep: true },
+        }),
+        triggerOverrides({
+          providers: {
+            [FCM_PROVIDER_ID]: {
+              tokens: ['t1'],
+              notification: { body: 'trigger-body' },
+              data: { added: 'yes' },
+            },
+          },
+        }),
+        'step_1',
+        FCM_PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({
+        tokens: ['t1'],
+        notification: { title: 'bridge', body: 'trigger-body' },
+        data: { keep: true, added: 'yes' },
+      });
+    });
+
+    it('leaves providers without exclusive groups unchanged', () => {
+      const combined = combineProviderOverrides(
+        bridge({ channel: 'C_BRIDGE', text: 'hi', metadata: { a: 1 } }),
+        triggerOverrides({
+          providers: { [PROVIDER_ID]: { token: 'xoxb-global' } },
+          steps: { step_1: { providers: { [PROVIDER_ID]: { channel: 'C_STEP', metadata: { b: 2 } } } } },
+        }),
+        'step_1',
+        PROVIDER_ID
+      );
+
+      expect(combined).to.deep.equal({
+        channel: 'C_STEP',
+        text: 'hi',
+        token: 'xoxb-global',
+        metadata: { a: 1, b: 2 },
+      });
     });
   });
 });
