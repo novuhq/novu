@@ -1,5 +1,7 @@
+import { Braces } from 'lucide-react';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import Title from '@/components/Title';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import {
   FCM_SW_VERSION,
   type FcmPushMessage,
@@ -54,6 +56,25 @@ function ActionFeedback({ status }: { status: ActionStatus }) {
   }
 
   return null;
+}
+
+function ReceivedPayloadHover({ raw }: { raw: unknown }) {
+  return (
+    <HoverCard closeDelay={100} openDelay={200}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+          aria-label="View full push payload received on device"
+        >
+          <Braces className="h-4 w-4" />
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="end" className="w-auto max-w-md p-0">
+        <pre className={`max-h-80 overflow-auto p-3 ${monoClass}`}>{JSON.stringify(raw, null, 2)}</pre>
+      </HoverCardContent>
+    </HoverCard>
+  );
 }
 
 export default function FcmWebPushPage() {
@@ -505,7 +526,9 @@ export default function FcmWebPushPage() {
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Received messages</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             The service worker displays an OS notification for every push and forwards the payload here, so this works
-            whether or not the playground is the focused tab.
+            whether or not the playground is the focused tab. Hover the{' '}
+            <Braces className="inline h-3.5 w-3.5 align-text-bottom" aria-hidden /> icon on a message to inspect the
+            full payload received on the device.
           </p>
           {messages.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">No messages received yet.</p>
@@ -513,12 +536,14 @@ export default function FcmWebPushPage() {
             <ul className="mt-3 space-y-2">
               {messages.map((message) => (
                 <li key={`${message.receivedAt}-${message.title ?? ''}`} className="rounded-md bg-muted p-3 text-sm">
-                  <div className="font-medium">{message.title || '(no title)'}</div>
-                  <div className="text-muted-foreground">{message.body || '(no body)'}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{message.receivedAt}</div>
-                  {message.data && Object.keys(message.data).length > 0 && (
-                    <pre className={`mt-2 ${monoClass}`}>{JSON.stringify(message.data, null, 2)}</pre>
-                  )}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">{message.title || '(no title)'}</div>
+                      <div className="text-muted-foreground">{message.body || '(no body)'}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">{message.receivedAt}</div>
+                    </div>
+                    <ReceivedPayloadHover raw={message.raw} />
+                  </div>
                 </li>
               ))}
             </ul>
