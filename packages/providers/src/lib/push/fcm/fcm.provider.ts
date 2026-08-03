@@ -9,7 +9,7 @@ import { WithPassthrough } from '../../../utils/types';
 export class FcmPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.FCM;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
-  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
+  protected casing: CasingEnum = CasingEnum.NONE;
 
   private readonly INVALID_TOKEN_ERRORS = ['Requested entity was not found'];
 
