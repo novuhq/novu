@@ -59,6 +59,65 @@ function assertRoutingKeysAreAbsent(schema: JSONSchemaDto): void {
 }
 
 /**
+ * After `inlineRootNode`, `expose: 'all'` still leaves the original root alias (e.g. `BaseMessage`)
+ * as an unreferenced definition. Drop those so committed artifacts stay lean.
+ */
+function pruneUnreferencedDefinitions(schema: JSONSchemaDto): JSONSchemaDto {
+  const definitions = { ...(schema.definitions ?? {}) };
+  const referenced = new Set<string>();
+
+  function visit(value: unknown): void {
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        visit(entry);
+      }
+
+      return;
+    }
+
+    if (value === null || typeof value !== 'object') {
+      return;
+    }
+
+    const node = value as Record<string, unknown>;
+    if (typeof node.$ref === 'string') {
+      referenced.add(definitionKeyOf(node.$ref));
+    }
+
+    for (const child of Object.values(node)) {
+      visit(child);
+    }
+  }
+
+  visit({ ...schema, definitions: undefined });
+
+  let growing = true;
+  while (growing) {
+    const before = referenced.size;
+    for (const name of [...referenced]) {
+      visit(definitions[name]);
+    }
+    growing = referenced.size > before;
+  }
+
+  const pruned = Object.fromEntries(
+    Object.keys(definitions)
+      .filter((name) => referenced.has(name))
+      .sort()
+      .map((name) => {
+        const definition = definitions[name];
+        if (definition === undefined) {
+          throw new Error(`Missing definition \`${name}\` while pruning unreferenced schemas.`);
+        }
+
+        return [name, definition];
+      })
+  );
+
+  return { ...schema, definitions: pruned };
+}
+
+/**
  * `firebase-admin/messaging` package entry does not always expand under `ts-json-schema-generator`
  * (nested types can become `{}`). Pointing `paths` at the resolved messaging declarations makes
  * the generator follow the real `.d.ts` files the same way a relative import into the package does.
@@ -116,7 +175,7 @@ export function buildFcmOverrideSchemas(): {
   };
 
   const generated = createGenerator(config).createSchema(ROOT_TYPE) as JSONSchemaDto;
-  const schema = [inlineRootNode, makeEveryTopLevelKeyOptional].reduce<JSONSchemaDto>(
+  const schema = [inlineRootNode, makeEveryTopLevelKeyOptional, pruneUnreferencedDefinitions].reduce<JSONSchemaDto>(
     (current, step) => step(current),
     generated
   );

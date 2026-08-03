@@ -31,52 +31,6 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
   },
   "additionalProperties": false,
   "definitions": {
-    "BaseMessage": {
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "notification": {
-          "$ref": "#/definitions/Notification"
-        },
-        "android": {
-          "$ref": "#/definitions/AndroidConfig"
-        },
-        "webpush": {
-          "$ref": "#/definitions/WebpushConfig"
-        },
-        "apns": {
-          "$ref": "#/definitions/ApnsConfig"
-        },
-        "fcmOptions": {
-          "$ref": "#/definitions/FcmOptions"
-        }
-      },
-      "additionalProperties": false
-    },
-    "Notification": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string",
-          "description": "The title of the notification."
-        },
-        "body": {
-          "type": "string",
-          "description": "The notification body"
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of an image to be displayed in the notification."
-        }
-      },
-      "additionalProperties": false,
-      "description": "A notification that can be included in  {@link  Message } ."
-    },
     "AndroidConfig": {
       "type": "object",
       "properties": {
@@ -122,6 +76,17 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
       },
       "additionalProperties": false,
       "description": "Represents the Android-specific options that can be included in an  {@link  Message } ."
+    },
+    "AndroidFcmOptions": {
+      "type": "object",
+      "properties": {
+        "analyticsLabel": {
+          "type": "string",
+          "description": "The label associated with the message's analytics data."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Represents options for features provided by the FCM SDK for Android."
     },
     "AndroidNotification": {
       "type": "object",
@@ -261,183 +226,6 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
       "additionalProperties": false,
       "description": "Represents the Android-specific notification options that can be included in  {@link  AndroidConfig } ."
     },
-    "LightSettings": {
-      "type": "object",
-      "properties": {
-        "color": {
-          "type": "string",
-          "description": "Required. Sets color of the LED in `#rrggbb` or `#rrggbbaa` format."
-        },
-        "lightOnDurationMillis": {
-          "type": "number",
-          "description": "Required. Along with `light_off_duration`, defines the blink rate of LED flashes."
-        },
-        "lightOffDurationMillis": {
-          "type": "number",
-          "description": "Required. Along with `light_on_duration`, defines the blink rate of LED flashes."
-        }
-      },
-      "required": [
-        "color",
-        "lightOnDurationMillis",
-        "lightOffDurationMillis"
-      ],
-      "additionalProperties": false,
-      "description": "Represents settings to control notification LED that can be included in  {@link  AndroidNotification } ."
-    },
-    "AndroidFcmOptions": {
-      "type": "object",
-      "properties": {
-        "analyticsLabel": {
-          "type": "string",
-          "description": "The label associated with the message's analytics data."
-        }
-      },
-      "additionalProperties": false,
-      "description": "Represents options for features provided by the FCM SDK for Android."
-    },
-    "WebpushConfig": {
-      "type": "object",
-      "properties": {
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "A collection of WebPush headers. Header values must be strings.\n\nSee  {@link  https://tools.ietf.org/html/rfc8030#section-5 WebPush specification }  for supported headers."
-        },
-        "data": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "A collection of data fields."
-        },
-        "notification": {
-          "$ref": "#/definitions/WebpushNotification",
-          "description": "A WebPush notification payload to be included in the message."
-        },
-        "fcmOptions": {
-          "$ref": "#/definitions/WebpushFcmOptions",
-          "description": "Options for features provided by the FCM SDK for Web."
-        }
-      },
-      "additionalProperties": false,
-      "description": "Represents the WebPush protocol options that can be included in an  {@link  Message } ."
-    },
-    "WebpushNotification": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string",
-          "description": "Title text of the notification."
-        },
-        "actions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "action": {
-                "type": "string",
-                "description": "An action available to the user when the notification is presented"
-              },
-              "icon": {
-                "type": "string",
-                "description": "Optional icon for a notification action."
-              },
-              "title": {
-                "type": "string",
-                "description": "Title of the notification action."
-              }
-            },
-            "required": [
-              "action",
-              "title"
-            ],
-            "additionalProperties": false
-          },
-          "description": "An array of notification actions representing the actions available to the user when the notification is presented."
-        },
-        "badge": {
-          "type": "string",
-          "description": "URL of the image used to represent the notification when there is not enough space to display the notification itself."
-        },
-        "body": {
-          "type": "string",
-          "description": "Body text of the notification."
-        },
-        "data": {
-          "description": "Arbitrary data that you want associated with the notification. This can be of any data type."
-        },
-        "dir": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "ltr",
-            "rtl"
-          ],
-          "description": "The direction in which to display the notification. Must be one of `auto`, `ltr` or `rtl`."
-        },
-        "icon": {
-          "type": "string",
-          "description": "URL to the notification icon."
-        },
-        "image": {
-          "type": "string",
-          "description": "URL of an image to be displayed in the notification."
-        },
-        "lang": {
-          "type": "string",
-          "description": "The notification's language as a BCP 47 language tag."
-        },
-        "renotify": {
-          "type": "boolean",
-          "description": "A boolean specifying whether the user should be notified after a new notification replaces an old one. Defaults to false."
-        },
-        "requireInteraction": {
-          "type": "boolean",
-          "description": "Indicates that a notification should remain active until the user clicks or dismisses it, rather than closing automatically. Defaults to false."
-        },
-        "silent": {
-          "type": "boolean",
-          "description": "A boolean specifying whether the notification should be silent. Defaults to false."
-        },
-        "tag": {
-          "type": "string",
-          "description": "An identifying tag for the notification."
-        },
-        "timestamp": {
-          "type": "number",
-          "description": "Timestamp of the notification. Refer to https://developer.mozilla.org/en-US/docs/Web/API/notification/timestamp for details."
-        },
-        "vibrate": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "array",
-              "items": {
-                "type": "number"
-              }
-            }
-          ],
-          "description": "A vibration pattern for the device's vibration hardware to emit when the notification fires."
-        }
-      },
-      "description": "Represents the WebPush-specific notification options that can be included in  {@link  WebpushConfig } . This supports most of the standard options as defined in the Web Notification  {@link  https://developer.mozilla.org/en-US/docs/Web/API/notification/Notification specification } ."
-    },
-    "WebpushFcmOptions": {
-      "type": "object",
-      "properties": {
-        "link": {
-          "type": "string",
-          "description": "The link to open when the user clicks on the notification. For all URL values, HTTPS is required."
-        }
-      },
-      "additionalProperties": false,
-      "description": "Represents options for features provided by the FCM SDK for Web (which are not part of the Webpush standard)."
-    },
     "ApnsConfig": {
       "type": "object",
       "properties": {
@@ -459,6 +247,21 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
       },
       "additionalProperties": false,
       "description": "Represents the APNs-specific options that can be included in an  {@link  Message } . Refer to  {@link  https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/CommunicatingwithAPNs.html  }  * Apple documentation} for various headers and payload fields supported by APNs."
+    },
+    "ApnsFcmOptions": {
+      "type": "object",
+      "properties": {
+        "analyticsLabel": {
+          "type": "string",
+          "description": "The label associated with the message's analytics data."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of an image to be displayed in the notification."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Represents options for features provided by the FCM SDK for iOS."
     },
     "ApnsPayload": {
       "type": "object",
@@ -591,21 +394,6 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
       "additionalProperties": false,
       "description": "Represents a critical sound configuration that can be included in the `aps` dictionary of an APNs payload."
     },
-    "ApnsFcmOptions": {
-      "type": "object",
-      "properties": {
-        "analyticsLabel": {
-          "type": "string",
-          "description": "The label associated with the message's analytics data."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of an image to be displayed in the notification."
-        }
-      },
-      "additionalProperties": false,
-      "description": "Represents options for features provided by the FCM SDK for iOS."
-    },
     "FcmOptions": {
       "type": "object",
       "properties": {
@@ -616,6 +404,191 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
       },
       "additionalProperties": false,
       "description": "Represents platform-independent options for features provided by the FCM SDKs."
+    },
+    "LightSettings": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "description": "Required. Sets color of the LED in `#rrggbb` or `#rrggbbaa` format."
+        },
+        "lightOnDurationMillis": {
+          "type": "number",
+          "description": "Required. Along with `light_off_duration`, defines the blink rate of LED flashes."
+        },
+        "lightOffDurationMillis": {
+          "type": "number",
+          "description": "Required. Along with `light_on_duration`, defines the blink rate of LED flashes."
+        }
+      },
+      "required": [
+        "color",
+        "lightOnDurationMillis",
+        "lightOffDurationMillis"
+      ],
+      "additionalProperties": false,
+      "description": "Represents settings to control notification LED that can be included in  {@link  AndroidNotification } ."
+    },
+    "Notification": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the notification."
+        },
+        "body": {
+          "type": "string",
+          "description": "The notification body"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of an image to be displayed in the notification."
+        }
+      },
+      "additionalProperties": false,
+      "description": "A notification that can be included in  {@link  Message } ."
+    },
+    "WebpushConfig": {
+      "type": "object",
+      "properties": {
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A collection of WebPush headers. Header values must be strings.\n\nSee  {@link  https://tools.ietf.org/html/rfc8030#section-5 WebPush specification }  for supported headers."
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "A collection of data fields."
+        },
+        "notification": {
+          "$ref": "#/definitions/WebpushNotification",
+          "description": "A WebPush notification payload to be included in the message."
+        },
+        "fcmOptions": {
+          "$ref": "#/definitions/WebpushFcmOptions",
+          "description": "Options for features provided by the FCM SDK for Web."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Represents the WebPush protocol options that can be included in an  {@link  Message } ."
+    },
+    "WebpushFcmOptions": {
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "description": "The link to open when the user clicks on the notification. For all URL values, HTTPS is required."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Represents options for features provided by the FCM SDK for Web (which are not part of the Webpush standard)."
+    },
+    "WebpushNotification": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title text of the notification."
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "description": "An action available to the user when the notification is presented"
+              },
+              "icon": {
+                "type": "string",
+                "description": "Optional icon for a notification action."
+              },
+              "title": {
+                "type": "string",
+                "description": "Title of the notification action."
+              }
+            },
+            "required": [
+              "action",
+              "title"
+            ],
+            "additionalProperties": false
+          },
+          "description": "An array of notification actions representing the actions available to the user when the notification is presented."
+        },
+        "badge": {
+          "type": "string",
+          "description": "URL of the image used to represent the notification when there is not enough space to display the notification itself."
+        },
+        "body": {
+          "type": "string",
+          "description": "Body text of the notification."
+        },
+        "data": {
+          "description": "Arbitrary data that you want associated with the notification. This can be of any data type."
+        },
+        "dir": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ltr",
+            "rtl"
+          ],
+          "description": "The direction in which to display the notification. Must be one of `auto`, `ltr` or `rtl`."
+        },
+        "icon": {
+          "type": "string",
+          "description": "URL to the notification icon."
+        },
+        "image": {
+          "type": "string",
+          "description": "URL of an image to be displayed in the notification."
+        },
+        "lang": {
+          "type": "string",
+          "description": "The notification's language as a BCP 47 language tag."
+        },
+        "renotify": {
+          "type": "boolean",
+          "description": "A boolean specifying whether the user should be notified after a new notification replaces an old one. Defaults to false."
+        },
+        "requireInteraction": {
+          "type": "boolean",
+          "description": "Indicates that a notification should remain active until the user clicks or dismisses it, rather than closing automatically. Defaults to false."
+        },
+        "silent": {
+          "type": "boolean",
+          "description": "A boolean specifying whether the notification should be silent. Defaults to false."
+        },
+        "tag": {
+          "type": "string",
+          "description": "An identifying tag for the notification."
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Timestamp of the notification. Refer to https://developer.mozilla.org/en-US/docs/Web/API/notification/timestamp for details."
+        },
+        "vibrate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          ],
+          "description": "A vibration pattern for the device's vibration hardware to emit when the notification fires."
+        }
+      },
+      "description": "Represents the WebPush-specific notification options that can be included in  {@link  WebpushConfig } . This supports most of the standard options as defined in the Web Notification  {@link  https://developer.mozilla.org/en-US/docs/Web/API/notification/Notification specification } ."
     }
   }
 };

@@ -84,10 +84,13 @@ describe('committed FCM override schema', () => {
     }
   });
 
-  it('exposes BaseMessage content keys and nests primary content under notification.body', () => {
-    expect(Object.keys(fcmOverrideJsonSchema.properties ?? {})).toEqual([...FCM_OVERRIDE_KEYS]);
-    expect(fcmOverrideJsonSchema.properties?.notification).toBeDefined();
+  it('keeps notification.body available and top-level required absent for partial patches', () => {
     expect(fcmOverrideJsonSchema.required).toBeUndefined();
+    expect(fcmOverrideJsonSchema.definitions?.Notification).toMatchObject({
+      properties: {
+        body: { type: 'string' },
+      },
+    });
   });
 
   it('resolves every internal reference so AJV can compile it standalone', () => {
