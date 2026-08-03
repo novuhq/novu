@@ -8,6 +8,12 @@ export enum CasingEnum {
   SNAKE_CASE = 'snake_case',
   KEBAB_CASE = 'kebab-case',
   CONSTANT_CASE = 'CONSTANT_CASE',
+  /**
+   * Identity transform — leave keys and nested maps unchanged.
+   * Use when the provider SDK expects the framework's native casing
+   * (e.g. firebase-admin v1 camelCase) and performs its own wire renames.
+   */
+  NONE = 'none',
 }
 
 type MergedPassthrough<T> = {
@@ -27,6 +33,7 @@ export abstract class BaseProvider {
    * - snake_case
    * - kebab-case
    * - CONSTANT_CASE
+   * - none (identity — no key rename)
    */
   protected abstract casing: CasingEnum;
 
@@ -124,8 +131,12 @@ export abstract class BaseProvider {
       case CasingEnum.CAMEL_CASE:
         casing = camelCase;
         break;
-      default:
-        throw new Error(`Unknown casing: ${this.casing}`);
+      case CasingEnum.NONE:
+        return data;
+      default: {
+        const _exhaustiveCheck: never = this.casing;
+        throw new Error(`Unknown casing: ${_exhaustiveCheck}`);
+      }
     }
 
     return casing(data, {

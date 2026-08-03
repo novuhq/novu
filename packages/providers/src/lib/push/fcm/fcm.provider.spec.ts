@@ -1,5 +1,5 @@
 import { IPushOptions } from '@novu/stateless';
-import app from 'firebase-admin/app';
+import { cert, initializeApp } from 'firebase-admin/app';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { FcmPushProvider } from './fcm.provider';
@@ -62,7 +62,7 @@ vi.mock('firebase-admin', async (importOriginal) => {
   };
 });
 
-describe.skip('FcmPushProvider', () => {
+describe('FcmPushProvider', () => {
   let provider: FcmPushProvider;
   let spy: ReturnType<typeof vi.spyOn>;
   const subscriber = {};
@@ -109,8 +109,8 @@ describe.skip('FcmPushProvider', () => {
         },
       }
     );
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -118,7 +118,59 @@ describe.skip('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
-      registration_ids: ['test'],
+      registrationIds: ['test'],
+      android: undefined,
+      apns: undefined,
+      fcmOptions: undefined,
+      webpush: undefined,
+      data: {},
+    });
+  });
+
+  test('should preserve camelCase and nested bridge keys with NONE casing', async () => {
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        fcmOptions: {
+          analyticsLabel: 'checkout',
+        },
+        apns: {
+          headers: {
+            'apns-priority': '10',
+          },
+        },
+        data: {
+          orderId: 'ord_123',
+        },
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      tokens: ['tester'],
+      android: undefined,
+      webpush: undefined,
+      fcmOptions: {
+        analyticsLabel: 'checkout',
+      },
+      apns: {
+        headers: {
+          'apns-priority': '10',
+        },
+      },
+      data: {
+        orderId: 'ord_123',
+      },
     });
   });
 
@@ -139,8 +191,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -178,8 +230,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -226,8 +278,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -235,6 +287,10 @@ describe.skip('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
+      android: undefined,
+      fcmOptions: undefined,
+      webpush: undefined,
+      data: {},
       apns: {
         payload: {
           aps: {
@@ -280,8 +336,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -330,8 +386,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -385,8 +441,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -420,8 +476,8 @@ describe.skip('FcmPushProvider', () => {
           subscriber,
           step,
         });
-        expect(app.initializeApp).toHaveBeenCalledTimes(1);
-        expect(app.cert).toHaveBeenCalledTimes(1);
+        expect(initializeApp).toHaveBeenCalledTimes(1);
+        expect(cert).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalled();
         expect(spy).toHaveBeenCalledWith({
           tokens: [token],
@@ -460,8 +516,8 @@ describe.skip('FcmPushProvider', () => {
         },
       }
     );
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -469,7 +525,12 @@ describe.skip('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester', 'tokens'],
-      registration_ids: ['test'],
+      registrationIds: ['test'],
+      android: undefined,
+      apns: undefined,
+      fcmOptions: undefined,
+      webpush: undefined,
+      data: {},
     });
   });
 });
