@@ -2,9 +2,18 @@ import { PushProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import crypto from 'crypto';
 import { cert, deleteApp, getApp, initializeApp } from 'firebase-admin/app';
-import { getMessaging, Messaging, MulticastMessage, TopicMessage } from 'firebase-admin/messaging';
+import {
+  ConditionMessage,
+  getMessaging,
+  Messaging,
+  MulticastMessage,
+  TokenMessage,
+  TopicMessage,
+} from 'firebase-admin/messaging';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+
+type FcmRoutingBody = Partial<TokenMessage & MulticastMessage & TopicMessage & ConditionMessage>;
 
 export class FcmPushProvider extends BaseProvider implements IPushProvider {
   id = PushProviderIdEnum.FCM;
@@ -58,29 +67,49 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     const payload = this.cleanPayload(options.payload);
     const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
-    const transformedBase = this.transform<MulticastMessage | TopicMessage>(bridgeProviderData, {});
+    const transformedBase = this.transform<FcmRoutingBody>(bridgeProviderData, {});
+    const routing = (transformedBase?.body ?? {}) as FcmRoutingBody;
 
-    const commonProps: Partial<MulticastMessage & TopicMessage> = {
+    const commonProps: Partial<MulticastMessage & TopicMessage & TokenMessage & ConditionMessage> = {
       android,
       apns,
       fcmOptions,
       webpush,
     };
 
+    const notificationPayload = {
+      notification: {
+        title: options.title,
+        body: options.content,
+      },
+      data: { ...novuData, ...data },
+      ...commonProps,
+    };
+
     let res;
 
-    if ((transformedBase?.body as TopicMessage).topic) {
+    // Defensive precedence: token > tokens > topic > condition
+    if (routing.token) {
+      const tokenMessage = this.transform<TokenMessage>(bridgeProviderData, {
+        token: routing.token,
+        ...notificationPayload,
+      }).body;
+
+      res = await this.messaging.send(tokenMessage);
+    } else if (!routing.tokens && routing.topic) {
       const topicMessage = this.transform<TopicMessage>(bridgeProviderData, {
-        topic: (transformedBase.body as TopicMessage).topic,
-        notification: {
-          title: options.title,
-          body: options.content,
-        },
-        data: { ...novuData, ...data },
-        ...commonProps,
+        topic: routing.topic,
+        ...notificationPayload,
       }).body;
 
       res = await this.messaging.send(topicMessage);
+    } else if (!routing.tokens && routing.condition) {
+      const conditionMessage = this.transform<ConditionMessage>(bridgeProviderData, {
+        condition: routing.condition,
+        ...notificationPayload,
+      }).body;
+
+      res = await this.messaging.send(conditionMessage);
     } else {
       const multicastConfig: Partial<MulticastMessage> = {
         tokens: options.target,
@@ -115,7 +144,8 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     const app = getApp(this.appName);
     await deleteApp(app);
 
-    if (res.successCount === 0) {
+    // MulticastBatchResponse only; string message ids from send() leave successCount undefined
+    if (typeof res !== 'string' && res.successCount === 0) {
       throw new Error(
         `Sending message failed due to "${res.responses.find((i) => i.success === false).error.message}"`
       );
