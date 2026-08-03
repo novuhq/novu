@@ -31,12 +31,21 @@ export class UpsertTopicUseCase {
           data: command.data ?? undefined,
         });
       } catch (error: unknown) {
-        if (this.isDuplicateKeyError(error)) {
-          topic = await this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
-          created = false;
-        } else {
+        if (!this.isDuplicateKeyError(error)) {
           throw error;
         }
+
+        if (command.failIfExists) {
+          throw new ConflictException(`Topic with key "${command.key}" already exists`);
+        }
+
+        const existingTopic = await this.topicRepository.findTopicByKey(
+          command.key,
+          command.organizationId,
+          command.environmentId
+        );
+        created = false;
+        topic = existingTopic ? await this.applyTopicUpdate(existingTopic._id, command) : existingTopic;
       }
     } else {
       topic = await this.applyTopicUpdate(topic._id, command);
