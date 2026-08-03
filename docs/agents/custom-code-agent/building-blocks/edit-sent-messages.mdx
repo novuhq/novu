@@ -14,6 +14,7 @@ That is not a [reply type](/agents/custom-code-agent/building-blocks/reply); it 
 | --- | --- | --- | --- | --- | --- |
 | Message edits in place | Yes | Yes | Yes | Yes | No |
 | Plan card via edit-in-place | Native plan card | Markdown edit-in-place | No | Markdown edit-in-place | No |
+| Outbound file attachments on edit | Yes | Yes | Not yet | Not yet | Not yet |
 
 See [Channels overview](/agents/channels/overview) for the full matrix.
 
@@ -29,7 +30,7 @@ await sentMessage.edit('Done! Here are your results.');
 
 ## Edit with attachments
 
-You can attach files when editing plain text or markdown content. The next example attaches a file when updating the message text:
+You can attach files when editing plain text or markdown content. Outbound files are delivered on **Slack** and **Microsoft Teams**; other channels do not support them yet. See [Sending attachments](/agents/custom-code-agent/building-blocks/reply#sending-attachments).
 
 ```tsx
 await sentMessage.edit('Updated report attached.', {

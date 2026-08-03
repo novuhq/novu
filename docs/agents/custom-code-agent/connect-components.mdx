@@ -97,8 +97,9 @@ const MsTeamsConnectButtonComponent = () => {
         connectionMode="subscriber"
         connectLabel="Install agent ↗"
         connectedLabel="Connected to MS Teams"
-        onConnectSuccess={() => {
+        onConnectSuccess={(connectionIdentifier) => {
           // Workspace linked
+          console.log('Connected', connectionIdentifier);
         }}
         onConnectError={(error: unknown) => {
           console.error(error);
@@ -137,7 +138,7 @@ Optional reference: https://docs.novu.co/agents/custom-code-agent/connect-compon
 | `subscriberId` | `string` | Optional. Defaults to the `NovuProvider` subscriber. |
 | `connectionMode` | `ConnectionMode` | e.g. `subscriber`. |
 | `autoLinkUser` | `boolean` | Defaults to `true` in subscriber mode. |
-| `onConnectSuccess` | `() => void` | Called after consent succeeds. |
+| `onConnectSuccess` | `(connectionIdentifier: string) => void` | Called with the connection identifier after consent succeeds. |
 | `onConnectError` | `(error: unknown) => void` | Called when consent or link fails. |
 | `onDisconnectSuccess` | `() => void` | Called after disconnect. |
 | `onDisconnectError` | `(error: unknown) => void` | Called when disconnect fails. |
