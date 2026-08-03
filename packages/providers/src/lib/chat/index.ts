@@ -1,4 +1,5 @@
 export { cardToFallbackMarkdown } from './card-render.utils';
+export { getChatCardValidator, type ChatCardValidator } from './card-validators';
 export * from './chat-webhook/chat-webhook.provider';
 export * from './discord/discord.provider';
 export * from './getstream/getstream.provider';

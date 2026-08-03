@@ -1,8 +1,12 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { ControlValuesRepository } from '@novu/dal';
+import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
+import { getChatCardValidator } from '@novu/providers';
 import {
+  CardElement,
+  ChannelTypeEnum,
   ContentIssueEnum,
   ControlValuesLevelEnum,
+  providers,
   ResourceOriginEnum,
   RuntimeIssue,
   StepIssuesDto,
@@ -15,7 +19,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { QueryIssueTypeEnum, QueryValidatorService } from '../../services/query-parser/query-validator.service';
-import { dashboardSanitizeControlValues } from '../../utils';
+import { compileMailyToCard, dashboardSanitizeControlValues, isStringifiedMailyJSONContent } from '../../utils';
 import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from '../../utils/issues';
 import { parseStepVariables } from '../../utils/parse-step-variables';
 import {
@@ -32,11 +36,16 @@ const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
 
+function getChatProviderDisplayName(providerId: string): string {
+  return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;
+}
+
 @Injectable()
 export class BuildStepIssuesUsecase {
   constructor(
     private buildAvailableVariableSchemaUsecase: BuildVariableSchemaUsecase,
     private controlValuesRepository: ControlValuesRepository,
+    private integrationRepository: IntegrationRepository,
     @Inject(forwardRef(() => TierRestrictionsValidateUsecase))
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private logger: PinoLogger
@@ -132,8 +141,86 @@ export class BuildStepIssuesUsecase {
     const skipLogicIssues = sanitizedControlValues?.skip
       ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
       : {};
+    const chatCardIssues = await this.processChatCardIssues(user, stepType, sanitizedControlValues || {});
 
-    return merge(schemaIssues, liquidIssues, providerOverrideIssues, customIssues, skipLogicIssues);
+    return merge(schemaIssues, liquidIssues, providerOverrideIssues, customIssues, skipLogicIssues, chatCardIssues);
+  }
+
+  /**
+   * Rich Chat: surface the deterministic, platform-limit card findings (e.g. Slack's 50-block cap)
+   * as `controls.body` step issues on save, mirroring the `validation` a provider's `render()` returns
+   * at delivery. The chat body is a stringified Maily/TipTap document that compiles to a
+   * provider-agnostic `CardElement`; each active chat provider's validator runs against it. Unresolved
+   * liquid variables stay as literal text, which is fine for the structural (block/button count) checks.
+   */
+  @Instrument()
+  private async processChatCardIssues(
+    user: UserSessionData,
+    stepType: StepTypeEnum,
+    controlValues: Record<string, unknown> | null
+  ): Promise<StepIssuesDto> {
+    if (stepType !== StepTypeEnum.CHAT) {
+      return {};
+    }
+
+    const body = controlValues?.body;
+    if (typeof body !== 'string' || !isStringifiedMailyJSONContent(body)) {
+      return {};
+    }
+
+    let card: CardElement;
+    try {
+      card = compileMailyToCard(JSON.parse(body));
+    } catch {
+      // An empty or structurally-invalid card throws on compile; empty bodies are already handled by
+      // the sanitize/schema passes, so there is no card-limit finding to surface here.
+      return {};
+    }
+
+    const targetProviderIds = await this.resolveActiveChatProviderIds(user);
+    if (targetProviderIds.length === 0) {
+      return {};
+    }
+
+    const annotateWithProvider = targetProviderIds.length > 1;
+    const seen = new Set<string>();
+    const cardIssues: RuntimeIssue[] = [];
+
+    for (const providerId of targetProviderIds) {
+      const validate = getChatCardValidator(providerId);
+      if (!validate) {
+        continue;
+      }
+
+      for (const finding of validate(card)) {
+        const dedupeKey = `${providerId}:${finding.code}`;
+        if (seen.has(dedupeKey)) {
+          continue;
+        }
+        seen.add(dedupeKey);
+
+        cardIssues.push({
+          issueType: ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED,
+          message: annotateWithProvider
+            ? `${getChatProviderDisplayName(providerId)}: ${finding.message}`
+            : finding.message,
+        });
+      }
+    }
+
+    return cardIssues.length > 0 ? { controls: { body: cardIssues } } : {};
+  }
+
+  @Instrument()
+  private async resolveActiveChatProviderIds(user: UserSessionData): Promise<string[]> {
+    const integrations = await this.integrationRepository.find({
+      _environmentId: user.environmentId,
+      _organizationId: user.organizationId,
+      channel: ChannelTypeEnum.CHAT,
+      active: true,
+    });
+
+    return [...new Set(integrations.map((integration) => integration.providerId))];
   }
 
   private async resolveProviderOverrides({

@@ -218,6 +218,62 @@ describe('Upsert Workflow #novu-v2', () => {
       expect(issues[0].issueType).to.equal(ContentIssueEnum.UNSUPPORTED_PROPERTY);
     });
 
+    it('should surface chat card platform-limit findings as body step issues', async () => {
+      // A Maily/TipTap body whose 51 paragraphs compile to 51 card blocks, exceeding Slack's 50-block cap.
+      const overLimitCard = JSON.stringify({
+        type: 'doc',
+        content: Array.from({ length: 51 }, (_, index) => ({
+          type: 'paragraph',
+          content: [{ type: 'text', text: `line ${index}` }],
+        })),
+      });
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Chat Card Limit Workflow',
+        workflowId: `chat-card-limit-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: { body: overLimitCard },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+
+      const bodyIssues = createResponse.body.data.steps[0].issues?.controls?.body;
+      expect(bodyIssues).to.exist;
+      expect(bodyIssues[0].issueType).to.equal(ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED);
+      expect(bodyIssues.some((issue: { message: string }) => issue.message.includes('50'))).to.equal(true);
+    });
+
+    it('should not surface chat card issues for a within-limit card', async () => {
+      const withinLimitCard = JSON.stringify({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+      });
+
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Chat Card Within Limit Workflow',
+        workflowId: `chat-card-within-limit-${randomUUID()}`,
+        active: true,
+        steps: [
+          {
+            name: 'Chat Step',
+            type: StepTypeEnum.CHAT,
+            controlValues: { body: withinLimitCard },
+          },
+        ],
+      });
+
+      expect(createResponse.status).to.equal(201);
+      expect(createResponse.body.data.steps[0].issues?.controls?.body).to.equal(undefined);
+    });
+
     it('should delete all provider override docs when providerOverrides is null', async () => {
       const createResponse = await session.testAgent.post('/v2/workflows').send({
         __source: WorkflowCreationSourceEnum.Editor,
