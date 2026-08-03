@@ -327,10 +327,20 @@ describe('processProviderOverridesIssues', () => {
     expect(issues.controls?.['providerOverrides.fcm']).toEqual([
       {
         message: 'Only one of token, tokens, topic, condition is allowed',
-        issueType: ContentIssueEnum.MISSING_VALUE,
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.fcm',
       },
     ]);
+  });
+
+  it('accepts a single FCM routing key with Liquid', () => {
+    const issues = processProviderOverridesIssues({
+      [PushProviderIdEnum.FCM]: {
+        topic: 'org-{{subscriber.data.orgId}}',
+      },
+    });
+
+    expect(issues.controls).toBeUndefined();
   });
 
   it('keeps unrelated FCM schema issues when routing keys conflict', () => {
@@ -345,7 +355,7 @@ describe('processProviderOverridesIssues', () => {
     expect(issues.controls?.['providerOverrides.fcm']).toEqual([
       {
         message: 'Only one of token, tokens, topic, condition is allowed',
-        issueType: ContentIssueEnum.MISSING_VALUE,
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.fcm',
       },
     ]);

@@ -25,11 +25,9 @@ import {
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FCM_ROUTING_KEYS,
   getProviderOverrideConfig,
   ITenantDefine,
   ProvidersIdEnum,
-  PushProviderIdEnum,
   providers,
   SmsProviderIdEnum,
   TriggerOverrides,
@@ -98,19 +96,8 @@ function applyExclusiveKeyGroups(
   return result;
 }
 
-/** Prefer registry `exclusiveKeyGroups`; FCM keeps a local fallback if the config omits them. */
 function resolveExclusiveKeyGroups(integrationId: string): readonly (readonly string[])[] {
-  const fromRegistry = getProviderOverrideConfig(integrationId)?.exclusiveKeyGroups;
-
-  if (fromRegistry?.length) {
-    return fromRegistry;
-  }
-
-  if (integrationId === PushProviderIdEnum.FCM) {
-    return [FCM_ROUTING_KEYS];
-  }
-
-  return [];
+  return getProviderOverrideConfig(integrationId)?.exclusiveKeyGroups ?? [];
 }
 
 /**

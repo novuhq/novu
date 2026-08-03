@@ -47,6 +47,12 @@ import { IPushOptions } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
+import {
+  extractPushRoutingCredentials,
+  hasTokenlessRoutingOverride,
+  type PushProviderOverride,
+  upsertMergedFcmRoutingOverride,
+} from './fcm-routing-overrides';
 import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
@@ -86,11 +92,6 @@ export function serializePushProviderError(error: unknown): string {
   }
 
   return JSON.stringify({ message: String(error ?? '') });
-}
-
-interface IPushProviderOverride {
-  providerId: PushProviderIdEnum;
-  overrides: Record<string, unknown>;
 }
 
 @Injectable()
@@ -471,10 +472,10 @@ export class SendMessagePush extends SendMessageBase {
    * Collects push provider overrides from trigger overrides and merged bridge data
    * (content overrides carry FCM routing keys on bridgeData.providers).
    */
-  private getPushProviderOverrides(command: SendMessageChannelCommand): IPushProviderOverride[] {
+  private getPushProviderOverrides(command: SendMessageChannelCommand): PushProviderOverride[] {
     const overrides = command.overrides;
     const stepId = command.step?.stepId || '';
-    const result: IPushProviderOverride[] = [];
+    const result: PushProviderOverride[] = [];
 
     if (overrides?.providers) {
       for (const providerId of Object.keys(overrides.providers)) {
@@ -514,55 +515,19 @@ export class SendMessagePush extends SendMessageBase {
       }
     }
 
-    const mergedFcmOverrides = combineProviderOverrides(
-      command.bridgeData,
-      command.overrides,
-      command.step?.stepId,
-      PushProviderIdEnum.FCM
-    );
-
-    if (this.hasProviderSpecificOverrides(PushProviderIdEnum.FCM, mergedFcmOverrides)) {
-      const existingIndex = result.findIndex((item) => item.providerId === PushProviderIdEnum.FCM);
-
-      if (existingIndex >= 0) {
-        result[existingIndex].overrides = mergedFcmOverrides;
-      } else {
-        result.push({
-          providerId: PushProviderIdEnum.FCM,
-          overrides: mergedFcmOverrides,
-        });
-      }
-    }
+    upsertMergedFcmRoutingOverride(result, command);
 
     return result;
-  }
-
-  /**
-   * Checks if specific overrides keys exist based on the delivery provider.
-   * This solution is not ideal, as we expose provider related concerns in the usecase layer.
-   * We will have to revisit this once we have a more flexible way to handle overrides and push providers.
-   */
-  private hasProviderSpecificOverrides(providerId: PushProviderIdEnum, overrides: Record<string, unknown>): boolean {
-    if (!overrides) return false;
-
-    switch (providerId) {
-      case PushProviderIdEnum.FCM:
-        return 'token' in overrides || 'tokens' in overrides || 'topic' in overrides || 'condition' in overrides;
-      default:
-        return false;
-    }
   }
 
   /**
    * Filters the provided array of push provider overrides and returns only those
    * that contain provider-specific credential keys
    */
-  private filterProvidersWithCredentialOverrides(providerOverrides: IPushProviderOverride[]): IPushProviderOverride[] {
+  private filterProvidersWithCredentialOverrides(providerOverrides: PushProviderOverride[]): PushProviderOverride[] {
     if (!providerOverrides?.length) return [];
 
-    return providerOverrides.filter((override) =>
-      this.hasProviderSpecificOverrides(override.providerId, override.overrides)
-    );
+    return providerOverrides.filter((override) => hasTokenlessRoutingOverride(override.providerId, override.overrides));
   }
 
   private channelMissingDeviceTokens(channel: IChannelSettings): boolean {
@@ -855,13 +820,13 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async constructChannelSettingsFromOverrides(
-    providersWithCredentialOverrides: IPushProviderOverride[],
+    providersWithCredentialOverrides: PushProviderOverride[],
     command: SendMessageChannelCommand
   ): Promise<IChannelSettings[]> {
     const channelSettings: IChannelSettings[] = [];
 
     for (const providerOverride of providersWithCredentialOverrides) {
-      const credentials = this.extractCredentialsFromOverride(providerOverride.providerId, providerOverride.overrides);
+      const credentials = extractPushRoutingCredentials(providerOverride.providerId, providerOverride.overrides);
 
       if (!credentials) continue;
 
@@ -886,42 +851,6 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     return channelSettings;
-  }
-
-  private extractCredentialsFromOverride(
-    providerId: PushProviderIdEnum,
-    overrides: Record<string, unknown>
-  ): {
-    deviceTokens?: string[];
-    topic?: string;
-  } | null {
-    if (!overrides) return null;
-
-    switch (providerId) {
-      case PushProviderIdEnum.FCM:
-        if (Array.isArray(overrides.tokens)) {
-          return {
-            deviceTokens: overrides.tokens,
-          };
-        }
-
-        if (typeof overrides.topic === 'string') {
-          return {
-            topic: overrides.topic,
-          };
-        }
-
-        // token / condition route via bridgeProviderData; empty tokens mark tokenless send
-        if (typeof overrides.token === 'string' || typeof overrides.condition === 'string') {
-          return {
-            deviceTokens: [],
-          };
-        }
-
-        return null;
-      default:
-        return null;
-    }
   }
 
   private async removeInvalidDeviceToken(

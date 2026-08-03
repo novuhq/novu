@@ -675,8 +675,8 @@ describe('FcmPushProvider', () => {
         title: 'Test',
         body: 'Test push',
       },
-      // deepMerge concatenates array values from trigger + bridge
-      tokens: ['tester', 'bridge-token-1', 'bridge-token-2'],
+      // routing.tokens replaces subscriber targets — not concatenated
+      tokens: ['bridge-token-1', 'bridge-token-2'],
       data: {},
     });
     expect(sendSpy).not.toHaveBeenCalled();

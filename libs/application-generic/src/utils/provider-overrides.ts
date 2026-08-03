@@ -4,10 +4,8 @@ import {
   ContentIssueEnum,
   type ContentOverrideProviderId,
   FCM_OVERRIDE_SCHEMA_SUBPATH,
-  FCM_ROUTING_KEYS,
   getProviderOverrideConfig,
   type ProviderOverrideConfig,
-  PushProviderIdEnum,
   type RuntimeIssue,
   SLACK_OVERRIDE_SCHEMA_SUBPATH,
   type StepProviderOverrides,
@@ -26,9 +24,6 @@ import { createLiquidTolerantValidator } from './liquid-tolerant-validator';
 export type { StepProviderOverrides };
 
 const SUPPORTED_PROVIDER_IDS = new Set<string>(CONTENT_OVERRIDE_PROVIDER_IDS);
-
-const FCM_ROUTING_KEY_SET = new Set<string>(FCM_ROUTING_KEYS);
-const FCM_ROUTING_MUTUAL_EXCLUSION_MESSAGE = 'Only one of token, tokens, topic, condition is allowed';
 
 /** Escape-hatch providers accept keys we cannot describe up front: well-formedness only. */
 const FREE_FORM_OBJECT_SCHEMA: JSONSchemaDto = {
@@ -138,7 +133,7 @@ function unsupportedProviderIssue(path: string, providerId: string): RuntimeIssu
   };
 }
 
-function hasMultipleFcmRoutingKeys(override: unknown): boolean {
+function hasMultipleExclusiveKeys(override: unknown, group: readonly string[]): boolean {
   if (!override || typeof override !== 'object' || Array.isArray(override)) {
     return false;
   }
@@ -146,7 +141,7 @@ function hasMultipleFcmRoutingKeys(override: unknown): boolean {
   const record = override as Record<string, unknown>;
   let present = 0;
 
-  for (const key of FCM_ROUTING_KEYS) {
+  for (const key of group) {
     if (key in record) {
       present += 1;
       if (present > 1) {
@@ -159,7 +154,7 @@ function hasMultipleFcmRoutingKeys(override: unknown): boolean {
 }
 
 /** Pairwise `allOf`/`not.required` constraints report as root `not` errors with message "must NOT be valid". */
-function isFcmRoutingMutualExclusionAjvError(error: ErrorObject): boolean {
+function isExclusiveGroupAjvError(error: ErrorObject, groupKeys: ReadonlySet<string>): boolean {
   if (error.keyword !== 'not' || !error.schemaPath.includes('/allOf/')) {
     return false;
   }
@@ -169,35 +164,33 @@ function isFcmRoutingMutualExclusionAjvError(error: ErrorObject): boolean {
     return false;
   }
 
-  return (
-    negated.required.length >= 2 &&
-    negated.required.every((key) => typeof key === 'string' && FCM_ROUTING_KEY_SET.has(key))
-  );
+  return negated.required.length >= 2 && negated.required.every((key) => typeof key === 'string' && groupKeys.has(key));
 }
 
-function isFcmRoutingAdditionalPropertyError(error: ErrorObject): boolean {
-  return error.keyword === 'additionalProperties' && FCM_ROUTING_KEY_SET.has(error.params.additionalProperty as string);
+function exclusiveGroupMessage(group: readonly string[]): string {
+  return `Only one of ${group.join(', ')} is allowed`;
 }
 
 /**
- * Rewrites FCM routing mutual-exclusion failures to one friendly issue. Covers both the defensive
- * multi-key check (works before the schema lands) and AJV `not`/`allOf` errors once it does;
- * suppresses routing-key `additionalProperties` noise when a conflict is already reported.
+ * Rewrites exclusive-key-group failures (config + AJV pairwise `not`/`allOf`) to one friendly issue.
  */
-function mapFcmProviderOverrideIssues(
+function mapExclusiveKeyGroupIssues(
   override: unknown,
   providerPath: string,
-  errors: ErrorObject[]
+  errors: ErrorObject[],
+  exclusiveKeyGroups: readonly (readonly string[])[]
 ): Record<string, RuntimeIssue[]> {
-  const hasConflict = hasMultipleFcmRoutingKeys(override) || errors.some(isFcmRoutingMutualExclusionAjvError);
+  const conflictGroups = exclusiveKeyGroups.filter((group) => {
+    const groupKeys = new Set(group);
 
-  const filteredErrors = errors.filter((error) => {
-    if (isFcmRoutingMutualExclusionAjvError(error)) {
-      return false;
-    }
-
-    return !(hasConflict && isFcmRoutingAdditionalPropertyError(error));
+    return (
+      hasMultipleExclusiveKeys(override, group) || errors.some((error) => isExclusiveGroupAjvError(error, groupKeys))
+    );
   });
+
+  const filteredErrors = errors.filter(
+    (error) => !conflictGroups.some((group) => isExclusiveGroupAjvError(error, new Set(group)))
+  );
 
   const controls =
     mapSchemaErrorsToControlIssues(filteredErrors, {
@@ -205,12 +198,12 @@ function mapFcmProviderOverrideIssues(
       collapseUrlFieldErrors: false,
     }).controls ?? {};
 
-  if (hasConflict) {
+  for (const group of conflictGroups) {
     controls[providerPath] = [
       ...(controls[providerPath] ?? []),
       {
-        message: FCM_ROUTING_MUTUAL_EXCLUSION_MESSAGE,
-        issueType: ContentIssueEnum.MISSING_VALUE,
+        message: exclusiveGroupMessage(group),
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: providerPath,
       },
     ];
@@ -248,9 +241,10 @@ export function processProviderOverridesIssues(
     }
 
     const schemaErrors = getProviderOverrideValidator(config)(override);
+    const exclusiveKeyGroups = config.exclusiveKeyGroups ?? [];
     const providerIssues =
-      providerId === PushProviderIdEnum.FCM
-        ? mapFcmProviderOverrideIssues(override, providerPath, schemaErrors)
+      exclusiveKeyGroups.length > 0
+        ? mapExclusiveKeyGroupIssues(override, providerPath, schemaErrors, exclusiveKeyGroups)
         : mapSchemaErrorsToControlIssues(schemaErrors, {
             pathPrefix: providerPath,
             collapseUrlFieldErrors: false,
