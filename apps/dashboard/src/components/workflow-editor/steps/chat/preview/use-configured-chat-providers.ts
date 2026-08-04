@@ -64,7 +64,7 @@ function compareProviderOptions(left: ChatPreviewProviderOption, right: ChatPrev
 function buildChatPreviewProviders(
   integrations: IIntegration[] | undefined,
   environmentId: string | undefined
-): ChatPreviewProviders {
+): Omit<ChatPreviewProviders, 'isLoading'> {
   const connectedProviderIds = new Set<string>();
   const seen = new Set<string>();
   const options: ChatPreviewProviderOption[] = [];
