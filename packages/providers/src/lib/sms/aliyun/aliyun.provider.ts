@@ -35,6 +35,7 @@ export class AliyunSmsProvider extends BaseProvider implements ISmsProvider {
       accessKeySecret?: string;
       from?: string;
       regionId?: string;
+      templateId?: string;
     }
   ) {
     super();
@@ -47,8 +48,18 @@ export class AliyunSmsProvider extends BaseProvider implements ISmsProvider {
     const data = this.transform<Record<string, string>>(bridgeProviderData, {
       phoneNumbers: options.to,
       signName: options.from || this.config.from,
+      templateCode: this.config.templateId,
       templateParam: options.content,
     });
+
+    // Aliyun requires a registered `TemplateCode`. It defaults to the integration credential, but a
+    // workflow may omit the credential and pass it per-message via `_passthrough.body.TemplateCode`.
+    // Fail fast with a clear message rather than letting Aliyun reject the send cryptically.
+    if (!data.body.TemplateCode) {
+      throw new Error(
+        'Aliyun requires a TemplateCode. Set it as the "Template Code" integration credential or supply it per-message via _passthrough.body.TemplateCode.'
+      );
+    }
 
     const params: Record<string, unknown> = {
       AccessKeyId: this.config.accessKeyId || '',

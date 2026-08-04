@@ -399,6 +399,13 @@ export const aliyunConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.TemplateId,
+    displayName: 'Template Code',
+    description: 'Default Aliyun TemplateCode. Optional — can be overridden per-message via _passthrough.body.TemplateCode.',
+    type: 'string',
+    required: false,
+  },
 ];
 
 export const burstSmsConfig: IConfigCredential[] = [

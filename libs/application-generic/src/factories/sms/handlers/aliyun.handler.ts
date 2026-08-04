@@ -12,6 +12,7 @@ export class AliyunSmsHandler extends BaseSmsHandler {
       accessKeyId: credentials.apiKey,
       accessKeySecret: credentials.secretKey,
       from: credentials.from,
+      templateId: credentials.templateId,
     });
   }
 }

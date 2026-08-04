@@ -119,6 +119,7 @@ test('should throw when Aliyun returns a non-OK code', async () => {
     accessKeyId: 'test-access-key-id',
     accessKeySecret: 'test-access-key-secret',
     from: 'AliyunTest',
+    templateId: 'SMS_123456789',
   });
 
   global.fetch = vi.fn().mockResolvedValue({
@@ -141,6 +142,7 @@ test('should throw when the response has no BizId even if it looks successful', 
     accessKeyId: 'test-access-key-id',
     accessKeySecret: 'test-access-key-secret',
     from: 'AliyunTest',
+    templateId: 'SMS_123456789',
   });
 
   // HTTP error whose body carries no `Code` — previously slipped through and
@@ -158,4 +160,70 @@ test('should throw when the response has no BizId even if it looks successful', 
       to: '+8613800138000',
     })
   ).rejects.toThrow('Aliyun SMS request failed');
+});
+
+test('should use the templateId credential as the default TemplateCode', async () => {
+  const provider = new AliyunSmsProvider({
+    accessKeyId: 'test-access-key-id',
+    accessKeySecret: 'test-access-key-secret',
+    from: 'AliyunTest',
+    templateId: 'SMS_CREDENTIAL_DEFAULT',
+  });
+
+  const fetchMock = vi.fn().mockResolvedValue(okResponse());
+  global.fetch = fetchMock;
+
+  await provider.sendMessage({
+    content: '{"code":"1234"}',
+    from: 'AliyunTest',
+    to: '+8613800138000',
+  });
+
+  const [url] = fetchMock.mock.calls[0];
+  expect(url).toContain('TemplateCode=SMS_CREDENTIAL_DEFAULT');
+});
+
+test('should let _passthrough.TemplateCode override the credential default', async () => {
+  const provider = new AliyunSmsProvider({
+    accessKeyId: 'test-access-key-id',
+    accessKeySecret: 'test-access-key-secret',
+    from: 'AliyunTest',
+    templateId: 'SMS_CREDENTIAL_DEFAULT',
+  });
+
+  const fetchMock = vi.fn().mockResolvedValue(okResponse());
+  global.fetch = fetchMock;
+
+  await provider.sendMessage(
+    {
+      content: '{"code":"1234"}',
+      from: 'AliyunTest',
+      to: '+8613800138000',
+    },
+    { _passthrough: { body: { TemplateCode: 'SMS_PER_MESSAGE' } } }
+  );
+
+  const [url] = fetchMock.mock.calls[0];
+  expect(url).toContain('TemplateCode=SMS_PER_MESSAGE');
+  expect(url).not.toContain('SMS_CREDENTIAL_DEFAULT');
+});
+
+test('should fail fast when no TemplateCode is available from credential or passthrough', async () => {
+  const provider = new AliyunSmsProvider({
+    accessKeyId: 'test-access-key-id',
+    accessKeySecret: 'test-access-key-secret',
+    from: 'AliyunTest',
+  });
+
+  const fetchMock = vi.fn().mockResolvedValue(okResponse());
+  global.fetch = fetchMock;
+
+  await expect(
+    provider.sendMessage({
+      content: '{"code":"1234"}',
+      from: 'AliyunTest',
+      to: '+8613800138000',
+    })
+  ).rejects.toThrow('Aliyun requires a TemplateCode');
+  expect(fetchMock).not.toHaveBeenCalled();
 });
