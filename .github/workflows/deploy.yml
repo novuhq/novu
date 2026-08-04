@@ -23,6 +23,27 @@ description: |
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
+# One deploy per environment + service combination at a time, so deploys of
+# unrelated services don't block each other. Staging cancels the in-flight
+# run so only the latest commit deploys; production queues instead of
+# cancelling to never interrupt an in-progress production deploy.
+concurrency:
+  group: >-
+    deploy-${{ github.event.inputs.environment }}${{
+      github.event.inputs.deploy_api == 'true' && '-api' || ''
+    }}${{
+      github.event.inputs.deploy_worker == 'true' && '-worker' || ''
+    }}${{
+      github.event.inputs.deploy_ws == 'true' && '-ws' || ''
+    }}${{
+      github.event.inputs.deploy_webhook == 'true' && '-webhook' || ''
+    }}${{
+      github.event.inputs.deploy_inbound_mail == 'true' && '-inbound-mail' || ''
+    }}${{
+      github.event.inputs.deploy_thalamus_observer == 'true' && '-thalamus-observer' || ''
+    }}
+  cancel-in-progress: ${{ startsWith(github.event.inputs.environment, 'staging') }}
+
 on:
   workflow_dispatch:
     inputs:
