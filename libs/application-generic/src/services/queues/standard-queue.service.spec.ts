@@ -1,4 +1,5 @@
 import { CommunityOrganizationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, QueueBackendMode } from '@novu/shared';
 import { PinoLogger } from '../../logging';
 import { CloudflareSchedulerService } from '../cloudflare-scheduler';
 import { FeatureFlagsService } from '../feature-flags';
@@ -12,12 +13,14 @@ const mockCloudflareSchedulerService = {
   scheduleJob: jest.fn(),
 } as unknown as CloudflareSchedulerService;
 
+const ORGANIZATION_ID = 'standard-organization-id';
+
 const mockFeatureFlagsService = {
-  getFlag: jest.fn(),
+  getFlag: jest.fn().mockResolvedValue(QueueBackendMode.BULLMQ),
 } as unknown as FeatureFlagsService;
 
 const mockOrganizationRepository = {
-  findOne: jest.fn(),
+  findOne: jest.fn().mockResolvedValue({ _id: ORGANIZATION_ID, apiServiceLevel: ApiServiceLevelEnum.FREE }),
 } as unknown as CommunityOrganizationRepository;
 
 const mockSqsService = {
@@ -58,9 +61,7 @@ describe('Standard Queue service', () => {
 
     it('should be initialised properly', async () => {
       expect(standardQueueService).toBeDefined();
-      expect(Object.keys(standardQueueService)).toEqual(
-        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
-      );
+      expect(Object.keys(standardQueueService)).toEqual(expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'queue']));
       expect(standardQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(standardQueueService.topic).toEqual('standard');
       expect(await standardQueueService.getStatus()).toEqual({
@@ -112,7 +113,7 @@ describe('Standard Queue service', () => {
       const [standardQueueJob] = standardQueueJobs;
       expect(standardQueueJob).toMatchObject(
         expect.objectContaining({
-          id: '1',
+          id: jobId,
           name: jobId,
           data: jobData,
           attemptsMade: 0,
@@ -147,7 +148,7 @@ describe('Standard Queue service', () => {
       const [standardQueueJob] = standardQueueJobs;
       expect(standardQueueJob).toMatchObject(
         expect.objectContaining({
-          id: '2',
+          id: jobId,
           name: jobId,
           data: {
             _id: jobId,
@@ -158,6 +159,49 @@ describe('Standard Queue service', () => {
           attemptsMade: 0,
         })
       );
+    });
+
+    it('should not add the same job twice', async () => {
+      const jobId = 'standard-job-id-duplicated';
+      const jobData = {
+        _id: jobId,
+        _environmentId: 'standard-environment-id',
+        _organizationId: ORGANIZATION_ID,
+        _userId: 'standard-user-id',
+      };
+
+      await standardQueueService.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+      await standardQueueService.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+
+      expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
+
+      const standardQueueJobs = await standardQueueService.queue.getJobs();
+      expect(standardQueueJobs.length).toEqual(1);
+      expect(standardQueueJobs[0].id).toEqual(jobId);
+    });
+
+    it('should honour a job id provided by the caller', async () => {
+      const jobId = 'standard-job-id-with-custom-id';
+      const customJobId = `${jobId}-ext1`;
+      const jobData = {
+        _id: jobId,
+        _environmentId: 'standard-environment-id',
+        _organizationId: ORGANIZATION_ID,
+        _userId: 'standard-user-id',
+      };
+
+      await standardQueueService.add({ name: jobId, data: jobData, groupId: ORGANIZATION_ID });
+      await standardQueueService.add({
+        name: jobId,
+        data: jobData,
+        groupId: ORGANIZATION_ID,
+        options: { jobId: customJobId },
+      });
+
+      expect(await standardQueueService.queue.getWaitingCount()).toEqual(2);
+
+      const standardQueueJobs = await standardQueueService.queue.getJobs();
+      expect(standardQueueJobs.map((job) => job.id).sort()).toEqual([customJobId, jobId]);
     });
   });
 

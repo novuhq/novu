@@ -1095,6 +1095,15 @@ export class AddJob {
       options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
+    /*
+     * The standard queue dedups on the job id, so a re-enqueue of a job that is still queued or
+     * running collapses onto the live entry. A schedule extension re-queues a job whose entry is
+     * the one currently being processed, so it needs an id of its own or the step would never be
+     * delivered. The counter advances on every extension, so an extended job carries no dedup
+     * protection - the atomic claim in JobRepository is what keeps that case correct.
+     */
+    options.jobId = job.scheduleExtensionsCount ? `${job._id}-ext${job.scheduleExtensionsCount}` : job._id;
+
     await this.standardQueueService.add({
       name: job._id,
       data: {
