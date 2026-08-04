@@ -195,4 +195,41 @@ describe('mergeProviderPreview', () => {
     });
     expect(result.defaultContentKey).toBeUndefined();
   });
+
+  it('fills omitted FCM notification.body from the step body and preserves siblings', () => {
+    const result = mergeProviderPreview({
+      body: 'Default push body',
+      providerId: PushProviderIdEnum.FCM,
+      override: { notification: { title: 'Orders' }, android: { priority: 'high' } },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        notification: {
+          title: 'Orders',
+          body: 'Default push body',
+        },
+        android: { priority: 'high' },
+      },
+      defaultContentKey: 'notification.body',
+    });
+  });
+
+  it('keeps an explicit FCM notification.body override and omits defaultContentKey', () => {
+    const result = mergeProviderPreview({
+      body: 'Default push body',
+      providerId: PushProviderIdEnum.FCM,
+      override: { notification: { title: 'Orders', body: 'Custom FCM body' } },
+    });
+
+    expect(result).toEqual({
+      merged: {
+        notification: {
+          title: 'Orders',
+          body: 'Custom FCM body',
+        },
+      },
+    });
+    expect(result.defaultContentKey).toBeUndefined();
+  });
 });

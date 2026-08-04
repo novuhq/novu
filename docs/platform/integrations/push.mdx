@@ -972,16 +972,24 @@ Expo overrides are validated against the [Expo Push message](https://docs.expo.d
   Schema-backed Expo override fields, body fallback, and title behavior.
 </Card>
 
+### FCM is schema-backed
+
+FCM overrides are validated against the FCM HTTP v1 [`Message`](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) shape, plus Novu's multicast `tokens` key. The editor autocompletes supported field names, validates the JSON, and flags unsupported fields. Routing keys (`token`, `tokens`, `topic`, `condition`) are allowed in step content overrides — see [Configure FCM overrides](/platform/integrations/push/fcm#configure-fcm-overrides) for exclusive-or rules, Liquid, fan-out, and trigger precedence.
+
+<Card title="Configure FCM overrides" icon="smartphone" href="/platform/integrations/push/fcm#configure-fcm-overrides">
+  Schema-backed FCM override fields, `notification.body` fallback, and routing in content or trigger overrides.
+</Card>
+
 ### Every other push provider is a raw passthrough
 
-For FCM, APNS, OneSignal, Pushpad, Push Webhook, Pusher Beams, and AppIO, the override is an unvalidated escape hatch. Whatever JSON object you save is merged into that provider's outbound payload as-is.
+For APNS, OneSignal, Pushpad, Push Webhook, Pusher Beams, and AppIO, the override is an unvalidated escape hatch. Whatever JSON object you save is merged into that provider's outbound payload as-is.
 
 That means:
 
 - **No validation.** Novu does not check field names, types, or nesting. A typo reaches the provider's API unchanged. Depending on the provider it either fails the delivery, which you will see in the **Activity feed**, or is silently ignored.
 - **No autocomplete.** There is no schema to suggest from.
 - **The shape is the provider's contract, not Novu's.** Write the object against the provider's own API reference. If the provider changes its API, your override has to change with it.
-- **No key blocklist.** Routing keys such as FCM `topic` are allowed and take effect.
+- **No key blocklist.** Provider-specific routing keys in the override are allowed and take effect.
 
 Use this when a provider supports something Novu's step editor does not expose, and test with a real trigger before relying on it.
 

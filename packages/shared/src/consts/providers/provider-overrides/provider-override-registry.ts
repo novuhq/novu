@@ -7,6 +7,7 @@ import {
   ToolProviderIdEnum,
 } from '../../../types';
 import { expoOverrideJsonSchema } from './expo-override.schema';
+import { FCM_OVERRIDE_KEYS, FCM_OVERRIDE_SCHEMA_SUBPATH, FCM_PRIMARY_CONTENT_KEY, FCM_ROUTING_KEYS } from './fcm/keys';
 import { grafanaOverrideJsonSchema } from './grafana-override.schema';
 import { toLiquidTolerantSchema } from './liquid-tolerant';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
@@ -62,6 +63,12 @@ export type ProviderOverrideConfig = {
    * Used when content lives in an array element (LINE `messages[].text`) rather than a scalar path.
    */
   seedWhenAbsent?: ProviderOverrideSeedWhenAbsent;
+  /**
+   * Groups of top-level keys that are mutually exclusive within a single content override.
+   * Enforced in the full JSON Schema via pairwise `allOf` / `not.required` constraints; exposed
+   * here so UI and key-level validation can surface the same rule without loading the schema.
+   */
+  exclusiveKeyGroups?: readonly (readonly string[])[];
 };
 
 /**
@@ -87,6 +94,7 @@ export const PROVIDER_OVERRIDE_KEYS = {
   [ChatProviderIdEnum.Slack]: SLACK_OVERRIDE_KEYS,
   [ChatProviderIdEnum.Telegram]: TELEGRAM_OVERRIDE_KEYS,
   [ChatProviderIdEnum.WhatsAppBusiness]: WHATSAPP_OVERRIDE_KEYS,
+  [PushProviderIdEnum.FCM]: FCM_OVERRIDE_KEYS,
   [PushProviderIdEnum.EXPO]: Object.keys(expoOverrideJsonSchema.properties),
 } as const satisfies Partial<Record<ToolProviderIdEnum | ChatProviderIdEnum | PushProviderIdEnum, readonly string[]>>;
 
@@ -176,12 +184,18 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 /**
- * Push providers default to escape-hatch free-form JSON until a schema is hand-written.
- * Expo is the first schema-backed push provider (`primaryContentKey: body`).
+ * Push providers default to escape-hatch free-form JSON until a schema is authored.
+ * Expo is eagerly schema-backed (`primaryContentKey: body`); FCM ships its generated schema behind
+ * a lazy package subpath (`primaryContentKey: notification.body`).
  * `satisfies Record<...>` fails the build when a provider joins the enum without a decision.
  */
 const PUSH_PROVIDER_OVERRIDE_CONFIGS = {
-  [PushProviderIdEnum.FCM]: escapeHatch(null),
+  [PushProviderIdEnum.FCM]: {
+    schemaSubpath: FCM_OVERRIDE_SCHEMA_SUBPATH,
+    keys: PROVIDER_OVERRIDE_KEYS[PushProviderIdEnum.FCM],
+    primaryContentKey: FCM_PRIMARY_CONTENT_KEY,
+    exclusiveKeyGroups: [FCM_ROUTING_KEYS],
+  },
   [PushProviderIdEnum.APNS]: escapeHatch(null),
   [PushProviderIdEnum.EXPO]: schemaBacked(
     expoOverrideJsonSchema,
