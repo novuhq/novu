@@ -98,6 +98,11 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
   );
 }
 
+/**
+ * Chat step preview router. The rich default-preview shell, platform selector, warning banners,
+ * and editor content-source sync live exclusively in `ChatBlockEditorPreview` and are only mounted
+ * when `IS_CHAT_BLOCK_EDITOR_ENABLED` is on.
+ */
 export const ChatPreviewPanel = (props: ChatPreviewPanelProps) => {
   const isBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
   const areProviderOverridesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_PROVIDER_OVERRIDES_ENABLED);
