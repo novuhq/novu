@@ -8,7 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AnalyticsService, encryptSecret, FeatureFlagsService, isAgentEmailEnabled } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret, isAgentEmailEnabled } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
@@ -23,7 +23,6 @@ import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
 } from '@novu/shared';
@@ -44,8 +43,7 @@ export class AddAgentIntegration {
     private readonly environmentRepository: EnvironmentRepository,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly findOrCreateNovuWebChat: NovuWebChatProvisioningService,
-    private readonly analyticsService: AnalyticsService,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -98,8 +96,6 @@ export class AddAgentIntegration {
     }
 
     if (command.providerId === ChatProviderIdEnum.NovuWebChat) {
-      await this.enforceWebChatFlag(command.environmentId, command.organizationId);
-
       const { response, provisionedNewLink } = await this.findOrCreateNovuWebChat.execute(
         agent._id,
         command.environmentId,
@@ -216,24 +212,6 @@ export class AddAgentIntegration {
     });
 
     return response;
-  }
-
-  /**
-   * Web chat is still pre-release: the channel is only provisionable once
-   * `IS_AGENT_WEB_CHAT_ENABLED` is on for the org/env, matching the gate on the subscriber
-   * `/v1/web-chat/*` API. Defaults to off so an LD outage cannot open the channel.
-   */
-  private async enforceWebChatFlag(environmentId: string, organizationId: string): Promise<void> {
-    const enabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_AGENT_WEB_CHAT_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-      environment: { _id: environmentId },
-    });
-
-    if (!enabled) {
-      throw new ForbiddenException('Agent web chat is not enabled for this organization.');
-    }
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
