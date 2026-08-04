@@ -1,5 +1,5 @@
 import { PatchPreferenceChannelsDto, SubscriberWorkflowPreferenceDto } from '@novu/api/models/components';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
@@ -7,8 +7,7 @@ import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/primitives/card';
 import { Step } from '@/components/primitives/step';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { isChannelVisibleInUi } from '@/utils/channels';
+import { isChannelVisibleInPreferencesUi } from '@/utils/channels';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
@@ -22,15 +21,19 @@ type WorkflowPreferencesProps = {
 export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   const { workflowPreferences, onToggle, readOnly = false } = props;
   const [isExpanded, setIsExpanded] = useState(false);
-  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const { workflow, channels, updatedAt } = workflowPreferences;
   const visibleChannels = useMemo(
     () =>
       (Object.entries(channels) as [ChannelTypeEnum, boolean][]).filter(([channel]) =>
-        isChannelVisibleInUi(channel, isToolChannelEnabled)
+        isChannelVisibleInPreferencesUi(channel)
       ),
-    [channels, isToolChannelEnabled]
+    [channels]
   );
+
+  if (visibleChannels.length === 0) {
+    return null;
+  }
+
   return (
     <Card className="border rounded-lg border-neutral-100 bg-neutral-50 p-1 shadow-none">
       <CardHeader
