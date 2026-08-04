@@ -391,7 +391,7 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     expect(listResponse.result.workflows[0].channels.email).to.equal(false);
   });
 
-  it('should round-trip tool channel preferences via single and bulk PATCH', async () => {
+  it('should round-trip tool channel preferences via single PATCH', async () => {
     const toolWorkflow = await session.createTemplate({
       noFeedId: true,
       steps: [
@@ -418,22 +418,6 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     expect(singleWorkflowPreference).to.exist;
     expect(singleWorkflowPreference.channels.tool).to.equal(false);
 
-    const bulkPatchRes = await session.testAgent
-      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
-      .set('Authorization', `ApiKey ${session.apiKey}`)
-      .send({
-        preferences: [
-          {
-            workflowId: toolWorkflow._id,
-            channels: { tool: false },
-          },
-        ],
-      });
-
-    expect(bulkPatchRes.status).to.equal(200);
-    expect(bulkPatchRes.body.data).to.be.an('array').with.lengthOf(1);
-    expect(bulkPatchRes.body.data[0].channels.tool).to.equal(false);
-
     const listRes = await session.testAgent.get(`/v2/subscribers/${subscriber.subscriberId}/preferences`);
     expect(listRes.status).to.equal(200);
 
@@ -442,6 +426,51 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     );
     expect(listedWorkflowPreference).to.exist;
     expect(listedWorkflowPreference.channels.tool).to.equal(false);
+  });
+
+  it('should round-trip tool channel preferences via bulk PATCH', async () => {
+    const toolWorkflow = await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.TOOL,
+          content: 'Tool step content',
+        },
+      ],
+    });
+
+    await session.testAgent
+      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences`)
+      .set('Authorization', `ApiKey ${session.apiKey}`)
+      .send({
+        workflowId: toolWorkflow._id,
+        channels: { tool: false },
+      });
+
+    const bulkPatchRes = await session.testAgent
+      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
+      .set('Authorization', `ApiKey ${session.apiKey}`)
+      .send({
+        preferences: [
+          {
+            workflowId: toolWorkflow._id,
+            channels: { tool: true },
+          },
+        ],
+      });
+
+    expect(bulkPatchRes.status).to.equal(200);
+    expect(bulkPatchRes.body.data).to.be.an('array').with.lengthOf(1);
+    expect(bulkPatchRes.body.data[0].channels.tool).to.equal(true);
+
+    const listRes = await session.testAgent.get(`/v2/subscribers/${subscriber.subscriberId}/preferences`);
+    expect(listRes.status).to.equal(200);
+
+    const listedWorkflowPreference = listRes.body.data.workflows.find(
+      (wf: { workflow: { identifier: string } }) => wf.workflow.identifier === toolWorkflow.triggers[0].identifier
+    );
+    expect(listedWorkflowPreference).to.exist;
+    expect(listedWorkflowPreference.channels.tool).to.equal(true);
   });
 });
 
