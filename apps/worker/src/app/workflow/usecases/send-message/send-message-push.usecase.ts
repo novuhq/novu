@@ -872,6 +872,11 @@ export class SendMessagePush extends SendMessageBase {
     providerErrorMessage: string,
     messageId: string
   ): Promise<void> {
+    // Refuse non-strings so `$pull` never receives Mongo query-operator objects.
+    if (typeof deviceToken !== 'string' || deviceToken.length === 0) {
+      return;
+    }
+
     try {
       await this.subscriberRepository.update(
         {

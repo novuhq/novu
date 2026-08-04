@@ -35,7 +35,12 @@ export function extractFcmRoutingCredentials(overrides: Record<string, unknown>)
   }
 
   if (Array.isArray(overrides.tokens)) {
-    return { deviceTokens: overrides.tokens };
+    // Only plain strings — objects (e.g. Mongo operators) must never reach $pull token cleanup.
+    const tokens = overrides.tokens.filter((token): token is string => typeof token === 'string');
+
+    if (tokens.length > 0) {
+      return { deviceTokens: tokens };
+    }
   }
 
   if (typeof overrides.topic === 'string') {
