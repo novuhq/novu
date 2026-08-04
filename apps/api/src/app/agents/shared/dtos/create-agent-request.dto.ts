@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AGENT_NAME_MAX_LENGTH, AgentRuntime, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
+import {
+  AGENT_IDENTIFIER_MAX_LENGTH,
+  AGENT_NAME_MAX_LENGTH,
+  AgentRuntime,
+  SLUG_IDENTIFIER_REGEX,
+  slugIdentifierFormatMessage,
+} from '@novu/shared';
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -37,6 +43,9 @@ export class CreateAgentRequestDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(AGENT_IDENTIFIER_MAX_LENGTH, {
+    message: `Identifier must be ${AGENT_IDENTIFIER_MAX_LENGTH} characters or fewer.`,
+  })
   @Matches(SLUG_IDENTIFIER_REGEX, {
     message: slugIdentifierFormatMessage('identifier'),
   })

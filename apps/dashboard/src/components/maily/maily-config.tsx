@@ -4,6 +4,7 @@ import {
   blockquote,
   bulletList,
   button,
+  cardButton,
   columns,
   divider,
   hardBreak,
@@ -69,6 +70,7 @@ type BlockType =
   | 'blockquote'
   | 'bulletList'
   | 'button'
+  | 'cardButton'
   | 'columns'
   | 'divider'
   | 'hardBreak'
@@ -224,6 +226,7 @@ export const createEditorBlocks = (props: {
     blockquote: () => blockquote,
     bulletList: () => bulletList,
     button: () => button,
+    cardButton: () => cardButton,
     columns: () => columns,
     divider: () => divider,
     hardBreak: () => hardBreak,
@@ -316,6 +319,8 @@ export const useCreateExtensions = ({
   blocks: BlockGroupItem[];
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   isTranslationEnabled?: boolean;
+  /** Extra editor extensions to register, e.g. opt-in nodes not part of the default maily editor. */
+  additionalExtensions?: AnyExtension[];
   translationKeys?: TranslationKey[];
   resourceId: string;
   resourceType: LocalizationResourceEnum;
@@ -335,6 +340,13 @@ export const useCreateExtensions = ({
     isAllowedVariable: IsAllowedVariable
   ) => (props: NodeViewProps) => JSX.Element;
   translationValueInput: TranslationValueInputComponent;
+  /** Chat-specific image defaults (left align, no resize, preview-sized). Email keeps kit defaults. */
+  imageExtensionOptions?: {
+    resizable?: boolean;
+    defaultAlignment?: 'left' | 'center' | 'right';
+    maxWidth?: number;
+    maxHeight?: number;
+  };
 }) => {
   /**
    * Maily doesn't re-render if the extensions change, so we need to use a data ref to store the latest props.
@@ -444,6 +456,9 @@ export const useCreateExtensions = ({
         renderVariable,
         variables: handleCalculateVariables as Variables,
         variableSuggestionsPopover,
+        // Bubble-menu fields (Actions Label/URL, showIf, …) select via SuggestionInput
+        // rather than the content VariableExtension command — still create schema keys.
+        onCreateNewVariable,
       }),
       HTMLCodeBlockExtension.extend({
         addNodeView() {
@@ -524,7 +539,7 @@ export const useCreateExtensions = ({
             },
           };
         },
-      }),
+      }).configure(propsRef.current.imageExtensionOptions ?? {}),
       InlineImageExtension.extend({
         addAttributes() {
           const attributes = this.parent?.();
@@ -593,6 +608,11 @@ export const useCreateExtensions = ({
         },
       })
     );
+
+    const additionalExtensions = propsRef.current.additionalExtensions;
+    if (additionalExtensions?.length) {
+      extensions.push(...additionalExtensions);
+    }
 
     return extensions;
   }, [propsRef, translationExtension, isTranslationEnabled]);

@@ -66,7 +66,7 @@ export const SubscriberActivityList = ({
         initial="hidden"
         animate="visible"
         variants={listVariants}
-        className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
       >
         {Array.from({ length: 10 }).map((_, index) => (
           <motion.div
@@ -105,7 +105,7 @@ export const SubscriberActivityList = ({
           },
         },
       }}
-      className="flex flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
+      className="flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-t-neutral-200"
     >
       {activities.map((activity) => {
         const status = getActivityStatus(activity.jobs);

@@ -72,7 +72,8 @@ export class UnsnoozeNotification {
         _notificationId: notificationId,
         _environmentId: command.environmentId,
         delay: { $exists: true },
-        status: JobStatusEnum.PENDING,
+        // PENDING kept for unsnooze jobs created before the switch to DELAYED
+        status: { $in: [JobStatusEnum.DELAYED, JobStatusEnum.PENDING] },
         'payload.unsnooze': true,
       });
 

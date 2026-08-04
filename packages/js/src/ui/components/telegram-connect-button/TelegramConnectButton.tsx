@@ -1,4 +1,5 @@
 import { createSignal, onCleanup, Show } from 'solid-js';
+import type { Context } from '../../../types';
 import { useTelegramConnection } from '../../api/hooks/useTelegramConnection';
 import { useNovu } from '../../context';
 import { useStyle } from '../../helpers/useStyle';
@@ -12,6 +13,19 @@ import { IconRendererWrapper } from '../shared/IconRendererWrapper';
 export type TelegramConnectButtonProps = {
   integrationIdentifier: string;
   subscriberId?: string;
+  /**
+   * Context bound to the Telegram endpoint at link time. Falls back to the
+   * `context` configured on `NovuProvider`.
+   */
+  context?: Context;
+  /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
+   * secret key (the same "Inbox with context" signing). Required when connecting
+   * with HMAC validation enabled and the current session did not already verify
+   * the context. Must be minted by an authenticated backend — never computed in
+   * the browser.
+   */
+  contextHash?: string;
   onConnectSuccess?: (endpointIdentifier: string) => void;
   onConnectError?: (error: unknown) => void;
   onDisconnectSuccess?: () => void;
@@ -29,6 +43,8 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
   const novuAccessor = useNovu();
   const integrationIdentifier = () => props.integrationIdentifier;
   const resolvedSubscriberId = () => props.subscriberId ?? novuAccessor().subscriberId;
+  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const resolvedContextHash = () => props.contextHash ?? novuAccessor().contextHash;
 
   const { endpoint, loading, disconnect, mutate, link } = useTelegramConnection({
     integrationIdentifier: integrationIdentifier(),
@@ -120,6 +136,8 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
 
       const result = await link({
         integrationIdentifier: integrationIdentifier(),
+        context: resolvedContext(),
+        contextHash: resolvedContextHash(),
       });
 
       if (result.error) {

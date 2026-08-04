@@ -1,3 +1,4 @@
+export type { AgentEvent, AgentEventEnvelope } from '@novu/agent-event-protocol';
 export * from '../constants';
 export * from '../errors';
 export * from '../filters';
@@ -20,4 +21,5 @@ export type { ParsedApprovalAction, ToolApprovalRequestPayload } from '../resour
 export { buildApprovalActionId, parseApprovalActionId } from '../resources/agent/tool-approval/action-id';
 export { actionStepSchemas, channelStepSchemas } from '../schemas';
 export * from '../types';
+export { compileJsonControlValues, repairJsonString } from '../utils/compile-json-control-values';
 export { createLiquidEngine } from '../utils/liquid.utils';

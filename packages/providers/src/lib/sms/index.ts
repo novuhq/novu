@@ -24,6 +24,7 @@ export * from './mobishastra/mobishastra.provider';
 export * from './nexmo/nexmo.provider';
 export * from './plivo/plivo.provider';
 export * from './ring-central/ring-central.provider';
+export * from './ruach-sms/ruach-sms.provider';
 export * from './sendchamp/sendchamp.provider';
 export * from './simpletexting/simpletexting.provider';
 export * from './sinch/sinch.provider';

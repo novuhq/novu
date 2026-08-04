@@ -34,6 +34,10 @@ export class ExternalServicesRoute {
     if (command.event === WebSocketEventEnum.UNREAD) {
       await this.sendUnreadCountChange(command);
     }
+
+    if (command.event === WebSocketEventEnum.AGENT_EVENT) {
+      await this.wsGateway.sendMessage(command.userId, command.event, command.payload, command.contextKeys);
+    }
   }
 
   private async processReceivedEvent(command: ExternalServicesRouteCommand): Promise<void> {

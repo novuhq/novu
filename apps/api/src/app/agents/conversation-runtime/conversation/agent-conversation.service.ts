@@ -11,8 +11,10 @@ import {
   ConversationParticipantTypeEnum,
   ConversationRepository,
   ConversationStatusEnum,
+  isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
+import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
 export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
@@ -63,6 +65,14 @@ export interface CreateOrGetConversationParams {
   firstMessageText: string;
   /** Whether the thread is a direct message — persisted for active-conversation window selection. */
   isDirectMessage?: boolean;
+  /**
+   * Platform workspace/team id (e.g. Slack `team_id`) this thread belongs to. Persisted on the
+   * channel so outbound delivery can resolve the correct per-workspace bot token in multi-workspace
+   * installs. Absent for single-workspace platforms.
+   */
+  workspaceId?: string;
+  /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
+  identifier?: string;
 }
 
 export interface PersistInboundMessageParams {
@@ -77,6 +87,10 @@ export interface PersistInboundMessageParams {
   richContent?: Record<string, unknown>;
   hasPlatformAttachments?: boolean;
   platformMessageId?: string;
+  /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
+  identifier?: string;
+  /** Pre-allocated conversation event sequence; minted at persist time when absent */
+  sequence?: number;
   environmentId: string;
   organizationId: string;
 }
@@ -89,13 +103,23 @@ export interface ConversationActivityContext {
   organizationId: string;
 }
 
+export interface PersistAgentMessageResult {
+  activity: ConversationActivityEntity;
+  /** `false` when the identifier already existed — the caller lost the persist race. */
+  created: boolean;
+}
+
 export interface PersistAgentActivityParams extends ConversationActivityContext {
-  platformMessageId: string;
+  platformMessageId?: string;
   /** Overrides channel.platformThreadId when delivery returns a different thread ID */
   platformThreadId?: string;
+  /** Caller-supplied activity identifier; defaults to a server-minted act_* id */
+  identifier?: string;
   agentName?: string;
   content: string;
   richContent?: Record<string, unknown>;
+  /** Pre-allocated conversation event sequence; minted at persist time when absent */
+  sequence?: number;
 }
 
 export interface PersistToolApprovalRequestParams extends ConversationActivityContext {
@@ -152,6 +176,7 @@ export class AgentConversationService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
+    private readonly eventSequenceService: ConversationEventSequenceService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -194,7 +219,7 @@ export class AgentConversationService {
     }
 
     const conversation = await this.conversationRepository.create({
-      identifier: `conv_${shortId(12)}`,
+      identifier: params.identifier ?? `conv_${shortId(12)}`,
       _agentId: params.agentId,
       participants: [
         { type: params.participantType, id: params.participantId },
@@ -205,6 +230,7 @@ export class AgentConversationService {
           platform: params.platform,
           _integrationId: params.integrationId,
           platformThreadId,
+          ...(params.workspaceId ? { workspace: { id: params.workspaceId } } : {}),
         },
       ],
       status: ConversationStatusEnum.ACTIVE,
@@ -261,32 +287,59 @@ export class AgentConversationService {
       richContent: params.richContent,
       hasPlatformAttachments: params.hasPlatformAttachments,
     });
+    const identifier = params.identifier ?? `act_${shortId(12)}`;
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId,
+      params.sequence
+    );
 
-    const [activity] = await Promise.all([
-      this.activityRepository.createUserActivity({
-        identifier: `act_${shortId(12)}`,
-        conversationId: params.conversationId,
-        platform: params.platform,
-        integrationId: params.integrationId,
-        platformThreadId: params.platformThreadId,
-        senderType: params.senderType,
-        senderId: params.senderId,
-        senderName: params.senderName,
-        content,
-        richContent: params.richContent,
-        platformMessageId: params.platformMessageId,
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-      }),
-      this.conversationRepository.touchActivity(
-        params.environmentId,
-        params.organizationId,
-        params.conversationId,
-        preview
-      ),
-    ]);
+    try {
+      const [activity] = await Promise.all([
+        this.activityRepository.createUserActivity({
+          identifier,
+          conversationId: params.conversationId,
+          platform: params.platform,
+          integrationId: params.integrationId,
+          platformThreadId: params.platformThreadId,
+          senderType: params.senderType,
+          senderId: params.senderId,
+          senderName: params.senderName,
+          content,
+          richContent: params.richContent,
+          platformMessageId: params.platformMessageId,
+          sequence,
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+        }),
+        this.conversationRepository.touchActivity(
+          params.environmentId,
+          params.organizationId,
+          params.conversationId,
+          preview
+        ),
+      ]);
 
-    return activity;
+      return activity;
+    } catch (err) {
+      if (params.identifier && isDuplicateKeyError(err)) {
+        const existing = await this.activityRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _conversationId: params.conversationId,
+            identifier: params.identifier,
+          },
+          '*'
+        );
+
+        if (existing) {
+          return existing;
+        }
+      }
+
+      throw err;
+    }
   }
 
   async getHistory(
@@ -337,6 +390,21 @@ export class AgentConversationService {
     );
   }
 
+  async findByPublicIdentifier(
+    environmentId: string,
+    organizationId: string,
+    identifier: string
+  ): Promise<ConversationEntity | null> {
+    return this.conversationRepository.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        identifier,
+      },
+      '*'
+    );
+  }
+
   async findByAgentIntegrationParticipant(params: {
     environmentId: string;
     organizationId: string;
@@ -345,6 +413,7 @@ export class AgentConversationService {
     participantId: string;
     participantType?: ConversationParticipantTypeEnum;
     title?: string;
+    workspaceId?: string;
   }): Promise<ConversationEntity | null> {
     return this.conversationRepository.findByAgentIntegrationParticipant(
       params.environmentId,
@@ -353,7 +422,8 @@ export class AgentConversationService {
       params.integrationId,
       params.participantId,
       params.participantType,
-      params.title
+      params.title,
+      params.workspaceId
     );
   }
 
@@ -373,12 +443,93 @@ export class AgentConversationService {
     );
   }
 
-  async persistAgentMessage(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
-    return this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
+  async findAgentMessageByIdentifier(
+    environmentId: string,
+    conversationId: string,
+    identifier: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.activityRepository.findOne(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        identifier,
+        type: ConversationActivityTypeEnum.MESSAGE,
+      },
+      '*'
+    );
+  }
+
+  async persistAgentMessage(params: PersistAgentActivityParams): Promise<PersistAgentMessageResult> {
+    try {
+      const activity = await this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
+
+      return { activity, created: true };
+    } catch (err) {
+      if (params.identifier && isDuplicateKeyError(err)) {
+        this.logger.warn(
+          { identifier: params.identifier, conversationId: params.conversationId },
+          'Agent message activity already recorded (duplicate identifier)'
+        );
+
+        const existing = await this.activityRepository.findOne(
+          {
+            _environmentId: params.environmentId,
+            _conversationId: params.conversationId,
+            identifier: params.identifier,
+          },
+          '*'
+        );
+
+        if (existing) {
+          return { activity: existing, created: false };
+        }
+      }
+
+      throw err;
+    }
+  }
+
+  /** Records the platform-native message id after a successful post on a persist-first delivery. */
+  async setAgentMessagePlatformMessageId(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+    platformMessageId: string;
+  }): Promise<void> {
+    await this.activityRepository.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        _id: params.activityId,
+      },
+      { $set: { platformMessageId: params.platformMessageId } }
+    );
+  }
+
+  /** Compensating delete when the platform post fails, so a retry can re-claim the identifier. */
+  async deleteAgentMessage(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+  }): Promise<void> {
+    await this.activityRepository.findOneAndDelete({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      _conversationId: params.conversationId,
+      _id: params.activityId,
+    });
   }
 
   async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
     const toolName = params.toolName;
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
 
     return this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
@@ -396,6 +547,7 @@ export class AgentConversationService {
         toolName: params.toolName,
         input: params.input,
       },
+      sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
@@ -425,12 +577,22 @@ export class AgentConversationService {
     return this.persistAgentActivity(params, ConversationActivityTypeEnum.EDIT, 'preview');
   }
 
+  async persistAgentDelete(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
+    return this.persistAgentActivity(params, ConversationActivityTypeEnum.DELETE, 'preview');
+  }
+
   private async persistAgentActivity(
     params: PersistAgentActivityParams & { toolData?: ConversationActivityToolData },
     type: ConversationActivityTypeEnum,
     touch: 'activity' | 'preview'
   ): Promise<ConversationActivityEntity> {
     const threadId = params.platformThreadId ?? params.channel.platformThreadId;
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId,
+      params.sequence
+    );
 
     const touchFn =
       touch === 'activity'
@@ -439,7 +601,7 @@ export class AgentConversationService {
 
     const [activity] = await Promise.all([
       this.activityRepository.createAgentActivity({
-        identifier: `act_${shortId(12)}`,
+        identifier: params.identifier ?? `act_${shortId(12)}`,
         conversationId: params.conversationId,
         platform: params.channel.platform,
         integrationId: params.channel._integrationId,
@@ -451,6 +613,7 @@ export class AgentConversationService {
         richContent: params.richContent,
         toolData: params.toolData,
         type,
+        sequence,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       }),
@@ -548,6 +711,11 @@ export class AgentConversationService {
    */
   async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<void> {
     const toolName = params.toolName ?? 'tool call';
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
 
     await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
@@ -560,12 +728,19 @@ export class AgentConversationService {
       content: params.approved ? `Approved ${toolName}` : `Denied ${toolName}`,
       type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
       toolData: { approvalId: params.approvalId, approved: params.approved, toolName: params.toolName },
+      sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
+    const sequence = await this.resolveEventSequence(
+      params.conversationId,
+      params.environmentId,
+      params.organizationId
+    );
+
     await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: params.conversationId,
@@ -577,8 +752,31 @@ export class AgentConversationService {
       content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
       type: ConversationActivityTypeEnum.TOOL_RESULT,
       toolData: { toolCallId: params.toolCallId, toolName: params.toolName, output: params.output },
+      sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
+    });
+  }
+
+  /**
+   * Whoever makes the event real first mints its sequence: live delivery paths
+   * (web) mint before emitting and pass the value here; everything else gets
+   * one at persist time. Channel-agnostic — every conversation is sequenced.
+   */
+  private async resolveEventSequence(
+    conversationId: string,
+    environmentId: string,
+    organizationId: string,
+    sequence?: number
+  ): Promise<number> {
+    if (sequence !== undefined) {
+      return sequence;
+    }
+
+    return this.eventSequenceService.mint({
+      environmentId,
+      organizationId,
+      conversationId,
     });
   }
 

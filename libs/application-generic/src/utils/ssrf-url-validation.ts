@@ -29,14 +29,14 @@ type PrivateIpClassificationModule = typeof import('@novu/shared/dist/cjs/utils/
 type OutboundSsrfAllowListModule = typeof import('@novu/shared/dist/cjs/utils/outbound-ssrf-allow-list');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isPrivateIp, normalizeHostnameForLookup } =
+const { isPrivateIp, isLinkLocalIp, normalizeHostnameForLookup } =
   require('@novu/shared/utils/private-ip-classification') as PrivateIpClassificationModule;
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isAddressAllowedByOutboundAllowList, isHostnameAllowedByOutboundAllowList } =
+const { isAddressAllowedByOutboundAllowList, isHostnameAllowedByOutboundAllowList, isOutboundAddressAllowed } =
   require('@novu/shared/utils/outbound-ssrf-allow-list') as OutboundSsrfAllowListModule;
 
-export { isPrivateIp, normalizeHostnameForLookup };
+export { isPrivateIp, isLinkLocalIp, normalizeHostnameForLookup };
 
 export function normalizeOutboundHttpUrl(raw: string): string | null {
   const trimmed = raw.trim();
@@ -128,6 +128,19 @@ export function assertSafeOutboundUrl(input: string | URL): URL {
     throw new SsrfBlockedError('BLOCKED_HOSTNAME', `Requests to "${hostname}" are not allowed.`, { hostname });
   }
 
+  const normalized = normalizeHostnameForLookup(hostname);
+  const literalFamily = isIP(normalized);
+
+  if (literalFamily !== 0) {
+    if (isLinkLocalIp(normalized) || (isPrivateIp(normalized) && !isOutboundAddressAllowed(normalized, normalized))) {
+      throw new SsrfBlockedError(
+        'PRIVATE_IP',
+        `Requests to private or reserved IP addresses are not allowed (resolved: ${normalized}).`,
+        { hostname: normalized, resolvedAddress: normalized }
+      );
+    }
+  }
+
   return parsed;
 }
 
@@ -162,12 +175,16 @@ export async function resolvePublicAddresses(
     }
   }
 
-  if (isHostnameAllowedByOutboundAllowList(normalized)) {
-    return addresses;
-  }
-
   for (const { address } of addresses) {
-    if (isAddressAllowedByOutboundAllowList(address)) {
+    if (isLinkLocalIp(address)) {
+      throw new SsrfBlockedError(
+        'PRIVATE_IP',
+        `Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`,
+        { hostname: normalized, resolvedAddress: address }
+      );
+    }
+
+    if (isHostnameAllowedByOutboundAllowList(normalized) || isAddressAllowedByOutboundAllowList(address)) {
       continue;
     }
 

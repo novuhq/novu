@@ -23,6 +23,7 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
+  AgentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
@@ -34,7 +35,6 @@ import {
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   FeatureFlagsKeysEnum,
-  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
@@ -82,7 +82,8 @@ export class ParseEventRequest {
     private featureFlagService: FeatureFlagsService,
     private traceLogRepository: TraceLogRepository,
     protected moduleRef: ModuleRef,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private agentRepository: AgentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -93,6 +94,14 @@ export class ParseEventRequest {
     const requestId = command.requestId;
 
     try {
+      if (command.agentId !== undefined) {
+        if (command.agentId === null) {
+          command._agentId = null;
+        } else {
+          command._agentId = await this.validateTriggerAgent(command);
+        }
+      }
+
       const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
 
       if (statelessWorkflowAllowed) {
@@ -306,12 +315,12 @@ export class ParseEventRequest {
         environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
-        // User-supplied stateless bridgeUrl: pin the connection to a validated
-        // public IP and re-validate every redirect so IP literals like
-        // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
+        // User-supplied stateless bridgeUrl: always pin the connection to a
+        // validated public IP and re-validate every redirect. Self-hosted
+        // internal bridges must be allow-listed via NOVU_SAFE_OUTBOUND_ALLOW.
         // The downstream EXECUTE call from the worker enforces the same guard
         // — see `apps/worker/src/app/workflow/usecases/execute-bridge-job`.
-        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+        enforceSsrfProtection: true,
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
@@ -326,9 +335,10 @@ export class ParseEventRequest {
   // hosts (loopback, RFC1918, link-local 169.254.169.254, cloud metadata)
   // and have the API + worker process fan out to those targets.
   //
-  // The synchronous `assertSafeOutboundUrl` check rejects the obvious vectors
-  // (non-http schemes, embedded credentials, blocked hostnames). The
-  // connect-time DNS-pinned guard against IP-literal private addresses is
+  // The synchronous `assertSafeOutboundUrl` check rejects non-http schemes,
+  // embedded credentials, blocked hostnames, and private/link-local IP
+  // literals (unless allow-listed via NOVU_SAFE_OUTBOUND_ALLOW). The
+  // connect-time DNS-pinned guard against hostname→private resolution is
   // applied via `enforceSsrfProtection: true` on the actual outbound request.
   private assertSafeBridgeUrl(bridgeUrl: string): void {
     try {
@@ -354,7 +364,7 @@ export class ParseEventRequest {
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
   }): Promise<ParseEventRequestResult> {
     // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue
-    const { workflow, ...commandArgs } = command;
+    const { workflow, agentId, ...commandArgs } = command;
 
     const isDryRun = await this.featureFlagService.getFlag({
       environment: { _id: command.environmentId },
@@ -439,6 +449,28 @@ export class ParseEventRequest {
       ...(activityFeedLink ? { activityFeedLink } : {}),
       jobData: command.skipQueueInsertion ? jobData : undefined,
     };
+  }
+
+  private async validateTriggerAgent(command: ParseEventRequestCommand): Promise<string> {
+    const agentIdentifier = command.agentId;
+    if (typeof agentIdentifier !== 'string' || agentIdentifier.trim().length === 0) {
+      throw new BadRequestException('Agent identifier must be a non-empty string.');
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: agentIdentifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    if (!agent) {
+      throw new BadRequestException(`Agent with identifier "${agentIdentifier}" was not found.`);
+    }
+
+    return agent._id;
   }
 
   private isStatelessWorkflowAllowed(bridgeUrl: string | undefined) {

@@ -1,4 +1,4 @@
-import type { ChannelEndpointType } from '@novu/shared';
+import { type ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 import { useState } from 'react';
 import type { ChannelEndpointPayload } from '@/api/channel-endpoints';
 import { AddCredentialDropdown } from './add-credential-dropdown';
@@ -8,6 +8,7 @@ import { payloadToFields } from './credential-fields';
 import { CredentialFormEditor } from './credential-form-editor';
 import { CredentialFormRow } from './credential-form-row';
 import { CredentialItemsCard } from './credential-items-card';
+import { ToolWebhookCredentialFormEditor, ToolWebhookCredentialFormRow } from './tool-webhook-credential-form';
 
 function getInitialAddOption(
   autoStartAdding: boolean,
@@ -60,16 +61,28 @@ export function ChatIntegrationCard({
     />
   ) : null;
 
+  const isToolWebhook = addOption?.type === ENDPOINT_TYPES.TOOL_WEBHOOK;
+
+  const handleAddCancel = () => {
+    setAddOption(null);
+    onAddCancelled?.();
+  };
+
   const addEditor = addOption ? (
-    <CredentialFormEditor
-      fields={payloadToFields(addOption.skeleton)}
-      onSave={(values) => onAddItem(row, addOption.type, values as ChannelEndpointPayload)}
-      onCancel={() => {
-        setAddOption(null);
-        onAddCancelled?.();
-      }}
-      onSaved={() => setAddOption(null)}
-    />
+    isToolWebhook ? (
+      <ToolWebhookCredentialFormEditor
+        onSave={(payload) => onAddItem(row, addOption.type, payload)}
+        onCancel={handleAddCancel}
+        onSaved={() => setAddOption(null)}
+      />
+    ) : (
+      <CredentialFormEditor
+        fields={payloadToFields(addOption.skeleton)}
+        onSave={(values) => onAddItem(row, addOption.type, values as ChannelEndpointPayload)}
+        onCancel={handleAddCancel}
+        onSaved={() => setAddOption(null)}
+      />
+    )
   ) : null;
 
   return (
@@ -79,17 +92,29 @@ export function ChatIntegrationCard({
       items={row.items}
       addControl={addControl}
       addEditor={addEditor}
-      renderItem={(item, _index, valuesVisible) => (
-        <CredentialFormRow
-          key={item.id}
-          fields={payloadToFields(item.payload)}
-          ariaEntity={`${row.displayName} credential`}
-          readOnly={readOnly}
-          valuesVisible={valuesVisible}
-          onSave={(values) => onSaveItem(item, values as ChannelEndpointPayload)}
-          onDelete={() => onDeleteItem(item)}
-        />
-      )}
+      renderItem={(item, _index, valuesVisible) =>
+        item.source === 'endpoint' && item.endpointType === ENDPOINT_TYPES.TOOL_WEBHOOK ? (
+          <ToolWebhookCredentialFormRow
+            key={item.id}
+            payload={item.payload}
+            ariaEntity={`${row.displayName} credential`}
+            readOnly={readOnly}
+            valuesVisible={valuesVisible}
+            onSave={(payload) => onSaveItem(item, payload)}
+            onDelete={() => onDeleteItem(item)}
+          />
+        ) : (
+          <CredentialFormRow
+            key={item.id}
+            fields={payloadToFields(item.payload)}
+            ariaEntity={`${row.displayName} credential`}
+            readOnly={readOnly}
+            valuesVisible={valuesVisible}
+            onSave={(values) => onSaveItem(item, values as ChannelEndpointPayload)}
+            onDelete={() => onDeleteItem(item)}
+          />
+        )
+      }
     />
   );
 }

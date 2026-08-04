@@ -28,6 +28,13 @@ export interface ConversationChannel {
   platformThreadId: string;
   /** Platform message ID of the thread-starting message */
   firstPlatformMessageId?: string;
+  /**
+   * Platform workspace/team id this thread belongs to (e.g. Slack `team_id`). Captured at inbound
+   * creation so outbound delivery can resolve the correct per-workspace bot token when a single
+   * platform app is installed across many workspaces. Absent on single-workspace platforms and
+   * on conversations created before multi-workspace support.
+   */
+  workspace?: { id: string };
 }
 
 export interface ConversationTokenUsage {
@@ -131,6 +138,12 @@ export class ConversationEntity {
    * for active-conversation counting on paths without a live thread (outbound).
    */
   isDirectMessage?: boolean;
+
+  /**
+   * Monotonic high-watermark for live delivery + durable conversation event sequences.
+   * Ephemeral typing envelopes consume values that may be absent from history.
+   */
+  eventSequence?: number;
 
   _environmentId: EnvironmentId;
 

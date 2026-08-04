@@ -24,7 +24,7 @@ import {
   recalculatePositionAndIndex,
 } from './node-utils';
 import { NodeData } from './nodes';
-import { createStep } from './step-utils';
+import { createStep, removeStepFromWorkflow } from './step-utils';
 import { showErrorToast } from './toasts';
 import { useAnimatedNodes } from './use-animated-nodes';
 import { useWorkflowEditorRoutes } from './use-workflow-editor-routes';
@@ -283,10 +283,7 @@ export const useCanvasNodesEdges = ({
       const nodeToRemove = nodes[removeIndex];
 
       update(
-        {
-          ...workflow,
-          steps: workflow.steps.filter((s) => s.slug !== nodeToRemove.data.stepSlug),
-        },
+        removeStepFromWorkflow(workflow, (s) => s.slug !== nodeToRemove.data.stepSlug),
         {
           onSuccess: () => {
             const newNodes = [...dataRef.current.nodes].filter((node) => node.id !== nodeToRemove.id);

@@ -73,6 +73,7 @@ export class GetWorkflowUseCase {
         organizationId: command.user.organizationId,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
         userId: command.user._id,
+        skipPreferencesCache: command.skipPreferencesCache,
       })
     );
 

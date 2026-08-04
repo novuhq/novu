@@ -12,7 +12,7 @@ An agent is a conversational assistant scoped to an environment. Agents receive 
 | --- | --- | --- |
 | `_id` | string | Unique identifier of the agent record in the database. |
 | `name` | string | Display name shown in connected channels such as Slack and Microsoft Teams. |
-| `identifier` | string | External slug used in API paths and SDK calls. Unique per environment. |
+| `identifier` | string | External slug used in API paths and SDK calls. Unique per environment. Maximum 60 characters, and must be a slug (alphanumeric characters separated by `-`, `_`, or `.`, for example `support-bot`). |
 | `description` | string | Optional summary of the agent's purpose. |
 | `active` | boolean | Whether the agent accepts inbound messages. |
 | `runtime` | string | Agent brain mode: `self-hosted` (bridge) or `managed` (provider-hosted). |

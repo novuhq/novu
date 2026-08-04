@@ -17,9 +17,10 @@ import {
 import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ENDPOINT_ROUTED_TOOL_PROVIDERS,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  ToolProviderIdEnum,
+  isEndpointRoutedToolProvider,
 } from '@novu/shared';
 import { ChannelData } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
@@ -29,44 +30,18 @@ import {
   IntegrationEndpoints,
   ResolveChannelEndpoints,
 } from './channel-endpoint-resolution/resolve-channel-endpoints.usecase';
-import { SendMessageBase } from './send-message.base';
+import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageTool';
 
-/**
- * Tool providers whose routing is per-subscriber via `ChannelEndpoint` — they
- * cannot fall back to env-level integration credentials. If no endpoint is
- * resolved for the subscriber, we silently skip the integration (execution
- * detail + `SKIPPED` status) rather than attempting a credential-based send.
- */
-export const ENDPOINT_ROUTED_TOOL_PROVIDERS = new Set<string>([
-  ToolProviderIdEnum.PagerDuty,
-  ToolProviderIdEnum.Opsgenie,
-]);
-
-export function isEndpointRoutedToolProvider(providerId: string): boolean {
-  return ENDPOINT_ROUTED_TOOL_PROVIDERS.has(providerId);
-}
+/** Re-export shared tool routing policy for worker call sites and specs. */
+export { ENDPOINT_ROUTED_TOOL_PROVIDERS, isEndpointRoutedToolProvider };
 
 type ToolStepOutputs = {
   body?: string;
-  enabledIntegrations?: string[];
 };
-
-export function filterToolIntegrationsByEnabledIdentifiers<T extends { identifier: string }>(
-  integrations: T[],
-  enabledIntegrations?: string[]
-): T[] {
-  if (!enabledIntegrations || enabledIntegrations.length === 0) {
-    return integrations;
-  }
-
-  const selectedIdentifiers = new Set(enabledIntegrations);
-
-  return integrations.filter((integration) => selectedIdentifiers.has(integration.identifier));
-}
 
 @Injectable()
 export class SendMessageTool extends SendMessageBase {
@@ -102,7 +77,7 @@ export class SendMessageTool extends SendMessageBase {
     });
 
     const bridgeOutputs = command.bridgeData?.outputs as ToolStepOutputs | undefined;
-    const { content, enabledIntegrations } = await this.resolveContentAndProviders(command, bridgeOutputs);
+    const content = await this.resolveContent(command, bridgeOutputs);
 
     if (!content) {
       return {
@@ -122,11 +97,7 @@ export class SendMessageTool extends SendMessageBase {
       })
     );
 
-    const selectedIntegrations = filterToolIntegrationsByEnabledIdentifiers(integrations, enabledIntegrations);
-
-    if (selectedIntegrations.length === 0) {
-      const noActiveIntegrations = integrations.length === 0;
-
+    if (integrations.length === 0) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -136,9 +107,8 @@ export class SendMessageTool extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            reason: noActiveIntegrations ? 'no_active_tool_integrations' : 'enabled_integrations_filter_matched_none',
-            requestedEnabledIntegrations: enabledIntegrations ?? [],
-            availableIdentifiers: integrations.map((integration) => integration.identifier),
+            reason: 'no_active_tool_integrations',
+            availableIdentifiers: [],
           }),
         })
       );
@@ -156,24 +126,23 @@ export class SendMessageTool extends SendMessageBase {
     let anySkipped = false;
     const toolFactory = new ToolFactory();
 
-    for (const integration of selectedIntegrations) {
-      const resolved = endpointsByIntegration.get(integration.identifier);
-      const channelDataList = resolved?.channelData ?? [];
+    for (const integration of integrations) {
+      const endpointRouted = isEndpointRoutedToolProvider(integration.providerId, integration.credentials);
 
-      if (channelDataList.length === 0) {
-        if (isEndpointRoutedToolProvider(integration.providerId)) {
-          await this.emitSkippedNoEndpoint(command, integration);
-          anySkipped = true;
-          continue;
-        }
-
-        // The tool webhook is the only remaining credential-routed provider —
-        // it routes via env-level integration credentials, so preserve the
-        // legacy send path.
+      if (!endpointRouted) {
         const result = await this.sendToIntegration(command, integration, content, toolFactory, undefined);
         status = this.mergeStatus(status, result.status);
         if (result.status === SendMessageStatus.SUCCESS) anySent = true;
         else if (result.status === SendMessageStatus.SKIPPED) anySkipped = true;
+        continue;
+      }
+
+      const resolved = endpointsByIntegration.get(integration.identifier);
+      const channelDataList = resolved?.channelData ?? [];
+
+      if (channelDataList.length === 0) {
+        await this.emitSkippedNoEndpoint(command, integration);
+        anySkipped = true;
         continue;
       }
 
@@ -203,15 +172,11 @@ export class SendMessageTool extends SendMessageBase {
     return { status };
   }
 
-  private async resolveContentAndProviders(
-    command: SendMessageChannelCommand,
-    bridgeOutputs?: ToolStepOutputs
-  ): Promise<{ content: string; enabledIntegrations?: string[] }> {
-    const enabledIntegrations = bridgeOutputs?.enabledIntegrations;
+  private async resolveContent(command: SendMessageChannelCommand, bridgeOutputs?: ToolStepOutputs): Promise<string> {
     let content = bridgeOutputs?.body || '';
 
     if (command.bridgeData) {
-      return { content, enabledIntegrations };
+      return content;
     }
 
     const { step } = command;
@@ -242,10 +207,10 @@ export class SendMessageTool extends SendMessageBase {
     } catch (error) {
       await this.sendErrorHandlebars(command.job, error.message);
 
-      return { content: '', enabledIntegrations };
+      return '';
     }
 
-    return { content, enabledIntegrations };
+    return content;
   }
 
   private async resolveEndpointsByIntegration(
@@ -359,7 +324,7 @@ export class SendMessageTool extends SendMessageBase {
         transactionId: command.transactionId,
         subscriberId: command.subscriberId,
         stepId: command.step.stepId,
-        bridgeProviderData: this.combineOverrides(
+        bridgeProviderData: combineProviderOverrides(
           command.bridgeData,
           command.overrides,
           command.step.stepId,

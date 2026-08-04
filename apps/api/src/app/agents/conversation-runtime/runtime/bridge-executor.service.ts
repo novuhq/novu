@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
   buildNovuSignatureHeader,
+  FeatureFlagsService,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   PinoLogger,
@@ -13,6 +14,7 @@ import {
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
+  AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
@@ -22,6 +24,12 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import {
+  AGENT_PLATFORM_PROVISION_SOURCE,
+  AGENT_PROVISION_DATA_KEYS,
+  AgentSubscriberAccessEnum,
+  FeatureFlagsKeysEnum,
+} from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -135,6 +143,8 @@ export interface AgentExecutionParams {
   subscriber: SubscriberEntity | null;
   message: Message | null;
   platformContext: AgentPlatformContext;
+  /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
+  context?: AgentContextPayload | null;
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
@@ -155,7 +165,8 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly conversationService: AgentConversationService
+    private readonly conversationService: AgentConversationService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -313,7 +324,15 @@ export class BridgeExecutorService {
 
     const history = await this.loadHistory(config.environmentId, conversation._id, agentIdentifier);
 
-    const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
+    const apiOrigin = resolveAgentReplyApiOrigin();
+    const replyUrl = `${apiOrigin}/v1/agents/${agentIdentifier}/reply`;
+
+    const isEventProtocolEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
+      defaultValue: false,
+      organization: { _id: config.organizationId },
+      environment: { _id: config.environmentId },
+    });
 
     const timestamp = new Date().toISOString();
 
@@ -328,7 +347,7 @@ export class BridgeExecutorService {
       deliveryId = `${conversation._id}:${event}`;
     }
 
-    return {
+    const payload: AgentBridgeRequest = {
       version: 1,
       timestamp,
       deliveryId,
@@ -346,12 +365,20 @@ export class BridgeExecutorService {
         : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
+      subscriberAccess: config.subscriberAccess,
+      context: params.context ?? null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
       action: action ?? null,
       reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
     };
+
+    if (isEventProtocolEnabled) {
+      payload.eventsUrl = `${apiOrigin}/v1/agents/events/ingest`;
+    }
+
+    return payload;
   }
 
   /** Fail-soft: a history read error must not drop the bridge delivery — send the event with empty history. */

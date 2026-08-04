@@ -1,8 +1,22 @@
-import { EnvironmentTypeEnum, type UiSchema } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  type ContentOverrideProviderId,
+  EnvironmentTypeEnum,
+  ToolProviderIdEnum,
+  type UiSchema,
+} from '@novu/shared';
+import { useCallback } from 'react';
+import { RiLightbulbLine } from 'react-icons/ri';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
-import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
+import {
+  ContentOverridePanel,
+  type ProviderOverrideEditorExtras,
+} from '@/components/workflow-editor/steps/shared/provider-overrides/content-override-panel';
 import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
+import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
+import { annotateWebhookField, describeWebhookField } from './webhook-override-annotations';
+import { formatWebhookSchemaSourceLabel } from './webhook-payload-schema';
 
 type ToolEditorProps = { uiSchema: UiSchema };
 
@@ -10,18 +24,51 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { currentEnvironment } = useEnvironment();
   const { uiSchema } = props;
   const { body } = uiSchema?.properties ?? {};
+  const { providerOptions, providerOverrides, webhookPayloadSchema, webhookRootSchema } =
+    useToolOverrideProviderOptions();
+
+  const getEditorExtras = useCallback(
+    (providerId: ContentOverrideProviderId): ProviderOverrideEditorExtras => {
+      if (providerId !== ToolProviderIdEnum.Webhook) {
+        return {};
+      }
+
+      const { ignoredSources } = webhookPayloadSchema;
+
+      return {
+        rootSchemaOverride: webhookRootSchema,
+        describeField: describeWebhookField,
+        annotateField: annotateWebhookField,
+        headerTooltip: 'Webhook overrides replace default content and accept arbitrary JSON object keys.',
+        placeholder: '{\n  "event": "{{payload.title}}"\n}',
+        notice: (
+          <div className="text-text-soft flex items-start gap-1">
+            <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
+            <span className="min-w-0 flex-1 text-xs">
+              Non-empty JSON replaces default content and is sent to every active webhook integration. Each integration
+              merges its own body template beneath this payload. Empty <code>{'{}'}</code> uses default content.
+              {ignoredSources.length > 0 && (
+                <> Autocomplete is unavailable for: {ignoredSources.map(formatWebhookSchemaSourceLabel).join(', ')}.</>
+              )}
+            </span>
+          </div>
+        ),
+      };
+    },
+    [webhookPayloadSchema, webhookRootSchema]
+  );
 
   if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
     return <StepEditorUnavailable />;
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <TabsSection className="p-0 pb-3">
-        <div className="rounded-12 flex flex-col gap-2 border border-neutral-100 p-2 bg-bg-weak">
-          {body && getComponentByType({ component: body.component })}
-        </div>
-      </TabsSection>
-    </div>
+    <ContentOverridePanel
+      channel={ChannelTypeEnum.TOOL}
+      providerOptions={providerOptions}
+      providerOverrides={providerOverrides}
+      defaultContent={body ? getComponentByType({ component: body.component }) : null}
+      getEditorExtras={getEditorExtras}
+    />
   );
 };

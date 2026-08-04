@@ -34,7 +34,8 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       {} as never,
       featureFlagService as never,
       {} as never,
-      sendWebhookMessage as never
+      sendWebhookMessage as never,
+      { resolveAgentEmailContext: sinon.stub().resolves({}) } as never
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
@@ -90,7 +91,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
               body: bridgeBody,
             },
           } as never)
-        : undefined,
+        : null,
       step: {
         stepId: 'email-step',
         template: {
@@ -174,5 +175,218 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
 
     expect(mailData.payloadDetails.content).to.equal(templateContent);
     expect(mailData.payloadDetails.subject).to.equal(templateSubject);
+  });
+});
+
+describe('SendMessageEmail - agent sender / reply-to precedence', () => {
+  function buildUsecase(agentStubs?: { replyTo?: string; senderName?: string; senderEmail?: string }) {
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'msg_1' }),
+      update: sinon.stub().resolves(undefined),
+    };
+    const resolveAgentInboundAddresses = {
+      resolveAgentEmailContext: sinon.stub().resolves({
+        replyTo: agentStubs?.replyTo,
+        senderName: agentStubs?.senderName,
+        senderEmail: agentStubs?.senderEmail,
+      }),
+      resolveAgentEmailContextById: sinon.stub().resolves({
+        replyTo: agentStubs?.replyTo,
+        senderName: agentStubs?.senderName,
+        senderEmail: agentStubs?.senderEmail,
+      }),
+    };
+
+    const usecase = new SendMessageEmail(
+      {} as never,
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      createExecutionDetails as never,
+      { execute: sinon.stub() } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { getFlag: sinon.stub().resolves(true) } as never,
+      {} as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      resolveAgentInboundAddresses as never
+    );
+
+    sinon.stub(usecase as never, 'getIntegration').resolves({
+      _id: 'integration_1',
+      providerId: EmailProviderIdEnum.SendGrid,
+      credentials: {
+        from: 'integration@test.com',
+        senderName: 'Integration Name',
+      },
+    });
+    sinon.stub(usecase as never, 'processVariants').resolves(undefined);
+    sinon.stub(usecase as never, 'getOverrideLayoutId').resolves(undefined);
+    sinon.stub(usecase as never, 'sendSelectedIntegrationExecution').resolves(undefined);
+    sinon.stub(usecase as never, 'initiateTranslations').resolves(undefined);
+    sinon.stub(usecase as never, 'storeContent').returns(false);
+    sinon.stub(usecase as never, 'buildEmailProviderOverrides').returns({});
+
+    return { usecase, resolveAgentInboundAddresses };
+  }
+
+  function buildCommand(
+    outputs: Record<string, unknown> = {},
+    options: { jobAgentId?: string | null; overrides?: Record<string, unknown> } = {}
+  ) {
+    return SendMessageChannelCommand.create({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      payload: {},
+      overrides: options.overrides || {},
+      transactionId: 'txn_1',
+      notificationId: 'notif_1',
+      _templateId: 'tpl_1',
+      subscriberId: 'sub_1',
+      _subscriberId: '_sub_1',
+      jobId: 'job_1',
+      tags: [],
+      contextKeys: [],
+      compileContext: {
+        subscriber: { subscriberId: 'sub_1', email: 'subscriber@test.com', locale: 'en' },
+      } as never,
+      bridgeData: {
+        outputs: {
+          subject: 'Hello',
+          body: '<html><body>Hi</body></html>',
+          ...outputs,
+        },
+      } as never,
+      workflow: {
+        agent: { identifier: 'support-bot' },
+      } as never,
+      step: {
+        stepId: 'email-step',
+        template: {
+          _id: 'mt_1',
+          type: ChannelTypeEnum.EMAIL,
+          subject: 'Hello',
+          content: '',
+          contentType: 'editor',
+        },
+      } as never,
+      job: {
+        _id: 'job_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        _subscriberId: '_sub_1',
+        subscriberId: 'sub_1',
+        _notificationId: 'notif_1',
+        _templateId: 'tpl_1',
+        transactionId: 'txn_1',
+        identifier: 'wf-identifier',
+        type: ChannelTypeEnum.EMAIL,
+        step: { stepId: 'email-step' },
+        ...(options.jobAgentId !== undefined && { _agentId: options.jobAgentId }),
+      } as never,
+    });
+  }
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('uses agent sender defaults when step from is unset', async () => {
+    const { usecase, resolveAgentInboundAddresses } = buildUsecase({
+      senderName: 'Support Agent',
+      senderEmail: 'agent@inbox.com',
+      replyTo: 'agent@inbox.com',
+    });
+    const sendStub = sinon.stub().resolves({ id: 'msg_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+    await usecase.execute(buildCommand());
+
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.firstCall.args[0].agent).to.deep.equal({
+      identifier: 'support-bot',
+    });
+    expect(sendStub.firstCall.args[0].from).to.equal('agent@inbox.com');
+    expect(sendStub.firstCall.args[0].senderName).to.equal('Support Agent');
+    expect(sendStub.firstCall.args[0].replyTo).to.equal('agent@inbox.com');
+  });
+
+  it('uses trigger agent ObjectId override over workflow agent', async () => {
+    const { usecase, resolveAgentInboundAddresses } = buildUsecase({
+      senderName: 'Trigger Agent',
+      senderEmail: 'trigger@inbox.com',
+      replyTo: 'trigger@inbox.com',
+    });
+    const sendStub = sinon.stub().resolves({ id: 'msg_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+    await usecase.execute(buildCommand({}, { jobAgentId: 'bbbbbbbbbbbbbbbbbbbbbbb1' }));
+
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContextById.calledOnce).to.equal(true);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContextById.firstCall.args[0].agentId).to.equal(
+      'bbbbbbbbbbbbbbbbbbbbbbb1'
+    );
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
+    expect(sendStub.firstCall.args[0].from).to.equal('trigger@inbox.com');
+    expect(sendStub.firstCall.args[0].replyTo).to.equal('trigger@inbox.com');
+  });
+
+  it('opts out of agent defaults when job _agentId is explicitly null', async () => {
+    const { usecase, resolveAgentInboundAddresses } = buildUsecase({
+      senderName: 'Support Agent',
+      senderEmail: 'agent@inbox.com',
+      replyTo: 'agent@inbox.com',
+    });
+    const sendStub = sinon.stub().resolves({ id: 'msg_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+    await usecase.execute(buildCommand({}, { jobAgentId: null }));
+
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContextById.called).to.equal(false);
+    expect(sendStub.firstCall.args[0].from).to.equal('integration@test.com');
+    expect(sendStub.firstCall.args[0].replyTo).to.equal(undefined);
+  });
+
+  it('prefers step from / replyTo overrides over agent defaults', async () => {
+    const { usecase, resolveAgentInboundAddresses } = buildUsecase({
+      senderName: 'Support Agent',
+      senderEmail: 'agent@inbox.com',
+      replyTo: 'agent@inbox.com',
+    });
+    const sendStub = sinon.stub().resolves({ id: 'msg_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+    await usecase.execute(
+      buildCommand({
+        from: { email: 'step@acme.com', name: 'Step Sender' },
+        replyTo: 'step-reply@acme.com',
+      })
+    );
+
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
+    expect(sendStub.firstCall.args[0].from).to.equal('step@acme.com');
+    expect(sendStub.firstCall.args[0].senderName).to.equal('Step Sender');
+    expect(sendStub.firstCall.args[0].replyTo).to.equal('step-reply@acme.com');
+  });
+
+  it('skips agent sender defaults when useProviderDefaults is true', async () => {
+    const { usecase, resolveAgentInboundAddresses } = buildUsecase({
+      senderName: 'Support Agent',
+      senderEmail: 'agent@inbox.com',
+    });
+    const sendStub = sinon.stub().resolves({ id: 'msg_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+    await usecase.execute(buildCommand({ useProviderDefaults: true }));
+
+    // Still resolves once for reply-to (sender is skipped via useProviderDefaults)
+    expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
+    expect(sendStub.firstCall.args[0].from).to.equal('integration@test.com');
   });
 });

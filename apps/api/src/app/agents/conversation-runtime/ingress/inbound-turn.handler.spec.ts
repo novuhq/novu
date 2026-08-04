@@ -80,7 +80,7 @@ describe('AgentInboundHandler', () => {
       createOrGetConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
-      persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
+      persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
@@ -159,7 +159,11 @@ describe('AgentInboundHandler', () => {
     const linkTelegramChatToSubscriber = {
       execute:
         overrides.linkTelegramExecute ??
-        sinon.stub().resolves({ created: true, subscriberId: 'sub-1', agentIdentifier: 'support-agent' }),
+        sinon.stub().resolves({
+          created: true,
+          subscriberId: 'sub-1',
+          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+        }),
     };
     const startCodeService = {
       consumeIfMatches: overrides.startCodeConsume ?? sinon.stub().resolves({ status: 'missing' }),
@@ -181,6 +185,9 @@ describe('AgentInboundHandler', () => {
     const planLimitGate = {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
+    };
+    const connectionContextResolver = {
+      resolve: sinon.stub().resolves(null),
     };
     const replyApprovalInterceptor = {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),
@@ -205,6 +212,7 @@ describe('AgentInboundHandler', () => {
       keylessAbuseGuard as any,
       planLimitGate as any,
       inboundAck as any,
+      connectionContextResolver as any,
       replyApprovalInterceptor as any
     );
 
@@ -481,7 +489,7 @@ describe('AgentInboundHandler', () => {
       });
     });
 
-    it('should reply with access-denied for custom-code restricted agents and not forward to the bridge', async () => {
+    it('should dispatch custom-code restricted agents so the framework posts the auth card when the sender is unknown', async () => {
       const restrictedConfig = {
         ...config,
         isManaged: false,
@@ -497,21 +505,35 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
+      // Bypass the plain API reply: the framework's auth gate builds the CTA card on the bridge.
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
+    });
+
+    it('should still reply for custom-code restricted agents when subscriber resolution errors', async () => {
+      const restrictedConfig = {
+        ...config,
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const { handler, bridgeExecutor, outboundGateway, inboundAck } = makeHandler({
+        subscriberResolve: sinon.stub().rejects(new Error('mongo timeout')),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      // Transient failures are not the unlinked-sender case — keep the plain reply and never dispatch.
       expect(bridgeExecutor.execute.called).to.equal(false);
       expect(inboundAck.showWorkingSignal.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
-        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
-      });
-      expect(outboundGateway.replyOnThread.firstCall.args[2]).to.deep.include({
-        persist: {
-          conversationId: conversation._id,
-          channel: conversation.channels[0],
-          agentIdentifier: 'support-agent',
-          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
-          environmentId: 'env1',
-          organizationId: 'org1',
-        },
+        markdown: UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY,
       });
     });
 
@@ -1122,7 +1144,7 @@ describe('AgentInboundHandler', () => {
     const matchingStartPayload = {
       _environmentId: 'env1',
       _organizationId: 'org1',
-      agentIdentifier: 'support-agent',
+      linkScope: { mode: 'agent' as const, agentIdentifier: 'support-agent' },
       _integrationId: 'integration1',
       subscriberId: 'ext-sub-1',
     };
@@ -1152,9 +1174,11 @@ describe('AgentInboundHandler', () => {
     }
 
     it('atomically consumes start code and links subscriber on matching scope, skipping bridge', async () => {
-      const linkTelegramExecute = sinon
-        .stub()
-        .resolves({ created: true, subscriberId: 'ext-sub-1', agentIdentifier: 'support-agent' });
+      const linkTelegramExecute = sinon.stub().resolves({
+        created: true,
+        subscriberId: 'ext-sub-1',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+      });
       const startCodeConsume = sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload });
       const { handler, bridgeExecutor, linkTelegramChatToSubscriber, conversationService, startCodeService } =
         makeHandler({
@@ -1172,22 +1196,25 @@ describe('AgentInboundHandler', () => {
         environmentId: 'env1',
         organizationId: 'org1',
         integrationId: 'integration1',
-        agentIdentifier: 'support-agent',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
       });
       expect(linkTelegramChatToSubscriber.execute.calledOnce).to.equal(true);
       const cmd = linkTelegramChatToSubscriber.execute.firstCall.args[0];
       expect(cmd.environmentId).to.equal('env1');
       expect(cmd.subscriberId).to.equal('ext-sub-1');
       expect(cmd.chatId).to.equal('42');
+      expect(cmd.linkScope).to.deep.equal({ mode: 'agent', agentIdentifier: 'support-agent' });
       expect(thread.post.calledOnce).to.equal(true);
       expect(bridgeExecutor.execute.called).to.equal(false);
       expect(conversationService.createOrGetConversation.called).to.equal(false);
     });
 
     it('replies with the duplicate message when the chat was already linked', async () => {
-      const linkTelegramExecute = sinon
-        .stub()
-        .resolves({ created: false, subscriberId: 'sub-1', agentIdentifier: 'support-agent' });
+      const linkTelegramExecute = sinon.stub().resolves({
+        created: false,
+        subscriberId: 'sub-1',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+      });
       const { handler, bridgeExecutor } = makeHandler({
         linkTelegramExecute,
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
@@ -1205,9 +1232,11 @@ describe('AgentInboundHandler', () => {
     it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
       const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
       const { handler, agentIntegrationRepository } = makeHandler({
-        linkTelegramExecute: sinon
-          .stub()
-          .resolves({ created: true, subscriberId: 'user-123', agentIdentifier: 'support-agent' }),
+        linkTelegramExecute: sinon.stub().resolves({
+          created: true,
+          subscriberId: 'user-123',
+          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+        }),
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
       });
       const thread = makeTelegramThread();
@@ -1239,9 +1268,11 @@ describe('AgentInboundHandler', () => {
 
     it('does not mark the integration connected (Layer 2) when a genuine end user links via /start', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
-        linkTelegramExecute: sinon
-          .stub()
-          .resolves({ created: true, subscriberId: 'ext-sub-1', agentIdentifier: 'support-agent' }),
+        linkTelegramExecute: sinon.stub().resolves({
+          created: true,
+          subscriberId: 'ext-sub-1',
+          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+        }),
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
       });
       const thread = makeTelegramThread();

@@ -26,7 +26,7 @@ export type WhatsAppInboxCardProps = {
  * Persistent post-connect WHATSAPP card: business phone display plus state-aware
  * subscriber-access education. The agent-wide open-access toggle lives on Agent behavior.
  */
-export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppInboxCardProps) {
+function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppInboxCardProps) {
   const { currentEnvironment } = useEnvironment();
   const credentials = whatsappIntegration.credentials ?? {};
   const apiToken = readCredentialString(credentials, CredentialsKeyEnum.ApiToken);

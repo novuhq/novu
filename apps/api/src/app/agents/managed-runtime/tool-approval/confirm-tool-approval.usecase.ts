@@ -83,7 +83,6 @@ export class ConfirmToolApproval {
       .deleteInConversation(
         command.agentId,
         command.integrationIdentifier,
-        command.platform,
         command.platformThreadId,
         command.sourceMessageId
       )

@@ -1,6 +1,7 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
-import * as NextServer from 'next/server';
 import { type NextRequest } from 'next/server';
+// `.js` required: Node ESM cannot resolve bare `next/server` when this package is externalized (NV-8366).
+import * as NextServer from 'next/server.js';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type Either, type SupportedFrameworkName } from '../types';

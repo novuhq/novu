@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DirectionEnum } from '@novu/shared';
+import { AGENT_AUTH_METADATA_KEYS, DirectionEnum } from '@novu/shared';
 import { type ClientSession, FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
@@ -75,7 +75,13 @@ export class ConversationRepository extends BaseRepositoryV2<
     integrationId: string,
     participantId: string,
     participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER,
-    title?: string
+    title?: string,
+    /**
+     * When set, only match conversations whose channel belongs to this platform workspace
+     * (e.g. Slack `team_id`). Required for multi-workspace welcome dedup so a prior welcome
+     * in workspace A does not suppress a welcome in workspace B for the same participant key.
+     */
+    workspaceId?: string
   ): Promise<ConversationEntity | null> {
     return this.findOne(
       {
@@ -85,6 +91,7 @@ export class ConversationRepository extends BaseRepositoryV2<
         channels: {
           $elemMatch: {
             _integrationId: new Types.ObjectId(integrationId),
+            ...(workspaceId ? { 'workspace.id': workspaceId } : {}),
           },
         },
         participants: { $elemMatch: { id: participantId, type: participantType } },
@@ -338,6 +345,37 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Finds conversations where a platform user was shown the auth CTA card and has
+   * not yet been confirmed as linked — i.e. `metadata` still carries the auth-card
+   * tracking key written by the framework auth gate. Scoped to the integration and
+   * the platform participant so a link event only touches that user's own threads.
+   * Powers the real-time "account linked" card update on `CreateChannelEndpoint`.
+   */
+  async findPendingAuthCards(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    participantId: string;
+  }): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: {
+          $elemMatch: {
+            _integrationId: new Types.ObjectId(params.integrationId),
+          },
+        },
+        participants: {
+          $elemMatch: { id: params.participantId, type: ConversationParticipantTypeEnum.PLATFORM_USER },
+        },
+        [`metadata.${AGENT_AUTH_METADATA_KEYS.authCardMessageId}`]: { $exists: true },
+      } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds,
+      '*'
+    );
+  }
+
   async clearExternalSessionIdsForAgent(
     environmentId: string,
     organizationId: string,
@@ -433,6 +471,37 @@ export class ConversationRepository extends BaseRepositoryV2<
       { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
       { $set: { 'billing.resolvedAt': nowIso } }
     );
+  }
+
+  /**
+   * Atomically advances the conversation event high-watermark and returns the
+   * allocated sequence number (1-based).
+   */
+  async allocateEventSequence(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    minimum = 0
+  ): Promise<number> {
+    const filter = {
+      _id: conversationId,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
+
+    if (minimum > 0) {
+      await this.update(
+        {
+          ...filter,
+          $or: [{ eventSequence: { $lt: minimum } }, { eventSequence: { $exists: false } }],
+        },
+        { $set: { eventSequence: minimum } }
+      );
+    }
+
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+
+    return updated?.eventSequence ?? 1;
   }
 
   async incrementTokenUsage(

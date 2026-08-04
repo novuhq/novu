@@ -27,6 +27,7 @@ export function EditStepTemplateV2Page() {
 function fingerprintControls(step: StepResponseDto): string {
   return JSON.stringify({
     v: step.controls?.values,
+    po: step.providerOverrides,
     ui: step.controls?.uiSchema,
     ds: step.controls?.dataSchema,
   });
@@ -84,8 +85,12 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
     previousData: {},
     form,
     save: (data, { onSuccess }) => {
+      const { providerOverrides, ...controlValues } = data as Record<string, unknown> & {
+        providerOverrides?: StepUpdateDto['providerOverrides'];
+      };
       const fp = JSON.stringify({
-        v: data,
+        v: controlValues,
+        po: providerOverrides,
         ui: step.controls?.uiSchema,
         ds: step.controls?.dataSchema,
       });
@@ -95,9 +100,11 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       // that would otherwise overwrite in-progress edits.
       inFlightFingerprintsRef.current.add(fp);
 
-      const updateStepData: Partial<StepUpdateDto> = {
-        controlValues: data,
-      };
+      const updateStepData: Partial<StepUpdateDto> = { controlValues };
+      // Omit when untouched (leave server docs unchanged); send null only to delete all.
+      if (providerOverrides !== undefined) {
+        updateStepData.providerOverrides = providerOverrides;
+      }
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
         onSuccess: () => {
           // Clean up the in-flight fingerprint on success.

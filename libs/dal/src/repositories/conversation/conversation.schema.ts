@@ -51,6 +51,14 @@ const conversationSchema = new Schema<ConversationDBModel>(
             firstPlatformMessageId: {
               type: Schema.Types.String,
             },
+            workspace: {
+              type: new Schema(
+                {
+                  id: { type: Schema.Types.String, required: true },
+                },
+                { _id: false }
+              ),
+            },
           },
           { _id: false }
         ),
@@ -121,6 +129,10 @@ const conversationSchema = new Schema<ConversationDBModel>(
     },
     isDirectMessage: {
       type: Schema.Types.Boolean,
+    },
+    eventSequence: {
+      type: Schema.Types.Number,
+      default: 0,
     },
     lastActivityAt: {
       type: Schema.Types.String,

@@ -31,8 +31,8 @@ export async function updateOrganizationSettings({
   return patch('/organizations/settings', { environment, body: data });
 }
 
-// Writes onboarding metadata (e.g. productUseCases) onto the external (Clerk) organization.
-// Org context is resolved server-side from the session, so no environment is required.
+// Writes onboarding metadata (e.g. productUseCases) onto the external (Clerk) organization
+// and the internal Mongo organization. Org context is resolved server-side from the session.
 export async function updateExternalOrganization(data: UpdateExternalOrganizationDto): Promise<unknown> {
   return post('/clerk/organization', { body: data });
 }

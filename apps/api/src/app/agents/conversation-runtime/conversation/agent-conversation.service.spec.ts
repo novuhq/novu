@@ -1,4 +1,9 @@
-import { ConversationParticipantTypeEnum, ConversationRepository, ConversationStatusEnum } from '@novu/dal';
+import {
+  ConversationActivityTypeEnum,
+  ConversationParticipantTypeEnum,
+  ConversationRepository,
+  ConversationStatusEnum,
+} from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import {
@@ -8,6 +13,7 @@ import {
   getInboundActivityPreview,
   INBOUND_ATTACHMENT_ONLY_PREVIEW,
 } from './agent-conversation.service';
+import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 describe('AgentConversationService', () => {
   function makeLogger() {
@@ -34,6 +40,145 @@ describe('AgentConversationService', () => {
       firstMessageText: 'hello',
     };
   }
+
+  function makeActivityRepository() {
+    return {
+      createAgentActivity: sinon.stub().resolves({ _id: 'activity-1', identifier: 'act_generated' }),
+      findOne: sinon.stub().resolves(null),
+    };
+  }
+
+  function basePersistParams() {
+    return {
+      conversationId: 'conv-1',
+      channel: {
+        platform: 'slack',
+        _integrationId: 'integration-a',
+        platformThreadId: 'thread-1',
+      },
+      platformMessageId: 'msg-1',
+      agentIdentifier: 'agent-a',
+      content: 'hello',
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+    };
+  }
+
+  function makeEventSequenceService(mint = sinon.stub().resolves(undefined)) {
+    return { mint } as unknown as ConversationEventSequenceService;
+  }
+
+  function makeService(
+    conversationRepository: ConversationRepository,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    activityRepository: any = makeActivityRepository(),
+    eventSequenceService = makeEventSequenceService()
+  ) {
+    return new AgentConversationService(
+      conversationRepository,
+      activityRepository as any,
+      eventSequenceService,
+      makeLogger() as any
+    );
+  }
+
+  describe('persistAgentMessage', () => {
+    it('uses the caller-supplied identifier when provided', async () => {
+      const activityRepository = makeActivityRepository();
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const service = makeService(conversationRepository, activityRepository);
+
+      const result = await service.persistAgentMessage({
+        ...basePersistParams(),
+        identifier: 'client-msg-123',
+      });
+
+      expect(result.created).to.equal(true);
+      expect(activityRepository.createAgentActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('client-msg-123');
+      expect(activityRepository.createAgentActivity.firstCall.args[0].type).to.equal(
+        ConversationActivityTypeEnum.MESSAGE
+      );
+    });
+
+    it('mints an act_ identifier when none is supplied', async () => {
+      const activityRepository = makeActivityRepository();
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const service = makeService(conversationRepository, activityRepository);
+
+      await service.persistAgentMessage(basePersistParams());
+
+      const identifier = activityRepository.createAgentActivity.firstCall.args[0].identifier;
+
+      expect(identifier).to.match(/^act_/);
+    });
+
+    it('logs and returns the existing activity on duplicate identifier races', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const existingActivity = { _id: 'existing-1', identifier: 'client-msg-123' };
+      const activityRepository = {
+        createAgentActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves(existingActivity),
+      };
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const logger = makeLogger();
+      const service = new AgentConversationService(
+        conversationRepository,
+        activityRepository as any,
+        makeEventSequenceService(),
+        logger as any
+      );
+
+      const result = await service.persistAgentMessage({
+        ...basePersistParams(),
+        identifier: 'client-msg-123',
+      });
+
+      expect(result.activity).to.equal(existingActivity);
+      expect(result.created).to.equal(false);
+      expect(logger.warn.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('event sequencing', () => {
+    it('allocates a sequence for durable tool activities on any channel', async () => {
+      const conversationRepository = {} as unknown as ConversationRepository;
+      const activityRepository = {
+        createToolActivity: sinon.stub().resolves({ _id: 'tool-activity' }),
+      };
+      const mint = sinon.stub().resolves(4);
+      const service = makeService(conversationRepository, activityRepository, makeEventSequenceService(mint));
+
+      await service.persistToolResult({
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'slack',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        toolCallId: 'tool-call-1',
+        output: 'done',
+      });
+
+      expect(activityRepository.createToolActivity.firstCall.args[0].sequence).to.equal(4);
+      expect(
+        mint.calledOnceWithExactly({
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+          conversationId: 'conv-1',
+        })
+      ).to.equal(true);
+    });
+  });
 
   describe('getConversationTitle', () => {
     it('returns trimmed text truncated to 200 characters', () => {
@@ -75,7 +220,12 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      makeLogger() as any
+    );
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
@@ -102,7 +252,12 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      makeLogger() as any
+    );
 
     await service.createOrGetConversation(baseCreateParams());
 
@@ -125,7 +280,12 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      makeLogger() as any
+    );
 
     await service.findByPlatformThread('e', 'o', 'agent-x', 'int-x', 'thread-z');
 

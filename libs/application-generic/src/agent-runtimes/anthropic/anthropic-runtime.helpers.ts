@@ -1,6 +1,11 @@
 import { APIError } from '@anthropic-ai/sdk';
 import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto, McpTokenEndpointAuthMethod } from '@novu/shared';
-import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA, resolvePersistedMcpTokenEndpointAuthMethod } from '@novu/shared';
+import {
+  CLAUDE_BUILTIN_TOOLS,
+  NOVU_RESOLVE_SCHEMA,
+  NOVU_TOOL_CATALOG_SCHEMA,
+  resolvePersistedMcpTokenEndpointAuthMethod,
+} from '@novu/shared';
 import {
   AgentRuntimeNetworkError,
   AgentRuntimeOverloadedError,
@@ -247,7 +252,10 @@ export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
  * Novu-owned tools always attached to managed agents (independent of user tool/MCP selections).
  */
 export function buildPlatformToolsPayload(): Record<string, unknown>[] {
-  return [{ type: 'custom', ...NOVU_TOOLS_SCHEMA }];
+  return [
+    { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+    { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+  ];
 }
 
 function buildUserToolsetPayload(
@@ -309,7 +317,7 @@ export function ensureSkillRequiredTools(toolTypes: string[] | undefined, hasSki
  * API to default all omitted tools to enabled, which means the agent ends up
  * with every tool regardless of what the user selected.
  *
- * Platform tools (e.g. `novu_tools`) are always included, even when the user
+ * Platform tools (e.g. `novu_tool_catalog`, `novu_resolve`) are always included, even when the user
  * has no builtin tools or MCP servers enabled.
  *
  * When `hasSkills` is true, `read` is force-enabled — Anthropic rejects skill

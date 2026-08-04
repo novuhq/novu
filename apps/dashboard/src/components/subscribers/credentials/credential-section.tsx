@@ -77,6 +77,12 @@ export function CredentialSection({ group, subscriberId, readOnly, actions }: Cr
   const showPicker = !readOnly && pickerRows.length > 0;
   const showEmptyHint = visibleRows.length === 0;
 
+  // Read-only has no picker, so empty-only groups would otherwise render a
+  // "No credentials set" stub — hide the section entirely instead.
+  if (readOnly && visibleRows.length === 0) {
+    return null;
+  }
+
   return (
     <section className="flex flex-col gap-1 p-2.5">
       <div className="flex h-6 items-center justify-between -mx-2.5 px-2.5 py-1 bg-bg-weak">

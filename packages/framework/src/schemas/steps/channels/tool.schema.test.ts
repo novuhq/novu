@@ -1,24 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { channelStepSchemas } from './index';
+import { chatChannelSchemas } from './chat.schema';
+import { toolChannelSchemas } from './tool.schema';
 
-describe('tool channel schemas', () => {
-  it('exposes output and result schemas on channelStepSchemas.tool', () => {
-    expect(channelStepSchemas.tool).toBeDefined();
-    expect(channelStepSchemas.tool.output).toMatchObject({
+describe('chat and tool channel output schemas', () => {
+  it.each([
+    ['chat', chatChannelSchemas],
+    ['tool', toolChannelSchemas],
+  ] as const)('%s output is required body only', (_name, schemas) => {
+    expect(schemas.output).toEqual({
       type: 'object',
       properties: {
         body: { type: 'string' },
-        enabledIntegrations: {
-          type: 'array',
-          items: { type: 'string' },
-        },
       },
       required: ['body'],
-    });
-    expect(channelStepSchemas.tool.result).toMatchObject({
-      type: 'object',
-      properties: {},
-      required: [],
+      additionalProperties: false,
     });
   });
 });

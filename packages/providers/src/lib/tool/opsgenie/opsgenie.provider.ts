@@ -1,4 +1,4 @@
-import { ToolProviderIdEnum } from '@novu/shared';
+import { TOOL_PROVIDER_OVERRIDE_KEYS, ToolProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
   ChannelTypeEnum,
@@ -25,20 +25,15 @@ const OPSGENIE_ENDPOINTS: Record<OpsgenieRegion, string> = {
 // Opsgenie enforces a 130-character limit on the `message` field.
 const MESSAGE_MAX_LENGTH = 130;
 
-const RESERVED_OVERRIDE_KEYS = new Set([
+/**
+ * Keys consumed by explicit Alert API mapping and therefore excluded from
+ * details. Uses the shared override-key inventory plus provider-internal fields.
+ * Explicitly mapped fields in sendMessage must stay a subset of
+ * TOOL_PROVIDER_OVERRIDE_KEYS[Opsgenie] (enforced in opsgenie.provider.spec.ts).
+ */
+const RESERVED_OVERRIDE_KEYS = new Set<string>([
   'content',
-  'message',
-  'alias',
-  'description',
-  'source',
-  'entity',
-  'user',
-  'note',
-  'priority',
-  'tags',
-  'responders',
-  'visibleTo',
-  'details',
+  ...TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie],
 ]);
 
 export class OpsgenieProvider extends BaseProvider implements IToolProvider {
@@ -91,6 +86,10 @@ export class OpsgenieProvider extends BaseProvider implements IToolProvider {
 
     if (Array.isArray(overrides.visibleTo)) {
       payload.visibleTo = overrides.visibleTo;
+    }
+
+    if (Array.isArray(overrides.actions)) {
+      payload.actions = overrides.actions;
     }
 
     const details = this.buildDetails(overrides);

@@ -11,6 +11,7 @@ import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-s
 import { OrganizationSettings as BetterAuthOrganizationSettings } from '@/utils/better-auth/components/organization-settings';
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
+import { ConnectedWorkspacesSection } from './connected-workspaces-section';
 import { NovuBrandingSwitch } from './novu-branding-switch';
 
 // After deleting (or leaving) an org, Clerk falls back to `<ClerkProvider signInUrl>` when this
@@ -176,6 +177,9 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
           </div>
         </div>
       </Protect>
+
+      {/* Connected Workspaces Section */}
+      <ConnectedWorkspacesSection />
 
       {/* Organization Settings Section */}
       <div>

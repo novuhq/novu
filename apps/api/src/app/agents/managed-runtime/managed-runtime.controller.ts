@@ -9,7 +9,7 @@ export class ManagedRuntimeController {
   constructor(private managedAgentService: ManagedAgentService) {}
 
   @Post('/events')
-  async handleThalamusEvent(@Req() req: Request, @Res() res: Response) {
+  async handleAgentEvents(@Req() req: Request, @Res() res: Response) {
     await this.managedAgentService.handleWebhook(req, res);
   }
 }

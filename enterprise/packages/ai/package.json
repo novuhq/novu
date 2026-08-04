@@ -25,6 +25,7 @@
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
+    "@novu/framework": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/testing": "workspace:*",
     "@sentry/node": "^10.63.0",

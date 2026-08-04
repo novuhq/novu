@@ -1,3 +1,25 @@
+## v3.18.2 (2026-08-03)
+
+### 🩹 Fixes
+
+- **js,react:** when web locks not available then dont broadcast messages fixes NV-8425 ([#12170](https://github.com/novuhq/novu/pull/12170))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
+## v3.18.1 (2026-07-23)
+
+### 🚀 Features
+
+- **dashboard,api-service,js,react,framework:** novu copilot agent for slack fixes NV-8316 ([#11973](https://github.com/novuhq/novu/pull/11973))
+- **providers:** add Webex Messaging OAuth support fixes NV-8272 ([#11633](https://github.com/novuhq/novu/pull/11633))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+- Rahul Jain
+
 ## v3.18.0 (2026-07-08)
 
 ### 🚀 Features

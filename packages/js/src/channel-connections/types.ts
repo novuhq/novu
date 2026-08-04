@@ -2,6 +2,10 @@ import type { Context } from '../types';
 
 export type ChannelConnectionResponse = {
   identifier: string;
+  /** The provider workspace/team this connection is bound to. */
+  workspace?: { id: string; name?: string; botUserId?: string };
+  /** ISO timestamp of when the connection was created. */
+  createdAt?: string;
 };
 
 export type ChannelEndpointResponse = {
@@ -34,6 +38,12 @@ export type GenerateConnectOAuthUrlArgs = {
   connectionIdentifier?: string;
   subscriberId?: string;
   context?: Context;
+  /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
+   * secret key (same "Inbox with context" signing). Required when connecting to a
+   * `restricted` agent and the session did not already verify the context.
+   */
+  contextHash?: string;
   /** Slack only: OAuth bot scopes to request. */
   scope?: string[];
   connectionMode?: ConnectionMode;
@@ -47,6 +57,12 @@ export type GenerateLinkUserOAuthUrlArgs = {
   /** Required — this operation always binds a specific subscriber to a user identity. */
   subscriberId: string;
   context?: Context;
+  /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
+   * secret key. Required when linking to a `restricted` agent and the session did
+   * not already verify the context, so the per-user link carries a trustworthy binding.
+   */
+  contextHash?: string;
   /** Slack only: user-level OAuth scopes (e.g. identity.basic). */
   userScope?: string[];
 };
@@ -57,6 +73,12 @@ export type ListChannelConnectionsArgs = {
   channel?: string;
   providerId?: string;
   contextKeys?: string[];
+  /**
+   * Scope results relative to the subscriber. `subscriber` returns only the
+   * subscriber's own connections, `shared` returns only shared (workspace-level)
+   * connections. Omit to return both.
+   */
+  connectionMode?: ConnectionMode;
   limit?: number;
   after?: string;
   before?: string;
@@ -64,6 +86,7 @@ export type ListChannelConnectionsArgs = {
 
 export type GetChannelConnectionArgs = {
   identifier: string;
+  connectionMode?: ConnectionMode;
 };
 
 export type CreateChannelConnectionArgs = {
@@ -116,6 +139,17 @@ export type DeleteChannelEndpointArgs = {
  */
 export type LinkChannelEndpointArgs = {
   integrationIdentifier: string;
+  /**
+   * Context bound to the resulting channel endpoint at link time.
+   */
+  context?: Context;
+  /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
+   * secret key (the same "Inbox with context" signing). Required when the
+   * integration has HMAC validation enabled and the current session did not
+   * already verify the context.
+   */
+  contextHash?: string;
 };
 
 export type LinkChannelEndpointResponse = {

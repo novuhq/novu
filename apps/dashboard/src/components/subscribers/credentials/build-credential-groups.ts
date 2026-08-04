@@ -356,7 +356,10 @@ function buildChatGroup(
   return createChannelGroup(ChannelTypeEnum.CHAT, [...integrationRows, ...phoneBasedRows, ...orphanRows]);
 }
 
-/** TOOL section for endpoint-routed tools (PagerDuty, Opsgenie). Credential-routed tools are omitted when empty. */
+/**
+ * TOOL section for endpoint-routed tools (PagerDuty, Opsgenie, and tool-webhook in dynamic
+ * routing mode). Integrations with no stored endpoints and nothing addable are omitted.
+ */
 function buildToolGroup(integrations: IIntegration[], channelEndpoints: ChannelEndpointDto[]): ChannelGroup {
   const toolIntegrations = getActiveIntegrationsByChannel(integrations, ChannelTypeEnum.TOOL);
   const toolEndpoints = channelEndpoints.filter((endpoint) => endpoint.channel === ChannelTypeEnum.TOOL);
@@ -367,7 +370,7 @@ function buildToolGroup(integrations: IIntegration[], channelEndpoints: ChannelE
     integrations: toolIntegrations,
     channelEndpoints: toolEndpoints,
     getAddable: (integration) => ({
-      addableTypes: getAddableToolEndpointTypes(integration.providerId),
+      addableTypes: getAddableToolEndpointTypes(integration.providerId, integration.credentials),
     }),
     skipEmptyNonAddable: true,
   });

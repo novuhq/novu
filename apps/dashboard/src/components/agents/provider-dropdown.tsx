@@ -1,6 +1,5 @@
 import {
   ChannelTypeEnum,
-  CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   EmailProviderIdEnum,
   type IIntegration,
@@ -31,6 +30,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { useConversationalProviders } from '@/hooks/use-conversational-providers';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
@@ -188,6 +188,7 @@ export function ProviderDropdown({
   const { integrations } = useFetchIntegrations();
   const navigate = useNavigate();
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
+  const conversationalProviders = useConversationalProviders();
 
   const closeDropdown = () => {
     setOpen(false);
@@ -204,8 +205,8 @@ export function ProviderDropdown({
   });
 
   const { supported: allSupported, comingSoon } = useMemo(
-    () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
-    [integrations]
+    () => buildDropdownItems(conversationalProviders, integrations),
+    [conversationalProviders, integrations]
   );
 
   const supported = useMemo(() => {

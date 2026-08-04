@@ -65,8 +65,16 @@ export class MessageTemplateRepository extends BaseRepository<
     return await deleteQuery;
   }
 
-  async findDeleted(query: MessageTemplateQuery): Promise<MessageTemplateEntity> {
-    const res: MessageTemplateEntity = await this.messageTemplate.findDeleted(query);
+  async findDeleted(query: MessageTemplateQuery, options: RepositoryOptions = {}): Promise<MessageTemplateEntity> {
+    const { session } = options;
+
+    const findQuery = this.messageTemplate.findDeleted(query);
+
+    if (session) {
+      findQuery.session(session);
+    }
+
+    const res: MessageTemplateEntity = await findQuery;
 
     return this.mapEntity(res);
   }
