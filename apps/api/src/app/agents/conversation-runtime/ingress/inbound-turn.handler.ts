@@ -1273,6 +1273,9 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    // Hydrate the workflow dispatch seed into conversation history before the runtime turn.
+    await this.maybeHydrateWorkflowDispatchSeed(agentId, config, conversation, thread.id);
+
     const actorType =
       participantType === ConversationParticipantTypeEnum.SUBSCRIBER
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER

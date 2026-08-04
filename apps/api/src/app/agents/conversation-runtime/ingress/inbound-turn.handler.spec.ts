@@ -1551,6 +1551,80 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_ACTION);
       expect(bridgeExecutor.execute.firstCall.args[0].action).to.deep.equal(action);
     });
+
+    it('should hydrate workflow dispatch seed when an action is the first interaction on the thread', async () => {
+      const {
+        handler,
+        conversationService,
+        workflowAgentDispatchRepository,
+        notificationRepository,
+        messageRepository,
+        bridgeExecutor,
+      } = makeHandler();
+
+      workflowAgentDispatchRepository.findByPlatformThread.resolves({
+        _id: 'dispatch1',
+        _notificationId: 'notif1',
+        _jobId: 'job1',
+        _messageId: 'msg1',
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        transactionId: 'txn1',
+        workflowIdentifier: 'order-alerts',
+        stepId: 'chat-1',
+        subscriberId: 'sub1',
+        platformMessageId: '1777837477.371619',
+        platformThreadId: 'thread1',
+      });
+      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+      messageRepository.findOne.resolves({ content: 'Order ORD-1 shipped' });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'ack', value: undefined } as any,
+        'user1'
+      );
+
+      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+      const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
+      expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
+      // The origin must reach history before the runtime reads the conversation.
+      expect(conversationService.persistWorkflowOriginHydration.calledBefore(bridgeExecutor.execute)).to.equal(true);
+    });
+
+    it('should not hydrate workflow dispatch seed for link-button actions', async () => {
+      const { handler, conversationService, workflowAgentDispatchRepository } = makeHandler();
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'link-https://novu.co/pricing', value: undefined } as any,
+        'user1'
+      );
+
+      expect(workflowAgentDispatchRepository.findByPlatformThread.called).to.equal(false);
+      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+    });
+
+    it('should still dispatch the action when workflow dispatch hydration fails', async () => {
+      const { handler, conversationService, workflowAgentDispatchRepository, bridgeExecutor } = makeHandler();
+
+      workflowAgentDispatchRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'ack', value: undefined } as any,
+        'user1'
+      );
+
+      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
   });
 
   describe('handleReaction', () => {
