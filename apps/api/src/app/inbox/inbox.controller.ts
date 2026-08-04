@@ -118,6 +118,10 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import {
+  stripHiddenChannelsFromInboxPreference,
+  stripHiddenPreferenceChannels,
+} from './utils/strip-hidden-preference-channels';
 import type { InboxPreference } from './utils/types';
 
 @ApiCommonResponses()
@@ -253,6 +257,7 @@ export class InboxController {
     return {
       level: PreferenceLevelEnum.GLOBAL,
       ...globalPreference.preference,
+      channels: stripHiddenPreferenceChannels(globalPreference.preference.channels),
     };
   }
 
@@ -428,7 +433,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
-    return await this.updatePreferencesUsecase.execute(
+    const preference = await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -444,6 +449,8 @@ export class InboxController {
         includeInactiveChannels: false,
       })
     );
+
+    return stripHiddenChannelsFromInboxPreference(preference);
   }
 
   /**
@@ -456,7 +463,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: BulkUpdatePreferencesRequestDto
   ): Promise<InboxPreference[]> {
-    return await this.bulkUpdatePreferencesUsecase.execute(
+    const preferences = await this.bulkUpdatePreferencesUsecase.execute(
       BulkUpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -465,6 +472,8 @@ export class InboxController {
         preferences: body.preferences,
       })
     );
+
+    return preferences.map(stripHiddenChannelsFromInboxPreference);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -474,7 +483,7 @@ export class InboxController {
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
-    return await this.updatePreferencesUsecase.execute(
+    const preference = await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -495,6 +504,8 @@ export class InboxController {
         includeInactiveChannels: false,
       })
     );
+
+    return stripHiddenChannelsFromInboxPreference(preference);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -506,7 +517,7 @@ export class InboxController {
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
-    return await this.updatePreferencesUsecase.execute(
+    const preference = await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -528,6 +539,8 @@ export class InboxController {
         includeInactiveChannels: false,
       })
     );
+
+    return stripHiddenChannelsFromInboxPreference(preference);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
