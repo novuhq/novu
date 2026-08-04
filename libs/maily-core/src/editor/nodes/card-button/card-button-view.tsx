@@ -27,12 +27,24 @@ export function CardButtonView(props: NodeViewProps) {
 
   const preset = STYLE_PRESETS[style] ?? STYLE_PRESETS.default;
 
+  const selectCardButton = () => {
+    if (!editor.isEditable) {
+      return;
+    }
+
+    // Always select the node so attribute updates (Configure Variable) have a
+    // target. When a variable pill is clicked, `editor.storage.variable.popover`
+    // suppresses the Actions bubble so only Configure Variable is shown.
+    editor.commands.setNodeSelection(getPos());
+  };
+
   return (
     <NodeViewWrapper data-type="cardButton" data-selected={selected ? 'true' : undefined} className="mly-inline-flex">
-      {/* A non-focusable div (not a <button>) so clicking selects the node without
-          stealing focus from the editor — keeping the actions bubble menu visible. */}
+      {/* Not a <button>: mousedown preventDefault keeps editor focus on click so the
+          Actions bubble stays open. tabIndex + Enter/Space cover keyboard users. */}
       <div
         role="button"
+        tabIndex={editor.isEditable ? 0 : -1}
         data-selected={selected ? 'true' : undefined}
         // No color transition: tweening bg/border/text independently flashes
         // unreadable combos (e.g. primary black bg while text is still dark).
@@ -46,15 +58,18 @@ export function CardButtonView(props: NodeViewProps) {
             borderColor: preset.borderColor,
           } as CSSProperties
         }
-        onClick={() => {
-          if (!editor.isEditable) {
+        onMouseDown={(event) => {
+          // Prevent the div from taking focus on click (would hide the Actions bubble).
+          event.preventDefault();
+        }}
+        onClick={selectCardButton}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') {
             return;
           }
 
-          // Always select the node so attribute updates (Configure Variable) have a
-          // target. When a variable pill is clicked, `editor.storage.variable.popover`
-          // suppresses the Actions bubble so only Configure Variable is shown.
-          editor.commands.setNodeSelection(getPos());
+          event.preventDefault();
+          selectCardButton();
         }}
       >
         {matchingProvider ? matchingProvider.renderValue(label, editor, 'button-variable') : label}
