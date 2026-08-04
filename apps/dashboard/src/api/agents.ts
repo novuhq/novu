@@ -40,6 +40,14 @@ export function getAgentsListQueryKey(
   return [AGENTS_LIST_QUERY_KEY, environmentId, params] as const;
 }
 
+/** Separate from {@link getAgentsListQueryKey} so paginated pages never share a cache entry with single-page reads. */
+export function getAgentsInfiniteListQueryKey(
+  environmentId: string | undefined,
+  params: { limit: number; identifier: string }
+) {
+  return [AGENTS_LIST_QUERY_KEY, 'infinite', environmentId, params] as const;
+}
+
 export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
   return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
@@ -384,6 +392,27 @@ export function deleteAgent(
   const params = options?.deleteFromProvider ? '?deleteFromProvider=true' : '';
 
   return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
+}
+
+export type AgentWorkflowUsageInfo = {
+  name: string;
+  workflowId: string;
+};
+
+export type GetAgentUsageResponse = {
+  workflows: AgentWorkflowUsageInfo[];
+};
+
+export async function getAgentUsage(
+  environment: IEnvironment,
+  identifier: string
+): Promise<GetAgentUsageResponse> {
+  const response = await get<{ data: GetAgentUsageResponse } | GetAgentUsageResponse>(
+    `/agents/${encodeURIComponent(identifier)}/usage`,
+    { environment }
+  );
+
+  return 'data' in response ? response.data : response;
 }
 
 /** Picked integration fields on an agent–integration link (matches API `integration`). */

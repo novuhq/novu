@@ -2,12 +2,37 @@ import { useEffect, useId, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
+import { resolveSameOriginRedirectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { readReturnDestination, withRedirectUrl } from '../sso-redirect';
+import { useAuthConfig } from '../use-auth-config';
+
+/**
+ * Resolved before handing off to the identity provider, since the browser leaves the app entirely
+ * and only `callbackURL` decides where it comes back to. Mirrors the email/password sign-in
+ * fallbacks: an explicit destination, then a pending invitation, then the organization picker.
+ */
+function resolvePostSignInUrl(redirectUrl: string | null): string {
+  if (redirectUrl) {
+    return redirectUrl;
+  }
+
+  const pendingInvitationId = sessionStorage.getItem('pendingInvitationId');
+  const path = pendingInvitationId
+    ? `${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}`
+    : ROUTES.SIGNUP_ORGANIZATION_LIST;
+
+  return new URL(path, window.location.origin).href;
+}
 
 export function SSOSignIn() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { emailPasswordAuthEnabled } = useAuthConfig();
+  const postSignInRedirectUrl = resolveSameOriginRedirectUrl(readReturnDestination(searchParams));
+  const signInPath = withRedirectUrl(ROUTES.SIGN_IN, postSignInRedirectUrl);
+  const ssoRetryPath = withRedirectUrl(ROUTES.SSO_SIGN_IN, postSignInRedirectUrl);
   const ssoEmailId = useId();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -36,15 +61,17 @@ export function SSOSignIn() {
         throw new Error('Please enter a valid email address');
       }
 
+      const postSignInUrl = resolvePostSignInUrl(postSignInRedirectUrl);
+
       await authClient.signIn.sso(
         {
           domain,
-          callbackURL: window.location.origin + ROUTES.SIGNUP_ORGANIZATION_LIST,
-          errorCallbackURL: window.location.origin + ROUTES.SSO_SIGN_IN,
+          callbackURL: postSignInUrl,
+          errorCallbackURL: window.location.origin + ssoRetryPath,
         },
         {
           onSuccess: () => {
-            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
+            window.location.href = postSignInUrl;
           },
           onError: (ctx: any) => {
             throw new Error(ctx.error.message || 'SSO sign in failed');
@@ -83,19 +110,21 @@ export function SSOSignIn() {
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Redirecting...' : 'Continue with SSO'}
         </Button>
-        <p className="mt-4 text-center text-sm text-foreground-600">
-          <span
-            role="button"
-            tabIndex={0}
-            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
-            onClick={() => navigate(ROUTES.SIGN_IN)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.SIGN_IN);
-            }}
-          >
-            Back to sign in
-          </span>
-        </p>
+        {emailPasswordAuthEnabled && (
+          <p className="mt-4 text-center text-sm text-foreground-600">
+            <span
+              role="button"
+              tabIndex={0}
+              className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
+              onClick={() => navigate(signInPath)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') navigate(signInPath);
+              }}
+            >
+              Back to sign in
+            </span>
+          </p>
+        )}
       </form>
     </div>
   );

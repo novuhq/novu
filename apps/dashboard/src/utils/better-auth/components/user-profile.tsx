@@ -14,6 +14,7 @@ import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { authClient } from '../client';
 import { useAuth, useUser } from '../index';
+import { useAuthConfig } from '../use-auth-config';
 
 function getUserInitials(name: string): string {
   return name
@@ -255,6 +256,7 @@ function ProfileSection() {
 
 function SecuritySection() {
   const { user } = useUser();
+  const { emailPasswordAuthEnabled } = useAuthConfig();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -306,6 +308,19 @@ function SecuritySection() {
   };
 
   if (!user) return null;
+
+  if (!emailPasswordAuthEnabled) {
+    return (
+      <div className="space-y-6">
+        <div className="border-b border-neutral-100 pb-4">
+          <h2 className="text-lg font-semibold text-foreground-950">Security</h2>
+          <p className="mt-1 text-sm text-foreground-600">
+            Your credentials are managed by your organization&apos;s identity provider.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

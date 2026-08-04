@@ -71,6 +71,7 @@ export function workflow<
       ...(event.overrides && { overrides: event.overrides }),
       ...(event.actor && { actor: event.actor }),
       ...(event.context && { context: event.context }),
+      ...(event.agentId !== undefined && { agentId: event.agentId }),
       ...(bridgeUrl && { bridgeUrl }),
     };
 

@@ -5,6 +5,7 @@ import { CardElement, FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ChatOutputRendererCommand, ChatOutputRendererUsecase } from './chat-output-renderer.usecase';
+import { ControlsTranslationService } from './controls-translation.service';
 import { FullPayloadForRender } from './render-command';
 
 /**
@@ -68,7 +69,15 @@ describe('ChatOutputRendererUsecase', () => {
     featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
     featureFlagsServiceMock.getFlag.resolves(true);
 
-    usecase = new ChatOutputRendererUsecase(moduleRef as any, pinoLoggerMock as any, featureFlagsServiceMock as any);
+    // Real service wired to the mocked `moduleRef`/`Translate` so translations no-op as before.
+    const controlsTranslationService = new ControlsTranslationService(moduleRef as any, pinoLoggerMock as any);
+
+    usecase = new ChatOutputRendererUsecase(
+      moduleRef as any,
+      pinoLoggerMock as any,
+      featureFlagsServiceMock as any,
+      controlsTranslationService
+    );
   });
 
   afterEach(() => {
@@ -120,7 +129,8 @@ describe('ChatOutputRendererUsecase', () => {
       command({ body: JSON.stringify(maily) }, { status: 'succeeded', service: 'api' })
     );
 
-    expect(result).to.not.have.property('body');
+    // `body` degrades to a provider-agnostic markdown rendering of the compiled card.
+    expect(result.body).to.equal('**Deployment succeeded**\n\nService api is live');
     const card = result.card as CardElement;
     expect(card.type).to.equal('card');
     expect(card.children[0]).to.deep.equal({ type: 'text', content: 'Deployment succeeded', style: 'bold' });

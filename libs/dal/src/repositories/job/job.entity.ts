@@ -26,6 +26,10 @@ export class JobEntity {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  /**
+   * Trigger-selected agent ObjectId. Omitted inherits the workflow agent; null opts out.
+   */
+  _agentId?: string | null;
   step: NotificationStepEntity;
   tenant?: ITenantDefine;
   transactionId: string;
@@ -67,10 +71,12 @@ export class JobEntity {
 }
 
 export type JobDBModel = ChangePropsValueType<
-  Omit<JobEntity, '_parentId' | '_actorId'>,
+  Omit<JobEntity, '_parentId' | '_actorId' | '_agentId'>,
   '_notificationId' | '_subscriberId' | '_environmentId' | '_organizationId' | '_userId'
 > & {
   _parentId?: Types.ObjectId;
 
   _actorId?: Types.ObjectId;
+
+  _agentId?: Types.ObjectId | null;
 };

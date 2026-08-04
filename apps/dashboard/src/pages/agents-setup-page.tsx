@@ -2,8 +2,8 @@ import { ProductUseCasesEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AgentResponse, getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
 import { AgentSetupSteps, ManagedAgentRecap } from '@/components/agents/agent-setup-steps';
@@ -14,6 +14,7 @@ import { getConnectorById } from '@/components/onboarding/connect-agent/connecto
 // import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
+import { OnboardingStepHeader } from '@/components/onboarding/step-header';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { useAuth } from '@/context/auth/hooks';
@@ -105,34 +106,19 @@ function ShowAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
   );
 }
 
-type StepHeaderProps = {
-  current: 1 | 2 | undefined;
-  onBack?: () => void;
-};
-
-function StepHeader({ current, onBack }: StepHeaderProps) {
-  return (
-    <button
-      type="button"
-      onClick={onBack}
-      disabled={!onBack}
-      className="mb-5 flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
-    >
-      <RiArrowLeftSLine className="text-text-sub size-4" />
-      {typeof current === 'number' ? <span className="text-text-sub text-xs">{current}/2</span> : null}
-    </button>
-  );
-}
-
 export function AgentsSetupPage() {
   const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const navigate = useNavigate();
+  const location = useLocation();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
   const updateProductUseCases = useUpdateProductUseCases();
   const productUseCasesPersistedRef = useRef(false);
+  const setupArrivalState = location.state as { from?: string; suppressPersonalizeBack?: boolean } | null;
+  const arrivedFromPersonalize = setupArrivalState?.from === 'personalize';
+  const suppressPersonalizeBack = setupArrivalState?.suppressPersonalizeBack === true;
 
   const [searchParams] = useSearchParams();
   const agentTemplateId = useMemo(
@@ -299,8 +285,28 @@ export function AgentsSetupPage() {
   }, [activeAgent, agentRoutes.detailsTab, currentEnvironment?.slug, navigate]);
 
   const handleBackStep = useCallback(() => {
-    void navigate(ROUTES.USECASE_SELECT);
-  }, [navigate]);
+    // Onboarding funnel: personalize stamps router state so back returns to the survey.
+    // Welcome / agents-list entry points have no stamp — restore the previous screen instead of
+    // forcing users through a fresh personalize step. Carry `suppressBack` so deeplinked agents
+    // signups don't regain a path into the Inbox-default usecase picker after setup clears the
+    // pending product marker.
+    if (arrivedFromPersonalize) {
+      void navigate(ROUTES.AGENTS_PERSONALIZE, {
+        state: suppressPersonalizeBack ? { suppressBack: true } : undefined,
+      });
+
+      return;
+    }
+
+    const historyIdx = (window.history.state as { idx?: number } | null)?.idx;
+    if (typeof historyIdx === 'number' && historyIdx > 0) {
+      void navigate(-1);
+
+      return;
+    }
+
+    void navigate(ROUTES.AGENTS_PERSONALIZE);
+  }, [arrivedFromPersonalize, navigate, suppressPersonalizeBack]);
 
   if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
@@ -330,7 +336,7 @@ export function AgentsSetupPage() {
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      <StepHeader current={2} onBack={handleBackStep} />
+      <OnboardingStepHeader current={3} total={3} onBack={handleBackStep} />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">

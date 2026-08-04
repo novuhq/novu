@@ -12,6 +12,7 @@ import {
 import { LocalizationResourceEnum, NotificationTemplateEntity, OrganizationEntity } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { JSONContent as MailyJSONContent } from '@novu/maily-render';
+import { cardToFallbackMarkdown } from '@novu/providers';
 import { ChatRenderOutput, FeatureFlagsKeysEnum } from '@novu/shared';
 import { Liquid } from 'liquidjs';
 import { BaseTranslationRendererUsecase, TranslationContext } from './base-translation-renderer.usecase';
@@ -91,7 +92,7 @@ export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
         translationContext,
       });
 
-      return { card };
+      return { body: card ? cardToFallbackMarkdown(card) : body, card };
     }
 
     const translatedControls = await this.processTranslations({
