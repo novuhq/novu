@@ -23,6 +23,8 @@ import { IntegrationRepository } from '@novu/dal';
 import {
   ChatProviderIdEnum,
   ConnectionMode,
+  IPreferenceChannels,
+  isPreferenceChannelVisibleInUi,
   MessageActionStatusEnum,
   PreferenceLevelEnum,
   UserSessionData,
@@ -253,6 +255,7 @@ export class InboxController {
     return {
       level: PreferenceLevelEnum.GLOBAL,
       ...globalPreference.preference,
+      channels: this.stripHiddenPreferenceChannels(globalPreference.preference.channels),
     };
   }
 
@@ -950,5 +953,11 @@ export class InboxController {
           `Provider "${providerId}" does not support subscriber chat linking via this endpoint.`
         );
     }
+  }
+
+  private stripHiddenPreferenceChannels(channels: IPreferenceChannels): IPreferenceChannels {
+    return Object.fromEntries(
+      Object.entries(channels).filter(([channel]) => isPreferenceChannelVisibleInUi(channel))
+    ) as IPreferenceChannels;
   }
 }

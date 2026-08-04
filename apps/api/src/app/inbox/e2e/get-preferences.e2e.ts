@@ -51,6 +51,46 @@ describe('Get all preferences - /inbox/preferences (GET) #novu-v2', () => {
     expect(workflowPreference.level).to.equal('template');
   });
 
+  it('should omit tool channel from global and workflow preferences when workflow has an active tool step', async () => {
+    await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.TOOL,
+          content: 'Tool step content',
+        },
+        {
+          type: StepTypeEnum.EMAIL,
+          content: 'Email content',
+        },
+      ],
+    });
+
+    const response = await session.testAgent
+      .get('/v1/inbox/preferences')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(response.status).to.equal(200);
+
+    const globalPreference = response.body.data[0];
+    expect(globalPreference.level).to.equal('global');
+    expect(globalPreference.channels).to.not.have.property('tool');
+    expect(globalPreference.channels.email).to.equal(true);
+
+    const workflowPreference = response.body.data[1];
+    expect(workflowPreference.level).to.equal('template');
+    expect(workflowPreference.channels).to.not.have.property('tool');
+    expect(workflowPreference.channels.email).to.equal(true);
+
+    const globalOnlyResponse = await session.testAgent
+      .get('/v1/inbox/preferences/global')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(globalOnlyResponse.status).to.equal(200);
+    expect(globalOnlyResponse.body.data.channels).to.not.have.property('tool');
+    expect(globalOnlyResponse.body.data.channels.email).to.equal(true);
+  });
+
   it('should throw error when made unauthorized call', async () => {
     const response = await session.testAgent.get(`/v1/inbox/preferences`).set('Authorization', `Bearer InvalidToken`);
 
