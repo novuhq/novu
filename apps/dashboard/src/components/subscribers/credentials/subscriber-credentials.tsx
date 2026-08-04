@@ -269,8 +269,8 @@ export function SubscriberCredentials({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
         {groups.length > 0 ? (
           <div className="flex flex-col gap-2">
             {groups.map((group) => (
@@ -293,8 +293,8 @@ export function SubscriberCredentials({
         )}
       </div>
 
-      <Separator />
-      <div className="flex flex-col gap-2.5 px-5 py-3">
+      <Separator className="shrink-0" />
+      <div className="flex shrink-0 flex-col gap-2.5 px-5 py-3">
         {subscriber?.updatedAt && (
           <span className="text-2xs text-text-soft">
             Last updated {formatDistanceToNow(new Date(subscriber.updatedAt), { addSuffix: true })}
