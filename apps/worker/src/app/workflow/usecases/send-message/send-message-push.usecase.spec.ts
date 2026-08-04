@@ -314,5 +314,28 @@ describe('SendMessagePush - provider content overrides', () => {
       expect(result.status).to.equal(SendMessageStatus.SKIPPED);
       sinon.assert.notCalled(sendStub);
     });
+
+    it('does not duplicate sends when an empty-token FCM channel precedes a populated one', async () => {
+      const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+      sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      const emptyFirst = {
+        _integrationId: '507f1f77bcf86cd799439033',
+        providerId: PushProviderIdEnum.FCM,
+        credentials: { deviceTokens: [] as string[] },
+      };
+
+      const result = await buildUsecase().execute(
+        buildCommand({
+          channels: [emptyFirst, fcmChannelWithTokens],
+          providerOverrides: { topic: 'orders' },
+        })
+      );
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      sinon.assert.calledOnce(sendStub);
+      expect(sendStub.firstCall.args[0].target).to.deep.equal(['device-token-1']);
+      expect(sendStub.firstCall.args[0].bridgeProviderData).to.deep.equal({ topic: 'orders' });
+    });
   });
 });

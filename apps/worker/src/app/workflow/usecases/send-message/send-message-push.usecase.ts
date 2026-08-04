@@ -206,8 +206,12 @@ export class SendMessagePush extends SendMessageBase {
     });
 
     const uniqueOverrideChannels = channelsFromOverrides.filter((overrideChannel) => {
-      const existing = pushChannels.find((channel) => channel.providerId === overrideChannel.providerId);
-      if (!existing || this.channelMissingDeviceTokens(existing)) {
+      // Prefer a channel that already has tokens — otherwise `find()` on an empty-token
+      // channel first would add a synthetic override while still keeping the populated one.
+      const existingWithTokens = pushChannels.find(
+        (channel) => channel.providerId === overrideChannel.providerId && !this.channelMissingDeviceTokens(channel)
+      );
+      if (!existingWithTokens) {
         tokenlessRoutingProviderIds.add(overrideChannel.providerId);
 
         return true;
