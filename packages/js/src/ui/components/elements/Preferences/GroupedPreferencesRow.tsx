@@ -1,5 +1,5 @@
 import { createMemo, createSignal, Index, Show } from 'solid-js';
-import { ChannelPreference, Preference } from '../../../../types';
+import { ChannelPreference, ChannelType, Preference } from '../../../../types';
 import { useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons/ArrowDropDown';
@@ -219,12 +219,12 @@ export const GroupedPreferencesRow = (props: {
                 >[0],
               })}
             >
-              <Index each={Object.keys(uniqueChannels()).filter(isRenderablePreferenceChannel)}>
+              <Index each={Object.keys(uniqueChannels())}>
                 {(channel) => {
                   return (
                     <ChannelRow
                       channel={{
-                        channel: channel(),
+                        channel: channel() as ChannelType,
                         state: uniqueChannels()[channel() as keyof ChannelPreference],
                       }}
                       onChange={updatePreferencesForChannel(channel())}
