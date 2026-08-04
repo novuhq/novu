@@ -42,6 +42,7 @@ import {
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
 import { stripContextFromIdentifier } from '../../../subscriptions/utils/subscriptions';
+import { stripHiddenPreferenceChannels } from '../../utils/strip-hidden-preference-channels';
 import { InboxPreference } from '../../utils/types';
 import { UpdatePreferencesCommand } from './update-preferences.command';
 
@@ -74,6 +75,10 @@ export class UpdatePreferences {
     await this.updateSubscriberPreference(command, subscriber, workflow?._id, internalSubscriptionId);
 
     newPreference = await this.findPreference(command, subscriber, workflow, internalSubscriptionId);
+    newPreference = {
+      ...newPreference,
+      channels: stripHiddenPreferenceChannels(newPreference.channels),
+    };
 
     await this.sendWebhookMessage.execute({
       eventType: WebhookEventEnum.PREFERENCE_UPDATED,

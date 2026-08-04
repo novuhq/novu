@@ -11,9 +11,6 @@ import {
 import { AllAppearanceKey, AllIconKey, InboxAppearanceCallback } from '../../../types';
 import { Switch, SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
-import { RENDERABLE_PREFERENCE_CHANNELS } from './renderable-preference-channels';
-
-export { RENDERABLE_PREFERENCE_CHANNELS };
 
 type ChannelRowProps = {
   channel: { channel: ChannelType; state: SwitchState };

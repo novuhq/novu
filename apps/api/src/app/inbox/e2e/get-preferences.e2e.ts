@@ -89,6 +89,15 @@ describe('Get all preferences - /inbox/preferences (GET) #novu-v2', () => {
     expect(globalOnlyResponse.status).to.equal(200);
     expect(globalOnlyResponse.body.data.channels).to.not.have.property('tool');
     expect(globalOnlyResponse.body.data.channels.email).to.equal(true);
+
+    const patchResponse = await session.testAgent
+      .patch(`/v1/inbox/preferences/${workflowPreference.workflow.identifier}`)
+      .send({ email: false })
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    expect(patchResponse.status).to.equal(200);
+    expect(patchResponse.body.data.channels).to.not.have.property('tool');
+    expect(patchResponse.body.data.channels.email).to.equal(false);
   });
 
   it('should throw error when made unauthorized call', async () => {
