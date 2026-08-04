@@ -77,11 +77,59 @@ test('should format the from address with a sender name', async () => {
   expect(JSON.parse(init.body as string).from).toBe('Test User <test@test.com>');
 });
 
-test('should throw when the mailkite api rejects a send', async () => {
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 401, statusText: 'Unauthorized' } as any);
+test('should apply provider overrides and _passthrough from bridge data', async () => {
+  const fetchSpy = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValue(mockOkResponse({ id: 'msg_789', status: 'sent' }) as any);
 
   const provider = new MailKiteEmailProvider(mockConfig);
-  await expect(provider.sendMessage(mockNovuMessage)).rejects.toThrow('MailKite send failed: 401');
+  await provider.sendMessage(mockNovuMessage, {
+    subject: 'Overridden subject',
+    templateId: 'tpl_123',
+    _passthrough: {
+      body: { templateData: { name: 'Ann' } },
+      headers: { 'X-Custom-Header': 'novu' },
+    },
+  });
+
+  const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+  const body = JSON.parse(init.body as string);
+
+  // Bridge overrides beat the trigger data, and _passthrough beats both.
+  expect(body.subject).toBe('Overridden subject');
+  expect(body.templateId).toBe('tpl_123');
+  expect(body.templateData).toEqual({ name: 'Ann' });
+  // Untouched trigger fields survive the merge.
+  expect(body.to).toEqual(mockNovuMessage.to);
+  // _passthrough headers reach the HTTP request, alongside auth.
+  expect((init.headers as Record<string, string>)['X-Custom-Header']).toBe('novu');
+  expect((init.headers as Record<string, string>).Authorization).toBe('Bearer mk_live_test-key');
+});
+
+test('should throw when the mailkite api rejects a send', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    ok: false,
+    status: 401,
+    statusText: 'Unauthorized',
+    json: async () => ({ error: 'invalid api key' }),
+  } as any);
+
+  const provider = new MailKiteEmailProvider(mockConfig);
+  await expect(provider.sendMessage(mockNovuMessage)).rejects.toThrow('MailKite send failed: 401 invalid api key');
+});
+
+test('should fall back to the status text when the error body is not json', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    ok: false,
+    status: 502,
+    statusText: 'Bad Gateway',
+    json: async () => {
+      throw new Error('not json');
+    },
+  } as any);
+
+  const provider = new MailKiteEmailProvider(mockConfig);
+  await expect(provider.sendMessage(mockNovuMessage)).rejects.toThrow('MailKite send failed: 502 Bad Gateway');
 });
 
 test('should report a successful integration check', async () => {
@@ -99,10 +147,17 @@ test('should report a successful integration check', async () => {
 });
 
 test('should report a failed integration check on an unauthorized api key', async () => {
-  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 401, statusText: 'Unauthorized' } as any);
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+    ok: false,
+    status: 401,
+    statusText: 'Unauthorized',
+    json: async () => ({ error: 'invalid api key' }),
+  } as any);
 
   const provider = new MailKiteEmailProvider(mockConfig);
   const result = await provider.checkIntegration(mockNovuMessage);
 
   expect(result.success).toBe(false);
+  // The user sees why the key was rejected, not just a status code.
+  expect(result.message).toContain('invalid api key');
 });

@@ -47,6 +47,21 @@ export class MailKiteEmailProvider extends BaseProvider implements IEmailProvide
     return this.config.baseUrl || MAILKITE_API_URL;
   }
 
+  /**
+   * MailKite reports failures as `{ "error": "from required" }`. Surface that
+   * message rather than the bare status text, so an integration check or a
+   * failed send tells the user what to actually fix.
+   */
+  private async readError(response: Response): Promise<string> {
+    try {
+      const payload = (await response.json()) as { error?: string };
+
+      return payload?.error || response.statusText;
+    } catch {
+      return response.statusText;
+    }
+  }
+
   async sendMessage(
     options: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
@@ -54,7 +69,7 @@ export class MailKiteEmailProvider extends BaseProvider implements IEmailProvide
     const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;
 
-    const body = this.transform<Record<string, unknown>>(bridgeProviderData, {
+    const { body, headers } = this.transform<Record<string, unknown>>(bridgeProviderData, {
       from: senderName ? `${senderName} <${fromAddress}>` : fromAddress,
       to: options.to,
       subject: options.subject,
@@ -69,19 +84,20 @@ export class MailKiteEmailProvider extends BaseProvider implements IEmailProvide
         content: attachment.file?.toString('base64'),
         contentType: attachment.mime,
       })),
-    }).body;
+    });
 
     const response = await fetch(`${this.baseUrl}/v1/send`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.config.apiKey}`,
         'Content-Type': 'application/json',
+        ...headers,
       },
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      throw new Error(`MailKite send failed: ${response.status} ${response.statusText}`);
+      throw new Error(`MailKite send failed: ${response.status} ${await this.readError(response)}`);
     }
 
     const data = (await response.json()) as MailKiteSendResponse;
@@ -101,7 +117,7 @@ export class MailKiteEmailProvider extends BaseProvider implements IEmailProvide
       });
 
       if (!response.ok) {
-        throw new Error(`MailKite authentication failed: ${response.status}`);
+        throw new Error(`MailKite authentication failed: ${response.status} ${await this.readError(response)}`);
       }
 
       return {
