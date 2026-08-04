@@ -1,5 +1,5 @@
 import { Editor } from '@tiptap/core';
-import { MousePointerClick, Plus, Trash2 } from 'lucide-react';
+import { ChevronsUpDown, ExternalLink, MousePointerClick, Plus, Trash2 } from 'lucide-react';
 import { ReactNode } from 'react';
 import {
   AllowedCardButtonStyle,
@@ -10,7 +10,6 @@ import { cn } from '@/editor/utils/classname';
 import { ButtonLabelInput } from '../../nodes/button/button-label-input';
 import { Divider } from '../ui/divider';
 import { Select } from '../ui/select';
-import { CardActionsUrlInput } from './card-actions-url-input';
 import { useCardActionsState } from './use-card-actions-state';
 
 const STYLE_LABELS: Record<AllowedCardButtonStyle, string> = {
@@ -22,6 +21,12 @@ const STYLE_LABELS: Record<AllowedCardButtonStyle, string> = {
 // Only redirect-url (link) buttons are supported today. The dropdown is kept for
 // future action/postback button types.
 const ACTION_TYPE_OPTIONS = [{ value: 'redirect-url', label: 'Redirect URL' }];
+
+/** Shared chrome for Presets / Label / Action / URL controls (Figma maily-NumButton). */
+const FIELD_CONTROL_CLASS =
+  // max-h + overflow-hidden: variable pills can be taller than 24px; without this, flex
+  // min-height:auto grows the row and shifts the form when switching buttons.
+  'mly-box-border mly-h-6 mly-max-h-6 mly-min-h-6 mly-w-full mly-overflow-hidden mly-rounded mly-border mly-border-[#f2f5f8] mly-bg-soft-gray mly-px-1.5 mly-text-xs mly-font-medium mly-text-[#0e121b] hover:mly-bg-soft-gray focus:mly-border-[#c1c7d0] focus:mly-bg-soft-gray focus:mly-outline-none focus-visible:mly-border-[#c1c7d0] focus-visible:mly-ring-0';
 
 export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
   const state = useCardActionsState(editor);
@@ -41,94 +46,132 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
   };
 
   return (
-    <div className="mly-flex mly-w-72 mly-flex-col mly-gap-2 mly-p-1 mly-text-midnight-gray">
-      <div className="mly-flex mly-items-center mly-gap-1.5 mly-px-1">
-        <MousePointerClick className="mly-size-3.5 mly-shrink-0" />
-        <span className="mly-text-sm mly-font-medium">Actions</span>
+    <div className="mly-flex mly-w-[292px] mly-flex-col mly-gap-0.5 mly-text-[#0e121b]">
+      <div className="mly-flex mly-max-h-5 mly-items-center mly-gap-2 mly-overflow-hidden mly-rounded mly-py-0.5 mly-pl-0.5 mly-pr-1">
+        <div className="mly-flex mly-min-w-0 mly-flex-1 mly-items-center mly-gap-1">
+          <MousePointerClick className="mly-size-3.5 mly-shrink-0" strokeWidth={2} />
+          <span className="mly-text-xs mly-font-medium mly-leading-4">Actions</span>
+        </div>
+        <ChevronsUpDown className="mly-size-2.5 mly-shrink-0 mly-text-[#99a0ae]" strokeWidth={2} aria-hidden />
       </div>
 
-      <div className="mly-flex mly-flex-wrap mly-items-center mly-gap-1">
-        <div className="mly-flex mly-flex-wrap mly-items-center mly-gap-0.5 mly-rounded-md mly-bg-soft-gray mly-p-0.5">
-          {state.buttons.map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              data-state={index === state.activeIndex}
-              className={cn(
-                'mly-shrink-0 mly-rounded mly-px-2 mly-py-0.5 mly-text-xs mly-font-medium mly-text-slate-600 hover:mly-text-midnight-gray',
-                'data-[state=true]:mly-bg-white data-[state=true]:mly-text-midnight-gray data-[state=true]:mly-shadow-sm'
-              )}
-              onClick={() => editor.commands.selectCardButton(index)}
-            >
-              Button {index + 1}
-            </button>
-          ))}
+      <div className="mly-flex mly-flex-col mly-gap-1 mly-pl-1 mly-pr-1">
+        <div className="mly-flex mly-items-center mly-gap-2 mly-py-1">
+          <div className="mly-flex mly-items-start mly-gap-px mly-rounded-[5px] mly-bg-soft-gray mly-p-px">
+            {state.buttons.map((_, index) => {
+              const isActive = index === state.activeIndex;
+
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  data-state={isActive}
+                  className={cn(
+                    'mly-shrink-0 mly-rounded mly-border mly-border-transparent mly-py-1 mly-pl-1.5 mly-pr-2 mly-text-xs mly-font-medium mly-leading-4 mly-text-[#525866]',
+                    isActive &&
+                      'mly-border-[#e1e4ea] mly-bg-white mly-text-[#0e121b] mly-shadow-[0px_1px_2px_-1px_rgba(0,0,0,0.08),0px_2px_4px_0px_rgba(0,0,0,0.04)]'
+                  )}
+                  onClick={() => editor.commands.selectCardButton(index)}
+                >
+                  Button {index + 1}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            disabled={!state.canAddButton}
+            className="mly-flex mly-shrink-0 mly-items-center mly-gap-1 mly-text-xs mly-font-medium mly-leading-4 mly-text-[#525866] hover:mly-text-[#0e121b] disabled:mly-cursor-not-allowed disabled:mly-opacity-40"
+            onClick={() => editor.commands.addCardButton()}
+          >
+            <Plus className="mly-size-[15px] mly-stroke-[2]" />
+            Add button
+          </button>
         </div>
+
+        <Divider type="horizontal" className="mly-mx-0 mly-bg-[#f2f5f8]" />
+
+        <div className="mly-flex mly-flex-col mly-gap-1.5">
+          <FieldRow label="Presets">
+            <Select
+              label="Presets"
+              value={activeButton.style}
+              options={allowedCardButtonStyle.map((value) => ({ value, label: STYLE_LABELS[value] }))}
+              onValueChange={(value) => updateActiveButton({ style: value as AllowedCardButtonStyle })}
+              fullWidth
+              portalled={false}
+              className={FIELD_CONTROL_CLASS}
+              chevronClassName="mly-size-2.5 mly-text-[#99a0ae]"
+            />
+          </FieldRow>
+
+          <FieldRow label="Label">
+            <ButtonLabelInput
+              key={`label-${state.activeIndex}`}
+              value={activeButton.label}
+              isVariable={activeButton.isLabelVariable}
+              editor={editor}
+              className={FIELD_CONTROL_CLASS}
+              onValueChange={(value, isVariable) =>
+                updateActiveButton({ label: value, isLabelVariable: isVariable ?? false })
+              }
+            />
+          </FieldRow>
+
+          <FieldRow label="Action">
+            <Select
+              label="Action"
+              value="redirect-url"
+              options={ACTION_TYPE_OPTIONS}
+              onValueChange={() => {}}
+              fullWidth
+              portalled={false}
+              icon={ExternalLink}
+              iconClassName="mly-size-3 mly-text-[#525866]"
+              className={FIELD_CONTROL_CLASS}
+              chevronClassName="mly-size-2.5 mly-text-[#99a0ae]"
+            />
+          </FieldRow>
+
+          <Divider type="horizontal" className="mly-mx-0 mly-bg-[#f2f5f8]" />
+
+          <FieldRow label="URL">
+            <ButtonLabelInput
+              key={`url-${state.activeIndex}`}
+              value={activeButton.url}
+              isVariable={activeButton.isUrlVariable}
+              editor={editor}
+              enabledProviders={['variable']}
+              className={FIELD_CONTROL_CLASS}
+              onValueChange={(value, isVariable) =>
+                updateActiveButton({ url: value, isUrlVariable: isVariable ?? false })
+              }
+            />
+          </FieldRow>
+        </div>
+
+        <Divider type="horizontal" className="mly-mx-0 mly-bg-[#f2f5f8]" />
 
         <button
           type="button"
-          disabled={!state.canAddButton}
-          className="mly-flex mly-shrink-0 mly-items-center mly-gap-1 mly-rounded-md mly-px-1.5 mly-py-1 mly-text-xs mly-font-medium mly-text-slate-600 hover:mly-bg-soft-gray disabled:mly-cursor-not-allowed disabled:mly-text-slate-300 disabled:hover:mly-bg-transparent"
-          onClick={() => editor.commands.addCardButton()}
+          className="mly-flex mly-items-center mly-gap-1.5 mly-rounded mly-px-0.5 mly-py-1 mly-text-xs mly-font-medium mly-text-red-600 hover:mly-bg-soft-gray"
+          onClick={() => editor.commands.removeCardButton(state.activeIndex)}
         >
-          <Plus className="mly-size-3.5 mly-stroke-[2.5]" />
-          Add button
+          <Trash2 className="mly-size-3.5" />
+          Remove button
         </button>
       </div>
-
-      <Divider type="horizontal" className="mly-mx-0" />
-
-      <FieldRow label="Presets">
-        <Select
-          label="Presets"
-          value={activeButton.style}
-          options={allowedCardButtonStyle.map((value) => ({ value, label: STYLE_LABELS[value] }))}
-          onValueChange={(value) => updateActiveButton({ style: value as AllowedCardButtonStyle })}
-        />
-      </FieldRow>
-
-      <FieldRow label="Label">
-        <ButtonLabelInput
-          value={activeButton.label}
-          isVariable={activeButton.isLabelVariable}
-          editor={editor}
-          onValueChange={(value, isVariable) =>
-            updateActiveButton({ label: value, isLabelVariable: isVariable ?? false })
-          }
-        />
-      </FieldRow>
-
-      <FieldRow label="Action">
-        <Select label="Action" value="redirect-url" options={ACTION_TYPE_OPTIONS} onValueChange={() => {}} />
-      </FieldRow>
-
-      <FieldRow label="URL">
-        <CardActionsUrlInput
-          value={activeButton.url}
-          isVariable={activeButton.isUrlVariable}
-          editor={editor}
-          onValueChange={(value, isVariable) => updateActiveButton({ url: value, isUrlVariable: isVariable ?? false })}
-        />
-      </FieldRow>
-
-      <Divider type="horizontal" className="mly-mx-0" />
-
-      <button
-        type="button"
-        className="mly-flex mly-items-center mly-gap-1.5 mly-rounded-md mly-px-1.5 mly-py-1 mly-text-xs mly-font-medium mly-text-red-600 hover:mly-bg-soft-gray"
-        onClick={() => editor.commands.removeCardButton(state.activeIndex)}
-      >
-        <Trash2 className="mly-size-3.5" />
-        Remove button
-      </button>
     </div>
   );
 }
 
 function FieldRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="mly-flex mly-items-center mly-gap-2">
-      <span className="mly-w-16 mly-shrink-0 mly-text-xs mly-text-slate-500">{label}</span>
+    <div className="mly-flex mly-w-full mly-items-center mly-justify-center mly-gap-3">
+      <span className="mly-w-[50px] mly-shrink-0 mly-text-xs mly-font-medium mly-leading-4 mly-text-[#525866]">
+        {label}
+      </span>
       <div className="mly-flex mly-min-w-0 mly-flex-1 mly-items-center">{children}</div>
     </div>
   );

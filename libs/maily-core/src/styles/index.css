@@ -514,6 +514,37 @@
 }
 
 /*
+ * Tippy `animation: 'popover'` — mirrors dashboard Radix PopoverContent:
+ * fade-in-0 + zoom-in-95 + slide-in-from-<side>-2 (tailwindcss-animate).
+ * TipTap BubbleMenu defaults to duration: 0; Actions sets duration explicitly.
+ */
+.tippy-box[data-animation='popover'] {
+  transition-property: transform, visibility, opacity;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tippy-box[data-animation='popover'][data-state='hidden'] {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.tippy-box[data-animation='popover'][data-state='hidden'][data-placement^='top'] {
+  transform: translateY(0.5rem) scale(0.95);
+}
+
+.tippy-box[data-animation='popover'][data-state='hidden'][data-placement^='bottom'] {
+  transform: translateY(-0.5rem) scale(0.95);
+}
+
+.tippy-box[data-animation='popover'][data-state='hidden'][data-placement^='left'] {
+  transform: translateX(0.5rem) scale(0.95);
+}
+
+.tippy-box[data-animation='popover'][data-state='hidden'][data-placement^='right'] {
+  transform: translateX(-0.5rem) scale(0.95);
+}
+
+/*
  * Card actions row: render its `cardButton` children inline (max 3 per row).
  * TipTap injects the real content DOM as a full-width block child inside the
  * React NodeViewContent wrapper; that inner element is the flex row that keeps

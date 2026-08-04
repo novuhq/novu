@@ -121,8 +121,19 @@ describe('compileMailyToCard', () => {
     expect(actions.type === 'actions' && actions.children).toHaveLength(3);
   });
 
-  it('drops action buttons without a url or label', () => {
+  it('keeps labeled action buttons without a url for preview WYSIWYG', () => {
     const card = compileMailyToCard(doc(paragraph(text('body')), { type: 'cardButton', attrs: { label: 'no-url' } }));
+
+    expect(card.children).toEqual([
+      { type: 'text', content: 'body', style: 'plain' },
+      { type: 'actions', children: [{ type: 'link-button', label: 'no-url', url: '' }] },
+    ]);
+  });
+
+  it('drops action buttons without a label', () => {
+    const card = compileMailyToCard(
+      doc(paragraph(text('body')), { type: 'cardButton', attrs: { label: '', url: 'https://x.test' } })
+    );
 
     expect(card.children).toEqual([{ type: 'text', content: 'body', style: 'plain' }]);
   });
@@ -169,23 +180,26 @@ describe('compileMailyToCard', () => {
     expect(actions.type === 'actions' && actions.children).toHaveLength(3);
   });
 
-  it('drops cardActions buttons without a url and keeps the surrounding blocks', () => {
+  it('keeps cardActions buttons without a url alongside linked buttons', () => {
     const card = compileMailyToCard(
-      doc(
-        paragraph(text('body')),
-        {
-          type: 'cardActions',
-          content: [
-            { type: 'cardButton', attrs: { label: 'no-url' } },
-            { type: 'cardButton', attrs: { label: 'linked', url: 'https://linked.test' } },
-          ],
-        }
-      )
+      doc(paragraph(text('body')), {
+        type: 'cardActions',
+        content: [
+          { type: 'cardButton', attrs: { label: 'no-url' } },
+          { type: 'cardButton', attrs: { label: 'linked', url: 'https://linked.test' } },
+        ],
+      })
     );
 
     expect(card.children).toEqual([
       { type: 'text', content: 'body', style: 'plain' },
-      { type: 'actions', children: [{ type: 'link-button', label: 'linked', url: 'https://linked.test' }] },
+      {
+        type: 'actions',
+        children: [
+          { type: 'link-button', label: 'no-url', url: '' },
+          { type: 'link-button', label: 'linked', url: 'https://linked.test' },
+        ],
+      },
     ]);
   });
 

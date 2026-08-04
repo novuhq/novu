@@ -15,6 +15,8 @@ export interface SuggestionProvider {
   formatValue: (item: SuggestionItem) => string; // How to store the value
   renderValue: (value: string, editor: Editor, from: RenderVariableOptions['from']) => React.ReactNode; // How to display stored value
   isMatch: (value: string) => boolean; // Check if a value matches this provider's pattern
+  /** Optional side-effect when a suggestion is chosen (e.g. create payload schema key). */
+  onSelect?: (item: SuggestionItem, editor: Editor) => void;
 }
 
 export interface SuggestionContext {

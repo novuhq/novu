@@ -200,7 +200,7 @@ export function ContentOverridePanel({
   const selectedOption = providerOptions.find((option) => option.providerId === overrideProviderId);
 
   return (
-    <div className="-mx-3 -mt-3 flex h-full flex-col">
+    <div className="-mx-3 -mt-3 flex h-full min-h-0 flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
         <ContentSourceSelector
           selectedSource={showingOverride ? selectedSource : DEFAULT_CONTENT_SOURCE}
@@ -241,7 +241,7 @@ export function ContentOverridePanel({
         <div className="h-full flex-1" />
       </div>
 
-      <TabsSection className="p-3">
+      <TabsSection className="flex min-h-0 flex-1 flex-col p-3">
         {overrideProviderId ? (
           <ProviderOverrideEditor
             providerId={overrideProviderId}
@@ -251,7 +251,7 @@ export function ContentOverridePanel({
           />
         ) : (
           defaultContent && (
-            <div className="rounded-12 bg-bg-weak flex flex-col gap-2 border border-neutral-100 p-2">
+            <div className="rounded-12 bg-bg-weak flex min-h-0 flex-1 flex-col gap-2 border border-neutral-100 p-2">
               {defaultContent}
             </div>
           )

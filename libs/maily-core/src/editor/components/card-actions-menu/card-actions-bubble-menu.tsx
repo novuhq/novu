@@ -28,6 +28,12 @@ export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
         return false;
       }
 
+      // Match the email button: while Configure Variable is open, hide Actions so
+      // only the variable popover is shown.
+      if (editor.storage?.variable?.popover) {
+        return false;
+      }
+
       // A `cardActions` row (or one of its buttons) must be selected. Note: a
       // NodeSelection is not a text selection, so `isTextSelected` is not used here.
       return !!findCardActions(editor);
@@ -42,6 +48,17 @@ export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
       plugins: [sticky],
       sticky: 'popper',
       maxWidth: 'auto',
+      // Match dashboard PopoverContent (create-variable): fade + zoom-95 + slide.
+      // TipTap BubbleMenu defaults to duration: 0; styles in `styles/index.css`.
+      animation: 'popover',
+      duration: [150, 100],
+      // Keep the tippy open for nested menus / autocomplete that render outside fields.
+      interactive: true,
+      // Focus can move into nested dropdown items; don't dismiss Actions on blur.
+      hideOnClick: false,
+      onCreate: (instance) => {
+        instance.popper.style.overflow = 'visible';
+      },
     },
     pluginKey: 'cardActionsBubbleMenu',
   };
@@ -49,7 +66,7 @@ export function CardActionsBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className="mly-rounded-lg mly-border mly-border-gray-200 mly-bg-white mly-p-1 mly-shadow-md"
+      className="mly-overflow-visible mly-rounded-md mly-border mly-border-[#f2f5f8] mly-bg-white mly-p-1 mly-shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]"
     >
       <TooltipProvider>
         <CardActionsBubbleMenuContent editor={editor} />

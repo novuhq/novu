@@ -123,8 +123,10 @@ function toLinkButton(node: MailyJSONContent): CardElementLinkButtonElement | nu
   const url = (node.attrs?.url as string) || '';
   const label = (node.attrs?.label as string) || '';
 
-  // v1 supports only link buttons; action buttons (no URL) are dropped until postback support lands.
-  if (!url || !label) {
+  // Keep labeled buttons even when the URL is still empty so the editor preview matches
+  // the Actions row (newly added buttons default to `url: ''`). Providers must omit
+  // incomplete link buttons at serialize time until postback/action buttons land.
+  if (!label) {
     return null;
   }
 

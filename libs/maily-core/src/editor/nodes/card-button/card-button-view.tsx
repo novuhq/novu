@@ -34,7 +34,9 @@ export function CardButtonView(props: NodeViewProps) {
       <div
         role="button"
         data-selected={selected ? 'true' : undefined}
-        className="mly-inline-flex mly-cursor-pointer mly-select-none mly-items-center mly-justify-center mly-rounded-md mly-px-3 mly-py-1 mly-text-sm mly-font-semibold mly-no-underline mly-transition-colors data-[selected=true]:mly-ring-2 data-[selected=true]:mly-ring-gray-400 data-[selected=true]:mly-ring-offset-1"
+        // No color transition: tweening bg/border/text independently flashes
+        // unreadable combos (e.g. primary black bg while text is still dark).
+        className="mly-inline-flex mly-cursor-pointer mly-select-none mly-items-center mly-justify-center mly-rounded-md mly-px-3 mly-py-1 mly-text-sm mly-font-semibold mly-no-underline data-[selected=true]:mly-ring-2 data-[selected=true]:mly-ring-gray-400 data-[selected=true]:mly-ring-offset-1"
         style={
           {
             backgroundColor: preset.backgroundColor,
@@ -49,6 +51,9 @@ export function CardButtonView(props: NodeViewProps) {
             return;
           }
 
+          // Always select the node so attribute updates (Configure Variable) have a
+          // target. When a variable pill is clicked, `editor.storage.variable.popover`
+          // suppresses the Actions bubble so only Configure Variable is shown.
           editor.commands.setNodeSelection(getPos());
         }}
       >
