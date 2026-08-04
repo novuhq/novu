@@ -49,3 +49,22 @@ export function readClerkAuthParamFromLocation(param: string, searchParams?: URL
 export function readClerkRedirectUrlParam(searchParams?: URLSearchParams): string | null {
   return readClerkAuthParamFromLocation('redirect_url', searchParams);
 }
+
+/** `redirect_url` arrives from an untrusted query string, so only same-origin targets are honored. */
+export function resolveSameOriginRedirectUrl(redirectUrl: string | null): string | null {
+  if (!redirectUrl) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(redirectUrl, window.location.origin);
+
+    if (parsed.origin !== window.location.origin) {
+      return null;
+    }
+
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}

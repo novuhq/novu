@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { buildSsoSignInPath } from '../sso-redirect';
+import { useAuthConfig } from '../use-auth-config';
 
 export function ResetPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { emailPasswordAuthEnabled, isLoading: isAuthConfigLoading } = useAuthConfig();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +68,14 @@ export function ResetPassword() {
       setIsLoading(false);
     }
   };
+
+  if (isAuthConfigLoading) {
+    return null;
+  }
+
+  if (!emailPasswordAuthEnabled) {
+    return <Navigate to={buildSsoSignInPath(searchParams)} replace />;
+  }
 
   return (
     <div className="mx-auto w-full max-w-md pt-12">
