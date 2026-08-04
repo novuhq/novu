@@ -727,16 +727,22 @@ export class AgentInboundHandler implements OnModuleInit {
     originPayload: Record<string, unknown>;
   }> {
     const [notification, message] = await Promise.all([
-      this.notificationRepository.findOne({
-        _id: seed._notificationId,
-        _environmentId: seed._environmentId,
-        _organizationId: seed._organizationId,
-      }),
-      this.messageRepository.findOne({
-        _id: seed._messageId,
-        _environmentId: seed._environmentId,
-        _organizationId: seed._organizationId,
-      }),
+      this.notificationRepository.findOne(
+        {
+          _id: seed._notificationId,
+          _environmentId: seed._environmentId,
+          _organizationId: seed._organizationId,
+        },
+        'payload'
+      ),
+      this.messageRepository.findOne(
+        {
+          _id: seed._messageId,
+          _environmentId: seed._environmentId,
+          _organizationId: seed._organizationId,
+        },
+        'content'
+      ),
     ]);
 
     const payload =
