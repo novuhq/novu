@@ -20,6 +20,7 @@ import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.s
 import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import {
@@ -825,7 +826,7 @@ export class AgentInboundHandler implements OnModuleInit {
       environmentId: config.environmentId,
       organizationId: config.organizationId,
       integrationId: config.integrationId,
-      agentIdentifier: config.agentIdentifier,
+      linkScope: agentTelegramLinkScope(config.agentIdentifier),
     });
 
     if (result.status === 'mismatch') {
@@ -841,11 +842,12 @@ export class AgentInboundHandler implements OnModuleInit {
           LinkTelegramChatToSubscriberCommand.create({
             environmentId: payload._environmentId,
             organizationId: payload._organizationId,
-            agentIdentifier: payload.agentIdentifier,
+            linkScope: payload.linkScope,
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
             context: payload.context,
+            contextKeys: payload.contextKeys,
           })
         );
 

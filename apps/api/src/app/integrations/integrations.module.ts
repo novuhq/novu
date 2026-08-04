@@ -18,6 +18,7 @@ import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.m
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { IntegrationsController } from './integrations.controller';
+import { IntegrationTelegramWebhookController } from '../telegram-linking/integration-telegram-webhook.controller';
 import { IntegrationsMobileConfigurePublicController } from './integrations-mobile-configure-public.controller';
 import { IntegrationsPublicController } from './integrations-public.controller';
 import { IntegrationsWhatsAppSignupPublicController } from './integrations-whatsapp-signup-public.controller';
@@ -46,6 +47,7 @@ const PROVIDERS = [
     IntegrationsPublicController,
     IntegrationsMobileConfigurePublicController,
     IntegrationsWhatsAppSignupPublicController,
+    IntegrationTelegramWebhookController,
   ],
   providers: [
     ...USE_CASES,

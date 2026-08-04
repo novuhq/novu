@@ -6,10 +6,15 @@ import {
   SlackLinkUser,
   TelegramConnectButton,
 } from '@novu/nextjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 import { connectChatContext as context } from '@/utils/connect-chat-context';
+
+type HmacSession = {
+  subscriberHash: string;
+  contextHash?: string;
+};
 
 const SLACK_INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_CHAT_INTEGRATION_IDENTIFIER ?? 'slack';
 const SLACK_CONNECTION_IDENTIFIER = 'slack-workspace-connection';
@@ -19,6 +24,8 @@ const MSTEAMS_CONNECTION_IDENTIFIER = 'msteams-workspace-connection';
 const TELEGRAM_INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_TELEGRAM_INTEGRATION_IDENTIFIER ?? 'telegram';
 
 export default function ConnectChatPage() {
+  const [hmacSession, setHmacSession] = useState<HmacSession | null>(null);
+  const [hmacError, setHmacError] = useState<string | null>(null);
   const [dmStatus, setDmStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [dmLoading, setDmLoading] = useState(false);
   const [aadOidOverride, setAadOidOverride] = useState('');
@@ -27,6 +34,39 @@ export default function ConnectChatPage() {
   const [triggerWorkflowId, setTriggerWorkflowId] = useState(SLACK_TEST_WORKFLOW_ID);
   const [triggerStatus, setTriggerStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [triggerLoading, setTriggerLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHmacSession() {
+      try {
+        const res = await fetch('/api/hmac');
+        const data = (await res.json()) as HmacSession & { error?: string };
+
+        if (!res.ok || data.error || !data.subscriberHash) {
+          throw new Error(data.error ?? `Failed to mint HMAC session (HTTP ${res.status})`);
+        }
+
+        if (!cancelled) {
+          setHmacSession({
+            subscriberHash: data.subscriberHash,
+            ...(data.contextHash && { contextHash: data.contextHash }),
+          });
+          setHmacError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setHmacError(err instanceof Error ? err.message : 'Failed to mint HMAC session');
+        }
+      }
+    }
+
+    void loadHmacSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleCreateDmEndpoint = async () => {
     setDmLoading(true);
@@ -128,10 +168,33 @@ export default function ConnectChatPage() {
     }
   };
 
+  if (hmacError) {
+    return (
+      <>
+        <Title title="Connect Chat Components" />
+        <p className="p-4 text-sm text-destructive">HMAC session error: {hmacError}</p>
+      </>
+    );
+  }
+
+  if (!hmacSession) {
+    return (
+      <>
+        <Title title="Connect Chat Components" />
+        <p className="p-4 text-sm text-muted-foreground">Loading HMAC session…</p>
+      </>
+    );
+  }
+
   return (
     <>
       <Title title="Connect Chat Components" />
-      <NovuProvider {...novuConfig} context={context}>
+      <NovuProvider
+        {...novuConfig}
+        context={context}
+        subscriberHash={hmacSession.subscriberHash}
+        contextHash={hmacSession.contextHash}
+      >
         <div className="flex flex-col gap-10 p-4 max-w-xl">
           <div className="flex flex-col gap-6 rounded-lg border border-border p-5">
             <h3 className="text-base font-semibold">Slack</h3>

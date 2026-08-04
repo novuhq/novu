@@ -914,8 +914,9 @@ export class InboxController {
   /**
    * Subscriber-JWT twin of `POST /v1/integrations/channel-endpoints/link`.
    * Returns a provider-specific URL the subscriber opens to link their chat
-   * identity. The subscriber is resolved from the session token, so the body
-   * only carries `integrationIdentifier`. Telegram returns a `t.me` deep link.
+   * identity. The subscriber is resolved from the session token. Context follows
+   * the same trust model as inbox OAuth connect/link-user. Telegram returns a
+   * `t.me` deep link.
    */
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/channel-endpoints/link')
@@ -947,6 +948,13 @@ export class InboxController {
             organizationId: subscriberSession._organizationId,
             integrationIdentifier: body.integrationIdentifier,
             subscriberId: subscriberSession.subscriberId,
+            // A session that already carries resolved `contextKeys` is the trusted
+            // context source; the raw `body.context` is only used (and re-verified via
+            // `contextHash`) when the session has none.
+            context: body.context,
+            contextKeys: subscriberSession.contextKeys,
+            contextHash: body.contextHash,
+            isContextValidated: !!subscriberSession.contextKeys?.length,
           })
         );
 

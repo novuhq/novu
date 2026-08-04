@@ -143,6 +143,13 @@ export type LinkChannelEndpointArgs = {
    * Context bound to the resulting channel endpoint at link time.
    */
   context?: Context;
+  /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
+   * secret key (the same "Inbox with context" signing). Required when the
+   * integration has HMAC validation enabled and the current session did not
+   * already verify the context.
+   */
+  contextHash?: string;
 };
 
 export type LinkChannelEndpointResponse = {
