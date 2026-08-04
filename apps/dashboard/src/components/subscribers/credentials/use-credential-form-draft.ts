@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { CredentialField } from './credential-fields';
 
 function toValues(fields: CredentialField[]): Record<string, string> {
@@ -17,30 +17,34 @@ type UseCredentialFormDraftArgs = {
   onSaved?: () => void;
 };
 
+/**
+ * Local draft for credential create/edit. Call {@link resetDraft} when entering
+ * edit to snapshot server values. Do not sync from `fields` during edit: parents
+ * often pass a new fields array each render, which would flash stale credentials
+ * while a save is in flight.
+ */
 export function useCredentialFormDraft({ fields, onSave, onCancel, onSaved }: UseCredentialFormDraftArgs) {
-  const initialValues = useMemo(() => toValues(fields), [fields]);
-  const [draft, setDraft] = useState<Record<string, string>>(initialValues);
+  const [draft, setDraft] = useState<Record<string, string>>(() => toValues(fields));
+  const [baseline, setBaseline] = useState<Record<string, string>>(() => toValues(fields));
   const [showErrors, setShowErrors] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    setDraft(toValues(fields));
-    setShowErrors(false);
-  }, [fields]);
-
   const hasMissingRequired = fields.some((field) => !field.optional && (draft[field.key] ?? '').trim().length === 0);
-  const hasChanges = fields.some((field) => (draft[field.key] ?? '') !== (initialValues[field.key] ?? ''));
+  const hasChanges = fields.some((field) => (draft[field.key] ?? '') !== (baseline[field.key] ?? ''));
   const hasUnsavedCredential = !isSaving && hasChanges;
 
   const setField = (key: string, value: string) => setDraft((prev) => ({ ...prev, [key]: value }));
 
-  const resetDraft = () => {
-    setDraft(initialValues);
+  const resetDraft = (nextFields: CredentialField[] = fields) => {
+    const values = toValues(nextFields);
+    setDraft(values);
+    setBaseline(values);
     setShowErrors(false);
   };
 
   const cancel = () => {
-    resetDraft();
+    setDraft(baseline);
+    setShowErrors(false);
     onCancel();
   };
 
@@ -69,7 +73,8 @@ export function useCredentialFormDraft({ fields, onSave, onCancel, onSaved }: Us
     setIsSaving(false);
 
     if (succeeded) {
-      resetDraft();
+      // Exit without resetting to the pre-edit baseline; display uses refreshed props.
+      setShowErrors(false);
       (onSaved ?? onCancel)();
     }
   };
@@ -82,5 +87,6 @@ export function useCredentialFormDraft({ fields, onSave, onCancel, onSaved }: Us
     hasUnsavedCredential,
     save,
     cancel,
+    resetDraft,
   };
 }
