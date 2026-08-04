@@ -1,12 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import {
-  IPreferenceChannels,
-  isPreferenceChannelVisibleInUi,
-  PreferenceLevelEnum,
-  SeverityLevelEnum,
-} from '@novu/shared';
+import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -16,6 +11,7 @@ import {
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
 import { AnalyticsEventsEnum } from '../../utils';
+import { stripHiddenPreferenceChannels } from '../../utils/strip-hidden-preference-channels';
 import { InboxPreference } from '../../utils/types';
 import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 
@@ -49,7 +45,7 @@ export class GetInboxPreferences {
     const updatedGlobalPreference = {
       level: PreferenceLevelEnum.GLOBAL,
       ...globalPreference.preference,
-      channels: this.stripHiddenPreferenceChannels(globalPreference.preference.channels),
+      channels: stripHiddenPreferenceChannels(globalPreference.preference.channels),
     };
 
     const severity = command.severity
@@ -74,7 +70,7 @@ export class GetInboxPreferences {
     const workflowPreferences = subscriberWorkflowPreferences.map((subscriberWorkflowPreference) => {
       return {
         ...subscriberWorkflowPreference.preference,
-        channels: this.stripHiddenPreferenceChannels(subscriberWorkflowPreference.preference.channels),
+        channels: stripHiddenPreferenceChannels(subscriberWorkflowPreference.preference.channels),
         level: PreferenceLevelEnum.TEMPLATE,
         workflow: {
           id: subscriberWorkflowPreference.template._id,
@@ -108,12 +104,6 @@ export class GetInboxPreferences {
     });
 
     return [updatedGlobalPreference, ...sortedWorkflowPreferences];
-  }
-
-  private stripHiddenPreferenceChannels(channels: IPreferenceChannels): IPreferenceChannels {
-    return Object.fromEntries(
-      Object.entries(channels).filter(([channel]) => isPreferenceChannelVisibleInUi(channel))
-    ) as IPreferenceChannels;
   }
 
   private async getSubscriber(command: GetInboxPreferencesCommand): Promise<SubscriberEntity> {

@@ -23,8 +23,6 @@ import { IntegrationRepository } from '@novu/dal';
 import {
   ChatProviderIdEnum,
   ConnectionMode,
-  IPreferenceChannels,
-  isPreferenceChannelVisibleInUi,
   MessageActionStatusEnum,
   PreferenceLevelEnum,
   UserSessionData,
@@ -120,6 +118,7 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import { stripHiddenPreferenceChannels } from './utils/strip-hidden-preference-channels';
 import type { InboxPreference } from './utils/types';
 
 @ApiCommonResponses()
@@ -255,7 +254,7 @@ export class InboxController {
     return {
       level: PreferenceLevelEnum.GLOBAL,
       ...globalPreference.preference,
-      channels: this.stripHiddenPreferenceChannels(globalPreference.preference.channels),
+      channels: stripHiddenPreferenceChannels(globalPreference.preference.channels),
     };
   }
 
@@ -953,11 +952,5 @@ export class InboxController {
           `Provider "${providerId}" does not support subscriber chat linking via this endpoint.`
         );
     }
-  }
-
-  private stripHiddenPreferenceChannels(channels: IPreferenceChannels): IPreferenceChannels {
-    return Object.fromEntries(
-      Object.entries(channels).filter(([channel]) => isPreferenceChannelVisibleInUi(channel))
-    ) as IPreferenceChannels;
   }
 }
