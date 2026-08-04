@@ -11,6 +11,7 @@ import {
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
 import { AnalyticsEventsEnum } from '../../utils';
+import { stripHiddenPreferenceChannels } from '../../utils/strip-hidden-preference-channels';
 import { InboxPreference } from '../../utils/types';
 import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 
@@ -44,6 +45,7 @@ export class GetInboxPreferences {
     const updatedGlobalPreference = {
       level: PreferenceLevelEnum.GLOBAL,
       ...globalPreference.preference,
+      channels: stripHiddenPreferenceChannels(globalPreference.preference.channels),
     };
 
     const severity = command.severity
@@ -68,6 +70,7 @@ export class GetInboxPreferences {
     const workflowPreferences = subscriberWorkflowPreferences.map((subscriberWorkflowPreference) => {
       return {
         ...subscriberWorkflowPreference.preference,
+        channels: stripHiddenPreferenceChannels(subscriberWorkflowPreference.preference.channels),
         level: PreferenceLevelEnum.TEMPLATE,
         workflow: {
           id: subscriberWorkflowPreference.template._id,
