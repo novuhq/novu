@@ -52,8 +52,12 @@ export class TextLkSmsProvider extends BaseProvider implements ISmsProvider {
 
     const body = (await response.json()) as ITextLkResponse;
 
+    if (!response.ok || body.status !== 'success' || !body.data?.uid) {
+      throw new Error(`Text.lk SMS error: ${body.message || `request failed with status ${response.status}`}`);
+    }
+
     return {
-      id: body.data?.uid,
+      id: body.data.uid,
       date: new Date().toISOString(),
     };
   }
