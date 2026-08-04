@@ -378,6 +378,7 @@ export class SubscribersController {
       in_app: preference.channels?.in_app,
       push: preference.channels?.push,
       chat: preference.channels?.chat,
+      tool: preference.channels?.tool,
     }));
 
     return await this.bulkUpdatePreferencesUsecase.execute(
