@@ -17,6 +17,7 @@ import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { esmImport } from '../../../utils/esm-import';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
+import { omitIncompleteLinkButtons } from '../card-render.utils';
 import { dedupeSlackActionIds, toSlackFlavoredCard, validateSlackCard } from './card-render.utils';
 
 type SlackBlocksModule = {
@@ -39,12 +40,13 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
 
     // Translate the card's provider-agnostic markdown into Slack mrkdwn (links `<url|label>`,
     // strikethrough `~x~`) before serializing; the adapter only converts `**bold**` on its own.
-    const slackCard = toSlackFlavoredCard(card);
+    // Incomplete Actions (empty URL) stay in the preview card but must not hit Slack.
+    const slackCard = toSlackFlavoredCard(omitIncompleteLinkButtons(card));
 
     return {
       nativePayload: { blocks: dedupeSlackActionIds(cardToBlockKit(slackCard)) },
       content: cardToFallbackText(slackCard),
-      validation: validateSlackCard(card),
+      validation: validateSlackCard(slackCard),
     };
   }
 

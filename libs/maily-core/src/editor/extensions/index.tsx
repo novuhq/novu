@@ -16,8 +16,14 @@ type ExtensionsProps = Partial<MailyContextType> & {
 export function extensions(props: ExtensionsProps) {
   const { blocks, extensions = [] } = props;
 
+  // Dashboard re-registers `image` with `.extend().configure(...)`. Disable the kit
+  // copy so attribute defaults (e.g. chat `defaultAlignment: 'left'`) actually apply.
+  const hasCustomImage = extensions.some((extension) => extension.name === 'image');
+
   const defaultExtensions = [
-    MailyKit,
+    MailyKit.configure({
+      ...(hasCustomImage ? { image: false as const } : {}),
+    }),
     SlashCommandExtension.configure({
       suggestion: getSlashCommandSuggestions(blocks),
     }),
