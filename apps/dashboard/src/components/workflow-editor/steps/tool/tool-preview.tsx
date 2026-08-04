@@ -71,8 +71,10 @@ export const ToolPreviewMini = ({ isPreviewPending, previewData }: ToolPreviewPr
               <Skeleton className="h-4 w-1/2" />
             ) : (
               <span
-                className="text-foreground-950 line-clamp-3 min-h-4 whitespace-pre-wrap text-xs font-normal"
-                title={body}
+                className={`line-clamp-3 min-h-4 whitespace-pre-wrap text-xs font-normal ${
+                  body ? 'text-foreground-950' : 'text-foreground-400 italic'
+                }`}
+                title={body || EMPTY_BODY_PLACEHOLDER}
               >
                 {body || EMPTY_BODY_PLACEHOLDER}
               </span>
@@ -138,7 +140,15 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       return <AnnotatedOverrideJson {...annotatedPreview} />;
     }
 
-    return <div className={`${PREVIEW_PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
+    if (!body) {
+      return (
+        <div className="text-foreground-400 flex min-h-16 items-center justify-center rounded-md border border-dashed border-neutral-100 p-2 text-xs italic">
+          {EMPTY_BODY_PLACEHOLDER}
+        </div>
+      );
+    }
+
+    return <div className={`${PREVIEW_PANEL_CLASS} whitespace-pre-wrap`}>{body}</div>;
   };
 
   let previewLabel = 'Default content';

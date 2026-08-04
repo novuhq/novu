@@ -36,3 +36,8 @@ export const useContentSource = (): ContentSourceContextValue => {
 
   return context;
 };
+
+/** Soft read for call sites that may render outside `ContentSourceProvider`. */
+export const useOptionalContentSource = (): ContentSourceContextValue | null => {
+  return useContext(ContentSourceContext);
+};
