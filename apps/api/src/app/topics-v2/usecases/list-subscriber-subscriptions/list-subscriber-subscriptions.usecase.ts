@@ -142,17 +142,42 @@ export class ListSubscriberSubscriptionsUseCase {
     }
 
     const contextQuery = await this.buildContextQuery(contextKeys, organizationId);
+
+    const allPreferences = await this.preferencesRepository.find({
+      _environmentId: subscriptions[0]._environmentId,
+      _subscriberId: subscriptions[0]._subscriberId,
+      _topicSubscriptionId: { $in: subscriptions.map((subscription) => subscription._id) },
+      type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+      ...contextQuery,
+    });
+
+    const preferencesBySubscriptionEntityId = new Map<string, PreferencesEntity[]>();
+
+    for (const subscription of subscriptions) {
+      preferencesBySubscriptionEntityId.set(subscription._id.toString(), []);
+    }
+
+    for (const preference of allPreferences) {
+      const subscriptionId = preference._topicSubscriptionId?.toString();
+
+      if (!subscriptionId) {
+        continue;
+      }
+
+      const subscriptionPreferences = preferencesBySubscriptionEntityId.get(subscriptionId);
+
+      if (subscriptionPreferences) {
+        subscriptionPreferences.push(preference);
+      }
+    }
+
     const subscriptionPreferencesMap = new Map<TopicSubscribersEntity, PreferencesEntity[]>();
 
     for (const subscription of subscriptions) {
-      const preferences = await this.preferencesRepository.find({
-        _environmentId: subscription._environmentId,
-        _subscriberId: subscription._subscriberId,
-        _topicSubscriptionId: subscription._id,
-        type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
-        ...contextQuery,
-      });
-      subscriptionPreferencesMap.set(subscription, preferences);
+      subscriptionPreferencesMap.set(
+        subscription,
+        preferencesBySubscriptionEntityId.get(subscription._id.toString()) ?? []
+      );
     }
 
     const workflowsMap = await this.findWorkflows(subscriptionPreferencesMap, subscriptions);
@@ -218,8 +243,10 @@ export class ListSubscriberSubscriptionsUseCase {
       organization: { _id: organizationId },
     });
 
-    return this.topicSubscribersRepository.buildContextExactMatchQuery(contextKeys, {
-      enabled: useContextFiltering,
-    });
+    return contextKeys === undefined
+      ? {}
+      : this.topicSubscribersRepository.buildContextExactMatchQuery(contextKeys, {
+          enabled: useContextFiltering,
+        });
   }
 }
