@@ -174,6 +174,29 @@ describe('SendMessagePush - provider content overrides', () => {
     });
   }
 
+  it('sends to every subscriber FCM channel when multiple integrations share the provider', async () => {
+    const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
+    sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+    const secondFcmChannel = {
+      _integrationId: '507f1f77bcf86cd799439022',
+      providerId: PushProviderIdEnum.FCM,
+      credentials: { deviceTokens: ['device-token-2'] },
+    };
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        channels: [fcmChannelWithTokens, secondFcmChannel],
+        providerOverrides: persistedFcmOverride,
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledTwice(sendStub);
+    expect(sendStub.firstCall.args[0].target).to.deep.equal(['device-token-1']);
+    expect(sendStub.secondCall.args[0].target).to.deep.equal(['device-token-2']);
+  });
+
   it('delivers persisted FCM bridge provider overrides as bridgeProviderData', async () => {
     const sendStub = sinon.stub().resolves({ id: 'fcm_1' });
     sinon.stub(PushFactory.prototype, 'getHandler').returns({ send: sendStub } as never);

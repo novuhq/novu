@@ -190,19 +190,33 @@ export class SendMessagePush extends SendMessageBase {
      * Prefer a synthetic override channel when the subscriber already has the provider
      * channel but no device tokens — otherwise routing overrides (topic/condition/token)
      * are dropped and the send is skipped.
+     *
+     * Keep every subscriber channel (including multiple integrations for the same
+     * providerId); only collapse tokenless channels that the override replaces.
      */
-    const channelsByProvider = new Map(pushChannels.map((channel) => [channel.providerId, channel]));
+    const overrideProviderIds = new Set(channelsFromOverrides.map((channel) => channel.providerId));
     const tokenlessRoutingProviderIds = new Set<string>();
 
-    for (const overrideChannel of channelsFromOverrides) {
-      const existing = channelsByProvider.get(overrideChannel.providerId);
-      if (!existing || this.channelMissingDeviceTokens(existing)) {
-        channelsByProvider.set(overrideChannel.providerId, overrideChannel);
-        tokenlessRoutingProviderIds.add(overrideChannel.providerId);
+    const pushChannelsToUse = pushChannels.filter((channel) => {
+      if (this.channelMissingDeviceTokens(channel) && overrideProviderIds.has(channel.providerId)) {
+        return false;
       }
-    }
 
-    const allPushChannels = [...channelsByProvider.values()];
+      return true;
+    });
+
+    const uniqueOverrideChannels = channelsFromOverrides.filter((overrideChannel) => {
+      const existing = pushChannels.find((channel) => channel.providerId === overrideChannel.providerId);
+      if (!existing || this.channelMissingDeviceTokens(existing)) {
+        tokenlessRoutingProviderIds.add(overrideChannel.providerId);
+
+        return true;
+      }
+
+      return false;
+    });
+
+    const allPushChannels = [...pushChannelsToUse, ...uniqueOverrideChannels];
 
     if (!allPushChannels.length) {
       await this.createExecutionDetails.execute(

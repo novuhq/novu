@@ -210,6 +210,20 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       delete rest[key];
     }
 
+    // Strip routing from `_passthrough` too — `transform` deep-merges it last and
+    // must not reintroduce destinations that `resolveSendPlan` did not select.
+    if (rest._passthrough?.body && typeof rest._passthrough.body === 'object') {
+      const body = { ...rest._passthrough.body };
+      for (const key of FCM_ROUTING_KEYS) {
+        delete body[key];
+      }
+
+      rest._passthrough = {
+        ...rest._passthrough,
+        body,
+      };
+    }
+
     return rest;
   }
 

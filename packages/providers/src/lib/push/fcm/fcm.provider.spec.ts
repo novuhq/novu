@@ -502,7 +502,8 @@ describe('FcmPushProvider', () => {
         },
         _passthrough: {
           body: {
-            tokens: ['tokens'],
+            // Non-routing field — routing keys in `_passthrough.body` are stripped
+            android: { priority: 'high' },
           },
         },
       }
@@ -515,10 +516,47 @@ describe('FcmPushProvider', () => {
         title: 'Test 1',
         body: 'Test push',
       },
-      tokens: ['tester', 'tokens'],
+      tokens: ['tester'],
       registrationIds: ['test'],
+      android: { priority: 'high' },
       data: {},
     });
+  });
+
+  test('should not let _passthrough.body routing keys hijack or conflict with send plan', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('should-not-be-used');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['legitimate-token'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        _passthrough: {
+          body: {
+            tokens: ['attacker-token'],
+            topic: 'hijack-topic',
+          },
+        },
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      tokens: ['legitimate-token'],
+      data: {},
+    });
+    expect(sendSpy).not.toHaveBeenCalled();
   });
 
   test('should send via messaging.send when bridgeProviderData has topic', async () => {
