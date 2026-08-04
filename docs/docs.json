@@ -432,14 +432,31 @@
               "agents/get-started/agents-and-providers",
               {
                 "group": "Quickstart",
-                "pages": ["agents/get-started/ai-sdk", "agents/get-started/langchain", "agents/get-started/mastra"]
+                "pages": [
+                  "agents/get-started/ai-sdk",
+                  "agents/get-started/langchain",
+                  "agents/get-started/mastra",
+                  "agents/get-started/claude-managed",
+                  "agents/get-started/aws-claude"
+                ]
               }
             ]
           },
           {
+            "group": "Channels",
+            "pages": [
+              "agents/channels/overview",
+              "agents/channels/slack",
+              "agents/channels/microsoft-teams",
+              "agents/channels/whatsapp",
+              "agents/channels/telegram",
+              "agents/channels/email"
+            ],
+            "icon": "messages-square"
+          },
+          {
             "group": "Custom Code Agent",
             "pages": [
-              "agents/custom-code-agent/quickstart",
               "agents/custom-code-agent/concepts",
               "agents/custom-code-agent/connecting-your-app",
               {
@@ -470,7 +487,6 @@
             "group": "Managed Agent",
             "pages": [
               "agents/managed-agent/overview",
-              "agents/managed-agent/quickstart",
               "agents/managed-agent/concepts",
               "agents/managed-agent/configure-mcp-servers",
               "agents/managed-agent/add-skills"
@@ -1576,6 +1592,61 @@
       "permanent": true
     },
     {
+      "source": "/agents/quickstart/ai-sdk",
+      "destination": "/agents/get-started/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/langchain",
+      "destination": "/agents/get-started/langchain",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/mastra",
+      "destination": "/agents/get-started/mastra",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/claude-managed",
+      "destination": "/agents/get-started/claude-managed",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/aws-claude",
+      "destination": "/agents/get-started/aws-claude",
+      "permanent": true
+    },
+    {
+      "source": "/agents/managed-agent/quickstart",
+      "destination": "/agents/get-started/claude-managed",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/managed",
+      "destination": "/agents/get-started/claude-managed",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/shared-onboarding",
+      "destination": "/agents/get-started/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels",
+      "destination": "/agents/channels/overview",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/capabilities",
+      "destination": "/agents/channels/overview",
+      "permanent": true
+    },
+    {
       "source": "/agents/custom-code-agent/build-your-first-agent",
       "destination": "/agents/custom-code-agent/frameworks/ai-sdk",
       "permanent": true
@@ -1607,17 +1678,17 @@
     },
     {
       "source": "/agents/custom-code-agent/setup-your-agent/overview",
-      "destination": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {
       "source": "/agents/custom-code-agent/setup-your-agent/create-an-agent",
-      "destination": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {
       "source": "/agents/custom-code-agent/setup-your-agent/scaffold-your-project",
-      "destination": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {
