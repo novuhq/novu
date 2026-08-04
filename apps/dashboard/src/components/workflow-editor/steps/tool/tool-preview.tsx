@@ -13,12 +13,12 @@ import {
   type ProviderOverrideOption,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
-import { ContentSourceSelector } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-selector';
 import {
   getMergedOverrideHint,
   PREVIEW_PANEL_CLASS,
   useAnnotatedOverridePreview,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import { PreviewSourceBar } from '@/components/workflow-editor/steps/shared/provider-overrides/preview-source-bar';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 
 type ToolPreviewResult = {
@@ -163,16 +163,12 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
 
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
-      {!isViewingOverride && (
-        <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
-          <ContentSourceSelector
-            selectedSource={previewSource}
-            providers={providerOptions}
-            onSelectSource={setPreviewSource}
-          />
-          <div className="h-full flex-1" />
-        </div>
-      )}
+      <PreviewSourceBar
+        visible={!isViewingOverride}
+        selectedSource={previewSource}
+        providers={providerOptions}
+        onSelectSource={setPreviewSource}
+      />
 
       <div className="relative flex min-h-0 flex-1 flex-col gap-3 p-3">
         <div className="flex h-full min-h-0 w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
