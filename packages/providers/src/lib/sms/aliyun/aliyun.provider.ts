@@ -50,7 +50,7 @@ export class AliyunSmsProvider extends BaseProvider implements ISmsProvider {
       templateParam: options.content,
     });
 
-    const params: Record<string, string> = {
+    const params: Record<string, unknown> = {
       AccessKeyId: this.config.accessKeyId || '',
       Action: 'SendSms',
       Format: 'JSON',
@@ -65,7 +65,14 @@ export class AliyunSmsProvider extends BaseProvider implements ISmsProvider {
 
     const canonicalizedQuery = Object.keys(params)
       .sort()
-      .map((key) => `${this.percentEncode(key)}=${this.percentEncode(params[key])}`)
+      .map((key) => {
+        const value = params[key];
+        // Aliyun expects every parameter as a string, and `TemplateParam` in particular as a JSON
+        // string. A structured `_passthrough.body.TemplateParam` (e.g. `{ code: '1234' }`) would
+        // otherwise stringify to `[object Object]` and be rejected, so serialise non-strings.
+        const normalized = typeof value === 'string' ? value : JSON.stringify(value);
+        return `${this.percentEncode(key)}=${this.percentEncode(normalized)}`;
+      })
       .join('&');
 
     const stringToSign = `GET&${this.percentEncode('/')}&${this.percentEncode(canonicalizedQuery)}`;

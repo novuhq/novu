@@ -82,6 +82,38 @@ test('should let _passthrough override the resolved params', async () => {
   expect(url).toContain('PhoneNumbers=%2B8613900139000');
 });
 
+test('should JSON-serialize a structured TemplateParam override', async () => {
+  const provider = new AliyunSmsProvider({
+    accessKeyId: 'test-access-key-id',
+    accessKeySecret: 'test-access-key-secret',
+    from: 'AliyunTest',
+  });
+
+  const fetchMock = vi.fn().mockResolvedValue(okResponse());
+  global.fetch = fetchMock;
+
+  await provider.sendMessage(
+    {
+      content: 'ignored',
+      from: 'AliyunTest',
+      to: '+8613800138000',
+    },
+    {
+      _passthrough: {
+        body: {
+          TemplateCode: 'SMS_123456789',
+          TemplateParam: { code: '1234' },
+        },
+      },
+    }
+  );
+
+  const [url] = fetchMock.mock.calls[0];
+  // `{ code: '1234' }` must be serialized to the JSON string Aliyun expects, not `[object Object]`.
+  expect(url).toContain(`TemplateParam=${encodeURIComponent('{"code":"1234"}')}`);
+  expect(url).not.toContain('object%20Object');
+});
+
 test('should throw when Aliyun returns a non-OK code', async () => {
   const provider = new AliyunSmsProvider({
     accessKeyId: 'test-access-key-id',
