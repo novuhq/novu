@@ -1,17 +1,12 @@
 import { CommunityOrganizationRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, QueueBackendMode } from '@novu/shared';
 import { PinoLogger } from '../../logging';
-import { CloudflareSchedulerService } from '../cloudflare-scheduler';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SqsService } from '../sqs';
 import { StandardQueueService } from './standard-queue.service';
 
 let standardQueueService: StandardQueueService;
-
-const mockCloudflareSchedulerService = {
-  scheduleJob: jest.fn(),
-} as unknown as CloudflareSchedulerService;
 
 const ORGANIZATION_ID = 'standard-organization-id';
 
@@ -42,10 +37,9 @@ describe('Standard Queue service', () => {
     beforeAll(async () => {
       standardQueueService = new StandardQueueService(
         new WorkflowInMemoryProviderService(),
-        mockCloudflareSchedulerService,
+        mockSqsService,
         mockFeatureFlagsService,
         mockOrganizationRepository,
-        mockSqsService,
         mockLogger
       );
       await standardQueueService.queue.obliterate();
@@ -211,10 +205,9 @@ describe('Standard Queue service', () => {
 
       standardQueueService = new StandardQueueService(
         new WorkflowInMemoryProviderService(),
-        mockCloudflareSchedulerService,
+        mockSqsService,
         mockFeatureFlagsService,
         mockOrganizationRepository,
-        mockSqsService,
         mockLogger
       );
       await standardQueueService.queue.obliterate();

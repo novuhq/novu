@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Test } from '@nestjs/testing';
 import {
-  CloudflareSchedulerService,
   FeatureFlagsService,
   JobsOptions,
   PinoLogger,
@@ -45,12 +44,6 @@ import { StandardWorker } from './standard.worker';
 
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
-
-const mockCloudflareSchedulerService = {
-  scheduleJob: async () => {},
-  cancelJob: async () => false,
-  isConfigured: () => false,
-} as unknown as CloudflareSchedulerService;
 
 const mockFeatureFlagsService = {
   getFlag: async () => false,
@@ -135,10 +128,9 @@ describe('Standard Worker', () => {
 
     standardQueueService = new StandardQueueService(
       workflowInMemoryProviderService,
-      mockCloudflareSchedulerService,
+      mockSqsService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
-      mockSqsService,
       mockLogger
     );
     await standardQueueService.queue.obliterate();
