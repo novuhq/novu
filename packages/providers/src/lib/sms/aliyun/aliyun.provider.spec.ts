@@ -6,6 +6,8 @@ afterEach(() => {
 });
 
 const okResponse = () => ({
+  ok: true,
+  status: 200,
   json: () => Promise.resolve({ Code: 'OK', Message: 'OK', RequestId: 'req-1', BizId: 'mock-biz-id' }),
 });
 
@@ -88,6 +90,8 @@ test('should throw when Aliyun returns a non-OK code', async () => {
   });
 
   global.fetch = vi.fn().mockResolvedValue({
+    ok: false,
+    status: 400,
     json: () => Promise.resolve({ Code: 'isv.MOBILE_NUMBER_ILLEGAL', Message: 'invalid number' }),
   });
 
@@ -98,4 +102,28 @@ test('should throw when Aliyun returns a non-OK code', async () => {
       to: 'not-a-number',
     })
   ).rejects.toThrow('isv.MOBILE_NUMBER_ILLEGAL');
+});
+
+test('should throw when the response has no BizId even if it looks successful', async () => {
+  const provider = new AliyunSmsProvider({
+    accessKeyId: 'test-access-key-id',
+    accessKeySecret: 'test-access-key-secret',
+    from: 'AliyunTest',
+  });
+
+  // HTTP error whose body carries no `Code` — previously slipped through and
+  // resolved as a success with `id: undefined`.
+  global.fetch = vi.fn().mockResolvedValue({
+    ok: false,
+    status: 500,
+    json: () => Promise.resolve({ Message: 'Internal error' }),
+  });
+
+  await expect(
+    provider.sendMessage({
+      content: '{"code":"1234"}',
+      from: 'AliyunTest',
+      to: '+8613800138000',
+    })
+  ).rejects.toThrow('Aliyun SMS request failed');
 });

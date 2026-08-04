@@ -85,8 +85,8 @@ export class AliyunSmsProvider extends BaseProvider implements ISmsProvider {
 
     const body = (await response.json()) as IAliyunResponse;
 
-    if (body.Code && body.Code !== 'OK') {
-      throw new Error(`Aliyun SMS request failed (${body.Code}): ${body.Message}`);
+    if (!response.ok || body.Code !== 'OK' || !body.BizId) {
+      throw new Error(`Aliyun SMS request failed (${body.Code ?? response.status}): ${body.Message ?? 'unknown error'}`);
     }
 
     return {
