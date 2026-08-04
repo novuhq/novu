@@ -103,14 +103,22 @@ export function SubscriberCredentials({
       return [];
     }
 
-    return buildCredentialGroups({
+    const built = buildCredentialGroups({
       subscriber,
       integrations: environmentIntegrations,
       channelEndpoints,
       channelConnections,
       includeToolChannel: isToolChannelEnabled,
     });
-  }, [subscriber, environmentIntegrations, channelEndpoints, channelConnections, isToolChannelEnabled]);
+
+    // Empty-only groups exist so editors can add credentials via the picker.
+    // Read-only has no picker — drop them so we don't render empty section stubs.
+    if (readOnly) {
+      return built.filter((group) => group.rows.length > 0);
+    }
+
+    return built;
+  }, [subscriber, environmentIntegrations, channelEndpoints, channelConnections, isToolChannelEnabled, readOnly]);
 
   if (isSubscriberPending || isIntegrationsPending || isEndpointsPending || isConnectionsPending) {
     return <CredentialsSkeleton />;

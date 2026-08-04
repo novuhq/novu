@@ -13,6 +13,8 @@ type UseCredentialFormDraftArgs = {
   fields: CredentialField[];
   onSave: (values: Record<string, string>) => Promise<boolean>;
   onCancel: () => void;
+  /** Called after a successful save to exit edit/add mode. Defaults to `onCancel`. */
+  onSaved?: () => void;
 };
 
 /**
@@ -21,7 +23,7 @@ type UseCredentialFormDraftArgs = {
  * often pass a new fields array each render, which would flash stale credentials
  * while a save is in flight.
  */
-export function useCredentialFormDraft({ fields, onSave, onCancel }: UseCredentialFormDraftArgs) {
+export function useCredentialFormDraft({ fields, onSave, onCancel, onSaved }: UseCredentialFormDraftArgs) {
   const [draft, setDraft] = useState<Record<string, string>>(() => toValues(fields));
   const [baseline, setBaseline] = useState<Record<string, string>>(() => toValues(fields));
   const [showErrors, setShowErrors] = useState(false);
@@ -73,7 +75,7 @@ export function useCredentialFormDraft({ fields, onSave, onCancel }: UseCredenti
     if (succeeded) {
       // Exit without resetting to the pre-edit baseline; display uses refreshed props.
       setShowErrors(false);
-      onCancel();
+      (onSaved ?? onCancel)();
     }
   };
 

@@ -53,7 +53,10 @@ export class TelegramAgentLinkResolver {
       return null;
     }
 
-    return this.resolveFromLinks(links.map((link) => link._agentId), params);
+    return this.resolveFromLinks(
+      links.map((link) => link._agentId),
+      params
+    );
   }
 
   async resolve(params: {
