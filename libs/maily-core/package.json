@@ -194,7 +194,7 @@
     "@types/sanitize-html": "^2.11.0",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
-    "postcss": "^8.4.47",
+    "postcss": "^8.5.23",
     "postcss-replace": "^2.0.1",
     "@novu/maily-tailwind-config": "workspace:*",
     "@novu/maily-tsconfig": "workspace:*",
