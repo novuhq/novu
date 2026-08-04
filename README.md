@@ -165,11 +165,12 @@ Expand a channel below to browse supported providers.
 </details>
 
 <details>
-<summary><strong>📞 SMS</strong> (37 providers)</summary>
+<summary><strong>📞 SMS</strong> (38 providers)</summary>
 
 | Provider |
 | --- |
 | [46elks](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/forty-six-elks) |
+| [8x8](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/8x8) |
 | [Africa's Talking](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/africas-talking) |
 | [Afro SMS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/afro-sms) |
 | [Amazon SNS](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/sns) |
@@ -226,10 +227,11 @@ Expand a channel below to browse supported providers.
 </details>
 
 <details>
-<summary><strong>💬 Chat</strong> (13 providers)</summary>
+<summary><strong>💬 Chat</strong> (14 providers)</summary>
 
 | Provider |
 | --- |
+| [8x8 WhatsApp](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/8x8-whatsapp) |
 | [Chat Webhook](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/chat-webhook) |
 | [Discord](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/discord) |
 | [GetStream](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/getstream) |
