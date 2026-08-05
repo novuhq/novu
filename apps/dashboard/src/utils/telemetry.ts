@@ -107,8 +107,6 @@ export enum TelemetryEvent {
   SUPPORT_DRAWER_ROADMAP_CLICKED = 'Support drawer roadmap clicked - [Support]',
   SUPPORT_DRAWER_CHAT_CLICKED = 'Support drawer chat clicked - [Support]',
   SUPPORT_DRAWER_BOOK_DEMO_CLICKED = 'Support drawer book demo clicked - [Support]',
-  SUPPORT_DRAWER_DOCS_BACK_CLICKED = 'Support drawer docs back clicked - [Support]',
-  SUPPORT_DRAWER_DOCS_EXTERNAL_CLICKED = 'Support drawer docs external link clicked - [Support]',
 
   COPILOT_MESSAGE_SENT = 'Copilot message sent - [AI Copilot]',
   COPILOT_GENERATION_COMPLETED = 'Copilot generation completed - [AI Copilot]',
