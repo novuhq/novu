@@ -145,7 +145,7 @@ function ConnectorCard({
       {isSelected ? (
         <RiCheckboxCircleFill className="text-success-base absolute right-2 top-2 size-4" aria-hidden />
       ) : null}
-      {badge ? (
+      {badge && !isSelected ? (
         <div
           className={cn(
             'absolute right-2 top-2 transition-opacity',
