@@ -1,6 +1,6 @@
 ---
 title: "Reply"
-description: "Send plain text, markdown, file attachments, and interactive cards from custom code agent handlers with ctx.reply across Slack, Teams, WhatsApp, and email."
+description: "Send plain text, markdown, file attachments, and interactive cards from custom code agent handlers with ctx.reply across Slack, Teams, WhatsApp, Telegram, and email."
 ---
 
 
@@ -16,7 +16,17 @@ The public API is `ctx.reply(content, options?)`. You can also return a string o
 
 To send a reply from your backend without going through the bridge handler, use the [Send an agent reply](/api-reference/agents/send-an-agent-reply) API.
 
-## Reply types at a glance
+## Channel support
+
+| Capability | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| Plain / rich text | Yes | Yes | Bold / italics | Yes | HTML |
+| Tap-to-respond buttons | Yes | Yes | Yes (up to 3) | Yes | Action links |
+| Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+
+See [Channels overview](/agents/channels/overview) for the full matrix.
+
+## Reply types
 
 The following table summarizes the reply types your agent can send:
 
@@ -48,11 +58,16 @@ await ctx.reply('**Report generated.** See the attached PDF.');
 
 Include files with string or markdown replies via the optional second argument.
 
+<Note>
+  Outbound file attachments are delivered on **Slack** and **Microsoft Teams**. WhatsApp, Telegram, and email do not support outbound files yet. See [Channels overview](/agents/channels/overview).
+</Note>
+
 When sending attachments, keep these limits in mind:
 
 - Attachments are limited to 25 MB per file.
 - Files are only supported with string or markdown replies, not card replies.
 - Provide each file with exactly one of `url` or `data`.
+- Prefer `url` for larger files. Inline `data` is capped at 5 MB per file (and 5 MB aggregate per message).
 
 ### File reference type
 

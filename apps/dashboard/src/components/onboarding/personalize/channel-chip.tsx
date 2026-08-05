@@ -17,9 +17,7 @@ export function ChannelChip({ label, icon, accent, isSelected, onToggle }: Chann
       onClick={onToggle}
       className={cn(
         'text-label-xs inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border px-2 font-medium transition-colors',
-        isSelected
-          ? 'text-text-strong'
-          : 'border-stroke-soft hover:border-stroke-strong text-text-sub bg-white hover:bg-white'
+        isSelected ? 'text-text-strong' : 'border-stroke-weak hover:border-stroke-soft text-text-sub bg-white'
       )}
       style={isSelected ? { backgroundColor: `${accent}1f`, borderColor: `${accent}3d` } : undefined}
     >

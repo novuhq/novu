@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
 import {
   AGENT_IDENTIFIER_MAX_LENGTH,
@@ -9,7 +10,6 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { randomUUID } from 'node:crypto';
 
 describe('Agents API - /agents #novu-v2', () => {
   let session: UserSession;

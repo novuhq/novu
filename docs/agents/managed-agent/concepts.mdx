@@ -15,17 +15,27 @@ A connector links your Novu agent to an AI platform. The platform receives each 
 | Connector | Status |
 | --- | --- |
 | Claude (Anthropic) | Available |
+| AWS Claude (Claude Platform on AWS) | Available |
+| AWS Bedrock AgentCore | Coming soon |
 | OpenAI | Coming soon |
-| AWS Bedrock | Coming soon |
 
 ### Credentials
 
-Each connector needs platform credentials. For Claude, you provide:
+Each connector needs platform credentials.
+
+**Claude (Anthropic):**
 
 - **API Key**: from the [Anthropic console](https://console.anthropic.com/settings/keys).
-- **Workspace ID**: from the [Anthropic console](https://console.anthropic.com/settings/workspaces).
 
-If you want to try things out first, you can use the Novu demo credentials. They give you a limited number of free conversations without an Anthropic account.
+Quickstart: [Connect Claude managed agent](/agents/get-started/claude-managed).
+
+**AWS Claude:**
+
+- **API key**, **region**, and **workspace ID** (`wrkspc_…`) from [Claude Platform on AWS](https://docs.aws.amazon.com/claude-platform/latest/userguide/setup.html).
+
+Quickstart: [Connect AWS Claude managed agent](/agents/get-started/aws-claude).
+
+If you want to try things out first, select **Try a demo agent** in `npx novu connect`. That path uses Novu demo credentials with a limited number of free conversations.
 
 ## System prompt
 
@@ -227,8 +237,11 @@ You can manage agents programmatically with the [Agents API reference](/api-refe
 ## Next steps
 
 <Columns cols={2}>
-  <Card icon="zap" href="/agents/managed-agent/quickstart" title="Quickstart">
-    Create a managed agent with Claude and connect it to Slack.
+  <Card icon="sparkles" href="/agents/get-started/claude-managed" title="Connect Claude">
+    Anthropic Claude managed agent + Slack.
+  </Card>
+  <Card icon="cloud" href="/agents/get-started/aws-claude" title="Connect AWS Claude">
+    Claude Platform on AWS + Slack.
   </Card>
   <Card icon="link" href="/agents/managed-agent/configure-mcp-servers" title="Configure MCP servers">
     Enable external tools for your managed agent.

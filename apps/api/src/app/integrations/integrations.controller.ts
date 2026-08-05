@@ -987,6 +987,7 @@ export class IntegrationsController {
             integrationIdentifier: body.integrationIdentifier,
             subscriberId: body.subscriberId,
             context: body.context,
+            contextHash: body.contextHash,
           })
         );
 

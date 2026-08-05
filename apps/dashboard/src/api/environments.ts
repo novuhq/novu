@@ -27,7 +27,11 @@ export interface IResourceDependency {
   resourceId: string;
   resourceName: string;
   isBlocking: boolean;
-  reason: 'LAYOUT_REQUIRED_FOR_WORKFLOW' | 'LAYOUT_EXISTS_IN_TARGET' | 'AGENT_REQUIRED_FOR_WORKFLOW' | 'AGENT_EXISTS_IN_TARGET';
+  reason:
+    | 'LAYOUT_REQUIRED_FOR_WORKFLOW'
+    | 'LAYOUT_EXISTS_IN_TARGET'
+    | 'AGENT_REQUIRED_FOR_WORKFLOW'
+    | 'AGENT_EXISTS_IN_TARGET';
 }
 
 export interface IResourceDiffResult {

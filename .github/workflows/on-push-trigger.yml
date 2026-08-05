@@ -5,6 +5,11 @@ on:
     branches:
       - next
 
+# A newer push to next cancels any in-flight run so only the latest commit triggers a deploy
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: write

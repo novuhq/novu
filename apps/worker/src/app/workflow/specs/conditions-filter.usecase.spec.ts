@@ -25,13 +25,22 @@ describe('Message filter matcher', () => {
     add: sinon.stub(),
     execute: sinon.stub().resolves(),
   };
+  const featureFlagsService = {
+    getFlag: sinon.stub().resolves(false),
+  };
+  const logger = {
+    setContext: sinon.stub(),
+    info: sinon.stub(),
+  };
   const conditionsFilter = new ConditionsFilter(
     undefined as any,
     undefined as any,
     undefined as any,
     undefined as any,
     executionLogQueueService as any,
-    new CompileTemplate()
+    new CompileTemplate(),
+    featureFlagsService as any,
+    logger as any
   );
 
   it('should filter correct message by the filter value', async () => {
@@ -911,7 +920,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -947,7 +958,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -977,7 +990,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1001,7 +1016,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1025,7 +1042,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1053,7 +1072,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1090,7 +1111,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1117,7 +1140,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1144,7 +1169,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1171,7 +1198,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1198,7 +1227,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({
@@ -1225,7 +1256,9 @@ describe('Message filter matcher', () => {
           undefined as any,
           undefined as any,
           executionLogQueueService as any,
-          new CompileTemplate()
+          new CompileTemplate(),
+          featureFlagsService as any,
+          logger as any
         );
         const matchedMessage = await filter.filter(
           mapConditionsFilterCommand({

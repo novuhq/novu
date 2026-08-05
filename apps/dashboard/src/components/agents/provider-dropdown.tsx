@@ -1,6 +1,5 @@
 import {
   ChannelTypeEnum,
-  CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   EmailProviderIdEnum,
   type IIntegration,
@@ -31,6 +30,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { useConversationalProviders } from '@/hooks/use-conversational-providers';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
@@ -188,6 +188,7 @@ export function ProviderDropdown({
   const { integrations } = useFetchIntegrations();
   const navigate = useNavigate();
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
+  const conversationalProviders = useConversationalProviders();
 
   const closeDropdown = () => {
     setOpen(false);
@@ -204,8 +205,8 @@ export function ProviderDropdown({
   });
 
   const { supported: allSupported, comingSoon } = useMemo(
-    () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
-    [integrations]
+    () => buildDropdownItems(conversationalProviders, integrations),
+    [conversationalProviders, integrations]
   );
 
   const supported = useMemo(() => {
@@ -382,12 +383,12 @@ export function ProviderDropdown({
                 (isNovuAgent && selected?.providerId === EmailProviderIdEnum.NovuAgent);
 
               const rowContent = (
-                <div className="flex w-full min-w-0 items-center gap-1 break-normal">
+                <div className="flex w-full min-w-0 items-center gap-1.5 break-normal">
                   <ProviderIcon
                     providerId={providerType.providerId}
                     providerDisplayName={providerType.displayName}
                     iconFileName={getProviderSquareIconFileName(providerType.providerId)}
-                    className="size-4 shrink-0"
+                    className="size-5 shrink-0"
                   />
                   <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
                     {providerType.displayName}
@@ -461,7 +462,7 @@ export function ProviderDropdown({
                   aria-disabled={isLocked || undefined}
                   onSelect={handleTypeRowSelect}
                   className={cn(
-                    'flex min-w-0 items-center gap-2 rounded-md p-1',
+                    'flex min-h-9 min-w-0 items-center gap-2 rounded-md px-2 py-2',
                     isAnyInstanceSelected && 'bg-bg-muted',
                     isLocked && '!pointer-events-auto opacity-60'
                   )}
@@ -535,14 +536,14 @@ export function ProviderDropdown({
                 key={item.providerId}
                 value={`${item.displayName} ${item.providerId}`}
                 disabled
-                className="flex items-center gap-2 rounded-md p-1 opacity-50"
+                className="flex min-h-9 items-center gap-2 rounded-md px-2 py-2 opacity-50"
               >
-                <div className="flex flex-1 items-center gap-1">
+                <div className="flex flex-1 items-center gap-1.5">
                   <ProviderIcon
                     providerId={item.providerId}
                     providerDisplayName={item.displayName}
                     iconFileName={getProviderSquareIconFileName(item.providerId)}
-                    className="size-4 shrink-0"
+                    className="size-5 shrink-0"
                   />
                   <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">{item.displayName}</span>
                 </div>
@@ -625,7 +626,7 @@ export function ProviderDropdown({
                 disabled={isBusy}
                 onSelect={() => void handleSelect(item, index)}
                 className={cn(
-                  'flex min-w-0 items-center gap-2 rounded-md p-1',
+                  'flex min-h-9 min-w-0 items-center gap-2 rounded-md px-2 py-2',
                   integration._id === selectedIntegrationId && 'bg-bg-muted'
                 )}
               >
@@ -666,7 +667,7 @@ export function ProviderDropdown({
               expandedProvider.integrations.length
             );
           }}
-          className="flex items-center gap-1.5 rounded-md p-1"
+          className="flex min-h-9 items-center gap-1.5 rounded-md px-2 py-2"
         >
           {pendingItemKey === `${expandedProvider.providerId}-new-${expandedProvider.integrations.length}` ? (
             <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />

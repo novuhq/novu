@@ -10,7 +10,12 @@ import { CardButtonView } from './card-button-view';
  * - `url` empty  -> `<Button id="…">`      (interactive/action button, URL resolved from the id)
  *
  * Both share `label` and `style`.
+ *
+ * A `cardButton` only ever lives inside a `cardActions` row (see card-actions.tsx);
+ * it is never a top-level block.
  */
+export const CARD_BUTTON_NODE_NAME = 'cardButton';
+
 export const allowedCardButtonStyle = ['default', 'primary', 'danger'] as const;
 export type AllowedCardButtonStyle = (typeof allowedCardButtonStyle)[number];
 
@@ -32,17 +37,16 @@ export type CardButtonAttributes = {
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     cardButton: {
-      setCardButton: () => ReturnType;
       updateCardButtonAttributes: (attrs: Partial<CardButtonAttributes>) => ReturnType;
     };
   }
 }
 
 export const CardButtonExtension = Node.create({
-  name: 'cardButton',
-  group: 'block',
+  name: CARD_BUTTON_NODE_NAME,
+  group: 'cardButtonItem',
   atom: true,
-  draggable: true,
+  draggable: false,
 
   addAttributes() {
     return {
@@ -106,15 +110,6 @@ export const CardButtonExtension = Node.create({
 
   addCommands() {
     return {
-      setCardButton:
-        () =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: {},
-            content: [],
-          });
-        },
       updateCardButtonAttributes: (attrs) => updateAttributes(this.name, attrs),
     };
   },

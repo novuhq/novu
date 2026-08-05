@@ -112,12 +112,7 @@ export class ResolveAgentInboundAddresses {
       return {};
     }
 
-    return this.buildEmailContext(
-      agent,
-      { identifier: agent.identifier },
-      params.environmentId,
-      params.organizationId
-    );
+    return this.buildEmailContext(agent, { identifier: agent.identifier }, params.environmentId, params.organizationId);
   }
 
   /**

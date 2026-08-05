@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { buildSsoSignInPath } from '../sso-redirect';
+import { useAuthConfig } from '../use-auth-config';
 
 export function ForgotPassword() {
   const navigate = useNavigate();
+  const { emailPasswordAuthEnabled, isLoading: isAuthConfigLoading } = useAuthConfig();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +40,14 @@ export function ForgotPassword() {
       setIsLoading(false);
     }
   };
+
+  if (isAuthConfigLoading) {
+    return null;
+  }
+
+  if (!emailPasswordAuthEnabled) {
+    return <Navigate to={buildSsoSignInPath()} replace />;
+  }
 
   if (emailSent) {
     return (

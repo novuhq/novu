@@ -28,12 +28,7 @@ import {
 } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
-import {
-  getAgent,
-  getAgentDetailQueryKey,
-  getAgentIntegrationsQueryKey,
-  listAgentIntegrations,
-} from '@/api/agents';
+import { getAgent, getAgentDetailQueryKey, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DeleteWorkflowDialog } from '@/components/delete-workflow-dialog';

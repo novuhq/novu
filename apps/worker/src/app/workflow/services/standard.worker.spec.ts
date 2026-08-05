@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Test } from '@nestjs/testing';
 import {
-  CloudflareSchedulerService,
   FeatureFlagsService,
+  JobsOptions,
   PinoLogger,
   SqsService,
   StandardQueueService,
@@ -44,12 +44,6 @@ import { StandardWorker } from './standard.worker';
 
 let standardQueueService: StandardQueueService;
 let standardWorker: StandardWorker;
-
-const mockCloudflareSchedulerService = {
-  scheduleJob: async () => {},
-  cancelJob: async () => false,
-  isConfigured: () => false,
-} as unknown as CloudflareSchedulerService;
 
 const mockFeatureFlagsService = {
   getFlag: async () => false,
@@ -134,10 +128,9 @@ describe('Standard Worker', () => {
 
     standardQueueService = new StandardQueueService(
       workflowInMemoryProviderService,
-      mockCloudflareSchedulerService,
+      mockSqsService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
-      mockSqsService,
       mockLogger
     );
     await standardQueueService.queue.obliterate();
@@ -721,6 +714,71 @@ describe('Standard Worker', () => {
       const result = await jobRepository.releaseStaleQueuedChildToPending(parent._environmentId, parent._id);
 
       expect(result).to.equal(null);
+    });
+  });
+
+  describe('queue entry dedup', () => {
+    // A long delay parks the entry in the delayed set, where the running worker cannot consume it.
+    const DELAY_MS = 60_000;
+
+    const enqueue = async (job: JobEntity, options: JobsOptions = {}) =>
+      standardQueueService.add({
+        name: job._id,
+        data: {
+          _environmentId: job._environmentId,
+          _id: job._id,
+          _organizationId: job._organizationId,
+          _userId: job._userId,
+        },
+        groupId: '0',
+        options: { delay: DELAY_MS, ...options },
+      });
+
+    /*
+     * Nothing else in this suite enqueues with a delay and afterEach empties the set, so every
+     * delayed entry belongs to the test at hand - including one BullMQ numbered itself because a
+     * caller-supplied id went missing.
+     */
+    const delayedEntryIds = async (): Promise<(string | undefined)[]> => {
+      const delayed = await standardQueueService.queue.getDelayed();
+
+      return delayed.map((entry) => entry.id);
+    };
+
+    afterEach(async () => {
+      const delayed = await standardQueueService.queue.getDelayed();
+      await Promise.all(delayed.map((entry) => entry.remove()));
+    });
+
+    it('collapses a repeated enqueue of the same job onto the live entry', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
+
+      await enqueue(created);
+      await enqueue(created);
+
+      expect(await delayedEntryIds()).to.deep.equal([created._id]);
+    });
+
+    it('still dedups when a caller passes an explicitly undefined job id', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
+
+      await enqueue(created);
+      await enqueue(created, { jobId: undefined });
+
+      expect(await delayedEntryIds()).to.deep.equal([created._id]);
+    });
+
+    it('keeps a schedule extension re-queue alongside the entry it extends', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
+
+      // Mirrors the ids AddJob.queueJob derives before and after an extension.
+      await enqueue(created, { jobId: created._id });
+      await enqueue(created, { jobId: `${created._id}-ext1` });
+
+      const ids = await delayedEntryIds();
+      expect(ids.length).to.equal(2);
+      expect(ids).to.include(created._id);
+      expect(ids).to.include(`${created._id}-ext1`);
     });
   });
 

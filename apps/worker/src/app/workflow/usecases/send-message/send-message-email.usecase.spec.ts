@@ -179,11 +179,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
 });
 
 describe('SendMessageEmail - agent sender / reply-to precedence', () => {
-  function buildUsecase(agentStubs?: {
-    replyTo?: string;
-    senderName?: string;
-    senderEmail?: string;
-  }) {
+  function buildUsecase(agentStubs?: { replyTo?: string; senderName?: string; senderEmail?: string }) {
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const messageRepository = {
       create: sinon.stub().resolves({ _id: 'msg_1' }),

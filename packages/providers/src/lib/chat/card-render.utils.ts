@@ -54,13 +54,41 @@ function childToMarkdown(child: CardElementChild): string {
     case 'divider':
       return '---';
     case 'actions':
-      return child.children.map((button) => `[${button.label}](${button.url})`).join(' · ');
+      return child.children
+        .map((button) => (button.url ? `[${button.label}](${button.url})` : button.label))
+        .join(' · ');
     default: {
       const exhaustiveCheck: never = child;
 
       return exhaustiveCheck;
     }
   }
+}
+
+/**
+ * Drop link buttons that still have an empty URL before platform serialization.
+ * The chat compiler keeps them so the dashboard preview stays WYSIWYG while authors
+ * fill in Actions; Slack/Teams reject (or mis-handle) empty `url` values.
+ */
+export function omitIncompleteLinkButtons(card: CardElement): CardElement {
+  const children: CardElementChild[] = [];
+
+  for (const child of card.children) {
+    if (child.type !== 'actions') {
+      children.push(child);
+      continue;
+    }
+
+    const buttons = child.children.filter((button) => Boolean(button.url?.trim()));
+
+    if (buttons.length === 0) {
+      continue;
+    }
+
+    children.push({ ...child, children: buttons } satisfies CardElementActionsElement);
+  }
+
+  return { ...card, children };
 }
 
 /**

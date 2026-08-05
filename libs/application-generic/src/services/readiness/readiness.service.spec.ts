@@ -6,7 +6,6 @@ import {
 } from '../../health';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { CloudflareSchedulerService } from '../cloudflare-scheduler';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
@@ -19,10 +18,6 @@ let standardQueueService: StandardQueueService;
 let workflowQueueService: WorkflowQueueService;
 let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
-
-const mockCloudflareSchedulerService = {
-  scheduleJob: jest.fn(),
-} as unknown as CloudflareSchedulerService;
 
 const mockFeatureFlagsService = {
   getFlag: jest.fn(),
@@ -53,10 +48,9 @@ describe('Readiness Service', () => {
 
     standardQueueService = new StandardQueueService(
       new WorkflowInMemoryProviderService(),
-      mockCloudflareSchedulerService,
+      mockSqsService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
-      mockSqsService,
       mockLogger
     );
     workflowQueueService = new WorkflowQueueService(
