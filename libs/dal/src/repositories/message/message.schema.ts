@@ -154,12 +154,6 @@ const messageSchema = new Schema<MessageDBModel>(
       type: [Schema.Types.String],
       default: undefined,
     },
-    platformThreadId: {
-      type: Schema.Types.String,
-    },
-    platformMessageId: {
-      type: Schema.Types.String,
-    },
     _agentId: {
       type: Schema.Types.ObjectId,
       ref: 'Agent',
@@ -397,18 +391,6 @@ messageSchema.index({
   createdAt: -1,
   _id: -1,
 });
-
-/**
- * Lookup outbound Message by env + agent + platformThreadId (agent workflow-origin hydration).
- */
-messageSchema.index(
-  {
-    _environmentId: 1,
-    _agentId: 1,
-    platformThreadId: 1,
-  },
-  { sparse: true }
-);
 
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||

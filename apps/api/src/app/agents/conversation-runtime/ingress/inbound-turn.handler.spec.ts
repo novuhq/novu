@@ -208,7 +208,7 @@ describe('AgentInboundHandler', () => {
     };
     const messageRepository = {
       findOne: sinon.stub().resolves(null),
-      findByPlatformThread: sinon.stub().resolves(null),
+      findByAgentIdentifier: sinon.stub().resolves(null),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -432,7 +432,7 @@ describe('AgentInboundHandler', () => {
       );
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByPlatformThread.resolves({
+      messageRepository.findByAgentIdentifier.resolves({
         _id: 'msg1',
         _notificationId: 'notif1',
         _jobId: 'job1',
@@ -440,8 +440,7 @@ describe('AgentInboundHandler', () => {
         templateIdentifier: 'order-alerts',
         stepId: 'chat-1',
         content: 'Order ORD-1 shipped',
-        platformMessageId: '1777837477.371619',
-        platformThreadId: 'slack:D123:1777837477.371619',
+        identifier: 'D123:1777837477.371619',
       });
       notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
 
@@ -454,11 +453,11 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
-      expect(messageRepository.findByPlatformThread.calledOnce).to.equal(true);
-      expect(messageRepository.findByPlatformThread.firstCall.args).to.deep.equal([
+      expect(messageRepository.findByAgentIdentifier.calledOnce).to.equal(true);
+      expect(messageRepository.findByAgentIdentifier.firstCall.args).to.deep.equal([
         'env1',
         'agent1',
-        'slack:D123:1777837477.371619',
+        'D123:1777837477.371619',
         'subscriber-mongo-1',
       ]);
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
@@ -468,6 +467,7 @@ describe('AgentInboundHandler', () => {
         'Order ORD-1 shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-1"\n}'
       );
       expect(hydrateArgs.platformMessageId).to.equal('1777837477.371619');
+      expect(hydrateArgs.platformThreadId).to.equal('slack:D123:1777837477.371619');
       expect(hydrateArgs.originPayload.payload).to.deep.equal({ orderId: 'ORD-1' });
       expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
     });
@@ -478,8 +478,8 @@ describe('AgentInboundHandler', () => {
       );
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByPlatformThread.callsFake(
-        (_environmentId: string, _agentId: string, _platformThreadId: string, subscriberId?: string) =>
+      messageRepository.findByAgentIdentifier.callsFake(
+        (_environmentId: string, _agentId: string, _identifier: string, subscriberId?: string) =>
           subscriberId
             ? null
             : {
@@ -487,8 +487,7 @@ describe('AgentInboundHandler', () => {
                 _notificationId: 'victim-notification',
                 _subscriberId: 'victim-mongo',
                 content: 'Your password reset token is secret',
-                platformMessageId: '1777837477.371619',
-                platformThreadId: 'slack:D123:1777837477.371619',
+                identifier: 'D123:1777837477.371619',
               }
       );
       notificationRepository.findOne.resolves({ payload: { resetToken: 'secret' } });
@@ -505,10 +504,10 @@ describe('AgentInboundHandler', () => {
         AgentEventEnum.ON_MESSAGE
       );
 
-      expect(messageRepository.findByPlatformThread.firstCall.args).to.deep.equal([
+      expect(messageRepository.findByAgentIdentifier.firstCall.args).to.deep.equal([
         'env1',
         'agent1',
-        'slack:D123:1777837477.371619',
+        'D123:1777837477.371619',
         'attacker-mongo',
       ]);
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal(undefined);
@@ -520,7 +519,7 @@ describe('AgentInboundHandler', () => {
       const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByPlatformThread.resolves(null);
+      messageRepository.findByAgentIdentifier.resolves(null);
 
       await handler.handle(
         'agent1',
@@ -539,7 +538,7 @@ describe('AgentInboundHandler', () => {
       );
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
+      messageRepository.findByAgentIdentifier.rejects(new Error('mongo timeout'));
 
       await handler.handle(
         'agent1',
@@ -576,7 +575,7 @@ describe('AgentInboundHandler', () => {
         AgentEventEnum.ON_MESSAGE
       );
 
-      expect(messageRepository.findByPlatformThread.called).to.equal(false);
+      expect(messageRepository.findByAgentIdentifier.called).to.equal(false);
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
@@ -1572,7 +1571,7 @@ describe('AgentInboundHandler', () => {
         makeHandler(makeResolvedSubscriberOverrides());
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByPlatformThread.resolves({
+      messageRepository.findByAgentIdentifier.resolves({
         _id: 'msg1',
         _notificationId: 'notif1',
         _jobId: 'job1',
@@ -1580,8 +1579,7 @@ describe('AgentInboundHandler', () => {
         templateIdentifier: 'order-alerts',
         stepId: 'chat-1',
         content: 'Order ORD-1 shipped',
-        platformMessageId: '1777837477.371619',
-        platformThreadId: 'thread1',
+        identifier: 'thread1:1777837477.371619',
       });
       notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
 
@@ -1611,7 +1609,7 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(messageRepository.findByPlatformThread.called).to.equal(false);
+      expect(messageRepository.findByAgentIdentifier.called).to.equal(false);
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
@@ -1625,7 +1623,7 @@ describe('AgentInboundHandler', () => {
       // otherwise `_notificationId` gets stamped with no origin content ever written,
       // permanently blocking every later retry.
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByPlatformThread.resolves({
+      messageRepository.findByAgentIdentifier.resolves({
         _id: 'msg1',
         _notificationId: 'notif1',
         _jobId: 'job1',
@@ -1633,8 +1631,7 @@ describe('AgentInboundHandler', () => {
         templateIdentifier: 'order-alerts',
         stepId: 'chat-1',
         content: 'Order ORD-1 shipped',
-        platformMessageId: '1777837477.371619',
-        platformThreadId: 'thread1',
+        identifier: 'thread1:1777837477.371619',
       });
       notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
 
@@ -1656,7 +1653,7 @@ describe('AgentInboundHandler', () => {
       );
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
+      messageRepository.findByAgentIdentifier.rejects(new Error('mongo timeout'));
 
       await handler.handleAction(
         'agent1',

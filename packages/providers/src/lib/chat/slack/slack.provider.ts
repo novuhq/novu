@@ -71,9 +71,8 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
     }
 
     return {
-      id: response.data.ts,
+      id: `${response.data.channel}:${response.data.ts}`,
       date: new Date().toISOString(),
-      channel: response.data.channel,
     };
   }
 

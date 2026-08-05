@@ -1248,39 +1248,37 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     };
   }
 
-  async findByPlatformThread(
+  async findByAgentIdentifier(
     environmentId: string,
     agentId: string,
-    platformThreadId: string,
+    identifier: string,
     subscriberId: string
   ): Promise<MessageEntity | null> {
     return this.findOne({
       _environmentId: environmentId,
       _agentId: agentId,
       _subscriberId: subscriberId,
-      platformThreadId,
+      identifier,
     });
   }
 
-  /** Set-if-absent so multi-endpoint fanout keeps the first successful thread id. */
-  async setPlatformThreadBridge(params: {
+  /** Set-if-absent so multi-endpoint fanout keeps the first successful provider id. */
+  async setProviderIdentifierIfAbsent(params: {
     messageId: string;
     environmentId: string;
-    agentId: string;
-    platformThreadId: string;
-    platformMessageId: string;
+    identifier: string;
+    agentId?: string;
   }): Promise<void> {
     await this.update(
       {
         _id: params.messageId,
         _environmentId: params.environmentId,
-        platformThreadId: { $exists: false },
+        identifier: { $exists: false },
       },
       {
         $set: {
-          platformThreadId: params.platformThreadId,
-          platformMessageId: params.platformMessageId,
-          _agentId: params.agentId,
+          identifier: params.identifier,
+          ...(params.agentId ? { _agentId: params.agentId } : {}),
         },
       }
     );

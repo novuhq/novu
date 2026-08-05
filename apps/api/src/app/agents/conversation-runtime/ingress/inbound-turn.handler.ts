@@ -42,7 +42,11 @@ import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../sh
 import { extractWorkspaceId } from '../../shared/util/workspace-id';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
-import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
+import {
+  AgentConversationService,
+  type CreateOrGetConversationParams,
+  getInboundActivityPreview,
+} from '../conversation/agent-conversation.service';
 import {
   AgentSubscriberResolver,
   BotAuthorSkippedError,
@@ -204,6 +208,21 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   }
 
   return `${thread.id}${threadRoot}`;
+}
+
+/** Conversation uses `slack:{channel}:{ts}`; Message.identifier stores bare `{channel}:{ts}`. */
+function toProviderMessageLookupKey(platformThreadId: string): string {
+  return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
+}
+
+/** Slack provider id is `{channel}:{ts}` — channel ids never contain `:`. */
+function platformMessageIdFromProviderIdentifier(identifier: string): string | undefined {
+  const colon = identifier.indexOf(':');
+  if (colon <= 0 || colon === identifier.length - 1) {
+    return undefined;
+  }
+
+  return identifier.slice(colon + 1);
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -449,18 +468,23 @@ export class AgentInboundHandler implements OnModuleInit {
       existingConversation,
       platformThreadId,
       subscriberId,
-      (notificationId) =>
-        this.openConversation(
-          agentId,
-          config,
-          message,
-          subscriberId,
-          platformThreadId,
-          thread.isDM,
-          extractWorkspaceId(config.platform, message.raw) ?? undefined,
-          this.webChatConversationIdentifier(config.platform, platformThreadId),
-          notificationId
-        )
+      {
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        agentId,
+        platform: config.platform,
+        integrationId: config.integrationId,
+        platformThreadId,
+        participantId: subscriberId ?? `${config.platform}:${message.author.userId}`,
+        participantType: subscriberId
+          ? ConversationParticipantTypeEnum.SUBSCRIBER
+          : ConversationParticipantTypeEnum.PLATFORM_USER,
+        platformUserId: message.author.userId,
+        firstMessageText: resolveInboundFirstMessageText(config.platform, message),
+        isDirectMessage: thread.isDM,
+        workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
+        identifier: this.webChatConversationIdentifier(config.platform, platformThreadId),
+      }
     );
 
     if (config.isKeyless) {
@@ -646,40 +670,6 @@ export class AgentInboundHandler implements OnModuleInit {
     return platformThreadId.startsWith('web_chat:') ? platformThreadId.slice('web_chat:'.length) : platformThreadId;
   }
 
-  private async openConversation(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    message: Message,
-    subscriberId: string | null,
-    platformThreadId: string,
-    isDirectMessage: boolean,
-    workspaceId?: string,
-    conversationIdentifier?: string,
-    notificationId?: string
-  ): Promise<ConversationEntity> {
-    const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
-    const participantType = subscriberId
-      ? ConversationParticipantTypeEnum.SUBSCRIBER
-      : ConversationParticipantTypeEnum.PLATFORM_USER;
-
-    return this.conversationService.createOrGetConversation({
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      agentId,
-      platform: config.platform,
-      integrationId: config.integrationId,
-      platformThreadId,
-      participantId,
-      participantType,
-      platformUserId: message.author.userId,
-      firstMessageText: resolveInboundFirstMessageText(config.platform, message),
-      isDirectMessage,
-      workspaceId,
-      identifier: conversationIdentifier,
-      notificationId,
-    });
-  }
-
   /** Create/reopen the conversation, then hydrate workflow-origin history if this turn opened a seeded thread. */
   private async openConversationAndMaybeHydrateOrigin(
     agentId: string,
@@ -687,13 +677,16 @@ export class AgentInboundHandler implements OnModuleInit {
     existingConversation: ConversationEntity | null,
     platformThreadId: string,
     subscriberId: string | null,
-    resolveConversation: (notificationId?: string) => Promise<ConversationEntity>
+    createParams: Omit<CreateOrGetConversationParams, 'notificationId'>
   ): Promise<ConversationEntity> {
     const seededMessage = existingConversation
       ? null
       : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId);
 
-    const conversation = await resolveConversation(seededMessage?._notificationId);
+    const conversation = await this.conversationService.createOrGetConversation({
+      ...createParams,
+      notificationId: seededMessage?._notificationId,
+    });
 
     if (seededMessage) {
       await this.hydrateWorkflowOrigin(agentId, config, conversation, platformThreadId, seededMessage);
@@ -719,10 +712,12 @@ export class AgentInboundHandler implements OnModuleInit {
         return null;
       }
 
-      return await this.messageRepository.findByPlatformThread(
+      const identifier = toProviderMessageLookupKey(platformThreadId);
+
+      return await this.messageRepository.findByAgentIdentifier(
         config.environmentId,
         agentId,
-        platformThreadId,
+        identifier,
         subscriber._id
       );
     } catch (err) {
@@ -748,7 +743,12 @@ export class AgentInboundHandler implements OnModuleInit {
     platformThreadId: string,
     originMessage: MessageEntity
   ): Promise<void> {
-    if (!originMessage._notificationId || !originMessage.platformMessageId) {
+    if (!originMessage._notificationId || !originMessage.identifier) {
+      return;
+    }
+
+    const platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
+    if (!platformMessageId) {
       return;
     }
 
@@ -766,8 +766,8 @@ export class AgentInboundHandler implements OnModuleInit {
         agentIdentifier: config.agentIdentifier,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
-        platformMessageId: originMessage.platformMessageId,
-        platformThreadId: originMessage.platformThreadId ?? platformThreadId,
+        platformMessageId,
+        platformThreadId,
         content,
         originPayload,
       });
@@ -1316,22 +1316,20 @@ export class AgentInboundHandler implements OnModuleInit {
       existingConversation,
       thread.id,
       subscriberId,
-      (notificationId) =>
-        this.conversationService.createOrGetConversation({
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-          agentId,
-          platform: config.platform,
-          integrationId: config.integrationId,
-          platformThreadId: thread.id,
-          participantId,
-          participantType,
-          platformUserId: userId,
-          firstMessageText: `[action:${action.id}]`,
-          isDirectMessage: thread.isDM,
-          workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
-          notificationId,
-        })
+      {
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        agentId,
+        platform: config.platform,
+        integrationId: config.integrationId,
+        platformThreadId: thread.id,
+        participantId,
+        participantType,
+        platformUserId: userId,
+        firstMessageText: `[action:${action.id}]`,
+        isDirectMessage: thread.isDM,
+        workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
+      }
     );
 
     trackAgentInboundAction(this.analyticsService, {

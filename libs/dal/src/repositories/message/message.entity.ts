@@ -138,13 +138,7 @@ export class MessageEntity {
 
   contextKeys?: string[];
 
-  /** Platform thread id from an agent-assigned chat send (e.g. `slack:{channel}:{ts}`). */
-  platformThreadId?: string;
-
-  /** Platform message id of the outbound workflow chat send that opened the thread. */
-  platformMessageId?: string;
-
-  /** Agent that owned the outbound chat send when platform thread fields were stamped. */
+  /** Agent that owned the outbound chat send when provider identifier was stamped for seed hydration. */
   _agentId?: string;
 }
 

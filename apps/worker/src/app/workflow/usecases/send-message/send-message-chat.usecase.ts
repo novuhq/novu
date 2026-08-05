@@ -100,43 +100,6 @@ function filterAgentSupportedEndpoints(endpoints: ChannelData[]): ChannelData[] 
   });
 }
 
-/**
- * Chat SDK thread ids are `slack:{conversation}:{rootTs}`. Channel endpoints already
- * carry the conversation id; user endpoints send to `U…` but land in a `D…` DM that
- * Slack returns on the success `channel` field.
- */
-function resolveSlackConversationId(
-  channelData: ChannelData,
-  result: ISendMessageSuccessResponse
-): string | undefined {
-  if (channelData.type === ENDPOINT_TYPES.SLACK_CHANNEL) {
-    return channelData.endpoint.channelId;
-  }
-
-  if (channelData.type === ENDPOINT_TYPES.SLACK_USER) {
-    return result.channel;
-  }
-
-  return undefined;
-}
-
-function buildAgentPlatformThreadId(
-  providerId: string,
-  channelData: ChannelData,
-  result: ISendMessageSuccessResponse
-): string | undefined {
-  if (providerId !== ChatProviderIdEnum.Slack || !result.id) {
-    return undefined;
-  }
-
-  const conversationId = resolveSlackConversationId(channelData, result);
-  if (!conversationId) {
-    return undefined;
-  }
-
-  return `slack:${conversationId}:${result.id}`;
-}
-
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
   channelType = ChannelTypeEnum.CHAT;
@@ -748,15 +711,8 @@ export class SendMessageChat extends SendMessageBase {
         nativePayload,
       });
 
-      if (assignedAgentId) {
-        await this.persistPlatformThreadBridge(
-          assignedAgentId,
-          integration.providerId,
-          overriddenChannelData,
-          result,
-          message,
-          command
-        );
+      if (result.id) {
+        await this.persistProviderIdentifier(result.id, message, command, assignedAgentId);
       }
 
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
@@ -766,40 +722,18 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   /** Post-send stamp for inbound hydration; must not flip a successful send to FAILED. */
-  private async persistPlatformThreadBridge(
-    assignedAgentId: string,
-    providerId: string,
-    channelData: ChannelData,
-    result: ISendMessageSuccessResponse,
+  private async persistProviderIdentifier(
+    identifier: string,
     message: MessageEntity,
-    command: SendMessageChannelCommand
+    command: SendMessageChannelCommand,
+    assignedAgentId?: string
   ): Promise<void> {
-    const platformMessageId = result.id;
-    const platformThreadId = buildAgentPlatformThreadId(providerId, channelData, result);
-
-    if (!platformThreadId || !platformMessageId) {
-      Logger.warn(
-        {
-          jobId: command.jobId,
-          messageId: message._id,
-          agentId: assignedAgentId,
-          providerId,
-          endpointType: channelData.type,
-        },
-        'Agent-assigned chat send succeeded without platform thread ids — skipping message bridge stamp',
-        LOG_CONTEXT
-      );
-
-      return;
-    }
-
     try {
-      await this.messageRepository.setPlatformThreadBridge({
+      await this.messageRepository.setProviderIdentifierIfAbsent({
         messageId: message._id,
         environmentId: command.environmentId,
-        agentId: assignedAgentId,
-        platformThreadId,
-        platformMessageId,
+        identifier,
+        ...(assignedAgentId ? { agentId: assignedAgentId } : {}),
       });
     } catch (error) {
       Logger.error(
@@ -808,9 +742,9 @@ export class SendMessageChat extends SendMessageBase {
           jobId: command.jobId,
           messageId: message._id,
           agentId: assignedAgentId,
-          platformThreadId,
+          identifier,
         },
-        'Failed to persist platform thread bridge on message after successful send',
+        'Failed to persist provider identifier on message after successful send',
         LOG_CONTEXT
       );
 
@@ -820,8 +754,7 @@ export class SendMessageChat extends SendMessageBase {
         ExecutionDetailsStatusEnum.WARNING,
         message._id,
         {
-          platformThreadId,
-          platformMessageId,
+          identifier,
           message: this.getErrorMessage(error),
         }
       );
