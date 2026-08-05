@@ -16,12 +16,12 @@ export class GenerateMcpOAuthUrlCommand extends EnvironmentWithUserCommand {
   @IsNotEmpty()
   subscriberId: string;
 
-  /** Conversation that initiated setup — round-trips through signed OAuth state. */
+  /** Conversation that initiated setup — persisted on the pending connection callback context. */
   @IsOptional()
   @IsString()
   conversationId?: string;
 
-  /** Where the OAuth URL was generated — round-trips through signed OAuth state. */
+  /** Where the OAuth URL was generated — persisted on the pending connection callback context. */
   @IsOptional()
   @IsIn(['api', 'user_chat'])
   source?: 'api' | 'user_chat';
@@ -32,8 +32,8 @@ export class GenerateMcpOAuthUrlCommand extends EnvironmentWithUserCommand {
   trustToolsOnConnect?: boolean;
 
   // ── Session resume fields (source: 'user_chat') ──────────────────────
-  // Forwarded into McpOAuthState so the callback can resume the session
-  // without additional DB lookups.
+  // Persisted on the pending connection (`oauthState.callbackContext`) so
+  // the callback can resume the session without bloating the authorize URL.
 
   @IsOptional()
   @IsString()

@@ -220,7 +220,7 @@ export type TopicSubscriptionDetailsResponse = {
   id: string;
   identifier?: string;
   name?: string;
-  preferences: TopicSubscriptionPreference[];
+  preferences?: TopicSubscriptionPreference[];
 };
 
 export const getTopicSubscriptions = async ({
@@ -268,18 +268,19 @@ export const getTopicSubscriptions = async ({
 export const getTopicSubscription = async ({
   environment,
   topicKey,
-  subscriptionId,
+  subscriptionIdentifier,
 }: {
   environment: IEnvironment;
   topicKey: string;
-  subscriptionId: string;
-}): Promise<TopicSubscriptionDetailsResponse> => {
-  const response = await getV2<{ data: TopicSubscriptionDetailsResponse }>(
-    `/topics/${encodeURIComponent(topicKey)}/subscriptions/${subscriptionId}`,
+  subscriptionIdentifier: string;
+}): Promise<TopicSubscriptionDetailsResponse | null> => {
+  const response = await getV2<{ data?: TopicSubscriptionDetailsResponse }>(
+    `/topics/${encodeURIComponent(topicKey)}/subscriptions/${encodeURIComponent(subscriptionIdentifier)}`,
     {
       environment,
     }
   );
 
-  return response.data;
+  // The endpoint replies with 204 No Content when the subscription does not exist
+  return response.data ?? null;
 };

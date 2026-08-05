@@ -1,5 +1,5 @@
-import { CardElement, CardElementChild } from '@novu/stateless';
-import { convertText, InlineNode } from '../card-render.utils';
+import { CardElement, CardElementChild, ChatRenderValidationLevelEnum, IChatRenderValidation } from '@novu/stateless';
+import { CardValidator, convertText, InlineNode, maxMessageLength, runCardValidators } from '../card-render.utils';
 
 /** WhatsApp: `*bold*`, `_italic_`, `~strike~`, ```` ```mono``` ````; no link markup, so render `label (url)`. */
 function inlineToWhatsApp(nodes: InlineNode[]): string {
@@ -33,6 +33,24 @@ function inlineToWhatsApp(nodes: InlineNode[]): string {
       }
     })
     .join('');
+}
+
+/**
+ * WhatsApp degrades the card to a single flavored-text message: v1 link buttons become body text
+ * (`label (url)`), so no reply-button cap applies, and there is no block concept. The only useful
+ * check is the ~1024-char interactive body limit, applied to the *whole* rendered body (WhatsApp
+ * truncates/splits rather than rejects) — a non-blocking degradation `WARNING`.
+ */
+const WHATSAPP_VALIDATORS: CardValidator[] = [
+  maxMessageLength({
+    level: ChatRenderValidationLevelEnum.WARNING,
+    limit: 1024,
+    measure: (card) => cardToWhatsAppText(card).length,
+  }),
+];
+
+export function validateWhatsAppCard(card: CardElement): IChatRenderValidation[] {
+  return runCardValidators(card, WHATSAPP_VALIDATORS);
 }
 
 /** WhatsApp has no native card payload: degrade the card to WhatsApp-flavored plain text. */
