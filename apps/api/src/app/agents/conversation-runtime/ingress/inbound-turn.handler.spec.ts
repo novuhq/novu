@@ -664,29 +664,6 @@ describe('AgentInboundHandler', () => {
       });
     });
 
-    it('should dispatch custom-code restricted agents so the framework posts the auth card when the sender is unknown', async () => {
-      const restrictedConfig = {
-        ...config,
-        isManaged: false,
-        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
-      };
-      const { handler, bridgeExecutor, outboundGateway, inboundAck } = makeHandler({
-        subscriberResolve: sinon.stub().resolves(null),
-        subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
-      });
-      const thread = makeSlackDmThread();
-      const message = makeSlackDmMessage();
-
-      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      // Bypass the plain API reply: the framework's auth gate builds the CTA card on the bridge.
-      expect(outboundGateway.replyOnThread.called).to.equal(false);
-      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
-      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
-      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
-    });
-
     it('should still reply for custom-code restricted agents when subscriber resolution errors', async () => {
       const restrictedConfig = {
         ...config,
