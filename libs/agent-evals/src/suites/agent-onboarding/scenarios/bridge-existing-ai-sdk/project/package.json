@@ -1,0 +1,8 @@
+{
+  "name": "acme-shop",
+  "description": "Acme shopper support portal",
+  "dependencies": {
+    "ai": "^7.0.0",
+    "@ai-sdk/openai": "^2.0.0"
+  }
+}

@@ -252,7 +252,12 @@ export class TriggerEventRequestDto {
   @IsOptional()
   payload?: Record<string, unknown>;
 
-  @ApiHideProperty()
+  @ApiPropertyOptional({
+    description: `Optional Bridge Endpoint URL used to route this trigger to a specific Bridge application. Useful during local development when multiple engineers share an organization: set this to your personal tunnel URL from \`npx novu@latest dev\` (for example via NOVU_BRIDGE_URL) so app-fired triggers hit your machine instead of the environment's synced Bridge URL. Must be a publicly reachable https URL — private or localhost addresses are rejected.`,
+    type: 'string',
+    required: false,
+    example: 'https://your-tunnel.novu.co/api/novu',
+  })
   @IsString()
   @IsOptional()
   bridgeUrl?: string;
@@ -272,6 +277,19 @@ export class TriggerEventRequestDto {
   @IsObject()
   @IsOptional()
   overrides?: TriggerOverrides;
+
+  @ApiPropertyOptional({
+    description:
+      'Override the workflow-assigned agent for this trigger using the public agent identifier. Omit to use the workflow default; pass null to disable agent routing for this execution.',
+    type: 'string',
+    nullable: true,
+    example: 'support-agent',
+  })
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  @IsNotEmpty()
+  agentId?: string | null;
 
   @ApiProperty({
     description:

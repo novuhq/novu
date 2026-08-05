@@ -8,6 +8,7 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  TerminalWorkflowStatusEvent,
 } from '@novu/dal';
 import {
   DeliveryLifecycleDetail,
@@ -18,7 +19,6 @@ import {
 } from '@novu/shared';
 import { PinoLogger } from '../logging';
 import {
-  EventType,
   TraceLogRepository,
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
@@ -37,8 +37,6 @@ const DELIVERY_STATUS_TO_EVENT: Record<DeliveryLifecycleStatusEnum, DeliveryLife
   [DeliveryLifecycleStatusEnum.DELIVERED]: 'workflow_run_delivery_delivered',
   [DeliveryLifecycleStatusEnum.INTERACTED]: 'workflow_run_delivery_interacted',
 };
-
-export type WorkflowRunStatusEventType = Extract<EventType, `workflow_run_status_${string}`>;
 
 export type NotificationForTrace = {
   _id: string;
@@ -74,6 +72,18 @@ export interface WorkflowStatusUpdateParams {
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   notification?: NotificationForTrace | null;
   currentJob?: Pick<JobEntity, 'type' | '_id'>;
+  /**
+   * Prefetched workflow metadata. Required for stateless (bridge-URL) runs,
+   * where no notification template exists in the database to look up.
+   */
+  workflow?: WorkflowForTrace | null;
+  /**
+   * When false, skip emitting terminal workflow status traces
+   * (`workflow_run_status_completed` / `workflow_run_status_error`).
+   * Defaults to true. Inbox interactions set this to false to avoid
+   * re-emitting status traces that inflate ClickHouse counts.
+   */
+  emitStatusTrace?: boolean;
 }
 
 type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id' | '_mergedDigestId'>;
@@ -169,6 +179,8 @@ export class WorkflowRunService {
     deliveryLifecycleDetail: providedDetail,
     notification: passedNotification,
     currentJob,
+    workflow: passedWorkflow,
+    emitStatusTrace = true,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
       let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
@@ -211,7 +223,7 @@ export class WorkflowRunService {
           organizationId,
           environmentId,
           passedNotification,
-          null
+          passedWorkflow ?? null
         );
         notification = result.notification;
         workflow = result.workflow;
@@ -262,35 +274,15 @@ export class WorkflowRunService {
         );
       }
 
-      if (
-        workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
-        workflowStatus === WorkflowRunStatusEnum.ERROR ||
-        workflowStatus === WorkflowRunStatusEnum.SUCCESS
-      ) {
-        if (!notification || !workflow) {
-          const result = await this.getNotificationAndWorkflow(
-            notificationId,
-            organizationId,
-            environmentId,
-            notification,
-            workflow
-          );
-          notification = result.notification;
-          workflow = result.workflow;
-        }
-
-        const statusToEmit =
-          workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS
-            ? ('workflow_run_status_completed' as const)
-            : ('workflow_run_status_error' as const);
-        await this.createWorkflowStatusTrace(
-          notificationId,
-          statusToEmit,
-          { organizationId, environmentId },
-          notification,
-          workflow
-        );
-      }
+      await this.maybeEmitTerminalStatusTrace({
+        emitStatusTrace,
+        workflowStatus,
+        notificationId,
+        organizationId,
+        environmentId,
+        notification,
+        workflow,
+      });
     } catch (error) {
       this.logger.error(
         {
@@ -312,6 +304,8 @@ export class WorkflowRunService {
     deliveryLifecycleDetail: providedDetail,
     notification: passedNotification,
     currentJob,
+    workflow: passedWorkflow,
+    emitStatusTrace = true,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
       let deliveryLifecycleStatus: DeliveryLifecycleStatusEnum;
@@ -344,7 +338,7 @@ export class WorkflowRunService {
         organizationId,
         environmentId,
         passedNotification,
-        null
+        passedWorkflow ?? null
       );
 
       // Handle in-app transition: SENT -> DELIVERED
@@ -413,23 +407,15 @@ export class WorkflowRunService {
         );
       }
 
-      if (
-        workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
-        workflowStatus === WorkflowRunStatusEnum.ERROR ||
-        workflowStatus === WorkflowRunStatusEnum.SUCCESS
-      ) {
-        const statusToEmit =
-          workflowStatus === WorkflowRunStatusEnum.COMPLETED || workflowStatus === WorkflowRunStatusEnum.SUCCESS
-            ? ('workflow_run_status_completed' as const)
-            : ('workflow_run_status_error' as const);
-        await this.createWorkflowStatusTrace(
-          notificationId,
-          statusToEmit,
-          { organizationId, environmentId },
-          notification,
-          workflow
-        );
-      }
+      await this.maybeEmitTerminalStatusTrace({
+        emitStatusTrace,
+        workflowStatus,
+        notificationId,
+        organizationId,
+        environmentId,
+        notification,
+        workflow,
+      });
 
       this.seedDeliveryLifecycleState({
         notificationId,
@@ -563,9 +549,61 @@ export class WorkflowRunService {
     }
   }
 
+  /** Shared gate for legacy/transition paths; Inbox passes emitStatusTrace: false. */
+  private async maybeEmitTerminalStatusTrace(params: {
+    emitStatusTrace: boolean;
+    workflowStatus: WorkflowRunStatusEnum;
+    notificationId: string;
+    organizationId: string;
+    environmentId: string;
+    notification: NotificationForTrace | null;
+    workflow: Pick<NotificationTemplateEntity, 'name' | 'triggers'> | WorkflowForTrace | null;
+  }): Promise<void> {
+    if (!params.emitStatusTrace) {
+      return;
+    }
+
+    if (
+      params.workflowStatus !== WorkflowRunStatusEnum.COMPLETED &&
+      params.workflowStatus !== WorkflowRunStatusEnum.ERROR &&
+      params.workflowStatus !== WorkflowRunStatusEnum.SUCCESS
+    ) {
+      return;
+    }
+
+    let notification = params.notification;
+    let workflow = params.workflow;
+
+    if (!notification || !workflow) {
+      const result = await this.getNotificationAndWorkflow(
+        params.notificationId,
+        params.organizationId,
+        params.environmentId,
+        notification,
+        workflow
+      );
+      notification = result.notification;
+      workflow = result.workflow;
+    }
+
+    const statusToEmit: TerminalWorkflowStatusEvent =
+      params.workflowStatus === WorkflowRunStatusEnum.COMPLETED ||
+      params.workflowStatus === WorkflowRunStatusEnum.SUCCESS
+        ? 'workflow_run_status_completed'
+        : 'workflow_run_status_error';
+
+    await this.createWorkflowStatusTrace(
+      params.notificationId,
+      statusToEmit,
+      { organizationId: params.organizationId, environmentId: params.environmentId },
+      notification,
+      workflow
+    );
+  }
+
   async createWorkflowStatusTrace(
     notificationId: string,
-    status: WorkflowRunStatusEventType,
+    status: TerminalWorkflowStatusEvent,
     context: { organizationId: string; environmentId: string; userId?: string },
     passedNotification?: NotificationForTrace | null,
     passedWorkflow?: WorkflowForTrace | null
@@ -592,6 +630,29 @@ export class WorkflowRunService {
       );
 
       if (!notification || !workflow) {
+        return;
+      }
+
+      // Claim before write: same at-most-once tradeoff as delivery-lifecycle transitions —
+      // prefer undercount over duplicate ClickHouse status counts if the write fails after claim.
+      const { isUpdated } = await this.notificationRepository.tryWorkflowStatusTransition(
+        notificationId,
+        context.organizationId,
+        context.environmentId,
+        status
+      );
+
+      if (!isUpdated) {
+        this.logger.trace(
+          {
+            notificationId,
+            status,
+            organizationId: context.organizationId,
+            environmentId: context.environmentId,
+          },
+          'Skipped workflow status trace - already emitted for this run'
+        );
+
         return;
       }
 

@@ -7,6 +7,7 @@ import {
   ConversationRepository,
   ConversationStatusEnum,
 } from '@novu/dal';
+import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -33,6 +34,7 @@ describe('Conversations API - /conversations #novu-v2', () => {
       name: 'E2E Conversations Agent',
       identifier: `conv-agent-${Date.now()}`,
       active: true,
+      behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
     });

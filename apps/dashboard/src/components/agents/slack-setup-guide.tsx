@@ -1,5 +1,11 @@
 import { SlackConnectButton } from '@novu/react';
-import { ChatProviderIdEnum, FeatureFlagsKeysEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  SLACK_AGENT_BOT_EVENTS,
+  SLACK_AGENT_DEFAULT_DESCRIPTION,
+  SLACK_AGENT_OAUTH_SCOPES,
+} from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -28,9 +34,11 @@ import type { SetupMode } from './setup-guide-primitives';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupModeToggle,
   SetupStep,
+  SetupStepperRail,
 } from './setup-guide-primitives';
 import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
@@ -71,10 +79,11 @@ function sanitizeBotDisplayName(name: string): string {
 
 function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string, chatOAuthCallbackUrl: string): string {
   const botName = escapeYamlDoubleQuoted(sanitizeBotDisplayName(agent.name));
-  const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || 'Agent built with Novu');
+  const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || SLACK_AGENT_DEFAULT_DESCRIPTION);
   const oauthCallbackQuoted = escapeYamlDoubleQuoted(chatOAuthCallbackUrl);
   const webhookHandlerUrlQuoted = escapeYamlDoubleQuoted(webhookHandlerUrl);
   const botScopesYaml = SLACK_AGENT_OAUTH_SCOPES.map((scope) => `      - ${scope}`).join('\n');
+  const botEventsYaml = SLACK_AGENT_BOT_EVENTS.map((event) => `      - ${event}`).join('\n');
 
   return `display_information:
   name: "${botName}"
@@ -85,8 +94,8 @@ features:
     home_tab_enabled: false
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
-  assistant_view:
-    assistant_description: "${displayDescription}"
+  agent_view:
+    agent_description: "${displayDescription}"
     suggested_prompts:
       - title: "Say hello"
         message: "Hello!"
@@ -105,22 +114,13 @@ settings:
   event_subscriptions:
     request_url: "${webhookHandlerUrlQuoted}"
     bot_events:
-      - app_mention
-      - message.channels
-      - message.groups
-      - message.im
-      - message.mpim
-      - member_joined_channel
-      - assistant_thread_started
-      - assistant_thread_context_changed
-      - reaction_added
-      - reaction_removed
+${botEventsYaml}
   interactivity:
     is_enabled: true
     request_url: "${webhookHandlerUrlQuoted}"
   org_deploy_enabled: false
   socket_mode_enabled: false
-  token_rotation_enabled: false`;
+  token_rotation_enabled: true`;
 }
 
 function ManifestControls({
@@ -260,6 +260,12 @@ export function SlackSetupGuide({
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_QUICK_SETUP_ENABLED, false);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
+  // Installing the app (OAuth) completes the install step but is NOT the same as
+  // being connected — connection happens only when the user sends their first
+  // real message (which the backend records as `connectedAt`). Keeping these
+  // separate stops the install step from silently completing "Send your first
+  // message" and finishing onboarding prematurely.
+  const [isSlackAppInstalled, setIsSlackAppInstalled] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
@@ -267,6 +273,7 @@ export function SlackSetupGuide({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
+    setIsSlackAppInstalled(false);
     setIsSlackWorkspaceConnected(false);
     setCredentialsSavedLocally(false);
   }, [integrationId]);
@@ -290,7 +297,11 @@ export function SlackSetupGuide({
   const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
 
   const handleSlackOAuthSuccess = useCallback(() => {
-    handleSlackWorkspaceConnected();
+    // OAuth success means the app is installed — it does NOT mean a user has
+    // messaged the agent yet. Only advance the install step; the workspace is
+    // marked connected (and onboarding completes) once the first real inbound
+    // message arrives, detected via `ListeningStatus` below.
+    setIsSlackAppInstalled(true);
 
     if (currentEnvironment && selectedIntegrationIdentifier) {
       sendAgentWelcomeMessage(currentEnvironment, agent.identifier, selectedIntegrationIdentifier)
@@ -308,14 +319,7 @@ export function SlackSetupGuide({
           console.warn('Failed to send agent welcome message after Slack OAuth:', err);
         });
     }
-  }, [
-    handleSlackWorkspaceConnected,
-    currentEnvironment,
-    agent.identifier,
-    selectedIntegrationIdentifier,
-    setSearchParams,
-    onWelcomeSent,
-  ]);
+  }, [currentEnvironment, agent.identifier, selectedIntegrationIdentifier, setSearchParams, onWelcomeSent]);
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
@@ -338,8 +342,18 @@ export function SlackSetupGuide({
       return base;
     }
 
-    return activeSetupMode === 'quick' ? base + 1 : base + 2;
-  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, activeSetupMode]);
+    if (activeSetupMode === 'quick') {
+      // quick: base = create app, base + 1 = install, base + 2 = send first message.
+      // Installing completes the install step but leaves "Send your first message"
+      // as the current step until a real message lands.
+      return isSlackAppInstalled ? base + 2 : base + 1;
+    }
+
+    // manual: base = create app, base + 1 = paste credentials, base + 2 = install.
+    // There is no separate "send your first message" step, so installing completes
+    // the column.
+    return isSlackAppInstalled ? base + 3 : base + 2;
+  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, isSlackAppInstalled, activeSetupMode]);
 
   const modeSwitcher = isQuickSetupEnabled ? (
     <div className="pl-6">
@@ -512,23 +526,19 @@ export function SlackSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleSlackWorkspaceConnected}
-      connectedMessage="Your Slack workspace is connected — check your DMs for a welcome message from the bot!"
-      listeningMessage="Install the app to your Slack workspace to continue."
+      connectedMessage="Your Slack workspace is connected: check your DMs for a welcome message from the bot!"
+      listeningMessage={
+        isSlackAppInstalled
+          ? `Send a message to ${agent.name} in your Slack workspace to finish connecting.`
+          : 'Install the app to your Slack workspace to continue.'
+      }
     />
   );
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {stepsColumn}
-        </div>
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsColumn}</SetupStepperRail>
         <div className="pl-8">{listening}</div>
         <IntegrationCredentialsSidebar
           integrationId={integrationId}
@@ -543,8 +553,8 @@ export function SlackSetupGuide({
 
   return (
     <>
-      {stepsColumn}
-      {listening}
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
+      <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}

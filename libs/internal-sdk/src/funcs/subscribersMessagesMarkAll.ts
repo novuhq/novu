@@ -31,9 +31,11 @@ import { Result } from "../types/fp.js";
  * Update all notifications state
  *
  * @remarks
- * Update all subscriber in-app (inbox) notifications state such as read, unread, seen or unseen by **subscriberId**.
+ * This API is deprecated, use v2 API instead. Update all subscriber in-app notifications state such as read, unread, seen or unseen by **subscriberId**.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function subscribersMessagesMarkAll(
   client: NovuCore,

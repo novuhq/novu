@@ -15,7 +15,11 @@ export function VariableTooltip({ issues, isNotInSchema, errorMessage, children 
   return (
     <Tooltip open={isHovered && hasTooltip}>
       <TooltipTrigger asChild>
-        <div onMouseLeave={() => setIsHovered(false)} onMouseEnter={() => setIsHovered(true)}>
+        <div
+          className="inline-flex h-full max-h-full min-h-0 items-center"
+          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={() => setIsHovered(true)}
+        >
           {children}
         </div>
       </TooltipTrigger>

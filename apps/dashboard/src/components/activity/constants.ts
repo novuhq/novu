@@ -87,6 +87,7 @@ export const CHANNEL_OPTIONS = [
   { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
   { value: ChannelTypeEnum.PUSH, label: 'Push' },
   { value: ChannelTypeEnum.CHAT, label: 'Chat' },
+  { value: ChannelTypeEnum.TOOL, label: 'Tool' },
 ];
 
 export const defaultActivityFilters: ActivityFiltersData = {

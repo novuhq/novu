@@ -93,7 +93,7 @@ Potential common places where the inbox could be integrated in the UI:
 - **Subscriber ID Management**: Extract subscriber IDs using authentication hooks for seamless integration.
 - **Environment Variables**: Verify the presence of .env.local or .env files with correct configurations to support the application environment.
 - **TypeScript Compliance**: Adhere to Novu Inbox props and follow TypeScript best practices to ensure type safety and maintainable code.
-- **Backend and Socket URL**: Only override 'backendUrl'/'socketUrl' when targeting a non-default region (e.g., EU) based on workspace/tenant configuration — not end-user location. Read from 'NEXT_PUBLIC_NOVU_BACKEND_URL' and 'NEXT_PUBLIC_NOVU_SOCKET_URL' when set; otherwise omit these props to use defaults.   
+- **Backend and Socket URL**: Only override 'backendUrl'/'socketUrl' when targeting a non-default region (e.g., EU) based on workspace/tenant configuration: not end-user location. Read from 'NEXT_PUBLIC_NOVU_BACKEND_URL' and 'NEXT_PUBLIC_NOVU_SOCKET_URL' when set; otherwise omit these props to use defaults.   
 
 ### Never Do:
 - **External Files**: Use external appearance objects or separate files to manage styling and design elements.
@@ -169,7 +169,7 @@ appearance={{
 }}
 \`\`\`
 
-### Step 4.0 — Styling Integration Principles
+### Step 4.0: Styling Integration Principles
 
 Extract styling variables from the host application first.
 
@@ -177,7 +177,7 @@ Customize only what's necessary to achieve visual consistency.
 
 Avoid introducing new styles that don't exist in the host application.
 
-### Step 4.1 — Extract Styling Variables
+### Step 4.1: Extract Styling Variables
 
 **Objective**:
 - Collect and prepare the host application's design tokens (colors, typography, spacing) for the <Inbox /> component appearance.variables object.
@@ -220,7 +220,7 @@ Avoid introducing new styles that don't exist in the host application.
 
 - Document any assumptions.
 
-### Step 4.2 — Apply Variables
+### Step 4.2: Apply Variables
 
 **Objective**:    
 Integrate the extracted variables into <Inbox />.
@@ -235,7 +235,7 @@ Integrate the extracted variables into <Inbox />.
 
 - [ ] The variables object is applied and functional.
 
-### Step 4.3 — Validate Visual Integration
+### Step 4.3: Validate Visual Integration
 
 **Objective**:
 - Ensure <Inbox /> aligns visually with the host application.

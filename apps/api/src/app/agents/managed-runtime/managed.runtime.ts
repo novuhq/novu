@@ -7,11 +7,10 @@ import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
-import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { parseToolApprovalActionId } from '../shared/tool-approval/action-id';
 import { ManagedAgentService } from './managed-agent.service';
-import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
-import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
-import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
+import { isMissingReadToolForSkillsError, MISSING_READ_TOOL_FOR_SKILLS_REPLY } from './managed-agent-errors';
 import { ConfirmToolApprovalCommand } from './tool-approval/confirm-tool-approval.command';
 import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
 
@@ -19,7 +18,6 @@ import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.useca
 export class ManagedRuntime implements AgentRuntime {
   constructor(
     private readonly managedAgentService: ManagedAgentService,
-    private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
@@ -41,30 +39,20 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    if (!turn.subscriber) {
-      await this.replyUnresolvedSubscriberAccess(turn);
-
-      return;
-    }
-
-    if (turn.message?.id) {
-      const parked = await this.handleManagedAgentSetupInbound.execute(
-        ManagedAgentSetupInboundCommand.create({
-          userId: turn.config.organizationId,
-          environmentId: turn.config.environmentId,
-          organizationId: turn.config.organizationId,
+    // Subscriber-access denial / open leftovers are owned by the inbound handler gate.
+    // Keyless email demos may reach here without a subscriber (handler bypass).
+    const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
+    if (!turn.subscriber && !isKeylessEmailDemo) {
+      this.logger.warn(
+        {
+          agentId: turn.agentId,
           conversationId: turn.conversation._id,
-          agentId: turn.agent._id,
-          subscriberId: turn.subscriber.subscriberId,
-          agentIdentifier: turn.config.agentIdentifier,
-          integrationIdentifier: turn.config.integrationIdentifier,
-          platformMessageId: turn.message.id,
-        })
+          platform: turn.config.platform,
+        },
+        'Managed dispatch reached without subscriber after handler gate — skipping'
       );
 
-      if (parked) {
-        return;
-      }
+      return;
     }
 
     try {
@@ -95,13 +83,29 @@ export class ManagedRuntime implements AgentRuntime {
           ...ackParams,
           isFirstMessage,
         });
-        await this.inboundAck.showQueuedSignal(ackParams);
       } else if (status === 'queued') {
         await this.inboundAck.showQueuedSignal(ackParams);
       }
     } catch (err) {
       if (err instanceof DemoQuotaExhaustedError) {
-        await this.replyDemoQuotaExhausted(turn);
+        await this.replyOnThread(turn, DEMO_QUOTA_EXHAUSTED_REPLY);
+
+        return;
+      }
+
+      // Sync createSession / events.send failures never reach the async
+      // session.error webhook path — without this catch the ChatInstanceRegistry
+      // logs+swallows the error and Slack gets no agent reply.
+      if (isMissingReadToolForSkillsError(err)) {
+        this.logger.warn(
+          {
+            agentId: turn.agentId,
+            conversationId: turn.conversation._id,
+            err: err instanceof Error ? err.message : err,
+          },
+          'Managed dispatch rejected: skills require the read tool'
+        );
+        await this.replyOnThread(turn, MISSING_READ_TOOL_FOR_SKILLS_REPLY);
 
         return;
       }
@@ -141,40 +145,17 @@ export class ManagedRuntime implements AgentRuntime {
     );
   }
 
-  private async replyDemoQuotaExhausted(turn: ConversationTurn): Promise<void> {
+  private async replyOnThread(turn: ConversationTurn, markdown: string): Promise<void> {
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
     await this.outboundGateway.replyOnThread(
       turn.thread,
-      { markdown: DEMO_QUOTA_EXHAUSTED_REPLY },
+      { markdown },
       {
         persist: {
           conversationId: turn.conversation._id,
           channel: this.conversationService.getPrimaryChannel(turn.conversation),
           agentIdentifier: turn.config.agentIdentifier,
-          content: DEMO_QUOTA_EXHAUSTED_REPLY,
-          environmentId: turn.config.environmentId,
-          organizationId: turn.config.organizationId,
-        },
-      }
-    );
-  }
-
-  private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
-    const reply = buildUnresolvedSubscriberAccessReply({
-      platform: turn.config.platform,
-      senderEmail: turn.message?.author?.userId,
-    });
-
-    applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
-    await this.outboundGateway.replyOnThread(
-      turn.thread,
-      { markdown: reply },
-      {
-        persist: {
-          conversationId: turn.conversation._id,
-          channel: this.conversationService.getPrimaryChannel(turn.conversation),
-          agentIdentifier: turn.config.agentIdentifier,
-          content: reply,
+          content: markdown,
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
         },

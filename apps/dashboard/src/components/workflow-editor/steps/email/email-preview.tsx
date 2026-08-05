@@ -5,7 +5,10 @@ import { RiArrowDownSFill, RiEdit2Line } from 'react-icons/ri';
 import { MAILY_EMAIL_WIDTH } from '@/components/maily/maily-config';
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { useWorkflowAgentEmailDefaults } from '@/components/workflow-editor/use-workflow-agent-email-defaults';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integration';
+import { sanitizeEmailHtml } from '@/utils/sanitize-email-html';
 import { cn } from '@/utils/ui';
 import { NovuBranding } from './novu-branding';
 
@@ -22,11 +25,26 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
   const { className, children, minimalHeader = false, onEditSenderClick, previewFrom, ...rest } = props;
   const { senderEmail, senderName, isLoading } = usePrimaryEmailIntegration();
   const formContext = useFormContext();
+  const { workflow } = useWorkflow();
+  const agentDefaults = useWorkflowAgentEmailDefaults({ agent: workflow?.agent });
   const fromEmail = formContext?.watch('from.email');
   const fromName = formContext?.watch('from.name');
+  const useProviderDefaults = formContext?.watch('useProviderDefaults') === true;
+  const hasAgent = Boolean(workflow?.agent?.identifier);
+  const useAgentDefaults = hasAgent && !useProviderDefaults;
 
-  const displaySenderName = previewFrom?.name || fromName || senderName || 'Acme Inc.';
-  const displaySenderEmail = previewFrom?.email || fromEmail || senderEmail || 'noreply@novu.co';
+  const displaySenderName =
+    previewFrom?.name ||
+    fromName ||
+    (useAgentDefaults ? agentDefaults.senderName : undefined) ||
+    senderName ||
+    'Acme Inc.';
+  const displaySenderEmail =
+    previewFrom?.email ||
+    fromEmail ||
+    (useAgentDefaults ? agentDefaults.senderEmail : undefined) ||
+    senderEmail ||
+    'noreply@novu.co';
 
   return (
     <div className={cn('flex gap-2', className)} {...rest}>
@@ -95,9 +113,11 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
   const processBody = useCallback((shadowRoot: ShadowRoot, bodyToProcess: string) => {
+    const sanitizedBody = sanitizeEmailHtml(bodyToProcess);
+
     // use a template to parse the full HTML
     const template = document.createElement('template');
-    template.innerHTML = bodyToProcess;
+    template.innerHTML = sanitizedBody;
 
     const doc = template.content;
     const style = document.createElement('style');
@@ -186,9 +206,11 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
   const processBody = useCallback((shadowRoot: ShadowRoot, bodyToProcess: string) => {
+    const sanitizedBody = sanitizeEmailHtml(bodyToProcess);
+
     // use a template to parse the full HTML
     const template = document.createElement('template');
-    template.innerHTML = bodyToProcess;
+    template.innerHTML = sanitizedBody;
 
     const doc = template.content;
     const style = document.createElement('style');

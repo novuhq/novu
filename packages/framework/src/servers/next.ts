@@ -1,5 +1,7 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
+// `.js` required: Node ESM cannot resolve bare `next/server` when this package is externalized (NV-8366).
+import * as NextServer from 'next/server.js';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
 import { type Either, type SupportedFrameworkName } from '../types';
@@ -31,6 +33,33 @@ export const frameworkName: SupportedFrameworkName = 'next';
  */
 export type RequestHandler = (expectedReq: NextRequest, res: unknown) => Promise<Response>;
 
+/**
+ * Builds a `waitUntil` implementation backed by Next.js `after()` (stable since
+ * Next.js 15.1). `after()` extends the invocation lifetime on serverless
+ * platforms (e.g. Vercel) so background agent turns complete after the
+ * acknowledgement response is sent.
+ *
+ * Feature-detected at runtime: on older Next.js versions `after` is not
+ * exported and this returns `undefined`, preserving the previous behavior.
+ */
+const getAfterWaitUntil = (): ((promise: Promise<unknown>) => void) | undefined => {
+  if (typeof NextServer.after !== 'function') {
+    return undefined;
+  }
+
+  return (promise) => {
+    try {
+      NextServer.after(promise);
+    } catch {
+      /*
+       * `after()` requires an App Router request scope and throws in the
+       * pages router. Fall back to fire-and-forget, matching the behavior
+       * on Next.js versions without `after()`.
+       */
+    }
+  };
+};
+
 // Helper function to check if the response is a Next.js 12 API response
 const isNext12ApiResponse = (val: unknown): val is NextApiResponse => {
   return (
@@ -47,6 +76,11 @@ const isNext12ApiResponse = (val: unknown): val is NextApiResponse => {
  * them available to be triggered by events.
  *
  * Supports Next.js 12+, both serverless and edge.
+ *
+ * On Next.js >= 15.1 (App Router), background agent turns are kept alive after
+ * the acknowledgement response via `after()` from `next/server`, so agents work
+ * on serverless platforms such as Vercel without extra configuration. On older
+ * versions, pass `waitUntil` to `serve()` when deploying to serverless.
  *
  * @example Next.js <=12 or the pages router can export the handler directly
  * ```ts
@@ -89,6 +123,7 @@ export const serve = (
 
       return {
         body: () => (typeof request.json === 'function' ? request.json() : request.body),
+        waitUntil: getAfterWaitUntil(),
         headers: extractHeader,
         method: () => {
           /**

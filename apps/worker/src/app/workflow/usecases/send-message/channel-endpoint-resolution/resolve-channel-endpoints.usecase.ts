@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
   decryptChannelConnectionAuth,
+  decryptChannelEndpoint,
   decryptCredentials,
   InstrumentUsecase,
   MsTeamsTokenService,
+  RotatingConnectionTokenService,
 } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -15,6 +17,25 @@ import {
 import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
+
+type EndpointStoredSecretConfig = {
+  providerLabel: string;
+  /** Fields that must all be present (non-empty) after decrypt; missing any triggers one combined error. */
+  requiredFields: string[];
+};
+
+/**
+ * Tool endpoint types whose per-subscriber routing secret lives on the
+ * `ChannelEndpoint.endpoint` document. The resolver decrypts secret fields and
+ * returns the decrypted wire shape at send time — no channel connection lookup.
+ */
+const ENDPOINT_STORED_SECRET_CONFIGS: Partial<Record<string, EndpointStoredSecretConfig>> = {
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', requiredFields: ['routingKey', 'region'] },
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', requiredFields: ['apiKey', 'region'] },
+  // authToken is optional and therefore not listed as required.
+  [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION]: { providerLabel: 'Grafana', requiredFields: ['url'] },
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: { providerLabel: 'Tool Webhook', requiredFields: ['url'] },
+};
 
 export type IntegrationEndpoints = {
   integrationIdentifier: string;
@@ -49,7 +70,8 @@ export class ResolveChannelEndpoints {
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly msTeamsTokenService: MsTeamsTokenService
+    private readonly msTeamsTokenService: MsTeamsTokenService,
+    private readonly rotatingConnectionTokenService: RotatingConnectionTokenService
   ) {}
 
   @InstrumentUsecase()
@@ -167,9 +189,10 @@ export class ResolveChannelEndpoints {
   }
 
   /**
-   * Extracts token for endpoint based on type
+   * Extracts token / hydrated endpoint data based on type
    * - MS Teams: Fetches Bot Framework token from Microsoft
-   * - Slack: Extracts OAuth token from connection
+   * - Slack / Webex: Reads the OAuth token from the connection, refreshing rotation-enabled tokens
+   * - PagerDuty / Opsgenie / Grafana / Tool Webhook: Decrypts secrets from endpoint.endpoint and hydrates the endpoint wire shape
    */
   private async extractToken(
     endpoint: ChannelEndpointEntity,
@@ -180,9 +203,44 @@ export class ResolveChannelEndpoints {
       return await this.extractMsTeamsToken(endpoint, connectionMap);
     }
 
-    // Slack and other connection-based tokens
+    if (
+      endpoint.type === ENDPOINT_TYPES.SLACK_CHANNEL ||
+      endpoint.type === ENDPOINT_TYPES.SLACK_USER ||
+      endpoint.type === ENDPOINT_TYPES.WEBEX_ROOM ||
+      endpoint.type === ENDPOINT_TYPES.WEBEX_PERSON
+    ) {
+      return await this.extractRotatingConnectionToken(endpoint, connectionMap);
+    }
+
+    const endpointStoredSecretConfig = ENDPOINT_STORED_SECRET_CONFIGS[endpoint.type];
+    if (endpointStoredSecretConfig) {
+      return this.extractEndpointStoredSecrets(endpoint, endpointStoredSecretConfig);
+    }
+
+    // Other connection-based tokens
     const token = this.extractConnectionToken(endpoint, connectionMap);
     return { token: token || '' };
+  }
+
+  /**
+   * Decrypts tool routing secrets from `ChannelEndpoint.endpoint` and returns
+   * an `endpoint` override so `buildChannelData`'s spread replaces the
+   * encrypted stored document with the plaintext wire shape providers read.
+   * `requiredFields` must all be present or the whole endpoint is rejected.
+   */
+  private extractEndpointStoredSecrets(
+    endpoint: ChannelEndpointEntity,
+    config: EndpointStoredSecretConfig
+  ): Record<string, unknown> {
+    const { providerLabel, requiredFields } = config;
+    const decrypted = decryptChannelEndpoint(endpoint.type, endpoint.endpoint);
+    const decryptedFields = decrypted as Record<string, unknown>;
+
+    if (requiredFields.some((field) => !decryptedFields[field])) {
+      throw new Error(`${providerLabel} endpoint ${endpoint.identifier} is missing ${requiredFields.join(' or ')}`);
+    }
+
+    return { endpoint: decrypted };
   }
 
   /**
@@ -193,10 +251,18 @@ export class ResolveChannelEndpoints {
     connectionMap: Map<string, ChannelConnectionEntity>
   ): Promise<Record<string, unknown>> {
     const connection = endpoint.connectionIdentifier ? connectionMap.get(endpoint.connectionIdentifier) : undefined;
-    const subscriberTenantId = connection?.workspace?.id;
+
+    /*
+     * The subscriber's Azure AD tenant. Prefer the linked admin-consent connection's workspace id,
+     * then fall back to the tenant stored on the endpoint itself (set for multi-tenant /
+     * auto-provisioned MS Teams users that have no separate connection). For multi-tenant
+     * distribution this can be an external customer tenant, not the bot's home tenant.
+     */
+    const endpointTenantId = (endpoint.endpoint as { tenantId?: string }).tenantId;
+    const subscriberTenantId = connection?.workspace?.id ?? endpointTenantId;
 
     if (!subscriberTenantId) {
-      throw new Error(`MS Teams endpoint ${endpoint.identifier} requires a connection with tenant ID`);
+      throw new Error(`MS Teams endpoint ${endpoint.identifier} requires a connection or endpoint tenant ID`);
     }
 
     // Fetch integration credentials
@@ -229,7 +295,28 @@ export class ResolveChannelEndpoints {
   }
 
   /**
-   * Extracts OAuth token from connection (Slack, etc.)
+   * Extracts the bot token from the linked connection for providers with rotating OAuth
+   * tokens (Slack, Webex), refreshing it first when the app uses token rotation
+   * (refreshToken + expiresAt persisted by the OAuth callback).
+   */
+  private async extractRotatingConnectionToken(
+    endpoint: ChannelEndpointEntity,
+    connectionMap: Map<string, ChannelConnectionEntity>
+  ): Promise<Record<string, unknown>> {
+    const connection = endpoint.connectionIdentifier ? connectionMap.get(endpoint.connectionIdentifier) : undefined;
+
+    if (!connection?.auth) {
+      return { token: '' };
+    }
+
+    const token = await this.rotatingConnectionTokenService.getConnectionToken(connection);
+
+    return { token: token || '' };
+  }
+
+  /**
+   * Extracts a plain OAuth access token from the linked connection (fallback for
+   * endpoint types without dedicated token handling).
    */
   private extractConnectionToken(
     endpoint: ChannelEndpointEntity,

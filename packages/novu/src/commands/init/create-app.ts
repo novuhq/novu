@@ -25,7 +25,6 @@ export async function createApp({
   apiUrl,
   applicationId,
   userId,
-  agentIdentifier,
 }: {
   appPath: string;
   packageManager: PackageManager;
@@ -38,11 +37,10 @@ export async function createApp({
   apiUrl: string;
   applicationId: string;
   userId: string;
-  agentIdentifier?: string;
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined;
   const mode: TemplateMode = typescript ? 'ts' : 'js';
-  const template: TemplateType = templateChoice === 'agent' ? 'app-agent' : 'app-react-email';
+  const template: TemplateType = templateChoice === 'chat-sdk' ? 'app-chat-sdk' : 'app-react-email';
 
   const root = path.resolve(appPath);
 
@@ -86,7 +84,6 @@ export async function createApp({
     apiUrl,
     applicationId,
     userId,
-    agentIdentifier,
   });
 
   if (tryGitInit(root)) {
@@ -102,37 +99,24 @@ export async function createApp({
   }
 
   console.log(`${green('Success!')} Created ${appName} at ${appPath}`);
-  printNextSteps({ template, cdPath, root, agentIdentifier, skipCd: appPath === originalDirectory });
-}
-
-function terminalLink(text: string, url: string): string {
-  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
+  printNextSteps({ template, cdPath, skipCd: appPath === originalDirectory });
 }
 
 function printNextSteps({
   template,
   cdPath,
-  root,
-  agentIdentifier,
   skipCd,
 }: {
   template: TemplateType;
   cdPath: string;
-  root: string;
-  agentIdentifier?: string;
   skipCd: boolean;
 }): void {
-  const isAgent = template === TemplateTypeEnum.APP_AGENT;
+  const isChatSdk = template === TemplateTypeEnum.APP_CHAT_SDK;
 
-  if (isAgent) {
+  if (isChatSdk) {
     const cmd = skipCd ? 'npm run dev:novu' : `cd ${cdPath} && npm run dev:novu`;
     const cmdLine = `$ ${cmd}`;
     const innerWidth = Math.max(cmdLine.length + 4, 50);
-
-    const agentFileName = agentIdentifier ? `${agentIdentifier}.tsx` : 'support-agent.tsx';
-    const agentFilePath = path.join(root, 'app', 'novu', 'agents', agentFileName);
-    const agentRelPath = `app/novu/agents/${agentFileName}`;
-    const fileUrl = `file://${agentFilePath}`;
 
     console.log();
     console.log(dim(`  ╭${'─'.repeat(innerWidth)}╮`));
@@ -141,12 +125,12 @@ function printNextSteps({
     console.log(dim(`  │${' '.repeat(innerWidth)}│`));
     console.log(dim(`  ╰${'─'.repeat(innerWidth)}╯`));
     console.log();
-    console.log(`  Send a message from your chat provider — your agent will reply.`);
+    console.log(`  Send a message from your connected channel — your bot will reply.`);
     console.log();
     console.log(`  ${dim('npm run dev')}        ${dim('Start app without tunnel')}`);
     console.log(`  ${dim('npm run dev:novu')}   ${dim('Start app + dev tunnel')}`);
     console.log();
-    console.log(`  ${dim('Your agent')}  ${cyan(terminalLink(agentRelPath, fileUrl))}`);
+    console.log(`  ${dim('Bridge')}      ${cyan('POST /api/webhooks/novu')}`);
     console.log(`  ${dim('Docs')}        ${cyan('https://docs.novu.co/agents/overview')}`);
     console.log();
   } else {

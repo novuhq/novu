@@ -96,40 +96,32 @@ export class ActiveJobsMetricService {
 
   private getWorkerProcessor() {
     return async () => {
-      return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.debug('metric job started', LOG_CONTEXT);
-        const deploymentName = process.env.FLEET_NAME ?? 'default';
-        let fatalError: unknown;
+      Logger.debug('metric job started', LOG_CONTEXT);
+      const deploymentName = process.env.FLEET_NAME ?? 'default';
+      let fatalError: unknown;
 
-        for (const queueService of this.tokenList) {
-          try {
-            const waitCount = queueService.getGroupsJobsCount
-              ? await queueService.getGroupsJobsCount()
-              : await queueService.getWaitingCount();
-            const delayedCount = await queueService.getDelayedCount();
-            const activeCount = await queueService.getActiveCount();
+      for (const queueService of this.tokenList) {
+        try {
+          const waitCount = queueService.getGroupsJobsCount
+            ? await queueService.getGroupsJobsCount()
+            : await queueService.getWaitingCount();
+          const delayedCount = await queueService.getDelayedCount();
+          const activeCount = await queueService.getActiveCount();
 
-            Logger.verbose(`Recording metrics for queue: ${queueService.topic}`);
+          Logger.verbose(`Recording metrics for queue: ${queueService.topic}`);
 
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
-            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
-          } catch (error) {
-            Logger.error(
-              error,
-              `Failed to collect metrics for queue: ${queueService.topic}`,
-              LOG_CONTEXT
-            );
-            fatalError = error;
-          }
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+          this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
+        } catch (error) {
+          Logger.error(error, `Failed to collect metrics for queue: ${queueService.topic}`, LOG_CONTEXT);
+          fatalError = error;
         }
+      }
 
-        if (fatalError) {
-          return reject(fatalError);
-        }
-
-        return resolve();
-      });
+      if (fatalError) {
+        throw fatalError;
+      }
     };
   }
 

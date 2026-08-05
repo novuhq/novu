@@ -49,7 +49,10 @@ describe('installSkills', () => {
   });
 
   it('honors a custom officialBranch option', () => {
-    const result = installSkills(tempDir, { hosts: ['claude'], officialBranch: 'does-not-exist-xyz' });
+    const result = installSkills(tempDir, {
+      hosts: ['claude'],
+      officialBranch: 'does-not-exist-xyz',
+    });
 
     expect(result.officialBranch).toBe('does-not-exist-xyz');
     expect(result.officialFetched).toBe(false);

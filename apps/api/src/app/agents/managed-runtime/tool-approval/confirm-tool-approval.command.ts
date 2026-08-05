@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import type { ParsedToolApprovalAction } from './approval-card.builder';
+import type { ParsedToolApprovalAction } from '../../shared/tool-approval/action-id';
 
 export class ConfirmToolApprovalCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -25,7 +25,9 @@ export class ConfirmToolApprovalCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   subscriberId?: string;
 
-  platform?: AgentPlatformEnum;
+  @IsEnum(AgentPlatformEnum)
+  @IsNotEmpty()
+  platform: AgentPlatformEnum;
 
   parsed: ParsedToolApprovalAction;
 
@@ -34,8 +36,8 @@ export class ConfirmToolApprovalCommand extends EnvironmentWithUserCommand {
   sourceMessageId?: string;
 
   @IsString()
-  @IsOptional()
-  platformThreadId?: string;
+  @IsNotEmpty()
+  platformThreadId: string;
 
   @IsString()
   @IsOptional()

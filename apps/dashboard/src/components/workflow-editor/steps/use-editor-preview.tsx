@@ -3,10 +3,9 @@ import * as Sentry from '@sentry/react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { previewStep } from '@/api/steps';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDataRef } from '@/hooks/use-data-ref';
-import { usePreviewStep } from '@/hooks/use-preview-step';
+import { usePreviewStep, usePreviewStepFn } from '@/hooks/use-preview-step';
 import { parse, stringify } from '@/utils/json';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -16,6 +15,21 @@ type UseEditorPreviewProps = {
   controlValues: Record<string, unknown>;
   payloadSchema?: Record<string, any>;
 };
+
+const LOCAL_PREVIEW_REFRESH_INTERVAL_MS = 5 * 1000;
+
+/**
+ * The form keeps `providerOverrides` as `null` after a reset (the save API's delete-all contract),
+ * but the preview endpoint rejects a null value and falls back to an empty preview. Drop the key
+ * when there are no overrides so the request mirrors a freshly loaded step (which omits it entirely).
+ */
+function sanitizeControlValuesForPreview(controlValues: Record<string, unknown>): Record<string, unknown> {
+  const { providerOverrides, ...rest } = controlValues;
+  const hasOverrides =
+    !!providerOverrides && typeof providerOverrides === 'object' && Object.keys(providerOverrides).length > 0;
+
+  return hasOverrides ? controlValues : rest;
+}
 
 function useDebounced<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -35,12 +49,28 @@ function useDebounced<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const extractPayloadKeys = (data: PreviewPayload | null): string[] => {
-  if (!data?.payload || typeof data.payload !== 'object') {
-    return [];
+const collectDeepKeys = (value: unknown, prefix: string, keys: string[]): void => {
+  keys.push(prefix);
+
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    for (const [key, child] of Object.entries(value)) {
+      collectDeepKeys(child, `${prefix}.${key}`, keys);
+    }
+  }
+};
+
+const extractSyncKeys = (data: PreviewPayload | null): string[] => {
+  const keys: string[] = [];
+
+  if (data?.payload && typeof data.payload === 'object') {
+    keys.push(...Object.keys(data.payload).map((key) => `payload.${key}`));
   }
 
-  return Object.keys(data.payload).sort();
+  if (data?.context && typeof data.context === 'object') {
+    collectDeepKeys(data.context, 'context', keys);
+  }
+
+  return keys.sort();
 };
 
 function areKeysEqual(keys1: string[], keys2: string[]): boolean {
@@ -49,7 +79,7 @@ function areKeysEqual(keys1: string[], keys2: string[]): boolean {
 
 export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloadSchema }: UseEditorPreviewProps) => {
   const [editorValue, setEditorValue] = useState('{}');
-  const debouncedControlValues = useDebounced(controlValues, 500);
+  const debouncedControlValues = useDebounced(sanitizeControlValuesForPreview(controlValues), 500);
   const { currentEnvironment } = useEnvironment();
   const hasInitializedRef = useRef(false);
   const lastServerKeysRef = useRef<string[]>([]);
@@ -57,6 +87,8 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
   const { previewStep: manualPreviewStep } = usePreviewStep({
     onError: (error) => Sentry.captureException(error),
   });
+  // Routes to the stateless bridge endpoint for virtual (local mode) workflows.
+  const { previewStepFn, isReady: isPreviewFnReady, bridgeUrl, isLocalPreview } = usePreviewStepFn();
 
   const { data: parsedEditorPayload } = parse(editorValue);
 
@@ -68,6 +100,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     queryKey: [
       QueryKeys.previewStep,
       currentEnvironment?._id,
+      bridgeUrl,
       workflowSlug,
       stepSlug,
       debouncedControlValues,
@@ -79,8 +112,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
         throw new Error('Invalid JSON in editor');
       }
 
-      return await previewStep({
-        environment: currentEnvironment!,
+      return await previewStepFn({
         workflowSlug,
         stepSlug,
         previewData: {
@@ -90,10 +122,16 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
         signal,
       });
     },
-    enabled: Boolean(workflowSlug && stepSlug && currentEnvironment && parsedEditorPayload),
+    enabled: Boolean(workflowSlug && stepSlug && currentEnvironment && parsedEditorPayload && isPreviewFnReady),
     staleTime: 0,
     retry: false,
-    refetchOnWindowFocus: false,
+    // In local mode the step template lives in the developer's code and can
+    // change at any moment without anything in the query key changing (the
+    // bridge renders it at preview time). Re-render on tab focus and on a
+    // short interval so the preview tracks code edits; `keepPreviousData`
+    // prevents flicker between renders.
+    refetchOnWindowFocus: isLocalPreview,
+    refetchInterval: isLocalPreview ? LOCAL_PREVIEW_REFRESH_INTERVAL_MS : false,
     placeholderData: keepPreviousData,
   });
 
@@ -131,7 +169,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     const serverPayloadExample = previewData?.previewPayloadExample;
     if (!serverPayloadExample) return;
 
-    const serverKeys = extractPayloadKeys(serverPayloadExample);
+    const serverKeys = extractSyncKeys(serverPayloadExample);
 
     const shouldUpdateEditor = !hasInitializedRef.current || !areKeysEqual(serverKeys, lastServerKeysRef.current);
 

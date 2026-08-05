@@ -8,6 +8,10 @@ import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  LineUserEndpointDto,
+  LineUserEndpointDto$inboundSchema,
+} from "./lineuserendpointdto.js";
+import {
   MsTeamsChannelEndpointDto,
   MsTeamsChannelEndpointDto$inboundSchema,
 } from "./msteamschannelendpointdto.js";
@@ -31,6 +35,14 @@ import {
   TelegramChatEndpointDto,
   TelegramChatEndpointDto$inboundSchema,
 } from "./telegramchatendpointdto.js";
+import {
+  WebexPersonEndpointDto,
+  WebexPersonEndpointDto$inboundSchema,
+} from "./webexpersonendpointdto.js";
+import {
+  WebexRoomEndpointDto,
+  WebexRoomEndpointDto$inboundSchema,
+} from "./webexroomendpointdto.js";
 import {
   WebhookEndpointDto,
   WebhookEndpointDto$inboundSchema,
@@ -57,6 +69,7 @@ export type GetChannelEndpointResponseDtoChannel = ClosedEnum<
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
  */
 export const GetChannelEndpointResponseDtoProviderId = {
+  Anypost: "anypost",
   Emailjs: "emailjs",
   Mailgun: "mailgun",
   Mailjet: "mailjet",
@@ -128,6 +141,7 @@ export const GetChannelEndpointResponseDtoProviderId = {
   Slack: "slack",
   Discord: "discord",
   Msteams: "msteams",
+  WebexMessaging: "webex-messaging",
   Mattermost: "mattermost",
   Ryver: "ryver",
   Zulip: "zulip",
@@ -135,10 +149,14 @@ export const GetChannelEndpointResponseDtoProviderId = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  Line: "line",
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",
+  Sendblue: "sendblue",
   Anthropic: "anthropic",
+  NovuAnthropic: "novu-anthropic",
+  AnthropicAws: "anthropic-aws",
 } as const;
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
@@ -158,6 +176,9 @@ export const GetChannelEndpointResponseDtoType = {
   MsTeamsChannel: "ms_teams_channel",
   MsTeamsUser: "ms_teams_user",
   TelegramChat: "telegram_chat",
+  WebexRoom: "webex_room",
+  WebexPerson: "webex_person",
+  LineUser: "line_user",
 } as const;
 /**
  * Type of channel endpoint
@@ -176,7 +197,10 @@ export type Endpoint =
   | WebhookEndpointDto
   | PhoneEndpointDto
   | MsTeamsUserEndpointDto
-  | TelegramChatEndpointDto;
+  | TelegramChatEndpointDto
+  | WebexRoomEndpointDto
+  | LineUserEndpointDto
+  | WebexPersonEndpointDto;
 
 export type GetChannelEndpointResponseDto = {
   /**
@@ -221,7 +245,10 @@ export type GetChannelEndpointResponseDto = {
     | WebhookEndpointDto
     | PhoneEndpointDto
     | MsTeamsUserEndpointDto
-    | TelegramChatEndpointDto;
+    | TelegramChatEndpointDto
+    | WebexRoomEndpointDto
+    | LineUserEndpointDto
+    | WebexPersonEndpointDto;
   /**
    * The timestamp indicating when the channel endpoint was created, in ISO 8601 format.
    */
@@ -261,6 +288,9 @@ export const Endpoint$inboundSchema: z.ZodType<
   PhoneEndpointDto$inboundSchema,
   MsTeamsUserEndpointDto$inboundSchema,
   TelegramChatEndpointDto$inboundSchema,
+  WebexRoomEndpointDto$inboundSchema,
+  LineUserEndpointDto$inboundSchema,
+  WebexPersonEndpointDto$inboundSchema,
 ]);
 
 export function endpointFromJSON(
@@ -295,6 +325,9 @@ export const GetChannelEndpointResponseDto$inboundSchema: z.ZodType<
     PhoneEndpointDto$inboundSchema,
     MsTeamsUserEndpointDto$inboundSchema,
     TelegramChatEndpointDto$inboundSchema,
+    WebexRoomEndpointDto$inboundSchema,
+    LineUserEndpointDto$inboundSchema,
+    WebexPersonEndpointDto$inboundSchema,
   ]),
   createdAt: z.string(),
   updatedAt: z.string(),

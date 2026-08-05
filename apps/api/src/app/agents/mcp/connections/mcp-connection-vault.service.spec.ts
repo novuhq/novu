@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-
+import { AgentMcpSessionService } from '../runtime/agent-mcp-session.service';
 import { McpConnectionVaultService } from './mcp-connection-vault.service';
 
 const SUBSCRIBER_MONGO_ID = 'sub_mongo_123';
@@ -45,6 +45,13 @@ function makeAgentMcpServerRepo(enablements: Array<{ _id: string; mcpId: string 
   };
 }
 
+function makeSessionService(
+  repo: ReturnType<typeof makeMcpConnectionRepo>,
+  enablementRepo: ReturnType<typeof makeAgentMcpServerRepo>
+) {
+  return new AgentMcpSessionService(repo as any, enablementRepo as any, makeLogger() as any);
+}
+
 function makeService(
   repo: ReturnType<typeof makeMcpConnectionRepo>,
   enablementRepo: ReturnType<typeof makeAgentMcpServerRepo>
@@ -52,11 +59,11 @@ function makeService(
   return new McpConnectionVaultService(repo as any, enablementRepo as any, makeLogger() as any);
 }
 
-describe('McpConnectionVaultService', () => {
+describe('AgentMcpSessionService', () => {
   describe('resolveVaultIds', () => {
     it('returns [] when no subscriber is provided (anonymous platform turn)', async () => {
       const repo = makeMcpConnectionRepo();
-      const service = makeService(repo, makeAgentMcpServerRepo());
+      const service = makeSessionService(repo, makeAgentMcpServerRepo());
 
       const result = await service.resolveVaultIds({
         agentId: AGENT_ID,
@@ -76,7 +83,7 @@ describe('McpConnectionVaultService', () => {
       });
       const enablementRepo = makeAgentMcpServerRepo([{ _id: 'ams_1', mcpId: 'linear' }]);
       const runtimeProvider = makeRuntimeProvider();
-      const service = makeService(repo, enablementRepo);
+      const service = makeSessionService(repo, enablementRepo);
 
       const result = await service.resolveVaultIds({
         agentId: AGENT_ID,
@@ -139,7 +146,7 @@ describe('McpConnectionVaultService', () => {
       const runtimeProvider = makeRuntimeProvider({
         createVault: sinon.stub().resolves({ externalVaultId: 'vlt_anchor' }),
       });
-      const service = makeService(repo, enablementRepo);
+      const service = makeSessionService(repo, enablementRepo);
 
       const result = await service.resolveVaultIds({
         agentId: AGENT_ID,
@@ -178,7 +185,7 @@ describe('McpConnectionVaultService', () => {
       const runtimeProvider = makeRuntimeProvider({
         createVault: sinon.stub().resolves({ externalVaultId: 'vlt_propagated' }),
       });
-      const service = makeService(repo, enablementRepo);
+      const service = makeSessionService(repo, enablementRepo);
 
       const result = await service.resolveVaultIds({
         agentId: AGENT_ID,
@@ -205,7 +212,7 @@ describe('McpConnectionVaultService', () => {
       });
       const enablementRepo = makeAgentMcpServerRepo([{ _id: 'ams_1', mcpId: 'linear' }]);
       const runtimeProvider = makeRuntimeProvider();
-      const service = makeService(repo, enablementRepo);
+      const service = makeSessionService(repo, enablementRepo);
 
       const result = await service.resolveVaultIds({
         agentId: AGENT_ID,
@@ -236,7 +243,7 @@ describe('McpConnectionVaultService', () => {
       const runtimeProvider = makeRuntimeProvider({
         createVault: sinon.stub().resolves({ externalVaultId: 'vlt_loser' }),
       });
-      const service = makeService(repo, enablementRepo);
+      const service = makeSessionService(repo, enablementRepo);
 
       const result = await service.resolveVaultIds({
         agentId: AGENT_ID,
@@ -264,7 +271,7 @@ describe('McpConnectionVaultService', () => {
       const runtimeProvider = makeRuntimeProvider({
         createVault: sinon.stub().resolves({ externalVaultId: 'vlt_x' }),
       });
-      const service = makeService(repo, enablementRepo);
+      const service = makeSessionService(repo, enablementRepo);
 
       let caught: Error | null = null;
       try {
@@ -282,7 +289,9 @@ describe('McpConnectionVaultService', () => {
       expect(caught?.message).to.equal('boom');
     });
   });
+});
 
+describe('McpConnectionVaultService', () => {
   describe('ensureConnectionVault', () => {
     const baseConnection = {
       _id: 'mc_99',

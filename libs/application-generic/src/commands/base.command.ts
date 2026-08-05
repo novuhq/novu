@@ -5,17 +5,27 @@ import { ValidationError, validateSync } from 'class-validator';
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Base class pattern for command validation
 export abstract class BaseCommand {
-  static create<T extends BaseCommand>(this: new (...args: unknown[]) => T, data: T): T {
+  /**
+   * @param data - Plain command fields validated via class-transformer / class-validator.
+   * @param extras - Runtime objects that must not go through `plainToInstance`
+   *   (e.g. Mongo `ClientSession`, `AbortSignal`). Assigned onto the instance after transform.
+   *   Passing them in `data` throws (e.g. `ClientSession requires a MongoClient`).
+   */
+  static create<T extends BaseCommand>(this: new (...args: unknown[]) => T, data: T, extras?: Partial<T>): T {
     // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
     const convertedObject = plainToInstance<T, unknown>(this, {
       ...data,
     });
 
-    const errors = validateSync(convertedObject);
+    const errors = validateSync(convertedObject, { forbidUnknownValues: false });
     const flattenedErrors = flattenErrors(errors);
     if (Object.keys(flattenedErrors).length > 0) {
       // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
       throw new CommandValidationException(this.name, flattenedErrors);
+    }
+
+    if (extras) {
+      Object.assign(convertedObject, extras);
     }
 
     return convertedObject;

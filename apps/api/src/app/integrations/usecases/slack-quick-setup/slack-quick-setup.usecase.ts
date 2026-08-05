@@ -1,7 +1,12 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  SLACK_AGENT_BOT_EVENTS,
+  SLACK_AGENT_DEFAULT_DESCRIPTION,
+  SLACK_AGENT_OAUTH_SCOPES,
+} from '@novu/shared';
 import axios, { AxiosError } from 'axios';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../generate-chat-oath-url/chat-oauth.constants';
 import { SlackQuickSetupCommand } from './slack-quick-setup.command';
@@ -153,7 +158,7 @@ export class SlackQuickSetup {
     return {
       display_information: {
         name: displayName,
-        description: 'Agent built with Novu',
+        description: SLACK_AGENT_DEFAULT_DESCRIPTION,
       },
       features: {
         app_home: {
@@ -161,8 +166,8 @@ export class SlackQuickSetup {
           messages_tab_enabled: true,
           messages_tab_read_only_enabled: false,
         },
-        assistant_view: {
-          assistant_description: 'Agent built with Novu',
+        agent_view: {
+          agent_description: SLACK_AGENT_DEFAULT_DESCRIPTION,
         },
         bot_user: {
           display_name: displayName,
@@ -178,18 +183,7 @@ export class SlackQuickSetup {
       settings: {
         event_subscriptions: {
           request_url: webhookUrl,
-          bot_events: [
-            'app_mention',
-            'message.channels',
-            'message.groups',
-            'message.im',
-            'message.mpim',
-            'member_joined_channel',
-            'assistant_thread_started',
-            'assistant_thread_context_changed',
-            'reaction_added',
-            'reaction_removed',
-          ],
+          bot_events: [...SLACK_AGENT_BOT_EVENTS],
         },
         interactivity: {
           is_enabled: true,
@@ -197,7 +191,7 @@ export class SlackQuickSetup {
         },
         org_deploy_enabled: false,
         socket_mode_enabled: false,
-        token_rotation_enabled: false,
+        token_rotation_enabled: true,
       },
     };
   }

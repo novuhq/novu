@@ -5,9 +5,15 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { bold, cyan } from 'picocolors';
+import type { BridgeAdapterVariant } from '../../connect/pipeline/bridge-adapter/types';
+import { generateAgentNextConfigSource } from '../../connect/pipeline/llm-auth/codegen/generate-agent-next-config';
+import { generateSupportAgentSource } from '../../connect/pipeline/llm-auth/codegen/generate-support-agent';
+import { codegenSupportsTools } from '../../connect/pipeline/llm-auth/codegen/tool-support';
+import { resolveLlmAuthEnvVars, shouldWireLlmAuth } from '../../connect/pipeline/llm-auth/registry';
+import { resolveBridgeScaffoldDependencies } from '../../connect/pipeline/llm-auth/resolve-scaffold-dependencies';
 import { copy } from '../helpers/copy';
 import { install } from '../helpers/install';
-
+import { resolveAgentZodDependencies } from './agent-scaffold-deps';
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
 
 function resolveCliPackageJson(): Record<string, any> | null {
@@ -69,13 +75,21 @@ export const installTemplate = async ({
   applicationId,
   userId,
   agentIdentifier,
+  silent,
+  skipInstall,
+  llmAuth,
 }: InstallTemplateArgs) => {
-  console.log(bold(`Using ${packageManager}.`));
+  if (!silent) console.log(bold(`Using ${packageManager}.`));
+
+  const isAgentTemplate =
+    template === TemplateTypeEnum.APP_AGENT ||
+    template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+    template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
 
   /**
    * Copy the template files to the target directory.
    */
-  console.log('\nInitializing project with template:', template, '\n');
+  if (!silent) console.log('\nInitializing project with template:', template, '\n');
   const templatePath = path.join(__dirname, template, mode);
   const copySource = ['**'];
   if (!eslint) copySource.push('!eslintrc.json');
@@ -83,7 +97,11 @@ export const installTemplate = async ({
     copySource.push(mode === 'ts' ? 'tailwind.config.ts' : '!tailwind.config.js', '!postcss.config.cjs');
   }
 
-  const renameAgent = template === TemplateTypeEnum.APP_AGENT && agentIdentifier;
+  const renameAgent =
+    (template === TemplateTypeEnum.APP_AGENT ||
+      template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+      template === TemplateTypeEnum.APP_AGENT_LANGCHAIN) &&
+    agentIdentifier;
   if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
     throw new Error(
       `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
@@ -118,7 +136,11 @@ export const installTemplate = async ({
 
   if (renameAgent) {
     const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
-    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true, followSymbolicLinks: false });
+    const files = await glob('**/*.{tsx,ts,md}', {
+      cwd: root,
+      absolute: true,
+      followSymbolicLinks: false,
+    });
     await Promise.all(
       files.map(async (file) => {
         const before = await fs.readFile(file, 'utf8');
@@ -126,6 +148,34 @@ export const installTemplate = async ({
         if (after !== before) await fs.writeFile(file, after);
       })
     );
+  }
+
+  const isAiSdkTemplate = template === TemplateTypeEnum.APP_AGENT_AI_SDK;
+  const isLangChainTemplate = template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
+
+  if (renameAgent && llmAuth && shouldWireLlmAuth(llmAuth) && (isAiSdkTemplate || isLangChainTemplate)) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    const agentFilePath = path.join(root, 'app', 'novu', 'agents', `${agentIdentifier}.tsx`);
+    const source = generateSupportAgentSource({
+      runtime,
+      agentIdentifier: agentIdentifier!,
+      llmAuth,
+    });
+
+    await fs.writeFile(agentFilePath, source);
+
+    if (!codegenSupportsTools({ runtime, agentIdentifier: agentIdentifier!, llmAuth })) {
+      const toolsDir = path.join(root, 'app', 'novu', 'agents', 'tools');
+      await fs.rm(path.join(toolsDir, 'search-novu-docs.ts'), { force: true });
+      await fs.rmdir(toolsDir).catch(() => undefined);
+    }
+  }
+
+  if (isAiSdkTemplate || isLangChainTemplate) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    const nextConfigSource = generateAgentNextConfigSource(runtime, llmAuth ?? { kind: 'skip' });
+
+    await fs.writeFile(path.join(root, 'next.config.mjs'), nextConfigSource);
   }
 
   const tsconfigFile = path.join(root, 'tsconfig.json');
@@ -206,9 +256,19 @@ export const installTemplate = async ({
   }
 
   /* write .env file */
-  const envVars =
-    template === TemplateTypeEnum.APP_AGENT
-      ? { NOVU_SECRET_KEY: secretKey, NOVU_API_URL: apiUrl ?? 'https://api.novu.co' }
+  const llmEnvVars = llmAuth ? resolveLlmAuthEnvVars(llmAuth) : {};
+  const envVars = isAgentTemplate
+    ? {
+        NOVU_SECRET_KEY: secretKey,
+        NOVU_API_URL: apiUrl ?? 'https://api.novu.co',
+        ...llmEnvVars,
+      }
+    : template === TemplateTypeEnum.APP_CHAT_SDK
+      ? {
+          NOVU_SECRET_KEY: secretKey,
+          NOVU_AGENT_IDENTIFIER: agentIdentifier ?? 'my-chat-sdk-agent',
+          ...(apiUrl && apiUrl !== 'https://api.novu.co' ? { NOVU_API_BASE_URL: apiUrl } : {}),
+        }
       : {
           NOVU_SECRET_KEY: secretKey,
           NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',
@@ -222,7 +282,7 @@ export const installTemplate = async ({
   await fs.writeFile(path.join(root, '.env.local'), val);
 
   /* write github action (skip for agent template) */
-  if (template !== TemplateTypeEnum.APP_AGENT) {
+  if (!isAgentTemplate && template !== TemplateTypeEnum.APP_CHAT_SDK) {
     await copy(copySource, `${root}/.github`, {
       parents: true,
       cwd: path.join(__dirname, `./github`),
@@ -233,21 +293,36 @@ export const installTemplate = async ({
   const version = '16.2.1';
 
   /** Create a package.json for the new project and write it to disk. */
-  const isAgentTemplate = template === TemplateTypeEnum.APP_AGENT;
+  const isChatSdkTemplate = template === TemplateTypeEnum.APP_CHAT_SDK;
 
   const baseDependencies: Record<string, string> = {
     react: '^19',
     'react-dom': '^19',
     next: version,
-    '@novu/framework': resolveFrameworkVersion(),
   };
 
-  if (!isAgentTemplate) {
+  if (isAgentTemplate) {
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
+  }
+
+  if (isAiSdkTemplate || isLangChainTemplate) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    Object.assign(baseDependencies, resolveBridgeScaffoldDependencies(runtime, llmAuth));
+  }
+
+  if (isChatSdkTemplate) {
+    baseDependencies.chat = '4.31.0';
+    baseDependencies['@novu/chat-sdk-adapter'] = 'latest';
+    baseDependencies['@chat-adapter/state-memory'] = '4.31.0';
+  }
+
+  if (!isAgentTemplate && !isChatSdkTemplate) {
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
     baseDependencies['@novu/nextjs'] = '^2.5.0';
   }
 
   const scripts: Record<string, string> = {
-    dev: 'next dev --port=4000',
+    dev: 'next dev --port=3000',
     build: 'next build',
     start: 'next start',
     lint: 'next lint',
@@ -255,8 +330,15 @@ export const installTemplate = async ({
 
   if (isAgentTemplate) {
     const cliTag = resolveCliTag();
-    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4000`;
-    scripts['dev:novu'] = `npx novu@${cliTag} dev -p 4000 --no-studio --run "next dev --port=4000"`;
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
+    scripts['dev:novu'] = `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --run "next dev --port=4005"`;
+  }
+
+  if (isChatSdkTemplate) {
+    const cliTag = resolveCliTag();
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
+    scripts['dev:novu'] =
+      `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"`;
   }
 
   const packageJson: any = {
@@ -292,11 +374,18 @@ export const installTemplate = async ({
     };
   }
 
-  if (template === TemplateTypeEnum.APP_REACT_EMAIL || isAgentTemplate) {
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
     packageJson.dependencies = {
       ...packageJson.dependencies,
       zod: '^3.23.8',
       'zod-to-json-schema': '^3.23.1',
+    };
+  }
+
+  if (isAgentTemplate) {
+    packageJson.dependencies = {
+      ...packageJson.dependencies,
+      ...resolveAgentZodDependencies(),
     };
   }
 
@@ -309,22 +398,38 @@ export const installTemplate = async ({
     };
   }
 
+  if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
+    // chat (transitive via @novu/framework) peers ai@^6 for its own AI helpers.
+    // Framework only uses chat for card components; ai-sdk scaffold installs ai@7.
+    packageJson.pnpm = {
+      peerDependencyRules: {
+        allowedVersions: {
+          'chat>ai': '7',
+        },
+      },
+    };
+  }
+
   const devDeps = Object.keys(packageJson.devDependencies).length;
   if (!devDeps) delete packageJson.devDependencies;
 
   await fs.writeFile(path.join(root, 'package.json'), JSON.stringify(packageJson, null, 2) + os.EOL);
 
-  console.log('\nInstalling dependencies:');
-  for (const dependency in packageJson.dependencies) console.log(`- ${cyan(dependency)}`);
+  if (!silent) {
+    console.log('\nInstalling dependencies:');
+    for (const dependency in packageJson.dependencies) console.log(`- ${cyan(dependency)}`);
 
-  if (devDeps) {
-    console.log('\nInstalling devDependencies:');
-    for (const dependency in packageJson.devDependencies) console.log(`- ${cyan(dependency)}`);
+    if (devDeps) {
+      console.log('\nInstalling devDependencies:');
+      for (const dependency in packageJson.devDependencies) console.log(`- ${cyan(dependency)}`);
+    }
+
+    console.log();
   }
 
-  console.log();
-
-  await install(packageManager, isOnline);
+  if (!skipInstall) {
+    await install(packageManager, isOnline, silent, root);
+  }
 };
 
 export * from './types';

@@ -197,6 +197,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
         type: Schema.Types.Boolean,
         default: true,
       },
+      tool: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
     },
     origin: {
       type: Schema.Types.String,
@@ -246,6 +250,20 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     isTranslationEnabled: {
       type: Schema.Types.Boolean,
       default: false,
+    },
+    agent: {
+      type: {
+        identifier: {
+          type: Schema.Types.String,
+          required: true,
+        },
+        providers: {
+          type: Schema.Types.Mixed,
+          required: false,
+        },
+      },
+      required: false,
+      default: null,
     },
     issues: Schema.Types.Mixed,
     severity: {

@@ -1,6 +1,11 @@
 import { Novu } from '@novu/api';
 import { SubscriberEntity, TopicSubscribersRepository } from '@novu/dal';
-import { CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  CreateWorkflowDto,
+  StepTypeEnum,
+  TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -301,6 +306,34 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
     expect(updateResponse.result.preferences?.length).to.be.greaterThan(0);
   });
 
+  it('should preserve enabled=false when updating preferences with the workflowId shape', async () => {
+    const topicKey = `topic-key-enabled-false-${Date.now()}`;
+
+    await novuClient.topics.create({
+      key: topicKey,
+      name: 'Test Topic',
+    });
+
+    const subscriptionResponse = await novuClient.topics.subscriptions.create(
+      {
+        subscriberIds: [subscriber1.subscriberId],
+      },
+      topicKey
+    );
+
+    const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+
+    const response = await session.testAgent
+      .patch(`/v2/topics/${topicKey}/subscriptions/${subscriptionIdentifier}`)
+      .send({
+        preferences: [{ workflowId: 'workflow-1', enabled: false }],
+      });
+
+    expect(response.status, 'Should update the subscription').to.equal(200);
+    expect(response.body.data.preferences, 'Should return preferences').to.exist;
+    expect(response.body.data.preferences[0].enabled, 'Should preserve enabled=false').to.equal(false);
+  });
+
   it('should update subscription name', async () => {
     const topicKey = `topic-key-name-${Date.now()}`;
 
@@ -336,5 +369,144 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
     });
 
     expect(subscription?.name).to.equal('Updated Subscription Name');
+  });
+
+  it('should allow updating subscriptions that already have identifiers longer than 512 characters', async () => {
+    const topicKey = `topic-key-long-existing-identifier-${Date.now()}`;
+
+    const topicResponse = await novuClient.topics.create({
+      key: topicKey,
+      name: 'Long Existing Identifier Topic',
+    });
+
+    const longIdentifier = 'legacy-'.concat('a'.repeat(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH));
+
+    await topicSubscribersRepository.createSubscriptions([
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _subscriberId: subscriber1._id,
+        _topicId: topicResponse.result.id,
+        topicKey,
+        externalSubscriberId: subscriber1.subscriberId,
+        identifier: longIdentifier,
+      },
+    ]);
+
+    const updateResponse = await novuClient.topics.subscriptions.update({
+      topicKey,
+      identifier: longIdentifier,
+      updateTopicSubscriptionRequestDto: {
+        name: 'Updated Legacy Subscription',
+      },
+    });
+
+    expect(updateResponse.result.identifier).to.equal(longIdentifier);
+    expect(updateResponse.result.name).to.equal('Updated Legacy Subscription');
+  });
+
+  describe('Context-aware subscriptions', () => {
+    before(async () => {
+      (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
+    });
+
+    it('should update subscription with auto-generated identifier and context', async () => {
+      const topicKey = `topic-key-update-context-auto-${Date.now()}`;
+
+      await novuClient.topics.create({
+        key: topicKey,
+        name: 'Test Topic',
+      });
+
+      const subscriptionResponse = await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [subscriber1.subscriberId],
+          context: { tenant: 'org-123', project: 'proj-456' },
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-1'] },
+              enabled: true,
+            },
+          ],
+        },
+        topicKey
+      );
+
+      expect(subscriptionResponse.result.data.length).to.equal(1);
+      const subscriptionIdentifier = subscriptionResponse.result.data[0].identifier;
+      expect(subscriptionIdentifier).to.include(':ctx_');
+      expect(subscriptionResponse.result.data[0].contextKeys).to.have.members(['project:proj-456', 'tenant:org-123']);
+
+      const updateResponse = await novuClient.topics.subscriptions.update({
+        topicKey,
+        identifier: subscriptionIdentifier,
+        updateTopicSubscriptionRequestDto: {
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-2'] },
+              enabled: false,
+            },
+          ],
+        },
+      });
+
+      expect(updateResponse.result.identifier).to.equal(subscriptionIdentifier);
+      expect(updateResponse.result.contextKeys).to.have.members(['project:proj-456', 'tenant:org-123']);
+      expect(updateResponse.result.preferences?.length).to.be.greaterThan(0);
+      expect(updateResponse.result.preferences?.[0].enabled).to.equal(false);
+    });
+
+    it('should update subscription with custom identifier and context', async () => {
+      const topicKey = `topic-key-update-context-custom-${Date.now()}`;
+      const customIdentifier = `custom-sub-${Date.now()}`;
+
+      await novuClient.topics.create({
+        key: topicKey,
+        name: 'Test Topic',
+      });
+
+      const subscriptionResponse = await novuClient.topics.subscriptions.create(
+        {
+          subscriptions: [
+            {
+              identifier: customIdentifier,
+              subscriberId: subscriber1.subscriberId,
+            },
+          ],
+          context: { tenant: 'org-abc' },
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-1'] },
+              enabled: true,
+            },
+          ],
+        },
+        topicKey
+      );
+
+      expect(subscriptionResponse.result.data.length).to.equal(1);
+      expect(subscriptionResponse.result.data[0].identifier).to.equal(customIdentifier);
+      expect(subscriptionResponse.result.data[0].contextKeys).to.deep.equal(['tenant:org-abc']);
+
+      const updateResponse = await novuClient.topics.subscriptions.update({
+        topicKey,
+        identifier: customIdentifier,
+        updateTopicSubscriptionRequestDto: {
+          name: 'Updated Context Subscription',
+          preferences: [
+            {
+              filter: { workflowIds: ['workflow-2'] },
+              enabled: false,
+            },
+          ],
+        },
+      });
+
+      expect(updateResponse.result.identifier).to.equal(customIdentifier);
+      expect(updateResponse.result.name).to.equal('Updated Context Subscription');
+      expect(updateResponse.result.contextKeys).to.deep.equal(['tenant:org-abc']);
+      expect(updateResponse.result.preferences?.length).to.be.greaterThan(0);
+      expect(updateResponse.result.preferences?.[0].enabled).to.equal(false);
+    });
   });
 });

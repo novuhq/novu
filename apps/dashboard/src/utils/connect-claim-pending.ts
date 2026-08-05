@@ -1,10 +1,10 @@
-import { CONNECT_CLAIM_TOKEN_PATTERN } from '@novu/shared';
+import { isConnectClaimTokenFormat } from '@novu/shared';
 import { ROUTES } from '@/utils/routes';
 
 const STORAGE_KEY = 'pendingConnectClaim';
 
 function isValidToken(token: string | null | undefined): token is string {
-  return typeof token === 'string' && CONNECT_CLAIM_TOKEN_PATTERN.test(token);
+  return typeof token === 'string' && isConnectClaimTokenFormat(token);
 }
 
 export function isConnectClaimPath(pathname: string): boolean {

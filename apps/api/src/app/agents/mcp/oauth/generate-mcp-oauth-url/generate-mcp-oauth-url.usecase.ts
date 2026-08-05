@@ -32,11 +32,11 @@ import {
 } from '@novu/shared';
 import { trackAgentMcpOAuthCreated } from '../../../shared/analytics/agent-analytics';
 import { GenerateMcpOAuthUrlResponseDto } from '../../../shared/dtos/mcp-server.dto';
-import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
 import {
   McpNovuAppCredentialsService,
   type NovuAppCredentials,
 } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
+import { assertMcpNovuAppFlagEnabled } from '../../shared/assert-mcp-novu-app-flag-enabled';
 import {
   AuthorizationServerMetadata,
   buildTokenEndpointAuthMethodsToTry,
@@ -856,6 +856,11 @@ export class GenerateMcpOAuthUrl {
       source: command.source ?? 'api',
       ...(command.conversationId ? { conversationId: command.conversationId } : {}),
       ...(command.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
+      ...(command.toolUseId ? { toolUseId: command.toolUseId } : {}),
+      ...(command.agentIdentifier ? { agentIdentifier: command.agentIdentifier } : {}),
+      ...(command.integrationIdentifier ? { integrationIdentifier: command.integrationIdentifier } : {}),
+      ...(command.platform ? { platform: command.platform } : {}),
+      ...(command.platformThreadId ? { platformThreadId: command.platformThreadId } : {}),
     };
 
     const payload = JSON.stringify(stateData);

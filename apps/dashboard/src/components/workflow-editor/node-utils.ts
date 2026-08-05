@@ -21,6 +21,7 @@ import {
   PushNode,
   SmsNode,
   ThrottleNode,
+  ToolNode,
   TriggerNode,
 } from './nodes';
 
@@ -35,6 +36,7 @@ export const nodeTypes = {
   in_app: InAppNode,
   push: PushNode,
   chat: ChatNode,
+  tool: ToolNode,
   delay: DelayNode,
   digest: DigestNode,
   throttle: ThrottleNode,
@@ -50,6 +52,7 @@ export const NODE_TYPE_TO_STEP_TYPE: Omit<Record<keyof typeof nodeTypes, StepTyp
   in_app: StepTypeEnum.IN_APP,
   push: StepTypeEnum.PUSH,
   chat: StepTypeEnum.CHAT,
+  tool: StepTypeEnum.TOOL,
   delay: StepTypeEnum.DELAY,
   digest: StepTypeEnum.DIGEST,
   throttle: StepTypeEnum.THROTTLE,
@@ -94,6 +97,8 @@ export const mapStepToNodeContent = (
       return 'Sends Push notification to your subscribers';
     case StepTypeEnum.CHAT:
       return 'Sends Chat message to your subscribers';
+    case StepTypeEnum.TOOL:
+      return 'Sends delivery to custom tools configured';
     case StepTypeEnum.DELAY: {
       const delayMessage =
         workflowOrigin === ResourceOriginEnum.EXTERNAL
@@ -252,7 +257,10 @@ export const createEdges = (nodes: Node<NodeData, keyof typeof nodeTypes>[], sho
 export const createTriggerNode = (
   currentWorkflow?: WorkflowResponseDto,
   currentEnvironment?: IEnvironment,
-  containerWidth?: number
+  containerWidth?: number,
+  // Local mode mounts the editor under /env/:slug/local/* — the trigger node
+  // link must stay within that mount (see use-workflow-editor-routes.ts).
+  triggerRoutePattern: string = ROUTES.TRIGGER_WORKFLOW
 ) => {
   const middleX = containerWidth ? containerWidth / 2 - NODE_WIDTH / 2 : 0;
   const id = generateUUID();
@@ -263,7 +271,7 @@ export const createTriggerNode = (
     height: NODE_HEIGHT,
     data: {
       index: 0,
-      triggerLink: buildRoute(ROUTES.TRIGGER_WORKFLOW, {
+      triggerLink: buildRoute(triggerRoutePattern, {
         environmentSlug: currentEnvironment?.slug ?? '',
         workflowSlug: currentWorkflow?.slug ?? '',
       }),

@@ -1,113 +1,24 @@
-import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
-import {
-  Bot,
-  CalendarDays,
-  ChevronDown,
-  ChevronRight,
-  Mail,
-  MessageCircle,
-  MoreHorizontal,
-  Settings,
-  Smartphone,
-} from 'lucide-react';
+import { ProductUseCasesEnum } from '@novu/shared';
+import { Bot, ChevronDown, Mail, MessageCircle, MoreHorizontal, Settings, Smartphone } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { RiArrowLeftSLine, RiCheckLine } from 'react-icons/ri';
+import { RiCheckLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
-import { AwsIcon } from '@/components/icons/aws';
-import { ClaudeIcon } from '@/components/icons/claude';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { Notification5Fill } from '@/components/icons/notification-5-fill';
-import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
+import { AgentOnboardingPreview } from '@/components/onboarding/agent-onboarding-preview';
+import { OnboardingContinueFooter } from '@/components/onboarding/onboarding-continue-footer';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
+import { OnboardingStepHeader } from '@/components/onboarding/step-header';
 import { PageMeta } from '@/components/page-meta';
-import { IS_EU } from '@/config';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
+import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { beginOnboardingProvisioning } from '@/utils/connect/onboarding-session';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-
-function SubscriberAvatar() {
-  return (
-    <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8Z"
-        fill="#E1E4EA"
-      />
-      <g clipPath="url(#sub-avatar-clip)">
-        <ellipse cx="8" cy="15.6" rx="6.4" ry="4.8" fill="white" fillOpacity="0.72" />
-        <circle opacity="0.9" cx="8" cy="6.4" r="3.2" fill="white" />
-      </g>
-      <defs>
-        <clipPath id="sub-avatar-clip">
-          <rect width="16" height="16" rx="8" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
-  );
-}
-
-function Pill({ icon, children, rotate = 0 }: { icon?: React.ReactNode; children: React.ReactNode; rotate?: number }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded border border-[#e8ebef] bg-[#f8f9fa] px-1 py-0.5 align-middle text-xs font-medium text-[#3a3f47]"
-      style={rotate ? { transform: `rotate(${rotate}deg)` } : undefined}
-    >
-      {icon}
-      {children}
-    </span>
-  );
-}
-
-function FeatureList() {
-  return (
-    <div className="flex flex-col gap-1 px-4 text-xs font-medium text-[#525866]">
-      <div className="flex min-h-6 items-center gap-1.5">
-        <RiCheckLine className="size-3 shrink-0 text-[#b0b8c4]" />
-        <span className="flex flex-wrap items-center gap-1">
-          Cross-channel conversations across
-          <Pill icon={<img src="/images/providers/light/square/slack.svg" alt="" className="size-4" />} rotate={-1}>
-            Slack
-          </Pill>
-          <Pill
-            icon={<img src="/images/providers/light/square/whatsapp-business.svg" alt="" className="size-4" />}
-            rotate={1}
-          >
-            Whatsapp
-          </Pill>
-          and a lot more.
-        </span>
-      </div>
-      <div className="flex min-h-6 items-center gap-1.5">
-        <RiCheckLine className="size-3 shrink-0 text-[#b0b8c4]" />
-        <span className="flex flex-wrap items-center gap-1">
-          Bring agents from
-          <Pill icon={<ClaudeIcon className="size-4" />} rotate={-1}>
-            Claude
-          </Pill>
-          <Pill icon={<AwsIcon className="size-4" />} rotate={-1}>
-            Bedrock
-          </Pill>
-          or custom agents via agent() handler.
-        </span>
-      </div>
-      <div className="flex min-h-6 items-center gap-1.5">
-        <RiCheckLine className="size-3 shrink-0 text-[#b0b8c4]" />
-        <span className="flex flex-wrap items-center gap-1">
-          Provider identities resolved →
-          <Pill icon={<SubscriberAvatar />} rotate={1}>
-            Subscriber
-          </Pill>
-          mapping.
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function InboxPreview() {
   return (
@@ -327,9 +238,12 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
     }
 
     if (selected === 'agents') {
+      void trackAgentsUsecaseSelected('usecase_picker');
       updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true, [ProductUseCasesEnum.IN_APP]: false });
-      beginOnboardingProvisioning('agents');
-      void navigate(ROUTES.AGENTS_SETUP);
+      // No provisioning loader here: the personalize step renders instantly and has no data
+      // dependency, so the overlay would just hide the questions. It starts when that step hands
+      // off to the agents setup page, which is what actually waits on the org.
+      void navigate(ROUTES.AGENTS_PERSONALIZE);
     }
   };
 
@@ -382,38 +296,13 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
         })}
       </div>
 
-      <button
-        type="button"
-        onClick={handleContinue}
-        className="mt-8 inline-flex items-center gap-1 rounded-lg border border-white/[0.12] px-2.5 py-2 text-xs font-medium text-white transition-opacity hover:opacity-90"
-        style={{
-          backgroundImage:
-            'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 100%), linear-gradient(90deg, #0e121b 0%, #0e121b 100%)',
-          boxShadow: '0 1px 2px 0 rgba(27,28,29,0.48), 0 0 0 1px #242628',
-        }}
-      >
-        Continue setup
-        <ChevronRight className="size-4" />
-      </button>
-
-      <div className="text-text-sub mt-4 flex items-center gap-2 text-xs">
-        <span>Have questions?</span>
-        <a
-          href={BOOK_DEMO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-text-strong inline-flex items-center gap-1 text-xs font-medium hover:underline"
-        >
-          <CalendarDays className="size-4" />
-          Book a demo
-        </a>
-      </div>
+      <OnboardingContinueFooter onContinue={handleContinue} />
     </div>
   );
 }
 
 export function UsecaseSelectPage() {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const telemetry = useTelemetry();
   const [selected, setSelected] = useState<UsecaseId>('inbox');
   const provisioningActive = useOnboardingProvisioningActive();
@@ -431,18 +320,14 @@ export function UsecaseSelectPage() {
     return null;
   }
 
-  // Agents are hard-disabled in the EU region; skip the usecase picker entirely there.
-  if (IS_EU || !isAgentsEnabled) {
+  if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 
   const leftContent = (
     <>
       <PageMeta title="Get started with Novu" />
-      <div className="mb-5 flex items-center gap-0.5">
-        <RiArrowLeftSLine className="text-text-sub size-4" />
-        <span className="text-text-sub text-xs">1/2</span>
-      </div>
+      <OnboardingStepHeader current={1} total={selected === 'agents' ? 3 : 2} />
       <h1 className="text-foreground text-xl font-normal text-label-lg">Get started with Novu</h1>
       <p className="text-text-soft text-label-xs font-normal mt-2">
         Pick what you would like to start with, you can always set up the other path anytime.
@@ -462,14 +347,7 @@ export function UsecaseSelectPage() {
         transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
       >
         {selected === 'agents' ? (
-          <>
-            <div className="self-center">
-              <AgentUsecasePreviewIllustration />
-            </div>
-            <div className="mt-10">
-              <FeatureList />
-            </div>
-          </>
+          <AgentOnboardingPreview />
         ) : (
           <>
             <div className="self-center">

@@ -53,4 +53,9 @@ export class ChatOauthCallbackCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   readonly integrationIdentifier?: string;
+
+  /** Signed state minted by {@link ChatOauth} and echoed back by the provider. */
+  @IsOptional()
+  @IsString()
+  readonly state?: string;
 }

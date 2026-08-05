@@ -27,7 +27,11 @@ export interface IResourceDependency {
   resourceId: string;
   resourceName: string;
   isBlocking: boolean;
-  reason: 'LAYOUT_REQUIRED_FOR_WORKFLOW' | 'LAYOUT_EXISTS_IN_TARGET';
+  reason:
+    | 'LAYOUT_REQUIRED_FOR_WORKFLOW'
+    | 'LAYOUT_EXISTS_IN_TARGET'
+    | 'AGENT_REQUIRED_FOR_WORKFLOW'
+    | 'AGENT_EXISTS_IN_TARGET';
 }
 
 export interface IResourceDiffResult {
@@ -132,6 +136,14 @@ export async function deleteEnvironment({ environment }: { environment: IEnviron
 
 export async function regenerateApiKeys({ environment }: { environment: IEnvironment }): Promise<{ data: IApiKey[] }> {
   return post<{ data: IApiKey[] }>(`/environments/api-keys/regenerate`, { environment });
+}
+
+export async function createApiKey({ environment }: { environment: IEnvironment }): Promise<{ data: IApiKey[] }> {
+  return post<{ data: IApiKey[] }>(`/environments/api-keys`, { environment });
+}
+
+export async function deleteApiKey({ environment, hash }: { environment: IEnvironment; hash: string }): Promise<void> {
+  return del<void>(`/environments/api-keys/${hash}`, { environment });
 }
 
 export async function diffEnvironments({

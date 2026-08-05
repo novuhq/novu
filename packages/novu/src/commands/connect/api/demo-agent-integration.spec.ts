@@ -1,7 +1,7 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import type { IntegrationRecord } from './integrations';
 import { findActiveDemoAgentIntegration } from './demo-agent-integration';
+import type { IntegrationRecord } from './integrations';
 
 function demoIntegration(): IntegrationRecord {
   return {

@@ -54,6 +54,15 @@ describe('keyless-signup.helpers', () => {
     expect(buildConnectClaimUrl('abc+token')).to.equal('https://dashboard.example.com/connect/claim?token=abc%2Btoken');
   });
 
+  it('buildConnectClaimUrl preserves autolink-safe alphanumeric tokens', () => {
+    process.env.DASHBOARD_URL = 'https://dashboard.example.com';
+    delete process.env.FRONT_BASE_URL;
+
+    const token = '0123456789ABCDEFGHIJKLMNOPQRSTUV';
+
+    expect(buildConnectClaimUrl(token)).to.equal(`https://dashboard.example.com/connect/claim?token=${token}`);
+  });
+
   it('buildKeylessWelcomeCard includes welcome text and a primary signup button', () => {
     const welcomeText = getWelcomeText(AgentPlatformEnum.SLACK);
     const card = buildKeylessWelcomeCard(welcomeText, 'https://example.com/claim');

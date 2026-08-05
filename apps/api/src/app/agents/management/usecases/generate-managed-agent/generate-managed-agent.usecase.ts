@@ -104,17 +104,27 @@ You MUST select Claude built-in tools, MCP servers, and Anthropic Skills ONLY fr
 
 ## Tool selection
 - ALWAYS include \`web_search\` and \`web_fetch\` — every Novu agent should be able to pull live context from the web. Only omit them if the user explicitly forbids web access.
-- Add \`bash\`/\`read\`/\`write\`/\`edit\`/\`glob\`/\`grep\` only when the agent must work with files (code review, data files, repo automation, etc.).
+- Add \`bash\`/\`write\`/\`edit\`/\`glob\`/\`grep\` only when the agent must work with files (code review, data files, repo automation, etc.).
+- ALWAYS include \`read\` whenever you attach ANY skill (see Skill selection). Anthropic Managed Agents load skill bundles via the read tool and reject the agent otherwise.
 
 ## MCP selection
-- Do NOT infer or guess which MCPs might be relevant. Return an empty \`mcpServers\` array unless the user explicitly names a SaaS product, service, or integration in their description.
-- When the user explicitly names a product (GitHub, Linear, Slack, Notion, …), include the matching MCP from the catalog. Accept common aliases and product names (e.g. "Google Drive" → \`google-drive\`).
-- Do not attach MCPs based on implied domain, use case, or workflow — even when the task clearly involves issue trackers, CRMs, observability, support inboxes, or knowledge bases. If the user did not name the product, leave \`mcpServers\` empty.
-- When multiple catalog entries could match an explicitly named product, prefer \`popular: true\` servers.
-- Never attach more than 5 MCPs.
+- Decide per domain whether the agent actually needs an MCP. Many agents are pure reasoning / writing / summarisation tasks and need NO MCP at all — return an empty array in that case.
+- Attach an MCP only when the agent's job clearly requires reading from or writing to an external SaaS system (issue trackers, CRMs, observability, support inboxes, knowledge bases, etc.). If the description doesn't imply a system of record, do not attach one.
+- When the user names a SaaS product (GitHub, Linear, Slack, Notion, …), include the matching MCP.
+- When the user implies a domain and an external system is genuinely required, pick the most popular MCPs for that domain. Examples (non-exhaustive, only relevant if the agent needs to read/write that system):
+  - Customer feedback / support / voice-of-customer → \`intercom\`, \`linear\`, \`notion\`
+  - Code review / PRs / repo automation → \`github\`, \`linear\`
+  - Incidents / on-call / alerting → \`sentry\`, \`datadog\`, \`pagerduty\`
+  - Product analytics / experimentation → \`amplitude\`, \`linear\`, \`notion\`
+  - Marketing / sales / CRM → \`hubspot\`, \`salesforce\`, \`apollo\`
+  - Knowledge / docs / onboarding → \`notion\`, \`atlassian-rovo\`, \`google-drive\`
+  - Status updates / team summaries / digests → \`slack\`, \`linear\`, \`notion\`
+- Prefer \`popular: true\` servers when multiple options match.
+- Never attach more than 5 MCPs. Quality over quantity — fewer focused MCPs beat a long list.
 
 ## Skill selection
 - Anthropic skills are for file generation (pdf, xlsx, docx, pptx, …). Only attach when the agent must produce one of those file types. Otherwise return an empty array.
+- If you attach one or more skills, you MUST also include \`read\` in \`tools\`. Never return skills without \`read\`.
 
 ## System prompt
 The \`systemPrompt\` is sent verbatim to Claude. Address the agent in second person ("You are a…"), describe its role, scope, tone, and the workflow it should follow when invoked. Do not enumerate the tool/MCP/skill IDs in the systemPrompt — Anthropic wires them in automatically.
@@ -145,7 +155,7 @@ function buildUserPrompt(prompt: string): string {
 ${prompt.trim()}
 """
 
-Generate the complete agent configuration JSON. Pick a clear human name, derive a matching kebab-case identifier, write the systemPrompt as if instructing the agent, and select tools and skills this agent needs. For MCP servers, include only those the user explicitly named in their description — do not infer additional MCPs. Leave any array empty when the rules above do not call for it.`;
+Generate the complete agent configuration JSON. Pick a clear human name, derive a matching kebab-case identifier, write the systemPrompt as if instructing the agent, and select only the tools, MCP servers, and skills this agent actually needs — leave any array empty when its domain does not call for it.`;
 }
 
 /**
@@ -153,14 +163,21 @@ Generate the complete agent configuration JSON. Pick a clear human name, derive 
  * still ships with the baseline web tools. Without this, prompts that omit a clear "use X"
  * cue (e.g. "Build a Customer Feedback Agent That Groups Requests by Theme") would surface
  * an agent with no tools or MCPs attached, which is a poor first-run experience.
+ *
+ * Also force-enables `read` whenever skills are present — Anthropic Managed Agents require
+ * a usable read tool on the agent toolset to load skill bundles.
  */
-function ensureDefaultTools(tools: string[]): string[] {
+function ensureDefaultTools(tools: string[], skills: Array<{ skillId: string }>): string[] {
   const seen = new Set(tools);
   for (const defaultTool of CLAUDE_DEFAULT_TOOL_TYPES) {
     if (!seen.has(defaultTool)) {
       tools.push(defaultTool);
       seen.add(defaultTool);
     }
+  }
+
+  if (skills.length > 0 && !seen.has('read')) {
+    tools.push('read');
   }
 
   return tools;
@@ -248,14 +265,16 @@ export class GenerateManagedAgent {
       };
     }
 
+    const skills = generated.skills.map((skill) => ({ skillId: skill.skillId }));
+
     return {
       name: generated.name,
       identifier: generated.identifier,
       systemPrompt: generated.systemPrompt,
       description: generated.description,
-      tools: ensureDefaultTools([...generated.tools]),
+      tools: ensureDefaultTools([...generated.tools], skills),
       mcpServers: generated.mcpServers,
-      skills: generated.skills.map((skill) => ({ skillId: skill.skillId })),
+      skills,
     };
   }
 

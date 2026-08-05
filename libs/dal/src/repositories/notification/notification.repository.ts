@@ -5,7 +5,7 @@ import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepository } from '../base-repository';
 import { EnvironmentId } from '../environment';
-import { NotificationDBModel, NotificationEntity } from './notification.entity';
+import { NotificationDBModel, NotificationEntity, TerminalWorkflowStatusEvent } from './notification.entity';
 import { NotificationFeedItemEntity } from './notification.feed.Item.entity';
 import { Notification } from './notification.schema';
 
@@ -413,6 +413,32 @@ export class NotificationRepository extends BaseRepository<
     return {
       isUpdated: result !== null,
       previousEvent: result?.lastEmittedDeliveryEvent as DeliveryLifecycleEventType | undefined,
+    };
+  }
+
+  /**
+   * Atomically records the first terminal workflow status event for a notification.
+   * Once completed or error is set, neither is emitted again.
+   */
+  async tryWorkflowStatusTransition(
+    notificationId: string,
+    organizationId: string,
+    environmentId: string,
+    targetEvent: TerminalWorkflowStatusEvent
+  ): Promise<{ isUpdated: boolean }> {
+    const result = await this.findOneAndUpdate(
+      {
+        _id: notificationId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        $or: [{ lastEmittedWorkflowStatusEvent: { $exists: false } }, { lastEmittedWorkflowStatusEvent: null }],
+      },
+      { $set: { lastEmittedWorkflowStatusEvent: targetEvent } },
+      { returnDocument: 'before' }
+    );
+
+    return {
+      isUpdated: result !== null,
     };
   }
 }

@@ -5,6 +5,7 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  CreateStepConditionsPassedDetail,
   DetailEnum,
   GetPreferences,
   GetSubscriberTemplatePreference,
@@ -56,6 +57,7 @@ import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
+import { SendMessageTool } from './send-message-tool.usecase';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 import { Throttle } from './throttle';
 
@@ -67,6 +69,7 @@ export class SendMessage {
     private sendMessageInApp: SendMessageInApp,
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
+    private sendMessageTool: SendMessageTool,
     private digest: Digest,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
@@ -83,7 +86,8 @@ export class SendMessage {
     private environmentVariableRepository: EnvironmentVariableRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail
   ) {}
 
   @InstrumentUsecase()
@@ -143,6 +147,16 @@ export class SendMessage {
       };
     }
 
+    // Emitted only after every skip gate (conditions, preferences, bridge skip)
+    // has passed. Channel-level skips further down (e.g. missing email or push
+    // token) are reported by their own execution details.
+    if (command.job.step.filters?.length) {
+      await this.createStepConditionsPassedDetail.execute({
+        job: command.job,
+        conditions: stepCondition.conditions,
+      });
+    }
+
     let severity = command.severity;
     const { overrides } = command;
     if (stepType !== StepTypeEnum.TRIGGER && overrides?.severity && overrides.severity !== severity) {
@@ -190,6 +204,9 @@ export class SendMessage {
       }
       case StepTypeEnum.PUSH: {
         return await this.sendMessagePush.execute(sendMessageChannelCommand);
+      }
+      case StepTypeEnum.TOOL: {
+        return await this.sendMessageTool.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.DIGEST: {
         return await this.digest.execute(command);
@@ -550,7 +567,14 @@ export class SendMessage {
   }
 
   private isChannelStep(job: JobEntity) {
-    const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
+    const channels = [
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.SMS,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+      StepTypeEnum.TOOL,
+    ];
 
     return !!channels.find((channel) => channel === job.type);
   }

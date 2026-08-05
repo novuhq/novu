@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { areHexDigestsEqual } from '../../shared/helpers/timing-safe-equal';
 import { getRequestHeaderValue } from '../../shared/helpers/get-request-header-value';
+import { areHexDigestsEqual } from '../../shared/helpers/timing-safe-equal';
 
 @Injectable()
 export class PlainCardsGuard implements CanActivate {

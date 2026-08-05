@@ -1,8 +1,9 @@
-import type { AgentRuntime } from '@novu/shared';
+import type { AgentAnalyticsSource, AgentRuntime } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -42,4 +43,9 @@ export class CreateAgentCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   @Type(() => ManagedRuntimeDto)
   managedRuntime?: ManagedRuntimeDto;
+
+  /** Attribution for funnel analytics and product behaviour (e.g. CLI onboarding replies). */
+  @IsOptional()
+  @IsIn(['cli', 'dashboard_onboarding', 'dashboard', 'api'])
+  analyticsSource?: AgentAnalyticsSource;
 }

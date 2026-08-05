@@ -9,7 +9,7 @@ import { ConversationsTable } from '@/components/conversations/conversations-tab
 import { ConversationsUpgradeCta } from '@/components/conversations/conversations-upgrade-cta';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { UpdatedAgo } from '@/components/updated-ago';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useConversationUrlState } from '@/hooks/use-conversation-url-state';
 import { cn } from '@/utils/ui';
@@ -29,7 +29,7 @@ export function ConversationsContent({
   contentHeight = 'h-[calc(100vh-140px)]',
   redirectConversationSelectionTo,
 }: ConversationsContentProps) {
-  if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
+  if (IS_SELF_HOSTED_CE) {
     return (
       <div className={cn('p-2.5', className)}>
         <div className={cn('flex', contentHeight)}>
@@ -82,9 +82,7 @@ function EnterpriseConversationsContent({
     [navigate, redirectConversationSelectionTo]
   );
 
-  const onConversationSelect = redirectsOnSelect
-    ? handleConversationSelectWithRedirect
-    : handleConversationSelect;
+  const onConversationSelect = redirectsOnSelect ? handleConversationSelectWithRedirect : handleConversationSelect;
   const selectedConversationId = redirectsOnSelect ? null : conversationItemId;
 
   const queryClient = useQueryClient();

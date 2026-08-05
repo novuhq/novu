@@ -1,4 +1,3 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
@@ -19,6 +18,7 @@ import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Badge } from '@/components/primitives/badge';
@@ -34,11 +34,12 @@ import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { IS_EU } from '@/config';
+import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { QueryKeys } from '@/utils/query-keys';
 import {
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
@@ -91,7 +92,7 @@ export function AgentDetailsPage() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const { currentEnvironment, readOnly } = useEnvironment();
-  const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const agentRoutes = useAgentRoutes();
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
   const [setupModalDismissed, setSetupModalDismissed] = useState(false);
@@ -105,19 +106,28 @@ export function AgentDetailsPage() {
   const agentQuery = useQuery({
     queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agentIdentifier),
     queryFn: () => getAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agentIdentifier),
-    enabled: Boolean(currentEnvironment && agentIdentifier && isConversationalAgentsEnabled),
+    enabled: Boolean(currentEnvironment && agentIdentifier && areAgentsAvailable),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
+    mutationFn: ({
+      identifier,
+      deleteFromProvider,
+    }: {
+      identifier: string;
+      name: string;
+      deleteFromProvider?: boolean;
+    }) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
         deleteFromProvider,
       }),
-    onSuccess: async (_, { identifier }) => {
+    onSuccess: async (_, { identifier, name }) => {
       setAgentToDelete(null);
-      showSuccessToast('Agent deleted', 'The agent was removed.');
+      showSuccessToast(`Deleted agent: ${name.length > 40 ? `${name.slice(0, 40)}…` : name}`);
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
       navigate(agentsListPath);
     },
     onError: (err: Error) => {
@@ -135,7 +145,7 @@ export function AgentDetailsPage() {
         agentIdentifier,
         limit: 100,
       }),
-    enabled: Boolean(currentEnvironment && agentIdentifier && isConversationalAgentsEnabled),
+    enabled: Boolean(currentEnvironment && agentIdentifier && areAgentsAvailable),
   });
 
   const hasConnectedIntegration = useMemo(() => {
@@ -159,7 +169,7 @@ export function AgentDetailsPage() {
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
   useEffect(() => {
-    if (!isConversationalAgentsEnabled || !agentIdentifier || !agentQuery.data) {
+    if (!areAgentsAvailable || !agentIdentifier || !agentQuery.data) {
       return;
     }
 
@@ -182,9 +192,9 @@ export function AgentDetailsPage() {
         integrationIdentifier,
       });
     }
-  }, [agentIdentifier, agentQuery.data, currentTab, integrationIdentifier, isConversationalAgentsEnabled, track]);
+  }, [agentIdentifier, agentQuery.data, currentTab, integrationIdentifier, areAgentsAvailable, track]);
 
-  if (IS_EU || !isConversationalAgentsEnabled) {
+  if (!areAgentsAvailable) {
     return <Navigate to={agentsListPath} replace />;
   }
 
@@ -265,7 +275,7 @@ export function AgentDetailsPage() {
             ) : (
               <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
                 <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
-                <span className="truncate">{breadcrumbCurrentLabel}</span>
+                <TruncatedText className="min-w-0 max-w-[40ch]">{breadcrumbCurrentLabel}</TruncatedText>
                 <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
                   BETA
                 </Badge>
@@ -281,86 +291,93 @@ export function AgentDetailsPage() {
     <>
       <PageMeta title={pageTitle} />
       <DashboardLayout headerStartItems={headerStartItems}>
-        {isNotFound ? (
-          <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">
-            <p>This agent does not exist or was removed.</p>
-            <Link to={agentsListPath} className="text-primary-base mt-3 inline-block text-label-sm font-medium">
-              Back to agents
-            </Link>
-          </div>
-        ) : null}
+        {/* Below header: Inbox must not nest under this customer-env NovuProvider. */}
+        <ConnectSubscriberProvider>
+          {isNotFound ? (
+            <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">
+              <p>This agent does not exist or was removed.</p>
+              <Link to={agentsListPath} className="text-primary-base mt-3 inline-block text-label-sm font-medium">
+                Back to agents
+              </Link>
+            </div>
+          ) : null}
 
-        {error && !isNotFound ? (
-          <div className="text-error-base text-label-sm max-w-3xl px-4 py-6 md:px-6">
-            Could not load this agent. Try again later.
-          </div>
-        ) : null}
+          {error && !isNotFound ? (
+            <div className="text-error-base text-label-sm max-w-3xl px-4 py-6 md:px-6">
+              Could not load this agent. Try again later.
+            </div>
+          ) : null}
 
-        {!error && isLoading ? (
-          <>
-            <AgentDetailsHeader agent={undefined} isLoading />
-            <AgentDetailsTabsSkeleton />
-          </>
-        ) : null}
+          {!error && isLoading ? (
+            <>
+              <AgentDetailsHeader agent={undefined} isLoading />
+              <AgentDetailsTabsSkeleton />
+            </>
+          ) : null}
 
-        {!error && !isLoading && agent ? (
-          <>
-            <AgentDetailsHeader agent={agent} isLoading={false} onRequestDelete={setAgentToDelete} />
+          {!error && !isLoading && agent ? (
+            <>
+              <AgentDetailsHeader agent={agent} isLoading={false} onRequestDelete={setAgentToDelete} />
 
-            {agent.exceedsPlanLimit ? (
-              <div className="px-4 pb-2 md:px-6">
-                <AgentExceedsPlanBanner />
-              </div>
-            ) : null}
+              {agent.exceedsPlanLimit ? (
+                <div className="px-4 pb-2 md:px-6">
+                  <AgentExceedsPlanBanner />
+                </div>
+              ) : null}
 
-            <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
-              <TabsList align="start" variant="regular" className="border-t-transparent px-4 py-0! md:px-6">
-                <TabsTrigger variant="regular" value="overview" size="xl">
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger variant="regular" value="integrations" size="xl">
-                  Channels
-                </TabsTrigger>
-              </TabsList>
+              <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
+                <TabsList align="start" variant="regular" className="border-t-transparent px-4 py-0! md:px-6">
+                  <TabsTrigger variant="regular" value="overview" size="xl">
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger variant="regular" value="integrations" size="xl">
+                    Channels
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="overview" className="outline-none">
-                <AgentOverviewTab agent={agent} />
-              </TabsContent>
-              <TabsContent value="integrations" className="outline-none">
-                {currentTab === 'integrations' ? (
-                  <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
-                ) : null}
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="overview" className="outline-none">
+                  <AgentOverviewTab agent={agent} />
+                </TabsContent>
+                <TabsContent value="integrations" className="outline-none">
+                  {currentTab === 'integrations' ? (
+                    <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
+                  ) : null}
+                </TabsContent>
+              </Tabs>
 
-            <DeleteAgentDialog
-              open={Boolean(agentToDelete)}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setAgentToDelete(null);
-                }
-              }}
-              onConfirm={({ deleteFromProvider }) => {
-                if (agentToDelete) {
-                  deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
-                }
-              }}
-              agentName={agentToDelete?.name ?? ''}
-              agentIdentifier={agentToDelete?.identifier ?? ''}
-              isDeleting={deleteMutation.isPending}
-              isManagedRuntime={agentToDelete?.runtime === 'managed'}
-            />
+              <DeleteAgentDialog
+                open={Boolean(agentToDelete)}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setAgentToDelete(null);
+                  }
+                }}
+                onConfirm={({ deleteFromProvider }) => {
+                  if (agentToDelete) {
+                    deleteMutation.mutate({
+                      identifier: agentToDelete.identifier,
+                      name: agentToDelete.name,
+                      deleteFromProvider,
+                    });
+                  }
+                }}
+                agentName={agentToDelete?.name ?? ''}
+                agentIdentifier={agentToDelete?.identifier ?? ''}
+                isDeleting={deleteMutation.isPending}
+                isManagedRuntime={agentToDelete?.runtime === 'managed'}
+              />
 
-            <AgentSetupModal
-              isOpen={showSetupModal}
-              onClose={() => setSetupModalDismissed(true)}
-              onSetupClick={() => {
-                setSetupModalDismissed(true);
-                handleTabChange('integrations');
-              }}
-            />
-          </>
-        ) : null}
+              <AgentSetupModal
+                isOpen={showSetupModal}
+                onClose={() => setSetupModalDismissed(true)}
+                onSetupClick={() => {
+                  setSetupModalDismissed(true);
+                  handleTabChange('integrations');
+                }}
+              />
+            </>
+          ) : null}
+        </ConnectSubscriberProvider>
       </DashboardLayout>
     </>
   );

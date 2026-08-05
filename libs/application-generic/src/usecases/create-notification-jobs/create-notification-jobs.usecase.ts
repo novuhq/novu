@@ -25,13 +25,17 @@ import {
 } from '../../services/analytic-logs';
 import { LogRepository } from '../../services/analytic-logs/log.repository';
 import { FeatureFlagsService } from '../../services/feature-flags';
-import { getNestedValue } from '../../utils';
+import { type LeanNotificationStep, toLeanStep } from '../../services/step-template-hydration.service';
 import { PlatformException } from '../../utils/exceptions';
+import { getNestedValue } from '../../utils/object';
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
+type NotificationStepWithTemplate = NotificationStepEntity & {
+  template: NonNullable<NotificationStepEntity['template']>;
+};
 
 @Injectable()
 export class CreateNotificationJobs {
@@ -45,7 +49,7 @@ export class CreateNotificationJobs {
 
   @InstrumentUsecase()
   public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
-    const activeSteps = this.filterActiveSteps(command.template.steps);
+    const activeSteps = this.filterActiveStepsWithTemplates(command.template.steps, command.template._id);
 
     const channels = activeSteps
       .map((item) => item.template.type as StepTypeEnum)
@@ -71,17 +75,34 @@ export class CreateNotificationJobs {
 
     const steps = await this.createSteps(command, activeSteps, notification);
 
-    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification);
+    // Both dedup flags shrink what a job persists and are read once here (the
+    // worker's read paths handle either shape, so both are forward-only and safe
+    // to toggle off): payload-dedup drops the per-job trigger payload (resolved
+    // from the notification via `_notificationId`); job-step-dedup persists a
+    // lean step (ids/filters/metadata + a `{ _id, type }` template stub) that
+    // the worker rehydrates from the live workflow at execution time.
+    const [isPayloadDedupEnabled, isJobStepDedupEnabled] = await Promise.all([
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_PAYLOAD_DEDUP_ENABLED,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        defaultValue: false,
+      }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_JOB_STEP_DEDUP_ENABLED,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        defaultValue: false,
+      }),
+    ]);
+
+    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification, isPayloadDedupEnabled);
     if (adhocTriggerJob) {
       jobs.push(adhocTriggerJob);
     }
 
     for (const step of steps) {
-      if (!step.template) {
-        throw new PlatformException('Step template was not found');
-      }
-
-      jobs.push(this.buildJobFromStep(step, command, notification));
+      jobs.push(this.buildJobFromStep(step, command, notification, isPayloadDedupEnabled, isJobStepDedupEnabled));
     }
 
     return jobs;
@@ -183,16 +204,23 @@ export class CreateNotificationJobs {
     }
   }
 
-  private buildJobFromStep(step, command: CreateNotificationJobsCommand, notification): NotificationJob {
+  private buildJobFromStep(
+    step: NotificationStepWithTemplate,
+    command: CreateNotificationJobsCommand,
+    notification: NotificationEntity,
+    isPayloadDedupEnabled: boolean,
+    isJobStepDedupEnabled: boolean
+  ): NotificationJob {
     const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
     const providerId = command.templateProviderIds[channel];
 
     return {
       identifier: command.identifier,
-      payload: command.payload,
+      payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
+      ...(command._agentId !== undefined && { _agentId: command._agentId }),
       tenant: command.tenant,
-      step: this.buildStepForJob(step, command),
+      step: this.buildStepForJob(step, command, isJobStepDedupEnabled),
       transactionId: command.transactionId,
       _notificationId: notification._id,
       _environmentId: command.environmentId,
@@ -257,17 +285,35 @@ export class CreateNotificationJobs {
     return {};
   }
 
-  private buildStepForJob(step, command: CreateNotificationJobsCommand) {
-    return {
-      ...step,
+  private buildStepForJob(
+    step: NotificationStepEntity,
+    command: CreateNotificationJobsCommand,
+    isJobStepDedupEnabled: boolean
+  ): NotificationStepEntity {
+    if (!isJobStepDedupEnabled) {
+      return {
+        ...step,
+        ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+      };
+    }
+
+    const leanStep: LeanNotificationStep = {
+      ...toLeanStep(step),
+      ...(step.variants ? { variants: step.variants.map(toLeanStep) } : {}),
       ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
     };
+
+    // `job.step` is a Mongo Mixed field; under job-step-dedup we intentionally
+    // persist this lean projection and rehydrate the full template at execution
+    // time (StepTemplateHydrationService).
+    return leanStep as unknown as NotificationStepEntity;
   }
 
   private createATriggerJobIfMissing(
-    steps: NotificationStepEntity[],
+    steps: NotificationStepWithTemplate[],
     command: CreateNotificationJobsCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    isPayloadDedupEnabled = false
   ): NotificationJob | undefined {
     const triggerStepExist = steps.some((step) => step.template.type === StepTypeEnum.TRIGGER);
 
@@ -277,8 +323,9 @@ export class CreateNotificationJobs {
 
     return {
       identifier: command.identifier,
-      payload: command.payload,
+      payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
+      ...(command._agentId !== undefined && { _agentId: command._agentId }),
       tenant: command.tenant,
       step: {
         bridgeUrl: command.bridgeUrl,
@@ -312,30 +359,56 @@ export class CreateNotificationJobs {
 
   private async createSteps(
     command: CreateNotificationJobsCommand,
-    activeSteps: NotificationStepEntity[],
+    activeSteps: NotificationStepWithTemplate[],
     notification: NotificationEntity
-  ): Promise<NotificationStepEntity[]> {
+  ): Promise<NotificationStepWithTemplate[]> {
     return await this.filterDigestSteps(command, notification, activeSteps);
   }
 
-  private filterActiveSteps(steps: NotificationStepEntity[]): NotificationStepEntity[] {
-    return steps.filter((step) => step.active === true);
+  private filterActiveStepsWithTemplates(
+    steps: NotificationStepEntity[],
+    workflowId: string
+  ): NotificationStepWithTemplate[] {
+    const activeSteps = steps.filter((step) => step.active === true);
+    const stepsWithTemplates: NotificationStepWithTemplate[] = [];
+
+    for (const step of activeSteps) {
+      if (step.template) {
+        stepsWithTemplates.push(step as NotificationStepWithTemplate);
+      } else {
+        Logger.error(
+          `Skipping step with missing template for workflow ${workflowId} (stepId: ${step.stepId}, _templateId: ${step._templateId})`,
+          LOG_CONTEXT
+        );
+      }
+    }
+
+    if (activeSteps.length > 0 && stepsWithTemplates.length === 0) {
+      const message = `No active steps with templates found for workflow ${workflowId}`;
+      const error = new PlatformException(message);
+      Logger.error(error, message, LOG_CONTEXT);
+      throw error;
+    }
+
+    return stepsWithTemplates;
   }
 
   private async filterDigestSteps(
     command: CreateNotificationJobsCommand,
     notification: NotificationEntity,
-    steps: NotificationStepEntity[]
-  ): Promise<NotificationStepEntity[]> {
+    steps: NotificationStepWithTemplate[]
+  ): Promise<NotificationStepWithTemplate[]> {
     // TODO: Review this for workflows with more than one digest as this will return the first element found
-    const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
+    const digestStep = steps.find((step) => step.template.type === StepTypeEnum.DIGEST);
 
     if (digestStep?.metadata && 'type' in digestStep.metadata) {
-      return await this.digestFilterSteps.execute(
-        DigestFilterStepsCommand.create({
+      // `steps` is re-supplied after create() because the command class widens it
+      // to NotificationStepEntity[], which would erase the narrowed step type.
+      return await this.digestFilterSteps.execute({
+        ...DigestFilterStepsCommand.create({
           _subscriberId: command.subscriber._id,
           payload: command.payload,
-          steps: command.template.steps,
+          steps,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
@@ -344,8 +417,9 @@ export class CreateNotificationJobs {
           transactionId: command.transactionId,
           type: digestStep.metadata.type as DigestTypeEnum, // We already checked it is a DIGEST
           backoff: 'backoff' in digestStep.metadata ? digestStep.metadata.backoff : undefined,
-        })
-      );
+        }),
+        steps,
+      });
     }
 
     return steps;

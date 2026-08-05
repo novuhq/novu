@@ -15,6 +15,7 @@ import {
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 import type { AgentMcpServerDto, AgentRuntimeConfigResponseDto, AgentToolDto } from '../dtos/agent-runtime-config.dto';
+import { formatAgentLinkConnectedAt } from '../util/agent-inbound-connection';
 
 /**
  * Minimal integration shape needed by the agent integration mapper to compute
@@ -200,7 +201,7 @@ export function toAgentIntegrationResponse(
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,
-    connectedAt: link.connectedAt ?? null,
+    connectedAt: formatAgentLinkConnectedAt(link.connectedAt),
     createdAt: link.createdAt,
     updatedAt: link.updatedAt,
   };

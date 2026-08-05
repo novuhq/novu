@@ -120,7 +120,15 @@ export class PayloadMergerService {
 
     mergedPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
-    mergedPayload.context = this.resolveContext(userPayloadExample?.context);
+    const fullActorSchema = this.mockDataGenerator.createFullActorObject();
+    const userActorData = (userPayloadExample?.actor as Record<string, unknown>) || {};
+
+    mergedPayload.actor = merge({}, fullActorSchema, userActorData);
+
+    mergedPayload.context = this.resolveContextWithFallback(
+      userPayloadExample?.context,
+      payloadExample.context as Record<string, unknown> | undefined
+    );
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -179,6 +187,38 @@ export class PayloadMergerService {
     return Object.keys(resolved).length > 0 ? resolved : undefined;
   }
 
+  private resolveContextWithFallback(
+    userContext?: ContextPayload,
+    extractedContext?: Record<string, unknown>
+  ): ContextResolved | undefined {
+    const userResolved = this.resolveContext(userContext);
+    const extractedResolved = this.resolveExtractedContext(extractedContext);
+
+    if (!userResolved) return extractedResolved;
+    if (!extractedResolved) return userResolved;
+
+    return merge({}, extractedResolved, userResolved);
+  }
+
+  private resolveExtractedContext(extractedContext?: Record<string, unknown>): ContextResolved | undefined {
+    if (!extractedContext || Object.keys(extractedContext).length === 0) {
+      return undefined;
+    }
+
+    const asPayload: ContextPayload = {};
+    for (const [contextType, contextValue] of Object.entries(extractedContext)) {
+      if (!contextValue || typeof contextValue !== 'object') continue;
+
+      const entity = contextValue as Record<string, unknown>;
+      asPayload[contextType] = {
+        id: typeof entity.id === 'string' ? entity.id : `example-${contextType}-id`,
+        data: (typeof entity.data === 'object' && entity.data !== null ? entity.data : {}) as Record<string, unknown>,
+      };
+    }
+
+    return this.resolveContext(asPayload);
+  }
+
   private async mergeWithoutPayloadSchema({
     payloadExample,
     userPayloadExample,
@@ -209,7 +249,15 @@ export class PayloadMergerService {
 
     finalPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
-    finalPayload.context = this.resolveContext(userPayloadExample?.context);
+    const fullActorSchema = this.mockDataGenerator.createFullActorObject();
+    const userActorData = (userPayloadExample?.actor as Record<string, unknown>) || {};
+
+    finalPayload.actor = merge({}, fullActorSchema, userActorData);
+
+    finalPayload.context = this.resolveContextWithFallback(
+      userPayloadExample?.context,
+      payloadExample.context as Record<string, unknown> | undefined
+    );
 
     if (workflow && stepIdOrInternalId) {
       /*

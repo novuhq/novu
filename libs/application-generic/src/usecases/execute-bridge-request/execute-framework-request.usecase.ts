@@ -106,6 +106,12 @@ export class ExecuteFrameworkRequest {
 
     this.logger.debug(`Making bridge request to \`${url}\``);
 
+    // Always DNS-pin user- or environment-controlled bridge targets (stateless
+    // bridgeUrl, EXTERNAL origin, or explicit opt-in). Previously this was gated
+    // behind isOutboundSsrfProtectionEnabled() (Cloud EE only), which left
+    // self-hosted deployments with only the incomplete sync hostname denylist.
+    // Legitimate private/internal bridges must be allow-listed via
+    // NOVU_SAFE_OUTBOUND_ALLOW.
     const enforceSsrfProtection =
       command.enforceSsrfProtection === true ||
       !!command.statelessBridgeUrl ||

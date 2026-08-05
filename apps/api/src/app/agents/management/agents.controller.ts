@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -14,9 +15,16 @@ import {
   UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  isAgentAnalyticsSource,
+  NOVU_ANALYTICS_SOURCE_HEADER,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
@@ -27,11 +35,15 @@ import {
   ApiResponse,
 } from '../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
+import { SdkGroupName, SdkMethodName } from '../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../shared/framework/user.decorator';
+import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
 import {
   AgentResponseDto,
+  ConversationUsageResponseDto,
   CreateAgentRequestDto,
+  GetAgentUsageResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
   UpdateAgentBridgeRequestDto,
@@ -44,6 +56,8 @@ import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
+import { GetAgentUsageCommand } from './usecases/get-agent-usage/get-agent-usage.command';
+import { GetAgentUsage } from './usecases/get-agent-usage/get-agent-usage.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
@@ -53,19 +67,44 @@ import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
+@ApiTags('Agents')
+@SdkGroupName('Agents')
 @RequireAuthentication()
 export class AgentsController {
   constructor(
     private readonly createAgentUsecase: CreateAgent,
     private readonly listAgentsUsecase: ListAgents,
     private readonly getAgentUsecase: GetAgent,
+    private readonly getAgentUsageUsecase: GetAgentUsage,
     private readonly updateAgentUsecase: UpdateAgent,
     private readonly deleteAgentUsecase: DeleteAgent,
-    private readonly listAgentEmojiUsecase: ListAgentEmoji
+    private readonly listAgentEmojiUsecase: ListAgentEmoji,
+    private readonly conversationActivation: ConversationActivationService
   ) {}
 
+  @Get('/usage/conversations')
+  @ApiExcludeEndpoint()
+  @ApiResponse(ConversationUsageResponseDto)
+  @ApiOperation({
+    summary: 'Get active-conversations usage',
+    description:
+      'Returns the number of active conversations counted for the organization in the current billing period, ' +
+      'the amount included in the plan (`null` when unlimited), and the period bounds.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  async getConversationUsage(@UserSession() user: UserSessionData): Promise<ConversationUsageResponseDto> {
+    const usage = await this.conversationActivation.getUsage(user.organizationId);
+
+    return {
+      current: usage.current,
+      included: usage.included,
+      periodStart: usage.periodStart.toISOString(),
+      periodEnd: usage.periodEnd.toISOString(),
+    };
+  }
+
   @Get('/emoji')
+  @ApiExcludeEndpoint()
   @ApiOperation({
     summary: 'List available emoji',
     description:
@@ -80,14 +119,22 @@ export class AgentsController {
   @Post('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents')
+  @SdkMethodName('create')
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
-    summary: 'Create agent',
-    description: 'Creates an agent scoped to the current environment. The identifier must be unique per environment.',
+    summary: 'Create an agent',
+    description:
+      'Create an agent scoped to the current environment. The identifier must be unique per environment. ' +
+      'Set `runtime` to `managed` and supply `managedRuntime` to provision a provider-hosted agent brain.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseFilters(AgentRuntimeExceptionFilter)
-  createAgent(@UserSession() user: UserSessionData, @Body() body: CreateAgentRequestDto): Promise<AgentResponseDto> {
+  createAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: CreateAgentRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSourceHeader?: string
+  ): Promise<AgentResponseDto> {
     return this.createAgentUsecase.execute(
       CreateAgentCommand.create({
         userId: user._id,
@@ -99,6 +146,7 @@ export class AgentsController {
         active: body.active,
         runtime: body.runtime,
         managedRuntime: body.managedRuntime,
+        analyticsSource: isAgentAnalyticsSource(analyticsSourceHeader) ? analyticsSourceHeader : undefined,
       })
     );
   }
@@ -106,11 +154,13 @@ export class AgentsController {
   @Get('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents')
+  @SdkMethodName('list')
   @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
-    summary: 'List agents',
+    summary: 'List all agents',
     description:
-      'Returns a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
+      'Retrieve a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgents(@UserSession() user: UserSessionData, @Query() query: ListAgentsQueryDto): Promise<ListAgentsResponseDto> {
@@ -131,11 +181,13 @@ export class AgentsController {
   }
 
   @Put('/:identifier/bridge')
+  @SdkGroupName('Agents')
+  @SdkMethodName('updateBridge')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
-    summary: 'Update agent bridge configuration',
+    summary: 'Update an agent bridge',
     description:
-      'Updates the bridge URL configuration for an agent. Used by the CLI to register dev tunnel URLs. Refuses to activate dev bridges on production environments.',
+      'Update the bridge URL configuration for an agent. Used by the CLI to register dev tunnel URLs. Refuses to activate dev bridges on production environments.',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -161,10 +213,13 @@ export class AgentsController {
   }
 
   @Get('/:identifier')
+  @ExternalApiAccessible()
+  @SdkGroupName('Agents')
+  @SdkMethodName('retrieve')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
-    summary: 'Get agent',
-    description: 'Retrieves an agent by its external identifier (not the internal MongoDB id).',
+    summary: 'Retrieve an agent',
+    description: 'Retrieve an agent by its external identifier (not the internal MongoDB id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -181,11 +236,39 @@ export class AgentsController {
     );
   }
 
+  @Get('/:identifier/usage')
+  @ApiExcludeEndpoint()
+  @ApiResponse(GetAgentUsageResponseDto)
+  @ApiOperation({
+    summary: 'Get agent usage',
+    description: 'Returns workflows in the current environment that have this agent assigned.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getAgentUsage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<GetAgentUsageResponseDto> {
+    return this.getAgentUsageUsecase.execute(
+      GetAgentUsageCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+      })
+    );
+  }
+
   @Patch('/:identifier')
+  @ExternalApiAccessible()
+  @SdkGroupName('Agents')
+  @SdkMethodName('update')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
-    summary: 'Update agent',
-    description: 'Updates an agent by its external identifier.',
+    summary: 'Update an agent',
+    description: 'Update an agent by its external identifier.',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -214,11 +297,14 @@ export class AgentsController {
   }
 
   @Delete('/:identifier')
+  @ExternalApiAccessible()
+  @SdkGroupName('Agents')
+  @SdkMethodName('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Delete agent',
+    summary: 'Delete an agent',
     description:
-      'Deletes an agent by identifier and removes all agent-integration links. ' +
+      'Delete an agent by identifier, remove all agent-integration links, and clear the agent assignment from any workflows that reference it. ' +
       'For managed-runtime agents, pass `deleteFromProvider=true` to also archive the agent on the provider side (e.g. Anthropic). ' +
       'By default only the Novu record is deleted and the provider agent is left intact.',
   })

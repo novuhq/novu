@@ -24,9 +24,10 @@ import {
   recalculatePositionAndIndex,
 } from './node-utils';
 import { NodeData } from './nodes';
-import { createStep } from './step-utils';
+import { createStep, removeStepFromWorkflow } from './step-utils';
 import { showErrorToast } from './toasts';
 import { useAnimatedNodes } from './use-animated-nodes';
+import { useWorkflowEditorRoutes } from './use-workflow-editor-routes';
 import { useWorkflow } from './workflow-provider';
 
 function isIntersecting(el1: Element, el2: Element) {
@@ -61,6 +62,7 @@ export const useCanvasNodesEdges = ({
 }) => {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const { triggerWorkflowRoute } = useWorkflowEditorRoutes();
   const { workflow: currentWorkflow, step: currentStep, update } = useWorkflow();
   const { data: layoutsResponse } = useFetchLayouts({
     limit: 100,
@@ -281,10 +283,7 @@ export const useCanvasNodesEdges = ({
       const nodeToRemove = nodes[removeIndex];
 
       update(
-        {
-          ...workflow,
-          steps: workflow.steps.filter((s) => s.slug !== nodeToRemove.data.stepSlug),
-        },
+        removeStepFromWorkflow(workflow, (s) => s.slug !== nodeToRemove.data.stepSlug),
         {
           onSuccess: () => {
             const newNodes = [...dataRef.current.nodes].filter((node) => node.id !== nodeToRemove.id);
@@ -644,7 +643,7 @@ export const useCanvasNodesEdges = ({
       });
       const triggerNode =
         nodes.find((node) => node.type === 'trigger') ??
-        createTriggerNode(currentWorkflow, currentEnvironment, containerWidth);
+        createTriggerNode(currentWorkflow, currentEnvironment, containerWidth, triggerWorkflowRoute);
       const previousPosition = newNodes[newNodes.length - 1]?.position ?? triggerNode.position;
       const addNode = nodes.find((node) => node.type === 'add') ?? createAddNode(previousPosition, newNodes);
       const finalNodes = [triggerNode, ...newNodes, addNode].filter((node) => node !== undefined);
@@ -662,7 +661,7 @@ export const useCanvasNodesEdges = ({
     return () => {
       clearTimeout(timeout);
     };
-  }, [dataRef, currentWorkflow, reactFlowWrapper]);
+  }, [dataRef, currentWorkflow, reactFlowWrapper, triggerWorkflowRoute]);
 
   return {
     selectedNodeId: currentSelectedNodeId,

@@ -1,3 +1,4 @@
+import { AGENT_ANALYTICS_SOURCES, AgentSubscriberAccessEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -21,6 +22,11 @@ const agentSchema = new Schema<AgentDBModel>(
     behavior: {
       acknowledgeOnReceived: Schema.Types.Boolean,
       reactionOnResolved: Schema.Types.String,
+      subscriberAccess: {
+        type: Schema.Types.String,
+        enum: Object.values(AgentSubscriberAccessEnum),
+        required: true,
+      },
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,
@@ -45,6 +51,11 @@ const agentSchema = new Schema<AgentDBModel>(
         ref: 'Integration',
       },
       externalAgentId: Schema.Types.String,
+      managedDefinitionVersion: Schema.Types.Number,
+    },
+    creationSource: {
+      type: Schema.Types.String,
+      enum: AGENT_ANALYTICS_SOURCES,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,

@@ -13,6 +13,7 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { ControlsTranslationService } from './controls-translation.service';
 import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 
@@ -101,10 +102,15 @@ describe('EmailOutputRendererUsecase', () => {
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
 
+    const controlsTranslationService = new ControlsTranslationService(
+      moduleRef as unknown as ModuleRef,
+      pinoLoggerMock as unknown as PinoLogger
+    );
+
     emailOutputRendererUsecase = new EmailOutputRendererUsecase(
       getOrganizationSettingsMock as any,
-      moduleRef as any,
       pinoLoggerMock as any,
+      controlsTranslationService,
       controlValuesRepositoryMock as any,
       getLayoutUseCaseV0 as any,
       jobRepositoryMock as any,
@@ -275,6 +281,47 @@ describe('EmailOutputRendererUsecase', () => {
 
       expect(result).to.have.property('subject', 'Welcome');
       expect(result.body).to.include('Hello valued customer');
+    });
+  });
+
+  describe('preheader injection', () => {
+    const buildPreheaderCommand = (preheader: string): EmailOutputRendererCommand => ({
+      dbWorkflow: mockDbWorkflow,
+      controlValues: {
+        subject: 'Welcome Email',
+        preheader,
+        body: JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: 'Unique body marker' }],
+            },
+          ],
+        } satisfies MailyJSONContent),
+      },
+      fullPayloadForRender: mockFullPayload,
+      stepId: 'fake_step_id',
+    });
+
+    it('should render the preheader once', async () => {
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand('Peek inside'));
+
+      expect(result.body.split('Peek inside')).to.have.lengthOf(2);
+    });
+
+    it('should not expand $& as a special replacement pattern', async () => {
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand('$&'));
+
+      expect(result.body).to.include('$&');
+      expect(result.body.match(/<body\b/gi) || []).to.have.lengthOf(1);
+    });
+
+    it("should not expand $' as a special replacement pattern", async () => {
+      const result = await emailOutputRendererUsecase.execute(buildPreheaderCommand("$'"));
+
+      expect(result.body).to.include("$'");
+      expect(result.body.split('Unique body marker')).to.have.lengthOf(2);
     });
   });
 

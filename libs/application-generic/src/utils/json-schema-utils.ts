@@ -3,8 +3,8 @@ import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
-import set from 'lodash/set';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
+import { safeSetPath } from './safe-set-path';
 import { DIGEST_EVENTS_VARIABLE_PATTERN } from './template-parser/parser-utils';
 
 export type ArrayVariable = {
@@ -143,7 +143,7 @@ function buildObjectFromPaths(
 
   // Initialize arrays with the correct number of iterations
   arrayVariables.forEach((arrayVariable) => {
-    set(result, arrayVariable.path, Array(arrayVariable.iterations).fill({}));
+    safeSetPath(result, arrayVariable.path, Array(arrayVariable.iterations).fill({}));
   });
 
   // Sort paths by number of dots (depth) in ascending order
@@ -205,7 +205,7 @@ function buildObjectFromPaths(
         payloadProperties.forEach((property) => {
           const propertyParts = property.split('.');
           const propertyValue = propertyParts[propertyParts.length - 1];
-          setNestedProperty(payload, property, propertyValue);
+          safeSetPath(payload, property, propertyValue);
         });
         value = payload;
       } else {
@@ -217,7 +217,7 @@ function buildObjectFromPaths(
       (arrayVariable) => arrayVariable.path === path || path.startsWith(`${arrayVariable.path}.`)
     );
     if (!arrayParent) {
-      set(result, path.replace(/\[\d+\]/g, '[0]'), value);
+      safeSetPath(result, path.replace(/\[\d+\]/g, '[0]'), value);
 
       return;
     }
@@ -226,37 +226,13 @@ function buildObjectFromPaths(
     const targetPath = isDirectArrayPath ? path : `${arrayParent.path}[0].${path.slice(arrayParent.path.length + 1)}`;
 
     if (isDirectArrayPath) {
-      set(result, targetPath, Array(arrayParent.iterations).fill(value));
+      safeSetPath(result, targetPath, Array(arrayParent.iterations).fill(value));
     } else {
-      set(result, targetPath, value);
+      safeSetPath(result, targetPath, value);
     }
   });
 
   return result;
-}
-
-const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-
-function isPrototypePollutionKey(key: string): boolean {
-  return PROTOTYPE_POLLUTION_KEYS.has(key);
-}
-
-function setNestedProperty(obj: Record<string, unknown>, path: string, value: string) {
-  const keys = path.split('.');
-
-  if (keys.some(isPrototypePollutionKey)) return;
-
-  let current = obj;
-
-  for (let i = 0; i < keys.length - 1; i += 1) {
-    const key = keys[i];
-    if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {
-      current[key] = {};
-    }
-    current = current[key] as Record<string, unknown>;
-  }
-
-  current[keys[keys.length - 1]] = value;
 }
 
 /**

@@ -1,0 +1,27 @@
+{
+  "name": "@novu/agent-evals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Behavioral eval harness for Novu coding-agent playbooks (suite-based).",
+  "type": "module",
+  "scripts": {
+    "eval": "vitest run --config vitest.evals.config.ts",
+    "eval:watch": "vitest --config vitest.evals.config.ts",
+    "test": "vitest run --config vitest.config.ts",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@novu/shared": "workspace:*",
+    "@ai-sdk/anthropic": "^3.0.10",
+    "ai": "6.0.50",
+    "dotenv": "^16.6.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "5.6.2",
+    "vitest": "^4.1.8",
+    "vitest-evals": "0.12.0"
+  }
+}

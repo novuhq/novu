@@ -14,6 +14,16 @@
 export const DEFAULT_CONTEXT_VALUE = '';
 export const DEFAULT_CONTEXT_LABEL = 'Default context';
 
+const DANGEROUS_OBJECT_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+export function isDangerousObjectKey(key: string): boolean {
+  return DANGEROUS_OBJECT_KEYS.has(key);
+}
+
+function hasDangerousObjectKey(segments: string[]): boolean {
+  return segments.some((segment) => isDangerousObjectKey(segment));
+}
+
 /**
  * Simple context variable validation
  * Valid patterns:
@@ -26,7 +36,10 @@ export function isValidContextVariable(variableName: string): boolean {
   const parts = variableName.split('.');
   if (parts.length < 3) return false;
 
-  const [, , property] = parts;
+  const [, contextType, property, ...dataPath] = parts;
+  if (!contextType || hasDangerousObjectKey([contextType, property, ...dataPath])) {
+    return false;
+  }
 
   // context.<type>.id - no nesting allowed
   if (property === 'id') {
@@ -39,6 +52,67 @@ export function isValidContextVariable(variableName: string): boolean {
   }
 
   return false;
+}
+
+export function isPreviewSandboxVariable(variableName: string): boolean {
+  if (variableName.startsWith('subscriber.data.') || variableName.startsWith('actor.data.')) {
+    return true;
+  }
+
+  return isValidContextVariable(variableName);
+}
+
+export function extractVariablePath(liquidOrPath: string): string {
+  return liquidOrPath
+    .replace(/^\{\{|\}\}$/g, '')
+    .split('|')[0]
+    .trim();
+}
+
+export function buildContextFragmentFromKey(key: string): Record<string, unknown> {
+  const [contextType, property, ...dataPath] = key.split('.');
+  if (!contextType || !property || hasDangerousObjectKey([contextType, property, ...dataPath])) {
+    return {};
+  }
+
+  if (property === 'id') {
+    return {
+      [contextType]: {
+        id: `example-${contextType}-id`,
+        data: {},
+      },
+    };
+  }
+
+  if (property !== 'data') {
+    return {};
+  }
+
+  const data =
+    dataPath.length === 0
+      ? {}
+      : dataPath.reduceRight((value, segment) => ({ [segment]: value }), 'example_value' as unknown);
+
+  return {
+    [contextType]: {
+      id: `example-${contextType}-id`,
+      data,
+    },
+  };
+}
+
+export function extractContextTypesFromVariables(variables: { name: string }[]): string[] {
+  const types = new Set<string>();
+  for (const v of variables) {
+    if (v.name.startsWith('context.')) {
+      const contextParts = v.name.split('.');
+      if (contextParts.length >= 2 && contextParts[1]) {
+        types.add(contextParts[1]);
+      }
+    }
+  }
+
+  return Array.from(types);
 }
 
 /**

@@ -125,6 +125,29 @@ describe('workflow function', () => {
     });
   });
 
+  it('should discover a tool channel step', async () => {
+    const { discover } = workflow('tool-workflow', async ({ step }) => {
+      await step.tool('send-tool', async () => ({
+        body: 'Tool body',
+      }));
+    });
+
+    const definition = await discover();
+
+    expect(definition.steps).to.have.length(1);
+    expect(definition.steps[0]).to.include({
+      stepId: 'send-tool',
+      type: 'tool',
+    });
+    expect(definition.steps[0].outputs.schema).toMatchObject({
+      type: 'object',
+      properties: {
+        body: { type: 'string' },
+      },
+      required: ['body'],
+    });
+  });
+
   it('should include the defined name', async () => {
     const { discover } = workflow(
       'workflow-with-name',
@@ -394,6 +417,64 @@ describe('workflow function', () => {
           method: 'POST',
         })
       );
+    });
+
+    it('should include agent override in trigger payload', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      const fetchMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => {
+          return Promise.resolve({
+            transactionId: '123',
+          });
+        },
+      });
+      global.fetch = fetchMock;
+
+      await testWorkflow.trigger({
+        to: 'test@test.com',
+        payload: {
+          free: 'field',
+        },
+        agentId: 'support-agent',
+      });
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.agentId).toEqual('support-agent');
+    });
+
+    it('should include explicit null agent in trigger payload', async () => {
+      const testWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.custom('custom', async () => ({
+          foo: 'bar',
+        }));
+      });
+
+      const fetchMock = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: () => {
+          return Promise.resolve({
+            transactionId: '123',
+          });
+        },
+      });
+      global.fetch = fetchMock;
+
+      await testWorkflow.trigger({
+        to: 'test@test.com',
+        payload: {
+          free: 'field',
+        },
+        agentId: null,
+      });
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+      expect(body.agentId).toBeNull();
     });
 
     it('should make an API call when provided with a valid payload', async () => {

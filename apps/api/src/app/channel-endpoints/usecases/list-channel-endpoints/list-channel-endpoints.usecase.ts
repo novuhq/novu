@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { decryptChannelEndpoint, InstrumentUsecase } from '@novu/application-generic';
 import type { EnforceEnvOrOrgIds } from '@novu/dal';
 import { ChannelEndpointDBModel, ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
@@ -99,8 +99,13 @@ export class ListChannelEndpoints {
       includeCursor: command.includeCursor,
     });
 
+    const decryptedData = (pagination.data as ChannelEndpointEntity[]).map((endpoint) => ({
+      ...endpoint,
+      endpoint: decryptChannelEndpoint(endpoint.type, endpoint.endpoint),
+    }));
+
     return {
-      data: pagination.data,
+      data: decryptedData,
       next: pagination.next,
       previous: pagination.previous,
       totalCount: pagination.totalCount,

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchEnvironmentVariables } from '@/hooks/use-fetch-environment-variables';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -26,8 +26,7 @@ export const VariableList = () => {
     getFeatureForTierAsBoolean(
       FeatureNameEnum.ENVIRONMENT_VARIABLES,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+    ) && !IS_SELF_HOSTED_CE;
 
   useEffect(() => {
     const timeout = setTimeout(() => {

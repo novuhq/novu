@@ -1,6 +1,6 @@
 import { Novu } from '@novu/api';
 import { SubscriberEntity, TopicSubscribersRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -325,6 +325,39 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
     expect(subscriptionsAfterDuplicate.length, 'expect subscriptionsAfterDuplicate.length to be 2').to.equal(2);
   });
 
+  it('should preserve enabled=false when preferences use the workflowId shape', async () => {
+    const topicKey = `topic-key-enabled-false-${Date.now()}`;
+
+    await novuClient.topics.create({
+      key: topicKey,
+      name: 'Test Topic for Enabled Flag',
+    });
+
+    const workflow = await session.createTemplate({
+      name: 'Workflow Enabled False',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test content',
+        },
+      ],
+    });
+
+    const response = await session.testAgent.post(`/v2/topics/${topicKey}/subscriptions`).send({
+      subscriptions: [
+        {
+          identifier: `${subscriber1.subscriberId}-disabled-pref`,
+          subscriberId: subscriber1.subscriberId,
+        },
+      ],
+      preferences: [{ workflowId: workflow._id, enabled: false }],
+    });
+
+    expect(response.status, 'Should create the subscription').to.equal(201);
+    expect(response.body.data[0].preferences, 'Should return preferences').to.exist;
+    expect(response.body.data[0].preferences[0].enabled, 'Should preserve enabled=false').to.equal(false);
+  });
+
   it('should enforce subscription limit of 10 per subscriber per topic', async () => {
     try {
       const topicKey = `topic-key-limit-${Date.now()}`;
@@ -554,5 +587,62 @@ describe('Create topic subscriptions - /v2/topics/:topicKey/subscriptions (POST)
       expect(getResponse.result.contextKeys).to.deep.equal([]);
       expect(getResponse.result.identifier).to.not.include(':ctx_');
     });
+  });
+
+  it('should reject user-provided subscription identifiers longer than 512 characters', async () => {
+    const topicKey = `topic-key-identifier-limit-${Date.now()}`;
+
+    await novuClient.topics.create({
+      key: topicKey,
+      name: 'Identifier Limit Topic',
+    });
+
+    const tooLongIdentifier = 'a'.repeat(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH + 1);
+
+    try {
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriptions: [
+            {
+              identifier: tooLongIdentifier,
+              subscriberId: subscriber1.subscriberId,
+            },
+          ],
+        },
+        topicKey
+      );
+
+      expect.fail('Request should have thrown an error for an identifier that exceeds the limit');
+    } catch (error: any) {
+      expect(error.statusCode || error.data$?.statusCode || error.status).to.equal(400);
+
+      const errorResponse = error.ctx || error.data$?.ctx;
+
+      expect(errorResponse.meta.successful).to.equal(0);
+      expect(errorResponse.meta.failed).to.equal(1);
+      expect(errorResponse.errors?.[0].code).to.equal('INVALID_SUBSCRIPTION_IDENTIFIER');
+      expect(errorResponse.errors?.[0].subscriberId).to.equal(subscriber1.subscriberId);
+    }
+  });
+
+  it('should allow auto-generated subscription identifiers when no custom identifier is provided', async () => {
+    const topicKey = `topic-key-auto-identifier-${Date.now()}`;
+
+    await novuClient.topics.create({
+      key: topicKey,
+      name: 'Auto Identifier Topic',
+    });
+
+    const response = await novuClient.topics.subscriptions.create(
+      {
+        subscriberIds: [subscriber1.subscriberId],
+      },
+      topicKey
+    );
+
+    expect(response.result.meta.successful).to.equal(1);
+    expect(response.result.meta.failed).to.equal(0);
+    expect(response.result.data[0].identifier).to.exist;
+    expect(response.result.data[0].identifier!.length).to.be.at.most(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH);
   });
 });

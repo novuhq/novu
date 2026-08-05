@@ -4,11 +4,17 @@ import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
+import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
+import { installDepsPrompt, installingDepsMessage, reconcilePlanTitle } from './bridge-reconcile-variant';
 import {
   logAuthUrlFileHandoffEvent,
   logEmailHandoffEvents,
+  logSendblueDashboardHandoffEvent,
+  logSendblueImessageHandoffEvents,
+  logSendblueWebhookHandoffEvents,
   logSlackHandoffEvents,
   logSlackSetupLinkHandoffEvent,
   logTelegramBotfatherHandoffEvent,
@@ -16,8 +22,13 @@ import {
   logTelegramDeepLinkQrPngHandoffEvent,
   logTelegramSetupLinkHandoffEvent,
   logTelegramSetupLinkQrPngHandoffEvent,
+  logWhatsAppSignupHandoffEvent,
+  logWhatsAppTestHandoffEvents,
+  logWhatsAppWaMeQrPngHandoffEvent,
   writeAuthUrlHandoffFile,
 } from './handoff-events';
+import { printBridgeReconcilePlan } from './print-bridge-reconcile-plan';
+import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import { renderQRPngFile } from './qr';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
@@ -44,6 +55,9 @@ export function createLoggingUI(): ConnectUI {
 
   return {
     interactive: false,
+    releaseTerminal() {
+      return Promise.resolve();
+    },
     showWelcome() {
       // Non-interactive: skip the welcome prompt; the run is unattended by
       // definition (--ci or piped stdin) so there's nobody to press Enter.
@@ -96,19 +110,22 @@ export function createLoggingUI(): ConnectUI {
     loadingIntegrations() {
       start('Looking up agent runtime integrations…');
     },
-    pickAgentRuntime({ preselected }) {
+    pickAgentConnectMode({ preselected }) {
       stop();
-      const runtime = preselected ?? 'demo';
-      console.log(chalk.gray(`Non-interactive mode: using "${runtime}" agent runtime.`));
+      const mode = preselected ?? 'demo';
+      console.log(chalk.gray(`Non-interactive mode: using "${mode}" connect mode.`));
 
-      return Promise.resolve(runtime);
+      return Promise.resolve(mode);
     },
     pickAgentIntegration({ integrations }) {
       stop();
       if (integrations.length === 1) {
         console.log(chalk.gray(`Non-interactive mode: reusing integration "${integrations[0].name}".`));
 
-        return Promise.resolve({ kind: 'existing', integrationId: integrations[0]._id });
+        return Promise.resolve({
+          kind: 'existing',
+          integrationId: integrations[0]._id,
+        });
       }
 
       return Promise.reject(
@@ -176,13 +193,78 @@ export function createLoggingUI(): ConnectUI {
       stop();
       logGeneratedAgentPreview(spec);
 
-      return Promise.resolve<GeneratedAgentPreviewResult>({ action: 'confirm', spec });
+      return Promise.resolve<GeneratedAgentPreviewResult>({
+        action: 'confirm',
+        spec,
+      });
     },
     creatingAgent(name) {
       start(`Creating agent "${name}"…`);
     },
     agentCreated(agent: AgentSummary) {
       succeed(`Created agent "${agent.name}" (${agent.identifier})`);
+    },
+    promptForAgentName(defaultName) {
+      stop();
+      const name = defaultName.trim() || 'My Chat SDK Agent';
+      console.log(chalk.gray(`Non-interactive mode: using agent name "${name}".`));
+
+      return Promise.resolve(name);
+    },
+    confirmEnvSecretOverwrite() {
+      return Promise.resolve(false);
+    },
+    pickLlmAuthKind() {
+      stop();
+      console.log(chalk.gray('Non-interactive mode: skipping LLM wiring (demo echo). Pass --llm-auth to configure.'));
+
+      return Promise.resolve('skip');
+    },
+    confirmScaffold({ projectDir, appName, variant = 'chat-sdk' }) {
+      console.log(chalk.cyan(`→ Scaffolding ${bridgeScaffoldLabel(variant)} "${appName}" in ${projectDir}`));
+
+      return Promise.resolve(true);
+    },
+    scaffoldingBridge({ variant }) {
+      start(bridgeScaffoldSpinnerText(variant));
+    },
+    bridgeScaffolded(opts) {
+      stop();
+      printBridgeScaffolded(opts);
+    },
+    confirmInstallBridgeDeps({ projectDir, installCommand, packages, variant = 'chat-sdk' }) {
+      console.log('');
+      console.log(chalk.bold(installDepsPrompt(variant)));
+      console.log(chalk.dim(`Adding: ${packages.join(', ')}`));
+      console.log(chalk.gray(`  Project: ${projectDir}`));
+      console.log(chalk.cyan(`  ${installCommand}`));
+
+      return Promise.resolve(true);
+    },
+    installingBridgeDeps(variant = 'chat-sdk') {
+      start(installingDepsMessage(variant));
+    },
+    showBridgeReconcilePlan({
+      projectDir,
+      requirements,
+      envPaths,
+      wiringInstructions,
+      requirementsFile,
+      variant = 'chat-sdk',
+    }) {
+      succeed(`${reconcilePlanTitle(variant)} reconciled`);
+      printBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile, variant });
+      console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
+
+      return Promise.resolve();
+    },
+    offerBridgeTunnel({ devCommand }) {
+      console.log('');
+      console.log(chalk.bold('Start the dev tunnel?'));
+      console.log(chalk.cyan(`  ${devCommand}`));
+      console.log(chalk.gray('Non-interactive mode: skipping tunnel launch.'));
+
+      return Promise.resolve('skip');
     },
     pickChannel() {
       stop();
@@ -256,6 +338,96 @@ export function createLoggingUI(): ConnectUI {
     telegramConnected() {
       succeed('Telegram connected');
     },
+    addingSendblueIntegration() {
+      start('Linking iMessage (Sendblue) to your agent…');
+    },
+    showSendblueIntro({ dashboardUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Sendblue API settings (account required): ${chalk.underline(dashboardUrl)}`);
+      logSendblueDashboardHandoffEvent({ dashboardUrl });
+
+      return Promise.resolve();
+    },
+    promptForSendblueCredential({ title, verificationError }) {
+      stop();
+      if (verificationError) {
+        console.error(chalk.yellow(verificationError));
+      }
+
+      return Promise.reject(
+        new Error(
+          `Non-interactive mode: Sendblue credential "${title}" required. Pass --sendblue-api-key, --sendblue-secret-key and --sendblue-from.`
+        )
+      );
+    },
+    configuringSendblueWebhook() {
+      start('Registering your Sendblue receive webhook…');
+    },
+    showSendblueWebhookManualFallback({ callbackUrl, webhookSecret }) {
+      stop();
+      console.log(`${chalk.yellow('!')} Could not auto-register the Sendblue webhook. Add it manually:`);
+      console.log(`  ${chalk.bold('Callback URL:')} ${chalk.underline(callbackUrl)}`);
+      if (webhookSecret) {
+        console.log(`  ${chalk.bold('Signing secret:')} ${webhookSecret}`);
+      }
+      logSendblueWebhookHandoffEvents({ callbackUrl, webhookSecret });
+
+      return Promise.resolve();
+    },
+    promptForSendblueTestPhone() {
+      stop();
+
+      return Promise.reject(
+        new Error('Non-interactive mode: pass --sendblue-test-phone <+E.164> for the Sendblue test message.')
+      );
+    },
+    sendingSendblueTestMessage() {
+      start('Sending a test iMessage…');
+    },
+    showSendblueTestWaiting({ phone, fromNumber, imessageUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Test message sent to ${chalk.bold(phone)} from ${chalk.bold(fromNumber)}.`);
+      console.log(`${chalk.cyan('→')} Message the bot on iMessage: ${chalk.underline(imessageUrl)}`);
+      logSendblueImessageHandoffEvents({ imessageUrl, fromNumber });
+      start('Waiting for your first inbound iMessage…');
+    },
+    sendblueConnected() {
+      succeed('iMessage (Sendblue) connected');
+    },
+    addingWhatsAppIntegration() {
+      start('Linking WhatsApp to your agent…');
+    },
+    awaitWhatsAppSignupOpen({ signupUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Finish WhatsApp signup here: ${chalk.underline(signupUrl)}`);
+      logWhatsAppSignupHandoffEvent({ signupUrl });
+
+      return Promise.resolve();
+    },
+    showWhatsAppSignupWaiting(_opts) {
+      start('Waiting for Meta Embedded Signup to complete…');
+    },
+    showWhatsAppTest({ waMeUrl, displayPhoneNumber }) {
+      stop();
+      if (displayPhoneNumber) {
+        console.log(`${chalk.cyan('→')} Send any WhatsApp message to ${chalk.bold(displayPhoneNumber)}.`);
+      } else {
+        console.log(`${chalk.cyan('→')} Send any WhatsApp message to your business number.`);
+      }
+      if (waMeUrl) {
+        console.log(`${chalk.cyan('→')} Open WhatsApp directly: ${chalk.underline(waMeUrl)}`);
+      }
+      logWhatsAppTestHandoffEvents({ waMeUrl, displayPhoneNumber });
+      if (waMeUrl) {
+        void renderQRPngFile(waMeUrl)
+          .then((waMeQrPngPath) => logWhatsAppWaMeQrPngHandoffEvent({ waMeQrPngPath }))
+          .catch(() => undefined);
+      }
+      start('Waiting for your first inbound WhatsApp message…');
+    },
+    whatsappConnected() {
+      succeed('WhatsApp connected');
+    },
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
     },
@@ -302,37 +474,11 @@ export function createLoggingUI(): ConnectUI {
     },
     success(result) {
       stop();
-      const agentUrl = result.environmentSlug
-        ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
-        : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
-      const channelLabel = (() => {
-        if (result.connectedChannel === 'slack') return 'Slack';
-        if (result.connectedChannel === 'telegram') return 'Telegram';
-        if (result.connectedChannel === 'email') return 'Email';
+      if (shouldSkipConnectSuccessSummary(result)) {
+        return;
+      }
 
-        return null;
-      })();
-      const redirectChannelLabel = result.dashboardRedirectChannel
-        ? channelDisplayName(result.dashboardRedirectChannel)
-        : null;
-      console.log('');
-      console.log(`${chalk.green('✓')} Your agent is live.`);
-      console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-      if (channelLabel) {
-        console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
-      } else if (redirectChannelLabel) {
-        console.log(
-          `  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`
-        );
-      } else {
-        console.log(`  ${chalk.gray('No channel connected.')}`);
-      }
-      if (result.isKeyless && result.claimUrl) {
-        console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
-        console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
-      } else {
-        console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
-      }
+      printConnectSuccess(result);
     },
     failure(message) {
       stop();
@@ -364,4 +510,36 @@ function logGeneratedAgentPreview(spec: GeneratedAgentSpec): void {
     console.log(`  ${chalk.bold('Skills:')} ${labels.skills.join(', ')}`);
   }
   console.log(chalk.gray('Non-interactive mode: continuing without confirmation.'));
+}
+
+function bridgeScaffoldLabel(variant: BridgeScaffoldVariant): string {
+  if (variant === 'chat-sdk') {
+    return 'Chat SDK app';
+  }
+
+  if (variant === 'ai-sdk') {
+    return 'AI SDK agent app';
+  }
+
+  if (variant === 'langchain') {
+    return 'LangChain agent app';
+  }
+
+  return 'agent app';
+}
+
+function bridgeScaffoldSpinnerText(variant: BridgeScaffoldVariant): string {
+  if (variant === 'chat-sdk') {
+    return 'Scaffolding Chat SDK project…';
+  }
+
+  if (variant === 'ai-sdk') {
+    return 'Scaffolding AI SDK agent project…';
+  }
+
+  if (variant === 'langchain') {
+    return 'Scaffolding LangChain agent project…';
+  }
+
+  return 'Scaffolding agent project…';
 }

@@ -3,7 +3,6 @@ import {
   CLAUDE_BUILTIN_TOOLS,
   ClaudeBuiltinTool,
   CONVERSATIONAL_PROVIDERS,
-  EmailProviderIdEnum,
   getMcpIconPath,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
@@ -11,6 +10,7 @@ import { useMemo, useState } from 'react';
 import { RiFileCodeLine } from 'react-icons/ri';
 import { AwsIcon } from '@/components/icons/aws';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { LogoCircle } from '../icons/logo-circle';
 import { AnthropicAsteriskIcon } from './agent-flow-illustration-shared';
 import { AgentUsecasePreviewIllustration } from './agent-usecase-preview-illustration';
@@ -632,11 +632,12 @@ const PROVIDER_DISPLAY_NAME_BY_ID = new Map<string, string>(
  */
 const PROVIDER_DISPLAY_NAME_OVERRIDES: Record<string, string> = {
   [ChatProviderIdEnum.WhatsAppBusiness]: 'WhatsApp',
-  [EmailProviderIdEnum.NovuAgent]: 'Email',
 };
 
 function getChannelDisplayName(providerId: string): string {
-  return PROVIDER_DISPLAY_NAME_OVERRIDES[providerId] ?? PROVIDER_DISPLAY_NAME_BY_ID.get(providerId) ?? providerId;
+  const base = PROVIDER_DISPLAY_NAME_OVERRIDES[providerId] ?? PROVIDER_DISPLAY_NAME_BY_ID.get(providerId) ?? providerId;
+
+  return getAgentChannelDisplayName(providerId, base);
 }
 
 function resolveChannelStatus(

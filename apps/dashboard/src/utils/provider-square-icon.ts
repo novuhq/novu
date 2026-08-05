@@ -1,9 +1,11 @@
 const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   whatsapp: 'whatsapp-business',
-  'novu-email-agent': 'novu-email',
+  'novu-email-agent': 'email',
   'novu-anthropic': 'novu',
   email: 'novu-email',
   teams: 'msteams',
+  pagerduty: 'pager-duty',
+  grafana: 'grafana-on-call',
 };
 
 export function getProviderSquareIconFileName(platform: string): string {

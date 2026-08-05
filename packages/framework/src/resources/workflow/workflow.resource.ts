@@ -71,6 +71,7 @@ export function workflow<
       ...(event.overrides && { overrides: event.overrides }),
       ...(event.actor && { actor: event.actor }),
       ...(event.context && { context: event.context }),
+      ...(event.agentId !== undefined && { agentId: event.agentId }),
       ...(bridgeUrl && { bridgeUrl }),
     };
 
@@ -147,6 +148,12 @@ export function workflow<
           ChannelStepEnum.IN_APP,
           channelStepSchemas.in_app.output,
           channelStepSchemas.in_app.result
+        ),
+        tool: await discoverChannelStepFactory(
+          newWorkflow,
+          ChannelStepEnum.TOOL,
+          channelStepSchemas.tool.output,
+          channelStepSchemas.tool.result
         ),
         digest: await discoverActionStepFactory(
           newWorkflow,

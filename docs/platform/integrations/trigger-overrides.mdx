@@ -1,0 +1,952 @@
+---
+title: 'Trigger Overrides'
+description: "Customize workflow behavior at trigger time in Novu using overrides. Override provider settings, headers, and payloads per event without editing your workflow."
+---
+
+
+Trigger overrides let you to modify the default behavior of specific aspects of a workflow trigger (event), giving you fine-tuned control over how messages are delivered across different channels and providers.
+
+## Channel overrides
+
+Channel overrides let you customize specific channel settings and content during workflow trigger. Each channel has its own supported override options, documented in their respective channel guides.
+
+<Note>
+  Channel overrides is only available for Email and SMS channels.
+</Note>
+
+<Columns cols={2}>
+  <Card
+    title="Email overrides"
+    icon="mail"
+    href="/platform/integrations/email"
+  />
+  <Card
+    title="SMS overrides"
+    icon="message-square"
+    href="/platform/integrations/sms"
+  />
+</Columns>
+
+## Provider overrides
+
+Provider overrides give you fine-tuned control over how messages are delivered by allowing direct configuration of the underlying provider SDKs during the workflow's trigger phase.
+
+This feature is designed for advanced use cases where Novu's default message editor or UI does not expose specific provider capabilities.
+
+Use provider overrides to:
+- Access native provider features not surfaced by Novu’s abstraction layer. For example, custom headers in SendGrid, topic messaging in FCM, or [Slack Block Kit](/platform/integrations/chat/slack#format-messages-with-block-kit).
+- Adapt to provider-specific options by injecting parameters that Novu doesn’t yet officially support.
+- Configure shared or unique settings across steps without altering templates or workflow logic.
+
+This mechanism offers a flexible customization layer that lets you pass deeply nested payloads that align directly with your provider’s native API. It helps decouple workflow behavior from provider-specific implementation details, which is essential when working across multiple channels like email, push, or chat.
+
+<Note>
+  Because overrides interact directly with provider SDKs, they won’t work if they're misconfigured. Make sure you understand the supported options for each provider before using this feature. 
+</Note>
+
+### Provider override scopes
+
+Overrides are defined in the `overrides` property of a trigger payload. You can specify configuration values at two levels:
+- Workflow-level: Applies to all steps using a specific provider and takes precedence over the default workflow provider settings.
+- Step-level: Targets a specific step in the workflow and it takes precedence over both workflow-level overrides and the default workflow provider settings.
+
+Some channels also let you save provider overrides on the step itself in the workflow editor, rather than sending them with every trigger. Those configured overrides sit below both scopes above: anything you send at trigger time replaces the configured value for the same field, and fields you do not send keep their configured values. See [chat provider content overrides](/platform/integrations/chat#provider-content-overrides).
+
+<Warning>
+  **Arrays replace, they do not merge.** When an array key is set at more than one level, the higher-priority array is used whole rather than merged element by element. Previously arrays were merged by index, which could leave a partial array patched over a longer one. Send the complete array at the level you want to win.
+</Warning>
+
+### Workflow-level provider overrides
+
+Workflow-level provider overrides apply configuration to all steps that use a given provider in the workflow. They’re useful for applying shared logic across multiple steps, without repeating the same settings in each one.
+
+Use workflow-level overrides when:
+- You need to define common metadata like headers, personalization, or layout settings.
+- You want consistent behavior across all steps for a given provider.
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.trigger({
+  to: {
+    subscriberId: "subscriber_unique_identifier",
+    firstName: "Albert",
+    lastName: "Einstein",
+    email: "albert@einstein.com",
+    phone: "+1234567890",
+  },
+  workflowId: "workflow_identifier",
+  payload: {
+    comment_id: "string",
+    post: { text: "string" },
+  },
+  overrides: {
+    providers: {
+      sendgrid: {
+        template_id: "xxxxxxxx",
+        trackingSettings: {
+          clickTracking: {
+            enable: true,
+            enableText: false,
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={
+            "subscriber_id": "subscriber_unique_identifier",
+            "first_name": "Albert",
+            "last_name": "Einstein",
+            "email": "albert@einstein.com",
+            "phone": "+1234567890",
+        },
+        payload={
+            "comment_id": "string",
+            "post": {"text": "string"},
+        },
+        overrides={
+            "providers": {
+                "sendgrid": {
+                    "template_id": "xxxxxxxx",
+                    "trackingSettings": {
+                        "clickTracking": {
+                            "enable": True,
+                            "enableText": False,
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber_unique_identifier",
+        FirstName:    "Albert",
+        LastName:     "Einstein",
+        Email:        "albert@einstein.com",
+        Phone:        "+1234567890",
+    }),
+    Payload: map[string]any{
+        "comment_id": "string",
+        "post":       map[string]any{"text": "string"},
+    },
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "sendgrid": map[string]any{
+                "template_id": "xxxxxxxx",
+                "trackingSettings": map[string]any{
+                    "clickTracking": map[string]any{
+                        "enable":     true,
+                        "enableText": false,
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(
+            subscriberId: 'subscriber_unique_identifier',
+            firstName: 'Albert',
+            lastName: 'Einstein',
+            email: 'albert@einstein.com',
+            phone: '+1234567890',
+        ),
+        payload: [
+            'comment_id' => 'string',
+            'post' => ['text' => 'string'],
+        ],
+        overrides: [
+            'providers' => [
+                'sendgrid' => [
+                    'template_id' => 'xxxxxxxx',
+                    'trackingSettings' => [
+                        'clickTracking' => [
+                            'enable' => true,
+                            'enableText' => false,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriber_unique_identifier",
+        FirstName = "Albert",
+        LastName = "Einstein",
+        Email = "albert@einstein.com",
+        Phone = "+1234567890",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "comment_id", "string" },
+        { "post", new Dictionary<string, object>() { { "text", "string" } } },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "sendgrid", new Dictionary<string, object>() {
+                { "template_id", "xxxxxxxx" },
+                { "trackingSettings", new Dictionary<string, object>() {
+                    { "clickTracking", new Dictionary<string, object>() {
+                        { "enable", true },
+                        { "enableText", false },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriber_unique_identifier")
+            .firstName("Albert")
+            .lastName("Einstein")
+            .email("albert@einstein.com")
+            .phone("+1234567890")
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("comment_id", "string"),
+            Map.entry("post", Map.of("text", "string"))))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("sendgrid", Map.ofEntries(
+                Map.entry("template_id", "xxxxxxxx"),
+                Map.entry("trackingSettings", Map.of("clickTracking", Map.ofEntries(
+                    Map.entry("enable", true),
+                    Map.entry("enableText", false))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflow_identifier",
+    "to": {
+        "subscriberId": "subscriber_unique_identifier",
+        "firstName": "Albert",
+        "lastName": "Einstein",
+        "email": "albert@einstein.com",
+        "phone": "+1234567890"
+    },
+    "payload": {
+        "comment_id": "string",
+        "post": { "text": "string" }
+    },
+    "overrides": {
+        "providers": {
+            "sendgrid": {
+                "template_id": "xxxxxxxx",
+                "trackingSettings": {
+                    "clickTracking": {
+                        "enable": true,
+                        "enableText": false
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+This configuration affects every step in the workflow that uses SendGrid, unless a step-level override provides a more specific value.
+
+#### Sending extra fields supported by provider SDK
+
+You can also send extra fields supported by the provider SDK. For example, if you want to send a headers to the provider SDK, then you could use the `_passthrough` field.
+
+```json
+"overrides": {
+  "providers" : {
+    "sendgrid": {
+      "_passthrough": {
+        "headers": {
+          "Authorization": "Bearer my-api-key"
+        }
+      }
+    },
+  },
+},
+```
+
+### Step-level overrides
+
+Step-level overrides let you apply provider-specific settings directly to an individual step in your workflow.
+
+Use step-level overrides when:
+- You want to send push notifications through the same provider, but with different settings for each step. For example, two steps use FCM, but each sends a different sound or title.
+- You need to customize the payload for a specific push step, such as platform-specific settings for Android and iOS, without affecting other steps.
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.trigger({
+  to: {
+    subscriberId: "subscriber_unique_identifier",
+    firstName: "Albert",
+    lastName: "Einstein",
+    email: "albert@einstein.com",
+    phone: "+1234567890",
+  },
+  workflowId: "workflow_identifier",
+  payload: {
+    comment_id: "string",
+    post: { text: "string" },
+  },
+  overrides: {
+    steps: {
+      "push-step": {
+        providers: {
+          fcm: {
+            notification: {
+              title: "New Comment",
+              body: "Someone replied to your post!",
+              sound: "default",
+            },
+            android: {
+              notification: {
+                sound: "sound_bell",
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: "notification_bell.caf",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={
+            "subscriber_id": "subscriber_unique_identifier",
+            "first_name": "Albert",
+            "last_name": "Einstein",
+            "email": "albert@einstein.com",
+            "phone": "+1234567890",
+        },
+        payload={
+            "comment_id": "string",
+            "post": {"text": "string"},
+        },
+        overrides={
+            "steps": {
+                "push-step": {
+                    "providers": {
+                        "fcm": {
+                            "notification": {
+                                "title": "New Comment",
+                                "body": "Someone replied to your post!",
+                                "sound": "default",
+                            },
+                            "android": {
+                                "notification": {
+                                    "sound": "sound_bell",
+                                },
+                            },
+                            "apns": {
+                                "payload": {
+                                    "aps": {
+                                        "sound": "notification_bell.caf",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber_unique_identifier",
+        FirstName:    "Albert",
+        LastName:     "Einstein",
+        Email:        "albert@einstein.com",
+        Phone:        "+1234567890",
+    }),
+    Payload: map[string]any{
+        "comment_id": "string",
+        "post":       map[string]any{"text": "string"},
+    },
+    Overrides: map[string]map[string]any{
+        "steps": {
+            "push-step": map[string]any{
+                "providers": map[string]any{
+                    "fcm": map[string]any{
+                        "notification": map[string]any{
+                            "title": "New Comment",
+                            "body":  "Someone replied to your post!",
+                            "sound": "default",
+                        },
+                        "android": map[string]any{
+                            "notification": map[string]any{
+                                "sound": "sound_bell",
+                            },
+                        },
+                        "apns": map[string]any{
+                            "payload": map[string]any{
+                                "aps": map[string]any{
+                                    "sound": "notification_bell.caf",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(
+            subscriberId: 'subscriber_unique_identifier',
+            firstName: 'Albert',
+            lastName: 'Einstein',
+            email: 'albert@einstein.com',
+            phone: '+1234567890',
+        ),
+        payload: [
+            'comment_id' => 'string',
+            'post' => ['text' => 'string'],
+        ],
+        overrides: [
+            'steps' => [
+                'push-step' => [
+                    'providers' => [
+                        'fcm' => [
+                            'notification' => [
+                                'title' => 'New Comment',
+                                'body' => 'Someone replied to your post!',
+                                'sound' => 'default',
+                            ],
+                            'android' => [
+                                'notification' => [
+                                    'sound' => 'sound_bell',
+                                ],
+                            ],
+                            'apns' => [
+                                'payload' => [
+                                    'aps' => [
+                                        'sound' => 'notification_bell.caf',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriber_unique_identifier",
+        FirstName = "Albert",
+        LastName = "Einstein",
+        Email = "albert@einstein.com",
+        Phone = "+1234567890",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "comment_id", "string" },
+        { "post", new Dictionary<string, object>() { { "text", "string" } } },
+    },
+    Overrides = new Overrides() {
+        Steps = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>() {
+            { "push-step", new Dictionary<string, Dictionary<string, object>>() {
+                { "providers", new Dictionary<string, object>() {
+                    { "fcm", new Dictionary<string, object>() {
+                        { "notification", new Dictionary<string, object>() {
+                            { "title", "New Comment" },
+                            { "body", "Someone replied to your post!" },
+                            { "sound", "default" },
+                        } },
+                        { "android", new Dictionary<string, object>() {
+                            { "notification", new Dictionary<string, object>() {
+                                { "sound", "sound_bell" },
+                            } },
+                        } },
+                        { "apns", new Dictionary<string, object>() {
+                            { "payload", new Dictionary<string, object>() {
+                                { "aps", new Dictionary<string, object>() {
+                                    { "sound", "notification_bell.caf" },
+                                } },
+                            } },
+                        } },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriber_unique_identifier")
+            .firstName("Albert")
+            .lastName("Einstein")
+            .email("albert@einstein.com")
+            .phone("+1234567890")
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("comment_id", "string"),
+            Map.entry("post", Map.of("text", "string"))))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("steps", Map.of("push-step", Map.of("providers", Map.of("fcm", Map.ofEntries(
+                Map.entry("notification", Map.ofEntries(
+                    Map.entry("title", "New Comment"),
+                    Map.entry("body", "Someone replied to your post!"),
+                    Map.entry("sound", "default"))),
+                Map.entry("android", Map.of("notification", Map.of("sound", "sound_bell"))),
+                Map.entry("apns", Map.of("payload", Map.of("aps", Map.of("sound", "notification_bell.caf"))))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflow_identifier",
+    "to": {
+        "subscriberId": "subscriber_unique_identifier",
+        "firstName": "Albert",
+        "lastName": "Einstein",
+        "email": "albert@einstein.com",
+        "phone": "+1234567890"
+    },
+    "payload": {
+        "comment_id": "string",
+        "post": { "text": "string" }
+    },
+    "overrides": {
+        "steps": {
+            "push-step": {
+                "providers": {
+                    "fcm": {
+                        "notification": {
+                            "title": "New Comment",
+                            "body": "Someone replied to your post!",
+                            "sound": "default"
+                        },
+                        "android": {
+                            "notification": {
+                                "sound": "sound_bell"
+                            }
+                        },
+                        "apns": {
+                            "payload": {
+                                "aps": {
+                                    "sound": "notification_bell.caf"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+<Note>
+  The `push-step` refers to the step identifier, which you can copy directly from your workflow in the Novu dashboard. Use this identifier to target the specific step you want to override. 
+</Note>
+
+In this example, only the `push-step` is affected, and multiple FCM-specific settings are overridden for that step, which are the notification title, body, and sound configurations for both Android and iOS platforms.
+
+### Slack Block Kit overrides
+
+Use trigger overrides to send [Slack Block Kit](https://api.slack.com/block-kit) messages that only your calling code can build. Pass a `blocks` array under `overrides.steps.<step-id>.providers.slack`, or use `_passthrough.body` for raw Slack API fields.
+
+<Note>
+  You can also save Slack overrides directly on the Chat step in the workflow editor, which keeps the layout versioned with the workflow instead of duplicated across every trigger call. That editor is [rolling out gradually](/platform/integrations/chat#provider-content-overrides). Use trigger overrides when the message depends on data your application only has at send time.
+</Note>
+
+<Card title="Slack Block Kit guide" icon="messages-square" href="/platform/integrations/chat/slack#format-messages-with-block-kit">
+  Step-by-step examples for plain text digests, step-configured overrides, direct `blocks` overrides, and `_passthrough` for all supported SDKs.
+</Card>
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+await novu.trigger({
+  workflowId: 'comment-alert',
+  to: { subscriberId: 'user-123' },
+  payload: {
+    postTitle: 'Q1 planning thread',
+    postUrl: 'https://app.example.com/posts/456',
+  },
+  overrides: {
+    steps: {
+      'slack-chat-step': {
+        providers: {
+          slack: {
+            text: 'You have new comments',
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: '*New comments on Q1 planning thread*',
+                },
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+    workflow_id='comment-alert',
+    to={'subscriber_id': 'user-123'},
+    payload={
+        'postTitle': 'Q1 planning thread',
+        'postUrl': 'https://app.example.com/posts/456',
+    },
+    overrides={
+        'steps': {
+            'slack-chat-step': {
+                'providers': {
+                    'slack': {
+                        'text': 'You have new comments',
+                        'blocks': [
+                            {
+                                'type': 'section',
+                                'text': {
+                                    'type': 'mrkdwn',
+                                    'text': '*New comments on Q1 planning thread*',
+                                },
+                            },
+                        ],
+                    },
+                },
+            },
+        },
+    },
+))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "comment-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "postTitle": "Q1 planning thread",
+        "postUrl":   "https://app.example.com/posts/456",
+    },
+    Overrides: map[string]map[string]any{
+        "steps": {
+            "slack-chat-step": map[string]any{
+                "providers": map[string]any{
+                    "slack": map[string]any{
+                        "text": "You have new comments",
+                        "blocks": []map[string]any{
+                            {
+                                "type": "section",
+                                "text": map[string]any{
+                                    "type": "mrkdwn",
+                                    "text": "*New comments on Q1 planning thread*",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'comment-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: [
+            'postTitle' => 'Q1 planning thread',
+            'postUrl' => 'https://app.example.com/posts/456',
+        ],
+        overrides: [
+            'steps' => [
+                'slack-chat-step' => [
+                    'providers' => [
+                        'slack' => [
+                            'text' => 'You have new comments',
+                            'blocks' => [
+                                [
+                                    'type' => 'section',
+                                    'text' => [
+                                        'type' => 'mrkdwn',
+                                        'text' => '*New comments on Q1 planning thread*',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "comment-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = new Dictionary<string, object>() {
+        { "postTitle", "Q1 planning thread" },
+        { "postUrl", "https://app.example.com/posts/456" },
+    },
+    Overrides = new Overrides() {
+        Steps = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>() {
+            { "slack-chat-step", new Dictionary<string, Dictionary<string, object>>() {
+                { "providers", new Dictionary<string, object>() {
+                    { "slack", new Dictionary<string, object>() {
+                        { "text", "You have new comments" },
+                        { "blocks", new List<Dictionary<string, object>>() {
+                            new Dictionary<string, object>() {
+                                { "type", "section" },
+                                { "text", new Dictionary<string, object>() {
+                                    { "type", "mrkdwn" },
+                                    { "text", "*New comments on Q1 planning thread*" },
+                                } },
+                            },
+                        } },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("comment-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of(
+            "postTitle", "Q1 planning thread",
+            "postUrl", "https://app.example.com/posts/456"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of(
+                "steps", Map.of(
+                    "slack-chat-step", Map.of(
+                        "providers", Map.of(
+                            "slack", Map.of(
+                                "text", "You have new comments",
+                                "blocks", List.of(
+                                    Map.of(
+                                        "type", "section",
+                                        "text", Map.of(
+                                            "type", "mrkdwn",
+                                            "text", "*New comments on Q1 planning thread*"))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -d '{
+    "name": "comment-alert",
+    "to": { "subscriberId": "user-123" },
+    "payload": {
+      "postTitle": "Q1 planning thread",
+      "postUrl": "https://app.example.com/posts/456"
+    },
+    "overrides": {
+      "steps": {
+        "slack-chat-step": {
+          "providers": {
+            "slack": {
+              "text": "You have new comments",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*New comments on Q1 planning thread*"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }'
+```
+  </Tab>
+</Tabs>
+
+<Note>
+  Replace `slack-chat-step` with the Chat step identifier from your workflow. For digest workflows, trigger overrides do not automatically reflect batched events. See [Slack Block Kit](/platform/integrations/chat/slack#block-kit-with-digest-workflows) for details.
+</Note>

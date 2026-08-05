@@ -6,17 +6,18 @@ import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { getAgentsListQueryKey, listAgents } from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useConversationalProviders } from '@/hooks/use-conversational-providers';
 import { useDebouncedForm } from '@/hooks/use-debounced-form';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { ConversationFiltersData } from '@/types/conversation';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { cn } from '@/utils/ui';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_CLOUD } from '../../config';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
-import { PROVIDER_OPTIONS } from './constants';
+import { buildProviderFilterOptions } from './constants';
 
 const AGENT_FILTER_LIMIT = 100;
 const AGENT_FILTER_PARAMS = { after: undefined, before: undefined, limit: AGENT_FILTER_LIMIT, identifier: '' };
@@ -41,6 +42,8 @@ export function ConversationFilters({
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
+  const conversationalProviders = useConversationalProviders();
+  const providerOptions = useMemo(() => buildProviderFilterOptions(conversationalProviders), [conversationalProviders]);
 
   const form = useForm<ConversationFiltersData>({
     values: filters,
@@ -51,7 +54,7 @@ export function ConversationFilters({
   useDebouncedForm(watch, onFiltersChange, 400);
 
   const dateFilterOptions = useMemo(() => {
-    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+    const missingSubscription = !subscription && IS_CLOUD;
 
     if (!organization || missingSubscription) {
       return [];
@@ -125,7 +128,7 @@ export function ConversationFilters({
                 type="multi"
                 title="Provider"
                 hideSearch
-                options={PROVIDER_OPTIONS}
+                options={providerOptions}
                 selected={field.value}
                 onSelect={(values) => setValue('provider', values)}
               />

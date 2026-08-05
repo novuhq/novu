@@ -14,6 +14,7 @@ import {
   verifyManagedCredentials,
 } from '../api/integrations';
 import type { AgentRuntimeChoice, ConnectCommandOptions } from '../types';
+import { isBridgeConnectMode } from '../types';
 import type { ConnectUI } from '../ui/ui';
 
 const AGENT_INTEGRATION_KIND = 'agent' as const;
@@ -36,7 +37,12 @@ export function resolveRuntimeProviderId(runtime: AgentRuntimeChoice): AgentRunt
 }
 
 export function resolveRuntimeFromOptions(options: ConnectCommandOptions): AgentRuntimeChoice | undefined {
-  return options.runtime;
+  const runtime = options.runtime;
+  if (!runtime || isBridgeConnectMode(runtime)) {
+    return undefined;
+  }
+
+  return runtime;
 }
 
 export async function resolveAgentRuntimeIntegration(

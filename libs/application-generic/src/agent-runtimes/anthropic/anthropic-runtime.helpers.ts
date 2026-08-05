@@ -1,6 +1,11 @@
 import { APIError } from '@anthropic-ai/sdk';
 import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto, McpTokenEndpointAuthMethod } from '@novu/shared';
-import { CLAUDE_BUILTIN_TOOLS, resolvePersistedMcpTokenEndpointAuthMethod } from '@novu/shared';
+import {
+  CLAUDE_BUILTIN_TOOLS,
+  NOVU_RESOLVE_SCHEMA,
+  NOVU_TOOL_CATALOG_SCHEMA,
+  resolvePersistedMcpTokenEndpointAuthMethod,
+} from '@novu/shared';
 import {
   AgentRuntimeNetworkError,
   AgentRuntimeOverloadedError,
@@ -221,22 +226,6 @@ export const MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG = {
   permission_policy: { type: 'always_ask' },
 } as const;
 
-export const MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG = {
-  permission_policy: { type: 'always_allow' },
-} as const;
-
-export type ManagedAgentPermissionConfig =
-  | typeof MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG
-  | typeof MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG;
-
-export function resolveManagedAgentPermissionConfig(useAlwaysAllow: boolean | undefined): ManagedAgentPermissionConfig {
-  if (useAlwaysAllow) {
-    return MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG;
-  }
-
-  return MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG;
-}
-
 /**
  * The agent response `tools` array contains toolset objects, not plain tool entries.
  * Flatten builtin toolset configs into individual AgentToolDto entries.
@@ -260,34 +249,26 @@ export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
 }
 
 /**
- * Build the Anthropic `tools` payload array from builtin tool type strings
- * and optional MCP server entries.
- *
- * We always emit the full toolset with every known tool explicitly set to
- * enabled or disabled. Sending only the enabled subset causes the Anthropic
- * API to default all omitted tools to enabled, which means the agent ends up
- * with every tool regardless of what the user selected.
+ * Novu-owned tools always attached to managed agents (independent of user tool/MCP selections).
  */
-export function buildToolsPayload(
+export function buildPlatformToolsPayload(): Record<string, unknown>[] {
+  return [
+    { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+    { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+  ];
+}
+
+function buildUserToolsetPayload(
   toolTypes?: string[],
-  mcpServers?: Array<{ name: string; url: string }>,
-  permissionConfig: ManagedAgentPermissionConfig = MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG
+  mcpServers?: Array<{ name: string; url: string }>
 ): Record<string, unknown>[] {
-  const hasTools = Array.isArray(toolTypes) && toolTypes.length > 0;
-  const hasMcpServers = Array.isArray(mcpServers) && mcpServers.length > 0;
-
-  if (!hasTools && !hasMcpServers) {
-    return [];
-  }
-
   const payload: Record<string, unknown>[] = [];
-
   const enabledSet = new Set(toolTypes ?? []);
   const allToolNames = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
 
   payload.push({
     type: 'agent_toolset_20260401',
-    default_config: permissionConfig,
+    default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
     configs: allToolNames.map((name) => ({ name, enabled: enabledSet.has(name) })),
   });
 
@@ -296,12 +277,61 @@ export function buildToolsPayload(
       payload.push({
         type: 'mcp_toolset',
         mcp_server_name: server.name,
-        default_config: permissionConfig,
+        default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
       });
     }
   }
 
   return payload;
+}
+
+/**
+ * Anthropic Managed Agents require the `read` builtin to be enabled (and not
+ * `always_deny`) whenever skills are attached — skills are loaded by reading
+ * their bundle files. Omitting it yields a 400:
+ *   "Missing required tool: skills require the read tool…"
+ */
+export const SKILL_REQUIRED_BUILTIN_TOOL = 'read';
+
+/**
+ * Ensures `read` is present in the tool-type list when the agent has skills.
+ * Idempotent — returns `toolTypes` unchanged when skills are absent or `read`
+ * is already selected.
+ */
+export function ensureSkillRequiredTools(toolTypes: string[] | undefined, hasSkills: boolean): string[] {
+  const tools = [...(toolTypes ?? [])];
+
+  if (hasSkills && !tools.includes(SKILL_REQUIRED_BUILTIN_TOOL)) {
+    tools.push(SKILL_REQUIRED_BUILTIN_TOOL);
+  }
+
+  return tools;
+}
+
+/**
+ * Build the Anthropic `tools` payload array from builtin tool type strings
+ * and optional MCP server entries.
+ *
+ * We always emit the full toolset with every known tool explicitly set to
+ * enabled or disabled. Sending only the enabled subset causes the Anthropic
+ * API to default all omitted tools to enabled, which means the agent ends up
+ * with every tool regardless of what the user selected.
+ *
+ * Platform tools (e.g. `novu_tool_catalog`, `novu_resolve`) are always included, even when the user
+ * has no builtin tools or MCP servers enabled.
+ *
+ * When `hasSkills` is true, `read` is force-enabled — Anthropic rejects skill
+ * attachments without a usable read tool on the agent toolset.
+ */
+export function buildToolsPayload(
+  toolTypes?: string[],
+  mcpServers?: Array<{ name: string; url: string }>,
+  hasSkills = false
+): Record<string, unknown>[] {
+  return [
+    ...buildUserToolsetPayload(ensureSkillRequiredTools(toolTypes, hasSkills), mcpServers),
+    ...buildPlatformToolsPayload(),
+  ];
 }
 
 /**

@@ -19,7 +19,6 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatDateSimple } from '@/utils/format-date';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { cn } from '@/utils/ui';
 import { ConfirmationModal } from '../confirmation-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Button } from '../primitives/button';
@@ -48,6 +47,9 @@ type SubscriberOverviewFormProps = {
   readOnly?: boolean;
   onCloseDrawer?: () => void;
   closeOnSave?: boolean;
+  /** When set, the matching field is focused once the form mounts (e.g. "Edit in overview"). */
+  focusField?: 'email' | 'phone';
+  onFocusHandled?: () => void;
 };
 
 const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
@@ -62,7 +64,7 @@ const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
 });
 
 export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
-  const { subscriber, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
+  const { subscriber, readOnly = false, onCloseDrawer, closeOnSave = false, focusField, onFocusHandled } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const track = useTelemetry();
   const queryClient = useQueryClient();
@@ -152,6 +154,21 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
     }
   }, [subscriber, form]);
 
+  /**
+   * Focuses the requested field once the form is mounted. The form only renders after the
+   * subscriber has loaded, so a single attempt is deterministic (no polling required).
+   */
+  useEffect(() => {
+    if (!focusField) {
+      return;
+    }
+
+    const element = document.getElementById(focusField);
+    element?.focus();
+    element?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    onFocusHandled?.();
+  }, [focusField, onFocusHandled]);
+
   const onSubmit = async (formData: z.infer<typeof SubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;
 
@@ -178,10 +195,15 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const lastNameChar = form.getValues('lastName')?.charAt(0) || '';
 
   return (
-    <div className={cn('flex h-full flex-col')}>
+    <div className="flex h-full min-h-0 flex-col">
       <Form {...form}>
-        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
-          <div className="flex flex-1 flex-col items-stretch overflow-y-auto">
+        <FormRoot
+          autoComplete="off"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex h-full min-h-0 flex-col"
+        >
+          <div className="flex min-h-0 flex-1 flex-col items-stretch overflow-y-auto">
             <div className="flex flex-col items-stretch gap-6 p-5">
               <div className="flex items-center gap-3">
                 <Tooltip>
@@ -432,7 +454,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
           </div>
 
           {!readOnly && (
-            <div className="mt-auto">
+            <div className="mt-auto shrink-0">
               <Separator />
               <div className="flex justify-between gap-3 p-3.5">
                 <Button

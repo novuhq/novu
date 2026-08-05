@@ -13,6 +13,7 @@ import {
   Instrument,
   InstrumentUsecase,
   IWorkflowDataDto,
+  isClickHouseConfigured,
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
@@ -22,6 +23,7 @@ import {
   WorkflowQueueService,
 } from '@novu/application-generic';
 import {
+  AgentRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   TenantEntity,
@@ -80,7 +82,8 @@ export class ParseEventRequest {
     private featureFlagService: FeatureFlagsService,
     private traceLogRepository: TraceLogRepository,
     protected moduleRef: ModuleRef,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private agentRepository: AgentRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -91,6 +94,14 @@ export class ParseEventRequest {
     const requestId = command.requestId;
 
     try {
+      if (command.agentId !== undefined) {
+        if (command.agentId === null) {
+          command._agentId = null;
+        } else {
+          command._agentId = await this.validateTriggerAgent(command);
+        }
+      }
+
       const statelessWorkflowAllowed = this.isStatelessWorkflowAllowed(command.bridgeUrl);
 
       if (statelessWorkflowAllowed) {
@@ -304,9 +315,9 @@ export class ParseEventRequest {
         environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
-        // User-supplied stateless bridgeUrl: pin the connection to a validated
-        // public IP and re-validate every redirect so IP literals like
-        // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
+        // User-supplied stateless bridgeUrl: always pin the connection to a
+        // validated public IP and re-validate every redirect. Self-hosted
+        // internal bridges must be allow-listed via NOVU_SAFE_OUTBOUND_ALLOW.
         // The downstream EXECUTE call from the worker enforces the same guard
         // — see `apps/worker/src/app/workflow/usecases/execute-bridge-job`.
         enforceSsrfProtection: true,
@@ -324,9 +335,10 @@ export class ParseEventRequest {
   // hosts (loopback, RFC1918, link-local 169.254.169.254, cloud metadata)
   // and have the API + worker process fan out to those targets.
   //
-  // The synchronous `assertSafeOutboundUrl` check rejects the obvious vectors
-  // (non-http schemes, embedded credentials, blocked hostnames). The
-  // connect-time DNS-pinned guard against IP-literal private addresses is
+  // The synchronous `assertSafeOutboundUrl` check rejects non-http schemes,
+  // embedded credentials, blocked hostnames, and private/link-local IP
+  // literals (unless allow-listed via NOVU_SAFE_OUTBOUND_ALLOW). The
+  // connect-time DNS-pinned guard against hostname→private resolution is
   // applied via `enforceSsrfProtection: true` on the actual outbound request.
   private assertSafeBridgeUrl(bridgeUrl: string): void {
     try {
@@ -352,7 +364,7 @@ export class ParseEventRequest {
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
   }): Promise<ParseEventRequestResult> {
     // biome-ignore lint/correctness/noUnusedVariables: eliminate from queue
-    const { workflow, ...commandArgs } = command;
+    const { workflow, agentId, ...commandArgs } = command;
 
     const isDryRun = await this.featureFlagService.getFlag({
       environment: { _id: command.environmentId },
@@ -414,14 +426,51 @@ export class ParseEventRequest {
       );
     }
 
-    const activityFeedLink = `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
+    const dashboardBaseUrl = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+    let activityFeedLink: string | undefined;
+    if (isClickHouseConfigured() && dashboardBaseUrl) {
+      const isHttpLogsPageEnabled = await this.featureFlagService.getFlag({
+        environment: { _id: command.environmentId },
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId } as UserEntity,
+        key: FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED,
+        defaultValue: false,
+      });
+
+      if (isHttpLogsPageEnabled) {
+        activityFeedLink = `${dashboardBaseUrl}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
+      }
+    }
+
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
-      activityFeedLink,
+      ...(activityFeedLink ? { activityFeedLink } : {}),
       jobData: command.skipQueueInsertion ? jobData : undefined,
     };
+  }
+
+  private async validateTriggerAgent(command: ParseEventRequestCommand): Promise<string> {
+    const agentIdentifier = command.agentId;
+    if (typeof agentIdentifier !== 'string' || agentIdentifier.trim().length === 0) {
+      throw new BadRequestException('Agent identifier must be a non-empty string.');
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: agentIdentifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    if (!agent) {
+      throw new BadRequestException(`Agent with identifier "${agentIdentifier}" was not found.`);
+    }
+
+    return agent._id;
   }
 
   private isStatelessWorkflowAllowed(bridgeUrl: string | undefined) {
@@ -449,6 +498,31 @@ export class ParseEventRequest {
 
   @Instrument()
   private modifyAttachments(command: ParseEventRequestCommand): void {
+    const invalidAttachmentIndices = command.payload.attachments
+      .map((attachment, index) => {
+        const file = attachment?.file;
+
+        if (file === null || file === undefined) {
+          return index;
+        }
+
+        if (isAttachmentFileContent(file)) {
+          return -1;
+        }
+
+        return index;
+      })
+      .filter((index) => index >= 0);
+
+    if (invalidAttachmentIndices.length > 0) {
+      throw new PayloadValidationException(
+        invalidAttachmentIndices.map((index) => ({
+          field: `attachments.${index}.file`,
+          message: 'Each attachment must include file content as a base64-encoded string or Buffer',
+        }))
+      );
+    }
+
     // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
       const randomId = randomBytes(16).toString('hex');
@@ -456,7 +530,7 @@ export class ParseEventRequest {
       return {
         ...attachment,
         name: attachment.name,
-        file: Buffer.from(attachment.file, 'base64'),
+        file: toAttachmentFileBuffer(attachment.file),
         storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
       };
     });
@@ -542,4 +616,32 @@ export class ParseEventRequest {
 
     return validate;
   }
+}
+
+type SerializedBuffer = { type: 'Buffer'; data: number[] };
+
+function isSerializedBuffer(value: unknown): value is SerializedBuffer {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<SerializedBuffer>;
+
+  return candidate.type === 'Buffer' && Array.isArray(candidate.data);
+}
+
+function isAttachmentFileContent(file: unknown): file is string | Buffer | SerializedBuffer {
+  return typeof file === 'string' || Buffer.isBuffer(file) || isSerializedBuffer(file);
+}
+
+function toAttachmentFileBuffer(file: string | Buffer | SerializedBuffer): Buffer {
+  if (Buffer.isBuffer(file)) {
+    return file;
+  }
+
+  if (isSerializedBuffer(file)) {
+    return Buffer.from(file.data);
+  }
+
+  return Buffer.from(file, 'base64');
 }

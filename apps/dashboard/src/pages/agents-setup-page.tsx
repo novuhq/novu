@@ -1,9 +1,9 @@
-import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
+import { ProductUseCasesEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { type AgentResponse, getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
 import { AgentSetupSteps, ManagedAgentRecap } from '@/components/agents/agent-setup-steps';
@@ -11,21 +11,22 @@ import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitiv
 import { AgentCliSuccessView } from '@/components/onboarding/connect-agent/agent-cli-success-view';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
 import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
-import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
+// import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
+import { OnboardingStepHeader } from '@/components/onboarding/step-header';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
-import { IS_EU } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentCliConnectionPoll } from '@/hooks/use-agent-cli-connection-poll';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
+import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
@@ -105,42 +106,26 @@ function ShowAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
   );
 }
 
-type StepHeaderProps = {
-  current: 1 | 2 | undefined;
-  onBack?: () => void;
-};
-
-function StepHeader({ current, onBack }: StepHeaderProps) {
-  return (
-    <button
-      type="button"
-      onClick={onBack}
-      disabled={!onBack}
-      className="mb-5 flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
-    >
-      <RiArrowLeftSLine className="text-text-sub size-4" />
-      {typeof current === 'number' ? <span className="text-text-sub text-xs">{current}/2</span> : null}
-    </button>
-  );
-}
-
 export function AgentsSetupPage() {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const navigate = useNavigate();
+  const location = useLocation();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
   const updateProductUseCases = useUpdateProductUseCases();
   const productUseCasesPersistedRef = useRef(false);
+  const setupArrivalState = location.state as { from?: string; suppressPersonalizeBack?: boolean } | null;
+  const arrivedFromPersonalize = setupArrivalState?.from === 'personalize';
+  const suppressPersonalizeBack = setupArrivalState?.suppressPersonalizeBack === true;
 
   const [searchParams] = useSearchParams();
   const agentTemplateId = useMemo(
     () => readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM)),
     [searchParams]
   );
-  const pageTitle = 'Connect your agent to where your users are';
+  const pageTitle = "Let's connect your agent";
 
   // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
   // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
@@ -159,9 +144,8 @@ export function AgentsSetupPage() {
 
   // When the user arrives here via `?product_type=agents` (the usecase picker is skipped), persist the
   // agents usecase on the org once it's resolved. Runs once; the usecase picker path persists itself.
-  // Skipped when agents are unavailable (EU/flag off) since the page redirects to the inbox path.
   useEffect(() => {
-    if (productUseCasesPersistedRef.current || IS_EU || !isAgentsEnabled || !currentOrganization?._id) {
+    if (productUseCasesPersistedRef.current || !areAgentsAvailable || !currentOrganization?._id) {
       return;
     }
 
@@ -170,9 +154,10 @@ export function AgentsSetupPage() {
     }
 
     productUseCasesPersistedRef.current = true;
+    void trackAgentsUsecaseSelected('product_type_deeplink');
     updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
     clearPendingProductType();
-  }, [currentOrganization?._id, isAgentsEnabled, updateProductUseCases]);
+  }, [areAgentsAvailable, currentOrganization?._id, updateProductUseCases]);
 
   const [createdAgent, setCreatedAgent] = useState<AgentResponse | null>(null);
   const [connectSummary, setConnectSummary] = useState<ConnectSummary | null>(null);
@@ -300,11 +285,30 @@ export function AgentsSetupPage() {
   }, [activeAgent, agentRoutes.detailsTab, currentEnvironment?.slug, navigate]);
 
   const handleBackStep = useCallback(() => {
-    void navigate(ROUTES.USECASE_SELECT);
-  }, [navigate]);
+    // Onboarding funnel: personalize stamps router state so back returns to the survey.
+    // Welcome / agents-list entry points have no stamp — restore the previous screen instead of
+    // forcing users through a fresh personalize step. Carry `suppressBack` so deeplinked agents
+    // signups don't regain a path into the Inbox-default usecase picker after setup clears the
+    // pending product marker.
+    if (arrivedFromPersonalize) {
+      void navigate(ROUTES.AGENTS_PERSONALIZE, {
+        state: suppressPersonalizeBack ? { suppressBack: true } : undefined,
+      });
 
-  // Agents are not available in the EU region.
-  if (IS_EU || !isAgentsEnabled) {
+      return;
+    }
+
+    const historyIdx = (window.history.state as { idx?: number } | null)?.idx;
+    if (typeof historyIdx === 'number' && historyIdx > 0) {
+      void navigate(-1);
+
+      return;
+    }
+
+    void navigate(ROUTES.AGENTS_PERSONALIZE);
+  }, [arrivedFromPersonalize, navigate, suppressPersonalizeBack]);
+
+  if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 
@@ -332,12 +336,11 @@ export function AgentsSetupPage() {
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      <StepHeader current={2} onBack={handleBackStep} />
+      <OnboardingStepHeader current={3} total={3} onBack={handleBackStep} />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
-        Choose a starting point to see how your agent handles your users’ conversations. You can replace it with your
-        own agent and credentials later.
+        Novu connects your customer facing agent to multiple communication channels.
       </p>
 
       {cliConnected ? (
@@ -365,25 +368,6 @@ export function AgentsSetupPage() {
         </div>
       ) : (
         <>
-          {/* Pre-built prompt tip: only relevant while the user is authoring the agent brain. It
-           * collapses away once the agent is created and the page morphs into the agent preview. */}
-          <AnimatePresence initial={false}>
-            {!createdAgent ? (
-              <motion.div
-                key="prebuilt-prompt-banner"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                style={{ overflow: 'hidden' }}
-              >
-                <div className="mt-6">
-                  <PrebuiltPromptBanner />
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-
           {/*
            * The user stays on one screen. Step 1 crossfades the brain form into the created-agent
            * preview card; step 2 (channels) crossfades from the dimmed/disabled preview into the live,
@@ -463,7 +447,6 @@ export function AgentsSetupPage() {
                 <div className="relative pb-12">
                   <ConnectAgentStep
                     onAgentCreated={handleAgentCreated}
-                    isManagedEnabled={isManagedEnabled}
                     agentTemplateId={agentTemplateId}
                     simplifiedDemo
                   />
@@ -517,5 +500,11 @@ export function AgentsSetupPage() {
     </>
   );
 
-  return <OnboardingShell left={leftContent} maxLeftWidth="864px" alignLeft="top" />;
+  return (
+    <OnboardingShell
+      left={leftContent}
+      contentClassName="max-w-[864px] lg:max-w-[960px] xl:max-w-[1024px]"
+      alignLeft="top"
+    />
+  );
 }

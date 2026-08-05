@@ -12,11 +12,13 @@ import {
   JobRepository,
   MessageEntity,
   MessageRepository,
+  NotificationRepository,
   OrganizationEntity,
 } from '@novu/dal';
 import { ApiServiceLevelEnum, ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
@@ -43,11 +45,13 @@ describe('SnoozeNotification', () => {
   let loggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
+  let notificationRepositoryMock: sinon.SinonStubbedInstance<NotificationRepository>;
   let standardQueueServiceMock: sinon.SinonStubbedInstance<StandardQueueService>;
   let organizationRepositoryMock: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
+  let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
 
   const mockMessage: MessageEntity = {
     _id: validNotificationId,
@@ -91,11 +95,13 @@ describe('SnoozeNotification', () => {
     loggerMock = sinon.createStubInstance(PinoLogger);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
+    notificationRepositoryMock = sinon.createStubInstance(NotificationRepository);
     standardQueueServiceMock = sinon.createStubInstance(StandardQueueService);
     organizationRepositoryMock = sinon.createStubInstance(CommunityOrganizationRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
+    getSubscriberMock = sinon.createStubInstance(GetSubscriber);
 
     // Mock the MarkNotificationAsCommand.create method
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
@@ -116,11 +122,13 @@ describe('SnoozeNotification', () => {
       loggerMock as any,
       messageRepositoryMock as any,
       jobRepositoryMock as any,
+      notificationRepositoryMock as any,
       standardQueueServiceMock as any,
       organizationRepositoryMock as any,
       createExecutionDetailsMock as any,
       markNotificationAsMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      getSubscriberMock as any
     );
 
     sinon.stub(JobRepository, 'createObjectId').returns('new-job-id');
@@ -140,6 +148,7 @@ describe('SnoozeNotification', () => {
 
     organizationRepositoryMock.findOne.resolves(orgEntity);
     standardQueueServiceMock.add.resolves();
+    getSubscriberMock.execute.resolves({ _id: validSubscriberId } as any);
     messageRepositoryMock.findOne.resolves(mockMessage);
   });
 
@@ -204,7 +213,8 @@ describe('SnoozeNotification', () => {
     expect(result).to.deep.equal(mockNotification);
     expect(jobRepositoryMock.create.calledOnce).to.be.true;
     const createCallArg = jobRepositoryMock.create.firstCall.args[0];
-    expect(createCallArg).to.have.property('status', JobStatusEnum.PENDING);
+    // DELAYED so RunJob's atomic claim (QUEUED|DELAYED only) can claim the unsnooze delivery
+    expect(createCallArg).to.have.property('status', JobStatusEnum.DELAYED);
     expect(createCallArg).to.have.property('delay').that.is.a('number');
     expect(createCallArg.payload).to.have.property('unsnooze', true);
 

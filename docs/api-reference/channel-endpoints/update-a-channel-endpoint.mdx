@@ -1,0 +1,31 @@
+---
+title: "Update a channel endpoint"
+openapi: "PATCH /v1/channel-endpoints/{identifier}"
+---
+
+Update an existing channel endpoint. Pass only the fields you want to change inside `endpoint` (and optional top-level fields such as `context` where supported).
+
+## `tool_webhook` variant
+
+Rotate a subscriber's callback URL, headers, or HTTP method without recreating the endpoint:
+
+```bash
+curl -L -X PATCH 'https://api.novu.co/v1/channel-endpoints/<ENDPOINT_IDENTIFIER>' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "endpoint": {
+    "url": "https://customer.example.com/hooks/novu-v2",
+    "headers": { "Authorization": "Bearer rotated-token" },
+    "method": "POST"
+  }
+}'
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `endpoint.url` | `string` | New destination URL (`http:` or `https:`). Re-encrypted on the linked connection. |
+| `endpoint.headers` | `Record<string, string>` | Optional. Replaces the stored header map for this endpoint. |
+| `endpoint.method` | `"POST" \| "PUT" \| "PATCH"` | Optional. New HTTP method override for this endpoint. |
+
+The response re-hydrates the full wire shape (including decrypted `url`, `headers`, and `method`) from the linked channel connection.

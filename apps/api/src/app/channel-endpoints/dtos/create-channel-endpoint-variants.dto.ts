@@ -2,14 +2,21 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
+  GrafanaOnCallIntegrationEndpointDto,
+  LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  OpsgenieIntegrationEndpointDto,
+  PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  ToolWebhookEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
   WebhookEndpointDto,
 } from './endpoint-types.dto';
 
@@ -32,6 +39,17 @@ class CreateChannelEndpointBaseDto {
   @IsDefined()
   @IsString()
   subscriberId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, the subscriber is created if it does not exist yet (existing subscribers are never modified). ' +
+      'When false or omitted, an unknown subscriberId returns 404.',
+    type: Boolean,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  createSubscriberIfMissing?: boolean;
 
   @ApiContextPayload()
   @IsOptional()
@@ -195,4 +213,166 @@ export class CreateTelegramChatEndpointDto extends CreateChannelEndpointBaseDto 
   @ValidateNested()
   @Type(() => TelegramChatEndpointDto)
   endpoint: TelegramChatEndpointDto;
+}
+
+export class CreateWebexRoomEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'The identifier of the channel connection to use for this Webex endpoint.',
+    type: String,
+    example: 'webex-connection-abc123',
+  })
+  @IsDefined()
+  @IsString()
+  connectionIdentifier: string;
+
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.WEBEX_ROOM],
+    example: ENDPOINT_TYPES.WEBEX_ROOM,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.WEBEX_ROOM])
+  type: typeof ENDPOINT_TYPES.WEBEX_ROOM;
+
+  @ApiProperty({
+    description: 'Webex room endpoint data',
+    type: WebexRoomEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => WebexRoomEndpointDto)
+  endpoint: WebexRoomEndpointDto;
+}
+
+export class CreateWebexPersonEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'The identifier of the channel connection to use for this Webex endpoint.',
+    type: String,
+    example: 'webex-connection-abc123',
+  })
+  @IsDefined()
+  @IsString()
+  connectionIdentifier: string;
+
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.WEBEX_PERSON],
+    example: ENDPOINT_TYPES.WEBEX_PERSON,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.WEBEX_PERSON])
+  type: typeof ENDPOINT_TYPES.WEBEX_PERSON;
+
+  @ApiProperty({
+    description: 'Webex person endpoint data. Provide exactly one of personId or personEmail.',
+    type: WebexPersonEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => WebexPersonEndpointDto)
+  endpoint: WebexPersonEndpointDto;
+}
+
+export class CreateLineUserEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.LINE_USER],
+    example: ENDPOINT_TYPES.LINE_USER,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.LINE_USER])
+  type: typeof ENDPOINT_TYPES.LINE_USER;
+
+  @ApiProperty({
+    description: 'LINE user endpoint data',
+    type: LineUserEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => LineUserEndpointDto)
+  endpoint: LineUserEndpointDto;
+}
+
+export class CreatePagerDutyServiceEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.PAGERDUTY_SERVICE],
+    example: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.PAGERDUTY_SERVICE])
+  type: typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE;
+
+  @ApiProperty({
+    description:
+      'PagerDuty service endpoint data. `routingKey` is encrypted at rest on the channel endpoint (`endpoint` field); `region` remains plaintext. No linked channel connection.',
+    type: PagerDutyServiceEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => PagerDutyServiceEndpointDto)
+  endpoint: PagerDutyServiceEndpointDto;
+}
+
+export class CreateOpsgenieIntegrationEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.OPSGENIE_INTEGRATION],
+    example: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.OPSGENIE_INTEGRATION])
+  type: typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION;
+
+  @ApiProperty({
+    description:
+      'Opsgenie integration endpoint data. `apiKey` is encrypted at rest on the channel endpoint (`endpoint` field); `region` remains plaintext. No linked channel connection.',
+    type: OpsgenieIntegrationEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => OpsgenieIntegrationEndpointDto)
+  endpoint: OpsgenieIntegrationEndpointDto;
+}
+
+export class CreateGrafanaOnCallIntegrationEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION],
+    example: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION])
+  type: typeof ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION;
+
+  @ApiProperty({
+    description:
+      'Grafana OnCall integration endpoint data. `url` and `authToken` are encrypted at rest on the channel endpoint (`endpoint` field). No linked channel connection.',
+    type: GrafanaOnCallIntegrationEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => GrafanaOnCallIntegrationEndpointDto)
+  endpoint: GrafanaOnCallIntegrationEndpointDto;
+}
+
+export class CreateToolWebhookEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.TOOL_WEBHOOK],
+    example: ENDPOINT_TYPES.TOOL_WEBHOOK,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.TOOL_WEBHOOK])
+  type: typeof ENDPOINT_TYPES.TOOL_WEBHOOK;
+
+  @ApiProperty({
+    description:
+      'Tool webhook endpoint data. `url` and header values are encrypted at rest on the channel endpoint (`endpoint` field); `method` remains plaintext. No linked channel connection.',
+    type: ToolWebhookEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => ToolWebhookEndpointDto)
+  endpoint: ToolWebhookEndpointDto;
 }

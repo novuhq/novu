@@ -1,13 +1,19 @@
 import { useId, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
-import { IS_ENTERPRISE } from '@/config';
+import { IS_SELF_HOSTED_EE } from '@/config';
+import { readClerkRedirectUrlParam, resolveSameOriginRedirectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { buildSsoSignInPath } from '../sso-redirect';
+import { useAuthConfig } from '../use-auth-config';
 
 export function SignIn() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { emailPasswordAuthEnabled, isLoading: isAuthConfigLoading } = useAuthConfig();
+  const postSignInRedirectUrl = resolveSameOriginRedirectUrl(readClerkRedirectUrlParam(searchParams));
   const emailId = useId();
   const passwordId = useId();
   const [email, setEmail] = useState('');
@@ -71,6 +77,12 @@ export function SignIn() {
         return;
       }
 
+      if (postSignInRedirectUrl) {
+        window.location.href = postSignInRedirectUrl;
+
+        return;
+      }
+
       window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
     } catch (e: any) {
       setError(e.message || 'An unexpected error occurred.');
@@ -78,6 +90,14 @@ export function SignIn() {
       setIsLoading(false);
     }
   };
+
+  if (isAuthConfigLoading) {
+    return null;
+  }
+
+  if (!emailPasswordAuthEnabled) {
+    return <Navigate to={buildSsoSignInPath(searchParams)} replace />;
+  }
 
   return (
     <div className="mx-auto w-full max-w-md pt-12">
@@ -159,7 +179,7 @@ export function SignIn() {
           </span>
         </p>
       </form>
-      {IS_ENTERPRISE && (
+      {IS_SELF_HOSTED_EE && (
         <>
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
@@ -169,7 +189,12 @@ export function SignIn() {
               <span className="bg-white px-2 text-foreground-500">Or</span>
             </div>
           </div>
-          <Button variant="secondary" mode="outline" className="w-full" onClick={() => navigate(ROUTES.SSO_SIGN_IN)}>
+          <Button
+            variant="secondary"
+            mode="outline"
+            className="w-full"
+            onClick={() => navigate(buildSsoSignInPath(searchParams))}
+          >
             Sign in with SSO
           </Button>
         </>

@@ -8,6 +8,7 @@ export interface IPreferenceChannels {
   in_app?: boolean;
   chat?: boolean;
   push?: boolean;
+  tool?: boolean;
 }
 
 export interface IPreferenceOverride {

@@ -61,10 +61,11 @@ type SubscriberDrawerButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
   subscriberId: string;
   readOnly?: boolean;
   closeOnSave?: boolean;
+  modal?: boolean;
 };
 
 export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
-  const { subscriberId, onClick, readOnly = false, closeOnSave = false, ...rest } = props;
+  const { subscriberId, onClick, readOnly = false, closeOnSave = false, modal = false, ...rest } = props;
   const [open, setOpen] = useState(false);
 
   return (
@@ -77,6 +78,7 @@ export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
         }}
       />
       <SubscriberDrawer
+        modal={modal}
         open={open}
         onOpenChange={setOpen}
         subscriberId={subscriberId}

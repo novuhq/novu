@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { decryptChannelConnectionAuth, encryptChannelConnectionAuth } from './encrypt-channel-connection-auth';
 
 describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
@@ -71,5 +73,26 @@ describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
   it('skips empty-string values', () => {
     const encrypted = encryptChannelConnectionAuth({ accessToken: '' });
     expect(encrypted!.accessToken).toEqual('');
+  });
+
+  it('does not encrypt tool-channel fields that belong on the endpoint document', () => {
+    const auth = {
+      accessToken: 'xoxb-secret',
+      routingKey: 'R0UTINGK3YEXAMPLE000000000000000',
+      apiKey: 'eb243592-faa2-4ba2-a551-1afdf565c889',
+      url: 'https://hooks.example.com/inbound',
+      headers: { Authorization: 'Bearer secret' },
+      method: 'POST',
+      region: 'eu',
+    };
+    const encrypted = encryptChannelConnectionAuth(auth);
+
+    expect((encrypted!.accessToken as string).startsWith(novuSubMask)).toBe(true);
+    expect(encrypted!.routingKey).toEqual(auth.routingKey);
+    expect(encrypted!.apiKey).toEqual(auth.apiKey);
+    expect(encrypted!.url).toEqual(auth.url);
+    expect(encrypted!.headers).toEqual(auth.headers);
+    expect(encrypted!.method).toEqual(auth.method);
+    expect(encrypted!.region).toEqual(auth.region);
   });
 });

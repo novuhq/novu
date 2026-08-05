@@ -6,8 +6,20 @@ export enum ConversationActivityTypeEnum {
   MESSAGE = 'message',
   /** In-place edit of a previously sent agent message, via replyHandle.edit() */
   EDIT = 'edit',
+  /**
+   * Immutable delete tombstone for a previously sent agent message.
+   * Append-only ledger for all channels (dashboard timeline + web history).
+   * Does not hard-delete the original MESSAGE activity.
+   */
+  DELETE = 'delete',
   /** System-generated timeline event (e.g. workflow triggered, conversation resolved) */
   SIGNAL = 'signal',
+  /** Agent proposed a tool call that requires human approval before it runs. Carries `{ approvalId, toolCallId, toolName, input }` in `toolData`. */
+  TOOL_APPROVAL_REQUEST = 'tool_approval_request',
+  /** Human approve/deny verdict for a pending tool approval. Carries `{ approvalId, approved }` in `toolData`. */
+  TOOL_APPROVAL_DECISION = 'tool_approval_decision',
+  /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
+  TOOL_RESULT = 'tool_result',
 }
 
 export enum ConversationActivitySenderTypeEnum {
@@ -22,6 +34,21 @@ export interface ConversationActivitySignalData {
   type: string;
   /** Relevant IDs or metadata about the signal execution */
   payload?: Record<string, unknown>;
+}
+
+export interface ConversationActivityToolData {
+  /** The tool call this activity relates to (request + result). */
+  toolCallId?: string;
+  /** Human-readable tool name (request + result). */
+  toolName?: string;
+  /** Correlation id linking an approval request to its decision (request + decision). */
+  approvalId?: string;
+  /** Tool input arguments (request). */
+  input?: Record<string, unknown>;
+  /** Approve/deny verdict (decision). */
+  approved?: boolean;
+  /** Executed tool output, or the `execution-denied` marker (result). */
+  output?: unknown;
 }
 
 export class ConversationActivityEntity {
@@ -56,11 +83,20 @@ export class ConversationActivityEntity {
   /** Platform-native message ID (e.g. Slack ts) — used for deduplication */
   platformMessageId?: string;
 
+  /**
+   * Conversation event sequence when allocated at live emit / durable persist.
+   * Ephemeral typing sequences create intentional gaps in durable history.
+   */
+  sequence?: number;
+
   /** Structured content for markdown, card, or file messages — absent for plain text */
   richContent?: Record<string, unknown>;
 
   /** Populated only when type === SIGNAL */
   signalData?: ConversationActivitySignalData;
+
+  /** Populated only for the `TOOL_*` activity types — the tool call, decision, or result. */
+  toolData?: ConversationActivityToolData;
 
   _environmentId: EnvironmentId;
 

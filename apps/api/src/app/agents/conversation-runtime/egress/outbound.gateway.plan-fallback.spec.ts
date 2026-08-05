@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { OutboundGateway } from './outbound.gateway';
+import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
 
 describe('OutboundGateway plan fallback', () => {
   const planModel = {
@@ -28,6 +29,7 @@ describe('OutboundGateway plan fallback', () => {
       agentConfigResolver as any,
       { prepareContentForDelivery: sinon.stub().callsFake(async (c) => c) } as any,
       {} as any,
+      new OutboundDeliveryInfo(),
       logger as any
     );
 

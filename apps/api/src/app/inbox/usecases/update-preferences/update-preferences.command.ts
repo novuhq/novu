@@ -60,6 +60,10 @@ export class UpdatePreferencesCommand extends EnvironmentWithSubscriber {
   @IsBoolean()
   readonly push?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
+  readonly tool?: boolean;
+
   @IsDefined()
   @IsEnum(PreferenceLevelEnum)
   readonly level: PreferenceLevelEnum;

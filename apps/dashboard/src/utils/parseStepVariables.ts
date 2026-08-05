@@ -24,6 +24,29 @@ export interface LiquidVariable {
   isNewSuggestion?: boolean;
 }
 
+/**
+ * Preferred nested-namespace order when typing `{{` in the workflow editor.
+ * Higher boost ranks higher in CodeMirror / Maily autocomplete.
+ *
+ * Order: payload.* → subscriber.* → env.* → actor.* → root namespaces / rest
+ */
+export const NESTED_NAMESPACE_BOOST: Record<string, number> = {
+  payload: 99,
+  subscriber: 98,
+  env: 97,
+  actor: 96,
+};
+
+export function getVariableBoost(name: string): number | undefined {
+  for (const [namespace, boost] of Object.entries(NESTED_NAMESPACE_BOOST)) {
+    if (name.startsWith(`${namespace}.`)) {
+      return boost;
+    }
+  }
+
+  return undefined;
+}
+
 export type FieldDataType = 'string' | 'number' | 'boolean' | 'date' | 'datetime' | 'array' | 'object';
 
 export interface EnhancedLiquidVariable extends LiquidVariable {
@@ -114,11 +137,15 @@ export function parseStepVariables(
         const fullPath = path ? `${path}.${key}` : key;
 
         if (typeof value === 'object') {
+          const boost = getVariableBoost(fullPath);
+          const boostProps = boost !== undefined ? { boost } : {};
+
           if (value.type === 'array') {
-            result.arrays.push({ name: fullPath });
+            result.arrays.push({ name: fullPath, ...boostProps });
             enhancedVariables.push({
               name: fullPath,
               dataType: 'array',
+              ...boostProps,
             });
 
             if (value.properties) {
@@ -130,10 +157,11 @@ export function parseStepVariables(
               extractProperties(items, `${fullPath}.0`);
             }
           } else if (value.type === 'object') {
-            result.namespaces.push({ name: fullPath });
+            result.namespaces.push({ name: fullPath, ...boostProps });
             enhancedVariables.push({
               name: fullPath,
               dataType: 'object',
+              ...boostProps,
             });
 
             extractProperties(value, fullPath);
@@ -141,12 +169,13 @@ export function parseStepVariables(
             const dataType = mapJsonSchemaTypeToFieldType(value);
             const inputType = getInputTypeFromSchema(value);
 
-            result.primitives.push({ name: fullPath });
+            result.primitives.push({ name: fullPath, ...boostProps });
             enhancedVariables.push({
               name: fullPath,
               dataType,
               inputType,
               format: value.format,
+              ...boostProps,
             });
           }
         }

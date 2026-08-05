@@ -63,13 +63,44 @@ function extractResponseDetail(responseBody: string): string | null {
   return null;
 }
 
+function formatDeliveryMessage(statusCode: number, responseBody: string): string {
+  const reason = HTTP_STATUS_TEXT[statusCode] ?? statusCode;
+  const detail = extractResponseDetail(responseBody);
+
+  if (detail) {
+    return `Delivery failed: ${reason}: ${detail}`;
+  }
+
+  return `Delivery failed: ${reason}`;
+}
+
+export type AgentErrorDelivery = {
+  statusCode: number;
+  responseBody: string;
+};
+
+export type AgentErrorOptions = {
+  cause?: unknown;
+  delivery?: AgentErrorDelivery;
+};
+
+/** Turn and handler failures. Delivery failures use {@link AgentDeliveryError}. */
+export class AgentError extends Error {
+  readonly cause?: unknown;
+  readonly delivery?: AgentErrorDelivery;
+
+  constructor(message: string, options?: AgentErrorOptions) {
+    super(message);
+    this.name = 'AgentError';
+    this.cause = options?.cause;
+    this.delivery = options?.delivery;
+  }
+}
+
 /**
  * Thrown by `ctx.reply()` and `handle.edit()` when the upstream message delivery
  * fails — e.g. the configured email provider returns 401, Slack rejects the token,
  * or Teams rejects the request.
- *
- * `message` is always a short, human-readable summary.
- * `responseBody` preserves the raw upstream body for debugging.
  *
  * @example
  * ```ts
@@ -79,24 +110,34 @@ function extractResponseDetail(responseBody: string): string | null {
  *   await ctx.reply('Hello!');
  * } catch (err) {
  *   if (err instanceof AgentDeliveryError) {
- *     console.error('Delivery failed:', err.message);
+ *     console.error('Delivery failed:', err.message, err.statusCode);
  *     return;
  *   }
  *   throw err;
  * }
  * ```
  */
-export class AgentDeliveryError extends Error {
+export class AgentDeliveryError extends AgentError {
   readonly statusCode: number;
   readonly responseBody: string;
 
   constructor(statusCode: number, responseBody: string) {
-    const reason = HTTP_STATUS_TEXT[statusCode] ?? statusCode;
-    const detail = extractResponseDetail(responseBody);
-    const message = detail ? `Delivery failed: ${reason}: ${detail}` : `Delivery failed: ${reason}`;
-    super(message);
+    const delivery = { statusCode, responseBody };
+    super(formatDeliveryMessage(statusCode, responseBody), { delivery });
     this.name = 'AgentDeliveryError';
     this.statusCode = statusCode;
     this.responseBody = responseBody;
   }
+}
+
+export function toAgentError(err: unknown): AgentError {
+  if (err instanceof AgentError) {
+    return err;
+  }
+
+  if (err instanceof Error) {
+    return new AgentError(err.message, { cause: err });
+  }
+
+  return new AgentError('Turn failed', { cause: err });
 }

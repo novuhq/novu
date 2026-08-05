@@ -1,0 +1,41 @@
+---
+title: "Create a channel endpoint"
+openapi: "POST /v1/channel-endpoints"
+---
+
+Create a channel endpoint to register a subscriber-specific delivery target (Slack channel, phone number, PagerDuty routing key, Tool Webhook URL, and other variants). The request body uses a discriminated `type` field; each variant carries its own `endpoint` object shape.
+
+## `tool_webhook` variant
+
+Use type `tool_webhook` with a **Tool Webhook** integration configured for **Dynamic** routing. A subscriber may have **multiple** `tool_webhook` endpoints on the same integration — Novu delivers the Tool step once per endpoint.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `type` | `"tool_webhook"` | Discriminator for Tool Webhook dynamic routing. |
+| `integrationIdentifier` | `string` | Identifier of the Tool Webhook integration. |
+| `subscriberId` | `string` | Subscriber that owns this destination URL. |
+| `createSubscriberIfMissing` | `boolean` | Optional. When `true`, creates the subscriber if missing. Defaults to `false`. |
+| `endpoint.url` | `string` | Required. `http:` or `https:` URL. Stored encrypted on the linked channel connection. |
+| `endpoint.headers` | `Record<string, string>` | Optional. Per-endpoint headers; override integration defaults on key collision. Values stored encrypted. |
+| `endpoint.method` | `"POST" \| "PUT" \| "PATCH"` | Optional. Overrides the integration HTTP method for this endpoint. |
+
+Example:
+
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "type": "tool_webhook",
+  "integrationIdentifier": "tool-webhook",
+  "subscriberId": "user-123",
+  "createSubscriberIfMissing": true,
+  "endpoint": {
+    "url": "https://customer.example.com/hooks/novu",
+    "headers": { "Authorization": "Bearer token" },
+    "method": "POST"
+  }
+}'
+```
+
+See the [Tool Webhook setup guide](/platform/integrations/tool/webhook) for static vs dynamic routing, header/body merge, and HMAC verification.

@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { DirectionEnum } from '@novu/shared';
+import { AGENT_AUTH_METADATA_KEYS, DirectionEnum } from '@novu/shared';
 import { type ClientSession, FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
+import { buildActivationOrConditions } from './billing-activation-rules';
 import {
   ConversationDBModel,
   ConversationEntity,
@@ -74,7 +75,13 @@ export class ConversationRepository extends BaseRepositoryV2<
     integrationId: string,
     participantId: string,
     participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER,
-    title?: string
+    title?: string,
+    /**
+     * When set, only match conversations whose channel belongs to this platform workspace
+     * (e.g. Slack `team_id`). Required for multi-workspace welcome dedup so a prior welcome
+     * in workspace A does not suppress a welcome in workspace B for the same participant key.
+     */
+    workspaceId?: string
   ): Promise<ConversationEntity | null> {
     return this.findOne(
       {
@@ -84,6 +91,7 @@ export class ConversationRepository extends BaseRepositoryV2<
         channels: {
           $elemMatch: {
             _integrationId: new Types.ObjectId(integrationId),
+            ...(workspaceId ? { 'workspace.id': workspaceId } : {}),
           },
         },
         participants: { $elemMatch: { id: participantId, type: participantType } },
@@ -144,6 +152,36 @@ export class ConversationRepository extends BaseRepositoryV2<
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       { $set: { participants } }
     );
+  }
+
+  /**
+   * Repoint every SUBSCRIBER participant from `fromSubscriberId` to
+   * `toSubscriberId` (both external `subscriberId` strings) across the whole
+   * environment. Used by the email adoption merge when an auto-provisioned
+   * "phantom" subscriber is folded into a real customer-created one so its
+   * conversation history follows the surviving identity. The positional `$`
+   * updates the single matching participant per conversation — email threads are
+   * 1:1 (one human + agent), so a conversation never carries both ids. Returns
+   * the number of conversations updated.
+   */
+  async repointSubscriberParticipant(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<number> {
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        participants: {
+          $elemMatch: { id: params.fromSubscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
+        },
+      },
+      { $set: { 'participants.$.id': params.toSubscriberId } }
+    );
+
+    return result.modified;
   }
 
   async touchActivity(
@@ -307,6 +345,37 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Finds conversations where a platform user was shown the auth CTA card and has
+   * not yet been confirmed as linked — i.e. `metadata` still carries the auth-card
+   * tracking key written by the framework auth gate. Scoped to the integration and
+   * the platform participant so a link event only touches that user's own threads.
+   * Powers the real-time "account linked" card update on `CreateChannelEndpoint`.
+   */
+  async findPendingAuthCards(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    participantId: string;
+  }): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: {
+          $elemMatch: {
+            _integrationId: new Types.ObjectId(params.integrationId),
+          },
+        },
+        participants: {
+          $elemMatch: { id: params.participantId, type: ConversationParticipantTypeEnum.PLATFORM_USER },
+        },
+        [`metadata.${AGENT_AUTH_METADATA_KEYS.authCardMessageId}`]: { $exists: true },
+      } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds,
+      '*'
+    );
+  }
+
   async clearExternalSessionIdsForAgent(
     environmentId: string,
     organizationId: string,
@@ -322,6 +391,117 @@ export class ConversationRepository extends BaseRepositoryV2<
       { $unset: { externalSessionId: '' } },
       options?.session ? { session: options.session } : {}
     );
+  }
+
+  /**
+   * Atomically claims a new active-conversation activation for this billing
+   * period. Returns `true` only for the single caller that wins the race —
+   * MongoDB serializes `findOneAndUpdate`, so a concurrent engagement that
+   * arrives after the winner stamps the billing state re-evaluates the `$or`
+   * against the updated document and matches nothing.
+   *
+   * An engagement starts a new activation when any of the following hold:
+   *   - the conversation has never been counted (`lastCountedPeriodKey` absent);
+   *   - it was resolved since it was last counted (`resolvedAt` present) — reopen;
+   *   - it was last counted in a different billing period — new cycle;
+   *   - the rolling inactivity window has lapsed since the last engagement.
+   */
+  async startActivationIfNeeded(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    periodKey: string;
+    /** ISO timestamp; engagements older than this are window-expired. */
+    windowThresholdIso: string;
+    nowIso: string;
+  }): Promise<boolean> {
+    const updated = await this.findOneAndUpdate(
+      {
+        _id: params.conversationId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        // Single source of truth shared with `classifyActivationReason` — see billing-activation-rules.ts.
+        $or: buildActivationOrConditions({
+          periodKey: params.periodKey,
+          windowThresholdIso: params.windowThresholdIso,
+        }) as FilterQuery<ConversationDBModel>[],
+      },
+      {
+        $set: {
+          'billing.lastCountedPeriodKey': params.periodKey,
+          'billing.lastEngagementAt': params.nowIso,
+          'billing.activationStartedAt': params.nowIso,
+        },
+        $unset: { 'billing.resolvedAt': '' },
+      }
+    );
+
+    return updated !== null;
+  }
+
+  /**
+   * Slides the rolling inactivity window forward without counting a new
+   * activation. Called for every engagement that did not start a new
+   * activation so a continuous thread keeps its window fresh.
+   */
+  async bumpLastEngagement(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    nowIso: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { 'billing.lastEngagementAt': nowIso } }
+    );
+  }
+
+  /**
+   * Marks the conversation resolved for billing so the next agent engagement is
+   * counted as a reopen activation. Paired with the status flip in
+   * `resolveConversation`.
+   */
+  async markBillingResolved(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    nowIso: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { 'billing.resolvedAt': nowIso } }
+    );
+  }
+
+  /**
+   * Atomically advances the conversation event high-watermark and returns the
+   * allocated sequence number (1-based).
+   */
+  async allocateEventSequence(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    minimum = 0
+  ): Promise<number> {
+    const filter = {
+      _id: conversationId,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
+
+    if (minimum > 0) {
+      await this.update(
+        {
+          ...filter,
+          $or: [{ eventSequence: { $lt: minimum } }, { eventSequence: { $exists: false } }],
+        },
+        { $set: { eventSequence: minimum } }
+      );
+    }
+
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+
+    return updated?.eventSequence ?? 1;
   }
 
   async incrementTokenUsage(

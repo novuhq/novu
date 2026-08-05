@@ -8,7 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AnalyticsService, encryptSecret, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret, isAgentEmailEnabled } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
@@ -20,6 +20,7 @@ import {
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentTypeEnum,
   FeatureNameEnum,
@@ -29,6 +30,7 @@ import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
+import { NovuWebChatProvisioningService } from '../../web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { AddAgentIntegrationCommand } from './add-agent-integration.command';
 
 @Injectable()
@@ -40,6 +42,7 @@ export class AddAgentIntegration {
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
+    private readonly findOrCreateNovuWebChat: NovuWebChatProvisioningService,
     private readonly analyticsService: AnalyticsService
   ) {}
 
@@ -86,6 +89,31 @@ export class AddAgentIntegration {
           providerId: response.integration.providerId,
           channel: response.integration.channel,
           connectionSource: 'novu_email_provisioned',
+        });
+      }
+
+      return response;
+    }
+
+    if (command.providerId === ChatProviderIdEnum.NovuWebChat) {
+      const { response, provisionedNewLink } = await this.findOrCreateNovuWebChat.execute(
+        agent._id,
+        command.environmentId,
+        command.organizationId
+      );
+
+      if (provisionedNewLink) {
+        trackAgentIntegrationConnected(this.analyticsService, {
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          agentId: agent._id,
+          agentIdentifier: command.agentIdentifier,
+          integrationId: response.integration._id,
+          integrationIdentifier: response.integration.identifier,
+          providerId: response.integration.providerId,
+          channel: response.integration.channel,
+          connectionSource: 'novu_web_chat_provisioned',
         });
       }
 
@@ -144,6 +172,21 @@ export class AddAgentIntegration {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
+    if (integration.providerId === ChatProviderIdEnum.Telegram) {
+      const linkedElsewhere = await this.agentIntegrationRepository.findOne(
+        {
+          _integrationId: integration._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_agentId']
+      );
+
+      if (linkedElsewhere && linkedElsewhere._agentId !== agent._id) {
+        throw new ConflictException('Integration is already linked to a different agent');
+      }
+    }
+
     // Revives a tombstoned (disconnected) link when one exists for this pair —
     // a plain create would violate the unique (_agentId, _integrationId) index.
     const link = await this.agentIntegrationRepository.createOrReviveLink({
@@ -172,7 +215,7 @@ export class AddAgentIntegration {
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
-    if (!isAgentSharedInboxEnabled()) {
+    if (!isAgentEmailEnabled()) {
       throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
     }
 

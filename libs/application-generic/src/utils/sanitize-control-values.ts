@@ -16,6 +16,7 @@ import {
   LookBackWindowType,
   PushControlType,
   SmsControlType,
+  ToolControlType,
 } from '../schemas/control';
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 
@@ -93,6 +94,9 @@ function sanitizeEmail(controlValues: EmailControlType) {
     disableOutputSanitization: controlValues.disableOutputSanitization,
     layoutId: controlValues.layoutId,
     from: controlValues.from,
+    useProviderDefaults: controlValues.useProviderDefaults,
+    replyTo: controlValues.replyTo,
+    preheader: controlValues.preheader,
   };
 
   return filterNullishValues(emailControls);
@@ -117,13 +121,39 @@ function sanitizePush(controlValues: PushControlType) {
   return filterNullishValues(mappedValues);
 }
 
-function sanitizeChat(controlValues: ChatControlType) {
+type WithProviderOverrides<T> = T & { providerOverrides?: Record<string, unknown> };
+
+/**
+ * Runtime/preview may still nest providerOverrides (stitched or form-sourced).
+ * They are not part of the persisted main control schema — pass them through.
+ */
+function keepProviderOverrides(
+  sanitized: Record<string, unknown>,
+  controlValues: { providerOverrides?: Record<string, unknown> }
+): Record<string, unknown> {
+  if (controlValues.providerOverrides === undefined) {
+    return sanitized;
+  }
+
+  return { ...sanitized, providerOverrides: controlValues.providerOverrides };
+}
+
+function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
   const mappedValues: ChatControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
   };
 
-  return filterNullishValues(mappedValues);
+  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
+}
+
+function sanitizeTool(controlValues: WithProviderOverrides<ToolControlType>) {
+  const mappedValues: ToolControlType = {
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+  };
+
+  return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
 }
 
 function sanitizeDigest(controlValues: DigestControlSchemaType) {
@@ -317,7 +347,10 @@ export function dashboardSanitizeControlValues(
         normalizedValues = sanitizePush(controlValues as PushControlType);
         break;
       case StepTypeEnum.CHAT:
-        normalizedValues = sanitizeChat(controlValues as ChatControlType);
+        normalizedValues = sanitizeChat(controlValues as WithProviderOverrides<ChatControlType>);
+        break;
+      case StepTypeEnum.TOOL:
+        normalizedValues = sanitizeTool(controlValues as WithProviderOverrides<ToolControlType>);
         break;
       case StepTypeEnum.DIGEST:
         normalizedValues = sanitizeDigest(controlValues as DigestControlSchemaType);

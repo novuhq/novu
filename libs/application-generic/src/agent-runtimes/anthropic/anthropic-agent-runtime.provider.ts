@@ -1,10 +1,11 @@
 import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
+import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
   AgentRuntimeCapabilities,
   AgentRuntimeProviderIdEnum,
   isAnthropicAwsProvider,
+  isNovuInternalToolName,
 } from '@novu/shared';
 import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
@@ -54,7 +55,6 @@ import {
   mapSkill,
   mapToolset,
   parseRetryAfter,
-  resolveManagedAgentPermissionConfig,
   sleep,
   toSkillParam,
   truncateWithEllipsis,
@@ -180,9 +180,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // Not retried: agent creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable agent upstream.
     try {
-      const permissionConfig = resolveManagedAgentPermissionConfig(input.useAlwaysAllowToolPermissions);
-      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, permissionConfig);
-
+      const skills = input.skills ?? [];
+      const hasSkills = skills.length > 0;
+      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, hasSkills);
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -191,7 +191,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           ? { mcp_servers: input.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url })) }
           : {}),
         ...(toolsPayload.length > 0 ? { tools: toolsPayload } : {}),
-        ...(input.skills && input.skills.length > 0 ? { skills: input.skills.map(toSkillParam) } : {}),
+        ...(hasSkills ? { skills: skills.map(toSkillParam) } : {}),
       });
 
       return { externalAgentId: agent.id as string };
@@ -277,11 +277,23 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         };
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
-        if (patch.systemPrompt !== undefined) updatePayload.system = patch.systemPrompt;
+        if (patch.systemPrompt !== undefined) {
+          updatePayload.system = patch.systemPrompt;
+        }
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
         }
-        if (patch.tools !== undefined || patch.mcpServers !== undefined) {
+
+        // Anthropic rejects skills without a usable `read` tool. Compute the
+        // effective skill set after this patch so we can force-enable `read`
+        // even on a skills-only update that wouldn't otherwise touch tools.
+        const currentSkills = ((currentAgent.skills as any[]) ?? []).map(mapSkill);
+        const effectiveSkills = patch.skills !== undefined ? patch.skills : currentSkills;
+        const hasSkills = effectiveSkills.length > 0;
+        const shouldRebuildTools =
+          patch.tools !== undefined || patch.mcpServers !== undefined || (patch.skills !== undefined && hasSkills);
+
+        if (shouldRebuildTools) {
           const currentTools = ((currentAgent.tools as any[]) ?? []).flatMap(mapToolset);
           const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
           // Use externalId (the provider tool `type`, e.g. "bash"), not the display `name`
@@ -293,8 +305,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
             patch.mcpServers !== undefined
               ? patch.mcpServers.map((s) => ({ name: s.name, url: s.url }))
               : currentMcpServers.map((s) => ({ name: s.name, url: s.url }));
-          const permissionConfig = resolveManagedAgentPermissionConfig(patch.useAlwaysAllowToolPermissions);
-          const toolsPayload = buildToolsPayload(toolTypes, mcpServers, permissionConfig);
+          const toolsPayload = buildToolsPayload(toolTypes, mcpServers, hasSkills);
 
           if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
         }
@@ -311,6 +322,49 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           tools: ((updated.tools as any[]) ?? []).flatMap(mapToolset),
           skills: ((updated.skills as any[]) ?? []).map(mapSkill),
         };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async refreshPlatformDefinition(externalAgentId: string): Promise<void> {
+    const client = await this.getClient();
+
+    await this.withRetry(async () => {
+      try {
+        // Read the agent's current user-selected tools/MCP and re-emit them through
+        // buildToolsPayload, which always appends Novu-owned platform tools (e.g.
+        // novu_tool_catalog). Nothing the user chose changes — this only backfills the overlay.
+        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const rawTools = (currentAgent.tools as any[]) ?? [];
+        const currentTools = rawTools.flatMap(mapToolset);
+        const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
+        const hasSkills = ((currentAgent.skills as any[]) ?? []).length > 0;
+
+        // Preserve any provider-side custom tools we don't own (e.g. on an adopted agent).
+        // buildToolsPayload re-emits Novu-owned platform tools, so drop those here to avoid duplicates.
+        const foreignCustomTools = rawTools.filter(
+          (tool) => tool?.type === 'custom' && !isNovuInternalToolName(tool?.name)
+        );
+
+        const toolsPayload = [
+          ...buildToolsPayload(
+            currentTools.map((t) => t.externalId),
+            currentMcpServers.map((s) => ({ name: s.name, url: s.url })),
+            hasSkills
+          ),
+          ...foreignCustomTools,
+        ];
+
+        if (toolsPayload.length === 0) {
+          return;
+        }
+
+        await (client as any).beta.agents.update(externalAgentId, {
+          version: currentAgent.version,
+          tools: toolsPayload,
+        });
       } catch (err) {
         this.normaliseError(err);
       }

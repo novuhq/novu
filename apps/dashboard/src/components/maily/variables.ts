@@ -1,9 +1,8 @@
-import { Variable } from '@novu/maily-core/extensions';
 import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
 import { VariableFrom } from '@/components/maily/types';
 import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
-import { isValidContextVariable } from '@/utils/context-variable-utils';
+import { extractContextTypesFromVariables, isValidContextVariable } from '@/utils/context-variable-utils';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import {
   isInsideRepeatBlock,
@@ -36,13 +35,15 @@ function addContextVariableSuggestions(
     }
   };
 
-  // "context.tenant" → suggest "context.tenant.id" and "context.tenant.data"
-  if (parts.length === 2 && parts[1]?.trim()) {
+  if (parts.length === 2 && !parts[1]?.trim()) {
+    for (const type of extractContextTypesFromVariables(variables)) {
+      addIfNotExists(`context.${type}.data`);
+      addIfNotExists(`context.${type}.id`);
+    }
+  } else if (parts.length === 2 && parts[1]?.trim()) {
     addIfNotExists(`${queryWithoutSuffix}.id`);
     addIfNotExists(`${queryWithoutSuffix}.data`);
-  }
-  // "context.tenant.id" → suggest if valid and doesn't exist
-  else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
+  } else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
     addIfNotExists(queryWithoutSuffix);
   }
 }
@@ -328,7 +329,9 @@ const getRepeatBlockEachVariables = (editor: TiptapEditor): Array<LiquidVariable
   return [{ name: iterableName }];
 };
 
-const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array<Variable> => {
+type SortableVariable = LiquidVariable;
+
+const dedupAndSortVariables = (variables: Array<SortableVariable>, query: string): Array<SortableVariable> => {
   const lowerQuery = query.toLowerCase();
 
   const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(lowerQuery));
@@ -337,8 +340,8 @@ const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array
 
   // Separate digest variables that match the query
   const digestLabels = new Set(DIGEST_VARIABLES.map((v) => v.name));
-  const matchedDigestVariables: Variable[] = [];
-  const others: Variable[] = [];
+  const matchedDigestVariables: SortableVariable[] = [];
+  const others: SortableVariable[] = [];
 
   for (const variable of uniqueVariables) {
     if (digestLabels.has(variable.name)) {
@@ -348,8 +351,13 @@ const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array
     }
   }
 
-  // Sort the non-digest variables
+  // Sort the non-digest variables: preferred namespaces (boost) first, then match quality, then alpha
   const sortedOthers = others.sort((a, b) => {
+    const aBoost = a.boost ?? 0;
+    const bBoost = b.boost ?? 0;
+
+    if (aBoost !== bBoost) return bBoost - aBoost;
+
     const aExact = a.name.toLowerCase() === lowerQuery;
     const bExact = b.name.toLowerCase() === lowerQuery;
     const aStarts = a.name.toLowerCase().startsWith(lowerQuery);

@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { AgentEntitlementsService, PinoLogger } from '@novu/application-generic';
+import { ConversationEntity } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import type { CardElement, Thread } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAttributedNovuUrl } from '../../shared/util/novu-attribution-url';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 
 const NOVU_AGENTS_UPGRADE_URL = 'https://go.novu.co/agents-upgrade';
@@ -16,14 +19,16 @@ export function isLinkButtonActionId(id: string | undefined): boolean {
   return typeof id === 'string' && id.startsWith('link-');
 }
 
-/** Which plan entitlement caused an over-limit agent/channel to be soft-blocked at runtime. */
-type PlanLimitBlockReason = 'agents' | 'channels';
+/** Which plan entitlement caused an over-limit agent/channel/conversation to be soft-blocked at runtime. */
+export type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
 
 const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
   agents:
     "This agent isn't active on your current Novu plan — you've reached the number of agents included in your plan. Please upgrade your plan to activate it.",
   channels:
     "This channel isn't active on your current Novu plan — you've reached the number of active channels included in your plan. Please upgrade your plan to activate it.",
+  conversations:
+    "You've reached the number of active conversations included in your current Novu plan. Upgrade your plan to start new conversations — your existing conversations keep working.",
 };
 
 function buildUpgradeRequiredCard(
@@ -81,7 +86,9 @@ export class PlanLimitGateService {
   constructor(
     private readonly logger: PinoLogger,
     private readonly agentEntitlements: AgentEntitlementsService,
-    private readonly outboundGateway: OutboundGateway
+    private readonly outboundGateway: OutboundGateway,
+    private readonly conversationActivation: ConversationActivationService,
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -105,7 +112,7 @@ export class PlanLimitGateService {
       config.organizationId,
       config.environmentId,
       agentId,
-      config.integrationId
+      config.providerId
     );
 
     let reason: PlanLimitBlockReason | null = null;
@@ -126,17 +133,76 @@ export class PlanLimitGateService {
     return true;
   }
 
+  /**
+   * Returns `true` when inbound processing must stop because a Free-tier
+   * organization has reached its included active-conversations limit and this
+   * engagement would start a *new* activation. Existing (already-counted)
+   * conversations are never blocked — only new ones — so an organization at its
+   * limit keeps serving its current threads. Posts the upgrade card before
+   * returning. Keyless/demo orgs are governed by their own caps and skipped.
+   *
+   * `conversation` is omitted for a brand-new thread (not yet persisted); the
+   * caller invokes this before creating it so a block can't orphan a
+   * Conversation/participants. A brand-new thread is always a NEW activation.
+   */
+  async maybeBlockConversation(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    conversation?: ConversationEntity
+  ): Promise<boolean> {
+    if (config.isKeyless) {
+      return false;
+    }
+
+    const { blocked } = await this.conversationActivation.shouldBlockFreeTier({
+      conversation,
+      platform: config.platform,
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      isDirectMessage: thread.isDM,
+    });
+
+    if (!blocked) {
+      return false;
+    }
+
+    await this.postUpgradeRequiredReply(agentId, config, thread, 'conversations', conversation);
+
+    return true;
+  }
+
   /** Fail-soft: failing to post the card must not crash the inbound webhook. */
   private async postUpgradeRequiredReply(
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    reason: PlanLimitBlockReason
+    reason: PlanLimitBlockReason,
+    conversation?: ConversationEntity
   ): Promise<void> {
     try {
+      const card = buildUpgradeRequiredCard(reason, config.agentIdentifier, config.platform);
+      // Pre-conversation gates (agents/channels, brand-new thread at conversations
+      // limit) have nothing to attach history to — ephemeral platform delivery only.
+      // When an existing conversation is blocked from a new activation, persist so
+      // the upgrade card appears in durable web-chat history.
       await this.outboundGateway.replyOnThreadWithCard(
         thread,
-        buildUpgradeRequiredCard(reason, config.agentIdentifier, config.platform)
+        card,
+        conversation
+          ? {
+              persist: {
+                conversationId: conversation._id,
+                channel: this.conversationService.getPrimaryChannel(conversation),
+                agentIdentifier: config.agentIdentifier,
+                content: PLAN_LIMIT_BLOCK_MESSAGES[reason],
+                richContent: { card },
+                environmentId: config.environmentId,
+                organizationId: config.organizationId,
+              },
+            }
+          : undefined
       );
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post plan-limit upgrade reply (${reason})`);

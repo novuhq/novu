@@ -56,6 +56,19 @@ export interface ICredentials {
   tenantId?: string;
   signingSecret?: string;
   outboundIntegrationId?: string;
+  /**
+   * Agent email: ISO timestamp of when the agent's outbound was first switched from the demo
+   * sender to the user's own provider. Marks completion of the email "What's next" layer-2
+   * onboarding and time-boxes that guide. Only meaningful on the NovuAgent email integration.
+   */
+  outboundConnectedAt?: string;
+  /**
+   * Channel-agnostic ISO timestamp marking Layer-2 "What's next" completion (Connected badge +
+   * guide hide window). For WhatsApp Business: stamped when a permanent Access Token is in place
+   * (server auto-stamp on post-connect `apiToken` rotation, or manual confirm). Email continues to
+   * use `outboundConnectedAt` for now.
+   */
+  whatsNextCompletedAt?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
   /**
@@ -77,13 +90,18 @@ export interface ICredentials {
    */
   inboxRoutingKey?: string;
   /**
-   * Cloud-only kill switch for the Novu shared inbox
+   * Kill switch for the Novu shared inbox
    * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). When `true`, the
    * inbound worker drops mail addressed to this agent on the shared domain;
    * custom-domain routes for the same agent still deliver. Only meaningful on
-   * the NovuAgent email integration. Managed server-side via
-   * `PATCH /agents/:identifier/inbox/shared`; pinned through the generic
-   * integration update path.
+   * the NovuAgent email integration.
+   *
+   * On cloud this is a user-facing toggle managed via
+   * `PATCH /agents/:identifier/inbox/shared` (pinned through the generic
+   * integration update path). On self-hosted, where there is no shared inbox,
+   * it is set to `true` defensively at provisioning time and is effectively
+   * redundant (every reader also gates on `isAgentSharedInboxEnabled()` /
+   * `sharedInboundAddress`, both falsy self-hosted).
    */
   sharedInboxDisabled?: boolean;
   /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. */
@@ -104,4 +122,17 @@ export interface ICredentials {
    * configured per-integration when the customer is not on the default workspace.
    */
   externalWorkspaceId?: string;
+  /** When true, WhatsApp credentials were provisioned via Novu Tech Provider Embedded Signup; app secret is resolved from platform env. */
+  isNovuManaged?: boolean;
+  /** HTTP method for custom webhook delivery (e.g. POST, PUT). */
+  method?: string;
+  /** Custom webhook request headers as JSON. */
+  headers?: string;
+  /** Custom webhook request body template. */
+  body?: string;
+  /**
+   * Tool-webhook routing mode. `'static'` sends to the integration `webhookUrl`;
+   * `'dynamic'` fans out to per-subscriber `tool_webhook` endpoints. Missing = static.
+   */
+  routingMode?: 'static' | 'dynamic';
 }

@@ -6,18 +6,14 @@ describe('applyDecorators', () => {
   it('should chain decorator return values', () => {
     const firstKey = Symbol('novu-first-decorator');
     const secondKey = Symbol('novu-second-decorator');
-    const firstDecorator =
-      (): ClassDecorator =>
-      (target) => {
-        Reflect.defineMetadata(firstKey, 'first', target);
+    const firstDecorator = (): ClassDecorator => (target) => {
+      Reflect.defineMetadata(firstKey, 'first', target);
 
-        return class extends (target as typeof NovuController) {};
-      };
-    const secondDecorator =
-      (): ClassDecorator =>
-      (target) => {
-        Reflect.defineMetadata(secondKey, 'second', target);
-      };
+      return class extends (target as typeof NovuController) {};
+    };
+    const secondDecorator = (): ClassDecorator => (target) => {
+      Reflect.defineMetadata(secondKey, 'second', target);
+    };
 
     const decoratedClass = applyDecorators(NovuController, [firstDecorator(), secondDecorator()]);
 
@@ -29,15 +25,13 @@ describe('applyDecorators', () => {
 describe('applyDecoratorsInPlace', () => {
   it('should copy metadata from class-replacing decorators onto the base controller', () => {
     const metadataKey = Symbol('novu-replaced-class-decorator');
-    const replacingDecorator =
-      (): ClassDecorator =>
-      (target) => {
-        const replacedClass = class extends (target as typeof NovuController) {};
+    const replacingDecorator = (): ClassDecorator => (target) => {
+      const replacedClass = class extends (target as typeof NovuController) {};
 
-        Reflect.defineMetadata(metadataKey, 'replaced', replacedClass);
+      Reflect.defineMetadata(metadataKey, 'replaced', replacedClass);
 
-        return replacedClass;
-      };
+      return replacedClass;
+    };
 
     applyDecoratorsInPlace(NovuController, [replacingDecorator()]);
 

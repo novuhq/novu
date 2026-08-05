@@ -1,11 +1,17 @@
-import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
+import {
+  CLAUDE_BUILTIN_TOOLS,
+  isNovuInternalToolName,
+  NOVU_RESOLVE_SCHEMA,
+  NOVU_TOOL_CATALOG_SCHEMA,
+} from '@novu/shared';
 import { expect } from 'chai';
 import {
+  buildPlatformToolsPayload,
   buildToolsPayload,
-  MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG,
+  ensureSkillRequiredTools,
   MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
   mapToolset,
-  resolveManagedAgentPermissionConfig,
+  SKILL_REQUIRED_BUILTIN_TOOL,
 } from './anthropic-runtime.helpers';
 
 describe('mapToolset', () => {
@@ -63,27 +69,62 @@ describe('buildToolsPayload', () => {
     });
   });
 
-  it('sets always_allow when the permission config override is provided', () => {
-    const payload = buildToolsPayload(
-      ['bash'],
-      [{ name: 'GitHub', url: 'https://mcp.example.com/github' }],
-      MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG
-    );
-    const toolset = payload.find((entry) => entry.type === 'agent_toolset_20260401');
-    const mcpToolset = payload.find((entry) => entry.type === 'mcp_toolset');
+  it('includes platform tools when the user has no tools or MCP servers', () => {
+    const payload = buildToolsPayload(undefined, undefined);
+    const toolset = payload.find((entry) => entry.type === 'agent_toolset_20260401') as {
+      configs: Array<{ name: string; enabled: boolean }>;
+    };
+    const platformTools = payload.filter((entry) => entry.type === 'custom');
 
-    expect(toolset?.default_config).to.deep.equal(MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG);
-    expect(mcpToolset?.default_config).to.deep.equal(MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG);
+    expect(toolset.configs.every((c) => c.enabled === false)).to.equal(true);
+    expect(platformTools).to.deep.equal([
+      { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+      { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+    ]);
+  });
+
+  it('buildPlatformToolsPayload returns novu_tool_catalog and novu_resolve', () => {
+    expect(buildPlatformToolsPayload()).to.deep.equal([
+      { type: 'custom', ...NOVU_TOOL_CATALOG_SCHEMA },
+      { type: 'custom', ...NOVU_RESOLVE_SCHEMA },
+    ]);
+  });
+
+  it('isNovuInternalToolName recognizes platform tools only', () => {
+    expect(isNovuInternalToolName('novu_tool_catalog')).to.equal(true);
+    expect(isNovuInternalToolName('novu_tools')).to.equal(true);
+    expect(isNovuInternalToolName('novu_resolve')).to.equal(true);
+    expect(isNovuInternalToolName('customer_tool')).to.equal(false);
+    expect(isNovuInternalToolName(undefined)).to.equal(false);
+  });
+
+  it('force-enables read when hasSkills is true', () => {
+    const payload = buildToolsPayload(['web_search'], undefined, true);
+    const toolset = payload[0] as { configs: Array<{ name: string; enabled: boolean }> };
+    const readConfig = toolset.configs.find((c) => c.name === SKILL_REQUIRED_BUILTIN_TOOL);
+
+    expect(readConfig?.enabled).to.equal(true);
+  });
+
+  it('does not enable read when hasSkills is false', () => {
+    const payload = buildToolsPayload(['web_search'], undefined, false);
+    const toolset = payload[0] as { configs: Array<{ name: string; enabled: boolean }> };
+    const readConfig = toolset.configs.find((c) => c.name === SKILL_REQUIRED_BUILTIN_TOOL);
+
+    expect(readConfig?.enabled).to.equal(false);
   });
 });
 
-describe('resolveManagedAgentPermissionConfig', () => {
-  it('returns always_ask when the flag is false or undefined', () => {
-    expect(resolveManagedAgentPermissionConfig(false)).to.deep.equal(MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG);
-    expect(resolveManagedAgentPermissionConfig(undefined)).to.deep.equal(MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG);
+describe('ensureSkillRequiredTools', () => {
+  it('appends read when skills are present and read is missing', () => {
+    expect(ensureSkillRequiredTools(['web_search'], true)).to.deep.equal(['web_search', 'read']);
   });
 
-  it('returns always_allow when the flag is true', () => {
-    expect(resolveManagedAgentPermissionConfig(true)).to.deep.equal(MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG);
+  it('is idempotent when read is already selected', () => {
+    expect(ensureSkillRequiredTools(['read', 'web_search'], true)).to.deep.equal(['read', 'web_search']);
+  });
+
+  it('returns the input unchanged when skills are absent', () => {
+    expect(ensureSkillRequiredTools(['web_search'], false)).to.deep.equal(['web_search']);
   });
 });

@@ -10,6 +10,7 @@ import {
 import {
   encryptSecret,
   generateAgentInboxRoutingKey,
+  isAgentEmailEnabled,
   isAgentSharedInboxEnabled,
   isValidAgentEmailSlugPrefix,
 } from '@novu/application-generic';
@@ -113,11 +114,19 @@ export class NovuEmailProvisioningService {
   }
 
   /**
-   * Mints the NovuAgent integration with a freshly-generated `inboxRoutingKey`.
-   * The key is globally unique under a partial index gated to NovuAgent rows
-   * (`{ 'credentials.inboxRoutingKey': 1 }`), so the lone failure mode of a
-   * duplicate-key collision is retried up to {@link ROUTING_KEY_MAX_ATTEMPTS}
-   * times before surfacing the error to the caller.
+   * Mints the NovuAgent integration.
+   *
+   * On shared-inbox deployments (cloud) a freshly-generated `inboxRoutingKey` is
+   * attached. The key is globally unique under a partial index gated to
+   * NovuAgent rows (`{ 'credentials.inboxRoutingKey': 1 }`), so the lone failure
+   * mode of a duplicate-key collision is retried up to
+   * {@link ROUTING_KEY_MAX_ATTEMPTS} times before surfacing the error.
+   *
+   * On non-shared-inbox deployments (self-hosted) there is no shared domain to
+   * route against, so we skip routing-key minting entirely and persist
+   * `sharedInboxDisabled: true`. Inbound is wired through a per-tenant verified
+   * Domain + DomainRoute(type=AGENT) instead. The outbound sender is optional
+   * here and assigned later via the agent email setup guide.
    */
   private async createNovuAgentIntegration({
     displayName,
@@ -133,35 +142,52 @@ export class NovuEmailProvisioningService {
     identifier: string;
     emailSlugPrefix: string;
     senderName: string;
-    outboundIntegrationId: string;
+    outboundIntegrationId?: string;
     environmentId: string;
     organizationId: string;
     session: ClientSession | null;
   }): Promise<IntegrationEntity> {
+    const baseCredentials = {
+      secretKey: encryptSecret(randomBytes(32).toString('hex')),
+      emailSlugPrefix,
+      senderName,
+      ...(outboundIntegrationId ? { outboundIntegrationId } : {}),
+    };
+
+    // The create envelope is identical across both branches; only `credentials`
+    // varies (shared-inbox routing key vs. self-hosted disabled flag). Build it
+    // once so the lone `as any` (a pre-existing DAL signature wart) lives in a
+    // single place. The cast is needed because the repository's `create` accepts
+    // a query type rather than a plain document.
+    const buildPayload = (credentials: Record<string, unknown>) =>
+      ({
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials,
+        configurations: {},
+        name: displayName,
+        identifier,
+        active: true,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      }) as any;
+
+    // Self-hosted: no shared domain to route against, so skip routing-key minting
+    // (and its collision loop) and persist the disabled flag. Inbound is wired
+    // through a per-tenant verified Domain + DomainRoute(type=AGENT).
+    if (!isAgentSharedInboxEnabled()) {
+      return this.integrationRepository.create(buildPayload({ ...baseCredentials, sharedInboxDisabled: true }), {
+        session,
+      });
+    }
+
     let lastError: unknown;
     for (let attempt = 0; attempt < ROUTING_KEY_MAX_ATTEMPTS; attempt += 1) {
       const inboxRoutingKey = generateAgentInboxRoutingKey();
       try {
-        return await this.integrationRepository.create(
-          {
-            providerId: EmailProviderIdEnum.NovuAgent,
-            channel: ChannelTypeEnum.EMAIL,
-            credentials: {
-              secretKey: encryptSecret(randomBytes(32).toString('hex')),
-              emailSlugPrefix,
-              inboxRoutingKey,
-              outboundIntegrationId,
-              senderName,
-            },
-            configurations: {},
-            name: displayName,
-            identifier,
-            active: true,
-            _environmentId: environmentId,
-            _organizationId: organizationId,
-          } as any,
-          { session }
-        );
+        return await this.integrationRepository.create(buildPayload({ ...baseCredentials, inboxRoutingKey }), {
+          session,
+        });
       } catch (err) {
         if (!isInboxRoutingKeyCollision(err)) {
           throw err;
@@ -186,14 +212,22 @@ export class NovuEmailProvisioningService {
    *      Development environments alongside the org. It's quota-limited but
    *      lets the agent reply out of the box without any user configuration.
    *
-   * We deliberately throw when neither exists rather than persisting an empty
-   * sentinel: every downstream path (send-agent-test-email + chat-sdk's
-   * `buildSendEmailCallback`) now assumes a concrete integration id, and a
-   * misconfigured env (custom non-prod env with no email seeded) is surfaced
-   * loudly so the user can fix it instead of silently routing through a
-   * synthetic demo that may also be unavailable.
+   * On shared-inbox deployments (cloud) we deliberately throw when neither
+   * exists rather than persisting an empty sentinel: every downstream path
+   * (send-agent-test-email + chat-sdk's `buildSendEmailCallback`) assumes a
+   * concrete integration id, and a misconfigured env (custom non-prod env with
+   * no email seeded) is surfaced loudly so the user can fix it instead of
+   * silently routing through a synthetic demo that may also be unavailable.
+   *
+   * On self-hosted there is no bundled Novu demo provider, so a fresh org has
+   * no outbound sender to attach yet. We return `undefined` and let the agent
+   * email setup guide assign a provider; sending stays gracefully blocked with
+   * a clear error until one is selected.
    */
-  private async resolveDefaultOutboundIntegrationId(environmentId: string, organizationId: string): Promise<string> {
+  private async resolveDefaultOutboundIntegrationId(
+    environmentId: string,
+    organizationId: string
+  ): Promise<string | undefined> {
     const primaryCustom = await this.integrationRepository.findOne({
       _environmentId: environmentId,
       _organizationId: organizationId,
@@ -213,9 +247,13 @@ export class NovuEmailProvisioningService {
     });
     if (novuDemo) return novuDemo._id;
 
-    throw new ConflictException(
-      'No outbound email integration available for this environment. Activate the Novu Email demo provider or configure a primary email integration.'
-    );
+    if (isAgentSharedInboxEnabled()) {
+      throw new ConflictException(
+        'No outbound email integration available for this environment. Activate the Novu Email demo provider or configure a primary email integration.'
+      );
+    }
+
+    return undefined;
   }
 
   /**
@@ -315,7 +353,7 @@ export class NovuEmailProvisioningService {
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
-    if (!isAgentSharedInboxEnabled()) {
+    if (!isAgentEmailEnabled()) {
       throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
     }
 

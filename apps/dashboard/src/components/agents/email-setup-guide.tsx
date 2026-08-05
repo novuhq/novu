@@ -1,39 +1,24 @@
-import { EmailProviderIdEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
+import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMemo, useState } from 'react';
-import { RiInformation2Fill, RiInformation2Line, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
-import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail } from '@/api/agents';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { RiInformation2Line, RiKey2Line } from 'react-icons/ri';
+import { type AgentIntegrationLink, type AgentResponse } from '@/api/agents';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { IS_SELF_HOSTED_EE } from '@/config';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { cn } from '@/utils/ui';
 import { InboundAddressConfig } from './inbound-address-config';
 import { OutboundProviderSelect } from './outbound-provider-select';
-import { SharedInboundAddressField } from './shared-inbound-address-field';
-import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
+import {
+  IntegrationCredentialsSidebar,
+  ListeningStatus,
+  ProviderSetupStepperRail,
+  SetupButton,
+  SetupStep,
+  SetupStepperRail,
+} from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
-import { type ConfiguredAddress, useEmailSetupCredentials } from './use-email-setup-credentials';
-
-function resolveTestEmailTarget(
-  customTarget: ConfiguredAddress | undefined,
-  sharedInboundAddress: string | undefined,
-  hasSharedInbox: boolean
-): string | undefined {
-  if (customTarget) {
-    if (customTarget.address === '*') {
-      return `test@${customTarget.domain}`;
-    }
-
-    return `${customTarget.address}@${customTarget.domain}`;
-  }
-
-  if (hasSharedInbox) {
-    return sharedInboundAddress;
-  }
-
-  return undefined;
-}
+import { SharedInboundAddressField } from './shared-inbound-address-field';
+import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
 export type EmailSetupGuideProps = {
   agent: AgentResponse;
@@ -44,9 +29,8 @@ export type EmailSetupGuideProps = {
   /**
    * Optional agent–integration link, populated by callers that already have
    * it. When present, the wizard counts the Novu shared inbox as a valid
-   * inbound address and uses it as the test-email target if no custom-domain
-   * routes are configured. When absent (legacy callers), the wizard falls
-   * back to the previous behavior of requiring a custom address.
+   * inbound address. When absent (legacy callers), the wizard falls back to
+   * the previous behavior of requiring a custom address.
    */
   integrationLink?: AgentIntegrationLink;
   /** Onboarding hides the custom-address add-form; the shared inbox is enough to get started. */
@@ -62,8 +46,8 @@ export function EmailSetupGuide({
   integrationLink,
   isOnboarding = false,
 }: EmailSetupGuideProps) {
-  const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
+  const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
 
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [testConnected, setTestConnected] = useState(false);
@@ -77,7 +61,6 @@ export function EmailSetupGuide({
     outboundId,
     configuredAddresses,
     domains,
-    isOutboundDemo,
     needsCredentialsStep,
     hasOutboundCredentials,
     outboundProviderConfig,
@@ -95,24 +78,15 @@ export function EmailSetupGuide({
   const sharedInboundAddress = integrationLink?.integration?.sharedInboundAddress;
   const sharedInboxDisabled = Boolean(integrationLink?.integration?.sharedInboxDisabled);
   const hasSharedInbox = Boolean(sharedInboundAddress) && !sharedInboxDisabled;
-  const isManagedAgent = agent.runtime === 'managed';
 
-  const testEmailMutation = useMutation({
-    mutationFn: async () => {
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const customTarget = configuredAddresses[0];
-      const targetAddress = resolveTestEmailTarget(customTarget, sharedInboundAddress, hasSharedInbox);
-      if (!targetAddress) throw new Error('No inbound address configured.');
-      await sendAgentTestEmail(environment, agent.identifier, targetAddress);
-    },
-    onSuccess: () => showSuccessToast('Test email sent.'),
-    onError: (err) => {
-      const message = err instanceof Error ? err.message : 'Could not send test email.';
-      showErrorToast(message, 'Test email failed');
-    },
-  });
+  // Layer-1 simplification: on cloud (a shared inbox is provisioned), the agent works out of the
+  // box on the Novu demo sender + shared inbox, so setup collapses to "see your address + test".
+  // Production hardening (own provider, custom domain, branded address) moves to the layer-2
+  // "What's next" guide; custom From lives in the EMAIL card below. Self-hosted EE has no demo/shared inbox, so it keeps the full
+  // provider + domain flow as a hard prerequisite. Flag off = unchanged behavior.
+  const simplifiedSetup = isEmailWhatsNextEnabled && hasSharedInbox && !IS_SELF_HOSTED_EE;
 
-  // Step indices — credentials step is conditionally inserted
+  // Step indices: credentials step is conditionally inserted
   const base = stepOffset;
   const credentialsStepIndex = base + 1;
   const inboundStepIndex = needsCredentialsStep ? base + 2 : base + 1;
@@ -128,13 +102,23 @@ export function EmailSetupGuide({
   // provider is an explicit upgrade rather than a prerequisite. For demo,
   // `needsCredentialsStep` stays false so the credentials step is skipped
   // naturally and the wizard advances straight to the inbound-address step.
+  // Self-hosted Enterprise has no bundled Novu demo sender, so a freshly
+  // provisioned agent has no outbound provider selected. Treat picking one as a
+  // hard prerequisite there. On cloud the demo is selected by default, so this
+  // branch never fires and the step stays pre-completed exactly as before (zero
+  // behavioral delta).
+  const needsOutboundSelection = IS_SELF_HOSTED_EE && !outboundId;
+
   const firstIncompleteStep = useMemo(() => {
+    if (needsOutboundSelection) return base;
     if (needsCredentialsStep && !hasOutboundCredentials) return credentialsStepIndex;
     if (!hasAddresses) return inboundStepIndex;
     if (!testConnected) return testStepIndex;
 
     return testStepIndex + 1;
   }, [
+    needsOutboundSelection,
+    base,
     needsCredentialsStep,
     hasOutboundCredentials,
     credentialsStepIndex,
@@ -153,7 +137,11 @@ export function EmailSetupGuide({
         status={deriveStepStatus(base, firstIncompleteStep)}
         sectionLabel="SETUP SENDING EMAILS"
         title="Setup providers to send emails."
-        description="The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume later."
+        description={
+          IS_SELF_HOSTED_EE
+            ? 'Select an email provider (e.g. SendGrid, SES, Resend) so your agent can send replies.'
+            : 'The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume later.'
+        }
         rightContent={
           <div className="flex w-full flex-col gap-1.5">
             <div className="text-text-strong text-label-xs flex items-center gap-1 font-medium leading-4">
@@ -219,7 +207,7 @@ export function EmailSetupGuide({
         description={
           showInboundAddressOnTestStep
             ? 'Your agent receives email on a dedicated inbound address. Custom domains and providers can be configured later.'
-            : 'You can talk to your agent via this mail address. Override the address to send from another email. Reply-To always routes back to the agent so replies stay in the thread.'
+            : 'Email sent to this address is delivered to your agent.'
         }
         extraContent={
           showInboundAddressOnTestStep ? undefined : (
@@ -239,11 +227,7 @@ export function EmailSetupGuide({
         index={testStepIndex}
         status={deriveStepStatus(testStepIndex, firstIncompleteStep)}
         title="Test connection"
-        description={
-          isManagedAgent
-            ? 'Send an email to your configured inbound address. We will detect when it arrives.'
-            : 'Send an email to your configured inbound address and verify it reaches your agent handler.'
-        }
+        description="Send an email to your configured inbound address. We will detect when it arrives."
         extraContent={
           <div className="flex w-full flex-col gap-4">
             {showInboundAddressOnTestStep ? (
@@ -258,34 +242,56 @@ export function EmailSetupGuide({
                 onStepsCompleted?.();
               }}
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
-              listeningMessage={
-                isManagedAgent
-                  ? 'Waiting for your email — send a message to your configured inbound address.'
-                  : 'Send a test email to verify the inbound pipeline reaches your agent.'
-              }
+              listeningMessage="Waiting for your email: send a message to your configured inbound address."
             />
           </div>
-        }
-        rightContent={
-          isManagedAgent ? undefined : (
-            <SetupButton
-              leadingIcon={
-                testEmailMutation.isPending ? (
-                  <RiLoader4Line className="size-3.5 animate-spin" />
-                ) : (
-                  <RiMailSendLine className="size-3.5" />
-                )
-              }
-              disabled={firstIncompleteStep < testStepIndex || testEmailMutation.isPending}
-              onClick={() => testEmailMutation.mutate()}
-            >
-              {testEmailMutation.isPending ? 'Sending...' : 'Send test email'}
-            </SetupButton>
-          )
         }
       />
     </>
   );
+
+  // Two-step out-of-box flow used when `simplifiedSetup` is on: the address is provisioned, so the
+  // only action is the connection test. Everything production-oriented lives in "What's next".
+  const simplifiedFirstIncompleteStep = testConnected ? base + 2 : base + 1;
+
+  const simplifiedStepsColumn = (
+    <>
+      <SetupStep
+        index={base}
+        status={deriveStepStatus(base, simplifiedFirstIncompleteStep)}
+        sectionLabel="YOUR AGENT'S EMAIL"
+        title="Your agent's email address"
+        description="Your agent receives email on this dedicated inbound address. Share it with your users to start a conversation. Connect your own provider and a custom domain later from What's next."
+        extraContent={
+          sharedInboundAddress ? <SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} /> : undefined
+        }
+      />
+
+      <SetupStep
+        index={base + 1}
+        status={deriveStepStatus(base + 1, simplifiedFirstIncompleteStep)}
+        title="Test connection"
+        description="Send an email to your inbound address. We will detect when it arrives."
+        extraContent={
+          <div className="flex w-full flex-col gap-4">
+            <ListeningStatus
+              inline
+              agentIdentifier={agent.identifier}
+              watchedIntegrationId={integrationId}
+              onConnected={() => {
+                setTestConnected(true);
+                onStepsCompleted?.();
+              }}
+              connectedMessage="Your email integration is connected. This agent is ready to receive emails."
+              listeningMessage="Waiting for your email: send a message to your inbound address."
+            />
+          </div>
+        }
+      />
+    </>
+  );
+
+  const activeStepsColumn = simplifiedSetup ? simplifiedStepsColumn : stepsColumn;
 
   const credentialsSidebar =
     outboundId && needsCredentialsStep ? (
@@ -300,15 +306,7 @@ export function EmailSetupGuide({
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {stepsColumn}
-        </div>
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{activeStepsColumn}</SetupStepperRail>
         {credentialsSidebar}
       </div>
     );
@@ -316,20 +314,8 @@ export function EmailSetupGuide({
 
   return (
     <>
-      {stepsColumn}
+      <ProviderSetupStepperRail>{activeStepsColumn}</ProviderSetupStepperRail>
       {credentialsSidebar}
     </>
-  );
-}
-
-function DemoProviderHint() {
-  return (
-    <div className="bg-bg-weak border-stroke-weak text-text-sub flex items-start gap-2 rounded-md border px-2 py-1.5">
-      <RiInformation2Fill className="text-away-base mt-px size-3.5 shrink-0" aria-hidden />
-      <p className="text-paragraph-xs leading-4">
-        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider to
-        send at scale.
-      </p>
-    </div>
   );
 }

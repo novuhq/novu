@@ -1,57 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
-import {
-  AgentMcpServerRepository,
-  ConversationRepository,
-  McpConnectionRepository,
-  SubscriberRepository,
-} from '@novu/dal';
-import {
-  CredentialExpiredError,
-  McpServerError,
-  type SessionEventContext,
-  SessionExpiredError,
-  type StreamCallbacks,
-  type Response as ThalamusResponse,
-} from '@novu/thalamus';
-import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
-import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
-import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
-import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
-import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
-import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
-import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
-import { captureAgentException } from '../shared/errors/capture-agent-sentry';
-import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
-import { listOAuthMcps } from './setup/list-oauth-mcps.helper';
-import { findOAuthMcpByServerName } from './setup/oauth-mcp.types';
-import { buildSetupCardForMcps } from './setup/setup-card.builder';
-import { HandlePendingToolApprovalsCommand } from './tool-approval/handle-pending-tool-approvals.command';
-import { HandlePendingToolApprovals } from './tool-approval/handle-pending-tool-approvals.usecase';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { type SessionEventContext, type StreamCallbacks, type StreamPart } from '@novu/thalamus';
+import { AgentEventContext, AgentEventSink } from '../shared/agent-event-sink.service';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { mapStreamPart, RunEventBuilder } from './stream-part-mapper';
 
-interface BaseCommandFields {
-  userId: string;
-  environmentId: string;
-  organizationId: string;
-  conversationId: string;
-  agentIdentifier: string;
-  integrationIdentifier: string;
-}
-
+/**
+ * Thin dual adapter: feature flag selects which Thalamus callback surface feeds
+ * the shared AgentEventSink. SessionEventsFactory is sync, so the flag is
+ * resolved once on the first event and cached for the rest of the turn.
+ */
 @Injectable()
 export class ManagedAgentEventHandler {
   constructor(
-    private readonly conversationRepository: ConversationRepository,
-    private readonly subscriberRepository: SubscriberRepository,
-    private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly mcpConnectionRepository: McpConnectionRepository,
-    private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
-    private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
-    private readonly handleAgentReply: HandleAgentReply,
-    private readonly handlePlanProgress: HandlePlanProgress,
-    private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
-    private readonly demoQuota: DemoClaudeQuotaPolicy,
-    private readonly inboundAck: InboundAckService,
+    private readonly agentEventSink: AgentEventSink,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -66,360 +30,138 @@ export class ManagedAgentEventHandler {
       return {};
     }
 
-    const baseFields = this.buildBaseFields(metadata);
-    return {
-      onToolUseStart: async (event: {
-        toolUseId: string;
-        toolName: string;
-        source?: { type: string; serverName?: string };
-      }) => {
-        try {
-          await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({
-              ...baseFields,
-              toolProgress: {
-                action: 'tool-use',
-                toolUseId: event.toolUseId,
-                toolName: event.toolName,
-                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
-                status: 'running',
-              },
-            })
-          );
-        } catch (err) {
-          this.logger.error(err, `onToolUseStart failed: session=${sessionId}`);
-          captureAgentException(err, {
-            component: 'managed-agent-event-handler',
-            operation: 'on-tool-use-start',
-            sessionId,
-          });
-        }
-      },
-
-      onToolUseDone: async (event: {
-        toolUseId: string;
-        toolName: string;
-        input?: Record<string, unknown>;
-        source?: { type: string; serverName?: string };
-      }) => {
-        try {
-          if (!event.input || Object.keys(event.input).length === 0) {
-            return;
-          }
-          await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({
-              ...baseFields,
-              toolProgress: {
-                action: 'tool-use',
-                toolUseId: event.toolUseId,
-                toolName: event.toolName,
-                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
-                status: 'running',
-                toolInput: event.input,
-              },
-            })
-          );
-        } catch (err) {
-          this.logger.error(err, `onToolUseDone failed: session=${sessionId}`);
-          captureAgentException(err, {
-            component: 'managed-agent-event-handler',
-            operation: 'on-tool-use-done',
-            sessionId,
-          });
-        }
-      },
-
-      onToolUseResult: async (event: { toolUseId: string; isError?: boolean }) => {
-        try {
-          await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({
-              ...baseFields,
-              toolProgress: {
-                action: 'tool-use',
-                toolUseId: event.toolUseId,
-                status: event.isError === true ? 'error' : 'complete',
-              },
-            })
-          );
-        } catch (err) {
-          this.logger.error(err, `onToolUseResult failed: session=${sessionId}`);
-          captureAgentException(err, {
-            component: 'managed-agent-event-handler',
-            operation: 'on-tool-use-result',
-            sessionId,
-          });
-        }
-      },
-
-      onFinish: async (event: { response: ThalamusResponse }) => {
-        try {
-          if (event.response.finishReason === 'requires-action') {
-            await this.handlePendingToolApprovals.execute(
-              HandlePendingToolApprovalsCommand.create({
-                ...baseFields,
-                subscriberId: metadata.subscriberId,
-                platform: metadata.platform,
-                sessionId,
-                response: event.response,
-              })
-            );
-            await this.inboundAck.onManagedTurnComplete(metadata);
-
-            return;
-          }
-
-          const replyMarkdown = event.response.content?.trim();
-          if (replyMarkdown) {
-            await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: replyMarkdown } })
-            );
-          }
-
-          await this.inboundAck.onManagedTurnComplete(metadata);
-
-          await this.demoQuota.recordUsage(
-            metadata.environmentId,
-            metadata.organizationId,
-            metadata.conversationId,
-            event.response.usage
-          );
-          await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { action: 'complete' } })
-          );
-        } catch (err) {
-          this.logger.error(err, `onFinish failed: session=${sessionId}`);
-          captureAgentException(err, {
-            component: 'managed-agent-event-handler',
-            operation: 'on-finish',
-            sessionId,
-          });
-          throw err;
-        }
-      },
-
-      onError: async (event: { error: Error }) => {
-        try {
-          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields);
-        } catch (err) {
-          this.logger.error(err, `onError handler failed: session=${sessionId}`);
-          captureAgentException(err, {
-            component: 'managed-agent-event-handler',
-            operation: 'on-error-handler',
-            sessionId,
-          });
-        }
-      },
-    };
-  }
-
-  private buildBaseFields(metadata: Record<string, string>): BaseCommandFields {
-    return {
+    const builder = new RunEventBuilder({
+      conversationId: metadata.conversationId,
+      agentId: metadata.agentId ?? '',
+      turnId: context.turnId,
+      runId: context.runId,
+    });
+    const agentEventContext: AgentEventContext = {
       userId: metadata.organizationId,
       environmentId: metadata.environmentId,
       organizationId: metadata.organizationId,
       conversationId: metadata.conversationId,
       agentIdentifier: metadata.agentIdentifier ?? '',
       integrationIdentifier: metadata.integrationIdentifier ?? '',
+      agentId: metadata.agentId,
+      subscriberId: metadata.subscriberId,
+      platform: parsePlatform(metadata.platform),
+      platformThreadId: metadata.platformThreadId,
+      sessionId,
+      suppressReply: metadata.suppressReply === 'true',
+      source: 'managed',
+    };
+
+    let protocolEnabled: boolean | undefined;
+    const resolveProtocolEnabled = async (): Promise<boolean> => {
+      if (protocolEnabled === undefined) {
+        protocolEnabled = await this.isProtocolEnabled(metadata);
+      }
+
+      return protocolEnabled;
+    };
+
+    const ingestPart = async (part: StreamPart): Promise<void> => {
+      // One StreamPart can expand to multiple AgentEvents (e.g. finish →
+      // tool-approval-request* + run-finish). Ingest as a batch so paused
+      // finish can pair with those approval requests without a process Map.
+      await this.agentEventSink.ingestMany(builder.wrap(mapStreamPart(part)), agentEventContext);
+    };
+
+    return {
+      onPart: async (part) => {
+        if (!(await resolveProtocolEnabled())) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
+
+      onToolUseStart: async (part) => {
+        if (await resolveProtocolEnabled()) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
+
+      onToolUseDone: async (part) => {
+        if (await resolveProtocolEnabled()) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
+
+      // TODO(agents): also persist a TOOL_RESULT activity once Thalamus sends the tool output
+      // (today this event only has { toolUseId, isError }), so the ledger holds the full tool trail.
+      onToolUseResult: async (part) => {
+        if (await resolveProtocolEnabled()) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
+
+      onMessage: async (part) => {
+        if (await resolveProtocolEnabled()) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
+
+      onFinish: async (part) => {
+        if (await resolveProtocolEnabled()) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
+
+      onError: async (part) => {
+        if (await resolveProtocolEnabled()) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
+
+      onMcpServerFailure: async (part) => {
+        if (await resolveProtocolEnabled()) {
+          return;
+        }
+
+        await ingestPart(part);
+      },
     };
   }
 
-  private async handleErrorEvent(
-    metadata: Record<string, string>,
-    sessionId: string,
-    error: Error,
-    baseCommand: BaseCommandFields
-  ): Promise<void> {
-    if (error instanceof SessionExpiredError) {
-      this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
-      await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
-      await this.inboundAck.onManagedTurnComplete(metadata);
+  private async isProtocolEnabled(metadata: Record<string, string>): Promise<boolean> {
+    const organizationId = metadata.organizationId;
+    const environmentId = metadata.environmentId;
 
-      return;
-    }
-
-    const failedMcpServerName = parseMcpInitFailureServerName(error);
-
-    const postedReconnectSetupCard =
-      failedMcpServerName && metadata.subscriberId
-        ? await this.tryPostMcpReconnectSetupCard({
-            ...baseCommand,
-            subscriberId: metadata.subscriberId,
-            serverName: failedMcpServerName,
-          })
-        : false;
-
-    if (postedReconnectSetupCard) {
-      await this.inboundAck.onManagedTurnComplete(metadata);
-
-      try {
-        await this.handlePlanProgress.execute(
-          HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
-        );
-      } catch (err) {
-        this.logger.error(err, `Failed to mark plan progress failed for session ${sessionId}`);
-        captureAgentException(err, {
-          component: 'managed-agent-event-handler',
-          operation: 'deliver-error-plan-progress',
-          sessionId,
-        });
-      }
-
-      return;
-    }
-
-    const message = buildErrorMessage(error);
-
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
-      );
-      await this.inboundAck.onManagedTurnComplete(metadata);
-      await this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
-      );
-    } catch (err) {
-      this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
-      captureAgentException(err, {
-        component: 'managed-agent-event-handler',
-        operation: 'deliver-error-message',
-        sessionId,
-      });
-    }
-  }
-
-  private async tryPostMcpReconnectSetupCard(params: {
-    userId: string;
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    agentIdentifier: string;
-    integrationIdentifier: string;
-    subscriberId: string;
-    serverName: string;
-  }): Promise<boolean> {
-    const conversation = await this.conversationRepository.findOne(
-      {
-        _id: params.conversationId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      ['_agentId']
-    );
-
-    if (!conversation?._agentId) {
+    if (!organizationId || !environmentId) {
       return false;
     }
 
-    const mcps = await listOAuthMcps(
-      {
-        subscriberRepository: this.subscriberRepository,
-        agentMcpServerRepository: this.agentMcpServerRepository,
-        mcpConnectionRepository: this.mcpConnectionRepository,
-      },
-      {
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: conversation._agentId,
-        subscriberId: params.subscriberId,
-      }
-    );
-    const mcp = findOAuthMcpByServerName(mcps, params.serverName);
-
-    if (!mcp) {
-      this.logger.warn(
-        {
-          conversationId: params.conversationId,
-          serverName: params.serverName,
-        },
-        'MCP init failure did not match an OAuth MCP on the agent'
-      );
-
-      return false;
-    }
-
-    try {
-      const card = await buildSetupCardForMcps({
-        mcps,
-        forceReconnectAgentMcpServerIds: new Set([mcp.agentMcpServerId]),
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentIdentifier: params.agentIdentifier,
-        subscriberId: params.subscriberId,
-        conversationId: params.conversationId,
-        generateMcpOAuthUrl: this.generateMcpOAuthUrl,
-        ensureProviderManagedVault: this.ensureProviderManagedVault,
-        logger: this.logger,
-      });
-
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          userId: params.userId,
-          organizationId: params.organizationId,
-          environmentId: params.environmentId,
-          conversationId: params.conversationId,
-          agentIdentifier: params.agentIdentifier,
-          integrationIdentifier: params.integrationIdentifier,
-          reply: { card },
-        })
-      );
-
-      return true;
-    } catch (err) {
-      this.logger.warn(err, `Failed to post MCP reconnect setup card for conversation ${params.conversationId}`);
-
-      return false;
-    }
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
+      defaultValue: false,
+      organization: { _id: organizationId },
+      environment: { _id: environmentId },
+    });
   }
 }
 
-function extractErrorMessage(err: unknown): string | undefined {
-  if (err instanceof Error) {
-    return err.message;
-  }
-
-  // Errors that cross the webhook boundary are JSON-serialized and arrive as
-  // plain objects, so `instanceof Error` is false — read `message` directly.
-  if (typeof err === 'object' && err !== null && 'message' in err) {
-    const message = (err as { message?: unknown }).message;
-
-    return typeof message === 'string' ? message : undefined;
-  }
-
-  return undefined;
-}
-
-export function parseMcpInitFailureServerName(err: unknown): string | undefined {
-  const message = extractErrorMessage(err);
-
-  if (!message) {
+function parsePlatform(value?: string): AgentPlatformEnum | undefined {
+  if (!value) {
     return undefined;
   }
 
-  const mcpInitMatch = message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
-
-  return mcpInitMatch?.[1];
-}
-
-export function buildErrorMessage(err: unknown): string {
-  if (err instanceof CredentialExpiredError) {
-    return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
-  }
-  if (err instanceof McpServerError) {
-    return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
+  if ((Object.values(AgentPlatformEnum) as string[]).includes(value)) {
+    return value as AgentPlatformEnum;
   }
 
-  const failedMcpServerName = parseMcpInitFailureServerName(err);
-
-  if (failedMcpServerName) {
-    return buildMcpInitFailureMessage(failedMcpServerName);
-  }
-
-  return 'The agent is temporarily unavailable. Please try again later.';
-}
-
-export function buildMcpInitFailureMessage(serverName: string): string {
-  return (
-    `I couldn't connect to the **${serverName}** MCP server yet. ` +
-    `Use Connect to authorize ${serverName}, then send your message again.`
-  );
+  return undefined;
 }

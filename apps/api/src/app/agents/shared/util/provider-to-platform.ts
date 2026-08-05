@@ -7,6 +7,8 @@ const PROVIDER_TO_PLATFORM: Partial<Record<string, AgentPlatformEnum>> = {
   [ChatProviderIdEnum.WhatsAppBusiness]: AgentPlatformEnum.WHATSAPP,
   [EmailProviderIdEnum.NovuAgent]: AgentPlatformEnum.EMAIL,
   [ChatProviderIdEnum.Telegram]: AgentPlatformEnum.TELEGRAM,
+  [ChatProviderIdEnum.Sendblue]: AgentPlatformEnum.SENDBLUE,
+  [ChatProviderIdEnum.NovuWebChat]: AgentPlatformEnum.WEB_CHAT,
 };
 
 export function resolveAgentPlatform(providerId: string): AgentPlatformEnum | null {

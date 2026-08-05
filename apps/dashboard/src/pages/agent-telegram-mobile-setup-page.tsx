@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { RiAlertLine, RiCheckLine, RiErrorWarningLine, RiSendPlaneLine, RiTimeLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
@@ -10,6 +9,7 @@ import {
   type TelegramMobileLinkStatus,
   TelegramMobileSubmitError,
 } from '@/api/agents';
+import { Card, PageShell } from '@/components/agents/public-token-page';
 import { Button } from '@/components/primitives/button';
 import { Textarea } from '@/components/primitives/textarea';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
@@ -38,23 +38,6 @@ export function AgentTelegramMobileSetupPage() {
       {token && statusQuery.isError && <InactiveLinkCard reason="invalid" />}
       {token && statusQuery.data?.valid && <SetupForm token={token} agentName={statusQuery.data.agentName} />}
     </PageShell>
-  );
-}
-
-function PageShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-bg-weak flex min-h-dvh flex-col items-center justify-between px-4 py-8">
-      <div className="w-full max-w-md flex-1 pt-[max(env(safe-area-inset-top),0px)]">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {children}
-        </motion.div>
-      </div>
-      <PoweredByNovu />
-    </div>
   );
 }
 
@@ -121,7 +104,7 @@ function SetupForm({ token, agentName }: SetupFormProps) {
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and connect the webhook
-          automatically — nothing else to fill in.
+          automatically: nothing else to fill in.
         </p>
       </div>
 
@@ -184,7 +167,7 @@ function ParseStatus({ draft, parsedToken, parsedUsername }: ParseStatusProps) {
     return (
       <div className="text-text-soft text-label-xs flex items-start gap-1.5 leading-4">
         <RiAlertLine className="text-warning-base mt-0.5 size-3.5 shrink-0" />
-        <span>We couldn&apos;t find a bot token yet. Paste the entire message — it starts with &quot;Done!&quot;.</span>
+        <span>We couldn&apos;t find a bot token yet. Paste the entire message: it starts with &quot;Done!&quot;.</span>
       </div>
     );
   }
@@ -229,7 +212,7 @@ function SuccessCard({
           Your Telegram bot is now wired up to <span className="text-text-strong font-medium">{agentName}</span>.
           {hasStartLink
             ? ' Open the link below in Telegram to link this chat and send your first test message.'
-            : ' Open it in Telegram to send your first message — your agent will reply.'}
+            : ' Open it in Telegram to send your first message: your agent will reply.'}
         </p>
       </div>
 
@@ -288,32 +271,4 @@ function reasonCopy(reason: InactiveReason): { title: string; description: strin
           'The link may be broken or for a different integration. Open your Novu dashboard and scan a fresh QR code to continue.',
       };
   }
-}
-
-function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div
-      className={cn(
-        'border-stroke-soft bg-bg-white shadow-regular-xs flex w-full flex-col rounded-xl border p-5',
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function PoweredByNovu() {
-  return (
-    <a
-      href="https://novu.co"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-text-soft hover:text-text-strong mt-8 inline-flex items-center gap-2 text-label-xs transition"
-      aria-label="Powered by Novu"
-    >
-      <span>Powered by</span>
-      <img src="/images/novu-logo-dark.svg" alt="Novu" className="h-3.5" />
-    </a>
-  );
 }

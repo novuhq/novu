@@ -13,6 +13,7 @@ import { createIntegration, deleteIntegration } from '@/api/integrations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENT_EMAIL_PROVIDER_LABEL, getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -139,24 +140,20 @@ export function useLinkAgentIntegration({
         integrationIdentifier: string,
         mode: 'novu_email' | 'existing_integration' | 'new_integration_then_link'
       ) => {
-        track(
-          TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
-          {
-            agentIdentifier,
-            providerId,
-            integrationIdentifier,
-            mode,
-          }
-        );
+        track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
+          agentIdentifier,
+          providerId,
+          integrationIdentifier,
+          mode,
+        });
       };
 
       /**
        * Removes other links for the *same provider* as the freshly linked one. Runs only when
-       * `replaceExisting` is enabled. Links for other providers (including the auto-provisioned
-       * NovuAgent email link) are always preserved — picking a Slack card replaces a previous
-       * Slack link, not MsTeams or NovuEmail. Only integrations provisioned by this hook are
-       * deleted; pre-existing integrations are unlinked but left intact. Failures are logged
-       * but never surfaced because the primary link succeeded.
+       * `replaceExisting` is enabled. Links for other providers are always preserved — picking a
+       * Slack card replaces a previous Slack link, not MsTeams or NovuEmail. Only integrations
+       * provisioned by this hook are deleted; pre-existing integrations are unlinked but left
+       * intact. Failures are logged but never surfaced because the primary link succeeded.
        */
       const removePreviousLinks = async (keepIntegrationId: string | undefined) => {
         if (!replaceExisting || !existingLinks?.length) return;
@@ -198,7 +195,10 @@ export function useLinkAgentIntegration({
           const integration = link.integration as unknown as IIntegration;
 
           createdIntegrationIdsRef.current.add(integration._id);
-          showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
+          showSuccessToast(
+            'Integration linked',
+            `${getAgentChannelDisplayName(item.providerId, link.integration.name ?? AGENT_EMAIL_PROVIDER_LABEL)} was added to this agent.`
+          );
           trackLink(item.providerId, link.integration.identifier, 'novu_email');
           await removePreviousLinks(integration._id);
           onLinked?.(item.providerId, integration);

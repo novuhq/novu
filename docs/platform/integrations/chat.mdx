@@ -1,0 +1,301 @@
+---
+title: 'Chat'
+description: "Configure and manage chat providers like Slack, Microsoft Teams, WhatsApp, Discord, and Telegram in Novu to deliver chat notifications through workflows."
+---
+
+The Chat channel delivers messages to your subscribers via their preferred chat platforms and application.
+
+## Messaging platforms vs. Messaging applications
+
+- **Messaging platforms**: Ideal for structured, workplace communication. Use these to notify teams or users in collaborative environments. Examples: Slack, Teams
+- **Messaging apps**: Best for consumer-facing messaging. Engage users directly through personal or group chats. Examples: WhatsApp, Telegram, Discord
+
+<Note>
+  Looking to build agents using chat provider integrations? Check out the [agents](/agents) documentation for more information.
+</Note>
+## How chat delivery works in Novu
+
+Here’s the typical flow for sending a chat notification through Novu:
+
+<Steps>
+<Step>
+
+### Add a chat provider
+
+Start by adding a chat provider in the integration store on your Novu dashboard.  
+You can connect one or more integrations for different or even the same providers, for example, multiple Slack workspaces.
+
+To learn how to add a chat provider, refer to [the setup guide](/platform/integrations/chat#supported-providers) for that provider.
+
+</Step>
+
+<Step>
+
+### Add the chat channel to your workflow
+
+Next, include a Chat step in your workflow.  
+This step defines when and how a chat message should be sent as part of your notification workflow.
+
+</Step>
+
+<Step>
+
+### Define the chat content
+
+Within the Chat step editor, write the message body.  
+The editor supports dynamic data for personalized and contextual messages.
+
+</Step>
+
+<Step>
+
+### Store subscriber credentials
+
+Each subscriber must have valid chat credentials, such as a `webhookUrl` or unique identifier, to receive chat notifications.  
+You can store or update these credentials using the Novu dashboard, API, or SDKs.
+
+</Step>
+
+<Step>
+
+### Trigger the workflow
+
+Trigger the workflow using your application code. Novu automatically:
+- Resolves the subscriber.
+- Retrieves the correct credentials, for example, the `webhookUrl`.
+- Selects the appropriate provider.
+- Renders the message.
+- Delivers it to the chat platform.
+
+</Step>
+</Steps>
+
+## Configuring chat providers
+
+When you add a chat provider in the Integration Store, you'll configure credentials specific to that provider.
+
+### Provider authentication
+
+You may need to provide credentials specific to your chat provider, such as an API key, Client ID, or Client Secret. However, some providers, like Discord, may not require any global credentials to be set in the Integration Store.
+
+Each provider has different requirements.
+
+<Note>
+  For detailed setup guides for each provider integration, refer to the supported chat providers list at the end of this page .
+</Note>
+
+## How to manages Chat credentials
+
+The chat channel works by storing specific credentials for each subscriber. This credential is typically a `webhookUrl` that tells Novu where to send a message for that specific subscriber.
+
+Before triggering a chat notification, you must update the subscriber with this `webhookUrl`.
+
+### Storing subscriber credentials
+
+Use the `subscribers.credentials.update` method to store the `webhookUrl` for a specific subscriber and provider.
+
+Checkout the [API reference](/api-reference/subscribers/update-provider-credentials) for more details.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Discord,
+    credentials: {
+      webhookUrl: "<WEBHOOK_URL>",
+    },
+    integrationIdentifier: "discord-MnGLxp8uy",
+  },
+  "subscriberId"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.DISCORD,
+            "credentials": {
+                "webhook_url": "<WEBHOOK_URL>",
+            },
+            "integration_identifier": "discord-MnGLxp8uy",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+integrationIdentifier := "discord-MnGLxp8uy"
+webhookURL := "<WEBHOOK_URL>"
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumDiscord,
+    IntegrationIdentifier: &integrationIdentifier,
+    Credentials: components.ChannelCredentials{
+        WebhookURL: &webhookURL,
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->subscribers->updateCredentials(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::Discord,
+        credentials: new Components\ChannelCredentials(
+            webhookUrl: '<WEBHOOK_URL>',
+        ),
+        integrationIdentifier: 'discord-MnGLxp8uy',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.UpdateCredentialsAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.Discord,
+        IntegrationIdentifier = "discord-MnGLxp8uy",
+        Credentials = new ChannelCredentials() {
+            WebhookUrl = "<WEBHOOK_URL>",
+        },
+    }
+);
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.subscribers().updateCredentials()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.DISCORD)
+        .integrationIdentifier("discord-MnGLxp8uy")
+        .credentials(ChannelCredentials.builder()
+            .webhookUrl("<WEBHOOK_URL>")
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "slack",
+  "credentials": {
+      "webhookUrl": "<WEBHOOK_URL>"
+  },
+  "integrationIdentifier": "slack-MnGLxp8uy"
+}'
+```
+  </Tab>
+</Tabs>
+
+## Provider content overrides
+
+The Chat step body is plain text. When you need a platform's richer message format, such as Slack Block Kit, configure a **provider content override** on the Chat step in the workflow editor.
+
+An override is a JSON object that Novu merges into the request it sends to that provider. It is saved on the step, so it is versioned and promoted between environments with the rest of the workflow, and it applies to every trigger without any change to your trigger call.
+
+<Note>
+  Provider content overrides in the workflow editor are rolling out gradually and may not be available on your Chat step yet. [Trigger overrides](/platform/integrations/trigger-overrides) work regardless.
+</Note>
+
+### Slack is schema-backed
+
+Slack overrides are validated against the [`chat.postMessage`](https://api.slack.com/methods/chat.postMessage) argument set, and the editor autocompletes field names as you type — including inside `blocks[].elements[]`. The editor validates the JSON and flags unsupported fields.
+
+<Card title="Configure Slack overrides" icon="messages-square" href="/platform/integrations/chat/slack#configure-slack-overrides-in-the-dashboard">
+  Field-by-field reference, a Block Kit example with Liquid variables, and the incoming-webhook caveats.
+</Card>
+
+### WhatsApp is schema-backed
+
+WhatsApp Business overrides are validated against [WhatsApp Cloud API Message](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages) fields such as `type`, `text`, `template`, `interactive`, media, and `context`. The editor autocompletes supported field names, validates the JSON, and flags unsupported fields.
+
+<Card title="Configure WhatsApp overrides" icon="whatsapp" href="/platform/integrations/chat/whats-app#configure-whatsapp-overrides">
+  How to save a schema-backed WhatsApp override on the Chat step, with a text example and Liquid fallback notes.
+</Card>
+
+### Every other chat provider is a raw passthrough
+
+For all other chat providers, the override is an unvalidated escape hatch. Whatever JSON object you save is merged into that provider's outbound payload as-is.
+
+That means:
+
+- **No validation.** Novu does not check field names, types, or nesting. A typo reaches the provider's API unchanged. Depending on the provider it either fails the delivery, which you will see in the **Activity feed**, or is silently ignored.
+- **No autocomplete.** There is no schema to suggest from.
+- **The shape is the provider's contract, not Novu's.** Write the object against the provider's own API reference. If the provider changes its API, your override has to change with it.
+
+Use this when a provider supports something Novu's step editor does not expose, and test with a real trigger before relying on it.
+
+### Liquid, fallback, and precedence
+
+Override values may contain [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) templates, which Novu compiles at send time. Where a provider has a primary content field — `text` for Slack, `text.body` for WhatsApp — and your override omits it, Novu fills it with the rendered Chat step body.
+
+When the same field is set both on the step and at trigger time, the trigger value wins, and arrays replace rather than merge. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
+
+## Supported providers
+
+Here are the chat providers that are currently supported by Novu. Select any provider to see its detailed setup guide.
+
+<Columns cols={2}>
+<Card title="Discord" href="/platform/integrations/chat/discord"> Learn how to use the Discord provider to send chat notifications using Novu. </Card>
+<Card title="LINE" href="/platform/integrations/chat/line"> Learn how to use the LINE Messaging API provider to send chat notifications using Novu.</Card>
+<Card title="Mattermost" href="/platform/integrations/chat/mattermost"> Learn how to use the Mattermost provider to send chat notifications using Novu.</Card> 
+<Card title="Microsoft Teams" href="/platform/integrations/chat/ms-teams"> Learn how to use the Microsoft Teams provider to send chat notifications using Novu.</Card>
+<Card title="Slack" href="/platform/integrations/chat/slack"> Learn how to use the Slack provider to send chat notifications using Novu.</Card>
+<Card title="Telegram" href="/platform/integrations/chat/telegram"> Learn how to use the Telegram provider for chat notifications and agent conversations.</Card>
+<Card title="WhatsApp Business" href="/platform/integrations/chat/whats-app"> Learn how to use the WhatsApp Business provider to send chat notifications using Novu.</Card> 
+<Card title="Zulip" href="/platform/integrations/chat/zulip"> Learn how to use the Zulip provider to send chat notifications using Novu.</Card>
+</Columns>

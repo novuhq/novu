@@ -1,9 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 
-export function areStringsEqual(
-  expected: string | null | undefined,
-  provided: string | null | undefined
-): boolean {
+export function areStringsEqual(expected: string | null | undefined, provided: string | null | undefined): boolean {
   if (typeof expected !== 'string' || typeof provided !== 'string') {
     return false;
   }
@@ -19,10 +16,7 @@ export function areStringsEqual(
   return timingResult && expectedBuffer.length === providedBuffer.length;
 }
 
-export function areHexDigestsEqual(
-  expected: string | null | undefined,
-  provided: string | null | undefined
-): boolean {
+export function areHexDigestsEqual(expected: string | null | undefined, provided: string | null | undefined): boolean {
   if (typeof expected !== 'string' || typeof provided !== 'string') {
     return false;
   }

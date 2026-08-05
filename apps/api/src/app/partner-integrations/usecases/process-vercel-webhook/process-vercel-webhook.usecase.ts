@@ -8,8 +8,8 @@ import {
   EnvironmentRepository,
   MemberRepository,
 } from '@novu/dal';
-import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { Sync } from '../../../bridge/usecases/sync';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 
 @Injectable()

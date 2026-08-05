@@ -52,6 +52,7 @@ import {
   clearPersistedAgentTemplateId,
   readActiveAgentTemplateId,
 } from '@/utils/agent-template-identity';
+import { QueryKeys } from '@/utils/query-keys';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -149,13 +150,20 @@ export function AgentsList() {
   const { submit: submitCreateAgent, isPending: isCreatingAgent } = useCreateAgentMutation();
 
   const deleteMutation = useMutation({
-    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
+    mutationFn: ({
+      identifier,
+      deleteFromProvider,
+    }: {
+      identifier: string;
+      name: string;
+      deleteFromProvider?: boolean;
+    }) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
         deleteFromProvider,
       }),
-    onSuccess: async (_, { identifier }) => {
+    onSuccess: async (_, { identifier, name }) => {
       setAgentToDelete(null);
-      showSuccessToast('Agent deleted', 'The agent was removed.');
+      showSuccessToast(`Deleted agent: ${name.length > 40 ? `${name.slice(0, 40)}…` : name}`);
 
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
@@ -168,6 +176,8 @@ export function AgentsList() {
       });
 
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
 
       const refreshed = await queryClient.fetchQuery({
         queryKey: listKey,
@@ -252,40 +262,33 @@ export function AgentsList() {
     void navigate(ROUTES.AGENTS_SETUP);
   }, [navigate]);
 
-  const handleAddAgentClick = useCallback(() => {
-    // Hard cap first — the API rejects creation outright at this point.
-    if (isAtCreationLimit) {
-      setCreationLimitDialogOpen(true);
+  const runIfWithinAgentLimits = useCallback(
+    (pending: 'create-dialog' | 'onboarding', action: () => void) => {
+      if (isAtCreationLimit) {
+        setCreationLimitDialogOpen(true);
 
-      return;
-    }
+        return;
+      }
 
-    if (isAtAgentLimit) {
-      pendingAfterLimitRef.current = 'create-dialog';
-      setLimitDialogOpen(true);
+      if (isAtAgentLimit) {
+        pendingAfterLimitRef.current = pending;
+        setLimitDialogOpen(true);
 
-      return;
-    }
+        return;
+      }
 
-    setCreateOpen(true);
-  }, [isAtAgentLimit, isAtCreationLimit]);
+      action();
+    },
+    [isAtAgentLimit, isAtCreationLimit]
+  );
 
   const handleEmptyStateSetupClick = useCallback(() => {
-    if (isAtCreationLimit) {
-      setCreationLimitDialogOpen(true);
+    runIfWithinAgentLimits('onboarding', goToAgentsSetup);
+  }, [runIfWithinAgentLimits, goToAgentsSetup]);
 
-      return;
-    }
-
-    if (isAtAgentLimit) {
-      pendingAfterLimitRef.current = 'onboarding';
-      setLimitDialogOpen(true);
-
-      return;
-    }
-
-    goToAgentsSetup();
-  }, [goToAgentsSetup, isAtAgentLimit, isAtCreationLimit]);
+  const handleAddAgentClick = useCallback(() => {
+    runIfWithinAgentLimits('create-dialog', () => setCreateOpen(true));
+  }, [runIfWithinAgentLimits]);
 
   const handleContinuePastAgentLimit = useCallback(() => {
     if (pendingAfterLimitRef.current === 'onboarding') {
@@ -322,6 +325,7 @@ export function AgentsList() {
           const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
           showErrorToast(message, 'Create failed');
         },
+        analyticsSource: 'dashboard',
       });
     },
     [submitCreateAgent, track, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
@@ -377,6 +381,7 @@ export function AgentsList() {
             const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
             showErrorToast(message, 'Create failed');
           },
+          analyticsSource: 'dashboard',
         }
       );
     },
@@ -609,7 +614,11 @@ export function AgentsList() {
         }}
         onConfirm={({ deleteFromProvider }) => {
           if (agentToDelete) {
-            deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
+            deleteMutation.mutate({
+              identifier: agentToDelete.identifier,
+              name: agentToDelete.name,
+              deleteFromProvider,
+            });
           }
         }}
         agentName={agentToDelete?.name ?? ''}

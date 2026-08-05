@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import { projectMcpRowsToCatalog } from '../../../mcp/project-mcp-servers';
+import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
 import type {
   AgentRuntimeCapabilitiesDto,
   AgentRuntimeConfigResponseDto,
@@ -15,6 +15,7 @@ export class GetAgentRuntimeConfig {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -63,8 +64,7 @@ export class GetAgentRuntimeConfig {
 
     const runtimeProvider = resolved.provider;
 
-    // Mongo is authoritative for the agent's MCP list. Other runtime fields
-    // (model, system prompt, tools, skills) still come live from the provider.
+    // MCP list in the response = shared Anthropic agent only (not per-subscriber connections).
     const [config, mcpRows] = await Promise.all([
       runtimeProvider.getConfig(externalAgentId),
       this.agentMcpServerRepository.findByAgent({
@@ -75,9 +75,9 @@ export class GetAgentRuntimeConfig {
       }),
     ]);
 
-    const mcpServers = projectMcpRowsToCatalog(mcpRows, this.logger, {
+    const mcpServers = this.agentMcpDefinitionService.project(mcpRows, {
       agentId: agent._id,
-      useCase: GetAgentRuntimeConfig.name,
+      caller: GetAgentRuntimeConfig.name,
     });
 
     const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);

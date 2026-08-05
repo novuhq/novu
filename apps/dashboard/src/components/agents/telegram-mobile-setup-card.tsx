@@ -117,8 +117,7 @@ function TelegramMobileSetupCardShell({
 }
 
 type AgentTelegramMobileSetupCardProps = {
-  agentIdentifier: string;
-  integrationId: string;
+  integrationIdentifier: string;
   /** When set, mobile setup success returns a `/start` deep link for this subscriber. */
   testSubscriberId?: string | null;
   disabled?: boolean;
@@ -128,11 +127,10 @@ type AgentTelegramMobileSetupCardProps = {
 
 /**
  * Agent-scoped variant — issues mobile setup links that bind the BotFather
- * token to an existing agent–integration pair.
+ * token to an existing Telegram integration (agent resolved server-side).
  */
 export function AgentTelegramMobileSetupCard({
-  agentIdentifier,
-  integrationId,
+  integrationIdentifier,
   testSubscriberId,
   disabled,
   className,
@@ -142,15 +140,14 @@ export function AgentTelegramMobileSetupCard({
   const environmentId = currentEnvironment?._id;
 
   const linkQuery = useQuery<TelegramMobileLink>({
-    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, agentIdentifier, integrationId, testSubscriberId],
+    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, integrationIdentifier, testSubscriberId],
     queryFn: () =>
       requestTelegramMobileLink(
         requireEnvironment(currentEnvironment, 'No environment selected'),
-        agentIdentifier,
-        integrationId,
+        integrationIdentifier,
         testSubscriberId ?? undefined
       ),
-    enabled: !disabled && Boolean(environmentId && agentIdentifier && integrationId),
+    enabled: !disabled && Boolean(environmentId && integrationIdentifier),
     refetchInterval: REFRESH_INTERVAL_MS,
     refetchOnWindowFocus: true,
     staleTime: REFRESH_INTERVAL_MS,
@@ -169,7 +166,6 @@ export function AgentTelegramMobileSetupCard({
     />
   );
 }
-
 
 type IntegrationStoreTelegramMobileSetupCardProps = {
   disabled?: boolean;

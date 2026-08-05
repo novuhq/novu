@@ -1,6 +1,6 @@
 import { CloudRegionEnum } from '../dev/enums';
 import { resolveRegionUrls } from '../dev/resolve-region-urls';
-import type { ConnectCommandOptions } from './types';
+import type { AgentConnectMode, ConnectCommandOptions } from './types';
 
 export const CONNECT_REGION_VALUES = Object.values(CloudRegionEnum) as CloudRegionEnum[];
 
@@ -9,6 +9,14 @@ export type ConnectCommandInput = Omit<ConnectCommandOptions, 'apiUrl' | 'dashbo
   dashboardUrl?: string;
   connectDashboardUrl?: string;
 };
+
+function resolveRuntimeFromFlags(input: ConnectCommandInput): AgentConnectMode | undefined {
+  if (input.chatSdk || input.brain === 'chat-sdk') {
+    return 'chat-sdk';
+  }
+
+  return input.runtime;
+}
 
 export function resolveConnectCommandOptions(input: ConnectCommandInput): ConnectCommandOptions {
   const region = input.region;
@@ -22,9 +30,12 @@ export function resolveConnectCommandOptions(input: ConnectCommandInput): Connec
     connectDashboardUrl: input.connectDashboardUrl,
   });
 
+  const runtime = resolveRuntimeFromFlags(input);
+
   return {
     ...input,
     region,
+    runtime,
     apiUrl: urls.apiUrl,
     dashboardUrl: urls.dashboardUrl,
     connectDashboardUrl: urls.connectDashboardUrl,

@@ -1,6 +1,21 @@
 import type { AnalyticsService } from '@novu/application-generic';
+import { AGENTS_ORG_FUNNEL_EVENTS, type AgentAnalyticsSource, type AgentsUsecaseSource } from '@novu/shared';
 
 const AGENT_SEGMENT_CATEGORY = '[Agents]';
+
+export function trackAgentsUsecaseSelected(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    source: AgentsUsecaseSource;
+  }
+): void {
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.USECASE_SELECTED, params.userId, {
+    _organization: params.organizationId,
+    source: params.source,
+  });
+}
 
 export function trackAgentCreated(
   analytics: AnalyticsService,
@@ -12,15 +27,30 @@ export function trackAgentCreated(
     agentIdentifier: string;
     active: boolean;
     name: string;
+    source?: AgentAnalyticsSource;
+    runtime?: string;
   }
 ): void {
-  analytics.track(`Agent Created - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+  const source = params.source ?? 'api';
+
+  // CLI has no usecase picker — fire intent before Agent Created so Mixpanel order is preserved.
+  if (source === 'cli') {
+    trackAgentsUsecaseSelected(analytics, {
+      userId: params.userId,
+      organizationId: params.organizationId,
+      source: 'cli',
+    });
+  }
+
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_CREATED, params.userId, {
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentId: params.agentId,
     agentIdentifier: params.agentIdentifier,
     active: params.active,
     name: params.name,
+    source,
+    ...(params.runtime ? { runtime: params.runtime } : {}),
   });
 }
 
@@ -36,7 +66,7 @@ export function trackAgentIntegrationConnected(
     integrationIdentifier: string;
     providerId: string;
     channel?: string;
-    connectionSource: 'existing_integration' | 'novu_email_provisioned';
+    connectionSource: 'existing_integration' | 'novu_email_provisioned' | 'novu_web_chat_provisioned';
   }
 ): void {
   analytics.track(`Agent Integration Connected - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
@@ -263,7 +293,7 @@ export function trackAgentMcpOAuthCreated(
     authMode: string;
     scope: string;
     subscriberId: string;
-    source: 'api' | 'setup_card';
+    source: 'api' | 'user_chat';
     conversationId?: string;
     reusedPendingSession?: boolean;
   }
@@ -294,7 +324,7 @@ export function trackAgentMcpOAuthCompleted(
     authMode: string;
     scope: string;
     connectionId: string;
-    source: 'api' | 'setup_card';
+    source?: string;
     conversationId?: string;
   }
 ): void {
@@ -322,7 +352,7 @@ export function trackAgentMcpOAuthFailed(
     authMode?: string;
     scope: string;
     errorCode: string;
-    source: 'api' | 'setup_card';
+    source?: string;
     conversationId?: string;
   }
 ): void {
@@ -336,6 +366,74 @@ export function trackAgentMcpOAuthFailed(
     errorCode: params.errorCode,
     source: params.source,
     conversationId: params.conversationId,
+  });
+}
+
+/**
+ * Fired each time an active conversation is counted (one activation episode):
+ * a new/reopened thread, a rolling-window lapse, or a new billing cycle. Gives
+ * per-tier / per-channel conversation volume for pricing analysis. Org-scoped.
+ */
+export function trackAgentActiveConversationCounted(
+  analytics: AnalyticsService,
+  params: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    conversationId: string;
+    platform: string;
+    threadKind: string;
+    reason: string;
+    periodKey: string;
+    apiServiceLevel: string;
+  }
+): void {
+  analytics.track(`Agent Active Conversation Counted - ${AGENT_SEGMENT_CATEGORY}`, params.organizationId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    conversationId: params.conversationId,
+    platform: params.platform,
+    threadKind: params.threadKind,
+    reason: params.reason,
+    periodKey: params.periodKey,
+    apiServiceLevel: params.apiServiceLevel,
+  });
+}
+
+/**
+ * Fired when an organization reaches/exceeds its included active-conversations
+ * limit. Fires on every finite tier (not just Free): for Free `blocked` is true
+ * (the engagement was short-circuited); for paid tiers `blocked` is false and
+ * `overage` measures the extra conversations beyond the included amount — the
+ * signal for deciding overage pricing. Org-scoped.
+ */
+export function trackAgentActiveConversationLimitReached(
+  analytics: AnalyticsService,
+  params: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    conversationId: string;
+    platform: string;
+    apiServiceLevel: string;
+    limit: number;
+    currentCount: number;
+    overage: number;
+    blocked: boolean;
+  }
+): void {
+  analytics.track(`Agent Active Conversation Limit Reached - ${AGENT_SEGMENT_CATEGORY}`, params.organizationId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    conversationId: params.conversationId,
+    platform: params.platform,
+    apiServiceLevel: params.apiServiceLevel,
+    limit: params.limit,
+    currentCount: params.currentCount,
+    overage: params.overage,
+    blocked: params.blocked,
   });
 }
 

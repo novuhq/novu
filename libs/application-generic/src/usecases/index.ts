@@ -46,6 +46,8 @@ export * from './preview';
 export * from './preview-step';
 export * from './process-tenant';
 export * from './promote-type-change.command';
+export * from './resolve-agent-inbound-addresses';
+export * from './resolve-trigger-contexts';
 export * from './select-integration';
 export * from './select-variant';
 export * from './subscribers';

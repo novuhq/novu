@@ -84,6 +84,18 @@ const oauthStateSchema = new Schema({
     type: Schema.Types.String,
     required: false,
   },
+  connectCardMessageId: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  connectCardPlatform: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  connectCardThreadId: {
+    type: Schema.Types.String,
+    required: false,
+  },
 });
 
 const oauthClientSchema = new Schema(
@@ -140,25 +152,6 @@ const oauthClientSchema = new Schema(
     registeredAt: {
       type: Schema.Types.Date,
       required: true,
-    },
-  },
-  { _id: false }
-);
-
-const toolTrustSchema = new Schema(
-  {
-    serverDefault: {
-      type: Schema.Types.String,
-      required: false,
-      enum: ['always_ask', 'always_allow'],
-    },
-    tools: {
-      type: Schema.Types.Map,
-      of: {
-        type: Schema.Types.String,
-        enum: ['always_ask', 'always_allow'],
-      },
-      required: false,
     },
   },
   { _id: false }
@@ -262,10 +255,6 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     },
     lastError: {
       type: lastErrorSchema,
-      required: false,
-    },
-    toolTrust: {
-      type: toolTrustSchema,
       required: false,
     },
     connectedAt: {

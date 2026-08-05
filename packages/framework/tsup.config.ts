@@ -2,7 +2,17 @@ import { defineConfig, type Options } from 'tsup';
 import { version } from './package.json';
 import { type SupportedFrameworkName } from './src/internal';
 
-const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', 'sveltekit', 'remix', 'lambda', 'nest'];
+const frameworks: SupportedFrameworkName[] = [
+  'h3',
+  'hono',
+  'express',
+  'next',
+  'nuxt',
+  'sveltekit',
+  'remix',
+  'lambda',
+  'nest',
+];
 
 const baseConfig: Options = {
   entry: [
@@ -13,15 +23,20 @@ const baseConfig: Options = {
     'src/step-resolver.ts',
     'src/validators.ts',
     ...frameworks.map((framework) => `src/servers/${framework}.ts`),
+    'src/ai-sdk/index.ts',
+    'src/langchain/index.ts',
+    'src/cards.ts',
   ],
   sourcemap: false,
   clean: true,
-  dts: true,
+  dts: {
+    resolve: ['@novu/agent-event-protocol'],
+  },
   minify: true,
   minifyWhitespace: true,
   minifyIdentifiers: true,
   minifySyntax: true,
-  noExternal: ['chat'],
+  noExternal: ['chat', '@novu/agent-event-protocol'],
   define: {
     SDK_VERSION: `"${version}"`,
     FRAMEWORK_VERSION: `"2024-06-26"`,

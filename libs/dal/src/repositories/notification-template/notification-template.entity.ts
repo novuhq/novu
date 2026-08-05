@@ -93,6 +93,20 @@ export class NotificationTemplateEntity {
 
   isTranslationEnabled?: boolean;
 
+  /**
+   * Optional agent assignment used to route this workflow through an agent's
+   * connected channels. `null` means explicitly unassigned.
+   */
+  agent?: {
+    identifier: string;
+    providers?: Record<
+      string,
+      {
+        replyTo?: string;
+      }
+    >;
+  } | null;
+
   issues: Record<string, RuntimeIssue[]>;
 
   status?: WorkflowStatusEnum;

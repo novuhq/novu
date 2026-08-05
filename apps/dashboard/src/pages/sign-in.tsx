@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import {
@@ -45,7 +45,7 @@ export const SignInPage = () => {
     const pending = parseCliAuthReturnFromSearchParams(searchParams);
 
     if (pending) {
-      storePendingCliAuth(pending.deviceCode, pending.name);
+      storePendingCliAuth(pending);
     }
 
     storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));
@@ -119,7 +119,7 @@ export const SignInPage = () => {
             appearance={clerkSignupAppearance}
             forceRedirectUrl={cliAuthReturnUrl ?? connectClaimReturnUrl ?? undefined}
           />
-          {!IS_SELF_HOSTED && <RegionPicker />}
+          {IS_CLOUD && <RegionPicker />}
         </div>
       </div>
     </div>

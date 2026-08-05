@@ -1,13 +1,14 @@
 import { type PreviewError, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { memo } from 'react';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
+import { ChatPreviewPanel } from '@/components/workflow-editor/steps/chat/chat-preview-panel';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { HttpRequestConsolePreview } from '@/components/workflow-editor/steps/http-request/http-request-console-preview';
 import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
 import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
 import { StepResolverEmptyPreview } from '@/components/workflow-editor/steps/shared/step-resolver-empty-preview';
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
+import { ToolPreview } from '@/components/workflow-editor/steps/tool/tool-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
 import { StepResolverPreviewError } from './step-resolver-preview-error';
@@ -84,7 +85,10 @@ export function StepPreviewFactory() {
       );
 
     case StepTypeEnum.CHAT:
-      return <ChatPreview {...commonProps} />;
+      return <ChatPreviewPanel {...commonProps} />;
+
+    case StepTypeEnum.TOOL:
+      return <ToolPreview {...commonProps} />;
 
     case StepTypeEnum.HTTP_REQUEST:
       return <HttpRequestConsolePreview />;

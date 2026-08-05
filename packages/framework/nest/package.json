@@ -1,3 +1,4 @@
 {
-  "main": "../dist/cjs/servers/nest.cjs"
+  "main": "../dist/cjs/servers/nest.cjs",
+  "types": "../dist/cjs/servers/nest.d.cts"
 }

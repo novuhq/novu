@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
-import type { CardChild, CardElement } from 'chat';
+import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from './agent-runtime.port';
 import { type AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
+import { BridgeExpireSupersededApprovalsService } from './bridge-expire-superseded-approvals.service';
+import { buildAgentDashboardOverviewUrl, buildNoBridgeReply } from './bridge-no-bridge-reply';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from './build-platform-context.util';
 import type { ConversationTurn } from './conversation-turn';
 import { applyPlatformThreadIdToThread } from './platform-thread.util';
@@ -15,27 +17,6 @@ const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
 
 The agent is unavailable right now. Please try again later.`;
 
-const ONBOARDING_NO_BRIDGE_TEXT =
-  "I'm live but running on defaults. Connect your agent in the dashboard to customize how I respond.";
-
-function buildNoBridgeReply(dashboardUrl?: string): Record<string, unknown> {
-  const children: CardChild[] = [{ type: 'text', content: ONBOARDING_NO_BRIDGE_TEXT }];
-
-  if (dashboardUrl) {
-    children.push(
-      { type: 'divider' },
-      {
-        type: 'actions',
-        children: [{ type: 'link-button', label: 'Continue setup', url: dashboardUrl, style: 'primary' }],
-      }
-    );
-  }
-
-  const card: CardElement = { type: 'card', children };
-
-  return card as unknown as Record<string, unknown>;
-}
-
 @Injectable()
 export class BridgeRuntime implements AgentRuntime {
   constructor(
@@ -43,6 +24,7 @@ export class BridgeRuntime implements AgentRuntime {
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly environmentRepository: EnvironmentRepository,
+    private readonly expireSupersededApprovals: BridgeExpireSupersededApprovalsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -50,6 +32,19 @@ export class BridgeRuntime implements AgentRuntime {
 
   /** Bridge handles every turn shape the same way: forward it to the customer bridge. */
   async dispatch(turn: ConversationTurn): Promise<void> {
+    if (turn.event === AgentEventEnum.ON_MESSAGE) {
+      try {
+        await this.expireSupersededApprovals.expireOnNewMessage(turn);
+      } catch (err) {
+        this.logger.warn(err, `[agent:${turn.config.agentIdentifier}] Failed to expire superseded tool approvals`);
+        captureAgentWarning(err, {
+          component: 'bridge-runtime',
+          operation: 'expire-on-new-message',
+          agentIdentifier: turn.config.agentIdentifier,
+        });
+      }
+    }
+
     try {
       await this.bridgeExecutor.execute(this.toExecutionParams(turn));
     } catch (err) {
@@ -69,7 +64,7 @@ export class BridgeRuntime implements AgentRuntime {
       config: turn.config,
       conversation: turn.conversation,
       subscriber: turn.subscriber,
-      history: turn.history,
+      context: turn.context ?? null,
       message: turn.message,
       platformContext: buildAgentPlatformContext({
         platformThreadId: turn.platformThreadId,
@@ -108,13 +103,27 @@ export class BridgeRuntime implements AgentRuntime {
   private async replyNoBridgeConfigured(turn: ConversationTurn): Promise<void> {
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
 
+    const creationSource = turn.config.creationSource;
     let dashboardUrl: string | undefined;
     const dashboardBase = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
-    if (dashboardBase) {
+
+    // CLI onboarding users finish setup in the terminal — skip the dashboard CTA entirely.
+    if (creationSource !== 'cli' && dashboardBase) {
       try {
-        const environment = await this.environmentRepository.findOne({ _id: turn.config.environmentId });
-        if (environment?.identifier) {
-          dashboardUrl = `${dashboardBase}/env/${environment.identifier}/agents/${turn.config.agentIdentifier}/overview`;
+        const environment = await this.environmentRepository.findOne(
+          {
+            _id: turn.config.environmentId,
+            _organizationId: turn.config.organizationId,
+          },
+          ['_id', 'name']
+        );
+        if (environment?.name) {
+          dashboardUrl = buildAgentDashboardOverviewUrl({
+            dashboardBase,
+            environmentName: environment.name,
+            environmentId: environment._id,
+            agentIdentifier: turn.config.agentIdentifier,
+          });
         }
       } catch (lookupErr) {
         this.logger.warn(
@@ -129,17 +138,17 @@ export class BridgeRuntime implements AgentRuntime {
       }
     }
 
-    const reply = buildNoBridgeReply(dashboardUrl);
+    const reply = buildNoBridgeReply({ creationSource, dashboardUrl });
     await this.outboundGateway.replyOnThread(
       turn.thread,
-      { card: reply },
+      { card: reply.card },
       {
         persist: {
           conversationId: turn.conversation._id,
           channel: this.conversationService.getPrimaryChannel(turn.conversation),
           agentIdentifier: turn.config.agentIdentifier,
-          content: ONBOARDING_NO_BRIDGE_TEXT,
-          richContent: { card: reply },
+          content: reply.content,
+          richContent: { card: reply.card },
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
         },

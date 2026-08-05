@@ -1,3 +1,4 @@
+import { ONBOARDING_SESSION_ID_PARAM } from '@/utils/onboarding-session-id';
 import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 
@@ -8,6 +9,7 @@ const DEVICE_CODE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 export type PendingCliAuth = {
   deviceCode: string;
   name: string | null;
+  onboardingSessionId?: string | null;
 };
 
 function isValidDeviceCode(deviceCode: string | null | undefined): deviceCode is string {
@@ -32,7 +34,7 @@ export function isCliAuthReturnUrl(url: string): boolean {
   }
 }
 
-export function parseCliAuthFromUrl(url: string): Pick<PendingCliAuth, 'deviceCode' | 'name'> | null {
+export function parseCliAuthFromUrl(url: string): PendingCliAuth | null {
   try {
     const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local');
 
@@ -46,9 +48,12 @@ export function parseCliAuthFromUrl(url: string): Pick<PendingCliAuth, 'deviceCo
       return null;
     }
 
+    const onboardingSessionId = parsed.searchParams.get(ONBOARDING_SESSION_ID_PARAM)?.trim();
+
     return {
       deviceCode,
       name: parsed.searchParams.get('name'),
+      onboardingSessionId: onboardingSessionId || null,
     };
   } catch {
     return null;
@@ -66,22 +71,29 @@ export function storePendingCliAuthFromPath(pathname: string, search = ''): bool
     return false;
   }
 
-  storePendingCliAuth(parsed.deviceCode, parsed.name);
+  storePendingCliAuth(parsed);
 
   return true;
 }
 
-export function storePendingCliAuth(deviceCode: string, name: string | null): void {
-  if (typeof window === 'undefined' || !isValidDeviceCode(deviceCode)) {
+export function storePendingCliAuth(pending: PendingCliAuth | string, name?: string | null): void {
+  if (typeof window === 'undefined') {
     return;
   }
 
-  const pending: PendingCliAuth = {
-    deviceCode,
-    name,
-  };
+  const resolved: PendingCliAuth =
+    typeof pending === 'string'
+      ? {
+          deviceCode: pending,
+          name: name ?? null,
+        }
+      : pending;
 
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
+  if (!isValidDeviceCode(resolved.deviceCode)) {
+    return;
+  }
+
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(resolved));
 }
 
 export function readPendingCliAuth(): PendingCliAuth | null {
@@ -105,6 +117,7 @@ export function readPendingCliAuth(): PendingCliAuth | null {
     return {
       deviceCode: parsed.deviceCode,
       name: typeof parsed.name === 'string' ? parsed.name : null,
+      onboardingSessionId: typeof parsed.onboardingSessionId === 'string' ? parsed.onboardingSessionId : null,
     };
   } catch {
     return null;
@@ -127,6 +140,10 @@ export function buildCliAuthUrl(pending: PendingCliAuth): string {
     params.set('name', pending.name);
   }
 
+  if (pending.onboardingSessionId) {
+    params.set(ONBOARDING_SESSION_ID_PARAM, pending.onboardingSessionId);
+  }
+
   return `${ROUTES.CLI_AUTH}?${params.toString()}`;
 }
 
@@ -147,16 +164,7 @@ export function parseCliAuthReturnFromSearchParams(searchParams?: URLSearchParam
     return null;
   }
 
-  const parsed = parseCliAuthFromUrl(redirectUrl);
-
-  if (!parsed) {
-    return null;
-  }
-
-  return {
-    deviceCode: parsed.deviceCode,
-    name: parsed.name,
-  };
+  return parseCliAuthFromUrl(redirectUrl);
 }
 
 export function buildCliAuthReturnUrlFromSearchParams(searchParams?: URLSearchParams): string | null {
@@ -176,7 +184,7 @@ export function readCliAuthReturnUrl(searchParams?: URLSearchParams): string | n
     return null;
   }
 
-  storePendingCliAuth(pending.deviceCode, pending.name);
+  storePendingCliAuth(pending);
 
   return buildCliAuthUrl(pending);
 }
@@ -186,4 +194,8 @@ export function appendRedirectUrlParam(url: string, redirectUrl: string): string
   parsed.searchParams.set('redirect_url', redirectUrl);
 
   return parsed.toString();
+}
+
+export function hasPendingCliAuth(): boolean {
+  return readPendingCliAuth() !== null;
 }

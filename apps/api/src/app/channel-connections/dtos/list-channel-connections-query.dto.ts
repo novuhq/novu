@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import { ChannelTypeEnum, ConnectionMode, ProvidersIdEnum, providerIdValues } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { GetChannelConnectionResponseDto } from './get-channel-connection-response.dto';
 
@@ -19,6 +19,18 @@ export class ListChannelConnectionsQueryDto extends CursorPaginationQueryDto<
   subscriberId?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Scope results relative to the subscriber. `subscriber` returns only the subscriber-owned ' +
+      'connections, `shared` returns only shared (workspace-level) connections. Omit to return both.',
+    enum: ['subscriber', 'shared'],
+    example: 'shared',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['subscriber', 'shared'])
+  connectionMode?: ConnectionMode;
+
+  @ApiPropertyOptional({
     description: 'Filter by channel type (email, sms, push, chat, etc.).',
     enum: ChannelTypeEnum,
     example: ChannelTypeEnum.CHAT,
@@ -29,14 +41,14 @@ export class ListChannelConnectionsQueryDto extends CursorPaginationQueryDto<
 
   @ApiPropertyOptional({
     description: 'Filter by provider identifier (e.g., sendgrid, twilio, slack, etc.).',
-    enum: [...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))])],
+    enum: providerIdValues,
     enumName: 'ProvidersIdEnum',
     type: String,
     example: 'slack',
   })
   @IsString()
   @IsOptional()
-  @IsEnum(Object.values(ProvidersIdEnumConst))
+  @IsIn(providerIdValues)
   providerId?: ProvidersIdEnum;
 
   @ApiPropertyOptional({

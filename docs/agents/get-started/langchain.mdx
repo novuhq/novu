@@ -1,0 +1,234 @@
+---
+title: "Connect LangChain to Slack"
+description: "Add @novu/framework/langchain to an existing app, connect Slack, and return a LangChainAgentConfig from onMessage."
+sidebarTitle: Connect LangChain
+boost: 3
+---
+
+Connect a [LangChain](https://docs.langchain.com/) agent to Novu Connect. Return a `LangChainAgentConfig` from `onMessage`; Novu invokes the agent and delivers the reply on Slack. The same handler works on other providers after you link them.
+
+This guide uses **Slack** first and assumes an existing Node.js app.
+
+<Note>
+  Starting from scratch? See [Scaffold with the CLI](#scaffold-with-the-cli).
+</Note>
+
+## Prerequisites
+
+- A [Novu account](https://dashboard.novu.co)
+- Node.js 22+
+- An existing app with LangChain agent logic
+- A Slack workspace where you can install apps
+- An `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` (or another [LangChain provider](https://docs.langchain.com/oss/javascript/integrations/providers) key)
+
+## Connect an existing app
+
+<Steps>
+
+<Step>
+## Create the agent and connect Slack
+
+In the [Novu dashboard](https://dashboard.novu.co):
+
+1. Go to **Agents** → **Create agent**.
+2. Under **Custom code**, pick **LangChain**.
+3. Set **Agent name** and **Identifier** (your code must use the same identifier).
+4. Select **Slack**, generate a [Slack App Configuration Token](https://api.slack.com/apps), paste it, and finish the install / Allow flow.
+
+Alternatively run `npx novu connect`, choose **LangChain** and **Slack**, and skip creating a starter project when prompted. Screenshots: [Create a Slack app](/agents/channels/slack#create-a-slack-app).
+</Step>
+
+<Step>
+## Install packages
+
+<Tabs>
+  <Tab title="OpenAI">
+```bash
+npm install @novu/framework langchain @langchain/core @langchain/openai
+```
+  </Tab>
+  <Tab title="Claude">
+```bash
+npm install @novu/framework langchain @langchain/core @langchain/anthropic
+```
+  </Tab>
+</Tabs>
+
+Add to `.env.local`:
+
+```bash
+NOVU_SECRET_KEY=your-novu-secret-key
+OPENAI_API_KEY=sk-...   # or ANTHROPIC_API_KEY
+```
+</Step>
+
+<Step>
+## Add the handler
+
+Create `app/novu/agents/<your-identifier>.ts`. Match `agent('...')` to the dashboard **Identifier**.
+
+<Tabs>
+  <Tab title="OpenAI">
+```typescript
+import { agent } from '@novu/framework/langchain';
+
+export const supportBot = agent('support-bot', {
+  onMessage: async (_message, ctx) => ({
+    model: 'openai:gpt-4o',
+    system: 'You are a helpful support agent. Keep answers short.',
+  }),
+});
+```
+  </Tab>
+  <Tab title="Claude">
+```typescript
+import { agent } from '@novu/framework/langchain';
+
+export const supportBot = agent('support-bot', {
+  onMessage: async (_message, ctx) => ({
+    model: 'anthropic:claude-sonnet-4-20250514',
+    system: 'You are a helpful support agent. Keep answers short.',
+  }),
+});
+```
+  </Tab>
+</Tabs>
+
+Export from `app/novu/agents/index.ts`:
+
+```typescript
+export { supportBot } from './support-bot';
+```
+
+Returning `{ model, system }` is a `LangChainAgentConfig`. Novu calls `createAgent().invoke()` and posts the final text. Novu maps `ctx.history` on this path.
+
+On Next.js, add LangChain packages to `serverExternalPackages` for Turbopack. See [Next.js and Turbopack](/agents/custom-code-agent/frameworks/langchain#next-js-and-turbopack).
+</Step>
+
+<Step>
+## Add the bridge route
+
+```typescript
+import { serve } from '@novu/framework/next';
+import { supportBot } from '../../novu/agents';
+
+export const { GET, POST, OPTIONS } = serve({
+  agents: [supportBot],
+});
+```
+
+For Express, Hono, and other servers, see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
+</Step>
+
+<Step>
+## Run locally and message Slack
+
+```bash
+npx novu dev --port 4000
+```
+
+DM or @mention the bot in Slack. The reply should come from your LangChain handler in the same thread.
+</Step>
+
+</Steps>
+
+## Tool approval
+
+Gate a tool with `needsApproval`:
+
+```typescript
+import { tool } from '@langchain/core/tools';
+import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
+
+const issueRefund = tool(
+  async ({ orderId }) => ({ orderId, status: 'refunded' }),
+  {
+    name: 'issueRefund',
+    description: 'Issue a refund for an order',
+    schema: z.object({ orderId: z.string() }),
+  },
+);
+
+export const supportBot = agent('support-bot', {
+  onMessage: async (_message, ctx) => ({
+    model: 'openai:gpt-4o',
+    system: 'You are a helpful support agent. Use issueRefund only when the user asks for a refund.',
+    tools: [issueRefund],
+    needsApproval: (toolCall) => toolCall.name === 'issueRefund',
+  }),
+});
+```
+
+See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) and the [LangChain reference](/agents/custom-code-agent/frameworks/langchain#automatic-tool-approval).
+
+## Scaffold with the CLI
+
+```bash
+npx novu connect
+```
+
+Choose **LangChain**, authenticate the model, connect **Slack**, and accept the starter project. Then run `npm run dev:novu`.
+
+For an existing codebase, use [Connect an existing app](#connect-an-existing-app) instead.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Which channels work with a LangChain agent?">
+    Slack, Microsoft Teams, WhatsApp, Telegram, and email. See [Channels overview](/agents/channels/overview).
+  </Accordion>
+  <Accordion title="Does Novu run LangChain for me?">
+    When you return a `LangChainAgentConfig`, Novu invokes `createAgent()` with your model, system prompt, and tools, then posts the final text.
+  </Accordion>
+  <Accordion title="Where is the adapter API documented?">
+    [LangChain reference](/agents/custom-code-agent/frameworks/langchain): tool approval, custom invoke, and `onError`.
+  </Accordion>
+  <Accordion title='I get "Cannot find module as expression is too dynamic"'>
+    Turbopack cannot resolve LangChain dynamic provider imports for model strings. Add LangChain packages to `serverExternalPackages` in `next.config.mjs`. See [Next.js and Turbopack](/agents/custom-code-agent/frameworks/langchain#next-js-and-turbopack).
+  </Accordion>
+</AccordionGroup>
+
+## Set this up with an AI assistant
+
+<Prompt description="Connect my LangChain agent to Slack with Novu" icon="plug" actions={["copy", "cursor"]}>
+# Connect a LangChain agent to Slack with Novu Connect
+
+Follow https://docs.novu.co/agents/get-started/langchain
+
+## Goal
+
+Add Novu bridge + LangChain config handler to this repo and connect Slack. Prefer the existing project over scaffolding a new one.
+
+## Rules
+
+ALWAYS:
+
+- Match `agent('id')` to the Novu dashboard agent Identifier
+- Return a LangChainAgentConfig so Novu can invoke the agent
+- Keep handlers channel-agnostic
+- Follow the project's package manager and TypeScript conventions
+
+NEVER:
+
+- Hardcode API keys
+- Rebuild conversation history manually when returning a config
+
+</Prompt>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain reference">
+    Adapter API: tools, approval, custom invoke, and onError.
+  </Card>
+  <Card icon="hash" href="/agents/channels/slack" title="Slack">
+    Slack capabilities and setup links.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy the bridge and disable local tunneling.
+  </Card>
+  <Card icon="sparkles" href="/agents/get-started/ai-sdk" title="Connect AI SDK">
+    Same flow with @novu/framework/ai-sdk.
+  </Card>
+</Columns>

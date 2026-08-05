@@ -1,8 +1,9 @@
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { RiGroup2Line } from 'react-icons/ri';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { SubscriberCredentials } from '@/components/subscribers/credentials/subscriber-credentials';
 import { Preferences } from '@/components/subscribers/preferences/preferences';
 import { PreferencesSkeleton } from '@/components/subscribers/preferences/preferences-skeleton';
 import { SubscriberActivity } from '@/components/subscribers/subscriber-activity';
@@ -13,15 +14,19 @@ import TruncatedText from '@/components/truncated-text';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
 
+type OverviewFocusField = 'email' | 'phone';
+
 type SubscriberOverviewProps = {
   subscriberId: string;
   readOnly?: boolean;
   onCloseDrawer?: () => void;
   closeOnSave?: boolean;
+  focusField?: OverviewFocusField;
+  onFocusHandled?: () => void;
 };
 
 const SubscriberOverview = (props: SubscriberOverviewProps) => {
-  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false, focusField, onFocusHandled } = props;
   const { data, isPending } = useFetchSubscriber({
     subscriberId,
   });
@@ -36,6 +41,8 @@ const SubscriberOverview = (props: SubscriberOverviewProps) => {
       readOnly={readOnly}
       onCloseDrawer={onCloseDrawer}
       closeOnSave={closeOnSave}
+      focusField={focusField}
+      onFocusHandled={onFocusHandled}
     />
   );
 };
@@ -72,6 +79,9 @@ const SubscriberPreferences = (props: SubscriberPreferencesProps) => {
 const tabTriggerClasses =
   'hover:data-[state=inactive]:text-foreground-950 py-3 rounded-none [&>span]:h-5 px-0 relative';
 
+const tabContentPanelClasses = 'min-h-0 w-full flex-1 overflow-hidden';
+const tabContentScrollClasses = 'min-h-0 w-full flex-1 overflow-y-auto';
+
 type SubscriberTabsProps = {
   subscriberId: string;
   readOnly?: boolean;
@@ -82,20 +92,32 @@ type SubscriberTabsProps = {
 export function SubscriberTabs(props: SubscriberTabsProps) {
   const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const [tab, setTab] = useState('overview');
+  const [overviewFocusField, setOverviewFocusField] = useState<OverviewFocusField | undefined>();
+
+  const focusOverviewField = useCallback((field: OverviewFocusField) => {
+    setOverviewFocusField(field);
+    setTab('overview');
+  }, []);
+
+  const clearOverviewFocusField = useCallback(() => setOverviewFocusField(undefined), []);
 
   return (
-    <Tabs className="flex h-full w-full flex-col" value={tab} onValueChange={setTab}>
-      <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
+    <Tabs className="flex h-full min-h-0 w-full flex-col" value={tab} onValueChange={setTab}>
+      <header className="border-bg-soft flex h-12 w-full shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
         <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
           <RiGroup2Line className="size-5 p-0.5" />
           <TruncatedText className="flex-1">Subscriber Profile - {subscriberId}</TruncatedText>
         </div>
       </header>
 
-      <TabsList className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b bg-transparent px-3 py-0">
+      <TabsList className="border-bg-soft h-auto w-full shrink-0 items-center gap-6 rounded-none border-b bg-transparent px-3 py-0">
         <TabsTrigger value="overview" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Overview</span>
           {tab === 'overview' && <ActiveTabIndicator />}
+        </TabsTrigger>
+        <TabsTrigger value="credentials" className={tabTriggerClasses} variant="regular" size="lg">
+          <span>Credentials</span>
+          {tab === 'credentials' && <ActiveTabIndicator />}
         </TabsTrigger>
         <TabsTrigger value="preferences" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Preferences</span>
@@ -110,24 +132,29 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
           {tab === 'activity-feed' && <ActiveTabIndicator />}
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="overview" className="h-full w-full overflow-y-auto">
+      <TabsContent value="overview" className={tabContentPanelClasses}>
         <SubscriberOverview
           subscriberId={subscriberId}
           readOnly={readOnly}
           onCloseDrawer={onCloseDrawer}
           closeOnSave={closeOnSave}
+          focusField={overviewFocusField}
+          onFocusHandled={clearOverviewFocusField}
         />
       </TabsContent>
-      <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
+      <TabsContent value="credentials" className={tabContentPanelClasses}>
+        <SubscriberCredentials subscriberId={subscriberId} readOnly={readOnly} onEditInOverview={focusOverviewField} />
+      </TabsContent>
+      <TabsContent value="preferences" className={tabContentScrollClasses}>
         <SubscriberPreferences subscriberId={subscriberId} readOnly={readOnly} />
       </TabsContent>
-      <TabsContent value="subscriptions" className="h-full w-full overflow-y-auto">
+      <TabsContent value="subscriptions" className={tabContentScrollClasses}>
         <SubscriberSubscriptions subscriberId={subscriberId} />
       </TabsContent>
-      <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
+      <TabsContent value="activity-feed" className={tabContentPanelClasses}>
         <SubscriberActivity subscriberId={subscriberId} />
       </TabsContent>
-      <Separator />
+      <Separator className="shrink-0" />
     </Tabs>
   );
 }

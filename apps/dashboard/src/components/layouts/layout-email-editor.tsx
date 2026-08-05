@@ -22,7 +22,7 @@ export const LayoutEmailEditor = (props: EmailEditorProps) => {
           </EmailPreviewHeader>
         </div>
       </div>
-      {getLayoutComponentByType({ component: body.component })}
+      {body && getLayoutComponentByType({ component: body.component })}
     </div>
   );
 };

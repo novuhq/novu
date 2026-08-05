@@ -23,6 +23,7 @@ import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
+import { buildStepPreview } from './utils/build-step-preview';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()
@@ -101,7 +102,7 @@ export class PreviewUsecase {
 
         return {
           result: {
-            preview: executeOutput.outputs as Record<string, unknown>,
+            preview: buildStepPreview(context.stepData.type, executeOutput),
             type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
@@ -210,7 +211,15 @@ export class PreviewUsecase {
   private async initializePreviewContext(command: PreviewCommand) {
     // get step with control values, variables, issues etc.
     const stepData = await this.getStepData(command);
-    const controlValues = command.generatePreviewRequestDto.controlValues || stepData.controls.values || {};
+    // Preview requests from the editor may still nest providerOverrides inside controlValues.
+    // When falling back to persisted step data, stitch the sibling field back into controls
+    // so the bridge/tool output renderer contract stays unchanged.
+    const controlValues = command.generatePreviewRequestDto.controlValues
+      ? command.generatePreviewRequestDto.controlValues
+      : {
+          ...(stepData.controls.values || {}),
+          ...(stepData.providerOverrides ? { providerOverrides: stepData.providerOverrides } : {}),
+        };
     const workflow = await this.findWorkflow(command);
 
     // extract all variables from the control values and build the variables object
@@ -306,6 +315,7 @@ export class PreviewUsecase {
       PreviewStepCommand.create({
         payload: previewPayloadExample.payload || {},
         subscriber: previewPayloadExample.subscriber,
+        actor: previewPayloadExample.actor,
         controls: controlValues || {},
         context: previewPayloadExample.context as ContextResolved,
         environmentId: command.user.environmentId,

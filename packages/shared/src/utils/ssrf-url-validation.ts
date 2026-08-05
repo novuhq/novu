@@ -1,9 +1,14 @@
 import * as dns from 'node:dns';
 import { isIP } from 'node:net';
 import { LRUCache } from 'lru-cache';
-import { isPrivateIp, normalizeHostnameForLookup } from './private-ip-classification';
+import {
+  isAddressAllowedByOutboundAllowList,
+  isHostnameAllowedByOutboundAllowList,
+  isOutboundAddressAllowed,
+} from './outbound-ssrf-allow-list';
+import { isLinkLocalIp, isPrivateIp, normalizeHostnameForLookup } from './private-ip-classification';
 
-export { isPrivateIp, normalizeHostnameForLookup };
+export { isLinkLocalIp, isPrivateIp, normalizeHostnameForLookup };
 
 /**
  * Resolves a webhook-style URL for outbound HTTP requests.
@@ -92,6 +97,8 @@ export class SsrfBlockedError extends Error {
  *  - must be http/https
  *  - must not embed credentials
  *  - must not target a blocked hostname
+ *  - must not target a private / reserved IP literal (unless allow-listed);
+ *    link-local / cloud-metadata literals are never allow-listed
  *
  * Throws {@link SsrfBlockedError} on any rejection. Returns the parsed URL on success.
  *
@@ -122,6 +129,19 @@ export function assertSafeOutboundUrl(input: string | URL): URL {
 
   if (BLOCKED_HOSTNAMES.has(hostname)) {
     throw new SsrfBlockedError('BLOCKED_HOSTNAME', `Requests to "${hostname}" are not allowed.`, { hostname });
+  }
+
+  const normalized = normalizeHostnameForLookup(hostname);
+  const literalFamily = isIP(normalized);
+
+  if (literalFamily !== 0) {
+    if (isLinkLocalIp(normalized) || (isPrivateIp(normalized) && !isOutboundAddressAllowed(normalized, normalized))) {
+      throw new SsrfBlockedError(
+        'PRIVATE_IP',
+        `Requests to private or reserved IP addresses are not allowed (resolved: ${normalized}).`,
+        { hostname: normalized, resolvedAddress: normalized }
+      );
+    }
   }
 
   return parsed;
@@ -172,6 +192,19 @@ export async function resolvePublicAddresses(
   }
 
   for (const { address } of addresses) {
+    // Link-local / IMDS ranges are never allow-listable.
+    if (isLinkLocalIp(address)) {
+      throw new SsrfBlockedError(
+        'PRIVATE_IP',
+        `Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`,
+        { hostname: normalized, resolvedAddress: address }
+      );
+    }
+
+    if (isHostnameAllowedByOutboundAllowList(normalized) || isAddressAllowedByOutboundAllowList(address)) {
+      continue;
+    }
+
     if (isPrivateIp(address)) {
       throw new SsrfBlockedError(
         'PRIVATE_IP',

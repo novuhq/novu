@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import {
+  ContextPayload,
   ISubscribersDefine,
   ITenantDefine,
   ResourceEnum,
@@ -28,9 +29,11 @@ export type BaseTriggerCommand = {
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;
+  _agentId?: string | null;
   template: NotificationTemplateEntity;
   actor?: SubscriberEntity | undefined;
   contextKeys: string[];
+  context?: ContextPayload;
   tenant: ITenantDefine | null;
   requestCategory?: TriggerRequestCategoryEnum;
   controls?: StatelessControls;

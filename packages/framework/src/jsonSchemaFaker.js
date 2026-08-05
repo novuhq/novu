@@ -6060,6 +6060,8 @@ JSONSchemaFaker.random.shuffle = function shuffle() {
 JSONSchemaFaker.option({
   useDefaultValue: true,
   alwaysFakeOptionals: true,
+  // Match JsonSchemaMock: do not invent keys for additionalProperties (e.g. '[placeholder]').
+  fillProperties: false,
 });
 
 export function mockSchema(schema) {

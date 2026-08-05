@@ -12,15 +12,11 @@ export class EdgeAccumulator {
   conversationId: string | undefined;
   mcpServerByToolUseId = new Map<string, string>();
   stepIndex = 0;
-
-  set content(_: string) {}
-  get content() {
-    return '';
-  }
+  messages: string[] = [];
 
   toResponse(sessionId?: string): ThalamusResponse {
     return {
-      content: '',
+      messages: this.messages,
       sessionId: sessionId ?? this.conversationId ?? this.sessionId,
       finishReason: this.finishReason,
       usage: this.usage,

@@ -107,17 +107,93 @@ export interface IChatOptions {
   phoneNumber?: string;
   channelData?: ChannelData;
   content: string;
-  blocks?: IBlock[];
+  /**
+   * Rich Chat: the provider-native payload the caller (worker) already produced from a
+   * `CardElement` via this provider's `render()` (Slack `{ blocks }`, Teams `{ attachments }`).
+   * The provider spreads it into its outgoing body; `content` carries the markdown fallback text.
+   */
+  nativePayload?: Record<string, unknown>;
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;
 }
 
-export interface IBlock {
-  type: 'section' | 'header';
-  text: {
-    type: 'mrkdwn';
-    text: string;
-  };
+/**
+ * Cross-platform card content (Rich Chat), rendered natively per provider at delivery
+ * (Slack Block Kit, MS Teams Adaptive Cards) and degraded to markdown text elsewhere.
+ *
+ * Structurally identical to `CardElement` in `@novu/shared`; duplicated here because
+ * `@novu/stateless` has no dependency on `@novu/shared`. Only link buttons are supported
+ * in v1; action/postback buttons may be added later.
+ */
+export type CardElementTextElement = {
+  type: 'text';
+  content: string;
+  style?: 'plain' | 'bold' | 'muted';
+};
+
+export type CardElementImageElement = {
+  type: 'image';
+  url: string;
+  alt?: string;
+};
+
+export type CardElementDividerElement = {
+  type: 'divider';
+};
+
+export type CardElementLinkButtonElement = {
+  type: 'link-button';
+  label: string;
+  url: string;
+  style?: 'primary' | 'danger' | 'default';
+  /** Optional author-provided id; platform serializers use it (e.g. Slack `action_id`). */
+  id?: string;
+};
+
+export type CardElementActionsElement = {
+  type: 'actions';
+  children: CardElementLinkButtonElement[];
+};
+
+export type CardElementChild =
+  | CardElementTextElement
+  | CardElementImageElement
+  | CardElementDividerElement
+  | CardElementActionsElement;
+
+export type CardElement = {
+  type: 'card';
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  children: CardElementChild[];
+};
+
+export enum ChatRenderValidationLevelEnum {
+  WARNING = 'warning',
+  ERROR = 'error',
+}
+
+/**
+ * A deterministic, post-render platform-limit finding (e.g. "Slack section text
+ * truncated to 3000 chars", "WhatsApp only delivers the first 3 buttons"). Warnings
+ * are non-blocking; the worker logs them and still delivers.
+ */
+export interface IChatRenderValidation {
+  level: ChatRenderValidationLevelEnum;
+  code: string;
+  message: string;
+}
+
+/**
+ * Result of serializing a `CardElement` for a specific chat provider.
+ * `nativePayload` is the provider-native payload (Slack blocks, Teams Adaptive Card, ...),
+ * `content` is the provider-flavored text used as `text` and on card-less surfaces.
+ */
+export interface IChatRenderResult {
+  nativePayload: Record<string, unknown>;
+  content: string;
+  validation: IChatRenderValidation[];
 }
 
 export interface ISendMessageSuccessResponse {
@@ -194,7 +270,7 @@ export interface IEmailProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => IEmailEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => IEmailEventBody | undefined;
 
   checkIntegration?: (options: IEmailOptions) => Promise<ICheckIntegrationResponse>;
 }
@@ -206,16 +282,26 @@ export interface ISmsProvider extends IProvider {
 
   getMessageId?: (body: any) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => ISMSEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {
   sendMessage(options: IChatOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
   channelType: ChannelTypeEnum.CHAT;
 
+  /**
+   * Rich Chat: serialize a `CardElement` DSL into this provider's native payload.
+   * Rich providers (Slack, Teams, ...) return a native `nativePayload`; providers without
+   * a native serializer omit this method and the caller falls back to markdown text.
+   * Async because the underlying Chat SDK serializers are ESM-only and lazily imported.
+   * Pure/side-effect free: the handler invokes it once before `sendMessage` (forwarding
+   * `nativePayload`/`content` via `IChatOptions`) and the editor preview reuses it.
+   */
+  render?: (card: CardElement) => Promise<IChatRenderResult>;
+
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
 export interface IPushProvider extends IProvider {
@@ -227,10 +313,40 @@ export interface IPushProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
-export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider;
+export interface IToolOptions {
+  content: string;
+  customData?: Record<string, unknown>;
+  bridgeProviderData?: Record<string, unknown>;
+  /**
+   * Per-subscriber routing data resolved from a `ChannelEndpoint` + `ChannelConnection.auth`.
+   * Providers that route per-subscriber (e.g. PagerDuty) read fields off this union;
+   * providers that route from env-level credentials ignore it.
+   */
+  channelData?: ChannelData;
+  /**
+   * IDs threaded through so providers can derive a stable, retry-safe dedup key
+   * (e.g. PagerDuty's Events API v2 dedup_key). All three together are the finest-grained
+   * "logical send" identity: unique per trigger, stable across worker retries of the same job.
+   */
+  transactionId?: string;
+  subscriberId?: string;
+  stepId?: string;
+}
+
+export interface IToolProvider extends IProvider {
+  sendMessage(options: IToolOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
+
+  channelType: ChannelTypeEnum.TOOL;
+
+  getMessageId?: (body: any | any[]) => string[];
+
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
+}
+
+export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | IToolProvider;
 
 export interface ICheckIntegrationResponse {
   success: boolean;

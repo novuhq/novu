@@ -28,7 +28,8 @@ enablePrePostScripts: true
 
 # Settings migrated from package.json#pnpm (pnpm v11 no longer reads the `pnpm` field).
 overrides:
-  body-parser@<1.20.3: ^1.20.3
+  body-parser@<1.20.6: ^1.20.6
+  body-parser@>=2.0.0 <2.3.0: ^2.3.0
   handlebars@<4.7.9: 4.7.9
   braces@<3.0.3: ^3.0.3
   file-type@>=13.0.0 <16.5.4: ^16.5.4
@@ -42,61 +43,65 @@ overrides:
   minimatch@>=9.0.0 <9.0.7: ^9.0.7
   nanoid@>=3.0.0 <3.3.8: ^3.3.8
   nth-check: ^2.1.1
-  postcss@<8.5.10: ^8.5.10
+  postcss@<8.5.18: ^8.5.18
   proxy-agent@<6.3.1: ^6.3.1
   semver@>=7.0.0 <7.5.2: ^7.5.2
-  systeminformation@<5.31.6: ^5.31.6
-  tar: 7.5.13
+  systeminformation@<5.31.7: ^5.31.7
+  tar: 7.5.21
   tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
   trim-newlines@<3.0.1: ^3.0.1
   xml2js@<0.5.0: ^0.5.0
   '@types/mocha': ^10.0.8
   rollup@>=4.0.0 <4.59.0: ^4.59.0
-  '@nestjs/common@>=10.0.0 <12.0.0': 11.1.24
+  '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
   '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
   joi@<18.2.1: ^18.2.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
   '@swc/cli@>=0.0.0 <1.0.0': 0.3.12
-  '@babel/core@>7.0.0 <8.0.0': 7.28.0
+  '@babel/core@>7.0.0 <8.0.0': 7.29.7
   prismjs@<=1.29.0: 1.30.0
   mongodb@>=4.0.0 <5.0.0: 5.9.2
-  form-data@<2.5.4: 2.5.5
-  form-data@>=3.0.0 <3.0.4: 3.0.4
-  form-data@>=4.0.0 <4.0.4: 4.0.5
+  form-data@<2.5.6: ^2.5.6
+  form-data@>=3.0.0 <3.0.5: ^3.0.5
+  form-data@>=4.0.0 <4.0.6: ^4.0.6
   vite@<4.5.10: ^4.5.10
-  vite@>=5.0.0 <6.4.2: ^6.4.2
+  vite@>=5.0.0 <6.4.3: ^6.4.3
   node-forge@<1.4.0: ^1.4.0
-  ws@>=8.0.0 <8.20.1: ^8.20.1
-  nextjs>next: 15.5.18
-  next@<16.2.6: ^16.2.6
+  ws@>=8.0.0 <8.21.0: ^8.21.0
+  ws@>=7.0.0 <7.5.11: ^7.5.11
+  websocket-driver@<0.7.5: ^0.7.5
+  nextjs>next: 15.5.21
+  next@<16.2.11: ^16.2.11
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
+  fast-xml-parser@>=5.9.3 <5.10.1: 5.10.1
   basic-ftp@<5.3.1: ^5.3.1
-  axios@>=1.0.0 <1.17.0: ^1.17.0
-  seroval@<1.4.1: ^1.4.1
+  axios@>=1.0.0 <1.18.0: ^1.18.1
+  '@slack/web-api': 7.17.0
+  seroval@<1.5.3: ^1.5.3
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.1.1: ^2.1.1
+  multer@<2.2.0: ^2.2.0
   jws@<3.2.3: ^3.2.3
-  svgo@>=3.0.0 <3.3.3: ^3.3.3
+  svgo@>=3.0.0 <3.3.4: ^3.3.4
   flatted@<3.4.2: ^3.4.2
   serialize-javascript@<7.0.5: ^7.0.5
   ejs@<3.1.10: ^3.1.10
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
   glob@>=10.2.0 <10.5.0: ^10.5.0
-  undici@>=7.0.0 <7.24.0: ^7.24.0
-  undici@>=6.0.0 <6.24.0: ^6.24.0
+  undici@>=7.0.0 <7.28.0: ^7.28.0
+  undici@>=6.0.0 <6.27.0: ^6.27.0
   jose@>=3.0.0 <4.15.5: ^4.15.5
   qs@<6.15.2: ^6.15.2
-  js-yaml@<3.14.2: ^3.14.2
-  js-yaml@>=4.0.0 <4.1.1: ^4.1.1
+  js-yaml@<3.15.0: ^3.15.0
+  js-yaml@>=4.0.0 <4.3.0: ^4.3.0
   smol-toml@<1.6.1: ^1.6.1
   '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
@@ -107,20 +112,27 @@ overrides:
   express@<4.20.0: ^4.20.0
   serve-static@<1.16.0: ^1.16.0
   send@<0.19.0: ^0.19.0
-  dompurify@>=3.1.3 <3.4.0: ^3.4.0
+  dompurify@>=3.1.3 <3.4.12: ^3.4.12
   '@octokit/endpoint@>=9.0.5 <9.0.6': ^9.0.6
   '@octokit/request-error@<5.1.1': ^5.1.1
   '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
   '@octokit/request@<8.4.1': ^8.4.1
   kysely@>=0.26.0 <0.28.17: 0.28.17
-  undici@>=5.0.0 <5.30.0: ^6.24.0
-  markdown-it@>=13.0.0 <14.1.1: ^14.1.1
+  undici@>=5.0.0 <5.30.0: ^6.27.0
+  markdown-it@>=13.0.0 <14.2.0: ^14.2.0
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
   micromatch@>=4.0.0 <4.0.8: ^4.0.8
-  brace-expansion@>=1.0.0 <1.1.13: ^1.1.13
-  brace-expansion@>=2.0.0 <2.0.3: ^2.0.3
-  brace-expansion@>=5.0.0 <5.0.6: ^5.0.6
+  # GHSA-mh99-v99m-4gvg / CVE-2026-14257: DoS via unbounded expansion length.
+  # The advisory backports the fix to 2.1.3, 3.0.3, and 5.0.8. We can't force
+  # every consumer to 5.0.8 because v4 switched from `module.exports = fn` to
+  # named `exports.expand` and breaks minimatch@9 (`(0 , brace_expansion_1
+  # .default) is not a function`). Route each range to the matching patched
+  # branch instead. There is no 1.x patch, so 1.x consumers move up to 2.1.3
+  # which is API-compatible (same default-export shape).
+  brace-expansion@<2.1.3: ^2.1.3
+  brace-expansion@>=3.0.0 <3.0.3: ^3.0.3
+  brace-expansion@>=4.0.0 <5.0.8: ^5.0.8
   on-headers@<1.1.0: ^1.1.0
   diff@>=4.0.0 <4.0.4: ^4.0.4
   diff@>=5.0.0 <5.2.2: ^5.2.2
@@ -129,15 +141,16 @@ overrides:
   ip@<1.1.9: ^1.1.9
   socks@>=2.0.0 <2.7.2: ^2.8.7
   cookie@<0.7.0: ^0.7.0
-  tmp@<0.2.6: 0.2.6
-  socket.io-parser@>=4.0.0 <4.2.6: ^4.2.6
+  tmp@<0.2.7: ^0.2.7
+  socket.io-parser@>=4.0.0 <4.2.7: ^4.2.7
+  engine.io@>=6.0.0 <6.6.7: ^6.6.7
   cross-spawn@<6.0.6: ^6.0.6
   path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
   path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
   path-to-regexp@>=6.0.0 <6.3.0: ^6.3.0
   path-to-regexp@>=8.0.0 <8.4.0: ^8.4.0
   svelte: 5.55.7
-  '@sveltejs/kit@<=2.60.0': ^2.60.1
+  '@sveltejs/kit@<=2.69.0': ^2.69.1
   langsmith@<0.6.0: ^0.6.3
   devalue@<5.8.1: ^5.8.1
   picomatch@<2.3.2: ^2.3.2
@@ -158,17 +171,19 @@ overrides:
   aws-lambda>aws-sdk: '-'
   esbuild@<0.28.1: ^0.28.1
   follow-redirects@<=1.15.11: ^1.16.0
-  hono@<4.12.21: ^4.12.21
+  hono@<4.12.27: ^4.12.27
+  '@hono/node-server@<2.0.5': ^2.0.5
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@clerk/shared@>=4.0.0 <4.12.2': ^4.12.2
   '@tootallnate/once@<3.0.1': ^3.0.1
-  protobufjs@<7.5.8: ^7.5.8
-  protobufjs@>=8.0.0 <8.0.2: ^8.0.2
-  ip-address@<10.1.1: ^10.1.1
-  mongoose@>=8.0.0 <8.22.1: ^8.22.1
+  protobufjs@<7.6.5: ^7.6.5
+  protobufjs@>=8.0.0 <8.6.6: ^8.6.6
+  ip-address@<10.3.1: ^10.3.1
+  mongoose@>=8.0.0 <8.24.1: ^8.24.1
   newrelic: 13.19.2
-  fast-uri@<3.1.2: ^3.1.2
+  fast-uri@<3.1.5: ^3.1.5
+  sharp@<0.35.0: ^0.35.3
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4
   uuid: ^11.1.1
   '@taskforcesh/bullmq-pro@6.11.0>uuid': 11.1.1
@@ -177,15 +192,29 @@ overrides:
   '@opentelemetry/exporter-prometheus@<0.217.0': ^0.217.0
   '@opentelemetry/sdk-node@<0.217.0': ^0.217.0
   '@opentelemetry/auto-instrumentations-node@<0.75.0': ^0.75.0
+  '@opentelemetry/core@<2.8.0': ^2.8.0
+  '@opentelemetry/sdk-trace-base@<2.8.0': ^2.8.0
+  '@opentelemetry/resources@<2.8.0': ^2.8.0
+  '@opentelemetry/context-async-hooks@<2.8.0': ^2.8.0
+  '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
   mermaid@>=11.0.0-alpha.1 <11.15.0: ^11.15.0
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
   samlify@<2.13.0: ^2.13.0
-  better-auth: 1.5.6
-  shell-quote@<1.8.4: ^1.8.4
+  better-auth@<1.6.13: ^1.6.23
+  '@better-auth/sso@<1.6.13': ^1.6.23
+  nodemailer@<9.0.1: ^9.0.1
+  shell-quote@<1.8.5: ^1.8.5
+  piscina@<4.9.3: ^4.9.3
   vitest@<4.1.0: ^4.1.0
+  react-router@>=6.0.0 <7.18.0: ^7.18.0
   js-cookie@<3.0.7: ^3.0.7
+  # GHSA-77c7-pq4r-6mcq: degit command injection via unsanitised git repo name.
+  # Transitive dev-only dep via hygen. Stay on the 2.x patch (^2.8.6) since
+  # hygen pins the 2.x line; a 3.x jump would be unnecessary.
+  degit@<2.8.6: ^2.8.6
   liquidjs@<10.26.0: ^10.27.0
+  linkify-it@<5.0.2: ^5.0.2
   # Force single instances of @codemirror/state and @codemirror/autocomplete.
   # Without this, transitive lang-* packages pin to state@6.4.1 while direct
   # dashboard imports resolve against state@6.6.0, producing two virtual peer
@@ -210,6 +239,7 @@ allowBuilds:
   '@newrelic/native-metrics': true
   '@novu/thalamus': true
   '@sentry/cli': true
+  '@sentry/node-cpu-profiler': true
   '@sentry/profiling-node': true
   '@sveltejs/kit': true
   '@swc/core': true

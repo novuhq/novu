@@ -1,7 +1,7 @@
 import { CursorBasedPaginatedCommand } from '@novu/application-generic';
 import { ChannelConnectionEntity } from '@novu/dal';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ChannelTypeEnum, ConnectionMode, ProvidersIdEnum, providerIdValues } from '@novu/shared';
+import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
 export class ListChannelConnectionsCommand extends CursorBasedPaginatedCommand<
   ChannelConnectionEntity,
@@ -11,11 +11,22 @@ export class ListChannelConnectionsCommand extends CursorBasedPaginatedCommand<
   @IsString()
   subscriberId?: string;
 
+  /**
+   * Read-time scoping over `subscriberId` (only applied when `subscriberId` is set):
+   * - `'subscriber'` returns only the subscriber's own connections;
+   * - `'shared'` returns only shared connections (`subscriberId` null);
+   * - omitted returns both (subscriber-owned and shared).
+   */
+  @IsOptional()
+  @IsString()
+  @IsIn(['subscriber', 'shared'])
+  connectionMode?: ConnectionMode;
+
   @IsEnum(ChannelTypeEnum)
   @IsOptional()
   channel?: ChannelTypeEnum;
 
-  @IsEnum(ProvidersIdEnumConst)
+  @IsIn(providerIdValues)
   @IsOptional()
   providerId?: ProvidersIdEnum;
 

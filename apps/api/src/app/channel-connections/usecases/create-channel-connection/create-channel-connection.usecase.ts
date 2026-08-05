@@ -1,10 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  CreateOrUpdateSubscriberUseCase,
-  encryptChannelConnectionAuth,
-  InstrumentUsecase,
-  shortId,
-} from '@novu/application-generic';
+import { encryptChannelConnectionAuth, InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -13,8 +8,8 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { validateConnectionMode } from '../channel-connection.utils';
-import { ensureConnectDashboardSubscriber } from '../ensure-connect-dashboard-subscriber';
+import { validateAndNormalizeConnectionAuth, validateConnectionMode } from '../channel-connection.utils';
+import { assertSubscriberExists } from '../ensure-connect-dashboard-subscriber';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
 @Injectable()
@@ -23,8 +18,7 @@ export class CreateChannelConnection {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly contextRepository: ContextRepository,
-    private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase
+    private readonly contextRepository: ContextRepository
   ) {}
 
   @InstrumentUsecase()
@@ -32,9 +26,10 @@ export class CreateChannelConnection {
     this.validateResourceOrContext(command);
 
     const integration = await this.findIntegration(command);
+    const auth = validateAndNormalizeConnectionAuth(command.auth, integration);
     const contextKeys = await this.resolveContexts(command);
 
-    await this.assertSubscriberExists(command);
+    await this.ensureSubscriberExists(command);
     await this.ensureUniqueConnectionForResourceAndContext(command, integration, contextKeys);
 
     const identifier = command.identifier || this.generateIdentifier();
@@ -52,7 +47,7 @@ export class CreateChannelConnection {
       );
     }
 
-    const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys);
+    const channelConnection = await this.createChannelConnection(command, identifier, integration, contextKeys, auth);
 
     return channelConnection;
   }
@@ -62,10 +57,17 @@ export class CreateChannelConnection {
       connectionMode: command.connectionMode,
       subscriberId: command.subscriberId,
       context: command.context,
+      contextKeys: command.contextKeys,
     });
   }
 
   private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
+    // A session-validated context arrives pre-resolved as keys — persist verbatim
+    // (never re-resolve/trust the raw payload alongside it).
+    if (command.contextKeys?.length) {
+      return command.contextKeys;
+    }
+
     if (!command.context) {
       return [];
     }
@@ -116,7 +118,8 @@ export class CreateChannelConnection {
     command: CreateChannelConnectionCommand,
     identifier: string,
     integration: IntegrationEntity,
-    contextKeys: string[]
+    contextKeys: string[],
+    auth: CreateChannelConnectionCommand['auth']
   ): Promise<ChannelConnectionEntity> {
     const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
 
@@ -130,23 +133,21 @@ export class CreateChannelConnection {
       subscriberId,
       contextKeys,
       workspace: command.workspace,
-      auth: encryptChannelConnectionAuth(command.auth),
+      auth: encryptChannelConnectionAuth(auth),
     });
 
     return channelConnection;
   }
 
-  private async assertSubscriberExists(command: CreateChannelConnectionCommand) {
+  private async ensureSubscriberExists(command: CreateChannelConnectionCommand) {
     if (!command.subscriberId) {
       return;
     }
 
-    await ensureConnectDashboardSubscriber({
+    await assertSubscriberExists({
       subscriberId: command.subscriberId,
       environmentId: command.environmentId,
-      organizationId: command.organizationId,
       subscriberRepository: this.subscriberRepository,
-      createOrUpdateSubscriber: this.createOrUpdateSubscriber,
     });
   }
 

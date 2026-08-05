@@ -1,5 +1,6 @@
 import { Novu } from '@novu/api';
 import { SubscriberResponseDto } from '@novu/api/models/components';
+import { SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -44,6 +45,22 @@ describe('Get Subscriber - /subscribers/:subscriberId (GET) #novu-v2', () => {
 
     expect(res.result.firstName).to.be.undefined;
     expect(res.result.lastName).to.be.undefined;
+  });
+
+  it('should retrieve subscriber when channels is null in the database', async () => {
+    const subscriberId = `test-subscriber-null-channels-${randomBytes(4).toString('hex')}`;
+    await novuClient.subscribers.create({ subscriberId });
+
+    const subscriberRepository = new SubscriberRepository();
+    await subscriberRepository.update(
+      { _environmentId: session.environment._id, subscriberId },
+      { $set: { channels: null } }
+    );
+
+    const res = await novuClient.subscribers.retrieve(subscriberId);
+
+    expect(res.result.subscriberId).to.equal(subscriberId);
+    expect(res.result.channels).to.deep.equal([]);
   });
 });
 

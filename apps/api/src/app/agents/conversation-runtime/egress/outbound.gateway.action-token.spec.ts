@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AGENT_ACTION_TOKEN_PREFIX } from '../action-token/agent-action-token.service';
 import { OutboundGateway } from './outbound.gateway';
+import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
 
 describe('OutboundGateway action token egress', () => {
   const binding = {
@@ -15,7 +16,7 @@ describe('OutboundGateway action token egress', () => {
     const actionTokenService = {
       tokenizeCardForDelivery:
         actionTokenOverrides.tokenizeCardForDelivery ??
-        sinon.stub().callsFake(async (card: Record<string, unknown>) => ({
+        sinon.stub().callsFake(async (card: { type: 'card'; children?: unknown[] }) => ({
           ...card,
           children: [
             {
@@ -37,6 +38,7 @@ describe('OutboundGateway action token egress', () => {
       {} as any,
       { prepareContentForDelivery: sinon.stub().callsFake(async (content) => content) } as any,
       actionTokenService as any,
+      new OutboundDeliveryInfo(),
       logger as any
     );
 

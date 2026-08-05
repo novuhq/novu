@@ -82,9 +82,6 @@ export const envValidators = {
   NOVU_REGION: str({ default: 'local' }),
   NOVU_SECRET_KEY: str({ default: '' }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
-  SCHEDULER_URL: str({ default: undefined }),
-  SCHEDULER_API_KEY: str({ default: undefined }),
-  INTERNAL_CALLBACK_API_KEY: str({ default: undefined }),
   STEP_RESOLVER_CF_ACCOUNT_ID: str({ default: undefined }),
   STEP_RESOLVER_CF_API_TOKEN: str({ default: undefined }),
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),
@@ -99,6 +96,9 @@ export const envValidators = {
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
+  NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
+  NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),
   NOVU_MANAGED_CLAUDE_API_KEY: str({ default: undefined }),
   MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS: num({ default: 10 }),
   MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION: num({ default: 100_000 }),

@@ -1,19 +1,29 @@
-import { ControlValuesEntity, NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../commands';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
+import { WorkflowForVariableSchema } from '../../types/workflow-mapper.types';
 
 // Type for optimistic step data used during sync
 export interface IOptimisticStepInfo {
   stepId: string;
   type: StepTypeEnum;
+  /**
+   * In-flight control values from the upsert/sync payload.
+   * Needed so HTTP response schemas are available before control values are persisted.
+   */
+  controlValues?: Record<string, unknown>;
+  /**
+   * Persisted step template id in the target environment (when updating an existing workflow).
+   */
+  _id?: string;
 }
 
 export class BuildVariableSchemaCommand extends EnvironmentWithUserCommand {
   @IsOptional()
-  workflow?: NotificationTemplateEntity;
+  workflow?: WorkflowForVariableSchema;
 
   @IsOptional()
   @IsString()

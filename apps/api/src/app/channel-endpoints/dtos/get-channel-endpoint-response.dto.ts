@@ -7,12 +7,19 @@ import {
   ProvidersIdEnumConst,
 } from '@novu/shared';
 import {
+  GrafanaOnCallIntegrationEndpointDto,
+  LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  OpsgenieIntegrationEndpointDto,
+  PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  ToolWebhookEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
   WebhookEndpointDto,
 } from './endpoint-types.dto';
 
@@ -83,6 +90,13 @@ export class GetChannelEndpointResponseDto {
       { $ref: getSchemaPath(MsTeamsChannelEndpointDto) },
       { $ref: getSchemaPath(MsTeamsUserEndpointDto) },
       { $ref: getSchemaPath(TelegramChatEndpointDto) },
+      { $ref: getSchemaPath(WebexRoomEndpointDto) },
+      { $ref: getSchemaPath(WebexPersonEndpointDto) },
+      { $ref: getSchemaPath(LineUserEndpointDto) },
+      { $ref: getSchemaPath(PagerDutyServiceEndpointDto) },
+      { $ref: getSchemaPath(OpsgenieIntegrationEndpointDto) },
+      { $ref: getSchemaPath(GrafanaOnCallIntegrationEndpointDto) },
+      { $ref: getSchemaPath(ToolWebhookEndpointDto) },
     ],
   })
   endpoint:
@@ -92,7 +106,14 @@ export class GetChannelEndpointResponseDto {
     | PhoneEndpointDto
     | MsTeamsChannelEndpointDto
     | MsTeamsUserEndpointDto
-    | TelegramChatEndpointDto;
+    | TelegramChatEndpointDto
+    | WebexRoomEndpointDto
+    | WebexPersonEndpointDto
+    | LineUserEndpointDto
+    | PagerDutyServiceEndpointDto
+    | OpsgenieIntegrationEndpointDto
+    | GrafanaOnCallIntegrationEndpointDto
+    | ToolWebhookEndpointDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

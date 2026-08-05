@@ -96,6 +96,7 @@ function buildMockProvider(overrides: ProviderStubs = {}) {
     deleteAgent: sinon.stub().resolves(),
     getAgent: sinon.stub().resolves({ externalAgentId: 'ext-agent-skill', name: 'agent' }),
     getConfig: sinon.stub().resolves({ model: 'claude-sonnet-4-5', systemPrompt: '', mcpServers: [], tools: [] }),
+    refreshPlatformDefinition: sinon.stub().resolves(undefined),
     updateConfig: sinon.stub().resolves({ model: 'claude-sonnet-4-5', systemPrompt: '', mcpServers: [], tools: [] }),
     provisionIntegration: sinon
       .stub()

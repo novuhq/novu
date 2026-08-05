@@ -17,11 +17,18 @@
  * REQUIRED ENV VARS
  *   NOVU_SECRET_KEY                        Novu API secret key (sk_...)
  *   NOVU_API_BASE_URL                      Novu API base URL (optional; falls back to NEXT_PUBLIC_NOVU_BACKEND_URL, then https://api.novu.co)
- *   NOVU_MSTEAMS_INTEGRATION_IDENTIFIER    Novu integration identifier for the MS Teams integration
- *   NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID     Fallback AAD Object ID for testing (public, optional)
+ *   NOVU_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER    Novu integration identifier for the MS Teams integration
+ *   NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID     Fallback AAD Object ID for testing (public, optional)
  */
 
 import { Novu } from '@novu/api';
+import type { ContextPayload } from '@novu/shared';
+import {
+  findConnectionForProvider,
+  findMatchingUserEndpoint,
+  hasConnectContext,
+  mismatchedContextEndpointMessage,
+} from '@/lib/dm-endpoint-context';
 
 const MS_TEAMS_USER_TYPE = 'ms_teams_user' as const;
 
@@ -55,23 +62,26 @@ function getNovuClient(): Novu {
  *
  * @param subscriberId          The Novu subscriber ID
  * @param integrationIdentifier The Novu MS Teams integration identifier
- * @param aadObjectIdOverride   The subscriber's AAD Object ID (falls back to NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID)
+ * @param aadObjectIdOverride   The subscriber's AAD Object ID (falls back to NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID)
+ * @param context               Must match NovuProvider context and trigger context when using multi-context routing
  */
 export async function ensureMsTeamsUserDmEndpoint(args: {
   subscriberId: string;
   integrationIdentifier: string;
   aadObjectIdOverride?: string;
+  context?: ContextPayload;
 }): Promise<EnsureMsTeamsUserDmEndpointResult> {
   const novu = getNovuClient();
   const { subscriberId, integrationIdentifier } = args;
 
-  const aadObjectId = args.aadObjectIdOverride?.trim() || process.env.NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID?.trim() || '';
+  const aadObjectId =
+    args.aadObjectIdOverride?.trim() || process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID?.trim() || '';
 
   if (!aadObjectId) {
     return {
       ok: false,
       error:
-        'AAD Object ID is required. Pass aadObjectIdOverride or set NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID.' +
+        'AAD Object ID is required. Pass aadObjectIdOverride or set NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID.' +
         ' You can find the AAD Object ID in Microsoft Entra admin center or via <MsTeamsLinkUser /> OAuth.',
     };
   }
@@ -82,14 +92,25 @@ export async function ensureMsTeamsUserDmEndpoint(args: {
     limit: 100,
   });
 
-  const alreadyLinked = endpoints.result.data.some((ep) => {
+  const matchingEndpoint = findMatchingUserEndpoint(
+    endpoints.result.data,
+    MS_TEAMS_USER_TYPE,
+    aadObjectId,
+    args.context
+  );
+
+  if (matchingEndpoint) {
+    return { ok: true, aadObjectId };
+  }
+
+  const conflictingEndpoint = endpoints.result.data.find((ep) => {
     const endpointData = ep.endpoint as Record<string, string>;
 
     return ep.type === MS_TEAMS_USER_TYPE && endpointData.userId === aadObjectId;
   });
 
-  if (alreadyLinked) {
-    return { ok: true, aadObjectId };
+  if (conflictingEndpoint) {
+    return { ok: false, error: mismatchedContextEndpointMessage(hasConnectContext(args.context)) };
   }
 
   const connections = await novu.channelConnections.list({
@@ -98,9 +119,7 @@ export async function ensureMsTeamsUserDmEndpoint(args: {
     limit: 100,
   });
 
-  const connectionIdentifier = connections.result.data.find(
-    (c) => c.identifier && c.providerId === 'msteams'
-  )?.identifier;
+  const connectionIdentifier = findConnectionForProvider(connections.result.data, 'msteams', args.context);
 
   if (!connectionIdentifier) {
     return {
@@ -118,6 +137,7 @@ export async function ensureMsTeamsUserDmEndpoint(args: {
       connectionIdentifier,
       type: MS_TEAMS_USER_TYPE,
       endpoint: { userId: aadObjectId },
+      ...(args.context && { context: args.context }),
     });
 
     return { ok: true, aadObjectId };

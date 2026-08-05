@@ -1,7 +1,7 @@
 import { createEffect, onCleanup } from 'solid-js';
 import type { EventHandler, Events, SocketEventNames } from '../../event-emitter';
 import { useNovu } from '../context';
-import { requestLock } from './browser';
+import { isWebLocksSupported, requestLock } from './browser';
 
 export const useWebSocketEvent = <E extends SocketEventNames>({
   event: webSocketEvent,
@@ -23,9 +23,16 @@ export const useWebSocketEvent = <E extends SocketEventNames>({
 
     tabsChannel.addEventListener('message', listener);
 
+    // When Web Locks are unavailable, requestLock runs the callback in every tab,
+    // so each tab already receives the event through its own socket. Re-broadcasting
+    // in that case would duplicate the event across tabs (count multiplied by tab
+    // count). Only the exclusive lock owner should fan out to the other tabs.
+    const shouldBroadcast = isWebLocksSupported();
     const updateReadCount: EventHandler<Events[E]> = (data) => {
       onMessage(data);
-      tabsChannel.postMessage(data);
+      if (shouldBroadcast) {
+        tabsChannel.postMessage(data);
+      }
     };
 
     let cleanup: (() => void) | undefined;

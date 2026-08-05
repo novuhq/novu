@@ -5,7 +5,6 @@ import {
   areNovuManagedClaudeCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
-  decryptCredentials,
   encryptCredentials,
   PinoLogger,
   resolveAgentRuntime,
@@ -30,6 +29,7 @@ import {
   slugify,
 } from '@novu/shared';
 import shortid from 'shortid';
+import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
@@ -163,6 +163,12 @@ export class CreateIntegration {
 
     await this.validate(command);
 
+    const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
+
+    if (!isAgentKind) {
+      await validateOutboundIntegrationCredentials(command.providerId, command.credentials);
+    }
+
     this.analyticsService.track('Create Integration - [Integrations]', command.userId, {
       providerId: command.providerId,
       channel: command.channel,
@@ -171,8 +177,6 @@ export class CreateIntegration {
     });
 
     try {
-      const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
-
       if (command.check && !isAgentKind) {
         await this.checkIntegration.execute(
           CheckIntegrationCommand.create({

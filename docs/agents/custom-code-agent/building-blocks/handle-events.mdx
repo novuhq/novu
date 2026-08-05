@@ -1,0 +1,475 @@
+---
+title: "Handlers and context"
+description: "Write event handlers for your custom code agent and understand the context object that Novu passes on every turn, including messages, users, and providers."
+---
+
+
+Novu gives your handler the same building blocks whether the message came from Slack, email, or another provider, and whether you call an LLM or plain TypeScript.
+
+## Channel support
+
+Handlers are provider-agnostic. The same `onMessage`, `onAction`, `onReaction`, `onResolve`, `onToolApproval`, and `onError` APIs run on Slack, Microsoft Teams, WhatsApp, Telegram, and email. What the user sees (buttons vs action links, typing vs eyes reaction) depends on the channel. See [Channels overview](/agents/channels/overview).
+
+| Event surface | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| `onMessage` | Yes | Yes | Yes | Yes | Yes |
+| `onAction` (buttons / links) | Yes | Yes | Yes | Yes | Yes |
+| `onReaction` | Yes | Yes | Yes | Yes | Gmail only |
+| `onResolve` | Yes | Yes | Yes | Yes | Yes |
+| `onToolApproval` | Yes | Yes | Yes | Yes | Yes |
+
+## Event handlers
+
+Event handlers are functions that respond to events in a conversation. Your agent can respond to these event types:
+
+| Handler | When it runs | Common use case |
+| --- | --- | --- |
+| `onMessage` | A user sends a message in the conversation | Process the message and reply |
+| `onAction` | A user clicks a button or selects a value in an interactive card | Handle form submissions, button clicks, dropdown selections |
+| `onReaction` | A user adds or removes a reaction | Capture feedback or trigger a follow-up |
+| `onResolve` | The conversation is marked as resolved | Clean up state, log analytics, or send a summary |
+| `onToolApproval` | A user approves or denies a gated tool call | Run or skip the tool, audit the decision. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) |
+| `onError` | A turn fails (handler throw, promise rejection, delivery error) | Log, suppress, send custom copy, or rely on Novu's generic reply |
+
+Handlers are where the communication layer connects to your application logic. For example, an `onMessage` handler receives the user's message, passes conversation context to an LLM or custom function, and sends the response back through Novu.
+
+## Context object
+
+Each event handler receives a context object with the information needed to understand the current event and respond. Depending on the event type, it can include:
+
+- The incoming message
+- The current conversation state and metadata
+- The resolved subscriber (when available)
+- Recent conversation history
+- Provider information
+- Platform-specific details, such as thread or channel identifiers
+- Methods for replying, updating metadata, triggering workflows, or resolving the conversation
+
+The context object is how your code talks to Novu. You do not call Slack, Teams, or email APIs directly in the handler.
+
+## Event handling flow
+
+When a user messages your agent:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Provider as Chat Provider
+    participant Novu
+    participant Bridge as Agent Bridge
+    participant Agent as Agent Logic
+
+    User->>Provider: Send message
+    Provider->>Novu: Platform webhook
+    Novu->>Novu: Map thread to conversation
+    Novu->>Bridge: Call onMessage with context
+    Bridge->>Agent: Pass message and history
+    Agent->>Bridge: Return reply and signals
+    Bridge->>Novu: ctx.reply and signals
+    Novu->>Provider: Deliver reply to thread
+    Novu->>Novu: Persist conversation state
+    Provider->>User: Show reply
+```
+
+<Steps>
+  <Step title="User sends a message">
+    A user sends a message from a connected provider (for example, Slack).
+  </Step>
+
+  <Step title="Novu receives the event">
+    The provider delivers the inbound message to your agent endpoint.
+  </Step>
+
+  <Step title="Novu maps the thread">
+    Novu maps the provider thread to a conversation and resolves the platform user to a subscriber, when possible.
+  </Step>
+
+  <Step title="Novu calls onMessage">
+    Novu calls the agent's `onMessage` handler with the context object.
+  </Step>
+
+  <Step title="Handler passes context to agent logic">
+    Your handler forwards the message and `ctx.history` to your LLM or custom logic.
+  </Step>
+
+  <Step title="Agent logic decides next action">
+    Your agent logic decides what should happen next.
+  </Step>
+
+  <Step title="Handler sends reply or signals">
+    Your handler returns a reply, calls `ctx.reply()`, or emits signals.
+  </Step>
+
+  <Step title="Novu delivers the reply">
+    The agent response is posted back to the original provider thread.
+  </Step>
+
+  <Step title="Novu records conversation state">
+    Novu records messages, participants, metadata, signals, and conversation status.
+  </Step>
+</Steps>
+
+The same agent logic works across all connected providers because Novu handles the provider-specific communication layer. Connecting a new provider does not require changing your agent code.
+
+### onMessage
+
+`onMessage` fires every time a user sends a message in a conversation with your agent.
+
+<Tabs>
+  <Tab title="AI SDK">
+
+```typescript
+import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    const userMessage = message.text ?? '';
+    const conversationHistory = ctx.history;
+    const subscriber = ctx.subscriber;
+
+    return generateText({
+      model: openai('gpt-4o-mini'),
+      instructions: 'You are a helpful support agent.',
+      messages: toModelMessages(conversationHistory),
+    });
+  },
+});
+```
+
+Return `generateText()` or `streamText()` from the handler - Novu delivers the model output to the thread. See [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk).
+
+  </Tab>
+  <Tab title="LangChain">
+
+```typescript
+import { tool } from '@langchain/core/tools';
+import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
+
+const lookupOrder = tool(
+  async ({ orderId }) => ({ orderId, status: 'shipped' }),
+  {
+    name: 'lookupOrder',
+    description: 'Look up an order by ID',
+    schema: z.object({ orderId: z.string() }),
+  },
+);
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    const userMessage = message.text ?? '';
+    const conversationHistory = ctx.history;
+    const subscriber = ctx.subscriber;
+
+    return {
+      model: 'openai:gpt-4o-mini',
+      system: 'You are a helpful support agent.',
+      tools: [lookupOrder],
+    };
+  },
+});
+```
+
+Return a `LangChainAgentConfig` from the handler - Novu runs the agent and delivers the final text. See [LangChain](/agents/custom-code-agent/frameworks/langchain).
+
+  </Tab>
+  <Tab title="Custom code">
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    const userMessage = message.text ?? '';
+    const conversationHistory = ctx.history;
+    const subscriber = ctx.subscriber;
+
+    const response = await yourLLM.chat(userMessage, conversationHistory);
+
+    ctx.metadata.set('lastIntent', response.intent);
+    await ctx.reply(response.text);
+  },
+});
+```
+
+Call your LLM or business logic yourself, then reply with `ctx.reply()` or by returning a string.
+
+  </Tab>
+</Tabs>
+
+#### Handling attachments
+
+Inbound messages can include file attachments when the platform supports them. Novu normalizes files into `message.attachments` with short-lived signed URLs. Keep in mind:
+
+- Download attachment URLs promptly inside your handler.
+- Signed links are valid for 15 minutes.
+- Inbound attachments are limited to 25 MB per file.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    const attachments = message.attachments ?? [];
+
+    for (const file of attachments) {
+      // file.type: 'image', 'document', 'audio', 'video'
+      // file.url: short-lived download URL
+      // file.name: original filename
+      // file.mimeType: e.g. 'image/jpeg'
+      // file.size: size in bytes
+    }
+  },
+});
+```
+
+### onAction
+
+`onAction` fires when a user clicks a button or selects a value in an interactive card. The `action` payload carries `action.id` (the element's `id` prop), `action.value` (its `value` prop, if set), and `action.sourceMessageId`. See [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards).
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onAction: async (action, ctx) => {
+    if (action.id === 'approve' && action.value === 'true') {
+      await ctx.reply('Request approved!');
+      ctx.trigger('approval-workflow', {
+        to: ctx.subscriber?.subscriberId,
+        payload: { approved: true },
+      });
+    }
+  },
+});
+```
+
+### onReaction
+
+`onReaction` fires when a user adds or removes an emoji reaction on a message. The `reaction` payload carries `reaction.emoji.name`, `reaction.added` (`true` when added, `false` when removed), and `reaction.messageId`.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onReaction: async (reaction, ctx) => {
+    if (reaction.emoji.name === 'thumbs_up' && reaction.added) {
+      ctx.metadata.set('userSatisfied', true);
+    } else if (reaction.emoji.name === 'thumbs_down' && reaction.added) {
+      ctx.metadata.set('userUnsatisfied', true);
+    }
+    await ctx.reply('Thank you for your feedback!');
+  },
+});
+```
+
+### onResolve
+
+`onResolve` fires when the conversation is marked as resolved via `ctx.resolve()` or the resolve signal. It receives only the context object.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onResolve: async (ctx) => {
+    ctx.metadata.set('resolvedAt', new Date().toISOString());
+  },
+});
+```
+
+### onToolApproval
+
+`onToolApproval` fires when a user approves or denies a gated tool call. It receives a `decision` with the tool call, the verdict, and a handle to the approval card.
+
+<Tabs>
+  <Tab title="AI SDK">
+
+On the AI SDK path, tools gated with `needsApproval: true` in `onMessage` trigger this handler when the user clicks **Approve** or **Deny**. Register it when you need a hook after the click - for example to audit the decision or change how the card is handled.
+
+```typescript
+import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText, tool } from 'ai';
+import { z } from 'zod';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    return generateText({
+      model: openai('gpt-4o'),
+      messages: toModelMessages(ctx.history),
+      tools: {
+        issueRefund: tool({
+          inputSchema: z.object({ orderId: z.string() }),
+          needsApproval: true,
+          execute: async ({ orderId }) => refund(orderId),
+        }),
+      },
+    });
+  },
+
+  onToolApproval: async (decision, ctx) => {
+    await decision.approvalMessage.delete();
+
+    if (!decision.approved) return 'Refund denied.';
+    // return nothing → onMessage auto-resumes
+  },
+});
+```
+
+  </Tab>
+  <Tab title="LangChain">
+
+```typescript
+import { tool } from '@langchain/core/tools';
+import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
+
+const issueRefund = tool(
+  async ({ orderId }) => refund(orderId),
+  {
+    name: 'issueRefund',
+    description: 'Issue a refund for an order',
+    schema: z.object({ orderId: z.string() }),
+  },
+);
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => ({
+    model: 'openai:gpt-4o',
+    tools: [issueRefund],
+    needsApproval: (toolCall) => toolCall.name === 'issueRefund',
+  }),
+
+  onToolApproval: async (decision, ctx) => {
+    await decision.approvalMessage.delete();
+
+    if (!decision.approved) return 'Refund denied.';
+    // return nothing → onMessage auto-resumes
+  },
+});
+```
+
+  </Tab>
+  <Tab title="Custom code">
+
+Gate the tool with `ctx.toolApproval.request()` and handle the click in `onToolApproval`:
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    return ctx.toolApproval.request({ id: 'call_1', name: 'issueRefund', input: { orderId: 'A-123' } });
+  },
+
+  onToolApproval: async (decision, ctx) => {
+    await decision.approvalMessage.delete();
+    if (!decision.approved) return 'Action cancelled.';
+
+    await issueRefund(decision.toolCall.input);
+    return 'Done.';
+  },
+});
+```
+
+  </Tab>
+</Tabs>
+
+See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for card customization, auditing, and `renderApproval`.
+
+### onError
+
+When a turn fails - your handler throws, a returned promise rejects, or message delivery fails inside the handler - Novu runs an error pipeline on the bridge before the turn ends:
+
+1. Log the failure locally on your bridge
+2. Call `onError` if you registered one
+3. If `onError` does not handle the failure, auto-report `{ error: true }` to Novu
+4. Novu delivers safe generic copy to the user in the thread
+5. Clear the typing indicator for the turn (even when no reply is sent)
+
+By default, users see:
+
+> *Something went wrong while processing your message. Please try again in a moment.*
+
+| Return from `onError` | Behavior |
+| --- | --- |
+| nothing / `undefined` | Auto-report - Novu sends the generic message |
+| `{ suppress: true }` | No user-visible reply (failure is logged only) |
+| `string` / JSX `Card` | Custom reply delivered through `ctx.reply()` |
+
+The first argument is an `AgentError` (use `toAgentError()` from `@novu/framework` if you normalize errors in your own code). Reply delivery failures surface as `AgentDeliveryError`, a subclass of `AgentError`, with `statusCode` and `responseBody` for debugging.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    const answer = await runAgent(message, ctx);
+
+    return answer;
+  },
+
+  onError: async (error, ctx) => {
+    console.error('[my-agent]', error.message, error.cause);
+
+    return 'Sorry - something went wrong. Please try again.';
+  },
+});
+```
+
+When `onError` returns message content, Novu posts it like a normal reply. When it returns nothing, the framework auto-reports the turn failure and Novu sends the generic message.
+
+#### When to suppress
+
+Use `{ suppress: true }` when a failure should be logged on your bridge but should **not** post another message in the thread. A common case is side-effect handlers such as `onReaction` or `onAction`: if analytics or feedback logging fails, a generic *"Something went wrong…"* reply is usually more confusing than helpful.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => runAgent(message, ctx),
+
+  onReaction: async (reaction, ctx) => {
+    await recordFeedback(reaction, ctx.conversation.identifier);
+  },
+
+  onError: async (error, ctx) => {
+    console.error('[my-agent]', ctx.event, error.message, error.cause);
+
+    if (ctx.event === 'onReaction' || ctx.event === 'onAction') {
+      return { suppress: true };
+    }
+
+    return 'Sorry - something went wrong. Please try again.';
+  },
+});
+```
+
+For `onMessage` failures, prefer a custom reply or the default generic message so the user knows their message was not handled.
+
+Runtime adapters forward `onError` from the same agent config. For adapter-specific failure behavior, see [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk), [LangChain](/agents/custom-code-agent/frameworks/langchain), or [Other frameworks](/agents/custom-code-agent/frameworks/other).
+
+<Note>
+  Reporting turn failures is best-effort. If the bridge cannot reach Novu, the failure is logged locally and is not re-thrown. Failures inside `onError` itself are logged and do not recurse.
+</Note>
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="reply" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
+    Send plain text, markdown, attachments, and interactive cards.
+  </Card>
+  <Card icon="loader" href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator">
+    Show a Thinking… or custom status while your handler runs.
+  </Card>
+  <Card icon="shield-check" href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval">
+    Gate tool calls with an in-thread Approve / Deny card.
+  </Card>
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Build end to end with `@novu/framework/ai-sdk`.
+  </Card>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+    Build end to end with `@novu/framework/langchain`.
+  </Card>
+</Columns>

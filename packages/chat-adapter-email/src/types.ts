@@ -83,6 +83,13 @@ export interface NovuEmailRawMessage {
   route?: EmailWebhookRouteContext;
   createdAt: string;
   attachments?: NovuEmailAttachment[];
+  /**
+   * Sender-authentication verdicts (`'pass'` / `'failed'`) forwarded from the
+   * inbound-mail service. Downstream identity resolution must treat the
+   * spoofable `from` address as untrusted unless both are `'pass'`.
+   */
+  dkim?: string;
+  spf?: string;
 }
 
 export type NovuEmailAdapter = Adapter<NovuEmailThreadId, NovuEmailRawMessage>;

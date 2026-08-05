@@ -1,15 +1,15 @@
-import { BadGatewayException } from '@nestjs/common';
-import type { SentMessageInfo } from '@novu/framework';
+import type { SentMessageInfo } from '@novu/framework/internal';
 import { WebClient } from '@slack/web-api';
 import type {
   ChannelAndBlocks,
   ChatPostMessageArguments,
   ChatUpdateArguments,
 } from '@slack/web-api/dist/types/request/chat';
+import { toDeliveryError } from '../../shared/util/delivery-error.util';
 
 export type SlackNativeDelivery = Required<Omit<ChannelAndBlocks, 'channel'>>;
 
-function decodeSlackPlatformThreadId(platformThreadId: string): { channel: string; threadTs?: string } {
+export function decodeSlackPlatformThreadId(platformThreadId: string): { channel: string; threadTs?: string } {
   const parts = platformThreadId.split(':');
   if (parts[0] !== 'slack' || !parts[1]) {
     throw new Error(`Invalid Slack platform thread id: ${platformThreadId}`);
@@ -51,10 +51,7 @@ export async function postSlackNativeBlocks(params: {
   } satisfies ChatPostMessageArguments);
 
   if (!result.ok || !result.ts) {
-    throw new BadGatewayException({
-      error: 'delivery_failed',
-      message: result.error ?? 'Slack chat.postMessage failed',
-    });
+    toDeliveryError(new Error(result.error ?? 'Slack chat.postMessage failed'));
   }
 
   return { messageId: result.ts, platformThreadId: params.platformThreadId };
@@ -76,10 +73,7 @@ export async function editSlackNativeBlocks(params: {
   } satisfies ChatUpdateArguments);
 
   if (!result.ok || !result.ts) {
-    throw new BadGatewayException({
-      error: 'delivery_failed',
-      message: result.error ?? 'Slack chat.update failed',
-    });
+    toDeliveryError(new Error(result.error ?? 'Slack chat.update failed'));
   }
 
   return { messageId: result.ts, platformThreadId: params.platformThreadId };

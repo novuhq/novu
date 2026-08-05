@@ -1,4 +1,4 @@
-import { ChannelPreference, WorkflowPreference, WorkflowPreferences } from '../../types';
+import { ChannelPreference, ChannelTypeEnum, WorkflowPreference, WorkflowPreferences } from '../../types';
 
 export const PREFERENCE_DEFAULT_VALUE: WorkflowPreference['enabled'] = true;
 export const PREFERENCE_DEFAULT_READ_ONLY: WorkflowPreference['readOnly'] = false;
@@ -20,8 +20,15 @@ export const DEFAULT_WORKFLOW_PREFERENCES: WorkflowPreferences = {
     email: CHANNEL_PREFERENCE_DEFAULT,
     push: CHANNEL_PREFERENCE_DEFAULT,
     chat: CHANNEL_PREFERENCE_DEFAULT,
+    tool: CHANNEL_PREFERENCE_DEFAULT,
   },
 };
+
+/** Channels with no designed preference experience yet; hidden from every preference UI (NV-8502). */
+export const PREFERENCE_UI_HIDDEN_CHANNELS: ChannelTypeEnum[] = [ChannelTypeEnum.TOOL];
+
+export const isPreferenceChannelVisibleInUi = (channel: string): boolean =>
+  !PREFERENCE_UI_HIDDEN_CHANNELS.includes(channel as ChannelTypeEnum);
 
 export enum WorkflowCriticalityEnum {
   CRITICAL = 'critical',

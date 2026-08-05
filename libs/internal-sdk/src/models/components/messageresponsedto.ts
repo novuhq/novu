@@ -29,7 +29,7 @@ import {
 /**
  * Content of the message, can be an email block or a string
  */
-export type Content = Array<EmailBlock> | string;
+export type MessageResponseDtoContent = Array<EmailBlock> | string;
 
 export type MessageResponseDto = {
   /**
@@ -175,16 +175,19 @@ export type MessageResponseDto = {
 };
 
 /** @internal */
-export const Content$inboundSchema: z.ZodType<Content, z.ZodTypeDef, unknown> =
-  z.union([z.array(EmailBlock$inboundSchema), z.string()]);
+export const MessageResponseDtoContent$inboundSchema: z.ZodType<
+  MessageResponseDtoContent,
+  z.ZodTypeDef,
+  unknown
+> = z.union([z.array(EmailBlock$inboundSchema), z.string()]);
 
-export function contentFromJSON(
+export function messageResponseDtoContentFromJSON(
   jsonString: string,
-): SafeParseResult<Content, SDKValidationError> {
+): SafeParseResult<MessageResponseDtoContent, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Content$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Content' from JSON`,
+    (x) => MessageResponseDtoContent$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'MessageResponseDtoContent' from JSON`,
   );
 }
 

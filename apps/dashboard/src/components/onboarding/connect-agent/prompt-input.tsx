@@ -6,8 +6,7 @@ import { GenerationStatus, type GenerationStep } from './generation-status';
 
 const PROMPT_MAX_LENGTH = 2000;
 
-const DEFAULT_PLACEHOLDER =
-  'Describe your product or the agent you want to connect';
+const DEFAULT_PLACEHOLDER = 'Describe your product or the agent you want to connect';
 
 type PromptInputProps = {
   value: string;

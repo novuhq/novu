@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
@@ -20,7 +21,7 @@ import { USE_CASES } from './usecases';
     OutboundWebhooksModule.forRoot(),
   ],
   controllers: [SubscribersV1Controller],
-  providers: [...USE_CASES],
+  providers: [...USE_CASES, CommunityOrganizationRepository],
   exports: [...USE_CASES],
 })
 export class SubscribersV1Module {}

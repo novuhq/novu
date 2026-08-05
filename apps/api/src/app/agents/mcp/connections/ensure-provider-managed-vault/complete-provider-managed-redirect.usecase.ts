@@ -1,12 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, McpConnectionRepository } from '@novu/dal';
-import { buildClaudePlatformVaultUrl, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
+import { buildClaudePlatformVaultUrl, McpConnectionStatusEnum } from '@novu/shared';
 
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
-import { CompleteManagedAgentSetup } from '../../../managed-runtime/setup/complete-managed-agent-setup.usecase';
-import { ManagedAgentSetupCompleteCommand } from '../../../managed-runtime/setup/managed-agent-setup-complete.command';
-import type { McpOAuthState } from '../../oauth/generate-mcp-oauth-url/mcp-oauth-state';
+import { ManagedAgentService } from '../../../managed-runtime/managed-agent.service';
+import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import {
   decodeProviderManagedRedirectState,
   PROVIDER_MANAGED_REDIRECT_TTL_MS,
@@ -38,7 +37,7 @@ export class CompleteProviderManagedRedirect {
   constructor(
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly completeManagedAgentSetup: CompleteManagedAgentSetup,
+    private readonly managedAgentService: ManagedAgentService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(CompleteProviderManagedRedirect.name);
@@ -56,8 +55,8 @@ export class CompleteProviderManagedRedirect {
       throw new NotFoundException('Environment for redirect state not found or has no API keys.');
     }
 
-    const isValidSignature = environment.apiKeys.some(
-      ({ key }) => areHexDigestsEqual(createHash(key, rawPayload), signature)
+    const isValidSignature = environment.apiKeys.some(({ key }) =>
+      areHexDigestsEqual(createHash(key, rawPayload), signature)
     );
     if (!isValidSignature) {
       throw new BadRequestException('Provider-managed redirect signature mismatch.');
@@ -116,19 +115,20 @@ export class CompleteProviderManagedRedirect {
       }
     );
 
-    const stateData: McpOAuthState = {
-      agentId: payload.agentId,
-      agentMcpServerId: payload.agentMcpServerId,
-      subscriberId: payload.subscriberId,
-      environmentId: payload.environmentId,
-      organizationId: payload.organizationId,
-      mcpId: payload.mcpId,
-      scope: McpConnectionScopeEnum.Subscriber,
-      timestamp: payload.timestamp,
-      source: 'setup_card',
-      ...(payload.conversationId ? { conversationId: payload.conversationId } : {}),
-    };
-
-    await this.completeManagedAgentSetup.execute(ManagedAgentSetupCompleteCommand.create({ stateData }));
+    if (payload.toolUseId && payload.conversationId && payload.platform && payload.platformThreadId) {
+      await this.managedAgentService.sendToolResult({
+        conversationId: payload.conversationId,
+        environmentId: payload.environmentId,
+        organizationId: payload.organizationId,
+        agentIdentifier: payload.agentIdentifier ?? '',
+        integrationIdentifier: payload.integrationIdentifier ?? '',
+        subscriberId: payload.subscriberId,
+        toolUseId: payload.toolUseId,
+        content: `Connected. Do not attempt any MCP tools this turn.`,
+        followUpMessage: `You can now use the ${payload.mcpId ?? 'Integration'} tools directly.`,
+        platform: payload.platform as AgentPlatformEnum,
+        platformThreadId: payload.platformThreadId,
+      });
+    }
   }
 }
