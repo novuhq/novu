@@ -1,4 +1,4 @@
-import { ContentIssueEnum, WorkflowStatusEnum } from '@novu/shared';
+import { ContentIssueEnum, StepIssueSeverityEnum, WorkflowStatusEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import { computeWorkflowStatus } from './compute-workflow-status';
 
@@ -28,5 +28,50 @@ describe('computeWorkflowStatus', () => {
     expect(computeWorkflowStatus(true, [{ issues: { controls: {} } }, { issues: {} }])).to.equal(
       WorkflowStatusEnum.ACTIVE
     );
+  });
+
+  it('returns ACTIVE when the only control issues are non-blocking warnings', () => {
+    expect(
+      computeWorkflowStatus(true, [
+        {
+          issues: {
+            controls: {
+              body: [
+                {
+                  message: 'Telegram truncates text',
+                  issueType: ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED,
+                  severity: StepIssueSeverityEnum.WARNING,
+                },
+              ],
+            },
+          },
+        },
+      ])
+    ).to.equal(WorkflowStatusEnum.ACTIVE);
+  });
+
+  it('returns ERROR when a step mixes a blocking error with a warning', () => {
+    expect(
+      computeWorkflowStatus(true, [
+        {
+          issues: {
+            controls: {
+              body: [
+                {
+                  message: 'Telegram truncates text',
+                  issueType: ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED,
+                  severity: StepIssueSeverityEnum.WARNING,
+                },
+                {
+                  message: 'Slack rejects the payload',
+                  issueType: ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED,
+                  severity: StepIssueSeverityEnum.ERROR,
+                },
+              ],
+            },
+          },
+        },
+      ])
+    ).to.equal(WorkflowStatusEnum.ERROR);
   });
 });

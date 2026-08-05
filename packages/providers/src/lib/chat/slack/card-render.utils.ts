@@ -1,5 +1,13 @@
-import { CardElement, IChatRenderValidation } from '@novu/stateless';
-import { CardPlatformLimits, InlineNode, mapCardText, validateCard } from '../card-render.utils';
+import { CardElement, ChatRenderValidationLevelEnum, IChatRenderValidation } from '@novu/stateless';
+import {
+  CardValidator,
+  InlineNode,
+  mapCardText,
+  maxBlocks,
+  maxButtonsPerRow,
+  maxTextLengthPerBlock,
+  runCardValidators,
+} from '../card-render.utils';
 
 /** Slack mrkdwn: `*bold*`, `_italic_`, `~strike~`, `` `code` ``, `<url|label>`. */
 function inlineToSlack(nodes: InlineNode[]): string {
@@ -36,15 +44,21 @@ export function toSlackFlavoredCard(card: CardElement): CardElement {
   return mapCardText(card, inlineToSlack);
 }
 
-const SLACK_LIMITS: CardPlatformLimits = {
-  platform: 'Slack',
-  maxBlocks: 50,
-  maxTextLength: 3000,
-  maxButtonsPerRow: 25,
-};
+/**
+ * Slack Block Kit limits are API-enforced: the whole payload is rejected with `invalid_blocks`
+ * once any is crossed (>50 blocks, >3000-char section, >25 elements per actions block), so the
+ * message fails to deliver — these are blocking `ERROR`s, not degradation warnings.
+ */
+const SLACK = { level: ChatRenderValidationLevelEnum.ERROR } as const;
+
+const SLACK_VALIDATORS: CardValidator[] = [
+  maxBlocks({ ...SLACK, limit: 50 }),
+  maxTextLengthPerBlock({ ...SLACK, limit: 3000 }),
+  maxButtonsPerRow({ ...SLACK, limit: 25 }),
+];
 
 export function validateSlackCard(card: CardElement): IChatRenderValidation[] {
-  return validateCard(card, SLACK_LIMITS);
+  return runCardValidators(card, SLACK_VALIDATORS);
 }
 
 /** Slack rejects an `action_id` longer than 255 characters. */
