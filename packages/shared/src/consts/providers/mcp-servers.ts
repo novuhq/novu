@@ -1805,6 +1805,15 @@ export const MCP_SERVERS: McpServer[] = [
     oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
+    id: 'novu',
+    name: 'Novu',
+    description: 'Manage Novu workflows, subscribers, preferences, integrations, and delivery activity.',
+    url: 'https://mcp.novu.co/',
+    category: 'communication',
+    popular: false,
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+  },
+  {
     id: 'omni-analytics',
     name: 'Omni Analytics',
     description: 'Query Omni Analytics data, models, and dashboards through your agent.',
