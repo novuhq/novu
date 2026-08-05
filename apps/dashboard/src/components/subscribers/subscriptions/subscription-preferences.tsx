@@ -26,6 +26,17 @@ interface SubscriptionOverviewProps {
   value?: string;
 }
 
+const SubscriptionPreferencesHeader = () => {
+  return (
+    <header className="border-bg-soft flex h-12 w-full shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
+      <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
+        <RiMindMap className="size-5 p-0.5" />
+        <TruncatedText className="flex-1 pr-10">Subscription preferences</TruncatedText>
+      </div>
+    </header>
+  );
+};
+
 const SubscriptionOverview = ({ children, className, isCopyable, label, value }: SubscriptionOverviewProps) => {
   return (
     <div className={cn('flex items-center justify-between gap-2 overflow-hidden', className)}>
@@ -48,15 +59,10 @@ export const SubscriptionPreferences = ({
 }: SubscriptionPreferencesProps) => {
   const [openTopicDrawer, setOpenTopicDrawer] = useState(false);
 
-  if (isLoading || !subscription || !topicKey || !subscriberId) {
+  if (isLoading) {
     return (
       <div className="flex h-full flex-col">
-        <header className="border-bg-soft flex h-12 w-full shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
-          <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
-            <RiMindMap className="size-5 p-0.5" />
-            <TruncatedText className="flex-1 pr-10">Subscription preferences</TruncatedText>
-          </div>
-        </header>
+        <SubscriptionPreferencesHeader />
         <div className="flex min-h-0 flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-2 border-b border-bg-soft p-4">
             <motion.div {...fadeIn}>
@@ -110,15 +116,24 @@ export const SubscriptionPreferences = ({
     );
   }
 
+  if (!subscription || !topicKey || !subscriberId) {
+    return (
+      <div className="flex h-full flex-col">
+        <SubscriptionPreferencesHeader />
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
+          <span className="text-foreground-600 text-sm font-medium">Subscription not found</span>
+          <span className="text-text-soft text-xs">
+            It may have been removed, or it is no longer available in this environment.
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex h-full flex-col">
-        <header className="border-bg-soft flex h-12 w-full shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
-          <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">
-            <RiMindMap className="size-5 p-0.5" />
-            <TruncatedText className="flex-1 pr-10">Subscription preferences</TruncatedText>
-          </div>
-        </header>
+        <SubscriptionPreferencesHeader />
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex flex-col gap-2 border-b border-bg-soft p-4">
             <motion.div {...fadeIn}>
@@ -137,9 +152,13 @@ export const SubscriptionPreferences = ({
             <span className="text-xs font-medium">Preference rules</span>
           </div>
           <div className="flex flex-col gap-2 p-3 overflow-auto">
-            {subscription.preferences.map((preference) => (
-              <SubscriptionPreferenceRule key={preference.workflow.id} preference={preference} />
-            ))}
+            {subscription.preferences?.length ? (
+              subscription.preferences.map((preference) => (
+                <SubscriptionPreferenceRule key={preference.workflow.id} preference={preference} />
+              ))
+            ) : (
+              <span className="text-text-soft text-xs">No preference rules are defined for this subscription.</span>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 flex-col gap-2 border-t border-bg-soft p-3">

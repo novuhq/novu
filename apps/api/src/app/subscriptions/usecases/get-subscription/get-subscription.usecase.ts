@@ -61,14 +61,26 @@ export class GetSubscription {
             enabled: useContextFiltering,
           });
 
-    const subscription = await this.topicSubscribersRepository.findOne({
+    const scopeQuery = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       topicKey: command.topicKey,
-      identifier: command.identifier,
       ...(command._subscriberId && { _subscriberId: command._subscriberId }),
       ...contextQuery,
+    };
+
+    let subscription = await this.topicSubscribersRepository.findOne({
+      ...scopeQuery,
+      identifier: command.identifier,
     });
+
+    // Subscriptions created before identifiers existed may have none, so also accept the internal id
+    if (!subscription && BaseRepository.isInternalId(command.identifier)) {
+      subscription = await this.topicSubscribersRepository.findOne({
+        ...scopeQuery,
+        _id: command.identifier,
+      });
+    }
 
     if (!subscription) {
       return null;
