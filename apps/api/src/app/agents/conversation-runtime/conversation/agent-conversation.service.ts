@@ -73,6 +73,11 @@ export interface CreateOrGetConversationParams {
   workspaceId?: string;
   /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
   identifier?: string;
+  /**
+   * When opening from a workflow-originated platform thread, the originating
+   * Notification id. Stamped only on create (not on reopen of an existing conversation).
+   */
+  notificationId?: string;
 }
 
 export interface PersistInboundMessageParams {
@@ -228,6 +233,7 @@ export class AgentConversationService {
     const conversation = await this.conversationRepository.create({
       identifier: params.identifier ?? `conv_${shortId(12)}`,
       _agentId: params.agentId,
+      ...(params.notificationId ? { _notificationId: params.notificationId } : {}),
       participants: [
         { type: params.participantType, id: params.participantId },
         { type: ConversationParticipantTypeEnum.AGENT, id: params.agentId },
@@ -809,6 +815,13 @@ export class AgentConversationService {
     });
   }
 
+  /**
+   * Runs once, on the turn that creates a conversation from a workflow-seeded
+   * Message — `_notificationId` on the conversation marks it as hydrated, so
+   * callers never invoke this for existing conversations. The stable
+   * `workflow-dispatch-*` identifiers keep a rare concurrent first-turn race
+   * from double-writing (the loser fails on the unique index).
+   */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
     await this.persistAgentMessage({
       conversationId: params.conversationId,
@@ -822,36 +835,21 @@ export class AgentConversationService {
       content: params.content,
     });
 
-    const signalIdentifier = `workflow-dispatch-origin:${params.platformMessageId}`;
-
-    try {
-      await this.activityRepository.createSignalActivity({
-        identifier: signalIdentifier,
-        conversationId: params.conversationId,
-        platform: params.channel.platform,
-        integrationId: params.channel._integrationId,
-        platformThreadId: params.platformThreadId,
-        agentId: params.agentIdentifier,
-        content: `Workflow origin: ${String(params.originPayload.workflowIdentifier ?? 'unknown')}`,
-        signalData: {
-          type: 'workflow_origin',
-          payload: params.originPayload,
-        },
-        platformMessageId: params.platformMessageId,
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-      });
-    } catch (err) {
-      if (isDuplicateKeyError(err)) {
-        this.logger.warn(
-          { identifier: signalIdentifier, conversationId: params.conversationId },
-          'Workflow origin signal already recorded (duplicate identifier)'
-        );
-
-        return;
-      }
-
-      throw err;
-    }
+    await this.activityRepository.createSignalActivity({
+      identifier: `workflow-dispatch-origin:${params.platformMessageId}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.platformThreadId,
+      agentId: params.agentIdentifier,
+      content: `Workflow origin: ${String(params.originPayload.workflowIdentifier ?? 'unknown')}`,
+      signalData: {
+        type: 'workflow_origin',
+        payload: params.originPayload,
+      },
+      platformMessageId: params.platformMessageId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
   }
 }

@@ -199,6 +199,56 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
     return this.find(query, ['_agentId', '_integrationId']);
   }
 
+  /**
+   * Identifiers of the integrations currently linked to an agent, resolved in one round trip.
+   *
+   * Channel endpoints reference integrations by identifier rather than by id, so callers
+   * gating delivery on agent linkage only need identifiers — resolving them here saves the
+   * caller a second integration lookup per candidate integration.
+   *
+   * Links whose integration was (soft-)deleted or deactivated are excluded — they cannot
+   * deliver. Tombstoned (disconnected) links are excluded explicitly: the schema-level
+   * exclusion hook does not apply to aggregation pipelines.
+   */
+  async listLinkedIntegrationIdentifiers({
+    organizationId,
+    environmentId,
+    agentId,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+  }): Promise<string[]> {
+    const result = await this.aggregate([
+      {
+        $match: {
+          _organizationId: this.convertStringToObjectId(organizationId),
+          _environmentId: this.convertStringToObjectId(environmentId),
+          _agentId: this.convertStringToObjectId(agentId),
+          disconnectedAt: null,
+        },
+      },
+      {
+        $lookup: {
+          from: 'integrations',
+          localField: '_integrationId',
+          foreignField: '_id',
+          as: 'integration',
+        },
+      },
+      { $unwind: '$integration' },
+      {
+        $match: {
+          'integration.deleted': { $ne: true },
+          'integration.active': true,
+        },
+      },
+      { $group: { _id: '$integration.identifier' } },
+    ]);
+
+    return (result as Array<{ _id: unknown }>).map((row) => String(row._id));
+  }
+
   async listAgentIntegrationsForAgent({
     organizationId,
     environmentId,

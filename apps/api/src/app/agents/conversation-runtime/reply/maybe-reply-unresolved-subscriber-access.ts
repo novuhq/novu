@@ -62,6 +62,16 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
     return true;
   }
 
+  // Restricted custom-code + not_found: let the framework auth gate post the CTA
+  // card on the bridge instead of a plain API denial reply.
+  if (
+    !turn.config.isManaged &&
+    turn.config.subscriberAccess === AgentSubscriberAccessEnum.RESTRICTED &&
+    resolution.outcome === 'not_found'
+  ) {
+    return false;
+  }
+
   await postUnresolvedSubscriberAccessReply({
     turn,
     logger,

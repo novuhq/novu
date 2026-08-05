@@ -83,6 +83,13 @@ export class ConversationEntity {
   /** References AgentEntity._id — populated once agent CRUD is implemented */
   _agentId: string;
 
+  /**
+   * When this conversation was opened from an agent-assigned workflow chat send,
+   * the originating Notification id. Stamped only at creation, where workflow-origin
+   * hydration also runs exactly once — its presence marks the conversation as hydrated.
+   */
+  _notificationId?: string;
+
   /** All parties in the conversation; extensible to agents/bots in future */
   participants: ConversationParticipant[];
 
@@ -156,5 +163,5 @@ export class ConversationEntity {
 
 export type ConversationDBModel = ChangePropsValueType<
   ConversationEntity,
-  '_agentId' | '_environmentId' | '_organizationId'
+  '_agentId' | '_environmentId' | '_organizationId' | '_notificationId'
 >;

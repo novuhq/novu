@@ -164,7 +164,7 @@ export type EventType =
   | 'chat_agent_integration_not_linked'
   | 'chat_agent_unsupported_endpoint'
   | 'chat_agent_no_eligible_channels'
-  | 'chat_agent_dispatch_seed_failed'
+  | 'chat_agent_platform_thread_persist_failed'
   | 'msteams_bot_not_installed'
   | 'msteams_channel_not_found'
   | 'msteams_user_not_found'

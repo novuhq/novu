@@ -8,11 +8,10 @@ import {
   ConversationActivitySenderTypeEnum,
   ConversationEntity,
   ConversationParticipantTypeEnum,
+  MessageEntity,
   MessageRepository,
   NotificationRepository,
   SubscriberRepository,
-  WorkflowAgentDispatchEntity,
-  WorkflowAgentDispatchRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
@@ -287,7 +286,6 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly inboundAck: InboundAckService,
     private readonly connectionContextResolver: InboundConnectionContextResolver,
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
-    private readonly workflowAgentDispatchRepository: WorkflowAgentDispatchRepository,
     private readonly notificationRepository: NotificationRepository,
     private readonly messageRepository: MessageRepository
   ) {
@@ -443,22 +441,28 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Persist only after the gate. For an existing thread this reconciles
     // participants and reopens a RESOLVED conversation; for a brand-new one it
-    // creates the Conversation that the gate just cleared.
-    const conversation = await this.openConversation(
+    // creates the Conversation that the gate just cleared and, when a
+    // workflow-origin Message seeded the thread, hydrates its history once.
+    // Existing conversations were hydrated when they were created, so no
+    // per-turn lookup or hydration is needed for them.
+    const conversation = await this.openConversationAndMaybeHydrateOrigin(
       agentId,
       config,
-      message,
-      subscriberId,
+      existingConversation,
       platformThreadId,
-      thread.isDM,
-      extractWorkspaceId(config.platform, message.raw) ?? undefined,
-      this.webChatConversationIdentifier(config.platform, platformThreadId)
+      (notificationId) =>
+        this.openConversation(
+          agentId,
+          config,
+          message,
+          subscriberId,
+          platformThreadId,
+          thread.isDM,
+          extractWorkspaceId(config.platform, message.raw) ?? undefined,
+          this.webChatConversationIdentifier(config.platform, platformThreadId),
+          notificationId
+        )
     );
-
-    // Always attempt seed hydration — persistWorkflowOriginHydration is idempotent
-    // via stable activity identifiers, so later replies can recover if the first
-    // attempt failed after the conversation was already created.
-    await this.maybeHydrateWorkflowDispatchSeed(agentId, config, conversation, platformThreadId);
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
@@ -651,7 +655,8 @@ export class AgentInboundHandler implements OnModuleInit {
     platformThreadId: string,
     isDirectMessage: boolean,
     workspaceId?: string,
-    conversationIdentifier?: string
+    conversationIdentifier?: string,
+    notificationId?: string
   ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -672,31 +677,90 @@ export class AgentInboundHandler implements OnModuleInit {
       isDirectMessage,
       workspaceId,
       identifier: conversationIdentifier,
+      notificationId,
     });
   }
 
-  private async maybeHydrateWorkflowDispatchSeed(
+  /**
+   * Atomically resolves the conversation for this turn and, when it was just
+   * created from a workflow-seeded Message, hydrates workflow-origin history
+   * into it before returning. Keeping create-then-hydrate behind one call
+   * means no caller can read (or short-circuit on) the conversation between
+   * the `_notificationId` stamp and the hydration write — once a caller has
+   * the conversation, hydration has already either run or been attempted.
+   */
+  private async openConversationAndMaybeHydrateOrigin(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    existingConversation: ConversationEntity | null,
+    platformThreadId: string,
+    resolveConversation: (notificationId?: string) => Promise<ConversationEntity>
+  ): Promise<ConversationEntity> {
+    const seededMessage = existingConversation
+      ? null
+      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId);
+
+    const conversation = await resolveConversation(seededMessage?._notificationId);
+
+    if (seededMessage) {
+      await this.hydrateWorkflowOrigin(agentId, config, conversation, platformThreadId, seededMessage);
+    }
+
+    return conversation;
+  }
+
+  /**
+   * Fail-soft lookup of the outbound workflow Message that opened this thread
+   * (stamped by the worker after an agent-assigned chat send). Only called when
+   * no conversation exists yet — an existing conversation was already hydrated
+   * (and stamped with `_notificationId`) on the turn that created it.
+   */
+  private async findWorkflowOriginMessage(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    platformThreadId: string
+  ): Promise<MessageEntity | null> {
+    try {
+      return await this.messageRepository.findByPlatformThread(config.environmentId, agentId, platformThreadId);
+    } catch (err) {
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'lookup-workflow-origin-message',
+        agentId,
+      });
+      this.logger.warn(
+        { err, agentId, platformThreadId },
+        'Failed to look up workflow origin message before conversation create'
+      );
+
+      return null;
+    }
+  }
+
+  /**
+   * One-shot enrichment on conversation create: write the workflow-origin
+   * message and signal into history so the runtime sees why the thread exists.
+   * Runs only on the turn that created the conversation from a seeded Message —
+   * `_notificationId` on the conversation marks it as already hydrated.
+   */
+  private async hydrateWorkflowOrigin(
     agentId: string,
     config: ResolvedAgentConfig,
     conversation: ConversationEntity,
-    platformThreadId: string
+    platformThreadId: string,
+    originMessage: MessageEntity
   ): Promise<void> {
-    let seed: WorkflowAgentDispatchEntity | null = null;
+    if (!originMessage._notificationId || !originMessage.platformMessageId) {
+      return;
+    }
 
     try {
-      seed = await this.workflowAgentDispatchRepository.findByPlatformThread(
+      const { content, originPayload } = await this.buildWorkflowOriginHydration(
+        originMessage,
+        conversation,
         config.environmentId,
-        config.organizationId,
-        agentId,
-        config.integrationId,
-        platformThreadId
+        config.organizationId
       );
-
-      if (!seed?.platformMessageId) {
-        return;
-      }
-
-      const { content, originPayload } = await this.buildWorkflowOriginHydration(seed);
 
       await this.conversationService.persistWorkflowOriginHydration({
         conversationId: conversation._id,
@@ -704,66 +768,64 @@ export class AgentInboundHandler implements OnModuleInit {
         agentIdentifier: config.agentIdentifier,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
-        platformMessageId: seed.platformMessageId,
-        platformThreadId: seed.platformThreadId ?? platformThreadId,
+        platformMessageId: originMessage.platformMessageId,
+        platformThreadId: originMessage.platformThreadId ?? platformThreadId,
         content,
         originPayload,
       });
     } catch (err) {
       captureAgentWarning(err, {
         component: 'agent-inbound-handler',
-        operation: 'hydrate-workflow-dispatch-seed',
+        operation: 'hydrate-workflow-origin',
         agentId,
       });
       this.logger.warn(
-        { err, agentId, platformThreadId, dispatchId: seed?._id },
-        'Failed to hydrate workflow agent dispatch seed into conversation history'
+        { err, agentId, platformThreadId, messageId: originMessage._id, notificationId: originMessage._notificationId },
+        'Failed to hydrate workflow origin into conversation history'
       );
     }
   }
 
-  private async buildWorkflowOriginHydration(seed: WorkflowAgentDispatchEntity): Promise<{
+  private async buildWorkflowOriginHydration(
+    originMessage: MessageEntity,
+    conversation: ConversationEntity,
+    environmentId: string,
+    organizationId: string
+  ): Promise<{
     content: string;
     originPayload: Record<string, unknown>;
   }> {
-    const [notification, message] = await Promise.all([
-      this.notificationRepository.findOne(
-        {
-          _id: seed._notificationId,
-          _environmentId: seed._environmentId,
-          _organizationId: seed._organizationId,
-        },
-        'payload'
-      ),
-      this.messageRepository.findOne(
-        {
-          _id: seed._messageId,
-          _environmentId: seed._environmentId,
-          _organizationId: seed._organizationId,
-        },
-        'content'
-      ),
-    ]);
+    const notification = await this.notificationRepository.findOne(
+      {
+        _id: originMessage._notificationId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      'payload'
+    );
 
     const payload =
       notification?.payload && typeof notification.payload === 'object' && !Array.isArray(notification.payload)
         ? (notification.payload as Record<string, unknown>)
         : {};
 
-    const storedContent = typeof message?.content === 'string' ? message.content.trim() : '';
-    const content = buildWorkflowOriginSummary(seed.workflowIdentifier, storedContent, payload);
+    const storedContent = typeof originMessage.content === 'string' ? originMessage.content.trim() : '';
+    const workflowIdentifier = originMessage.templateIdentifier || 'unknown';
+    const content = buildWorkflowOriginSummary(workflowIdentifier, storedContent, payload);
+
+    const subscriberId =
+      conversation.participants?.find((p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER)?.id ?? undefined;
 
     return {
       content,
       originPayload: {
-        notificationId: seed._notificationId,
-        jobId: seed._jobId,
-        messageId: seed._messageId,
-        transactionId: seed.transactionId,
-        workflowIdentifier: seed.workflowIdentifier,
-        stepId: seed.stepId,
-        subscriberId: seed.subscriberId,
-        dispatchId: seed._id,
+        notificationId: originMessage._notificationId,
+        jobId: originMessage._jobId,
+        messageId: originMessage._id,
+        transactionId: originMessage.transactionId,
+        workflowIdentifier,
+        stepId: originMessage.stepId,
+        subscriberId,
         payload,
       },
     };
@@ -1241,20 +1303,36 @@ export class AgentInboundHandler implements OnModuleInit {
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
 
-    const conversation = await this.conversationService.createOrGetConversation({
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
+    const existingConversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
       agentId,
-      platform: config.platform,
-      integrationId: config.integrationId,
-      platformThreadId: thread.id,
-      participantId,
-      participantType,
-      platformUserId: userId,
-      firstMessageText: `[action:${action.id}]`,
-      isDirectMessage: thread.isDM,
-      workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
-    });
+      config.integrationId,
+      thread.id
+    );
+
+    const conversation = await this.openConversationAndMaybeHydrateOrigin(
+      agentId,
+      config,
+      existingConversation,
+      thread.id,
+      (notificationId) =>
+        this.conversationService.createOrGetConversation({
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+          agentId,
+          platform: config.platform,
+          integrationId: config.integrationId,
+          platformThreadId: thread.id,
+          participantId,
+          participantType,
+          platformUserId: userId,
+          firstMessageText: `[action:${action.id}]`,
+          isDirectMessage: thread.isDM,
+          workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
+          notificationId,
+        })
+    );
 
     trackAgentInboundAction(this.analyticsService, {
       organizationId: config.organizationId,
@@ -1272,9 +1350,6 @@ export class AgentInboundHandler implements OnModuleInit {
     if (isLinkButtonActionId(action.id)) {
       return;
     }
-
-    // Hydrate the workflow dispatch seed into conversation history before the runtime turn.
-    await this.maybeHydrateWorkflowDispatchSeed(agentId, config, conversation, thread.id);
 
     const actorType =
       participantType === ConversationParticipantTypeEnum.SUBSCRIBER

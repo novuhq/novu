@@ -53,7 +53,6 @@ import {
   IntegrationRepository,
   JobRepository,
   PreferencesRepository,
-  WorkflowAgentDispatchRepository,
 } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
 import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
@@ -131,7 +130,6 @@ const REPOSITORIES = [
   ChannelEndpointRepository,
   ChannelConnectionRepository,
   ContextRepository,
-  WorkflowAgentDispatchRepository,
 ];
 
 const webhookProvider: Provider = {

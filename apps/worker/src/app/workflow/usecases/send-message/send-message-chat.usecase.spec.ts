@@ -50,7 +50,6 @@ describe('SendMessageChat - phone-based channel de-duplication', () => {
       resolveChannelEndpoints as never,
       {} as never, // agentRepository
       {} as never, // agentIntegrationRepository
-      {} as never, // workflowAgentDispatchRepository
       { getFlag: sinon.stub().resolves(true) } as never // featureFlagsService
     );
 
@@ -221,7 +220,6 @@ describe('SendMessageChat - Slack provider content overrides', () => {
       } as never,
       {} as never, // agentRepository
       {} as never, // agentIntegrationRepository
-      {} as never, // workflowAgentDispatchRepository
       { getFlag: sinon.stub().resolves(false) } as never // featureFlagsService
     );
 
@@ -342,7 +340,7 @@ describe('SendMessageChat - agent assigned path', () => {
     channelData?: unknown[];
     linked?: boolean;
     chatHandlerSend?: sinon.SinonStub;
-    createSeed?: sinon.SinonStub;
+    setPlatformThreadBridge?: sinon.SinonStub;
     jobAgentId?: string | null;
     workflowAgentIdentifier?: string;
   } = {}) {
@@ -350,12 +348,11 @@ describe('SendMessageChat - agent assigned path', () => {
       channelData = [slackUserData],
       linked = true,
       chatHandlerSend = sinon.stub().resolves({
-        id: 'req-1',
+        id: '1777837477.371619',
         date: new Date().toISOString(),
-        platformMessageId: '1777837477.371619',
-        platformThreadId: 'slack:D123:1777837477.371619',
+        channel: 'D123',
       }),
-      createSeed = sinon.stub().resolves({ _id: 'seed_1' }),
+      setPlatformThreadBridge = sinon.stub().resolves(undefined),
       jobAgentId,
       workflowAgentIdentifier,
     } = options;
@@ -369,16 +366,14 @@ describe('SendMessageChat - agent assigned path', () => {
       findOne: sinon.stub().resolves(workflowAgentIdentifier ? { _id: 'agent_from_workflow' } : null),
     };
     const agentIntegrationRepository = {
-      findOne: sinon.stub().resolves(linked ? { _id: 'link_1' } : null),
-    };
-    const workflowAgentDispatchRepository = {
-      createSeed,
+      listLinkedIntegrationIdentifiers: sinon.stub().resolves(linked ? ['slack-main'] : []),
     };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
     const messageRepository = {
       create: sinon.stub().resolves({ _id: 'message_1' }),
       updateMessageStatus: sinon.stub().resolves(undefined),
+      setPlatformThreadBridge,
     };
     const selectIntegration = {
       execute: sinon.stub().resolves(slackIntegration),
@@ -412,14 +407,13 @@ describe('SendMessageChat - agent assigned path', () => {
       } as never,
       agentRepository as never,
       agentIntegrationRepository as never,
-      workflowAgentDispatchRepository as never,
       featureFlagsService as never
     );
 
     return {
       usecase,
       chatHandlerSend,
-      createSeed,
+      setPlatformThreadBridge,
       createExecutionDetails,
       sendWebhookMessage,
       messageRepository,
@@ -479,74 +473,107 @@ describe('SendMessageChat - agent assigned path', () => {
     });
   }
 
-  it('routes agent-assigned Slack delivery through ChatFactory and writes a dispatch seed', async () => {
-    const { usecase, chatHandlerSend, createSeed } = buildAgentUsecase({ jobAgentId: 'agent_1' });
+  it('routes agent-assigned Slack delivery through ChatFactory and stamps platform thread on message', async () => {
+    const { usecase, chatHandlerSend, setPlatformThreadBridge } = buildAgentUsecase({ jobAgentId: 'agent_1' });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledOnce(createSeed);
-    expect(createSeed.firstCall.args[0]).to.include({
+    sinon.assert.calledOnce(setPlatformThreadBridge);
+    expect(setPlatformThreadBridge.firstCall.args[0]).to.include({
       agentId: 'agent_1',
-      integrationId: 'integration_1',
-      platform: 'slack',
       platformMessageId: '1777837477.371619',
       platformThreadId: 'slack:D123:1777837477.371619',
       messageId: 'message_1',
-      jobId: 'job_1',
-      notificationId: 'notif_1',
-      subscriberId: 'sub_1',
-      workflowIdentifier: 'wf-identifier',
+      environmentId: 'env_1',
     });
   });
 
-  it('does not write a seed when provider send fails', async () => {
+  it('does not stamp platform thread when provider send fails', async () => {
     const chatHandlerSend = sinon.stub().rejects(new Error('slack down'));
-    const createSeed = sinon.stub().resolves({ _id: 'seed_1' });
+    const setPlatformThreadBridge = sinon.stub().resolves(undefined);
     const { usecase } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       chatHandlerSend,
-      createSeed,
+      setPlatformThreadBridge,
     });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(result.status).to.equal(SendMessageStatus.FAILED);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.notCalled(createSeed);
+    sinon.assert.notCalled(setPlatformThreadBridge);
   });
 
-  it('keeps send success when seed create fails (fail-soft)', async () => {
-    const createSeed = sinon.stub().rejects(new Error('mongo unavailable'));
-    const { usecase, createExecutionDetails } = buildAgentUsecase({
+  it('skips the stamp when a Slack user send carries no resolved conversation channel', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: '1777837477.371619', date: new Date().toISOString() });
+    const { usecase, setPlatformThreadBridge } = buildAgentUsecase({
       jobAgentId: 'agent_1',
-      createSeed,
+      chatHandlerSend,
     });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
-    sinon.assert.calledOnce(createSeed);
+    sinon.assert.notCalled(setPlatformThreadBridge);
+  });
+
+  it('stamps channel endpoints from channelData without needing a response channel', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: '1234567890.123456', date: new Date().toISOString() });
+    const { usecase, setPlatformThreadBridge } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      chatHandlerSend,
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.SLACK_CHANNEL,
+          identifier: 'ep_channel_1',
+          token: 'xoxb-test',
+          endpoint: { channelId: 'C999' },
+        },
+      ],
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(setPlatformThreadBridge);
+    expect(setPlatformThreadBridge.firstCall.args[0]).to.include({
+      platformMessageId: '1234567890.123456',
+      platformThreadId: 'slack:C999:1234567890.123456',
+    });
+  });
+
+  it('keeps send success when platform thread stamp fails (fail-soft)', async () => {
+    const setPlatformThreadBridge = sinon.stub().rejects(new Error('mongo unavailable'));
+    const { usecase, createExecutionDetails } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      setPlatformThreadBridge,
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(setPlatformThreadBridge);
     const warningCall = createExecutionDetails.execute
       .getCalls()
-      .find((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_DISPATCH_SEED_FAILED);
+      .find((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_PLATFORM_THREAD_PERSIST_FAILED);
     expect(warningCall).to.exist;
     expect(warningCall?.args[0]?.status).to.equal(ExecutionDetailsStatusEnum.WARNING);
   });
 
-  it('uses ChatFactory without seed when job._agentId is explicitly null (opt out)', async () => {
-    const { usecase, chatHandlerSend, createSeed } = buildAgentUsecase({ jobAgentId: null });
+  it('uses ChatFactory without stamp when job._agentId is explicitly null (opt out)', async () => {
+    const { usecase, chatHandlerSend, setPlatformThreadBridge } = buildAgentUsecase({ jobAgentId: null });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: null }));
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.notCalled(createSeed);
+    sinon.assert.notCalled(setPlatformThreadBridge);
   });
 
   it('fails when the integration is not linked to the assigned agent', async () => {
-    const { usecase, chatHandlerSend, createSeed } = buildAgentUsecase({
+    const { usecase, chatHandlerSend, setPlatformThreadBridge } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       linked: false,
     });
@@ -555,11 +582,11 @@ describe('SendMessageChat - agent assigned path', () => {
 
     expect(result.status).to.equal(SendMessageStatus.FAILED);
     sinon.assert.notCalled(chatHandlerSend);
-    sinon.assert.notCalled(createSeed);
+    sinon.assert.notCalled(setPlatformThreadBridge);
   });
 
   it('fails agent-assigned non-Slack endpoints', async () => {
-    const { usecase, chatHandlerSend, createSeed } = buildAgentUsecase({
+    const { usecase, chatHandlerSend, setPlatformThreadBridge } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       channelData: [
         {
@@ -574,11 +601,11 @@ describe('SendMessageChat - agent assigned path', () => {
 
     expect(result.status).to.equal(SendMessageStatus.FAILED);
     sinon.assert.notCalled(chatHandlerSend);
-    sinon.assert.notCalled(createSeed);
+    sinon.assert.notCalled(setPlatformThreadBridge);
   });
 
-  it('resolves workflow.agent when job._agentId is unset and seeds with that agent', async () => {
-    const { usecase, chatHandlerSend, createSeed } = buildAgentUsecase({
+  it('resolves workflow.agent when job._agentId is unset and stamps with that agent', async () => {
+    const { usecase, chatHandlerSend, setPlatformThreadBridge } = buildAgentUsecase({
       workflowAgentIdentifier: 'support-agent',
     });
 
@@ -586,7 +613,7 @@ describe('SendMessageChat - agent assigned path', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledOnce(createSeed);
-    expect(createSeed.firstCall.args[0].agentId).to.equal('agent_from_workflow');
+    sinon.assert.calledOnce(setPlatformThreadBridge);
+    expect(setPlatformThreadBridge.firstCall.args[0].agentId).to.equal('agent_from_workflow');
   });
 });

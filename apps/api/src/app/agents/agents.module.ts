@@ -22,7 +22,6 @@ import {
   McpConnectionRepository,
   MessageRepository,
   SubscriberRepository,
-  WorkflowAgentDispatchRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
@@ -139,7 +138,6 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     McpConnectionRepository,
     MessageRepository,
     SubscriberRepository,
-    WorkflowAgentDispatchRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     RotatingConnectionTokenService,

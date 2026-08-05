@@ -70,23 +70,11 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       throw new Error(`Slack API Error: ${response.data.error}`);
     }
 
-    const platformMessageId =
-      typeof response.data.ts === 'string' && response.data.ts.length > 0 ? response.data.ts : undefined;
-    // Prefer Slack's response channel (DM posts return a `D…` id, not the `U…` user id we posted to)
-    // so platformThreadId matches chat-sdk inbound thread ids used for agent hydration.
-    const responseChannel =
-      typeof response.data.channel === 'string' && response.data.channel.length > 0
-        ? response.data.channel
-        : undefined;
-    const platformThreadId =
-      platformMessageId && responseChannel ? `slack:${responseChannel}:${platformMessageId}` : undefined;
-
     return {
-      id: response.headers['x-slack-req-id'] || `webhook-id-${Date.now()}`,
+      id: response.data.ts,
       date: new Date().toISOString(),
-      platformMessageId,
-      platformThreadId,
-    };
+      channel: response.data.channel,
+    } as ISendMessageSuccessResponse;
   }
 
   private sendMessageToEndpoint(

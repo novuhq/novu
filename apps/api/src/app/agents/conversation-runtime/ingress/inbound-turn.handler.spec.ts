@@ -30,6 +30,10 @@ describe('AgentInboundHandler', () => {
     channels: [{ platformThreadId: 'thread1', platform: 'slack', _integrationId: 'integration1' }],
   };
 
+  afterEach(() => {
+    delete (conversation as { _notificationId?: string })._notificationId;
+  });
+
   function makeLogger() {
     return {
       warn: sinon.stub(),
@@ -190,14 +194,12 @@ describe('AgentInboundHandler', () => {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),
       tryHandleAsApprovalReaction: sinon.stub().resolves(false),
     };
-    const workflowAgentDispatchRepository = {
-      findByPlatformThread: sinon.stub().resolves(null),
-    };
     const notificationRepository = {
       findOne: sinon.stub().resolves(null),
     };
     const messageRepository = {
       findOne: sinon.stub().resolves(null),
+      findByPlatformThread: sinon.stub().resolves(null),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -220,7 +222,6 @@ describe('AgentInboundHandler', () => {
       inboundAck as any,
       connectionContextResolver as any,
       replyApprovalInterceptor as any,
-      workflowAgentDispatchRepository as any,
       notificationRepository as any,
       messageRepository as any
     );
@@ -232,7 +233,6 @@ describe('AgentInboundHandler', () => {
       attachmentStorage,
       bridgeExecutor,
       conversationService,
-      workflowAgentDispatchRepository,
       notificationRepository,
       messageRepository,
       linkTelegramChatToSubscriber,
@@ -417,32 +417,22 @@ describe('AgentInboundHandler', () => {
       expect(thread.post.calledOnce).to.equal(true);
     });
 
-    it('should hydrate workflow dispatch seed into conversation history on first reply', async () => {
-      const {
-        handler,
-        conversationService,
-        workflowAgentDispatchRepository,
-        notificationRepository,
-        messageRepository,
-      } = makeHandler();
+    it('should hydrate workflow origin into conversation history on first reply', async () => {
+      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler();
 
       conversationService.findByPlatformThread.resolves(null);
-      workflowAgentDispatchRepository.findByPlatformThread.resolves({
-        _id: 'dispatch1',
+      messageRepository.findByPlatformThread.resolves({
+        _id: 'msg1',
         _notificationId: 'notif1',
         _jobId: 'job1',
-        _messageId: 'msg1',
-        _environmentId: 'env1',
-        _organizationId: 'org1',
         transactionId: 'txn1',
-        workflowIdentifier: 'order-alerts',
+        templateIdentifier: 'order-alerts',
         stepId: 'chat-1',
-        subscriberId: 'sub1',
+        content: 'Order ORD-1 shipped',
         platformMessageId: '1777837477.371619',
         platformThreadId: 'slack:D123:1777837477.371619',
       });
       notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
-      messageRepository.findOne.resolves({ content: 'Order ORD-1 shipped' });
 
       const thread = makeSlackDmThread();
       const message = {
@@ -453,7 +443,8 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
-      expect(workflowAgentDispatchRepository.findByPlatformThread.calledOnce).to.equal(true);
+      expect(messageRepository.findByPlatformThread.calledOnce).to.equal(true);
+      expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
       expect(hydrateArgs.content).to.equal(
@@ -464,11 +455,11 @@ describe('AgentInboundHandler', () => {
       expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
     });
 
-    it('should not hydrate when no workflow dispatch seed exists', async () => {
-      const { handler, conversationService, workflowAgentDispatchRepository } = makeHandler();
+    it('should not hydrate when no workflow origin message exists', async () => {
+      const { handler, conversationService, messageRepository } = makeHandler();
 
       conversationService.findByPlatformThread.resolves(null);
-      workflowAgentDispatchRepository.findByPlatformThread.resolves(null);
+      messageRepository.findByPlatformThread.resolves(null);
 
       await handler.handle(
         'agent1',
@@ -481,11 +472,11 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
-    it('should still dispatch the reply when the workflow dispatch seed lookup fails', async () => {
-      const { handler, conversationService, workflowAgentDispatchRepository, bridgeExecutor } = makeHandler();
+    it('should still dispatch the reply when the workflow origin lookup fails', async () => {
+      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler();
 
       conversationService.findByPlatformThread.resolves(null);
-      workflowAgentDispatchRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
+      messageRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
 
       await handler.handle(
         'agent1',
@@ -500,32 +491,16 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });
 
-    it('should retry workflow dispatch hydration on later replies when the conversation already exists', async () => {
-      const {
-        handler,
-        conversationService,
-        workflowAgentDispatchRepository,
-        notificationRepository,
-        messageRepository,
-      } = makeHandler();
+    it('should not look up the origin message or re-hydrate on later replies to an existing conversation', async () => {
+      const { handler, conversationService, messageRepository } = makeHandler();
 
-      conversationService.findByPlatformThread.resolves(conversation);
-      workflowAgentDispatchRepository.findByPlatformThread.resolves({
-        _id: 'dispatch1',
+      const existingConversation = {
+        ...conversation,
         _notificationId: 'notif1',
-        _jobId: 'job1',
-        _messageId: 'msg1',
-        _environmentId: 'env1',
-        _organizationId: 'org1',
-        transactionId: 'txn1',
-        workflowIdentifier: 'order-alerts',
-        stepId: 'chat-1',
-        subscriberId: 'sub1',
-        platformMessageId: '1777837477.371619',
-        platformThreadId: 'slack:D123:1777837477.371619',
-      });
-      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
-      messageRepository.findOne.resolves({ content: 'Order ORD-1 shipped' });
+        participants: [{ type: 'subscriber', id: 'sub1' }],
+      };
+      conversationService.findByPlatformThread.resolves(existingConversation);
+      conversationService.createOrGetConversation.resolves(existingConversation);
 
       await handler.handle(
         'agent1',
@@ -539,7 +514,8 @@ describe('AgentInboundHandler', () => {
         AgentEventEnum.ON_MESSAGE
       );
 
-      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+      expect(messageRepository.findByPlatformThread.called).to.equal(false);
+      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
     it('should store and forward inbound WhatsApp attachments', async () => {
@@ -1552,32 +1528,23 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].action).to.deep.equal(action);
     });
 
-    it('should hydrate workflow dispatch seed when an action is the first interaction on the thread', async () => {
-      const {
-        handler,
-        conversationService,
-        workflowAgentDispatchRepository,
-        notificationRepository,
-        messageRepository,
-        bridgeExecutor,
-      } = makeHandler();
+    it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {
+      const { handler, conversationService, notificationRepository, messageRepository, bridgeExecutor } =
+        makeHandler();
 
-      workflowAgentDispatchRepository.findByPlatformThread.resolves({
-        _id: 'dispatch1',
+      conversationService.findByPlatformThread.resolves(null);
+      messageRepository.findByPlatformThread.resolves({
+        _id: 'msg1',
         _notificationId: 'notif1',
         _jobId: 'job1',
-        _messageId: 'msg1',
-        _environmentId: 'env1',
-        _organizationId: 'org1',
         transactionId: 'txn1',
-        workflowIdentifier: 'order-alerts',
+        templateIdentifier: 'order-alerts',
         stepId: 'chat-1',
-        subscriberId: 'sub1',
+        content: 'Order ORD-1 shipped',
         platformMessageId: '1777837477.371619',
         platformThreadId: 'thread1',
       });
       notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
-      messageRepository.findOne.resolves({ content: 'Order ORD-1 shipped' });
 
       await handler.handleAction(
         'agent1',
@@ -1594,8 +1561,8 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistWorkflowOriginHydration.calledBefore(bridgeExecutor.execute)).to.equal(true);
     });
 
-    it('should not hydrate workflow dispatch seed for link-button actions', async () => {
-      const { handler, conversationService, workflowAgentDispatchRepository } = makeHandler();
+    it('should not hydrate workflow origin for link-button actions', async () => {
+      const { handler, conversationService, messageRepository } = makeHandler();
 
       await handler.handleAction(
         'agent1',
@@ -1605,14 +1572,48 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(workflowAgentDispatchRepository.findByPlatformThread.called).to.equal(false);
+      expect(messageRepository.findByPlatformThread.called).to.equal(false);
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
-    it('should still dispatch the action when workflow dispatch hydration fails', async () => {
-      const { handler, conversationService, workflowAgentDispatchRepository, bridgeExecutor } = makeHandler();
+    it('should still hydrate workflow origin when a link-button click is the first-ever interaction on a seeded thread', async () => {
+      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler();
 
-      workflowAgentDispatchRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
+      // Regression: create + hydrate must be atomic. A link-button click swallowed
+      // right after conversation creation must not skip the one-shot hydration —
+      // otherwise `_notificationId` gets stamped with no origin content ever written,
+      // permanently blocking every later retry.
+      conversationService.findByPlatformThread.resolves(null);
+      messageRepository.findByPlatformThread.resolves({
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        _jobId: 'job1',
+        transactionId: 'txn1',
+        templateIdentifier: 'order-alerts',
+        stepId: 'chat-1',
+        content: 'Order ORD-1 shipped',
+        platformMessageId: '1777837477.371619',
+        platformThreadId: 'thread1',
+      });
+      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'link-https://novu.co/pricing', value: undefined } as any,
+        'user1'
+      );
+
+      expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
+      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+    });
+
+    it('should still dispatch the action when workflow origin hydration fails', async () => {
+      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler();
+
+      conversationService.findByPlatformThread.resolves(null);
+      messageRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
 
       await handler.handleAction(
         'agent1',

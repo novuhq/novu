@@ -216,7 +216,7 @@ test('should handle Slack webhook HTTP error correctly', async () => {
   ).rejects.toThrow('Request failed with status code 400');
 });
 
-test('should trigger Slack app correctly with OAuth and return platform ids', async () => {
+test('should trigger Slack app correctly with OAuth and return the message ts as id', async () => {
   const { mockPost } = axiosSpy({
     data: {
       ok: true,
@@ -255,12 +255,11 @@ test('should trigger Slack app correctly with OAuth and return platform ids', as
       },
     }
   );
-  expect(result.id).toBe('req-channel-1');
-  expect(result.platformMessageId).toBe('1234567890.123456');
-  expect(result.platformThreadId).toBe('slack:C1234567890:1234567890.123456');
+  expect(result.id).toBe('1234567890.123456');
+  expect((result as { channel?: string }).channel).toBe('C1234567890');
 });
 
-test('should return DM platformThreadId from Slack response channel, not user id', async () => {
+test('should echo the DM conversation from Slack response channel, not the user id we posted to', async () => {
   const { mockPost } = axiosSpy({
     data: {
       ok: true,
@@ -299,11 +298,11 @@ test('should return DM platformThreadId from Slack response channel, not user id
       },
     }
   );
-  expect(result.platformMessageId).toBe('1777837477.371619');
-  expect(result.platformThreadId).toBe('slack:D999888777:1777837477.371619');
+  expect(result.id).toBe('1777837477.371619');
+  expect((result as { channel?: string }).channel).toBe('D999888777');
 });
 
-test('should not return platform ids for Slack webhook sends', async () => {
+test('should not echo a channel for Slack webhook sends', async () => {
   safeOutboundJsonSpy({
     body: 'ok',
   });
@@ -320,6 +319,5 @@ test('should not return platform ids for Slack webhook sends', async () => {
     content: 'chat message',
   });
 
-  expect(result.platformMessageId).toBeUndefined();
-  expect(result.platformThreadId).toBeUndefined();
+  expect((result as { channel?: string }).channel).toBeUndefined();
 });

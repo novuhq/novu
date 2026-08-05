@@ -154,6 +154,16 @@ const messageSchema = new Schema<MessageDBModel>(
       type: [Schema.Types.String],
       default: undefined,
     },
+    platformThreadId: {
+      type: Schema.Types.String,
+    },
+    platformMessageId: {
+      type: Schema.Types.String,
+    },
+    _agentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Agent',
+    },
   },
   schemaOptions
 );
@@ -387,6 +397,19 @@ messageSchema.index({
   createdAt: -1,
   _id: -1,
 });
+
+/**
+ * Agent workflow-origin hydration: look up the outbound chat Message that opened
+ * a platform thread (env + agent + platformThreadId).
+ */
+messageSchema.index(
+  {
+    _environmentId: 1,
+    _agentId: 1,
+    platformThreadId: 1,
+  },
+  { sparse: true }
+);
 
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||

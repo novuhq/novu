@@ -1247,4 +1247,46 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       ...this.buildContextExactMatchQuery(contextKeys),
     };
   }
+
+  /**
+   * Find the outbound chat Message that stamped a platform thread bridge for an agent.
+   */
+  async findByPlatformThread(
+    environmentId: string,
+    agentId: string,
+    platformThreadId: string
+  ): Promise<MessageEntity | null> {
+    return this.findOne({
+      _environmentId: environmentId,
+      _agentId: agentId,
+      platformThreadId,
+    });
+  }
+
+  /**
+   * Fail-soft post-send stamp of platform thread bridge fields.
+   * Set-if-absent so multi-endpoint fanout keeps the first successful thread id.
+   */
+  async setPlatformThreadBridge(params: {
+    messageId: string;
+    environmentId: string;
+    agentId: string;
+    platformThreadId: string;
+    platformMessageId: string;
+  }): Promise<void> {
+    await this.update(
+      {
+        _id: params.messageId,
+        _environmentId: params.environmentId,
+        platformThreadId: { $exists: false },
+      },
+      {
+        $set: {
+          platformThreadId: params.platformThreadId,
+          platformMessageId: params.platformMessageId,
+          _agentId: params.agentId,
+        },
+      }
+    );
+  }
 }
