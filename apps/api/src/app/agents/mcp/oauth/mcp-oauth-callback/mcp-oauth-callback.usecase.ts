@@ -38,7 +38,13 @@ import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../../sha
 import { McpNovuAppCredentialsService } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import { McpConnectionVaultService } from '../../connections/mcp-connection-vault.service';
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
-import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
+import {
+  buildMcpOAuthRedirectUri,
+  isMcpOAuthStateRef,
+  type McpOAuthState,
+  type McpOAuthStateRef,
+  mergeCallbackContextIntoOAuthState,
+} from '../generate-mcp-oauth-url/mcp-oauth-state';
 import {
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
@@ -69,6 +75,10 @@ interface TokenResponse {
  * Trust chain on entry:
  *  - The signed `state` parameter is verified against the originating
  *    environment's API key (HMAC, same primitive as chat OAuth callbacks).
+ *    Modern flows carry a compact `McpOAuthStateRef` (env/org/nonce); the fat
+ *    callback context is loaded from `oauthState.callbackContext` after the
+ *    nonce lookup. Legacy fully-inline `McpOAuthState` payloads are still
+ *    accepted for in-flight redirects during deploy.
  *  - The Mongo `oauthState` is treated as a one-shot nonce: status transitions
  *    only fire when the row is currently `pending_oauth`. This prevents a
  *    replay of the signed state from flipping a `connected` row back to
@@ -953,21 +963,28 @@ export class McpOAuthCallback {
       throw new BadRequestException('Invalid OAuth state parameter.');
     }
 
-    let payload: McpOAuthState;
+    let parsed: unknown;
     try {
-      payload = JSON.parse(parts.payload) as McpOAuthState;
+      parsed = JSON.parse(parts.payload);
     } catch {
       throw new BadRequestException('Invalid OAuth state parameter.');
     }
 
-    if (!payload.environmentId || !payload.organizationId || !payload.agentId) {
+    if (!parsed || typeof parsed !== 'object') {
+      throw new BadRequestException('OAuth state missing required fields.');
+    }
+
+    const environmentId = (parsed as { environmentId?: unknown }).environmentId;
+    const organizationId = (parsed as { organizationId?: unknown }).organizationId;
+
+    if (typeof environmentId !== 'string' || typeof organizationId !== 'string') {
       throw new BadRequestException('OAuth state missing required fields.');
     }
 
     const environment = await this.environmentRepository.findOne(
       {
-        _id: payload.environmentId,
-        _organizationId: payload.organizationId,
+        _id: environmentId,
+        _organizationId: organizationId,
       },
       ['apiKeys']
     );
@@ -983,11 +1000,96 @@ export class McpOAuthCallback {
       throw new BadRequestException('OAuth state signature mismatch.');
     }
 
+    if (isMcpOAuthStateRef(parsed)) {
+      return this.rehydrateStateFromNonce(parsed);
+    }
+
+    const payload = parsed as McpOAuthState;
+
+    if (!payload.agentId) {
+      throw new BadRequestException('OAuth state missing required fields.');
+    }
+
     if (Date.now() - payload.timestamp > MCP_OAUTH_STATE_TTL_MS) {
       throw new BadRequestException('OAuth state expired. Restart the authorisation flow.');
     }
 
     return payload;
+  }
+
+  /**
+   * Resolve compact `McpOAuthStateRef` → full `McpOAuthState` via the
+   * connection row's stored `callbackContext`. `trustToolsOnConnect` stays on
+   * the signed ref so Connect / Auto-approve can share one pending row.
+   *
+   * Lookup is by `connectionId` (not nonce alone) so a duplicate callback
+   * after `oauthState` is cleared can still resolve to Connected.
+   */
+  private async rehydrateStateFromNonce(stateRef: McpOAuthStateRef): Promise<McpOAuthState> {
+    if (Date.now() - stateRef.timestamp > MCP_OAUTH_STATE_TTL_MS) {
+      throw new BadRequestException('OAuth state expired. Restart the authorisation flow.');
+    }
+
+    const connection = await this.mcpConnectionRepository.findOne(
+      {
+        _id: stateRef.connectionId,
+        _environmentId: stateRef.environmentId,
+        _organizationId: stateRef.organizationId,
+      },
+      '*'
+    );
+
+    if (!connection) {
+      throw new BadRequestException(
+        'OAuth callback rejected: connection for state was not found. Restart the authorisation flow.'
+      );
+    }
+
+    const callbackContext = connection.oauthState?.callbackContext;
+    const storedNonce = connection.oauthState?.stateNonce;
+
+    if (connection.status === McpConnectionStatusEnum.PendingOAuth) {
+      if (!callbackContext || !storedNonce || storedNonce !== stateRef.nonce) {
+        throw new BadRequestException(
+          'OAuth callback rejected: pending connection state nonce mismatch. Restart the authorisation flow.'
+        );
+      }
+
+      return mergeCallbackContextIntoOAuthState(callbackContext, stateRef);
+    }
+
+    // Connected / error / other — rebuild enough state for claimPendingConnection
+    // to take the AlreadyConnected / rejection path. callbackContext may be gone.
+    if (!connection._agentMcpServerId || !connection._subscriberId) {
+      throw new BadRequestException(
+        'OAuth callback rejected: connection is missing owner refs. Restart the authorisation flow.'
+      );
+    }
+
+    const enablement = await this.agentMcpServerRepository.findOne(
+      {
+        _id: connection._agentMcpServerId,
+        _environmentId: stateRef.environmentId,
+        _organizationId: stateRef.organizationId,
+      },
+      ['_id', '_agentId']
+    );
+
+    if (!enablement) {
+      throw new BadRequestException('OAuth callback rejected: agent MCP enablement for connection was not found.');
+    }
+
+    return {
+      agentId: enablement._agentId,
+      agentMcpServerId: connection._agentMcpServerId,
+      subscriberId: connection._subscriberId,
+      environmentId: stateRef.environmentId,
+      organizationId: stateRef.organizationId,
+      mcpId: connection.mcpId,
+      scope: connection.scope as McpOAuthState['scope'],
+      timestamp: stateRef.timestamp,
+      ...(stateRef.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
+    };
   }
 }
 
