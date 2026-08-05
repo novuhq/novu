@@ -7,6 +7,8 @@ import {
   RiKey2Line,
   RiLayoutGridLine,
   RiMailLine,
+  RiMessage3Line,
+  RiRobot2Line,
   RiRouteFill,
   RiSettings3Line,
   RiStore3Line,
@@ -15,9 +17,9 @@ import {
 } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
 import { Bell, NovuIcon } from '@/components/icons';
+import { BotIcon } from '@/components/icons/bot';
 
 export const DRAWER_WIDTH_DEFAULT = 350;
-export const DRAWER_WIDTH_EXPANDED = 700;
 
 const DOCS_BASE_URL = 'https://docs.novu.co';
 const UTM_SUFFIX = '?utm_campaign=support_drawer';
@@ -31,13 +33,6 @@ export function docsUrl(path = '') {
   const url = `${DOCS_BASE_URL}${basePath}${UTM_SUFFIX}`;
 
   return hash ? `${url}#${hash}` : url;
-}
-
-export function toEmbedUrl(url: string) {
-  const [baseWithParams, hash] = url.split('#');
-  const embedUrl = `${baseWithParams}&full=true`;
-
-  return hash ? `${embedUrl}#${hash}` : embedUrl;
 }
 
 export type SuggestionItem = {
@@ -77,9 +72,68 @@ type RouteContext =
   | 'settings'
   | 'environments'
   | 'contexts'
+  | 'agents'
+  | 'conversations'
   | 'default';
 
+const AGENT_SUGGESTIONS: SuggestionItem[] = [
+  {
+    icon: BotIcon,
+    title: 'What is ACI?',
+    description: 'Connect AI agents to Slack, Teams, WhatsApp, Telegram, and email.',
+    url: docsUrl('/agents/get-started/what-is-aci'),
+  },
+  {
+    icon: RiCodeLine,
+    title: 'Connect AI SDK to Slack',
+    description: 'Example: wire Vercel AI SDK to Slack and reply from onMessage.',
+    url: docsUrl('/agents/get-started/ai-sdk'),
+  },
+  {
+    icon: RiRobot2Line,
+    title: 'Claude managed agent',
+    description: 'Example: launch a managed agent with no bridge server required.',
+    url: docsUrl('/agents/get-started/claude-managed'),
+  },
+];
+
+const AGENT_GETTING_STARTED: SuggestionItem[] = [
+  {
+    icon: BotIcon,
+    title: 'Mental model',
+    description: 'Trace how messages flow from a channel to your agent and back.',
+    url: docsUrl('/agents/get-started/mental-model'),
+  },
+  {
+    icon: RiStore3Line,
+    title: 'Agents and providers',
+    description: 'Connect Slack, Teams, WhatsApp, and more to one agent.',
+    url: docsUrl('/agents/get-started/agents-and-providers'),
+  },
+  {
+    icon: RiMessage3Line,
+    title: 'Agent conversations',
+    description: 'Inspect threads, history, and lifecycle across providers.',
+    url: docsUrl('/agents/conversations'),
+  },
+];
+
 const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
+  agents: AGENT_SUGGESTIONS,
+  conversations: [
+    {
+      icon: RiMessage3Line,
+      title: 'Agent conversations',
+      description: 'View, inspect, and manage agent threads across providers.',
+      url: docsUrl('/agents/conversations'),
+    },
+    {
+      icon: BotIcon,
+      title: 'What is ACI?',
+      description: 'Connect AI agents to Slack, Teams, WhatsApp, Telegram, and email.',
+      url: docsUrl('/agents/get-started/what-is-aci'),
+    },
+  ],
   workflows: [
     {
       icon: RiRouteFill,
@@ -261,6 +315,8 @@ function getRouteContext(pathname: string): RouteContext {
   if (pathname.includes('/environments')) return 'environments';
   if (pathname.includes('/contexts')) return 'contexts';
   if (pathname.includes('/settings')) return 'settings';
+  if (pathname.includes('/agents')) return 'agents';
+  if (pathname.includes('/conversations')) return 'conversations';
 
   return 'default';
 }
@@ -275,7 +331,7 @@ export function useContextualSuggestions(): SuggestionItem[] {
   }, [location.pathname]);
 }
 
-export const GETTING_STARTED: SuggestionItem[] = [
+const DEFAULT_GETTING_STARTED: SuggestionItem[] = [
   {
     icon: NovuIcon,
     title: 'Learn the basics',
@@ -295,3 +351,21 @@ export const GETTING_STARTED: SuggestionItem[] = [
     url: docsUrl('/platform/integrations'),
   },
 ];
+
+const CONTEXTUAL_GETTING_STARTED: Partial<Record<RouteContext, SuggestionItem[]>> = {
+  agents: AGENT_GETTING_STARTED,
+  conversations: AGENT_GETTING_STARTED,
+};
+
+/** Default getting-started links shown outside agent surfaces. */
+export const GETTING_STARTED = DEFAULT_GETTING_STARTED;
+
+export function useContextualGettingStarted(): SuggestionItem[] {
+  const location = useLocation();
+
+  return useMemo(() => {
+    const context = getRouteContext(location.pathname);
+
+    return CONTEXTUAL_GETTING_STARTED[context] ?? DEFAULT_GETTING_STARTED;
+  }, [location.pathname]);
+}

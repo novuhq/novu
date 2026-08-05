@@ -61,6 +61,29 @@ export interface McpConnectionAuth {
   externalVaultId?: string;
 }
 
+/**
+ * Fat OAuth callback fields that must NOT ride in the authorize URL `state`
+ * parameter. Several authorization servers (e.g. Campfire) reject `state`
+ * values over 512 characters; chat session-resume fields push a fully-inline
+ * signed payload well past that limit. Looked up via {@link McpConnectionOAuthState.stateNonce}.
+ */
+export interface McpConnectionOAuthCallbackContext {
+  agentId: string;
+  agentMcpServerId: string;
+  /** Mongo Subscriber._id (not the external subscriberId). */
+  subscriberId: string;
+  mcpId: string;
+  scope: McpConnectionScope;
+  conversationId?: string;
+  userId?: string;
+  source?: 'api' | 'user_chat';
+  toolUseId?: string;
+  agentIdentifier?: string;
+  integrationIdentifier?: string;
+  platform?: string;
+  platformThreadId?: string;
+}
+
 export interface McpConnectionOAuthState {
   /** Optional PKCE verifier kept while the OAuth flow is in flight. */
   pkceVerifier?: string;
@@ -86,6 +109,19 @@ export interface McpConnectionOAuthState {
    * `callbackClaimedAt: { $exists: false }` filter and bail out.
    */
   callbackClaimedAt?: Date;
+  /**
+   * Opaque nonce mirrored into the compact signed OAuth `state` parameter.
+   * The authorize URL carries only this nonce (+ env/org/timestamp); the fat
+   * callback context lives in {@link callbackContext} so AS state-length
+   * limits (e.g. Campfire's 512-char cap) are not exceeded.
+   */
+  stateNonce?: string;
+  /**
+   * Chat / analytics callback fields for the in-flight OAuth round-trip.
+   * Rehydrated into the callback usecase's `McpOAuthState` after the compact
+   * signed `state` is verified.
+   */
+  callbackContext?: McpConnectionOAuthCallbackContext;
   /**
    * `novu-app` mode only: authorization-server `token_endpoint` copied from
    * the catalog at authorize time so the callback can exchange the

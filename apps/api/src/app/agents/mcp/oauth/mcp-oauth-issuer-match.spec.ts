@@ -26,6 +26,12 @@ const NEW_RELIC_OPTS: IssuerMatchOpts = {
   registrationEndpoint: 'https://mcp.newrelic.com/register',
 };
 
+const NOVU_OPTS: IssuerMatchOpts = {
+  authorizationEndpoint: 'https://clerk.dashboard.novu.co/oauth/authorize',
+  tokenEndpoint: 'https://clerk.dashboard.novu.co/oauth/token',
+  registrationEndpoint: 'https://mcp.novu.co/oauth/register',
+};
+
 describe('isAcceptableIssuerMatch', () => {
   it('accepts exact issuer match', () => {
     expect(isAcceptableIssuerMatch('https://auth.example.com', 'https://auth.example.com')).to.equal(true);
@@ -57,6 +63,10 @@ describe('isAcceptableIssuerMatch', () => {
     expect(isAcceptableIssuerMatch('https://mcp.newrelic.com', 'https://login.newrelic.com', NEW_RELIC_OPTS)).to.equal(
       true
     );
+  });
+
+  it('accepts the sibling-subdomain MCP gateway pattern (Novu / Clerk)', () => {
+    expect(isAcceptableIssuerMatch('https://mcp.novu.co', 'https://clerk.dashboard.novu.co', NOVU_OPTS)).to.equal(true);
   });
 
   it('rejects gateway pattern when OAuth endpoints leave the advertised domain', () => {
