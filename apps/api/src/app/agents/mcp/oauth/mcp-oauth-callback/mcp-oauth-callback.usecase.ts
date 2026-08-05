@@ -43,6 +43,7 @@ import {
   isMcpOAuthStateRef,
   type McpOAuthState,
   type McpOAuthStateRef,
+  mergeCallbackContextIntoOAuthState,
 } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import {
   McpOAuthDiscoveryError,
@@ -1054,27 +1055,7 @@ export class McpOAuthCallback {
         );
       }
 
-      return {
-        agentId: callbackContext.agentId,
-        agentMcpServerId: callbackContext.agentMcpServerId,
-        subscriberId: callbackContext.subscriberId,
-        environmentId: stateRef.environmentId,
-        organizationId: stateRef.organizationId,
-        mcpId: callbackContext.mcpId,
-        scope: callbackContext.scope as McpOAuthState['scope'],
-        timestamp: stateRef.timestamp,
-        ...(callbackContext.userId ? { userId: callbackContext.userId } : {}),
-        ...(callbackContext.source ? { source: callbackContext.source } : {}),
-        ...(callbackContext.conversationId ? { conversationId: callbackContext.conversationId } : {}),
-        ...(stateRef.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
-        ...(callbackContext.toolUseId ? { toolUseId: callbackContext.toolUseId } : {}),
-        ...(callbackContext.agentIdentifier ? { agentIdentifier: callbackContext.agentIdentifier } : {}),
-        ...(callbackContext.integrationIdentifier
-          ? { integrationIdentifier: callbackContext.integrationIdentifier }
-          : {}),
-        ...(callbackContext.platform ? { platform: callbackContext.platform } : {}),
-        ...(callbackContext.platformThreadId ? { platformThreadId: callbackContext.platformThreadId } : {}),
-      };
+      return mergeCallbackContextIntoOAuthState(callbackContext, stateRef);
     }
 
     // Connected / error / other — rebuild enough state for claimPendingConnection

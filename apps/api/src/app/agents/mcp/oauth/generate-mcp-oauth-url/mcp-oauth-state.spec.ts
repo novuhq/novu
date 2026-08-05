@@ -2,7 +2,13 @@ import { encodeOAuthState } from '@novu/application-generic';
 import { expect } from 'chai';
 
 import { MCP_OAUTH_CALLBACK_PATH } from './mcp-oauth.constants';
-import { buildMcpOAuthRedirectUri, isMcpOAuthStateRef, type McpOAuthStateRef } from './mcp-oauth-state';
+import {
+  buildMcpOAuthRedirectUri,
+  isMcpOAuthStateRef,
+  type McpOAuthCallbackContext,
+  type McpOAuthStateRef,
+  mergeCallbackContextIntoOAuthState,
+} from './mcp-oauth-state';
 
 /** Campfire (and similar AS) reject authorize requests when `state` exceeds this. */
 const CAMPFIRE_STATE_MAX_LEN = 512;
@@ -50,6 +56,36 @@ describe('isMcpOAuthStateRef', () => {
         timestamp: Date.now(),
       })
     ).to.equal(false);
+  });
+});
+
+describe('mergeCallbackContextIntoOAuthState', () => {
+  it('spreads persisted callback fields and overlays signed ref fields', () => {
+    const callbackContext: McpOAuthCallbackContext = {
+      agentId: 'agent',
+      agentMcpServerId: 'enablement',
+      subscriberId: 'sub',
+      mcpId: 'campfire',
+      scope: 'subscriber',
+      conversationId: 'conv',
+      toolUseId: 'tool',
+      platform: 'slack',
+    };
+    const stateRef: Pick<McpOAuthStateRef, 'environmentId' | 'organizationId' | 'timestamp' | 'trustToolsOnConnect'> = {
+      environmentId: 'env',
+      organizationId: 'org',
+      timestamp: 123,
+      trustToolsOnConnect: true,
+    };
+
+    expect(mergeCallbackContextIntoOAuthState(callbackContext, stateRef)).to.deep.equal({
+      ...callbackContext,
+      environmentId: 'env',
+      organizationId: 'org',
+      timestamp: 123,
+      scope: 'subscriber',
+      trustToolsOnConnect: true,
+    });
   });
 });
 

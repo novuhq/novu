@@ -699,7 +699,7 @@ export const MCP_SERVERS: McpServer[] = [
     popular: false,
     oauth: {
       mode: McpConnectionAuthModeEnum.Dcr,
-      scopes: ['openid', 'profile', 'email', 'claudeai'],
+      scopes: ['openid', 'profile', 'email'],
     },
   },
   {
