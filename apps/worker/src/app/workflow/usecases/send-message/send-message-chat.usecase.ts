@@ -88,11 +88,8 @@ type MessageContext = {
 /** Slack-only for now; extend when other agent platforms gain send support. */
 const AGENT_SUPPORTED_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
 
-function filterAgentSupportedEndpoints(endpoints: ChannelData[]): {
-  supported: ChannelData[];
-  droppedUnsupported: boolean;
-} {
-  const supported = endpoints.filter((endpoint) => {
+function filterAgentSupportedEndpoints(endpoints: ChannelData[]): ChannelData[] {
+  return endpoints.filter((endpoint) => {
     if (!AGENT_SUPPORTED_ENDPOINT_TYPES.has(endpoint.type)) {
       return false;
     }
@@ -101,11 +98,6 @@ function filterAgentSupportedEndpoints(endpoints: ChannelData[]): {
 
     return typeof token === 'string' && token.length > 0;
   });
-
-  return {
-    supported,
-    droppedUnsupported: supported.length < endpoints.length,
-  };
 }
 
 /**
@@ -144,11 +136,6 @@ function buildAgentPlatformThreadId(
 
   return `slack:${conversationId}:${result.id}`;
 }
-
-/** `detail: null` means no specific reason (e.g. empty endpoint group). */
-type AgentChannelGateResult =
-  | { channel: UnifiedChannel; detail?: never }
-  | { channel?: never; detail: DetailEnum | null };
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -897,33 +884,36 @@ export class SendMessageChat extends SendMessageBase {
       })
     );
 
-    const verdicts = channels.map((channel) => this.evaluateChannelForAgent(channel, linkedIntegrationIdentifiers));
-    const eligibleChannels = verdicts.flatMap((verdict) => (verdict.channel ? [verdict.channel] : []));
+    return channels.flatMap((channel) => {
+      const eligible = this.evaluateChannelForAgent(channel, linkedIntegrationIdentifiers);
 
-    return eligibleChannels;
+      return eligible ? [eligible] : [];
+    });
   }
 
   private evaluateChannelForAgent(
     channel: UnifiedChannel,
     linkedIntegrationIdentifiers: Set<string>
-  ): AgentChannelGateResult {
+  ): UnifiedChannel | null {
     if (channel.type !== 'new') {
-      return { detail: DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT };
+      return null;
     }
 
     const channelGroup = channel.data as IntegrationEndpoints;
 
     if (!linkedIntegrationIdentifiers.has(channelGroup.integrationIdentifier)) {
-      return { detail: DetailEnum.CHAT_AGENT_INTEGRATION_NOT_LINKED };
+      return null;
     }
 
-    const { supported, droppedUnsupported } = filterAgentSupportedEndpoints(channelGroup.channelData);
+    const supported = filterAgentSupportedEndpoints(channelGroup.channelData);
 
     if (supported.length === 0) {
-      return { detail: droppedUnsupported ? DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT : null };
+      return null;
     }
 
-    return { channel: { ...channel, data: { ...channelGroup, channelData: supported } } };
+    channelGroup.channelData = supported;
+
+    return channel;
   }
 
   private async isRichChatEnabled(command: SendMessageChannelCommand): Promise<boolean> {
