@@ -141,8 +141,7 @@ export function SubscriberSubscriptions({ subscriberId }: SubscriberSubscription
           }
         }}
         topicKey={selectedSubscription?.topic.key}
-        // legacy subscriptions may not have an identifier, the API also resolves them by internal id
-        subscriptionIdentifier={selectedSubscription?.identifier || selectedSubscription?._id}
+        subscriptionIdentifier={selectedSubscription?.identifier}
         subscriberId={selectedSubscription?.subscriber.subscriberId}
       />
       <ConfirmationModal

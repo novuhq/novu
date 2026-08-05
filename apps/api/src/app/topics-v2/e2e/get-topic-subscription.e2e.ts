@@ -78,7 +78,7 @@ describe('Get topic subscription - /v2/topics/:topicKey/subscriptions/:identifie
     expect(response.body.data.preferences[0].enabled).to.equal(false);
   });
 
-  it('should return the subscription when queried by its internal id', async () => {
+  it('should return 204 when queried by the internal subscription id', async () => {
     const topicKey = `topic-key-get-by-internal-id-${Date.now()}`;
     const subscription = await createSubscription(topicKey);
 
@@ -90,37 +90,7 @@ describe('Get topic subscription - /v2/topics/:topicKey/subscriptions/:identifie
 
     const response = await session.testAgent.get(`/v2/topics/${topicKey}/subscriptions/${subscriptionEntity?._id}`);
 
-    expect(response.status).to.equal(200);
-    expect(response.body.data.id).to.equal(subscriptionEntity?._id);
-    expect(response.body.data.identifier).to.equal(subscription.identifier);
-  });
-
-  it('should return the subscription by internal id when it has no identifier', async () => {
-    const topicKey = `topic-key-get-legacy-${Date.now()}`;
-    const topicResponse = await novuClient.topics.create({ key: topicKey, name: 'Legacy Topic' });
-
-    await topicSubscribersRepository.createSubscriptions([
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-        _subscriberId: subscriber._id,
-        _topicId: topicResponse.result.id,
-        topicKey,
-        externalSubscriberId: subscriber.subscriberId,
-        identifier: '',
-      },
-    ]);
-
-    const subscriptionEntity = await topicSubscribersRepository.findOne({
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-      topicKey,
-    });
-
-    const response = await session.testAgent.get(`/v2/topics/${topicKey}/subscriptions/${subscriptionEntity?._id}`);
-
-    expect(response.status).to.equal(200);
-    expect(response.body.data.id).to.equal(subscriptionEntity?._id);
+    expect(response.status).to.equal(204);
   });
 
   it('should return 204 when the subscription does not exist', async () => {

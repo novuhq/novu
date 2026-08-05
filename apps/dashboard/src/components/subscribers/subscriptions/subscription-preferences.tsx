@@ -13,6 +13,7 @@ import { SubscriptionPreferenceRule } from './subscription-preference-rule';
 
 type SubscriptionPreferencesProps = {
   isLoading: boolean;
+  isError?: boolean;
   topicKey?: string;
   subscription?: TopicSubscriptionDetailsResponse;
   subscriberId?: string;
@@ -53,6 +54,7 @@ const SubscriptionOverview = ({ children, className, isCopyable, label, value }:
 
 export const SubscriptionPreferences = ({
   isLoading,
+  isError,
   topicKey,
   subscription,
   subscriberId,
@@ -111,6 +113,18 @@ export const SubscriptionPreferences = ({
               View subscription activity
             </Button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-full flex-col">
+        <SubscriptionPreferencesHeader />
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
+          <span className="text-foreground-600 text-sm font-medium">Couldn't load subscription preferences</span>
+          <span className="text-text-soft text-xs">Close the panel and try again.</span>
         </div>
       </div>
     );

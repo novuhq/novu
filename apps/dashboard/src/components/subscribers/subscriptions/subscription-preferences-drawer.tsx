@@ -27,7 +27,11 @@ export const SubscriptionPreferencesDrawer = forwardRef<HTMLDivElement, Subscrip
       }
     };
 
-    const { data: subscription, isLoading } = useGetSubscription({
+    const {
+      data: subscription,
+      isLoading,
+      isError,
+    } = useGetSubscription({
       topicKey,
       subscriptionIdentifier,
       options: { enabled: open },
@@ -53,6 +57,7 @@ export const SubscriptionPreferencesDrawer = forwardRef<HTMLDivElement, Subscrip
           </VisuallyHidden>
           <SubscriptionPreferences
             isLoading={isLoading}
+            isError={isError}
             topicKey={topicKey}
             subscription={subscription ?? undefined}
             subscriberId={subscriberId}
