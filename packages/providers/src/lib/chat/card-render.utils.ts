@@ -210,49 +210,104 @@ export function escapeHtmlAttribute(value: string): string {
   return escapeHtml(value).replace(/"/g, '&quot;');
 }
 
-export type CardPlatformLimits = {
-  platform: string;
-  /** Max top-level children before the platform starts rejecting/dropping blocks. */
-  maxBlocks: number;
-  /** Max characters in a single text block. */
-  maxTextLength: number;
-  /** Max buttons in a single actions row. */
-  maxButtonsPerRow: number;
+/**
+ * A single composable card-validation rule: it inspects the card and returns any findings (empty
+ * when the card is within limits). A provider declares an array of these — one per limit it cares
+ * about — instead of a shared switch, so each platform validates the card in its own unique way
+ * (Slack per-block, Telegram/WhatsApp whole-message, ...). Compose with {@link runCardValidators}.
+ */
+export type CardValidator = (card: CardElement) => IChatRenderValidation[];
+
+/**
+ * Config shared by every platform-limit rule below. Messages are kept platform-agnostic — the
+ * provider label is added by the consumer (the dashboard prefixes the provider name) — so they stay
+ * short and never repeat the platform. `level` is the severity a crossed limit carries: `ERROR` when
+ * the platform's API rejects the whole payload once a limit is crossed (Slack Block Kit) so delivery
+ * fails — the editor blocks save. `WARNING` when the platform silently degrades but still delivers
+ * (Teams drops extras, Telegram/WhatsApp truncate) — non-blocking, surfaced in the preview only.
+ */
+type PlatformRule = {
+  level: ChatRenderValidationLevelEnum;
+  limit: number;
 };
 
-/** Shared deterministic platform-limit check; providers supply their own {@link CardPlatformLimits}. */
-export function validateCard(card: CardElement, limits: CardPlatformLimits): IChatRenderValidation[] {
-  const warnings: IChatRenderValidation[] = [];
+/** Runs a provider's validator array against a card and flattens their findings into one list. */
+export function runCardValidators(card: CardElement, validators: CardValidator[]): IChatRenderValidation[] {
+  return validators.flatMap((validate) => validate(card));
+}
 
-  if (card.children.length > limits.maxBlocks) {
-    warnings.push({
-      level: ChatRenderValidationLevelEnum.WARNING,
-      code: 'BLOCK_LIMIT_EXCEEDED',
-      message: `${limits.platform} renders at most ${limits.maxBlocks} blocks; the card has ${card.children.length}.`,
-    });
-  }
+/** Rule: too many top-level blocks for what the platform renders (Slack Block Kit 50, Teams). */
+export function maxBlocks({ level, limit }: PlatformRule): CardValidator {
+  return (card) =>
+    card.children.length > limit
+      ? [
+          {
+            level,
+            code: 'BLOCK_LIMIT_EXCEEDED',
+            message: `Exceeds the ${limit}-block limit (${card.children.length}).`,
+          },
+        ]
+      : [];
+}
 
-  for (const child of card.children) {
-    if (child.type === 'text' && child.content.length > limits.maxTextLength) {
-      warnings.push({
-        level: ChatRenderValidationLevelEnum.WARNING,
-        code: 'TEXT_LENGTH_EXCEEDED',
-        message: `${limits.platform} truncates text blocks longer than ${limits.maxTextLength} characters.`,
-      });
-    }
+/**
+ * Rule: a *single* text block longer than the platform's per-block cap — for block-structured
+ * providers where each text child maps to its own length-limited field (Slack `section` 3000, Teams
+ * `TextBlock`). Flattening providers cap the whole message instead; use {@link maxMessageLength}.
+ */
+export function maxTextLengthPerBlock({ level, limit }: PlatformRule): CardValidator {
+  return (card) =>
+    card.children.flatMap((child) =>
+      child.type === 'text' && child.content.length > limit
+        ? [
+            {
+              level,
+              code: 'TEXT_LENGTH_EXCEEDED',
+              message: `A text block exceeds the ${limit}-character limit (${child.content.length}).`,
+            },
+          ]
+        : []
+    );
+}
 
-    if (child.type === 'actions') {
-      const actions = child as CardElementActionsElement;
+/**
+ * Rule: the *whole* flattened message longer than the platform's message cap — for providers that
+ * collapse the entire card into one message (Telegram 4096 after entities parsing, WhatsApp 1024
+ * body). `measure` renders and measures the message the way that platform counts it, so a single
+ * over-limit block AND many blocks that only exceed the cap once concatenated are both caught.
+ */
+export function maxMessageLength({
+  level,
+  limit,
+  measure,
+}: PlatformRule & { measure: (card: CardElement) => number }): CardValidator {
+  return (card) => {
+    const length = measure(card);
 
-      if (actions.children.length > limits.maxButtonsPerRow) {
-        warnings.push({
-          level: ChatRenderValidationLevelEnum.WARNING,
-          code: 'BUTTON_LIMIT_EXCEEDED',
-          message: `${limits.platform} renders at most ${limits.maxButtonsPerRow} buttons per row; the row has ${actions.children.length}.`,
-        });
-      }
-    }
-  }
+    return length > limit
+      ? [
+          {
+            level,
+            code: 'MESSAGE_LENGTH_EXCEEDED',
+            message: `Message exceeds the ${limit}-character limit (${length}).`,
+          },
+        ]
+      : [];
+  };
+}
 
-  return warnings;
+/** Rule: an actions row with more buttons than the platform renders per row (Slack 25, Teams 6). */
+export function maxButtonsPerRow({ level, limit }: PlatformRule): CardValidator {
+  return (card) =>
+    card.children.flatMap((child) =>
+      child.type === 'actions' && child.children.length > limit
+        ? [
+            {
+              level,
+              code: 'BUTTON_LIMIT_EXCEEDED',
+              message: `A button row exceeds the ${limit}-button limit (${child.children.length}).`,
+            },
+          ]
+        : []
+    );
 }

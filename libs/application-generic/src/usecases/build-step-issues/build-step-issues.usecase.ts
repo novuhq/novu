@@ -6,18 +6,22 @@ import {
   ChannelTypeEnum,
   ContentIssueEnum,
   ControlValuesLevelEnum,
+  FeatureFlagsKeysEnum,
   providers,
   ResourceOriginEnum,
   RuntimeIssue,
+  StepIssueSeverityEnum,
   StepIssuesDto,
   StepTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { ChatRenderValidationLevelEnum } from '@novu/stateless';
 import { isEmpty, merge } from 'es-toolkit/compat';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { PinoLogger } from 'nestjs-pino';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { FeatureFlagsService } from '../../services';
 import { QueryIssueTypeEnum, QueryValidatorService } from '../../services/query-parser/query-validator.service';
 import { compileMailyToCard, dashboardSanitizeControlValues, isStringifiedMailyJSONContent } from '../../utils';
 import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from '../../utils/issues';
@@ -40,6 +44,17 @@ function getChatProviderDisplayName(providerId: string): string {
   return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;
 }
 
+/**
+ * A provider with a non-empty content override delivers that override at send time instead of the
+ * compiled card, so the card's platform-limit findings no longer apply to it — its card validation
+ * is skipped. An empty override object is treated as "no override" (nothing actually replaces the card).
+ */
+function hasProviderContentOverride(providerOverrides: StepProviderOverrides | undefined, providerId: string): boolean {
+  const override = providerOverrides?.[providerId as keyof StepProviderOverrides];
+
+  return override !== undefined && Object.keys(override).length > 0;
+}
+
 @Injectable()
 export class BuildStepIssuesUsecase {
   constructor(
@@ -48,6 +63,7 @@ export class BuildStepIssuesUsecase {
     private integrationRepository: IntegrationRepository,
     @Inject(forwardRef(() => TierRestrictionsValidateUsecase))
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {}
 
@@ -141,7 +157,12 @@ export class BuildStepIssuesUsecase {
     const skipLogicIssues = sanitizedControlValues?.skip
       ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
       : {};
-    const chatCardIssues = await this.processChatCardIssues(user, stepType, sanitizedControlValues || {});
+    const chatCardIssues = await this.processChatCardIssues(
+      user,
+      stepType,
+      sanitizedControlValues || {},
+      providerOverrides
+    );
 
     return merge(schemaIssues, liquidIssues, providerOverrideIssues, customIssues, skipLogicIssues, chatCardIssues);
   }
@@ -152,14 +173,29 @@ export class BuildStepIssuesUsecase {
    * at delivery. The chat body is a stringified Maily/TipTap document that compiles to a
    * provider-agnostic `CardElement`; each active chat provider's validator runs against it. Unresolved
    * liquid variables stay as literal text, which is fine for the structural (block/button count) checks.
+   *
+   * Each finding carries a `severity`: blocking `ERROR`s (today Slack, whose API rejects the whole
+   * payload once a limit is crossed so delivery fails) plus non-blocking `WARNING`s
+   * (Teams/Telegram/WhatsApp degradation that still delivers). Both are surfaced so the dashboard can
+   * show warnings without gating save. Gated by `IS_CHAT_BLOCK_EDITOR_ENABLED`; when off, the legacy
+   * plain-text chat body is not a card and there is nothing to validate.
+   *
+   * Providers with a content override are skipped: the override — not the compiled card — is what
+   * gets delivered for that provider, so the card's platform-limit findings would be misleading.
    */
   @Instrument()
   private async processChatCardIssues(
     user: UserSessionData,
     stepType: StepTypeEnum,
-    controlValues: Record<string, unknown> | null
+    controlValues: Record<string, unknown> | null,
+    providerOverrides?: StepProviderOverrides
   ): Promise<StepIssuesDto> {
     if (stepType !== StepTypeEnum.CHAT) {
+      return {};
+    }
+
+    const isRichChatEnabled = await this.isRichChatEnabled(user);
+    if (!isRichChatEnabled) {
       return {};
     }
 
@@ -187,6 +223,12 @@ export class BuildStepIssuesUsecase {
     const cardIssues: RuntimeIssue[] = [];
 
     for (const providerId of targetProviderIds) {
+      // A content override for this provider replaces the card at delivery time, so its card-derived
+      // findings no longer apply — don't surface them.
+      if (hasProviderContentOverride(providerOverrides, providerId)) {
+        continue;
+      }
+
       const validate = getChatCardValidator(providerId);
       if (!validate) {
         continue;
@@ -199,8 +241,15 @@ export class BuildStepIssuesUsecase {
         }
         seen.add(dedupeKey);
 
+        // Slack's Block Kit limits are API-enforced (the payload is rejected → delivery fails), so
+        // they surface as blocking `ERROR`s. Teams/Telegram/WhatsApp degradation still delivers, so
+        // it surfaces as a non-blocking `WARNING` the dashboard shows without gating save.
         cardIssues.push({
           issueType: ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED,
+          severity:
+            finding.level === ChatRenderValidationLevelEnum.ERROR
+              ? StepIssueSeverityEnum.ERROR
+              : StepIssueSeverityEnum.WARNING,
           message: annotateWithProvider
             ? `${getChatProviderDisplayName(providerId)}: ${finding.message}`
             : finding.message,
@@ -209,6 +258,15 @@ export class BuildStepIssuesUsecase {
     }
 
     return cardIssues.length > 0 ? { controls: { body: cardIssues } } : {};
+  }
+
+  private async isRichChatEnabled(user: UserSessionData): Promise<boolean> {
+    return this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED,
+      organization: { _id: user.organizationId },
+      environment: { _id: user.environmentId },
+      defaultValue: false,
+    });
   }
 
   @Instrument()

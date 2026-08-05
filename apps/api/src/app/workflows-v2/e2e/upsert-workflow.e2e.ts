@@ -11,8 +11,17 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { ControlValuesRepository } from '@novu/dal';
-import { ContentIssueEnum, ControlValuesLevelEnum, StepTypeEnum, ToolProviderIdEnum } from '@novu/shared';
+import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  ContentIssueEnum,
+  ControlValuesLevelEnum,
+  FeatureFlagsKeysEnum,
+  StepIssueSeverityEnum,
+  StepTypeEnum,
+  ToolProviderIdEnum,
+} from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
@@ -27,6 +36,7 @@ describe('Upsert Workflow #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
   const controlValuesRepository = new ControlValuesRepository();
+  const integrationRepository = new IntegrationRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -218,60 +228,250 @@ describe('Upsert Workflow #novu-v2', () => {
       expect(issues[0].issueType).to.equal(ContentIssueEnum.UNSUPPORTED_PROPERTY);
     });
 
-    it('should surface chat card platform-limit findings as body step issues', async () => {
-      // A Maily/TipTap body whose 51 paragraphs compile to 51 card blocks, exceeding Slack's 50-block cap.
-      const overLimitCard = JSON.stringify({
-        type: 'doc',
-        content: Array.from({ length: 51 }, (_, index) => ({
-          type: 'paragraph',
-          content: [{ type: 'text', text: `line ${index}` }],
-        })),
+    describe('chat card platform-limit validation', () => {
+      const flagKey = FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED;
+      let previousFlag: string | undefined;
+
+      before(() => {
+        previousFlag = process.env[flagKey];
+        process.env[flagKey] = 'true';
       });
 
-      const createResponse = await session.testAgent.post('/v2/workflows').send({
-        __source: WorkflowCreationSourceEnum.Editor,
-        name: 'Chat Card Limit Workflow',
-        workflowId: `chat-card-limit-${randomUUID()}`,
-        active: true,
-        steps: [
-          {
-            name: 'Chat Step',
-            type: StepTypeEnum.CHAT,
-            controlValues: { body: overLimitCard },
-          },
-        ],
+      after(() => {
+        if (previousFlag === undefined) {
+          delete process.env[flagKey];
+        } else {
+          process.env[flagKey] = previousFlag;
+        }
       });
 
-      expect(createResponse.status).to.equal(201);
+      // The seeded env only has Slack (hard-limit ERROR) + Discord (no card validator) active. Activating
+      // a degradation-only provider (Telegram) lets us assert the non-blocking WARNING severity path.
+      async function activateChatProvider(providerId: ChatProviderIdEnum): Promise<void> {
+        await integrationRepository.create({
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+          providerId,
+          channel: ChannelTypeEnum.CHAT,
+          credentials: {},
+          active: true,
+          name: providerId,
+          identifier: `${providerId}-${randomUUID()}`,
+        });
+      }
 
-      const bodyIssues = createResponse.body.data.steps[0].issues?.controls?.body;
-      expect(bodyIssues).to.exist;
-      expect(bodyIssues[0].issueType).to.equal(ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED);
-      expect(bodyIssues.some((issue: { message: string }) => issue.message.includes('50'))).to.equal(true);
-    });
+      it('should surface chat card platform-limit findings as blocking body step issues', async () => {
+        // A Maily/TipTap body whose 51 paragraphs compile to 51 card blocks, exceeding Slack's 50-block cap.
+        const overLimitCard = JSON.stringify({
+          type: 'doc',
+          content: Array.from({ length: 51 }, (_, index) => ({
+            type: 'paragraph',
+            content: [{ type: 'text', text: `line ${index}` }],
+          })),
+        });
 
-    it('should not surface chat card issues for a within-limit card', async () => {
-      const withinLimitCard = JSON.stringify({
-        type: 'doc',
-        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Chat Card Limit Workflow',
+          workflowId: `chat-card-limit-${randomUUID()}`,
+          active: true,
+          steps: [
+            {
+              name: 'Chat Step',
+              type: StepTypeEnum.CHAT,
+              controlValues: { body: overLimitCard },
+            },
+          ],
+        });
+
+        expect(createResponse.status).to.equal(201);
+
+        const bodyIssues = createResponse.body.data.steps[0].issues?.controls?.body;
+        expect(bodyIssues).to.exist;
+        expect(bodyIssues[0].issueType).to.equal(ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED);
+        expect(bodyIssues.some((issue: { message: string }) => issue.message.includes('50'))).to.equal(true);
+        // Slack's block cap is API-enforced, so it surfaces as a blocking error severity.
+        expect(
+          bodyIssues.some((issue: { severity?: string }) => issue.severity === StepIssueSeverityEnum.ERROR)
+        ).to.equal(true);
       });
 
-      const createResponse = await session.testAgent.post('/v2/workflows').send({
-        __source: WorkflowCreationSourceEnum.Editor,
-        name: 'Chat Card Within Limit Workflow',
-        workflowId: `chat-card-within-limit-${randomUUID()}`,
-        active: true,
-        steps: [
-          {
-            name: 'Chat Step',
-            type: StepTypeEnum.CHAT,
-            controlValues: { body: withinLimitCard },
-          },
-        ],
+      it('should surface a non-blocking WARNING for a degradation-only provider alongside a blocking ERROR', async () => {
+        await activateChatProvider(ChatProviderIdEnum.Telegram);
+
+        // A single 5000-char paragraph: over Slack's 3000-char per-block cap (hard ERROR) and over
+        // Telegram's 4096-char whole-message cap (which only truncates, so a WARNING).
+        const overLimitCard = JSON.stringify({
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'a'.repeat(5000) }] }],
+        });
+
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Chat Card Severity Workflow',
+          workflowId: `chat-card-severity-${randomUUID()}`,
+          active: true,
+          steps: [
+            {
+              name: 'Chat Step',
+              type: StepTypeEnum.CHAT,
+              controlValues: { body: overLimitCard },
+            },
+          ],
+        });
+
+        expect(createResponse.status).to.equal(201);
+
+        const bodyIssues = createResponse.body.data.steps[0].issues?.controls?.body;
+        expect(bodyIssues).to.exist;
+        const cardIssues = bodyIssues.filter(
+          (issue: { issueType: string }) => issue.issueType === ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED
+        );
+        expect(
+          cardIssues.some((issue: { severity?: string }) => issue.severity === StepIssueSeverityEnum.ERROR)
+        ).to.equal(true);
+        expect(
+          cardIssues.some((issue: { severity?: string }) => issue.severity === StepIssueSeverityEnum.WARNING)
+        ).to.equal(true);
       });
 
-      expect(createResponse.status).to.equal(201);
-      expect(createResponse.body.data.steps[0].issues?.controls?.body).to.equal(undefined);
+      it('should not surface chat card issues for a provider that has a content override', async () => {
+        // 51 blocks would exceed Slack's 50-block cap, but a Slack content override replaces the card
+        // at send time, so its platform-limit finding must be suppressed.
+        const overLimitCard = JSON.stringify({
+          type: 'doc',
+          content: Array.from({ length: 51 }, (_, index) => ({
+            type: 'paragraph',
+            content: [{ type: 'text', text: `line ${index}` }],
+          })),
+        });
+
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Chat Card Override Workflow',
+          workflowId: `chat-card-override-${randomUUID()}`,
+          active: true,
+          steps: [
+            {
+              name: 'Chat Step',
+              type: StepTypeEnum.CHAT,
+              controlValues: { body: overLimitCard },
+              providerOverrides: {
+                [ChatProviderIdEnum.Slack]: { text: 'overridden slack content' },
+              },
+            },
+          ],
+        });
+
+        expect(createResponse.status).to.equal(201);
+
+        const bodyIssues = createResponse.body.data.steps[0].issues?.controls?.body;
+        const cardIssues = (bodyIssues ?? []).filter(
+          (issue: { issueType: string }) => issue.issueType === ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED
+        );
+        expect(cardIssues).to.have.length(0);
+      });
+
+      it('should keep another active provider’s findings when only one provider has a content override', async () => {
+        await activateChatProvider(ChatProviderIdEnum.Telegram);
+
+        // Same 5000-char body: Slack (ERROR) + Telegram (WARNING). Overriding only Slack must suppress the
+        // Slack ERROR while leaving the un-overridden Telegram WARNING intact.
+        const overLimitCard = JSON.stringify({
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'a'.repeat(5000) }] }],
+        });
+
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Chat Card Scoped Override Workflow',
+          workflowId: `chat-card-scoped-override-${randomUUID()}`,
+          active: true,
+          steps: [
+            {
+              name: 'Chat Step',
+              type: StepTypeEnum.CHAT,
+              controlValues: { body: overLimitCard },
+              providerOverrides: {
+                [ChatProviderIdEnum.Slack]: { text: 'overridden slack content' },
+              },
+            },
+          ],
+        });
+
+        expect(createResponse.status).to.equal(201);
+
+        const bodyIssues = createResponse.body.data.steps[0].issues?.controls?.body;
+        expect(bodyIssues).to.exist;
+        const cardIssues = bodyIssues.filter(
+          (issue: { issueType: string }) => issue.issueType === ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED
+        );
+        // Slack (the only ERROR source) is overridden, so no blocking error should remain...
+        expect(
+          cardIssues.some((issue: { severity?: string }) => issue.severity === StepIssueSeverityEnum.ERROR)
+        ).to.equal(false);
+        // ...but Telegram's WARNING is still surfaced because it has no override.
+        expect(
+          cardIssues.some((issue: { severity?: string }) => issue.severity === StepIssueSeverityEnum.WARNING)
+        ).to.equal(true);
+      });
+
+      it('should not surface chat card issues for a within-limit card', async () => {
+        const withinLimitCard = JSON.stringify({
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }],
+        });
+
+        const createResponse = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Chat Card Within Limit Workflow',
+          workflowId: `chat-card-within-limit-${randomUUID()}`,
+          active: true,
+          steps: [
+            {
+              name: 'Chat Step',
+              type: StepTypeEnum.CHAT,
+              controlValues: { body: withinLimitCard },
+            },
+          ],
+        });
+
+        expect(createResponse.status).to.equal(201);
+        expect(createResponse.body.data.steps[0].issues?.controls?.body).to.equal(undefined);
+      });
+
+      it('should not surface chat card issues when the rich chat editor flag is disabled', async () => {
+        process.env[flagKey] = 'false';
+
+        try {
+          const overLimitCard = JSON.stringify({
+            type: 'doc',
+            content: Array.from({ length: 51 }, (_, index) => ({
+              type: 'paragraph',
+              content: [{ type: 'text', text: `line ${index}` }],
+            })),
+          });
+
+          const createResponse = await session.testAgent.post('/v2/workflows').send({
+            __source: WorkflowCreationSourceEnum.Editor,
+            name: 'Chat Card Flag Off Workflow',
+            workflowId: `chat-card-flag-off-${randomUUID()}`,
+            active: true,
+            steps: [
+              {
+                name: 'Chat Step',
+                type: StepTypeEnum.CHAT,
+                controlValues: { body: overLimitCard },
+              },
+            ],
+          });
+
+          expect(createResponse.status).to.equal(201);
+          expect(createResponse.body.data.steps[0].issues?.controls?.body).to.equal(undefined);
+        } finally {
+          process.env[flagKey] = 'true';
+        }
+      });
     });
 
     it('should delete all provider override docs when providerOverrides is null', async () => {

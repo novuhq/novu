@@ -13,8 +13,20 @@ export enum IntegrationIssueEnum {
   INBOX_NOT_CONNECTED = 'INBOX_NOT_CONNECTED',
 }
 
+/**
+ * Blocking severity of a step issue. `ERROR` (the default when `severity` is omitted, for
+ * backwards compatibility) means the value is invalid and must be fixed before the step can
+ * deliver — it blocks save. `WARNING` is a non-blocking notice (e.g. a rich chat card a platform
+ * will truncate/flatten but still deliver): the dashboard shows it without gating the workflow.
+ */
+export enum StepIssueSeverityEnum {
+  ERROR = 'error',
+  WARNING = 'warning',
+}
+
 export class RuntimeIssue {
   issueType: ContentIssueEnum | IntegrationIssueEnum;
   variableName?: string;
   message: string;
+  severity?: StepIssueSeverityEnum;
 }

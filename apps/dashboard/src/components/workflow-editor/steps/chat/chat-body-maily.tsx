@@ -2,7 +2,6 @@ import { CardActionsExtension, CardButtonExtension, Variable } from '@novu/maily
 import { Editor, NodeViewProps } from '@tiptap/core';
 import React, { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiErrorWarningFill } from 'react-icons/ri';
 import { EditorOverlays } from '@/components/editor-overlays';
 import { createChatEditorBlocks } from '@/components/maily/chat-blocks';
 import { Maily } from '@/components/maily/maily';
@@ -13,7 +12,7 @@ import {
   VariableSuggestionsPopoverRef,
 } from '@/components/maily/views/maily-variables-list-view';
 import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/views/variable-view';
-import { FormField, FormMessagePure } from '@/components/primitives/form/form';
+import { FormField } from '@/components/primitives/form/form';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -212,7 +211,7 @@ export const ChatBodyMaily = () => {
     <FormField
       control={control}
       name="body"
-      render={({ field, fieldState }) => {
+      render={({ field }) => {
         const rawBody: string = field.value ?? '';
         // Back-compat: Maily JSON loads as-is; a legacy plain string opens as
         // text blocks; an empty body starts a fresh block editor.
@@ -225,7 +224,6 @@ export const ChatBodyMaily = () => {
         };
 
         return (
-          <>
           <Maily
             value={getEditorValue()}
             onChange={field.onChange}
@@ -258,14 +256,6 @@ export const ChatBodyMaily = () => {
               translationValueInput={ControlInput}
             />
           </Maily>
-          <FormMessagePure
-            hasError={!!fieldState.error}
-            icon={fieldState.error ? RiErrorWarningFill : undefined}
-            className="mt-1 px-1"
-          >
-            {fieldState.error?.message}
-          </FormMessagePure>
-          </>
         );
       }}
     />

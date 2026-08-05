@@ -24,9 +24,14 @@ describe('getChatCardValidator', () => {
     expect(validate?.(cardWithBlocks(1))).toEqual([]);
   });
 
-  test('returns undefined for providers without platform-limit validators', () => {
-    expect(getChatCardValidator(ChatProviderIdEnum.Telegram)).toBeUndefined();
-    expect(getChatCardValidator(ChatProviderIdEnum.WhatsAppBusiness)).toBeUndefined();
+  test('returns validators for every rich provider (Slack, Teams, Telegram, WhatsApp)', () => {
+    expect(getChatCardValidator(ChatProviderIdEnum.Slack)).toBeDefined();
+    expect(getChatCardValidator(ChatProviderIdEnum.MsTeams)).toBeDefined();
+    expect(getChatCardValidator(ChatProviderIdEnum.Telegram)).toBeDefined();
+    expect(getChatCardValidator(ChatProviderIdEnum.WhatsAppBusiness)).toBeDefined();
+  });
+
+  test('returns undefined for markdown-fallback providers and unknown ids', () => {
     expect(getChatCardValidator(ChatProviderIdEnum.Discord)).toBeUndefined();
     expect(getChatCardValidator('not-a-provider')).toBeUndefined();
   });

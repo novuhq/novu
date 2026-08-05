@@ -1,5 +1,13 @@
-import { CardElement, CardElementChild } from '@novu/stateless';
-import { convertText, escapeHtml, escapeHtmlAttribute, InlineNode } from '../card-render.utils';
+import { CardElement, CardElementChild, ChatRenderValidationLevelEnum, IChatRenderValidation } from '@novu/stateless';
+import {
+  CardValidator,
+  convertText,
+  escapeHtml,
+  escapeHtmlAttribute,
+  InlineNode,
+  maxMessageLength,
+  runCardValidators,
+} from '../card-render.utils';
 
 /** Telegram `parse_mode: HTML`: `<b>`, `<i>`, `<s>`, `<code>`, `<a href>`, with entity escaping. */
 function inlineToTelegramHtml(nodes: InlineNode[]): string {
@@ -33,6 +41,37 @@ function inlineToTelegramHtml(nodes: InlineNode[]): string {
       }
     })
     .join('');
+}
+
+/**
+ * Telegram flattens the whole card into one `parse_mode: HTML` text message (link buttons render as
+ * inline `<a>` text, not a keyboard — see `render()`), so there is no block-count or per-block cap:
+ * the only limit is the 4096-character message cap, applied to the *whole* rendered message. Telegram
+ * silently truncates past it, so it is a non-blocking degradation `WARNING`.
+ */
+const TELEGRAM_VALIDATORS: CardValidator[] = [
+  maxMessageLength({
+    level: ChatRenderValidationLevelEnum.WARNING,
+    limit: 4096,
+    measure: telegramVisibleTextLength,
+  }),
+];
+
+export function validateTelegramCard(card: CardElement): IChatRenderValidation[] {
+  return runCardValidators(card, TELEGRAM_VALIDATORS);
+}
+
+/**
+ * Telegram counts a message's length "after entities parsing" — the visible text, not the HTML
+ * markup `render()` emits. Strip the tags and decode the escaped entities so the measured length
+ * matches what Telegram's 4096 cap actually counts.
+ */
+export function telegramVisibleTextLength(card: CardElement): number {
+  return cardToTelegramHtml(card)
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&').length;
 }
 
 /** Telegram has no native card payload: degrade the card to an HTML string (`parse_mode: HTML`). */
