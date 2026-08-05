@@ -254,6 +254,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     return new ChatCtor({
       userName: `novu-agent-${instanceKey}`,
       adapters,
+      // Telegram webhooks are acknowledged before the adapter's async message
+      // task completes. Queue follow-up messages instead of dropping them when
+      // a previous LLM turn still owns the thread lock.
+      ...(platform === AgentPlatformEnum.TELEGRAM ? { concurrency: 'queue' as const } : {}),
       state: createIoRedisState({
         client,
         keyPrefix: `novu:agent:${instanceKey}`,

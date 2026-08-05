@@ -90,6 +90,9 @@ const SUBSCRIBER_LINK_EXPIRED_REPLY =
 const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
   "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
 
+const INBOUND_TURN_ERROR_REPLY =
+  'Something went wrong while processing your message. Please try again in a moment.';
+
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
 const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 3);
@@ -536,7 +539,57 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
 
-    await runtime.dispatch(turn);
+    try {
+      await runtime.dispatch(turn);
+    } catch (err) {
+      this.logger.error(
+        err,
+        `[agent:${agentId}] Runtime dispatch failed for inbound message ${message.id}`
+      );
+      captureAgentException(err, {
+        component: 'agent-inbound-handler',
+        operation: 'runtime-dispatch',
+        agentId,
+        extra: { conversationId: conversation._id, messageId: message.id },
+      });
+
+      // BridgeRuntime owns its own offline/no-bridge delivery behavior. The
+      // fallback here is for managed provider failures, which otherwise only
+      // reach the Chat SDK's swallowed callback error handler.
+      if (agent?.runtime !== 'managed') {
+        throw err;
+      }
+
+      try {
+        await this.outboundGateway.replyOnThread(
+          thread,
+          { markdown: INBOUND_TURN_ERROR_REPLY },
+          {
+            persist: {
+              conversationId: conversation._id,
+              channel: this.conversationService.getPrimaryChannel(conversation),
+              agentIdentifier: config.agentIdentifier,
+              content: INBOUND_TURN_ERROR_REPLY,
+              environmentId: config.environmentId,
+              organizationId: config.organizationId,
+            },
+          }
+        );
+      } catch (replyErr) {
+        this.logger.error(
+          replyErr,
+          `[agent:${agentId}] Failed to send inbound runtime error reply for message ${message.id}`
+        );
+        captureAgentException(replyErr, {
+          component: 'agent-inbound-handler',
+          operation: 'runtime-dispatch-error-reply',
+          agentId,
+          extra: { conversationId: conversation._id, messageId: message.id },
+        });
+      }
+
+      throw err;
+    }
   }
 
   /**

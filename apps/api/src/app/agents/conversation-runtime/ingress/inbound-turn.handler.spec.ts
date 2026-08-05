@@ -52,6 +52,7 @@ describe('AgentInboundHandler', () => {
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
       subscriberResolveOrProvision?: sinon.SinonStub;
+      managedDispatchError?: Error;
     } = {}
   ) {
     const logger = makeLogger();
@@ -99,7 +100,9 @@ describe('AgentInboundHandler', () => {
       findBySubscriberId: overrides.subscriberFindById ?? sinon.stub(),
     };
     const managedAgentService = {
-      dispatch: sinon.stub().resolves({ status: 'active' }),
+      dispatch: overrides.managedDispatchError
+        ? sinon.stub().rejects(overrides.managedDispatchError)
+        : sinon.stub().resolves({ status: 'active' }),
     };
     const confirmToolApproval = {
       execute: sinon.stub().resolves(undefined),
@@ -374,6 +377,40 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handle', () => {
+    it('sends a fallback reply when managed runtime dispatch fails', async () => {
+      const dispatchError = new Error('provider unavailable');
+      const { handler, outboundGateway } = makeHandler({
+        managedDispatchError: dispatchError,
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        subscriberFindById: sinon.stub().resolves({ _id: 'subscriber1', subscriberId: 'subscriber1' }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+      const managedConfig = { ...config, isManaged: true };
+
+      let thrown: unknown;
+      try {
+        await handler.handle(
+          'agent1',
+          managedConfig as any,
+          thread as any,
+          message as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+      } catch (err) {
+        thrown = err;
+      } finally {
+        // The shared fixture is returned by the conversation stub in other
+        // tests; keep this failure-path test isolated from its channel state.
+        delete (conversation.channels[0] as any).firstPlatformMessageId;
+      }
+
+      expect(thrown).to.equal(dispatchError);
+
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.match(/went wrong/i);
+    });
+
     it('should persist Slack DMs with a message-rooted platform thread id when the SDK thread id is empty', async () => {
       const { handler, bridgeExecutor, conversationService } = makeHandler();
       const thread = makeSlackDmThread();
