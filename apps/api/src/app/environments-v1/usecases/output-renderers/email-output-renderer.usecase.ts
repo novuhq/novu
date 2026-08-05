@@ -639,11 +639,7 @@ function injectRenderedPreheader(html: string, preheader: string | undefined): s
     return html;
   }
 
-  const escaped = trimmed
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  const escaped = trimmed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const spacer = '&nbsp;&zwnj;'.repeat(50);
   const block = `<div style="display: none; max-height: 0px; overflow: hidden;">${escaped}${spacer}</div>`;
 

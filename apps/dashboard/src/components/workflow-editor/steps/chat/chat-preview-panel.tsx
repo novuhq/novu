@@ -8,11 +8,11 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { AnnotatedOverrideJson } from '@/components/workflow-editor/steps/shared/provider-overrides/annotated-override-json';
 import { DEFAULT_CONTENT_SOURCE } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
-import { ContentSourceSelector } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-selector';
 import {
   getMergedOverrideHint,
   useAnnotatedOverridePreview,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import { PreviewSourceBar } from '@/components/workflow-editor/steps/shared/provider-overrides/preview-source-bar';
 import { useProviderOverrideOptions } from '@/components/workflow-editor/steps/shared/provider-overrides/use-provider-override-options';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ChatPreview } from './chat-preview';
@@ -37,7 +37,7 @@ function extractChatPreview(previewData?: GeneratePreviewResponseDto): ChatRende
  */
 function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanelProps) {
   const { providerOptions, providerOverrides } = useProviderOverrideOptions(ChannelTypeEnum.CHAT);
-  const { previewSource, setPreviewSource } = useContentSource();
+  const { selectedSource, previewSource, setPreviewSource } = useContentSource();
 
   const preview = extractChatPreview(previewData);
   const body = preview?.body ?? '';
@@ -49,6 +49,8 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
     formOverrides: providerOverrides,
     previewOverrides: preview?.providerOverrides,
   });
+
+  const isViewingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE;
 
   const renderBody = () => {
     if (!activeProviderId || !annotatedPreview) {
@@ -83,15 +85,13 @@ function ChatOverridePreview({ isPreviewPending, previewData }: ChatPreviewPanel
 
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
-      <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
-        <ContentSourceSelector
-          selectedSource={previewSource}
-          providers={providerOptions}
-          showEscapeHatchBadge
-          onSelectSource={setPreviewSource}
-        />
-        <div className="h-full flex-1" />
-      </div>
+      <PreviewSourceBar
+        visible={!isViewingOverride}
+        selectedSource={previewSource}
+        providers={providerOptions}
+        showEscapeHatchBadge
+        onSelectSource={setPreviewSource}
+      />
 
       <div className="flex min-h-0 flex-1 flex-col p-3">{renderBody()}</div>
     </div>

@@ -50,6 +50,12 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
     variables: LiquidVariable[],
     isAllowedVariable: IsAllowedVariable
   ) => (props: NodeViewProps) => JSX.Element;
+  imageExtensionOptions?: {
+    resizable?: boolean;
+    defaultAlignment?: 'left' | 'center' | 'right';
+    maxWidth?: number;
+    maxHeight?: number;
+  };
 };
 
 /**
@@ -85,6 +91,7 @@ export const Maily = ({
   renderVariable = () => null,
   createVariableNodeView = defaultCreateVariableNodeView,
   translationValueInput,
+  imageExtensionOptions,
   ...rest
 }: MailyProps) => {
   const primitives = useMemo(
@@ -139,6 +146,7 @@ export const Maily = ({
     resourceId,
     resourceType,
     translationValueInput,
+    imageExtensionOptions,
   });
 
   /*

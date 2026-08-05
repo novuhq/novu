@@ -4,6 +4,7 @@ import { AnyExtension, FocusPosition, Editor as TiptapEditor } from '@tiptap/cor
 import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
 
 import { useMemo, useRef } from 'react';
+import { CardActionsBubbleMenu } from './components/card-actions-menu/card-actions-bubble-menu';
 import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
 import { ContentMenu } from './components/content-menu';
 import { EditorMenuBar } from './components/editor-menu-bar';
@@ -153,6 +154,7 @@ export function Editor(props: EditorProps) {
           <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} config={repeatMenuConfig} />
           <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
           <InlineImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
+          <CardActionsBubbleMenu editor={editor} appendTo={menuContainerRef} />
         </div>
       </div>
     </MailyProvider>

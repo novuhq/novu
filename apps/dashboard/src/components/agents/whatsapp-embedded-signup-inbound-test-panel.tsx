@@ -111,8 +111,8 @@ export function EmbeddedSignupInboundTestPanel({
           </div>
           <div className="text-text-soft text-label-2xs flex flex-col gap-2 leading-[14px]">
             <p>
-              Message from <span className="text-text-sub font-medium">{savedPhone || 'your phone'}</span> (or) scan with
-              your phone to open the chat.
+              Message from <span className="text-text-sub font-medium">{savedPhone || 'your phone'}</span> (or) scan
+              with your phone to open the chat.
             </p>
             <p>Novu confirms as soon as it arrives.</p>
           </div>

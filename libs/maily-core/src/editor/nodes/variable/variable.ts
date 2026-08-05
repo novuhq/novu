@@ -18,6 +18,9 @@ export type Variable = {
   required?: boolean;
   // default is true
   valid?: boolean;
+  /** Dashboard: marks a "Create <name>" suggestion for payload schema. */
+  type?: string;
+  displayLabel?: string;
 };
 
 export type VariableFunctionOptions = {
@@ -65,6 +68,12 @@ export type VariableOptions = {
    * @default VariableSuggestionPopover
    */
   variableSuggestionsPopover: VariableSuggestionsPopoverType;
+
+  /**
+   * Called when the user picks a variable that is not yet in the payload schema
+   * (content suggestions and bubble-menu fields).
+   */
+  onCreateNewVariable?: (variableName: string) => void | Promise<void>;
 };
 
 export type VariableStorage = {
@@ -91,6 +100,7 @@ export const VariableExtension = Node.create<VariableOptions, VariableStorage>({
       variables: DEFAULT_VARIABLES,
       variableSuggestionsPopover: DEFAULT_VARIABLE_SUGGESTION_POPOVER,
       renderVariable: DEFAULT_RENDER_VARIABLE_FUNCTION,
+      onCreateNewVariable: undefined,
 
       renderLabel(props) {
         const { node } = props;

@@ -193,9 +193,11 @@ function ToolWebhookFormActions({ isSaving, onSave, onCancel }: ToolWebhookFormA
 type ToolWebhookCredentialFormEditorProps = {
   onSave: (payload: ChannelEndpointPayload) => Promise<boolean>;
   onCancel: () => void;
+  /** Called after a successful save. Defaults to `onCancel` when omitted. */
+  onSaved?: () => void;
 };
 
-export function ToolWebhookCredentialFormEditor({ onSave, onCancel }: ToolWebhookCredentialFormEditorProps) {
+export function ToolWebhookCredentialFormEditor({ onSave, onCancel, onSaved }: ToolWebhookCredentialFormEditorProps) {
   const [draft, setDraft] = useState<ToolWebhookDraft>({ url: '', method: '', headerRows: [] });
   const [showError, setShowError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -212,7 +214,7 @@ export function ToolWebhookCredentialFormEditor({ onSave, onCancel }: ToolWebhoo
     setIsSaving(false);
 
     if (succeeded) {
-      onCancel();
+      (onSaved ?? onCancel)();
     }
   };
 

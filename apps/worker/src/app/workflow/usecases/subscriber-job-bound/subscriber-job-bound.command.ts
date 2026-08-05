@@ -10,7 +10,16 @@ import {
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
-import { IsArray, IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsDefined,
+  IsEnum,
+  IsMongoId,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 
 export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsString()

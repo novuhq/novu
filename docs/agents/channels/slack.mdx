@@ -1,0 +1,122 @@
+---
+title: "Slack"
+description: "Connect your agent to Slack: threading, typing indicators, plan cards, Block Kit, and tool approval."
+sidebarTitle: Slack
+---
+
+Use Slack as a messaging channel for your agent. Users can DM or @mention the bot. Novu keeps thread context, shows typing and plan cards during the turn, can attach files on replies, and can post Approve / Deny cards before gated tools run.
+
+## Capabilities
+
+| Capability | Support |
+| --- | --- |
+| Full context history | Yes |
+| Threaded replies | Yes |
+| Live typing indicator (custom status text) | Yes |
+| React with eyes on inbound messages | Yes |
+| Plan card (native) | Yes |
+| Rich text / Block Kit | Yes |
+| Tap-to-respond buttons | Yes |
+| Emoji reactions (both directions) | Yes |
+| Message edits in place | Yes |
+| Action / MCP tool approval | Yes |
+| MCP connect card | Yes |
+| Resolve conversation | Yes |
+| File sharing | Yes |
+| Streaming word-by-word | Not yet |
+
+Full matrix: [Channels overview](/agents/channels/overview).
+
+## Examples
+
+### Inbound thread
+
+A user @mentions the agent in a thread. Novu adds an eyes reaction, shows typing and a plan card while the agent runs tools, then replies in the same thread with optional action buttons.
+
+### Tool approval
+
+When a tool is gated, Slack shows a native approval block (**Deny**, **Approve once**, **Always allow this tool**). The handler resumes after the user selects an option.
+
+## Create a Slack app
+
+When the dashboard or CLI asks for a Slack App Configuration Token:
+
+1. Open [Slack API apps](https://api.slack.com/apps).
+2. Under **Your App Configuration Tokens**, click **Generate Token**.
+
+ ![Generate Slack token](/images/agents/quickstart/generate-slack-token.png)
+
+3. Select your workspace and click **Generate**.
+4. Copy the token (starts with `xoxe.xoxp-`) and paste it into Novu or the CLI.
+5. Finish the install / Allow flow in Slack.
+
+ ![Install app](/images/agents/quickstart/install-app.png)
+
+The configuration token is used once to create the Slack app. Novu does not store it.
+
+## Setup
+
+| Framework / Platform | Guide |
+| --- | --- |
+| AI SDK | [Connect AI SDK to Slack](/agents/get-started/ai-sdk) |
+| LangChain | [Connect LangChain to Slack](/agents/get-started/langchain) |
+| Mastra | [Connect Mastra to Slack](/agents/get-started/mastra) |
+| Claude managed agent | [Connect Claude managed agent](/agents/get-started/claude-managed) |
+| AWS Claude managed agent | [Connect AWS Claude managed agent](/agents/get-started/aws-claude) |
+
+## Connect component
+
+Use `SlackConnectButton` from `@novu/react` so end users can install the Slack app and link it to your agent from your product UI.
+
+```tsx
+import { NovuProvider, SlackConnectButton } from '@novu/react';
+
+export function SlackConnect() {
+  const subscriberId = 'subscriber-id';
+  const integrationIdentifier = 'slack-integration-identifier';
+  const agentIdentifier = 'agent-identifier';
+
+  return (
+    <NovuProvider
+      applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER!}
+      subscriberId={subscriberId}
+    >
+      <SlackConnectButton
+        integrationIdentifier={integrationIdentifier}
+        connectionIdentifier={`${subscriberId}:${integrationIdentifier}:${agentIdentifier}`}
+        connectionMode="subscriber"
+        connectLabel="Install agent ↗"
+        connectedLabel="Connected to Slack"
+        onConnectSuccess={() => {
+          // Workspace linked
+        }}
+        onConnectError={(error: unknown) => {
+          console.error(error);
+        }}
+      />
+    </NovuProvider>
+  );
+}
+```
+
+Props and appearance options: [Connect components](/agents/custom-code-agent/connect-components#slack-connect-button).
+
+## Related
+
+<Columns cols={2}>
+  <Card href="/agents/custom-code-agent/building-blocks/reply" title="Reply" icon="message-square">
+    Plain text, markdown, and interactive cards.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator" icon="ellipsis">
+    Custom status text while the handler runs.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval" icon="shield-check">
+    Approve / Deny before tools execute.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/edit-sent-messages" title="Edit sent messages" icon="pencil">
+    Update a sent message in place.
+  </Card>
+  <Card href="/agents/custom-code-agent/connect-components" title="Connect components" icon="plug">
+    SlackConnectButton props and appearance.
+  </Card>
+</Columns>

@@ -161,9 +161,7 @@ export function ProviderOverrideEditor({
   );
 
   useEffect(() => {
-    setDraft(
-      formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined)?.[providerId])
-    );
+    setDraft(formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ProviderOverrides | undefined)?.[providerId]));
   }, [getValues, providerId]);
 
   const formatJson = useCallback(() => {
@@ -242,11 +240,7 @@ export function ProviderOverrideEditor({
 
   const resolvedPlaceholder =
     placeholder ??
-    JSON.stringify(
-      primaryKey ? setAtPath({}, primaryKey, '{{payload.title}}') : { key: '{{payload.title}}' },
-      null,
-      2
-    );
+    JSON.stringify(primaryKey ? setAtPath({}, primaryKey, '{{payload.title}}') : { key: '{{payload.title}}' }, null, 2);
 
   const resolvedNotice = typeof notice === 'function' ? notice({ parsedDraft }) : notice;
 

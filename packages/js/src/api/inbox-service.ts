@@ -701,10 +701,12 @@ export class InboxService {
   linkChannelEndpoint({
     integrationIdentifier,
     context,
+    contextHash,
   }: LinkChannelEndpointArgs): Promise<LinkChannelEndpointResponse> {
     return this.#httpClient.post(`${CHANNEL_ENDPOINTS_ROUTE}/link`, {
       integrationIdentifier,
       context,
+      contextHash,
     });
   }
 }

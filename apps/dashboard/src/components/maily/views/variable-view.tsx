@@ -2,7 +2,7 @@ import type { Editor as TiptapEditor } from '@tiptap/core';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { JSONSchema7 } from 'json-schema';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { VariableFrom } from '@/components/maily/types';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { useVariableValidation } from '@/components/variable/hooks/use-variable-validation';
@@ -12,6 +12,20 @@ import { VariablePill } from '@/components/variable/variable-pill';
 import { parseVariable } from '@/utils/liquid';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../repeat-block-aliases';
+
+function isCardButtonVariableContext(editor: TiptapEditor): boolean {
+  return editor.isActive('cardButton');
+}
+
+function setVariablePopoverOpen(editor: TiptapEditor | undefined, open: boolean) {
+  if (!editor?.storage?.variable) {
+    return;
+  }
+
+  editor.storage.variable.popover = open;
+  // TipTap bubble menus re-check `shouldShow` on transactions.
+  editor.view.dispatch(editor.state.tr.setMeta('variablePopover', open));
+}
 
 interface ParsedVariableData {
   name: string;
@@ -186,6 +200,10 @@ export function BubbleMenuVariablePill({
   const [variableValue, setVariableValue] = useState(`{{${variableName || ''}}}`);
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    setVariableValue(`{{${variableName || ''}}}`);
+  }, [variableName]);
+
   const parsedData = useMemo(
     () => parseVariableWithFallback(variableValue, variableName || '', digestStepName),
     [variableValue, variableName, digestStepName]
@@ -219,10 +237,17 @@ export function BubbleMenuVariablePill({
       const newParsedData = parseVariableWithFallback(newValue, variableName || '', digestStepName);
       if (!newParsedData.fullLiquidExpression) return;
 
-      editor.commands.updateButtonAttributes({
-        text: newParsedData.fullLiquidExpression,
-        isTextVariable: true,
-      });
+      if (isCardButtonVariableContext(editor)) {
+        editor.commands.updateCardButtonAttributes({
+          label: newParsedData.fullLiquidExpression,
+          isLabelVariable: true,
+        });
+      } else {
+        editor.commands.updateButtonAttributes({
+          text: newParsedData.fullLiquidExpression,
+          isTextVariable: true,
+        });
+      }
 
       setVariableValue(newValue);
     },
@@ -232,18 +257,35 @@ export function BubbleMenuVariablePill({
   const handleDelete = useCallback(() => {
     if (!editor || from !== VariableFrom.Button) return;
 
-    editor.commands.updateButtonAttributes({
-      text: 'Button Text',
-      isTextVariable: false,
-    });
+    if (isCardButtonVariableContext(editor)) {
+      editor.commands.updateCardButtonAttributes({
+        label: 'Button',
+        isLabelVariable: false,
+      });
+    } else {
+      editor.commands.updateButtonAttributes({
+        text: 'Button Text',
+        isTextVariable: false,
+      });
+    }
   }, [editor, from]);
 
   const handleVariableClick = useCallback(() => {
+    setVariablePopoverOpen(editor, true);
     setIsOpen(true);
-  }, []);
+  }, [editor]);
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setIsOpen(open);
+      setVariablePopoverOpen(editor, open);
+    },
+    [editor]
+  );
 
   const handleManageSchema = useCallback(() => {
     if (editor) {
+      setVariablePopoverOpen(editor, false);
       // Unselect the button to hide the bubble menu when opening schema drawer
       editor.commands.setTextSelection(0);
     }
@@ -251,7 +293,32 @@ export function BubbleMenuVariablePill({
     openSchemaDrawer(parsedData.name);
   }, [editor, openSchemaDrawer, parsedData.name]);
 
+  // Bubble-menu fields (showIf, URL pills, …) are display-only — editing happens in
+  // the parent SuggestionInput. Button label pills (`button-variable`) open Configure Variable.
   const canEdit = from !== VariableFrom.Bubble;
+
+  const pill = (
+    <VariablePill
+      issues={parsedData.issues}
+      variableName={parsedData.name}
+      filters={parsedData.filtersArray}
+      onClick={canEdit ? handleVariableClick : undefined}
+      className={className}
+      from={from}
+      isNotInSchema={validation.hasError || !validation.isInSchema}
+      isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+      errorMessage={validation.errorMessage}
+    />
+  );
+
+  if (!canEdit) {
+    return (
+      <>
+        {pill}
+        {children}
+      </>
+    );
+  }
 
   return (
     <>
@@ -259,7 +326,7 @@ export function BubbleMenuVariablePill({
         isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         getSchemaPropertyByKey={getSchemaPropertyByKey}
         open={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={handleOpenChange}
         variable={variable}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
@@ -268,17 +335,7 @@ export function BubbleMenuVariablePill({
         onUpdate={handleUpdate}
         onDeleteClick={handleDelete}
       >
-        <VariablePill
-          issues={parsedData.issues}
-          variableName={parsedData.name}
-          filters={parsedData.filtersArray}
-          onClick={canEdit ? handleVariableClick : undefined}
-          className={className}
-          from={from}
-          isNotInSchema={validation.hasError || !validation.isInSchema}
-          isPayloadSchemaEnabled={isPayloadSchemaEnabled}
-          errorMessage={validation.errorMessage}
-        />
+        {pill}
       </EditVariablePopover>
       {children}
     </>
