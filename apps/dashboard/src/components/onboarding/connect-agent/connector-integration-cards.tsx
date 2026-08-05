@@ -89,7 +89,7 @@ function ConnectAction({ isVisible }: { isVisible: boolean }) {
   return (
     <div
       className={cn(
-        'text-text-sub flex items-center justify-center py-1 transition-opacity',
+        'text-text-sub absolute right-2 top-2 flex items-center justify-center py-1 transition-opacity',
         isVisible ? 'opacity-100' : 'opacity-0'
       )}
     >
@@ -131,19 +131,31 @@ function ConnectorCard({
       onFocus={() => setIsHovered(true)}
       onBlur={() => setIsHovered(false)}
       className={cn(
-        'group bg-bg-white border-stroke-weak relative flex h-16 w-[150px] flex-col items-start gap-2 overflow-hidden rounded-lg border p-2 text-left shadow-xs transition-colors',
+        'group bg-bg-white border-stroke-weak relative flex h-[68px] w-40 flex-col items-start gap-2 overflow-hidden rounded-lg border p-2 text-left shadow-xs transition-colors',
         'hover:border-stroke-soft focus-visible:border-stroke-soft focus-visible:outline-none',
-        isSelected && 'border-stroke-strong',
+        isSelected && 'border-stroke-sub',
         comingSoon && 'cursor-not-allowed',
         isDisabled && !comingSoon && 'cursor-default opacity-60',
         !isDisabled && 'cursor-pointer!'
       )}
     >
-      <div className="flex h-6 w-full items-center justify-between">
+      <div className="flex h-6 w-full items-center">
         <div className="flex size-6 shrink-0 items-center justify-center">{icon}</div>
-        {isSelected ? <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden /> : badge}
-        {!isSelected && !comingSoon ? <ConnectAction isVisible={isConnectVisible} /> : null}
       </div>
+      {isSelected ? (
+        <RiCheckboxCircleFill className="text-success-base absolute right-2 top-2 size-4" aria-hidden />
+      ) : null}
+      {badge ? (
+        <div
+          className={cn(
+            'absolute right-2 top-2 transition-opacity',
+            isHovered && !comingSoon ? 'opacity-0' : 'opacity-100'
+          )}
+        >
+          {badge}
+        </div>
+      ) : null}
+      {!isSelected && !comingSoon ? <ConnectAction isVisible={isConnectVisible} /> : null}
       <span
         className={cn(
           'text-text-sub min-w-0 text-label-xs font-medium leading-4',
@@ -228,7 +240,7 @@ export function ConnectorIntegrationCards({
   }
 
   return (
-    <div className="grid w-full grid-cols-2 gap-x-3 gap-y-3.5 sm:grid-cols-3 md:grid-cols-[repeat(4,150px)]">
+    <div className="grid w-full grid-cols-2 gap-x-3 gap-y-3.5 sm:grid-cols-3 md:grid-cols-[repeat(4,160px)]">
       {items.map((item) => {
         if (item.kind === 'demo') {
           return (
@@ -237,7 +249,7 @@ export function ConnectorIntegrationCards({
               label="Demo agent"
               icon={<DemoCardIcon />}
               badge={
-                <Badge color="yellow" variant="lighter" size="sm" className="shrink-0 rounded-sm uppercase">
+                <Badge color="yellow" variant="lighter" size="sm" className="shrink-0 rounded-sm px-1 uppercase">
                   DEMO
                 </Badge>
               }
@@ -259,7 +271,7 @@ export function ConnectorIntegrationCards({
             icon={<ConnectorCardIcon connectorId={option.id} />}
             badge={
               isComingSoon ? (
-                <Badge color="gray" variant="lighter" size="sm" className="shrink-0 rounded-sm uppercase">
+                <Badge color="gray" variant="lighter" size="sm" className="shrink-0 rounded-sm px-1 uppercase">
                   Coming soon
                 </Badge>
               ) : undefined
