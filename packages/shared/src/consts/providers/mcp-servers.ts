@@ -504,7 +504,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'adisinsight',
     name: 'AdisInsight',
-    description: 'Connect AdisInsight to your agent via the managed runtime provider.',
+    description: 'Connect AdisInsight to your agent via OAuth.',
     url: 'https://adisinsight-mcp.springer.com/mcp',
     category: 'health-and-wellness',
     popular: false,
@@ -570,7 +570,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'alma',
     name: 'Alma',
-    description: 'Connect Alma to your agent via the managed runtime provider.',
+    description: 'Connect Alma to your agent via OAuth.',
     url: 'https://mcp.alma.food',
     category: 'other',
     popular: false,
@@ -591,7 +591,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'aura',
     name: 'Aura',
-    description: 'Connect Aura to your agent via the managed runtime provider.',
+    description: 'Connect Aura to your agent via OAuth.',
     url: 'https://mcp.auraintelligence.com/mcp',
     category: 'sales-and-marketing',
     popular: false,
@@ -600,7 +600,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'aurora',
     name: 'Aurora',
-    description: 'Connect Aurora to your agent via the managed runtime provider.',
+    description: 'Connect Aurora to your agent via OAuth.',
     url: 'https://mcp.ai.consilio.com',
     category: 'other',
     popular: false,
@@ -669,7 +669,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'calendly',
     name: 'Calendly',
-    description: 'Connect Calendly to your agent via the managed runtime provider.',
+    description: 'Connect Calendly to your agent via OAuth.',
     url: 'https://mcp.calendly.com',
     category: 'productivity',
     popular: false,
@@ -681,7 +681,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'campfire',
     name: 'Campfire',
-    description: 'Connect Campfire to your agent via the managed runtime provider.',
+    description: 'Connect Campfire to your agent via OAuth.',
     url: 'https://api.meetcampfire.com/mcp',
     category: 'communication',
     popular: false,
@@ -693,7 +693,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'candid',
     name: 'Candid',
-    description: 'Connect Candid to your agent via the managed runtime provider.',
+    description: 'Connect Candid to your agent via OAuth.',
     url: 'https://mcp.candid.org/mcp',
     category: 'other',
     popular: false,
@@ -705,7 +705,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'carta',
     name: 'Carta',
-    description: 'Connect Carta to your agent via the managed runtime provider.',
+    description: 'Connect Carta to your agent via OAuth.',
     url: 'https://mcp.app.carta.com/mcp',
     category: 'financial-services',
     popular: false,
@@ -741,7 +741,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'circleback',
     name: 'Circleback',
-    description: 'Connect Circleback to your agent via the managed runtime provider.',
+    description: 'Connect Circleback to your agent via OAuth.',
     url: 'https://circleback.ai/api/mcp',
     category: 'communication',
     popular: false,
@@ -816,7 +816,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'coindesk',
     name: 'CoinDesk',
-    description: 'Connect CoinDesk to your agent via the managed runtime provider.',
+    description: 'Connect CoinDesk to your agent via OAuth.',
     url: 'https://mcp.coindesk.com/mcp',
     category: 'financial-services',
     popular: false,
@@ -825,7 +825,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'common-room',
     name: 'Common Room',
-    description: 'Connect Common Room to your agent via the managed runtime provider.',
+    description: 'Connect Common Room to your agent via OAuth.',
     url: 'https://mcp.commonroom.io/mcp',
     category: 'sales-and-marketing',
     popular: false,
@@ -873,7 +873,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'courtlistener',
     name: 'CourtListener',
-    description: 'Connect CourtListener to your agent via the managed runtime provider.',
+    description: 'Connect CourtListener to your agent via OAuth.',
     url: 'https://mcp.courtlistener.com/',
     category: 'other',
     popular: false,
@@ -894,7 +894,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'crossbeam',
     name: 'Crossbeam',
-    description: 'Connect Crossbeam to your agent via the managed runtime provider.',
+    description: 'Connect Crossbeam to your agent via OAuth.',
     url: 'https://mcp.crossbeam.com',
     category: 'sales-and-marketing',
     popular: false,
@@ -915,7 +915,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'daloopa',
     name: 'Daloopa',
-    description: 'Connect Daloopa to your agent via the managed runtime provider.',
+    description: 'Connect Daloopa to your agent via OAuth.',
     url: 'https://mcp.daloopa.com/server/mcp',
     category: 'financial-services',
     popular: false,
@@ -942,7 +942,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'definely',
     name: 'Definely',
-    description: 'Connect Definely to your agent via the managed runtime provider.',
+    description: 'Connect Definely to your agent via OAuth.',
     url: 'https://mcp.app.definely.com',
     category: 'other',
     popular: false,
@@ -1080,7 +1080,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'factset-ai-ready-data',
     name: 'FactSet AI-Ready Data',
-    description: 'Connect FactSet AI-Ready Data to your agent via the managed runtime provider.',
+    description: 'Connect FactSet AI-Ready Data to your agent via OAuth.',
     url: 'https://mcp.factset.com/content/v1',
     category: 'financial-services',
     popular: false,
@@ -1092,7 +1092,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'fathom',
     name: 'Fathom',
-    description: 'Connect Fathom to your agent via the managed runtime provider.',
+    description: 'Connect Fathom to your agent via OAuth.',
     url: 'https://api.fathom.ai/mcp',
     category: 'communication',
     popular: false,
@@ -1104,7 +1104,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'fellow-ai',
     name: 'Fellow.ai',
-    description: 'Connect Fellow.ai to your agent via the managed runtime provider.',
+    description: 'Connect Fellow.ai to your agent via OAuth.',
     url: 'https://fellow.app/mcp',
     category: 'communication',
     popular: false,
@@ -1116,7 +1116,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'fever-event-discovery',
     name: 'Fever Event Discovery',
-    description: 'Connect Fever Event Discovery to your agent via the managed runtime provider.',
+    description: 'Connect Fever Event Discovery to your agent via OAuth.',
     url: 'https://data-search.apigw.feverup.com/mcp',
     category: 'other',
     popular: false,
@@ -1137,7 +1137,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'fiscal-ai',
     name: 'Fiscal.ai',
-    description: 'Connect Fiscal.ai to your agent via the managed runtime provider.',
+    description: 'Connect Fiscal.ai to your agent via OAuth.',
     url: 'https://api.fiscal.ai/mcp/sse',
     category: 'financial-services',
     popular: false,
