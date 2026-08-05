@@ -528,6 +528,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Chat agent unsupported endpoint';
     case 'chat_agent_no_eligible_channels':
       return 'Chat agent has no eligible channels';
+    case 'chat_agent_channels_fallback':
+      return 'Fell back to subscriber chat channels';
     case 'chat_agent_platform_thread_persist_failed':
       return 'Chat agent platform thread persist failed';
 

@@ -28,6 +28,7 @@ describe('AgentInboundHandler', () => {
   const conversation = {
     _id: 'conversation1',
     channels: [{ platformThreadId: 'thread1', platform: 'slack', _integrationId: 'integration1' }],
+    participants: [{ type: 'subscriber', id: 'sub1' }],
   };
 
   afterEach(() => {
@@ -41,6 +42,14 @@ describe('AgentInboundHandler', () => {
       debug: sinon.stub(),
       info: sinon.stub(),
       setContext: sinon.stub(),
+    };
+  }
+
+  function makeResolvedSubscriberOverrides(subscriberId = 'sub1', internalSubscriberId = 'subscriber-mongo-1') {
+    return {
+      subscriberResolve: sinon.stub().resolves(subscriberId),
+      subscriberResolveOrProvision: sinon.stub().resolves({ outcome: 'resolved', subscriberId }),
+      subscriberFindById: sinon.stub().resolves({ _id: internalSubscriberId, subscriberId }),
     };
   }
 
@@ -418,7 +427,9 @@ describe('AgentInboundHandler', () => {
     });
 
     it('should hydrate workflow origin into conversation history on first reply', async () => {
-      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler();
+      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
 
       conversationService.findByPlatformThread.resolves(null);
       messageRepository.findByPlatformThread.resolves({
@@ -444,6 +455,12 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(messageRepository.findByPlatformThread.calledOnce).to.equal(true);
+      expect(messageRepository.findByPlatformThread.firstCall.args).to.deep.equal([
+        'env1',
+        'agent1',
+        'slack:D123:1777837477.371619',
+        'subscriber-mongo-1',
+      ]);
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
@@ -455,8 +472,52 @@ describe('AgentInboundHandler', () => {
       expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
     });
 
+    it("should not hydrate another subscriber's workflow origin from the same platform thread", async () => {
+      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
+        makeResolvedSubscriberOverrides('attacker-subscriber', 'attacker-mongo')
+      );
+
+      conversationService.findByPlatformThread.resolves(null);
+      messageRepository.findByPlatformThread.callsFake(
+        (_environmentId: string, _agentId: string, _platformThreadId: string, subscriberId?: string) =>
+          subscriberId
+            ? null
+            : {
+                _id: 'victim-message',
+                _notificationId: 'victim-notification',
+                _subscriberId: 'victim-mongo',
+                content: 'Your password reset token is secret',
+                platformMessageId: '1777837477.371619',
+                platformThreadId: 'slack:D123:1777837477.371619',
+              }
+      );
+      notificationRepository.findOne.resolves({ payload: { resetToken: 'secret' } });
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        {
+          ...makeSlackDmMessage(),
+          id: '1777837480.1',
+          raw: { thread_ts: '1777837477.371619' },
+        } as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(messageRepository.findByPlatformThread.firstCall.args).to.deep.equal([
+        'env1',
+        'agent1',
+        'slack:D123:1777837477.371619',
+        'attacker-mongo',
+      ]);
+      expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal(undefined);
+      expect(notificationRepository.findOne.called).to.equal(false);
+      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+    });
+
     it('should not hydrate when no workflow origin message exists', async () => {
-      const { handler, conversationService, messageRepository } = makeHandler();
+      const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
 
       conversationService.findByPlatformThread.resolves(null);
       messageRepository.findByPlatformThread.resolves(null);
@@ -473,7 +534,9 @@ describe('AgentInboundHandler', () => {
     });
 
     it('should still dispatch the reply when the workflow origin lookup fails', async () => {
-      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler();
+      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
 
       conversationService.findByPlatformThread.resolves(null);
       messageRepository.findByPlatformThread.rejects(new Error('mongo timeout'));
@@ -1529,7 +1592,7 @@ describe('AgentInboundHandler', () => {
 
     it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {
       const { handler, conversationService, notificationRepository, messageRepository, bridgeExecutor } =
-        makeHandler();
+        makeHandler(makeResolvedSubscriberOverrides());
 
       conversationService.findByPlatformThread.resolves(null);
       messageRepository.findByPlatformThread.resolves({
@@ -1576,7 +1639,9 @@ describe('AgentInboundHandler', () => {
     });
 
     it('should still hydrate workflow origin when a link-button click is the first-ever interaction on a seeded thread', async () => {
-      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler();
+      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
 
       // Regression: create + hydrate must be atomic. A link-button click swallowed
       // right after conversation creation must not skip the one-shot hydration —
@@ -1609,7 +1674,9 @@ describe('AgentInboundHandler', () => {
     });
 
     it('should still dispatch the action when workflow origin hydration fails', async () => {
-      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler();
+      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
 
       conversationService.findByPlatformThread.resolves(null);
       messageRepository.findByPlatformThread.rejects(new Error('mongo timeout'));

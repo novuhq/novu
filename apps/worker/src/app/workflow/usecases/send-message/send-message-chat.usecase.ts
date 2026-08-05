@@ -150,12 +150,6 @@ type AgentChannelGateResult =
   | { channel: UnifiedChannel; detail?: never }
   | { channel?: never; detail: DetailEnum | null };
 
-/** Most-specific rejection first when no channel is eligible. */
-const AGENT_GATE_FAILURE_DETAILS = [
-  DetailEnum.CHAT_AGENT_INTEGRATION_NOT_LINKED,
-  DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
-];
-
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
   channelType = ChannelTypeEnum.CHAT;
@@ -222,10 +216,20 @@ export class SendMessageChat extends SendMessageBase {
 
       if (assignedAgentId) {
         const gated = await this.gateChannelsForAssignedAgent(channels, assignedAgentId, command);
-        if (gated.error) {
-          return gated.error;
+        if (gated.length > 0) {
+          channels = gated;
+        } else {
+          await this.createExecutionDetail(
+            command,
+            DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
+            ExecutionDetailsStatusEnum.WARNING,
+            undefined,
+            {
+              message:
+                `No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels`,
+            }
+          );
         }
-        channels = gated.channels;
       }
 
       // Phase 3: Send to all channels using unified pipeline
@@ -884,7 +888,7 @@ export class SendMessageChat extends SendMessageBase {
     channels: UnifiedChannel[],
     assignedAgentId: string,
     command: SendMessageChannelCommand
-  ): Promise<{ channels: UnifiedChannel[]; error?: never } | { channels?: never; error: SendMessageResult }> {
+  ): Promise<UnifiedChannel[]> {
     const linkedIntegrationIdentifiers = new Set(
       await this.agentIntegrationRepository.listLinkedIntegrationIdentifiers({
         agentId: assignedAgentId,
@@ -896,23 +900,7 @@ export class SendMessageChat extends SendMessageBase {
     const verdicts = channels.map((channel) => this.evaluateChannelForAgent(channel, linkedIntegrationIdentifiers));
     const eligibleChannels = verdicts.flatMap((verdict) => (verdict.channel ? [verdict.channel] : []));
 
-    if (!eligibleChannels.length) {
-      const rejections = new Set(verdicts.map((verdict) => verdict.detail));
-      const detail =
-        AGENT_GATE_FAILURE_DETAILS.find((candidate) => rejections.has(candidate)) ??
-        DetailEnum.CHAT_AGENT_NO_ELIGIBLE_CHANNELS;
-
-      await this.createExecutionDetail(command, detail, ExecutionDetailsStatusEnum.FAILED);
-
-      return {
-        error: {
-          status: SendMessageStatus.FAILED,
-          errorMessage: detail,
-        },
-      };
-    }
-
-    return { channels: eligibleChannels };
+    return eligibleChannels;
   }
 
   private evaluateChannelForAgent(

@@ -1251,11 +1251,13 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   async findByPlatformThread(
     environmentId: string,
     agentId: string,
-    platformThreadId: string
+    platformThreadId: string,
+    subscriberId: string
   ): Promise<MessageEntity | null> {
     return this.findOne({
       _environmentId: environmentId,
       _agentId: agentId,
+      _subscriberId: subscriberId,
       platformThreadId,
     });
   }

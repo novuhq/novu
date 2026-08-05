@@ -572,21 +572,29 @@ describe('SendMessageChat - agent assigned path', () => {
     sinon.assert.notCalled(setPlatformThreadBridge);
   });
 
-  it('fails when the integration is not linked to the assigned agent', async () => {
-    const { usecase, chatHandlerSend, setPlatformThreadBridge } = buildAgentUsecase({
+  it('falls back to resolved channels when the integration is not linked to the assigned agent', async () => {
+    const { usecase, chatHandlerSend, setPlatformThreadBridge, createExecutionDetails } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       linked: false,
     });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
-    expect(result.status).to.equal(SendMessageStatus.FAILED);
-    sinon.assert.notCalled(chatHandlerSend);
-    sinon.assert.notCalled(setPlatformThreadBridge);
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.calledOnce(setPlatformThreadBridge);
+    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
+      detail: DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
+      status: ExecutionDetailsStatusEnum.WARNING,
+      raw: JSON.stringify({
+        message:
+          `No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels`,
+      }),
+    });
   });
 
-  it('fails agent-assigned non-Slack endpoints', async () => {
-    const { usecase, chatHandlerSend, setPlatformThreadBridge } = buildAgentUsecase({
+  it('falls back to resolved channels for agent-assigned non-Slack endpoints', async () => {
+    const { usecase, chatHandlerSend, setPlatformThreadBridge, createExecutionDetails } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       channelData: [
         {
@@ -599,9 +607,17 @@ describe('SendMessageChat - agent assigned path', () => {
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
-    expect(result.status).to.equal(SendMessageStatus.FAILED);
-    sinon.assert.notCalled(chatHandlerSend);
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
     sinon.assert.notCalled(setPlatformThreadBridge);
+    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
+      detail: DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
+      status: ExecutionDetailsStatusEnum.WARNING,
+      raw: JSON.stringify({
+        message:
+          "No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels",
+      }),
+    });
   });
 
   it('resolves workflow.agent when job._agentId is unset and stamps with that agent', async () => {

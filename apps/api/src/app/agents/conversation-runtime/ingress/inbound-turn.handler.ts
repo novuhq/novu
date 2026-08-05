@@ -448,6 +448,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       existingConversation,
       platformThreadId,
+      subscriberId,
       (notificationId) =>
         this.openConversation(
           agentId,
@@ -685,11 +686,12 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     existingConversation: ConversationEntity | null,
     platformThreadId: string,
+    subscriberId: string | null,
     resolveConversation: (notificationId?: string) => Promise<ConversationEntity>
   ): Promise<ConversationEntity> {
     const seededMessage = existingConversation
       ? null
-      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId);
+      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId);
 
     const conversation = await resolveConversation(seededMessage?._notificationId);
 
@@ -704,10 +706,25 @@ export class AgentInboundHandler implements OnModuleInit {
   private async findWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,
-    platformThreadId: string
+    platformThreadId: string,
+    subscriberId: string | null
   ): Promise<MessageEntity | null> {
+    if (!subscriberId) {
+      return null;
+    }
+
     try {
-      return await this.messageRepository.findByPlatformThread(config.environmentId, agentId, platformThreadId);
+      const subscriber = await this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId);
+      if (!subscriber) {
+        return null;
+      }
+
+      return await this.messageRepository.findByPlatformThread(
+        config.environmentId,
+        agentId,
+        platformThreadId,
+        subscriber._id
+      );
     } catch (err) {
       captureAgentWarning(err, {
         component: 'agent-inbound-handler',
@@ -1298,6 +1315,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       existingConversation,
       thread.id,
+      subscriberId,
       (notificationId) =>
         this.conversationService.createOrGetConversation({
           environmentId: config.environmentId,
