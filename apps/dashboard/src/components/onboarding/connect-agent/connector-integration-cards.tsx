@@ -272,7 +272,7 @@ export function ConnectorIntegrationCards({
             badge={
               isComingSoon ? (
                 <Badge color="gray" variant="lighter" size="sm" className="shrink-0 rounded-sm px-1 uppercase">
-                  Coming soon
+                  Soon
                 </Badge>
               ) : undefined
             }
