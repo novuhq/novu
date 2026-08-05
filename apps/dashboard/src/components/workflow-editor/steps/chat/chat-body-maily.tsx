@@ -1,6 +1,7 @@
 import { CardActionsExtension, CardButtonExtension, Variable } from '@novu/maily-core/extensions';
 import { Editor, NodeViewProps } from '@tiptap/core';
-import React, { useCallback, useMemo } from 'react';
+import { EditorView } from '@uiw/react-codemirror';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { EditorOverlays } from '@/components/editor-overlays';
 import { createChatEditorBlocks } from '@/components/maily/chat-blocks';
@@ -13,11 +14,15 @@ import {
 } from '@/components/maily/views/maily-variables-list-view';
 import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/views/variable-view';
 import { FormField } from '@/components/primitives/form/form';
+import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
+import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { LocalizationResourceEnum } from '@/types/translations';
@@ -172,6 +177,8 @@ function createVariableNodeView() {
 const chatCreateVariableNodeView = createVariableNodeView();
 
 export const ChatBodyMaily = () => {
+  const viewRef = useRef<EditorView | null>(null);
+  const lastCompletionRef = useRef<CompletionRange | null>(null);
   const { control } = useFormContext();
   const { digestStepBeforeCurrent, workflow } = useWorkflow();
   const resourceId = workflow?.workflowId || '';
@@ -194,6 +201,53 @@ export const ChatBodyMaily = () => {
     currentSchema,
     getSchemaPropertyByKey,
   });
+
+  const noopOnChange = useCallback(() => {}, []);
+
+  const {
+    selectedTranslation,
+    handleTranslationDelete,
+    handleTranslationReplaceKey,
+    handleTranslationPopoverOpenChange,
+    translationTriggerPosition,
+    isTranslationPopoverOpen,
+    shouldEnableTranslations,
+  } = useEditorTranslationOverlay({
+    viewRef,
+    lastCompletionRef,
+    onChange: noopOnChange,
+    resourceId,
+    resourceType,
+    isTranslationEnabledOnResource: !!workflow?.isTranslationEnabled,
+  });
+
+  const createTranslationKeyMutation = useCreateTranslationKey();
+
+  const handleCreateNewTranslationKey = useCallback(
+    async (translationKey: string) => {
+      if (!resourceId) return;
+
+      await createTranslationKeyMutation.mutateAsync({
+        resourceId,
+        resourceType,
+        translationKey,
+        defaultValue: `[${translationKey}]`,
+      });
+    },
+    [resourceId, resourceType, createTranslationKeyMutation]
+  );
+
+  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
+    resourceId,
+    resourceType,
+    enabled: shouldEnableTranslations && !!resourceId,
+  });
+
+  const isTranslationEnabled = shouldEnableTranslations && !isTranslationKeysLoading;
+
+  // Remount only when translations flip on/off so the translation extension mounts. Chat intentionally
+  // avoids remounting on variable/key changes (see `chatCreateVariableNodeView`) to keep the Actions bubble open.
+  const editorKey = `translation-${isTranslationEnabled ? 'enabled' : 'disabled'}`;
 
   const renderVariable = useCallback(
     (opts: {
@@ -225,6 +279,7 @@ export const ChatBodyMaily = () => {
 
         return (
           <Maily
+            key={editorKey}
             value={getEditorValue()}
             onChange={field.onChange}
             variables={parsedVariables}
@@ -233,10 +288,12 @@ export const ChatBodyMaily = () => {
             imageExtensionOptions={CHAT_IMAGE_EXTENSION_OPTIONS}
             additionalExtensions={CHAT_ADDITIONAL_EXTENSIONS}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
-            isTranslationEnabled={false}
+            isTranslationEnabled={isTranslationEnabled}
             isContextEnabled={true}
+            translationKeys={translationKeys}
             addDigestVariables={!!digestStepBeforeCurrent?.stepId}
             translationValueInput={ControlInput}
+            onCreateNewTranslationKey={handleCreateNewTranslationKey}
             onCreateNewVariable={handleCreateNewVariable}
             variableSuggestionsPopover={MailyVariablesListViewForWorkflows}
             renderVariable={renderVariable}
@@ -245,6 +302,12 @@ export const ChatBodyMaily = () => {
             resourceType={resourceType}
           >
             <EditorOverlays
+              isTranslationPopoverOpen={isTranslationPopoverOpen}
+              selectedTranslation={selectedTranslation}
+              onTranslationPopoverOpenChange={handleTranslationPopoverOpenChange}
+              onTranslationDelete={handleTranslationDelete}
+              onTranslationReplaceKey={handleTranslationReplaceKey}
+              translationTriggerPosition={translationTriggerPosition}
               variables={parsedVariables.variables}
               isAllowedVariable={enhancedIsAllowedVariable}
               workflow={workflow}
