@@ -8,6 +8,7 @@ import {
   RiLayoutGridLine,
   RiMailLine,
   RiMessage3Line,
+  RiRobot2Line,
   RiRouteFill,
   RiSettings3Line,
   RiStore3Line,
@@ -97,7 +98,7 @@ const AGENT_SUGGESTIONS: SuggestionItem[] = [
     url: docsUrl('/agents/get-started/ai-sdk'),
   },
   {
-    icon: RiStore3Line,
+    icon: RiRobot2Line,
     title: 'Claude managed agent',
     description: 'Example: launch a managed agent with no bridge server required.',
     url: docsUrl('/agents/get-started/claude-managed'),
