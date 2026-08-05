@@ -203,7 +203,7 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
                     <button
                       type="button"
                       disabled={isBusy}
-                      className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                      className="flex min-w-[150px] max-w-[160px] flex-1 cursor-pointer flex-col gap-1.5 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                     >
                       <AddChannelCardContent />
                     </button>
