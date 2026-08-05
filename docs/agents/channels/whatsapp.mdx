@@ -1,0 +1,70 @@
+---
+title: "WhatsApp"
+description: "Connect your agent to WhatsApp Business: session context, typing indicators, quick-reply buttons, and tool approval."
+sidebarTitle: WhatsApp
+---
+
+Use WhatsApp Business as a messaging channel for your agent. Novu keeps session context, shows a typing indicator during the turn, and uses native quick-reply buttons for choices and tool approval.
+
+## Capabilities
+
+| Capability | Support |
+| --- | --- |
+| Full context history | Yes |
+| Threaded replies (within session window) | Yes |
+| Live typing indicator | Yes (fixed text) |
+| React with eyes on inbound messages | Yes |
+| Plan card | No |
+| Rich text | Bold / italics only |
+| Tap-to-respond buttons | Yes (up to 3 per message) |
+| Emoji reactions | Yes |
+| Message edits in place | Yes |
+| Action / MCP tool approval | Yes (quick-reply buttons) |
+| MCP connect card | Yes (short authorize URL) |
+| Resolve conversation | Yes |
+| File sharing | Not yet |
+| Streaming word-by-word | Not yet |
+
+Full matrix: [Channels overview](/agents/channels/overview).
+
+## Examples
+
+### Inbound message
+
+A user messages the bot. Novu adds an eyes reaction, shows typing, then delivers a complete reply with up to three quick-reply buttons.
+
+### Tool approval
+
+Gated tools use Approve / Deny quick replies. The handler resumes after the user taps a button.
+
+## Setup
+
+| Framework / Platform | Guide |
+| --- | --- |
+| Custom code agent | Follow a [connect guide](/agents/get-started/ai-sdk), then add WhatsApp as another provider |
+| Managed agent | [Claude](/agents/get-started/claude-managed) or [AWS Claude](/agents/get-started/aws-claude), then link WhatsApp in the dashboard |
+
+WhatsApp Business credentials are configured in the Novu dashboard when you add the provider.
+
+## Connect component
+
+`@novu/react` does not ship a WhatsApp connect button yet. Link WhatsApp Business in the Novu dashboard when you add the provider to the agent, or use the [channel endpoints API](/api-reference/channel-endpoints/create-a-channel-endpoint) if you need programmatic subscriber endpoints.
+
+For Slack, Teams, and Telegram embeddable buttons, see [Connect components](/agents/custom-code-agent/connect-components).
+
+## Related
+
+<Columns cols={2}>
+  <Card href="/agents/custom-code-agent/building-blocks/reply" title="Reply" icon="message-square">
+    Plain text and interactive buttons.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator" icon="ellipsis">
+    Typing bubble while the handler runs.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval" icon="shield-check">
+    Approve / Deny before tools execute.
+  </Card>
+  <Card href="/agents/channels/overview" title="Channels overview" icon="table">
+    Compare providers.
+  </Card>
+</Columns>

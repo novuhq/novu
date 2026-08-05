@@ -20,7 +20,7 @@ describe('select variant', () => {
 
   beforeEach(async () => {
     selectVariantUsecase = new SelectVariant(
-      // @ts-ignore
+      // @ts-expect-error test stub — logger/featureFlags are optional at construction
       new ConditionsFilter(),
       new MessageTemplateRepository(),
       new NormalizeVariables(new SubscriberRepository(), new TenantRepository())

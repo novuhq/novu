@@ -122,7 +122,17 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       disableOutputSanitization,
       layoutId: stepLayoutId,
       from,
+      replyTo,
+      preheader,
+      useProviderDefaults,
     } = renderCommand.controlValues as EmailControlType;
+
+    const controlMeta = {
+      ...(from && { from }),
+      ...(replyTo && { replyTo }),
+      ...(preheader && { preheader }),
+      ...(useProviderDefaults !== undefined && { useProviderDefaults }),
+    };
 
     if (!body || typeof body !== 'string') {
       /**
@@ -134,7 +144,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       return {
         subject: controlSubject as string,
         body: body as string,
-        ...(from && { from }),
+        ...controlMeta,
       };
     }
 
@@ -193,22 +203,23 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     // Step 3: Add Novu branding
     const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId, organization);
     const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
+    const htmlWithPreheader = injectRenderedPreheader(cleanedHtml, preheader);
 
     // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
       return {
         subject: translatedSubject,
-        body: cleanedHtml,
-        ...(from && { from }),
+        body: htmlWithPreheader,
+        ...controlMeta,
       };
     }
 
-    const sanitizedBody = sanitizeHTML(cleanedHtml);
+    const sanitizedBody = sanitizeHTML(htmlWithPreheader);
 
     return {
       subject: translatedSubject,
       body: sanitizedBody,
-      ...(from && { from }),
+      ...controlMeta,
     };
   }
 
@@ -620,4 +631,22 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
      */
     return html.replace(/<p([^>]*)>\s+<\/p>/g, '<p$1></p>');
   }
+}
+
+function injectRenderedPreheader(html: string, preheader: string | undefined): string {
+  const trimmed = preheader?.trim();
+  if (!trimmed || !html) {
+    return html;
+  }
+
+  const escaped = trimmed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const spacer = '&nbsp;&zwnj;'.repeat(50);
+  const block = `<div style="display: none; max-height: 0px; overflow: hidden;">${escaped}${spacer}</div>`;
+
+  if (!/<body\b[^<>]*?>/i.test(html)) {
+    return `${block}${html}`;
+  }
+
+  // Replacer function, not a string: the block carries user content and `$&`/`$'` would otherwise be expanded.
+  return html.replace(/<body\b[^<>]*?>/i, (bodyTag) => `${bodyTag}${block}`);
 }

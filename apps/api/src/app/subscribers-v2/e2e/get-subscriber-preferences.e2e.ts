@@ -1,6 +1,7 @@
 import { Novu } from '@novu/api';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { NotificationTemplateEntity } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -242,6 +243,28 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     expect(response.body.message).to.include('Get preferences service is currently unavailable');
 
     delete (process.env as any).IS_GET_PREFERENCES_DISABLED;
+  });
+
+  it('should include tool channel for workflows with an active tool step', async () => {
+    const toolWorkflow = await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.TOOL,
+          content: 'Tool step content',
+        },
+      ],
+    });
+
+    const res = await session.testAgent.get(`/v2/subscribers/${subscriber.subscriberId}/preferences`);
+    expect(res.status).to.equal(200);
+
+    const toolWorkflowPreference = res.body.data.workflows.find(
+      (wf: { workflow: { identifier: string } }) => wf.workflow.identifier === toolWorkflow.triggers[0].identifier
+    );
+
+    expect(toolWorkflowPreference).to.exist;
+    expect(toolWorkflowPreference.channels).to.have.property('tool', true);
   });
 });
 

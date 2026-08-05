@@ -1,6 +1,6 @@
 import { CardElement } from '@novu/stateless';
 import { describe, expect, test } from 'vitest';
-import { cardToFallbackMarkdown } from './card-render.utils';
+import { cardToFallbackMarkdown, omitIncompleteLinkButtons } from './card-render.utils';
 
 const baseCard: CardElement = {
   type: 'card',
@@ -35,5 +35,55 @@ describe('cardToFallbackMarkdown', () => {
     const card: CardElement = { type: 'card', children: [{ type: 'text', content: 'note', style: 'muted' }] };
 
     expect(cardToFallbackMarkdown(card)).toBe('_note_');
+  });
+
+  test('renders actions without a url as plain labels', () => {
+    const card: CardElement = {
+      type: 'card',
+      children: [
+        {
+          type: 'actions',
+          children: [
+            { type: 'link-button', label: 'Draft', url: '' },
+            { type: 'link-button', label: 'View', url: 'https://novu.co' },
+          ],
+        },
+      ],
+    };
+
+    expect(cardToFallbackMarkdown(card)).toBe('Draft · [View](https://novu.co)');
+  });
+});
+
+describe('omitIncompleteLinkButtons', () => {
+  test('removes link buttons with an empty url and drops empty actions rows', () => {
+    const card: CardElement = {
+      type: 'card',
+      children: [
+        { type: 'text', content: 'body', style: 'plain' },
+        {
+          type: 'actions',
+          children: [
+            { type: 'link-button', label: 'Draft', url: '' },
+            { type: 'link-button', label: 'View', url: 'https://novu.co' },
+          ],
+        },
+        {
+          type: 'actions',
+          children: [{ type: 'link-button', label: 'Only draft', url: '   ' }],
+        },
+      ],
+    };
+
+    expect(omitIncompleteLinkButtons(card)).toEqual({
+      type: 'card',
+      children: [
+        { type: 'text', content: 'body', style: 'plain' },
+        {
+          type: 'actions',
+          children: [{ type: 'link-button', label: 'View', url: 'https://novu.co' }],
+        },
+      ],
+    });
   });
 });

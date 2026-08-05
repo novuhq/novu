@@ -24,6 +24,11 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   overrides: TriggerOverrides;
 
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  _agentId?: string | null;
+
   @IsString()
   @IsDefined()
   transactionId: string;

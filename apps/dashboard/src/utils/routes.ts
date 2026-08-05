@@ -38,6 +38,7 @@ export const ROUTES = {
   WELCOME: '/env/:environmentSlug/welcome',
   HOME: '/env/:environmentSlug/home',
   EDIT_WORKFLOW_PREFERENCES: 'preferences',
+  EDIT_WORKFLOW_AGENT: 'agent',
   EDIT_STEP: 'steps/:stepSlug',
 
   EDIT_STEP_TEMPLATE: 'steps/:stepSlug/editor',

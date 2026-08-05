@@ -36,6 +36,9 @@ export class EmailRenderOutput extends RenderOutput {
     email?: string;
     name?: string;
   };
+  replyTo?: string;
+  preheader?: string;
+  useProviderDefaults?: boolean;
 }
 
 export class DigestOutputProcessor {
