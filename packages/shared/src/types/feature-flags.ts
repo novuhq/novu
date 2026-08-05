@@ -214,7 +214,6 @@ export enum FeatureFlagsKeysEnum {
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
   // String flags
-  CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
   QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
   USAGE_REPORT_OVERRIDE_EMAIL = 'USAGE_REPORT_OVERRIDE_EMAIL',
@@ -236,13 +235,6 @@ export enum FeatureFlagsKeysEnum {
   MAX_CUSTOM_EMAIL_DOMAINS_NUMBER = 'MAX_CUSTOM_EMAIL_DOMAINS_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
-}
-
-export enum CloudflareSchedulerMode {
-  OFF = 'off',
-  SHADOW = 'shadow',
-  LIVE = 'live',
-  COMPLETE = 'complete',
 }
 
 export enum QueueBackendMode {

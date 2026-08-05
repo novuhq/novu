@@ -1,6 +1,6 @@
 import { createMemo, createSignal, Index, JSXElement, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { ChannelPreference, ChannelType, Preference } from '../../../../types';
+import { ChannelPreference, Preference } from '../../../../types';
 import { StringLocalizationKey, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Cogs, ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
@@ -10,6 +10,7 @@ import { Collapsible } from '../../primitives/Collapsible';
 import { SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 import { ChannelRow, getLabel } from './ChannelRow';
+import { isRenderablePreferenceChannel } from './renderable-preference-channels';
 
 type IconComponentType = (props?: JSX.HTMLAttributes<SVGSVGElement>) => JSXElement;
 
@@ -28,10 +29,12 @@ export const PreferencesRow = (props: {
   const { t } = useLocalization();
 
   const channels = createMemo(() =>
-    Object.keys(props.preference?.channels ?? {}).map((channel) => ({
-      channel: channel as ChannelType,
-      state: props.preference?.channels[channel as keyof ChannelPreference] ? 'enabled' : ('disabled' as SwitchState),
-    }))
+    Object.keys(props.preference?.channels ?? {})
+      .filter(isRenderablePreferenceChannel)
+      .map((channel) => ({
+        channel,
+        state: props.preference?.channels[channel as keyof ChannelPreference] ? 'enabled' : ('disabled' as SwitchState),
+      }))
   );
 
   const DefaultIconComponent = iconKeyToComponentMap[props.iconKey];
@@ -203,6 +206,10 @@ const WorkflowDescription = (props: WorkflowDescriptionProps) => {
     const channels = [];
 
     for (const key in props.channels) {
+      if (!isRenderablePreferenceChannel(key)) {
+        continue;
+      }
+
       if (props.channels[key as keyof ChannelPreference] !== undefined) {
         const isDisabled = !props.channels[key as keyof ChannelPreference];
 
@@ -215,7 +222,7 @@ const WorkflowDescription = (props: WorkflowDescriptionProps) => {
             })}
             data-disabled={isDisabled}
           >
-            {getLabel(key as ChannelType)}
+            {getLabel(key)}
           </span>
         );
         channels.push(element);

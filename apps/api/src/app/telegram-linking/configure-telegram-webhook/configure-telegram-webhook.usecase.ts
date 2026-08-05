@@ -12,15 +12,16 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
 import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
+import {
+  buildAgentTelegramWebhookUrl,
+  buildIntegrationTelegramWebhookUrl,
+  buildTelegramBotApiUrl,
+} from '../telegram-webhook.utils';
 import { ConfigureTelegramWebhookCommand } from './configure-telegram-webhook.command';
 
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
 const TELEGRAM_MAX_RETRIES = 3;
 const TELEGRAM_RETRY_DELAY_BASE_MS = 500;
-/**
- * Every update type from Telegram's Update object (Bot API).
- * @see https://core.telegram.org/bots/api#update
- */
 const TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES = [
   'message',
   'edited_message',
@@ -43,6 +44,9 @@ const TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES = [
   'removed_chat_boost',
   'managed_bot',
 ] as const;
+
+/** Integration-only webhooks only need message updates for `/start` subscriber linking. */
+const TELEGRAM_INTEGRATION_WEBHOOK_ALLOWED_UPDATES = ['message'] as const;
 
 interface TelegramSetWebhookResult {
   webhookUrl: string;
@@ -97,19 +101,24 @@ export class ConfigureTelegramWebhook {
       );
     }
 
-    const agent = await this.agentLinkResolver.resolve({
+    const agent = await this.agentLinkResolver.resolveOptional({
       integrationId: integration._id,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       botToken,
     });
 
-    const webhookUrl = this.buildWebhookUrl(agent.agentId, integration.identifier);
+    const webhookUrl = agent
+      ? buildAgentTelegramWebhookUrl(agent.agentId, integration.identifier)
+      : buildIntegrationTelegramWebhookUrl(command.environmentId, integration.identifier);
     this.assertHttps(webhookUrl);
 
     const secretToken = randomBytes(32).toString('hex');
+    const allowedUpdates = agent
+      ? [...TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES]
+      : [...TELEGRAM_INTEGRATION_WEBHOOK_ALLOWED_UPDATES];
 
-    await this.callSetWebhook(botToken, webhookUrl, secretToken);
+    await this.callSetWebhook(botToken, webhookUrl, secretToken, allowedUpdates);
 
     const [, botUsername] = await Promise.all([
       this.integrationRepository.update(
@@ -126,15 +135,6 @@ export class ConfigureTelegramWebhook {
     return { webhookUrl, configuredAt: new Date().toISOString(), botUsername };
   }
 
-  private buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
-    const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(
-      /\/$/,
-      ''
-    );
-
-    return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
-  }
-
   private assertHttps(url: string): void {
     if (!url.startsWith('https://')) {
       throw new BadRequestException(
@@ -144,7 +144,7 @@ export class ConfigureTelegramWebhook {
   }
 
   private async callGetMe(botToken: string): Promise<string> {
-    const telegramUrl = `https://api.telegram.org/bot${botToken}/getMe`;
+    const telegramUrl = buildTelegramBotApiUrl(botToken, 'getMe');
     let lastError: unknown;
 
     for (let attempt = 0; attempt < TELEGRAM_MAX_RETRIES; attempt++) {
@@ -177,15 +177,20 @@ export class ConfigureTelegramWebhook {
     throw new BadGatewayException(`Failed to reach Telegram API (getMe): ${message}`);
   }
 
-  private async callSetWebhook(botToken: string, url: string, secretToken: string): Promise<void> {
-    const telegramUrl = `https://api.telegram.org/bot${botToken}/setWebhook`;
+  private async callSetWebhook(
+    botToken: string,
+    url: string,
+    secretToken: string,
+    allowedUpdates: readonly string[]
+  ): Promise<void> {
+    const telegramUrl = buildTelegramBotApiUrl(botToken, 'setWebhook');
     let lastError: unknown;
 
     for (let attempt = 0; attempt < TELEGRAM_MAX_RETRIES; attempt++) {
       try {
         const { data } = await Axios.post<TelegramApiResponse>(
           telegramUrl,
-          { url, secret_token: secretToken, allowed_updates: [...TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES] },
+          { url, secret_token: secretToken, allowed_updates: allowedUpdates },
           {
             timeout: TELEGRAM_API_TIMEOUT_MS,
             maxRedirects: 0,

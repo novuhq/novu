@@ -149,6 +149,7 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
           disabled={!activity.subscriber}
           className="text-start"
           subscriberId={activity.subscriber?.subscriberId || activity._subscriberId}
+          modal
         >
           <OverviewItem
             label="Subscriber ID"

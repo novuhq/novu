@@ -1,10 +1,6 @@
 import { Body, Controller, Delete, Param, Post, Req, Scope, ServiceUnavailableException } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  FeatureFlagsService,
-  RequirePermissions,
-  ResourceCategory,
-} from '@novu/application-generic';
+import { FeatureFlagsService, RequirePermissions, ResourceCategory } from '@novu/application-generic';
 import {
   AddressingTypeEnum,
   ApiRateLimitCategoryEnum,
