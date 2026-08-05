@@ -113,7 +113,7 @@ export function ConnectAgentDemoForm({
       title="Where your agent runs?"
       description="The platform or framework that hosts and runs your agent today. Novu supports both custom-code and managed-runtime agents."
       fullWidthContent={
-        <div className="mt-1 flex w-full max-w-[560px] flex-col gap-2">
+        <div className="mt-1 flex w-full max-w-[719px] flex-col gap-2">
           <ConnectorIntegrationCards
             selectedConnectorId={connectorId}
             selectedIntegrationId={selectedIntegrationId}

@@ -54,36 +54,16 @@ type CardItem =
 function ConnectorCardIcon({ connectorId }: { connectorId: ConnectorId }) {
   switch (connectorId) {
     case 'ai-sdk':
-      return (
-        <div className="bg-bg-weak text-text-strong flex size-6 items-center justify-center rounded-full">
-          <AiSdkIcon className="size-3.5" />
-        </div>
-      );
+      return <AiSdkIcon className="text-text-strong h-4 w-[18.5px]" />;
     case 'langchain':
-      return (
-        <div className="bg-bg-weak flex size-6 items-center justify-center rounded-full">
-          <LangChainIcon className="size-4" />
-        </div>
-      );
+      return <LangChainIcon className="size-[18px]" />;
     case 'custom-code':
-      return (
-        <div className="bg-bg-weak text-text-sub flex size-6 items-center justify-center rounded-full">
-          <RiFileCodeLine className="size-4" />
-        </div>
-      );
+      return <RiFileCodeLine className="text-text-sub size-4" />;
     case 'claude':
-      return (
-        <div className="bg-primary-base/10 text-primary-base flex size-6 items-center justify-center rounded-full">
-          <ClaudeIcon className="size-3.5" />
-        </div>
-      );
+      return <ClaudeIcon className="text-primary-base size-5" />;
     case 'claude-aws':
     case 'bedrock':
-      return (
-        <div className="bg-bg-weak text-text-sub flex size-6 items-center justify-center rounded-full">
-          <AwsIcon className="size-4" />
-        </div>
-      );
+      return <AwsIcon className="size-6" />;
     default: {
       const _exhaustive: never = connectorId;
 
@@ -95,31 +75,21 @@ function ConnectorCardIcon({ connectorId }: { connectorId: ConnectorId }) {
 function DemoCardIcon() {
   return (
     <div
-      className="flex size-6 items-center justify-center rounded-full text-white"
+      className="flex size-[18px] items-center justify-center rounded-full text-white"
       style={{
         background: 'linear-gradient(135deg, #FF884D 0%, #E300BD 55%, #7B61FF 100%)',
       }}
     >
-      <NovuIcon className="size-3.5" />
+      <NovuIcon className="size-2.5" />
     </div>
   );
 }
 
-function ConnectPill() {
+function ConnectAction() {
   return (
-    <div
-      className={cn(
-        'flex h-full w-full items-center justify-center rounded-[4px] text-text-sub',
-        'shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea]'
-      )}
-      style={{
-        backgroundImage:
-          'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.02) 100%), linear-gradient(90deg, #fff 0%, #fff 100%)',
-      }}
-      aria-hidden
-    >
-      <span className="px-1 text-label-xs font-medium leading-4">Connect</span>
-      <RiArrowRightSLine className="size-3.5 shrink-0 text-text-soft" />
+    <div className="text-text-sub flex items-center justify-center py-1 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
+      <span className="px-0.5 text-label-xs font-medium leading-4">Connect</span>
+      <RiArrowRightSLine className="size-4 shrink-0" aria-hidden />
     </div>
   );
 }
@@ -149,23 +119,27 @@ function ConnectorCard({
       aria-disabled={isDisabled || undefined}
       aria-pressed={isSelected || undefined}
       className={cn(
-        'relative flex min-h-[92px] flex-col items-start gap-1.5 overflow-hidden rounded-[8px] border bg-bg-white p-2 text-left shadow-xs transition-colors',
-        isSelected ? 'border-stroke-strong' : 'border-stroke-weak hover:border-stroke-soft',
-        comingSoon && 'cursor-not-allowed opacity-60',
+        'group bg-bg-white border-stroke-weak relative flex h-16 w-[150px] flex-col items-start gap-2 overflow-hidden rounded-lg border p-2 text-left shadow-xs transition-colors',
+        'hover:border-stroke-soft focus-visible:border-stroke-soft focus-visible:outline-none',
+        isSelected && 'border-stroke-strong',
+        comingSoon && 'cursor-not-allowed',
         isDisabled && !comingSoon && 'cursor-default opacity-60',
         !isDisabled && 'cursor-pointer!'
       )}
     >
-      <div className="flex w-full items-start justify-between gap-1">
+      <div className="flex h-6 w-full items-center justify-between">
         <div className="flex size-6 shrink-0 items-center justify-center">{icon}</div>
-        {isSelected ? (
-          <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden />
-        ) : (
-          (badge ?? null)
-        )}
+        {isSelected ? <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden /> : badge}
+        {!isSelected && !comingSoon ? <ConnectAction /> : null}
       </div>
-      <span className="text-label-xs text-text-sub min-w-0 font-medium leading-4">{label}</span>
-      <div className="mt-auto h-7 w-full shrink-0">{isSelected || comingSoon ? null : <ConnectPill />}</div>
+      <span
+        className={cn(
+          'text-text-sub min-w-0 text-label-xs font-medium leading-4',
+          !isDisabled && 'group-hover:text-text-strong group-focus-visible:text-text-strong'
+        )}
+      >
+        {label}
+      </span>
     </button>
   );
 }
@@ -242,7 +216,7 @@ export function ConnectorIntegrationCards({
   }
 
   return (
-    <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+    <div className="grid w-full grid-cols-2 gap-x-3 gap-y-3.5 sm:grid-cols-3 md:grid-cols-[repeat(4,150px)]">
       {items.map((item) => {
         if (item.kind === 'demo') {
           return (
