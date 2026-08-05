@@ -138,16 +138,13 @@ export class MessageEntity {
 
   contextKeys?: string[];
 
-  /**
-   * Platform thread id from an agent-assigned chat send (e.g. Slack
-   * `slack:{channel}:{ts}`). Used to hydrate workflow origin on first inbound reply.
-   */
+  /** Platform thread id from an agent-assigned chat send (e.g. `slack:{channel}:{ts}`). */
   platformThreadId?: string;
 
   /** Platform message id of the outbound workflow chat send that opened the thread. */
   platformMessageId?: string;
 
-  /** Agent that owned the outbound chat send when platform thread bridge fields were stamped. */
+  /** Agent that owned the outbound chat send when platform thread fields were stamped. */
   _agentId?: string;
 }
 

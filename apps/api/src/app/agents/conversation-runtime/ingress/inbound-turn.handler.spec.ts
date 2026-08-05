@@ -486,7 +486,6 @@ describe('AgentInboundHandler', () => {
         AgentEventEnum.ON_MESSAGE
       );
 
-      // Workflow origin context is optional enrichment — losing it must not drop the user's reply.
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });

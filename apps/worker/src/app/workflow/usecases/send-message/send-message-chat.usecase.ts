@@ -85,18 +85,7 @@ type MessageContext = {
   assignedAgentId: string | null;
 };
 
-type AgentPlatformThreadContext = {
-  assignedAgentId: string;
-};
-
-/**
- * Endpoint types eligible for agent-assigned workflow chat delivery.
- * Currently Slack-only; extend this set when other agent platforms gain send support.
- *
- * Bot-identity invariant: the ChannelEndpoint token used for send must belong to the same
- * Slack app that serves the agent's inbound webhook — implied by the AgentIntegration link,
- * not by types.
- */
+/** Slack-only for now; extend when other agent platforms gain send support. */
 const AGENT_SUPPORTED_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
 
 function filterAgentSupportedEndpoints(endpoints: ChannelData[]): {
@@ -120,14 +109,9 @@ function filterAgentSupportedEndpoints(endpoints: ChannelData[]): {
 }
 
 /**
- * Slack addresses a message by `(channel, ts)`. Inbound Chat SDK thread ids are
- * `slack:{conversation}:{rootTs}`, so an outbound agent-assigned send must stamp the same shape.
- *
- * Conversation resolution stays in the worker (not on `ISendMessageSuccessResponse`):
- * - channel endpoints already carry the `C…` / `G…` id
- * - user endpoints are addressed as `U…`, but `chat.postMessage` lands in a `D…` conversation —
- *   Slack echoes that on the success object as a provider-local `channel` field (not part of the
- *   shared send-success contract)
+ * Chat SDK thread ids are `slack:{conversation}:{rootTs}`. Channel endpoints already
+ * carry the conversation id; user endpoints send to `U…` but land in a `D…` DM that
+ * Slack returns on the success `channel` field.
  */
 function resolveSlackConversationId(
   channelData: ChannelData,
@@ -138,9 +122,7 @@ function resolveSlackConversationId(
   }
 
   if (channelData.type === ENDPOINT_TYPES.SLACK_USER) {
-    const channel = (result as { channel?: unknown }).channel;
-
-    return typeof channel === 'string' && channel.length > 0 ? channel : undefined;
+    return result.channel;
   }
 
   return undefined;
@@ -163,16 +145,12 @@ function buildAgentPlatformThreadId(
   return `slack:${conversationId}:${result.id}`;
 }
 
-/**
- * Per-channel gate verdict: either the narrowed channel to deliver on, or the detail
- * explaining the rejection. `detail: null` means "nothing to deliver, no specific reason"
- * (e.g. an empty endpoint group) so a more specific sibling rejection is reported instead.
- */
+/** `detail: null` means no specific reason (e.g. empty endpoint group). */
 type AgentChannelGateResult =
   | { channel: UnifiedChannel; detail?: never }
   | { channel?: never; detail: DetailEnum | null };
 
-/** Reported rejection reason when no channel is eligible — most specific first. */
+/** Most-specific rejection first when no channel is eligible. */
 const AGENT_GATE_FAILURE_DETAILS = [
   DetailEnum.CHAT_AGENT_INTEGRATION_NOT_LINKED,
   DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
@@ -528,10 +506,6 @@ export class SendMessageChat extends SendMessageBase {
 
     for (const channelData of integrationChannelData.channelData) {
       try {
-        const agentPlatformThreadContext: AgentPlatformThreadContext | undefined = assignedAgentId
-          ? { assignedAgentId }
-          : undefined;
-
         const result = await this.sendMessage(
           channelData,
           integration,
@@ -539,7 +513,7 @@ export class SendMessageChat extends SendMessageBase {
           card,
           message,
           command,
-          agentPlatformThreadContext
+          assignedAgentId ?? undefined
         );
 
         if (result.status === SendMessageStatus.SUCCESS) {
@@ -760,7 +734,7 @@ export class SendMessageChat extends SendMessageBase {
     card: CardElement | undefined,
     message: MessageEntity,
     command: SendMessageChannelCommand,
-    agentPlatformThreadContext?: AgentPlatformThreadContext
+    assignedAgentId?: string
   ): Promise<SendMessageResult> {
     const chatHandler = this.setupChatHandler(integration);
     const overrides = this.buildMessageOverrides(command, integration);
@@ -799,9 +773,9 @@ export class SendMessageChat extends SendMessageBase {
         nativePayload,
       });
 
-      if (agentPlatformThreadContext) {
+      if (assignedAgentId) {
         await this.persistPlatformThreadBridge(
-          agentPlatformThreadContext,
+          assignedAgentId,
           integration.providerId,
           overriddenChannelData,
           result,
@@ -816,12 +790,9 @@ export class SendMessageChat extends SendMessageBase {
     }
   }
 
-  /**
-   * Fail-soft post-send stamp so inbound replies can hydrate workflow origin.
-   * Delivery already succeeded — stamp failures must not flip the send to FAILED.
-   */
+  /** Post-send stamp for inbound hydration; must not flip a successful send to FAILED. */
   private async persistPlatformThreadBridge(
-    agentPlatformThreadContext: AgentPlatformThreadContext,
+    assignedAgentId: string,
     providerId: string,
     channelData: ChannelData,
     result: ISendMessageSuccessResponse,
@@ -836,7 +807,7 @@ export class SendMessageChat extends SendMessageBase {
         {
           jobId: command.jobId,
           messageId: message._id,
-          agentId: agentPlatformThreadContext.assignedAgentId,
+          agentId: assignedAgentId,
           providerId,
           endpointType: channelData.type,
         },
@@ -851,7 +822,7 @@ export class SendMessageChat extends SendMessageBase {
       await this.messageRepository.setPlatformThreadBridge({
         messageId: message._id,
         environmentId: command.environmentId,
-        agentId: agentPlatformThreadContext.assignedAgentId,
+        agentId: assignedAgentId,
         platformThreadId,
         platformMessageId,
       });
@@ -861,7 +832,7 @@ export class SendMessageChat extends SendMessageBase {
           err: error,
           jobId: command.jobId,
           messageId: message._id,
-          agentId: agentPlatformThreadContext.assignedAgentId,
+          agentId: assignedAgentId,
           platformThreadId,
         },
         'Failed to persist platform thread bridge on message after successful send',
@@ -908,10 +879,7 @@ export class SendMessageChat extends SendMessageBase {
     return agent?._id ? String(agent._id) : null;
   }
 
-  /**
-   * Agent-assigned workflows may only deliver through integrations linked to the agent
-   * (same Slack app as the inbound webhook) and agent-supported endpoint types.
-   */
+  /** Only agent-linked, agent-supported endpoint types may deliver. */
   private async gateChannelsForAssignedAgent(
     channels: UnifiedChannel[],
     assignedAgentId: string,

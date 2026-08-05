@@ -441,10 +441,8 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Persist only after the gate. For an existing thread this reconciles
     // participants and reopens a RESOLVED conversation; for a brand-new one it
-    // creates the Conversation that the gate just cleared and, when a
-    // workflow-origin Message seeded the thread, hydrates its history once.
-    // Existing conversations were hydrated when they were created, so no
-    // per-turn lookup or hydration is needed for them.
+    // creates the Conversation that the gate just cleared and hydrates any
+    // workflow-origin Message that seeded the thread.
     const conversation = await this.openConversationAndMaybeHydrateOrigin(
       agentId,
       config,
@@ -681,14 +679,7 @@ export class AgentInboundHandler implements OnModuleInit {
     });
   }
 
-  /**
-   * Atomically resolves the conversation for this turn and, when it was just
-   * created from a workflow-seeded Message, hydrates workflow-origin history
-   * into it before returning. Keeping create-then-hydrate behind one call
-   * means no caller can read (or short-circuit on) the conversation between
-   * the `_notificationId` stamp and the hydration write — once a caller has
-   * the conversation, hydration has already either run or been attempted.
-   */
+  /** Create/reopen the conversation, then hydrate workflow-origin history if this turn opened a seeded thread. */
   private async openConversationAndMaybeHydrateOrigin(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -709,12 +700,7 @@ export class AgentInboundHandler implements OnModuleInit {
     return conversation;
   }
 
-  /**
-   * Fail-soft lookup of the outbound workflow Message that opened this thread
-   * (stamped by the worker after an agent-assigned chat send). Only called when
-   * no conversation exists yet — an existing conversation was already hydrated
-   * (and stamped with `_notificationId`) on the turn that created it.
-   */
+  /** Outbound workflow Message that opened this thread, if any. Fail-soft — enrichment must not block the turn. */
   private async findWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -737,12 +723,7 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
-  /**
-   * One-shot enrichment on conversation create: write the workflow-origin
-   * message and signal into history so the runtime sees why the thread exists.
-   * Runs only on the turn that created the conversation from a seeded Message —
-   * `_notificationId` on the conversation marks it as already hydrated.
-   */
+  /** Write workflow-origin message + signal into conversation history. Fail-soft. */
   private async hydrateWorkflowOrigin(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -813,8 +794,9 @@ export class AgentInboundHandler implements OnModuleInit {
     const workflowIdentifier = originMessage.templateIdentifier || 'unknown';
     const content = buildWorkflowOriginSummary(workflowIdentifier, storedContent, payload);
 
-    const subscriberId =
-      conversation.participants?.find((p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER)?.id ?? undefined;
+    const subscriberId = conversation.participants.find(
+      (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+    )?.id;
 
     return {
       content,

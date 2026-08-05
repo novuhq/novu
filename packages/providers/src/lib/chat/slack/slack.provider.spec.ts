@@ -256,7 +256,7 @@ test('should trigger Slack app correctly with OAuth and return the message ts as
     }
   );
   expect(result.id).toBe('1234567890.123456');
-  expect((result as { channel?: string }).channel).toBe('C1234567890');
+  expect(result.channel).toBe('C1234567890');
 });
 
 test('should echo the DM conversation from Slack response channel, not the user id we posted to', async () => {
@@ -299,7 +299,7 @@ test('should echo the DM conversation from Slack response channel, not the user 
     }
   );
   expect(result.id).toBe('1777837477.371619');
-  expect((result as { channel?: string }).channel).toBe('D999888777');
+  expect(result.channel).toBe('D999888777');
 });
 
 test('should not echo a channel for Slack webhook sends', async () => {
@@ -319,5 +319,5 @@ test('should not echo a channel for Slack webhook sends', async () => {
     content: 'chat message',
   });
 
-  expect((result as { channel?: string }).channel).toBeUndefined();
+  expect(result.channel).toBeUndefined();
 });

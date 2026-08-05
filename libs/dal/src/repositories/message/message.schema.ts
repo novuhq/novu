@@ -399,8 +399,7 @@ messageSchema.index({
 });
 
 /**
- * Agent workflow-origin hydration: look up the outbound chat Message that opened
- * a platform thread (env + agent + platformThreadId).
+ * Lookup outbound Message by env + agent + platformThreadId (agent workflow-origin hydration).
  */
 messageSchema.index(
   {

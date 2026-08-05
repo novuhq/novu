@@ -1248,9 +1248,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     };
   }
 
-  /**
-   * Find the outbound chat Message that stamped a platform thread bridge for an agent.
-   */
   async findByPlatformThread(
     environmentId: string,
     agentId: string,
@@ -1263,10 +1260,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     });
   }
 
-  /**
-   * Fail-soft post-send stamp of platform thread bridge fields.
-   * Set-if-absent so multi-endpoint fanout keeps the first successful thread id.
-   */
+  /** Set-if-absent so multi-endpoint fanout keeps the first successful thread id. */
   async setPlatformThreadBridge(params: {
     messageId: string;
     environmentId: string;

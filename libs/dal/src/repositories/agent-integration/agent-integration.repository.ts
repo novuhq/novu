@@ -200,15 +200,8 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Identifiers of the integrations currently linked to an agent, resolved in one round trip.
-   *
-   * Channel endpoints reference integrations by identifier rather than by id, so callers
-   * gating delivery on agent linkage only need identifiers — resolving them here saves the
-   * caller a second integration lookup per candidate integration.
-   *
-   * Links whose integration was (soft-)deleted or deactivated are excluded — they cannot
-   * deliver. Tombstoned (disconnected) links are excluded explicitly: the schema-level
-   * exclusion hook does not apply to aggregation pipelines.
+   * Linked integration identifiers for an agent (one round trip).
+   * `disconnectedAt: null` is explicit — aggregation skips the schema exclusion hook.
    */
   async listLinkedIntegrationIdentifiers({
     organizationId,

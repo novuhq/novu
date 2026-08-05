@@ -84,9 +84,8 @@ export class ConversationEntity {
   _agentId: string;
 
   /**
-   * When this conversation was opened from an agent-assigned workflow chat send,
-   * the originating Notification id. Stamped only at creation, where workflow-origin
-   * hydration also runs exactly once — its presence marks the conversation as hydrated.
+   * Originating Notification id when opened from an agent-assigned workflow chat
+   * send. Stamped at creation (hydration runs once on that turn).
    */
   _notificationId?: string;
 

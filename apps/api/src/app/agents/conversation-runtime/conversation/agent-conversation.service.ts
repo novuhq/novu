@@ -73,10 +73,7 @@ export interface CreateOrGetConversationParams {
   workspaceId?: string;
   /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
   identifier?: string;
-  /**
-   * When opening from a workflow-originated platform thread, the originating
-   * Notification id. Stamped only on create (not on reopen of an existing conversation).
-   */
+  /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
   notificationId?: string;
 }
 
@@ -816,11 +813,8 @@ export class AgentConversationService {
   }
 
   /**
-   * Runs once, on the turn that creates a conversation from a workflow-seeded
-   * Message — `_notificationId` on the conversation marks it as hydrated, so
-   * callers never invoke this for existing conversations. The stable
-   * `workflow-dispatch-*` identifiers keep a rare concurrent first-turn race
-   * from double-writing (the loser fails on the unique index).
+   * Persist the workflow-origin message + signal. Stable `workflow-dispatch-*`
+   * identifiers make a concurrent first-turn race lose on the unique index.
    */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
     await this.persistAgentMessage({
