@@ -4,10 +4,11 @@ import { createAuthClient } from 'better-auth/react';
 import { API_HOSTNAME, BETTER_AUTH_BASE_URL } from '@/config';
 
 const baseURL = BETTER_AUTH_BASE_URL || API_HOSTNAME || 'http://localhost:3000';
-const fullBaseURL = `${baseURL}/v1/better-auth`;
+
+export const BETTER_AUTH_API_URL = `${baseURL}/v1/better-auth`;
 
 export const authClient = createAuthClient({
-  baseURL: fullBaseURL,
+  baseURL: BETTER_AUTH_API_URL,
   plugins: [organizationClient(), ssoClient()],
   fetchOptions: {
     credentials: 'include',

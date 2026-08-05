@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getAgentUsage, type GetAgentUsageResponse } from '@/api/agents';
+import { type GetAgentUsageResponse, getAgentUsage } from '@/api/agents';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 

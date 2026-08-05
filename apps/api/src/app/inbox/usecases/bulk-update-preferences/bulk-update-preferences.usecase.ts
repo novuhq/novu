@@ -126,6 +126,7 @@ export class BulkUpdatePreferences {
             in_app: preference.in_app,
             push: preference.push,
             sms: preference.sms,
+            tool: preference.tool,
             workflowIdOrIdentifier: workflowId,
             workflow,
             includeInactiveChannels: false,

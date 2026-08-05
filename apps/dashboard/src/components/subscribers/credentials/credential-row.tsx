@@ -139,15 +139,27 @@ type CredentialRowProps = {
   subscriberId: string;
   readOnly: boolean;
   actions: CredentialActions;
+  /** Opens the add form when the card was just revealed from the section Add picker. */
+  autoStartAdding?: boolean;
+  onAddCancelled?: () => void;
 };
 
-export function CredentialRow({ row, subscriberId, readOnly, actions }: CredentialRowProps) {
+export function CredentialRow({
+  row,
+  subscriberId,
+  readOnly,
+  actions,
+  autoStartAdding = false,
+  onAddCancelled,
+}: CredentialRowProps) {
   if (row.kind === 'chatIntegration') {
     return (
       <ChatIntegrationCard
         row={row}
         subscriberId={subscriberId}
         readOnly={readOnly}
+        autoStartAdding={autoStartAdding}
+        onAddCancelled={onAddCancelled}
         onSaveItem={actions.onSaveItem}
         onDeleteItem={actions.onDeleteItem}
         onAddItem={actions.onAddItem}
@@ -163,6 +175,8 @@ export function CredentialRow({ row, subscriberId, readOnly, actions }: Credenti
     <PushIntegrationCard
       row={row}
       readOnly={readOnly}
+      autoStartAdding={autoStartAdding}
+      onAddCancelled={onAddCancelled}
       onSaveToken={actions.onSaveToken}
       onDeleteToken={actions.onDeleteToken}
     />

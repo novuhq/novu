@@ -403,10 +403,7 @@ export type GetAgentUsageResponse = {
   workflows: AgentWorkflowUsageInfo[];
 };
 
-export async function getAgentUsage(
-  environment: IEnvironment,
-  identifier: string
-): Promise<GetAgentUsageResponse> {
+export async function getAgentUsage(environment: IEnvironment, identifier: string): Promise<GetAgentUsageResponse> {
   const response = await get<{ data: GetAgentUsageResponse } | GetAgentUsageResponse>(
     `/agents/${encodeURIComponent(identifier)}/usage`,
     { environment }

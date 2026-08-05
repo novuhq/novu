@@ -3,10 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { RiCloseLine, RiInformation2Line, RiLoopLeftLine } from 'react-icons/ri';
 import { isDemoManagedClaudeIntegrationSelected } from '@/components/agents/connectors/claude-managed-integrations';
-import {
-  ConnectorIntegrationDropdown,
-  type ConnectorIntegrationStatus,
-} from '@/components/agents/connectors/connector-integration-dropdown';
+import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption, getConnectorById } from '@/components/agents/connectors/connector-options';
 import {
   ConfigureCredentialsSection,
@@ -18,6 +15,7 @@ import { SetupStep } from '@/components/agents/setup-guide-primitives';
 import { Button } from '@/components/primitives/button';
 import { AgentSuggestionPills } from './agent-suggestion-pills';
 import type { AgentGenerationBindings } from './connect-agent-form';
+import { ConnectorIntegrationCards } from './connector-integration-cards';
 import type { ConnectorId } from './connector-options';
 import { GenerationStatus } from './generation-status';
 import { PromptInput } from './prompt-input';
@@ -78,8 +76,6 @@ export function ConnectAgentDemoForm({
   disabled,
   integrations,
   selectedIntegrationId,
-  dropdownStatus,
-  showSavedBadge,
   credentialsPanelVisible,
   credentialsPanelExpanded,
   integrationName,
@@ -117,13 +113,11 @@ export function ConnectAgentDemoForm({
       title="Where your agent runs?"
       description="The platform or framework that hosts and runs your agent today. Novu supports both custom-code and managed-runtime agents."
       fullWidthContent={
-        <div className="mt-1 flex w-full max-w-[500px] flex-col gap-2">
-          <ConnectorIntegrationDropdown
+        <div className="mt-1 flex w-full max-w-[719px] flex-col gap-2">
+          <ConnectorIntegrationCards
             selectedConnectorId={connectorId}
             selectedIntegrationId={selectedIntegrationId}
             integrations={integrations}
-            status={dropdownStatus}
-            showStatusBadge={showSavedBadge}
             disabled={disabled}
             onSelectConnector={onConnectorChange}
             onSelectIntegration={onSelectIntegration}

@@ -8,6 +8,7 @@ export type DefaultTelegramConnectButtonProps = Pick<
   | 'integrationIdentifier'
   | 'subscriberId'
   | 'context'
+  | 'contextHash'
   | 'onConnectSuccess'
   | 'onConnectError'
   | 'onDisconnectSuccess'
@@ -21,6 +22,7 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
     integrationIdentifier,
     subscriberId,
     context,
+    contextHash,
     onConnectSuccess,
     onConnectError,
     onDisconnectSuccess,
@@ -38,6 +40,7 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
           integrationIdentifier,
           subscriberId,
           context,
+          contextHash,
           onConnectSuccess,
           onConnectError,
           onDisconnectSuccess,
@@ -53,6 +56,7 @@ export const DefaultTelegramConnectButton = (props: DefaultTelegramConnectButton
       integrationIdentifier,
       subscriberId,
       context,
+      contextHash,
       onConnectSuccess,
       onConnectError,
       onDisconnectSuccess,

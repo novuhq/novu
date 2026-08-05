@@ -1,12 +1,7 @@
 import { ChannelTypeEnum, DomainRouteTypeEnum, EmailProviderIdEnum, type IEnvironment } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import {
-  getAgent,
-  getAgentDetailQueryKey,
-  getAgentIntegrationsQueryKey,
-  listAgentIntegrations,
-} from '@/api/agents';
+import { getAgent, getAgentDetailQueryKey, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { type DomainResponse, fetchDomainRoutes, fetchDomains } from '@/api/domains';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 
@@ -131,7 +126,9 @@ export function useWorkflowAgentInboundAddresses(agentIdentifier: string | null 
   return {
     addresses,
     primaryAddress: addresses[0],
-    isLoading: Boolean(agentIdentifier) && (agentQuery.isLoading || integrationsQuery.isLoading || customAddressesQuery.isLoading),
+    isLoading:
+      Boolean(agentIdentifier) &&
+      (agentQuery.isLoading || integrationsQuery.isLoading || customAddressesQuery.isLoading),
     isError: agentQuery.isError || integrationsQuery.isError || customAddressesQuery.isError,
   };
 }

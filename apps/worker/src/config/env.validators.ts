@@ -91,8 +91,6 @@ export const envValidators = {
   SQS_DEFAULT_WAIT_TIME_SECONDS: num({ default: undefined }),
   SOCKET_WORKER_URL: str({ default: undefined }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
-  SCHEDULER_URL: str({ default: undefined }),
-  SCHEDULER_API_KEY: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   // Feature Flags

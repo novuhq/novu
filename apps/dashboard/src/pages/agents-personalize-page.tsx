@@ -41,12 +41,17 @@ type SetupHandoffState = {
 
 const PAGE_TITLE = 'Help us personalize your experience';
 
-/** Wraps each question so it rises into place as the previous answer reveals it. */
-function RevealedField({ children }: { children: ReactNode }) {
+/**
+ * Wraps each question so it rises into place as the previous answer reveals it. Hidden questions
+ * stay mounted so the column keeps its full height — otherwise the vertically centered layout would
+ * drag the title and step header upwards every time an answer revealed the next question.
+ */
+function RevealedField({ isRevealed, children }: { isRevealed: boolean; children: ReactNode }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      inert={!isRevealed}
+      initial={false}
+      animate={{ opacity: isRevealed ? 1 : 0, y: isRevealed ? 0 : 12 }}
       transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
     >
       {children}
@@ -226,29 +231,23 @@ export function AgentsPersonalizePage() {
           onChange={handleReadinessChange}
         />
 
-        {readiness ? (
-          <RevealedField>
-            <QuestionSelect
-              label="Who should your agent communicate with?"
-              options={AGENT_AUDIENCE_OPTIONS}
-              value={audience}
-              onChange={handleAudienceChange}
-            />
-          </RevealedField>
-        ) : null}
+        <RevealedField isRevealed={Boolean(readiness)}>
+          <QuestionSelect
+            label="Who should your agent communicate with?"
+            options={AGENT_AUDIENCE_OPTIONS}
+            value={audience}
+            onChange={handleAudienceChange}
+          />
+        </RevealedField>
 
-        {audience ? (
-          <RevealedField>
-            <ChannelQuestion selected={channels} onToggle={handleChannelToggle} />
-          </RevealedField>
-        ) : null}
+        <RevealedField isRevealed={Boolean(audience)}>
+          <ChannelQuestion selected={channels} onToggle={handleChannelToggle} />
+        </RevealedField>
       </div>
 
-      {audience ? (
-        <RevealedField>
-          <OnboardingContinueFooter onContinue={handleContinue} />
-        </RevealedField>
-      ) : null}
+      <RevealedField isRevealed={Boolean(audience)}>
+        <OnboardingContinueFooter onContinue={handleContinue} />
+      </RevealedField>
     </>
   );
 
