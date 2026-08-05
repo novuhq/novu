@@ -226,16 +226,19 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
           from: 'integrations',
           localField: '_integrationId',
           foreignField: '_id',
+          pipeline: [
+            {
+              $match: {
+                deleted: { $ne: true },
+                active: true,
+              },
+            },
+            { $project: { _id: 0, identifier: 1 } },
+          ],
           as: 'integration',
         },
       },
       { $unwind: '$integration' },
-      {
-        $match: {
-          'integration.deleted': { $ne: true },
-          'integration.active': true,
-        },
-      },
       { $group: { _id: '$integration.identifier' } },
     ]);
 

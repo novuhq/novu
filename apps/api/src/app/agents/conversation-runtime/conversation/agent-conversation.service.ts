@@ -230,7 +230,7 @@ export class AgentConversationService {
     const conversation = await this.conversationRepository.create({
       identifier: params.identifier ?? `conv_${shortId(12)}`,
       _agentId: params.agentId,
-      ...(params.notificationId ? { _notificationId: params.notificationId } : {}),
+      _notificationId: params.notificationId,
       participants: [
         { type: params.participantType, id: params.participantId },
         { type: ConversationParticipantTypeEnum.AGENT, id: params.agentId },

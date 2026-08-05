@@ -261,9 +261,9 @@ export class SendMessageChat extends SendMessageBase {
       step.template = template;
     }
 
-    const bridgeOutput = command.bridgeData?.outputs as (ChatOutput & { card?: CardElement }) | undefined;
+    const bridgeOutput = command.bridgeData?.outputs as ChatOutput | undefined;
     let content: string = bridgeOutput?.body || '';
-    const card = bridgeOutput?.card;
+    const card = bridgeOutput?.card as CardElement | undefined;
 
     try {
       if (!command.bridgeData) {
@@ -339,7 +339,6 @@ export class SendMessageChat extends SendMessageBase {
             channel.data as IChannelSettings,
             messageContext.step,
             messageContext.content,
-            messageContext.assignedAgentId,
             messageContext.card
           );
         }
@@ -534,23 +533,8 @@ export class SendMessageChat extends SendMessageBase {
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
     content: string,
-    assignedAgentId: string | null,
     card?: CardElement
   ): Promise<SendMessageResult> {
-    if (assignedAgentId) {
-      await this.createExecutionDetail(
-        command,
-        DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
-        ExecutionDetailsStatusEnum.FAILED,
-        undefined,
-        'Legacy chat channels are not supported for agent-assigned delivery'
-      );
-
-      return {
-        status: SendMessageStatus.FAILED,
-        errorMessage: DetailEnum.CHAT_AGENT_UNSUPPORTED_ENDPOINT,
-      };
-    }
 
     /**
      * Workaround: phone-based chat providers (WhatsApp, Sendblue) behave more like SMS than our
