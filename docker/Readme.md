@@ -10,7 +10,7 @@ You need the following installed in your system:
 
 - [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/)
 - [Git](https://git-scm.com/downloads)
-- Node.js v22.22.1 and pnpm 11.x (to run Novu application services from source)
+- Node.js v22.23.0 and pnpm 11.x (to run Novu application services from source)
 
 ## Quick Start (local development)
 
