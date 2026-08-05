@@ -967,10 +967,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.descrybe.com/mcp',
     category: 'other',
     popular: false,
-    oauth: {
-      mode: McpConnectionAuthModeEnum.Dcr,
-      scopes: ['connect:mcp:read'],
-    },
+    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
   },
   {
     id: 'devrev',
