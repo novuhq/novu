@@ -1,5 +1,5 @@
 import { type IIntegration } from '@novu/shared';
-import { type ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCheckboxCircleFill, RiFileCodeLine } from 'react-icons/ri';
 import {
   getClaudeManagedAgentIntegrations,
@@ -85,9 +85,14 @@ function DemoCardIcon() {
   );
 }
 
-function ConnectAction() {
+function ConnectAction({ isVisible }: { isVisible: boolean }) {
   return (
-    <div className="text-text-sub flex items-center justify-center py-1 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
+    <div
+      className={cn(
+        'text-text-sub flex items-center justify-center py-1 transition-opacity',
+        isVisible ? 'opacity-100' : 'opacity-0'
+      )}
+    >
       <span className="px-0.5 text-label-xs font-medium leading-4">Connect</span>
       <RiArrowRightSLine className="size-4 shrink-0" aria-hidden />
     </div>
@@ -111,6 +116,9 @@ function ConnectorCard({
   comingSoon?: boolean;
   onClick: () => void;
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isConnectVisible = isHovered && !isSelected && !comingSoon;
+
   return (
     <button
       type="button"
@@ -118,6 +126,10 @@ function ConnectorCard({
       disabled={isDisabled}
       aria-disabled={isDisabled || undefined}
       aria-pressed={isSelected || undefined}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
       className={cn(
         'group bg-bg-white border-stroke-weak relative flex h-16 w-[150px] flex-col items-start gap-2 overflow-hidden rounded-lg border p-2 text-left shadow-xs transition-colors',
         'hover:border-stroke-soft focus-visible:border-stroke-soft focus-visible:outline-none',
@@ -130,7 +142,7 @@ function ConnectorCard({
       <div className="flex h-6 w-full items-center justify-between">
         <div className="flex size-6 shrink-0 items-center justify-center">{icon}</div>
         {isSelected ? <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden /> : badge}
-        {!isSelected && !comingSoon ? <ConnectAction /> : null}
+        {!isSelected && !comingSoon ? <ConnectAction isVisible={isConnectVisible} /> : null}
       </div>
       <span
         className={cn(
