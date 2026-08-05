@@ -141,7 +141,7 @@ export function SubscriberSubscriptions({ subscriberId }: SubscriberSubscription
           }
         }}
         topicKey={selectedSubscription?.topic.key}
-        subscriptionId={selectedSubscription?._id}
+        subscriptionIdentifier={selectedSubscription?.identifier}
         subscriberId={selectedSubscription?.subscriber.subscriberId}
       />
       <ConfirmationModal
