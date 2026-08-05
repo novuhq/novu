@@ -4,9 +4,13 @@ import { buildAgentApiRootUrl } from '../../../shared/util/agent-api-root-url';
 import { MCP_OAUTH_CALLBACK_PATH } from './mcp-oauth.constants';
 
 /**
- * Signed payload that round-trips through the provider's OAuth flow as the
- * `state` query parameter. The signature is verified using the originating
- * environment's API key on callback.
+ * Full OAuth callback context. Historically this entire object was signed into
+ * the authorize URL's `state` parameter. Several authorization servers
+ * (notably Campfire) reject `state` values over 512 characters, and
+ * chat-initiated connects with session-resume fields exceed that budget.
+ *
+ * The fat fields now live on `mcp_connection.oauthState.callbackContext` and
+ * only a short opaque {@link McpOAuthStateRef} round-trips through the AS.
  */
 export interface McpOAuthState {
   /** Mongo `Agent._id` of the agent the enablement belongs to. */
@@ -29,14 +33,60 @@ export interface McpOAuthState {
   trustToolsOnConnect?: boolean;
 
   // ── Session resume fields (source: 'user_chat') ──────────────────────
-  // Carried through the OAuth redirect so the callback can resume the
-  // waiting session without additional DB lookups.
+  // Persisted on the connection row (not in the authorize URL) so the
+  // callback can resume the waiting session without blowing AS state limits.
   /** custom_tool_use ID — the callback sends a tool result for this ID to resume the session. */
   toolUseId?: string;
   agentIdentifier?: string;
   integrationIdentifier?: string;
   platform?: string;
   platformThreadId?: string;
+}
+
+/**
+ * Compact signed payload carried as the OAuth `state` query parameter.
+ * Looks up the pending connection via `oauthState.stateNonce` and rebuilds
+ * {@link McpOAuthState} from the stored `callbackContext`.
+ *
+ * `trustToolsOnConnect` stays in the URL (not on the row) so the setup-card
+ * Connect / Auto-approve buttons can share one pending session while still
+ * differing on tool trust.
+ */
+export interface McpOAuthStateRef {
+  v: 1;
+  environmentId: string;
+  organizationId: string;
+  /** Pending `mcp_connection` row — survives callback even after `oauthState` is cleared. */
+  connectionId: string;
+  nonce: string;
+  timestamp: number;
+  trustToolsOnConnect?: boolean;
+}
+
+/**
+ * Chat / analytics fields persisted on the pending connection while OAuth
+ * is in flight. Rehydrated into {@link McpOAuthState} on callback.
+ */
+export type McpOAuthCallbackContext = Omit<
+  McpOAuthState,
+  'environmentId' | 'organizationId' | 'timestamp' | 'trustToolsOnConnect'
+>;
+
+export function isMcpOAuthStateRef(payload: unknown): payload is McpOAuthStateRef {
+  if (!payload || typeof payload !== 'object') {
+    return false;
+  }
+
+  const candidate = payload as Partial<McpOAuthStateRef>;
+
+  return (
+    candidate.v === 1 &&
+    typeof candidate.environmentId === 'string' &&
+    typeof candidate.organizationId === 'string' &&
+    typeof candidate.connectionId === 'string' &&
+    typeof candidate.nonce === 'string' &&
+    typeof candidate.timestamp === 'number'
+  );
 }
 
 export function buildMcpOAuthRedirectUri(): string {
