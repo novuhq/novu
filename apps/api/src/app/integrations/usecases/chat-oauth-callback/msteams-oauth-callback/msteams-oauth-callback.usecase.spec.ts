@@ -384,6 +384,57 @@ describe('MsTeamsOauthCallback', () => {
       }
     });
 
+    function buildAxiosError(status: number, data: Record<string, unknown>) {
+      return Object.assign(new Error(`Request failed with status code ${status}`), {
+        isAxiosError: true,
+        response: { status, data },
+      });
+    }
+
+    it('should return an error page (not 500) when the code exchange is rejected by Azure AD', async () => {
+      axiosPost.onFirstCall().rejects(
+        buildAxiosError(400, {
+          error: 'invalid_grant',
+          error_description: 'AADSTS54005: OAuth2 Authorization code was already redeemed.',
+        })
+      );
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      // Apostrophes are HTML-escaped in the rendered page, so match the escape-free part
+      expect(result.result).to.include('set up Microsoft Teams');
+      expect(result.result).to.include('AADSTS54005');
+      expect(createChannelEndpoint.execute.called).to.be.false;
+    });
+
+    it('should return an error page (not 500) when acquiring the Graph token fails', async () => {
+      stubTokenExchange();
+      msTeamsTokenService.getGraphToken.rejects(
+        buildAxiosError(400, {
+          error: 'unauthorized_client',
+          error_description: `AADSTS700016: Application with identifier '${MOCK_CLIENT_ID}' was not found in the directory.`,
+        })
+      );
+
+      const command = MsTeamsOauthCallbackCommand.create({
+        providerCode: 'auth-code-abc',
+        state: buildLinkUserState(),
+      });
+
+      const result = await usecase.execute(command);
+
+      expect(result.result).to.include('set up Microsoft Teams');
+      expect(result.result).to.include('AADSTS700016');
+      // Propagation-delay hint for the fresh-consent case
+      expect(result.result).to.include('Azure permission changes can take up to 60 minutes');
+      expect(createChannelEndpoint.execute.called).to.be.false;
+    });
+
     it('should throw if id_token is missing from token response', async () => {
       axiosPost.onFirstCall().resolves({ data: { access_token: 'at-123' } });
 
