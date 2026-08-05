@@ -190,9 +190,15 @@ contexts.forEach((context: Context) => {
       const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
       expect(foundWorkflow?._id).to.be.ok;
 
-      await triggerEvent(session, workflowId, subscriber.subscriberId, { name: 'tunnel_user' }, {
-        url: `${bridgeServer.serverPath}/novu`,
-      });
+      await triggerEvent(
+        session,
+        workflowId,
+        subscriber.subscriberId,
+        { name: 'tunnel_user' },
+        {
+          url: `${bridgeServer.serverPath}/novu`,
+        }
+      );
       await session.waitForJobCompletion();
 
       const failedHydrationDetails = await executionDetailsRepository.find({

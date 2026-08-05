@@ -34,7 +34,11 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
   const useAgentDefaults = hasAgent && !useProviderDefaults;
 
   const displaySenderName =
-    previewFrom?.name || fromName || (useAgentDefaults ? agentDefaults.senderName : undefined) || senderName || 'Acme Inc.';
+    previewFrom?.name ||
+    fromName ||
+    (useAgentDefaults ? agentDefaults.senderName : undefined) ||
+    senderName ||
+    'Acme Inc.';
   const displaySenderEmail =
     previewFrom?.email ||
     fromEmail ||

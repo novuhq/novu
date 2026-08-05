@@ -373,11 +373,7 @@ export class SubscribersController {
   ): Promise<GetPreferencesResponseDto[]> {
     const preferences = body.preferences.map((preference) => ({
       workflowId: preference.workflowId,
-      email: preference.channels?.email,
-      sms: preference.channels?.sms,
-      in_app: preference.channels?.in_app,
-      push: preference.channels?.push,
-      chat: preference.channels?.chat,
+      ...preference.channels,
     }));
 
     return await this.bulkUpdatePreferencesUsecase.execute(

@@ -1,3 +1,13 @@
+## v3.18.2 (2026-08-03)
+
+### 🩹 Fixes
+
+- **js,react:** when web locks not available then dont broadcast messages fixes NV-8425 ([#12170](https://github.com/novuhq/novu/pull/12170))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
 ## v3.18.1 (2026-07-23)
 
 ### 🚀 Features

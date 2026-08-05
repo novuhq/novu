@@ -1,0 +1,70 @@
+---
+title: "Email"
+description: "Connect your agent to email: threaded HTML replies, action-link buttons, and tool approval. No typing indicator or plan card."
+sidebarTitle: Email
+---
+
+Use email as a messaging channel for your agent. Novu preserves standard email threading, delivers HTML replies with action links, and can request tool approval in-thread. Email is request/response only: no typing indicator or plan card.
+
+## Capabilities
+
+| Capability | Support |
+| --- | --- |
+| Full context history | Yes |
+| Threaded replies (email threading) | Yes |
+| Live typing indicator | No |
+| React with eyes on the original email | Yes |
+| Plan card | No |
+| Rich text | HTML |
+| Tap-to-respond | Yes (action links in the body) |
+| Emoji reactions | Gmail only (limited set) |
+| Message edits in place | No |
+| Action / MCP tool approval | Yes (action links) |
+| MCP connect card | Yes (action links) |
+| Resolve conversation | Yes |
+| File sharing | Not yet |
+| Streaming word-by-word | Not yet |
+
+Full matrix: [Channels overview](/agents/channels/overview).
+
+## Examples
+
+### Inbound email
+
+A user emails the agent address. Novu reacts with eyes on the original message while the agent runs, then sends a threaded HTML reply with optional action links.
+
+### Tool approval
+
+Gated tools send Approve / Deny action links in a follow-up email. The handler resumes after the user clicks a link.
+
+## Setup
+
+| Framework / Platform | Guide |
+| --- | --- |
+| Custom code agent | Follow a [connect guide](/agents/get-started/ai-sdk), then add email as another provider |
+| Managed agent | [Claude](/agents/get-started/claude-managed) or [AWS Claude](/agents/get-started/aws-claude), then link email in the dashboard |
+
+Email provider credentials are configured in the Novu dashboard when you add the provider.
+
+## Connect component
+
+`@novu/react` does not ship an email connect button. Email connections are address-based: configure the email provider on the agent in the dashboard (or via the [Agents API](/api-reference/agents/create-an-agent-integration)). Users reach the agent by emailing that address; threading is handled by ACI.
+
+For Slack, Teams, and Telegram embeddable buttons, see [Connect components](/agents/custom-code-agent/connect-components).
+
+## Related
+
+<Columns cols={2}>
+  <Card href="/agents/custom-code-agent/building-blocks/reply" title="Reply" icon="message-square">
+    HTML / markdown replies and action links.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval" icon="shield-check">
+    Approve / Deny via action links.
+  </Card>
+  <Card href="/agents/custom-code-agent/building-blocks/signals" title="Signals" icon="radio">
+    Resolve the conversation when the thread is done.
+  </Card>
+  <Card href="/agents/channels/overview" title="Channels overview" icon="table">
+    Compare providers.
+  </Card>
+</Columns>

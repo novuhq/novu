@@ -15,12 +15,22 @@ function deviceTokenField(token: string): CredentialField[] {
 type PushIntegrationCardProps = {
   row: EditableCredentialRow;
   readOnly: boolean;
+  /** When true, opens the add form immediately (used after picking from the section Add picker). */
+  autoStartAdding?: boolean;
+  onAddCancelled?: () => void;
   onSaveToken: (row: EditableCredentialRow, value: string, mode: 'add' | 'edit', index?: number) => Promise<boolean>;
   onDeleteToken: (row: EditableCredentialRow, index: number) => void;
 };
 
-export function PushIntegrationCard({ row, readOnly, onSaveToken, onDeleteToken }: PushIntegrationCardProps) {
-  const [isAdding, setIsAdding] = useState(false);
+export function PushIntegrationCard({
+  row,
+  readOnly,
+  autoStartAdding = false,
+  onAddCancelled,
+  onSaveToken,
+  onDeleteToken,
+}: PushIntegrationCardProps) {
+  const [isAdding, setIsAdding] = useState(autoStartAdding);
 
   const addControl = readOnly ? null : (
     <AddButton
@@ -36,7 +46,11 @@ export function PushIntegrationCard({ row, readOnly, onSaveToken, onDeleteToken 
     <CredentialFormEditor
       fields={deviceTokenField('')}
       onSave={(values) => onSaveToken(row, values.deviceToken, 'add')}
-      onCancel={() => setIsAdding(false)}
+      onCancel={() => {
+        setIsAdding(false);
+        onAddCancelled?.();
+      }}
+      onSaved={() => setIsAdding(false)}
     />
   ) : null;
 

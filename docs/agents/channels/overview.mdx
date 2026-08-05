@@ -1,0 +1,60 @@
+---
+title: "Overview"
+description: "Feature support matrix for Novu Connect on Slack, Microsoft Teams, WhatsApp, Telegram, and email."
+sidebarTitle: Overview
+---
+
+Novu normalizes inbound events and outbound replies, but each provider exposes a different subset of UI features. Use this matrix when implementing replies, typing, edits, and tool approval.
+
+## Supported capabilities
+
+| Capability | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| Full context history | Yes | Yes | Yes | Yes | Yes |
+| Threaded replies | Yes | Yes | Yes | Yes | Yes |
+| Live typing indicator | Yes | Yes | Yes | Yes | No |
+| React with eyes on new message | Yes | Yes | Yes | Yes | Yes |
+| Plan card (chain of thought) | Yes (native) | Markdown edit-in-place | No | Markdown edit-in-place | No |
+| Rich text styling | Yes | Yes | Bold / italics | Yes | HTML |
+| Tap-to-respond (buttons) | Yes | Yes | Yes (up to 3) | Yes | Yes (action links) |
+| Emoji reactions | Yes | Yes | Yes | Yes | Gmail only |
+| Message edits in place | Yes | Yes | Yes | Yes | No |
+| Action / tool approval | Yes | Yes | Yes | Yes | Yes |
+| MCP tool approval | Yes | Yes | Yes | Yes | Yes |
+| MCP connect card | Yes | Yes | Yes | Yes | Yes |
+| Resolve conversation | Yes | Yes | Yes | Yes | Yes |
+| Message queueing | Yes | Yes | Yes | Yes | Yes |
+| Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+
+Word-by-word streaming is not supported on any live channel yet.
+
+## Channel pages
+
+<Columns cols={3}>
+  <Card title="Slack" icon="hash" href="/agents/channels/slack">
+    Block Kit, native plan cards, tool approval.
+  </Card>
+  <Card title="Microsoft Teams" icon="users" href="/agents/channels/microsoft-teams">
+    Adaptive Cards, typing, tool approval.
+  </Card>
+  <Card title="WhatsApp" icon="message-circle" href="/agents/channels/whatsapp">
+    Quick-reply buttons, session context.
+  </Card>
+  <Card title="Telegram" icon="send" href="/agents/channels/telegram">
+    Inline keyboards, edit-in-place plans.
+  </Card>
+  <Card title="Email" icon="mail" href="/agents/channels/email">
+    Threaded HTML, action-link approvals.
+  </Card>
+</Columns>
+
+## Building blocks
+
+Each building block page lists channel support for that API:
+
+- [Reply](/agents/custom-code-agent/building-blocks/reply)
+- [Typing indicator](/agents/custom-code-agent/building-blocks/typing-indicator)
+- [Edit sent messages](/agents/custom-code-agent/building-blocks/edit-sent-messages)
+- [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval)
+- [Signals](/agents/custom-code-agent/building-blocks/signals)
+- [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events)

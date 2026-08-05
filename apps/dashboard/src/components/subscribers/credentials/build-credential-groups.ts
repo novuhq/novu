@@ -79,10 +79,16 @@ export type ChatIntegrationRow = {
 
 export type CredentialRow = EditableCredentialRow | ReadonlyCredentialRow | ChatIntegrationRow;
 
+/** Integrations that can receive new credentials via the section Add picker. */
+export type AddableCredentialRow = EditableCredentialRow | ChatIntegrationRow;
+
 export type ChannelGroup = {
   channel: ChannelTypeEnum;
   label: string;
+  /** Integrations that already have credentials for this subscriber. */
   rows: CredentialRow[];
+  /** Addable integrations with no credentials yet — shown via the section Add picker. */
+  emptyRows: AddableCredentialRow[];
 };
 
 type StoredChannel = {
@@ -347,11 +353,7 @@ function buildChatGroup(
     'phone'
   );
 
-  return {
-    channel: ChannelTypeEnum.CHAT,
-    label: CHANNEL_LABELS[ChannelTypeEnum.CHAT],
-    rows: [...integrationRows, ...phoneBasedRows, ...orphanRows],
-  };
+  return createChannelGroup(ChannelTypeEnum.CHAT, [...integrationRows, ...phoneBasedRows, ...orphanRows]);
 }
 
 /**
@@ -373,11 +375,7 @@ function buildToolGroup(integrations: IIntegration[], channelEndpoints: ChannelE
     skipEmptyNonAddable: true,
   });
 
-  return {
-    channel: ChannelTypeEnum.TOOL,
-    label: CHANNEL_LABELS[ChannelTypeEnum.TOOL],
-    rows: [...integrationRows, ...orphanRows],
-  };
+  return createChannelGroup(ChannelTypeEnum.TOOL, [...integrationRows, ...orphanRows]);
 }
 
 /**
@@ -417,6 +415,59 @@ type BuildCredentialGroupsArgs = {
   includeToolChannel?: boolean;
 };
 
+function hasCredentials(row: CredentialRow): boolean {
+  if (row.kind === 'editable') {
+    return row.values.length > 0;
+  }
+
+  if (row.kind === 'chatIntegration') {
+    return row.items.length > 0;
+  }
+
+  // Readonly rows (email/SMS/phone-based chat) always stay visible — they map to Overview.
+  return true;
+}
+
+function isAddableEmpty(row: CredentialRow): row is AddableCredentialRow {
+  if (row.kind === 'editable') {
+    return row.values.length === 0;
+  }
+
+  if (row.kind === 'chatIntegration') {
+    return row.items.length === 0 && row.addableTypes.length > 0;
+  }
+
+  return false;
+}
+
+/**
+ * Splits a group's rows into configured cards vs addable-but-empty integrations.
+ * Empty chat/tool rows with no addable types are dropped.
+ */
+function partitionGroup(group: ChannelGroup): ChannelGroup {
+  const rows: CredentialRow[] = [];
+  const emptyRows: AddableCredentialRow[] = [];
+
+  for (const row of group.rows) {
+    if (hasCredentials(row)) {
+      rows.push(row);
+    } else if (isAddableEmpty(row)) {
+      emptyRows.push(row);
+    }
+  }
+
+  return { ...group, rows, emptyRows };
+}
+
+function createChannelGroup(channel: ChannelTypeEnum, rows: CredentialRow[]): ChannelGroup {
+  return {
+    channel,
+    label: CHANNEL_LABELS[channel],
+    rows,
+    emptyRows: [],
+  };
+}
+
 export function buildCredentialGroups({
   subscriber,
   integrations,
@@ -430,13 +481,12 @@ export function buildCredentialGroups({
 
   const groups: ChannelGroup[] = GROUP_ORDER.map((channel) => {
     if (channel === ChannelTypeEnum.PUSH) {
-      return {
+      return createChannelGroup(
         channel,
-        label: CHANNEL_LABELS[channel],
-        rows: getActiveIntegrationsByChannel(integrations, ChannelTypeEnum.PUSH).map((integration) =>
+        getActiveIntegrationsByChannel(integrations, ChannelTypeEnum.PUSH).map((integration) =>
           buildEditableIntegrationRow(integration, storedChannels)
-        ),
-      };
+        )
+      );
     }
 
     if (channel === ChannelTypeEnum.CHAT) {
@@ -446,16 +496,12 @@ export function buildCredentialGroups({
     const value = channel === ChannelTypeEnum.EMAIL ? email : phone;
     const overviewField: OverviewField = channel === ChannelTypeEnum.EMAIL ? 'email' : 'phone';
 
-    return {
-      channel,
-      label: CHANNEL_LABELS[channel],
-      rows: buildSingleValueRows(integrations, channel, value, overviewField),
-    };
+    return createChannelGroup(channel, buildSingleValueRows(integrations, channel, value, overviewField));
   });
 
   if (includeToolChannel) {
     groups.push(buildToolGroup(integrations, channelEndpoints));
   }
 
-  return groups.filter((group) => group.rows.length > 0);
+  return groups.map(partitionGroup).filter((group) => group.rows.length > 0 || group.emptyRows.length > 0);
 }
