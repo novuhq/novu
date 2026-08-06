@@ -50,6 +50,7 @@ import { PlatformException } from '../../../shared/utils';
 import {
   extractPushRoutingCredentials,
   hasTokenlessRoutingOverride,
+  isBroadcastRoutingOverride,
   type PushProviderOverride,
   upsertMergedRoutingOverrides,
 } from './fcm-routing-overrides';
@@ -195,17 +196,20 @@ export class SendMessagePush extends SendMessageBase {
      * providerId); only collapse tokenless channels that the override replaces.
      */
     const overrideProviderIds = new Set(channelsFromOverrides.map((channel) => channel.providerId));
+    const overridePayloadByProviderId = new Map(
+      providersWithCredentialOverrides.map((override) => [override.providerId, override.overrides])
+    );
     const tokenlessRoutingProviderIds = new Set<string>();
 
-    const pushChannelsToUse = pushChannels.filter((channel) => {
-      if (this.channelMissingDeviceTokens(channel) && overrideProviderIds.has(channel.providerId)) {
-        return false;
+    const uniqueOverrideChannels = channelsFromOverrides.filter((overrideChannel) => {
+      const overridePayload = overridePayloadByProviderId.get(overrideChannel.providerId);
+
+      if (isBroadcastRoutingOverride(overridePayload)) {
+        tokenlessRoutingProviderIds.add(overrideChannel.providerId);
+
+        return true;
       }
 
-      return true;
-    });
-
-    const uniqueOverrideChannels = channelsFromOverrides.filter((overrideChannel) => {
       // Prefer a channel that already has tokens — otherwise `find()` on an empty-token
       // channel first would add a synthetic override while still keeping the populated one.
       const existingWithTokens = pushChannels.find(
@@ -218,6 +222,24 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       return false;
+    });
+
+    const broadcastOverrideProviderIds = new Set(
+      uniqueOverrideChannels
+        .filter((channel) => isBroadcastRoutingOverride(overridePayloadByProviderId.get(channel.providerId)))
+        .map((channel) => channel.providerId)
+    );
+
+    const pushChannelsToUse = pushChannels.filter((channel) => {
+      if (broadcastOverrideProviderIds.has(channel.providerId)) {
+        return false;
+      }
+
+      if (this.channelMissingDeviceTokens(channel) && overrideProviderIds.has(channel.providerId)) {
+        return false;
+      }
+
+      return true;
     });
 
     const allPushChannels = [...pushChannelsToUse, ...uniqueOverrideChannels];
