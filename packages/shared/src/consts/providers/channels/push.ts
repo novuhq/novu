@@ -72,7 +72,7 @@ export const pushProviders: IProviderConfig[] = [
     credentials: pushWebhookConfig,
     configurations: pushWebhookGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/push/push-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'tool-webhook.svg', dark: 'tool-webhook.svg' },
+    logoFileName: { light: 'webhook.svg', dark: 'webhook.svg' },
     betaVersion: true,
   },
   {

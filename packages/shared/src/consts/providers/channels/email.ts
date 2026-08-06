@@ -195,7 +195,7 @@ export const emailProviders: IProviderConfig[] = [
     credentials: emailWebhookConfig,
     betaVersion: true,
     docReference: `https://docs.novu.co/channels/email/email-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'tool-webhook.svg', dark: 'tool-webhook.svg' },
+    logoFileName: { light: 'webhook.svg', dark: 'webhook.svg' },
   },
   {
     id: EmailProviderIdEnum.NovuAgent,

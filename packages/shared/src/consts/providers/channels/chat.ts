@@ -132,7 +132,7 @@ export const chatProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.CHAT,
     credentials: chatWebhookConfig,
     docReference: `https://docs.novu.co/channels-and-providers/chat/chat-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'tool-webhook.svg', dark: 'tool-webhook.svg' },
+    logoFileName: { light: 'webhook.svg', dark: 'webhook.svg' },
     betaVersion: true,
   },
   {

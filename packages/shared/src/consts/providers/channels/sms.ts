@@ -228,7 +228,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: genericSmsConfig,
     docReference: `https://docs.novu.co/platform/integrations/sms/sms-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'tool-webhook.svg', dark: 'tool-webhook.svg' },
+    logoFileName: { light: 'webhook.svg', dark: 'webhook.svg' },
   },
   {
     id: SmsProviderIdEnum.Clicksend,
