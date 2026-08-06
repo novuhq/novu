@@ -1,7 +1,6 @@
 import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import {
   ChatCardButtonFieldName,
-  ChatCardButtonIssueCodeEnum,
   ContentIssueEnum,
   getChatCardButtonFieldError,
   RuntimeIssue,
@@ -15,15 +14,11 @@ import {
  * unless the value is a variable), and returns one blocking issue per invalid field.
  *
  * The dashboard Actions bubble runs the same shared validator inline, so the footer and the bubble
- * stay consistent.
+ * stay consistent. Issues use the chat-card-specific `CHAT_CARD_INVALID_BUTTON` type (not
+ * `MISSING_VALUE`) so the footer surfaces them even though the enclosing `body` control is non-empty.
  */
 
 const CARD_BUTTON_NODE_TYPE = 'cardButton';
-
-const CODE_TO_ISSUE_TYPE: Record<ChatCardButtonIssueCodeEnum, ContentIssueEnum> = {
-  [ChatCardButtonIssueCodeEnum.REQUIRED]: ContentIssueEnum.MISSING_VALUE,
-  [ChatCardButtonIssueCodeEnum.INVALID_URL]: ContentIssueEnum.INVALID_URL,
-};
 
 function collectCardButtonNodes(node: MailyJSONContent, acc: MailyJSONContent[]): void {
   if (node.type === CARD_BUTTON_NODE_TYPE) {
@@ -71,7 +66,7 @@ export function collectCardButtonFieldIssues(doc: MailyJSONContent): RuntimeIssu
       }
 
       issues.push({
-        issueType: CODE_TO_ISSUE_TYPE[error.code],
+        issueType: ContentIssueEnum.CHAT_CARD_INVALID_BUTTON,
         severity: StepIssueSeverityEnum.ERROR,
         message: annotateButton ? `Button ${index + 1}: ${error.message}` : error.message,
       });

@@ -23,31 +23,33 @@ describe('collectCardButtonFieldIssues', () => {
     expect(issues).toEqual([]);
   });
 
-  it('flags a missing label as a blocking MISSING_VALUE issue', () => {
+  it('flags a missing label as a blocking issue', () => {
     const issues = collectCardButtonFieldIssues(
       doc(cardActions(cardButton({ label: '', url: 'https://example.com' })))
     );
 
     expect(issues).toHaveLength(1);
-    expect(issues[0].issueType).toBe(ContentIssueEnum.MISSING_VALUE);
+    expect(issues[0].issueType).toBe(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
     expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
+    expect(issues[0].message).toContain('Label is required');
   });
 
-  it('flags a missing url as a blocking MISSING_VALUE issue', () => {
+  it('flags a missing url as a blocking issue', () => {
     const issues = collectCardButtonFieldIssues(doc(cardActions(cardButton({ label: 'View', url: '' }))));
 
     expect(issues).toHaveLength(1);
-    expect(issues[0].issueType).toBe(ContentIssueEnum.MISSING_VALUE);
+    expect(issues[0].issueType).toBe(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
     expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
+    expect(issues[0].message).toContain('URL is required');
   });
 
-  it('flags a malformed url as a blocking INVALID_URL issue', () => {
+  it('flags a malformed url as a blocking issue', () => {
     const issues = collectCardButtonFieldIssues(
       doc(cardActions(cardButton({ label: 'View', url: 'not-a-valid-url' })))
     );
 
     expect(issues).toHaveLength(1);
-    expect(issues[0].issueType).toBe(ContentIssueEnum.INVALID_URL);
+    expect(issues[0].issueType).toBe(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
     expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
   });
 

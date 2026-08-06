@@ -523,7 +523,7 @@ describe('Upsert Workflow #novu-v2', () => {
         expect(bodyIssues).to.exist;
         const urlIssue = (bodyIssues ?? []).find((issue) => issue.message.includes('URL is required'));
         expect(urlIssue).to.exist;
-        expect(urlIssue?.issueType).to.equal(ContentIssueEnum.MISSING_VALUE);
+        expect(urlIssue?.issueType).to.equal(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
         expect(urlIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
       });
 
@@ -531,7 +531,9 @@ describe('Upsert Workflow #novu-v2', () => {
         const bodyIssues = await createChatWorkflow(cardBody({ label: 'View', url: 'not-a-valid-url' }));
 
         expect(bodyIssues).to.exist;
-        const urlIssue = (bodyIssues ?? []).find((issue) => issue.issueType === ContentIssueEnum.INVALID_URL);
+        const urlIssue = (bodyIssues ?? []).find(
+          (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
+        );
         expect(urlIssue).to.exist;
         expect(urlIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
       });
@@ -542,7 +544,7 @@ describe('Upsert Workflow #novu-v2', () => {
         expect(bodyIssues).to.exist;
         const labelIssue = (bodyIssues ?? []).find((issue) => issue.message.includes('Label is required'));
         expect(labelIssue).to.exist;
-        expect(labelIssue?.issueType).to.equal(ContentIssueEnum.MISSING_VALUE);
+        expect(labelIssue?.issueType).to.equal(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
         expect(labelIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
       });
 
@@ -551,8 +553,8 @@ describe('Upsert Workflow #novu-v2', () => {
           cardBody({ label: 'View order', url: 'https://example.com/order' })
         );
 
-        const buttonIssues = (bodyIssues ?? []).filter((issue) =>
-          [ContentIssueEnum.MISSING_VALUE, ContentIssueEnum.INVALID_URL].includes(issue.issueType as ContentIssueEnum)
+        const buttonIssues = (bodyIssues ?? []).filter(
+          (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
         );
         expect(buttonIssues).to.have.length(0);
       });
@@ -562,8 +564,10 @@ describe('Upsert Workflow #novu-v2', () => {
           cardBody({ label: 'View', url: 'payload.link', isUrlVariable: true })
         );
 
-        const urlFormatIssues = (bodyIssues ?? []).filter((issue) => issue.issueType === ContentIssueEnum.INVALID_URL);
-        expect(urlFormatIssues).to.have.length(0);
+        const buttonIssues = (bodyIssues ?? []).filter(
+          (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
+        );
+        expect(buttonIssues).to.have.length(0);
       });
 
       it('should not surface link-button issues when the rich chat editor flag is disabled', async () => {
@@ -571,8 +575,8 @@ describe('Upsert Workflow #novu-v2', () => {
 
         try {
           const bodyIssues = await createChatWorkflow(cardBody({ label: '', url: '' }));
-          const buttonIssues = (bodyIssues ?? []).filter((issue) =>
-            [ContentIssueEnum.MISSING_VALUE, ContentIssueEnum.INVALID_URL].includes(issue.issueType as ContentIssueEnum)
+          const buttonIssues = (bodyIssues ?? []).filter(
+            (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
           );
           expect(buttonIssues).to.have.length(0);
         } finally {
