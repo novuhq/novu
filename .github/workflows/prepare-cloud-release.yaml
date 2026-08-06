@@ -129,22 +129,6 @@ jobs:
             exit 1
           fi
 
-      # Runs only after the new release branch was prepared successfully, so a
-      # failed hotfix (invalid PR, conflict, nothing to ship) never leaves us
-      # without an open release PR.
-      - name: Close existing cloud release PRs
-        id: close-existing-prs
-        run: |
-          gh pr list --base prod --state open --json number,headRefName \
-            --jq '.[] | select(.headRefName | startswith("release_")) | [.number, .headRefName] | @tsv' | \
-          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
-            echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
-            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR."
-            git push origin --delete "$BRANCH_NAME" || true
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Push release branch
         run: git push origin ${{ steps.output-variables.outputs.branch_name }}
 
@@ -162,6 +146,25 @@ jobs:
             BODY='Automated daily production Novu Cloud release'
           fi
           echo "pr_url=$(gh pr create --base prod --head ${{ steps.output-variables.outputs.branch_name }} --title "$TITLE" --body "$BODY")" >> "$GITHUB_OUTPUT"
+
+      # Runs only after the replacement release PR exists, so a failure anywhere
+      # earlier (hotfix validation, cherry-pick conflict, branch push, PR
+      # creation) never leaves us without an open cloud release PR.
+      - name: Close superseded cloud release PRs
+        id: close-existing-prs
+        if: ${{ steps.create-pr.outputs.pr_url != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_BRANCH: ${{ steps.output-variables.outputs.branch_name }}
+        run: |
+          gh pr list --base prod --state open --json number,headRefName | \
+          jq -r --arg new_branch "$NEW_BRANCH" \
+            '.[] | select((.headRefName | startswith("release_")) and .headRefName != $new_branch) | [.number, .headRefName] | @tsv' | \
+          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
+            echo "Closing superseded cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
+            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR: ${{ steps.create-pr.outputs.pr_url }}"
+            git push origin --delete "$BRANCH_NAME" || true
+          done
 
       - name: Enable PR automerge
         id: enable-pr-automerge
