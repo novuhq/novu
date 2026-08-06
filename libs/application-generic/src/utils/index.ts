@@ -21,6 +21,7 @@ export * from './hmac';
 export * from './html';
 export * from './inbound-email-references';
 export * from './infobip-sms-credentials';
+export * from './card-button-issues';
 export * from './issues';
 export * from './json-schema-mock';
 export * from './json-schema-utils';

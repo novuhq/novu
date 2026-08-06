@@ -1,0 +1,95 @@
+import { JSONContent as MailyJSONContent } from '@novu/maily-render';
+import { ContentIssueEnum, StepIssueSeverityEnum } from '@novu/shared';
+import { collectCardButtonFieldIssues } from './card-button-issues';
+
+const doc = (...content: MailyJSONContent[]): MailyJSONContent => ({ type: 'doc', content });
+
+const cardActions = (...buttons: MailyJSONContent[]): MailyJSONContent => ({ type: 'cardActions', content: buttons });
+
+const cardButton = (attrs: Record<string, unknown>): MailyJSONContent => ({ type: 'cardButton', attrs });
+
+describe('collectCardButtonFieldIssues', () => {
+  it('returns no issues when there are no card buttons', () => {
+    expect(collectCardButtonFieldIssues(doc({ type: 'paragraph', content: [{ type: 'text', text: 'hi' }] }))).toEqual(
+      []
+    );
+  });
+
+  it('returns no issues for a valid link button', () => {
+    const issues = collectCardButtonFieldIssues(
+      doc(cardActions(cardButton({ label: 'View', url: 'https://example.com' })))
+    );
+
+    expect(issues).toEqual([]);
+  });
+
+  it('flags a missing label as a blocking MISSING_VALUE issue', () => {
+    const issues = collectCardButtonFieldIssues(
+      doc(cardActions(cardButton({ label: '', url: 'https://example.com' })))
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].issueType).toBe(ContentIssueEnum.MISSING_VALUE);
+    expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
+  });
+
+  it('flags a missing url as a blocking MISSING_VALUE issue', () => {
+    const issues = collectCardButtonFieldIssues(doc(cardActions(cardButton({ label: 'View', url: '' }))));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].issueType).toBe(ContentIssueEnum.MISSING_VALUE);
+    expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
+  });
+
+  it('flags a malformed url as a blocking INVALID_URL issue', () => {
+    const issues = collectCardButtonFieldIssues(
+      doc(cardActions(cardButton({ label: 'View', url: 'not-a-valid-url' })))
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].issueType).toBe(ContentIssueEnum.INVALID_URL);
+    expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
+  });
+
+  it('accepts variable-backed label and url values without url-format checks', () => {
+    const issues = collectCardButtonFieldIssues(
+      doc(
+        cardActions(
+          cardButton({ label: 'payload.label', isLabelVariable: true, url: 'payload.url', isUrlVariable: true })
+        )
+      )
+    );
+
+    expect(issues).toEqual([]);
+  });
+
+  it('accepts a text + variable url combination', () => {
+    const issues = collectCardButtonFieldIssues(
+      doc(cardActions(cardButton({ label: 'View', url: 'https://example.com/{{ payload.id }}' })))
+    );
+
+    expect(issues).toEqual([]);
+  });
+
+  it('annotates issues with the button number when there is more than one button', () => {
+    const issues = collectCardButtonFieldIssues(
+      doc(
+        cardActions(
+          cardButton({ label: 'First', url: 'https://example.com' }),
+          cardButton({ label: 'Second', url: '' })
+        )
+      )
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].message).toMatch(/^Button 2:/);
+  });
+
+  it('finds legacy top-level card buttons', () => {
+    const issues = collectCardButtonFieldIssues(doc(cardButton({ label: '', url: '' })));
+
+    // A single button (no annotation) with both fields invalid.
+    expect(issues).toHaveLength(2);
+    expect(issues.every((issue) => !issue.message.startsWith('Button'))).toBe(true);
+  });
+});
