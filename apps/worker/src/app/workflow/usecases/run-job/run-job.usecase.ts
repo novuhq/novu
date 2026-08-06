@@ -615,6 +615,8 @@ export class RunJob {
     let shouldContinueQueueNextJob = true;
 
     while (shouldContinueQueueNextJob) {
+      let isWorkflowHaltedForNextJob = false;
+
       try {
         if (!currentJob) {
           return;
@@ -635,6 +637,10 @@ export class RunJob {
               currentJob: { type: currentJob.type, _id: currentJob._id },
             });
           }
+
+          // No job left in the chain, so the stored attachments can be released.
+          currentJob.payload = getEffectiveJobPayload(currentJob, notification);
+          await this.storageHelperService.deleteAttachments(currentJob.payload?.attachments);
 
           return;
         }
@@ -724,6 +730,7 @@ export class RunJob {
 
         const isHaltingWorkflow = shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error as Error);
         const isLastJobFailed = !jobAfterNext || isHaltingWorkflow;
+        isWorkflowHaltedForNextJob = isHaltingWorkflow;
 
         await this.setJobAsFailed.execute(
           SetJobAsFailedCommand.create({
@@ -768,7 +775,13 @@ export class RunJob {
           // when the job doesn't carry its own. nextJob shares the same
           // notification as the current workflow execution.
           nextJob.payload = getEffectiveJobPayload(nextJob, notification);
-          await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
+
+          // Only release the stored attachments once nothing is left to run. A queued
+          // job still has to download them, and a job that will be retried after a
+          // backoff needs them on its next attempt.
+          if (isWorkflowHaltedForNextJob) {
+            await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
+          }
         }
       }
     }
