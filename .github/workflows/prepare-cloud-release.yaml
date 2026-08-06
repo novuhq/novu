@@ -174,9 +174,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete release branch step on failure
+      # Only clean up the branch when no release PR was created for it. Once the
+      # PR exists it must survive later failures (superseded-PR cleanup,
+      # automerge), otherwise deleting its head branch would leave no viable
+      # cloud release after the older PRs were closed.
+      - name: Delete release branch when no PR was created
         id: delete-branch
-        if: ${{ failure() || steps.create-pr.outputs.pr_url == '' }}
+        if: ${{ !cancelled() && steps.create-pr.outputs.pr_url == '' }}
         run: |
           git push origin -d ${{ steps.output-variables.outputs.branch_name }} || true
 
