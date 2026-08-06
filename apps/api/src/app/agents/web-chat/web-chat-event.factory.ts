@@ -4,6 +4,7 @@ import { shortId } from '@novu/application-generic';
 
 type WebChatFactoryBaseInput = {
   conversationId: string;
+  conversationIdentifier: string;
   agentId: string;
   sequence: number;
   runId?: string;
@@ -68,20 +69,11 @@ export class WebChatEventFactory {
     });
   }
 
-  private build(
-    input: {
-      conversationId: string;
-      agentId: string;
-      sequence: number;
-      runId?: string;
-      turnId?: string;
-      timestamp?: string;
-    },
-    event: AgentEvent
-  ): AgentEventEnvelope {
+  private build(input: WebChatFactoryBaseInput, event: AgentEvent): AgentEventEnvelope {
     return {
       version: AGENT_EVENT_PROTOCOL_VERSION,
       conversationId: input.conversationId,
+      conversationIdentifier: input.conversationIdentifier,
       agentId: input.agentId,
       runId: input.runId ?? `web_${shortId(12)}`,
       turnId: input.turnId ?? `turn_${shortId(12)}`,

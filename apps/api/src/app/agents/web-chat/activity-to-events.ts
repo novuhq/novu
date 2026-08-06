@@ -125,11 +125,12 @@ function buildEnvelope(
   activity: ConversationActivityEntity,
   event: AgentEvent,
   sequence: number,
-  context: { conversationId: string; agentIdentifier: string }
+  context: { conversationId: string; conversationIdentifier: string; agentIdentifier: string }
 ): AgentEventEnvelope {
   return {
     version: AGENT_EVENT_PROTOCOL_VERSION,
     conversationId: context.conversationId,
+    conversationIdentifier: context.conversationIdentifier,
     agentId: context.agentIdentifier,
     runId: 'history',
     turnId: activity.identifier,
@@ -151,7 +152,7 @@ export function isMappableActivity(activity: ConversationActivityEntity): boolea
 
 export function mapActivitiesToEventPage(
   activities: ConversationActivityEntity[],
-  context: { conversationId: string; agentIdentifier: string },
+  context: { conversationId: string; conversationIdentifier: string; agentIdentifier: string },
   options: {
     sequenceOffset?: number;
     afterSequence?: number;

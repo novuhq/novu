@@ -99,6 +99,8 @@ export type AgentEvent =
 export interface AgentEventEnvelope {
   version: typeof AGENT_EVENT_PROTOCOL_VERSION;
   conversationId: string;
+  /** Public `conv_*` identifier. Clients receive only this id, never `conversationId`. */
+  conversationIdentifier?: string;
   agentId: string;
   runId: string;
   turnId: string;

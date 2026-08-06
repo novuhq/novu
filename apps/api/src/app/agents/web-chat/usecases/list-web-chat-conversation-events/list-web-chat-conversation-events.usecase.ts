@@ -78,6 +78,7 @@ export class ListWebChatConversationEvents {
 
     const mapContext = {
       conversationId: conversation._id,
+      conversationIdentifier: conversation.identifier,
       agentIdentifier: agent.identifier,
     };
 
@@ -104,7 +105,7 @@ export class ListWebChatConversationEvents {
   private async fetchAfterSequenceEventPage(
     command: ListWebChatConversationEventsCommand,
     conversationId: string,
-    mapContext: { conversationId: string; agentIdentifier: string }
+    mapContext: { conversationId: string; conversationIdentifier: string; agentIdentifier: string }
   ): Promise<EventPageResult> {
     const page = await this.activityRepository.listEventActivitiesAfterSequence({
       environmentId: command.environmentId,
@@ -130,7 +131,7 @@ export class ListWebChatConversationEvents {
   private async fetchEventPage(
     command: ListWebChatConversationEventsCommand,
     conversationId: string,
-    mapContext: { conversationId: string; agentIdentifier: string },
+    mapContext: { conversationId: string; conversationIdentifier: string; agentIdentifier: string },
     options: {
       activityCursor?: string;
       before?: string;
