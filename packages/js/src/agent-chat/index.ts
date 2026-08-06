@@ -1,2 +1,2 @@
 export { AgentChat } from './agent-chat';
-export type { SendMessageArgs, SendMessageResult } from './types';
+export type { AgentChatMessagesUpdated, AgentMessage, SendMessageArgs, SendMessageResult } from './types';

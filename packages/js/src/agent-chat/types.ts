@@ -1,3 +1,7 @@
+import type { AgentMessage } from '@novu/agent-event-protocol';
+
+export type { AgentMessage };
+
 export type SendMessageArgs = {
   agentId: string;
   text: string;
@@ -7,4 +11,10 @@ export type SendMessageArgs = {
 
 export type SendMessageResult = {
   conversationId: string;
+};
+
+export type AgentChatMessagesUpdated = {
+  agentId: string;
+  conversationId?: string;
+  messages: AgentMessage[];
 };

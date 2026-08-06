@@ -147,6 +147,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.preferences.cache.clearAll();
     this.preferences.scheduleCache.clearAll();
     this.subscriptions.cache.clearAll();
+    this.agentChat.clearCache();
   }
 
   /**

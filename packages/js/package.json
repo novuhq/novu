@@ -98,6 +98,7 @@
     ]
   },
   "devDependencies": {
+    "@novu/agent-event-protocol": "workspace:*",
     "@arethetypeswrong/cli": "^0.17.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^22.0.0",
