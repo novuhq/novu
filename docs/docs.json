@@ -282,6 +282,7 @@
                   "platform/integrations/sms/nexmo",
                   "platform/integrations/sms/plivo",
                   "platform/integrations/sms/sendchamp",
+                  "platform/integrations/sms/sinch",
                   "platform/integrations/sms/simpletexting",
                   "platform/integrations/sms/sms-central",
                   "platform/integrations/sms/sms-webhook",

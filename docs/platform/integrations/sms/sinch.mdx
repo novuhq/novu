@@ -1,0 +1,67 @@
+---
+title: "Sinch SMS Integration with Novu"
+sidebarTitle: "Sinch"
+description: "Connect Sinch to Novu to send SMS notifications through workflows. Store your Service Plan ID, API token, sender, and region in the Novu dashboard."
+---
+
+You can use the [Sinch SMS API](https://developers.sinch.com/docs/sms/getting-started) to send SMS messages to your customers through Novu.
+
+## Setting up Sinch
+
+<Steps>
+<Step title="Create a Sinch account">
+1. Go to the [Sinch Build Dashboard](https://dashboard.sinch.com/) and create an account, or log in if you already have one.
+2. Open the SMS product and confirm you have a virtual number for sending. New accounts usually get a free test number. You can buy more numbers later from the dashboard.
+</Step>
+
+<Step title="Get your Service Plan ID and API token">
+1. In the Sinch Build Dashboard, go to **SMS** then **APIs**.
+2. Under **REST configuration**, copy your **Service Plan ID**.
+3. Click **Show** next to the API token and copy it.
+
+Keep these values handy. Novu needs both to authenticate with Sinch.
+</Step>
+
+<Step title="Note your region and sender">
+Sinch hosts SMS APIs in several regions. Use the same region as your service plan:
+
+| Region value in Novu | Sinch API host |
+| --- | --- |
+| `eu` | `eu.sms.api.sinch.com` (Ireland, Sweden) |
+| `us` | `us.sms.api.sinch.com` |
+| `au` | `au.sms.api.sinch.com` |
+| `br` | `br.sms.api.sinch.com` |
+| `ca` | `ca.sms.api.sinch.com` |
+
+For the **From** field, use a Sinch virtual number assigned to your service plan, or another sender ID Sinch allows for your account and destination country.
+</Step>
+</Steps>
+
+## Creating a Sinch integration with Novu
+
+<Steps>
+<Step title="Connect Sinch to Novu">
+1. Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-sms-sinch) page on Novu.
+2. Click **Add a provider**.
+3. Locate **Sinch** under the SMS section and click **Connect**.
+4. Enter your:
+   - **Service Plan ID**
+   - **API Token**
+   - **Region** (must match your Sinch service plan)
+   - **From** (your Sinch sender number or sender ID)
+5. Click the **Disabled** toggle and mark the integration as **Active**.
+6. Click **Connect**.
+</Step>
+</Steps>
+
+You can now send SMS notifications with Sinch through Novu.
+
+<Note>
+  Some countries restrict which sender IDs you can use. Check Sinch and local regulations for the destinations you send to.
+</Note>
+
+## Next steps
+
+<Card title="Adding SMS Channel" href="/platform/integrations/sms/adding-sms">
+  Learn how to add an SMS step to a workflow and test delivery.
+</Card>
