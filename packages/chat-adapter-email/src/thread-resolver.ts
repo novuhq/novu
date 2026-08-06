@@ -21,6 +21,10 @@ function agentAddressKey(threadId: string): string {
   return `email:thread:${threadId}:agentAddress`;
 }
 
+function normalizeRecipient(address: string): string {
+  return address.trim().toLowerCase();
+}
+
 interface ResolveInput {
   recipientAddress: string;
   messageId: string;
@@ -67,7 +71,11 @@ export class ThreadResolver {
 
     for (const candidate of candidateIds) {
       const existingThread = await state.get<string>(msgKey(candidate));
-      if (existingThread) {
+      // In-Reply-To / References and the sender's own Message-ID are attacker-controlled, so a
+      // tracked thread is only adopted when it already belongs to this sender. Otherwise a reply
+      // naming a stranger's Message-ID would join their conversation, and a mail declaring a
+      // Message-ID the agent later sends would capture that recipient's replies.
+      if (existingThread && this.threadBelongsTo(existingThread, recipientAddress)) {
         await this.trackMessage(existingThread, messageId);
 
         return existingThread;
@@ -129,6 +137,24 @@ export class ThreadResolver {
     const state = this.getState();
 
     return (await state.get<string>(agentAddressKey(threadId))) ?? undefined;
+  }
+
+  /**
+   * Whether a tracked thread ID is owned by `recipientAddress`.
+   *
+   * Compared case-insensitively because inbound addresses arrive lowercased via
+   * `parseEmailAddress` while `openDM()` encodes the caller's raw address; a strict
+   * compare would fork a live thread. An undecodable stored value is treated as
+   * not-owned so a malformed entry can never fail the whole inbound webhook.
+   */
+  private threadBelongsTo(threadId: string, recipientAddress: string): boolean {
+    try {
+      const owner = this.decodeThreadId(threadId).recipientAddress;
+
+      return normalizeRecipient(owner) === normalizeRecipient(recipientAddress);
+    } catch {
+      return false;
+    }
   }
 
   /**

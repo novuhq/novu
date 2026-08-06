@@ -87,7 +87,8 @@ describe('ThreadResolver.resolveThreadId', () => {
   });
 
   it('still prefers a tracked ancestor over the derived root', async () => {
-    await resolver.trackMessage('email:existing:thread', '<middle@mail.gmail.com>');
+    const ownThread = `email:${encodeURIComponent(RECIPIENT)}:existing`;
+    await resolver.trackMessage(ownThread, '<middle@mail.gmail.com>');
 
     const threadId = await resolver.resolveThreadId({
       recipientAddress: RECIPIENT,
@@ -96,7 +97,20 @@ describe('ThreadResolver.resolveThreadId', () => {
       inReplyTo: '<middle@mail.gmail.com>',
     });
 
-    expect(threadId).toBe('email:existing:thread');
+    expect(threadId).toBe(ownThread);
+  });
+
+  it('adopts a tracked ancestor whose owner differs only by address casing', async () => {
+    const ownThread = `email:${encodeURIComponent('alice@example.com')}:existing`;
+    await resolver.trackMessage(ownThread, '<middle@mail.gmail.com>');
+
+    const threadId = await resolver.resolveThreadId({
+      recipientAddress: 'Alice@Example.com',
+      messageId: '<reply-5@mail.gmail.com>',
+      inReplyTo: '<middle@mail.gmail.com>',
+    });
+
+    expect(threadId).toBe(ownThread);
   });
 
   it('keeps different senders on separate threads for the same origin', async () => {
@@ -112,5 +126,36 @@ describe('ThreadResolver.resolveThreadId', () => {
     });
 
     expect(first).not.toBe(second);
+  });
+
+  it('refuses to join a thread owned by another sender', async () => {
+    const victimThread = `email:${encodeURIComponent('victim@example.com')}:${hashMessageId(ORIGIN_ID)}`;
+    // The agent's outbound reply to the victim — its Message-ID travels in every
+    // References header of that thread, so it is not a secret.
+    await resolver.trackMessage(victimThread, '<agent-reply@agentconnect.sh>');
+
+    const threadId = await resolver.resolveThreadId({
+      recipientAddress: 'attacker@example.com',
+      messageId: '<attack@mail.gmail.com>',
+      inReplyTo: '<agent-reply@agentconnect.sh>',
+    });
+
+    expect(threadId).not.toBe(victimThread);
+    expect(resolver.decodeThreadId(threadId).recipientAddress).toBe('attacker@example.com');
+  });
+
+  it('ignores a poisoned message mapping when the real recipient replies', async () => {
+    // An inbound mail may declare any Message-ID, including one the agent will later
+    // send to somebody else — that must not capture the real recipient's replies.
+    const attackerThread = `email:${encodeURIComponent('attacker@example.com')}:deadbeef`;
+    await resolver.trackMessage(attackerThread, ORIGIN_ID);
+
+    const threadId = await resolver.resolveThreadId({
+      recipientAddress: 'victim@example.com',
+      messageId: '<victim-reply@mail.gmail.com>',
+      inReplyTo: ORIGIN_ID,
+    });
+
+    expect(threadId).toBe(`email:${encodeURIComponent('victim@example.com')}:${hashMessageId(ORIGIN_ID)}`);
   });
 });

@@ -708,6 +708,29 @@ describe('AgentInboundHandler', () => {
         expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
       });
 
+      it('should only look up the oldest workflow origin for replies with many minted Message-IDs', async () => {
+        const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
+        const references = Array.from(
+          { length: 25 },
+          (_, index) => `<novu-${index.toString(16).padStart(24, '0')}@agentconnect.sh>`
+        ).join(' ');
+
+        conversationService.findByPlatformThread.resolves(null);
+        messageRepository.findOne.resolves(null);
+
+        await handler.handle(
+          'agent1',
+          emailConfig as any,
+          makeEmailDmThread() as any,
+          makeEmailReply({ references }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(messageRepository.findOne.calledOnce).to.equal(true);
+        expect(messageRepository.findOne.firstCall.args[0]._id).to.equal('000000000000000000000000');
+        expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      });
+
       it('should not query when the reply carries no threading headers', async () => {
         const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
 
@@ -1741,7 +1764,6 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
       expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
-      // The origin must reach history before the runtime reads the conversation.
       expect(conversationService.persistWorkflowOriginHydration.calledBefore(bridgeExecutor.execute)).to.equal(true);
     });
 
@@ -1765,10 +1787,7 @@ describe('AgentInboundHandler', () => {
         makeResolvedSubscriberOverrides()
       );
 
-      // Regression: create + hydrate must be atomic. A link-button click swallowed
-      // right after conversation creation must not skip the one-shot hydration —
-      // otherwise `_notificationId` gets stamped with no origin content ever written,
-      // permanently blocking every later retry.
+      // Link-button early-return must not skip create+hydrate on a new seeded thread.
       conversationService.findByPlatformThread.resolves(null);
       messageRepository.findByAgentIdentifier.resolves({
         _id: 'msg1',

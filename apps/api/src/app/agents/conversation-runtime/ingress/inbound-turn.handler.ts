@@ -215,12 +215,12 @@ function toProviderMessageLookupKey(platformThreadId: string): string {
   return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
 }
 
-/** Novu-minted Message-IDs from inbound `References` / `In-Reply-To`, oldest first. */
-function extractAgentEmailOriginRefs(message: Message): Array<{ originId: string; rfcMessageId: string }> {
+/** Oldest Novu-minted Message-ID from inbound `References`, falling back to `In-Reply-To`. */
+function extractAgentEmailOriginRef(message: Message): { originId: string; rfcMessageId: string } | null {
   const raw = asRecord(message.raw);
 
   if (!raw) {
-    return [];
+    return null;
   }
 
   const candidates = [
@@ -228,17 +228,15 @@ function extractAgentEmailOriginRefs(message: Message): Array<{ originId: string
     ...normalizeReferences(raw.inReplyTo as string | string[] | undefined),
   ];
 
-  const refs: Array<{ originId: string; rfcMessageId: string }> = [];
-
   for (const candidate of candidates) {
     const originId = parseAgentEmailMessageId(candidate);
 
-    if (originId && !refs.some((ref) => ref.originId === originId)) {
-      refs.push({ originId, rfcMessageId: candidate.trim() });
+    if (originId) {
+      return { originId, rfcMessageId: candidate.trim() };
     }
   }
 
-  return refs;
+  return null;
 }
 
 /** Slack provider id is `{channel}:{ts}` — channel ids never contain `:`. */
@@ -697,7 +695,6 @@ export class AgentInboundHandler implements OnModuleInit {
     return platformThreadId.startsWith('web_chat:') ? platformThreadId.slice('web_chat:'.length) : platformThreadId;
   }
 
-  /** Create/reopen the conversation, then hydrate workflow-origin history if this turn opened a seeded thread. */
   private async openConversationAndMaybeHydrateOrigin(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -730,7 +727,7 @@ export class AgentInboundHandler implements OnModuleInit {
     return conversation;
   }
 
-  /** Outbound workflow Message that opened this thread, if any. Fail-soft — enrichment must not block the turn. */
+  /** Fail-soft: origin enrichment must not block the inbound turn. */
   private async findWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -783,30 +780,28 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
-  /** Resolve origin via minted Message-ID in the reply's threading headers. */
   private async findEmailWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,
     subscriberId: string,
     message: Message
   ): Promise<{ message: MessageEntity; platformMessageId: string } | null> {
-    for (const { originId, rfcMessageId } of extractAgentEmailOriginRefs(message)) {
-      const originMessage = await this.messageRepository.findOne({
-        _id: originId,
-        _environmentId: config.environmentId,
-        _agentId: agentId,
-        _subscriberId: subscriberId,
-      });
-
-      if (originMessage) {
-        return { message: originMessage, platformMessageId: rfcMessageId };
-      }
+    const originRef = extractAgentEmailOriginRef(message);
+    if (!originRef) {
+      return null;
     }
 
-    return null;
+    const originMessage = await this.messageRepository.findOne({
+      _id: originRef.originId,
+      _environmentId: config.environmentId,
+      _agentId: agentId,
+      _subscriberId: subscriberId,
+    });
+
+    return originMessage ? { message: originMessage, platformMessageId: originRef.rfcMessageId } : null;
   }
 
-  /** Write workflow-origin message + signal into conversation history. Fail-soft. */
+  /** Fail-soft: origin write must not block the inbound turn. */
   private async hydrateWorkflowOrigin(
     agentId: string,
     config: ResolvedAgentConfig,

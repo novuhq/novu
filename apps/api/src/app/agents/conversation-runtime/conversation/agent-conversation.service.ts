@@ -836,7 +836,7 @@ export class AgentConversationService {
       integrationId: params.channel._integrationId,
       platformThreadId: params.platformThreadId,
       agentId: params.agentIdentifier,
-      content: `Workflow origin: ${String(params.originPayload.workflowIdentifier ?? 'unknown')}`,
+      content: `Workflow origin: ${params.originPayload.workflowIdentifier ?? 'unknown'}`,
       signalData: {
         type: 'workflow_origin',
         payload: params.originPayload,
