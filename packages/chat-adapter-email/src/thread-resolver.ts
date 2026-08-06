@@ -4,6 +4,8 @@ import { hashMessageId } from './utils.js';
 
 const WHITESPACE_RE = /\s+/;
 const STATE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+// Matches appendToList maxLength below — we never emit more than 100 IDs in References.
+const MAX_THREAD_CANDIDATE_LOOKUPS = 100;
 
 function msgKey(messageId: string): string {
   return `email:msg:${messageId}`;
@@ -68,8 +70,9 @@ export class ThreadResolver {
     const { recipientAddress, messageId, inReplyTo, references } = input;
 
     const candidateIds = inReplyTo || references ? this.extractMessageIds(inReplyTo, references) : [];
+    const candidatesToLookup = candidateIds.slice(-MAX_THREAD_CANDIDATE_LOOKUPS);
 
-    for (const candidate of candidateIds) {
+    for (const candidate of candidatesToLookup) {
       const existingThread = await state.get<string>(msgKey(candidate));
       // In-Reply-To / References and the sender's own Message-ID are attacker-controlled, so a
       // tracked thread is only adopted when it already belongs to this sender. Otherwise a reply

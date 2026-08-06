@@ -6,12 +6,16 @@ import { hashMessageId } from './utils.js';
 const RECIPIENT = 'agent@inbox.test';
 const ORIGIN_ID = '<novu-65f1a2b3c4d5e6f7a8b9c0d1@agentconnect.sh>';
 
-function makeState(): StateAdapter {
+function makeState(onGet?: (key: string) => void): StateAdapter {
   const values = new Map<string, unknown>();
   const lists = new Map<string, unknown[]>();
 
   return {
-    get: async (key: string) => values.get(key) ?? null,
+    get: async (key: string) => {
+      onGet?.(key);
+
+      return values.get(key) ?? null;
+    },
     set: async (key: string, value: unknown) => {
       values.set(key, value);
     },
@@ -157,5 +161,24 @@ describe('ThreadResolver.resolveThreadId', () => {
     });
 
     expect(threadId).toBe(`email:${encodeURIComponent('victim@example.com')}:${hashMessageId(ORIGIN_ID)}`);
+  });
+
+  it('bounds state lookups for oversized References headers while preserving the oldest root', async () => {
+    let lookupCount = 0;
+    const references = Array.from({ length: 2_000 }, (_, index) => `<message-${index}@example.com>`);
+    resolver.setStateAdapter(
+      makeState(() => {
+        lookupCount += 1;
+      })
+    );
+
+    const threadId = await resolver.resolveThreadId({
+      recipientAddress: RECIPIENT,
+      messageId: '<oversized-references@example.com>',
+      references: references.join(' '),
+    });
+
+    expect(lookupCount).toBe(100);
+    expect(threadId).toBe(threadIdFor('<message-0@example.com>'));
   });
 });
