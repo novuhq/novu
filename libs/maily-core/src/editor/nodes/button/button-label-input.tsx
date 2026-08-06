@@ -83,9 +83,14 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           'mly-box-border mly-h-6 mly-max-h-6 mly-w-40 mly-rounded-md mly-px-2 mly-pr-6 mly-text-sm mly-text-midnight-gray hover:mly-bg-soft-gray focus:mly-bg-soft-gray focus:mly-outline-none',
           className
         )}
-        onSelectSuggestion={(_provider, _item, formattedValue) => {
-          setIsEditing(false);
-          onValueChange?.(formattedValue, true);
+        onSelectSuggestion={(_provider, _item, formattedValue, isWholeFieldSuggestion) => {
+          // Whole-field variable → pill + is*Variable. Mixed text + `{{var}}` stays free text
+          // (same model as the in-app subject field / NV-8543).
+          if (isWholeFieldSuggestion) {
+            setIsEditing(false);
+          }
+
+          onValueChange?.(formattedValue, isWholeFieldSuggestion);
         }}
         onOutsideClick={() => {
           if (matchingProvider && isVariable) {

@@ -6,13 +6,19 @@ import { cn } from '@/editor/utils/classname';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/editor/utils/constants';
 import { useInlineDecoratorOptions, useVariableOptions } from '@/editor/utils/node-options';
 import { useOutsideClick } from '@/editor/utils/use-outside-click';
+import { resolveSuggestionInsertValue } from './resolve-suggestion-value';
 import { SuggestionItem, SuggestionProvider } from './suggestion-provider';
 import { useActiveSuggestion, useSuggestionProviders } from './use-suggestion-providers';
 
 type SuggestionInputProps = HTMLAttributes<HTMLInputElement> & {
   value: string;
   onValueChange: (value: string) => void;
-  onSelectSuggestion?: (provider: SuggestionProvider, item: SuggestionItem, formattedValue: string) => void;
+  onSelectSuggestion?: (
+    provider: SuggestionProvider,
+    item: SuggestionItem,
+    formattedValue: string,
+    isWholeFieldSuggestion: boolean
+  ) => void;
   enabledProviders?: string[];
   onOutsideClick?: () => void;
   placeholder?: string;
@@ -124,13 +130,21 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
     activeSuggestion.provider.onSelect?.(item, editor);
 
     const formattedValue = activeSuggestion.provider.formatValue(item);
+    const { value: newValue, isWholeFieldSuggestion } = resolveSuggestionInsertValue({
+      currentValue: value,
+      triggerIndex: activeSuggestion.triggerIndex,
+      formattedValue,
+      provider: activeSuggestion.provider,
+    });
 
-    // Replace the trigger + query with the formatted value
-    const beforeTrigger = value.slice(0, activeSuggestion.triggerIndex);
-    const newValue = beforeTrigger + formattedValue;
-
-    onValueChange(newValue);
-    onSelectSuggestion?.(activeSuggestion.provider, item, newValue);
+    // Single update path: when a suggestion callback is provided it owns the write
+    // (including isVariable). Calling onValueChange first used to force isVariable=false
+    // and could leave button URL/label fields as bare text after a mouse pick.
+    if (onSelectSuggestion) {
+      onSelectSuggestion(activeSuggestion.provider, item, newValue, isWholeFieldSuggestion);
+    } else {
+      onValueChange(newValue);
+    }
   };
 
   const isTriggering = !!activeSuggestion && suggestions.length > 0;
@@ -195,7 +209,18 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
               };
             })}
             onSelectItem={(item) => {
-              const suggestion = suggestions.find((s) => s.id === item.name);
+              // Digest variables rewrite `name` before select; fall back to the rewritten id
+              // so mouse picks still resolve instead of silently no-oping.
+              const suggestion =
+                suggestions.find((s) => s.id === item.name) ??
+                (item.name
+                  ? {
+                      id: item.name,
+                      label: item.displayLabel ?? item.name,
+                      data: item,
+                    }
+                  : undefined);
+
               if (suggestion) {
                 handleSelectItem(suggestion);
               }

@@ -91,8 +91,14 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType = forwar
             items?.map((item, index: number) => (
               <button
                 key={index}
+                type="button"
                 ref={(el) => {
                   itemRefs.current[index] = el;
+                }}
+                // Keep the parent SuggestionInput focused so mouse picks don't blur/dismiss
+                // the bubble field before onClick runs (NV-8543).
+                onMouseDown={(e) => {
+                  e.preventDefault();
                 }}
                 onClick={() => onSelectItem(item)}
                 className={cn(
