@@ -215,14 +215,7 @@ function toProviderMessageLookupKey(platformThreadId: string): string {
   return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
 }
 
-/**
- * Novu-minted Message-IDs referenced by an inbound email's threading headers, oldest first.
- * A workflow email sent on behalf of an agent carries a `Message-ID` derived from its
- * `Message._id`, and replies echo that value back in `In-Reply-To` / `References`.
- *
- * The raw header value is kept alongside the decoded id so hydration records the Message-ID
- * exactly as it went out on the wire rather than reconstructing it from a guessed domain.
- */
+/** Novu-minted Message-IDs from inbound `References` / `In-Reply-To`, oldest first. */
 function extractAgentEmailOriginRefs(message: Message): Array<{ originId: string; rfcMessageId: string }> {
   const raw = asRecord(message.raw);
 
@@ -711,7 +704,6 @@ export class AgentInboundHandler implements OnModuleInit {
     existingConversation: ConversationEntity | null,
     platformThreadId: string,
     subscriberId: string | null,
-    /** Absent for action (button-click) turns, which no email platform produces. */
     message: Message | null,
     createParams: Omit<CreateOrGetConversationParams, 'notificationId'>
   ): Promise<ConversationEntity> {
@@ -738,10 +730,7 @@ export class AgentInboundHandler implements OnModuleInit {
     return conversation;
   }
 
-  /**
-   * Outbound workflow Message that opened this thread, if any, together with the platform message
-   * id that identifies it in conversation history. Fail-soft — enrichment must not block the turn.
-   */
+  /** Outbound workflow Message that opened this thread, if any. Fail-soft — enrichment must not block the turn. */
   private async findWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -794,12 +783,7 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
-  /**
-   * Email has no thread id we control at send time, so the reply's own threading headers carry the
-   * correlation: the workflow email's `Message-ID` is minted from its `Message._id`. Scoping the
-   * lookup to environment + agent + subscriber keeps a spoofed header from reaching another
-   * subscriber's message.
-   */
+  /** Resolve origin via minted Message-ID in the reply's threading headers. */
   private async findEmailWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,

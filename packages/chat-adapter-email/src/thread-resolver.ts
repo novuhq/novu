@@ -74,12 +74,8 @@ export class ThreadResolver {
       }
     }
 
-    /*
-     * No tracked ancestor. Root the thread at the oldest referenced message rather than at this
-     * message — `References` is oldest-first per RFC 2822, so every reply in a thread derives the
-     * same id even when state was never seeded (a message sent outside this adapter) or has since
-     * expired. Falling back to the inbound message's own id would fork a thread per reply.
-     */
+    // No tracked ancestor: root at oldest References entry (RFC 2822) so unreplied/expired state
+    // still yields a stable thread id instead of forking on each reply's own Message-ID.
     const rootMessageId = candidateIds[0] ?? messageId;
     const threadId = this.encodeThreadId({ recipientAddress, rootMessageIdHash: hashMessageId(rootMessageId) });
     await this.trackMessage(threadId, messageId);

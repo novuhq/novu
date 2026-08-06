@@ -200,11 +200,6 @@ export class SendMessageEmail extends SendMessageBase {
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
-    /*
-     * Stamped at creation rather than post-send: unlike chat — whose correlation key only exists
-     * once the provider responds — the agent is known up front, and auto-replies can arrive before
-     * a post-send update would land.
-     */
     const assignedAgentId = await this.resolveAssignedAgentId(command);
 
     const message: MessageEntity = await this.messageRepository.create({
@@ -391,12 +386,6 @@ export class SendMessageEmail extends SendMessageBase {
 
     resolvedFromEmail = resolvedFromEmail || integration?.credentials.from || 'no-reply@novu.co';
 
-    /*
-     * Agent sends carry a Message-ID derived from `message._id` so the subscriber's reply — which
-     * echoes it back in In-Reply-To / References — can be traced to this message and hydrate the
-     * agent conversation. `Message.identifier` cannot serve this role: for email it holds the
-     * provider send id and is the join key for delivery/open/bounce webhooks.
-     */
     const agentMessageId = assignedAgentId ? buildAgentEmailMessageId(message._id, resolvedFromEmail) : undefined;
 
     const mailData: IEmailOptions = createMailData(
@@ -436,10 +425,6 @@ export class SendMessageEmail extends SendMessageBase {
     return await this.sendMessage(integration, mailData, message, command);
   }
 
-  /**
-   * Agent that owns this send: job `_agentId` override, else the workflow's agent.
-   * Mirrors the chat channel's resolution so both channels stamp the same value.
-   */
   private async resolveAssignedAgentId(command: SendMessageChannelCommand): Promise<string | null> {
     if (command.job._agentId !== undefined) {
       if (command.job._agentId === null) {
@@ -902,10 +887,7 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
 
   const ipPoolName = overrides?.ipPoolName ? { ipPoolName: overrides?.ipPoolName } : {};
 
-  /*
-   * Overrides win per-header, except Message-ID: a caller-supplied header must not silently break
-   * agent reply correlation, which depends on the exact minted value going out on the wire.
-   */
+  // Prefer overrides, but never let them replace a minted agent Message-ID.
   const headers = { ...options.headers, ...overrides?.headers };
   if (options.headers?.['Message-ID']) {
     headers['Message-ID'] = options.headers['Message-ID'];

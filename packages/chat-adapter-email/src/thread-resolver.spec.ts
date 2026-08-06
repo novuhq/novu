@@ -6,7 +6,6 @@ import { hashMessageId } from './utils.js';
 const RECIPIENT = 'agent@inbox.test';
 const ORIGIN_ID = '<novu-65f1a2b3c4d5e6f7a8b9c0d1@agentconnect.sh>';
 
-/** In-memory stand-in for the Redis-backed adapter; a fresh one models expired/never-seeded state. */
 function makeState(): StateAdapter {
   const values = new Map<string, unknown>();
   const lists = new Map<string, unknown[]>();
@@ -55,7 +54,7 @@ describe('ThreadResolver.resolveThreadId', () => {
       inReplyTo: ORIGIN_ID,
     });
 
-    // A second resolver with empty state stands in for an expired 30-day TTL.
+    // Fresh state = expired / never-seeded TTL.
     const cold = new ThreadResolver();
     cold.setStateAdapter(makeState());
     const second = await cold.resolveThreadId({

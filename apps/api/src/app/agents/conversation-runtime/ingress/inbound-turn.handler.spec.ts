@@ -603,7 +603,6 @@ describe('AgentInboundHandler', () => {
           templateIdentifier: 'order-alerts',
           stepId: 'email-1',
           content: 'Order ORD-1 shipped',
-          // Provider send id — reserved for delivery webhooks, never the correlation key.
           identifier: 'provider-send-id',
         };
       }
@@ -671,7 +670,6 @@ describe('AgentInboundHandler', () => {
         );
 
         conversationService.findByPlatformThread.resolves(null);
-        // The scoped query is the guard: a spoofed reference matches nothing for this subscriber.
         messageRepository.findOne.callsFake(async (query: { _subscriberId: string }) =>
           query._subscriberId === 'subscriber-mongo-1' ? makeOriginMessage() : null
         );
