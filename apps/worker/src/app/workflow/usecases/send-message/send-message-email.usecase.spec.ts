@@ -35,7 +35,8 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
       featureFlagService as never,
       {} as never,
       sendWebhookMessage as never,
-      { resolveAgentEmailContext: sinon.stub().resolves({}) } as never
+      { resolveAgentEmailContext: sinon.stub().resolves({}) } as never,
+      { findOne: sinon.stub().resolves(null) } as never
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
@@ -179,16 +180,23 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
 });
 
 describe('SendMessageEmail - agent sender / reply-to precedence', () => {
-  function buildUsecase(agentStubs?: {
-    replyTo?: string;
-    senderName?: string;
-    senderEmail?: string;
-  }) {
+  const AGENT_ID = 'aaaaaaaaaaaaaaaaaaaaaaa1';
+  const MESSAGE_ID = '65f1a2b3c4d5e6f7a8b9c0d1';
+
+  function buildUsecase(
+    agentStubs?: {
+      replyTo?: string;
+      senderName?: string;
+      senderEmail?: string;
+    },
+    providerOverrides: Record<string, unknown> = {}
+  ) {
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const messageRepository = {
-      create: sinon.stub().resolves({ _id: 'msg_1' }),
+      create: sinon.stub().resolves({ _id: MESSAGE_ID }),
       update: sinon.stub().resolves(undefined),
     };
+    const agentRepository = { findOne: sinon.stub().resolves({ _id: AGENT_ID }) };
     const resolveAgentInboundAddresses = {
       resolveAgentEmailContext: sinon.stub().resolves({
         replyTo: agentStubs?.replyTo,
@@ -216,7 +224,8 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
       { getFlag: sinon.stub().resolves(true) } as never,
       {} as never,
       { execute: sinon.stub().resolves(undefined) } as never,
-      resolveAgentInboundAddresses as never
+      resolveAgentInboundAddresses as never,
+      agentRepository as never
     );
 
     sinon.stub(usecase as never, 'getIntegration').resolves({
@@ -232,9 +241,9 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     sinon.stub(usecase as never, 'sendSelectedIntegrationExecution').resolves(undefined);
     sinon.stub(usecase as never, 'initiateTranslations').resolves(undefined);
     sinon.stub(usecase as never, 'storeContent').returns(false);
-    sinon.stub(usecase as never, 'buildEmailProviderOverrides').returns({});
+    sinon.stub(usecase as never, 'buildEmailProviderOverrides').returns(providerOverrides);
 
-    return { usecase, resolveAgentInboundAddresses };
+    return { usecase, resolveAgentInboundAddresses, messageRepository, agentRepository };
   }
 
   function buildCommand(
@@ -392,5 +401,91 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     // Still resolves once for reply-to (sender is skipped via useProviderDefaults)
     expect(resolveAgentInboundAddresses.resolveAgentEmailContext.calledOnce).to.equal(true);
     expect(sendStub.firstCall.args[0].from).to.equal('integration@test.com');
+  });
+
+  describe('agent reply correlation', () => {
+    it('stamps _agentId at creation and mints a Message-ID on the sender domain', async () => {
+      const { usecase, messageRepository, agentRepository } = buildUsecase({
+        senderEmail: 'agent@inbox.com',
+        replyTo: 'agent@inbox.com',
+      });
+      const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      await usecase.execute(buildCommand());
+
+      expect(agentRepository.findOne.firstCall.args[0]).to.deep.equal({
+        identifier: 'support-bot',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+      });
+      expect(messageRepository.create.firstCall.args[0]._agentId).to.equal(AGENT_ID);
+      expect(sendStub.firstCall.args[0].headers['Message-ID']).to.equal(`<novu-${MESSAGE_ID}@inbox.com>`);
+    });
+
+    it('resolves the agent from job _agentId without querying the repository', async () => {
+      const { usecase, messageRepository, agentRepository } = buildUsecase({
+        senderEmail: 'trigger@inbox.com',
+      });
+      const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      await usecase.execute(buildCommand({}, { jobAgentId: 'bbbbbbbbbbbbbbbbbbbbbbb1' }));
+
+      expect(agentRepository.findOne.called).to.equal(false);
+      expect(messageRepository.create.firstCall.args[0]._agentId).to.equal('bbbbbbbbbbbbbbbbbbbbbbb1');
+      expect(sendStub.firstCall.args[0].headers['Message-ID']).to.equal(`<novu-${MESSAGE_ID}@inbox.com>`);
+    });
+
+    it('leaves non-agent sends untouched', async () => {
+      const { usecase, messageRepository } = buildUsecase();
+      const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      await usecase.execute(buildCommand({}, { jobAgentId: null }));
+
+      expect(messageRepository.create.firstCall.args[0]).to.not.have.property('_agentId');
+      expect(sendStub.firstCall.args[0].headers).to.deep.equal({});
+    });
+
+    it('keeps the post-send identifier update on the provider send id', async () => {
+      const { usecase, messageRepository } = buildUsecase({ senderEmail: 'agent@inbox.com' });
+      const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      await usecase.execute(buildCommand());
+
+      const updateCall = messageRepository.update
+        .getCalls()
+        .find((call) => call.args[1]?.$set?.identifier !== undefined);
+
+      expect(updateCall?.args[1].$set.identifier).to.equal('provider_send_1');
+    });
+
+    it('merges override headers but keeps the minted Message-ID', async () => {
+      const { usecase } = buildUsecase(
+        { senderEmail: 'agent@inbox.com' },
+        { headers: { 'X-Custom': 'kept', 'Message-ID': '<spoofed@evil.example>' } }
+      );
+      const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      await usecase.execute(buildCommand());
+
+      expect(sendStub.firstCall.args[0].headers).to.deep.equal({
+        'X-Custom': 'kept',
+        'Message-ID': `<novu-${MESSAGE_ID}@inbox.com>`,
+      });
+    });
+
+    it('lets override headers through untouched for non-agent sends', async () => {
+      const { usecase } = buildUsecase(undefined, { headers: { 'Message-ID': '<caller@example.com>' } });
+      const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
+
+      await usecase.execute(buildCommand({}, { jobAgentId: null }));
+
+      expect(sendStub.firstCall.args[0].headers['Message-ID']).to.equal('<caller@example.com>');
+    });
   });
 });

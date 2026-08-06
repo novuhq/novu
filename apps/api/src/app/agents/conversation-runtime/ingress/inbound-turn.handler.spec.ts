@@ -579,6 +579,155 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
     });
 
+    describe('email workflow origin hydration', () => {
+      const ORIGIN_MESSAGE_ID = '65f1a2b3c4d5e6f7a8b9c0d1';
+      const MINTED_ID = `<novu-${ORIGIN_MESSAGE_ID}@agentconnect.sh>`;
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+      };
+
+      function makeEmailReply(raw: Record<string, unknown>) {
+        const message = makeEmailDmMessage('member@example.com');
+
+        return { ...message, raw: { ...message.raw, ...raw } };
+      }
+
+      function makeOriginMessage() {
+        return {
+          _id: ORIGIN_MESSAGE_ID,
+          _notificationId: 'notif1',
+          _jobId: 'job1',
+          transactionId: 'txn1',
+          templateIdentifier: 'order-alerts',
+          stepId: 'email-1',
+          content: 'Order ORD-1 shipped',
+          // Provider send id — reserved for delivery webhooks, never the correlation key.
+          identifier: 'provider-send-id',
+        };
+      }
+
+      it('should hydrate the workflow origin referenced by In-Reply-To', async () => {
+        const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
+          makeResolvedSubscriberOverrides()
+        );
+
+        conversationService.findByPlatformThread.resolves(null);
+        messageRepository.findOne.resolves(makeOriginMessage());
+        notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+
+        await handler.handle(
+          'agent1',
+          emailConfig as any,
+          makeEmailDmThread() as any,
+          makeEmailReply({ inReplyTo: MINTED_ID }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(messageRepository.findByAgentIdentifier.called).to.equal(false);
+        expect(messageRepository.findOne.calledOnce).to.equal(true);
+        expect(messageRepository.findOne.firstCall.args[0]).to.deep.equal({
+          _id: ORIGIN_MESSAGE_ID,
+          _environmentId: 'env1',
+          _agentId: 'agent1',
+          _subscriberId: 'subscriber-mongo-1',
+        });
+        expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
+
+        const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
+        expect(hydrateArgs.platformMessageId).to.equal(MINTED_ID);
+        expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
+        expect(hydrateArgs.content).to.equal(
+          'Order ORD-1 shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-1"\n}'
+        );
+      });
+
+      it('should find the origin among mixed References and ignore foreign ids', async () => {
+        const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
+
+        conversationService.findByPlatformThread.resolves(null);
+        messageRepository.findOne.resolves(makeOriginMessage());
+
+        await handler.handle(
+          'agent1',
+          emailConfig as any,
+          makeEmailDmThread() as any,
+          makeEmailReply({
+            references: `<CAJ1x0y2@mail.gmail.com> ${MINTED_ID} <b0b0@mail.gmail.com>`,
+            inReplyTo: '<b0b0@mail.gmail.com>',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(messageRepository.findOne.calledOnce).to.equal(true);
+        expect(messageRepository.findOne.firstCall.args[0]._id).to.equal(ORIGIN_MESSAGE_ID);
+        expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+      });
+
+      it('should not hydrate when the referenced message belongs to another subscriber', async () => {
+        const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
+          makeResolvedSubscriberOverrides('attacker-subscriber', 'attacker-mongo')
+        );
+
+        conversationService.findByPlatformThread.resolves(null);
+        // The scoped query is the guard: a spoofed reference matches nothing for this subscriber.
+        messageRepository.findOne.callsFake(async (query: { _subscriberId: string }) =>
+          query._subscriberId === 'subscriber-mongo-1' ? makeOriginMessage() : null
+        );
+
+        await handler.handle(
+          'agent1',
+          emailConfig as any,
+          makeEmailDmThread() as any,
+          makeEmailReply({ inReplyTo: MINTED_ID }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(messageRepository.findOne.firstCall.args[0]._subscriberId).to.equal('attacker-mongo');
+        expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal(undefined);
+        expect(notificationRepository.findOne.called).to.equal(false);
+        expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      });
+
+      it('should not query for foreign or malformed Message-IDs', async () => {
+        const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
+
+        conversationService.findByPlatformThread.resolves(null);
+
+        await handler.handle(
+          'agent1',
+          emailConfig as any,
+          makeEmailDmThread() as any,
+          makeEmailReply({
+            references: '<CAJ1x0y2@mail.gmail.com> <novu-nothex@agentconnect.sh>',
+            inReplyTo: '<010001900abc@eu-west-1.amazonses.com>',
+          }) as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(messageRepository.findOne.called).to.equal(false);
+        expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      });
+
+      it('should not query when the reply carries no threading headers', async () => {
+        const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
+
+        conversationService.findByPlatformThread.resolves(null);
+
+        await handler.handle(
+          'agent1',
+          emailConfig as any,
+          makeEmailDmThread() as any,
+          makeEmailDmMessage('member@example.com') as any,
+          AgentEventEnum.ON_MESSAGE
+        );
+
+        expect(messageRepository.findOne.called).to.equal(false);
+        expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      });
+    });
+
     it('should store and forward inbound WhatsApp attachments', async () => {
       const storedAttachments = [
         {

@@ -10,6 +10,13 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/chat-adapter-email run test",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

@@ -15,7 +15,9 @@
     "build": "tsc -p tsconfig.json",
     "watch:build": "tsc -p tsconfig.json -w",
     "check": "biome check .",
-    "check:fix": "biome check --write ."
+    "check:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@novu/shared": "workspace:*",
@@ -34,6 +36,7 @@
     "react": "^19.2.3",
     "rimraf": "~3.0.2",
     "typescript": "5.6.2",
+    "vitest": "^4.1.0",
     "zod": "3.25.20"
   },
   "nx": {

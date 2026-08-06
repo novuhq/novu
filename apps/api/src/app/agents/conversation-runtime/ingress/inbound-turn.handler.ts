@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, normalizeReferences, PinoLogger, parseAgentEmailMessageId } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -213,6 +213,39 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
 /** Conversation uses `slack:{channel}:{ts}`; Message.identifier stores bare `{channel}:{ts}`. */
 function toProviderMessageLookupKey(platformThreadId: string): string {
   return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
+}
+
+/**
+ * Novu-minted Message-IDs referenced by an inbound email's threading headers, oldest first.
+ * A workflow email sent on behalf of an agent carries a `Message-ID` derived from its
+ * `Message._id`, and replies echo that value back in `In-Reply-To` / `References`.
+ *
+ * The raw header value is kept alongside the decoded id so hydration records the Message-ID
+ * exactly as it went out on the wire rather than reconstructing it from a guessed domain.
+ */
+function extractAgentEmailOriginRefs(message: Message): Array<{ originId: string; rfcMessageId: string }> {
+  const raw = asRecord(message.raw);
+
+  if (!raw) {
+    return [];
+  }
+
+  const candidates = [
+    ...normalizeReferences(raw.references as string | string[] | undefined),
+    ...normalizeReferences(raw.inReplyTo as string | string[] | undefined),
+  ];
+
+  const refs: Array<{ originId: string; rfcMessageId: string }> = [];
+
+  for (const candidate of candidates) {
+    const originId = parseAgentEmailMessageId(candidate);
+
+    if (originId && !refs.some((ref) => ref.originId === originId)) {
+      refs.push({ originId, rfcMessageId: candidate.trim() });
+    }
+  }
+
+  return refs;
 }
 
 /** Slack provider id is `{channel}:{ts}` — channel ids never contain `:`. */
@@ -468,6 +501,7 @@ export class AgentInboundHandler implements OnModuleInit {
       existingConversation,
       platformThreadId,
       subscriberId,
+      message,
       {
         environmentId: config.environmentId,
         organizationId: config.organizationId,
@@ -677,31 +711,44 @@ export class AgentInboundHandler implements OnModuleInit {
     existingConversation: ConversationEntity | null,
     platformThreadId: string,
     subscriberId: string | null,
+    /** Absent for action (button-click) turns, which no email platform produces. */
+    message: Message | null,
     createParams: Omit<CreateOrGetConversationParams, 'notificationId'>
   ): Promise<ConversationEntity> {
-    const seededMessage = existingConversation
+    const seeded = existingConversation
       ? null
-      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId);
+      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId, message);
 
     const conversation = await this.conversationService.createOrGetConversation({
       ...createParams,
-      notificationId: seededMessage?._notificationId,
+      notificationId: seeded?.message._notificationId,
     });
 
-    if (seededMessage) {
-      await this.hydrateWorkflowOrigin(agentId, config, conversation, platformThreadId, seededMessage);
+    if (seeded) {
+      await this.hydrateWorkflowOrigin(
+        agentId,
+        config,
+        conversation,
+        platformThreadId,
+        seeded.message,
+        seeded.platformMessageId
+      );
     }
 
     return conversation;
   }
 
-  /** Outbound workflow Message that opened this thread, if any. Fail-soft — enrichment must not block the turn. */
+  /**
+   * Outbound workflow Message that opened this thread, if any, together with the platform message
+   * id that identifies it in conversation history. Fail-soft — enrichment must not block the turn.
+   */
   private async findWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,
     platformThreadId: string,
-    subscriberId: string | null
-  ): Promise<MessageEntity | null> {
+    subscriberId: string | null,
+    message: Message | null
+  ): Promise<{ message: MessageEntity; platformMessageId: string } | null> {
     if (!subscriberId) {
       return null;
     }
@@ -712,14 +759,26 @@ export class AgentInboundHandler implements OnModuleInit {
         return null;
       }
 
+      if (config.platform === AgentPlatformEnum.EMAIL) {
+        return message ? await this.findEmailWorkflowOriginMessage(agentId, config, subscriber._id, message) : null;
+      }
+
       const identifier = toProviderMessageLookupKey(platformThreadId);
 
-      return await this.messageRepository.findByAgentIdentifier(
+      const originMessage = await this.messageRepository.findByAgentIdentifier(
         config.environmentId,
         agentId,
         identifier,
         subscriber._id
       );
+
+      if (!originMessage?.identifier) {
+        return null;
+      }
+
+      const platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
+
+      return platformMessageId ? { message: originMessage, platformMessageId } : null;
     } catch (err) {
       captureAgentWarning(err, {
         component: 'agent-inbound-handler',
@@ -735,20 +794,44 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  /**
+   * Email has no thread id we control at send time, so the reply's own threading headers carry the
+   * correlation: the workflow email's `Message-ID` is minted from its `Message._id`. Scoping the
+   * lookup to environment + agent + subscriber keeps a spoofed header from reaching another
+   * subscriber's message.
+   */
+  private async findEmailWorkflowOriginMessage(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    subscriberId: string,
+    message: Message
+  ): Promise<{ message: MessageEntity; platformMessageId: string } | null> {
+    for (const { originId, rfcMessageId } of extractAgentEmailOriginRefs(message)) {
+      const originMessage = await this.messageRepository.findOne({
+        _id: originId,
+        _environmentId: config.environmentId,
+        _agentId: agentId,
+        _subscriberId: subscriberId,
+      });
+
+      if (originMessage) {
+        return { message: originMessage, platformMessageId: rfcMessageId };
+      }
+    }
+
+    return null;
+  }
+
   /** Write workflow-origin message + signal into conversation history. Fail-soft. */
   private async hydrateWorkflowOrigin(
     agentId: string,
     config: ResolvedAgentConfig,
     conversation: ConversationEntity,
     platformThreadId: string,
-    originMessage: MessageEntity
+    originMessage: MessageEntity,
+    platformMessageId: string
   ): Promise<void> {
-    if (!originMessage._notificationId || !originMessage.identifier) {
-      return;
-    }
-
-    const platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
-    if (!platformMessageId) {
+    if (!originMessage._notificationId) {
       return;
     }
 
@@ -1316,6 +1399,7 @@ export class AgentInboundHandler implements OnModuleInit {
       existingConversation,
       thread.id,
       subscriberId,
+      null,
       {
         environmentId: config.environmentId,
         organizationId: config.organizationId,

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   type AgentEmailContext,
+  buildAgentEmailMessageId,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CreateExecutionDetails,
@@ -21,6 +22,7 @@ import {
   SendWebhookMessage,
 } from '@novu/application-generic';
 import {
+  AgentRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
@@ -73,7 +75,8 @@ export class SendMessageEmail extends SendMessageBase {
     private featureFlagService: FeatureFlagsService,
     private getLayoutUseCaseV0: GetLayoutUseCaseV0,
     private sendWebhookMessage: SendWebhookMessage,
-    private resolveAgentInboundAddresses: ResolveAgentInboundAddresses
+    private resolveAgentInboundAddresses: ResolveAgentInboundAddresses,
+    private agentRepository: AgentRepository
   ) {
     super(
       messageRepository,
@@ -197,6 +200,13 @@ export class SendMessageEmail extends SendMessageBase {
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
+    /*
+     * Stamped at creation rather than post-send: unlike chat — whose correlation key only exists
+     * once the provider responds — the agent is known up front, and auto-replies can arrive before
+     * a post-send update would land.
+     */
+    const assignedAgentId = await this.resolveAssignedAgentId(command);
+
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
       _environmentId: command.environmentId,
@@ -217,6 +227,7 @@ export class SendMessageEmail extends SendMessageBase {
       tags: command.tags,
       severity: command.severity,
       contextKeys: command.contextKeys,
+      ...(assignedAgentId ? { _agentId: assignedAgentId } : {}),
     });
 
     let replyToAddress: string | undefined;
@@ -380,6 +391,14 @@ export class SendMessageEmail extends SendMessageBase {
 
     resolvedFromEmail = resolvedFromEmail || integration?.credentials.from || 'no-reply@novu.co';
 
+    /*
+     * Agent sends carry a Message-ID derived from `message._id` so the subscriber's reply — which
+     * echoes it back in In-Reply-To / References — can be traced to this message and hydrate the
+     * agent conversation. `Message.identifier` cannot serve this role: for email it holds the
+     * provider send id and is the join key for delivery/open/bounce webhooks.
+     */
+    const agentMessageId = assignedAgentId ? buildAgentEmailMessageId(message._id, resolvedFromEmail) : undefined;
+
     const mailData: IEmailOptions = createMailData(
       {
         // @ts-expect-error
@@ -391,6 +410,7 @@ export class SendMessageEmail extends SendMessageBase {
         senderName: resolvedSenderName,
         id: message._id,
         replyTo: replyToAddress,
+        ...(agentMessageId ? { headers: { 'Message-ID': agentMessageId } } : {}),
         notificationDetails: {
           transactionId: command.transactionId,
           workflowIdentifier: command.identifier,
@@ -414,6 +434,36 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     return await this.sendMessage(integration, mailData, message, command);
+  }
+
+  /**
+   * Agent that owns this send: job `_agentId` override, else the workflow's agent.
+   * Mirrors the chat channel's resolution so both channels stamp the same value.
+   */
+  private async resolveAssignedAgentId(command: SendMessageChannelCommand): Promise<string | null> {
+    if (command.job._agentId !== undefined) {
+      if (command.job._agentId === null) {
+        return null;
+      }
+
+      return String(command.job._agentId);
+    }
+
+    const workflowAgent = command.workflow?.agent;
+    if (!workflowAgent?.identifier) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: workflowAgent.identifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    return agent?._id ? String(agent._id) : null;
   }
 
   /**
@@ -852,6 +902,15 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
 
   const ipPoolName = overrides?.ipPoolName ? { ipPoolName: overrides?.ipPoolName } : {};
 
+  /*
+   * Overrides win per-header, except Message-ID: a caller-supplied header must not silently break
+   * agent reply correlation, which depends on the exact minted value going out on the wire.
+   */
+  const headers = { ...options.headers, ...overrides?.headers };
+  if (options.headers?.['Message-ID']) {
+    headers['Message-ID'] = options.headers['Message-ID'];
+  }
+
   return {
     ...options,
     to,
@@ -864,7 +923,7 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
     senderName: overrides?.senderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
-    headers: overrides?.headers || {},
+    headers,
   };
 };
 
