@@ -457,7 +457,7 @@ export class RunJob {
           workflow: this.buildStatelessWorkflowForRuns(job),
         });
         // Remove the attachments if the job should not be queued
-        await this.storageHelperService.deleteAttachments(job.payload?.attachments);
+        await this.deleteChainAttachments(job, notification);
       }
     }
   }
@@ -637,15 +637,12 @@ export class RunJob {
 
             /*
              * The chain is finished, so no later step needs the stored
-             * attachments anymore. They are deleted from the executed job's
-             * payload — the one `getAttachments` hydrated — rather than from the
-             * chain cursor, which may be a skipped tail step that never
-             * hydrated. Under payload-dedup the payload lives on the parent
-             * notification when the job carries none. Skipped when the current
-             * job errored, so its retries still find the files.
+             * attachments anymore. Cleaned up from the executed job rather than
+             * the chain cursor, which may be a skipped tail step whose payload
+             * was never hydrated. Skipped when the current job errored, so its
+             * retries still find the files.
              */
-            job.payload = getEffectiveJobPayload(job, notification);
-            await this.storageHelperService.deleteAttachments(job.payload?.attachments);
+            await this.deleteChainAttachments(job, notification);
           }
 
           return;
@@ -775,6 +772,30 @@ export class RunJob {
 
         currentJob = nextJob;
       }
+    }
+  }
+
+  /**
+   * Deletes the trigger attachments of a finished workflow chain. Under
+   * payload-dedup the payload lives on the parent notification when the job
+   * carries none.
+   *
+   * Best-effort by design: the job and the workflow run are already marked
+   * completed by the time this runs, so a storage failure must not escape and
+   * push the chain down a failure path that would rewrite that state.
+   */
+  private async deleteChainAttachments(job: JobEntity, notification?: PartialNotificationEntity | null): Promise<void> {
+    // Left as a local: writing it back would put a payload on a job that
+    // payload-dedup deliberately persists without one.
+    const payload: JobEntity['payload'] = getEffectiveJobPayload(job, notification);
+
+    try {
+      await this.storageHelperService.deleteAttachments(payload?.attachments);
+    } catch (error: unknown) {
+      this.logger.warn(
+        { err: error, nv: { jobId: job._id, transactionId: job.transactionId } },
+        'Failed to delete the attachments of a finished workflow chain'
+      );
     }
   }
 

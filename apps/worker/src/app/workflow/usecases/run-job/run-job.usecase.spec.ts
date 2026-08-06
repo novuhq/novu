@@ -27,7 +27,7 @@ type RunJobTestDouble = {
   workflowRunService: { updateDeliveryLifecycle: sinon.SinonStub };
   stepRunRepository: { create: sinon.SinonStub };
   createExecutionDetails: { execute: sinon.SinonStub };
-  logger: { debug: sinon.SinonStub };
+  logger: { debug: sinon.SinonStub; warn: sinon.SinonStub };
 };
 
 const ATTACHMENT_STORAGE_PATH = 'environment-id/attachment.pdf';
@@ -40,7 +40,7 @@ function buildUsecase(sandbox: sinon.SinonSandbox): RunJobTestDouble {
   usecase.workflowRunService = { updateDeliveryLifecycle: sandbox.stub().resolves() };
   usecase.stepRunRepository = { create: sandbox.stub().resolves() };
   usecase.createExecutionDetails = { execute: sandbox.stub().resolves() };
-  usecase.logger = { debug: sandbox.stub() };
+  usecase.logger = { debug: sandbox.stub(), warn: sandbox.stub() };
 
   return usecase;
 }
@@ -127,6 +127,27 @@ describe('RunJob - attachment cleanup ordering', () => {
     await usecase.tryQueueNextJobs(triggerJob, notification, true);
 
     sinon.assert.notCalled(deleteAttachments);
+  });
+
+  it('leaves the completed state untouched when the attachment cleanup fails', async () => {
+    usecase.jobRepository.claimNextChildAsQueued.resolves(null);
+    deleteAttachments.rejects(new Error('storage is unavailable'));
+
+    await usecase.tryQueueNextJobs(triggerJob, notification);
+
+    // A second call would emit a duplicate completion trace for the same run.
+    sinon.assert.calledOnce(usecase.workflowRunService.updateDeliveryLifecycle);
+    sinon.assert.calledOnce(usecase.logger.warn);
+  });
+
+  it('does not write the resolved payload back onto a payload-dedup job', async () => {
+    const dedupJob = buildJob({ payload: undefined });
+    usecase.jobRepository.claimNextChildAsQueued.resolves(null);
+
+    await usecase.tryQueueNextJobs(dedupJob, notification);
+
+    sinon.assert.calledOnceWithExactly(deleteAttachments, notification.payload.attachments);
+    expect(dedupJob.payload).to.equal(undefined);
   });
 
   it('deletes the executed job attachments when the chain ends on a skipped step', async () => {
