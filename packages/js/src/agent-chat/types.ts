@@ -11,6 +11,18 @@ export type SendMessageArgs = {
 
 export type SendMessageResult = {
   conversationId: string;
+  messageId: string;
+};
+
+export type LoadConversationArgs = {
+  agentId: string;
+  conversationId: string;
+};
+
+export type LoadConversationResult = {
+  conversationId: string;
+  messages: AgentMessage[];
+  hasMore: boolean;
 };
 
 export type AgentChatMessagesUpdated = {

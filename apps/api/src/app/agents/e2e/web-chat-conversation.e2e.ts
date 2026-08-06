@@ -146,6 +146,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       timestamp: new Date().toISOString(),
       event: {
         type: 'message',
+        role: 'assistant',
         messageId,
         content: { markdown: `Agent reply ${messageId}` },
       },
@@ -162,6 +163,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     expect(res.status).to.equal(201);
     expect(res.body.data.identifier).to.match(/^conv_/);
+    expect(res.body.data.messageId).to.match(/^msg_/);
 
     const conversation = await pollFor(() =>
       conversationRepository.findOne(
@@ -189,7 +191,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       return subscriberMessage ?? null;
     });
     expect(activities.content).to.equal('Hello from web chat');
-    expect(activities.identifier).to.match(/^msg_/);
+    expect(activities.identifier).to.equal(res.body.data.messageId);
     expect(conversation.channels.some((channel) => channel.platform === 'web_chat')).to.equal(true);
     expect(conversation.channels[0]?.platformThreadId).to.equal(`web_chat:${res.body.data.identifier}`);
   });
@@ -296,19 +298,20 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(agentMessageEvent.event.content.markdown).to.equal(`Agent reply ${messageId}`);
 
     const subscriberMessageEvent = eventsRes.body.data.events.find((envelope: AgentEventEnvelope) => {
-      if (envelope.event.type !== 'custom' || envelope.event.name !== 'subscriber.message') {
-        return false;
-      }
-      const data = envelope.event.data as { content?: { markdown?: string }; messageId?: string };
-
-      return data.content?.markdown === 'Start thread';
+      return (
+        envelope.event.type === 'message' &&
+        envelope.event.role === 'user' &&
+        envelope.event.content?.markdown === 'Start thread'
+      );
     });
     expect(subscriberMessageEvent).to.exist;
-    const subscriberData = subscriberMessageEvent.event.data as { messageId?: string };
-    expect(subscriberData.messageId).to.match(/^msg_/);
+    expect(subscriberMessageEvent.event.type).to.equal('message');
+    if (subscriberMessageEvent.event.type === 'message') {
+      expect(subscriberMessageEvent.event.messageId).to.match(/^msg_/);
+    }
   });
 
-  it('should paginate events with activity cursor', async () => {
+  it('should return the newest page by default and paginate older with before', async () => {
     await linkWebChat();
 
     const createRes = await createConversation({
@@ -331,19 +334,21 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       events: [messageEnvelope(conversation._id, `msg-page-${Date.now()}`)],
     });
 
-    const firstPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 1 });
-    expect(firstPage.status).to.equal(200);
-    expect(firstPage.body.data.events).to.have.length(1);
-    expect(firstPage.body.data.hasMore).to.equal(true);
-    expect(firstPage.body.data.next).to.be.a('string');
+    const newestPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 1 });
+    expect(newestPage.status).to.equal(200);
+    expect(newestPage.body.data.events).to.have.length(1);
+    expect(newestPage.body.data.hasMore).to.equal(true);
+    expect(newestPage.body.data.previous).to.be.a('string');
 
-    const secondPage = await ctx.session.testAgent
+    const olderPage = await ctx.session.testAgent
       .get(`/v1/web-chat/conversations/${createRes.body.data.identifier}/events`)
-      .query({ after: firstPage.body.data.next, limit: 50 })
+      .query({ before: newestPage.body.data.previous, limit: 50 })
       .set('Authorization', `Bearer ${subscriberToken}`);
-    expect(secondPage.status).to.equal(200);
-    expect(secondPage.body.data.events.length).to.be.greaterThan(0);
-    expect(secondPage.body.data.events[0].sequence).to.be.greaterThan(firstPage.body.data.events[0].sequence);
+    expect(olderPage.status).to.equal(200);
+    expect(olderPage.body.data.events.length).to.be.greaterThan(0);
+    expect(olderPage.body.data.events[olderPage.body.data.events.length - 1].sequence).to.be.lessThan(
+      newestPage.body.data.events[0].sequence
+    );
   });
 
   it('should reject GET events for another subscriber', async () => {
@@ -682,7 +687,11 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(byType('channel.delete')).to.have.length(1);
 
     const liveMessage = byType('message')[0].data.payload as AgentEventEnvelope;
-    expect(liveMessage.event).to.deep.include({ type: 'message', messageId: platformMessageId });
+    expect(liveMessage.event).to.deep.include({
+      type: 'message',
+      role: 'assistant',
+      messageId: platformMessageId,
+    });
 
     const historyRes = await getEvents(createRes.body.data.identifier);
     expect(historyRes.status).to.equal(200);
@@ -754,6 +763,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(liveMessages).to.have.length(1);
     expect((liveMessages[0].data.payload as AgentEventEnvelope).event).to.deep.include({
       type: 'message',
+      role: 'assistant',
       messageId: activity.platformMessageId,
     });
   });

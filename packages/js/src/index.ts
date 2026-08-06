@@ -1,5 +1,11 @@
 export type * from 'json-logic-js';
-export type { AgentMessage, SendMessageArgs, SendMessageResult } from './agent-chat';
+export type {
+  AgentMessage,
+  LoadConversationArgs,
+  LoadConversationResult,
+  SendMessageArgs,
+  SendMessageResult,
+} from './agent-chat';
 export type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,

@@ -86,6 +86,8 @@ export class ListWebChatConversationEvents {
       return this.fetchAfterSequenceEventPage(command, conversation._id, mapContext);
     }
 
+    // No cursor → newest page (chat open/resume). Explicit `after` stays oldest→newer.
+    const reverse = Boolean(command.before) || (!command.after && !command.before);
     const sequenceOffset = command.after
       ? await this.countMappableEventsUpToActivity(
           command.environmentId,
@@ -97,7 +99,7 @@ export class ListWebChatConversationEvents {
 
     return this.fetchEventPage(command, conversation._id, mapContext, {
       activityCursor: command.after ?? command.before,
-      before: command.before,
+      reverse,
       sequenceOffset,
     });
   }
@@ -134,11 +136,13 @@ export class ListWebChatConversationEvents {
     mapContext: { conversationId: string; conversationIdentifier: string; agentIdentifier: string },
     options: {
       activityCursor?: string;
-      before?: string;
+      /** Newest-first DB walk (`before` cursor or default open/resume page). */
+      reverse?: boolean;
       sequenceOffset?: number;
     }
   ): Promise<EventPageResult> {
-    const sortDirection = options.before ? -1 : 1;
+    const reverse = Boolean(options.reverse);
+    const sortDirection = reverse ? -1 : 1;
     let activityCursor = options.activityCursor;
     let dbNext: string | null = null;
     let dbPrevious: string | null = null;
@@ -149,8 +153,8 @@ export class ListWebChatConversationEvents {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         conversationId,
-        after: options.before ? undefined : activityCursor,
-        before: options.before ? activityCursor : undefined,
+        after: reverse ? undefined : activityCursor,
+        before: reverse ? activityCursor : undefined,
         limit: ACTIVITY_FETCH_BATCH_SIZE,
         sortDirection,
       });
@@ -169,17 +173,13 @@ export class ListWebChatConversationEvents {
       });
 
       if (mapped.events.length >= command.limit || mapped.hasMoreActivities || !page.next) {
-        const events = options.before ? [...mapped.events].reverse() : mapped.events;
+        const events = reverse ? [...mapped.events].reverse() : mapped.events;
 
         return {
           events,
           hasMore: mapped.hasMoreActivities || Boolean(page.next),
-          next: options.before ? dbPrevious : mapped.hasMoreActivities ? (mapped.lastActivityId ?? dbNext) : dbNext,
-          previous: options.before
-            ? mapped.hasMoreActivities
-              ? (mapped.lastActivityId ?? dbNext)
-              : dbNext
-            : dbPrevious,
+          next: reverse ? dbPrevious : mapped.hasMoreActivities ? (mapped.lastActivityId ?? dbNext) : dbNext,
+          previous: reverse ? (mapped.hasMoreActivities ? (mapped.lastActivityId ?? dbNext) : dbNext) : dbPrevious,
         };
       }
 

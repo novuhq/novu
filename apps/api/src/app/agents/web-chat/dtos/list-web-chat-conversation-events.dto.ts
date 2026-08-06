@@ -3,12 +3,15 @@ import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class ListWebChatConversationEventsQueryDto {
-  /** Cursor: activity `_id` for forward pagination. */
+  /**
+   * Cursor: activity `_id` for forward pagination (older → newer).
+   * Omit both `after` and `before` to get the newest page (open/resume).
+   */
   @IsOptional()
   @IsString()
   after?: string;
 
-  /** Cursor: activity `_id` for reverse pagination. */
+  /** Cursor: activity `_id` for reverse pagination (load older history). */
   @IsOptional()
   @IsString()
   before?: string;

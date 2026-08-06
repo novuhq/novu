@@ -120,9 +120,10 @@ describe('NovuWebChatAdapterImpl', () => {
 
     expect(response.status).toBe(201);
     expect(body.data.identifier).toMatch(/^conv_[0-9a-z]{12}$/);
+    expect(body.data.messageId).toMatch(/^msg_[0-9a-z]{12}$/);
     expect(processMessage).toHaveBeenCalledOnce();
     expect(processMessage.mock.calls[0]?.[1]).toBe(`web_chat:${body.data.identifier}`);
-    expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
+    expect(processMessage.mock.calls[0]?.[2].id).toBe(body.data.messageId);
   });
 
   it('ignores client messageId and always mints server message id', async () => {

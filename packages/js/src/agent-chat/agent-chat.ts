@@ -1,11 +1,12 @@
 import type { AgentMessage } from '@novu/agent-event-protocol';
+import { applyEnvelopes, createInitialAgentConversationState } from '@novu/agent-event-protocol';
 import { AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import { AgentChatStore } from './agent-chat-store';
-import type { SendMessageArgs, SendMessageResult } from './types';
+import type { LoadConversationArgs, LoadConversationResult, SendMessageArgs, SendMessageResult } from './types';
 
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
@@ -55,6 +56,33 @@ export class AgentChat extends BaseModule {
     };
   }
 
+  /**
+   * Fetch the newest history page and replace the local timeline.
+   * Used on open/resume when the parent passes `conversationId`.
+   */
+  async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
+    return this.callWithSession(async () => {
+      try {
+        const page = await this.#agentChatService.getEvents({
+          conversationId: args.conversationId,
+        });
+        const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
+        const folded = applyEnvelopes(createInitialAgentConversationState(), page.events);
+        const next = this.#store.replaceFromHistory(entry, folded, args.conversationId);
+
+        return {
+          data: {
+            conversationId: args.conversationId,
+            messages: next.messages,
+            hasMore: page.hasMore,
+          },
+        };
+      } catch (error) {
+        return { error: new NovuError('Failed to load agent chat conversation', error) };
+      }
+    });
+  }
+
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult> {
     return this.callWithSession(async () => {
       const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
@@ -67,9 +95,14 @@ export class AgentChat extends BaseModule {
           conversationId: args.conversationId ?? live?.conversationId,
         });
 
-        this.#store.markSent(entry, optimisticId, data.identifier);
+        this.#store.markSent(entry, optimisticId, data.identifier, data.messageId);
 
-        return { data: { conversationId: data.identifier } };
+        return {
+          data: {
+            conversationId: data.identifier,
+            messageId: data.messageId,
+          },
+        };
       } catch (error) {
         this.#store.markFailed(entry, optimisticId);
 

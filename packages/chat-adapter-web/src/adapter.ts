@@ -201,8 +201,9 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     // Always mint message ids. Client `messageId` idempotency would ack a ghost
     // turn if checked before durable create; keep server-minted ids for now.
     const threadId = this.encodeThreadId({ conversationId });
+    const messageId = mintMessageId();
     const message = this.parseMessage({
-      id: mintMessageId(),
+      id: messageId,
       text: kind.text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
@@ -212,7 +213,8 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
 
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
     // `web_chat:conv_*` so `chat.thread()` can resolve this adapter by prefix.
-    return jsonResponse({ data: { identifier: conversationId } }, 201);
+    // `messageId` lets the client reconcile optimistic bubbles with history/live.
+    return jsonResponse({ data: { identifier: conversationId, messageId } }, 201);
   }
 
   /** Button / approval click — mirrors Telegram `handleCallbackQuery`. */

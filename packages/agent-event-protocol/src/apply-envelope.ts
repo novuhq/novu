@@ -70,12 +70,21 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
         parts: finalizeMessageEndParts(message.parts, event.content, event.files),
       }));
 
-    case 'message':
+    case 'message': {
+      if (event.role === 'user') {
+        return withUserMessage(state, envelope, event.messageId, (message) => ({
+          ...message,
+          parts: applyDurableMessageParts(message.parts, event.content, event.files),
+          status: 'sent',
+        }));
+      }
+
       return withAssistantMessage(state, envelope, event.messageId, (message) => ({
         ...message,
         parts: applyDurableMessageParts(message.parts, event.content, event.files),
         status: 'sent',
       }));
+    }
 
     case 'thinking-start':
       return withActiveAssistantMessage(state, envelope, (message) => ({
@@ -196,6 +205,48 @@ function withAssistantMessage(
     messages: nextMessages,
     activeAssistantMessageId: messageId,
   };
+}
+
+function withUserMessage(
+  state: AgentConversationState,
+  envelope: AgentEventEnvelope,
+  messageId: string,
+  update: (message: AgentMessage) => AgentMessage
+): AgentConversationState {
+  const { messages, index } = ensureUserMessage(state, envelope, messageId);
+  const existing = messages[index];
+  if (!existing) {
+    return state;
+  }
+  const nextMessages = messages.slice();
+  nextMessages[index] = update(existing);
+
+  return {
+    ...state,
+    messages: nextMessages,
+  };
+}
+
+function ensureUserMessage(
+  state: AgentConversationState,
+  envelope: AgentEventEnvelope,
+  messageId: string
+): { messages: AgentMessage[]; index: number } {
+  const existingIndex = state.messages.findIndex((message) => message.id === messageId && message.role === 'user');
+
+  if (existingIndex >= 0) {
+    return { messages: state.messages, index: existingIndex };
+  }
+
+  const message: AgentMessage = {
+    id: messageId,
+    role: 'user',
+    parts: [],
+    createdAt: envelope.timestamp,
+    status: 'sent',
+  };
+
+  return { messages: [...state.messages, message], index: state.messages.length };
 }
 
 function withActiveAssistantMessage(

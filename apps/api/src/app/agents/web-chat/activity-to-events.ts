@@ -42,6 +42,7 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
       if (activity.senderType === ConversationActivitySenderTypeEnum.AGENT) {
         return {
           type: 'message',
+          role: 'assistant',
           // Browser-visible id is platformMessageId (aligned with live WS envelopes).
           messageId: activity.platformMessageId ?? activity.identifier,
           content: { markdown: activity.content },
@@ -51,12 +52,11 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
 
       if (activity.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER) {
         return {
-          type: 'custom',
-          name: 'subscriber.message',
-          data: {
-            messageId: activity.identifier,
-            content: { markdown: activity.content },
-          },
+          type: 'message',
+          role: 'user',
+          messageId: activity.platformMessageId ?? activity.identifier,
+          content: { markdown: activity.content },
+          files: filesFromRichContent(activity.richContent),
         };
       }
 

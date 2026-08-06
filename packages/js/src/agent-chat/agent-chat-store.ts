@@ -136,13 +136,30 @@ export class AgentChatStore {
 
   /**
    * Mark an optimistic message `sent` and attach the server conversation id.
+   * When `serverMessageId` is present, swap the optimistic id so history/live join.
    * Indexes the entry under conversationId so remount/resume can find it.
    */
-  markSent(entry: ConversationEntry, messageId: string, conversationId: string): ConversationEntry {
+  markSent(
+    entry: ConversationEntry,
+    optimisticMessageId: string,
+    conversationId: string,
+    serverMessageId?: string
+  ): ConversationEntry {
     const current = this.#latest(entry);
+    const messages = current.messages.map((message) => {
+      if (message.id !== optimisticMessageId) {
+        return message;
+      }
+
+      return {
+        ...message,
+        id: serverMessageId ?? message.id,
+        status: 'sent' as const,
+      };
+    });
     const next: ConversationEntry = {
       ...current,
-      ...setMessageStatus(current, messageId, 'sent'),
+      messages,
       conversationId,
     };
 
@@ -158,6 +175,28 @@ export class AgentChatStore {
     const next: ConversationEntry = {
       ...current,
       ...setMessageStatus(current, messageId, 'failed'),
+    };
+
+    this.#replace(current, next);
+    this.#onUpdate(next);
+
+    return next;
+  }
+
+  /**
+   * Replace local timeline with a folded history page (open/resume).
+   * Keeps agentId; adopts conversationId into both indexes.
+   */
+  replaceFromHistory(
+    entry: ConversationEntry,
+    history: AgentConversationState,
+    conversationId: string
+  ): ConversationEntry {
+    const current = this.#latest(entry);
+    const next: ConversationEntry = {
+      ...history,
+      agentId: current.agentId,
+      conversationId,
     };
 
     this.#replace(current, next);

@@ -6,7 +6,7 @@ describe('AgentChatService', () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 201,
-      json: async () => ({ data: { identifier: 'conv_abcdefghijkl' } }),
+      json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
     } as Response);
     global.fetch = fetchMock as unknown as typeof fetch;
 
@@ -16,7 +16,7 @@ describe('AgentChatService', () => {
 
     const result = await service.sendMessage({ agentId: 'agent_1', text: 'hello' });
 
-    expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
+    expect(result).toEqual({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
     expect(fetchMock).toHaveBeenCalledWith(
       'https://test.novu.co/v1/web-chat/conversations',
       expect.objectContaining({
@@ -30,7 +30,7 @@ describe('AgentChatService', () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 201,
-      json: async () => ({ data: { identifier: 'conv_abcdefghijkl' } }),
+      json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
     } as Response);
     global.fetch = fetchMock as unknown as typeof fetch;
 
@@ -52,6 +52,37 @@ describe('AgentChatService', () => {
           conversationIdentifier: 'conv_abcdefghijkl',
         }),
       })
+    );
+  });
+
+  it('GETs conversation events', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          events: [],
+          hasMore: false,
+          next: null,
+          previous: null,
+        },
+      }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    const result = await service.getEvents({
+      conversationId: 'conv_abcdefghijkl',
+      limit: 50,
+      before: 'act_cursor',
+    });
+
+    expect(result).toEqual({ events: [], hasMore: false, next: null, previous: null });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/events?before=act_cursor&limit=50',
+      expect.objectContaining({ method: 'GET' })
     );
   });
 });

@@ -41,6 +41,7 @@ export class WebChatEventFactory {
   createMessageEnvelope(input: WebChatFactoryMessageInput): AgentEventEnvelope {
     return this.build(input, {
       type: 'message',
+      role: 'assistant',
       messageId: input.platformMessageId,
       content: input.content,
     });

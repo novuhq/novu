@@ -1,3 +1,4 @@
+import type { AgentMessageRole } from './agent-message.types';
 import type { AgentFileRef, AgentMessageContent, AgentToolResultContent, AgentToolSource } from './wire-content.types';
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
@@ -39,7 +40,14 @@ export type AgentEvent =
   | { type: 'step-start'; name?: string; index?: number }
   | { type: 'step-end'; name?: string; index?: number; usage?: AgentEventUsage }
   // Content
-  | { type: 'message'; messageId: string; content: AgentMessageContent; files?: AgentFileRef[] }
+  | {
+      type: 'message';
+      messageId: string;
+      /** Who authored this durable message. Streaming events stay assistant-only and omit role. */
+      role: AgentMessageRole;
+      content: AgentMessageContent;
+      files?: AgentFileRef[];
+    }
   | { type: 'message-start'; messageId: string }
   | { type: 'message-delta'; messageId: string; delta: string }
   | { type: 'message-end'; messageId: string; content?: AgentMessageContent; files?: AgentFileRef[] }
