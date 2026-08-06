@@ -49,19 +49,6 @@ jobs:
             echo "branch_name=release_$(date +'%Y_%m_%d_%H_%M')" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Close existing cloud release PRs
-        id: close-existing-prs
-        run: |
-          gh pr list --base prod --state open --json number,headRefName \
-            --jq '.[] | select(.headRefName | startswith("release_")) | [.number, .headRefName] | @tsv' | \
-          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
-            echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
-            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR."
-            git push origin --delete "$BRANCH_NAME" || true
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create Novu Cloud release branch
         if: ${{ steps.output-variables.outputs.release_type == 'regular' }}
         run: |
@@ -78,6 +65,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBERS: ${{ steps.output-variables.outputs.pr_numbers }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           git checkout -b ${{ steps.output-variables.outputs.branch_name }} origin/prod
 
@@ -89,12 +77,23 @@ jobs:
               echo "::error::Invalid PR number: '$PR'. Provide comma-separated numbers, e.g. 1234,5678."
               exit 1
             fi
-            PR_JSON=$(gh pr view "$PR" --json state,mergeCommit,mergedAt,title)
+            PR_JSON=$(gh pr view "$PR" --json state,mergeCommit,mergedAt,baseRefName,title)
             STATE=$(jq -r '.state' <<< "$PR_JSON")
             SHA=$(jq -r '.mergeCommit.oid // empty' <<< "$PR_JSON")
             MERGED_AT=$(jq -r '.mergedAt' <<< "$PR_JSON")
+            BASE_REF=$(jq -r '.baseRefName' <<< "$PR_JSON")
             if [ "$STATE" != "MERGED" ] || [ -z "$SHA" ]; then
-              echo "::error::PR #$PR is not merged (state: $STATE). Only PRs merged into next can be shipped as a hotfix."
+              echo "::error::PR #$PR is not merged (state: $STATE). Only PRs merged into $DEFAULT_BRANCH can be shipped as a hotfix."
+              exit 1
+            fi
+            if [ "$BASE_REF" != "$DEFAULT_BRANCH" ]; then
+              echo "::error::PR #$PR was merged into '$BASE_REF', not '$DEFAULT_BRANCH'. Only PRs merged into $DEFAULT_BRANCH can be shipped as a hotfix."
+              exit 1
+            fi
+            # Defense in depth: verify at the git level that the merge commit is
+            # actually part of the default branch history, not just PR metadata.
+            if ! git merge-base --is-ancestor "$SHA" "origin/$DEFAULT_BRANCH"; then
+              echo "::error::Merge commit $SHA of PR #$PR is not in the history of $DEFAULT_BRANCH — refusing to cherry-pick it."
               exit 1
             fi
             printf '%s\t%s\t%s\n' "$MERGED_AT" "$PR" "$SHA" >> "$PICK_LIST"
@@ -129,6 +128,22 @@ jobs:
             echo "::error::Nothing to release — all specified PRs are already in prod."
             exit 1
           fi
+
+      # Runs only after the new release branch was prepared successfully, so a
+      # failed hotfix (invalid PR, conflict, nothing to ship) never leaves us
+      # without an open release PR.
+      - name: Close existing cloud release PRs
+        id: close-existing-prs
+        run: |
+          gh pr list --base prod --state open --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("release_")) | [.number, .headRefName] | @tsv' | \
+          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
+            echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
+            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR."
+            git push origin --delete "$BRANCH_NAME" || true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push release branch
         run: git push origin ${{ steps.output-variables.outputs.branch_name }}
