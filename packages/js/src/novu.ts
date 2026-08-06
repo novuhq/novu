@@ -1,3 +1,4 @@
+import { AgentChat } from './agent-chat';
 import { InboxService } from './api';
 import { ChannelConnections } from './channel-connections';
 import { ChannelEndpoints } from './channel-endpoints';
@@ -23,6 +24,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   public readonly subscriptions: Subscriptions;
   public readonly channelConnections: ChannelConnections;
   public readonly channelEndpoints: ChannelEndpoints;
+  public readonly agentChat: AgentChat;
   public readonly socket: BaseSocketInterface;
 
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
@@ -100,6 +102,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       eventEmitterInstance: this.#emitter,
     });
     this.channelEndpoints = new ChannelEndpoints({
+      inboxServiceInstance: this.#inboxService,
+      eventEmitterInstance: this.#emitter,
+    });
+    this.agentChat = new AgentChat({
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
