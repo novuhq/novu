@@ -50,7 +50,7 @@ import { PlatformException } from '../../../shared/utils';
 import {
   extractPushRoutingCredentials,
   hasTokenlessRoutingOverride,
-  isBroadcastRoutingOverride,
+  isFcmBroadcastRoutingOverride,
   type PushProviderOverride,
   upsertMergedRoutingOverrides,
 } from './fcm-routing-overrides';
@@ -193,18 +193,19 @@ export class SendMessagePush extends SendMessageBase {
      * are dropped and the send is skipped.
      *
      * Keep every subscriber channel (including multiple integrations for the same
-     * providerId); only collapse tokenless channels that the override replaces.
+     * providerId). Token/tokens overrides only collapse empty-token channels they replace;
+     * FCM topic/condition overrides are broadcast and replace the entire provider fan-out.
      */
     const overrideProviderIds = new Set(channelsFromOverrides.map((channel) => channel.providerId));
-    const overridePayloadByProviderId = new Map(
-      providersWithCredentialOverrides.map((override) => [override.providerId, override.overrides])
+    const broadcastOverrideProviderIds = new Set(
+      providersWithCredentialOverrides
+        .filter((override) => isFcmBroadcastRoutingOverride(override.overrides))
+        .map((override) => override.providerId)
     );
     const tokenlessRoutingProviderIds = new Set<string>();
 
     const uniqueOverrideChannels = channelsFromOverrides.filter((overrideChannel) => {
-      const overridePayload = overridePayloadByProviderId.get(overrideChannel.providerId);
-
-      if (isBroadcastRoutingOverride(overridePayload)) {
+      if (broadcastOverrideProviderIds.has(overrideChannel.providerId)) {
         tokenlessRoutingProviderIds.add(overrideChannel.providerId);
 
         return true;
@@ -223,12 +224,6 @@ export class SendMessagePush extends SendMessageBase {
 
       return false;
     });
-
-    const broadcastOverrideProviderIds = new Set(
-      uniqueOverrideChannels
-        .filter((channel) => isBroadcastRoutingOverride(overridePayloadByProviderId.get(channel.providerId)))
-        .map((channel) => channel.providerId)
-    );
 
     const pushChannelsToUse = pushChannels.filter((channel) => {
       if (broadcastOverrideProviderIds.has(channel.providerId)) {

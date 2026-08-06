@@ -12,7 +12,7 @@ export type PushRoutingCredentials = {
 };
 
 /** FCM topic/condition sends are broadcast — they must not fan out per subscriber device token. */
-export function isBroadcastRoutingOverride(overrides: Record<string, unknown> | null | undefined): boolean {
+export function isFcmBroadcastRoutingOverride(overrides: Record<string, unknown> | null | undefined): boolean {
   if (!overrides) {
     return false;
   }
@@ -26,17 +26,6 @@ export function hasTokenlessRoutingOverride(
 ): boolean {
   if (!overrides) {
     return false;
-  }
-
-  if (providerId === PushProviderIdEnum.FCM) {
-    if (
-      typeof overrides.topic === 'string' ||
-      typeof overrides.condition === 'string' ||
-      typeof overrides.token === 'string' ||
-      Array.isArray(overrides.tokens)
-    ) {
-      return true;
-    }
   }
 
   const keys = getProviderOverrideConfig(providerId)?.exclusiveKeyGroups?.flat() ?? [];

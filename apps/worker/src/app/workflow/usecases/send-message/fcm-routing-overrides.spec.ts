@@ -1,28 +1,17 @@
-import { PushProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
-import {
-  extractFcmRoutingCredentials,
-  hasTokenlessRoutingOverride,
-  isBroadcastRoutingOverride,
-} from './fcm-routing-overrides';
+import { extractFcmRoutingCredentials, isFcmBroadcastRoutingOverride } from './fcm-routing-overrides';
 
-describe('isBroadcastRoutingOverride', () => {
+describe('isFcmBroadcastRoutingOverride', () => {
   it('returns true for topic routing', () => {
-    expect(isBroadcastRoutingOverride({ topic: 'news_updates' })).to.equal(true);
+    expect(isFcmBroadcastRoutingOverride({ topic: 'news_updates' })).to.equal(true);
   });
 
   it('returns true for condition routing', () => {
-    expect(isBroadcastRoutingOverride({ condition: "'news' in topics" })).to.equal(true);
+    expect(isFcmBroadcastRoutingOverride({ condition: "'news' in topics" })).to.equal(true);
   });
 
   it('returns false for token routing', () => {
-    expect(isBroadcastRoutingOverride({ token: 'abc' })).to.equal(false);
-  });
-});
-
-describe('hasTokenlessRoutingOverride', () => {
-  it('returns true for FCM topic without relying on shared exclusiveKeyGroups', () => {
-    expect(hasTokenlessRoutingOverride(PushProviderIdEnum.FCM, { topic: 'news_updates' })).to.equal(true);
+    expect(isFcmBroadcastRoutingOverride({ token: 'abc' })).to.equal(false);
   });
 });
 
