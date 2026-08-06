@@ -764,6 +764,11 @@ export class RunJob {
               'Failed to cancel pending jobs after next job failure'
             );
           }
+
+          // The remaining steps were just cancelled, so this chain is over and
+          // nothing will read the attachments again. The retryable case below
+          // deliberately keeps them for the retry.
+          await this.deleteChainAttachments(job, notification);
         }
 
         if (shouldHaltOnStepFailure(nextJob) || this.shouldBackoff(error as Error)) {
