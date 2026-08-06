@@ -634,6 +634,18 @@ export class RunJob {
               notification,
               currentJob: { type: currentJob.type, _id: currentJob._id },
             });
+
+            /*
+             * The chain is finished, so no later step needs the stored
+             * attachments anymore. They are deleted from the executed job's
+             * payload — the one `getAttachments` hydrated — rather than from the
+             * chain cursor, which may be a skipped tail step that never
+             * hydrated. Under payload-dedup the payload lives on the parent
+             * notification when the job carries none. Skipped when the current
+             * job errored, so its retries still find the files.
+             */
+            job.payload = getEffectiveJobPayload(job, notification);
+            await this.storageHelperService.deleteAttachments(job.payload?.attachments);
           }
 
           return;
@@ -762,14 +774,6 @@ export class RunJob {
         }
 
         currentJob = nextJob;
-      } finally {
-        if (nextJob) {
-          // Payload-dedup: attachments live on the parent notification's payload
-          // when the job doesn't carry its own. nextJob shares the same
-          // notification as the current workflow execution.
-          nextJob.payload = getEffectiveJobPayload(nextJob, notification);
-          await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
-        }
       }
     }
   }
