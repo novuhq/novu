@@ -3,6 +3,7 @@ import type {
   CardElementActionsElement,
   CardElementChild,
   CardElementLinkButtonElement,
+  CardElementLinkElement,
   CardElementTextElement,
 } from '@novu/shared';
 
@@ -100,6 +101,16 @@ function MessageActions({ element }: { element: CardElementActionsElement }) {
   );
 }
 
+function MessageLink({ element }: { element: CardElementLinkElement }) {
+  return (
+    <p className="leading-5.5 m-0 mb-1 text-[15px] font-normal text-[#1d1c1d]">
+      <a href={element.url} target="_blank" rel="noopener noreferrer" className="text-[#1264a3] hover:underline">
+        {element.label}
+      </a>
+    </p>
+  );
+}
+
 function MessageChild({ child }: { child: CardElementChild }) {
   switch (child.type) {
     case 'text':
@@ -108,6 +119,8 @@ function MessageChild({ child }: { child: CardElementChild }) {
       return <MessageImage src={child.url} alt={child.alt ?? ''} />;
     case 'divider':
       return <hr className="my-1 mb-2 h-px w-full border-0 bg-[rgba(29,28,29,0.13)]" />;
+    case 'link':
+      return <MessageLink element={child} />;
     case 'actions':
       return <MessageActions element={child} />;
     default: {

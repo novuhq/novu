@@ -15,6 +15,15 @@ describe('cardToWhatsAppText', () => {
       'a *bold* _italic_ ~strike~ ```code``` label (https://novu.co)'
     );
   });
+
+  test('renders a link child as "label (url)"', () => {
+    const card: CardElement = {
+      type: 'card',
+      children: [{ type: 'link', label: 'Docs', url: 'https://novu.co/docs' }],
+    };
+
+    expect(cardToWhatsAppText(card)).toBe('Docs (https://novu.co/docs)');
+  });
 });
 
 describe('validateWhatsAppCard', () => {

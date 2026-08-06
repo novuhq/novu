@@ -10,6 +10,7 @@ const baseCard: CardElement = {
   children: [
     { type: 'text', content: 'All checks passed', style: 'bold' },
     { type: 'divider' },
+    { type: 'link', label: 'Release notes', url: 'https://novu.co/notes' },
     {
       type: 'actions',
       children: [{ type: 'link-button', label: 'View', url: 'https://novu.co/run/1' }],
@@ -26,6 +27,7 @@ describe('cardToFallbackMarkdown', () => {
         '![](https://novu.co/hero.png)',
         '**All checks passed**',
         '---',
+        '[Release notes](https://novu.co/notes)',
         '[View](https://novu.co/run/1)',
       ].join('\n\n')
     );

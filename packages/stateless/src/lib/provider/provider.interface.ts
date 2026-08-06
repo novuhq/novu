@@ -141,6 +141,13 @@ export type CardElementDividerElement = {
   type: 'divider';
 };
 
+/** Presentational inline hyperlink (Chat SDK `CardLink`). Interactive elements stay agent-only. */
+export type CardElementLinkElement = {
+  type: 'link';
+  label: string;
+  url: string;
+};
+
 export type CardElementLinkButtonElement = {
   type: 'link-button';
   label: string;
@@ -159,6 +166,7 @@ export type CardElementChild =
   | CardElementTextElement
   | CardElementImageElement
   | CardElementDividerElement
+  | CardElementLinkElement
   | CardElementActionsElement;
 
 export type CardElement = {

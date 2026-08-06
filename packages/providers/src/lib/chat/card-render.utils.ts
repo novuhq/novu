@@ -53,6 +53,8 @@ function childToMarkdown(child: CardElementChild): string {
       return `![${child.alt ?? ''}](${child.url})`;
     case 'divider':
       return '---';
+    case 'link':
+      return child.url ? `[${child.label}](${child.url})` : child.label;
     case 'actions':
       return child.children
         .map((button) => (button.url ? `[${button.label}](${button.url})` : button.label))

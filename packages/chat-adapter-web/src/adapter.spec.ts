@@ -275,6 +275,25 @@ describe('NovuWebChatAdapterImpl', () => {
     });
   });
 
+  it('postMessage includes link children in the plain-text fallback', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
+
+    await adapter.postMessage('web_chat:conv_abcdefghijkl', {
+      type: 'card',
+      children: [
+        { type: 'text', content: 'See the release notes.' },
+        { type: 'link', label: 'Release notes', url: 'https://novu.co/notes' },
+      ],
+    } as never);
+
+    expect(config.deliverMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: 'See the release notes.\nRelease notes (https://novu.co/notes)',
+      })
+    );
+  });
+
   it('editMessage and deleteMessage delegate to injected callbacks', async () => {
     const config = createConfig();
     const { adapter } = await createAdapter(config);

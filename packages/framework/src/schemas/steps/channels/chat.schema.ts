@@ -39,6 +39,16 @@ const cardElementDividerSchema = {
   required: ['type'],
 } as const satisfies JsonSchema;
 
+const cardElementLinkSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'link' },
+    label: { type: 'string' },
+    url: { type: 'string' },
+  },
+  required: ['type', 'label', 'url'],
+} as const satisfies JsonSchema;
+
 const cardElementLinkButtonSchema = {
   type: 'object',
   properties: {
@@ -71,7 +81,13 @@ const cardElementSchema = {
     children: {
       type: 'array',
       items: {
-        anyOf: [cardElementTextSchema, cardElementImageSchema, cardElementDividerSchema, cardElementActionsSchema],
+        anyOf: [
+          cardElementTextSchema,
+          cardElementImageSchema,
+          cardElementDividerSchema,
+          cardElementLinkSchema,
+          cardElementActionsSchema,
+        ],
       },
     },
   },

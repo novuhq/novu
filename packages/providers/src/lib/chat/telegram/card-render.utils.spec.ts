@@ -19,6 +19,15 @@ describe('cardToTelegramHtml', () => {
   test('escapes HTML control characters in plain text', () => {
     expect(cardToTelegramHtml(markdownCard('1 < 2 & 3 > 0'))).toBe('1 &lt; 2 &amp; 3 &gt; 0');
   });
+
+  test('renders a link child as an anchor', () => {
+    const card: CardElement = {
+      type: 'card',
+      children: [{ type: 'link', label: 'Docs', url: 'https://novu.co/docs' }],
+    };
+
+    expect(cardToTelegramHtml(card)).toBe('<a href="https://novu.co/docs">Docs</a>');
+  });
 });
 
 describe('validateTelegramCard', () => {

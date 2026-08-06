@@ -67,10 +67,7 @@ export function validateTelegramCard(card: CardElement): IChatRenderValidation[]
  * matches what Telegram's 4096 cap actually counts.
  */
 export function telegramVisibleTextLength(card: CardElement): number {
-  const decoded = cardToTelegramHtml(card)
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
+  const decoded = cardToTelegramHtml(card).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
   let visible = decoded;
   let previous: string;
@@ -128,6 +125,10 @@ function telegramChildToHtml(child: CardElementChild): string {
       return `<a href="${escapeHtmlAttribute(child.url)}">${child.alt ? escapeHtml(child.alt) : escapeHtml(child.url)}</a>`;
     case 'divider':
       return '———';
+    case 'link':
+      return child.url
+        ? `<a href="${escapeHtmlAttribute(child.url)}">${escapeHtml(child.label)}</a>`
+        : escapeHtml(child.label);
     case 'actions':
       return child.children
         .map((button) =>
