@@ -7,7 +7,7 @@ const AGENT_CHAT_CONVERSATIONS_ROUTE = '/web-chat/conversations';
 export type AgentChatSendMessageArgs = {
   agentId: string;
   text: string;
-  /** Resume an existing conversation (`conv_*`). */
+  /** The `conv_*` id of an existing conversation to resume. */
   conversationId?: string;
 };
 
@@ -18,17 +18,12 @@ export type AgentChatSendMessageResponse = {
 
 export type AgentChatGetEventsArgs = {
   conversationId: string;
-  after?: string;
-  before?: string;
-  afterSequence?: number;
-  limit?: number;
 };
 
 export type AgentChatGetEventsResponse = {
   events: AgentEventEnvelope[];
-  hasMore: boolean;
-  next: string | null;
-  previous: string | null;
+  /** Cursor toward older history (wire field; unused until loadOlder). */
+  olderCursor: string | null;
 };
 
 export class AgentChatService {
@@ -47,23 +42,6 @@ export class AgentChatService {
   }
 
   async getEvents(args: AgentChatGetEventsArgs): Promise<AgentChatGetEventsResponse> {
-    const searchParams = new URLSearchParams();
-    if (args.after) {
-      searchParams.set('after', args.after);
-    }
-    if (args.before) {
-      searchParams.set('before', args.before);
-    }
-    if (args.afterSequence !== undefined) {
-      searchParams.set('afterSequence', String(args.afterSequence));
-    }
-    if (args.limit !== undefined) {
-      searchParams.set('limit', String(args.limit));
-    }
-
-    return this.#httpClient.get(
-      `${AGENT_CHAT_CONVERSATIONS_ROUTE}/${encodeURIComponent(args.conversationId)}/events`,
-      searchParams
-    );
+    return this.#httpClient.get(`${AGENT_CHAT_CONVERSATIONS_ROUTE}/${encodeURIComponent(args.conversationId)}/events`);
   }
 }

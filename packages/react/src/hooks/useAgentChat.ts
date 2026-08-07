@@ -1,12 +1,16 @@
 import type { AgentMessage, LoadConversationResult, NovuError, SendMessageResult } from '@novu/js';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
 export type UseAgentChatProps = {
-  /** Which agent to talk to. Required for uncontrolled (new) conversations. */
+  /** The agent that receives the messages. */
   agentId: string;
-  /** Resume an existing conversation. Omit to start a new one on first send. */
+  /**
+   * Resume this conversation (loads history on mount).
+   * Omit for the agent draft: first send starts a chat; later sends sticky-resume it.
+   * Loading another conversation elsewhere does not steal that draft.
+   */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
   onError?: (error: NovuError) => void;
@@ -16,9 +20,9 @@ export type UseAgentChatResult = {
   messages: AgentMessage[];
   conversationId?: string;
   error?: NovuError;
-  /** True until the first history fetch finishes (only when `conversationId` prop is set). */
+  /** True until the first history fetch completes. Always false when no `conversationId` prop is given. */
   isLoading: boolean;
-  /** True while any history fetch is in flight. */
+  /** True while a history fetch is in progress. */
   isFetching: boolean;
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
@@ -32,50 +36,49 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const propsRef = useDataRef(props);
   const novu = useNovu();
 
-  const [adoptedConversationId, setAdoptedConversationId] = useState<string>();
-  const conversationId = conversationIdProp ?? adoptedConversationId;
+  const [assignedConversationId, setAssignedConversationId] = useState<string>();
+  const conversationId = conversationIdProp ?? assignedConversationId;
   const conversationIdRef = useDataRef(conversationId);
 
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
+  const fetchGenerationRef = useRef(0);
 
   useEffect(() => {
     if (conversationIdProp) {
-      setAdoptedConversationId(undefined);
+      setAssignedConversationId(undefined);
+    } else {
+      setIsLoading(false);
     }
   }, [conversationIdProp]);
 
   const fetchConversation = useCallback(
-    async (targetConversationId: string, options?: { refetch?: boolean }) => {
-      if (options?.refetch) {
-        setError(undefined);
-        setIsLoading(true);
-      }
-
+    async (targetConversationId: string) => {
+      const generation = ++fetchGenerationRef.current;
+      setError(undefined);
+      setIsLoading(true);
       setIsFetching(true);
 
-      try {
-        const response = await novu.agentChat.loadConversation({
-          agentId,
-          conversationId: targetConversationId,
-        });
+      const response = await novu.agentChat.loadConversation({
+        agentId,
+        conversationId: targetConversationId,
+      });
 
-        if (response.error) {
-          setError(response.error);
-          propsRef.current.onError?.(response.error);
-        } else if (response.data) {
-          propsRef.current.onSuccess?.(response.data);
-        }
-      } catch (err) {
-        const novuError = err as NovuError;
-        setError(novuError);
-        propsRef.current.onError?.(novuError);
-      } finally {
-        setIsLoading(false);
-        setIsFetching(false);
+      if (generation !== fetchGenerationRef.current) {
+        return;
       }
+
+      if (response.error) {
+        setError(response.error);
+        propsRef.current.onError?.(response.error);
+      } else if (response.data) {
+        propsRef.current.onSuccess?.(response.data);
+      }
+
+      setIsLoading(false);
+      setIsFetching(false);
     },
     [novu, agentId, propsRef]
   );
@@ -85,7 +88,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     if (snapshot) {
       setMessages(snapshot.messages);
       if (snapshot.conversationId && !conversationIdProp) {
-        setAdoptedConversationId(snapshot.conversationId);
+        setAssignedConversationId(snapshot.conversationId);
       }
     } else {
       setMessages([]);
@@ -103,14 +106,12 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       setMessages(data.messages);
       if (data.conversationId && !propsRef.current.conversationId) {
-        setAdoptedConversationId(data.conversationId);
+        setAssignedConversationId(data.conversationId);
       }
     });
 
     if (conversationIdProp) {
-      void fetchConversation(conversationIdProp, { refetch: true });
-    } else {
-      setIsLoading(false);
+      void fetchConversation(conversationIdProp);
     }
 
     return cleanup;
@@ -122,7 +123,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       return;
     }
 
-    await fetchConversation(id, { refetch: true });
+    await fetchConversation(id);
   }, [conversationIdRef, fetchConversation]);
 
   const sendMessage = useCallback(
@@ -139,7 +140,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         setError(response.error);
         propsRef.current.onError?.(response.error);
       } else if (response.data && !propsRef.current.conversationId) {
-        setAdoptedConversationId(response.data.conversationId);
+        setAssignedConversationId(response.data.conversationId);
       }
 
       return response;

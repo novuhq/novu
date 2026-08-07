@@ -75,7 +75,7 @@ export type AgentEvent =
   | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
   | ({
       type: 'tool-approval-request';
-      /** When true, no companion message carries the approval UI — the consumer should render its default approval card. */
+      /** When true, no companion message carries the approval UI. The consumer should render its default approval card. */
       deliverCard?: boolean;
     } & AgentApprovalRequest)
   | {
@@ -88,7 +88,7 @@ export type AgentEvent =
   // Conversation ops
   | { type: 'resolve'; summary?: string }
   | { type: 'signal'; signal: AgentSignal }
-  // Channel ops (imperative — emitted only by the framework SDK)
+  // Channel operations: imperative events that only the framework SDK emits.
   | { type: 'channel.typing'; state: 'on' | 'off'; status?: string }
   | { type: 'channel.edit'; messageId: string; content: AgentMessageContent; files?: AgentFileRef[] }
   | { type: 'channel.delete'; messageId: string }
@@ -130,16 +130,25 @@ export function isAgentEventEnvelope(value: unknown): value is AgentEventEnvelop
   const candidate = value as Record<string, unknown>;
   const event = candidate.event as Record<string, unknown> | undefined;
 
-  return (
-    candidate.version === AGENT_EVENT_PROTOCOL_VERSION &&
-    typeof candidate.conversationId === 'string' &&
-    typeof candidate.agentId === 'string' &&
-    typeof candidate.runId === 'string' &&
-    typeof candidate.turnId === 'string' &&
-    typeof candidate.sequence === 'number' &&
-    typeof candidate.timestamp === 'string' &&
-    typeof event === 'object' &&
-    event !== null &&
-    typeof event.type === 'string'
-  );
+  if (
+    candidate.version !== AGENT_EVENT_PROTOCOL_VERSION ||
+    typeof candidate.conversationId !== 'string' ||
+    typeof candidate.agentId !== 'string' ||
+    typeof candidate.runId !== 'string' ||
+    typeof candidate.turnId !== 'string' ||
+    typeof candidate.sequence !== 'number' ||
+    typeof candidate.timestamp !== 'string' ||
+    typeof event !== 'object' ||
+    event === null ||
+    typeof event.type !== 'string'
+  ) {
+    return false;
+  }
+
+  // Durable message requires an explicit role — no default.
+  if (event.type === 'message' && event.role !== 'user' && event.role !== 'assistant') {
+    return false;
+  }
+
+  return true;
 }

@@ -104,7 +104,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   function getEvents(
     conversationIdentifier: string,
     token = subscriberToken,
-    query: { after?: string; before?: string; afterSequence?: number; limit?: number } = {}
+    query: { before?: string; limit?: number } = {}
   ) {
     return ctx.session.testAgent
       .get(`/v1/web-chat/conversations/${conversationIdentifier}/events`)
@@ -286,8 +286,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     const eventsRes = await getEvents(createRes.body.data.identifier);
     expect(eventsRes.status).to.equal(200);
-    expect(eventsRes.body.data.hasMore).to.equal(false);
-    expect(eventsRes.body.data.next).to.equal(null);
+    expect(eventsRes.body.data.olderCursor).to.equal(null);
     expect(eventsRes.body.data.events.length).to.be.greaterThan(0);
 
     const agentMessageEvent = eventsRes.body.data.events.find(
@@ -337,18 +336,27 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     const newestPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 1 });
     expect(newestPage.status).to.equal(200);
     expect(newestPage.body.data.events).to.have.length(1);
-    expect(newestPage.body.data.hasMore).to.equal(true);
-    expect(newestPage.body.data.previous).to.be.a('string');
+    expect(newestPage.body.data.olderCursor).to.be.a('string');
 
-    const olderPage = await ctx.session.testAgent
-      .get(`/v1/web-chat/conversations/${createRes.body.data.identifier}/events`)
-      .query({ before: newestPage.body.data.previous, limit: 50 })
-      .set('Authorization', `Bearer ${subscriberToken}`);
+    const newestSequences = newestPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence);
+    for (let index = 1; index < newestSequences.length; index += 1) {
+      expect(newestSequences[index]).to.be.greaterThan(newestSequences[index - 1]);
+    }
+
+    const olderPage = await getEvents(createRes.body.data.identifier, subscriberToken, {
+      before: newestPage.body.data.olderCursor,
+      limit: 50,
+    });
     expect(olderPage.status).to.equal(200);
     expect(olderPage.body.data.events.length).to.be.greaterThan(0);
     expect(olderPage.body.data.events[olderPage.body.data.events.length - 1].sequence).to.be.lessThan(
       newestPage.body.data.events[0].sequence
     );
+
+    const olderSequences = olderPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence);
+    for (let index = 1; index < olderSequences.length; index += 1) {
+      expect(olderSequences[index]).to.be.greaterThan(olderSequences[index - 1]);
+    }
   });
 
   it('should reject GET events for another subscriber', async () => {
@@ -550,37 +558,6 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(second.status).to.equal(201);
     expect(second.body.data.identifier).to.not.equal(first.body.data.identifier);
     expect(second.body.data.identifier).to.match(/^conv_/);
-  });
-
-  it('should paginate durable history with afterSequence', async () => {
-    await linkWebChat();
-
-    const createRes = await createConversation({
-      agentId: ctx.agentIdentifier,
-      text: 'Sequence start',
-    });
-    expect(createRes.status).to.equal(201);
-
-    const conversation = await waitForConversation(createRes.body.data.identifier);
-
-    await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
-      events: [messageEnvelope(conversation._id, `msg-seq-${Date.now()}`)],
-    });
-
-    const fullPage = await getEvents(createRes.body.data.identifier);
-    expect(fullPage.status).to.equal(200);
-    expect(fullPage.body.data.events.length).to.be.greaterThan(1);
-
-    const firstSequence = fullPage.body.data.events[0].sequence as number;
-    const gapFill = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: firstSequence,
-      limit: 50,
-    });
-    expect(gapFill.status).to.equal(200);
-    expect(gapFill.body.data.events.length).to.be.greaterThan(0);
-    for (const envelope of gapFill.body.data.events) {
-      expect(envelope.sequence).to.be.greaterThan(firstSequence);
-    }
   });
 
   it('should emit exactly one live AGENT_EVENT per post/edit/delete/typing via adapter callbacks', async () => {
@@ -877,22 +854,15 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     );
     expect(agentActivity.sequence).to.be.greaterThan(1);
 
+    // Unsequenced legacy rows are excluded; only sequenced events appear, ascending.
     const eventsRes = await getEvents(createRes.body.data.identifier);
     expect(eventsRes.status).to.equal(200);
-    const sequences = eventsRes.body.data.events.map((event: AgentEventEnvelope) => event.sequence);
-    expect(new Set(sequences).size).to.equal(sequences.length);
-
-    const gapFillRes = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 1,
-      limit: 1,
-    });
-    expect(gapFillRes.status).to.equal(200);
-    expect(gapFillRes.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([
-      agentActivity.sequence,
-    ]);
+    expect(eventsRes.body.data.events).to.have.length(1);
+    expect(eventsRes.body.data.events[0].sequence).to.equal(agentActivity.sequence);
+    expect(eventsRes.body.data.olderCursor).to.equal(null);
   });
 
-  it('should return concurrent durable events in sequence order during gap-fill', async () => {
+  it('should return concurrent durable events in sequence order on the newest page', async () => {
     await linkWebChat();
     const createRes = await createConversation({
       agentId: ctx.agentIdentifier,
@@ -924,23 +894,13 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     await new Promise((resolve) => setTimeout(resolve, 5));
     await createActivity(2);
 
-    const firstGapPage = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 1,
-      limit: 1,
-    });
-    expect(firstGapPage.status).to.equal(200);
-    expect(firstGapPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([2]);
-    expect(firstGapPage.body.data.hasMore).to.equal(true);
-
-    const secondGapPage = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 2,
-      limit: 1,
-    });
-    expect(secondGapPage.status).to.equal(200);
-    expect(secondGapPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([3]);
+    const newestPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 2 });
+    expect(newestPage.status).to.equal(200);
+    // Newest page is chronological within the page (seq 2 then 3), not insert order.
+    expect(newestPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([2, 3]);
   });
 
-  it('should support ephemeral sequence gaps in durable afterSequence gap-fill', async () => {
+  it('should omit ephemeral sequence gaps from durable history', async () => {
     await linkWebChat();
     const createRes = await createConversation({
       agentId: ctx.agentIdentifier,
@@ -987,16 +947,5 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(agentMsg.sequence).to.be.a('number');
     // Durable history has fewer events than the high-watermark (ephemeral left a gap).
     expect(eventsRes.body.data.events.length).to.be.lessThan(refreshed!.eventSequence!);
-
-    const afterUser = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 1,
-      limit: 50,
-    });
-    expect(afterUser.status).to.equal(200);
-    expect(
-      afterUser.body.data.events.some(
-        (e: AgentEventEnvelope) => e.event.type === 'message' && e.event.messageId === agentActivity.platformMessageId
-      )
-    ).to.equal(true);
   });
 });

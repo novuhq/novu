@@ -108,7 +108,7 @@ describe('AgentChat', () => {
     expect(byAgent?.conversationId).toBe('conv_abcdefghijkl');
   });
 
-  it('returns retained messages for agentId after adopt without conversationId prop', async () => {
+  it('returns retained messages for agentId after the conversation id is assigned', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
@@ -173,9 +173,7 @@ describe('AgentChat', () => {
           },
         },
       ],
-      hasMore: false,
-      next: null,
-      previous: null,
+      olderCursor: null,
     });
 
     const result = await agentChat.loadConversation({
@@ -183,7 +181,6 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    expect(result.data?.hasMore).toBe(false);
     expect(result.data?.messages).toHaveLength(2);
     expect(result.data?.messages[0]).toMatchObject({
       id: 'msg_user0000001',
@@ -203,9 +200,9 @@ describe('AgentChat', () => {
     expect(snapshot?.messages).toEqual(result.data?.messages);
   });
 
-  it('loadConversation replaces optimistic local state with server history', async () => {
+  it('loadConversation merges history with local-only messages by messageId', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'stale local' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'ack locally' });
 
     getEvents.mockResolvedValue({
       events: [
@@ -226,9 +223,7 @@ describe('AgentChat', () => {
           },
         },
       ],
-      hasMore: true,
-      next: null,
-      previous: 'act_older',
+      olderCursor: 'act_older',
     });
 
     const result = await agentChat.loadConversation({
@@ -236,11 +231,118 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    expect(result.data?.hasMore).toBe(true);
-    expect(result.data?.messages).toHaveLength(1);
-    expect(result.data?.messages[0]).toMatchObject({
-      id: 'msg_server00001',
-      parts: [{ type: 'text', text: 'from server', state: 'done' }],
+    expect(result.data?.messages).toHaveLength(2);
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_server00001', 'msg_local000001']);
+    expect(result.data?.messages[1]).toMatchObject({
+      id: 'msg_local000001',
+      parts: [{ type: 'text', text: 'ack locally', state: 'done' }],
     });
+  });
+
+  it('loadConversation dedupes when history already contains the ack’d messageId', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_shared00001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'same turn' });
+
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'user',
+            messageId: 'msg_shared00001',
+            content: { markdown: 'same turn' },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    const result = await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages).toHaveLength(1);
+    expect(result.data?.messages[0]?.id).toBe('msg_shared00001');
+  });
+
+  it('loadConversation does not claim the agent draft — uncontrolled send starts a new chat', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_bbbbbbbbbbbb',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'user',
+            messageId: 'msg_hist0000001',
+            content: { markdown: 'old thread' },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+
+    sendMessage.mockResolvedValue({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_new00000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'fresh draft' });
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      text: 'fresh draft',
+      conversationId: undefined,
+    });
+
+    const draft = agentChat.getConversation({ agentId: 'agent_1' });
+    const resumed = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+
+    expect(draft?.conversationId).toBe('conv_aaaaaaaaaaaa');
+    expect(draft?.messages).toHaveLength(1);
+    expect(draft?.messages[0]).toMatchObject({
+      id: 'msg_new00000001',
+      parts: [{ type: 'text', text: 'fresh draft', state: 'done' }],
+    });
+    expect(resumed?.messages).toHaveLength(1);
+    expect(resumed?.messages[0]?.id).toBe('msg_hist0000001');
+  });
+
+  it('sticky-resumes the agent draft on a second uncontrolled send', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
+
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const draft = agentChat.getConversation({ agentId: 'agent_1' });
+    expect(draft?.messages).toHaveLength(2);
+    expect(draft?.conversationId).toBe('conv_abcdefghijkl');
   });
 });

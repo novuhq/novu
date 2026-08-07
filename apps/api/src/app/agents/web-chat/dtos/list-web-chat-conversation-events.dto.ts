@@ -3,25 +3,10 @@ import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class ListWebChatConversationEventsQueryDto {
-  /**
-   * Cursor: activity `_id` for forward pagination (older → newer).
-   * Omit both `after` and `before` to get the newest page (open/resume).
-   */
-  @IsOptional()
-  @IsString()
-  after?: string;
-
-  /** Cursor: activity `_id` for reverse pagination (load older history). */
+  /** Activity `_id` cursor that loads older history. Omit it to get the newest page. */
   @IsOptional()
   @IsString()
   before?: string;
-
-  /** Gap-fill replay cursor — events with sequence strictly greater than this value. */
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  afterSequence?: number;
 
   @IsOptional()
   @Type(() => Number)
@@ -33,7 +18,6 @@ export class ListWebChatConversationEventsQueryDto {
 
 export class ListWebChatConversationEventsResponseDto {
   events: AgentEventEnvelope[];
-  hasMore: boolean;
-  next: string | null;
-  previous: string | null;
+  /** Cursor toward older history. Send it as `before`. Null when the beginning is reached. */
+  olderCursor: string | null;
 }

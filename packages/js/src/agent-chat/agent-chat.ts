@@ -1,5 +1,4 @@
 import type { AgentMessage } from '@novu/agent-event-protocol';
-import { applyEnvelopes, createInitialAgentConversationState } from '@novu/agent-event-protocol';
 import { AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
@@ -57,8 +56,8 @@ export class AgentChat extends BaseModule {
   }
 
   /**
-   * Fetch the newest history page and replace the local timeline.
-   * Used on open/resume when the parent passes `conversationId`.
+   * Fetch the newest history page and merge it into the local timeline.
+   * Indexes by conversationId only — does not claim the uncontrolled agent draft.
    */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
     return this.callWithSession(async () => {
@@ -66,15 +65,14 @@ export class AgentChat extends BaseModule {
         const page = await this.#agentChatService.getEvents({
           conversationId: args.conversationId,
         });
+
         const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
-        const folded = applyEnvelopes(createInitialAgentConversationState(), page.events);
-        const next = this.#store.replaceFromHistory(entry, folded, args.conversationId);
+        const next = this.#store.absorbHistoryPage(entry, page.events);
 
         return {
           data: {
             conversationId: args.conversationId,
             messages: next.messages,
-            hasMore: page.hasMore,
           },
         };
       } catch (error) {
@@ -85,17 +83,22 @@ export class AgentChat extends BaseModule {
 
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult> {
     return this.callWithSession(async () => {
+      // Controlled: explicit conversationId. Uncontrolled: agent draft (sticky resume).
       const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
       const optimisticId = this.#store.appendSending(entry, args.text);
+      const conversationId = args.conversationId ?? entry.conversationId;
 
       try {
-        const live = this.#store.get(args.agentId, args.conversationId) ?? this.#store.get(args.agentId);
         const data = await this.#agentChatService.sendMessage({
           ...args,
-          conversationId: args.conversationId ?? live?.conversationId,
+          conversationId,
         });
 
-        this.#store.markSent(entry, optimisticId, data.identifier, data.messageId);
+        this.#store.markSent(entry, {
+          optimisticMessageId: optimisticId,
+          serverMessageId: data.messageId,
+          conversationId: data.identifier,
+        });
 
         return {
           data: {

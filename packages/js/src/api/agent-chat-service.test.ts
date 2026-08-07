@@ -62,9 +62,7 @@ describe('AgentChatService', () => {
       json: async () => ({
         data: {
           events: [],
-          hasMore: false,
-          next: null,
-          previous: null,
+          olderCursor: null,
         },
       }),
     } as Response);
@@ -75,13 +73,11 @@ describe('AgentChatService', () => {
 
     const result = await service.getEvents({
       conversationId: 'conv_abcdefghijkl',
-      limit: 50,
-      before: 'act_cursor',
     });
 
-    expect(result).toEqual({ events: [], hasMore: false, next: null, previous: null });
+    expect(result).toEqual({ events: [], olderCursor: null });
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/events?before=act_cursor&limit=50',
+      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/events',
       expect.objectContaining({ method: 'GET' })
     );
   });
