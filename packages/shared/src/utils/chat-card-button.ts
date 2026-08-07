@@ -28,10 +28,51 @@ export type ChatCardButtonFieldError = {
   message: string;
 };
 
-/** A whole liquid expression, e.g. `{{ payload.url }}` (leading, so `{{ x }}/path` also matches). */
-const LEADING_LIQUID_EXPRESSION_REGEX = /^\{\{[\s\S]*?\}\}/;
+/**
+ * Find the end index (exclusive) of a `{{ ... }}` expression starting at `startIndex`.
+ * Uses linear `indexOf` scans — avoids ReDoS from backtracking regexes on `{{`-heavy input.
+ */
+function findLiquidExpressionEnd(value: string, startIndex: number): number {
+  if (!value.startsWith('{{', startIndex)) {
+    return -1;
+  }
 
-const LIQUID_EXPRESSION_GLOBAL_REGEX = /\{\{[\s\S]*?\}\}/g;
+  const closeIndex = value.indexOf('}}', startIndex + 2);
+
+  if (closeIndex === -1) {
+    return -1;
+  }
+
+  return closeIndex + 2;
+}
+
+/** Replace every `{{ ... }}` segment with `replacement` in linear time. */
+function replaceLiquidExpressions(value: string, replacement: string): string {
+  let result = '';
+  let index = 0;
+  let lastCopyIndex = 0;
+
+  while (index < value.length) {
+    if (!value.startsWith('{{', index)) {
+      index += 1;
+      continue;
+    }
+
+    const endIndex = findLiquidExpressionEnd(value, index);
+
+    if (endIndex === -1) {
+      break;
+    }
+
+    result += value.slice(lastCopyIndex, index) + replacement;
+    index = endIndex;
+    lastCopyIndex = endIndex;
+  }
+
+  result += value.slice(lastCopyIndex);
+
+  return result;
+}
 
 /**
  * Whether the value should be treated as a variable reference (and therefore skip URL-format
@@ -46,7 +87,7 @@ export function isChatCardButtonVariableValue(value: string): boolean {
     return false;
   }
 
-  return LEADING_LIQUID_EXPRESSION_REGEX.test(trimmed);
+  return findLiquidExpressionEnd(trimmed, 0) !== -1;
 }
 
 /**
@@ -67,7 +108,7 @@ export function getChatCardButtonUrlError(value: string): ChatCardButtonFieldErr
 
   // Replace `{{ ... }}` segments so the URL parser can validate a text + variable combination,
   // e.g. `https://example.com/{{ payload.id }}` or `https://{{ payload.host }}/path`.
-  const normalized = trimmed.replace(LIQUID_EXPRESSION_GLOBAL_REGEX, 'novu');
+  const normalized = replaceLiquidExpressions(trimmed, 'novu');
 
   try {
     const parsed = new URL(normalized);
