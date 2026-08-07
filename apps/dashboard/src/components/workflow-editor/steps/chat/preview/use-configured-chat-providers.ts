@@ -44,6 +44,9 @@ const PROVIDER_ORDER: readonly string[] = [
  */
 const ALWAYS_AVAILABLE_PROVIDER_IDS: readonly string[] = [ChatProviderIdEnum.Slack, ChatProviderIdEnum.MsTeams];
 
+/** Novu-managed demo/hosted chat providers — not useful as preview platform targets. */
+const EXCLUDED_PROVIDER_IDS = new Set<string>([ChatProviderIdEnum.Novu, ChatProviderIdEnum.NovuWebChat]);
+
 export function getProviderDisplayName(providerId: string): string {
   return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;
 }
@@ -74,7 +77,8 @@ function buildChatPreviewProviders(
       integration.active &&
       !integration.deleted &&
       integration.channel === ChannelTypeEnum.CHAT &&
-      integration._environmentId === environmentId
+      integration._environmentId === environmentId &&
+      !EXCLUDED_PROVIDER_IDS.has(integration.providerId)
     ) {
       connectedProviderIds.add(integration.providerId);
 

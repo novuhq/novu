@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
+import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import { getChatCardValidator } from '@novu/providers';
 import {
   CardElement,
@@ -23,7 +24,12 @@ import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services';
 import { QueryIssueTypeEnum, QueryValidatorService } from '../../services/query-parser/query-validator.service';
-import { compileMailyToCard, dashboardSanitizeControlValues, isStringifiedMailyJSONContent } from '../../utils';
+import {
+  collectCardButtonFieldIssues,
+  compileMailyToCard,
+  dashboardSanitizeControlValues,
+  isStringifiedMailyJSONContent,
+} from '../../utils';
 import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from '../../utils/issues';
 import { parseStepVariables } from '../../utils/parse-step-variables';
 import {
@@ -168,20 +174,25 @@ export class BuildStepIssuesUsecase {
   }
 
   /**
-   * Rich Chat: surface the deterministic, platform-limit card findings (e.g. Slack's 50-block cap)
-   * as `controls.body` step issues on save, mirroring the `validation` a provider's `render()` returns
-   * at delivery. The chat body is a stringified Maily/TipTap document that compiles to a
-   * provider-agnostic `CardElement`; each active chat provider's validator runs against it. Unresolved
-   * liquid variables stay as literal text, which is fine for the structural (block/button count) checks.
+   * Rich Chat: surface two families of `controls.body` step issues on save.
    *
-   * Each finding carries a `severity`: blocking `ERROR`s (today Slack, whose API rejects the whole
-   * payload once a limit is crossed so delivery fails) plus non-blocking `WARNING`s
+   * 1. Blocking link-button field validation (label required; url required + valid url format unless
+   *    the value is a variable), run against the raw Maily/TipTap document so it applies regardless of
+   *    which chat providers are connected. The dashboard Actions bubble runs the same shared validator
+   *    inline, keeping the footer and the bubble consistent.
+   * 2. The deterministic, platform-limit card findings (e.g. Slack's 50-block cap), mirroring the
+   *    `validation` a provider's `render()` returns at delivery. The chat body compiles to a
+   *    provider-agnostic `CardElement`; each active chat provider's validator runs against it.
+   *    Unresolved liquid variables stay as literal text, which is fine for the structural checks.
+   *
+   * Each finding carries a `severity`: blocking `ERROR`s (invalid button fields, plus Slack, whose API
+   * rejects the whole payload once a limit is crossed so delivery fails) plus non-blocking `WARNING`s
    * (Teams/Telegram/WhatsApp degradation that still delivers). Both are surfaced so the dashboard can
    * show warnings without gating save. Gated by `IS_CHAT_BLOCK_EDITOR_ENABLED`; when off, the legacy
    * plain-text chat body is not a card and there is nothing to validate.
    *
-   * Providers with a content override are skipped: the override — not the compiled card — is what
-   * gets delivered for that provider, so the card's platform-limit findings would be misleading.
+   * Providers with a content override are skipped for the platform-limit pass: the override — not the
+   * compiled card — is what gets delivered for that provider, so those findings would be misleading.
    */
   @Instrument()
   private async processChatCardIssues(
@@ -204,56 +215,65 @@ export class BuildStepIssuesUsecase {
       return {};
     }
 
-    let card: CardElement;
+    let doc: MailyJSONContent;
     try {
-      card = compileMailyToCard(JSON.parse(body));
+      doc = JSON.parse(body);
     } catch {
-      // An empty or structurally-invalid card throws on compile; empty bodies are already handled by
-      // the sanitize/schema passes, so there is no card-limit finding to surface here.
       return {};
     }
 
-    const targetProviderIds = await this.resolveActiveChatProviderIds(user);
-    if (targetProviderIds.length === 0) {
-      return {};
-    }
-
-    const annotateWithProvider = targetProviderIds.length > 1;
-    const seen = new Set<string>();
     const cardIssues: RuntimeIssue[] = [];
 
-    for (const providerId of targetProviderIds) {
-      // A content override for this provider replaces the card at delivery time, so its card-derived
-      // findings no longer apply — don't surface them.
-      if (hasProviderContentOverride(providerOverrides, providerId)) {
-        continue;
-      }
+    // 1. Blocking link-button field validation — independent of the compiled card and connected providers.
+    cardIssues.push(...collectCardButtonFieldIssues(doc));
 
-      const validate = getChatCardValidator(providerId);
-      if (!validate) {
-        continue;
-      }
+    // 2. Platform-limit findings need a compiled card; an empty/structurally-invalid card throws on
+    // compile (empty bodies are already handled by the sanitize/schema passes), so skip that pass then.
+    let card: CardElement | null = null;
+    try {
+      card = compileMailyToCard(doc);
+    } catch {
+      card = null;
+    }
 
-      for (const finding of validate(card)) {
-        const dedupeKey = `${providerId}:${finding.code}`;
-        if (seen.has(dedupeKey)) {
+    if (card) {
+      const targetProviderIds = await this.resolveActiveChatProviderIds(user);
+      const annotateWithProvider = targetProviderIds.length > 1;
+      const seen = new Set<string>();
+
+      for (const providerId of targetProviderIds) {
+        // A content override for this provider replaces the card at delivery time, so its card-derived
+        // findings no longer apply — don't surface them.
+        if (hasProviderContentOverride(providerOverrides, providerId)) {
           continue;
         }
-        seen.add(dedupeKey);
 
-        // Slack's Block Kit limits are API-enforced (the payload is rejected → delivery fails), so
-        // they surface as blocking `ERROR`s. Teams/Telegram/WhatsApp degradation still delivers, so
-        // it surfaces as a non-blocking `WARNING` the dashboard shows without gating save.
-        cardIssues.push({
-          issueType: ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED,
-          severity:
-            finding.level === ChatRenderValidationLevelEnum.ERROR
-              ? StepIssueSeverityEnum.ERROR
-              : StepIssueSeverityEnum.WARNING,
-          message: annotateWithProvider
-            ? `${getChatProviderDisplayName(providerId)}: ${finding.message}`
-            : finding.message,
-        });
+        const validate = getChatCardValidator(providerId);
+        if (!validate) {
+          continue;
+        }
+
+        for (const finding of validate(card)) {
+          const dedupeKey = `${providerId}:${finding.code}`;
+          if (seen.has(dedupeKey)) {
+            continue;
+          }
+          seen.add(dedupeKey);
+
+          // Slack's Block Kit limits are API-enforced (the payload is rejected → delivery fails), so
+          // they surface as blocking `ERROR`s. Teams/Telegram/WhatsApp degradation still delivers, so
+          // it surfaces as a non-blocking `WARNING` the dashboard shows without gating save.
+          cardIssues.push({
+            issueType: ContentIssueEnum.CHAT_CARD_LIMIT_EXCEEDED,
+            severity:
+              finding.level === ChatRenderValidationLevelEnum.ERROR
+                ? StepIssueSeverityEnum.ERROR
+                : StepIssueSeverityEnum.WARNING,
+            message: annotateWithProvider
+              ? `${getChatProviderDisplayName(providerId)}: ${finding.message}`
+              : finding.message,
+          });
+        }
       }
     }
 
