@@ -1,6 +1,8 @@
 import type { InboxProps } from '../components/Inbox';
 import { ShadowRootDetector } from '../components/ShadowRootDetector';
 import type {
+  UseAgentChatProps,
+  UseAgentChatResult,
   UseCreateSubscriptionProps,
   UseCreateSubscriptionResult,
   UseNotificationsProps,
@@ -73,6 +75,16 @@ export function TelegramConnectButton() {
 
 export function useNovu() {
   return null;
+}
+
+export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
+  return {
+    messages: [],
+    isLoading: false,
+    isFetching: false,
+    refetch: () => Promise.resolve(),
+    sendMessage: () => Promise.resolve({ data: undefined, error: undefined }),
+  };
 }
 
 export function useCounts(_: UseCountsProps): UseCountsResult {
@@ -191,6 +203,8 @@ export type {
 export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from '../components';
 
 export type {
+  UseAgentChatProps,
+  UseAgentChatResult,
   UseCountsProps,
   UseCountsResult,
   UseNotificationsProps,
