@@ -21,6 +21,10 @@ import {
 const CARD_BUTTON_NODE_TYPE = 'cardButton';
 
 function collectCardButtonNodes(node: MailyJSONContent, acc: MailyJSONContent[]): void {
+  if (!node || typeof node !== 'object') {
+    return;
+  }
+
   if (node.type === CARD_BUTTON_NODE_TYPE) {
     acc.push(node);
   }
