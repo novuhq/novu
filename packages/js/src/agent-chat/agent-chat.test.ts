@@ -2,6 +2,7 @@ import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
 import { AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { AgentChat } from './agent-chat';
+import { draftKey, resumeKey } from './agent-chat-store';
 
 describe('AgentChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
@@ -24,9 +25,17 @@ describe('AgentChat', () => {
 
   it('appends an optimistic user message then marks it sent with server messageId', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
-    const updates: Array<{ messages: Array<{ id: string; status: string; role: string }> }> = [];
+    const updates: Array<{
+      key: string;
+      conversationId?: string;
+      messages: Array<{ id: string; status: string; role: string }>;
+    }> = [];
     emitter.on('agent_chat.messages.updated', ({ data }) => {
-      updates.push({ messages: data.messages.map((m) => ({ id: m.id, status: m.status, role: m.role })) });
+      updates.push({
+        key: data.key,
+        conversationId: data.conversationId,
+        messages: data.messages.map((m) => ({ id: m.id, status: m.status, role: m.role })),
+      });
     });
 
     const result = await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
@@ -34,8 +43,12 @@ describe('AgentChat', () => {
     expect(result).toEqual({
       data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' },
     });
+    expect(updates[0]?.key).toBe(draftKey('agent_1'));
+    expect(updates[0]?.conversationId).toBeUndefined();
     expect(updates[0]?.messages[0]?.status).toBe('sending');
     expect(updates[0]?.messages[0]?.id).toMatch(/^opt_/);
+    expect(updates[1]?.key).toBe(draftKey('agent_1'));
+    expect(updates[1]?.conversationId).toBe('conv_abcdefghijkl');
     expect(updates[1]?.messages).toEqual([{ id: 'msg_abcdefghijkl', status: 'sent', role: 'user' }]);
 
     const snapshot = agentChat.getConversation({
@@ -43,12 +56,31 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
     expect(snapshot?.messages).toHaveLength(1);
+    expect(snapshot?.key).toBe(draftKey('agent_1'));
     expect(snapshot?.messages[0]).toMatchObject({
       id: 'msg_abcdefghijkl',
       role: 'user',
       status: 'sent',
       parts: [{ type: 'text', text: 'hello', state: 'done' }],
     });
+  });
+
+  it('keeps draft emit key stable so a draft listener sees sending → sent', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    const draftStatuses: string[] = [];
+    const key = draftKey('agent_1');
+
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key !== key) {
+        return;
+      }
+
+      draftStatuses.push(data.messages[0]?.status ?? '');
+    });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
+
+    expect(draftStatuses).toEqual(['sending', 'sent']);
   });
 
   it('marks the optimistic message failed when the request errors', async () => {
@@ -61,7 +93,7 @@ describe('AgentChat', () => {
     expect(snapshot?.messages[0]?.status).toBe('failed');
   });
 
-  it('serializes uncontrolled sends until conversationId is assigned', async () => {
+  it('serializes unclaimed draft creates until conversationId is claimed', async () => {
     let resolveFirst!: (value: { identifier: string; messageId: string }) => void;
     sendMessage
       .mockImplementationOnce(
@@ -86,7 +118,6 @@ describe('AgentChat', () => {
       'sending',
     ]);
 
-    // Chain runs on a microtask — first POST starts, second stays queued.
     await Promise.resolve();
     expect(sendMessage).toHaveBeenCalledTimes(1);
     expect(sendMessage).toHaveBeenNthCalledWith(1, {
@@ -128,13 +159,86 @@ describe('AgentChat', () => {
     expect(byAgent?.conversationId).toBe('conv_abcdefghijkl');
   });
 
-  it('returns retained messages for agentId after the conversation id is assigned', async () => {
+  it('does not serialize sticky-resume draft sends after the claim', async () => {
+    let resolveFirst!: (value: { identifier: string; messageId: string }) => void;
+    let resolveSecond!: (value: { identifier: string; messageId: string }) => void;
+    let resolveThird!: (value: { identifier: string; messageId: string }) => void;
+
+    sendMessage
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          })
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecond = resolve;
+          })
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveThird = resolve;
+          })
+      );
+
+    const first = agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
+    await Promise.resolve();
+    resolveFirst({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' });
+    await first;
+
+    const second = agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
+    const third = agentChat.sendMessage({ agentId: 'agent_1', text: 'three' });
+    await Promise.resolve();
+
+    // Both sticky-resume POSTs are in flight (no claim gate after conv_* is known).
+    expect(sendMessage).toHaveBeenCalledTimes(3);
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(sendMessage).toHaveBeenNthCalledWith(3, {
+      agentId: 'agent_1',
+      text: 'three',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    resolveSecond({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+    resolveThird({ identifier: 'conv_abcdefghijkl', messageId: 'msg_cccccccccccc' });
+    await expect(second).resolves.toMatchObject({ data: { messageId: 'msg_bbbbbbbbbbbb' } });
+    await expect(third).resolves.toMatchObject({ data: { messageId: 'msg_cccccccccccc' } });
+  });
+
+  it('releases draft claim waiters when the create fails so the next send can mint', async () => {
+    sendMessage
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' });
+
+    const failed = await agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
+    expect(failed.error).toBeDefined();
+
+    const retry = await agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
+    expect(retry).toEqual({
+      data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' },
+    });
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: undefined,
+    });
+  });
+
+  it('returns retained messages for agentId after the conversation id is claimed', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
 
     const snapshot = agentChat.getConversation({ agentId: 'agent_1' });
     expect(snapshot?.conversationId).toBe('conv_abcdefghijkl');
+    expect(snapshot?.key).toBe(draftKey('agent_1'));
     expect(snapshot?.messages).toHaveLength(1);
     expect(snapshot?.messages[0]).toMatchObject({
       status: 'sent',
@@ -217,6 +321,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
+    expect(snapshot?.key).toBe(resumeKey('conv_abcdefghijkl'));
     expect(snapshot?.messages).toEqual(result.data?.messages);
   });
 
@@ -294,7 +399,7 @@ describe('AgentChat', () => {
     expect(result.data?.messages[0]?.id).toBe('msg_shared00001');
   });
 
-  it('loadConversation does not claim the agent draft — uncontrolled send starts a new chat', async () => {
+  it('loadConversation does not claim the agent draft — draft send starts a new chat', async () => {
     getEvents.mockResolvedValue({
       events: [
         {
@@ -338,16 +443,18 @@ describe('AgentChat', () => {
     });
 
     expect(draft?.conversationId).toBe('conv_aaaaaaaaaaaa');
+    expect(draft?.key).toBe(draftKey('agent_1'));
     expect(draft?.messages).toHaveLength(1);
     expect(draft?.messages[0]).toMatchObject({
       id: 'msg_new00000001',
       parts: [{ type: 'text', text: 'fresh draft', state: 'done' }],
     });
+    expect(resumed?.key).toBe(resumeKey('conv_bbbbbbbbbbbb'));
     expect(resumed?.messages).toHaveLength(1);
     expect(resumed?.messages[0]?.id).toBe('msg_hist0000001');
   });
 
-  it('sticky-resumes the agent draft on a second uncontrolled send', async () => {
+  it('sticky-resumes the agent draft on a second draft send', async () => {
     sendMessage
       .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
       .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });

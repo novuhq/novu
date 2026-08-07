@@ -10,12 +10,6 @@ import type { LoadConversationArgs, LoadConversationResult, SendMessageArgs, Sen
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
   #store: AgentChatStore;
-  /**
-   * Per-agent chain for uncontrolled sends.
-   * The first create must finish (and adopt `conv_*`) before the next POST omits
-   * `conversationIdentifier` — otherwise the server mints two conversations.
-   */
-  #uncontrolledSendChain = new Map<string, Promise<unknown>>();
 
   constructor({
     inboxServiceInstance,
@@ -33,6 +27,7 @@ export class AgentChat extends BaseModule {
         data: {
           agentId: entry.agentId,
           conversationId: entry.conversationId,
+          key: entry.key,
           messages: entry.messages,
         },
       });
@@ -41,7 +36,6 @@ export class AgentChat extends BaseModule {
 
   clearCache(): void {
     this.#store.clear();
-    this.#uncontrolledSendChain.clear();
   }
 
   getConversation({
@@ -50,7 +44,7 @@ export class AgentChat extends BaseModule {
   }: {
     agentId: string;
     conversationId?: string;
-  }): { conversationId?: string; messages: AgentMessage[] } | undefined {
+  }): { conversationId?: string; messages: AgentMessage[]; key?: string } | undefined {
     const entry = this.#store.get(agentId, conversationId);
     if (!entry) {
       return undefined;
@@ -59,12 +53,13 @@ export class AgentChat extends BaseModule {
     return {
       conversationId: entry.conversationId,
       messages: entry.messages,
+      key: entry.key,
     };
   }
 
   /**
    * Fetch the newest history page and merge it into the local timeline.
-   * Indexes by conversationId only — does not claim the uncontrolled agent draft.
+   * Indexes by conversationId only — does not claim the agent draft.
    */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
     return this.callWithSession(async () => {
@@ -90,15 +85,11 @@ export class AgentChat extends BaseModule {
 
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult> {
     return this.callWithSession(async () => {
-      // Controlled: explicit conversationId. Uncontrolled: agent draft (sticky resume).
+      // Explicit conversationId → resume. Omit → agent draft (claim on first send).
       const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
       const optimisticId = this.#store.appendSending(entry, args.text);
 
-      const post = async (): Result<SendMessageResult> => {
-        // Re-read after any prior uncontrolled create so sticky resume picks up conv_*.
-        const live = this.#store.get(args.agentId, args.conversationId) ?? entry;
-        const conversationId = args.conversationId ?? live.conversationId;
-
+      return this.#store.withDraftClaim(entry, args.conversationId, async (conversationId) => {
         try {
           const data = await this.#agentChatService.sendMessage({
             ...args,
@@ -122,25 +113,7 @@ export class AgentChat extends BaseModule {
 
           return { error: new NovuError('Failed to send agent chat message', error) };
         }
-      };
-
-      // Paint optimistically immediately; only serialize the HTTP create so two
-      // overlapping uncontrolled first-sends cannot mint two server conversations.
-      if (!args.conversationId) {
-        const previous = this.#uncontrolledSendChain.get(args.agentId) ?? Promise.resolve();
-        const current = previous.then(post, post);
-        this.#uncontrolledSendChain.set(
-          args.agentId,
-          current.then(
-            () => undefined,
-            () => undefined
-          )
-        );
-
-        return current;
-      }
-
-      return post();
+      });
     });
   }
 }

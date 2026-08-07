@@ -7,8 +7,8 @@ export type UseAgentChatProps = {
   /** The agent that receives the messages. */
   agentId: string;
   /**
-   * Resume this conversation (loads history on mount).
-   * Omit for the agent draft: first send starts a chat; later sends sticky-resume it.
+   * Resume this conversation (loads history on mount) — controlled mode.
+   * Omit for the agent draft (uncontrolled): first send claims a chat; later sends sticky-resume it.
    * Loading another conversation elsewhere does not steal that draft.
    */
   conversationId?: string;
@@ -30,6 +30,10 @@ export type UseAgentChatResult = {
     error?: NovuError;
   }>;
 };
+
+function subscriptionKey(agentId: string, conversationIdProp?: string): string {
+  return conversationIdProp ? `conv:${conversationIdProp}` : `agent:${agentId}`;
+}
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const { agentId, conversationId: conversationIdProp } = props;
@@ -94,16 +98,11 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setMessages([]);
     }
 
+    const key = subscriptionKey(agentId, conversationIdProp);
     const cleanup = novu.on('agent_chat.messages.updated', ({ data }) => {
-      if (data.agentId !== agentId) {
-        return;
-      }
-
-      // Exact identity: draft (no id) only accepts draft updates; a controlled /
-      // assigned conversation only accepts that conversationId. Prevents same-agent
-      // hooks from painting each other's timelines.
-      const currentConversationId = conversationIdRef.current;
-      if ((data.conversationId ?? undefined) !== (currentConversationId ?? undefined)) {
+      // Stable holder key from @novu/js — draft stays `agent:…` after claim, so
+      // the first sending→sent transition is not dropped.
+      if (data.key !== key) {
         return;
       }
 

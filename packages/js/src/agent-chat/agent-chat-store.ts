@@ -13,9 +13,22 @@ import {
  */
 export type ConversationEntry = AgentConversationState & {
   agentId: string;
-  /** Public `conv_*` id once assigned (uncontrolled send) or when resuming. */
+  /** Public `conv_*` id once the draft is claimed, or when resuming. */
   conversationId?: string;
+  /**
+   * Immutable subscription key for emits.
+   * Draft holders stay `agent:<agentId>` after claim; resumed holders are `conv:<id>`.
+   */
+  key: string;
 };
+
+export function draftKey(agentId: string): string {
+  return `agent:${agentId}`;
+}
+
+export function resumeKey(conversationId: string): string {
+  return `conv:${conversationId}`;
+}
 
 function createOptimisticMessageId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -41,18 +54,23 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
  * HTTP calls; the hook listens via `onUpdate` → `agent_chat.messages.updated`.
  *
  * Dual index — same stable holder, two lookup keys:
- * - `#byAgentId` — uncontrolled draft for that agent (omit conversationId on send)
+ * - `#byAgentId` — agent draft (omit conversationId on send / sticky resume)
  * - `#byConversationId` — alias added once the public `conv_*` id is known
  *
  * Holders are never swapped. `conversationId` is an alias on the existing object.
  * Resume/`loadConversation` indexes by conversationId only and does not claim the
- * agent draft key (so uncontrolled sends stay on the draft, not a resumed chat).
+ * agent draft key (so draft sends stay on the draft, not a resumed chat).
  */
 export class AgentChatStore {
-  /** Uncontrolled draft (and sticky resume) keyed by agent. */
+  /** Agent draft (and sticky resume after claim) keyed by agent. */
   #byAgentId = new Map<string, ConversationEntry>();
   /** Same holders keyed by public conversation id once known. */
   #byConversationId = new Map<string, ConversationEntry>();
+  /**
+   * In-flight draft claim per agent (server mint of `conv_*`).
+   * Waiters reuse the claimed id; concurrent posts after claim are not gated.
+   */
+  #pendingDraftClaims = new Map<string, Promise<string | undefined>>();
   /** Fired after every mutation so AgentChat can emit to React. */
   #onUpdate: (entry: ConversationEntry) => void;
 
@@ -64,6 +82,7 @@ export class AgentChatStore {
   clear(): void {
     this.#byAgentId.clear();
     this.#byConversationId.clear();
+    this.#pendingDraftClaims.clear();
   }
 
   /**
@@ -85,8 +104,8 @@ export class AgentChatStore {
 
   /**
    * Return the entry if it exists; otherwise create an empty holder.
-   * With `conversationId`: conversation index only (resume / controlled).
-   * Without: agent draft slot (uncontrolled send / sticky resume).
+   * With `conversationId`: conversation index only (resume).
+   * Without: agent draft slot (first send claims; later sends sticky-resume).
    */
   getOrCreate(agentId: string, conversationId?: string): ConversationEntry {
     const existing = this.get(agentId, conversationId);
@@ -98,6 +117,7 @@ export class AgentChatStore {
       ...createInitialAgentConversationState(),
       agentId,
       conversationId,
+      key: conversationId ? resumeKey(conversationId) : draftKey(agentId),
     };
 
     if (conversationId) {
@@ -131,7 +151,8 @@ export class AgentChatStore {
 
   /**
    * Mark an optimistic message `sent`, swap in the server message id, and adopt
-   * conversationId as an alias on this same holder (sticky uncontrolled resume).
+   * conversationId as an alias on this same holder (sticky draft resume).
+   * Does not change `entry.key` — draft listeners keep matching after claim.
    */
   markSent(
     entry: ConversationEntry,
@@ -184,5 +205,37 @@ export class AgentChatStore {
     this.#onUpdate(entry);
 
     return entry;
+  }
+
+  /**
+   * Run an HTTP post for this entry.
+   * Unclaimed drafts: only one create in flight; waiters reuse the claimed `conv_*`.
+   * After claim (or resume / explicit id): posts run immediately with no gating.
+   */
+  withDraftClaim<T>(
+    entry: ConversationEntry,
+    explicitConversationId: string | undefined,
+    post: (conversationId?: string) => Promise<T>
+  ): Promise<T> {
+    const known = explicitConversationId ?? entry.conversationId;
+    if (known) {
+      return post(known);
+    }
+
+    const pending = this.#pendingDraftClaims.get(entry.agentId);
+    if (pending) {
+      return pending.then((claimedId) => post(claimedId ?? entry.conversationId));
+    }
+
+    let resolveClaim!: (conversationId: string | undefined) => void;
+    const claimGate = new Promise<string | undefined>((resolve) => {
+      resolveClaim = resolve;
+    });
+    this.#pendingDraftClaims.set(entry.agentId, claimGate);
+
+    return post(undefined).finally(() => {
+      resolveClaim(entry.conversationId);
+      this.#pendingDraftClaims.delete(entry.agentId);
+    });
   }
 }

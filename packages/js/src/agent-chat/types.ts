@@ -7,8 +7,7 @@ export type SendMessageArgs = {
   text: string;
   /**
    * Resume this conversation.
-   * Omit to use the agent draft: a new chat on first send, or sticky resume of
-   * the draft started by a prior uncontrolled send for this agent.
+   * Omit to use the agent draft: first send claims a `conv_*`, later sends sticky-resume it.
    * Loading another conversation via `loadConversation` does not change the draft.
    */
   conversationId?: string;
@@ -32,5 +31,10 @@ export type LoadConversationResult = {
 export type AgentChatMessagesUpdated = {
   agentId: string;
   conversationId?: string;
+  /**
+   * Immutable subscription key for this holder.
+   * Draft emits stay `agent:<agentId>` after claim; resume emits are `conv:<id>`.
+   */
+  key: string;
   messages: AgentMessage[];
 };
