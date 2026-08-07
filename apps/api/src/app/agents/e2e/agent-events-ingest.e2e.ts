@@ -61,7 +61,7 @@ describe('Agent Events Ingest - /agents/events/ingest #novu-v2', () => {
   ): AgentEventEnvelope {
     return buildEnvelope(
       conversationId,
-      { type: 'message', messageId, content: { markdown: `Content for ${messageId}` } },
+      { type: 'message', role: 'assistant', messageId, content: { markdown: `Content for ${messageId}` } },
       overrides
     );
   }

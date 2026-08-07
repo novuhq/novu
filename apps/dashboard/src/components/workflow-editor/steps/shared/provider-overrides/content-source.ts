@@ -40,7 +40,7 @@ function findProviderConfig(providerId: string): IProviderConfig | undefined {
   return providers.find((provider) => provider.id === providerId);
 }
 
-export function getOverrideProviderDisplayName(providerId: string): string {
+function getOverrideProviderDisplayName(providerId: string): string {
   return findProviderConfig(providerId)?.displayName ?? providerId;
 }
 

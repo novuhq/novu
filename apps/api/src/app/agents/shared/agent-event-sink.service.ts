@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
@@ -270,6 +270,14 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<IngestOutcome> {
+    // Runtime ingest accepts assistant messages only. Subscriber turns arrive
+    // through the inbound HTTP endpoint, not through this path.
+    if (event.role !== 'assistant') {
+      throw new BadRequestException(
+        `Rejecting durable message with role "${event.role}": ingest accepts assistant messages only`
+      );
+    }
+
     if (context.suppressReply) {
       return 'accepted';
     }
