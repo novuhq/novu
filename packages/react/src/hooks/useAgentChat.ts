@@ -99,8 +99,11 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         return;
       }
 
+      // Exact identity: draft (no id) only accepts draft updates; a controlled /
+      // assigned conversation only accepts that conversationId. Prevents same-agent
+      // hooks from painting each other's timelines.
       const currentConversationId = conversationIdRef.current;
-      if (currentConversationId && data.conversationId && data.conversationId !== currentConversationId) {
+      if ((data.conversationId ?? undefined) !== (currentConversationId ?? undefined)) {
         return;
       }
 

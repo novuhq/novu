@@ -61,9 +61,8 @@ describe('AgentChat', () => {
     expect(snapshot?.messages[0]?.status).toBe('failed');
   });
 
-  it('keeps both messages sent when two sends race before conversationId exists', async () => {
+  it('serializes uncontrolled sends until conversationId is assigned', async () => {
     let resolveFirst!: (value: { identifier: string; messageId: string }) => void;
-    let resolveSecond!: (value: { identifier: string; messageId: string }) => void;
     sendMessage
       .mockImplementationOnce(
         () =>
@@ -71,24 +70,45 @@ describe('AgentChat', () => {
             resolveFirst = resolve;
           })
       )
-      .mockImplementationOnce(
-        () =>
-          new Promise((resolve) => {
-            resolveSecond = resolve;
-          })
-      );
+      .mockImplementationOnce(async (args) => {
+        expect(args.conversationId).toBe('conv_abcdefghijkl');
+
+        return { identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' };
+      });
 
     const first = agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
     const second = agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
 
+    // Both bubbles paint immediately; only the HTTP create is serialized.
+    expect(agentChat.getConversation({ agentId: 'agent_1' })?.messages).toHaveLength(2);
+    expect(agentChat.getConversation({ agentId: 'agent_1' })?.messages.map((m) => m.status)).toEqual([
+      'sending',
+      'sending',
+    ]);
+
+    // Chain runs on a microtask — first POST starts, second stays queued.
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(sendMessage).toHaveBeenNthCalledWith(1, {
+      agentId: 'agent_1',
+      text: 'one',
+      conversationId: undefined,
+    });
+
     resolveFirst({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' });
-    resolveSecond({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
 
     await expect(first).resolves.toEqual({
       data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' },
     });
     await expect(second).resolves.toEqual({
       data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' },
+    });
+
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_abcdefghijkl',
     });
 
     const byAgent = agentChat.getConversation({ agentId: 'agent_1' });

@@ -10,6 +10,12 @@ import type { LoadConversationArgs, LoadConversationResult, SendMessageArgs, Sen
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
   #store: AgentChatStore;
+  /**
+   * Per-agent chain for uncontrolled sends.
+   * The first create must finish (and adopt `conv_*`) before the next POST omits
+   * `conversationIdentifier` — otherwise the server mints two conversations.
+   */
+  #uncontrolledSendChain = new Map<string, Promise<unknown>>();
 
   constructor({
     inboxServiceInstance,
@@ -35,6 +41,7 @@ export class AgentChat extends BaseModule {
 
   clearCache(): void {
     this.#store.clear();
+    this.#uncontrolledSendChain.clear();
   }
 
   getConversation({
@@ -86,31 +93,54 @@ export class AgentChat extends BaseModule {
       // Controlled: explicit conversationId. Uncontrolled: agent draft (sticky resume).
       const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
       const optimisticId = this.#store.appendSending(entry, args.text);
-      const conversationId = args.conversationId ?? entry.conversationId;
 
-      try {
-        const data = await this.#agentChatService.sendMessage({
-          ...args,
-          conversationId,
-        });
+      const post = async (): Result<SendMessageResult> => {
+        // Re-read after any prior uncontrolled create so sticky resume picks up conv_*.
+        const live = this.#store.get(args.agentId, args.conversationId) ?? entry;
+        const conversationId = args.conversationId ?? live.conversationId;
 
-        this.#store.markSent(entry, {
-          optimisticMessageId: optimisticId,
-          serverMessageId: data.messageId,
-          conversationId: data.identifier,
-        });
+        try {
+          const data = await this.#agentChatService.sendMessage({
+            ...args,
+            conversationId,
+          });
 
-        return {
-          data: {
+          this.#store.markSent(entry, {
+            optimisticMessageId: optimisticId,
+            serverMessageId: data.messageId,
             conversationId: data.identifier,
-            messageId: data.messageId,
-          },
-        };
-      } catch (error) {
-        this.#store.markFailed(entry, optimisticId);
+          });
 
-        return { error: new NovuError('Failed to send agent chat message', error) };
+          return {
+            data: {
+              conversationId: data.identifier,
+              messageId: data.messageId,
+            },
+          };
+        } catch (error) {
+          this.#store.markFailed(entry, optimisticId);
+
+          return { error: new NovuError('Failed to send agent chat message', error) };
+        }
+      };
+
+      // Paint optimistically immediately; only serialize the HTTP create so two
+      // overlapping uncontrolled first-sends cannot mint two server conversations.
+      if (!args.conversationId) {
+        const previous = this.#uncontrolledSendChain.get(args.agentId) ?? Promise.resolve();
+        const current = previous.then(post, post);
+        this.#uncontrolledSendChain.set(
+          args.agentId,
+          current.then(
+            () => undefined,
+            () => undefined
+          )
+        );
+
+        return current;
       }
+
+      return post();
     });
   }
 }
