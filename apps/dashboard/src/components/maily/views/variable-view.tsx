@@ -1,8 +1,9 @@
+import { dismissCardActionsMenu } from '@novu/maily-core/extensions';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { JSONSchema7 } from 'json-schema';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { VariableFrom } from '@/components/maily/types';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { useVariableValidation } from '@/components/variable/hooks/use-variable-validation';
@@ -13,8 +14,58 @@ import { parseVariable } from '@/utils/liquid';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../repeat-block-aliases';
 
-function isCardButtonVariableContext(editor: TiptapEditor): boolean {
-  return editor.isActive('cardButton');
+const CARD_BUTTON_VARIABLE_FIELDS = ['label', 'url'] as const;
+const CARD_BUTTON_NODE_NAME = 'cardButton';
+
+/**
+ * Replaces (or removes, when `nextExpression` is empty) the `{{ variablePath }}` segment inside the
+ * card button field that contains it, preserving surrounding text. Searches the document so it still
+ * works when Configure Variable has focus and the card button is no longer node-selected (TipTap's
+ * `updateAttributes` / `getAttributes` are selection-scoped and would no-op).
+ */
+function replaceCardButtonVariableSegment(editor: TiptapEditor, variablePath: string, nextExpression: string): boolean {
+  const trimmedPath = variablePath.trim();
+
+  if (!trimmedPath) {
+    return false;
+  }
+
+  const escapedPath = trimmedPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const segmentRegex = new RegExp(`\\{\\{\\s*${escapedPath}\\s*\\}\\}`);
+
+  let targetPos: number | null = null;
+  let nextAttrs: Record<string, unknown> | null = null;
+
+  editor.state.doc.descendants((node, pos) => {
+    if (targetPos !== null || node.type.name !== CARD_BUTTON_NODE_NAME) {
+      return;
+    }
+
+    for (const field of CARD_BUTTON_VARIABLE_FIELDS) {
+      const current = node.attrs[field];
+
+      if (typeof current !== 'string' || !segmentRegex.test(current)) {
+        continue;
+      }
+
+      targetPos = pos;
+      nextAttrs = {
+        ...node.attrs,
+        [field]: current.replace(segmentRegex, nextExpression),
+      };
+
+      return;
+    }
+  });
+
+  if (targetPos === null || !nextAttrs) {
+    return false;
+  }
+
+  const tr = editor.state.tr.setNodeMarkup(targetPos, undefined, nextAttrs);
+  editor.view.dispatch(tr);
+
+  return true;
 }
 
 function setVariablePopoverOpen(editor: TiptapEditor | undefined, open: boolean) {
@@ -22,9 +73,74 @@ function setVariablePopoverOpen(editor: TiptapEditor | undefined, open: boolean)
     return;
   }
 
+  const keepCardActionsMenu = Boolean(editor.storage.variable.keepCardActionsMenu);
+  const isCanvasCardButton = editor.isActive(CARD_BUTTON_NODE_NAME) && !keepCardActionsMenu;
+
+  // Canvas pill Configure: always clear the row selection on close so Actions does not remount.
+  // Do not require `isActive('cardButton')` — focus in the popover often drops the node selection
+  // while the caret can still sit inside the `cardActions` row (which would show Actions).
+  if (!open && !keepCardActionsMenu) {
+    dismissCardActionsMenu(editor);
+  }
+
   editor.storage.variable.popover = open;
+
+  // Clear the "keep card Actions bubble mounted" flag on close so it can't leak into the next,
+  // unrelated Configure Variable popover. It is re-set (per origin) on the next pill mousedown.
+  if (!open) {
+    editor.storage.variable.keepCardActionsMenu = false;
+  }
+
   // TipTap bubble menus re-check `shouldShow` on transactions.
   editor.view.dispatch(editor.state.tr.setMeta('variablePopover', open));
+
+  // Opening Configure from a canvas pill: TipTap's BubbleMenu won't hide Actions on a meta-only
+  // flip — bounce selection while `popover` is already true so tippy stays dismissed.
+  if (open && isCanvasCardButton) {
+    const { selection } = editor.state;
+
+    if (selection.node?.type.name === CARD_BUTTON_NODE_NAME) {
+      const from = selection.from;
+      const after = Math.min(from + selection.node.nodeSize, editor.state.doc.content.size);
+      editor.commands.setTextSelection(after);
+      editor.commands.setNodeSelection(from);
+    }
+  }
+}
+
+function selectCardButtonFromEvent(editor: TiptapEditor, event: { target: EventTarget | null }): void {
+  if (!(event.target instanceof Element)) {
+    return;
+  }
+
+  const cardButtonEl = event.target.closest('[data-type="cardButton"]');
+
+  if (!cardButtonEl) {
+    return;
+  }
+
+  try {
+    const pos = editor.view.posAtDOM(cardButtonEl, 0);
+    const nodeAtPos = editor.state.doc.nodeAt(pos);
+
+    if (nodeAtPos?.type.name === 'cardButton') {
+      editor.commands.setNodeSelection(pos);
+
+      return;
+    }
+
+    const $pos = editor.state.doc.resolve(pos);
+
+    for (let depth = $pos.depth; depth > 0; depth--) {
+      if ($pos.node(depth).type.name === 'cardButton') {
+        editor.commands.setNodeSelection($pos.before(depth));
+
+        return;
+      }
+    }
+  } catch {
+    // posAtDOM can throw for nodes outside the editor (e.g. Label/URL field pills in Actions).
+  }
 }
 
 interface ParsedVariableData {
@@ -204,6 +320,26 @@ export function BubbleMenuVariablePill({
     setVariableValue(`{{${variableName || ''}}}`);
   }, [variableName]);
 
+  // Sync closed when Configure Variable is dismissed from outside this React tree (e.g. clicking
+  // the card button chrome to switch to the Actions bubble via `closeVariablePopover`).
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const onTransaction = () => {
+      if (isOpen && !editor.storage?.variable?.popover) {
+        setIsOpen(false);
+      }
+    };
+
+    editor.on('transaction', onTransaction);
+
+    return () => {
+      editor.off('transaction', onTransaction);
+    };
+  }, [editor, isOpen]);
+
   const parsedData = useMemo(
     () => parseVariableWithFallback(variableValue, variableName || '', digestStepName),
     [variableValue, variableName, digestStepName]
@@ -237,12 +373,14 @@ export function BubbleMenuVariablePill({
       const newParsedData = parseVariableWithFallback(newValue, variableName || '', digestStepName);
       if (!newParsedData.fullLiquidExpression) return;
 
-      if (isCardButtonVariableContext(editor)) {
-        editor.commands.updateCardButtonAttributes({
-          label: newParsedData.fullLiquidExpression,
-          isLabelVariable: true,
-        });
-      } else {
+      // Card buttons store label/url as plain strings that may mix text and `{{ }}` expressions, so
+      // replace only the clicked `{{ variableName }}` segment (in whichever field holds it) and keep
+      // the surrounding text — never clobber the whole field. `fullLiquidExpression` is the inner
+      // expression (no braces), so wrap it back into `{{ ... }}`.
+      const nextExpression = `{{ ${newParsedData.fullLiquidExpression} }}`;
+      const replacedCardButton = replaceCardButtonVariableSegment(editor, variableName || '', nextExpression);
+
+      if (!replacedCardButton) {
         editor.commands.updateButtonAttributes({
           text: newParsedData.fullLiquidExpression,
           isTextVariable: true,
@@ -257,23 +395,15 @@ export function BubbleMenuVariablePill({
   const handleDelete = useCallback(() => {
     if (!editor || from !== VariableFrom.Button) return;
 
-    if (isCardButtonVariableContext(editor)) {
-      editor.commands.updateCardButtonAttributes({
-        label: 'Button',
-        isLabelVariable: false,
-      });
-    } else {
+    const removedCardButton = replaceCardButtonVariableSegment(editor, variableName || '', '');
+
+    if (!removedCardButton) {
       editor.commands.updateButtonAttributes({
         text: 'Button Text',
         isTextVariable: false,
       });
     }
-  }, [editor, from]);
-
-  const handleVariableClick = useCallback(() => {
-    setVariablePopoverOpen(editor, true);
-    setIsOpen(true);
-  }, [editor]);
+  }, [editor, variableName, from]);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -281,6 +411,27 @@ export function BubbleMenuVariablePill({
       setVariablePopoverOpen(editor, open);
     },
     [editor]
+  );
+
+  // Toggle: first pill click opens Configure; second closes + unselects (canvas). Stop
+  // propagation so the card button chrome handler doesn't treat this as an Actions click.
+  const handleVariableClick = useCallback(
+    (event: MouseEvent) => {
+      event.stopPropagation();
+
+      if (isOpen) {
+        handleOpenChange(false);
+
+        return;
+      }
+
+      if (editor) {
+        selectCardButtonFromEvent(editor, event);
+      }
+
+      handleOpenChange(true);
+    },
+    [editor, handleOpenChange, isOpen]
   );
 
   const handleManageSchema = useCallback(() => {
@@ -334,6 +485,7 @@ export function BubbleMenuVariablePill({
         onAddToSchemaClick={handleCreateNewVariable}
         onUpdate={handleUpdate}
         onDeleteClick={handleDelete}
+        editor={editor}
       >
         {pill}
       </EditVariablePopover>

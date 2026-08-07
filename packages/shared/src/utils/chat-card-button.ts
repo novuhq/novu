@@ -5,10 +5,11 @@
  * - the dashboard Actions bubble UI (inline field errors, injected into `@novu/maily-core`)
  * - the server-side step-issue builder (`controls.body` issues surfaced in the chat editor footer)
  *
- * Both fields are required and may hold variables (`{{ payload.x }}` / picked bare paths like
- * `payload.x`), translation keys, or a text + variable combination. When the whole value is (or
- * starts with) a variable the URL format cannot be checked, so it is accepted; otherwise the URL
- * must be a valid absolute http(s) link (variables embedded in the path/host are allowed).
+ * Both fields are required and may hold variables, translation keys, or a text + variable
+ * combination. The only valid variable format is an explicit liquid expression `{{ payload.x }}`;
+ * a bare path like `payload.x` is treated as plain text (so a bare-path URL is an invalid URL).
+ * When the value is (or starts with) a `{{ }}` expression the URL format cannot be checked, so it
+ * is accepted; otherwise the URL must be a valid absolute http(s) link (embedded `{{ }}` allowed).
  */
 
 export type ChatCardButtonFieldName = 'label' | 'url';
@@ -18,9 +19,9 @@ export enum ChatCardButtonIssueCodeEnum {
   INVALID_URL = 'INVALID_URL',
 }
 
-export const CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE = 'Label is required.';
-export const CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE = 'URL is required.';
-export const CHAT_CARD_BUTTON_URL_INVALID_MESSAGE = 'Enter a valid URL (e.g. https://example.com) or a variable.';
+export const CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE = 'Button label is required.';
+export const CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE = 'Button url is required.';
+export const CHAT_CARD_BUTTON_URL_INVALID_MESSAGE = 'Button url is invalid.';
 
 export type ChatCardButtonFieldError = {
   code: ChatCardButtonIssueCodeEnum;
@@ -30,47 +31,37 @@ export type ChatCardButtonFieldError = {
 /** A whole liquid expression, e.g. `{{ payload.url }}` (leading, so `{{ x }}/path` also matches). */
 const LEADING_LIQUID_EXPRESSION_REGEX = /^\{\{[\s\S]*?\}\}/;
 
-/**
- * A bare variable path authored via the variable picker (no `{{ }}`), e.g. `payload.url`.
- * Mirrors `isBareLiquidVariablePath` in `libs/application-generic/src/utils/maily-utils.ts`, which
- * wraps these into `{{ ... }}` at delivery — so for validation they count as variables too.
- */
-const BARE_VARIABLE_PATH_REGEX = /^(payload|subscriber|steps|context|workflow|env)(\.[a-zA-Z0-9_-]+|\[\d+\])+/;
-
 const LIQUID_EXPRESSION_GLOBAL_REGEX = /\{\{[\s\S]*?\}\}/g;
 
 /**
  * Whether the value should be treated as a variable reference (and therefore skip URL-format
- * validation). True when the field flag marks it as a variable, when it starts with a `{{ }}`
- * expression, or when it is a bare variable path.
+ * validation). Only an explicit liquid expression counts: the value must start with a `{{ ... }}`
+ * expression. A bare path like `payload.url` is plain text — the only valid variable format is
+ * `{{ payload.url }}`.
  */
-export function isChatCardButtonVariableValue(value: string, isVariable?: boolean): boolean {
+export function isChatCardButtonVariableValue(value: string): boolean {
   const trimmed = value.trim();
 
   if (!trimmed) {
     return false;
   }
 
-  if (isVariable) {
-    return true;
-  }
-
-  return LEADING_LIQUID_EXPRESSION_REGEX.test(trimmed) || BARE_VARIABLE_PATH_REGEX.test(trimmed);
+  return LEADING_LIQUID_EXPRESSION_REGEX.test(trimmed);
 }
 
 /**
  * Validates a link-button URL. Returns `null` when valid. Empty values are required errors; a
- * variable (whole or leading) is accepted as-is; otherwise the value must parse as an absolute
- * http(s) URL once embedded `{{ }}` expressions are neutralized.
+ * value that is (or starts with) a `{{ }}` expression is accepted as-is; otherwise the value must
+ * parse as an absolute http(s) URL once embedded `{{ }}` expressions are neutralized.
  */
-export function getChatCardButtonUrlError(value: string, isVariable?: boolean): ChatCardButtonFieldError | null {
+export function getChatCardButtonUrlError(value: string): ChatCardButtonFieldError | null {
   const trimmed = (value ?? '').trim();
 
   if (!trimmed) {
     return { code: ChatCardButtonIssueCodeEnum.REQUIRED, message: CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE };
   }
 
-  if (isChatCardButtonVariableValue(trimmed, isVariable)) {
+  if (isChatCardButtonVariableValue(trimmed)) {
     return null;
   }
 
@@ -104,21 +95,16 @@ export function getChatCardButtonLabelError(value: string): ChatCardButtonFieldE
 
 export function getChatCardButtonFieldError(
   field: ChatCardButtonFieldName,
-  value: string,
-  isVariable?: boolean
+  value: string
 ): ChatCardButtonFieldError | null {
   if (field === 'label') {
     return getChatCardButtonLabelError(value);
   }
 
-  return getChatCardButtonUrlError(value, isVariable);
+  return getChatCardButtonUrlError(value);
 }
 
 /** Thin message-only wrapper, used as the injected validator for the Actions bubble UI. */
-export function validateChatCardButtonField(
-  field: ChatCardButtonFieldName,
-  value: string,
-  isVariable?: boolean
-): string | null {
-  return getChatCardButtonFieldError(field, value, isVariable)?.message ?? null;
+export function validateChatCardButtonField(field: ChatCardButtonFieldName, value: string): string | null {
+  return getChatCardButtonFieldError(field, value)?.message ?? null;
 }

@@ -1,5 +1,11 @@
 import { JSONContent as MailyJSONContent } from '@novu/maily-render';
-import { ContentIssueEnum, StepIssueSeverityEnum } from '@novu/shared';
+import {
+  CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE,
+  CHAT_CARD_BUTTON_URL_INVALID_MESSAGE,
+  CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE,
+  ContentIssueEnum,
+  StepIssueSeverityEnum,
+} from '@novu/shared';
 import { collectCardButtonFieldIssues } from './card-button-issues';
 
 const doc = (...content: MailyJSONContent[]): MailyJSONContent => ({ type: 'doc', content });
@@ -31,7 +37,7 @@ describe('collectCardButtonFieldIssues', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].issueType).toBe(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
     expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
-    expect(issues[0].message).toContain('Label is required');
+    expect(issues[0].message).toBe(CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE);
   });
 
   it('flags a missing url as a blocking issue', () => {
@@ -40,7 +46,7 @@ describe('collectCardButtonFieldIssues', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].issueType).toBe(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
     expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
-    expect(issues[0].message).toContain('URL is required');
+    expect(issues[0].message).toBe(CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE);
   });
 
   it('flags a malformed url as a blocking issue', () => {
@@ -51,18 +57,23 @@ describe('collectCardButtonFieldIssues', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].issueType).toBe(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
     expect(issues[0].severity).toBe(StepIssueSeverityEnum.ERROR);
+    expect(issues[0].message).toBe(CHAT_CARD_BUTTON_URL_INVALID_MESSAGE);
   });
 
-  it('accepts variable-backed label and url values without url-format checks', () => {
+  it('accepts {{ }} variable label and url values without url-format checks', () => {
     const issues = collectCardButtonFieldIssues(
-      doc(
-        cardActions(
-          cardButton({ label: 'payload.label', isLabelVariable: true, url: 'payload.url', isUrlVariable: true })
-        )
-      )
+      doc(cardActions(cardButton({ label: '{{ payload.label }}', url: '{{ payload.url }}' })))
     );
 
     expect(issues).toEqual([]);
+  });
+
+  it('flags a bare variable path url as invalid (only {{ payload.url }} is a variable)', () => {
+    const issues = collectCardButtonFieldIssues(doc(cardActions(cardButton({ label: 'View', url: 'payload.url' }))));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].issueType).toBe(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
+    expect(issues[0].message).toBe(CHAT_CARD_BUTTON_URL_INVALID_MESSAGE);
   });
 
   it('accepts a text + variable url combination', () => {
@@ -90,8 +101,10 @@ describe('collectCardButtonFieldIssues', () => {
   it('finds legacy top-level card buttons', () => {
     const issues = collectCardButtonFieldIssues(doc(cardButton({ label: '', url: '' })));
 
-    // A single button (no annotation) with both fields invalid.
+    // A single button (no `Button N:` annotation prefix) with both fields invalid. Note the
+    // messages themselves start with "Button" (e.g. "Button label is required."), so match the
+    // annotation prefix pattern explicitly rather than a bare "Button" prefix.
     expect(issues).toHaveLength(2);
-    expect(issues.every((issue) => !issue.message.startsWith('Button'))).toBe(true);
+    expect(issues.every((issue) => !/^Button \d+:/.test(issue.message))).toBe(true);
   });
 });

@@ -53,13 +53,13 @@ export function collectCardButtonFieldIssues(doc: MailyJSONContent): RuntimeIssu
   buttons.forEach((button, index) => {
     const attrs = button.attrs as Record<string, unknown> | undefined;
 
-    const fields: Array<{ field: ChatCardButtonFieldName; value: string; isVariable: boolean }> = [
-      { field: 'label', value: readStringAttr(attrs, 'label'), isVariable: attrs?.isLabelVariable === true },
-      { field: 'url', value: readStringAttr(attrs, 'url'), isVariable: attrs?.isUrlVariable === true },
+    const fields: Array<{ field: ChatCardButtonFieldName; value: string }> = [
+      { field: 'label', value: readStringAttr(attrs, 'label') },
+      { field: 'url', value: readStringAttr(attrs, 'url') },
     ];
 
-    for (const { field, value, isVariable } of fields) {
-      const error = getChatCardButtonFieldError(field, value, isVariable);
+    for (const { field, value } of fields) {
+      const error = getChatCardButtonFieldError(field, value);
 
       if (!error) {
         continue;

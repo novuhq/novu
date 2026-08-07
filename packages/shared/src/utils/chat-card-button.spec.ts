@@ -15,8 +15,9 @@ describe('chat-card-button validation', () => {
       expect(getChatCardButtonLabelError('   ')?.code).toBe(ChatCardButtonIssueCodeEnum.REQUIRED);
     });
 
-    it('accepts plain text, variables, translation keys and combinations', () => {
+    it('accepts any non-empty label: plain text, a {{ }} variable, or a combination', () => {
       expect(getChatCardButtonLabelError('View order')).toBeNull();
+      // A bare path is just text — still a valid (non-empty) label.
       expect(getChatCardButtonLabelError('payload.label')).toBeNull();
       expect(getChatCardButtonLabelError('{{ payload.label }}')).toBeNull();
       expect(getChatCardButtonLabelError('Hi {{ subscriber.firstName }}')).toBeNull();
@@ -39,11 +40,14 @@ describe('chat-card-button validation', () => {
       expect(getChatCardButtonUrlError('https://{{ payload.host }}/path')).toBeNull();
     });
 
-    it('accepts a whole/leading variable value without checking url format', () => {
-      expect(getChatCardButtonUrlError('payload.url', true)).toBeNull();
-      expect(getChatCardButtonUrlError('payload.url')).toBeNull();
+    it('accepts a whole/leading {{ }} variable value without checking url format', () => {
       expect(getChatCardButtonUrlError('{{ payload.url }}')).toBeNull();
       expect(getChatCardButtonUrlError('{{ payload.base }}/webhook')).toBeNull();
+    });
+
+    it('rejects a bare variable path (only {{ payload.url }} is a variable, a bare path is text)', () => {
+      expect(getChatCardButtonUrlError('payload.url')?.code).toBe(ChatCardButtonIssueCodeEnum.INVALID_URL);
+      expect(getChatCardButtonUrlError('subscriber.data.link')?.code).toBe(ChatCardButtonIssueCodeEnum.INVALID_URL);
     });
 
     it('rejects malformed URLs that are not variables', () => {
@@ -60,10 +64,10 @@ describe('chat-card-button validation', () => {
   });
 
   describe('isChatCardButtonVariableValue', () => {
-    it('detects variable-backed values', () => {
-      expect(isChatCardButtonVariableValue('payload.url', true)).toBe(true);
-      expect(isChatCardButtonVariableValue('payload.url')).toBe(true);
+    it('treats only a leading {{ }} expression as a variable; a bare path is text', () => {
       expect(isChatCardButtonVariableValue('{{ payload.url }}')).toBe(true);
+      expect(isChatCardButtonVariableValue('{{ payload.base }}/webhook')).toBe(true);
+      expect(isChatCardButtonVariableValue('payload.url')).toBe(false);
       expect(isChatCardButtonVariableValue('https://example.com')).toBe(false);
       expect(isChatCardButtonVariableValue('')).toBe(false);
     });

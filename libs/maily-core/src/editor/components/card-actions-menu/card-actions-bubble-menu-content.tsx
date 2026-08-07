@@ -121,6 +121,8 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
               value={activeButton.label}
               isVariable={activeButton.isLabelVariable}
               editor={editor}
+              wrapVariablesInLiquid
+              placeholder="Button"
               className={cn(FIELD_CONTROL_CLASS, labelError && FIELD_ERROR_CLASS)}
               onValueChange={(value, isVariable) =>
                 updateActiveButton({ label: value, isLabelVariable: isVariable ?? false })
@@ -152,6 +154,8 @@ export function CardActionsBubbleMenuContent({ editor }: { editor: Editor }) {
               isVariable={activeButton.isUrlVariable}
               editor={editor}
               enabledProviders={['variable']}
+              wrapVariablesInLiquid
+              placeholder="https://google.com"
               className={cn(FIELD_CONTROL_CLASS, urlError && FIELD_ERROR_CLASS)}
               onValueChange={(value, isVariable) =>
                 updateActiveButton({ url: value, isUrlVariable: isVariable ?? false })
