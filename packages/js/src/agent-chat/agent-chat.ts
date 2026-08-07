@@ -1,4 +1,4 @@
-import type { AgentMessage } from '@novu/agent-event-protocol';
+import type { AgentEventEnvelope, AgentMessage } from '@novu/agent-event-protocol';
 import { AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
@@ -31,6 +31,9 @@ export class AgentChat extends BaseModule {
           messages: entry.messages,
         },
       });
+    });
+    this._emitter.on('agent_chat.agent_event', ({ result }) => {
+      this.#handleAgentEvent(result);
     });
   }
 
@@ -173,5 +176,21 @@ export class AgentChat extends BaseModule {
     }
 
     return true;
+  }
+
+  /**
+   * Live WS path: fold envelopes into open holders only.
+   * Unknown conversations are dropped — mount/resume creates the holder.
+   */
+  #handleAgentEvent(envelope: AgentEventEnvelope): void {
+    const conversationId = envelope.conversationIdentifier;
+    if (!conversationId) {
+      return;
+    }
+
+    const entries = this.#store.findByConversationId(envelope.agentId, conversationId);
+    for (const entry of entries) {
+      this.#store.applyLiveEnvelope(entry, envelope);
+    }
   }
 }

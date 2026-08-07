@@ -2,6 +2,7 @@ import {
   type AgentConversationState,
   type AgentEventEnvelope,
   appendUserMessage,
+  applyEnvelope,
   applyEnvelopes,
   createInitialAgentConversationState,
 } from '@novu/agent-event-protocol';
@@ -86,6 +87,18 @@ export class AgentChatStore {
     }
 
     return undefined;
+  }
+
+  /** All holders that already claimed this conversation id (create + resume can both exist). */
+  findByConversationId(agentId: string, conversationId: string): ConversationEntry[] {
+    const matches: ConversationEntry[] = [];
+    for (const entry of this.#byKey.values()) {
+      if (entry.agentId === agentId && entry.conversationId === conversationId) {
+        matches.push(entry);
+      }
+    }
+
+    return matches;
   }
 
   /**
@@ -173,6 +186,14 @@ export class AgentChatStore {
       messages: [...folded.messages, ...localOnly],
     });
 
+    this.#onUpdate(entry);
+
+    return entry;
+  }
+
+  /** Fold one live envelope onto this holder and notify listeners. */
+  applyLiveEnvelope(entry: ConversationEntry, envelope: AgentEventEnvelope): ConversationEntry {
+    applyState(entry, applyEnvelope(entry, envelope));
     this.#onUpdate(entry);
 
     return entry;

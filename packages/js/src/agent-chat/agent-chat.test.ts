@@ -534,4 +534,98 @@ describe('AgentChat', () => {
     expect(resumed?.key).toBe('conv_bbbbbbbbbbbb');
     expect(resumed?.messages[0]?.id).toBe('msg_hist0000001');
   });
+
+  it('folds a live agent_chat.agent_event into the matching conversation holder', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: string[][] = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        updates.push(data.messages.map((message) => message.id));
+      }
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: {
+          type: 'message',
+          role: 'assistant',
+          messageId: 'msg_asst0000001',
+          content: { markdown: 'live reply' },
+        },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages).toHaveLength(2);
+    expect(snapshot?.messages[1]).toMatchObject({
+      id: 'msg_asst0000001',
+      role: 'assistant',
+      parts: [{ type: 'text', text: 'live reply', state: 'done' }],
+    });
+    expect(updates.at(-1)).toEqual(['msg_user0000001', 'msg_asst0000001']);
+  });
+
+  it('ignores live envelopes for conversations that are not open', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_otherother1',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: {
+          type: 'message',
+          role: 'assistant',
+          messageId: 'msg_asst0000001',
+          content: { markdown: 'other chat' },
+        },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages).toHaveLength(1);
+    expect(snapshot?.messages[0]?.id).toBe('msg_user0000001');
+  });
+
+  it('ignores live envelopes without conversationIdentifier', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: {
+          type: 'message',
+          role: 'assistant',
+          messageId: 'msg_asst0000001',
+          content: { markdown: 'no public id' },
+        },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages).toHaveLength(1);
+  });
 });
