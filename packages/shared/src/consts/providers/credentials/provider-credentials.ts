@@ -908,7 +908,7 @@ export const brazeEmailConfig: IConfigCredential[] = [
   },
   {
     key: CredentialsKeyEnum.AppID,
-    displayName: 'Base URL',
+    displayName: 'App ID',
     type: 'string',
     required: true,
   },
