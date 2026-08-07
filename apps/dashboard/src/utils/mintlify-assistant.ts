@@ -1,3 +1,4 @@
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 
 const MINTLIFY_WIDGET_ID = 'mint_widget_9890b2a3-6a4f-4516-8331-24a3b12e6162';
@@ -215,23 +216,29 @@ export async function openMintlifyAssistant({ source, query }: OpenMintlifyAssis
     return;
   }
 
-  const api = await ensureInitialized();
-  const trimmedQuery = query?.trim();
+  try {
+    const api = await ensureInitialized();
+    const trimmedQuery = query?.trim();
 
-  setAssistantVisible(true);
+    setAssistantVisible(true);
 
-  if (trimmedQuery) {
-    await api.ask(trimmedQuery, {
+    if (trimmedQuery) {
+      await api.ask(trimmedQuery, {
+        source,
+        open: true,
+        focus: true,
+      });
+
+      return;
+    }
+
+    await api.open({
       source,
-      open: true,
       focus: true,
     });
-
-    return;
+  } catch (error) {
+    setAssistantVisible(false);
+    console.error('Failed to open Mintlify assistant', error);
+    showErrorToast('Unable to open Ask AI right now. Please try again.', 'Ask AI unavailable');
   }
-
-  await api.open({
-    source,
-    focus: true,
-  });
 }
