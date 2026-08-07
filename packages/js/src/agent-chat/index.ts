@@ -3,6 +3,8 @@ export type {
   AgentChatMessagesUpdated,
   AgentConversationStatus,
   AgentMessage,
+  FetchMoreArgs,
+  FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
   SendMessageArgs,

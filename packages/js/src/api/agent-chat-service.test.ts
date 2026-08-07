@@ -81,4 +81,33 @@ describe('AgentChatService', () => {
       expect.objectContaining({ method: 'GET' })
     );
   });
+
+  it('GETs older conversation events with before cursor', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          events: [],
+          olderCursor: 'act_older0001',
+        },
+      }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    const result = await service.getEvents({
+      conversationId: 'conv_abcdefghijkl',
+      before: 'act_page0001',
+      limit: 50,
+    });
+
+    expect(result).toEqual({ events: [], olderCursor: 'act_older0001' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/events?before=act_page0001&limit=50',
+      expect.objectContaining({ method: 'GET' })
+    );
+  });
 });

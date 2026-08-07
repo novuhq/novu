@@ -30,7 +30,13 @@ export type UseAgentChatResult = {
   isFetching: boolean;
   isRunning: boolean;
   status: AgentConversationStatus;
+  /** True when older history pages are available via `fetchMore`. */
+  hasMore: boolean;
   refetch: () => Promise<void>;
+  fetchMore: () => Promise<{
+    data?: { messages: AgentMessage[]; hasMore: boolean };
+    error?: NovuError;
+  }>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
     error?: NovuError;
@@ -72,6 +78,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [status, setStatus] = useState<AgentConversationStatus>('active');
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
@@ -89,6 +96,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setMessages([]);
       setIsRunning(false);
       setStatus('active');
+      setHasMore(false);
       setError(undefined);
       setIsLoading(Boolean(conversationIdProp));
 
@@ -108,6 +116,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setMessages([]);
       setIsRunning(false);
       setStatus('active');
+      setHasMore(false);
     }
   }, [agentId, conversationIdProp]);
 
@@ -132,6 +141,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         propsRef.current.onError?.(response.error);
       } else if (response.data) {
         setMessages(response.data.messages);
+        setHasMore(response.data.hasMore);
         propsRef.current.onSuccess?.(response.data);
       }
 
@@ -153,6 +163,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setMessages(snapshot.messages);
       setIsRunning(snapshot.isRunning);
       setStatus(snapshot.status);
+      setHasMore(snapshot.hasMore);
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
@@ -160,6 +171,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setMessages([]);
       setIsRunning(false);
       setStatus('active');
+      setHasMore(false);
     }
 
     const cleanup = novu.on('agent_chat.messages.updated', ({ data }) => {
@@ -170,6 +182,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setMessages(data.messages);
       setIsRunning(data.isRunning);
       setStatus(data.status);
+      setHasMore(data.hasMore);
       if (data.conversationId && !propsRef.current.conversationId) {
         setAssignedConversationId(data.conversationId);
       }
@@ -193,6 +206,24 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
     await fetchConversation(id);
   }, [conversationIdRef, fetchConversation]);
+
+  const fetchMore = useCallback(async () => {
+    const response = await novu.agentChat.fetchMore({
+      agentId,
+      key: sessionKeyRef.current,
+      conversationId: conversationIdRef.current,
+    });
+
+    if (response.error) {
+      setError(response.error);
+      propsRef.current.onError?.(response.error);
+    } else if (response.data) {
+      setMessages(response.data.messages);
+      setHasMore(response.data.hasMore);
+    }
+
+    return response;
+  }, [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -226,6 +257,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     isFetching,
     isRunning,
     status,
+    hasMore,
     refetch,
+    fetchMore,
   };
 };

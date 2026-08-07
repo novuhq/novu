@@ -31,6 +31,18 @@ export type LoadConversationArgs = {
 export type LoadConversationResult = {
   conversationId: string;
   messages: AgentMessage[];
+  hasMore: boolean;
+};
+
+export type FetchMoreArgs = {
+  agentId: string;
+  conversationId?: string;
+  key?: string;
+};
+
+export type FetchMoreResult = {
+  messages: AgentMessage[];
+  hasMore: boolean;
 };
 
 export type AgentChatMessagesUpdated = {
@@ -41,4 +53,5 @@ export type AgentChatMessagesUpdated = {
   messages: AgentMessage[];
   isRunning: boolean;
   status: AgentConversationStatus;
+  hasMore: boolean;
 };

@@ -6,7 +6,14 @@ import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
-import type { LoadConversationArgs, LoadConversationResult, SendMessageArgs, SendMessageResult } from './types';
+import type {
+  FetchMoreArgs,
+  FetchMoreResult,
+  LoadConversationArgs,
+  LoadConversationResult,
+  SendMessageArgs,
+  SendMessageResult,
+} from './types';
 
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
@@ -43,6 +50,7 @@ export class AgentChat extends BaseModule {
           messages: entry.messages,
           isRunning: entry.isRunning,
           status: entry.status,
+          hasMore: entry.olderCursor != null,
         },
       });
     });
@@ -89,6 +97,7 @@ export class AgentChat extends BaseModule {
         key: string;
         isRunning: boolean;
         status: ConversationEntry['status'];
+        hasMore: boolean;
       }
     | undefined {
     const entry = key
@@ -107,6 +116,7 @@ export class AgentChat extends BaseModule {
       key: entry.key,
       isRunning: entry.isRunning,
       status: entry.status,
+      hasMore: entry.olderCursor != null,
     };
   }
 
@@ -126,16 +136,57 @@ export class AgentChat extends BaseModule {
           key: args.conversationId,
           conversationId: args.conversationId,
         });
-        const next = this.#store.absorbHistoryPage(entry, page.events);
+        const next = this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
 
         return {
           data: {
             conversationId: args.conversationId,
             messages: next.messages,
+            hasMore: next.olderCursor != null,
           },
         };
       } catch (error) {
         return { error: new NovuError('Failed to load agent chat conversation', error) };
+      }
+    });
+  }
+
+  async fetchMore(args: FetchMoreArgs): Result<FetchMoreResult> {
+    return this.callWithSession(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      if (!entry?.conversationId) {
+        return {
+          data: {
+            messages: entry?.messages ?? [],
+            hasMore: entry != null && entry.olderCursor != null,
+          },
+        };
+      }
+
+      if (entry.olderCursor == null) {
+        return {
+          data: {
+            messages: entry.messages,
+            hasMore: false,
+          },
+        };
+      }
+
+      try {
+        const page = await this.#agentChatService.getEvents({
+          conversationId: entry.conversationId,
+          before: entry.olderCursor,
+        });
+        const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
+
+        return {
+          data: {
+            messages: next.messages,
+            hasMore: next.olderCursor != null,
+          },
+        };
+      } catch (error) {
+        return { error: new NovuError('Failed to load older agent chat messages', error) };
       }
     });
   }
@@ -173,6 +224,21 @@ export class AgentChat extends BaseModule {
         }
       });
     });
+  }
+
+  #resolveFetchEntry(args: FetchMoreArgs): ConversationEntry | undefined {
+    if (args.key) {
+      const byKey = this.#store.get(args.key);
+      if (byKey && byKey.agentId === args.agentId) {
+        return byKey;
+      }
+    }
+
+    if (args.conversationId) {
+      return this.#store.get(args.conversationId) ?? this.#store.getByConversationId(args.agentId, args.conversationId);
+    }
+
+    return undefined;
   }
 
   /**
@@ -306,7 +372,7 @@ export class AgentChat extends BaseModule {
           continue;
         }
 
-        this.#store.absorbHistoryPage(entry, page.events);
+        this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
       }
     } catch {
       // Best-effort catch-up; buffered live envelopes still flush in the outer finally.

@@ -82,7 +82,11 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
     messages: [],
     isLoading: false,
     isFetching: false,
+    isRunning: false,
+    status: 'active',
+    hasMore: false,
     refetch: () => Promise.resolve(),
+    fetchMore: () => Promise.resolve({ data: undefined, error: undefined }),
     sendMessage: () => Promise.resolve({ data: undefined, error: undefined }),
   };
 }

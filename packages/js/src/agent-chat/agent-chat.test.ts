@@ -712,7 +712,8 @@ describe('AgentChat', () => {
       messageId: string;
       role: 'user' | 'assistant';
       markdown: string;
-    }>
+    }>,
+    olderCursor: string | null = null
   ) {
     return {
       events: events.map((event) => ({
@@ -731,7 +732,7 @@ describe('AgentChat', () => {
           content: { markdown: event.markdown },
         },
       })),
-      olderCursor: null,
+      olderCursor,
     };
   }
 
@@ -972,5 +973,120 @@ describe('AgentChat', () => {
     await Promise.resolve();
 
     expect(getEvents).not.toHaveBeenCalled();
+  });
+
+  it('loadConversation sets hasMore from olderCursor', async () => {
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_older0001')
+    );
+
+    const result = await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.hasMore).toBe(true);
+    expect(agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.hasMore).toBe(true);
+  });
+
+  it('fetchMore prepends older messages and advances the cursor', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], 'act_older0001')
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(getEvents).toHaveBeenLastCalledWith({
+      conversationId: 'conv_abcdefghijkl',
+      before: 'act_page0001',
+    });
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_old0000001', 'msg_new0000001']);
+    expect(result.data?.hasMore).toBe(true);
+    expect(agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.hasMore).toBe(true);
+  });
+
+  it('fetchMore no-ops when olderCursor is null and does not call getEvents', async () => {
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 1, messageId: 'msg_only0000001', role: 'user', markdown: 'only page' }], null)
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockClear();
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(getEvents).not.toHaveBeenCalled();
+    expect(result.data?.hasMore).toBe(false);
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_only0000001']);
+  });
+
+  it('fetchMore does not lower lastSequence so live envelopes still apply', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage(
+        [
+          { sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent user' },
+          { sequence: 4, messageId: 'msg_new0000002', role: 'assistant', markdown: 'recent assistant' },
+        ],
+        'act_page0001'
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 5,
+        messageId: 'msg_live0000001',
+        markdown: 'live after load',
+      })
+    );
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older user' }], null)
+    );
+
+    await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 6,
+        messageId: 'msg_live0000002',
+        markdown: 'live after fetchMore',
+      })
+    );
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(snapshot?.messages.map((message) => message.id)).toEqual([
+      'msg_old0000001',
+      'msg_new0000001',
+      'msg_new0000002',
+      'msg_live0000001',
+      'msg_live0000002',
+    ]);
+    expect(snapshot?.hasMore).toBe(false);
   });
 });

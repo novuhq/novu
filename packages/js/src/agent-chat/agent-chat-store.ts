@@ -21,6 +21,11 @@ export type ConversationEntry = AgentConversationState & {
    * Create sessions use `local_*`. Resume sessions use the `conv_*` id.
    */
   key: string;
+  /**
+   * Cursor toward older history (`before` on the next page). Null when unknown,
+   * exhausted, or on a create-only holder before any history load.
+   */
+  olderCursor: string | null;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
 };
@@ -129,6 +134,7 @@ export class AgentChatStore {
       agentId: args.agentId,
       conversationId: args.conversationId,
       key: args.key,
+      olderCursor: null,
     };
     this.#byKey.set(args.key, entry);
 
@@ -188,7 +194,11 @@ export class AgentChatStore {
    * Merge a history page into this holder.
    * Server message ids win. Local-only messages stay on the holder.
    */
-  absorbHistoryPage(entry: ConversationEntry, envelopes: AgentEventEnvelope[]): ConversationEntry {
+  absorbHistoryPage(
+    entry: ConversationEntry,
+    envelopes: AgentEventEnvelope[],
+    olderCursor: string | null
+  ): ConversationEntry {
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
     const localOnly = entry.messages.filter((message) => !serverIds.has(message.id));
@@ -197,6 +207,28 @@ export class AgentChatStore {
       ...folded,
       messages: [...folded.messages, ...localOnly],
     });
+    entry.olderCursor = olderCursor;
+
+    this.#onUpdate(entry);
+
+    return entry;
+  }
+
+  /**
+   * Fold an older history page into this holder without resetting live timeline fields.
+   * Preserves `lastSequence` so the live sequence gate stays valid after pagination.
+   */
+  prependOlderPage(
+    entry: ConversationEntry,
+    envelopes: AgentEventEnvelope[],
+    olderCursor: string | null
+  ): ConversationEntry {
+    const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
+    const existingIds = new Set(entry.messages.map((message) => message.id));
+    const olderMessages = folded.messages.filter((message) => !existingIds.has(message.id));
+
+    entry.messages = [...olderMessages, ...entry.messages];
+    entry.olderCursor = olderCursor;
 
     this.#onUpdate(entry);
 
