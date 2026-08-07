@@ -1,5 +1,6 @@
 export type * from 'json-logic-js';
 export type {
+  AgentConversationStatus,
   AgentMessage,
   LoadConversationArgs,
   LoadConversationResult,

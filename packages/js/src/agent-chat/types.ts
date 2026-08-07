@@ -1,6 +1,6 @@
-import type { AgentMessage } from '@novu/agent-event-protocol';
+import type { AgentConversationStatus, AgentMessage } from '@novu/agent-event-protocol';
 
-export type { AgentMessage };
+export type { AgentConversationStatus, AgentMessage };
 
 export type SendMessageArgs = {
   agentId: string;
@@ -39,4 +39,6 @@ export type AgentChatMessagesUpdated = {
   /** Immutable holder key. Stable for the life of the local conversation entry. */
   key: string;
   messages: AgentMessage[];
+  isRunning: boolean;
+  status: AgentConversationStatus;
 };

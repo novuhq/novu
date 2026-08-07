@@ -538,6 +538,66 @@ describe('AgentChat', () => {
     expect(resumed?.messages[0]?.id).toBe('msg_hist0000001');
   });
 
+  it('tracks isRunning and status on messages.updated and getConversation after live run lifecycle', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: Array<{ isRunning: boolean; status: string }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        updates.push({ isRunning: data.isRunning, status: data.status });
+      }
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: { type: 'run-start' },
+      },
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 2,
+        timestamp: '2026-08-07T12:00:01.000Z',
+        event: { type: 'run-finish', outcome: 'completed' },
+      },
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 3,
+        timestamp: '2026-08-07T12:00:02.000Z',
+        event: { type: 'resolve' },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.isRunning).toBe(false);
+    expect(snapshot?.status).toBe('resolved');
+    expect(updates.some((update) => update.isRunning === true && update.status === 'active')).toBe(true);
+    expect(updates.at(-1)).toEqual({ isRunning: false, status: 'resolved' });
+  });
+
   it('folds a live agent_chat.agent_event into the matching conversation holder', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });

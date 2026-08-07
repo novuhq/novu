@@ -41,6 +41,8 @@ export class AgentChat extends BaseModule {
           conversationId: entry.conversationId,
           key: entry.key,
           messages: entry.messages,
+          isRunning: entry.isRunning,
+          status: entry.status,
         },
       });
     });
@@ -80,15 +82,15 @@ export class AgentChat extends BaseModule {
     this.#catchUpBuffer = null;
   }
 
-  getConversation({
-    agentId,
-    conversationId,
-    key,
-  }: {
-    agentId: string;
-    conversationId?: string;
-    key?: string;
-  }): { conversationId?: string; messages: AgentMessage[]; key: string } | undefined {
+  getConversation({ agentId, conversationId, key }: { agentId: string; conversationId?: string; key?: string }):
+    | {
+        conversationId?: string;
+        messages: AgentMessage[];
+        key: string;
+        isRunning: boolean;
+        status: ConversationEntry['status'];
+      }
+    | undefined {
     const entry = key
       ? this.#store.get(key)
       : conversationId
@@ -103,6 +105,8 @@ export class AgentChat extends BaseModule {
       conversationId: entry.conversationId,
       messages: entry.messages,
       key: entry.key,
+      isRunning: entry.isRunning,
+      status: entry.status,
     };
   }
 

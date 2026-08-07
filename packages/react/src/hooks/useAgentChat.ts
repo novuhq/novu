@@ -1,4 +1,10 @@
-import type { AgentMessage, LoadConversationResult, NovuError, SendMessageResult } from '@novu/js';
+import type {
+  AgentConversationStatus,
+  AgentMessage,
+  LoadConversationResult,
+  NovuError,
+  SendMessageResult,
+} from '@novu/js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
@@ -22,6 +28,8 @@ export type UseAgentChatResult = {
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isFetching: boolean;
+  isRunning: boolean;
+  status: AgentConversationStatus;
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
@@ -62,6 +70,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const conversationIdRef = useDataRef(conversationId);
 
   const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [status, setStatus] = useState<AgentConversationStatus>('active');
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
@@ -77,6 +87,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setAssignedConversationId(undefined);
       setLocalSessionKey(createLocalSessionKey());
       setMessages([]);
+      setIsRunning(false);
+      setStatus('active');
       setError(undefined);
       setIsLoading(Boolean(conversationIdProp));
 
@@ -94,6 +106,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setAssignedConversationId(undefined);
       setLocalSessionKey(createLocalSessionKey());
       setMessages([]);
+      setIsRunning(false);
+      setStatus('active');
     }
   }, [agentId, conversationIdProp]);
 
@@ -137,11 +151,15 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     });
     if (snapshot) {
       setMessages(snapshot.messages);
+      setIsRunning(snapshot.isRunning);
+      setStatus(snapshot.status);
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
     } else if (!conversationIdProp) {
       setMessages([]);
+      setIsRunning(false);
+      setStatus('active');
     }
 
     const cleanup = novu.on('agent_chat.messages.updated', ({ data }) => {
@@ -150,6 +168,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       }
 
       setMessages(data.messages);
+      setIsRunning(data.isRunning);
+      setStatus(data.status);
       if (data.conversationId && !propsRef.current.conversationId) {
         setAssignedConversationId(data.conversationId);
       }
@@ -204,6 +224,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     error,
     isLoading,
     isFetching,
+    isRunning,
+    status,
     refetch,
   };
 };
