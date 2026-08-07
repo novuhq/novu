@@ -49,7 +49,7 @@ postman:
   outputModelSuffix: output
   packageName: novu/api
 typescript:
-  version: 0.1.21
+  version: 3.18.2
   acceptHeaderEnum: true
   additionalDependencies:
     dependencies: {}
