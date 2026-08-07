@@ -211,22 +211,21 @@
                 "pages": [
                   "platform/integrations/email/sendgrid",
                   "platform/integrations/email/amazon-ses",
-                  "platform/integrations/email/postmark",
                   "platform/integrations/email/resend",
-                  "platform/integrations/email/anypost",
+                  "platform/integrations/email/postmark",
                   "platform/integrations/email/brevo",
                   "platform/integrations/email/mailgun",
                   "platform/integrations/email/mailjet",
-                  "platform/integrations/email/braze",
+                  "platform/integrations/email/sparkpost",
+                  "platform/integrations/email/mandrill",
+                  "platform/integrations/email/outlook365",
                   "platform/integrations/email/infobip",
+                  "platform/integrations/email/braze",
                   "platform/integrations/email/mailersend",
                   "platform/integrations/email/mailtrap",
-                  "platform/integrations/email/mandrill",
-                  "platform/integrations/email/maqsam",
                   "platform/integrations/email/netcore",
-                  "platform/integrations/email/outlook365",
                   "platform/integrations/email/plunk",
-                  "platform/integrations/email/sparkpost",
+                  "platform/integrations/email/anypost",
                   "platform/integrations/email/webhook",
                   "platform/integrations/email/custom-smtp",
                   "platform/integrations/email/writing-email-template",
@@ -266,30 +265,43 @@
                 "root": "platform/integrations/sms",
                 "pages": [
                   "platform/integrations/sms/twilio",
-                  "platform/integrations/sms/infobip",
-                  "platform/integrations/sms/46elks",
-                  "platform/integrations/sms/africas-talking",
                   "platform/integrations/sms/aws-sns",
-                  "platform/integrations/sms/azure",
-                  "platform/integrations/sms/bulk-sms",
-                  "platform/integrations/sms/clickatell",
-                  "platform/integrations/sms/clicksend",
-                  "platform/integrations/sms/firetext",
-                  "platform/integrations/sms/gupshup",
-                  "platform/integrations/sms/kannel",
-                  "platform/integrations/sms/kudosity",
-                  "platform/integrations/sms/messagebird",
-                  "platform/integrations/sms/nexmo",
-                  "platform/integrations/sms/plivo",
-                  "platform/integrations/sms/sendchamp",
+                  "platform/integrations/sms/infobip",
                   "platform/integrations/sms/sinch",
-                  "platform/integrations/sms/simpletexting",
-                  "platform/integrations/sms/sms-central",
-                  "platform/integrations/sms/sms-webhook",
-                  "platform/integrations/sms/sms77",
-                  "platform/integrations/sms/sns",
+                  "platform/integrations/sms/nexmo",
+                  "platform/integrations/sms/messagebird",
                   "platform/integrations/sms/telnyx",
-                  "platform/integrations/sms/termii"
+                  "platform/integrations/sms/cm-com",
+                  "platform/integrations/sms/plivo",
+                  "platform/integrations/sms/bandwidth",
+                  "platform/integrations/sms/ring-central",
+                  "platform/integrations/sms/azure",
+                  "platform/integrations/sms/clicksend",
+                  "platform/integrations/sms/brevo",
+                  "platform/integrations/sms/clickatell",
+                  "platform/integrations/sms/bulk-sms",
+                  "platform/integrations/sms/sms77",
+                  "platform/integrations/sms/africas-talking",
+                  "platform/integrations/sms/unifonic",
+                  "platform/integrations/sms/gupshup",
+                  "platform/integrations/sms/termii",
+                  "platform/integrations/sms/kudosity",
+                  "platform/integrations/sms/sendchamp",
+                  "platform/integrations/sms/simpletexting",
+                  "platform/integrations/sms/46elks",
+                  "platform/integrations/sms/firetext",
+                  "platform/integrations/sms/sms-central",
+                  "platform/integrations/sms/kannel",
+                  "platform/integrations/sms/maqsam",
+                  "platform/integrations/sms/mobishastra",
+                  "platform/integrations/sms/afro-message",
+                  "platform/integrations/sms/smsmode",
+                  "platform/integrations/sms/isend-sms",
+                  "platform/integrations/sms/isendpro",
+                  "platform/integrations/sms/imedia",
+                  "platform/integrations/sms/eazy",
+                  "platform/integrations/sms/ruach-sms",
+                  "platform/integrations/sms/sms-webhook"
                 ]
               },
               {
@@ -1518,6 +1530,21 @@
       "permanent": true
     },
     {
+      "source": "/platform/integrations/email/sendinblue",
+      "destination": "/platform/integrations/email/brevo",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/email/maqsam",
+      "destination": "/platform/integrations/sms/maqsam",
+      "permanent": true
+    },
+    {
+      "source": "/channels/email/email-webhook",
+      "destination": "/platform/integrations/email/webhook",
+      "permanent": true
+    },
+    {
       "source": "/platform/integrations/sms/azure-sms",
       "destination": "/platform/integrations/sms/azure",
       "permanent": true
@@ -1530,6 +1557,21 @@
     {
       "source": "/channels/sms/generic-sms",
       "destination": "/platform/integrations/sms/sms-webhook",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/sms/sns",
+      "destination": "/platform/integrations/sms/aws-sns",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/azure",
+      "destination": "/platform/integrations/sms/azure",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/simpletexting",
+      "destination": "/platform/integrations/sms/simpletexting",
       "permanent": true
     },
     {
