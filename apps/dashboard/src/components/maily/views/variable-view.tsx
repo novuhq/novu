@@ -98,10 +98,11 @@ function setVariablePopoverOpen(editor: TiptapEditor | undefined, open: boolean)
   // flip — bounce selection while `popover` is already true so tippy stays dismissed.
   if (open && isCanvasCardButton) {
     const { selection } = editor.state;
+    const selectedNode = editor.state.doc.nodeAt(selection.from);
 
-    if (selection.node?.type.name === CARD_BUTTON_NODE_NAME) {
+    if (selectedNode?.type.name === CARD_BUTTON_NODE_NAME) {
       const from = selection.from;
-      const after = Math.min(from + selection.node.nodeSize, editor.state.doc.content.size);
+      const after = Math.min(from + selectedNode.nodeSize, editor.state.doc.content.size);
       editor.commands.setTextSelection(after);
       editor.commands.setNodeSelection(from);
     }

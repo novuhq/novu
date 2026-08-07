@@ -13,6 +13,8 @@ import {
 } from '@novu/api/models/components';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
+  CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE,
+  CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   ContentIssueEnum,
@@ -521,7 +523,9 @@ describe('Upsert Workflow #novu-v2', () => {
         const bodyIssues = await createChatWorkflow(cardBody({ label: 'View', url: '' }));
 
         expect(bodyIssues).to.exist;
-        const urlIssue = (bodyIssues ?? []).find((issue) => issue.message.includes('URL is required'));
+        const urlIssue = (bodyIssues ?? []).find((issue) =>
+          issue.message.includes(CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE)
+        );
         expect(urlIssue).to.exist;
         expect(urlIssue?.issueType).to.equal(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
         expect(urlIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
@@ -542,7 +546,9 @@ describe('Upsert Workflow #novu-v2', () => {
         const bodyIssues = await createChatWorkflow(cardBody({ label: '', url: 'https://example.com' }));
 
         expect(bodyIssues).to.exist;
-        const labelIssue = (bodyIssues ?? []).find((issue) => issue.message.includes('Label is required'));
+        const labelIssue = (bodyIssues ?? []).find((issue) =>
+          issue.message.includes(CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE)
+        );
         expect(labelIssue).to.exist;
         expect(labelIssue?.issueType).to.equal(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
         expect(labelIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
@@ -560,9 +566,7 @@ describe('Upsert Workflow #novu-v2', () => {
       });
 
       it('should accept a variable-backed url without url-format validation', async () => {
-        const bodyIssues = await createChatWorkflow(
-          cardBody({ label: 'View', url: 'payload.link', isUrlVariable: true })
-        );
+        const bodyIssues = await createChatWorkflow(cardBody({ label: 'View', url: '{{ payload.link }}' }));
 
         const buttonIssues = (bodyIssues ?? []).filter(
           (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
