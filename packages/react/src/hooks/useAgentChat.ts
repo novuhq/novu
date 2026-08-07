@@ -31,16 +31,19 @@ export type UseAgentChatResult = {
   }>;
 };
 
-function createSessionKey(conversationId?: string): string {
-  if (conversationId) {
-    return conversationId;
-  }
-
+function createLocalSessionKey(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `local_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
   }
 
-  return `local_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+
+    return `local_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  return `local_${Date.now().toString(36)}`;
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
@@ -48,7 +51,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const propsRef = useDataRef(props);
   const novu = useNovu();
 
-  const [sessionKey, setSessionKey] = useState(() => createSessionKey(conversationIdProp));
+  // Controlled resume uses the prop as key synchronously (no effect lag).
+  // Uncontrolled create sessions keep a local_* key until remount / prop clear / agent change.
+  const [localSessionKey, setLocalSessionKey] = useState(createLocalSessionKey);
+  const sessionKey = conversationIdProp ?? localSessionKey;
   const sessionKeyRef = useDataRef(sessionKey);
   const prevAgentIdRef = useRef(agentId);
   const prevConversationIdPropRef = useRef(conversationIdProp);
@@ -71,7 +77,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
     if (agentChanged) {
       setAssignedConversationId(undefined);
-      setSessionKey(createSessionKey(conversationIdProp));
+      setLocalSessionKey(createLocalSessionKey());
       setMessages([]);
       setError(undefined);
       setIsLoading(Boolean(conversationIdProp));
@@ -81,7 +87,6 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
     if (conversationIdProp) {
       setAssignedConversationId(undefined);
-      setSessionKey(conversationIdProp);
 
       return;
     }
@@ -89,7 +94,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     setIsLoading(false);
     if (prevConversationIdProp !== undefined) {
       setAssignedConversationId(undefined);
-      setSessionKey(createSessionKey());
+      setLocalSessionKey(createLocalSessionKey());
       setMessages([]);
     }
   }, [agentId, conversationIdProp]);

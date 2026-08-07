@@ -265,6 +265,38 @@ describe('AgentChat', () => {
     expect(snapshot?.key).toBe('local_session1');
   });
 
+  it('rejects a stale key that points at a different claimed conversation', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_stale' });
+
+    await agentChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'two',
+      key: 'local_stale',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+
+    const previous = agentChat.getConversation({ agentId: 'agent_1', key: 'local_stale' });
+    expect(previous?.messages).toHaveLength(1);
+    expect(previous?.conversationId).toBe('conv_aaaaaaaaaaaa');
+
+    const next = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_bbbbbbbbbbbb',
+    });
+    expect(next?.messages).toHaveLength(1);
+    expect(next?.key).toBe('conv_bbbbbbbbbbbb');
+  });
+
   it('resume-by-id after create receives sending → sent on the resume key', async () => {
     sendMessage
       .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })

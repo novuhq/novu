@@ -4,7 +4,7 @@ import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
-import { AgentChatStore, createLocalConversationKey } from './agent-chat-store';
+import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
 import type { LoadConversationArgs, LoadConversationResult, SendMessageArgs, SendMessageResult } from './types';
 
 export class AgentChat extends BaseModule {
@@ -97,16 +97,7 @@ export class AgentChat extends BaseModule {
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult> {
     return this.callWithSession(async () => {
       const key = args.key ?? args.conversationId ?? createLocalConversationKey();
-      // Prefer the session key; if the caller only has conversationId (plain JS
-      // after create), reuse the holder that already claimed that id.
-      const entry =
-        this.#store.get(key) ??
-        (args.conversationId ? this.#store.getByConversationId(args.agentId, args.conversationId) : undefined) ??
-        this.#store.getOrCreate({
-          agentId: args.agentId,
-          key,
-          conversationId: args.conversationId,
-        });
+      const entry = this.#resolveSendEntry(args, key);
       const optimisticId = this.#store.appendSending(entry, args.text);
 
       return this.#store.withCreateClaim(entry, args.conversationId, async (conversationId) => {
@@ -136,5 +127,51 @@ export class AgentChat extends BaseModule {
         }
       });
     });
+  }
+
+  /**
+   * Resolve the holder for a send. Rejects a key that belongs to another agent
+   * or a different claimed conversation (stale session key after prop change).
+   */
+  #resolveSendEntry(args: SendMessageArgs, key: string): ConversationEntry {
+    const byKey = this.#store.get(key);
+    if (byKey && this.#isUsableSendEntry(byKey, args)) {
+      return byKey;
+    }
+
+    if (args.conversationId) {
+      return (
+        this.#store.getByConversationId(args.agentId, args.conversationId) ??
+        this.#store.getOrCreate({
+          agentId: args.agentId,
+          key: args.conversationId,
+          conversationId: args.conversationId,
+        })
+      );
+    }
+
+    // Stale key must not call getOrCreate(key) — that would return the wrong holder.
+    const createKey = byKey ? createLocalConversationKey() : key;
+
+    return this.#store.getOrCreate({
+      agentId: args.agentId,
+      key: createKey,
+    });
+  }
+
+  #isUsableSendEntry(entry: ConversationEntry, args: SendMessageArgs): boolean {
+    if (entry.agentId !== args.agentId) {
+      return false;
+    }
+
+    if (
+      args.conversationId !== undefined &&
+      entry.conversationId !== undefined &&
+      entry.conversationId !== args.conversationId
+    ) {
+      return false;
+    }
+
+    return true;
   }
 }

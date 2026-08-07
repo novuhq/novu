@@ -24,21 +24,28 @@ export type ConversationEntry = AgentConversationState & {
   pendingCreate?: Promise<void>;
 };
 
-/** Client-minted holder key for a create session (before `conv_*` exists). */
-export function createLocalConversationKey(): string {
+function mintClientId(prefix: string): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `local_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+    return `${prefix}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
   }
 
-  return `local_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+
+    return `${prefix}_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  return `${prefix}_${Date.now().toString(36)}`;
+}
+
+/** Client-minted holder key for a create session (before `conv_*` exists). */
+export function createLocalConversationKey(): string {
+  return mintClientId('local');
 }
 
 function createOptimisticMessageId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `opt_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
-  }
-
-  return `opt_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  return mintClientId('opt');
 }
 
 function applyState(entry: ConversationEntry, next: AgentConversationState): void {
