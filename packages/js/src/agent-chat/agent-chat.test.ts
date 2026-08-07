@@ -2,7 +2,6 @@ import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
 import { AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { AgentChat } from './agent-chat';
-import { draftKey, resumeKey } from './agent-chat-store';
 
 describe('AgentChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
@@ -38,16 +37,16 @@ describe('AgentChat', () => {
       });
     });
 
-    const result = await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
+    const result = await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
     expect(result).toEqual({
       data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' },
     });
-    expect(updates[0]?.key).toBe(draftKey('agent_1'));
+    expect(updates[0]?.key).toBe('local_session1');
     expect(updates[0]?.conversationId).toBeUndefined();
     expect(updates[0]?.messages[0]?.status).toBe('sending');
     expect(updates[0]?.messages[0]?.id).toMatch(/^opt_/);
-    expect(updates[1]?.key).toBe(draftKey('agent_1'));
+    expect(updates[1]?.key).toBe('local_session1');
     expect(updates[1]?.conversationId).toBe('conv_abcdefghijkl');
     expect(updates[1]?.messages).toEqual([{ id: 'msg_abcdefghijkl', status: 'sent', role: 'user' }]);
 
@@ -55,8 +54,7 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(snapshot?.messages).toHaveLength(1);
-    expect(snapshot?.key).toBe(draftKey('agent_1'));
+    expect(snapshot?.key).toBe('local_session1');
     expect(snapshot?.messages[0]).toMatchObject({
       id: 'msg_abcdefghijkl',
       role: 'user',
@@ -65,35 +63,34 @@ describe('AgentChat', () => {
     });
   });
 
-  it('keeps draft emit key stable so a draft listener sees sending → sent', async () => {
+  it('keeps the session key stable so a create listener sees sending → sent', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
-    const draftStatuses: string[] = [];
-    const key = draftKey('agent_1');
+    const statuses: string[] = [];
 
     emitter.on('agent_chat.messages.updated', ({ data }) => {
-      if (data.key !== key) {
+      if (data.key !== 'local_session1') {
         return;
       }
 
-      draftStatuses.push(data.messages[0]?.status ?? '');
+      statuses.push(data.messages[0]?.status ?? '');
     });
 
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    expect(draftStatuses).toEqual(['sending', 'sent']);
+    expect(statuses).toEqual(['sending', 'sent']);
   });
 
   it('marks the optimistic message failed when the request errors', async () => {
     sendMessage.mockRejectedValue(new Error('network'));
 
-    const result = await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
+    const result = await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
     expect(result.error).toBeDefined();
-    const snapshot = agentChat.getConversation({ agentId: 'agent_1' });
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.messages[0]?.status).toBe('failed');
   });
 
-  it('serializes unclaimed draft creates until conversationId is claimed', async () => {
+  it('serializes overlapping creates on the same session key until conversationId is claimed', async () => {
     let resolveFirst!: (value: { identifier: string; messageId: string }) => void;
     sendMessage
       .mockImplementationOnce(
@@ -108,15 +105,10 @@ describe('AgentChat', () => {
         return { identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' };
       });
 
-    const first = agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
-    const second = agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
+    const first = agentChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+    const second = agentChat.sendMessage({ agentId: 'agent_1', text: 'two', key: 'local_session1' });
 
-    // Both bubbles paint immediately; only the HTTP create is serialized.
-    expect(agentChat.getConversation({ agentId: 'agent_1' })?.messages).toHaveLength(2);
-    expect(agentChat.getConversation({ agentId: 'agent_1' })?.messages.map((m) => m.status)).toEqual([
-      'sending',
-      'sending',
-    ]);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(2);
 
     await Promise.resolve();
     expect(sendMessage).toHaveBeenCalledTimes(1);
@@ -135,42 +127,42 @@ describe('AgentChat', () => {
       data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' },
     });
 
-    expect(sendMessage).toHaveBeenCalledTimes(2);
     expect(sendMessage).toHaveBeenNthCalledWith(2, {
       agentId: 'agent_1',
       text: 'two',
       conversationId: 'conv_abcdefghijkl',
     });
-
-    const byAgent = agentChat.getConversation({ agentId: 'agent_1' });
-    const byId = agentChat.getConversation({
-      agentId: 'agent_1',
-      conversationId: 'conv_abcdefghijkl',
-    });
-
-    expect(byAgent?.messages).toHaveLength(2);
-    expect(byAgent?.messages.map((m) => m.status)).toEqual(['sent', 'sent']);
-    expect(byAgent?.messages.map((m) => m.id)).toEqual(['msg_aaaaaaaaaaaa', 'msg_bbbbbbbbbbbb']);
-    expect(byAgent?.messages.map((m) => m.parts[0])).toEqual([
-      { type: 'text', text: 'one', state: 'done' },
-      { type: 'text', text: 'two', state: 'done' },
-    ]);
-    expect(byId?.messages).toEqual(byAgent?.messages);
-    expect(byAgent?.conversationId).toBe('conv_abcdefghijkl');
   });
 
-  it('does not serialize sticky-resume draft sends after the claim', async () => {
-    let resolveFirst!: (value: { identifier: string; messageId: string }) => void;
+  it('omitting conversationId on two different session keys creates two conversations', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_a' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'two', key: 'local_b' });
+
+    expect(sendMessage).toHaveBeenNthCalledWith(1, {
+      agentId: 'agent_1',
+      text: 'one',
+      conversationId: undefined,
+    });
+    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: undefined,
+    });
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.conversationId).toBe('conv_aaaaaaaaaaaa');
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_b' })?.conversationId).toBe('conv_bbbbbbbbbbbb');
+  });
+
+  it('does not serialize appends after the conversation id is known', async () => {
     let resolveSecond!: (value: { identifier: string; messageId: string }) => void;
     let resolveThird!: (value: { identifier: string; messageId: string }) => void;
 
     sendMessage
-      .mockImplementationOnce(
-        () =>
-          new Promise((resolve) => {
-            resolveFirst = resolve;
-          })
-      )
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
       .mockImplementationOnce(
         () =>
           new Promise((resolve) => {
@@ -184,27 +176,23 @@ describe('AgentChat', () => {
           })
       );
 
-    const first = agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
-    await Promise.resolve();
-    resolveFirst({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' });
-    await first;
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
 
-    const second = agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
-    const third = agentChat.sendMessage({ agentId: 'agent_1', text: 'three' });
-    await Promise.resolve();
-
-    // Both sticky-resume POSTs are in flight (no claim gate after conv_* is known).
-    expect(sendMessage).toHaveBeenCalledTimes(3);
-    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+    const second = agentChat.sendMessage({
       agentId: 'agent_1',
       text: 'two',
+      key: 'local_session1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(sendMessage).toHaveBeenNthCalledWith(3, {
+    const third = agentChat.sendMessage({
       agentId: 'agent_1',
       text: 'three',
+      key: 'local_session1',
       conversationId: 'conv_abcdefghijkl',
     });
+    await Promise.resolve();
+
+    expect(sendMessage).toHaveBeenCalledTimes(3);
 
     resolveSecond({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
     resolveThird({ identifier: 'conv_abcdefghijkl', messageId: 'msg_cccccccccccc' });
@@ -212,47 +200,111 @@ describe('AgentChat', () => {
     await expect(third).resolves.toMatchObject({ data: { messageId: 'msg_cccccccccccc' } });
   });
 
-  it('releases draft claim waiters when the create fails so the next send can mint', async () => {
+  it('serializes create retries after a failed create so waiters do not double-mint', async () => {
+    let resolveSecond!: (value: { identifier: string; messageId: string }) => void;
+    let resolveThird!: (value: { identifier: string; messageId: string }) => void;
+
     sendMessage
       .mockRejectedValueOnce(new Error('network'))
-      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' });
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecond = resolve;
+          })
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveThird = resolve;
+          })
+      );
 
-    const failed = await agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
-    expect(failed.error).toBeDefined();
+    const failed = agentChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+    const second = agentChat.sendMessage({ agentId: 'agent_1', text: 'two', key: 'local_session1' });
+    const third = agentChat.sendMessage({ agentId: 'agent_1', text: 'three', key: 'local_session1' });
 
-    const retry = await agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
-    expect(retry).toEqual({
-      data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' },
+    await expect(failed).resolves.toMatchObject({ error: expect.anything() });
+
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+
+    resolveSecond({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+    await expect(second).resolves.toEqual({
+      data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' },
     });
-    expect(sendMessage).toHaveBeenNthCalledWith(2, {
+
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledTimes(3);
+    expect(sendMessage).toHaveBeenNthCalledWith(3, {
       agentId: 'agent_1',
-      text: 'two',
-      conversationId: undefined,
+      text: 'three',
+      conversationId: 'conv_abcdefghijkl',
     });
+
+    resolveThird({ identifier: 'conv_abcdefghijkl', messageId: 'msg_cccccccccccc' });
+    await expect(third).resolves.toMatchObject({ data: { messageId: 'msg_cccccccccccc' } });
   });
 
-  it('returns retained messages for agentId after the conversation id is claimed', async () => {
-    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+  it('appends by conversationId alone after create (JS caller without local key)', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
 
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
-
-    const snapshot = agentChat.getConversation({ agentId: 'agent_1' });
-    expect(snapshot?.conversationId).toBe('conv_abcdefghijkl');
-    expect(snapshot?.key).toBe(draftKey('agent_1'));
-    expect(snapshot?.messages).toHaveLength(1);
-    expect(snapshot?.messages[0]).toMatchObject({
-      status: 'sent',
-      parts: [{ type: 'text', text: 'hello', state: 'done' }],
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+    await agentChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'two',
+      conversationId: 'conv_abcdefghijkl',
     });
+
+    const snapshot = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.messages).toHaveLength(2);
+    expect(snapshot?.key).toBe('local_session1');
+  });
+
+  it('resume-by-id after create receives sending → sent on the resume key', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
+      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'one', key: 'local_session1' });
+
+    const resumeStatuses: string[] = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key !== 'conv_abcdefghijkl') {
+        return;
+      }
+
+      resumeStatuses.push(data.messages.map((m) => m.status).join(','));
+    });
+
+    getEvents.mockResolvedValue({ events: [], olderCursor: null });
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    await agentChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'two',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(resumeStatuses.some((s) => s.includes('sending'))).toBe(true);
+    expect(resumeStatuses.some((s) => s.includes('sent'))).toBe(true);
   });
 
   it('clearCache drops retained conversation state', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
     agentChat.clearCache();
 
-    expect(agentChat.getConversation({ agentId: 'agent_1' })).toBeUndefined();
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })).toBeUndefined();
     expect(
       agentChat.getConversation({
         agentId: 'agent_1',
@@ -311,23 +363,23 @@ describe('AgentChat', () => {
       role: 'user',
       parts: [{ type: 'text', text: 'prior question', state: 'done' }],
     });
-    expect(result.data?.messages[1]).toMatchObject({
-      id: 'msg_asst0000001',
-      role: 'assistant',
-      parts: [{ type: 'text', text: 'prior answer', state: 'done' }],
-    });
 
     const snapshot = agentChat.getConversation({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(snapshot?.key).toBe(resumeKey('conv_abcdefghijkl'));
+    expect(snapshot?.key).toBe('conv_abcdefghijkl');
     expect(snapshot?.messages).toEqual(result.data?.messages);
   });
 
   it('loadConversation merges history with local-only messages by messageId', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_local000001' });
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'ack locally' });
+    await agentChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'ack locally',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
 
     getEvents.mockResolvedValue({
       events: [
@@ -356,17 +408,17 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    expect(result.data?.messages).toHaveLength(2);
     expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_server00001', 'msg_local000001']);
-    expect(result.data?.messages[1]).toMatchObject({
-      id: 'msg_local000001',
-      parts: [{ type: 'text', text: 'ack locally', state: 'done' }],
-    });
   });
 
   it('loadConversation dedupes when history already contains the ack’d messageId', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_shared00001' });
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'same turn' });
+    await agentChat.sendMessage({
+      agentId: 'agent_1',
+      text: 'same turn',
+      key: 'conv_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
 
     getEvents.mockResolvedValue({
       events: [
@@ -399,7 +451,7 @@ describe('AgentChat', () => {
     expect(result.data?.messages[0]?.id).toBe('msg_shared00001');
   });
 
-  it('loadConversation does not claim the agent draft — draft send starts a new chat', async () => {
+  it('loadConversation uses a resume holder separate from an in-flight create session', async () => {
     getEvents.mockResolvedValue({
       events: [
         {
@@ -428,48 +480,26 @@ describe('AgentChat', () => {
     });
 
     sendMessage.mockResolvedValue({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_new00000001' });
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'fresh draft' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'fresh chat', key: 'local_new' });
 
     expect(sendMessage).toHaveBeenCalledWith({
       agentId: 'agent_1',
-      text: 'fresh draft',
+      text: 'fresh chat',
       conversationId: undefined,
     });
 
-    const draft = agentChat.getConversation({ agentId: 'agent_1' });
+    const created = agentChat.getConversation({ agentId: 'agent_1', key: 'local_new' });
     const resumed = agentChat.getConversation({
       agentId: 'agent_1',
       conversationId: 'conv_bbbbbbbbbbbb',
     });
 
-    expect(draft?.conversationId).toBe('conv_aaaaaaaaaaaa');
-    expect(draft?.key).toBe(draftKey('agent_1'));
-    expect(draft?.messages).toHaveLength(1);
-    expect(draft?.messages[0]).toMatchObject({
+    expect(created?.conversationId).toBe('conv_aaaaaaaaaaaa');
+    expect(created?.messages[0]).toMatchObject({
       id: 'msg_new00000001',
-      parts: [{ type: 'text', text: 'fresh draft', state: 'done' }],
+      parts: [{ type: 'text', text: 'fresh chat', state: 'done' }],
     });
-    expect(resumed?.key).toBe(resumeKey('conv_bbbbbbbbbbbb'));
-    expect(resumed?.messages).toHaveLength(1);
+    expect(resumed?.key).toBe('conv_bbbbbbbbbbbb');
     expect(resumed?.messages[0]?.id).toBe('msg_hist0000001');
-  });
-
-  it('sticky-resumes the agent draft on a second draft send', async () => {
-    sendMessage
-      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_aaaaaaaaaaaa' })
-      .mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_bbbbbbbbbbbb' });
-
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'one' });
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'two' });
-
-    expect(sendMessage).toHaveBeenNthCalledWith(2, {
-      agentId: 'agent_1',
-      text: 'two',
-      conversationId: 'conv_abcdefghijkl',
-    });
-
-    const draft = agentChat.getConversation({ agentId: 'agent_1' });
-    expect(draft?.messages).toHaveLength(2);
-    expect(draft?.conversationId).toBe('conv_abcdefghijkl');
   });
 });

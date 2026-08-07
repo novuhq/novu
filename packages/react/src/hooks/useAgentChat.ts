@@ -7,9 +7,9 @@ export type UseAgentChatProps = {
   /** The agent that receives the messages. */
   agentId: string;
   /**
-   * Resume this conversation (loads history on mount) — controlled mode.
-   * Omit for the agent draft (uncontrolled): first send claims a chat; later sends sticky-resume it.
-   * Loading another conversation elsewhere does not steal that draft.
+   * Resume this conversation (loads history on mount).
+   * Omit to start a new chat: the first send creates a conversation; later sends
+   * pass the returned id. Remount or clear this prop to start another new chat.
    */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
@@ -31,14 +31,27 @@ export type UseAgentChatResult = {
   }>;
 };
 
-function subscriptionKey(agentId: string, conversationIdProp?: string): string {
-  return conversationIdProp ? `conv:${conversationIdProp}` : `agent:${agentId}`;
+function createSessionKey(conversationId?: string): string {
+  if (conversationId) {
+    return conversationId;
+  }
+
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `local_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+  }
+
+  return `local_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const { agentId, conversationId: conversationIdProp } = props;
   const propsRef = useDataRef(props);
   const novu = useNovu();
+
+  const [sessionKey, setSessionKey] = useState(() => createSessionKey(conversationIdProp));
+  const sessionKeyRef = useDataRef(sessionKey);
+  const prevAgentIdRef = useRef(agentId);
+  const prevConversationIdPropRef = useRef(conversationIdProp);
 
   const [assignedConversationId, setAssignedConversationId] = useState<string>();
   const conversationId = conversationIdProp ?? assignedConversationId;
@@ -51,12 +64,35 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const fetchGenerationRef = useRef(0);
 
   useEffect(() => {
+    const agentChanged = prevAgentIdRef.current !== agentId;
+    const prevConversationIdProp = prevConversationIdPropRef.current;
+    prevAgentIdRef.current = agentId;
+    prevConversationIdPropRef.current = conversationIdProp;
+
+    if (agentChanged) {
+      setAssignedConversationId(undefined);
+      setSessionKey(createSessionKey(conversationIdProp));
+      setMessages([]);
+      setError(undefined);
+      setIsLoading(Boolean(conversationIdProp));
+
+      return;
+    }
+
     if (conversationIdProp) {
       setAssignedConversationId(undefined);
-    } else {
-      setIsLoading(false);
+      setSessionKey(conversationIdProp);
+
+      return;
     }
-  }, [conversationIdProp]);
+
+    setIsLoading(false);
+    if (prevConversationIdProp !== undefined) {
+      setAssignedConversationId(undefined);
+      setSessionKey(createSessionKey());
+      setMessages([]);
+    }
+  }, [agentId, conversationIdProp]);
 
   const fetchConversation = useCallback(
     async (targetConversationId: string) => {
@@ -78,6 +114,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         setError(response.error);
         propsRef.current.onError?.(response.error);
       } else if (response.data) {
+        setMessages(response.data.messages);
         propsRef.current.onSuccess?.(response.data);
       }
 
@@ -88,21 +125,22 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   );
 
   useEffect(() => {
-    const snapshot = novu.agentChat.getConversation({ agentId, conversationId: conversationIdProp });
+    const snapshot = novu.agentChat.getConversation({
+      agentId,
+      key: sessionKey,
+      conversationId: conversationIdProp,
+    });
     if (snapshot) {
       setMessages(snapshot.messages);
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
-    } else {
+    } else if (!conversationIdProp) {
       setMessages([]);
     }
 
-    const key = subscriptionKey(agentId, conversationIdProp);
     const cleanup = novu.on('agent_chat.messages.updated', ({ data }) => {
-      // Stable holder key from @novu/js — draft stays `agent:…` after claim, so
-      // the first sending→sent transition is not dropped.
-      if (data.key !== key) {
+      if (data.key !== sessionKeyRef.current) {
         return;
       }
 
@@ -117,7 +155,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     }
 
     return cleanup;
-  }, [novu, agentId, conversationIdProp, conversationIdRef, propsRef, fetchConversation]);
+  }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, conversationIdRef, propsRef, fetchConversation]);
 
   const refetch = useCallback(async () => {
     const id = conversationIdRef.current;
@@ -135,6 +173,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       const response = await novu.agentChat.sendMessage({
         agentId,
         text,
+        key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
       });
 
@@ -147,7 +186,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [novu, agentId, conversationIdRef, propsRef]
+    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
   );
 
   return {

@@ -7,27 +7,30 @@ import {
 } from '@novu/agent-event-protocol';
 
 /**
- * Stable local identity for one conversation.
+ * Stable local identity for one conversation holder.
  * The object reference never changes; timeline fields are overwritten in place.
  * This is an in-memory UI cache, not a synchronized copy of the server timeline.
  */
 export type ConversationEntry = AgentConversationState & {
   agentId: string;
-  /** Public `conv_*` id once the draft is claimed, or when resuming. */
+  /** Public `conv_*` id once created on the server, or when resuming. */
   conversationId?: string;
   /**
-   * Immutable subscription key for emits.
-   * Draft holders stay `agent:<agentId>` after claim; resumed holders are `conv:<id>`.
+   * Immutable subscription / map key for this holder's whole life.
+   * Create sessions use `local_*`; resume sessions use the `conv_*` id.
    */
   key: string;
+  /** Serializes overlapping creates on this holder until a `conv_*` exists. */
+  pendingCreate?: Promise<void>;
 };
 
-export function draftKey(agentId: string): string {
-  return `agent:${agentId}`;
-}
+/** Client-minted holder key for a create session (before `conv_*` exists). */
+export function createLocalConversationKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `local_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+  }
 
-export function resumeKey(conversationId: string): string {
-  return `conv:${conversationId}`;
+  return `local_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function createOptimisticMessageId(): string {
@@ -53,24 +56,12 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
  * Owns the message list the UI paints. `AgentChat` mutates this store around
  * HTTP calls; the hook listens via `onUpdate` → `agent_chat.messages.updated`.
  *
- * Dual index — same stable holder, two lookup keys:
- * - `#byAgentId` — agent draft (omit conversationId on send / sticky resume)
- * - `#byConversationId` — alias added once the public `conv_*` id is known
- *
- * Holders are never swapped. `conversationId` is an alias on the existing object.
- * Resume/`loadConversation` indexes by conversationId only and does not claim the
- * agent draft key (so draft sends stay on the draft, not a resumed chat).
+ * One map keyed by an immutable holder `key` (NV-8445: state keyed by conversation
+ * identity — `local_*` until create returns `conv_*`, then the same key stays).
+ * Omit `conversationId` on send always creates; callers pass the returned id next.
  */
 export class AgentChatStore {
-  /** Agent draft (and sticky resume after claim) keyed by agent. */
-  #byAgentId = new Map<string, ConversationEntry>();
-  /** Same holders keyed by public conversation id once known. */
-  #byConversationId = new Map<string, ConversationEntry>();
-  /**
-   * In-flight draft claim per agent (server mint of `conv_*`).
-   * Waiters reuse the claimed id; concurrent posts after claim are not gated.
-   */
-  #pendingDraftClaims = new Map<string, Promise<string | undefined>>();
+  #byKey = new Map<string, ConversationEntry>();
   /** Fired after every mutation so AgentChat can emit to React. */
   #onUpdate: (entry: ConversationEntry) => void;
 
@@ -80,51 +71,42 @@ export class AgentChatStore {
 
   /** Drop all conversations (wired into `Novu.clearCache` / changeSubscriber). */
   clear(): void {
-    this.#byAgentId.clear();
-    this.#byConversationId.clear();
-    this.#pendingDraftClaims.clear();
+    this.#byKey.clear();
   }
 
-  /**
-   * Look up an existing conversation.
-   * Prefer conversationId when present; otherwise the agent draft.
-   */
-  get(agentId: string, conversationId?: string): ConversationEntry | undefined {
-    if (conversationId) {
-      const byId = this.#byConversationId.get(conversationId);
-      if (byId?.agentId === agentId) {
-        return byId;
-      }
+  get(key: string): ConversationEntry | undefined {
+    return this.#byKey.get(key);
+  }
 
-      return undefined;
+  /** Find a holder that already has this public conversation id (same-session append). */
+  getByConversationId(agentId: string, conversationId: string): ConversationEntry | undefined {
+    for (const entry of this.#byKey.values()) {
+      if (entry.agentId === agentId && entry.conversationId === conversationId) {
+        return entry;
+      }
     }
 
-    return this.#byAgentId.get(agentId);
+    return undefined;
   }
 
   /**
-   * Return the entry if it exists; otherwise create an empty holder.
-   * With `conversationId`: conversation index only (resume).
-   * Without: agent draft slot (first send claims; later sends sticky-resume).
+   * Return the entry for `key` if it exists; otherwise create an empty holder.
+   * Does not reuse another holder that merely shares `conversationId` — resume
+   * (`key === conversationId`) stays separate from an in-flight `local_*` create.
    */
-  getOrCreate(agentId: string, conversationId?: string): ConversationEntry {
-    const existing = this.get(agentId, conversationId);
+  getOrCreate(args: { agentId: string; key: string; conversationId?: string }): ConversationEntry {
+    const existing = this.#byKey.get(args.key);
     if (existing) {
       return existing;
     }
 
     const entry: ConversationEntry = {
       ...createInitialAgentConversationState(),
-      agentId,
-      conversationId,
-      key: conversationId ? resumeKey(conversationId) : draftKey(agentId),
+      agentId: args.agentId,
+      conversationId: args.conversationId,
+      key: args.key,
     };
-
-    if (conversationId) {
-      this.#byConversationId.set(conversationId, entry);
-    } else {
-      this.#byAgentId.set(agentId, entry);
-    }
+    this.#byKey.set(args.key, entry);
 
     return entry;
   }
@@ -150,9 +132,8 @@ export class AgentChatStore {
   }
 
   /**
-   * Mark an optimistic message `sent`, swap in the server message id, and adopt
-   * conversationId as an alias on this same holder (sticky draft resume).
-   * Does not change `entry.key` — draft listeners keep matching after claim.
+   * Mark an optimistic message `sent`, swap in the server message id, and record
+   * the public conversation id on this holder. Does not change `entry.key`.
    */
   markSent(
     entry: ConversationEntry,
@@ -166,7 +147,6 @@ export class AgentChatStore {
 
     if (!entry.conversationId) {
       entry.conversationId = args.conversationId;
-      this.#byConversationId.set(args.conversationId, entry);
     }
 
     this.#onUpdate(entry);
@@ -195,12 +175,9 @@ export class AgentChatStore {
 
     applyState(entry, {
       ...folded,
+      // Local-only (e.g. failed / in-flight) stay after the server page; cheap ordering approx.
       messages: [...folded.messages, ...localOnly],
     });
-
-    if (entry.conversationId) {
-      this.#byConversationId.set(entry.conversationId, entry);
-    }
 
     this.#onUpdate(entry);
 
@@ -209,10 +186,12 @@ export class AgentChatStore {
 
   /**
    * Run an HTTP post for this entry.
-   * Unclaimed drafts: only one create in flight; waiters reuse the claimed `conv_*`.
-   * After claim (or resume / explicit id): posts run immediately with no gating.
+   * Unclaimed creates: one in flight at a time on this holder; waiters re-check
+   * `entry.conversationId` so a successful create is reused and a failed create
+   * still serializes the next attempt (no fan-out double mint).
+   * After claim (or explicit id): posts run immediately with no gating.
    */
-  withDraftClaim<T>(
+  withCreateClaim<T>(
     entry: ConversationEntry,
     explicitConversationId: string | undefined,
     post: (conversationId?: string) => Promise<T>
@@ -222,20 +201,21 @@ export class AgentChatStore {
       return post(known);
     }
 
-    const pending = this.#pendingDraftClaims.get(entry.agentId);
-    if (pending) {
-      return pending.then((claimedId) => post(claimedId ?? entry.conversationId));
-    }
+    const run = async (): Promise<T> => {
+      if (entry.conversationId) {
+        return post(entry.conversationId);
+      }
 
-    let resolveClaim!: (conversationId: string | undefined) => void;
-    const claimGate = new Promise<string | undefined>((resolve) => {
-      resolveClaim = resolve;
-    });
-    this.#pendingDraftClaims.set(entry.agentId, claimGate);
+      return post(undefined);
+    };
 
-    return post(undefined).finally(() => {
-      resolveClaim(entry.conversationId);
-      this.#pendingDraftClaims.delete(entry.agentId);
-    });
+    const previous = entry.pendingCreate ?? Promise.resolve();
+    const current = previous.then(run, run);
+    entry.pendingCreate = current.then(
+      () => undefined,
+      () => undefined
+    );
+
+    return current;
   }
 }

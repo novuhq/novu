@@ -4,7 +4,7 @@ import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
-import { AgentChatStore } from './agent-chat-store';
+import { AgentChatStore, createLocalConversationKey } from './agent-chat-store';
 import type { LoadConversationArgs, LoadConversationResult, SendMessageArgs, SendMessageResult } from './types';
 
 export class AgentChat extends BaseModule {
@@ -41,12 +41,19 @@ export class AgentChat extends BaseModule {
   getConversation({
     agentId,
     conversationId,
+    key,
   }: {
     agentId: string;
     conversationId?: string;
-  }): { conversationId?: string; messages: AgentMessage[]; key?: string } | undefined {
-    const entry = this.#store.get(agentId, conversationId);
-    if (!entry) {
+    key?: string;
+  }): { conversationId?: string; messages: AgentMessage[]; key: string } | undefined {
+    const entry = key
+      ? this.#store.get(key)
+      : conversationId
+        ? (this.#store.get(conversationId) ?? this.#store.getByConversationId(agentId, conversationId))
+        : undefined;
+
+    if (!entry || entry.agentId !== agentId) {
       return undefined;
     }
 
@@ -59,7 +66,7 @@ export class AgentChat extends BaseModule {
 
   /**
    * Fetch the newest history page and merge it into the local timeline.
-   * Indexes by conversationId only — does not claim the agent draft.
+   * Holder key is the public conversation id (resume).
    */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
     return this.callWithSession(async () => {
@@ -68,7 +75,11 @@ export class AgentChat extends BaseModule {
           conversationId: args.conversationId,
         });
 
-        const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
+        const entry = this.#store.getOrCreate({
+          agentId: args.agentId,
+          key: args.conversationId,
+          conversationId: args.conversationId,
+        });
         const next = this.#store.absorbHistoryPage(entry, page.events);
 
         return {
@@ -85,14 +96,24 @@ export class AgentChat extends BaseModule {
 
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult> {
     return this.callWithSession(async () => {
-      // Explicit conversationId → resume. Omit → agent draft (claim on first send).
-      const entry = this.#store.getOrCreate(args.agentId, args.conversationId);
+      const key = args.key ?? args.conversationId ?? createLocalConversationKey();
+      // Prefer the session key; if the caller only has conversationId (plain JS
+      // after create), reuse the holder that already claimed that id.
+      const entry =
+        this.#store.get(key) ??
+        (args.conversationId ? this.#store.getByConversationId(args.agentId, args.conversationId) : undefined) ??
+        this.#store.getOrCreate({
+          agentId: args.agentId,
+          key,
+          conversationId: args.conversationId,
+        });
       const optimisticId = this.#store.appendSending(entry, args.text);
 
-      return this.#store.withDraftClaim(entry, args.conversationId, async (conversationId) => {
+      return this.#store.withCreateClaim(entry, args.conversationId, async (conversationId) => {
         try {
           const data = await this.#agentChatService.sendMessage({
-            ...args,
+            agentId: args.agentId,
+            text: args.text,
             conversationId,
           });
 
