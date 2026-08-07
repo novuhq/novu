@@ -10,6 +10,9 @@ import type { JsonSchema } from '../../../types/schema.types';
  * `required` fields already discriminate the union, and the card is validated strictly server-side
  * (`cardElementZodSchema`) before it reaches the bridge, so dropping the per-variant strictness here
  * is safe and avoids the corruption.
+ *
+ * Code-first `step.chat` accepts the Chat SDK card kit (section/fields/table + interactive
+ * button/select/radio_select). The dashboard Maily compiler still emits the v1 subset only.
  */
 const cardElementTextSchema = {
   type: 'object',
@@ -59,14 +62,149 @@ const cardElementLinkButtonSchema = {
     id: { type: 'string' },
   },
   required: ['type', 'label', 'url'],
-  additionalProperties: false,
+} as const satisfies JsonSchema;
+
+const cardElementButtonSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'button' },
+    id: { type: 'string' },
+    label: { type: 'string' },
+    style: { type: 'string', enum: ['primary', 'danger', 'default'] },
+    actionType: { type: 'string', enum: ['action', 'modal'] },
+    callbackUrl: { type: 'string' },
+    value: { type: 'string' },
+    disabled: { type: 'boolean' },
+  },
+  required: ['type', 'id', 'label'],
+} as const satisfies JsonSchema;
+
+const cardElementSelectOptionSchema = {
+  type: 'object',
+  properties: {
+    label: { type: 'string' },
+    value: { type: 'string' },
+    description: { type: 'string' },
+  },
+  required: ['label', 'value'],
+} as const satisfies JsonSchema;
+
+const cardElementSelectSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'select' },
+    id: { type: 'string' },
+    label: { type: 'string' },
+    options: { type: 'array', items: cardElementSelectOptionSchema },
+    initialOption: { type: 'string' },
+    optional: { type: 'boolean' },
+    placeholder: { type: 'string' },
+  },
+  required: ['type', 'id', 'label', 'options'],
+} as const satisfies JsonSchema;
+
+const cardElementRadioSelectSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'radio_select' },
+    id: { type: 'string' },
+    label: { type: 'string' },
+    options: { type: 'array', items: cardElementSelectOptionSchema },
+    initialOption: { type: 'string' },
+    optional: { type: 'boolean' },
+  },
+  required: ['type', 'id', 'label', 'options'],
 } as const satisfies JsonSchema;
 
 const cardElementActionsSchema = {
   type: 'object',
   properties: {
     type: { type: 'string', const: 'actions' },
-    children: { type: 'array', items: cardElementLinkButtonSchema },
+    children: {
+      type: 'array',
+      items: {
+        anyOf: [
+          cardElementLinkButtonSchema,
+          cardElementButtonSchema,
+          cardElementSelectSchema,
+          cardElementRadioSelectSchema,
+        ],
+      },
+    },
+  },
+  required: ['type', 'children'],
+} as const satisfies JsonSchema;
+
+const cardElementFieldSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'field' },
+    label: { type: 'string' },
+    value: { type: 'string' },
+  },
+  required: ['type', 'label', 'value'],
+} as const satisfies JsonSchema;
+
+const cardElementFieldsSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'fields' },
+    children: { type: 'array', items: cardElementFieldSchema },
+  },
+  required: ['type', 'children'],
+} as const satisfies JsonSchema;
+
+const cardElementTableSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'table' },
+    headers: { type: 'array', items: { type: 'string' } },
+    rows: {
+      type: 'array',
+      items: { type: 'array', items: { type: 'string' } },
+    },
+    align: {
+      type: 'array',
+      items: { type: 'string', enum: ['left', 'center', 'right'] },
+    },
+  },
+  required: ['type', 'headers', 'rows'],
+} as const satisfies JsonSchema;
+
+/**
+ * Non-recursive card children. `section` may nest further sections; those deeper
+ * levels are accepted as objects (TypeScript + Chat SDK builders enforce shape).
+ */
+const cardElementLeafChildSchemas = [
+  cardElementTextSchema,
+  cardElementImageSchema,
+  cardElementDividerSchema,
+  cardElementLinkSchema,
+  cardElementActionsSchema,
+  cardElementFieldsSchema,
+  cardElementTableSchema,
+] as const;
+
+const cardElementSectionSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'section' },
+    children: {
+      type: 'array',
+      items: {
+        anyOf: [
+          ...cardElementLeafChildSchemas,
+          {
+            type: 'object',
+            properties: {
+              type: { type: 'string', const: 'section' },
+              children: { type: 'array', items: { type: 'object' } },
+            },
+            required: ['type', 'children'],
+          },
+        ],
+      },
+    },
   },
   required: ['type', 'children'],
 } as const satisfies JsonSchema;
@@ -81,13 +219,7 @@ const cardElementSchema = {
     children: {
       type: 'array',
       items: {
-        anyOf: [
-          cardElementTextSchema,
-          cardElementImageSchema,
-          cardElementDividerSchema,
-          cardElementLinkSchema,
-          cardElementActionsSchema,
-        ],
+        anyOf: [...cardElementLeafChildSchemas, cardElementSectionSchema],
       },
     },
   },

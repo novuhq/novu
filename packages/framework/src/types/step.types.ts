@@ -208,8 +208,9 @@ export type PushResult = FromSchema<(typeof channelStepSchemas)['push']['result'
  * `interface`s (no implicit index signature), so `Card()` isn't assignable to the
  * inferred type. Swapping `card` for the SDK `CardElement` lets `Card` / `Actions`
  * / etc. be used on `step.chat` without changing those builders (agents keep the
- * unmodified Chat SDK types). Interactive children (`Select`, `Button`, …) are
- * still rejected at runtime by the chat output schema.
+ * unmodified Chat SDK types). The runtime schema accepts the Chat SDK card kit
+ * (section/fields/table + interactive button/select/radio_select); interactive
+ * elements render on Slack/Teams but have no callback wiring on classic `step.chat`.
  */
 type WithChatCard<T_Output> = T_Output extends { card: unknown }
   ? Prettify<Omit<T_Output, 'card'> & { card: CardElement }>

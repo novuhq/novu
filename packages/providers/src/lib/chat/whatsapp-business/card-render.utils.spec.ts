@@ -24,6 +24,33 @@ describe('cardToWhatsAppText', () => {
 
     expect(cardToWhatsAppText(card)).toBe('Docs (https://novu.co/docs)');
   });
+
+  test('renders section, fields and interactive action labels', () => {
+    const card: CardElement = {
+      type: 'card',
+      children: [
+        {
+          type: 'section',
+          children: [
+            { type: 'text', content: 'Details', style: 'plain' },
+            {
+              type: 'fields',
+              children: [{ type: 'field', label: 'Env', value: 'prod' }],
+            },
+          ],
+        },
+        {
+          type: 'actions',
+          children: [
+            { type: 'button', id: 'approve', label: 'Approve' },
+            { type: 'link-button', label: 'Docs', url: 'https://novu.co' },
+          ],
+        },
+      ],
+    };
+
+    expect(cardToWhatsAppText(card)).toBe(['Details\n\n*Env:* prod', 'Approve\nDocs (https://novu.co)'].join('\n\n'));
+  });
 });
 
 describe('validateWhatsAppCard', () => {

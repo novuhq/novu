@@ -28,6 +28,35 @@ describe('cardToTelegramHtml', () => {
 
     expect(cardToTelegramHtml(card)).toBe('<a href="https://novu.co/docs">Docs</a>');
   });
+
+  test('renders section, fields and interactive action labels', () => {
+    const card: CardElement = {
+      type: 'card',
+      children: [
+        {
+          type: 'section',
+          children: [
+            { type: 'text', content: 'Details', style: 'plain' },
+            {
+              type: 'fields',
+              children: [{ type: 'field', label: 'Env', value: 'prod' }],
+            },
+          ],
+        },
+        {
+          type: 'actions',
+          children: [
+            { type: 'button', id: 'approve', label: 'Approve' },
+            { type: 'link-button', label: 'Docs', url: 'https://novu.co' },
+          ],
+        },
+      ],
+    };
+
+    expect(cardToTelegramHtml(card)).toBe(
+      ['Details\n\n<b>Env:</b> prod', 'Approve\n<a href="https://novu.co">Docs</a>'].join('\n\n')
+    );
+  });
 });
 
 describe('validateTelegramCard', () => {

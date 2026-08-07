@@ -121,9 +121,10 @@ export interface IChatOptions {
  * Cross-platform card content (Rich Chat), rendered natively per provider at delivery
  * (Slack Block Kit, MS Teams Adaptive Cards) and degraded to markdown text elsewhere.
  *
- * Structurally identical to `CardElement` in `@novu/shared`; duplicated here because
- * `@novu/stateless` has no dependency on `@novu/shared`. Only link buttons are supported
- * in v1; action/postback buttons may be added later.
+ * Structural superset of the dashboard `@novu/shared` CardElement (v1 subset). Duplicated
+ * here because `@novu/stateless` has no dependency on `@novu/shared`. Code-first `step.chat`
+ * may emit the full Chat SDK kit (section/fields/table + interactive button/select/radio_select);
+ * the dashboard Maily editor still authors the v1 subset only.
  */
 export type CardElementTextElement = {
   type: 'text';
@@ -141,7 +142,7 @@ export type CardElementDividerElement = {
   type: 'divider';
 };
 
-/** Presentational inline hyperlink (Chat SDK `CardLink`). Interactive elements stay agent-only. */
+/** Presentational inline hyperlink (Chat SDK `CardLink`). */
 export type CardElementLinkElement = {
   type: 'link';
   label: string;
@@ -157,9 +158,77 @@ export type CardElementLinkButtonElement = {
   id?: string;
 };
 
+/** Interactive action button (Chat SDK `Button`). Renders on Slack/Teams; no callback wiring on classic `step.chat`. */
+export type CardElementButtonElement = {
+  type: 'button';
+  id: string;
+  label: string;
+  style?: 'primary' | 'danger' | 'default';
+  actionType?: 'action' | 'modal';
+  callbackUrl?: string;
+  value?: string;
+  disabled?: boolean;
+};
+
+export type CardElementSelectOptionElement = {
+  label: string;
+  value: string;
+  description?: string;
+};
+
+/** Chat SDK `Select`. Renders on Slack/Teams; no callback wiring on classic `step.chat`. */
+export type CardElementSelectElement = {
+  type: 'select';
+  id: string;
+  label: string;
+  options: CardElementSelectOptionElement[];
+  initialOption?: string;
+  optional?: boolean;
+  placeholder?: string;
+};
+
+/** Chat SDK `RadioSelect`. Renders on Slack/Teams; no callback wiring on classic `step.chat`. */
+export type CardElementRadioSelectElement = {
+  type: 'radio_select';
+  id: string;
+  label: string;
+  options: CardElementSelectOptionElement[];
+  initialOption?: string;
+  optional?: boolean;
+};
+
+export type CardElementActionChild =
+  | CardElementLinkButtonElement
+  | CardElementButtonElement
+  | CardElementSelectElement
+  | CardElementRadioSelectElement;
+
 export type CardElementActionsElement = {
   type: 'actions';
-  children: CardElementLinkButtonElement[];
+  children: CardElementActionChild[];
+};
+
+export type CardElementFieldElement = {
+  type: 'field';
+  label: string;
+  value: string;
+};
+
+export type CardElementFieldsElement = {
+  type: 'fields';
+  children: CardElementFieldElement[];
+};
+
+export type CardElementTableElement = {
+  type: 'table';
+  headers: string[];
+  rows: string[][];
+  align?: Array<'left' | 'center' | 'right'>;
+};
+
+export type CardElementSectionElement = {
+  type: 'section';
+  children: CardElementChild[];
 };
 
 export type CardElementChild =
@@ -167,7 +236,10 @@ export type CardElementChild =
   | CardElementImageElement
   | CardElementDividerElement
   | CardElementLinkElement
-  | CardElementActionsElement;
+  | CardElementActionsElement
+  | CardElementSectionElement
+  | CardElementFieldsElement
+  | CardElementTableElement;
 
 export type CardElement = {
   type: 'card';

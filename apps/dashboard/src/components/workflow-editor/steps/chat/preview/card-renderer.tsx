@@ -101,12 +101,40 @@ function MessageActions({ element }: { element: CardElementActionsElement }) {
   );
 }
 
+const SAFE_PREVIEW_HREF_PROTOCOLS = new Set(['http:', 'https:']);
+
+/**
+ * Only http(s) URLs are safe as live `<a href>` values in the chat preview.
+ * Rejects `javascript:`, `data:`, and other schemes that would execute in the
+ * dashboard session when a reviewer clicks the link.
+ */
+export function getSafePreviewHref(url: string): string | undefined {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+
+    return SAFE_PREVIEW_HREF_PROTOCOLS.has(parsed.protocol) ? trimmed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function MessageLink({ element }: { element: CardElementLinkElement }) {
+  const href = getSafePreviewHref(element.url);
+
   return (
     <p className="leading-5.5 m-0 mb-1 text-[15px] font-normal text-[#1d1c1d]">
-      <a href={element.url} target="_blank" rel="noopener noreferrer" className="text-[#1264a3] hover:underline">
-        {element.label}
-      </a>
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#1264a3] hover:underline">
+          {element.label}
+        </a>
+      ) : (
+        <span className="text-[#1264a3]">{element.label}</span>
+      )}
     </p>
   );
 }

@@ -1,4 +1,10 @@
-import { CardElement, CardElementChild, ChatRenderValidationLevelEnum, IChatRenderValidation } from '@novu/stateless';
+import {
+  CardElement,
+  CardElementActionChild,
+  CardElementChild,
+  ChatRenderValidationLevelEnum,
+  IChatRenderValidation,
+} from '@novu/stateless';
 import { CardValidator, convertText, InlineNode, maxMessageLength, runCardValidators } from '../card-render.utils';
 
 /** WhatsApp: `*bold*`, `_italic_`, `~strike~`, ```` ```mono``` ````; no link markup, so render `label (url)`. */
@@ -80,6 +86,22 @@ export function cardToWhatsAppText(card: CardElement): string {
   return sections.join('\n\n');
 }
 
+function whatsAppActionChildToText(action: CardElementActionChild): string {
+  switch (action.type) {
+    case 'link-button':
+      return action.url ? `${action.label} (${action.url})` : action.label;
+    case 'button':
+    case 'select':
+    case 'radio_select':
+      return action.label;
+    default: {
+      const exhaustiveCheck: never = action;
+
+      return exhaustiveCheck;
+    }
+  }
+}
+
 function whatsAppChildToText(child: CardElementChild): string {
   switch (child.type) {
     case 'text': {
@@ -102,7 +124,13 @@ function whatsAppChildToText(child: CardElementChild): string {
     case 'link':
       return child.url ? `${child.label} (${child.url})` : child.label;
     case 'actions':
-      return child.children.map((button) => (button.url ? `${button.label} (${button.url})` : button.label)).join('\n');
+      return child.children.map(whatsAppActionChildToText).filter(Boolean).join('\n');
+    case 'section':
+      return child.children.map(whatsAppChildToText).filter(Boolean).join('\n\n');
+    case 'fields':
+      return child.children.map((field) => `*${field.label}:* ${field.value}`).join('\n');
+    case 'table':
+      return [child.headers.join(' | '), ...child.rows.map((row) => row.join(' | '))].join('\n');
     default: {
       const exhaustiveCheck: never = child;
 
