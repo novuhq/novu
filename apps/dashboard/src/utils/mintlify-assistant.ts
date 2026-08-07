@@ -1,5 +1,14 @@
+import { IS_AI_FEATURES_ENABLED } from '@/config';
+
 const MINTLIFY_WIDGET_ID = 'mint_widget_9890b2a3-6a4f-4516-8331-24a3b12e6162';
-const MINTLIFY_EMBED_URL = 'https://widget.mintlify.com/v1/embed.js';
+/**
+ * Pin an immutable Mintlify widget build (not floating /v1/embed.js).
+ * Bump by reading https://widget.mintlify.com/v1/manifest.json, then refresh
+ * MINTLIFY_EMBED_INTEGRITY with: openssl dgst -sha384 -binary embed.js | openssl base64 -A
+ */
+const MINTLIFY_EMBED_VERSION = '0.0.61';
+const MINTLIFY_EMBED_URL = `https://widget.mintlify.com/versions/${MINTLIFY_EMBED_VERSION}/embed.js`;
+const MINTLIFY_EMBED_INTEGRITY = 'sha384-bSqvMIpnn7junQOtOOcmXzbErlvtTW6+lG3TXYc5L/aEISuuwVTmW0kH+3Tw7urd';
 const MINTLIFY_SCRIPT_ID = 'mintlify-assistant-embed';
 const MINTLIFY_STYLE_ID = 'mintlify-assistant-hide-trigger';
 
@@ -97,6 +106,9 @@ async function loadEmbedScript(): Promise<void> {
     const script = document.createElement('script');
     script.id = MINTLIFY_SCRIPT_ID;
     script.type = 'module';
+    // crossOrigin is required for Subresource Integrity on module scripts.
+    script.crossOrigin = 'anonymous';
+    script.integrity = MINTLIFY_EMBED_INTEGRITY;
     script.src = MINTLIFY_EMBED_URL;
     script.onload = () => resolve();
     script.onerror = () => {
@@ -199,6 +211,10 @@ export type OpenMintlifyAssistantOptions = {
 };
 
 export async function openMintlifyAssistant({ source, query }: OpenMintlifyAssistantOptions): Promise<void> {
+  if (!IS_AI_FEATURES_ENABLED) {
+    return;
+  }
+
   const api = await ensureInitialized();
   const trimmedQuery = query?.trim();
 
