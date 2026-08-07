@@ -7,13 +7,13 @@ export type SendMessageArgs = {
   text: string;
   /**
    * Existing conversation to append to.
-   * Omit to create a new conversation (no implicit reuse of a prior chat).
+   * Omit this field to create a new conversation. The client does not reuse a prior chat.
    * After create, pass the returned `conversationId` on later sends.
    */
   conversationId?: string;
   /**
-   * Immutable holder key for the local store / emit subscription.
-   * Defaults to `conversationId` when resuming, or a minted `local_*` key on create.
+   * Immutable holder key for the local store and emit subscription.
+   * Defaults to `conversationId` on resume, or a minted `local_*` key on create.
    */
   key?: string;
 };
@@ -36,7 +36,7 @@ export type LoadConversationResult = {
 export type AgentChatMessagesUpdated = {
   agentId: string;
   conversationId?: string;
-  /** Immutable holder key — stable for the life of the local conversation entry. */
+  /** Immutable holder key. Stable for the life of the local conversation entry. */
   key: string;
   messages: AgentMessage[];
 };

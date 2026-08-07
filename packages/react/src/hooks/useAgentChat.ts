@@ -4,12 +4,11 @@ import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
 export type UseAgentChatProps = {
-  /** The agent that receives the messages. */
   agentId: string;
   /**
-   * Resume this conversation (loads history on mount).
-   * Omit to start a new chat: the first send creates a conversation; later sends
-   * pass the returned id. Remount or clear this prop to start another new chat.
+   * Resume this conversation. The hook loads history on mount.
+   * Omit this prop to start a new chat. The first send creates a conversation.
+   * Later sends pass the returned id. Remount or clear this prop to start another chat.
    */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
@@ -20,9 +19,8 @@ export type UseAgentChatResult = {
   messages: AgentMessage[];
   conversationId?: string;
   error?: NovuError;
-  /** True until the first history fetch completes. Always false when no `conversationId` prop is given. */
+  /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
-  /** True while a history fetch is in progress. */
   isFetching: boolean;
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
@@ -51,8 +49,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const propsRef = useDataRef(props);
   const novu = useNovu();
 
-  // Controlled resume uses the prop as key synchronously (no effect lag).
-  // Uncontrolled create sessions keep a local_* key until remount / prop clear / agent change.
+  // Resume: the prop is the key on the same render (no effect lag).
+  // Create: keep a `local_*` key until remount, prop clear, or agent change.
   const [localSessionKey, setLocalSessionKey] = useState(createLocalSessionKey);
   const sessionKey = conversationIdProp ?? localSessionKey;
   const sessionKeyRef = useDataRef(sessionKey);

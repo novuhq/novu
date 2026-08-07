@@ -65,8 +65,8 @@ export class AgentChat extends BaseModule {
   }
 
   /**
-   * Fetch the newest history page and merge it into the local timeline.
-   * Holder key is the public conversation id (resume).
+   * Load the newest history page into the local holder.
+   * The holder key is the public conversation id.
    */
   async loadConversation(args: LoadConversationArgs): Result<LoadConversationResult> {
     return this.callWithSession(async () => {
@@ -130,8 +130,8 @@ export class AgentChat extends BaseModule {
   }
 
   /**
-   * Resolve the holder for a send. Rejects a key that belongs to another agent
-   * or a different claimed conversation (stale session key after prop change).
+   * Find the holder for a send.
+   * Reject a key when the holder belongs to another agent or another claimed conversation.
    */
   #resolveSendEntry(args: SendMessageArgs, key: string): ConversationEntry {
     const byKey = this.#store.get(key);
@@ -150,7 +150,7 @@ export class AgentChat extends BaseModule {
       );
     }
 
-    // Stale key must not call getOrCreate(key) — that would return the wrong holder.
+    // If the key is stale, do not call getOrCreate with that key. That returns the wrong holder.
     const createKey = byKey ? createLocalConversationKey() : key;
 
     return this.#store.getOrCreate({

@@ -7,7 +7,7 @@ const AGENT_CHAT_CONVERSATIONS_ROUTE = '/web-chat/conversations';
 export type AgentChatSendMessageArgs = {
   agentId: string;
   text: string;
-  /** The `conv_*` id of an existing conversation to resume. */
+  /** Existing conversation id. Omit this field to create a new conversation. */
   conversationId?: string;
 };
 
@@ -22,7 +22,7 @@ export type AgentChatGetEventsArgs = {
 
 export type AgentChatGetEventsResponse = {
   events: AgentEventEnvelope[];
-  /** Cursor toward older history (wire field; unused until loadOlder). */
+  /** Cursor for older history. */
   olderCursor: string | null;
 };
 

@@ -8,19 +8,19 @@ import {
 
 /**
  * Stable local identity for one conversation holder.
- * The object reference never changes; timeline fields are overwritten in place.
- * This is an in-memory UI cache, not a synchronized copy of the server timeline.
+ * The object reference does not change. Timeline fields are overwritten in place.
+ * This store is an in-memory UI cache. It is not a synchronized server timeline.
  */
 export type ConversationEntry = AgentConversationState & {
   agentId: string;
-  /** Public `conv_*` id once created on the server, or when resuming. */
+  /** Public conversation id after create, or when the session resumes. */
   conversationId?: string;
   /**
-   * Immutable subscription / map key for this holder's whole life.
-   * Create sessions use `local_*`; resume sessions use the `conv_*` id.
+   * Map key for this holder. The key does not change for the life of the holder.
+   * Create sessions use `local_*`. Resume sessions use the `conv_*` id.
    */
   key: string;
-  /** Serializes overlapping creates on this holder until a `conv_*` exists. */
+  /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
 };
 
@@ -39,7 +39,6 @@ function mintClientId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}`;
 }
 
-/** Client-minted holder key for a create session (before `conv_*` exists). */
 export function createLocalConversationKey(): string {
   return mintClientId('local');
 }
@@ -59,24 +58,17 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
 
 /**
  * In-memory store for agent-chat conversations.
- *
- * Owns the message list the UI paints. `AgentChat` mutates this store around
- * HTTP calls; the hook listens via `onUpdate` → `agent_chat.messages.updated`.
- *
- * One map keyed by an immutable holder `key` (NV-8445: state keyed by conversation
- * identity — `local_*` until create returns `conv_*`, then the same key stays).
- * Omit `conversationId` on send always creates; callers pass the returned id next.
+ * `AgentChat` updates this store around HTTP calls. The hook listens on `onUpdate`.
+ * The map key is the immutable holder `key`.
  */
 export class AgentChatStore {
   #byKey = new Map<string, ConversationEntry>();
-  /** Fired after every mutation so AgentChat can emit to React. */
   #onUpdate: (entry: ConversationEntry) => void;
 
   constructor(onUpdate: (entry: ConversationEntry) => void) {
     this.#onUpdate = onUpdate;
   }
 
-  /** Drop all conversations (wired into `Novu.clearCache` / changeSubscriber). */
   clear(): void {
     this.#byKey.clear();
   }
@@ -85,7 +77,7 @@ export class AgentChatStore {
     return this.#byKey.get(key);
   }
 
-  /** Find a holder that already has this public conversation id (same-session append). */
+  /** Find a holder that already claimed this conversation id. */
   getByConversationId(agentId: string, conversationId: string): ConversationEntry | undefined {
     for (const entry of this.#byKey.values()) {
       if (entry.agentId === agentId && entry.conversationId === conversationId) {
@@ -97,9 +89,9 @@ export class AgentChatStore {
   }
 
   /**
-   * Return the entry for `key` if it exists; otherwise create an empty holder.
-   * Does not reuse another holder that merely shares `conversationId` — resume
-   * (`key === conversationId`) stays separate from an in-flight `local_*` create.
+   * Return the entry for `key`, or create an empty holder.
+   * This method does not reuse a holder that only shares `conversationId`.
+   * Resume (`key === conversationId`) stays separate from an in-flight `local_*` create.
    */
   getOrCreate(args: { agentId: string; key: string; conversationId?: string }): ConversationEntry {
     const existing = this.#byKey.get(args.key);
@@ -118,10 +110,7 @@ export class AgentChatStore {
     return entry;
   }
 
-  /**
-   * Append a local user bubble with status `sending` before the HTTP call.
-   * Returns the optimistic message id so the caller can mark it sent/failed.
-   */
+  /** Append a user message with status `sending`. Returns the optimistic message id. */
   appendSending(entry: ConversationEntry, text: string): string {
     const messageId = createOptimisticMessageId();
     applyState(
@@ -139,8 +128,8 @@ export class AgentChatStore {
   }
 
   /**
-   * Mark an optimistic message `sent`, swap in the server message id, and record
-   * the public conversation id on this holder. Does not change `entry.key`.
+   * Mark an optimistic message as `sent` and set the server message id.
+   * Also records the public conversation id. Does not change `entry.key`.
    */
   markSent(
     entry: ConversationEntry,
@@ -161,7 +150,6 @@ export class AgentChatStore {
     return entry;
   }
 
-  /** Mark an optimistic message `failed`. No auto-retry (no idempotency key). */
   markFailed(entry: ConversationEntry, messageId: string): ConversationEntry {
     entry.messages = entry.messages.map((message) =>
       message.id === messageId ? { ...message, status: 'failed' as const } : message
@@ -172,8 +160,8 @@ export class AgentChatStore {
   }
 
   /**
-   * Fold a history page of envelopes into this holder (open/resume).
-   * Server ids win; local-only messages (in-flight or not yet on the page) stay.
+   * Merge a history page into this holder.
+   * Server message ids win. Local-only messages stay on the holder.
    */
   absorbHistoryPage(entry: ConversationEntry, envelopes: AgentEventEnvelope[]): ConversationEntry {
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
@@ -182,7 +170,6 @@ export class AgentChatStore {
 
     applyState(entry, {
       ...folded,
-      // Local-only (e.g. failed / in-flight) stay after the server page; cheap ordering approx.
       messages: [...folded.messages, ...localOnly],
     });
 
@@ -193,10 +180,11 @@ export class AgentChatStore {
 
   /**
    * Run an HTTP post for this entry.
-   * Unclaimed creates: one in flight at a time on this holder; waiters re-check
-   * `entry.conversationId` so a successful create is reused and a failed create
-   * still serializes the next attempt (no fan-out double mint).
-   * After claim (or explicit id): posts run immediately with no gating.
+   * If the holder has no conversation id, only one create runs at a time.
+   * Waiters read `entry.conversationId` again after the prior create finishes.
+   * If a create succeeds, later waiters reuse that id.
+   * If a create fails, the next attempt still waits in line.
+   * If the conversation id is already known, the post runs with no gate.
    */
   withCreateClaim<T>(
     entry: ConversationEntry,
