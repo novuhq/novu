@@ -13,6 +13,8 @@ import {
 } from '@novu/api/models/components';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
+  CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE,
+  CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   ContentIssueEnum,
@@ -468,6 +470,119 @@ describe('Upsert Workflow #novu-v2', () => {
 
           expect(createResponse.status).to.equal(201);
           expect(createResponse.body.data.steps[0].issues?.controls?.body).to.equal(undefined);
+        } finally {
+          process.env[flagKey] = 'true';
+        }
+      });
+    });
+
+    describe('chat card link-button validation', () => {
+      const flagKey = FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED;
+      let previousFlag: string | undefined;
+
+      before(() => {
+        previousFlag = process.env[flagKey];
+        process.env[flagKey] = 'true';
+      });
+
+      after(() => {
+        if (previousFlag === undefined) {
+          delete process.env[flagKey];
+        } else {
+          process.env[flagKey] = previousFlag;
+        }
+      });
+
+      function cardBody(buttonAttrs: Record<string, unknown>): string {
+        return JSON.stringify({
+          type: 'doc',
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'body' }] },
+            { type: 'cardActions', content: [{ type: 'cardButton', attrs: buttonAttrs }] },
+          ],
+        });
+      }
+
+      async function createChatWorkflow(body: string) {
+        const response = await session.testAgent.post('/v2/workflows').send({
+          __source: WorkflowCreationSourceEnum.Editor,
+          name: 'Chat Card Button Workflow',
+          workflowId: `chat-card-button-${randomUUID()}`,
+          active: true,
+          steps: [{ name: 'Chat Step', type: StepTypeEnum.CHAT, controlValues: { body } }],
+        });
+
+        expect(response.status).to.equal(201);
+
+        return response.body.data.steps[0].issues?.controls?.body as
+          | Array<{ issueType: string; severity?: string; message: string }>
+          | undefined;
+      }
+
+      it('should surface a blocking issue for a link button with an empty url', async () => {
+        const bodyIssues = await createChatWorkflow(cardBody({ label: 'View', url: '' }));
+
+        expect(bodyIssues).to.exist;
+        const urlIssue = (bodyIssues ?? []).find((issue) =>
+          issue.message.includes(CHAT_CARD_BUTTON_URL_REQUIRED_MESSAGE)
+        );
+        expect(urlIssue).to.exist;
+        expect(urlIssue?.issueType).to.equal(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
+        expect(urlIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
+      });
+
+      it('should surface a blocking issue for a link button with a malformed url', async () => {
+        const bodyIssues = await createChatWorkflow(cardBody({ label: 'View', url: 'not-a-valid-url' }));
+
+        expect(bodyIssues).to.exist;
+        const urlIssue = (bodyIssues ?? []).find(
+          (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
+        );
+        expect(urlIssue).to.exist;
+        expect(urlIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
+      });
+
+      it('should surface a blocking issue for a link button with an empty label', async () => {
+        const bodyIssues = await createChatWorkflow(cardBody({ label: '', url: 'https://example.com' }));
+
+        expect(bodyIssues).to.exist;
+        const labelIssue = (bodyIssues ?? []).find((issue) =>
+          issue.message.includes(CHAT_CARD_BUTTON_LABEL_REQUIRED_MESSAGE)
+        );
+        expect(labelIssue).to.exist;
+        expect(labelIssue?.issueType).to.equal(ContentIssueEnum.CHAT_CARD_INVALID_BUTTON);
+        expect(labelIssue?.severity).to.equal(StepIssueSeverityEnum.ERROR);
+      });
+
+      it('should not surface link-button issues for a valid label + absolute url', async () => {
+        const bodyIssues = await createChatWorkflow(
+          cardBody({ label: 'View order', url: 'https://example.com/order' })
+        );
+
+        const buttonIssues = (bodyIssues ?? []).filter(
+          (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
+        );
+        expect(buttonIssues).to.have.length(0);
+      });
+
+      it('should accept a variable-backed url without url-format validation', async () => {
+        const bodyIssues = await createChatWorkflow(cardBody({ label: 'View', url: '{{ payload.link }}' }));
+
+        const buttonIssues = (bodyIssues ?? []).filter(
+          (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
+        );
+        expect(buttonIssues).to.have.length(0);
+      });
+
+      it('should not surface link-button issues when the rich chat editor flag is disabled', async () => {
+        process.env[flagKey] = 'false';
+
+        try {
+          const bodyIssues = await createChatWorkflow(cardBody({ label: '', url: '' }));
+          const buttonIssues = (bodyIssues ?? []).filter(
+            (issue) => issue.issueType === ContentIssueEnum.CHAT_CARD_INVALID_BUTTON
+          );
+          expect(buttonIssues).to.have.length(0);
         } finally {
           process.env[flagKey] = 'true';
         }

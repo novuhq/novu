@@ -1,4 +1,5 @@
 import { CardActionsExtension, CardButtonExtension, Variable } from '@novu/maily-core/extensions';
+import { validateChatCardButtonField } from '@novu/shared';
 import { Editor, NodeViewProps } from '@tiptap/core';
 import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
@@ -287,6 +288,7 @@ export const ChatBodyMaily = () => {
             menuConfig={CHAT_MENU_CONFIG}
             imageExtensionOptions={CHAT_IMAGE_EXTENSION_OPTIONS}
             additionalExtensions={CHAT_ADDITIONAL_EXTENSIONS}
+            validateCardButtonField={validateChatCardButtonField}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
             isTranslationEnabled={isTranslationEnabled}
             isContextEnabled={true}
