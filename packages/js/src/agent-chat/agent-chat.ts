@@ -13,6 +13,12 @@ export class AgentChat extends BaseModule {
   #store: AgentChatStore;
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
+  /**
+   * Non-null while a reconnect catch-up is in flight: live envelopes are buffered here
+   * and applied after the HTTP page is absorbed. Serialized via `#catchUpChain`.
+   */
+  #catchUpBuffer: AgentEventEnvelope[] | null = null;
+  #catchUpChain: Promise<void> = Promise.resolve();
 
   constructor({
     inboxServiceInstance,
@@ -41,6 +47,13 @@ export class AgentChat extends BaseModule {
     this._emitter.on('agent_chat.agent_event', ({ result }) => {
       this.#handleAgentEvent(result);
     });
+    this._emitter.on('socket.connect.resolved', ({ error }) => {
+      if (error) {
+        return;
+      }
+
+      this.#requestCatchUp();
+    });
   }
 
   /**
@@ -64,6 +77,7 @@ export class AgentChat extends BaseModule {
 
   clearCache(): void {
     this.#store.clear();
+    this.#catchUpBuffer = null;
   }
 
   getConversation({
@@ -204,10 +218,25 @@ export class AgentChat extends BaseModule {
   }
 
   /**
-   * Live WS path: fold envelopes into open holders only.
-   * Unknown conversations are dropped — mount/resume creates the holder.
+   * Live WS path: apply envelopes into open conversations only.
+   * Unknown conversations are dropped — mount/resume creates the entry.
+   * During reconnect catch-up, all live envelopes are buffered until HTTP finishes.
    */
   #handleAgentEvent(envelope: AgentEventEnvelope): void {
+    if (!envelope.conversationIdentifier) {
+      return;
+    }
+
+    if (this.#catchUpBuffer) {
+      this.#catchUpBuffer.push(envelope);
+
+      return;
+    }
+
+    this.#applyLiveEnvelope(envelope);
+  }
+
+  #applyLiveEnvelope(envelope: AgentEventEnvelope): void {
     const conversationId = envelope.conversationIdentifier;
     if (!conversationId) {
       return;
@@ -216,6 +245,67 @@ export class AgentChat extends BaseModule {
     const entries = this.#store.findByConversationId(envelope.agentId, conversationId);
     for (const entry of entries) {
       this.#store.applyLiveEnvelope(entry, envelope);
+    }
+  }
+
+  #requestCatchUp(): void {
+    if (this.#liveSubscriberCount === 0) {
+      return;
+    }
+
+    // Keep the chain alive after a rejected run so later reconnects still catch up.
+    this.#catchUpChain = this.#catchUpChain.catch(() => undefined).then(() => this.#catchUpOpenConversations());
+  }
+
+  async #catchUpOpenConversations(): Promise<void> {
+    if (this.#liveSubscriberCount === 0 || !this._inboxService.isSessionInitialized) {
+      return;
+    }
+
+    const claimed = this.#store.listClaimed();
+    if (claimed.length === 0) {
+      return;
+    }
+
+    const byConversationId = new Map<string, ConversationEntry[]>();
+    for (const entry of claimed) {
+      const holders = byConversationId.get(entry.conversationId) ?? [];
+      holders.push(entry);
+      byConversationId.set(entry.conversationId, holders);
+    }
+
+    this.#catchUpBuffer = [];
+
+    try {
+      await Promise.all(
+        [...byConversationId.entries()].map(([conversationId, holders]) =>
+          this.#catchUpConversation(conversationId, holders)
+        )
+      );
+    } finally {
+      const buffered = this.#catchUpBuffer ?? [];
+      this.#catchUpBuffer = null;
+
+      for (const envelope of buffered) {
+        this.#applyLiveEnvelope(envelope);
+      }
+    }
+  }
+
+  async #catchUpConversation(conversationId: string, holders: ConversationEntry[]): Promise<void> {
+    try {
+      const page = await this.#agentChatService.getEvents({ conversationId });
+
+      for (const holder of holders) {
+        const entry = this.#store.get(holder.key);
+        if (!entry || entry.conversationId !== conversationId) {
+          continue;
+        }
+
+        this.#store.absorbHistoryPage(entry, page.events);
+      }
+    } catch {
+      // Best-effort catch-up; buffered live envelopes still flush in the outer finally.
     }
   }
 }

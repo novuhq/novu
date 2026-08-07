@@ -101,6 +101,18 @@ export class AgentChatStore {
     return matches;
   }
 
+  /** Holders that already have a public conversation id (eligible for reconnect catch-up). */
+  listClaimed(): Array<ConversationEntry & { conversationId: string }> {
+    const claimed: Array<ConversationEntry & { conversationId: string }> = [];
+    for (const entry of this.#byKey.values()) {
+      if (entry.conversationId) {
+        claimed.push(entry as ConversationEntry & { conversationId: string });
+      }
+    }
+
+    return claimed;
+  }
+
   /**
    * Return the entry for `key`, or create an empty holder.
    * This method does not reuse a holder that only shares `conversationId`.
@@ -191,8 +203,15 @@ export class AgentChatStore {
     return entry;
   }
 
-  /** Fold one live envelope onto this holder and notify listeners. */
+  /**
+   * Apply one live envelope onto this holder and notify listeners.
+   * Drops envelopes at or behind `lastSequence` so catch-up HTTP + buffered WS overlap is safe.
+   */
   applyLiveEnvelope(entry: ConversationEntry, envelope: AgentEventEnvelope): ConversationEntry {
+    if (envelope.sequence <= entry.lastSequence) {
+      return entry;
+    }
+
     applyState(entry, applyEnvelope(entry, envelope));
     this.#onUpdate(entry);
 

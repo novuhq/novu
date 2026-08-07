@@ -645,4 +645,272 @@ describe('AgentChat', () => {
     agentChat.subscribe();
     expect(connect).toHaveBeenCalledTimes(2);
   });
+
+  function historyPage(
+    events: Array<{
+      sequence: number;
+      messageId: string;
+      role: 'user' | 'assistant';
+      markdown: string;
+    }>
+  ) {
+    return {
+      events: events.map((event) => ({
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'history',
+        turnId: 't1',
+        sequence: event.sequence,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: {
+          type: 'message' as const,
+          role: event.role,
+          messageId: event.messageId,
+          content: { markdown: event.markdown },
+        },
+      })),
+      olderCursor: null,
+    };
+  }
+
+  function liveAssistantEnvelope(args: { sequence: number; messageId: string; markdown: string }) {
+    return {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 't1',
+        sequence: args.sequence,
+        timestamp: '2026-08-07T12:00:03.000Z',
+        event: {
+          type: 'message' as const,
+          role: 'assistant' as const,
+          messageId: args.messageId,
+          content: { markdown: args.markdown },
+        },
+      },
+    };
+  }
+
+  async function waitForMessageIds(expected: string[]): Promise<void> {
+    const current = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    if (current && current.messages.map((message) => message.id).join() === expected.join()) {
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`timed out waiting for ${expected.join(',')}`)), 1000);
+      const unsubscribe = emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.key !== 'local_session1') {
+          return;
+        }
+
+        if (data.messages.map((message) => message.id).join() === expected.join()) {
+          clearTimeout(timeout);
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
+  async function waitForGetEventsCalls(count: number): Promise<void> {
+    if (getEvents.mock.calls.length >= count) {
+      return;
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`timed out waiting for getEvents × ${count}`)), 1000);
+      const timer = setInterval(() => {
+        if (getEvents.mock.calls.length >= count) {
+          clearTimeout(timeout);
+          clearInterval(timer);
+          resolve();
+        }
+      }, 0);
+    });
+  }
+
+  async function openClaimedConversation(): Promise<void> {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    agentChat.subscribe();
+  }
+
+  it('on reconnect catch-up pulls newest events into open conversations', async () => {
+    await openClaimedConversation();
+
+    getEvents.mockResolvedValue(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_missed1', role: 'assistant', markdown: 'missed while offline' },
+      ])
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_missed1']);
+
+    expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('buffers live envelopes during catch-up and applies them after', async () => {
+    await openClaimedConversation();
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 3,
+        messageId: 'msg_asst_live001',
+        markdown: 'arrived during catch-up',
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    resolveEvents(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_http001', role: 'assistant', markdown: 'from http catch-up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_http001', 'msg_asst_live001']);
+  });
+
+  it('does not duplicate envelopes already present in the catch-up page', async () => {
+    await openClaimedConversation();
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_overlap1',
+        markdown: 'same as http page',
+      })
+    );
+
+    resolveEvents(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_overlap1', role: 'assistant', markdown: 'same as http page' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_overlap1']);
+
+    const assistant = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages[1];
+    expect(assistant?.parts).toEqual([{ type: 'text', text: 'same as http page', state: 'done' }]);
+  });
+
+  it('flushes buffered live envelopes when catch-up HTTP fails', async () => {
+    await openClaimedConversation();
+
+    let rejectEvents!: (error: Error) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectEvents = reject;
+        })
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_flush001',
+        markdown: 'kept after http failure',
+      })
+    );
+
+    rejectEvents(new Error('getEvents failed'));
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_flush001']);
+  });
+
+  it('runs a second catch-up when reconnect arrives during an in-flight catch-up', async () => {
+    await openClaimedConversation();
+
+    const resolvers: Array<(value: ReturnType<typeof historyPage>) => void> = [];
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        })
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+
+    resolvers[0]!(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_first001', role: 'assistant', markdown: 'first catch-up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_first001']);
+    await waitForGetEventsCalls(2);
+
+    resolvers[1]!(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_first001', role: 'assistant', markdown: 'first catch-up' },
+        { sequence: 3, messageId: 'msg_asst_second01', role: 'assistant', markdown: 'second catch-up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_first001', 'msg_asst_second01']);
+  });
+
+  it('does not catch up when nothing is subscribed', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await Promise.resolve();
+
+    expect(getEvents).not.toHaveBeenCalled();
+  });
+
+  it('does not catch up when socket connect resolves with an error', async () => {
+    await openClaimedConversation();
+
+    emitter.emit('socket.connect.resolved', {
+      args: { socketUrl: 'http://127.0.0.1:8787' },
+      error: new Error('connect failed'),
+    });
+    await Promise.resolve();
+
+    expect(getEvents).not.toHaveBeenCalled();
+  });
 });
