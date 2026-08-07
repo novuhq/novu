@@ -113,6 +113,7 @@ async function loadEmbedScript(): Promise<void> {
     script.src = MINTLIFY_EMBED_URL;
     script.onload = () => resolve();
     script.onerror = () => {
+      script.remove();
       initPromise = undefined;
       reject(new Error('Failed to load the Mintlify assistant embed script.'));
     };
