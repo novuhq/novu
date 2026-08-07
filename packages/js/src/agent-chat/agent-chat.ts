@@ -4,24 +4,30 @@ import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
+import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
 import type { LoadConversationArgs, LoadConversationResult, SendMessageArgs, SendMessageResult } from './types';
 
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
   #store: AgentChatStore;
+  #socket: Pick<BaseSocketInterface, 'connect'>;
+  #liveSubscriberCount = 0;
 
   constructor({
     inboxServiceInstance,
     eventEmitterInstance,
     agentChatService,
+    socket,
   }: {
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
     agentChatService: AgentChatService;
+    socket: Pick<BaseSocketInterface, 'connect'>;
   }) {
     super({ inboxServiceInstance, eventEmitterInstance });
     this.#agentChatService = agentChatService;
+    this.#socket = socket;
     this.#store = new AgentChatStore((entry) => {
       this._emitter.emit('agent_chat.messages.updated', {
         data: {
@@ -35,6 +41,25 @@ export class AgentChat extends BaseModule {
     this._emitter.on('agent_chat.agent_event', ({ result }) => {
       this.#handleAgentEvent(result);
     });
+  }
+
+  /**
+   * Keep the socket connected while at least one consumer wants live events.
+   * Call from hook mount / vanilla open. Pair with `unsubscribe`.
+   */
+  subscribe(): void {
+    this.#liveSubscriberCount += 1;
+    if (this.#liveSubscriberCount === 1) {
+      void this.#socket.connect();
+    }
+  }
+
+  unsubscribe(): void {
+    if (this.#liveSubscriberCount === 0) {
+      return;
+    }
+
+    this.#liveSubscriberCount -= 1;
   }
 
   clearCache(): void {

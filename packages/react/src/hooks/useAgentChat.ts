@@ -128,6 +128,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   );
 
   useEffect(() => {
+    novu.agentChat.subscribe();
+
     const snapshot = novu.agentChat.getConversation({
       agentId,
       key: sessionKey,
@@ -157,7 +159,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       void fetchConversation(conversationIdProp);
     }
 
-    return cleanup;
+    return () => {
+      cleanup();
+      novu.agentChat.unsubscribe();
+    };
   }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, conversationIdRef, propsRef, fetchConversation]);
 
   const refetch = useCallback(async () => {

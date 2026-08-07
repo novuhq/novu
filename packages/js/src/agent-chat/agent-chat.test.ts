@@ -8,17 +8,20 @@ describe('AgentChat', () => {
   let emitter: NovuEventEmitter;
   let sendMessage: jest.Mock;
   let getEvents: jest.Mock;
+  let connect: jest.Mock;
   let agentChat: AgentChat;
 
   beforeEach(() => {
     emitter = new NovuEventEmitter();
     sendMessage = jest.fn();
     getEvents = jest.fn();
+    connect = jest.fn().mockResolvedValue({ data: undefined });
     const agentChatService = { sendMessage, getEvents } as unknown as AgentChatService;
     agentChat = new AgentChat({
       inboxServiceInstance,
       eventEmitterInstance: emitter,
       agentChatService,
+      socket: { connect },
     });
   });
 
@@ -627,5 +630,19 @@ describe('AgentChat', () => {
 
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.messages).toHaveLength(1);
+  });
+
+  it('connects the socket on the first subscribe and refcounts later calls', () => {
+    agentChat.subscribe();
+    agentChat.subscribe();
+
+    expect(connect).toHaveBeenCalledTimes(1);
+
+    agentChat.unsubscribe();
+    agentChat.unsubscribe();
+    agentChat.unsubscribe();
+
+    agentChat.subscribe();
+    expect(connect).toHaveBeenCalledTimes(2);
   });
 });
