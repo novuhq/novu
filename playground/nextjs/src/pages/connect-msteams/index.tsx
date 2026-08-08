@@ -2,12 +2,11 @@ import { MsTeamsConnectButton, MsTeamsLinkUser, NovuProvider } from '@novu/nextj
 import { useState } from 'react';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
+import { connectChatContext as context } from '@/utils/connect-chat-context';
 
 const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER ?? 'msteams';
 // const CONNECTION_IDENTIFIER = 'msteams-workspace-connection';
 const MS_TEAMS_TEST_WORKFLOW_ID = process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_TEST_WORKFLOW_ID ?? '';
-// const context = { key: 'value2' };
-const context = undefined;
 
 export default function ConnectMsTeamsPage() {
   const [aadOidOverride, setAadOidOverride] = useState('');
@@ -29,6 +28,7 @@ export default function ConnectMsTeamsPage() {
           subscriberId: novuConfig.subscriberId,
           integrationIdentifier: INTEGRATION_IDENTIFIER,
           ...(aadOidOverride.trim() && { aadObjectIdOverride: aadOidOverride.trim() }),
+          ...(context && { context }),
         }),
       });
 

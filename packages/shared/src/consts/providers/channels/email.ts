@@ -36,7 +36,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Novu Email',
     channel: ChannelTypeEnum.EMAIL,
     credentials: [],
-    docReference: `https://docs.novu.co/integrations/providers/default-providers${UTM_CAMPAIGN_QUERY_PARAM}#novu-email-provider`,
+    docReference: `https://docs.novu.co/platform/integrations/demo-integration${UTM_CAMPAIGN_QUERY_PARAM}#novu-email-provider`,
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
   {
@@ -94,7 +94,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Brevo (formerly Sendinblue)',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendinblueConfig,
-    docReference: `https://docs.novu.co/platform/integrations/email/sendinblue${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/email/brevo${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
   },
   {
@@ -151,7 +151,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Braze',
     channel: ChannelTypeEnum.EMAIL,
     credentials: brazeEmailConfig,
-    docReference: 'https://www.braze.com/docs/api/endpoints/messaging/send_messages/post_send_messages/',
+    docReference: `https://docs.novu.co/platform/integrations/email/braze${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'braze.svg', dark: 'braze.svg' },
   },
   {
@@ -194,7 +194,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: emailWebhookConfig,
     betaVersion: true,
-    docReference: `https://docs.novu.co/channels/email/email-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/email/webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'email_webhook.svg', dark: 'email_webhook.svg' },
   },
   {

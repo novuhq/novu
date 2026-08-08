@@ -1,5 +1,5 @@
 import type { ChannelEndpointType } from '@novu/shared';
-import { ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, isToolWebhookDynamicRouting, ToolProviderIdEnum } from '@novu/shared';
 import type { IconType } from 'react-icons';
 import { RiAtLine, RiHashtag, RiKey2Line, RiLinksLine, RiTelegramLine } from 'react-icons/ri';
 
@@ -154,16 +154,44 @@ const OPSGENIE_INTEGRATION: ChatEndpointTypeOption = {
   requiresConnection: false,
 };
 
+const GRAFANA_ONCALL_INTEGRATION: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.GRAFANA_ONCALL_INTEGRATION,
+  label: 'Grafana OnCall webhook',
+  icon: RiKey2Line,
+  skeleton: { url: '', authToken: '' },
+  requiresConnection: false,
+};
+
 /**
- * Endpoint types each tool provider consumes for per-subscriber routing.
- * The credential-routed tool webhook has no subscriber endpoints.
+ * Tool-webhook per-subscriber endpoint, used only in dynamic routing mode (static mode
+ * delivers to the integration-level URL and has no subscriber endpoints).
  */
+const TOOL_WEBHOOK: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+  label: 'Webhook',
+  icon: RiLinksLine,
+  skeleton: { url: '' },
+  requiresConnection: false,
+};
+
+/** Endpoint types each tool provider consumes for per-subscriber routing. */
 const SUPPORTED_TOOL_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
   [ToolProviderIdEnum.PagerDuty]: [PAGERDUTY_SERVICE],
   [ToolProviderIdEnum.Opsgenie]: [OPSGENIE_INTEGRATION],
+  [ToolProviderIdEnum.Grafana]: [GRAFANA_ONCALL_INTEGRATION],
+  [ToolProviderIdEnum.Webhook]: [TOOL_WEBHOOK],
 };
 
 /** Resolves endpoint types a user may manually add for a tool integration. */
-export function getAddableToolEndpointTypes(providerId: string): ChatEndpointTypeOption[] {
-  return SUPPORTED_TOOL_TYPES_BY_PROVIDER[providerId] ?? [];
+export function getAddableToolEndpointTypes(
+  providerId: string,
+  credentials?: { routingMode?: string }
+): ChatEndpointTypeOption[] {
+  const types = SUPPORTED_TOOL_TYPES_BY_PROVIDER[providerId] ?? [];
+
+  if (providerId === ToolProviderIdEnum.Webhook && !isToolWebhookDynamicRouting(credentials)) {
+    return [];
+  }
+
+  return types;
 }

@@ -7,12 +7,18 @@ import {
   EmailControlDto,
   HttpRequestControlDto,
   InAppControlDto,
+  PROVIDER_OVERRIDES_API_PROPERTY,
   PushControlDto,
   SmsControlDto,
   ThrottleControlDto,
   ToolControlDto,
 } from '@novu/application-generic';
-import { SLUG_IDENTIFIER_REGEX, StepTypeEnum, slugIdentifierFormatMessage } from '@novu/shared';
+import {
+  SLUG_IDENTIFIER_REGEX,
+  type StepProviderOverrides,
+  StepTypeEnum,
+  slugIdentifierFormatMessage,
+} from '@novu/shared';
 import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 
 // Base DTO for common properties
@@ -134,6 +140,14 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   @IsOptional()
   @IsObject()
   controlValues?: ChatControlDto | Record<string, unknown> | null;
+
+  @ApiPropertyOptional({
+    ...PROVIDER_OVERRIDES_API_PROPERTY,
+    description: `${PROVIDER_OVERRIDES_API_PROPERTY.description} Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.`,
+  })
+  @IsOptional()
+  @IsObject()
+  providerOverrides?: StepProviderOverrides | null;
 }
 
 export class ToolStepUpsertDto extends BaseStepConfigDto {
@@ -155,22 +169,12 @@ export class ToolStepUpsertDto extends BaseStepConfigDto {
   controlValues?: ToolControlDto | Record<string, unknown> | null;
 
   @ApiPropertyOptional({
-    description:
-      'Per-provider content overrides keyed by providerId. Stored separately from controlValues and merged over the default body at send time. Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.',
-    type: 'object',
-    additionalProperties: {
-      type: 'object',
-      additionalProperties: true,
-    },
-    nullable: true,
-    example: {
-      pagerduty: { severity: 'warning', source: 'novu' },
-      opsgenie: { priority: 'P2' },
-    },
+    ...PROVIDER_OVERRIDES_API_PROPERTY,
+    description: `${PROVIDER_OVERRIDES_API_PROPERTY.description} Omit to leave unchanged; pass null to delete all provider overrides; pass an object to replace the full set.`,
   })
   @IsOptional()
   @IsObject()
-  providerOverrides?: Partial<Record<string, Record<string, unknown>>> | null;
+  providerOverrides?: StepProviderOverrides | null;
 }
 
 export class DelayStepUpsertDto extends BaseStepConfigDto {

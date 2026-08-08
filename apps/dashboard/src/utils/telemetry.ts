@@ -31,6 +31,9 @@ export enum TelemetryEvent {
   ONBOARDING_CHANNEL_CONNECTED = 'Onboarding channel connected - [Onboarding]',
   ONBOARDING_WELCOME_SENT = 'Onboarding welcome sent - [Onboarding]',
   ONBOARDING_REDIRECT = 'Onboarding redirect - [Onboarding]',
+  ONBOARDING_PERSONALIZE_PAGE_VIEWED = 'Onboarding personalize page viewed - [Onboarding]',
+  ONBOARDING_PERSONALIZE_ANSWERED = 'Onboarding personalize answered - [Onboarding]',
+  ONBOARDING_PERSONALIZE_SUBMITTED = 'Onboarding personalize submitted - [Onboarding]',
   USECASE_SELECT_PAGE_VIEWED = 'Use case select page viewed - [Onboarding]',
   USECASE_SELECTED = 'Use case selected - [Onboarding]',
   AGENTS_USECASE_PAGE_VIEWED = 'Agents use case page viewed - [Onboarding]',
@@ -104,8 +107,6 @@ export enum TelemetryEvent {
   SUPPORT_DRAWER_ROADMAP_CLICKED = 'Support drawer roadmap clicked - [Support]',
   SUPPORT_DRAWER_CHAT_CLICKED = 'Support drawer chat clicked - [Support]',
   SUPPORT_DRAWER_BOOK_DEMO_CLICKED = 'Support drawer book demo clicked - [Support]',
-  SUPPORT_DRAWER_DOCS_BACK_CLICKED = 'Support drawer docs back clicked - [Support]',
-  SUPPORT_DRAWER_DOCS_EXTERNAL_CLICKED = 'Support drawer docs external link clicked - [Support]',
 
   COPILOT_MESSAGE_SENT = 'Copilot message sent - [AI Copilot]',
   COPILOT_GENERATION_COMPLETED = 'Copilot generation completed - [AI Copilot]',

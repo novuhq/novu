@@ -1,3 +1,4 @@
+import { ClientSession } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../commands';
@@ -21,4 +22,11 @@ export class CreateChangeCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   @IsOptional()
   parentChangeId?: string;
+
+  /**
+   * Intentionally undecorated. Pass via `BaseCommand.create(data, { session })` —
+   * putting a ClientSession through `plainToInstance` calls `new ClientSession()` and
+   * throws `MongoRuntimeError: ClientSession requires a MongoClient` (NV-8457).
+   */
+  session?: ClientSession | null;
 }

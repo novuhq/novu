@@ -52,6 +52,7 @@ import {
   clearPersistedAgentTemplateId,
   readActiveAgentTemplateId,
 } from '@/utils/agent-template-identity';
+import { QueryKeys } from '@/utils/query-keys';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -175,6 +176,8 @@ export function AgentsList() {
       });
 
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
 
       const refreshed = await queryClient.fetchQuery({
         queryKey: listKey,

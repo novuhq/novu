@@ -9,7 +9,9 @@ export class ToolWebhookHandler extends BaseToolHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    if (!credentials.webhookUrl) {
+    const isDynamic = credentials.routingMode === 'dynamic';
+
+    if (!isDynamic && !credentials.webhookUrl) {
       throw new Error('Config is not valid for tool-webhook provider');
     }
 

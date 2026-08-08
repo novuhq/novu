@@ -1,3 +1,4 @@
+import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from '@novu/agent-event-protocol';
 import type { Emoji } from 'chat';
 import { AgentDeliveryError } from './agent.errors';
 import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
@@ -32,6 +33,7 @@ import type {
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
+import { AgentEventOutbox } from './agent-event-outbox';
 import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
@@ -208,8 +210,331 @@ async function serializeContent(content: MessageContent, files?: FileRef[]): Pro
   throw new Error('Invalid message content — expected string or CardElement');
 }
 
-interface ReplyPoster {
-  post(body: AgentReplyPayload): Promise<SentMessageInfo | null>;
+function mint(prefix: string): string {
+  return `${prefix}_${crypto.randomUUID()}`;
+}
+
+/**
+ * `ReplyContent['card']` is the structured `CardElement` type; `AgentMessageContent['card']` is
+ * `Record<string, unknown>` on the wire, since the protocol can't depend on the `chat` package's
+ * types. This is the one place that crosses that boundary for outbound (SDK → sink) card content.
+ */
+function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
+  if (reply.markdown !== undefined) {
+    return { markdown: reply.markdown };
+  }
+
+  if (reply.card !== undefined) {
+    return { card: reply.card as unknown as Record<string, unknown> };
+  }
+
+  throw new Error('Invalid reply content — expected markdown or card');
+}
+
+function toAgentFileRefs(files?: FileRef[]): AgentFileRef[] | undefined {
+  if (!files?.length) {
+    return undefined;
+  }
+
+  return files.map((file, index) => ({
+    fileId: file.filename || `file_${index}`,
+    name: file.filename,
+    mediaType: file.mimeType,
+    ...(file.data !== undefined ? { data: typeof file.data === 'string' ? file.data : undefined } : {}),
+    ...(file.url !== undefined ? { url: file.url } : {}),
+  }));
+}
+
+/** Pending side effects queued between replies, drained atomically before each turn action. */
+interface SideEffectsSnapshot {
+  toolApprovalRequest: ToolApprovalRequestPayload | null;
+  signals: Signal[];
+  toolResults: ToolResult[];
+  addReactions: AddReactionPayload[];
+  deleteMessages: DeleteMessagePayload[];
+  resolve: { summary?: string } | null;
+}
+
+/**
+ * A turn's delivery mechanism. Legacy bridges POST a single `AgentReplyPayload` per action;
+ * SDK-native runs emit one or more `AgentEvent`s to the outbox. `AgentContextImpl` selects one
+ * implementation per run and delegates to it, instead of branching on the mode at every call site.
+ */
+interface TurnTransport {
+  sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null>;
+  /**
+   * Returns `'unaddressable'` when the card was rendered but there is no client-addressable
+   * message handle for it (event mode: the sink owns approval-card rendering, so there is no
+   * id it could later resolve an edit/delete against).
+   */
+  sendApprovalCard(
+    card: ToolApprovalCard,
+    sideEffects: SideEffectsSnapshot
+  ): Promise<SentMessageInfo | null | 'unaddressable'>;
+  editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null>;
+  deleteMessage(messageId: string): Promise<void>;
+  setTyping(op: TypingOp): Promise<void>;
+  flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void>;
+  emitCustom(name: string, data: unknown): Promise<void>;
+  queueRunStart(): void;
+  emitRunFinish(outcome: AgentRunOutcome): Promise<void>;
+  reportTurnError(message?: string): Promise<void>;
+}
+
+function applySideEffects(body: AgentReplyPayload, sideEffects: SideEffectsSnapshot): void {
+  if (sideEffects.toolApprovalRequest) {
+    body.toolApprovalRequest = sideEffects.toolApprovalRequest;
+  }
+
+  if (sideEffects.signals.length) {
+    body.signals = sideEffects.signals;
+  }
+
+  if (sideEffects.toolResults.length) {
+    body.toolResults = sideEffects.toolResults;
+  }
+
+  if (sideEffects.addReactions.length) {
+    body.addReactions = sideEffects.addReactions;
+  }
+
+  if (sideEffects.deleteMessages.length) {
+    body.deleteMessages = sideEffects.deleteMessages;
+  }
+
+  if (sideEffects.resolve) {
+    body.resolve = sideEffects.resolve;
+  }
+}
+
+function toSideEffectEvents(
+  sideEffects: SideEffectsSnapshot,
+  options?: { deliverApprovalCard?: boolean }
+): AgentEvent[] {
+  const events: AgentEvent[] = [];
+
+  if (sideEffects.toolApprovalRequest) {
+    const request = sideEffects.toolApprovalRequest;
+    events.push({
+      type: 'tool-approval-request',
+      approvalId: request.approvalId,
+      toolUseId: request.toolCallId,
+      toolName: request.name,
+      input: request.input,
+      ...(options?.deliverApprovalCard ? { deliverCard: true } : {}),
+    });
+  }
+
+  for (const result of sideEffects.toolResults) {
+    events.push({
+      type: 'tool-use-result',
+      toolUseId: result.toolCallId,
+      content: [
+        { type: 'text', text: String(result.preview ?? '') },
+        { type: 'json', value: result.output },
+      ],
+    });
+  }
+
+  for (const signal of sideEffects.signals) {
+    events.push({ type: 'signal', signal });
+  }
+
+  for (const reaction of sideEffects.addReactions) {
+    events.push({ type: 'channel.reaction', messageId: reaction.messageId, emoji: reaction.emojiName, op: 'add' });
+  }
+
+  for (const deletion of sideEffects.deleteMessages) {
+    events.push({ type: 'channel.delete', messageId: deletion.messageId });
+  }
+
+  if (sideEffects.resolve) {
+    events.push({ type: 'resolve', summary: sideEffects.resolve.summary });
+  }
+
+  return events;
+}
+
+/** Legacy transport: one POST per turn action against the bridge's `replyUrl`. */
+class LegacyPostTransport implements TurnTransport {
+  constructor(
+    private readonly replyUrl: string,
+    private readonly secretKey: string,
+    private readonly conversationId: string,
+    private readonly integrationIdentifier: string
+  ) {}
+
+  async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
+    const body = this._baseBody();
+    body.reply = reply;
+    applySideEffects(body, sideEffects);
+
+    return this._post(body);
+  }
+
+  async sendApprovalCard(card: ToolApprovalCard, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
+    const body = this._baseBody();
+    body.reply = { toolApprovalCard: card };
+    applySideEffects(body, sideEffects);
+
+    return this._post(body);
+  }
+
+  async editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null> {
+    return this._post({ ...this._baseBody(), edit: { messageId, content: reply } });
+  }
+
+  async deleteMessage(messageId: string): Promise<void> {
+    await this._post({ ...this._baseBody(), deleteMessages: [{ messageId }] });
+  }
+
+  async setTyping(op: TypingOp): Promise<void> {
+    await this._post({ ...this._baseBody(), typing: op });
+  }
+
+  async flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void> {
+    const body = this._baseBody();
+    applySideEffects(body, sideEffects);
+    await this._post(body);
+  }
+
+  // Custom events and run lifecycle hooks are SDK-native concepts; legacy bridges have no equivalent.
+  async emitCustom(): Promise<void> {}
+
+  queueRunStart(): void {}
+
+  async emitRunFinish(): Promise<void> {}
+
+  async reportTurnError(): Promise<void> {
+    await this._post({ ...this._baseBody(), error: true });
+  }
+
+  private _baseBody(): AgentReplyPayload {
+    return { conversationId: this.conversationId, integrationIdentifier: this.integrationIdentifier };
+  }
+
+  private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
+    const response = await fetch(this.replyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `ApiKey ${this.secretKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new AgentDeliveryError(response.status, text);
+    }
+
+    const raw = await response.text().catch(() => '');
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as { data?: Record<string, unknown> } | Record<string, unknown>;
+      const envelope = (parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed) as
+        | Record<string, unknown>
+        | undefined;
+
+      if (envelope && typeof envelope.messageId === 'string' && typeof envelope.platformThreadId === 'string') {
+        return { messageId: envelope.messageId, platformThreadId: envelope.platformThreadId };
+      }
+    } catch {
+      // flush-only responses return null or an empty body; tolerate and fall through.
+    }
+
+    return null;
+  }
+}
+
+/** SDK-native transport: batches `AgentEvent`s through the run's outbox. */
+class EventOutboxTransport implements TurnTransport {
+  constructor(private readonly outbox: AgentEventOutbox) {}
+
+  async sendReply(reply: ReplyContent, sideEffects: SideEffectsSnapshot): Promise<SentMessageInfo | null> {
+    const messageId = mint('msg');
+    const events = toSideEffectEvents(sideEffects);
+    events.push({
+      type: 'message',
+      role: 'assistant',
+      messageId,
+      content: toAgentMessageContent(reply),
+      files: toAgentFileRefs(reply.files),
+    });
+    await this._emitAndFlush(events);
+
+    return { messageId, platformThreadId: '' };
+  }
+
+  // Approval-card rendering is sink-owned in event mode; only the queued side effects
+  // (notably the tool-approval-request itself) are drained here. There is no client-addressable
+  // message id for the rendered card, so the caller gets a no-op handle rather than a fake one.
+  async sendApprovalCard(_card: ToolApprovalCard, sideEffects: SideEffectsSnapshot): Promise<'unaddressable'> {
+    await this._emitAndFlush(toSideEffectEvents(sideEffects, { deliverApprovalCard: true }));
+
+    return 'unaddressable';
+  }
+
+  async editMessage(messageId: string, reply: ReplyContent): Promise<SentMessageInfo | null> {
+    await this.outbox.emit({
+      type: 'channel.edit',
+      messageId,
+      content: toAgentMessageContent(reply),
+      files: toAgentFileRefs(reply.files),
+    });
+
+    return { messageId, platformThreadId: '' };
+  }
+
+  async deleteMessage(messageId: string): Promise<void> {
+    await this.outbox.emit({ type: 'channel.delete', messageId });
+  }
+
+  async setTyping(op: TypingOp): Promise<void> {
+    if (op === 'stop') {
+      await this.outbox.emit({ type: 'channel.typing', state: 'off' });
+
+      return;
+    }
+
+    const status = typeof op === 'object' && 'status' in op ? op.status : undefined;
+    await this.outbox.emit({ type: 'channel.typing', state: 'on', status });
+  }
+
+  async flushSideEffects(sideEffects: SideEffectsSnapshot): Promise<void> {
+    await this._emitAndFlush(toSideEffectEvents(sideEffects));
+  }
+
+  async emitCustom(name: string, data: unknown): Promise<void> {
+    await this.outbox.emit({ type: 'custom', name, data });
+  }
+
+  queueRunStart(): void {
+    this.outbox.enqueue({ type: 'run-start' });
+  }
+
+  async emitRunFinish(outcome: AgentRunOutcome): Promise<void> {
+    await this.outbox.emit({ type: 'run-finish', outcome });
+  }
+
+  async reportTurnError(message?: string): Promise<void> {
+    await this.outbox.emit({ type: 'run-error', message: message ?? 'agent handler failed' });
+  }
+
+  private async _emitAndFlush(events: AgentEvent[]): Promise<void> {
+    if (events.length === 0) {
+      return;
+    }
+
+    for (const event of events) {
+      this.outbox.enqueue(event);
+    }
+
+    await this.outbox.flush();
+  }
 }
 
 class ReplyHandleImpl implements ReplyHandle {
@@ -221,9 +546,7 @@ class ReplyHandleImpl implements ReplyHandle {
   constructor(
     messageId: string,
     platformThreadId: string,
-    private readonly conversationId: string,
-    private readonly integrationIdentifier: string,
-    private readonly poster: ReplyPoster
+    private readonly transport: TurnTransport
   ) {
     this.messageId = messageId;
     this.platformThreadId = platformThreadId;
@@ -231,14 +554,8 @@ class ReplyHandleImpl implements ReplyHandle {
 
   async edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     this.editedByHandler = true;
-    const info = await this.poster.post({
-      conversationId: this.conversationId,
-      integrationIdentifier: this.integrationIdentifier,
-      edit: {
-        messageId: this.messageId,
-        content: await serializeContent(content, options?.files),
-      },
-    });
+    const reply = await serializeContent(content, options?.files);
+    const info = await this.transport.editMessage(this.messageId, reply);
 
     if (!info) {
       throw new Error('Agent edit did not return a message handle');
@@ -254,12 +571,25 @@ class ReplyHandleImpl implements ReplyHandle {
   }
 
   async delete(): Promise<void> {
-    await this.poster.post({
-      conversationId: this.conversationId,
-      integrationIdentifier: this.integrationIdentifier,
-      deleteMessages: [{ messageId: this.messageId }],
-    });
+    await this.transport.deleteMessage(this.messageId);
   }
+}
+
+/**
+ * Returned by `replyApprovalCard()` when the transport reports the card as not addressable
+ * (event mode: the sink renders the card from the `tool-approval-request` event itself, so
+ * there is no client id to edit/delete against). `edit`/`delete` are no-ops rather than
+ * emitting a `channel.edit`/`channel.delete` the sink could never resolve.
+ */
+class NoopReplyHandle implements ReplyHandle {
+  readonly messageId = '';
+  readonly platformThreadId = '';
+
+  async edit(): Promise<ReplyHandle> {
+    return this;
+  }
+
+  async delete(): Promise<void> {}
 }
 
 export class AgentContextImpl implements AgentRuntimeContext {
@@ -293,11 +623,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
-  private readonly _replyUrl: string;
-  private readonly _conversationId: string;
-  private readonly _integrationIdentifier: string;
-  private readonly _secretKey: string;
-  private readonly _poster: ReplyPoster;
+  private readonly _transport: TurnTransport;
 
   constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
     this.event = request.event as AgentEventEnum;
@@ -311,12 +637,18 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.platform = request.platform;
     this.platformContext = request.platformContext;
 
-    this._replyUrl = request.replyUrl;
-    this._conversationId = request.conversationId;
-    this._integrationIdentifier = request.integrationIdentifier;
-    this._secretKey = secretKey;
-    this._poster = { post: (body) => this._post(body) };
     this._toolApprovalConfig = toolApprovalConfig;
+    this._transport = request.eventsUrl
+      ? new EventOutboxTransport(
+          new AgentEventOutbox({
+            eventsUrl: request.eventsUrl,
+            secretKey,
+            conversationId: request.conversationId,
+            agentId: request.agentId,
+            turnId: request.deliveryId,
+          })
+        )
+      : new LegacyPostTransport(request.replyUrl, secretKey, request.conversationId, request.integrationIdentifier);
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
 
@@ -342,12 +674,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
       },
     };
 
-    const postTyping = (op: TypingOp): Promise<void> =>
-      this._post({
-        conversationId: this._conversationId,
-        integrationIdentifier: this._integrationIdentifier,
-        typing: op,
-      }).then(() => undefined);
+    const postTyping = (op: TypingOp): Promise<void> => this._transport.setTyping(op);
 
     const typing = ((status?: string) => postTyping(status === undefined ? {} : { status })) as TypingControl;
     typing.stop = () => postTyping('stop');
@@ -368,55 +695,38 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     const reply = await serializeContent(content, options?.files);
+    const sideEffects = this._drainSideEffectsSnapshot();
+    const info = await this._transport.sendReply(reply, sideEffects);
 
-    const body: AgentReplyPayload = {
-      conversationId: this._conversationId,
-      integrationIdentifier: this._integrationIdentifier,
-      reply,
-    };
-
-    this._drainSideEffects(body);
-
-    const info = await this._post(body);
     if (!info) {
       throw new Error('Agent reply did not return a message handle');
     }
 
-    return new ReplyHandleImpl(
-      info.messageId,
-      info.platformThreadId,
-      this._conversationId,
-      this._integrationIdentifier,
-      this._poster
-    );
+    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this._transport);
   }
 
   async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
-    const body: AgentReplyPayload = {
-      conversationId: this._conversationId,
-      integrationIdentifier: this._integrationIdentifier,
-      reply: { toolApprovalCard: card },
-    };
+    const sideEffects = this._drainSideEffectsSnapshot();
+    const info = await this._transport.sendApprovalCard(card, sideEffects);
 
-    this._drainSideEffects(body);
+    if (info === 'unaddressable') {
+      return new NoopReplyHandle();
+    }
 
-    const info = await this._post(body);
     if (!info) {
       throw new Error('Agent approval card reply did not return a message handle');
     }
 
-    return new ReplyHandleImpl(
-      info.messageId,
-      info.platformThreadId,
-      this._conversationId,
-      this._integrationIdentifier,
-      this._poster
-    );
+    return new ReplyHandleImpl(info.messageId, info.platformThreadId, this._transport);
   }
 
   /** @internal Build a handle to an already-posted message (used to resume an approval). */
   createReplyHandle(messageId: string): ReplyHandleImpl {
-    return new ReplyHandleImpl(messageId, '', this._conversationId, this._integrationIdentifier, this._poster);
+    return new ReplyHandleImpl(messageId, '', this._transport);
+  }
+
+  async emit(event: { name: string; data: unknown }): Promise<void> {
+    await this._transport.emitCustom(event.name, event.data);
   }
 
   resolve(summary?: string): void {
@@ -449,14 +759,24 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._pendingDeletes.push({ messageId });
   }
 
-  /** Best-effort failure report to Novu. Never throws. */
-  async reportTurnError(): Promise<void> {
+  /** @internal Enqueue run-start before handler execution; flushed with the first emit. */
+  queueRunStart(): void {
+    this._transport.queueRunStart();
+  }
+
+  /** @internal Enqueue and flush run-finish as the terminal success event. */
+  async emitRunFinish(options: { outcome: AgentRunOutcome }): Promise<void> {
     try {
-      await this._post({
-        conversationId: this._conversationId,
-        integrationIdentifier: this._integrationIdentifier,
-        error: true,
-      });
+      await this._transport.emitRunFinish(options.outcome);
+    } catch (err) {
+      console.error(`[agent] Failed to emit run finish:`, err);
+    }
+  }
+
+  /** Best-effort failure report to Novu. Never throws. */
+  async reportTurnError(message?: string): Promise<void> {
+    try {
+      await this._transport.reportTurnError(message);
     } catch (err) {
       // Local only — cannot recurse into onError
       console.error(`[agent] Failed to report turn error:`, err);
@@ -472,14 +792,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
       return;
     }
 
-    const body: AgentReplyPayload = {
-      conversationId: this._conversationId,
-      integrationIdentifier: this._integrationIdentifier,
-    };
-
-    this._drainSideEffects(body);
-
-    await this._post(body);
+    const sideEffects = this._drainSideEffectsSnapshot();
+    await this._transport.flushSideEffects(sideEffects);
   }
 
   private _hasPendingSideEffects(): boolean {
@@ -493,71 +807,24 @@ export class AgentContextImpl implements AgentRuntimeContext {
     );
   }
 
-  private _drainSideEffects(body: AgentReplyPayload): void {
-    if (this._pendingToolApprovalRequest) {
-      body.toolApprovalRequest = this._pendingToolApprovalRequest;
-      this._pendingToolApprovalRequest = null;
-    }
+  /** Atomically drains all queued side effects into a snapshot for the transport to deliver. */
+  private _drainSideEffectsSnapshot(): SideEffectsSnapshot {
+    const snapshot: SideEffectsSnapshot = {
+      toolApprovalRequest: this._pendingToolApprovalRequest,
+      signals: this._signals,
+      toolResults: this._toolResults,
+      addReactions: this._pendingReactions,
+      deleteMessages: this._pendingDeletes,
+      resolve: this._resolveSignal,
+    };
 
-    if (this._signals.length) {
-      body.signals = this._signals;
-      this._signals = [];
-    }
+    this._pendingToolApprovalRequest = null;
+    this._signals = [];
+    this._toolResults = [];
+    this._pendingReactions = [];
+    this._pendingDeletes = [];
+    this._resolveSignal = null;
 
-    if (this._toolResults.length) {
-      body.toolResults = this._toolResults;
-      this._toolResults = [];
-    }
-
-    if (this._pendingReactions.length) {
-      body.addReactions = this._pendingReactions;
-      this._pendingReactions = [];
-    }
-
-    if (this._pendingDeletes.length) {
-      body.deleteMessages = this._pendingDeletes;
-      this._pendingDeletes = [];
-    }
-
-    if (this._resolveSignal) {
-      body.resolve = this._resolveSignal;
-      this._resolveSignal = null;
-    }
-  }
-
-  private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
-    const response = await fetch(this._replyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `ApiKey ${this._secretKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new AgentDeliveryError(response.status, text);
-    }
-
-    const raw = await response.text().catch(() => '');
-    if (!raw) {
-      return null;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as { data?: Record<string, unknown> } | Record<string, unknown>;
-      const envelope = (parsed && typeof parsed === 'object' && 'data' in parsed ? parsed.data : parsed) as
-        | Record<string, unknown>
-        | undefined;
-
-      if (envelope && typeof envelope.messageId === 'string' && typeof envelope.platformThreadId === 'string') {
-        return { messageId: envelope.messageId, platformThreadId: envelope.platformThreadId };
-      }
-    } catch {
-      // flush-only responses return null or an empty body; tolerate and fall through.
-    }
-
-    return null;
+    return snapshot;
   }
 }

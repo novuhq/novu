@@ -19,7 +19,6 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { formatDateSimple } from '@/utils/format-date';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { cn } from '@/utils/ui';
 import { ConfirmationModal } from '../confirmation-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Button } from '../primitives/button';
@@ -196,10 +195,15 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
   const lastNameChar = form.getValues('lastName')?.charAt(0) || '';
 
   return (
-    <div className={cn('flex h-full flex-col')}>
+    <div className="flex h-full min-h-0 flex-col">
       <Form {...form}>
-        <FormRoot autoComplete="off" noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex h-full flex-col">
-          <div className="flex flex-1 flex-col items-stretch overflow-y-auto">
+        <FormRoot
+          autoComplete="off"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex h-full min-h-0 flex-col"
+        >
+          <div className="flex min-h-0 flex-1 flex-col items-stretch overflow-y-auto">
             <div className="flex flex-col items-stretch gap-6 p-5">
               <div className="flex items-center gap-3">
                 <Tooltip>
@@ -450,7 +454,7 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
           </div>
 
           {!readOnly && (
-            <div className="mt-auto">
+            <div className="mt-auto shrink-0">
               <Separator />
               <div className="flex justify-between gap-3 p-3.5">
                 <Button

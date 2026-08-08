@@ -1,3 +1,4 @@
+import type { CardElement } from 'chat';
 import { ChannelStepEnum } from '../constants';
 import { actionStepSchemas } from '../schemas/steps/actions';
 import {
@@ -198,8 +199,27 @@ export type PushOutput = FromSchema<(typeof channelStepSchemas)['push']['output'
 export type PushOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)['push']['output']>;
 export type PushResult = FromSchema<(typeof channelStepSchemas)['push']['result']>;
 
-export type ChatOutput = FromSchema<(typeof channelStepSchemas)['chat']['output']>;
-export type ChatOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)['chat']['output']>;
+/**
+ * Re-maps the `card` field to the Chat SDK `CardElement`.
+ *
+ * The chat step's `card` schema (see `chat.schema.ts`) intentionally omits
+ * `additionalProperties: false` on its child-element variants, so `json-schema-to-ts`
+ * adds `[x: string]: unknown` index signatures. The Chat SDK models cards as
+ * `interface`s (no implicit index signature), so `Card()` isn't assignable to the
+ * inferred type. Swapping `card` for the SDK `CardElement` lets `Card` / `Actions`
+ * / etc. be used on `step.chat` without changing those builders (agents keep the
+ * unmodified Chat SDK types). The runtime schema accepts the Chat SDK card kit
+ * (section/fields/table + interactive button/select/radio_select); interactive
+ * elements render on Slack/Teams but have no callback wiring on classic `step.chat`.
+ */
+type WithChatCard<T_Output> = T_Output extends { card: unknown }
+  ? Prettify<Omit<T_Output, 'card'> & { card: CardElement }>
+  : T_Output extends { card?: unknown }
+    ? Prettify<Omit<T_Output, 'card'> & { card?: CardElement }>
+    : T_Output;
+
+export type ChatOutput = WithChatCard<FromSchema<(typeof channelStepSchemas)['chat']['output']>>;
+export type ChatOutputUnvalidated = WithChatCard<FromSchemaUnvalidated<(typeof channelStepSchemas)['chat']['output']>>;
 export type ChatResult = FromSchema<(typeof channelStepSchemas)['chat']['result']>;
 
 export type InAppOutput = FromSchema<(typeof channelStepSchemas)['in_app']['output']>;

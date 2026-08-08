@@ -1,5 +1,7 @@
 export * from './bridge.utils';
 export * from './buildWorkflowPreferences';
+export * from './chat-body';
+export * from './chat-card-button';
 export * from './checkIsResponseError';
 export * from './connect-subscriber-id';
 export * from './data-filter';

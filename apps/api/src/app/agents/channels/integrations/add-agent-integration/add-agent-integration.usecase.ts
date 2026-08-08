@@ -30,6 +30,7 @@ import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
+import { NovuWebChatProvisioningService } from '../../web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { AddAgentIntegrationCommand } from './add-agent-integration.command';
 
 @Injectable()
@@ -41,6 +42,7 @@ export class AddAgentIntegration {
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
+    private readonly findOrCreateNovuWebChat: NovuWebChatProvisioningService,
     private readonly analyticsService: AnalyticsService
   ) {}
 
@@ -87,6 +89,31 @@ export class AddAgentIntegration {
           providerId: response.integration.providerId,
           channel: response.integration.channel,
           connectionSource: 'novu_email_provisioned',
+        });
+      }
+
+      return response;
+    }
+
+    if (command.providerId === ChatProviderIdEnum.NovuWebChat) {
+      const { response, provisionedNewLink } = await this.findOrCreateNovuWebChat.execute(
+        agent._id,
+        command.environmentId,
+        command.organizationId
+      );
+
+      if (provisionedNewLink) {
+        trackAgentIntegrationConnected(this.analyticsService, {
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          agentId: agent._id,
+          agentIdentifier: command.agentIdentifier,
+          integrationId: response.integration._id,
+          integrationIdentifier: response.integration.identifier,
+          providerId: response.integration.providerId,
+          channel: response.integration.channel,
+          connectionSource: 'novu_web_chat_provisioned',
         });
       }
 

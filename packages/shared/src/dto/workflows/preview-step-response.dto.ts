@@ -1,16 +1,23 @@
-import { ActionTypeEnum, ChannelTypeEnum, ContextPayload } from '../../types';
+import { ActionTypeEnum, CardElement, ChannelTypeEnum, ContextPayload } from '../../types';
 import { SubscriberDto } from '../subscriber';
 import { JSONSchemaDto } from './json-schema-dto';
+import type { StepProviderOverrides } from './step.dto';
 
 export class RenderOutput {}
 
 export class ChatRenderOutput extends RenderOutput {
-  body: string;
+  body?: string;
+  /**
+   * Rich Chat: the compiled, provider-agnostic card DSL (from a Maily block body or a
+   * code-first `card`). `body` and `card` are mutually exclusive.
+   */
+  card?: CardElement;
+  providerOverrides?: StepProviderOverrides;
 }
 
 export class ToolRenderOutput extends RenderOutput {
   body: string;
-  providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
+  providerOverrides?: StepProviderOverrides;
 }
 
 export class SmsRenderOutput extends RenderOutput {
@@ -29,6 +36,9 @@ export class EmailRenderOutput extends RenderOutput {
     email?: string;
     name?: string;
   };
+  replyTo?: string;
+  preheader?: string;
+  useProviderDefaults?: boolean;
 }
 
 export class DigestOutputProcessor {

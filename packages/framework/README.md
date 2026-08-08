@@ -17,7 +17,7 @@
 1. **Conversational agents** — define bridge agents in your codebase and connect them to Slack, Email, Telegram, WhatsApp, and Microsoft Teams with `npx novu connect`.
 2. **Notification workflows** — write durable, multi-channel notification flows as TypeScript functions.
 
-Learn more in the [Framework docs](https://docs.novu.co/framework/quickstart) and [managed agent quickstart](https://docs.novu.co/agents/managed-agent/quickstart).
+Learn more in the [Framework docs](https://docs.novu.co/framework/quickstart) and [managed agent quickstart](https://docs.novu.co/agents/get-started/claude-managed).
 
 ## Installation
 
@@ -166,7 +166,7 @@ Additional exports:
 
 ## Links
 
-- [Managed agent quickstart](https://docs.novu.co/agents/managed-agent/quickstart)
+- [Managed agent quickstart](https://docs.novu.co/agents/get-started/claude-managed)
 - [Framework quickstart](https://docs.novu.co/framework/quickstart)
 - [Novu CLI](../novu/README.MD)
 - [Chat SDK adapter](https://www.npmjs.com/package/@novu/chat-sdk-adapter)

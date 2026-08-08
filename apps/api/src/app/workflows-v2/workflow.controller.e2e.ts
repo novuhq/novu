@@ -77,6 +77,39 @@ function buildEmailStep(overrides: Partial<EmailStepUpsertDto> = {}): EmailStepU
   } as EmailStepUpsertDto;
 }
 
+function buildHttpRequestStep(overrides: Record<string, unknown> = {}) {
+  return {
+    name: 'HTTP Request Test Step',
+    type: 'http_request',
+    stepId: 'http-request-step',
+    controlValues: {
+      method: 'GET',
+      url: 'https://example.com',
+      responseBodySchema: {
+        type: 'object',
+        properties: {
+          type: { type: 'string' },
+        },
+        additionalProperties: false,
+      },
+    },
+    ...overrides,
+  };
+}
+
+function buildPushStep(overrides: Record<string, unknown> = {}) {
+  return {
+    name: 'Push Test Step',
+    type: 'push',
+    stepId: 'push-step',
+    controlValues: {
+      subject: 'Push subject',
+      body: 'Push body',
+    },
+    ...overrides,
+  };
+}
+
 // biome-ignore lint/suspicious/noExportsInTest: <explanation>
 export function buildWorkflow(overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
   const name = overrides.name || 'Test Workflow';
@@ -790,6 +823,44 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       });
     });
 
+    it('should promote workflow with HTTP step response variables in skip conditions without validation issues', async () => {
+      const httpStepId = 'http-request-step';
+      const skipCondition = {
+        '!=': [{ var: `steps.${httpStepId}.type` }, 'like'],
+      };
+
+      const createWorkflowDto = buildWorkflow({
+        name: 'HTTP Skip Promote Workflow',
+        steps: [
+          buildHttpRequestStep(),
+          buildPushStep({
+            controlValues: {
+              subject: 'Push subject',
+              body: 'Push body',
+              skip: skipCondition,
+            },
+          }),
+        ] as any,
+      });
+
+      const devWorkflow = await createWorkflow(apiClient, createWorkflowDto);
+      const devPushStep = devWorkflow.steps[1];
+
+      expect(devWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(devPushStep.issues?.controls?.skip).to.be.undefined;
+
+      await session.switchToProdEnvironment();
+      const prodEnvironmentId = session.environment._id;
+      await session.switchToDevEnvironment();
+
+      const prodWorkflow = await syncWorkflow(devWorkflow, prodEnvironmentId);
+      const prodPushStep = prodWorkflow.steps[1];
+
+      expect(prodWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(prodPushStep.controls.values.skip).to.deep.equal(skipCondition);
+      expect(prodPushStep.issues?.controls?.skip).to.be.undefined;
+    });
+
     it('should throw an error if trying to promote to the same environment', async () => {
       const devWorkflow = await createWorkflowAndValidate('-promote-workflow');
 
@@ -1061,6 +1132,88 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.Inactive);
       updatedWorkflow = await patchWorkflow(workflowDto.id, true);
       expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+    });
+
+    it('should clear ERROR status after fixing step issues via update', async () => {
+      const createdWorkflow = await createWorkflow(
+        apiClient,
+        buildWorkflow({
+          steps: [
+            {
+              name: 'In-App Test Step',
+              type: 'in_app',
+              controlValues: {
+                redirect: { url: 'https://example.com', target: '_blank' },
+              },
+            },
+          ],
+        } as CreateWorkflowDto)
+      );
+
+      expect(createdWorkflow.status).to.equal(WorkflowStatusEnum.Error);
+
+      const fixedWorkflow = await updateWorkflow(createdWorkflow.id, {
+        ...mapResponseToUpdateDto(createdWorkflow),
+        steps: [
+          {
+            id: createdWorkflow.steps[0].id,
+            type: 'in_app',
+            name: 'In-App Test Step',
+            controlValues: {
+              body: 'Fixed body',
+              redirect: { url: 'https://example.com', target: '_blank' },
+            },
+          },
+        ],
+      });
+
+      expect(fixedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(fixedWorkflow.steps[0].issues?.controls).to.not.exist;
+    });
+
+    it('should clear ERROR status after payload schema patch recalculates step issues', async () => {
+      const createdWorkflow = await createWorkflow(
+        apiClient,
+        buildWorkflow({
+          payloadSchema: {
+            type: 'object',
+            properties: {},
+            required: [],
+            additionalProperties: false,
+          },
+          steps: [
+            {
+              name: 'Email Test Step',
+              type: 'email',
+              controlValues: {
+                subject: 'Welcome',
+                body: 'Hello {{payload.firstName}}',
+              },
+            },
+          ],
+        } as CreateWorkflowDto)
+      );
+
+      expect(createdWorkflow.status).to.equal(WorkflowStatusEnum.Error);
+
+      const patchedWorkflow = (
+        await apiClient.workflows.patch(
+          {
+            payloadSchema: {
+              type: 'object',
+              properties: {
+                firstName: { type: 'string' },
+              },
+              required: [],
+              additionalProperties: false,
+            },
+          },
+          createdWorkflow.id
+        )
+      ).result;
+
+      expect(patchedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(patchedWorkflow.steps[0].issues?.controls).to.not.exist;
     });
   });
 

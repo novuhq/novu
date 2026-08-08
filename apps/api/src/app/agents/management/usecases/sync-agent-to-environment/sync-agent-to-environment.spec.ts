@@ -1,6 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 import { SyncAgentToEnvironmentCommand } from './sync-agent-to-environment.command';
@@ -28,7 +28,7 @@ function makeAgent(overrides: Partial<AgentEntity> = {}): AgentEntity {
     name: 'My Agent',
     identifier: 'my-agent',
     description: 'desc',
-    behavior: undefined,
+    behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
     active: true,
     _environmentId: SOURCE_ENV,
     _organizationId: ORG_ID,

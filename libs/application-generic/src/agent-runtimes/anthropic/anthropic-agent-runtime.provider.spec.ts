@@ -143,6 +143,7 @@ interface AgentToolsetConfigEntry {
 
 interface AgentToolsetPayloadEntry {
   type: string;
+  name?: string;
   configs?: AgentToolsetConfigEntry[];
   mcp_server_name?: string;
   default_config?: {
@@ -518,12 +519,12 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
 
     const [, updatePayload] = update.mock.calls[0];
     const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
-    const platformTool = (updatePayload as { tools?: AgentToolsetPayloadEntry[] }).tools?.find(
+    const platformTools = (updatePayload as { tools?: AgentToolsetPayloadEntry[] }).tools?.filter(
       (t) => t.type === 'custom'
     );
 
     expect(toolset?.configs?.every((c) => c.enabled === false)).to.equal(true);
-    expect(platformTool).to.deep.include({ type: 'custom', name: 'novu_tools' });
+    expect(platformTools?.map((t) => t.name)).to.deep.equal(['novu_tool_catalog', 'novu_resolve']);
   });
 
   it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {

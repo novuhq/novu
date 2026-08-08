@@ -172,6 +172,58 @@ export class WorkflowRunCountRepository extends LogRepository<typeof workflowRun
     };
   }
 
+  /**
+   * Platform usage from `workflow_run_count`, filtered to
+   * `event_type = workflow_run_status_processing`.
+   *
+   * Callers pass a half-open Date range `[startDate, endDate)`. That maps to
+   * inclusive UTC calendar days: `date >= toDate(start) AND date <= toDate(end - 1ms)`,
+   * so a midnight exclusive period end (e.g. Stripe `current_period_end`) does not
+   * pull in the next period's first day.
+   */
+  async getPlatformUsageByDateRange(
+    startDate: Date,
+    endDate: Date,
+    organizationId?: string
+  ): Promise<Array<{ organization_id: string; count: string }>> {
+    const organizationFilter = organizationId ? 'AND organization_id = {organizationId:String}' : '';
+    const startDay = startDate.toISOString().split('T')[0];
+    const endDayInclusive = new Date(endDate.getTime() - 1).toISOString().split('T')[0];
+
+    const query = `
+      SELECT
+        organization_id,
+        sum(count) as count
+      FROM ${WORKFLOW_RUN_COUNT_TABLE_NAME}
+      WHERE
+        date >= {startDate:Date}
+        AND date <= {endDate:Date}
+        AND event_type = 'workflow_run_status_processing'
+        ${organizationFilter}
+      GROUP BY organization_id
+      ORDER BY organization_id
+    `;
+
+    const params: Record<string, unknown> = {
+      startDate: startDay,
+      endDate: endDayInclusive,
+    };
+
+    if (organizationId) {
+      params.organizationId = organizationId;
+    }
+
+    const result = await this.clickhouseService.query<{
+      organization_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
   async getActiveOrganizationIds(
     startDate: Date,
     endDate: Date,

@@ -11,6 +11,7 @@ import {
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   FILTER_TO_LABEL,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
@@ -25,16 +26,23 @@ import {
   TimeOperatorEnum,
 } from '@novu/shared';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
+import { get as lodashGet } from 'lodash';
 import { decryptApiKey } from '../../encryption';
-import { buildSubscriberKey, CachedResponse, safeOutboundJsonRequest } from '../../services';
+import { PinoLogger } from '../../logging';
+import { buildSubscriberKey, CachedResponse, FeatureFlagsService, safeOutboundJsonRequest } from '../../services';
 import {
   assertSafeOutboundUrl,
   createHash,
+  createWebhookFilterError,
   Filter,
   FilterProcessingDetails,
   IFilterVariables,
   PlatformException,
   SsrfBlockedError,
+  shouldPropagateWebhookFilterFailure,
+  WEBHOOK_FILTER_ERROR_CODE,
+  WEBHOOK_FILTER_REQUEST_FAILED_DATA,
+  WEBHOOK_FILTER_SSRF_BLOCKED_DATA,
 } from '../../utils';
 import { CompileTemplate } from '../compile-template';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
@@ -55,9 +63,12 @@ export class ConditionsFilter extends Filter {
     private environmentRepository: EnvironmentRepository,
     @Inject(forwardRef(() => CreateExecutionDetails))
     private createExecutionDetails: CreateExecutionDetails,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private featureFlagsService: FeatureFlagsService,
+    private logger: PinoLogger
   ) {
     super();
+    this.logger?.setContext(this.constructor.name);
   }
 
   public async filter(command: ConditionsFilterCommand): Promise<IConditionsFilterResponse> {
@@ -258,7 +269,11 @@ export class ConditionsFilter extends Filter {
       assertSafeOutboundUrl(child.webhookUrl);
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
+        throw createWebhookFilterError({
+          code: WEBHOOK_FILTER_ERROR_CODE.SSRF_BLOCKED,
+          message: err.message,
+          data: WEBHOOK_FILTER_SSRF_BLOCKED_DATA,
+        });
       }
       throw err;
     }
@@ -277,13 +292,62 @@ export class ConditionsFilter extends Filter {
         body: payload,
       });
 
+      await this.maybeLogWebhookFilterResponse(command, child, response);
+
       return response.body;
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
+        throw createWebhookFilterError({
+          code: WEBHOOK_FILTER_ERROR_CODE.SSRF_BLOCKED,
+          message: err.message,
+          data: WEBHOOK_FILTER_SSRF_BLOCKED_DATA,
+        });
       }
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(JSON.stringify({ message, data: 'Exception while performing webhook request.' }));
+      throw createWebhookFilterError({
+        code: WEBHOOK_FILTER_ERROR_CODE.REQUEST_FAILED,
+        message,
+        data: WEBHOOK_FILTER_REQUEST_FAILED_DATA,
+      });
+    }
+  }
+
+  /**
+   * Best-effort pino log for webhook filter diagnostics. Gated by the same flag
+   * as step-conditions-passed execution details. Logs only the HTTP status and
+   * the field value used by the filter comparison — never the full response body,
+   * which may contain subscriber PII or credentials outside path-based redaction.
+   */
+  private async maybeLogWebhookFilterResponse(
+    command: ConditionsFilterCommand,
+    child: IWebhookFilterPart,
+    response: { statusCode: number; statusMessage: string; body: Record<string, unknown> | undefined }
+  ): Promise<void> {
+    try {
+      const isEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_CONDITIONS_PASSED_TRACE_ENABLED,
+        defaultValue: false,
+        organization: { _id: command.organizationId },
+        environment: { _id: command.environmentId },
+      });
+
+      if (!isEnabled) {
+        return;
+      }
+
+      this.logger.info(
+        {
+          statusCode: response.statusCode,
+          statusMessage: response.statusMessage,
+          field: child.field,
+          fieldValue: lodashGet(response.body, child.field),
+          jobId: command.job?._id,
+          transactionId: command.job?.transactionId,
+        },
+        'Webhook filter POST response'
+      );
+    } catch {
+      // Logging must never break filter evaluation.
     }
   }
 
@@ -376,7 +440,7 @@ export class ConditionsFilter extends Filter {
 
       return passed;
     } catch (error) {
-      if (this.isRetryableWebhookFilterError(error)) {
+      if (shouldPropagateWebhookFilterFailure(error)) {
         throw error;
       }
 
@@ -384,15 +448,6 @@ export class ConditionsFilter extends Filter {
 
       return false;
     }
-  }
-
-  private isRetryableWebhookFilterError(error: unknown): boolean {
-    const message = error instanceof Error ? error.message : String(error);
-
-    return (
-      message.includes('Exception while performing webhook request.') ||
-      message.includes('Webhook URL blocked by SSRF protection.')
-    );
   }
 
   private async recordFilterEvaluationError(

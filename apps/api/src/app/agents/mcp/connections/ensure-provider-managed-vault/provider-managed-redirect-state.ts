@@ -40,7 +40,7 @@ export interface ProviderManagedRedirectState {
   /** Optional Anthropic workspace id; falls back to the default workspace. */
   externalWorkspaceId?: string;
   conversationId?: string;
-  /** custom_tool_use ID — set when the redirect originated from novu_tools. */
+  /** custom_tool_use ID — set when the redirect originated from novu_tool_catalog. */
   toolUseId?: string;
   agentIdentifier?: string;
   integrationIdentifier?: string;

@@ -100,12 +100,7 @@ function expandIpv6Hextets(ip: string): Ipv6Hextets | null {
 }
 
 function hextetsToIpv4(highHextet: number, lowHextet: number): string {
-  return [
-    (highHextet >> 8) & 0xff,
-    highHextet & 0xff,
-    (lowHextet >> 8) & 0xff,
-    lowHextet & 0xff,
-  ].join('.');
+  return [(highHextet >> 8) & 0xff, highHextet & 0xff, (lowHextet >> 8) & 0xff, lowHextet & 0xff].join('.');
 }
 
 function looksLikeTransitionEncoding(ip: string): boolean {
@@ -195,6 +190,60 @@ export function isPrivateIp(ip: string): boolean {
 
   if (/^::(\d{1,3}(?:\.\d{1,3}){3})$/i.test(normalized)) {
     return true;
+  }
+
+  return false;
+}
+
+/**
+ * Link-local / cloud-metadata ranges that must never be reachable via outbound
+ * HTTP — even when an operator allow-lists a hostname or CIDR. Covers IPv4
+ * 169.254.0.0/16 (incl. 169.254.169.254 IMDS) and IPv6 fe80::/10, including
+ * IPv4-mapped / transition encodings of those ranges.
+ */
+export function isLinkLocalIp(ip: string): boolean {
+  const normalized = normalizeHostnameForLookup(ip);
+
+  if (isIPv4(normalized)) {
+    return normalized.startsWith('169.254.');
+  }
+
+  if (!isIPv6(normalized)) {
+    return false;
+  }
+
+  const hextets = expandIpv6Hextets(normalized);
+
+  if (hextets && hextets[0] >= 0xfe80 && hextets[0] <= 0xfebf) {
+    return true;
+  }
+
+  if (
+    hextets &&
+    hextets[0] === 0 &&
+    hextets[1] === 0 &&
+    hextets[2] === 0 &&
+    hextets[3] === 0 &&
+    hextets[4] === 0 &&
+    hextets[5] === 0xffff
+  ) {
+    return hextetsToIpv4(hextets[6], hextets[7]).startsWith('169.254.');
+  }
+
+  const embeddedIpv4 = extractTransitionEmbeddedIpv4(normalized);
+
+  if (embeddedIpv4 === 'invalid') {
+    return looksLikeTransitionEncoding(normalized);
+  }
+
+  if (embeddedIpv4 !== null) {
+    return embeddedIpv4.startsWith('169.254.');
+  }
+
+  const dottedMapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(normalized);
+
+  if (dottedMapped?.[1]) {
+    return dottedMapped[1].startsWith('169.254.');
   }
 
   return false;

@@ -9,11 +9,8 @@ import type { BridgeAdapterVariant } from '../../connect/pipeline/bridge-adapter
 import { generateAgentNextConfigSource } from '../../connect/pipeline/llm-auth/codegen/generate-agent-next-config';
 import { generateSupportAgentSource } from '../../connect/pipeline/llm-auth/codegen/generate-support-agent';
 import { codegenSupportsTools } from '../../connect/pipeline/llm-auth/codegen/tool-support';
-import {
-  resolveLlmAuthEnvVars,
-  resolveLlmAuthPackageDependencies,
-  shouldWireLlmAuth,
-} from '../../connect/pipeline/llm-auth/registry';
+import { resolveLlmAuthEnvVars, shouldWireLlmAuth } from '../../connect/pipeline/llm-auth/registry';
+import { resolveBridgeScaffoldDependencies } from '../../connect/pipeline/llm-auth/resolve-scaffold-dependencies';
 import { copy } from '../helpers/copy';
 import { install } from '../helpers/install';
 import { resolveAgentZodDependencies } from './agent-scaffold-deps';
@@ -174,7 +171,7 @@ export const installTemplate = async ({
     }
   }
 
-  if (isAgentTemplate) {
+  if (isAiSdkTemplate || isLangChainTemplate) {
     const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
     const nextConfigSource = generateAgentNextConfigSource(runtime, llmAuth ?? { kind: 'skip' });
 
@@ -308,18 +305,9 @@ export const installTemplate = async ({
     baseDependencies['@novu/framework'] = resolveFrameworkVersion();
   }
 
-  if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
-    baseDependencies.ai = '^7.0.0';
-  }
-
-  if (template === TemplateTypeEnum.APP_AGENT_LANGCHAIN) {
-    baseDependencies.langchain = '^1.0.0';
-    baseDependencies['@langchain/core'] = '^1.0.0';
-  }
-
-  if (llmAuth && shouldWireLlmAuth(llmAuth) && (isAiSdkTemplate || isLangChainTemplate)) {
+  if (isAiSdkTemplate || isLangChainTemplate) {
     const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
-    Object.assign(baseDependencies, resolveLlmAuthPackageDependencies(runtime, llmAuth));
+    Object.assign(baseDependencies, resolveBridgeScaffoldDependencies(runtime, llmAuth));
   }
 
   if (isChatSdkTemplate) {

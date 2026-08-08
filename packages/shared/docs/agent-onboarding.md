@@ -97,6 +97,8 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 | **CLI poll** | While the Connect shell runs in the background, the CLI process blocks up to ~5 min per handoff stage (OAuth, inbound email, dashboard authorization). You monitor progress by **Await**ing `NOVU_CONNECT_*` sentinels on that shell id. Success or timeout comes from its stdout only. |
 | **Claim** | Keyless only: user signs up via the in-channel link, migrating the temporary agent into their workspace. |
 | **Bridge agent** | Custom code path: agent handler runs on the user's server; Novu forwards channel messages to a `/api/novu` bridge route. |
+| **Scaffold** | Bridge empty-dir path: CLI creates a Next.js AI SDK or LangChain app in `--ci` (auto-confirm). Optional `--llm-auth` wires a model provider; default is demo echo. |
+| **Reconcile** | Bridge existing-project path: CLI installs packages / env / `dev:novu` and prints requirements; you Write remaining handler code. |
 | **Requirements file** | Bridge path only: CLI prints `NOVU_CONNECT_AI_SDK_REQUIREMENTS_FILE=` or `NOVU_CONNECT_LANGCHAIN_REQUIREMENTS_FILE=` with a checklist and wiring prompt. |
 
 ---
@@ -114,11 +116,11 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 ### Custom code bridge (AI SDK / LangChain)
 
 1. **Channel** — same picker as managed ([Step B1](#step-b1--choose-channel-bridge)).
-2. **Runtime** — detect or ask `ai-sdk` vs `langchain` ([Step B2](#step-b2--pick-bridge-runtime)).
-3. **Run** — connect with `--runtime <ai-sdk|langchain>` ([Step B3](#step-b3--run-connect-bridge)) — **no agent description positional**.
+2. **Runtime** — detect or ask `ai-sdk` vs `langchain` ([Step B2](#step-b2--pick-bridge-runtime)). Empty dir → default `ai-sdk` unless the user named LangChain.
+3. **Run** — connect with `--runtime <ai-sdk|langchain>` ([Step B3](#step-b3--run-connect-bridge)) — **no agent description positional**. On **empty dir**, add `--llm-auth` when the user wants a real provider.
 4. **Handoff** — [Shared channel handoffs](#shared--channel-handoffs). Also **Await** the bridge requirements file sentinel on the same shell.
-5. **Wire** — read the requirements file and finish bridge setup in the repo ([Step B5](#step-b5--wire-the-bridge)).
-6. **Report** — agent + channel live, bridge wired, run `dev:novu`.
+5. **Wire** — read the requirements file; on **existing** projects Write the bridge route/handler; on **scaffold** only if items remain unchecked ([Step B5](#step-b5--wire-the-bridge)).
+6. **Report** — agent + channel live, bridge ready, run `dev:novu`.
 
 ---
 
@@ -330,7 +332,31 @@ npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
 
 # Custom code bridge path (AI SDK / LangChain)
 
-The bridge path creates a Novu agent record, connects a channel, reconciles (or scaffolds) the project, then **you** finish handler code in the repo.
+The bridge path creates a Novu agent record, connects a channel, then either **scaffolds a new app** (empty directory) or **reconciles an existing project**. After connect, **you** finish any remaining handler wiring from the requirements file.
+
+## Empty directory vs existing project
+
+Detect with the **Read** tool (or a failed Read of `package.json`). **Never** use Bash to inspect the tree.
+
+| Workspace | CLI behavior in `--ci` | Your follow-up |
+|---|---|---|
+| **Empty** — no `package.json` | Auto-scaffolds a Next.js AI SDK or LangChain agent app (confirm is skipped in `--ci`), writes env + `dev:novu`, and usually leaves the handler already generated | Still **Read** the requirements file. If `code-wiring` is checked off, you are done after report. Pass **`--llm-auth`** when the user wants a real model provider (see below). |
+| **Existing** — `package.json` present | Reconciles packages/env/`dev:novu`, prints a requirements checklist; **does not** invent the handler for you | **Read** the requirements file and **Write** the bridge route + agent handler for every unchecked `code-wiring` item. |
+
+LLM provider wiring on **scaffold only** (empty dir):
+
+| Flag | When |
+|---|---|
+| Omit `--llm-auth` | Default in `--ci` — scaffold uses a **demo echo** handler (no provider API key). Fine when the user did not ask for OpenAI/Anthropic/etc. |
+| `--llm-auth openai` + `--openai-api-key …` | User wants OpenAI (or already has `OPENAI_API_KEY` to pass). |
+| `--llm-auth anthropic` + `--anthropic-api-key …` | User wants Anthropic. |
+| `--llm-auth codex-subscription` | User wants ChatGPT subscription / Codex OAuth on this machine. |
+| `--llm-auth claude-subscription` | User wants Claude subscription — **`ai-sdk` only** (not LangChain). |
+| `--llm-auth skip` | Explicit demo echo (same as omitting). |
+
+Do **not** invent API keys. If the user asked for a provider but has not given a key (and is not using a subscription), ask once in chat, then pass the matching flags. Subscription kinds need a prior local CLI login on the machine — if connect fails for that reason, tell the user the login command from the CLI error.
+
+**Existing projects:** never pass `--llm-auth` — reconcile does not use it. Reuse the project's existing model provider when wiring the handler.
 
 ## Step B1 — Choose channel and collect inputs
 
@@ -351,7 +377,7 @@ Use the **Read** tool on `package.json` and inspect `dependencies` / `devDepende
 | `ai` or any `@ai-sdk/*` package | `ai-sdk` |
 | `langchain`, `@langchain/core`, or any `@langchain/*` package | `langchain` |
 | Both AI SDK and LangChain signals | Ask the user (picker below) |
-| Neither | Default to **`ai-sdk`** unless the user named LangChain |
+| Neither (or **empty dir** / missing `package.json`) | Default to **`ai-sdk`** unless the user named LangChain |
 
 If you must ask, call `AskQuestion` / `AskUserQuestion`:
 
@@ -362,7 +388,7 @@ If you must ask, call `AskQuestion` / `AskUserQuestion`:
 
 ## Step B3 — Run connect (bridge, non-interactive)
 
-**Goal:** create the bridge agent, connect the channel, and let the CLI reconcile the project.
+**Goal:** create the bridge agent, connect the channel, and let the CLI scaffold or reconcile the project.
 
 **Do not** pass a positional agent description — bridge agents get a name from the project directory in `--ci` mode.
 
@@ -375,12 +401,23 @@ npx novu@latest connect \
   --channel <slack|email|telegram|whatsapp|teams|skip>
 ```
 
-**Canonical example (dashboard OAuth, AI SDK, slack):**
+**Canonical example (dashboard OAuth, AI SDK, slack, existing project):**
 
 ```bash
 npx novu@latest connect \
   --ci \
   --runtime ai-sdk \
+  --channel slack
+```
+
+**Empty-dir scaffold with OpenAI (example):**
+
+```bash
+npx novu@latest connect \
+  --ci \
+  --runtime ai-sdk \
+  --llm-auth openai \
+  --openai-api-key "$OPENAI_API_KEY" \
   --channel slack
 ```
 
@@ -400,20 +437,19 @@ NOVU_CONNECT_LANGCHAIN_REQUIREMENTS_FILE=<absolute path>
 
 Then **Await** `✓ Your agent is live.` or `✗` on that shell id.
 
-The CLI may auto-install packages, write `.env.local`, and add a `dev:novu` script during reconcile. Unchecked items in the requirements file still need your help.
+The CLI may auto-install packages, write `.env.local`, add a `dev:novu` script, and (on empty dirs) scaffold the app. Unchecked items in the requirements file still need your help.
 
 ## Step B5 — Wire the bridge
 
-**Goal:** satisfy every unchecked requirement and implement the agent handler so Slack (or the chosen channel) reaches the user's code.
+**Goal:** satisfy every unchecked requirement so the channel reaches the user's code.
 
 1. **Read** the requirements file from the `NOVU_CONNECT_*_REQUIREMENTS_FILE=` line (do not paste the path to the user).
 2. Note the **agent identifier** from the connect success output: `Agent: <name> (<identifier>)`.
 3. Complete every `- [ ]` item in the file (install packages, env, dev script).
-4. For **`code-wiring`**, follow the **"## Agent prompt"** section inside that file exactly — it matches what `npx novu connect` generated for this project.
+4. For **`code-wiring`** on an **existing** project: follow the **"## Agent prompt"** section inside that file exactly — use the **Write** tool to create the bridge route and agent handler (do not only describe the code in chat). Match App Router vs Pages Router, `src/` layout, and the package manager from the lockfile.
 5. Use the agent identifier from step 2 in the handler (`agent('<identifier>', …)`).
-6. **Verify:** run the project's `dev:novu` script (or the package manager equivalent) and confirm the bridge registers without errors.
-
-Match the project's existing framework (App Router vs Pages Router, `src/` layout, package manager from the lockfile).
+6. **Scaffolded (empty-dir) projects:** if `code-wiring` is already `[x]`, do not rewrite the generated handler unless the requirements file still lists unchecked wiring — then follow the agent prompt as above.
+7. **Verify:** run the project's `dev:novu` script (or the package manager equivalent) and confirm the bridge registers without errors.
 
 **Authoritative docs when stuck:** fetch `https://docs.novu.co/llms.txt`, then append `.md` to any doc URL. AI SDK: `/agents/custom-code-agent/frameworks/ai-sdk`. LangChain: `/agents/custom-code-agent/frameworks/langchain`.
 
@@ -421,9 +457,13 @@ Match the project's existing framework (App Router vs Pages Router, `src/` layou
 
 Lead with whether connect succeeded and whether the bridge is wired.
 
-**Authenticated bridge recap example:**
+**Authenticated bridge recap example (existing project):**
 
 > _"Novu created a bridge agent, connected Slack, and reconciled your project. I wired the `/api/novu` route and agent handler — run `npm run dev:novu` (or your package manager's equivalent) and message the bot in Slack to test."_
+
+**Scaffold recap example (empty dir):**
+
+> _"Novu scaffolded an AI SDK agent app, connected Slack, and your agent is live. Run `npm run dev:novu` in the new project directory and message the bot in Slack to test."_
 
 Include the agent identifier and dashboard URL from the CLI output.
 
@@ -632,6 +672,8 @@ Run `novu@latest connect --help` for the full contract. Keep help text in sync w
 | `connect "<description>"` | Positional agent description (**managed path only**; required in `--ci` managed runs). |
 | `--ci` | Non-interactive mode (required). |
 | `--runtime <ai-sdk\|langchain\|custom-code\|chat-sdk\|demo\|claude\|claude-aws>` | Agent brain. **Bridge path:** pass `ai-sdk` or `langchain`. **Managed path:** omit (demo runtime). |
+| `--llm-auth <openai\|anthropic\|codex-subscription\|claude-subscription\|skip>` | **Bridge empty-dir scaffold only** (ignored on existing-project reconcile). In `--ci`, omitting defaults to `skip` (demo echo). Pair `openai` / `anthropic` with `--openai-api-key` / `--anthropic-api-key`. `claude-subscription` is `ai-sdk` only. |
+| `--openai-api-key` / `--anthropic-api-key` | API keys for `--llm-auth openai` / `anthropic` on empty-dir scaffold. |
 | `--keyless` | Temporary demo agent — **managed path only** (default for anonymous managed runs). **Never** on bridge path. |
 | `--region <us\|eu>` | Target Novu Cloud region (default: `us`). |
 | `--channel <slack\|email\|telegram\|sendblue\|whatsapp\|teams\|skip>` | Channel to connect. `sendblue` is iMessage. `whatsapp` works in both modes (keyless included); `teams` requires dashboard OAuth (omit `--keyless`). |
@@ -680,8 +722,8 @@ You are done when:
 
 You are done when:
 
-1. The user picked a channel and you locked `ai-sdk` or `langchain`.
+1. The user picked a channel and you locked `ai-sdk` or `langchain` (and `--llm-auth` when scaffolding empty dir with a real provider).
 2. Dashboard OAuth completed (never `--keyless`).
 3. You delivered channel handoffs and the connect shell printed the requirements file path and `✓ Your agent is live.`.
-4. Every requirement in that file is satisfied and the bridge handler is implemented.
+4. You **Read** the requirements file; every `- [ ]` item is satisfied — on **existing** projects that includes **Writing** the bridge route + handler; on **scaffolded** projects the CLI may already have checked `code-wiring`.
 5. You told the user to run `dev:novu` and message the agent on the connected channel.

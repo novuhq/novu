@@ -29,7 +29,6 @@ import {
   StepResponseDto,
   UpsertStepDataCommand,
   UpsertWorkflowCommand,
-  UpsertWorkflowUseCase,
   UserSession,
   WorkflowResponseDto,
 } from '@novu/application-generic';
@@ -71,6 +70,7 @@ import {
   SyncToEnvironmentUseCase,
   TestHttpEndpointCommand,
   TestHttpEndpointUsecase,
+  UpsertWorkflow,
   WorkflowTestDataCommand,
 } from './usecases';
 import { PatchWorkflowCommand, PatchWorkflowUsecase } from './usecases/patch-workflow';
@@ -83,7 +83,7 @@ import { PatchWorkflowCommand, PatchWorkflowUsecase } from './usecases/patch-wor
 @ApiTags('Workflows')
 export class WorkflowController {
   constructor(
-    private upsertWorkflowUseCase: UpsertWorkflowUseCase,
+    private upsertWorkflow: UpsertWorkflow,
     private getWorkflowUseCase: GetWorkflowUseCase,
     private listWorkflowsUseCase: ListWorkflowsUseCase,
     private deleteWorkflowUsecase: DeleteWorkflowUseCase,
@@ -112,7 +112,7 @@ export class WorkflowController {
   ): Promise<WorkflowResponseDto> {
     const upsertSteps = this.normalizeSteps(createWorkflowDto.steps);
 
-    return this.upsertWorkflowUseCase.execute(
+    return this.upsertWorkflow.execute(
       UpsertWorkflowCommand.create({
         preserveWorkflowId: true,
         workflowDto: {
@@ -166,7 +166,7 @@ export class WorkflowController {
   ): Promise<WorkflowResponseDto> {
     const upsertSteps = this.normalizeSteps(updateWorkflowDto.steps);
 
-    return await this.upsertWorkflowUseCase.execute(
+    return await this.upsertWorkflow.execute(
       UpsertWorkflowCommand.create({
         workflowDto: {
           ...updateWorkflowDto,

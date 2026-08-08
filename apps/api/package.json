@@ -1,6 +1,6 @@
 {
   "name": "@novu/api-service",
-  "version": "3.18.1",
+  "version": "3.19.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -68,8 +68,10 @@
     "@nestjs/throttler": "6.5.0",
     "@novu/api": "workspace:*",
     "@novu/application-generic": "workspace:*",
+    "@novu/agent-event-protocol": "workspace:*",
     "@novu/chat-adapter-email": "workspace:*",
     "@novu/chat-adapter-sendblue": "workspace:*",
+    "@novu/chat-adapter-web": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/maily-render": "workspace:*",

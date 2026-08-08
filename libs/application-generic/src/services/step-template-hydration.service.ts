@@ -34,7 +34,7 @@ export type LeanNotificationStep = Pick<
 export enum StepTemplateHydrationStatus {
   /** Template was resolved and attached to the job step in place. */
   HYDRATED = 'hydrated',
-  /** Nothing to do: full snapshot, stateless job, or non-rendering lean step. */
+  /** Nothing to do: full snapshot, bridgeUrl/stateless job, or non-rendering lean step. */
   SKIPPED = 'skipped',
   /** Lean channel step whose template could not be resolved anywhere. */
   UNRESOLVED = 'unresolved',
@@ -98,18 +98,21 @@ export class StepTemplateHydrationService {
   /**
    * Restores `job.step.template` in place (never written back to Mongo) so
    * downstream rendering behaves identically to a full snapshot. No-op for full
-   * snapshots (old / flag-off jobs) and stateless bridge jobs. Returns
-   * {@link StepTemplateHydrationStatus.UNRESOLVED} for a lean channel step whose
-   * template is gone everywhere, leaving failure handling to the caller.
+   * snapshots (old / flag-off jobs) and bridgeUrl jobs (discover stub + optional
+   * synced `_templateId`). Returns {@link StepTemplateHydrationStatus.UNRESOLVED}
+   * for a lean channel step whose template is gone everywhere, leaving failure
+   * handling to the caller.
    */
   async hydrateJobStep(job: JobEntity, workflow?: NotificationTemplateEntity): Promise<StepTemplateHydrationStatus> {
     const { step } = job;
     if (!isLeanStepTemplate(step)) {
       return StepTemplateHydrationStatus.SKIPPED;
     }
-    // Stateless bridge-URL jobs have no persisted workflow/template; the bridge
-    // is the source of truth and carries its own controls.
-    if (!job._templateId) {
+    // Bridge-URL jobs (stateless discover, or a synced workflow triggered with an
+    // override bridgeUrl) use the bridge as the source of truth for step content.
+    // Their step.template is only a `{ type }` stub from discover — never hydrate
+    // from Mongo, even when a synced `_templateId` is present on the job.
+    if (!job._templateId || step.bridgeUrl) {
       return StepTemplateHydrationStatus.SKIPPED;
     }
 

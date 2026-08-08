@@ -110,7 +110,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
 
     expect(outboundGateway.deliver.called).to.equal(false);
     expect(outboundGateway.deleteInConversation.callCount).to.equal(2);
-    expect(outboundGateway.deleteInConversation.getCall(0).args[4]).to.equal('msg-abc');
-    expect(outboundGateway.deleteInConversation.getCall(1).args[4]).to.equal('msg-def');
+    expect(outboundGateway.deleteInConversation.getCall(0).args[3]).to.equal('msg-abc');
+    expect(outboundGateway.deleteInConversation.getCall(1).args[3]).to.equal('msg-def');
   });
 });

@@ -1,0 +1,25 @@
+# Novu LangChain connect requirements
+
+Project: /fixture/acme-langchain-app
+
+- [x] env: NOVU_SECRET_KEY set
+- [ ] package: Missing packages: @novu/framework
+- [ ] dev-script: Add dev:novu script
+- [ ] code-wiring: Create bridge route and agent handler
+
+## Code wiring
+
+Wire your LangChain agent into this project:
+
+1. Create app/api/novu/route.ts with serve({ agents: [...] }) from @novu/framework/next
+2. Create app/novu/agents/acme-lc-1.tsx with agent() from @novu/framework/langchain
+3. Return a { model, system, tools } config from onMessage
+4. Run npm run dev:novu for local bridge tunnel
+
+## Agent prompt
+
+Paste the following into your coding agent to finish wiring:
+
+Wire the Novu LangChain bridge for agent identifier `acme-lc-1`.
+Create app/api/novu/route.ts with serve from @novu/framework/next.
+Create the agent with agent() from @novu/framework/langchain named acme-lc-1.

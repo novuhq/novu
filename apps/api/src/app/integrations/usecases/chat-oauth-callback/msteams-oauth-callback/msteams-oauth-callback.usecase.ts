@@ -56,7 +56,12 @@ export class MsTeamsOauthCallback {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
 
-        if (message.includes('MS Teams bot installation failed')) {
+        this.logger.error(
+          { err: error },
+          `MS Teams link_user callback failed: subscriberId=${stateData.subscriberId} integrationId=${integration._id}`
+        );
+
+        if (message.includes('MS Teams bot installation failed') || message.includes('MS Teams user linking failed')) {
           return { type: ResponseTypeEnum.HTML, result: this.buildErrorHtml(message) };
         }
 
@@ -171,6 +176,10 @@ export class MsTeamsOauthCallback {
     }
 
     const decrypted = decryptCredentials(credentials);
+
+    this.logger.info(
+      `MS Teams link_user: exchanging authorization code for subscriberId=${stateData.subscriberId} clientId=${decrypted.clientId}`
+    );
     const { oid, tid } = await this.exchangeCodeForUserIdentity(command.providerCode, decrypted);
 
     /*
@@ -209,11 +218,16 @@ export class MsTeamsOauthCallback {
      * App-only Graph token in the USER's tenant. For a multi-tenant Entra app this works once that
      * tenant's admin has granted consent; the app + its org catalog entry then exist in that tenant.
      */
-    const graphToken = await this.msTeamsTokenService.getGraphToken(
-      clientId as string,
-      secretKey as string,
-      userTenantId
-    );
+    let graphToken: string;
+
+    try {
+      graphToken = await this.msTeamsTokenService.getGraphToken(clientId as string, secretKey as string, userTenantId);
+    } catch (error) {
+      this.logAadFailure('graph token acquisition', error, { clientId: clientId as string, tenantId: userTenantId });
+      throw new BadRequestException(
+        `MS Teams bot installation failed while acquiring a Microsoft Graph token in tenant ${userTenantId}: ${this.describeAadError(error)}`
+      );
+    }
 
     this.logger.info(`MS Teams bot install: resolving Teams app catalog ID for clientId=${clientId}`);
     const teamsAppId = await this.resolveTeamsAppId(graphToken, clientId as string);
@@ -329,8 +343,16 @@ export class MsTeamsOauthCallback {
    * propagation hint in `footerNote`.
    */
   private buildErrorHtml(message: string): string {
+    /*
+     * AADSTS700016 / AADSTS7000229: the app's service principal does not (yet) exist in the
+     * user's tenant — right after admin consent this is usually Azure propagation delay,
+     * so it deserves the same "wait and retry" hint as the permission errors.
+     */
     const isPermissionError =
-      message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');
+      message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') ||
+      message.includes('AppCatalog.Read.All') ||
+      message.includes('AADSTS700016') ||
+      message.includes('AADSTS7000229');
 
     return renderConnectionResultPage({
       status: 'error',
@@ -341,6 +363,52 @@ export class MsTeamsOauthCallback {
         ? 'Azure permission changes can take up to 60 minutes to take effect. If you just granted the required permissions, wait a few minutes and try again.'
         : undefined,
     });
+  }
+
+  /**
+   * Extracts a human-readable cause from an Azure AD / Graph error. AAD token endpoints return
+   * `{ error, error_description }` where `error_description` carries the AADSTS code — the part
+   * that actually tells the user (and us) what went wrong.
+   */
+  private describeAadError(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data as { error?: string; error_description?: string } | undefined;
+
+      if (data?.error_description) {
+        return data.error_description;
+      }
+
+      if (data?.error) {
+        return data.error;
+      }
+
+      return error.message;
+    }
+
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  /**
+   * Logs a sanitized view of an AAD failure instead of the raw AxiosError: the axios `config`
+   * carries the request body, which contains the client secret and must never reach the logs.
+   */
+  private logAadFailure(step: string, error: unknown, context: Record<string, string> = {}): void {
+    const responseStatus = axios.isAxiosError(error) ? error.response?.status : undefined;
+    const data = axios.isAxiosError(error)
+      ? (error.response?.data as { error?: string; error_description?: string } | undefined)
+      : undefined;
+
+    this.logger.error(
+      {
+        ...context,
+        responseStatus,
+        aadError: data?.error,
+        aadErrorDescription: data?.error_description,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      `MS Teams OAuth ${step} failed`
+    );
   }
 
   /**
@@ -369,11 +437,18 @@ export class MsTeamsOauthCallback {
       scope: 'openid profile User.Read',
     });
 
-    const response = await axios.post(
-      `${this.MS_TEAMS_TOKEN_URL}/organizations/oauth2/v2.0/token`,
-      tokenParams.toString(),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
+    let response: { data: { id_token?: string } };
+
+    try {
+      response = await axios.post(
+        `${this.MS_TEAMS_TOKEN_URL}/organizations/oauth2/v2.0/token`,
+        tokenParams.toString(),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+      );
+    } catch (error) {
+      this.logAadFailure('authorization code exchange', error);
+      throw new BadRequestException(`MS Teams user linking failed: ${this.describeAadError(error)}`);
+    }
 
     const { id_token: idToken } = response.data;
 

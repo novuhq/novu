@@ -158,7 +158,7 @@ describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
     expect(result.totalCount).to.equal(0);
   });
 
-  it('should hydrate opsgenie endpoints with the wire shape from their connections', async () => {
+  it('should decrypt opsgenie endpoint secrets when listing', async () => {
     const integration = await createOpsgenieIntegration(session);
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
@@ -170,6 +170,7 @@ describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
       endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'eu' },
     });
     expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.connectionIdentifier).to.be.null;
 
     const listRes = await session.testAgent.get('/v1/channel-endpoints').query({
       subscriberId: subscriber.subscriberId,
@@ -180,6 +181,7 @@ describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
       (endpoint: { type: string }) => endpoint.type === ENDPOINT_TYPES.OPSGENIE_INTEGRATION
     );
     expect(opsgenieEndpoint).to.exist;
+    expect(opsgenieEndpoint.connectionIdentifier).to.be.null;
     expect(opsgenieEndpoint.endpoint.apiKey).to.equal(VALID_OPSGENIE_API_KEY);
     expect(opsgenieEndpoint.endpoint.region).to.equal('eu');
   });

@@ -6,7 +6,7 @@ import type {
   UpdateWorkflowDto,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
+import { SeverityLevelEnum, StepIssueSeverityEnum, StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
 import { ERROR_AVATAR, INFO_AVATAR, WARNING_AVATAR } from '@/utils/avatars';
 import {
@@ -54,6 +54,13 @@ export function findDigestStepBeforeCurrent(
     .find((candidate) => candidate.type === 'digest');
 }
 
+/**
+ * A step issue blocks save unless it is explicitly a `warning`. Legacy issues without a `severity`
+ * are treated as blocking errors for backwards compatibility.
+ */
+export const isBlockingIssue = (issue: Pick<RuntimeIssue, 'severity'>): boolean =>
+  issue.severity !== StepIssueSeverityEnum.WARNING;
+
 export const getFirstErrorMessage = (
   issues?: {
     controls?: Record<string, RuntimeIssue[]>;
@@ -61,33 +68,37 @@ export const getFirstErrorMessage = (
   },
   type: 'controls' | 'integration' = 'controls'
 ) => {
-  const issuesArray = Object.entries({ ...issues?.[type] });
+  const issuesArrays = Object.values({ ...issues?.[type] });
 
-  if (issuesArray.length > 0) {
-    const firstIssue = issuesArray[0];
-    const contentIssues = firstIssue?.[1];
-    return contentIssues?.[0];
+  for (const contentIssues of issuesArrays) {
+    const blockingIssue = contentIssues?.find(isBlockingIssue);
+
+    if (blockingIssue) {
+      return blockingIssue;
+    }
   }
+
+  return undefined;
 };
 
+/** Counts only blocking (non-warning) issues — the ones that gate the workflow / turn a step red. */
 export const countIssues = (issues?: {
   controls?: Record<string, RuntimeIssue[]>;
   integration?: Record<string, RuntimeIssue[]>;
 }): number => {
   if (!issues) return 0;
 
+  const countBlocking = (issueMap: Record<string, RuntimeIssue[]>) =>
+    Object.values(issueMap).reduce((acc, issueArray) => acc + issueArray.filter(isBlockingIssue).length, 0);
+
   let count = 0;
 
   if (issues.controls) {
-    const controlIssues = Object.values(issues.controls).reduce((acc, issueArray) => acc + issueArray.length, 0);
-
-    count += controlIssues;
+    count += countBlocking(issues.controls);
   }
 
   if (issues.integration) {
-    const integrationIssues = Object.values(issues.integration).reduce((acc, issueArray) => acc + issueArray.length, 0);
-
-    count += integrationIssues;
+    count += countBlocking(issues.integration);
   }
 
   return count;
@@ -120,7 +131,9 @@ export const flattenIssues = (controlIssues?: Record<string, RuntimeIssue[]>): R
   const controlIssuesFlat: Record<string, RuntimeIssue[]> = flatten({ ...controlIssues }, { safe: true });
 
   return Object.entries(controlIssuesFlat).reduce((acc, [key, value]) => {
-    const errorMessage = value.length > 0 ? value[0].message : undefined;
+    // Only blocking issues become form-field errors; warnings are surfaced separately and must not
+    // mark the control invalid.
+    const errorMessage = value.find(isBlockingIssue)?.message;
 
     if (!errorMessage) {
       return acc;
@@ -148,6 +161,16 @@ function splitProviderOverridesFromControlValues(controlValues: Record<string, u
   };
 }
 
+function toStepUpsertShape(step: StepResponseDto): StepUpdateDto {
+  // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
+  const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+
+  return {
+    ...stepWithoutProviderOverrides,
+    controlValues: step.controls?.values || {},
+  };
+}
+
 export const updateStepInWorkflow = (
   workflow: WorkflowResponseDto,
   stepId: string,
@@ -156,8 +179,7 @@ export const updateStepInWorkflow = (
   return {
     ...workflow,
     steps: workflow.steps.map((step) => {
-      // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
-      const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+      const stepWithoutProviderOverrides = toStepUpsertShape(step);
 
       if (step.stepId === stepId) {
         const existingControlValues = step.controls?.values || {};
@@ -190,11 +212,18 @@ export const updateStepInWorkflow = (
         };
       }
 
-      return {
-        ...stepWithoutProviderOverrides,
-        controlValues: step.controls?.values || {},
-      };
+      return stepWithoutProviderOverrides;
     }),
+  };
+};
+
+export const removeStepFromWorkflow = (
+  workflow: WorkflowResponseDto,
+  shouldKeep: (step: StepResponseDto) => boolean
+): UpdateWorkflowDto => {
+  return {
+    ...workflow,
+    steps: workflow.steps.filter(shouldKeep).map(toStepUpsertShape),
   };
 };
 

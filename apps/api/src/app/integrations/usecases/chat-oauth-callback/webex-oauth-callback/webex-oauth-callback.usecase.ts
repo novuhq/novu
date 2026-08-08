@@ -1,5 +1,5 @@
 import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { decryptCredentials } from '@novu/application-generic';
+import { buildConnectionAuthFromOAuth, decryptCredentials } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -309,14 +309,6 @@ export class WebexOauthCallback {
     };
   }
 
-  private buildExpiresAt(expiresInSeconds?: number): string | undefined {
-    if (!expiresInSeconds) {
-      return undefined;
-    }
-
-    return new Date(Date.now() + expiresInSeconds * 1000).toISOString();
-  }
-
   private async decodeWebexState(state: string): Promise<StateData> {
     try {
       const preliminaryData = peekOAuthStatePayload<Partial<StateData>>(state);
@@ -358,12 +350,7 @@ export class WebexOauthCallback {
     const isSharedMode = stateData.connectionMode === 'shared';
     const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
     const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
-    const auth = {
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      expiresAt: this.buildExpiresAt(tokenData.expires_in),
-      refreshTokenExpiresAt: this.buildExpiresAt(tokenData.refresh_token_expires_in),
-    };
+    const auth = buildConnectionAuthFromOAuth(tokenData);
     const workspace = this.buildWorkspace(person);
 
     if (existingConnection) {

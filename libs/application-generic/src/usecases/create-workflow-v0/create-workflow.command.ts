@@ -27,6 +27,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../commands';
+import { WorkflowAgentConfigDto } from '../../dtos/workflow/workflow-agent-config.dto';
 import { ContentIssue, JSONSchema, NotificationStep } from '../../value-objects';
 import { PreferencesRequired } from '../upsert-preferences';
 
@@ -157,4 +158,10 @@ export class CreateWorkflowCommandV0 extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(SeverityLevelEnum)
   severity?: SeverityLevelEnum;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @ValidateNested()
+  @Type(() => WorkflowAgentConfigDto)
+  agent?: WorkflowAgentConfigDto | null;
 }

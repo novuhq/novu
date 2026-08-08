@@ -20,6 +20,7 @@ import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.s
 import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import {
@@ -429,14 +430,15 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       platformThreadId,
       thread.isDM,
-      extractWorkspaceId(config.platform, message.raw) ?? undefined
+      extractWorkspaceId(config.platform, message.raw) ?? undefined,
+      this.webChatConversationIdentifier(config.platform, platformThreadId)
     );
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
 
       if (!aiEnabled) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -446,7 +448,7 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       if (await this.isKeylessDemoCapReached(config, conversation._id)) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -603,6 +605,18 @@ export class AgentInboundHandler implements OnModuleInit {
     return this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
   }
 
+  /**
+   * Public conversation identifier is bare `conv_*`; chat-sdk thread ids are
+   * `web_chat:conv_*` so the registry can resolve the adapter by prefix.
+   */
+  private webChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
+    if (platform !== AgentPlatformEnum.WEB_CHAT) {
+      return undefined;
+    }
+
+    return platformThreadId.startsWith('web_chat:') ? platformThreadId.slice('web_chat:'.length) : platformThreadId;
+  }
+
   private async openConversation(
     agentId: string,
     config: ResolvedAgentConfig,
@@ -610,7 +624,8 @@ export class AgentInboundHandler implements OnModuleInit {
     subscriberId: string | null,
     platformThreadId: string,
     isDirectMessage: boolean,
-    workspaceId?: string
+    workspaceId?: string,
+    conversationIdentifier?: string
   ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -630,6 +645,7 @@ export class AgentInboundHandler implements OnModuleInit {
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
       isDirectMessage,
       workspaceId,
+      identifier: conversationIdentifier,
     });
   }
 
@@ -693,6 +709,7 @@ export class AgentInboundHandler implements OnModuleInit {
       richContent,
       hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
+      identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
@@ -809,7 +826,7 @@ export class AgentInboundHandler implements OnModuleInit {
       environmentId: config.environmentId,
       organizationId: config.organizationId,
       integrationId: config.integrationId,
-      agentIdentifier: config.agentIdentifier,
+      linkScope: agentTelegramLinkScope(config.agentIdentifier),
     });
 
     if (result.status === 'mismatch') {
@@ -825,11 +842,12 @@ export class AgentInboundHandler implements OnModuleInit {
           LinkTelegramChatToSubscriberCommand.create({
             environmentId: payload._environmentId,
             organizationId: payload._organizationId,
-            agentIdentifier: payload.agentIdentifier,
+            linkScope: payload.linkScope,
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
             context: payload.context,
+            contextKeys: payload.contextKeys,
           })
         );
 
@@ -934,10 +952,10 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    conversationId: string
+    conversation: ConversationEntity
   ): Promise<void> {
     try {
-      if (await this.connectClaimTokenService.isSignupCtaPosted(conversationId)) {
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
         return;
       }
 
@@ -946,10 +964,22 @@ export class AgentInboundHandler implements OnModuleInit {
         org: config.organizationId,
       });
       const claimUrl = buildConnectClaimUrl(token);
+      const channel = this.conversationService.getPrimaryChannel(conversation);
+      const card = buildKeylessSignupCard(claimUrl);
 
-      await this.outboundGateway.replyOnThreadWithCard(thread, buildKeylessSignupCard(claimUrl));
+      await this.outboundGateway.replyOnThreadWithCard(thread, card, {
+        persist: {
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: config.agentIdentifier,
+          content: card.title ?? '[Card]',
+          richContent: { card },
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        },
+      });
 
-      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversation._id);
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post keyless signup CTA`);
       captureAgentWarning(err, {

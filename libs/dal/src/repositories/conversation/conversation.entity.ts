@@ -139,6 +139,12 @@ export class ConversationEntity {
    */
   isDirectMessage?: boolean;
 
+  /**
+   * Monotonic high-watermark for live delivery + durable conversation event sequences.
+   * Ephemeral typing envelopes consume values that may be absent from history.
+   */
+  eventSequence?: number;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

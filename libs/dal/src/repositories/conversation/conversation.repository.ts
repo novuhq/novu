@@ -75,7 +75,13 @@ export class ConversationRepository extends BaseRepositoryV2<
     integrationId: string,
     participantId: string,
     participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER,
-    title?: string
+    title?: string,
+    /**
+     * When set, only match conversations whose channel belongs to this platform workspace
+     * (e.g. Slack `team_id`). Required for multi-workspace welcome dedup so a prior welcome
+     * in workspace A does not suppress a welcome in workspace B for the same participant key.
+     */
+    workspaceId?: string
   ): Promise<ConversationEntity | null> {
     return this.findOne(
       {
@@ -85,6 +91,7 @@ export class ConversationRepository extends BaseRepositoryV2<
         channels: {
           $elemMatch: {
             _integrationId: new Types.ObjectId(integrationId),
+            ...(workspaceId ? { 'workspace.id': workspaceId } : {}),
           },
         },
         participants: { $elemMatch: { id: participantId, type: participantType } },
@@ -464,6 +471,37 @@ export class ConversationRepository extends BaseRepositoryV2<
       { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
       { $set: { 'billing.resolvedAt': nowIso } }
     );
+  }
+
+  /**
+   * Atomically advances the conversation event high-watermark and returns the
+   * allocated sequence number (1-based).
+   */
+  async allocateEventSequence(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    minimum = 0
+  ): Promise<number> {
+    const filter = {
+      _id: conversationId,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    };
+
+    if (minimum > 0) {
+      await this.update(
+        {
+          ...filter,
+          $or: [{ eventSequence: { $lt: minimum } }, { eventSequence: { $exists: false } }],
+        },
+        { $set: { eventSequence: minimum } }
+      );
+    }
+
+    const updated = await this.findOneAndUpdate(filter, { $inc: { eventSequence: 1 } }, { new: true });
+
+    return updated?.eventSequence ?? 1;
   }
 
   async incrementTokenUsage(

@@ -6,6 +6,7 @@ import type { CardElement, Thread } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAttributedNovuUrl } from '../../shared/util/novu-attribution-url';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 
@@ -19,7 +20,7 @@ export function isLinkButtonActionId(id: string | undefined): boolean {
 }
 
 /** Which plan entitlement caused an over-limit agent/channel/conversation to be soft-blocked at runtime. */
-type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
+export type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
 
 const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
   agents:
@@ -86,7 +87,8 @@ export class PlanLimitGateService {
     private readonly logger: PinoLogger,
     private readonly agentEntitlements: AgentEntitlementsService,
     private readonly outboundGateway: OutboundGateway,
-    private readonly conversationActivation: ConversationActivationService
+    private readonly conversationActivation: ConversationActivationService,
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -166,7 +168,7 @@ export class PlanLimitGateService {
       return false;
     }
 
-    await this.postUpgradeRequiredReply(agentId, config, thread, 'conversations');
+    await this.postUpgradeRequiredReply(agentId, config, thread, 'conversations', conversation);
 
     return true;
   }
@@ -176,12 +178,31 @@ export class PlanLimitGateService {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    reason: PlanLimitBlockReason
+    reason: PlanLimitBlockReason,
+    conversation?: ConversationEntity
   ): Promise<void> {
     try {
+      const card = buildUpgradeRequiredCard(reason, config.agentIdentifier, config.platform);
+      // Pre-conversation gates (agents/channels, brand-new thread at conversations
+      // limit) have nothing to attach history to — ephemeral platform delivery only.
+      // When an existing conversation is blocked from a new activation, persist so
+      // the upgrade card appears in durable web-chat history.
       await this.outboundGateway.replyOnThreadWithCard(
         thread,
-        buildUpgradeRequiredCard(reason, config.agentIdentifier, config.platform)
+        card,
+        conversation
+          ? {
+              persist: {
+                conversationId: conversation._id,
+                channel: this.conversationService.getPrimaryChannel(conversation),
+                agentIdentifier: config.agentIdentifier,
+                content: PLAN_LIMIT_BLOCK_MESSAGES[reason],
+                richContent: { card },
+                environmentId: config.environmentId,
+                organizationId: config.organizationId,
+              },
+            }
+          : undefined
       );
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post plan-limit upgrade reply (${reason})`);

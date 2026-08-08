@@ -204,7 +204,6 @@ export class HandleAgentReply {
           this.outboundGateway.reactToMessage(
             conversation._agentId,
             command.integrationIdentifier,
-            channel.platform,
             channel.platformThreadId,
             r.messageId,
             r.emojiName,
@@ -220,10 +219,17 @@ export class HandleAgentReply {
           this.outboundGateway.deleteInConversation(
             conversation._agentId,
             command.integrationIdentifier,
-            channel.platform,
             channel.platformThreadId,
             d.messageId,
-            channel.workspace?.id
+            channel.workspace?.id,
+            {
+              conversationId: conversation._id,
+              channel,
+              agentIdentifier: command.agentIdentifier,
+              agentName,
+              environmentId: command.environmentId,
+              organizationId: command.organizationId,
+            }
           )
         )
       );
@@ -413,6 +419,7 @@ export class HandleAgentReply {
         channel,
         agentIdentifier: command.agentIdentifier,
         agentName,
+        activityIdentifier: command.activityIdentifier,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
@@ -492,7 +499,8 @@ export class HandleAgentReply {
         await this.outboundGateway.stopTypingInConversation(
           conversation._agentId,
           command.integrationIdentifier,
-          channel.platformThreadId
+          channel.platformThreadId,
+          channel.workspace?.id
         );
 
         return;
@@ -759,7 +767,6 @@ export class HandleAgentReply {
     await this.outboundGateway.reactToMessage(
       conversation._agentId,
       config.integrationIdentifier,
-      channel.platform,
       channel.platformThreadId,
       firstMessageId,
       config.reactionOnResolved,

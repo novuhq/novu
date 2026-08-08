@@ -72,11 +72,14 @@ export type EvalScenario<TParsed = ParsedCommand> = {
 export type RunResult = {
   scenarioId: string;
   userPrompt: string;
+  /** Fixture workspace root — used by graders that re-read written files from disk. */
+  projectRoot: string;
   toolCalls: ToolCallRecord[];
   assistantMessages: string[];
   finalText: string;
   capturedUrls: string[];
   openedFiles: string[];
+  writtenFiles: string[];
   killedShellIds: string[];
   /** Shell ids of commands the suite parser marked as tracked (e.g. the connect command). */
   trackedShellIds: string[];

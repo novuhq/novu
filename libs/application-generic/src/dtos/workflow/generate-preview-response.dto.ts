@@ -74,9 +74,19 @@ export class ActionDto {
 }
 
 export class ChatRenderOutput extends RenderOutput {
-  @ApiProperty({ description: 'Body of the chat message' })
+  @ApiPropertyOptional({ description: 'Body of the chat message. Mutually exclusive with `card`.' })
+  @IsOptional()
   @IsString()
-  body: string;
+  body?: string;
+
+  @ApiPropertyOptional({
+    description: 'Rich Chat: compiled provider-agnostic card DSL. Mutually exclusive with `body`.',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  card?: Record<string, unknown>;
 }
 
 export class SmsRenderOutput extends RenderOutput {

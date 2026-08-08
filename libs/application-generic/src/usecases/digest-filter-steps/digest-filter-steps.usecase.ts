@@ -1,15 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 
-const LOG_CONTEXT = 'DigestFilterSteps';
+type StepWithTemplate = NotificationStepEntity & { template: NonNullable<NotificationStepEntity['template']> };
 
 // TODO; Potentially rename this use case
 @Injectable()
 export class DigestFilterSteps {
-  public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
+  public async execute<TStep extends NotificationStepEntity>(
+    command: Omit<DigestFilterStepsCommand, 'steps'> & { steps: TStep[] }
+  ): Promise<(TStep | StepWithTemplate)[]> {
     const { steps } = command;
 
     const triggerStep = this.createTriggerStep(command);
@@ -17,7 +19,7 @@ export class DigestFilterSteps {
     return [triggerStep, ...steps];
   }
 
-  private createTriggerStep(command: DigestFilterStepsCommand): NotificationStepEntity {
+  private createTriggerStep(command: Omit<DigestFilterStepsCommand, 'steps'>): StepWithTemplate {
     return {
       template: {
         _environmentId: command.environmentId,

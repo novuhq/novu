@@ -13,7 +13,7 @@ export const VariablePill = React.forwardRef<
     filters?: string[];
     issues?: ReturnType<typeof validateEnhancedDigestFilters>;
     className?: string;
-    onClick?: () => void;
+    onClick?: (event: React.MouseEvent<HTMLSpanElement>) => void;
     from?: VariableFrom;
     isNotInSchema?: boolean;
     isPayloadSchemaEnabled?: boolean;
@@ -35,11 +35,16 @@ export const VariablePill = React.forwardRef<
     >
       <span
         ref={ref}
-        onClick={onClick}
+        onClick={(event) => {
+          // Keep parent controls (e.g. card button node selection) working via bubble,
+          // but mark the event so callers can distinguish pill vs chrome clicks if needed.
+          onClick?.(event);
+        }}
         className={cn(
+          // Keep an opaque hover fill — translucent error tints reveal the parent
+          // control (e.g. primary/black card buttons) and look like a black hover state.
           'bg-bg-white border-stroke-soft font-code relative m-0 box-border inline-flex h-full cursor-pointer items-center gap-[0.25em] rounded-lg border px-1.5 py-px align-middle font-medium leading-[inherit] text-inherit',
-          { 'hover:bg-error-base/2.5': !!issues },
-          { 'hover:bg-error-base/2.5': isNotInSchema && !issues },
+          { 'hover:bg-bg-weak': !!issues || (isNotInSchema && !issues) },
           className
         )}
       >
