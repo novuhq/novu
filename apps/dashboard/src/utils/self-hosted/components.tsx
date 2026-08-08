@@ -1,9 +1,9 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/primitives/button';
-import { Input } from '../../components/primitives/input';
-import { API_HOSTNAME } from '../../config';
+import { Button } from '@/components/primitives/button';
+import { Input } from '@/components/primitives/input';
+import { API_HOSTNAME } from '@/config';
 
 const JWT_STORAGE_KEY = 'self-hosted-jwt';
 
@@ -46,7 +46,7 @@ export function SignIn() {
         throw new Error(data.message || 'Login failed');
       }
 
-      if (data.data.token) {
+      if (data.data?.token) {
         localStorage.setItem(JWT_STORAGE_KEY, data.data.token);
         (window as any).Clerk = { ...((window as any).Clerk || {}), loggedIn: true };
         navigate('/');
@@ -71,6 +71,8 @@ export function SignIn() {
           <Input
             type="email"
             id="email"
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -85,6 +87,8 @@ export function SignIn() {
           <Input
             type="password"
             id="password"
+            name="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="Password"
@@ -205,7 +209,7 @@ export function SignUp() {
         return;
       }
 
-      if (data.data.token) {
+      if (data.data?.token) {
         localStorage.setItem(JWT_STORAGE_KEY, data.data.token);
         (window as any).Clerk = { ...((window as any).Clerk || {}), loggedIn: true };
         navigate('/');
@@ -230,6 +234,8 @@ export function SignUp() {
           <Input
             type="text"
             id="firstName"
+            name="firstName"
+            autoComplete="given-name"
             value={firstName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
             placeholder="John"
@@ -244,6 +250,8 @@ export function SignUp() {
           <Input
             type="text"
             id="lastName"
+            name="lastName"
+            autoComplete="family-name"
             value={lastName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
             placeholder="Doe"
@@ -257,6 +265,8 @@ export function SignUp() {
           <Input
             type="email"
             id="email"
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -271,6 +281,8 @@ export function SignUp() {
           <Input
             type="password"
             id="password"
+            name="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsSubmitted(false);
@@ -285,6 +297,11 @@ export function SignUp() {
           <p className="mt-1 text-xs text-gray-500" id="password-constraints">
             Min. 8 characters, include uppercase, lowercase, number, and special character.
           </p>
+          {isSubmitted && passwordError && (
+            <p className="mt-1 text-xs text-red-600" role="alert">
+              {passwordError}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="organizationName" className="mb-1 block text-sm font-medium text-gray-700">
@@ -293,6 +310,8 @@ export function SignUp() {
           <Input
             type="text"
             id="organizationName"
+            name="organizationName"
+            autoComplete="organization"
             value={organizationName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrganizationName(e.target.value)}
             placeholder="Your Company"
@@ -327,11 +346,11 @@ export function SignUp() {
   );
 }
 
-export function RedirectToSignIn({ children }: { children: any }) {
+export function RedirectToSignIn({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!(window as any).Clerk.loggedIn) {
+    if (!(window as any).Clerk?.loggedIn) {
       navigate('/auth/sign-in');
     }
   }, [navigate]);
@@ -339,12 +358,12 @@ export function RedirectToSignIn({ children }: { children: any }) {
   return <>{children}</>;
 }
 
-export function SignedIn({ children }: { children: any }) {
+export function SignedIn({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function SignedOut({ children }: { children: any }) {
-  if ((window as any).Clerk.loggedIn) return null;
+export function SignedOut({ children }: { children: React.ReactNode }) {
+  if ((window as any).Clerk?.loggedIn) return null;
 
   return <>{children}</>;
 }

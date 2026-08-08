@@ -4,7 +4,7 @@ import { IconType } from 'react-icons';
 import type { PolymorphicComponentProps } from '@/utils/polymorphic';
 import { recursiveCloneChildren } from '@/utils/recursive-clone-children';
 import { tv, type VariantProps } from '@/utils/tv';
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/utils/constants';
 
 const INPUT_ROOT_NAME = 'InputRoot';
 const INPUT_WRAPPER_NAME = 'InputWrapper';
@@ -235,9 +235,10 @@ const InputEl = React.forwardRef<
   React.InputHTMLAttributes<HTMLInputElement> &
     InputSharedProps & {
       asChild?: boolean;
+      disableAutofill?: boolean;
       onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     }
->(({ className, type = 'text', size, hasError, asChild, ...rest }, forwardedRef) => {
+>(({ className, type = 'text', size, hasError, asChild, disableAutofill = false, ...rest }, forwardedRef) => {
   const Component = asChild ? Slot : 'input';
 
   const { input } = inputVariants({
@@ -245,12 +246,14 @@ const InputEl = React.forwardRef<
     hasError,
   });
 
+  const autofillAttributes = disableAutofill ? AUTOCOMPLETE_PASSWORD_MANAGERS_OFF : {};
+
   return (
     <Component
       type={type}
       className={input({ class: className })}
       ref={forwardedRef}
-      {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
+      {...autofillAttributes}
       {...rest}
     />
   );
@@ -266,6 +269,17 @@ type InputProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> &
     trailingNode?: React.ReactNode;
     inlineLeadingNode?: React.ReactNode;
     inlineTrailingNode?: React.ReactNode;
+    /**
+     * When true, applies anti-autofill signals (autoComplete="off", data-1p-ignore, data-form-type="other")
+     * to prevent browsers and password managers from offering to fill or save the field.
+     *
+     * Use this for fields where autofill is actively disruptive (e.g. workflow name, credential
+     * identifiers in the integrations panel). Do NOT use on auth forms — sign-in/sign-up fields
+     * must remain autofillable so password managers work correctly.
+     *
+     * Defaults to false.
+     */
+    disableAutofill?: boolean;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   };
 
@@ -281,6 +295,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       inlineLeadingNode,
       inlineTrailingNode,
       onChange,
+      type = 'text',
+      // FIX: was previously destructured and silently dropped, so disableAutofill={true}
+      // had no effect and callers had no way to opt out of autofill blocking.
+      // Now forwarded to InputEl, which applies AUTOCOMPLETE_PASSWORD_MANAGERS_OFF only when true.
+      disableAutofill = false,
       ...rest
     },
     forwardedRef
@@ -291,7 +310,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <InputWrapper>
           {inlineLeadingNode}
           {LeadingIcon && <InputIcon as={LeadingIcon} />}
-          <InputEl ref={forwardedRef} type="text" onChange={onChange} {...rest} />
+          <InputEl ref={forwardedRef} type={type} onChange={onChange} disableAutofill={disableAutofill} {...rest} />
           {TrailingIcon && <InputIcon as={TrailingIcon} />}
           {inlineTrailingNode}
         </InputWrapper>
