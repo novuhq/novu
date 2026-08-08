@@ -1,11 +1,11 @@
 import { AiResourceTypeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
-import { BaseRepository } from '../base-repository';
+import { BaseRepositoryV2 } from '../base-repository-v2';
 import { AiChatDBModel, AiChatEntity, AiChatSnapshotRef } from './ai-chat.entity';
 import { AiChat } from './ai-chat.schema';
 
-export class AiChatRepository extends BaseRepository<AiChatDBModel, AiChatEntity, EnforceEnvOrOrgIds> {
+export class AiChatRepository extends BaseRepositoryV2<AiChatDBModel, AiChatEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(AiChat, AiChatEntity);
   }
@@ -25,7 +25,7 @@ export class AiChatRepository extends BaseRepository<AiChatDBModel, AiChatEntity
         resourceType,
         resourceId,
       },
-      undefined,
+      '*',
       { sort: { updatedAt: -1 }, limit: 1 }
     );
 
