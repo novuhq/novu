@@ -75,7 +75,7 @@
     "start:server": "http-server ./dist -p 4010",
     "prebuild": "node -e \"require('fs').copyFileSync('./src/ui/index.css', './src/ui/index.directcss')\"",
     "build": "pnpm run clean && cross-env NODE_ENV=production tsup",
-    "postbuild": "node -e \"try{require('fs').unlinkSync('./src/ui/index.directcss')}catch(e){}\" && node scripts/size-limit.mjs",
+    "postbuild": "node -e \"try{require('fs').unlinkSync('./src/ui/index.directcss')}catch(e){}\" && node scripts/size-limit.mjs && pnpm run check-exports",
     "build:umd": "webpack --config webpack.config.cjs",
     "build:watch": "concurrently \"pnpm run prebuild\" \"cross-env NODE_ENV=development pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch --onSuccess \"tsup --dts-only\"",

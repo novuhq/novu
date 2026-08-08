@@ -23,8 +23,8 @@ let passed = 0, failed = 0;
 
 function describe(name, fn) { console.log('\n' + name); fn(); }
 function it(name, fn) {
-  try { fn(); console.log('  ✅  ' + name); passed++; }
-  catch(err) { console.error('  ❌  ' + name + '\n       ' + err.message); failed++; }
+  try { fn(); console.log('   ✅   ' + name); passed++; }
+  catch(err) { console.error('   ❌   ' + name + '\n       ' + err.message); failed++; }
 }
 function expectAutofillEnabled(props) {
   assert.notEqual(props.autoComplete, 'off');
@@ -115,5 +115,5 @@ describe('BEFORE fix simulation', () => {
 });
 
 console.log('\n' + '─'.repeat(50));
-if (failed === 0) { console.log('✅  All ' + passed + ' tests passed'); }
-else { console.log('❌  ' + failed + ' failed, ' + passed + ' passed'); process.exit(1); }
+if (failed === 0) { console.log('✅   All ' + passed + ' tests passed'); }
+else { console.log('❌   ' + failed + ' failed, ' + passed + ' passed'); process.exit(1); }
