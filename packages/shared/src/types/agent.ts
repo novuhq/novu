@@ -103,6 +103,12 @@ export interface EmailWebhookPayload {
   domain?: EmailWebhookDomainContext;
   route?: EmailWebhookRouteContext;
   /**
+   * Decoded Novu `Message._id` extracted from a trailing `+nv{base36}` Reply-To
+   * token on the inbound recipient address. Present only for replies to
+   * agent-assigned workflow emails; used for workflow-origin hydration.
+   */
+  originToken?: string;
+  /**
    * Sender-authentication verdicts computed by the inbound-mail service
    * (`'pass'` / `'failed'`). Because the `From` header is trivially spoofable,
    * consumers that resolve a sender identity from it MUST treat the address as

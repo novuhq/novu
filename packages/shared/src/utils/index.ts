@@ -1,3 +1,4 @@
+export * from './agent-email-reply-token';
 export * from './bridge.utils';
 export * from './buildWorkflowPreferences';
 export * from './chat-body';

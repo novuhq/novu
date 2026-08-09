@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   type AgentEmailContext,
-  buildAgentEmailMessageId,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CreateExecutionDetails,
@@ -35,6 +34,7 @@ import {
 } from '@novu/dal';
 import { EmailOutput } from '@novu/framework/internal';
 import {
+  buildAgentReplyToAddress,
   ChannelTypeEnum,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
@@ -374,8 +374,8 @@ export class SendMessageEmail extends SendMessageBase {
     if (needsAgentReplyTo || needsAgentSender) {
       const agentEmailContext = await this.resolveWorkflowAgentEmailContext(command);
 
-      if (needsAgentReplyTo) {
-        replyToAddress = agentEmailContext.replyTo;
+      if (needsAgentReplyTo && agentEmailContext.replyTo) {
+        replyToAddress = buildAgentReplyToAddress(agentEmailContext.replyTo, message._id);
       }
 
       if (needsAgentSender) {
@@ -385,8 +385,6 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     resolvedFromEmail = resolvedFromEmail || integration?.credentials.from || 'no-reply@novu.co';
-
-    const agentMessageId = assignedAgentId ? buildAgentEmailMessageId(message._id, resolvedFromEmail) : undefined;
 
     const mailData: IEmailOptions = createMailData(
       {
@@ -399,7 +397,6 @@ export class SendMessageEmail extends SendMessageBase {
         senderName: resolvedSenderName,
         id: message._id,
         replyTo: replyToAddress,
-        ...(agentMessageId ? { headers: { 'Message-ID': agentMessageId } } : {}),
         notificationDetails: {
           transactionId: command.transactionId,
           workflowIdentifier: command.identifier,
@@ -887,12 +884,6 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
 
   const ipPoolName = overrides?.ipPoolName ? { ipPoolName: overrides?.ipPoolName } : {};
 
-  // Prefer overrides, but never let them replace a minted agent Message-ID.
-  const headers = { ...options.headers, ...overrides?.headers };
-  if (options.headers?.['Message-ID']) {
-    headers['Message-ID'] = options.headers['Message-ID'];
-  }
-
   return {
     ...options,
     to,
@@ -905,7 +896,10 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
     senderName: overrides?.senderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
-    headers,
+    headers: {
+      ...options.headers,
+      ...overrides?.headers,
+    },
   };
 };
 

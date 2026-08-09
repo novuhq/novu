@@ -194,6 +194,8 @@ export class InboundDomainRouteDelivery {
     route: DomainRouteEntity;
     mail: InboundDomainRouteMailInput;
     toAddress: string;
+    /** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token. */
+    originToken?: string;
   }): Promise<{ httpStatus: number; body: unknown; latencyMs: number }> {
     this.logger.info({ toAddress: params.toAddress }, 'Delivering inbound email to agent');
 
@@ -213,6 +215,7 @@ export class InboundDomainRouteDelivery {
     const payload = this.buildAgentEmailWebhookPayload(params.mail, {
       domain: params.domain,
       route: params.route,
+      originToken: params.originToken,
     });
     const signature = buildNovuSignatureHeader(secretKey, payload);
     const apiBaseUrl = process.env.API_ROOT_URL;
@@ -240,14 +243,14 @@ export class InboundDomainRouteDelivery {
 
   previewAgentMailPayload(
     mail: InboundDomainRouteMailInput,
-    options?: { domain?: RoutableDomain; route?: DomainRouteEntity }
+    options?: { domain?: RoutableDomain; route?: DomainRouteEntity; originToken?: string }
   ): EmailWebhookPayload {
     return this.buildAgentEmailWebhookPayload(mail, options);
   }
 
   private buildAgentEmailWebhookPayload(
     mail: InboundDomainRouteMailInput,
-    options?: { domain?: RoutableDomain; route?: DomainRouteEntity }
+    options?: { domain?: RoutableDomain; route?: DomainRouteEntity; originToken?: string }
   ): EmailWebhookPayload {
     const from = mail.from[0];
     const refs = normalizeReferences(mail.references);
@@ -268,6 +271,7 @@ export class InboundDomainRouteDelivery {
       text: mail.text || undefined,
       html: mail.html || undefined,
       headers,
+      originToken: options?.originToken,
       domain: options?.domain
         ? {
             id: options.domain._id,

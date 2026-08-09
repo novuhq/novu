@@ -1,5 +1,5 @@
 import { MailFactory } from '@novu/application-generic';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { buildAgentReplyToAddress, ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
@@ -326,7 +326,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     });
     expect(sendStub.firstCall.args[0].from).to.equal('agent@inbox.com');
     expect(sendStub.firstCall.args[0].senderName).to.equal('Support Agent');
-    expect(sendStub.firstCall.args[0].replyTo).to.equal('agent@inbox.com');
+    expect(sendStub.firstCall.args[0].replyTo).to.equal(buildAgentReplyToAddress('agent@inbox.com', MESSAGE_ID));
   });
 
   it('uses trigger agent ObjectId override over workflow agent', async () => {
@@ -346,7 +346,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     );
     expect(resolveAgentInboundAddresses.resolveAgentEmailContext.called).to.equal(false);
     expect(sendStub.firstCall.args[0].from).to.equal('trigger@inbox.com');
-    expect(sendStub.firstCall.args[0].replyTo).to.equal('trigger@inbox.com');
+    expect(sendStub.firstCall.args[0].replyTo).to.equal(buildAgentReplyToAddress('trigger@inbox.com', MESSAGE_ID));
   });
 
   it('opts out of agent defaults when job _agentId is explicitly null', async () => {
@@ -404,7 +404,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
   });
 
   describe('agent reply correlation', () => {
-    it('stamps _agentId at creation and mints a Message-ID on the sender domain', async () => {
+    it('stamps _agentId at creation and tokenizes the agent Reply-To', async () => {
       const { usecase, messageRepository, agentRepository } = buildUsecase({
         senderEmail: 'agent@inbox.com',
         replyTo: 'agent@inbox.com',
@@ -420,12 +420,14 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
         _organizationId: 'org_1',
       });
       expect(messageRepository.create.firstCall.args[0]._agentId).to.equal(AGENT_ID);
-      expect(sendStub.firstCall.args[0].headers['Message-ID']).to.equal(`<novu-${MESSAGE_ID}@inbox.com>`);
+      expect(sendStub.firstCall.args[0].replyTo).to.equal(buildAgentReplyToAddress('agent@inbox.com', MESSAGE_ID));
+      expect(sendStub.firstCall.args[0].headers?.['Message-ID']).to.equal(undefined);
     });
 
     it('resolves the agent from job _agentId without querying the repository', async () => {
       const { usecase, messageRepository, agentRepository } = buildUsecase({
         senderEmail: 'trigger@inbox.com',
+        replyTo: 'trigger@inbox.com',
       });
       const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
       sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
@@ -434,7 +436,7 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
 
       expect(agentRepository.findOne.called).to.equal(false);
       expect(messageRepository.create.firstCall.args[0]._agentId).to.equal('bbbbbbbbbbbbbbbbbbbbbbb1');
-      expect(sendStub.firstCall.args[0].headers['Message-ID']).to.equal(`<novu-${MESSAGE_ID}@inbox.com>`);
+      expect(sendStub.firstCall.args[0].replyTo).to.equal(buildAgentReplyToAddress('trigger@inbox.com', MESSAGE_ID));
     });
 
     it('leaves non-agent sends untouched', async () => {
@@ -462,10 +464,10 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
       expect(updateCall?.args[1].$set.identifier).to.equal('provider_send_1');
     });
 
-    it('merges override headers but keeps the minted Message-ID', async () => {
+    it('merges override headers without minting a Message-ID', async () => {
       const { usecase } = buildUsecase(
-        { senderEmail: 'agent@inbox.com' },
-        { headers: { 'X-Custom': 'kept', 'Message-ID': '<spoofed@evil.example>' } }
+        { senderEmail: 'agent@inbox.com', replyTo: 'agent@inbox.com' },
+        { headers: { 'X-Custom': 'kept', 'Message-ID': '<caller@example.com>' } }
       );
       const sendStub = sinon.stub().resolves({ id: 'provider_send_1' });
       sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub } as never);
@@ -474,8 +476,9 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
 
       expect(sendStub.firstCall.args[0].headers).to.deep.equal({
         'X-Custom': 'kept',
-        'Message-ID': `<novu-${MESSAGE_ID}@inbox.com>`,
+        'Message-ID': '<caller@example.com>',
       });
+      expect(sendStub.firstCall.args[0].replyTo).to.equal(buildAgentReplyToAddress('agent@inbox.com', MESSAGE_ID));
     });
 
     it('lets override headers through untouched for non-agent sends', async () => {

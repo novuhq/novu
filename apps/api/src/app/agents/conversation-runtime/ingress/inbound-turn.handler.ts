@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, normalizeReferences, PinoLogger, parseAgentEmailMessageId } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -215,28 +215,12 @@ function toProviderMessageLookupKey(platformThreadId: string): string {
   return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
 }
 
-/** Oldest Novu-minted Message-ID from inbound `References`, falling back to `In-Reply-To`. */
-function extractAgentEmailOriginRef(message: Message): { originId: string; rfcMessageId: string } | null {
+/** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token on the inbound recipient. */
+function extractAgentEmailOriginToken(message: Message): string | null {
   const raw = asRecord(message.raw);
+  const originToken = raw?.originToken;
 
-  if (!raw) {
-    return null;
-  }
-
-  const candidates = [
-    ...normalizeReferences(raw.references as string | string[] | undefined),
-    ...normalizeReferences(raw.inReplyTo as string | string[] | undefined),
-  ];
-
-  for (const candidate of candidates) {
-    const originId = parseAgentEmailMessageId(candidate);
-
-    if (originId) {
-      return { originId, rfcMessageId: candidate.trim() };
-    }
-  }
-
-  return null;
+  return typeof originToken === 'string' && originToken.length > 0 ? originToken.toLowerCase() : null;
 }
 
 /** Slack provider id is `{channel}:{ts}` — channel ids never contain `:`. */
@@ -786,19 +770,19 @@ export class AgentInboundHandler implements OnModuleInit {
     subscriberId: string,
     message: Message
   ): Promise<{ message: MessageEntity; platformMessageId: string } | null> {
-    const originRef = extractAgentEmailOriginRef(message);
-    if (!originRef) {
+    const originId = extractAgentEmailOriginToken(message);
+    if (!originId) {
       return null;
     }
 
     const originMessage = await this.messageRepository.findOne({
-      _id: originRef.originId,
+      _id: originId,
       _environmentId: config.environmentId,
       _agentId: agentId,
       _subscriberId: subscriberId,
     });
 
-    return originMessage ? { message: originMessage, platformMessageId: originRef.rfcMessageId } : null;
+    return originMessage ? { message: originMessage, platformMessageId: originMessage._id } : null;
   }
 
   /** Fail-soft: origin write must not block the inbound turn. */
