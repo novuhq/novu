@@ -28,6 +28,7 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  ConfigurationSetName = 'configurationSetName',
   ApiKeyRequestHeader = 'apiKeyRequestHeader',
   SecretKeyRequestHeader = 'secretKeyRequestHeader',
   IdPath = 'idPath',

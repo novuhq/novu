@@ -324,6 +324,13 @@ export const sesConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ConfigurationSetName,
+    displayName: 'Configuration Set Name',
+    description: 'The name of the SES Configuration Set to apply to sent emails',
+    type: 'string',
+    required: false,
+  },
   ...mailConfigBase,
 ];
 
