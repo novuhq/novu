@@ -314,7 +314,6 @@ function convertExecutionDetail(entity: ExecutionDetailFeedItem): ActivityNotifi
     source: entity.source,
     status: entity.status,
     raw: entity.raw || undefined,
-    message: entity.message || undefined,
     createdAt: entity.createdAt,
   };
 }

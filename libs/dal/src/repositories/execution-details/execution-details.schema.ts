@@ -60,9 +60,6 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
     raw: {
       type: Schema.Types.String,
     },
-    message: {
-      type: Schema.Types.String,
-    },
     webhookStatus: {
       type: Schema.Types.String,
     },

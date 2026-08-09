@@ -38,13 +38,6 @@ export class StepExecutionDetailDto {
   @IsOptional()
   @IsString()
   raw?: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Human-readable note surfaced alongside the detail, e.g. a warning explanation',
-  })
-  @IsOptional()
-  @IsString()
-  message?: string | null;
 }
 
 export class StepRunDto {

@@ -316,24 +316,6 @@ describe('SendMessageChat - Slack provider content overrides', () => {
   });
 });
 
-function findProviderSelectedCall(execute: sinon.SinonStub) {
-  return execute.getCalls().find((call) => call.args[0]?.detail?.includes('provider was selected'));
-}
-
-function expectFallbackWarningOnProviderSelected(execute: sinon.SinonStub) {
-  const providerSelectedCall = findProviderSelectedCall(execute);
-  expect(providerSelectedCall, 'provider selected execution detail').to.exist;
-  expect(providerSelectedCall?.args[0]?.status).to.equal(ExecutionDetailsStatusEnum.WARNING);
-  expect(providerSelectedCall?.args[0]?.message).to.equal(
-    'Agent integration unavailable. Integration fallback to `slack-main`. '
-  );
-
-  const fallbackCall = execute
-    .getCalls()
-    .find((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK);
-  expect(fallbackCall, 'standalone fallback execution detail').to.not.exist;
-}
-
 describe('SendMessageChat - agent assigned path', () => {
   const slackUserData = {
     type: ENDPOINT_TYPES.SLACK_USER,
@@ -592,7 +574,14 @@ describe('SendMessageChat - agent assigned path', () => {
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
     sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
-    expectFallbackWarningOnProviderSelected(createExecutionDetails.execute);
+    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
+      detail: DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
+      status: ExecutionDetailsStatusEnum.WARNING,
+      raw: JSON.stringify({
+        message:
+          `No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels`,
+      }),
+    });
   });
 
   it('falls back to resolved channels for agent-assigned non-Slack endpoints', async () => {
@@ -612,18 +601,14 @@ describe('SendMessageChat - agent assigned path', () => {
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
     sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
-    expectFallbackWarningOnProviderSelected(createExecutionDetails.execute);
-  });
-
-  it('logs the provider selection without a warning when the agent integration is linked', async () => {
-    const { usecase, createExecutionDetails } = buildAgentUsecase({ jobAgentId: 'agent_1' });
-
-    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
-
-    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
-    const providerSelectedCall = findProviderSelectedCall(createExecutionDetails.execute);
-    expect(providerSelectedCall?.args[0]?.status).to.equal(ExecutionDetailsStatusEnum.PENDING);
-    expect(providerSelectedCall?.args[0]?.message).to.equal(undefined);
+    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
+      detail: DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
+      status: ExecutionDetailsStatusEnum.WARNING,
+      raw: JSON.stringify({
+        message:
+          "No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels",
+      }),
+    });
   });
 
   it('resolves workflow.agent when job._agentId is unset and stamps with that agent', async () => {

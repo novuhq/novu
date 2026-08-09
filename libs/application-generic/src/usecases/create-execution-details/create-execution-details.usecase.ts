@@ -189,10 +189,6 @@ export class CreateExecutionDetails {
       delete cleanEntity.raw;
     }
 
-    if (cleanEntity.message === null) {
-      delete cleanEntity.message;
-    }
-
     return cleanEntity;
   }
 
@@ -209,7 +205,7 @@ export class CreateExecutionDetails {
       external_subscriber_id: command.subscriberId || null,
       event_type: eventType,
       title: command.detail,
-      message: command.message || null,
+      message: null,
       raw_data: command.raw || null,
       status: this.mapExecutionStatusToTraceStatus(command.status),
       entity_id: command.jobId,

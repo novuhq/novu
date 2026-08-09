@@ -215,12 +215,6 @@ export class ActivityNotificationExecutionDetailResponseDto {
   @ApiPropertyOptional({ description: 'Raw data of the execution', type: String })
   raw?: string | null;
 
-  @ApiPropertyOptional({
-    description: 'Human-readable note surfaced alongside the detail, e.g. a warning explanation',
-    type: String,
-  })
-  message?: string | null;
-
   @ApiProperty({
     enum: [...Object.values(ExecutionDetailsSourceEnum)],
     enumName: 'ExecutionDetailsSourceEnum',

@@ -290,7 +290,10 @@ function JobDetails({ job }: { job: IActivityJob }) {
         {job.executionDetails && job.executionDetails.length > 0 && (
           <div className="flex flex-col gap-2">
             {job.executionDetails.map((detail, index) => (
-              <ExecutionDetailItem key={index} detail={detail} />
+              <ExecutionDetailItem
+                key={index}
+                detail={{ ...detail, status: job.executionDetails[job.executionDetails.length - 1].status }}
+              />
             ))}
           </div>
         )}
