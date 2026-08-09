@@ -85,7 +85,6 @@ type MessageContext = {
   assignedAgentId: string | null;
 };
 
-/** Slack-only for now; extend when other agent platforms gain send support. */
 const AGENT_SUPPORTED_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
 
 function filterAgentSupportedEndpoints(endpoints: ChannelData[]): ChannelData[] {
@@ -176,7 +175,7 @@ export class SendMessageChat extends SendMessageBase {
             undefined,
             {
               message:
-                `No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels`,
+                "No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels",
             }
           );
         }
@@ -498,7 +497,6 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     card?: CardElement
   ): Promise<SendMessageResult> {
-
     /**
      * Workaround: phone-based chat providers (WhatsApp, Sendblue) behave more like SMS than our
      * webhook-based chat implementation, so they select their integration by providerId rather
@@ -721,7 +719,6 @@ export class SendMessageChat extends SendMessageBase {
     }
   }
 
-  /** Post-send stamp for inbound hydration; must not flip a successful send to FAILED. */
   private async persistProviderIdentifier(
     identifier: string,
     message: MessageEntity,
@@ -729,12 +726,18 @@ export class SendMessageChat extends SendMessageBase {
     assignedAgentId?: string
   ): Promise<void> {
     try {
-      await this.messageRepository.setProviderIdentifierIfAbsent({
-        messageId: message._id,
-        environmentId: command.environmentId,
-        identifier,
-        ...(assignedAgentId ? { agentId: assignedAgentId } : {}),
-      });
+      await this.messageRepository.update(
+        {
+          _id: message._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            identifier,
+            ...(assignedAgentId ? { _agentId: assignedAgentId } : {}),
+          },
+        }
+      );
     } catch (error) {
       Logger.error(
         {
@@ -787,7 +790,6 @@ export class SendMessageChat extends SendMessageBase {
     return agent?._id ? String(agent._id) : null;
   }
 
-  /** Only agent-linked, agent-supported endpoint types may deliver. */
   private async gateChannelsForAssignedAgent(
     channels: UnifiedChannel[],
     assignedAgentId: string,

@@ -138,7 +138,6 @@ export class MessageEntity {
 
   contextKeys?: string[];
 
-  /** Agent that owned the outbound chat send when provider identifier was stamped for seed hydration. */
   _agentId?: string;
 }
 

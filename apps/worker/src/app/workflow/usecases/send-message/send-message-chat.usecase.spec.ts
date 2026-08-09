@@ -340,7 +340,7 @@ describe('SendMessageChat - agent assigned path', () => {
     channelData?: unknown[];
     linked?: boolean;
     chatHandlerSend?: sinon.SinonStub;
-    setProviderIdentifierIfAbsent?: sinon.SinonStub;
+    updateMessage?: sinon.SinonStub;
     jobAgentId?: string | null;
     workflowAgentIdentifier?: string;
   } = {}) {
@@ -351,7 +351,7 @@ describe('SendMessageChat - agent assigned path', () => {
         id: 'D123:1777837477.371619',
         date: new Date().toISOString(),
       }),
-      setProviderIdentifierIfAbsent = sinon.stub().resolves(undefined),
+      updateMessage = sinon.stub().resolves(undefined),
       jobAgentId,
       workflowAgentIdentifier,
     } = options;
@@ -372,7 +372,7 @@ describe('SendMessageChat - agent assigned path', () => {
     const messageRepository = {
       create: sinon.stub().resolves({ _id: 'message_1' }),
       updateMessageStatus: sinon.stub().resolves(undefined),
-      setProviderIdentifierIfAbsent,
+      update: updateMessage,
     };
     const selectIntegration = {
       execute: sinon.stub().resolves(slackIntegration),
@@ -412,7 +412,7 @@ describe('SendMessageChat - agent assigned path', () => {
     return {
       usecase,
       chatHandlerSend,
-      setProviderIdentifierIfAbsent,
+      updateMessage,
       createExecutionDetails,
       sendWebhookMessage,
       messageRepository,
@@ -473,40 +473,44 @@ describe('SendMessageChat - agent assigned path', () => {
   }
 
   it('routes agent-assigned Slack delivery through ChatFactory and stamps provider identifier on message', async () => {
-    const { usecase, chatHandlerSend, setProviderIdentifierIfAbsent } = buildAgentUsecase({ jobAgentId: 'agent_1' });
+    const { usecase, chatHandlerSend, updateMessage } = buildAgentUsecase({ jobAgentId: 'agent_1' });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
-    expect(setProviderIdentifierIfAbsent.firstCall.args[0]).to.include({
-      agentId: 'agent_1',
-      identifier: 'D123:1777837477.371619',
-      messageId: 'message_1',
-      environmentId: 'env_1',
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[0]).to.deep.equal({
+      _id: 'message_1',
+      _environmentId: 'env_1',
+    });
+    expect(updateMessage.firstCall.args[1]).to.deep.equal({
+      $set: {
+        identifier: 'D123:1777837477.371619',
+        _agentId: 'agent_1',
+      },
     });
   });
 
   it('does not stamp provider identifier when provider send fails', async () => {
     const chatHandlerSend = sinon.stub().rejects(new Error('slack down'));
-    const setProviderIdentifierIfAbsent = sinon.stub().resolves(undefined);
+    const updateMessage = sinon.stub().resolves(undefined);
     const { usecase } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       chatHandlerSend,
-      setProviderIdentifierIfAbsent,
+      updateMessage,
     });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(result.status).to.equal(SendMessageStatus.FAILED);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.notCalled(setProviderIdentifierIfAbsent);
+    sinon.assert.notCalled(updateMessage);
   });
 
   it('stamps the composite provider id for Slack channel endpoints', async () => {
     const chatHandlerSend = sinon.stub().resolves({ id: 'C999:1234567890.123456', date: new Date().toISOString() });
-    const { usecase, setProviderIdentifierIfAbsent } = buildAgentUsecase({
+    const { usecase, updateMessage } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       chatHandlerSend,
       channelData: [
@@ -522,24 +526,26 @@ describe('SendMessageChat - agent assigned path', () => {
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
-    sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
-    expect(setProviderIdentifierIfAbsent.firstCall.args[0]).to.include({
-      identifier: 'C999:1234567890.123456',
-      agentId: 'agent_1',
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[1]).to.deep.equal({
+      $set: {
+        identifier: 'C999:1234567890.123456',
+        _agentId: 'agent_1',
+      },
     });
   });
 
   it('keeps send success when provider identifier stamp fails (fail-soft)', async () => {
-    const setProviderIdentifierIfAbsent = sinon.stub().rejects(new Error('mongo unavailable'));
+    const updateMessage = sinon.stub().rejects(new Error('mongo unavailable'));
     const { usecase, createExecutionDetails } = buildAgentUsecase({
       jobAgentId: 'agent_1',
-      setProviderIdentifierIfAbsent,
+      updateMessage,
     });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
-    sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
+    sinon.assert.calledOnce(updateMessage);
     const warningCall = createExecutionDetails.execute
       .getCalls()
       .find((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_PLATFORM_THREAD_PERSIST_FAILED);
@@ -548,23 +554,24 @@ describe('SendMessageChat - agent assigned path', () => {
   });
 
   it('stamps identifier without agentId when job._agentId is explicitly null (opt out)', async () => {
-    const { usecase, chatHandlerSend, setProviderIdentifierIfAbsent } = buildAgentUsecase({ jobAgentId: null });
+    const { usecase, chatHandlerSend, updateMessage } = buildAgentUsecase({ jobAgentId: null });
 
     const result = await usecase.execute(buildAgentCommand({ jobAgentId: null }));
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
-    expect(setProviderIdentifierIfAbsent.firstCall.args[0]).to.include({
-      identifier: 'D123:1777837477.371619',
-      messageId: 'message_1',
-      environmentId: 'env_1',
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[0]).to.deep.equal({
+      _id: 'message_1',
+      _environmentId: 'env_1',
     });
-    expect(setProviderIdentifierIfAbsent.firstCall.args[0]).to.not.have.property('agentId');
+    expect(updateMessage.firstCall.args[1]).to.deep.equal({
+      $set: { identifier: 'D123:1777837477.371619' },
+    });
   });
 
   it('falls back to resolved channels when the integration is not linked to the assigned agent', async () => {
-    const { usecase, chatHandlerSend, setProviderIdentifierIfAbsent, createExecutionDetails } = buildAgentUsecase({
+    const { usecase, chatHandlerSend, updateMessage, createExecutionDetails } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       linked: false,
     });
@@ -573,19 +580,19 @@ describe('SendMessageChat - agent assigned path', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
+    sinon.assert.calledOnce(updateMessage);
     sinon.assert.calledWithMatch(createExecutionDetails.execute, {
       detail: DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
       status: ExecutionDetailsStatusEnum.WARNING,
       raw: JSON.stringify({
         message:
-          `No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels`,
+          "No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels",
       }),
     });
   });
 
   it('falls back to resolved channels for agent-assigned non-Slack endpoints', async () => {
-    const { usecase, chatHandlerSend, setProviderIdentifierIfAbsent, createExecutionDetails } = buildAgentUsecase({
+    const { usecase, chatHandlerSend, updateMessage, createExecutionDetails } = buildAgentUsecase({
       jobAgentId: 'agent_1',
       channelData: [
         {
@@ -600,7 +607,7 @@ describe('SendMessageChat - agent assigned path', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
+    sinon.assert.calledOnce(updateMessage);
     sinon.assert.calledWithMatch(createExecutionDetails.execute, {
       detail: DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
       status: ExecutionDetailsStatusEnum.WARNING,
@@ -612,7 +619,7 @@ describe('SendMessageChat - agent assigned path', () => {
   });
 
   it('resolves workflow.agent when job._agentId is unset and stamps with that agent', async () => {
-    const { usecase, chatHandlerSend, setProviderIdentifierIfAbsent } = buildAgentUsecase({
+    const { usecase, chatHandlerSend, updateMessage } = buildAgentUsecase({
       workflowAgentIdentifier: 'support-agent',
     });
 
@@ -620,7 +627,7 @@ describe('SendMessageChat - agent assigned path', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     sinon.assert.calledOnce(chatHandlerSend);
-    sinon.assert.calledOnce(setProviderIdentifierIfAbsent);
-    expect(setProviderIdentifierIfAbsent.firstCall.args[0].agentId).to.equal('agent_from_workflow');
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[1].$set._agentId).to.equal('agent_from_workflow');
   });
 });

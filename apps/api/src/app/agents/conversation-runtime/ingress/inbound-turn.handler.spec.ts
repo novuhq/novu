@@ -467,13 +467,13 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
-      expect(hydrateArgs.content).to.equal(
+      expect(hydrateArgs.messageContent).to.equal(
         'Order ORD-1 shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-1"\n}'
       );
       expect(hydrateArgs.platformMessageId).to.equal('1777837477.371619');
       expect(hydrateArgs.platformThreadId).to.equal('slack:D123:1777837477.371619');
-      expect(hydrateArgs.originPayload.payload).to.deep.equal({ orderId: 'ORD-1' });
-      expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
+      expect(hydrateArgs.signalData.payload).to.deep.equal({ orderId: 'ORD-1' });
+      expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
     });
 
     it("should not hydrate another subscriber's workflow origin from the same platform thread", async () => {
@@ -1606,7 +1606,7 @@ describe('AgentInboundHandler', () => {
 
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
-      expect(hydrateArgs.originPayload.workflowIdentifier).to.equal('order-alerts');
+      expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
       // The origin must reach history before the runtime reads the conversation.
       expect(conversationService.persistWorkflowOriginHydration.calledBefore(bridgeExecutor.execute)).to.equal(true);
     });

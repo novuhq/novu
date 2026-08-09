@@ -156,8 +156,8 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
 export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
   platformMessageId: string;
   platformThreadId: string;
-  content: string;
-  originPayload: Record<string, unknown>;
+  messageContent: string;
+  signalData: Record<string, unknown>;
 }
 
 export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
@@ -826,7 +826,7 @@ export class AgentConversationService {
       platformMessageId: params.platformMessageId,
       platformThreadId: params.platformThreadId,
       identifier: `workflow-dispatch-msg:${params.platformMessageId}`,
-      content: params.content,
+      content: params.messageContent,
     });
 
     await this.activityRepository.createSignalActivity({
@@ -836,10 +836,10 @@ export class AgentConversationService {
       integrationId: params.channel._integrationId,
       platformThreadId: params.platformThreadId,
       agentId: params.agentIdentifier,
-      content: `Workflow origin: ${String(params.originPayload.workflowIdentifier ?? 'unknown')}`,
+      content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
       signalData: {
         type: 'workflow_origin',
-        payload: params.originPayload,
+        payload: params.signalData,
       },
       platformMessageId: params.platformMessageId,
       environmentId: params.environmentId,
