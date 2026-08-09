@@ -1261,26 +1261,4 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       identifier,
     });
   }
-
-  /** Set-if-absent so multi-endpoint fanout keeps the first successful provider id. */
-  async setProviderIdentifierIfAbsent(params: {
-    messageId: string;
-    environmentId: string;
-    identifier: string;
-    agentId?: string;
-  }): Promise<void> {
-    await this.update(
-      {
-        _id: params.messageId,
-        _environmentId: params.environmentId,
-        identifier: { $exists: false },
-      },
-      {
-        $set: {
-          identifier: params.identifier,
-          ...(params.agentId ? { _agentId: params.agentId } : {}),
-        },
-      }
-    );
-  }
 }
