@@ -120,9 +120,10 @@ describe('NovuWebChatAdapterImpl', () => {
 
     expect(response.status).toBe(201);
     expect(body.data.identifier).toMatch(/^conv_[0-9a-z]{12}$/);
+    expect(body.data.messageId).toMatch(/^msg_[0-9a-z]{12}$/);
     expect(processMessage).toHaveBeenCalledOnce();
     expect(processMessage.mock.calls[0]?.[1]).toBe(`web_chat:${body.data.identifier}`);
-    expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
+    expect(processMessage.mock.calls[0]?.[2].id).toBe(body.data.messageId);
   });
 
   it('ignores client messageId and always mints server message id', async () => {
@@ -273,6 +274,25 @@ describe('NovuWebChatAdapterImpl', () => {
         },
       },
     });
+  });
+
+  it('postMessage includes link children in the plain-text fallback', async () => {
+    const config = createConfig();
+    const { adapter } = await createAdapter(config);
+
+    await adapter.postMessage('web_chat:conv_abcdefghijkl', {
+      type: 'card',
+      children: [
+        { type: 'text', content: 'See the release notes.' },
+        { type: 'link', label: 'Release notes', url: 'https://novu.co/notes' },
+      ],
+    } as never);
+
+    expect(config.deliverMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: 'See the release notes.\nRelease notes (https://novu.co/notes)',
+      })
+    );
   });
 
   it('editMessage and deleteMessage delegate to injected callbacks', async () => {

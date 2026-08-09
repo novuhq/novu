@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { withCursorPagination } from '../../../shared/dtos/cursor-paginated-response';
+import { CursorPaginationQueryDto } from '../../shared/dtos/cursor-pagination-query.dto';
 
 export class WebChatConversationMetadataDto {
   identifier: string;
@@ -10,29 +10,11 @@ export class WebChatConversationMetadataDto {
   createdAt: string;
 }
 
-export class ListWebChatConversationsQueryDto {
-  /** Cursor: conversation `_id` for forward pagination. */
-  @IsOptional()
-  @IsString()
-  after?: string;
+export class ListWebChatConversationsQueryDto extends CursorPaginationQueryDto<
+  WebChatConversationMetadataDto,
+  'lastActivityAt' | 'createdAt'
+> {}
 
-  /** Cursor: conversation `_id` for reverse pagination. */
-  @IsOptional()
-  @IsString()
-  before?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit?: number;
-}
-
-export class ListWebChatConversationsResponseDto {
-  data: WebChatConversationMetadataDto[];
-  next: string | null;
-  previous: string | null;
-  totalCount: number;
-  totalCountCapped: boolean;
-}
+export class ListWebChatConversationsResponseDto extends withCursorPagination(WebChatConversationMetadataDto, {
+  description: 'List of web-chat conversations for the subscriber',
+}) {}

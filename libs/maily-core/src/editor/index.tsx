@@ -53,6 +53,7 @@ export type EditorProps = {
 } & PartialMailyContextType;
 
 export type { TextMenuConfig, ImageMenuConfig, MenuConfig };
+export type { CardButtonFieldName, ValidateCardButtonField } from './provider';
 
 export function Editor(props: EditorProps) {
   const {
@@ -73,6 +74,7 @@ export function Editor(props: EditorProps) {
     blocks = DEFAULT_SLASH_COMMANDS,
     editable = true,
     placeholderUrl = DEFAULT_PLACEHOLDER_URL,
+    validateCardButtonField,
     repeatMenuConfig,
     menuConfig,
   } = props;
@@ -132,7 +134,7 @@ export function Editor(props: EditorProps) {
   }
 
   return (
-    <MailyProvider placeholderUrl={placeholderUrl}>
+    <MailyProvider placeholderUrl={placeholderUrl} validateCardButtonField={validateCardButtonField}>
       <div
         className={cn(
           'mly-editor mly-antialiased',

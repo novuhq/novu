@@ -1,27 +1,40 @@
 ---
 title: "Email Webhook Email Integration with Novu"
 sidebarTitle: "Email Webhook"
-description: "Connect an email webhook provider to Novu to send transactional emails through your own HTTP API or a custom email service using a webhook URL and headers."
+description: "Connect an email webhook provider to Novu to deliver transactional emails through your own HTTP endpoint using a webhook URL and HMAC secret."
 ---
 
-[Email Webhooks](https://www.socketlabs.com/blog/what-is-a-webhook/#:~:text=Email%20webhooks%20are%20an%20extremely,%2C%20successful%20messages%2C%20and%20bounces.) are an extremely flexible way for developers to monitor the health of their mail stream in real time
+Email Webhook lets Novu hand each email payload to an HTTP endpoint you control. Instead of calling a built-in ESP SDK, Novu `POST`s the rendered message to your **Webhook URL** and signs the body with your HMAC secret.
 
-## Getting Started
+Use this when you want Novu workflows and templates, but delivery goes through an internal service or a provider that is not listed in the Integrations Store.
 
-First go to [Email Settings](https://dashboard.novu.co/settings/email?utm_campaign=docs-webhook) in Settings menu to configure Email Webhook.
+## Creating an Email Webhook integration with Novu
 
-## Creating the Email Webhook integration with Novu
+1. Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-email-webhook) page on Novu.
+2. Click **Add a provider**.
+3. Locate **Email Webhook** under the Email section and click **Connect**.
+4. Enter your:
+   - **Webhook URL** (HTTPS endpoint that accepts `POST` JSON)
+   - **Secret Hmac Key** (used to sign each request)
+   - **From email address**
+   - **Sender name**
+5. Confirm **Active Integration** is on. New integrations start active by default.
+6. Click **Create Integration**.
 
-- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-webhook) page on Novu.
-- Click the "Add a provider" button.
-- Select Email Webhook service
-- Click `Next`
-- Choose your preferred deployment environment: `Development` or `Production`. Then Click the `Create` button.
-- Add `Webhook URL` & `Secret Hmac Key` to sign off the email
-- Finally add `From email address` & `Sender name` to identify email sender
-- Click on the `Disabled` button and mark it as `Active`.
-- Click on the **Update** button.
-- You should now be able to send notifications using Email Webhook in Novu.
+## Request format
+
+For each email, Novu sends a `POST` request to your webhook URL with:
+
+- `Content-Type: application/json`
+- `X-Novu-Signature: <hmac-sha256-hex>` of the raw JSON body, using your Secret Hmac Key
+
+Verify the signature before processing the payload. Reject requests that do not match.
+
+The JSON body includes the rendered email fields Novu already prepared for the subscriber (to, from, subject, html/text content, and related metadata).
+
+<Note>
+  Email Webhook is marked beta in Novu. Treat it as a custom delivery bridge and monitor your endpoint health.
+</Note>
 
 ## Next Steps
 

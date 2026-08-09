@@ -7,21 +7,10 @@ export class ListWebChatConversationEventsCommand extends EnvironmentWithSubscri
   @IsNotEmpty()
   conversationIdentifier: string;
 
-  /** Cursor: activity `_id` — fetch events after this activity (forward pagination). */
-  @IsOptional()
-  @IsString()
-  after?: string;
-
-  /** Cursor: activity `_id` — fetch events before this activity (reverse pagination). */
+  /** Activity `_id` cursor that loads older history. Omit it to get the newest page. */
   @IsOptional()
   @IsString()
   before?: string;
-
-  /** Gap-fill replay cursor — events with sequence strictly greater than this value. */
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  afterSequence = 0;
 
   @IsOptional()
   @IsInt()

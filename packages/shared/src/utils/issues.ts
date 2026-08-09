@@ -6,6 +6,10 @@ export enum ContentIssueEnum {
   TIER_LIMIT_EXCEEDED = 'TIER_LIMIT_EXCEEDED',
   UNSUPPORTED_PROPERTY = 'UNSUPPORTED_PROPERTY',
   CHAT_CARD_LIMIT_EXCEEDED = 'CHAT_CARD_LIMIT_EXCEEDED',
+  // Invalid Rich Chat link-button field (empty/invalid label or url). Distinct from MISSING_VALUE so
+  // the dashboard footer does not treat it as a stale "empty control" issue and suppress it — the
+  // `body` control holds card content, so its per-field errors must surface even when body is non-empty.
+  CHAT_CARD_INVALID_BUTTON = 'CHAT_CARD_INVALID_BUTTON',
 }
 
 export enum IntegrationIssueEnum {

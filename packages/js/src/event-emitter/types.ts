@@ -1,3 +1,4 @@
+import type { AgentChatMessagesUpdated } from '../agent-chat/types';
 import type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
@@ -182,6 +183,10 @@ type SocketEvents = {
   [key in NotificationUnreadEvent]: { result: { total: number; severity: Record<string, number> } };
 };
 
+type AgentChatEvents = {
+  'agent_chat.messages.updated': { data: AgentChatMessagesUpdated };
+};
+
 /**
  * Events that are emitted by Novu Event Emitter.
  *
@@ -225,6 +230,7 @@ export type Events = SessionInitializeEvents &
   ChannelEndpointLinkEvents &
   SocketConnectEvents &
   SocketEvents &
+  AgentChatEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &
   NotificationSeenEvents &

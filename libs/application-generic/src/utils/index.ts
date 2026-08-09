@@ -5,6 +5,7 @@ export * from './build-slug';
 export * from './build-variables';
 export * from './build-zip';
 export * from './buildBridgeEndpointUrl';
+export * from './card-button-issues';
 export * from './compute-workflow-status';
 export * from './create-schema';
 export * from './deepmerge';

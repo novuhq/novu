@@ -19,6 +19,14 @@ npm install
 npm run dev
 ```
 
+`npm run dev` listens on **`http://127.0.0.1:8788`** (local wrangler env `dev.port`, not the Wrangler default 8787). That leaves **8787** free for `@novu/socket-worker`.
+
+Point the API at it:
+
+```env
+THALAMUS_CF_URL=http://127.0.0.1:8788
+```
+
 Optional `.dev.vars` for local secrets (never commit):
 
 ```bash

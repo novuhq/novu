@@ -459,6 +459,7 @@ class EventOutboxTransport implements TurnTransport {
     const events = toSideEffectEvents(sideEffects);
     events.push({
       type: 'message',
+      role: 'assistant',
       messageId,
       content: toAgentMessageContent(reply),
       files: toAgentFileRefs(reply.files),

@@ -1,4 +1,10 @@
-import { CardElement, CardElementChild, ChatRenderValidationLevelEnum, IChatRenderValidation } from '@novu/stateless';
+import {
+  CardElement,
+  CardElementActionChild,
+  CardElementChild,
+  ChatRenderValidationLevelEnum,
+  IChatRenderValidation,
+} from '@novu/stateless';
 import {
   CardValidator,
   convertText,
@@ -67,10 +73,7 @@ export function validateTelegramCard(card: CardElement): IChatRenderValidation[]
  * matches what Telegram's 4096 cap actually counts.
  */
 export function telegramVisibleTextLength(card: CardElement): number {
-  const decoded = cardToTelegramHtml(card)
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
+  const decoded = cardToTelegramHtml(card).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
   let visible = decoded;
   let previous: string;
@@ -109,6 +112,24 @@ export function cardToTelegramHtml(card: CardElement): string {
   return sections.join('\n\n');
 }
 
+function telegramActionChildToHtml(action: CardElementActionChild): string {
+  switch (action.type) {
+    case 'link-button':
+      return action.url
+        ? `<a href="${escapeHtmlAttribute(action.url)}">${escapeHtml(action.label)}</a>`
+        : escapeHtml(action.label);
+    case 'button':
+    case 'select':
+    case 'radio_select':
+      return escapeHtml(action.label);
+    default: {
+      const exhaustiveCheck: never = action;
+
+      return exhaustiveCheck;
+    }
+  }
+}
+
 function telegramChildToHtml(child: CardElementChild): string {
   switch (child.type) {
     case 'text': {
@@ -128,14 +149,21 @@ function telegramChildToHtml(child: CardElementChild): string {
       return `<a href="${escapeHtmlAttribute(child.url)}">${child.alt ? escapeHtml(child.alt) : escapeHtml(child.url)}</a>`;
     case 'divider':
       return '———';
+    case 'link':
+      return child.url
+        ? `<a href="${escapeHtmlAttribute(child.url)}">${escapeHtml(child.label)}</a>`
+        : escapeHtml(child.label);
     case 'actions':
-      return child.children
-        .map((button) =>
-          button.url
-            ? `<a href="${escapeHtmlAttribute(button.url)}">${escapeHtml(button.label)}</a>`
-            : escapeHtml(button.label)
-        )
-        .join('\n');
+      return child.children.map(telegramActionChildToHtml).filter(Boolean).join('\n');
+    case 'section':
+      return child.children.map(telegramChildToHtml).filter(Boolean).join('\n\n');
+    case 'fields':
+      return child.children.map((field) => `<b>${escapeHtml(field.label)}:</b> ${escapeHtml(field.value)}`).join('\n');
+    case 'table':
+      return [
+        child.headers.map(escapeHtml).join(' | '),
+        ...child.rows.map((row) => row.map(escapeHtml).join(' | ')),
+      ].join('\n');
     default: {
       const exhaustiveCheck: never = child;
 
