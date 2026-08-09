@@ -11,6 +11,7 @@ import {
 } from './provider-override-registry';
 
 export { type AnnotatedPreviewLine, buildAnnotatedPreviewLines } from './build-annotated-preview-lines';
+export { resolveExclusiveRoutingKeys } from './exclusive-routing';
 export { expoOverrideJsonSchema } from './expo-override.schema';
 export {
   FCM_OVERRIDE_KEYS,

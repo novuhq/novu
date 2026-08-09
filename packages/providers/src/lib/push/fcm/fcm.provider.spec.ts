@@ -502,7 +502,6 @@ describe('FcmPushProvider', () => {
         },
         _passthrough: {
           body: {
-            // Non-routing field — routing keys in `_passthrough.body` are stripped
             android: { priority: 'high' },
           },
         },
@@ -523,7 +522,80 @@ describe('FcmPushProvider', () => {
     });
   });
 
-  test('should not let _passthrough.body routing keys hijack or conflict with send plan', async () => {
+  test('should route from _passthrough.body when no schematized routing key is set', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/passthrough-topic');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        _passthrough: {
+          body: {
+            topic: 'news_updates',
+          },
+        },
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news_updates',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/passthrough-topic']);
+  });
+
+  test('should let _passthrough.body routing claim the whole group over a schematized destination', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/passthrough-wins');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['subscriber-token'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        tokens: ['override-token-1', 'override-token-2'],
+        _passthrough: {
+          body: {
+            topic: 'news_updates',
+          },
+        },
+      }
+    );
+
+    // Exactly one destination reaches FCM — the losing `tokens` is not smuggled along.
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news_updates',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('should ignore an unusable _passthrough.body routing value and keep the schematized destination', async () => {
     const sendSpy = vi
       // @ts-expect-error
       .spyOn(provider.messaging, 'send')
@@ -533,16 +605,16 @@ describe('FcmPushProvider', () => {
       {
         title: 'Test',
         content: 'Test push',
-        target: ['legitimate-token'],
+        target: ['subscriber-token'],
         payload: {},
         subscriber,
         step,
       },
       {
+        tokens: ['override-token-1'],
         _passthrough: {
           body: {
-            tokens: ['attacker-token'],
-            topic: 'hijack-topic',
+            topic: { $exists: true },
           },
         },
       }
@@ -553,7 +625,7 @@ describe('FcmPushProvider', () => {
         title: 'Test',
         body: 'Test push',
       },
-      tokens: ['legitimate-token'],
+      tokens: ['override-token-1'],
       data: {},
     });
     expect(sendSpy).not.toHaveBeenCalled();

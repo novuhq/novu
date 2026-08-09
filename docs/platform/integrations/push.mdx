@@ -999,6 +999,8 @@ Override values may contain [Liquid](/platform/workflow/add-notification-content
 
 When the same field is set both on the step and at trigger time, the trigger value wins, and arrays replace rather than merge. Precedence from lowest to highest: persisted dashboard override, then trigger workflow-level `overrides.providers`, then trigger step-level. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
 
+`_passthrough.body` sits outside this ordering. Wherever it appears, it is merged last and takes priority over every layer above — including provider routing keys such as FCM's `topic`. See [routing with `_passthrough`](/platform/integrations/push/fcm#routing-with-_passthrough).
+
 ## Supported providers
 
 Novu supports the following providers:

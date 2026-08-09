@@ -1,4 +1,4 @@
-import { FCM_ROUTING_KEYS, PushProviderIdEnum } from '@novu/shared';
+import { FCM_ROUTING_KEYS, PushProviderIdEnum, resolveExclusiveRoutingKeys } from '@novu/shared';
 import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import crypto from 'crypto';
 import { cert, deleteApp, getApp, initializeApp } from 'firebase-admin/app';
@@ -76,7 +76,8 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     const payload = this.cleanPayload(options.payload);
     const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
-    // Read routing from known bridge keys only — `_passthrough` must not choose the send plan.
+    // `_passthrough.body` may choose the destination, as the top of the override chain — the same
+    // priority `transform` gives its content keys.
     const sendPlan = this.resolveSendPlan(this.readRouting(bridgeProviderData), options.target);
     const bridgeWithoutRouting = this.omitRoutingKeys(bridgeProviderData);
 
@@ -158,23 +159,29 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     return this.INVALID_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
   }
 
+  /**
+   * Routing is claimed by the highest layer that sets a usable destination — `_passthrough.body`
+   * before the schematized keys — and claiming takes all four keys, so a passthrough `topic` cannot
+   * blend with a lower-layer `tokens`.
+   */
   private readRouting(bridgeProviderData: WithPassthrough<Record<string, unknown>>): FcmRouting {
+    const claimed = resolveExclusiveRoutingKeys(bridgeProviderData, [FCM_ROUTING_KEYS]);
     const routing: FcmRouting = {};
 
-    if (typeof bridgeProviderData.token === 'string') {
-      routing.token = bridgeProviderData.token;
+    if (typeof claimed.token === 'string') {
+      routing.token = claimed.token;
     }
 
-    if (Array.isArray(bridgeProviderData.tokens)) {
-      routing.tokens = bridgeProviderData.tokens as string[];
+    if (Array.isArray(claimed.tokens)) {
+      routing.tokens = claimed.tokens as string[];
     }
 
-    if (typeof bridgeProviderData.topic === 'string') {
-      routing.topic = bridgeProviderData.topic;
+    if (typeof claimed.topic === 'string') {
+      routing.topic = claimed.topic;
     }
 
-    if (typeof bridgeProviderData.condition === 'string') {
-      routing.condition = bridgeProviderData.condition;
+    if (typeof claimed.condition === 'string') {
+      routing.condition = claimed.condition;
     }
 
     return routing;
@@ -201,6 +208,11 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     return { kind: 'multicast', tokens: subscriberTargets };
   }
 
+  /**
+   * Clears every routing key from both layers so only `sendPlan.target` puts a destination back on
+   * the message. FCM addresses one destination per send, and the losing keys would otherwise ride
+   * along through `transform`.
+   */
   private omitRoutingKeys(
     bridgeProviderData: WithPassthrough<Record<string, unknown>>
   ): WithPassthrough<Record<string, unknown>> {
@@ -210,8 +222,6 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       delete rest[key];
     }
 
-    // Strip routing from `_passthrough` too — `transform` deep-merges it last and
-    // must not reintroduce destinations that `resolveSendPlan` did not select.
     if (rest._passthrough?.body && typeof rest._passthrough.body === 'object') {
       const body = { ...rest._passthrough.body };
       for (const key of FCM_ROUTING_KEYS) {

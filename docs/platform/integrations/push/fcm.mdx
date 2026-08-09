@@ -395,6 +395,33 @@ When you omit routing keys, Novu fills device tokens from the subscriber's crede
 
 Trigger overrides for these routing keys still work. When the same routing field is set both on the step and at trigger time, the trigger value wins. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
 
+### Routing with `_passthrough`
+
+Routing keys also take effect inside `_passthrough.body`, which is merged last and therefore wins over the same field set on the step or at trigger time. You own the destination when you set these fields.
+
+Because FCM addresses one destination per message, a routing key in `_passthrough.body` replaces the whole set rather than adding to it. In the example below the message goes to `news_updates` only — the `tokens` array is dropped, not sent alongside:
+
+```json
+{
+  "overrides": {
+    "providers": {
+      "fcm": {
+        "tokens": ["token1", "token2"],
+        "_passthrough": {
+          "body": {
+            "topic": "news_updates"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Novu ignores a passthrough routing value it cannot address — anything that is not a non-empty string, or for `tokens` an array of non-empty strings — and falls back to the routing set below it. Unlike the schematized keys, `_passthrough` is not validated, so a typo or a wrong type is silently ignored instead of flagged.
+
+The per-subscriber fan-out warning above applies to a `topic` or `condition` set in `_passthrough` too.
+
 See the [FCM HTTP v1 Message reference](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#Message) for the full field list.
 
 ## Web push with relative links

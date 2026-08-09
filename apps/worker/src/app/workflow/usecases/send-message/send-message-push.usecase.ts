@@ -197,7 +197,7 @@ export class SendMessagePush extends SendMessageBase {
      * FCM topic/condition overrides are broadcast and replace the entire provider fan-out.
      */
     const overrideProviderIds = new Set(channelsFromOverrides.map((channel) => channel.providerId));
-    const broadcastOverrideProviderIds = new Set(
+    const broadcastOverrideProviderIds = new Set<string>(
       providersWithCredentialOverrides
         .filter((override) => isFcmBroadcastRoutingOverride(override.overrides))
         .map((override) => override.providerId)
