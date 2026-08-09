@@ -81,10 +81,7 @@ function extractTopic(payload) {
   }
 
   const data = (payload && payload.data) || {};
-  const rawTopic =
-    (typeof data.topic === 'string' && data.topic.trim()) ||
-    (typeof data.__nvTopic === 'string' && data.__nvTopic.trim()) ||
-    '';
+  const rawTopic = (typeof data.topic === 'string' && data.topic.trim()) || '';
 
   if (!rawTopic) {
     return undefined;

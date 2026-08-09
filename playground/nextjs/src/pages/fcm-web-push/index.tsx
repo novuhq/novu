@@ -629,9 +629,22 @@ export default function FcmWebPushPage() {
             Same message list as device pushes below, but only for FCM topic{' '}
             <code className="text-xs">{FCM_TOPIC_NEWS_UPDATES}</code>. Getting a token also subscribes it to this topic
             (needs <code className="text-xs">FIREBASE_CLIENT_EMAIL</code> /{' '}
-            <code className="text-xs">FIREBASE_PRIVATE_KEY</code>). Trigger a Novu push with an FCM{' '}
-            <code className="text-xs">topic</code> override to test.
+            <code className="text-xs">FIREBASE_PRIVATE_KEY</code>). On web, FCM does not put the topic name in{' '}
+            <code className="text-xs">from</code>, so include it in <code className="text-xs">data.topic</code> when you
+            trigger.
           </p>
+          <pre className={`mt-3 rounded-md bg-muted p-3 ${monoClass}`}>{`{
+  "overrides": {
+    "providers": {
+      "fcm": {
+        "topic": "${FCM_TOPIC_NEWS_UPDATES}",
+        "data": {
+          "topic": "${FCM_TOPIC_NEWS_UPDATES}"
+        }
+      }
+    }
+  }
+}`}</pre>
           <div className="mt-3">
             <button
               type="button"

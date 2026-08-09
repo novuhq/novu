@@ -45,7 +45,7 @@ export const FCM_SW_SKIP_WAITING_TYPE = 'NOVU_FCM_SKIP_WAITING';
 export const FCM_SW_PING_TYPE = 'NOVU_FCM_PING';
 
 /** Bump when the generated service worker script changes. */
-export const FCM_SW_VERSION = '2026-08-03.4';
+export const FCM_SW_VERSION = '2026-08-09.1';
 
 const FIREBASE_COMPAT_VERSION = '11.10.0';
 const SW_URL = '/firebase-messaging-sw.js';
@@ -65,8 +65,9 @@ export type PushPayload = {
 };
 
 /**
- * Topic messages may set `from` to `/topics/<name>`. Web payloads often omit that,
- * so also accept common data keys (`topic`, `__nvTopic`) for playground routing.
+ * Topic messages may set `from` to `/topics/<name>` on Android. Web payloads use the
+ * numeric sender id instead, so callers must pass the topic in FCM `data` when triggering
+ * (e.g. `overrides.providers.fcm.data.topic`).
  */
 export function extractFcmTopic(payload: PushPayload): string | undefined {
   const from = payload.from?.trim();
@@ -79,7 +80,7 @@ export function extractFcmTopic(payload: PushPayload): string | undefined {
     }
   }
 
-  const dataTopic = payload.data?.topic?.trim() || payload.data?.__nvTopic?.trim();
+  const dataTopic = payload.data?.topic?.trim();
 
   if (dataTopic) {
     return dataTopic.startsWith('/topics/') ? dataTopic.slice('/topics/'.length) : dataTopic;
