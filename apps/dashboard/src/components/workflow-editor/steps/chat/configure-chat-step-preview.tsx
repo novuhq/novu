@@ -1,10 +1,10 @@
-import * as Sentry from '@sentry/react';
 import {
   ChannelTypeEnum,
   type ChatRenderOutput,
   FeatureFlagsKeysEnum,
   type GeneratePreviewResponseDto,
 } from '@novu/shared';
+import * as Sentry from '@sentry/react';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
