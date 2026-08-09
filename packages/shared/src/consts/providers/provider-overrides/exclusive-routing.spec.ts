@@ -55,10 +55,17 @@ describe('resolveExclusiveRoutingKeys', () => {
     ).toEqual({ tokens: ['safe-token'] });
   });
 
-  it('keeps every usable key of a claiming layer so send-plan precedence can break the tie', () => {
-    const resolved = resolveExclusiveRoutingKeys({ token: 'single', topic: 'orders' }, GROUPS);
+  it('keeps only the first usable key in group order within a claiming layer', () => {
+    expect(resolveExclusiveRoutingKeys({ token: 'single', topic: 'orders' }, GROUPS)).toEqual({
+      token: 'single',
+    });
 
-    expect(resolved).toEqual({ token: 'single', topic: 'orders' });
+    expect(
+      resolveExclusiveRoutingKeys(
+        { tokens: ['t1'], topic: 'orders', _passthrough: { body: { tokens: ['a'], topic: 'news' } } },
+        GROUPS
+      )
+    ).toEqual({ tokens: ['a'] });
   });
 
   it('ignores non-routing keys at both layers', () => {

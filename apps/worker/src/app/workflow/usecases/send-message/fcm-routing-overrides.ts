@@ -29,7 +29,7 @@ export type PushRoutingCredentials = {
 export function isFcmBroadcastRoutingOverride(overrides: Record<string, unknown> | null | undefined): boolean {
   const routing = resolveExclusiveRoutingKeys(overrides, [FCM_ROUTING_KEYS]);
 
-  return typeof routing.topic === 'string' || typeof routing.condition === 'string';
+  return 'topic' in routing || 'condition' in routing;
 }
 
 export function hasTokenlessRoutingOverride(
@@ -54,13 +54,7 @@ export function extractFcmRoutingCredentials(overrides: Record<string, unknown>)
   }
 
   if (Array.isArray(routing.tokens)) {
-    // Resolution already dropped non-strings so Mongo operators cannot reach $pull token cleanup;
-    // filtering again is what narrows the resolved `unknown[]` to the `string[]` credentials need.
-    const tokens = routing.tokens.filter((token): token is string => typeof token === 'string');
-
-    if (tokens.length > 0) {
-      return { deviceTokens: tokens };
-    }
+    return { deviceTokens: routing.tokens };
   }
 
   if (typeof routing.topic === 'string') {

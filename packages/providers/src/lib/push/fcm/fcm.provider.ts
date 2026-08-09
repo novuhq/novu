@@ -161,30 +161,29 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
   /**
    * Routing is claimed by the highest layer that sets a usable destination — `_passthrough.body`
-   * before the schematized keys — and claiming takes all four keys, so a passthrough `topic` cannot
-   * blend with a lower-layer `tokens`.
+   * before the schematized keys — as a single key in `FCM_ROUTING_KEYS` order, so a passthrough
+   * `topic` cannot blend with a lower-layer `tokens`.
    */
   private readRouting(bridgeProviderData: WithPassthrough<Record<string, unknown>>): FcmRouting {
     const claimed = resolveExclusiveRoutingKeys(bridgeProviderData, [FCM_ROUTING_KEYS]);
-    const routing: FcmRouting = {};
 
     if (typeof claimed.token === 'string') {
-      routing.token = claimed.token;
+      return { token: claimed.token };
     }
 
     if (Array.isArray(claimed.tokens)) {
-      routing.tokens = claimed.tokens as string[];
+      return { tokens: claimed.tokens };
     }
 
     if (typeof claimed.topic === 'string') {
-      routing.topic = claimed.topic;
+      return { topic: claimed.topic };
     }
 
     if (typeof claimed.condition === 'string') {
-      routing.condition = claimed.condition;
+      return { condition: claimed.condition };
     }
 
-    return routing;
+    return {};
   }
 
   /** Precedence: token > tokens (multicast) > topic > condition > default multicast */

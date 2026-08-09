@@ -29,6 +29,12 @@ describe('isFcmBroadcastRoutingOverride', () => {
     ).to.equal(true);
   });
 
+  it('returns false when passthrough tokens win group order over a sibling topic', () => {
+    expect(
+      isFcmBroadcastRoutingOverride({ _passthrough: { body: { tokens: ['a'], topic: 'news_updates' } } })
+    ).to.equal(false);
+  });
+
   it('returns false when the passthrough topic is unusable', () => {
     expect(isFcmBroadcastRoutingOverride({ _passthrough: { body: { topic: '' } } })).to.equal(false);
     expect(isFcmBroadcastRoutingOverride({ _passthrough: { body: { topic: { $exists: true } } } })).to.equal(false);
