@@ -1611,6 +1611,46 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistWorkflowOriginHydration.calledBefore(bridgeExecutor.execute)).to.equal(true);
     });
 
+    it('should use the clicked Slack message timestamp to hydrate an action-only thread', async () => {
+      const { handler, conversationService, notificationRepository, messageRepository, bridgeExecutor } =
+        makeHandler(makeResolvedSubscriberOverrides());
+      const platformThreadId = 'slack:D123:1777837477.371619';
+
+      conversationService.findByPlatformThread.resolves(null);
+      messageRepository.findByAgentIdentifier.resolves({
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        _jobId: 'job1',
+        transactionId: 'txn1',
+        templateIdentifier: 'order-alerts',
+        stepId: 'chat-1',
+        content: 'Order ORD-1 shipped',
+        identifier: 'D123:1777837477.371619',
+      });
+      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        { id: 'ack', sourceMessageId: '1777837477.371619' } as any,
+        'user1'
+      );
+
+      expect(conversationService.findByPlatformThread.firstCall.args[4]).to.equal(platformThreadId);
+      expect(messageRepository.findByAgentIdentifier.firstCall.args).to.deep.equal([
+        'env1',
+        'agent1',
+        'D123:1777837477.371619',
+        'subscriber-mongo-1',
+      ]);
+      expect(conversationService.createOrGetConversation.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
+      expect(conversationService.persistWorkflowOriginHydration.firstCall.args[0].platformThreadId).to.equal(
+        platformThreadId
+      );
+      expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(platformThreadId);
+    });
+
     it('should not hydrate workflow origin for link-button actions', async () => {
       const { handler, conversationService, messageRepository } = makeHandler();
 

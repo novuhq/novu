@@ -211,6 +211,14 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   return `${thread.id}${threadRoot}`;
 }
 
+function getActionPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, action: AgentAction): string {
+  if (platform !== AgentPlatformEnum.SLACK || !action.sourceMessageId || !thread.id.endsWith(':')) {
+    return thread.id;
+  }
+
+  return `${thread.id}${action.sourceMessageId}`;
+}
+
 /** Conversation uses `slack:{channel}:{ts}`; Message.identifier stores bare `{channel}:{ts}`. */
 function toProviderMessageLookupKey(platformThreadId: string): string {
   return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
@@ -1303,20 +1311,21 @@ export class AgentInboundHandler implements OnModuleInit {
     const participantType = subscriberId
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
+    const platformThreadId = getActionPlatformThreadId(config.platform, thread, action);
 
     const existingConversation = await this.conversationService.findByPlatformThread(
       config.environmentId,
       config.organizationId,
       agentId,
       config.integrationId,
-      thread.id
+      platformThreadId
     );
 
     const conversation = await this.openConversationAndMaybeHydrateOrigin(
       agentId,
       config,
       existingConversation,
-      thread.id,
+      platformThreadId,
       subscriberId,
       {
         environmentId: config.environmentId,
@@ -1324,7 +1333,7 @@ export class AgentInboundHandler implements OnModuleInit {
         agentId,
         platform: config.platform,
         integrationId: config.integrationId,
-        platformThreadId: thread.id,
+        platformThreadId,
         participantId,
         participantType,
         platformUserId: userId,
@@ -1384,7 +1393,7 @@ export class AgentInboundHandler implements OnModuleInit {
       message: null,
       event: AgentEventEnum.ON_ACTION,
       thread,
-      platformThreadId: thread.id,
+      platformThreadId,
       action,
     };
 
