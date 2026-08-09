@@ -54,7 +54,7 @@ import {
   shouldRotatePendingOAuthSessionForCatalogScopes,
 } from './dcr-oauth-session';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
-import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
+import { buildMcpOAuthRedirectUri, type McpOAuthCallbackContext, type McpOAuthStateRef } from './mcp-oauth-state';
 import { pickReusableOAuthClient } from './pick-reusable-oauth-client';
 
 type ResolvedOAuthConfig =
@@ -86,7 +86,10 @@ const SOFTWARE_VERSION = process.env.NOVU_API_VERSION || 'dev';
  *
  * Common to both modes:
  *  - Generate a PKCE S256 challenge, record `expectedIssuer` + canonical
- *    `resource` on `oauthState`, sign the redirect state with the env API key.
+ *    `resource` on `oauthState`, persist fat callback context + an opaque
+ *    `stateNonce` on the pending row, and sign a compact `state` ref
+ *    (env/org/nonce/timestamp) with the env API key. Inline full context
+ *    exceeds several AS `state` length caps (e.g. Campfire's 512 chars).
  *  - Return the authorize URL with `client_id`, `redirect_uri`,
  *    `response_type=code`, `scope`, `state`, `code_challenge`,
  *    `code_challenge_method=S256`, and `resource` (RFC 8707).
@@ -175,7 +178,10 @@ export class GenerateMcpOAuthUrl {
       // the rationale.
       assertSameOrigin(resolved.authorizationEndpoint, resolved.issuer);
 
-      await this.upsertPendingNovuAppConnection({
+      const stateNonce = generateStateNonce();
+      const callbackContext = this.buildCallbackContext(enablement, subscriber._id, agent._id, command);
+
+      const connectionId = await this.upsertPendingNovuAppConnection({
         enablement,
         subscriberMongoId: subscriber._id,
         command,
@@ -184,10 +190,12 @@ export class GenerateMcpOAuthUrl {
         resource: resolved.resource,
         tokenEndpoint: resolved.tokenEndpoint,
         authorizationEndpoint: resolved.authorizationEndpoint,
+        stateNonce,
+        callbackContext,
         existing,
       });
 
-      const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
+      const state = await this.buildSignedStateRef(command, stateNonce, connectionId);
       const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
         authorizationEndpoint: resolved.authorizationEndpoint,
         clientId: oauthConfig.credentials.clientId,
@@ -210,7 +218,10 @@ export class GenerateMcpOAuthUrl {
       scopes: resolved.scopes,
     });
 
-    await this.upsertPendingDcrConnection({
+    const stateNonce = generateStateNonce();
+    const callbackContext = this.buildCallbackContext(enablement, subscriber._id, agent._id, command);
+
+    const connectionId = await this.upsertPendingDcrConnection({
       enablement,
       subscriberMongoId: subscriber._id,
       command,
@@ -218,10 +229,12 @@ export class GenerateMcpOAuthUrl {
       expectedIssuer: resolved.asMetadata.issuer,
       resource: resolved.resource,
       oauthClient,
+      stateNonce,
+      callbackContext,
       existing,
     });
 
-    const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
+    const state = await this.buildSignedStateRef(command, stateNonce, connectionId);
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: resolved.asMetadata.authorizationEndpoint,
       clientId: oauthClient.clientId,
@@ -350,7 +363,26 @@ export class GenerateMcpOAuthUrl {
       throw new BadRequestException('Pending OAuth session is missing PKCE verifier; restart the flow.');
     }
 
-    const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
+    // Refresh fat callback context on the shared pending row. Reuse the
+    // existing nonce when present so Connect + Auto-approve buttons can
+    // share one pending session; only `trustToolsOnConnect` differs and
+    // that flag rides in the compact signed `state`, not on the row.
+    const stateNonce = existing.oauthState?.stateNonce ?? generateStateNonce();
+    const callbackContext = this.buildCallbackContext(enablement, subscriber._id, agent._id, command);
+    await this.mcpConnectionRepository.update(
+      {
+        _id: existing._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      {
+        $set: {
+          'oauthState.stateNonce': stateNonce,
+          'oauthState.callbackContext': callbackContext,
+        },
+      }
+    );
+    const state = await this.buildSignedStateRef(command, stateNonce, existing._id);
 
     if (oauthConfig.mode === McpConnectionAuthModeEnum.NovuApp) {
       const oauthState = existing.oauthState;
@@ -716,15 +748,29 @@ export class GenerateMcpOAuthUrl {
     expectedIssuer: string;
     resource: string;
     oauthClient: McpConnectionOAuthClient;
+    stateNonce: string;
+    callbackContext: McpOAuthCallbackContext;
     existing: McpConnectionEntity | null;
-  }): Promise<void> {
-    const { enablement, subscriberMongoId, command, pkceVerifier, expectedIssuer, resource, oauthClient, existing } =
-      args;
+  }): Promise<string> {
+    const {
+      enablement,
+      subscriberMongoId,
+      command,
+      pkceVerifier,
+      expectedIssuer,
+      resource,
+      oauthClient,
+      stateNonce,
+      callbackContext,
+      existing,
+    } = args;
     const oauthState: McpConnectionOAuthState = {
       pkceVerifier,
       initiatedAt: new Date(),
       expectedIssuer,
       resource,
+      stateNonce,
+      callbackContext,
     };
     const encryptedClient = encryptMcpConnectionOAuthClient(oauthClient);
 
@@ -746,10 +792,10 @@ export class GenerateMcpOAuthUrl {
         }
       );
 
-      return;
+      return existing._id;
     }
 
-    await this.mcpConnectionRepository.create({
+    const created = await this.mcpConnectionRepository.create({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       scope: McpConnectionScopeEnum.Subscriber,
@@ -761,6 +807,8 @@ export class GenerateMcpOAuthUrl {
       oauthState,
       oauthClient: encryptedClient,
     });
+
+    return created._id;
   }
 
   /**
@@ -782,8 +830,10 @@ export class GenerateMcpOAuthUrl {
     resource: string;
     tokenEndpoint: string;
     authorizationEndpoint: string;
+    stateNonce: string;
+    callbackContext: McpOAuthCallbackContext;
     existing: McpConnectionEntity | null;
-  }): Promise<void> {
+  }): Promise<string> {
     const {
       enablement,
       subscriberMongoId,
@@ -793,6 +843,8 @@ export class GenerateMcpOAuthUrl {
       resource,
       tokenEndpoint,
       authorizationEndpoint,
+      stateNonce,
+      callbackContext,
       existing,
     } = args;
     const oauthState: McpConnectionOAuthState = {
@@ -802,6 +854,8 @@ export class GenerateMcpOAuthUrl {
       resource,
       tokenEndpoint,
       authorizationEndpoint,
+      stateNonce,
+      callbackContext,
     };
 
     if (existing) {
@@ -821,10 +875,10 @@ export class GenerateMcpOAuthUrl {
         }
       );
 
-      return;
+      return existing._id;
     }
 
-    await this.mcpConnectionRepository.create({
+    const created = await this.mcpConnectionRepository.create({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       scope: McpConnectionScopeEnum.Subscriber,
@@ -835,32 +889,51 @@ export class GenerateMcpOAuthUrl {
       status: McpConnectionStatusEnum.PendingOAuth,
       oauthState,
     });
+
+    return created._id;
   }
 
-  private async buildSignedState(
+  private buildCallbackContext(
     enablement: AgentMcpServerEntity,
     subscriberMongoId: string,
     agentId: string,
     command: GenerateMcpOAuthUrlCommand
-  ): Promise<string> {
-    const stateData: McpOAuthState = {
+  ): McpOAuthCallbackContext {
+    return {
       agentId,
       agentMcpServerId: enablement._id,
       subscriberId: subscriberMongoId,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
       mcpId: command.mcpId,
       scope: McpConnectionScopeEnum.Subscriber,
-      timestamp: Date.now(),
       userId: command.userId,
       source: command.source ?? 'api',
       ...(command.conversationId ? { conversationId: command.conversationId } : {}),
-      ...(command.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
       ...(command.toolUseId ? { toolUseId: command.toolUseId } : {}),
       ...(command.agentIdentifier ? { agentIdentifier: command.agentIdentifier } : {}),
       ...(command.integrationIdentifier ? { integrationIdentifier: command.integrationIdentifier } : {}),
       ...(command.platform ? { platform: command.platform } : {}),
       ...(command.platformThreadId ? { platformThreadId: command.platformThreadId } : {}),
+    };
+  }
+
+  /**
+   * Sign a compact OAuth `state` ref. Fat chat/session fields live on the
+   * pending connection via `oauthState.callbackContext` and are rehydrated
+   * on callback after the nonce lookup — keeps `state` under AS length caps.
+   */
+  private async buildSignedStateRef(
+    command: GenerateMcpOAuthUrlCommand,
+    nonce: string,
+    connectionId: string
+  ): Promise<string> {
+    const stateData: McpOAuthStateRef = {
+      v: 1,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      connectionId,
+      nonce,
+      timestamp: Date.now(),
+      ...(command.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
     };
 
     const payload = JSON.stringify(stateData);
@@ -959,6 +1032,11 @@ function secondsSinceEpochToDate(seconds: number): Date | undefined {
  * encoded as base64url, yielding 43 chars within the 43-128 length window.
  */
 function generatePkceVerifier(): string {
+  return base64UrlEncode(randomBytes(32));
+}
+
+/** Opaque nonce mirrored into the compact signed OAuth `state` parameter. */
+function generateStateNonce(): string {
   return base64UrlEncode(randomBytes(32));
 }
 

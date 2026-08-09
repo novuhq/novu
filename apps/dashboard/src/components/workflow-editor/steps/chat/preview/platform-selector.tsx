@@ -1,4 +1,4 @@
-import { RiCheckLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiChat3Line, RiCheckLine, RiExpandUpDownLine } from 'react-icons/ri';
 
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
@@ -8,13 +8,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { cn } from '@/utils/ui';
-import type { ChatPreviewProviderOption } from './use-configured-chat-providers';
+import { type ChatPreviewProviderOption, DEFAULT_PREVIEW_PROVIDER_ID } from './use-configured-chat-providers';
 
 type PlatformSelectorProps = {
   activeOption?: ChatPreviewProviderOption;
   options: ChatPreviewProviderOption[];
   onSelect: (providerId: string) => void;
 };
+
+function PlatformIcon({ option, className }: { option: ChatPreviewProviderOption; className: string }) {
+  if (option.providerId === DEFAULT_PREVIEW_PROVIDER_ID) {
+    return <RiChat3Line className={cn('text-text-sub', className)} />;
+  }
+
+  return <ProviderIcon providerId={option.providerId} providerDisplayName={option.displayName} className={className} />;
+}
 
 export function PlatformSelector({ activeOption, options, onSelect }: PlatformSelectorProps) {
   const activeProviderId = activeOption?.providerId;
@@ -28,13 +36,7 @@ export function PlatformSelector({ activeOption, options, onSelect }: PlatformSe
             aria-label="Select preview platform"
             className="border-stroke-soft bg-bg-white hover:bg-bg-weak flex h-full items-center gap-1 border-r pl-2 pr-1 transition-colors"
           >
-            {activeOption && (
-              <ProviderIcon
-                providerId={activeOption.providerId}
-                providerDisplayName={activeOption.displayName}
-                className="size-3.5 shrink-0"
-              />
-            )}
+            {activeOption && <PlatformIcon option={activeOption} className="size-3.5 shrink-0" />}
             <span className="text-label-xs text-text-sub">{activeOption?.displayName ?? activeProviderId}</span>
             <RiExpandUpDownLine className="text-text-sub size-3" />
           </button>
@@ -53,11 +55,7 @@ export function PlatformSelector({ activeOption, options, onSelect }: PlatformSe
                 onSelect={() => onSelect(option.providerId)}
               >
                 <span className="flex min-w-0 items-center gap-1.5">
-                  <ProviderIcon
-                    providerId={option.providerId}
-                    providerDisplayName={option.displayName}
-                    className="size-4 shrink-0"
-                  />
+                  <PlatformIcon option={option} className="size-4 shrink-0" />
                   <span className="text-foreground-950 truncate text-xs font-medium">{option.displayName}</span>
                 </span>
                 {isSelected && <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />}

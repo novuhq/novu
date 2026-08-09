@@ -2,7 +2,7 @@
  * Collects root-level object keys from a JSON object literal, including incomplete
  * documents (returns keys parsed so far). Nested object keys are ignored.
  */
-export function collectRootKeys(text: string): string[] {
+function collectRootKeys(text: string): string[] {
   const keys: string[] = [];
   let depth = 0;
   let i = 0;

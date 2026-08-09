@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "start": "wrangler dev",
+    "dev": "wrangler dev --env local",
+    "start": "wrangler dev --env local",
     "cf-typegen": "wrangler types",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:production-us": "wrangler deploy --env production-us",

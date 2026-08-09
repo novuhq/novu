@@ -39,13 +39,13 @@ describe('applyEnvelope', () => {
       envelope(2, { type: 'message-start', messageId: 'm1' }),
       envelope(3, { type: 'message-delta', messageId: 'm1', delta: 'Hel' }),
       envelope(4, { type: 'message-delta', messageId: 'm1', delta: 'lo' }),
-      envelope(5, { type: 'message', messageId: 'm1', content: { markdown: 'Hello' } }),
+      envelope(5, { type: 'message', role: 'assistant', messageId: 'm1', content: { markdown: 'Hello' } }),
       envelope(6, { type: 'run-finish', outcome: 'completed' }),
     ]);
 
     const history = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, { type: 'run-start' }),
-      envelope(2, { type: 'message', messageId: 'm1', content: { markdown: 'Hello' } }),
+      envelope(2, { type: 'message', role: 'assistant', messageId: 'm1', content: { markdown: 'Hello' } }),
       envelope(3, { type: 'run-finish', outcome: 'completed' }),
     ]);
 
@@ -76,14 +76,29 @@ describe('applyEnvelope', () => {
         content: [{ type: 'text', text: 'Ships Friday' }],
       }),
       envelope(12, { type: 'message-delta', messageId: 'm1', delta: ' your order' }),
-      envelope(13, { type: 'message', messageId: 'm1', content: { markdown: 'Checking your order' } }),
-      envelope(14, { type: 'message', messageId: 'm1', content: { markdown: 'It ships Friday' } }),
+      envelope(13, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm1',
+        content: { markdown: 'Checking your order' },
+      }),
+      envelope(14, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm1',
+        content: { markdown: 'It ships Friday' },
+      }),
       envelope(15, { type: 'run-finish', outcome: 'completed' }),
     ];
 
     const historyEnvelopes: AgentEventEnvelope[] = [
       envelope(1, { type: 'run-start' }),
-      envelope(2, { type: 'message', messageId: 'm1', content: { markdown: 'Checking your order' } }),
+      envelope(2, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm1',
+        content: { markdown: 'Checking your order' },
+      }),
       envelope(3, { type: 'thinking-start', thinkingId: 't1' }),
       envelope(4, { type: 'thinking-delta', thinkingId: 't1', delta: 'Looking up order' }),
       envelope(5, { type: 'thinking-end', thinkingId: 't1' }),
@@ -99,7 +114,12 @@ describe('applyEnvelope', () => {
         toolUseId: 'tu1',
         content: [{ type: 'text', text: 'Ships Friday' }],
       }),
-      envelope(9, { type: 'message', messageId: 'm1', content: { markdown: 'It ships Friday' } }),
+      envelope(9, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm1',
+        content: { markdown: 'It ships Friday' },
+      }),
       envelope(10, { type: 'run-finish', outcome: 'completed' }),
     ];
 
@@ -184,5 +204,36 @@ describe('applyEnvelope', () => {
 
     const approval = state.messages[0]?.parts.find((part) => part.type === 'approval');
     expect(approval).toMatchObject({ type: 'approval', approvalId: 'a1', state: 'approved' });
+  });
+
+  it('folds durable user messages when role is user', () => {
+    const state = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, {
+        type: 'message',
+        role: 'user',
+        messageId: 'msg_user0000001',
+        content: { markdown: 'Hello agent' },
+      }),
+      envelope(2, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'msg_asst0000001',
+        content: { markdown: 'Hello human' },
+      }),
+    ]);
+
+    expect(state.messages).toHaveLength(2);
+    expect(state.messages[0]).toMatchObject({
+      id: 'msg_user0000001',
+      role: 'user',
+      status: 'sent',
+      parts: [{ type: 'text', text: 'Hello agent', state: 'done' }],
+    });
+    expect(state.messages[1]).toMatchObject({
+      id: 'msg_asst0000001',
+      role: 'assistant',
+      status: 'sent',
+      parts: [{ type: 'text', text: 'Hello human', state: 'done' }],
+    });
   });
 });

@@ -1,16 +1,15 @@
 import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { Link2, Zap } from 'lucide-react';
-import { CSSProperties, useState } from 'react';
-import { useMatchingProvider, useSuggestionProviders } from '@/editor/bubble-suggestions';
-import { Popover, PopoverContent, PopoverTrigger } from '@/editor/components/popover';
-import { Divider } from '@/editor/components/ui/divider';
-import { LinkInputPopover } from '@/editor/components/ui/link-input-popover';
-import { Select } from '@/editor/components/ui/select';
-import { TooltipProvider } from '@/editor/components/ui/tooltip';
-import { cn } from '@/editor/utils/classname';
+import { CSSProperties, useMemo, useRef } from 'react';
+import { useSuggestionProviders } from '@/editor/bubble-suggestions';
+import { dismissCardActionsMenu } from '@/editor/nodes/card-actions/card-actions';
+import {
+  closeVariablePopover,
+  renderLiquidVariableSegments,
+  setKeepCardActionsMenuOpen,
+  VARIABLE_PILL_MARKER_ATTR,
+} from '@/editor/utils/liquid-variables';
 import { DEFAULT_BUTTON_BACKGROUND_COLOR, DEFAULT_BUTTON_TEXT_COLOR } from '../button/button';
-import { ButtonLabelInput } from '../button/button-label-input';
-import { AllowedCardButtonStyle, allowedCardButtonStyle, CardButtonAttributes } from './card-button';
+import { AllowedCardButtonStyle, CardButtonAttributes } from './card-button';
 
 /**
  * Editor-only preview colors. Delivery-time rendering (Slack/Teams/Telegram/…)
@@ -26,139 +25,127 @@ const STYLE_PRESETS: Record<AllowedCardButtonStyle, { backgroundColor: string; c
   danger: { backgroundColor: '#dc2626', color: '#ffffff', borderColor: '#dc2626' },
 };
 
-const STYLE_LABELS: Record<AllowedCardButtonStyle, string> = {
-  default: 'Default',
-  primary: 'Primary',
-  danger: 'Danger',
-};
-
-// Card buttons only support link buttons for now. The Action ID input (for
-// future interactive/postback buttons) stays wired up but hidden until we add
-// a button `type` toggle — flip this to re-expose it.
-const SHOW_ACTION_ID_INPUT = false;
-
 export function CardButtonView(props: NodeViewProps) {
-  const { node, editor, getPos } = props;
-  const { label, isLabelVariable, style, url, isUrlVariable, actionId, isActionIdVariable } =
-    node.attrs as CardButtonAttributes;
+  const { node, editor, getPos, selected } = props;
+  const { label, style } = node.attrs as CardButtonAttributes;
 
-  const [open, setOpen] = useState(false);
   const providers = useSuggestionProviders(editor, ['variable', 'inlineDecorator']);
-  const matchingProvider = useMatchingProvider(label, providers);
+  const variableProvider = useMemo(
+    () => providers.find((provider) => provider.name === 'variable') ?? null,
+    [providers]
+  );
+
+  // Radix closes Configure Variable on mousedown-outside (the button chrome) before our click
+  // handler runs. Capture whether Configure was open at mousedown so a chrome click switches to
+  // Actions instead of being misread as "already selected → dismiss".
+  const configureOpenOnMouseDownRef = useRef(false);
 
   const preset = STYLE_PRESETS[style] ?? STYLE_PRESETS.default;
 
+  // TipTap's BubbleMenu only remounts/hides tippy when the selection changes. Meta-only flips of
+  // `storage.variable.popover` leave tippy stuck open/closed — bounce off the node and back.
+  const bounceCardButtonSelection = () => {
+    const pos = getPos();
+
+    if (typeof pos !== 'number') {
+      return;
+    }
+
+    const after = Math.min(pos + node.nodeSize, editor.state.doc.content.size);
+
+    editor.commands.setTextSelection(after);
+    editor.commands.setNodeSelection(pos);
+  };
+
+  const activateCardButton = (event?: { target: EventTarget | null }) => {
+    if (!editor.isEditable) {
+      return;
+    }
+
+    const isVariablePillClick =
+      event?.target instanceof Element && !!event.target.closest(`[${VARIABLE_PILL_MARKER_ATTR}]`);
+    const switchingFromConfigure = configureOpenOnMouseDownRef.current || Boolean(editor.storage?.variable?.popover);
+
+    configureOpenOnMouseDownRef.current = false;
+
+    // Pill clicks are handled by VariableFromButton (stopPropagation + Configure toggle).
+    // Don't treat them as chrome clicks or Actions would open/steal the toggle.
+    if (isVariablePillClick) {
+      setKeepCardActionsMenuOpen(editor, false);
+
+      return;
+    }
+
+    // Switching from Configure Variable to Actions: close Configure (idempotent if Radix already
+    // closed it on mousedown-outside), then bounce so Actions tippy remounts.
+    if (switchingFromConfigure) {
+      closeVariablePopover(editor);
+      bounceCardButtonSelection();
+
+      return;
+    }
+
+    // Second click on the button chrome closes Actions and clears the node selection.
+    if (selected) {
+      dismissCardActionsMenu(editor);
+
+      return;
+    }
+
+    editor.commands.setNodeSelection(getPos());
+  };
+
   return (
-    <NodeViewWrapper draggable={editor.isEditable} data-drag-handle={editor.isEditable} data-type="cardButton">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <div>
-            <button
-              className="mly-inline-flex mly-items-center mly-justify-center mly-rounded-md mly-px-3 mly-py-1 mly-mt-1 mly-text-sm mly-font-semibold mly-no-underline mly-transition-colors disabled:mly-pointer-events-none disabled:mly-opacity-50"
-              tabIndex={-1}
-              style={
-                {
-                  backgroundColor: preset.backgroundColor,
-                  color: preset.color,
-                  borderWidth: 2,
-                  borderStyle: 'solid',
-                  borderColor: preset.borderColor,
-                } as CSSProperties
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                if (!editor.isEditable) {
-                  return;
-                }
+    <NodeViewWrapper data-type="cardButton" data-selected={selected ? 'true' : undefined} className="mly-inline-flex">
+      {/* Not a <button>: mousedown preventDefault keeps editor focus on click so the
+          Actions bubble stays open. tabIndex + Enter/Space cover keyboard users. */}
+      <div
+        role="button"
+        tabIndex={editor.isEditable ? 0 : -1}
+        data-selected={selected ? 'true' : undefined}
+        // No color transition: tweening bg/border/text independently flashes
+        // unreadable combos (e.g. primary black bg while text is still dark).
+        className="mly-inline-flex mly-max-w-full mly-cursor-pointer mly-select-none mly-items-center mly-justify-center mly-gap-0.5 mly-overflow-x-auto mly-no-scrollbar mly-rounded-md mly-px-3 mly-py-1 mly-text-sm mly-font-semibold mly-no-underline data-[selected=true]:mly-ring-2 data-[selected=true]:mly-ring-gray-400 data-[selected=true]:mly-ring-offset-1"
+        style={
+          {
+            backgroundColor: preset.backgroundColor,
+            color: preset.color,
+            borderWidth: 2,
+            borderStyle: 'solid',
+            borderColor: preset.borderColor,
+          } as CSSProperties
+        }
+        onPointerDownCapture={() => {
+          // Radix dismisses Configure Variable on capture-phase pointerdown-outside, which runs
+          // BEFORE our bubble-phase mousedown. Snapshot here so a chrome click that closes
+          // Configure is still treated as "switch to Actions", not "toggle Actions off".
+          configureOpenOnMouseDownRef.current = Boolean(editor.storage?.variable?.popover);
+        }}
+        onMouseDown={(event) => {
+          // Prevent the div from taking focus on click (would hide the Actions bubble).
+          event.preventDefault();
+          // Button content is separate from the fields: a variable pill here opens Configure
+          // Variable on its own (Actions bubble hidden), so don't keep the bubble underneath.
+          setKeepCardActionsMenuOpen(editor, false);
+        }}
+        onClick={activateCardButton}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+          }
 
-                const pos = getPos();
-                editor.commands.setNodeSelection(pos);
-                setOpen(true);
-              }}
-            >
-              {matchingProvider ? matchingProvider.renderValue(label, editor, 'button-variable') : label}
-            </button>
-          </div>
-        </PopoverTrigger>
-        <PopoverContent
-          align="end"
-          side="top"
-          className="mly-w-max mly-rounded-lg !mly-p-0.5"
-          sideOffset={8}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
-        >
-          <TooltipProvider>
-            <div className="mly-flex mly-items-stretch mly-text-midnight-gray">
-              <ButtonLabelInput
-                value={label}
-                onValueChange={(value, isVariable) => {
-                  editor.commands.updateCardButtonAttributes({
-                    label: value,
-                    isLabelVariable: isVariable ?? false,
-                  });
-                }}
-                isVariable={isLabelVariable}
-                editor={editor}
-              />
-
-              <Divider />
-
-              <div className="mly-flex mly-space-x-0.5">
-                <Select
-                  label="Style"
-                  value={style}
-                  options={allowedCardButtonStyle.map((value) => ({
-                    value,
-                    label: STYLE_LABELS[value],
-                  }))}
-                  onValueChange={(value) => {
-                    editor.commands.updateCardButtonAttributes({
-                      style: value as AllowedCardButtonStyle,
-                    });
-                  }}
-                  tooltip="Style"
-                />
-              </div>
-
-              <Divider />
-
-              <div className={cn('mly-flex mly-space-x-0.5')}>
-                <LinkInputPopover
-                  defaultValue={url || ''}
-                  onValueChange={(value, isVariable) => {
-                    editor.commands.updateCardButtonAttributes({
-                      url: value,
-                      isUrlVariable: isVariable ?? false,
-                    });
-                  }}
-                  tooltip="URL"
-                  icon={Link2}
-                  editor={editor}
-                  isVariable={isUrlVariable}
-                />
-
-                {SHOW_ACTION_ID_INPUT && (
-                  <LinkInputPopover
-                    defaultValue={actionId || ''}
-                    onValueChange={(value, isVariable) => {
-                      editor.commands.updateCardButtonAttributes({
-                        actionId: value,
-                        isActionIdVariable: isVariable ?? false,
-                      });
-                    }}
-                    tooltip="Action ID"
-                    placeholder="Enter action ID"
-                    icon={Zap}
-                    editor={editor}
-                    isVariable={isActionIdVariable}
-                  />
-                )}
-              </div>
-            </div>
-          </TooltipProvider>
-        </PopoverContent>
-      </Popover>
+          event.preventDefault();
+          activateCardButton();
+        }}
+      >
+        {renderLiquidVariableSegments({
+          value: label,
+          provider: variableProvider,
+          editor,
+          from: 'button-variable',
+          markVariablePills: true,
+        })}
+      </div>
     </NodeViewWrapper>
   );
 }

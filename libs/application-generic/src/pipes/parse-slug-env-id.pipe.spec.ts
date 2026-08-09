@@ -1,5 +1,5 @@
 import { ArgumentMetadata } from '@nestjs/common';
-import { ApiAuthSchemeEnum, MemberRoleEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiAuthSchemeEnum, MemberRoleEnum, PermissionsEnum, ShortIsPrefixEnum, UserSessionData } from '@novu/shared';
 import { expect } from 'chai';
 
 import { encodeBase62 } from '../utils/base62';
@@ -67,6 +67,13 @@ describe('ParseSlugEnvironmentIdPipe', () => {
       const result = pipe.transform(userSession, {} as ArgumentMetadata);
       expect(result.environmentId).to.equal(identifier);
     });
+
+    it('should handle base62-only identifiers exactly at length boundary', () => {
+      const identifier = 'myEnvironment123'; // 16 characters, decodable as base62
+      const userSession = createUserSession(identifier);
+      const result = pipe.transform(userSession, {} as ArgumentMetadata);
+      expect(result.environmentId).to.equal(identifier);
+    });
   });
 
   describe('Environment slug IDs', () => {
@@ -91,19 +98,18 @@ describe('ParseSlugEnvironmentIdPipe', () => {
     it('should decode staging environment slug IDs', () => {
       const internalId = '507f191e810c19729de860ea';
       const encodedId = encodeBase62(internalId);
-      const slugId = `staging-env_stg_${encodedId}`;
+      const slugId = `staging-env_${ShortIsPrefixEnum.ENVIRONMENT}${encodedId}`;
       const userSession = createUserSession(slugId);
       const result = pipe.transform(userSession, {} as ArgumentMetadata);
       expect(result.environmentId).to.equal(internalId);
     });
 
-    it('should decode environment slug IDs with any prefix format', () => {
-      const internalId = '65f1234567890abcdef12345';
-      const encodedId = encodeBase62(internalId);
+    it('should not decode environment slug IDs with an unknown prefix', () => {
+      const encodedId = encodeBase62('65f1234567890abcdef12345');
       const slugId = `custom-environment_custom_${encodedId}`;
       const userSession = createUserSession(slugId);
       const result = pipe.transform(userSession, {} as ArgumentMetadata);
-      expect(result.environmentId).to.equal(internalId);
+      expect(result.environmentId).to.equal(slugId);
     });
   });
 
@@ -113,7 +119,7 @@ describe('ParseSlugEnvironmentIdPipe', () => {
 
       internalIds.forEach((internalId) => {
         const encodedId = encodeBase62(internalId);
-        const slugId = `env_prefix_${encodedId}`;
+        const slugId = `staging_${ShortIsPrefixEnum.ENVIRONMENT}${encodedId}`;
         const userSession = createUserSession(slugId);
         const result = pipe.transform(userSession, {} as ArgumentMetadata);
         expect(result.environmentId).to.equal(internalId);

@@ -1,10 +1,10 @@
 export const DOMAIN_NAME_PATTERN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
-export function normalizeInboundDomainName(domainName: string): string {
+function normalizeInboundDomainName(domainName: string): string {
   return domainName.trim().toLowerCase().replace(/\.$/, '');
 }
 
-export function isValidInboundDomainName(domainName: string): boolean {
+function isValidInboundDomainName(domainName: string): boolean {
   return DOMAIN_NAME_PATTERN.test(normalizeInboundDomainName(domainName));
 }
 

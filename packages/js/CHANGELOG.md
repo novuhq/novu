@@ -1,3 +1,30 @@
+## v3.19.0 (2026-08-07)
+
+### 🚀 Features
+
+- **js,react,api:** headless useAgentChat send + open/resume fixes NV-8445 ([#12271](https://github.com/novuhq/novu/pull/12271))
+
+### 🩹 Fixes
+
+- **api-service:** support TelegramConnectButton without agent link fixes NV-8452 ([#12144](https://github.com/novuhq/novu/pull/12144))
+- **api-service:** hide tool channel from preference UIs fixes NV-8502 ([#12219](https://github.com/novuhq/novu/pull/12219))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+
+## v3.18.2 (2026-08-03)
+
+### 🩹 Fixes
+
+- **js,react:** when web locks not available then dont broadcast messages fixes NV-8425 ([#12170](https://github.com/novuhq/novu/pull/12170))
+
+### ❤️ Thank You
+
+- Paweł Tymczuk @LetItRock
+
 ## v3.18.1 (2026-07-23)
 
 ### 🚀 Features

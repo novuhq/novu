@@ -3,7 +3,6 @@ import { JwtModule } from '@nestjs/jwt';
 import {
   analyticsService,
   CacheServiceHealthIndicator,
-  CloudflareSchedulerService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   cacheService,
@@ -151,7 +150,6 @@ const PROVIDERS = [
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
-  CloudflareSchedulerService,
   ComputeJobWaitDurationService,
   dalService,
   DalServiceHealthIndicator,

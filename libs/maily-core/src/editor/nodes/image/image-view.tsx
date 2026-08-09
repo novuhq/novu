@@ -2,13 +2,40 @@ import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
 import { Ban, BracesIcon, GrabIcon, ImageOffIcon, Loader2 } from 'lucide-react';
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useImageUploadOptions } from '@/editor/extensions/image-upload/image-upload';
-import { getAspectRatio, getNewHeight } from '@/editor/utils/aspect-ratio';
+import { getAspectRatio, getNewHeight, getNewWidth } from '@/editor/utils/aspect-ratio';
 import { cn } from '@/editor/utils/classname';
+import { getNodeOptions } from '@/editor/utils/node-options';
 import { useEvent } from '@/editor/utils/use-event';
+import type { ImageExtensionOptions } from './image';
 
 const MIN_WIDTH = 20;
 export const IMAGE_MAX_WIDTH = 600;
 export const IMAGE_MAX_HEIGHT = 400;
+
+function fitImageWithinBounds({
+  naturalWidth,
+  naturalHeight,
+  containerWidth,
+  maxWidth,
+  maxHeight,
+}: {
+  naturalWidth: number;
+  naturalHeight: number;
+  containerWidth: number;
+  maxWidth?: number;
+  maxHeight?: number;
+}) {
+  const aspectRatio = getAspectRatio(naturalWidth, naturalHeight);
+  let width = Math.min(containerWidth, naturalWidth, maxWidth ?? Number.POSITIVE_INFINITY);
+  let height = Math.min(getNewHeight(width, aspectRatio), naturalHeight);
+
+  if (maxHeight != null && height > maxHeight) {
+    height = Math.min(maxHeight, naturalHeight);
+    width = Math.min(getNewWidth(height, aspectRatio), containerWidth, naturalWidth);
+  }
+
+  return { width, height, aspectRatio };
+}
 
 export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
@@ -19,6 +46,7 @@ export function ImageView(props: NodeViewProps) {
   const [isPlaceholderImage, setIsPlaceholderImage] = useState(false);
 
   const { onImageUpload, allowedMimeTypes = [] } = useImageUploadOptions(editor);
+  const isResizable = getNodeOptions<ImageExtensionOptions>(editor, 'image')?.resizable !== false;
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -30,7 +58,7 @@ export function ImageView(props: NodeViewProps) {
   const handleMouseDown = useEvent((event: React.MouseEvent<HTMLDivElement>) => {
     const imageParent = document.querySelector('.ProseMirror-selectednode') as HTMLDivElement;
 
-    if (!imgRef.current || !imageParent || !selected) {
+    if (!isResizable || !imgRef.current || !imageParent || !selected) {
       return;
     }
 
@@ -92,7 +120,7 @@ export function ImageView(props: NodeViewProps) {
 
   const dragCornerButton = useCallback(
     (direction: string) => {
-      if (isPlaceholderImage) {
+      if (!isResizable || isPlaceholderImage) {
         return null;
       }
 
@@ -114,10 +142,11 @@ export function ImageView(props: NodeViewProps) {
         />
       );
     },
-    [handleMouseDown, isPlaceholderImage]
+    [handleMouseDown, isPlaceholderImage, isResizable]
   );
 
-  const { alignment = 'center', width, height, src, borderRadius } = node.attrs || {};
+  const imageOptions = getNodeOptions<ImageExtensionOptions>(editor, 'image');
+  const { alignment = imageOptions?.defaultAlignment ?? 'center', width, height, src, borderRadius } = node.attrs || {};
 
   const {
     externalLink,
@@ -180,20 +209,36 @@ export function ImageView(props: NodeViewProps) {
       // update the dimensions to ensure that the image is not stretched
       const { naturalWidth, naturalHeight } = img;
       const wrapper = wrapperRef?.current;
+      const imageOptions = getNodeOptions<ImageExtensionOptions>(editor, 'image');
+      const numericWidth = width === 'auto' ? null : Number(width);
+      const numericHeight = height === 'auto' ? null : Number(height);
+      const exceedsMaxWidth =
+        imageOptions?.maxWidth != null && numericWidth != null && numericWidth > imageOptions.maxWidth;
+      const exceedsMaxHeight =
+        imageOptions?.maxHeight != null && numericHeight != null && numericHeight > imageOptions.maxHeight;
+      const shouldFitSize = width === 'auto' || exceedsMaxWidth || exceedsMaxHeight;
 
-      if (!wrapper || width !== 'auto' || !naturalWidth) {
+      if (!wrapper || !naturalWidth || !shouldFitSize) {
         return;
       }
 
-      const wrapperWidth = wrapper.offsetWidth;
-      const aspectRatio = getAspectRatio(naturalWidth, naturalHeight);
-      const calculatedHeight = Math.min(getNewHeight(wrapperWidth, aspectRatio), naturalHeight);
+      const {
+        width: nextWidth,
+        height: nextHeight,
+        aspectRatio,
+      } = fitImageWithinBounds({
+        naturalWidth,
+        naturalHeight,
+        containerWidth: wrapper.offsetWidth,
+        maxWidth: imageOptions?.maxWidth,
+        maxHeight: imageOptions?.maxHeight,
+      });
 
       editor
         .chain()
         .updateImageAttributes({
-          width: Math.min(wrapperWidth, naturalWidth),
-          height: Math.min(calculatedHeight, naturalHeight),
+          width: nextWidth,
+          height: nextHeight,
           aspectRatio,
         })
         .run();
@@ -355,10 +400,14 @@ export function ImageView(props: NodeViewProps) {
                   }}
                 />
               ))}
-              {dragCornerButton('nw')}
-              {dragCornerButton('ne')}
-              {dragCornerButton('sw')}
-              {dragCornerButton('se')}
+              {isResizable && (
+                <>
+                  {dragCornerButton('nw')}
+                  {dragCornerButton('ne')}
+                  {dragCornerButton('sw')}
+                  {dragCornerButton('se')}
+                </>
+              )}
             </>
           )}
         </>

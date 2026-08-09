@@ -1,6 +1,8 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import type { ComponentType } from 'react';
 
+import { DEFAULT_PREVIEW_PROVIDER_ID } from '../use-configured-chat-providers';
+import { DefaultPreviewShell } from './default-preview-shell';
 import { GenericContentSkeleton } from './generic-content-skeleton';
 import { GenericShell } from './generic-shell';
 import { MsTeamsShell } from './ms-teams-shell';
@@ -23,7 +25,12 @@ type ChatPreviewSkin = {
  * Per-provider preview skin (shell chrome + loading body). Add WhatsApp / Telegram entries here
  * when those shells land; unregistered providers use the generic markdown fallback.
  */
-const PREVIEW_SKIN_BY_PROVIDER: Partial<Record<ChatProviderIdEnum, ChatPreviewSkin>> = {
+const PREVIEW_SKIN_BY_PROVIDER: Record<string, ChatPreviewSkin> = {
+  [DEFAULT_PREVIEW_PROVIDER_ID]: {
+    Shell: DefaultPreviewShell,
+    ContentSkeleton: GenericContentSkeleton,
+    isSupported: true,
+  },
   [ChatProviderIdEnum.Slack]: { Shell: SlackShell, ContentSkeleton: SlackContentSkeleton, isSupported: true },
   [ChatProviderIdEnum.Novu]: { Shell: SlackShell, ContentSkeleton: SlackContentSkeleton, isSupported: true },
   [ChatProviderIdEnum.MsTeams]: { Shell: MsTeamsShell, ContentSkeleton: GenericContentSkeleton, isSupported: true },
@@ -36,7 +43,7 @@ const GENERIC_PREVIEW_SKIN: ChatPreviewSkin = {
 };
 
 export function getChatPreviewSkin(providerId: string): ChatPreviewSkin {
-  return PREVIEW_SKIN_BY_PROVIDER[providerId as ChatProviderIdEnum] ?? GENERIC_PREVIEW_SKIN;
+  return PREVIEW_SKIN_BY_PROVIDER[providerId] ?? GENERIC_PREVIEW_SKIN;
 }
 
 /** Whether the provider has a platform-accurate shell (vs. the generic markdown fallback). */

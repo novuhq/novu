@@ -13,12 +13,12 @@ import {
   type ProviderOverrideOption,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source';
 import { useContentSource } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
-import { ContentSourceSelector } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-selector';
 import {
   getMergedOverrideHint,
   PREVIEW_PANEL_CLASS,
   useAnnotatedOverridePreview,
 } from '@/components/workflow-editor/steps/shared/provider-overrides/override-preview';
+import { PreviewSourceBar } from '@/components/workflow-editor/steps/shared/provider-overrides/preview-source-bar';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 
 type ToolPreviewResult = {
@@ -71,8 +71,10 @@ export const ToolPreviewMini = ({ isPreviewPending, previewData }: ToolPreviewPr
               <Skeleton className="h-4 w-1/2" />
             ) : (
               <span
-                className="text-foreground-950 line-clamp-3 min-h-4 whitespace-pre-wrap text-xs font-normal"
-                title={body}
+                className={`line-clamp-3 min-h-4 whitespace-pre-wrap text-xs font-normal ${
+                  body ? 'text-foreground-950' : 'text-foreground-400 italic'
+                }`}
+                title={body || EMPTY_BODY_PLACEHOLDER}
               >
                 {body || EMPTY_BODY_PLACEHOLDER}
               </span>
@@ -90,7 +92,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const body = preview?.body ?? '';
 
   const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
-  const { previewSource, setPreviewSource } = useContentSource();
+  const { selectedSource, previewSource, setPreviewSource } = useContentSource();
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
   const isWebhookPreview = activeProviderId === ToolProviderIdEnum.Webhook;
 
@@ -138,7 +140,15 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       return <AnnotatedOverrideJson {...annotatedPreview} />;
     }
 
-    return <div className={`${PREVIEW_PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
+    if (!body) {
+      return (
+        <div className="text-foreground-400 flex min-h-16 items-center justify-center rounded-md border border-dashed border-neutral-100 p-2 text-xs italic">
+          {EMPTY_BODY_PLACEHOLDER}
+        </div>
+      );
+    }
+
+    return <div className={`${PREVIEW_PANEL_CLASS} whitespace-pre-wrap`}>{body}</div>;
   };
 
   let previewLabel = 'Default content';
@@ -149,16 +159,16 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     previewLabel = 'Rendered override JSON';
   }
 
+  const isViewingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE;
+
   return (
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
-      <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
-        <ContentSourceSelector
-          selectedSource={previewSource}
-          providers={providerOptions}
-          onSelectSource={setPreviewSource}
-        />
-        <div className="h-full flex-1" />
-      </div>
+      <PreviewSourceBar
+        visible={!isViewingOverride}
+        selectedSource={previewSource}
+        providers={providerOptions}
+        onSelectSource={setPreviewSource}
+      />
 
       <div className="relative flex min-h-0 flex-1 flex-col gap-3 p-3">
         <div className="flex h-full min-h-0 w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">

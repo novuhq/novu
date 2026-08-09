@@ -105,46 +105,54 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
-  async listEventActivitiesAfterSequence(params: {
+  /**
+   * Newest-first page of event-capable activities that already carry a stored
+   * sequence. Used by web-chat history open/resume (`before` = older cursor).
+   */
+  async listEventActivities(params: {
     environmentId: string;
     organizationId: string;
     conversationId: string;
-    afterSequence: number;
+    /** Activity `_id` from the previous page's oldest row — fetch older history. */
+    before?: string;
     limit: number;
     filter: ConversationEventActivityFilter;
   }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
-    const baseQuery = {
+    const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
       _conversationId: params.conversationId,
+      sequence: { $type: 'number' },
       ...eventActivityQuery(params.filter),
     };
+
+    if (params.before) {
+      const cursor = await this.findOne(
+        {
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+          _conversationId: params.conversationId,
+          _id: params.before,
+        },
+        '*'
+      );
+
+      if (!cursor || typeof cursor.sequence !== 'number') {
+        return { data: [], hasMore: false };
+      }
+
+      query.$and = [
+        {
+          $or: [{ sequence: { $lt: cursor.sequence } }, { sequence: cursor.sequence, _id: { $lt: cursor._id } }],
+        },
+      ];
+    }
+
     const fetchLimit = params.limit + 1;
-    const legacyCount = await this.count({ ...baseQuery, sequence: { $exists: false } });
-    const legacy =
-      params.afterSequence < legacyCount
-        ? await this.find({ ...baseQuery, sequence: { $exists: false } }, '*', {
-            sort: { createdAt: 1, _id: 1 },
-            skip: params.afterSequence,
-            limit: fetchLimit,
-          })
-        : [];
-    const remaining = fetchLimit - legacy.length;
-    const sequenced =
-      remaining > 0
-        ? await this.find(
-            {
-              ...baseQuery,
-              sequence: { $gt: Math.max(params.afterSequence, legacyCount) },
-            },
-            '*',
-            {
-              sort: { sequence: 1, _id: 1 },
-              limit: remaining,
-            }
-          )
-        : [];
-    const data = [...legacy, ...sequenced];
+    const data = await this.find(query, '*', {
+      sort: { sequence: -1, _id: -1 },
+      limit: fetchLimit,
+    });
 
     return {
       data: data.slice(0, params.limit),

@@ -13,6 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { FeatureFlagsService } from '@novu/application-generic';
+import { DirectionEnum } from '@novu/shared';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import {
   SubscriberSession,
@@ -109,6 +110,9 @@ export class WebChatController {
         after: query.after,
         before: query.before,
         limit: query.limit ?? 50,
+        orderBy: query.orderBy || 'lastActivityAt',
+        orderDirection: query.orderDirection || DirectionEnum.DESC,
+        includeCursor: query.includeCursor,
       })
     );
   }
@@ -142,9 +146,7 @@ export class WebChatController {
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
         conversationIdentifier: identifier,
-        after: query.after,
         before: query.before,
-        afterSequence: query.afterSequence ?? 0,
         limit: query.limit ?? 50,
       })
     );

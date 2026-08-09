@@ -4,6 +4,7 @@ import { AnyExtension, FocusPosition, Editor as TiptapEditor } from '@tiptap/cor
 import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
 
 import { useMemo, useRef } from 'react';
+import { CardActionsBubbleMenu } from './components/card-actions-menu/card-actions-bubble-menu';
 import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
 import { ContentMenu } from './components/content-menu';
 import { EditorMenuBar } from './components/editor-menu-bar';
@@ -52,6 +53,7 @@ export type EditorProps = {
 } & PartialMailyContextType;
 
 export type { TextMenuConfig, ImageMenuConfig, MenuConfig };
+export type { CardButtonFieldName, ValidateCardButtonField } from './provider';
 
 export function Editor(props: EditorProps) {
   const {
@@ -72,6 +74,7 @@ export function Editor(props: EditorProps) {
     blocks = DEFAULT_SLASH_COMMANDS,
     editable = true,
     placeholderUrl = DEFAULT_PLACEHOLDER_URL,
+    validateCardButtonField,
     repeatMenuConfig,
     menuConfig,
   } = props;
@@ -131,7 +134,7 @@ export function Editor(props: EditorProps) {
   }
 
   return (
-    <MailyProvider placeholderUrl={placeholderUrl}>
+    <MailyProvider placeholderUrl={placeholderUrl} validateCardButtonField={validateCardButtonField}>
       <div
         className={cn(
           'mly-editor mly-antialiased',
@@ -153,6 +156,7 @@ export function Editor(props: EditorProps) {
           <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} config={repeatMenuConfig} />
           <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
           <InlineImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
+          <CardActionsBubbleMenu editor={editor} appendTo={menuContainerRef} />
         </div>
       </div>
     </MailyProvider>

@@ -40,7 +40,7 @@ export const MailyVariablesListView = React.forwardRef(
         items.map((item) => {
           const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
           const isNewVariableItem = isNewVariable(item);
-          const displayLabel = hasDisplayLabel(item) ? item.displayLabel : (item as ExtendedVariable).name;
+          const displayLabel = hasDisplayLabel(item) ? item.displayLabel : item.name;
 
           if (isDigestVariable) {
             const { label } = getDynamicDigestVariable({
@@ -131,10 +131,12 @@ export const MailyVariablesListView = React.forwardRef(
   }
 );
 
-function isNewVariable(item: Variable): item is ExtendedVariable {
-  return 'type' in item && (item as ExtendedVariable).type === 'new-variable';
+function isNewVariable(item: Variable): boolean {
+  // Keep as boolean (not a type predicate): `Variable` already has optional `type`/`displayLabel`,
+  // so `item is ExtendedVariable` would narrow the false branch to `never`.
+  return (item as ExtendedVariable).type === 'new-variable';
 }
 
-function hasDisplayLabel(item: Variable): item is ExtendedVariable {
-  return 'displayLabel' in item && typeof (item as ExtendedVariable).displayLabel === 'string';
+function hasDisplayLabel(item: Variable): item is Variable & { displayLabel: string } {
+  return typeof item.displayLabel === 'string';
 }

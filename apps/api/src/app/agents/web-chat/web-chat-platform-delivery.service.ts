@@ -64,6 +64,7 @@ export class WebChatPlatformDeliveryService {
         const markdown = this.markdownForLiveEnvelope(content, richContent);
         const envelope = this.eventFactory.createMessageEnvelope({
           conversationId: conversation._id,
+          conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId,
           content: { markdown },
@@ -91,6 +92,7 @@ export class WebChatPlatformDeliveryService {
         const markdown = this.markdownForLiveEnvelope(content, richContent);
         const envelope = this.eventFactory.createEditEnvelope({
           conversationId: conversation._id,
+          conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
           content: { markdown },
@@ -112,6 +114,7 @@ export class WebChatPlatformDeliveryService {
       if (conversation && sequence !== undefined) {
         const envelope = this.eventFactory.createDeleteEnvelope({
           conversationId: conversation._id,
+          conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
           sequence,
@@ -135,6 +138,7 @@ export class WebChatPlatformDeliveryService {
       const typingState = status?.trim() ? 'on' : 'off';
       const envelope = this.eventFactory.createTypingEnvelope({
         conversationId: conversation._id,
+        conversationIdentifier: conversation.identifier,
         agentId: context.config.agentIdentifier,
         sequence,
         state: typingState,
