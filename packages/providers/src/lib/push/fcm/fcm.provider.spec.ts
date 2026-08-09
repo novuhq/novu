@@ -1,5 +1,5 @@
 import { IPushOptions } from '@novu/stateless';
-import app from 'firebase-admin/app';
+import { cert, initializeApp } from 'firebase-admin/app';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { FcmPushProvider } from './fcm.provider';
@@ -62,7 +62,7 @@ vi.mock('firebase-admin', async (importOriginal) => {
   };
 });
 
-describe.skip('FcmPushProvider', () => {
+describe('FcmPushProvider', () => {
   let provider: FcmPushProvider;
   let spy: ReturnType<typeof vi.spyOn>;
   const subscriber = {};
@@ -109,8 +109,8 @@ describe.skip('FcmPushProvider', () => {
         },
       }
     );
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -118,7 +118,53 @@ describe.skip('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
-      registration_ids: ['test'],
+      registrationIds: ['test'],
+      data: {},
+    });
+  });
+
+  test('should preserve camelCase and nested bridge keys with NONE casing', async () => {
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        fcmOptions: {
+          analyticsLabel: 'checkout',
+        },
+        apns: {
+          headers: {
+            'apns-priority': '10',
+          },
+        },
+        data: {
+          orderId: 'ord_123',
+        },
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      tokens: ['tester'],
+      fcmOptions: {
+        analyticsLabel: 'checkout',
+      },
+      apns: {
+        headers: {
+          'apns-priority': '10',
+        },
+      },
+      data: {
+        orderId: 'ord_123',
+      },
     });
   });
 
@@ -139,8 +185,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -178,8 +224,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -226,8 +272,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -235,6 +281,7 @@ describe.skip('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
+      data: {},
       apns: {
         payload: {
           aps: {
@@ -280,8 +327,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -330,8 +377,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -385,8 +432,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -420,8 +467,8 @@ describe.skip('FcmPushProvider', () => {
           subscriber,
           step,
         });
-        expect(app.initializeApp).toHaveBeenCalledTimes(1);
-        expect(app.cert).toHaveBeenCalledTimes(1);
+        expect(initializeApp).toHaveBeenCalledTimes(1);
+        expect(cert).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalled();
         expect(spy).toHaveBeenCalledWith({
           tokens: [token],
@@ -455,21 +502,324 @@ describe.skip('FcmPushProvider', () => {
         },
         _passthrough: {
           body: {
-            tokens: ['tokens'],
+            android: { priority: 'high' },
           },
         },
       }
     );
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(initializeApp).toHaveBeenCalledTimes(1);
+    expect(cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
         title: 'Test 1',
         body: 'Test push',
       },
-      tokens: ['tester', 'tokens'],
-      registration_ids: ['test'],
+      tokens: ['tester'],
+      registrationIds: ['test'],
+      android: { priority: 'high' },
+      data: {},
     });
+  });
+
+  test('should route from _passthrough.body when no schematized routing key is set', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/passthrough-topic');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        _passthrough: {
+          body: {
+            topic: 'news_updates',
+          },
+        },
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news_updates',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/passthrough-topic']);
+  });
+
+  test('should let _passthrough.body routing claim the whole group over a schematized destination', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/passthrough-wins');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['subscriber-token'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        tokens: ['override-token-1', 'override-token-2'],
+        _passthrough: {
+          body: {
+            topic: 'news_updates',
+          },
+        },
+      }
+    );
+
+    // Exactly one destination reaches FCM — the losing `tokens` is not smuggled along.
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news_updates',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('should ignore an unusable _passthrough.body routing value and keep the schematized destination', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('should-not-be-used');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['subscriber-token'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        tokens: ['override-token-1'],
+        _passthrough: {
+          body: {
+            topic: { $exists: true },
+          },
+        },
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      tokens: ['override-token-1'],
+      data: {},
+    });
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  test('should send via messaging.send when bridgeProviderData has topic', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/topic-1');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        topic: 'news',
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/topic-1']);
+  });
+
+  test('should send via messaging.send when bridgeProviderData has condition', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/condition-1');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        condition: "'stocks' in topics && 'tech' in topics",
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      condition: "'stocks' in topics && 'tech' in topics",
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/condition-1']);
+  });
+
+  test('should send via messaging.send when bridgeProviderData has token', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/token-1');
+
+    const result = await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        token: 'device-token-abc',
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      token: 'device-token-abc',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.ids).toEqual(['projects/test/messages/token-1']);
+  });
+
+  test('should prefer token send path over topic when both are present in bridgeProviderData', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/token-wins');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        token: 'device-token-abc',
+        topic: 'news',
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      token: 'device-token-abc',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('should prefer topic over tokens when both are present in bridgeProviderData', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/topic-wins');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        tokens: ['bridge-token-1', 'bridge-token-2'],
+        topic: 'news',
+      }
+    );
+
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('should use multicast when bridgeProviderData has tokens alone', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('should-not-be-used');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        tokens: ['bridge-token-1', 'bridge-token-2'],
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      // routing.tokens replaces subscriber targets — not concatenated
+      tokens: ['bridge-token-1', 'bridge-token-2'],
+      data: {},
+    });
+    expect(sendSpy).not.toHaveBeenCalled();
   });
 });

@@ -201,6 +201,8 @@ export enum FeatureFlagsKeysEnum {
   IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED = 'IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED',
   /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
   IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
+  /** Enable per-provider content overrides on push steps (FCM/Expo schemas, free-form elsewhere). */
+  IS_PUSH_PROVIDER_OVERRIDES_ENABLED = 'IS_PUSH_PROVIDER_OVERRIDES_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require

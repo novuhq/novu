@@ -50,7 +50,7 @@ Overrides are defined in the `overrides` property of a trigger payload. You can 
 - Workflow-level: Applies to all steps using a specific provider and takes precedence over the default workflow provider settings.
 - Step-level: Targets a specific step in the workflow and it takes precedence over both workflow-level overrides and the default workflow provider settings.
 
-Some channels also let you save provider overrides on the step itself in the workflow editor, rather than sending them with every trigger. Those configured overrides sit below both scopes above: anything you send at trigger time replaces the configured value for the same field, and fields you do not send keep their configured values. See [chat provider content overrides](/platform/integrations/chat#provider-content-overrides).
+Some channels also let you save provider overrides on the step itself in the workflow editor, rather than sending them with every trigger. Those configured overrides sit below both scopes above: anything you send at trigger time replaces the configured value for the same field, and fields you do not send keep their configured values. See [chat provider content overrides](/platform/integrations/chat#provider-content-overrides) and [push provider content overrides](/platform/integrations/push#provider-content-overrides).
 
 <Warning>
   **Arrays replace, they do not merge.** When an array key is set at more than one level, the higher-priority array is used whole rather than merged element by element. Previously arrays were merged by index, which could leave a partial array patched over a longer one. Send the complete array at the level you want to win.

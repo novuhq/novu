@@ -14,7 +14,7 @@ export const DEFAULT_CONTENT_SOURCE = 'default' as const;
 export const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
 /** Channels whose steps can carry per-provider content overrides. */
-export type OverrideChannel = ChannelTypeEnum.CHAT | ChannelTypeEnum.TOOL;
+export type OverrideChannel = ChannelTypeEnum.CHAT | ChannelTypeEnum.TOOL | ChannelTypeEnum.PUSH;
 
 export type ContentSource = typeof DEFAULT_CONTENT_SOURCE | ContentOverrideProviderId;
 

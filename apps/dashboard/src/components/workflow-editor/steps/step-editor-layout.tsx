@@ -64,7 +64,7 @@ import { cn } from '@/utils/ui';
 import { Protect } from '../../../utils/protect';
 
 /** Step types whose editor and preview share a provider-override content source. */
-const CONTENT_OVERRIDE_STEP_TYPES: StepTypeEnum[] = [StepTypeEnum.CHAT, StepTypeEnum.TOOL];
+const CONTENT_OVERRIDE_STEP_TYPES: StepTypeEnum[] = [StepTypeEnum.CHAT, StepTypeEnum.TOOL, StepTypeEnum.PUSH];
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
