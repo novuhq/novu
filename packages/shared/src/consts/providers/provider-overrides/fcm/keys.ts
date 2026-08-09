@@ -9,8 +9,10 @@
 
 /**
  * At most one of these may appear in a single FCM content override.
- * Precedence: token > topic > condition > tokens.
- * Topic is claimed before tokens so a layer that sets both keeps the legacy topic send path.
+ * Claim / send-plan precedence (sole tie-breaker via `resolveExclusiveRoutingKeys`):
+ * token > topic > condition > tokens.
+ * Broadcast destinations (topic, condition) beat Novu `tokens` so a same-layer mix keeps the
+ * legacy topic path and treats condition the same way.
  */
 export const FCM_ROUTING_KEYS = ['token', 'topic', 'condition', 'tokens'] as const;
 

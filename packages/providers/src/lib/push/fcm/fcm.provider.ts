@@ -187,8 +187,8 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
   }
 
   /**
-   * Precedence: token > topic > condition > tokens (multicast) > default multicast.
-   * Topic beats tokens when both were set — legacy FCM behavior before exclusive-key validation.
+   * Maps an already-exclusive `routing` claim (from `readRouting`) onto a send plan.
+   * Same-layer precedence lives only in `FCM_ROUTING_KEYS` — `routing` has at most one key.
    */
   private resolveSendPlan(routing: FcmRouting, subscriberTargets: string[]): FcmSendPlan {
     if (routing.token) {

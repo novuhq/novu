@@ -780,7 +780,6 @@ describe('FcmPushProvider', () => {
       }
     );
 
-    // Legacy: topic beat tokens when both were set — keep that send path.
     expect(sendSpy).toHaveBeenCalledWith({
       topic: 'news',
       notification: {

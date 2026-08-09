@@ -60,7 +60,6 @@ describe('resolveExclusiveRoutingKeys', () => {
       token: 'single',
     });
 
-    // Legacy: topic beats tokens when both appear in the same claiming layer.
     expect(
       resolveExclusiveRoutingKeys(
         { tokens: ['t1'], topic: 'orders', _passthrough: { body: { tokens: ['a'], topic: 'news' } } },
@@ -70,6 +69,10 @@ describe('resolveExclusiveRoutingKeys', () => {
 
     expect(resolveExclusiveRoutingKeys({ tokens: ['t1'], topic: 'orders' }, GROUPS)).toEqual({
       topic: 'orders',
+    });
+
+    expect(resolveExclusiveRoutingKeys({ tokens: ['t1'], condition: "'a' in topics" }, GROUPS)).toEqual({
+      condition: "'a' in topics",
     });
   });
 

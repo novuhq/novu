@@ -108,13 +108,16 @@ describe('extractFcmRoutingCredentials', () => {
     ).to.deep.equal({ topic: 'news_updates' });
   });
 
-  it('prefers topic over tokens when both appear in the same claiming layer', () => {
+  it('prefers broadcast destinations over tokens in the same claiming layer', () => {
     expect(extractFcmRoutingCredentials({ tokens: ['a', 'b'], topic: 'news_updates' })).to.deep.equal({
       topic: 'news_updates',
     });
     expect(
       extractFcmRoutingCredentials({ _passthrough: { body: { tokens: ['a'], topic: 'news_updates' } } })
     ).to.deep.equal({ topic: 'news_updates' });
+    expect(extractFcmRoutingCredentials({ tokens: ['a'], condition: "'a' in topics" })).to.deep.equal({
+      deviceTokens: [],
+    });
   });
 
   it('keeps the schematized destination when the passthrough routing value is unusable', () => {
