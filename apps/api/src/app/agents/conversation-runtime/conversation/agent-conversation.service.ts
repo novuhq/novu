@@ -73,6 +73,8 @@ export interface CreateOrGetConversationParams {
   workspaceId?: string;
   /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
   identifier?: string;
+  /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
+  notificationId?: string;
 }
 
 export interface PersistInboundMessageParams {
@@ -151,6 +153,13 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
   transactionId: string;
 }
 
+export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
+  platformMessageId: string;
+  platformThreadId: string;
+  messageContent: string;
+  signalData: Record<string, unknown>;
+}
+
 export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
   approvalId: string;
   approved: boolean;
@@ -221,6 +230,7 @@ export class AgentConversationService {
     const conversation = await this.conversationRepository.create({
       identifier: params.identifier ?? `conv_${shortId(12)}`,
       _agentId: params.agentId,
+      _notificationId: params.notificationId,
       participants: [
         { type: params.participantType, id: params.participantId },
         { type: ConversationParticipantTypeEnum.AGENT, id: params.agentId },
@@ -797,6 +807,41 @@ export class AgentConversationService {
           transactionId: params.transactionId,
         },
       },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+  }
+
+  /**
+   * Persist the workflow-origin message + signal. Stable `workflow-dispatch-*`
+   * identifiers make a concurrent first-turn race lose on the unique index.
+   */
+  async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
+    await this.persistAgentMessage({
+      conversationId: params.conversationId,
+      channel: params.channel,
+      agentIdentifier: params.agentIdentifier,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      platformMessageId: params.platformMessageId,
+      platformThreadId: params.platformThreadId,
+      identifier: `workflow-dispatch-msg:${params.platformMessageId}`,
+      content: params.messageContent,
+    });
+
+    await this.activityRepository.createSignalActivity({
+      identifier: `workflow-dispatch-origin:${params.platformMessageId}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.platformThreadId,
+      agentId: params.agentIdentifier,
+      content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
+      signalData: {
+        type: 'workflow_origin',
+        payload: params.signalData,
+      },
+      platformMessageId: params.platformMessageId,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });

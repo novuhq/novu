@@ -18,6 +18,8 @@ import {
   validateEndpointForType,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   EnvironmentEntity,
   IntegrationEntity,
   MessageEntity,
@@ -80,7 +82,22 @@ type MessageContext = {
    */
   card?: CardElement;
   i18nInstance: unknown;
+  assignedAgentId: string | null;
 };
+
+const AGENT_SUPPORTED_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
+
+function filterAgentSupportedEndpoints(endpoints: ChannelData[]): ChannelData[] {
+  return endpoints.filter((endpoint) => {
+    if (!AGENT_SUPPORTED_ENDPOINT_TYPES.has(endpoint.type)) {
+      return false;
+    }
+
+    const token = 'token' in endpoint ? endpoint.token : undefined;
+
+    return typeof token === 'string' && token.length > 0;
+  });
+}
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -97,6 +114,8 @@ export class SendMessageChat extends SendMessageBase {
     protected moduleRef: ModuleRef,
     private sendWebhookMessage: SendWebhookMessage,
     private resolveChannelEndpoints: ResolveChannelEndpoints,
+    private agentRepository: AgentRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository,
     private featureFlagsService: FeatureFlagsService
   ) {
     super(
@@ -114,10 +133,11 @@ export class SendMessageChat extends SendMessageBase {
   public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     try {
       // Phase 1: Prepare message context (template processing, content compilation)
-      const messageContext = await this.prepareMessageContext(command);
+      const assignedAgentId = await this.resolveAssignedAgentId(command);
+      const messageContext = await this.prepareMessageContext(command, assignedAgentId);
 
       // Phase 2: Resolve all channels into unified format
-      const channels = await this.resolveAllChannels(command);
+      let channels = await this.resolveAllChannels(command);
 
       if (channels.length === 0) {
         if (command.contextKeys.length > 0) {
@@ -143,6 +163,24 @@ export class SendMessageChat extends SendMessageBase {
         };
       }
 
+      if (assignedAgentId) {
+        const gated = await this.gateChannelsForAssignedAgent(channels, assignedAgentId, command);
+        if (gated.length > 0) {
+          channels = gated;
+        } else {
+          await this.createExecutionDetail(
+            command,
+            DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
+            ExecutionDetailsStatusEnum.WARNING,
+            undefined,
+            {
+              message:
+                "No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels",
+            }
+          );
+        }
+      }
+
       // Phase 3: Send to all channels using unified pipeline
       const status = await this.sendToAllChannels(channels, messageContext);
 
@@ -162,7 +200,10 @@ export class SendMessageChat extends SendMessageBase {
   /**
    * Prepares the message context by handling template processing, variant resolution, and content compilation
    */
-  private async prepareMessageContext(command: SendMessageChannelCommand): Promise<MessageContext> {
+  private async prepareMessageContext(
+    command: SendMessageChannelCommand,
+    assignedAgentId: string | null
+  ): Promise<MessageContext> {
     addBreadcrumb({
       message: 'Sending Chat',
     });
@@ -201,7 +242,7 @@ export class SendMessageChat extends SendMessageBase {
       throw new PlatformException(DetailEnum.MESSAGE_CONTENT_NOT_GENERATED);
     }
 
-    return { command, step, content, card, i18nInstance };
+    return { command, step, content, card, i18nInstance, assignedAgentId };
   }
 
   /**
@@ -251,6 +292,7 @@ export class SendMessageChat extends SendMessageBase {
             channel.data as IntegrationEndpoints,
             messageContext.step,
             messageContext.content,
+            messageContext.assignedAgentId,
             messageContext.card
           );
         } else {
@@ -391,6 +433,7 @@ export class SendMessageChat extends SendMessageBase {
     integrationChannelData: IntegrationEndpoints,
     step: NotificationStepEntity,
     content: string,
+    assignedAgentId: string | null,
     card?: CardElement
   ): Promise<SendMessageResult> {
     const { integration, error } = await this.getAndValidateIntegration(
@@ -415,7 +458,15 @@ export class SendMessageChat extends SendMessageBase {
 
     for (const channelData of integrationChannelData.channelData) {
       try {
-        const result = await this.sendMessage(channelData, integration, content, card, message, command);
+        const result = await this.sendMessage(
+          channelData,
+          integration,
+          content,
+          card,
+          message,
+          command,
+          assignedAgentId ?? undefined
+        );
 
         if (result.status === SendMessageStatus.SUCCESS) {
           status = SendMessageStatus.SUCCESS;
@@ -618,7 +669,8 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     card: CardElement | undefined,
     message: MessageEntity,
-    command: SendMessageChannelCommand
+    command: SendMessageChannelCommand,
+    assignedAgentId?: string
   ): Promise<SendMessageResult> {
     const chatHandler = this.setupChatHandler(integration);
     const overrides = this.buildMessageOverrides(command, integration);
@@ -657,10 +709,130 @@ export class SendMessageChat extends SendMessageBase {
         nativePayload,
       });
 
+      if (result.id) {
+        await this.persistProviderIdentifier(result.id, message, command, assignedAgentId);
+      }
+
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
     } catch (error) {
       return await this.handleMessageSendError(error, message, command, overriddenChannelData);
     }
+  }
+
+  private async persistProviderIdentifier(
+    identifier: string,
+    message: MessageEntity,
+    command: SendMessageChannelCommand,
+    assignedAgentId?: string
+  ): Promise<void> {
+    try {
+      await this.messageRepository.update(
+        {
+          _id: message._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            identifier,
+            ...(assignedAgentId ? { _agentId: assignedAgentId } : {}),
+          },
+        }
+      );
+    } catch (error) {
+      Logger.error(
+        {
+          err: error,
+          jobId: command.jobId,
+          messageId: message._id,
+          agentId: assignedAgentId,
+          identifier,
+        },
+        'Failed to persist provider identifier on message after successful send',
+        LOG_CONTEXT
+      );
+
+      await this.createExecutionDetail(
+        command,
+        DetailEnum.CHAT_AGENT_PLATFORM_THREAD_PERSIST_FAILED,
+        ExecutionDetailsStatusEnum.WARNING,
+        message._id,
+        {
+          identifier,
+          message: this.getErrorMessage(error),
+        }
+      );
+    }
+  }
+
+  private async resolveAssignedAgentId(command: SendMessageChannelCommand): Promise<string | null> {
+    if (command.job._agentId !== undefined) {
+      if (command.job._agentId === null) {
+        return null;
+      }
+
+      return String(command.job._agentId);
+    }
+
+    const workflowAgent = command.workflow?.agent;
+    if (!workflowAgent?.identifier) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: workflowAgent.identifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    return agent?._id ? String(agent._id) : null;
+  }
+
+  private async gateChannelsForAssignedAgent(
+    channels: UnifiedChannel[],
+    assignedAgentId: string,
+    command: SendMessageChannelCommand
+  ): Promise<UnifiedChannel[]> {
+    const linkedIntegrationIdentifiers = new Set(
+      await this.agentIntegrationRepository.listLinkedIntegrationIdentifiers({
+        agentId: assignedAgentId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      })
+    );
+
+    return channels.flatMap((channel) => {
+      const eligible = this.evaluateChannelForAgent(channel, linkedIntegrationIdentifiers);
+
+      return eligible ? [eligible] : [];
+    });
+  }
+
+  private evaluateChannelForAgent(
+    channel: UnifiedChannel,
+    linkedIntegrationIdentifiers: Set<string>
+  ): UnifiedChannel | null {
+    if (channel.type !== 'new') {
+      return null;
+    }
+
+    const channelGroup = channel.data as IntegrationEndpoints;
+
+    if (!linkedIntegrationIdentifiers.has(channelGroup.integrationIdentifier)) {
+      return null;
+    }
+
+    const supported = filterAgentSupportedEndpoints(channelGroup.channelData);
+
+    if (supported.length === 0) {
+      return null;
+    }
+
+    channelGroup.channelData = supported;
+
+    return channel;
   }
 
   private async isRichChatEnabled(command: SendMessageChannelCommand): Promise<boolean> {
