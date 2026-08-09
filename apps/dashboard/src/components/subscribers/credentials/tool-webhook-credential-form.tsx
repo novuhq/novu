@@ -193,9 +193,11 @@ function ToolWebhookFormActions({ isSaving, onSave, onCancel }: ToolWebhookFormA
 type ToolWebhookCredentialFormEditorProps = {
   onSave: (payload: ChannelEndpointPayload) => Promise<boolean>;
   onCancel: () => void;
+  /** Called after a successful save. Defaults to `onCancel` when omitted. */
+  onSaved?: () => void;
 };
 
-export function ToolWebhookCredentialFormEditor({ onSave, onCancel }: ToolWebhookCredentialFormEditorProps) {
+export function ToolWebhookCredentialFormEditor({ onSave, onCancel, onSaved }: ToolWebhookCredentialFormEditorProps) {
   const [draft, setDraft] = useState<ToolWebhookDraft>({ url: '', method: '', headerRows: [] });
   const [showError, setShowError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -212,7 +214,7 @@ export function ToolWebhookCredentialFormEditor({ onSave, onCancel }: ToolWebhoo
     setIsSaving(false);
 
     if (succeeded) {
-      onCancel();
+      (onSaved ?? onCancel)();
     }
   };
 
@@ -289,7 +291,7 @@ export function ToolWebhookCredentialFormRow({
       <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className={CREDENTIAL_FIELD_LABEL_CLASS}>URL</span>
-          <span className="text-paragraph-xs font-mono text-text-sub truncate">{webhookPayload.url || '-'}</span>
+          <span className="text-paragraph-xs font-mono text-text-sub truncate px-0.5">{webhookPayload.url || '-'}</span>
         </div>
         {!readOnly && (
           <div className="flex shrink-0 items-center gap-1">
@@ -311,14 +313,14 @@ export function ToolWebhookCredentialFormRow({
       {webhookPayload.method && (
         <div className="flex flex-col gap-1">
           <span className={CREDENTIAL_FIELD_LABEL_CLASS}>Method</span>
-          <span className="text-paragraph-xs font-mono text-text-sub">{webhookPayload.method}</span>
+          <span className="text-paragraph-xs font-mono text-text-sub px-0.5">{webhookPayload.method}</span>
         </div>
       )}
       {headerEntries.length > 0 && (
         <div className="flex flex-col gap-1">
           <span className={CREDENTIAL_FIELD_LABEL_CLASS}>Headers</span>
           {headerEntries.map(([key, value]) => (
-            <div key={key} className="flex items-center gap-1 text-paragraph-xs font-mono text-text-sub">
+            <div key={key} className="flex items-center gap-1 px-0.5 text-paragraph-xs font-mono text-text-sub">
               <span className="w-[120px] shrink-0 truncate">{key}</span>
               <span className="min-w-0 flex-1 truncate">{valuesVisible ? value : maskCredentialValue(value)}</span>
             </div>

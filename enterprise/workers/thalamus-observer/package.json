@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "wrangler dev --env local",
-    "start": "wrangler dev --env local",
+    "dev": "wrangler dev --env local --port 8788",
+    "start": "wrangler dev --env local --port 8788",
     "deploy": "wrangler deploy",
     "deploy:local": "wrangler deploy --env local",
     "deploy:staging": "wrangler deploy --env staging",

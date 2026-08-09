@@ -40,11 +40,17 @@ export function CredentialFormRow({
   const baseId = useId();
   const [isEditing, setIsEditing] = useState(false);
 
-  const { draft, setField, showErrors, isSaving, hasUnsavedCredential, save, cancel } = useCredentialFormDraft({
-    fields,
-    onSave,
-    onCancel: () => setIsEditing(false),
-  });
+  const { draft, setField, showErrors, isSaving, hasUnsavedCredential, save, cancel, resetDraft } =
+    useCredentialFormDraft({
+      fields,
+      onSave,
+      onCancel: () => setIsEditing(false),
+    });
+
+  const handleEdit = () => {
+    resetDraft(fields);
+    setIsEditing(true);
+  };
 
   const handleCancel = () => cancel();
 
@@ -104,7 +110,7 @@ export function CredentialFormRow({
                       copyLabel={field.label}
                       ariaEntity={ariaEntity}
                       isSaving={isSaving}
-                      onEdit={isEditing ? undefined : () => setIsEditing(true)}
+                      onEdit={isEditing ? undefined : handleEdit}
                       onDelete={isEditing ? undefined : onDelete}
                       onConfirm={isEditing ? save : undefined}
                       onCancel={isEditing ? handleCancel : undefined}

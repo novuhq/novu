@@ -34,7 +34,9 @@ import type {
 import { SeverityLevelEnum } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 
-export type InboxServiceOptions = HttpClientOptions;
+export type InboxServiceOptions = HttpClientOptions & {
+  httpClient?: HttpClient;
+};
 
 const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
@@ -128,7 +130,8 @@ export class InboxService {
   #httpClient: HttpClient;
 
   constructor(options: InboxServiceOptions = {}) {
-    this.#httpClient = new HttpClient(options);
+    const { httpClient, ...httpClientOptions } = options;
+    this.#httpClient = httpClient ?? new HttpClient(httpClientOptions);
   }
 
   async initializeSession({
@@ -701,10 +704,12 @@ export class InboxService {
   linkChannelEndpoint({
     integrationIdentifier,
     context,
+    contextHash,
   }: LinkChannelEndpointArgs): Promise<LinkChannelEndpointResponse> {
     return this.#httpClient.post(`${CHANNEL_ENDPOINTS_ROUTE}/link`, {
       integrationIdentifier,
       context,
+      contextHash,
     });
   }
 }

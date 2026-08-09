@@ -53,3 +53,54 @@ const isMailyObject = (value: any): boolean => {
 
   return true;
 };
+
+const MAX_CARD_BUTTONS_PER_ROW = 3;
+
+/**
+ * Back-compat: earlier chat bodies stored `cardButton` nodes as bare top-level
+ * blocks. The editor now models buttons as children of a `cardActions` row, so
+ * consecutive top-level buttons are wrapped into rows (chunked to the max per row,
+ * matching the server compiler) before the document is loaded. Idempotent for
+ * documents already using `cardActions`.
+ */
+type MailyDocNode = { type?: string; content?: MailyDocNode[]; attrs?: Record<string, unknown> };
+
+export const wrapLegacyCardButtons = (value: string): string => {
+  try {
+    const parsed = JSON.parse(value) as { type?: string; content?: MailyDocNode[] };
+
+    if (!isMailyObject(parsed)) return value;
+
+    const nextContent: MailyDocNode[] = [];
+    const pendingButtons: MailyDocNode[] = [];
+    let didWrap = false;
+
+    const flushButtons = () => {
+      while (pendingButtons.length > 0) {
+        const chunk = pendingButtons.splice(0, MAX_CARD_BUTTONS_PER_ROW);
+        nextContent.push({ type: 'cardActions', attrs: {}, content: chunk });
+        didWrap = true;
+      }
+    };
+
+    for (const node of parsed.content ?? []) {
+      if (node?.type === 'cardButton') {
+        pendingButtons.push(node);
+        continue;
+      }
+
+      flushButtons();
+      nextContent.push(node);
+    }
+
+    flushButtons();
+
+    if (!didWrap) return value;
+
+    parsed.content = nextContent;
+
+    return JSON.stringify(parsed);
+  } catch {
+    return value;
+  }
+};

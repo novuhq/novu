@@ -1,4 +1,4 @@
-import { Editor as MailyEditor, type MenuConfig } from '@novu/maily-core';
+import { Editor as MailyEditor, type MenuConfig, type ValidateCardButtonField } from '@novu/maily-core';
 import { BlockGroupItem } from '@novu/maily-core/blocks';
 import { Variable } from '@novu/maily-core/extensions';
 import type { AnyExtension, Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
@@ -25,6 +25,7 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
   variables?: EnhancedParsedVariables;
   blocks?: BlockGroupItem[];
   menuConfig?: MenuConfig;
+  validateCardButtonField?: ValidateCardButtonField;
   additionalExtensions?: AnyExtension[];
   addDigestVariables?: boolean;
   onCreateNewVariable?: (variable: string) => Promise<void>;
@@ -50,6 +51,12 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
     variables: LiquidVariable[],
     isAllowedVariable: IsAllowedVariable
   ) => (props: NodeViewProps) => JSX.Element;
+  imageExtensionOptions?: {
+    resizable?: boolean;
+    defaultAlignment?: 'left' | 'center' | 'right';
+    maxWidth?: number;
+    maxHeight?: number;
+  };
 };
 
 /**
@@ -71,6 +78,7 @@ export const Maily = ({
   },
   blocks,
   menuConfig,
+  validateCardButtonField,
   additionalExtensions,
   isPayloadSchemaEnabled,
   isTranslationEnabled,
@@ -85,6 +93,7 @@ export const Maily = ({
   renderVariable = () => null,
   createVariableNodeView = defaultCreateVariableNodeView,
   translationValueInput,
+  imageExtensionOptions,
   ...rest
 }: MailyProps) => {
   const primitives = useMemo(
@@ -139,6 +148,7 @@ export const Maily = ({
     resourceId,
     resourceType,
     translationValueInput,
+    imageExtensionOptions,
   });
 
   /*
@@ -209,6 +219,7 @@ export const Maily = ({
           onUpdate={onUpdate}
           repeatMenuConfig={repeatMenuConfig}
           menuConfig={menuConfig}
+          validateCardButtonField={validateCardButtonField}
         />
       </div>
       {children}

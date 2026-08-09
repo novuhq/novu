@@ -4,7 +4,7 @@ export class ApiKeyDto {
   @ApiProperty({
     type: String,
     description: 'API key',
-    example: 'sk_test_1234567890abcdef',
+    example: 'api-key-1234567890abcdef',
   })
   key: string;
 

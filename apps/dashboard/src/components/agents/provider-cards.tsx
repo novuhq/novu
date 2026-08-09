@@ -1,6 +1,5 @@
 import {
   ChatProviderIdEnum,
-  CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   EmailProviderIdEnum,
   type IIntegration,
@@ -19,6 +18,7 @@ import type { AgentIntegrationLink } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { useConversationalProviders } from '@/hooks/use-conversational-providers';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
@@ -446,12 +446,13 @@ export function ProviderCards({
 }: ProviderCardsProps) {
   const { integrations } = useFetchIntegrations();
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
+  const conversationalProviders = useConversationalProviders();
   const navigate = useNavigate();
 
   // Email (NovuAgent) renders like every other connectable channel card; its integration + link
   // are only provisioned when the user clicks Connect.
   const items = useMemo(() => {
-    const built = buildCardItems(CONVERSATIONAL_PROVIDERS, integrations).filter(
+    const built = buildCardItems(conversationalProviders, integrations).filter(
       // Agent email is Enterprise/Cloud-only — never surface the card on Community.
       (item) => !(IS_SELF_HOSTED_CE && item.providerId === EmailProviderIdEnum.NovuAgent)
     );
@@ -462,7 +463,7 @@ export function ProviderCards({
 
       return 0;
     });
-  }, [integrations]);
+  }, [conversationalProviders, integrations]);
 
   const linkedIntegrationIds = useMemo(
     () => new Set(existingLinks?.map((link) => link.integration._id) ?? []),

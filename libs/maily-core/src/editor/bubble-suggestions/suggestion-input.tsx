@@ -17,6 +17,7 @@ type SuggestionInputProps = HTMLAttributes<HTMLInputElement> & {
   onOutsideClick?: () => void;
   placeholder?: string;
   editor: Editor;
+  containerClassName?: string;
 };
 
 export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps>((props, ref) => {
@@ -27,6 +28,7 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
     enabledProviders,
     onOutsideClick,
     className,
+    containerClassName,
     editor,
     ...inputProps
   } = props;
@@ -35,6 +37,10 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
   const popoverRef = useRef<VariableSuggestionsPopoverRef>(null);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Enter-arrow hint: only when the field is empty and idle (not focused).
+  const showEnterHint = !isFocused && value.trim() === '';
 
   // Get available providers and detect active suggestion
   const providers = useSuggestionProviders(editor, enabledProviders);
@@ -66,31 +72,60 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
 
   useOutsideClick(containerRef, handleOutsideClick);
 
-  // Load suggestions when active suggestion changes
+  // Load suggestions when the active query/provider changes. `await` always yields a
+  // microtask even for sync providers, so never flip `isLoading` immediately — that
+  // flashed "Loading suggestions..." on every keystroke over the existing list.
   useEffect(() => {
     if (!activeSuggestion) {
       setSuggestions([]);
+      setIsLoading(false);
+
       return;
     }
 
+    let cancelled = false;
+    let loadingTimer: ReturnType<typeof setTimeout> | undefined;
+
     const loadSuggestions = async () => {
-      setIsLoading(true);
+      loadingTimer = setTimeout(() => {
+        if (!cancelled) {
+          setIsLoading(true);
+        }
+      }, 150);
+
       try {
         const result = await activeSuggestion.provider.getSuggestions(activeSuggestion.query, editor);
-        setSuggestions(Array.isArray(result) ? result : []);
+
+        if (!cancelled) {
+          setSuggestions(Array.isArray(result) ? result : []);
+        }
       } catch (error) {
         console.error('Failed to load suggestions:', error);
-        setSuggestions([]);
+
+        if (!cancelled) {
+          setSuggestions([]);
+        }
       } finally {
-        setIsLoading(false);
+        clearTimeout(loadingTimer);
+
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadSuggestions();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(loadingTimer);
+    };
   }, [activeSuggestion, editor]);
 
   const handleSelectItem = (item: SuggestionItem) => {
     if (!activeSuggestion) return;
+
+    activeSuggestion.provider.onSelect?.(item, editor);
 
     const formattedValue = activeSuggestion.provider.formatValue(item);
 
@@ -98,15 +133,27 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
     const beforeTrigger = value.slice(0, activeSuggestion.triggerIndex);
     const newValue = beforeTrigger + formattedValue;
 
+    // When a selection handler is provided it owns the commit (value + variable flag). Calling the
+    // plain `onValueChange` first would commit an intermediate, unflagged value; on mouse selection
+    // that intermediate (plain text, no variable) is what survives — the picked variable turns into
+    // regular text. So commit exactly once, atomically.
+    if (onSelectSuggestion) {
+      onSelectSuggestion(activeSuggestion.provider, item, newValue);
+
+      return;
+    }
+
     onValueChange(newValue);
-    onSelectSuggestion?.(activeSuggestion.provider, item, newValue);
   };
 
   const isTriggering = !!activeSuggestion && suggestions.length > 0;
+  const showSuggestionLayer = !!activeSuggestion && !!VariableSuggestionPopoverComponent;
 
   return (
-    <div className={cn('mly-relative')} ref={containerRef}>
-      <label className="mly-relative">
+    // Elevate the whole field while suggestions are open so the list paints above
+    // sibling form rows (e.g. Actions Label above Action/URL).
+    <div className={cn('mly-relative', showSuggestionLayer && 'mly-z-50', containerClassName)} ref={containerRef}>
+      <label className="mly-relative mly-block mly-w-full">
         <input
           {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
           type="text"
@@ -116,8 +163,17 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
           onChange={(e) => {
             onValueChange(e.target.value);
           }}
+          onFocus={(e) => {
+            setIsFocused(true);
+            inputProps.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            inputProps.onBlur?.(e);
+          }}
           className={cn(
-            'mly-h-7 mly-w-40 mly-rounded-md mly-bg-white mly-px-2 mly-pr-6 mly-text-sm mly-text-midnight-gray hover:mly-bg-soft-gray focus:mly-bg-soft-gray focus:mly-outline-none',
+            'mly-box-border mly-h-7 mly-w-40 mly-rounded-md mly-bg-white mly-px-2 mly-text-sm mly-text-midnight-gray hover:mly-bg-soft-gray focus:mly-bg-soft-gray focus:mly-outline-none',
+            showEnterHint && 'mly-pr-6',
             className
           )}
           onKeyDown={(e) => {
@@ -139,18 +195,29 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
           }}
           spellCheck={false}
         />
-        <div className="mly-absolute mly-inset-y-0 mly-right-1 mly-flex mly-items-center">
-          <CornerDownLeft className="mly-h-3 mly-w-3 mly-stroke-[2.5] mly-text-midnight-gray" />
-        </div>
+        {showEnterHint ? (
+          <div className="mly-pointer-events-none mly-absolute mly-inset-y-0 mly-right-1 mly-flex mly-items-center">
+            <CornerDownLeft className="mly-h-3 mly-w-3 mly-stroke-[2.5] mly-text-midnight-gray" />
+          </div>
+        ) : null}
       </label>
 
       {isTriggering && VariableSuggestionPopoverComponent && (
-        <div className="mly-absolute mly-left-0 mly-top-8">
+        <div className="mly-absolute mly-left-0 mly-top-full mly-z-50 mly-mt-1">
           <VariableSuggestionPopoverComponent
-            items={suggestions.map((suggestion) => ({
-              name: suggestion.id,
-              label: suggestion.label,
-            }))}
+            items={suggestions.map((suggestion) => {
+              const data =
+                suggestion.data && typeof suggestion.data === 'object'
+                  ? (suggestion.data as Record<string, unknown>)
+                  : {};
+
+              return {
+                ...data,
+                name: suggestion.id,
+                // Prefer provider label (e.g. "Create payload.foo") for the list row.
+                displayLabel: suggestion.label ?? (data.displayLabel as string | undefined),
+              };
+            })}
             onSelectItem={(item) => {
               const suggestion = suggestions.find((s) => s.id === item.name);
               if (suggestion) {
@@ -162,8 +229,8 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
         </div>
       )}
 
-      {isLoading && (
-        <div className="mly-absolute mly-left-0 mly-top-8 mly-rounded-md mly-bg-white mly-p-2 mly-shadow-md">
+      {isLoading && activeSuggestion && suggestions.length === 0 && (
+        <div className="mly-absolute mly-left-0 mly-top-full mly-z-50 mly-mt-1 mly-rounded-md mly-bg-white mly-p-2 mly-shadow-md">
           Loading suggestions...
         </div>
       )}

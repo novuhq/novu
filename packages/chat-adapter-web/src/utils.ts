@@ -45,7 +45,7 @@ export function conversationIdFromThreadId(threadId: string): string {
   return threadId;
 }
 
-/** Flatten card title + text children for live/history markdown parity. */
+/** Flatten card title + text/link children for live/history markdown parity. */
 export function extractCardPlainText(card: CardElement): string {
   const title = typeof card.title === 'string' ? card.title.trim() : '';
   const childText = Array.isArray(card.children)
@@ -54,9 +54,15 @@ export function extractCardPlainText(card: CardElement): string {
           if (!child || typeof child !== 'object') {
             return [];
           }
-          const node = child as { type?: string; content?: unknown };
+          const node = child as { type?: string; content?: unknown; label?: unknown; url?: unknown };
           if (node.type === 'text' && typeof node.content === 'string' && node.content.trim()) {
             return [node.content.trim()];
+          }
+          if (node.type === 'link' && typeof node.label === 'string' && node.label.trim()) {
+            const label = node.label.trim();
+            const url = typeof node.url === 'string' ? node.url.trim() : '';
+
+            return [url ? `${label} (${url})` : label];
           }
 
           return [];

@@ -95,6 +95,44 @@ describe('Inbox - link channel endpoint - POST /v1/inbox/channel-endpoints/link 
     expect(command.organizationId).to.equal(session.organization._id);
   });
 
+  it('forwards session contextKeys and body context/contextHash like inbox OAuth', async () => {
+    const integrationIdentifier = await createTelegramIntegration();
+
+    const inboxSession = await session.testAgent.post('/v1/inbox/session').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: session.subscriberId,
+      context: { key: 'value2' },
+    });
+    expect(inboxSession.status).to.equal(201);
+    const contextToken = inboxSession.body.data.token as string;
+    const sessionContextKeys = inboxSession.body.data.contextKeys as string[];
+    expect(sessionContextKeys).to.include('key:value2');
+
+    const usecase = testServer.getService(IssueTelegramSubscriberLink);
+    issueTelegramSubscriberLinkStub = sinon.stub(usecase, 'execute').resolves({
+      deepLinkUrl: 'https://t.me/TestBot?start=ctx123',
+      botUsername: 'TestBot',
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+    });
+
+    const response = await session.testAgent
+      .post('/v1/inbox/channel-endpoints/link')
+      .set('Authorization', `Bearer ${contextToken}`)
+      .send({
+        integrationIdentifier,
+        context: { key: 'value2' },
+        contextHash: 'unused-when-session-validated',
+      });
+
+    expect(response.status).to.equal(200);
+    expect(issueTelegramSubscriberLinkStub.calledOnce).to.equal(true);
+    const command = issueTelegramSubscriberLinkStub.firstCall.args[0];
+    expect(command.contextKeys).to.deep.equal(sessionContextKeys);
+    expect(command.context).to.deep.equal({ key: 'value2' });
+    expect(command.contextHash).to.equal('unused-when-session-validated');
+    expect(command.isContextValidated).to.equal(true);
+  });
+
   it('rejects non-Telegram providers with 400', async () => {
     const integrationIdentifier = await createSlackIntegration();
 

@@ -8,6 +8,15 @@ Signals let you change conversation state without sending another chat message. 
 
 Use `ctx.reply()` when the user should see something. Use signals when you only need to persist data, trigger a Novu workflow, or close the conversation.
 
+## Channel support
+
+| Capability | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| Resolve conversation | Yes | Yes | Yes | Yes | Yes |
+| Metadata / trigger signals | Yes | Yes | Yes | Yes | Yes |
+
+Resolve and other signals are channel-agnostic. Novu applies them to the conversation regardless of provider. See [Channels overview](/agents/channels/overview).
+
 ## Signal types
 
 | Signal | What it does | Method |

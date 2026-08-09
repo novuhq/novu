@@ -16,6 +16,7 @@ import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { esmImport } from '../../../utils/esm-import';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
+import { omitIncompleteLinkButtons } from '../card-render.utils';
 import { toTeamsFlavoredCard, validateTeamsCard } from './card-render.utils';
 
 interface CreateConversationResponse {
@@ -51,14 +52,15 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
 
     // Teams Adaptive Card TextBlocks render standard markdown for bold/italic/links, but not
     // strikethrough or inline code — strip those markers so they don't show as literal `~~`/backticks.
-    const teamsCard = toTeamsFlavoredCard(card);
+    // Incomplete Actions (empty URL) stay in the preview card but must not hit Teams.
+    const teamsCard = toTeamsFlavoredCard(omitIncompleteLinkButtons(card));
 
     return {
       nativePayload: {
         attachments: [{ contentType: ADAPTIVE_CARD_CONTENT_TYPE, content: cardToAdaptiveCard(teamsCard) }],
       },
       content: cardToFallbackText(teamsCard),
-      validation: validateTeamsCard(card),
+      validation: validateTeamsCard(teamsCard),
     };
   }
 

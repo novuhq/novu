@@ -4,7 +4,7 @@ import { IsObject, IsOptional, IsString } from 'class-validator';
 export class WorkflowAgentProviderConfigDto {
   @ApiPropertyOptional({
     description:
-      "Novu-digestible inbound address for this agent (shared inbox or custom-domain agent route). Used as the outbound email Reply-To so replies route to the agent.",
+      'Novu-digestible inbound address for this agent (shared inbox or custom-domain agent route). Used as the outbound email Reply-To so replies route to the agent.',
     type: 'string',
   })
   @IsOptional()

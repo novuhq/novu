@@ -36,7 +36,7 @@ describe('AgentEventOutbox', () => {
     const outbox = new AgentEventOutbox({ ...BASE_OPTIONS, fetchFn });
 
     outbox.enqueue({ type: 'run-start' });
-    outbox.enqueue({ type: 'message', messageId: 'msg-1', content: { markdown: 'a' } });
+    outbox.enqueue({ type: 'message', role: 'assistant', messageId: 'msg-1', content: { markdown: 'a' } });
     outbox.enqueue({ type: 'run-finish', outcome: 'completed' });
     await outbox.flush();
 
