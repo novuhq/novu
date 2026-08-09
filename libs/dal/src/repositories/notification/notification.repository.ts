@@ -223,7 +223,7 @@ export class NotificationRepository extends BaseRepository<
         populate: [
           {
             path: 'executionDetails',
-            select: 'createdAt detail isRetry isTest providerId raw source status updatedAt webhookStatus',
+            select: 'createdAt detail isRetry isTest message providerId raw source status updatedAt webhookStatus',
             options: {
               sort: { createdAt: 1 },
             },

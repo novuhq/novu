@@ -51,6 +51,11 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsString()
   raw?: string | null;
 
+  /** Human-readable note surfaced alongside the detail in the activity feed. */
+  @IsOptional()
+  @IsString()
+  message?: string | null;
+
   @IsOptional()
   @IsString()
   // todo check if this can required

@@ -67,7 +67,16 @@ const stepRunSelectColumns = [
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
-const traceSelectColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at', 'event_type'] as const;
+const traceSelectColumns = [
+  'entity_id',
+  'id',
+  'status',
+  'title',
+  'raw_data',
+  'message',
+  'created_at',
+  'event_type',
+] as const;
 type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
 
 interface IStepRunWithDetails extends StepRunFetchResult {

@@ -67,7 +67,7 @@ const stepRunSelectColumns = [
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
-const traceSelectColumns = ['id', 'entity_id', 'title', 'status', 'created_at', 'raw_data'] as const;
+const traceSelectColumns = ['id', 'entity_id', 'title', 'status', 'created_at', 'raw_data', 'message'] as const;
 
 @Injectable()
 export class GetActivity {
@@ -228,6 +228,7 @@ export class GetActivity {
         isRetry: false,
         createdAt: new Date(trace.created_at).toISOString(),
         raw: trace.raw_data,
+        message: trace.message,
       }));
 
       executionDetailsByEntityId.set(entityId, executionDetails);

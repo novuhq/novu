@@ -163,8 +163,12 @@ export abstract class SendMessageBase extends SendMessageType {
     };
   }
 
+  /**
+   * @param warning - when set, the selection is logged as a WARNING carrying this note, so the
+   * activity feed can surface why the selected integration is not the expected one.
+   */
   @Instrument()
-  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
+  protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity, warning?: string) {
     const providerDisplayName = providers.find((el) => el.id === integration?.providerId)?.displayName || 'Unknown';
 
     await this.createExecutionDetails.execute(
@@ -172,9 +176,10 @@ export abstract class SendMessageBase extends SendMessageType {
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: createProviderSelectedMessage(providerDisplayName) as DetailEnum,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
+        status: warning ? ExecutionDetailsStatusEnum.WARNING : ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
+        ...(warning && { message: warning }),
         raw: JSON.stringify({
           providerId: integration?.providerId,
           identifier: integration?.identifier,

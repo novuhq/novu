@@ -30,7 +30,7 @@ import { mapFeedItemToDto } from './map-feed-item-to.dto';
 
 const TRACE_AFTER_BUFFER_DAYS = 1;
 const EXECUTION_DETAILS_TRACE_LIMIT = 200;
-const traceFindColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at'] as const;
+const traceFindColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'message', 'created_at'] as const;
 type TraceFindResult = Pick<Trace, (typeof traceFindColumns)[number]>;
 
 @Injectable()
@@ -389,6 +389,7 @@ export class GetActivityFeed {
         isRetry: false,
         createdAt: new Date(trace.created_at).toISOString(),
         raw: trace.raw_data,
+        message: trace.message,
       }));
 
       executionDetailsByEntityId.set(entityId, executionDetails);

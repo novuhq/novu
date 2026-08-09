@@ -37,5 +37,15 @@ export type JobFeedItem = Pick<
 
 export type ExecutionDetailFeedItem = Pick<
   ExecutionDetailsEntity,
-  '_id' | 'providerId' | 'detail' | 'source' | '_jobId' | 'status' | 'isTest' | 'isRetry' | 'createdAt' | 'raw'
+  | '_id'
+  | 'providerId'
+  | 'detail'
+  | 'source'
+  | '_jobId'
+  | 'status'
+  | 'isTest'
+  | 'isRetry'
+  | 'createdAt'
+  | 'raw'
+  | 'message'
 >;

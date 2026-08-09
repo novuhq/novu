@@ -83,6 +83,11 @@ type MessageContext = {
   card?: CardElement;
   i18nInstance: unknown;
   assignedAgentId: string | null;
+  /**
+   * Set when the assigned agent has no deliverable linked chat channel, so delivery falls back to
+   * the subscriber's configured channels. Surfaced as a warning on the provider selection log.
+   */
+  agentChannelsFallback: boolean;
 };
 
 /** Slack-only for now; extend when other agent platforms gain send support. */
@@ -169,16 +174,7 @@ export class SendMessageChat extends SendMessageBase {
         if (gated.length > 0) {
           channels = gated;
         } else {
-          await this.createExecutionDetail(
-            command,
-            DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK,
-            ExecutionDetailsStatusEnum.WARNING,
-            undefined,
-            {
-              message:
-                `No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels`,
-            }
-          );
+          messageContext.agentChannelsFallback = true;
         }
       }
 
@@ -243,7 +239,7 @@ export class SendMessageChat extends SendMessageBase {
       throw new PlatformException(DetailEnum.MESSAGE_CONTENT_NOT_GENERATED);
     }
 
-    return { command, step, content, card, i18nInstance, assignedAgentId };
+    return { command, step, content, card, i18nInstance, assignedAgentId, agentChannelsFallback: false };
   }
 
   /**
@@ -294,6 +290,7 @@ export class SendMessageChat extends SendMessageBase {
             messageContext.step,
             messageContext.content,
             messageContext.assignedAgentId,
+            messageContext.agentChannelsFallback,
             messageContext.card
           );
         } else {
@@ -302,6 +299,7 @@ export class SendMessageChat extends SendMessageBase {
             channel.data as IChannelSettings,
             messageContext.step,
             messageContext.content,
+            messageContext.agentChannelsFallback,
             messageContext.card
           );
         }
@@ -435,6 +433,7 @@ export class SendMessageChat extends SendMessageBase {
     step: NotificationStepEntity,
     content: string,
     assignedAgentId: string | null,
+    agentChannelsFallback: boolean,
     card?: CardElement
   ): Promise<SendMessageResult> {
     const { integration, error } = await this.getAndValidateIntegration(
@@ -451,6 +450,7 @@ export class SendMessageChat extends SendMessageBase {
       content,
       integrationChannelData.providerId,
       integration,
+      agentChannelsFallback,
       {},
       integrationChannelData.channelData
     );
@@ -496,6 +496,7 @@ export class SendMessageChat extends SendMessageBase {
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
     content: string,
+    agentChannelsFallback: boolean,
     card?: CardElement
   ): Promise<SendMessageResult> {
 
@@ -536,6 +537,7 @@ export class SendMessageChat extends SendMessageBase {
       content,
       subscriberChannel.providerId,
       integration,
+      agentChannelsFallback,
       {
         chatWebhookUrl,
         phone: phoneNumber,
@@ -874,6 +876,7 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     providerId: ProvidersIdEnum,
     integration: IntegrationEntity,
+    agentChannelsFallback: boolean,
     additionalFields: Partial<MessageEntity> = {},
     channelData?: ChannelData[]
   ): Promise<MessageEntity> {
@@ -898,7 +901,11 @@ export class SendMessageChat extends SendMessageBase {
       ...additionalFields,
     });
 
-    await this.sendSelectedIntegrationExecution(command.job, integration);
+    const fallbackWarning = agentChannelsFallback
+      ? `Agent integration unavailable. Integration fallback to \`${integration.identifier}\`. `
+      : undefined;
+
+    await this.sendSelectedIntegrationExecution(command.job, integration, fallbackWarning);
 
     await this.createExecutionDetail(
       command,

@@ -24,6 +24,7 @@ export interface IExecutionDetail {
   isTest: boolean;
   isRetry: boolean;
   raw?: string;
+  message?: string | null;
   createdAt: string;
   updatedAt: string;
   eventType: string;
