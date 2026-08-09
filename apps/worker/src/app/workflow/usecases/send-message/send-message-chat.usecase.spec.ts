@@ -3,7 +3,7 @@ import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, TriggerOverrides }
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageChat } from './send-message-chat.usecase';
+import { hasChatContentOverride, SendMessageChat } from './send-message-chat.usecase';
 import { SendMessageStatus } from './send-message-type.usecase';
 
 describe('SendMessageChat - phone-based channel de-duplication', () => {
@@ -367,5 +367,41 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     sinon.assert.calledOnce(resolveCardContent);
     expect(post.firstCall.args[1].text).to.equal('card fallback text');
     expect(post.firstCall.args[1].blocks).to.deep.equal(cardBlocks);
+  });
+
+  it('still resolves the compiled card when overrides are routing/metadata-only', async () => {
+    const cardBlocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'default card block' } }];
+    const { post, resolveCardContent } = stubSlackHandlerWithCardResolve({ blocks: cardBlocks });
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        providerOverrides: {
+          webhookUrl: 'https://hooks.example/override',
+          'slack-endpoint': { endpoint: { channelId: 'C_OVERRIDE' } },
+        },
+        card: demoCard,
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(resolveCardContent);
+    expect(post.firstCall.args[1].blocks).to.deep.equal(cardBlocks);
+  });
+});
+
+describe('hasChatContentOverride', () => {
+  it('treats primary content and native rich payloads as content overrides', () => {
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { text: 'hi' })).to.equal(true);
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { blocks: [] })).to.equal(true);
+    expect(hasChatContentOverride(ChatProviderIdEnum.MsTeams, { attachments: [] })).to.equal(true);
+  });
+
+  it('ignores routing and metadata-only keys', () => {
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { webhookUrl: 'https://example.com' })).to.equal(false);
+    expect(
+      hasChatContentOverride(ChatProviderIdEnum.Slack, {
+        'slack-endpoint': { endpoint: { channelId: 'C123' } },
+      })
+    ).to.equal(false);
   });
 });
