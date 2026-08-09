@@ -12,6 +12,14 @@ export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
       "type": "string",
       "description": "Registration token that identifies a single device."
     },
+    "topic": {
+      "type": "string",
+      "description": "Firebase topic name. Warning: when set in a step content override, every subscriber matching the workflow receives a separate topic broadcast."
+    },
+    "condition": {
+      "type": "string",
+      "description": "Firebase condition expression. Warning: when set in a step content override, every subscriber matching the workflow receives a separate condition broadcast."
+    },
     "tokens": {
       "anyOf": [
         {
@@ -26,14 +34,6 @@ export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
           "pattern": "\\{\\{|\\{%"
         }
       ]
-    },
-    "topic": {
-      "type": "string",
-      "description": "Firebase topic name. Warning: when set in a step content override, every subscriber matching the workflow receives a separate topic broadcast."
-    },
-    "condition": {
-      "type": "string",
-      "description": "Firebase condition expression. Warning: when set in a step content override, every subscriber matching the workflow receives a separate condition broadcast."
     },
     "data": {
       "anyOf": [
@@ -1095,39 +1095,23 @@ export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
       "not": {
         "required": [
           "token",
+          "topic"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "token",
+          "condition"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "token",
           "tokens"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "token",
-          "topic"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "token",
-          "condition"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "tokens",
-          "topic"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "tokens",
-          "condition"
         ]
       }
     },
@@ -1136,6 +1120,22 @@ export const fcmOverrideLiquidTolerantJsonSchema: JSONSchemaDto = {
         "required": [
           "topic",
           "condition"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "topic",
+          "tokens"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "condition",
+          "tokens"
         ]
       }
     }

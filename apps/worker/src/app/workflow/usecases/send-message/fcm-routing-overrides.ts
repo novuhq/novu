@@ -43,7 +43,8 @@ export function hasTokenlessRoutingOverride(
 
 /**
  * Maps FCM routing overrides onto channel credentials used for token-less send selection.
- * Precedence matches the provider send plan: token > tokens > topic > condition.
+ * Precedence matches the provider send plan: token > topic > condition > tokens.
+ * Topic beats tokens when both appear in one layer (legacy FCM behavior).
  * `token` / `condition` only need an empty deviceTokens marker — the provider reads them from bridge data.
  */
 export function extractFcmRoutingCredentials(overrides: Record<string, unknown>): PushRoutingCredentials | null {
@@ -53,16 +54,16 @@ export function extractFcmRoutingCredentials(overrides: Record<string, unknown>)
     return { deviceTokens: [] };
   }
 
-  if (Array.isArray(routing.tokens)) {
-    return { deviceTokens: routing.tokens };
-  }
-
   if (typeof routing.topic === 'string') {
     return { topic: routing.topic };
   }
 
   if (typeof routing.condition === 'string') {
     return { deviceTokens: [] };
+  }
+
+  if (Array.isArray(routing.tokens)) {
+    return { deviceTokens: routing.tokens };
   }
 
   return null;

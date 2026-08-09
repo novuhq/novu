@@ -29,10 +29,10 @@ describe('isFcmBroadcastRoutingOverride', () => {
     ).to.equal(true);
   });
 
-  it('returns false when passthrough tokens win group order over a sibling topic', () => {
+  it('returns true when passthrough topic wins group order over a sibling tokens', () => {
     expect(
       isFcmBroadcastRoutingOverride({ _passthrough: { body: { tokens: ['a'], topic: 'news_updates' } } })
-    ).to.equal(false);
+    ).to.equal(true);
   });
 
   it('returns false when the passthrough topic is unusable', () => {
@@ -105,6 +105,15 @@ describe('extractFcmRoutingCredentials', () => {
   it('lets a passthrough topic claim the group over schematized tokens', () => {
     expect(
       extractFcmRoutingCredentials({ tokens: ['a', 'b'], _passthrough: { body: { topic: 'news_updates' } } })
+    ).to.deep.equal({ topic: 'news_updates' });
+  });
+
+  it('prefers topic over tokens when both appear in the same claiming layer', () => {
+    expect(extractFcmRoutingCredentials({ tokens: ['a', 'b'], topic: 'news_updates' })).to.deep.equal({
+      topic: 'news_updates',
+    });
+    expect(
+      extractFcmRoutingCredentials({ _passthrough: { body: { tokens: ['a'], topic: 'news_updates' } } })
     ).to.deep.equal({ topic: 'news_updates' });
   });
 

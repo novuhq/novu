@@ -12,13 +12,6 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
       "type": "string",
       "description": "Registration token that identifies a single device."
     },
-    "tokens": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Registration tokens for a multicast send (Novu multicast extension)."
-    },
     "topic": {
       "type": "string",
       "description": "Firebase topic name. Warning: when set in a step content override, every subscriber matching the workflow receives a separate topic broadcast."
@@ -26,6 +19,13 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
     "condition": {
       "type": "string",
       "description": "Firebase condition expression. Warning: when set in a step content override, every subscriber matching the workflow receives a separate condition broadcast."
+    },
+    "tokens": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Registration tokens for a multicast send (Novu multicast extension)."
     },
     "data": {
       "type": "object",
@@ -615,39 +615,23 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
       "not": {
         "required": [
           "token",
+          "topic"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "token",
+          "condition"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "token",
           "tokens"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "token",
-          "topic"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "token",
-          "condition"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "tokens",
-          "topic"
-        ]
-      }
-    },
-    {
-      "not": {
-        "required": [
-          "tokens",
-          "condition"
         ]
       }
     },
@@ -656,6 +640,22 @@ export const fcmOverrideJsonSchema: JSONSchemaDto = {
         "required": [
           "topic",
           "condition"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "topic",
+          "tokens"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "condition",
+          "tokens"
         ]
       }
     }

@@ -3,12 +3,16 @@
  * the provider registry never have to pull the generated artifact into a bundle.
  * `fcm-override.drift.spec.ts` fails if these drift apart.
  *
- * Order matches the generator's property emission order exactly
- * (`Object.keys(fcmOverrideJsonSchema.properties)`).
+ * `FCM_ROUTING_KEYS` order is send-plan / claim precedence (see `resolveExclusiveRoutingKeys`).
+ * It must also match the routing-key prefix of `Object.keys(fcmOverrideJsonSchema.properties)`.
  */
 
-/** At most one of these may appear in a single FCM content override. */
-export const FCM_ROUTING_KEYS = ['token', 'tokens', 'topic', 'condition'] as const;
+/**
+ * At most one of these may appear in a single FCM content override.
+ * Precedence: token > topic > condition > tokens.
+ * Topic is claimed before tokens so a layer that sets both keeps the legacy topic send path.
+ */
+export const FCM_ROUTING_KEYS = ['token', 'topic', 'condition', 'tokens'] as const;
 
 export const FCM_OVERRIDE_KEYS = [
   ...FCM_ROUTING_KEYS,

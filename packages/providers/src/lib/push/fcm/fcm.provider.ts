@@ -171,10 +171,6 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       return { token: claimed.token };
     }
 
-    if (Array.isArray(claimed.tokens)) {
-      return { tokens: claimed.tokens };
-    }
-
     if (typeof claimed.topic === 'string') {
       return { topic: claimed.topic };
     }
@@ -183,17 +179,20 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       return { condition: claimed.condition };
     }
 
+    if (Array.isArray(claimed.tokens)) {
+      return { tokens: claimed.tokens };
+    }
+
     return {};
   }
 
-  /** Precedence: token > tokens (multicast) > topic > condition > default multicast */
+  /**
+   * Precedence: token > topic > condition > tokens (multicast) > default multicast.
+   * Topic beats tokens when both were set — legacy FCM behavior before exclusive-key validation.
+   */
   private resolveSendPlan(routing: FcmRouting, subscriberTargets: string[]): FcmSendPlan {
     if (routing.token) {
       return { kind: 'single', target: { token: routing.token } };
-    }
-
-    if (Array.isArray(routing.tokens)) {
-      return { kind: 'multicast', tokens: routing.tokens };
     }
 
     if (routing.topic) {
@@ -202,6 +201,10 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
 
     if (routing.condition) {
       return { kind: 'single', target: { condition: routing.condition } };
+    }
+
+    if (Array.isArray(routing.tokens)) {
+      return { kind: 'multicast', tokens: routing.tokens };
     }
 
     return { kind: 'multicast', tokens: subscriberTargets };

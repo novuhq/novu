@@ -326,7 +326,7 @@ describe('processProviderOverridesIssues', () => {
 
     expect(issues.controls?.['providerOverrides.fcm']).toEqual([
       {
-        message: 'Only one of token, tokens, topic, condition is allowed',
+        message: 'Only one of token, topic, condition, tokens is allowed',
         issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.fcm',
       },
@@ -354,7 +354,7 @@ describe('processProviderOverridesIssues', () => {
 
     expect(issues.controls?.['providerOverrides.fcm']).toEqual([
       {
-        message: 'Only one of token, tokens, topic, condition is allowed',
+        message: 'Only one of token, topic, condition, tokens is allowed',
         issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.fcm',
       },

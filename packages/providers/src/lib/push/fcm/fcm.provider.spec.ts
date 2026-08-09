@@ -759,7 +759,40 @@ describe('FcmPushProvider', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  test('should use multicast when bridgeProviderData has tokens and strip competing routing keys', async () => {
+  test('should prefer topic over tokens when both are present in bridgeProviderData', async () => {
+    const sendSpy = vi
+      // @ts-expect-error
+      .spyOn(provider.messaging, 'send')
+      .mockResolvedValue('projects/test/messages/topic-wins');
+
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {},
+        subscriber,
+        step,
+      },
+      {
+        tokens: ['bridge-token-1', 'bridge-token-2'],
+        topic: 'news',
+      }
+    );
+
+    // Legacy: topic beat tokens when both were set — keep that send path.
+    expect(sendSpy).toHaveBeenCalledWith({
+      topic: 'news',
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {},
+    });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test('should use multicast when bridgeProviderData has tokens alone', async () => {
     const sendSpy = vi
       // @ts-expect-error
       .spyOn(provider.messaging, 'send')
@@ -776,7 +809,6 @@ describe('FcmPushProvider', () => {
       },
       {
         tokens: ['bridge-token-1', 'bridge-token-2'],
-        topic: 'news',
       }
     );
 

@@ -35,8 +35,9 @@ function readPassthroughBody(overrides: Record<string, unknown>): Record<string,
 
 /**
  * Claims at most one key from the group — the first in group order with a usable value.
- * Group order is send-plan precedence (for FCM: token > tokens > topic > condition), so callers
- * do not re-break ties and broadcast detection cannot disagree with the destination that is sent.
+ * Group order is send-plan precedence (for FCM: token > topic > condition > tokens). Topic is
+ * before tokens so a layer that sets both keeps the legacy topic send path. Callers do not
+ * re-break ties and broadcast detection cannot disagree with the destination that is sent.
  */
 function claimGroup(layer: Record<string, unknown>, group: readonly string[]): ResolvedExclusiveRouting | undefined {
   for (const key of group) {

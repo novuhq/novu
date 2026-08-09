@@ -13,12 +13,12 @@ const sharedRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Literal fixtures for the six pairwise exclusions — not derived from the generator helper. */
 const ROUTING_KEY_PAIR_EXCLUSIONS = [
-  { not: { required: ['token', 'tokens'] } },
   { not: { required: ['token', 'topic'] } },
   { not: { required: ['token', 'condition'] } },
-  { not: { required: ['tokens', 'topic'] } },
-  { not: { required: ['tokens', 'condition'] } },
+  { not: { required: ['token', 'tokens'] } },
   { not: { required: ['topic', 'condition'] } },
+  { not: { required: ['topic', 'tokens'] } },
+  { not: { required: ['condition', 'tokens'] } },
 ] as const;
 
 /**
