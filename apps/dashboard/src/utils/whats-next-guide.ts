@@ -2,13 +2,13 @@ import type { AgentIntegrationLink } from '@/api/agents';
 import { hasAgentInboundConnection } from '@/components/agents/is-agent-integration-connected';
 
 /** How long after connection the "What's next" guide stays visible on revisit. */
-export const WHATS_NEXT_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
+const WHATS_NEXT_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Best-effort timestamp for when the user "connected" this integration — used to decide whether
  * the post-connect "What's next" guide is still relevant.
  */
-export function resolveWhatsNextConnectionAt(link: Pick<AgentIntegrationLink, 'connectedAt'>): string | null {
+function resolveWhatsNextConnectionAt(link: Pick<AgentIntegrationLink, 'connectedAt'>): string | null {
   if (hasAgentInboundConnection(link.connectedAt)) {
     return link.connectedAt ?? null;
   }
@@ -16,7 +16,7 @@ export function resolveWhatsNextConnectionAt(link: Pick<AgentIntegrationLink, 'c
   return null;
 }
 
-export function isWithinWhatsNextGracePeriod(
+function isWithinWhatsNextGracePeriod(
   connectionAt: string | null,
   gracePeriodMs = WHATS_NEXT_GRACE_PERIOD_MS
 ): boolean {

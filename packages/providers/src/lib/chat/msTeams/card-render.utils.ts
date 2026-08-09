@@ -1,5 +1,13 @@
-import { CardElement, IChatRenderValidation } from '@novu/stateless';
-import { CardPlatformLimits, InlineNode, mapCardText, validateCard } from '../card-render.utils';
+import { CardElement, ChatRenderValidationLevelEnum, IChatRenderValidation } from '@novu/stateless';
+import {
+  CardValidator,
+  InlineNode,
+  mapCardText,
+  maxBlocks,
+  maxButtonsPerRow,
+  maxTextLengthPerBlock,
+  runCardValidators,
+} from '../card-render.utils';
 
 /**
  * Teams Adaptive Card `TextBlock` renders standard markdown for bold/italic/links, but has no
@@ -39,13 +47,19 @@ export function toTeamsFlavoredCard(card: CardElement): CardElement {
   return mapCardText(card, inlineToTeams);
 }
 
-const TEAMS_LIMITS: CardPlatformLimits = {
-  platform: 'Teams',
-  maxBlocks: 500,
-  maxTextLength: 40000,
-  maxButtonsPerRow: 6,
-};
+/**
+ * Teams Adaptive Cards enforce no per-element limits in the adapter — extras are silently dropped
+ * and the card still delivers (the real ceiling is the ~28KB total-card size). So these are
+ * non-blocking degradation `WARNING`s; the generous caps rarely fire in practice.
+ */
+const TEAMS = { level: ChatRenderValidationLevelEnum.WARNING } as const;
+
+const TEAMS_VALIDATORS: CardValidator[] = [
+  maxBlocks({ ...TEAMS, limit: 500 }),
+  maxTextLengthPerBlock({ ...TEAMS, limit: 40000 }),
+  maxButtonsPerRow({ ...TEAMS, limit: 6 }),
+];
 
 export function validateTeamsCard(card: CardElement): IChatRenderValidation[] {
-  return validateCard(card, TEAMS_LIMITS);
+  return runCardValidators(card, TEAMS_VALIDATORS);
 }

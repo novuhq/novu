@@ -1,47 +1,49 @@
 ---
-title: "Mailgun Email Integration with Novu"
-sidebarTitle: 'Mailgun'
-description: "Connect Mailgun to Novu to send transactional emails through workflows. Configure your Mailgun API key, sending domain, and region for reliable email delivery."
+title: "Sinch Mailgun Email Integration with Novu"
+sidebarTitle: "Sinch Mailgun"
+description: "Connect Sinch Mailgun to Novu to send transactional emails through workflows. Configure your Mailgun API key, sending domain, and region for reliable email delivery."
 ---
 
-You can use the [Mailgun](https://mailgun.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
+You can use [Sinch Mailgun](https://www.mailgun.com/) to send transactional emails to your customers through Novu.
+
+Mailgun is Sinch's email product. In the Novu Integrations Store it still appears as **Mailgun**. Use the same credentials from your Sinch Mailgun account.
 
 ## Getting Started
 
-To use the Mailgun provider in the email channel, you will need to create a Mailgun account and add your API key and domain name to the Mailgun integration on the Novu platform.
+To use Sinch Mailgun in the email channel, create a Mailgun account and add your API key and domain name to the Mailgun integration on the Novu platform.
 
 ## Generating an API Key
 
-To generate a new API key in Mailgun, you can follow these steps:
+To generate a new API key in Mailgun:
 
-- [Sign up](https://signup.mailgun.com/new/signup) or [Log in](https://login.mailgun.com/login/) to your Mailgun account.
-- Click on the **Profile** section in the top right corner of the screen, and then click "API Keys" from the drop-down menu.
-- On the [API Keys](https://app.mailgun.com/app/account/security/api_keys) page, copy the generated **Private API Key**
+- [Sign up](https://signup.mailgun.com/new/signup) or [Log in](https://login.mailgun.com/login/) to your Mailgun account.
+- Click on the **Profile** section in the top right corner of the screen, and then click "API Keys" from the drop-down menu.
+- On the [API Keys](https://app.mailgun.com/app/account/security/api_keys) page, copy the generated **Private API Key**
 
 ## Adding a new domain name
 
 Mailgun recommends that you add a subdomain as a domain name. To do so:
 
-- Visit the page to add a [domain name](https://app.mailgun.com/app/sending/domains/new).
-  - During this process, you will need to choose a region for the domain name which is between `US` and `EU`. The default is `US`.
-- Follow the [instructions](https://documentation.mailgun.com/en/latest/user_manual.html#verifying-your-domain-1) to verify the domain name.
+- Visit the page to add a [domain name](https://app.mailgun.com/app/sending/domains/new).
+  - During this process, you will need to choose a region for the domain name which is between `US` and `EU`. The default is `US`.
+- Follow the [instructions](https://documentation.mailgun.com/en/latest/user_manual.html#verifying-your-domain-1) to verify the domain name.
 
-## Creating a Mailgun integration with Novu
+## Creating a Sinch Mailgun integration with Novu
 
-- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-mailgun) page on Novu.
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-mailgun) page on Novu.
 - Click on Add a Provider.
-- Select Mailgun service.
+- Select **Mailgun**.
 - Enter your Mailgun API Key.
 - Enter your Base URL.
-  - For domains created in the EU region, the base URL is: `https://api.eu.mailgun.net/`
+  - For domains created in the EU region, the base URL is: `https://api.eu.mailgun.net/`
   - Otherwise, leave the base URL blank.
-- Fill in the `Username`.
-- Fill in the `Domain name` registered on Mailgun.
-- Fill in the `From email address` field using the authenticated email from the previous step.
-- Fill in the `Sender's name`.
-- Click on the `Disabled` button and mark it as `Active`.
-- Click on the **Update** button.
-- You should now be able to send notifications using Mailgun in Novu.
+- Fill in the `Username`.
+- Fill in the `Domain name` registered on Mailgun.
+- Fill in the `From email address` field using the authenticated email from the previous step.
+- Fill in the `Sender's name`.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using Sinch Mailgun in Novu.
 
 ## Next Steps
 

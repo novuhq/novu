@@ -5,6 +5,11 @@ env:
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_numbers:
+        description: 'Comma-separated PR numbers (merged into next) to cherry-pick as a hotfix release. Leave empty for a regular full release.'
+        required: false
+        default: ''
   # Triggers the workflow every work day at 8:00 UTC
   # The 3 hour offset should change when daylight savings change for GMT +3.
   schedule:
@@ -23,37 +28,143 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Set output variables
         id: output-variables
-        run: |
-          echo "date_humanized=$(date +'%Y-%m-%d %H:%M')" >> "$GITHUB_OUTPUT"
-          echo "branch_name=release_$(date +'%Y_%m_%d_%H_%M')" >> "$GITHUB_OUTPUT"
-
-      - name: Close existing cloud release PRs
-        id: close-existing-prs
-        run: |
-          gh pr list --base prod --state open --json number,headRefName \
-            --jq '.[] | select(.headRefName | startswith("release_")) | [.number, .headRefName] | @tsv' | \
-          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
-            echo "Closing existing cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
-            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR."
-            git push origin --delete "$BRANCH_NAME" || true
-          done
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBERS: ${{ inputs.pr_numbers || '' }}
+        run: |
+          PR_NUMBERS="${PR_NUMBERS// /}"
+          echo "date_humanized=$(date +'%Y-%m-%d %H:%M')" >> "$GITHUB_OUTPUT"
+          echo "pr_numbers=$PR_NUMBERS" >> "$GITHUB_OUTPUT"
+          if [ -n "$PR_NUMBERS" ]; then
+            echo "release_type=hotfix" >> "$GITHUB_OUTPUT"
+            echo "branch_name=release_hotfix_$(date +'%Y_%m_%d_%H_%M')" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_type=regular" >> "$GITHUB_OUTPUT"
+            echo "branch_name=release_$(date +'%Y_%m_%d_%H_%M')" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create Novu Cloud release branch
-        run: git checkout -b ${{ steps.output-variables.outputs.branch_name }}
+        if: ${{ steps.output-variables.outputs.release_type == 'regular' }}
+        run: |
+          git checkout -b ${{ steps.output-variables.outputs.branch_name }}
+          # Reconcile hotfix commits that were cherry-picked onto prod since the
+          # last full release. Content on next is the source of truth, so any
+          # conflicting hunks resolve in favor of next (-X ours). This guarantees
+          # the release PR always merges cleanly, even after partial hotfixes.
+          git merge -X ours --no-edit origin/prod \
+            -m "chore(root): merge prod back into release branch"
+
+      - name: Create Novu Cloud hotfix branch
+        if: ${{ steps.output-variables.outputs.release_type == 'hotfix' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBERS: ${{ steps.output-variables.outputs.pr_numbers }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git checkout -b ${{ steps.output-variables.outputs.branch_name }} origin/prod
+
+          PICK_LIST=$(mktemp)
+          IFS=',' read -ra PRS <<< "$PR_NUMBERS"
+          for PR in "${PRS[@]}"; do
+            [ -z "$PR" ] && continue
+            if ! [[ "$PR" =~ ^[0-9]+$ ]]; then
+              echo "::error::Invalid PR number: '$PR'. Provide comma-separated numbers, e.g. 1234,5678."
+              exit 1
+            fi
+            PR_JSON=$(gh pr view "$PR" --json state,mergeCommit,mergedAt,baseRefName,title)
+            STATE=$(jq -r '.state' <<< "$PR_JSON")
+            SHA=$(jq -r '.mergeCommit.oid // empty' <<< "$PR_JSON")
+            MERGED_AT=$(jq -r '.mergedAt' <<< "$PR_JSON")
+            BASE_REF=$(jq -r '.baseRefName' <<< "$PR_JSON")
+            if [ "$STATE" != "MERGED" ] || [ -z "$SHA" ]; then
+              echo "::error::PR #$PR is not merged (state: $STATE). Only PRs merged into $DEFAULT_BRANCH can be shipped as a hotfix."
+              exit 1
+            fi
+            if [ "$BASE_REF" != "$DEFAULT_BRANCH" ]; then
+              echo "::error::PR #$PR was merged into '$BASE_REF', not '$DEFAULT_BRANCH'. Only PRs merged into $DEFAULT_BRANCH can be shipped as a hotfix."
+              exit 1
+            fi
+            # Defense in depth: verify at the git level that the merge commit is
+            # actually part of the default branch history, not just PR metadata.
+            if ! git merge-base --is-ancestor "$SHA" "origin/$DEFAULT_BRANCH"; then
+              echo "::error::Merge commit $SHA of PR #$PR is not in the history of $DEFAULT_BRANCH — refusing to cherry-pick it."
+              exit 1
+            fi
+            printf '%s\t%s\t%s\n' "$MERGED_AT" "$PR" "$SHA" >> "$PICK_LIST"
+          done
+
+          # Cherry-pick in the order the PRs were merged into next, so PRs that
+          # build on each other apply cleanly.
+          while IFS=$'\t' read -r MERGED_AT PR SHA; do
+            if git merge-base --is-ancestor "$SHA" origin/prod; then
+              echo "PR #$PR ($SHA) is already in prod — skipping."
+              continue
+            fi
+            PARENT_COUNT=$(git rev-list --parents -n 1 "$SHA" | awk '{ print NF - 1 }')
+            MAINLINE_ARGS=()
+            if [ "$PARENT_COUNT" -gt 1 ]; then
+              MAINLINE_ARGS=(-m 1)
+            fi
+            echo "Cherry-picking PR #$PR ($SHA)"
+            if ! git cherry-pick -x "${MAINLINE_ARGS[@]}" "$SHA"; then
+              if git diff --quiet && git diff --cached --quiet; then
+                echo "PR #$PR ($SHA) results in an empty commit (changes already in prod) — skipping."
+                git cherry-pick --skip
+              else
+                git status
+                echo "::error::Cherry-pick of PR #$PR ($SHA) conflicts with prod. Prepare the hotfix branch manually or include the PRs it depends on."
+                exit 1
+              fi
+            fi
+          done < <(sort "$PICK_LIST")
+
+          if [ "$(git rev-list --count origin/prod..HEAD)" -eq 0 ]; then
+            echo "::error::Nothing to release — all specified PRs are already in prod."
+            exit 1
+          fi
 
       - name: Push release branch
         run: git push origin ${{ steps.output-variables.outputs.branch_name }}
 
       - name: Create Novu Cloud release PR
         id: create-pr
-        run: |
-          echo "pr_url=$(gh pr create --base prod --head ${{steps.output-variables.outputs.branch_name}} --title 'chore(root): Release ${{steps.output-variables.outputs.date_humanized}}' --body 'Automated daily production Novu Cloud release')" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBERS: ${{ steps.output-variables.outputs.pr_numbers }}
+        run: |
+          if [ "${{ steps.output-variables.outputs.release_type }}" = "hotfix" ]; then
+            TITLE='chore(root): Hotfix Release ${{ steps.output-variables.outputs.date_humanized }}'
+            BODY="Hotfix Novu Cloud release cherry-picking PRs: $(sed 's/,/, #/g; s/^/#/' <<< "$PR_NUMBERS")"
+          else
+            TITLE='chore(root): Release ${{ steps.output-variables.outputs.date_humanized }}'
+            BODY='Automated daily production Novu Cloud release'
+          fi
+          echo "pr_url=$(gh pr create --base prod --head ${{ steps.output-variables.outputs.branch_name }} --title "$TITLE" --body "$BODY")" >> "$GITHUB_OUTPUT"
+
+      # Runs only after the replacement release PR exists, so a failure anywhere
+      # earlier (hotfix validation, cherry-pick conflict, branch push, PR
+      # creation) never leaves us without an open cloud release PR.
+      - name: Close superseded cloud release PRs
+        id: close-existing-prs
+        if: ${{ steps.create-pr.outputs.pr_url != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_BRANCH: ${{ steps.output-variables.outputs.branch_name }}
+        run: |
+          gh pr list --base prod --state open --json number,headRefName | \
+          jq -r --arg new_branch "$NEW_BRANCH" \
+            '.[] | select((.headRefName | startswith("release_")) and .headRefName != $new_branch) | [.number, .headRefName] | @tsv' | \
+          while IFS=$'\t' read -r PR_NUMBER BRANCH_NAME; do
+            echo "Closing superseded cloud release PR #$PR_NUMBER (branch: $BRANCH_NAME)"
+            gh pr close "$PR_NUMBER" --comment "Superseded by a newer cloud release PR: ${{ steps.create-pr.outputs.pr_url }}"
+            git push origin --delete "$BRANCH_NAME" || true
+          done
 
       - name: Enable PR automerge
         id: enable-pr-automerge
@@ -63,11 +174,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete release branch step on failure
+      # Only clean up the branch when no release PR was created for it. Once the
+      # PR exists it must survive later failures (superseded-PR cleanup,
+      # automerge), otherwise deleting its head branch would leave no viable
+      # cloud release after the older PRs were closed.
+      - name: Delete release branch when no PR was created
         id: delete-branch
-        if: ${{ failure() || steps.create-pr.outputs.pr_url == '' }}
+        if: ${{ !cancelled() && steps.create-pr.outputs.pr_url == '' }}
         run: |
-          git push origin -d ${{ steps.output-variables.outputs.branch_name }}
+          git push origin -d ${{ steps.output-variables.outputs.branch_name }} || true
 
       - name: Generate commit log
         id: commit-log

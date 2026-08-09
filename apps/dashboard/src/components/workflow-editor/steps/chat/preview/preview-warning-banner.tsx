@@ -14,7 +14,7 @@ type PreviewWarningBannerProps = {
 
 export function PreviewWarningBanner({ message, ctaLabel, onConnect }: PreviewWarningBannerProps) {
   return (
-    <div className="border-stroke-soft bg-warning/10 flex w-full items-start gap-0.5 border-y px-1.5 py-1.75">
+    <div className="border-stroke-soft bg-warning/10 flex w-full items-start gap-0.5 border-b px-1.5 py-1.75">
       <span className="flex size-4 shrink-0 items-center justify-center">
         <RiAlertFill className="text-warning min-w-2.5 size-2.5" />
       </span>
