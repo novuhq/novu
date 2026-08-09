@@ -637,12 +637,14 @@ export class SendMessageChat extends SendMessageBase {
       // Rich Chat: resolve the compiled card into transport-ready fields once, here — before
       // `send` — so the provider stays a pure transport and the editor preview can reuse the
       // same `render()`. Gated by `IS_CHAT_BLOCK_EDITOR_ENABLED`; when off, the legacy plain-text
-      // `content` path is used unchanged.
+      // `content` path is used unchanged. Skip when a content override is present — it replaces the
+      // card at delivery (otherwise Slack prefers default Block Kit `blocks` over override `text`).
       let messageContent = content;
       let nativePayload: Record<string, unknown> | undefined;
       const isRichChatEnabled = await this.isRichChatEnabled(command);
+      const hasContentOverride = Object.keys(combinedOverrides).length > 0;
 
-      if (card && isRichChatEnabled) {
+      if (card && isRichChatEnabled && !hasContentOverride) {
         const resolved = await chatHandler.resolveCardContent(card);
         messageContent = resolved.content;
         nativePayload = resolved.nativePayload;
