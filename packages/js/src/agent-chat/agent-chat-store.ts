@@ -1,11 +1,14 @@
 import {
   type AgentConversationState,
   type AgentEventEnvelope,
+  type AgentMessage,
   appendUserMessage,
   applyEnvelope,
   applyEnvelopes,
   createInitialAgentConversationState,
+  derivePendingApprovals,
 } from '@novu/agent-event-protocol';
+import type { AgentChatChange, AgentChatChangeSource } from './types';
 
 /**
  * Stable local identity for one conversation holder.
@@ -26,6 +29,11 @@ export type ConversationEntry = AgentConversationState & {
    * exhausted, or on a create-only holder before any history load.
    */
   olderCursor: string | null;
+  /**
+   * Approvals already reported as new. Add-only: an approvalId is never raised twice,
+   * so a resolved approval must not fall out and be reported again.
+   */
+  reportedApprovalIds: Set<string>;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
 };
@@ -53,6 +61,12 @@ function createOptimisticMessageId(): string {
   return mintClientId('opt');
 }
 
+function messagesAddedSince(previous: AgentMessage[], next: AgentMessage[]): AgentMessage[] {
+  const known = new Set(previous.map((message) => message.id));
+
+  return next.filter((message) => !known.has(message.id));
+}
+
 function applyState(entry: ConversationEntry, next: AgentConversationState): void {
   entry.messages = next.messages;
   entry.isRunning = next.isRunning;
@@ -69,10 +83,37 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
  */
 export class AgentChatStore {
   #byKey = new Map<string, ConversationEntry>();
-  #onUpdate: (entry: ConversationEntry) => void;
+  #onUpdate: (entry: ConversationEntry, change: AgentChatChange) => void;
 
-  constructor(onUpdate: (entry: ConversationEntry) => void) {
+  constructor(onUpdate: (entry: ConversationEntry, change: AgentChatChange) => void) {
     this.#onUpdate = onUpdate;
+  }
+
+  /**
+   * Notify listeners with the folded snapshot and what the fold added.
+   * Only this store can tell the three sources apart, so it reports them instead of
+   * leaving each consumer to guess from the snapshot alone.
+   */
+  #publish(entry: ConversationEntry, source: AgentChatChangeSource, addedMessages: AgentMessage[]): void {
+    const newApprovals = derivePendingApprovals(entry.messages).filter(
+      (approval) => !entry.reportedApprovalIds.has(approval.approvalId)
+    );
+    for (const approval of newApprovals) {
+      entry.reportedApprovalIds.add(approval.approvalId);
+    }
+
+    this.#onUpdate(entry, { ...source, addedMessages, newApprovals });
+  }
+
+  /**
+   * Mark a backfilled page's approvals as already reported.
+   * An older page can carry a request whose response is on a page already folded, which
+   * leaves it looking pending. Paging backwards is never new activity.
+   */
+  #suppressApprovals(entry: ConversationEntry, messages: AgentMessage[]): void {
+    for (const approval of derivePendingApprovals(messages)) {
+      entry.reportedApprovalIds.add(approval.approvalId);
+    }
   }
 
   clear(): void {
@@ -135,13 +176,18 @@ export class AgentChatStore {
       conversationId: args.conversationId,
       key: args.key,
       olderCursor: null,
+      reportedApprovalIds: new Set(),
     };
     this.#byKey.set(args.key, entry);
 
     return entry;
   }
 
-  /** Append a user message with status `sending`. Returns the optimistic message id. */
+  /**
+   * Append a user message with status `sending`. Returns the optimistic message id.
+   * The optimistic message is not reported as added: `markSent` reports it once under
+   * the server id, and `markFailed` never reports it.
+   */
   appendSending(entry: ConversationEntry, text: string): string {
     const messageId = createOptimisticMessageId();
     applyState(
@@ -153,7 +199,7 @@ export class AgentChatStore {
         parts: [{ type: 'text', text, state: 'done' }],
       })
     );
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'local' }, []);
 
     return messageId;
   }
@@ -166,6 +212,7 @@ export class AgentChatStore {
     entry: ConversationEntry,
     args: { optimisticMessageId: string; serverMessageId: string; conversationId: string }
   ): ConversationEntry {
+    const previous = entry.messages;
     entry.messages = entry.messages.map((message) =>
       message.id === args.optimisticMessageId
         ? { ...message, id: args.serverMessageId, status: 'sent' as const }
@@ -176,7 +223,7 @@ export class AgentChatStore {
       entry.conversationId = args.conversationId;
     }
 
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'local' }, messagesAddedSince(previous, entry.messages));
 
     return entry;
   }
@@ -185,7 +232,7 @@ export class AgentChatStore {
     entry.messages = entry.messages.map((message) =>
       message.id === messageId ? { ...message, status: 'failed' as const } : message
     );
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'local' }, []);
 
     return entry;
   }
@@ -199,9 +246,10 @@ export class AgentChatStore {
     envelopes: AgentEventEnvelope[],
     olderCursor: string | null
   ): ConversationEntry {
+    const previous = entry.messages;
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
-    const localOnly = entry.messages.filter((message) => !serverIds.has(message.id));
+    const localOnly = previous.filter((message) => !serverIds.has(message.id));
 
     applyState(entry, {
       ...folded,
@@ -209,7 +257,7 @@ export class AgentChatStore {
     });
     entry.olderCursor = olderCursor;
 
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'history' }, messagesAddedSince(previous, entry.messages));
 
     return entry;
   }
@@ -229,8 +277,9 @@ export class AgentChatStore {
 
     entry.messages = [...olderMessages, ...entry.messages];
     entry.olderCursor = olderCursor;
+    this.#suppressApprovals(entry, olderMessages);
 
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'history' }, olderMessages);
 
     return entry;
   }
@@ -244,8 +293,9 @@ export class AgentChatStore {
       return entry;
     }
 
+    const previous = entry.messages;
     applyState(entry, applyEnvelope(entry, envelope));
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'live', envelope }, messagesAddedSince(previous, entry.messages));
 
     return entry;
   }

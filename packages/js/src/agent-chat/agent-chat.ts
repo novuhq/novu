@@ -44,7 +44,7 @@ export class AgentChat extends BaseModule {
     super({ inboxServiceInstance, eventEmitterInstance });
     this.#agentChatService = agentChatService;
     this.#socket = socket;
-    this.#store = new AgentChatStore((entry) => {
+    this.#store = new AgentChatStore((entry, change) => {
       this._emitter.emit('agent_chat.messages.updated', {
         data: {
           agentId: entry.agentId,
@@ -54,6 +54,7 @@ export class AgentChat extends BaseModule {
           isRunning: entry.isRunning,
           status: entry.status,
           hasMore: entry.olderCursor != null,
+          change,
         },
       });
     });
