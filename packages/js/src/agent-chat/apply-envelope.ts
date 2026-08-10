@@ -1,4 +1,8 @@
-import type { AgentEventEnvelope } from './agent-event.types';
+/**
+ * Folds `AgentEventEnvelope` streams into a parts-based `AgentMessage[]` timeline.
+ * Runs on clients only (live WS + durable history); the server append-only stores envelopes.
+ */
+import type { AgentEventEnvelope, AgentFileRef, AgentMessageContent } from '@novu/agent-event-protocol';
 import type {
   AgentConversationState,
   AgentMessage,
@@ -9,7 +13,6 @@ import type {
   AgentToolPart,
 } from './agent-message.types';
 import { createInitialAgentConversationState } from './agent-message.types';
-import type { AgentFileRef, AgentMessageContent } from './wire-content.types';
 
 export function applyEnvelopes(
   initialState: AgentConversationState = createInitialAgentConversationState(),

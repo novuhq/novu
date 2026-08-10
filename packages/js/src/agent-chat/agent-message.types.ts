@@ -1,6 +1,6 @@
-import type { AgentToolResultContent, AgentToolSource } from './wire-content.types';
+import type { AgentMessageRole, AgentToolResultContent, AgentToolSource } from '@novu/agent-event-protocol';
 
-export type AgentMessageRole = 'user' | 'assistant';
+export type { AgentMessageRole };
 
 export type AgentMessageStatus = 'sending' | 'sent' | 'failed';
 

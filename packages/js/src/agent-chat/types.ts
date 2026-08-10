@@ -1,10 +1,10 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
   AgentApprovalPart,
   AgentConversationStatus,
   AgentConversationTyping,
-  AgentEventEnvelope,
   AgentMessage,
-} from '@novu/agent-event-protocol';
+} from './agent-message.types';
 
 export type { AgentApprovalPart, AgentConversationStatus, AgentConversationTyping, AgentEventEnvelope, AgentMessage };
 
