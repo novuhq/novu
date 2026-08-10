@@ -36,9 +36,9 @@
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+" target="_blank" rel="noopener noreferrer">Report a bug</a>
 </p>
 
-## ⚡ Add an agent to your app in about two minutes
+## ⚡ Connect your agent to your users in about two minutes
 
-Already working in Claude Code, Cursor, or any coding agent? Paste this and your agent does the rest: it sets up a managed agent for your project, connects the channel you pick, and hands you a claim link. No account, no API key.
+Already working in Claude Code, Cursor, or any coding agent? Paste this and your agent does the rest: it connects the agent you already have to the channel you pick, and hands you a claim link. No account, no API key.
 
 ```
 Connect this project's AI agent to customer channels (Slack, Microsoft Teams, WhatsApp, Telegram, Email, or iMessage) with Novu Connect.
@@ -56,16 +56,16 @@ Prefer to run it yourself?
 npx novu@latest connect
 ```
 
-Either way you go from template to a live agent talking with a real user in about two minutes. The first replies run keyless on a shared Claude demo runtime, then one link lets you claim the agent and keep it.
+Either way your agent is live, talking with a real user on their own channel in about two minutes. The first replies run keyless on a shared Claude demo runtime, then one link lets you claim the setup and keep it.
 
-<!-- Real recording of the keyless flow (source: 08-assets/github-readme/, commit as .github/assets/novu-connect-demo.gif) -->
+<!-- Lead with the payoff: your agent talking with a real user on their channel. Source: 08-assets/github-readme/agent-slack-conversation.gif -->
 <div align="center">
-  <img alt="npx novu connect: from one command to a live agent with its own inbox, keyless" src=".github/assets/novu-connect-demo.gif" width="80%"/>
+  <img alt="Your agent holding a two-way conversation with a real user in Slack, connected through Novu" src=".github/assets/agent-slack-conversation.gif" width="80%"/>
 </div>
 
-<!-- Hero GIF clipped from the Connect channels demo video (Slack segment). Source: 08-assets/github-readme/agent-slack-conversation.gif -->
+<!-- The one command that connects it. Source: 08-assets/github-readme/novu-connect-demo.gif -->
 <div align="center">
-  <img alt="An AI agent holding a two-way conversation with a user in Slack, powered by Novu" src=".github/assets/agent-slack-conversation.gif" width="80%"/>
+  <img alt="npx novu connect: point Novu at your agent and it is live on the channel, keyless" src=".github/assets/novu-connect-demo.gif" width="80%"/>
 </div>
 
 ## ⭐ Why Novu?
@@ -74,7 +74,7 @@ Either way you go from template to a live agent talking with a real user in abou
 
 Every product and every agent eventually needs to talk with people on the channels those people already use. Each channel has its own webhook format, identity model, and threading quirks. Novu standardizes that layer once, so you never rebuild inbox feeds, provider integrations, and channel webhooks from scratch again.
 
-There are two ways to build with Novu, on one shared foundation:
+There are two ways to communicate with Novu, on one shared foundation:
 
 - **For your product:** send notifications across Inbox/In-App, Email, SMS, Push, and Chat through one API, with workflows, digests, and an embeddable `<Inbox />` component.
 - **For your agents:** connect any agent you already built to Slack, Microsoft Teams, WhatsApp, Telegram, and Email through one conversation model, in both directions.
