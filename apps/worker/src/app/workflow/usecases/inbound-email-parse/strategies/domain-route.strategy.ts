@@ -101,12 +101,15 @@ export class DomainRouteStrategy {
       organizationId: domain._organizationId,
       addresses: addressCandidates,
     });
-    const route =
-      (localPart ? routes.find((r) => r.address === localPart) : undefined) ??
-      (strippedLocalPart && strippedLocalPart !== localPart
-        ? routes.find((r) => r.address === strippedLocalPart)
-        : undefined) ??
-      routes.find((r) => r.address === '*');
+    let route = localPart ? routes.find((r) => r.address === localPart) : undefined;
+
+    if (!route && strippedLocalPart && strippedLocalPart !== localPart) {
+      route = routes.find((r) => r.address === strippedLocalPart);
+    }
+
+    if (!route) {
+      route = routes.find((r) => r.address === '*');
+    }
 
     if (!route) {
       this.logger.info({ toAddress, domain: domain.name }, 'No route matched the inbound email');
