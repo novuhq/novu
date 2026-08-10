@@ -3,6 +3,7 @@ export type {
   AgentApprovalPart,
   AgentChatChange,
   AgentConversationStatus,
+  AgentConversationTyping,
   AgentEventEnvelope,
   AgentMessage,
   FetchMoreArgs,

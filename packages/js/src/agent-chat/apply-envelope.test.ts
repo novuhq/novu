@@ -235,4 +235,87 @@ describe('applyEnvelope', () => {
       parts: [{ type: 'text', text: 'Hello human', state: 'done' }],
     });
   });
+
+  it('tracks channel.typing on and off', () => {
+    const on = applyEnvelope(
+      createInitialAgentConversationState(),
+      envelope(1, {
+        type: 'channel.typing',
+        state: 'on',
+        status: 'Searching the docs…',
+      })
+    );
+    expect(on.typing).toEqual({ status: 'Searching the docs…' });
+
+    const off = applyEnvelope(on, envelope(2, { type: 'channel.typing', state: 'off' }));
+    expect(off.typing).toBeUndefined();
+  });
+
+  it('clears typing on assistant message-start and durable assistant message', () => {
+    const typing = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, { type: 'channel.typing', state: 'on', status: 'Thinking…' }),
+    ]);
+    expect(typing.typing).toEqual({ status: 'Thinking…' });
+
+    const started = applyEnvelope(typing, envelope(2, { type: 'message-start', messageId: 'm1' }));
+    expect(started.typing).toBeUndefined();
+
+    const typingAgain = applyEnvelope(started, envelope(3, { type: 'channel.typing', state: 'on' }));
+    const durable = applyEnvelope(
+      typingAgain,
+      envelope(4, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm1',
+        content: { markdown: 'Hello' },
+      })
+    );
+    expect(durable.typing).toBeUndefined();
+  });
+
+  it('does not clear typing on durable user messages', () => {
+    const typing = applyEnvelope(
+      createInitialAgentConversationState(),
+      envelope(1, {
+        type: 'channel.typing',
+        state: 'on',
+      })
+    );
+    const next = applyEnvelope(
+      typing,
+      envelope(2, {
+        type: 'message',
+        role: 'user',
+        messageId: 'msg_user0000001',
+        content: { markdown: 'Hello agent' },
+      })
+    );
+
+    expect(next.typing).toEqual({});
+  });
+
+  it('clears typing on tool-approval-request', () => {
+    const typing = applyEnvelope(
+      createInitialAgentConversationState(),
+      envelope(1, {
+        type: 'channel.typing',
+        state: 'on',
+        status: 'Thinking…',
+      })
+    );
+    expect(typing.typing).toEqual({ status: 'Thinking…' });
+
+    const next = applyEnvelope(
+      typing,
+      envelope(2, {
+        type: 'tool-approval-request',
+        approvalId: 'a1',
+        toolUseId: 'tu1',
+        toolName: 'delete_thing',
+        input: { id: '1' },
+      })
+    );
+
+    expect(next.typing).toBeUndefined();
+  });
 });

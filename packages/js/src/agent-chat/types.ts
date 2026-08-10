@@ -1,7 +1,12 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import type { AgentApprovalPart, AgentConversationStatus, AgentMessage } from './agent-message.types';
+import type {
+  AgentApprovalPart,
+  AgentConversationStatus,
+  AgentConversationTyping,
+  AgentMessage,
+} from './agent-message.types';
 
-export type { AgentApprovalPart, AgentConversationStatus, AgentEventEnvelope, AgentMessage };
+export type { AgentApprovalPart, AgentConversationStatus, AgentConversationTyping, AgentEventEnvelope, AgentMessage };
 
 export type SendMessageArgs = {
   agentId: string;
@@ -82,6 +87,7 @@ export type AgentChatMessagesUpdated = {
   key: string;
   messages: AgentMessage[];
   isRunning: boolean;
+  typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;
   change: AgentChatChange;

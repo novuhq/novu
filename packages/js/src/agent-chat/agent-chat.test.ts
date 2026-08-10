@@ -602,6 +602,51 @@ describe('AgentChat', () => {
     expect(updates.at(-1)).toEqual({ isRunning: false, status: 'resolved' });
   });
 
+  it('tracks typing on messages.updated and getConversation after channel.typing', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: Array<{ typing?: { status?: string } }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        updates.push({ typing: data.typing });
+      }
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: { type: 'channel.typing', state: 'on', status: 'Searching the docs…' },
+      },
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 2,
+        timestamp: '2026-08-07T12:00:01.000Z',
+        event: { type: 'channel.typing', state: 'off' },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.typing).toBeUndefined();
+    expect(updates.some((update) => update.typing?.status === 'Searching the docs…')).toBe(true);
+    expect(updates.at(-1)).toEqual({ typing: undefined });
+  });
+
   it('folds a live agent_chat.agent_event into the matching conversation holder', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
