@@ -999,6 +999,77 @@ describe('AgentChat', () => {
       'msg_asst_missed1',
     ]);
     expect(conversation?.hasMore).toBe(true);
+    // Newest catch-up page already overlaps known sequence — do not walk olderCursor.
+    expect(getEvents).toHaveBeenCalledTimes(1);
+  });
+
+  it('reconnect catch-up pages older events when the offline gap exceeds one page', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    agentChat.subscribe();
+    getEvents.mockClear();
+
+    getEvents.mockImplementation((args: { conversationId: string; before?: string }) => {
+      if (!args.before) {
+        return Promise.resolve(
+          historyPage(
+            [
+              { sequence: 4, messageId: 'msg_asst_page2a', role: 'assistant', markdown: 'newest page a' },
+              { sequence: 5, messageId: 'msg_asst_page2b', role: 'assistant', markdown: 'newest page b' },
+            ],
+            'act_mid0001'
+          )
+        );
+      }
+
+      expect(args.before).toBe('act_mid0001');
+
+      return Promise.resolve(
+        historyPage(
+          [
+            { sequence: 2, messageId: 'msg_asst_page1a', role: 'assistant', markdown: 'older missed a' },
+            { sequence: 3, messageId: 'msg_asst_page1b', role: 'assistant', markdown: 'older missed b' },
+          ],
+          null
+        )
+      );
+    });
+
+    const expectedIds = ['msg_user0000001', 'msg_asst_page1a', 'msg_asst_page1b', 'msg_asst_page2a', 'msg_asst_page2b'];
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(2);
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`timed out waiting for ${expectedIds.join(',')}`)), 1000);
+      const unsubscribe = emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.messages.map((message) => message.id).join() === expectedIds.join()) {
+          clearTimeout(timeout);
+          unsubscribe();
+          resolve();
+        }
+      });
+
+      const current = agentChat.getConversation({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+      });
+      if (current?.messages.map((message) => message.id).join() === expectedIds.join()) {
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve();
+      }
+    });
+
+    expect(getEvents).toHaveBeenNthCalledWith(1, { conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenNthCalledWith(2, {
+      conversationId: 'conv_abcdefghijkl',
+      before: 'act_mid0001',
+    });
   });
 
   it('does not catch up when nothing is subscribed', async () => {

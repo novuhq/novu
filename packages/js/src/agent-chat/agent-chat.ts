@@ -412,18 +412,46 @@ export class AgentChat extends BaseModule {
 
   async #catchUpConversation(conversationId: string, holders: ConversationEntry[]): Promise<void> {
     try {
-      const page = await this.#agentChatService.getEvents({ conversationId });
-      // Fold only missed live envelopes. Do not rebuild from the newest history page —
-      // that would reorder/drop already-loaded older pages and reset `olderCursor`.
-      const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
+      const activeHolders = holders
+        .map((holder) => this.#store.get(holder.key))
+        .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
 
-      for (const holder of holders) {
+      if (activeHolders.length === 0) {
+        return;
+      }
+
+      // Page toward older events until we reach already-known sequence territory.
+      // One newest page is not enough when the offline gap exceeds the server page size.
+      const knownThrough = Math.min(...activeHolders.map((entry) => entry.lastSequence));
+      const missed: AgentEventEnvelope[] = [];
+      let before: string | undefined;
+
+      for (let pageIndex = 0; pageIndex < 20; pageIndex += 1) {
+        const page = await this.#agentChatService.getEvents({
+          conversationId,
+          ...(before ? { before } : {}),
+        });
+        const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
+        missed.push(...envelopes);
+
+        const oldestInPage = envelopes[0]?.sequence;
+        if (page.olderCursor == null || oldestInPage == null || oldestInPage <= knownThrough) {
+          break;
+        }
+
+        before = page.olderCursor;
+      }
+
+      // Apply oldest→newest so message order stays chronological across pages.
+      missed.sort((left, right) => left.sequence - right.sequence);
+
+      for (const holder of activeHolders) {
         const entry = this.#store.get(holder.key);
         if (!entry || entry.conversationId !== conversationId) {
           continue;
         }
 
-        for (const envelope of envelopes) {
+        for (const envelope of missed) {
           this.#store.applyLiveEnvelope(entry, envelope);
         }
       }
