@@ -4,8 +4,6 @@ import { hashMessageId } from './utils.js';
 
 const WHITESPACE_RE = /\s+/;
 const STATE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-// Matches appendToList maxLength below — we never emit more than 100 IDs in References.
-const MAX_THREAD_CANDIDATE_LOOKUPS = 100;
 
 function msgKey(messageId: string): string {
   return `email:msg:${messageId}`;
@@ -21,10 +19,6 @@ function threadSubjectKey(threadId: string): string {
 
 function agentAddressKey(threadId: string): string {
   return `email:thread:${threadId}:agentAddress`;
-}
-
-function normalizeRecipient(address: string): string {
-  return address.trim().toLowerCase();
 }
 
 interface ResolveInput {
@@ -69,26 +63,20 @@ export class ThreadResolver {
     const state = this.getState();
     const { recipientAddress, messageId, inReplyTo, references } = input;
 
-    const candidateIds = inReplyTo || references ? this.extractMessageIds(inReplyTo, references) : [];
-    const candidatesToLookup = candidateIds.slice(-MAX_THREAD_CANDIDATE_LOOKUPS);
+    if (inReplyTo || references) {
+      const candidateIds = this.extractMessageIds(inReplyTo, references);
+      for (const candidate of candidateIds) {
+        const existingThread = await state.get<string>(msgKey(candidate));
+        if (existingThread) {
+          await this.trackMessage(existingThread, messageId);
 
-    for (const candidate of candidatesToLookup) {
-      const existingThread = await state.get<string>(msgKey(candidate));
-      // In-Reply-To / References and the sender's own Message-ID are attacker-controlled, so a
-      // tracked thread is only adopted when it already belongs to this sender. Otherwise a reply
-      // naming a stranger's Message-ID would join their conversation, and a mail declaring a
-      // Message-ID the agent later sends would capture that recipient's replies.
-      if (existingThread && this.threadBelongsTo(existingThread, recipientAddress)) {
-        await this.trackMessage(existingThread, messageId);
-
-        return existingThread;
+          return existingThread;
+        }
       }
     }
 
-    // No tracked ancestor: root at oldest References entry (RFC 2822) so unreplied/expired state
-    // still yields a stable thread id instead of forking on each reply's own Message-ID.
-    const rootMessageId = candidateIds[0] ?? messageId;
-    const threadId = this.encodeThreadId({ recipientAddress, rootMessageIdHash: hashMessageId(rootMessageId) });
+    const hash = hashMessageId(messageId);
+    const threadId = this.encodeThreadId({ recipientAddress, rootMessageIdHash: hash });
     await this.trackMessage(threadId, messageId);
 
     return threadId;
@@ -140,17 +128,6 @@ export class ThreadResolver {
     const state = this.getState();
 
     return (await state.get<string>(agentAddressKey(threadId))) ?? undefined;
-  }
-
-  /** Case-insensitive owner check; malformed thread ids are treated as not owned. */
-  private threadBelongsTo(threadId: string, recipientAddress: string): boolean {
-    try {
-      const owner = this.decodeThreadId(threadId).recipientAddress;
-
-      return normalizeRecipient(owner) === normalizeRecipient(recipientAddress);
-    } catch {
-      return false;
-    }
   }
 
   /**
