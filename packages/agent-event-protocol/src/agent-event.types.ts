@@ -1,5 +1,10 @@
-import type { AgentMessageRole } from './agent-message.types';
-import type { AgentFileRef, AgentMessageContent, AgentToolResultContent, AgentToolSource } from './wire-content.types';
+import type {
+  AgentFileRef,
+  AgentMessageContent,
+  AgentMessageRole,
+  AgentToolResultContent,
+  AgentToolSource,
+} from './wire-content.types';
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 

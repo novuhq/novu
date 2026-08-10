@@ -1,4 +1,5 @@
 export { AgentChat } from './agent-chat';
+export { derivePendingApprovals } from './agent-message.types';
 export type {
   AgentApprovalPart,
   AgentChatChange,

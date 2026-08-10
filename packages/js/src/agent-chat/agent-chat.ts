@@ -1,5 +1,4 @@
-import type { AgentEventEnvelope, AgentMessage } from '@novu/agent-event-protocol';
-import { derivePendingApprovals } from '@novu/agent-event-protocol';
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
@@ -7,6 +6,7 @@ import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
+import { type AgentMessage, derivePendingApprovals } from './agent-message.types';
 import type {
   FetchMoreArgs,
   FetchMoreResult,

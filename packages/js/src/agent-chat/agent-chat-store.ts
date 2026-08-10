@@ -1,13 +1,11 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import {
   type AgentConversationState,
-  type AgentEventEnvelope,
   type AgentMessage,
-  appendUserMessage,
-  applyEnvelope,
-  applyEnvelopes,
   createInitialAgentConversationState,
   derivePendingApprovals,
-} from '@novu/agent-event-protocol';
+} from './agent-message.types';
+import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 import type { AgentChatChange, AgentChatChangeSource } from './types';
 
 /**
