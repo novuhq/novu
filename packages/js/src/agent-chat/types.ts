@@ -1,6 +1,11 @@
-import type { AgentApprovalPart, AgentConversationStatus, AgentMessage } from '@novu/agent-event-protocol';
+import type {
+  AgentApprovalPart,
+  AgentConversationStatus,
+  AgentEventEnvelope,
+  AgentMessage,
+} from '@novu/agent-event-protocol';
 
-export type { AgentApprovalPart, AgentConversationStatus, AgentMessage };
+export type { AgentApprovalPart, AgentConversationStatus, AgentEventEnvelope, AgentMessage };
 
 export type SendMessageArgs = {
   agentId: string;
@@ -57,6 +62,23 @@ export type RespondToApprovalResult = {
   conversationId: string;
 };
 
+/** What caused a fold. A live fold carries the envelope that caused it. Internal to the store seam. */
+export type AgentChatChangeSource =
+  | { kind: 'live'; envelope: AgentEventEnvelope }
+  | { kind: 'history' }
+  | { kind: 'local' };
+
+/**
+ * What one fold added to a holder, next to the folded snapshot.
+ * A `history` fold replays stored events, so it is catch-up and not new activity.
+ */
+export type AgentChatChange = AgentChatChangeSource & {
+  /** Messages this fold added. A fold that only changes existing messages adds none. */
+  addedMessages: AgentMessage[];
+  /** Approvals that became pending in this fold. One approval is reported one time. */
+  newApprovals: AgentApprovalPart[];
+};
+
 export type AgentChatMessagesUpdated = {
   agentId: string;
   conversationId?: string;
@@ -66,4 +88,5 @@ export type AgentChatMessagesUpdated = {
   isRunning: boolean;
   status: AgentConversationStatus;
   hasMore: boolean;
+  change: AgentChatChange;
 };

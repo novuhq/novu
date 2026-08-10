@@ -1,6 +1,7 @@
 import type {
   AgentApprovalPart,
   AgentConversationStatus,
+  AgentEventEnvelope,
   AgentMessage,
   LoadConversationResult,
   NovuError,
@@ -22,6 +23,27 @@ export type UseAgentChatProps = {
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
   onError?: (error: NovuError) => void;
+  /**
+   * Fires once per message, when the message id first appears on the conversation.
+   * History pages are silent: only new activity fires.
+   * An agent message can still be empty at this point, because the first envelope of a
+   * turn creates the message before any text is folded into it.
+   * A send that never reaches the server does not fire: the message flips to `failed` instead.
+   */
+  onMessage?: (message: AgentMessage) => void;
+  /**
+   * Fires once per approval request, including approvals still pending on mount, so a
+   * resumed conversation reports what it is blocked on. Paging backwards is silent.
+   * The run waits until `respondToApproval` answers.
+   */
+  onApprovalRequested?: (approval: AgentApprovalPart) => void;
+  /**
+   * Raw envelopes for this conversation, before the derived callbacks for the same fold.
+   * A duplicate envelope that the store drops does not fire. Neither does an envelope that
+   * arrives before a newly created conversation claims its id.
+   * The store folds the envelope before this callback runs, so `messages` here is one render old.
+   */
+  onEvent?: (envelope: AgentEventEnvelope) => void;
 };
 
 export type UseAgentChatResult = {
@@ -177,6 +199,12 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
+
+      // The store reports each approval once per holder, and a holder outlives a mount.
+      // Replay from the snapshot so a remount still learns what the run is blocked on.
+      for (const approval of derivePendingApprovals(snapshot.messages)) {
+        propsRef.current.onApprovalRequested?.(approval);
+      }
     } else if (!conversationIdProp) {
       setMessages([]);
       setIsRunning(false);
@@ -196,6 +224,21 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       if (data.conversationId && !propsRef.current.conversationId) {
         setAssignedConversationId(data.conversationId);
       }
+
+      const { change } = data;
+      if (change.kind === 'live') {
+        propsRef.current.onEvent?.(change.envelope);
+      }
+
+      if (change.kind !== 'history') {
+        for (const message of change.addedMessages) {
+          propsRef.current.onMessage?.(message);
+        }
+      }
+
+      for (const approval of change.newApprovals) {
+        propsRef.current.onApprovalRequested?.(approval);
+      }
     });
 
     if (conversationIdProp) {
@@ -206,7 +249,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       cleanup();
       novu.agentChat.unsubscribe();
     };
-  }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, conversationIdRef, propsRef, fetchConversation]);
+  }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, propsRef, fetchConversation]);
 
   const refetch = useCallback(async () => {
     const id = conversationIdRef.current;
