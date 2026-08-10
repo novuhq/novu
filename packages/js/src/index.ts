@@ -1,4 +1,20 @@
+export { derivePendingApprovals } from '@novu/agent-event-protocol';
 export type * from 'json-logic-js';
+export type {
+  AgentApprovalPart,
+  AgentChatChange,
+  AgentConversationStatus,
+  AgentEventEnvelope,
+  AgentMessage,
+  FetchMoreArgs,
+  FetchMoreResult,
+  LoadConversationArgs,
+  LoadConversationResult,
+  RespondToApprovalArgs,
+  RespondToApprovalResult,
+  SendMessageArgs,
+  SendMessageResult,
+} from './agent-chat';
 export type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,

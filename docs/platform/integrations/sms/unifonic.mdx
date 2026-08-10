@@ -1,0 +1,27 @@
+---
+title: "Unifonic SMS Integration with Novu"
+sidebarTitle: "Unifonic"
+description: "Connect Unifonic to Novu to send SMS notifications through workflows. Store your Unifonic App SID and sender ID in the Novu dashboard."
+---
+
+You can use [Unifonic](https://docs.unifonic.com/) to send SMS messages through Novu.
+
+## Getting started
+
+1. Log in to your Unifonic account.
+2. Copy your application **App SID** from the Unifonic console. This authenticates API requests.
+3. Choose a **Sender ID** that Unifonic has approved for your account and destination countries.
+
+## Creating a Unifonic integration with Novu
+
+1. Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-sms-unifonic) page on Novu.
+2. Click **Add a provider**.
+3. Locate **Unifonic** under the SMS section and click **Connect**.
+4. Enter your:
+   - **App SID**
+   - **Sender ID** (this is what Unifonic uses as `SenderID` on send)
+   - **From** (required by the Novu SMS form; Unifonic delivery does not use this field, so paste the same approved sender ID here)
+5. Confirm **Active Integration** is on. New integrations start active by default.
+6. Click **Create Integration**.
+
+You can now send SMS notifications with Unifonic through Novu.

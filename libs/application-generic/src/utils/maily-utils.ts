@@ -167,27 +167,18 @@ function isLiquidExpression(value: string): boolean {
   return LIQUID_EXPRESSION_PATTERN.test(value.trim());
 }
 
-/** Bare paths authored via the variable picker, e.g. `payload.foo` (no `{{ }}`). */
-function isBareLiquidVariablePath(value: string): boolean {
-  const trimmed = value.trim();
-
-  if (!trimmed || isLiquidExpression(trimmed)) {
-    return false;
-  }
-
-  return /^(payload|subscriber|steps|context|workflow|env)(\.[a-zA-Z0-9_-]+|\[\d+\])+/.test(trimmed);
-}
-
 function isCardButtonNode(type: unknown): boolean {
   return type === CHAT_CARD_BUTTON_NODE_TYPE;
 }
 
-function shouldWrapVariableAttr(type: unknown, attrValue: string, flagValue: unknown): boolean {
-  if (flagValue) {
-    return true;
-  }
-
-  return isCardButtonNode(type) && isBareLiquidVariablePath(attrValue);
+/**
+ * An attribute is wrapped into a liquid output only when its variable flag is set. Chat card
+ * buttons no longer auto-wrap bare paths (e.g. `payload.foo`): the only variable format is an
+ * explicit `{{ payload.foo }}` liquid expression, which a later liquid render resolves directly,
+ * so a bare path is delivered as literal text.
+ */
+function shouldWrapVariableAttr(flagValue: unknown): boolean {
+  return Boolean(flagValue);
 }
 
 /**
@@ -520,7 +511,7 @@ const processVariableNodeAttributes = ({
       return;
     }
 
-    if (!shouldWrapVariableAttr(type, attrValue, flagValue)) {
+    if (!shouldWrapVariableAttr(flagValue)) {
       return;
     }
 

@@ -2,6 +2,7 @@ import {
   getEffectiveJobPayload,
   StorageHelperService,
   StorageService,
+  WEBHOOK_FILTER_REQUEST_FAILED_DATA,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobStatusEnum } from '@novu/dal';
@@ -21,13 +22,19 @@ type RunJobTestDouble = {
     notification?: PartialNotificationEntity | null,
     hasCurrentJobError?: boolean
   ) => Promise<void>;
-  jobRepository: { claimNextChildAsQueued: sinon.SinonStub; updateOne: sinon.SinonStub };
+  jobRepository: {
+    claimNextChildAsQueued: sinon.SinonStub;
+    updateOne: sinon.SinonStub;
+    findOne: sinon.SinonStub;
+    cancelPendingJobs: sinon.SinonStub;
+  };
   addJobUsecase: { execute: sinon.SinonStub };
+  setJobAsFailed: { execute: sinon.SinonStub };
   storageHelperService: StorageHelperService;
   workflowRunService: { updateDeliveryLifecycle: sinon.SinonStub };
-  stepRunRepository: { create: sinon.SinonStub };
+  stepRunRepository: { create: sinon.SinonStub; createMany: sinon.SinonStub };
   createExecutionDetails: { execute: sinon.SinonStub };
-  logger: { debug: sinon.SinonStub; warn: sinon.SinonStub };
+  logger: { debug: sinon.SinonStub; warn: sinon.SinonStub; error: sinon.SinonStub };
 };
 
 const ATTACHMENT_STORAGE_PATH = 'environment-id/attachment.pdf';
@@ -35,12 +42,18 @@ const PDF_BYTES = Buffer.from('%PDF-1.7 pdf-bytes');
 
 function buildUsecase(sandbox: sinon.SinonSandbox): RunJobTestDouble {
   const usecase = Object.create(RunJob.prototype) as RunJobTestDouble;
-  usecase.jobRepository = { claimNextChildAsQueued: sandbox.stub(), updateOne: sandbox.stub().resolves() };
+  usecase.jobRepository = {
+    claimNextChildAsQueued: sandbox.stub(),
+    updateOne: sandbox.stub().resolves(),
+    findOne: sandbox.stub().resolves(null),
+    cancelPendingJobs: sandbox.stub().resolves([]),
+  };
   usecase.addJobUsecase = { execute: sandbox.stub() };
+  usecase.setJobAsFailed = { execute: sandbox.stub().resolves() };
   usecase.workflowRunService = { updateDeliveryLifecycle: sandbox.stub().resolves() };
-  usecase.stepRunRepository = { create: sandbox.stub().resolves() };
+  usecase.stepRunRepository = { create: sandbox.stub().resolves(), createMany: sandbox.stub().resolves() };
   usecase.createExecutionDetails = { execute: sandbox.stub().resolves() };
-  usecase.logger = { debug: sandbox.stub(), warn: sandbox.stub() };
+  usecase.logger = { debug: sandbox.stub(), warn: sandbox.stub(), error: sandbox.stub() };
 
   return usecase;
 }
@@ -148,6 +161,38 @@ describe('RunJob - attachment cleanup ordering', () => {
 
     sinon.assert.calledOnceWithExactly(deleteAttachments, notification.payload.attachments);
     expect(dedupJob.payload).to.equal(undefined);
+  });
+
+  it('deletes the attachments when a failing child halts the workflow', async () => {
+    const haltingJob = buildJob({
+      _id: 'email-job-id',
+      type: StepTypeEnum.EMAIL,
+      payload: undefined,
+      step: { _id: 'step-id', shouldStopOnFail: true },
+    } as unknown as Partial<JobEntity>);
+    usecase.jobRepository.claimNextChildAsQueued.resolves(haltingJob);
+    usecase.addJobUsecase.execute.rejects(new Error('failed to add the job'));
+
+    await usecase.tryQueueNextJobs(triggerJob, notification);
+
+    sinon.assert.calledOnce(usecase.jobRepository.cancelPendingJobs);
+    sinon.assert.calledOnceWithExactly(deleteAttachments, notification.payload.attachments);
+  });
+
+  it('keeps the attachments when a failing child will be retried', async () => {
+    const retryingJob = buildJob({
+      _id: 'email-job-id',
+      type: StepTypeEnum.EMAIL,
+      payload: undefined,
+      step: { _id: 'step-id', shouldStopOnFail: true },
+    } as unknown as Partial<JobEntity>);
+    usecase.jobRepository.claimNextChildAsQueued.resolves(retryingJob);
+    usecase.addJobUsecase.execute.rejects(new Error(WEBHOOK_FILTER_REQUEST_FAILED_DATA));
+
+    await usecase.tryQueueNextJobs(triggerJob, notification);
+
+    sinon.assert.notCalled(usecase.jobRepository.cancelPendingJobs);
+    sinon.assert.notCalled(deleteAttachments);
   });
 
   it('deletes the executed job attachments when the chain ends on a skipped step', async () => {

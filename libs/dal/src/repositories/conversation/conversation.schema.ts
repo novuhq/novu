@@ -12,6 +12,10 @@ const conversationSchema = new Schema<ConversationDBModel>(
       type: Schema.Types.ObjectId,
       required: true,
     },
+    _notificationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Notification',
+    },
     participants: {
       type: [
         new Schema(

@@ -41,6 +41,10 @@ export type AgentApprovalPart = {
   input?: Record<string, unknown>;
   source?: AgentToolSource;
   state: AgentApprovalPartState;
+  /** Server-minted; echo via respondToApproval. Do not invent client-side. */
+  approveActionId?: string;
+  /** Server-minted; echo via respondToApproval. Do not invent client-side. */
+  denyActionId?: string;
 };
 
 export type AgentSourcePart = {

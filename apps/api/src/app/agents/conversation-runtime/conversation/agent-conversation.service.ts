@@ -14,6 +14,9 @@ import {
   isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
+import { usesProtocolEventApprovals } from '../../shared/enums/agent-platform.enum';
+import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
+import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
@@ -73,6 +76,8 @@ export interface CreateOrGetConversationParams {
   workspaceId?: string;
   /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
   identifier?: string;
+  /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
+  notificationId?: string;
 }
 
 export interface PersistInboundMessageParams {
@@ -129,6 +134,9 @@ export interface PersistToolApprovalRequestParams extends ConversationActivityCo
   input?: Record<string, unknown>;
   /** Human-readable preview for the display timeline. */
   preview?: string;
+  /** When omitted, self-hosted `tool-approval:*` ids are minted. */
+  approveActionId?: string;
+  denyActionId?: string;
 }
 
 export type MetadataOp =
@@ -149,6 +157,13 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
   workflowId: string;
   to: TriggerRecipientsPayload;
   transactionId: string;
+}
+
+export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
+  platformMessageId: string;
+  platformThreadId: string;
+  messageContent: string;
+  signalData: Record<string, unknown>;
 }
 
 export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
@@ -177,6 +192,7 @@ export class AgentConversationService {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly eventSequenceService: ConversationEventSequenceService,
+    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -221,6 +237,7 @@ export class AgentConversationService {
     const conversation = await this.conversationRepository.create({
       identifier: params.identifier ?? `conv_${shortId(12)}`,
       _agentId: params.agentId,
+      _notificationId: params.notificationId,
       participants: [
         { type: params.participantType, id: params.participantId },
         { type: ConversationParticipantTypeEnum.AGENT, id: params.agentId },
@@ -530,8 +547,12 @@ export class AgentConversationService {
       params.environmentId,
       params.organizationId
     );
+    const actionIds =
+      params.approveActionId && params.denyActionId
+        ? { approveActionId: params.approveActionId, denyActionId: params.denyActionId }
+        : mintApprovalActionIds({ approvalId: params.approvalId });
 
-    return this.activityRepository.createToolActivity({
+    const activity = await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: params.conversationId,
       platform: params.channel.platform,
@@ -546,11 +567,17 @@ export class AgentConversationService {
         toolCallId: params.toolCallId,
         toolName: params.toolName,
         input: params.input,
+        approveActionId: actionIds.approveActionId,
+        denyActionId: actionIds.denyActionId,
       },
       sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
+
+    await this.emitProtocolEventActivity(params, activity);
+
+    return activity;
   }
 
   /** Links a delivered approval card message to its ledger row (for platform edits). */
@@ -709,7 +736,7 @@ export class AgentConversationService {
    * message list from history via `toModelMessages`, so the decision must live in
    * the transcript — not only in the ephemeral approval card.
    */
-  async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<void> {
+  async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<ConversationActivityEntity> {
     const toolName = params.toolName ?? 'tool call';
     const sequence = await this.resolveEventSequence(
       params.conversationId,
@@ -717,7 +744,7 @@ export class AgentConversationService {
       params.organizationId
     );
 
-    await this.activityRepository.createToolActivity({
+    const activity = await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: params.conversationId,
       platform: params.channel.platform,
@@ -732,6 +759,10 @@ export class AgentConversationService {
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
+
+    await this.emitProtocolEventActivity(params, activity);
+
+    return activity;
   }
 
   async persistToolResult(params: PersistToolResultParams): Promise<void> {
@@ -741,7 +772,7 @@ export class AgentConversationService {
       params.organizationId
     );
 
-    await this.activityRepository.createToolActivity({
+    const activity = await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: params.conversationId,
       platform: params.channel.platform,
@@ -755,6 +786,31 @@ export class AgentConversationService {
       sequence,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
+    });
+
+    await this.emitProtocolEventActivity(params, activity);
+  }
+
+  private async emitProtocolEventActivity(
+    params: ConversationActivityContext,
+    activity: ConversationActivityEntity
+  ): Promise<void> {
+    if (!usesProtocolEventApprovals(params.channel.platform)) {
+      return;
+    }
+
+    const conversation = await this.getConversation(params.conversationId, params.environmentId, params.organizationId);
+    if (!conversation) {
+      return;
+    }
+
+    await this.webChatLiveActivityPublisher.emit({
+      agentId: conversation._agentId,
+      agentIdentifier: params.agentIdentifier,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      conversation,
+      activity,
     });
   }
 
@@ -797,6 +853,41 @@ export class AgentConversationService {
           transactionId: params.transactionId,
         },
       },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+  }
+
+  /**
+   * Persist the workflow-origin message + signal. Stable `workflow-dispatch-*`
+   * identifiers make a concurrent first-turn race lose on the unique index.
+   */
+  async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
+    await this.persistAgentMessage({
+      conversationId: params.conversationId,
+      channel: params.channel,
+      agentIdentifier: params.agentIdentifier,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      platformMessageId: params.platformMessageId,
+      platformThreadId: params.platformThreadId,
+      identifier: `workflow-dispatch-msg:${params.platformMessageId}`,
+      content: params.messageContent,
+    });
+
+    await this.activityRepository.createSignalActivity({
+      identifier: `workflow-dispatch-origin:${params.platformMessageId}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.platformThreadId,
+      agentId: params.agentIdentifier,
+      content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
+      signalData: {
+        type: 'workflow_origin',
+        payload: params.signalData,
+      },
+      platformMessageId: params.platformMessageId,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });

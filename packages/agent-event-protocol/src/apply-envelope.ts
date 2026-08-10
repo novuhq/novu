@@ -71,7 +71,7 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
       }));
 
     case 'message':
-      return withAssistantMessage(state, envelope, event.messageId, (message) => ({
+      return withMessage(state, envelope, event.messageId, event.role, (message) => ({
         ...message,
         parts: applyDurableMessageParts(message.parts, event.content, event.files),
         status: 'sent',
@@ -131,6 +131,8 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
             toolName: event.toolName,
             input: event.input,
             source: event.source,
+            approveActionId: event.approveActionId,
+            denyActionId: event.denyActionId,
             state: 'pending',
           },
         ],
@@ -177,13 +179,14 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
   }
 }
 
-function withAssistantMessage(
+function withMessage(
   state: AgentConversationState,
   envelope: AgentEventEnvelope,
   messageId: string,
+  role: AgentMessageRole,
   update: (message: AgentMessage) => AgentMessage
 ): AgentConversationState {
-  const { messages, index } = ensureAssistantMessage(state, envelope, messageId);
+  const { messages, index } = ensureMessage(state, envelope, messageId, role);
   const existing = messages[index];
   if (!existing) {
     return state;
@@ -194,8 +197,17 @@ function withAssistantMessage(
   return {
     ...state,
     messages: nextMessages,
-    activeAssistantMessageId: messageId,
+    ...(role === 'assistant' ? { activeAssistantMessageId: messageId } : {}),
   };
+}
+
+function withAssistantMessage(
+  state: AgentConversationState,
+  envelope: AgentEventEnvelope,
+  messageId: string,
+  update: (message: AgentMessage) => AgentMessage
+): AgentConversationState {
+  return withMessage(state, envelope, messageId, 'assistant', update);
 }
 
 function withActiveAssistantMessage(
@@ -204,27 +216,17 @@ function withActiveAssistantMessage(
   update: (message: AgentMessage) => AgentMessage
 ): AgentConversationState {
   const messageId = state.activeAssistantMessageId ?? envelope.runId;
-  const { messages, index } = ensureAssistantMessage(state, envelope, messageId);
-  const existing = messages[index];
-  if (!existing) {
-    return state;
-  }
-  const nextMessages = messages.slice();
-  nextMessages[index] = update(existing);
 
-  return {
-    ...state,
-    messages: nextMessages,
-    activeAssistantMessageId: messageId,
-  };
+  return withMessage(state, envelope, messageId, 'assistant', update);
 }
 
-function ensureAssistantMessage(
+function ensureMessage(
   state: AgentConversationState,
   envelope: AgentEventEnvelope,
-  messageId: string
+  messageId: string,
+  role: AgentMessageRole
 ): { messages: AgentMessage[]; index: number } {
-  const existingIndex = state.messages.findIndex((message) => message.id === messageId && message.role === 'assistant');
+  const existingIndex = state.messages.findIndex((message) => message.id === messageId && message.role === role);
 
   if (existingIndex >= 0) {
     return { messages: state.messages, index: existingIndex };
@@ -232,7 +234,7 @@ function ensureAssistantMessage(
 
   const message: AgentMessage = {
     id: messageId,
-    role: 'assistant',
+    role,
     parts: [],
     createdAt: envelope.timestamp,
     status: 'sent',

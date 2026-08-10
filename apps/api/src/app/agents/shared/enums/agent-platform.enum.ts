@@ -69,3 +69,8 @@ export function requiresShortConnectUrl(platform: string): boolean {
 export function usesReplyBasedApprovals(platform: string): boolean {
   return !resolvePlatformEgressCapabilities(platform).interactiveButtons;
 }
+
+/** Platforms that surface tool approvals via agent-event protocol instead of portable cards. */
+export function usesProtocolEventApprovals(platform: string): boolean {
+  return platform === AgentPlatformEnum.WEB_CHAT;
+}

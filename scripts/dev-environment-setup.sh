@@ -362,7 +362,7 @@ check_nvm () {
 }
 
 install_node () {
-    NODE_JS_VERSION="22.22.1"
+    NODE_JS_VERSION="22.23.0"
 
     SKIP="$(check_nvm)"
 

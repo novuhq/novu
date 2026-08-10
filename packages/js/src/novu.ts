@@ -1,4 +1,5 @@
-import { InboxService } from './api';
+import { AgentChat } from './agent-chat';
+import { AgentChatService, HttpClient, InboxService } from './api';
 import { ChannelConnections } from './channel-connections';
 import { ChannelEndpoints } from './channel-endpoints';
 import type { EventHandler, EventNames, Events } from './event-emitter';
@@ -15,7 +16,9 @@ import type { BaseSocketInterface } from './ws/base-socket';
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
+  #httpClient: HttpClient;
   #inboxService: InboxService;
+  #agentChatService: AgentChatService;
   #options: NovuOptions;
 
   public readonly notifications: Notifications;
@@ -23,6 +26,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   public readonly subscriptions: Subscriptions;
   public readonly channelConnections: ChannelConnections;
   public readonly channelEndpoints: ChannelEndpoints;
+  public readonly agentChat: AgentChat;
   public readonly socket: BaseSocketInterface;
 
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
@@ -58,8 +62,14 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 
   constructor(options: NovuOptions) {
     this.#options = options;
-    this.#inboxService = new InboxService({
+    this.#httpClient = new HttpClient({
       apiUrl: options.apiUrl || options.backendUrl,
+    });
+    this.#inboxService = new InboxService({
+      httpClient: this.#httpClient,
+    });
+    this.#agentChatService = new AgentChatService({
+      httpClient: this.#httpClient,
     });
     this.#emitter = new NovuEventEmitter();
     const subscriber = buildSubscriber({ subscriberId: options.subscriberId, subscriber: options.subscriber });
@@ -109,6 +119,12 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
     });
+    this.agentChat = new AgentChat({
+      inboxServiceInstance: this.#inboxService,
+      eventEmitterInstance: this.#emitter,
+      agentChatService: this.#agentChatService,
+      socket: this.socket,
+    });
 
     this.on = (eventName, listener) => {
       if (this.socket.isSocketEvent(eventName)) {
@@ -132,6 +148,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.preferences.cache.clearAll();
     this.preferences.scheduleCache.clearAll();
     this.subscriptions.cache.clearAll();
+    this.agentChat.clearCache();
   }
 
   /**

@@ -26,6 +26,7 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
       return [
         {
           type: 'message',
+          role: 'assistant',
           messageId: randomUUID(),
           content: { markdown: part.text },
         },
@@ -41,6 +42,7 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
       return [
         {
           type: 'message',
+          role: 'assistant',
           messageId: randomUUID(),
           content: { markdown: part.text },
         },
