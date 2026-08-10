@@ -41,6 +41,7 @@ import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IAttachmentOptions,
   ITriggerPayload,
   JobStatusEnum,
   ResourceOriginEnum,
@@ -217,21 +218,33 @@ export class ExecuteBridgeJob {
      * bridge body limit for files larger than ~5–7 MB. Encode as base64 for the bridge
      * wire format (same shape clients send on trigger) without mutating the original
      * payload used later for channel delivery.
+     *
+     * Cast: IAttachmentOptions.file is typed as Buffer, but the bridge JSON body must
+     * carry a base64 string. Runtime consumers of this normalized payload expect that.
      */
-    return {
-      ...payload,
-      attachments: payload.attachments.map((attachment) => {
-        const file = attachment?.file;
+    const attachments = payload.attachments.map((attachment) => {
+      const file: unknown = attachment?.file;
 
-        if (!Buffer.isBuffer(file) && !(file instanceof Uint8Array)) {
-          return attachment;
-        }
+      if (Buffer.isBuffer(file)) {
+        return {
+          ...attachment,
+          file: file.toString('base64'),
+        };
+      }
 
+      if (file instanceof Uint8Array) {
         return {
           ...attachment,
           file: Buffer.from(file).toString('base64'),
         };
-      }),
+      }
+
+      return attachment;
+    }) as IAttachmentOptions[];
+
+    return {
+      ...payload,
+      attachments,
     };
   }
 
