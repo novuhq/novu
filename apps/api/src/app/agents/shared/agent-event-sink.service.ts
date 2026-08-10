@@ -24,7 +24,7 @@ import {
   toReplyContent,
   toThalamusUsage,
 } from './agent-event-mappers';
-import { AgentPlatformEnum } from './enums/agent-platform.enum';
+import { AgentPlatformEnum, usesProtocolEventApprovals } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
 import { McpConnectionErrorHandler } from './mcp-connection-error.handler';
 
@@ -220,7 +220,10 @@ export class AgentEventSink {
     };
 
     try {
-      const shouldDeliverCard = autoDeliverCard && !context.suppressReply;
+      const shouldDeliverCard =
+        autoDeliverCard &&
+        !context.suppressReply &&
+        !(context.platform && usesProtocolEventApprovals(context.platform));
 
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({

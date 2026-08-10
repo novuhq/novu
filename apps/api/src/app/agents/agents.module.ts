@@ -92,6 +92,7 @@ import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
 import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
+import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
 import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
 import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
 import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
@@ -176,6 +177,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     WebChatResumeAuthorizationService,
     WebChatEventFactory,
     WebChatPlatformDeliveryService,
+    WebChatLiveActivityPublisher,
     OutboundDeliveryInfo,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,

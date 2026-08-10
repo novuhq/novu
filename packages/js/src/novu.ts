@@ -113,16 +113,17 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
-    this.agentChat = new AgentChat({
-      inboxServiceInstance: this.#inboxService,
-      eventEmitterInstance: this.#emitter,
-      agentChatService: this.#agentChatService,
-    });
     this.socket = createSocket({
       socketUrl: options.socketUrl,
       socketOptions: options.socketOptions,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
+    });
+    this.agentChat = new AgentChat({
+      inboxServiceInstance: this.#inboxService,
+      eventEmitterInstance: this.#emitter,
+      agentChatService: this.#agentChatService,
+      socket: this.socket,
     });
 
     this.on = (eventName, listener) => {

@@ -1,5 +1,14 @@
-import type { AgentMessage, LoadConversationResult, NovuError, SendMessageResult } from '@novu/js';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type {
+  AgentApprovalPart,
+  AgentConversationStatus,
+  AgentMessage,
+  LoadConversationResult,
+  NovuError,
+  RespondToApprovalResult,
+  SendMessageResult,
+} from '@novu/js';
+import { derivePendingApprovals } from '@novu/js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
@@ -17,14 +26,27 @@ export type UseAgentChatProps = {
 
 export type UseAgentChatResult = {
   messages: AgentMessage[];
+  pendingApprovals: AgentApprovalPart[];
   conversationId?: string;
   error?: NovuError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isFetching: boolean;
+  isRunning: boolean;
+  status: AgentConversationStatus;
+  /** True when older history pages are available via `fetchMore`. */
+  hasMore: boolean;
   refetch: () => Promise<void>;
+  fetchMore: () => Promise<{
+    data?: { messages: AgentMessage[]; hasMore: boolean };
+    error?: NovuError;
+  }>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
+    error?: NovuError;
+  }>;
+  respondToApproval: (args: { approvalId: string; decision: 'approved' | 'denied' }) => Promise<{
+    data?: RespondToApprovalResult;
     error?: NovuError;
   }>;
 };
@@ -62,10 +84,15 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const conversationIdRef = useDataRef(conversationId);
 
   const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [status, setStatus] = useState<AgentConversationStatus>('active');
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
   const fetchGenerationRef = useRef(0);
+
+  const pendingApprovals = useMemo(() => derivePendingApprovals(messages), [messages]);
 
   useEffect(() => {
     const agentChanged = prevAgentIdRef.current !== agentId;
@@ -77,6 +104,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setAssignedConversationId(undefined);
       setLocalSessionKey(createLocalSessionKey());
       setMessages([]);
+      setIsRunning(false);
+      setStatus('active');
+      setHasMore(false);
       setError(undefined);
       setIsLoading(Boolean(conversationIdProp));
 
@@ -94,6 +124,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setAssignedConversationId(undefined);
       setLocalSessionKey(createLocalSessionKey());
       setMessages([]);
+      setIsRunning(false);
+      setStatus('active');
+      setHasMore(false);
     }
   }, [agentId, conversationIdProp]);
 
@@ -118,6 +151,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         propsRef.current.onError?.(response.error);
       } else if (response.data) {
         setMessages(response.data.messages);
+        setHasMore(response.data.hasMore);
         propsRef.current.onSuccess?.(response.data);
       }
 
@@ -128,6 +162,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   );
 
   useEffect(() => {
+    novu.agentChat.subscribe();
+
     const snapshot = novu.agentChat.getConversation({
       agentId,
       key: sessionKey,
@@ -135,11 +171,17 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     });
     if (snapshot) {
       setMessages(snapshot.messages);
+      setIsRunning(snapshot.isRunning);
+      setStatus(snapshot.status);
+      setHasMore(snapshot.hasMore);
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
     } else if (!conversationIdProp) {
       setMessages([]);
+      setIsRunning(false);
+      setStatus('active');
+      setHasMore(false);
     }
 
     const cleanup = novu.on('agent_chat.messages.updated', ({ data }) => {
@@ -148,6 +190,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       }
 
       setMessages(data.messages);
+      setIsRunning(data.isRunning);
+      setStatus(data.status);
+      setHasMore(data.hasMore);
       if (data.conversationId && !propsRef.current.conversationId) {
         setAssignedConversationId(data.conversationId);
       }
@@ -157,7 +202,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       void fetchConversation(conversationIdProp);
     }
 
-    return cleanup;
+    return () => {
+      cleanup();
+      novu.agentChat.unsubscribe();
+    };
   }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, conversationIdRef, propsRef, fetchConversation]);
 
   const refetch = useCallback(async () => {
@@ -168,6 +216,24 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
     await fetchConversation(id);
   }, [conversationIdRef, fetchConversation]);
+
+  const fetchMore = useCallback(async () => {
+    const response = await novu.agentChat.fetchMore({
+      agentId,
+      key: sessionKeyRef.current,
+      conversationId: conversationIdRef.current,
+    });
+
+    if (response.error) {
+      setError(response.error);
+      propsRef.current.onError?.(response.error);
+    } else if (response.data) {
+      setMessages(response.data.messages);
+      setHasMore(response.data.hasMore);
+    }
+
+    return response;
+  }, [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -192,13 +258,41 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
   );
 
+  const respondToApproval = useCallback(
+    async (args: { approvalId: string; decision: 'approved' | 'denied' }) => {
+      setError(undefined);
+
+      const response = await novu.agentChat.respondToApproval({
+        agentId,
+        key: sessionKeyRef.current,
+        conversationId: conversationIdRef.current,
+        approvalId: args.approvalId,
+        decision: args.decision,
+      });
+
+      if (response.error) {
+        setError(response.error);
+        propsRef.current.onError?.(response.error);
+      }
+
+      return response;
+    },
+    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+  );
+
   return {
     messages,
+    pendingApprovals,
     sendMessage,
+    respondToApproval,
     conversationId,
     error,
     isLoading,
     isFetching,
+    isRunning,
+    status,
+    hasMore,
     refetch,
+    fetchMore,
   };
 };

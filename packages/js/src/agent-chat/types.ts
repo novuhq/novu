@@ -1,6 +1,6 @@
-import type { AgentMessage } from '@novu/agent-event-protocol';
+import type { AgentApprovalPart, AgentConversationStatus, AgentMessage } from '@novu/agent-event-protocol';
 
-export type { AgentMessage };
+export type { AgentApprovalPart, AgentConversationStatus, AgentMessage };
 
 export type SendMessageArgs = {
   agentId: string;
@@ -31,6 +31,30 @@ export type LoadConversationArgs = {
 export type LoadConversationResult = {
   conversationId: string;
   messages: AgentMessage[];
+  hasMore: boolean;
+};
+
+export type FetchMoreArgs = {
+  agentId: string;
+  conversationId?: string;
+  key?: string;
+};
+
+export type FetchMoreResult = {
+  messages: AgentMessage[];
+  hasMore: boolean;
+};
+
+export type RespondToApprovalArgs = {
+  agentId: string;
+  approvalId: string;
+  decision: 'approved' | 'denied';
+  conversationId?: string;
+  key?: string;
+};
+
+export type RespondToApprovalResult = {
+  conversationId: string;
 };
 
 export type AgentChatMessagesUpdated = {
@@ -39,4 +63,7 @@ export type AgentChatMessagesUpdated = {
   /** Immutable holder key. Stable for the life of the local conversation entry. */
   key: string;
   messages: AgentMessage[];
+  isRunning: boolean;
+  status: AgentConversationStatus;
+  hasMore: boolean;
 };

@@ -76,7 +76,10 @@ export type WebChatRequestBody = {
   text?: string;
   /** Interactive / approval button id (e.g. `tool-approval:approve:…`). XOR with `text`. */
   actionId?: string;
-  /** Platform message id of the clicked card/button; required with `actionId`. */
+  /**
+   * Platform message id of the clicked card/button.
+   * Required with non-approval `actionId`; optional for approval action ids (headless).
+   */
   sourceMessageId?: string;
   /** Optional button/select value alongside `actionId`. */
   value?: string;
