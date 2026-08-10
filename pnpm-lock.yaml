@@ -4347,6 +4347,34 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
+  playground/agent-chat:
+    dependencies:
+      '@novu/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      next:
+        specifier: ^16.2.11
+        version: 16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.15.13
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.8
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.8)
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
   playground/nestjs:
     dependencies:
       '@nestjs/common':

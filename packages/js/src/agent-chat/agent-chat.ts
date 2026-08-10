@@ -52,6 +52,7 @@ export class AgentChat extends BaseModule {
           key: entry.key,
           messages: entry.messages,
           isRunning: entry.isRunning,
+          typing: entry.typing,
           status: entry.status,
           hasMore: entry.olderCursor != null,
           change,
@@ -100,6 +101,7 @@ export class AgentChat extends BaseModule {
         messages: AgentMessage[];
         key: string;
         isRunning: boolean;
+        typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
         hasMore: boolean;
       }
@@ -119,6 +121,7 @@ export class AgentChat extends BaseModule {
       messages: entry.messages,
       key: entry.key,
       isRunning: entry.isRunning,
+      typing: entry.typing,
       status: entry.status,
       hasMore: entry.olderCursor != null,
     };

@@ -15,6 +15,7 @@ export type {
   AgentConversationError,
   AgentConversationState,
   AgentConversationStatus,
+  AgentConversationTyping,
   AgentFilePart,
   AgentMessage,
   AgentMessagePart,

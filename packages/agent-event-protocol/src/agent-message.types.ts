@@ -91,10 +91,16 @@ export type AgentConversationError = {
   code?: string;
 };
 
+/** Ephemeral typing indicator. Absent when not typing. */
+export type AgentConversationTyping = {
+  status?: string;
+};
+
 /** Timeline state produced by folding `AgentEventEnvelope`s. */
 export type AgentConversationState = {
   messages: AgentMessage[];
   isRunning: boolean;
+  typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   lastSequence: number;
   error?: AgentConversationError;
