@@ -1,6 +1,6 @@
-import type { AgentConversationStatus, AgentMessage } from '@novu/agent-event-protocol';
+import type { AgentApprovalPart, AgentConversationStatus, AgentMessage } from '@novu/agent-event-protocol';
 
-export type { AgentConversationStatus, AgentMessage };
+export type { AgentApprovalPart, AgentConversationStatus, AgentMessage };
 
 export type SendMessageArgs = {
   agentId: string;
@@ -43,6 +43,18 @@ export type FetchMoreArgs = {
 export type FetchMoreResult = {
   messages: AgentMessage[];
   hasMore: boolean;
+};
+
+export type RespondToApprovalArgs = {
+  agentId: string;
+  approvalId: string;
+  decision: 'approved' | 'denied';
+  conversationId?: string;
+  key?: string;
+};
+
+export type RespondToApprovalResult = {
+  conversationId: string;
 };
 
 export type AgentChatMessagesUpdated = {

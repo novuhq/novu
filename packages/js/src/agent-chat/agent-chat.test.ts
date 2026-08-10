@@ -1,4 +1,4 @@
-import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
+import { AGENT_EVENT_PROTOCOL_VERSION, derivePendingApprovals } from '@novu/agent-event-protocol';
 import { AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { AgentChat } from './agent-chat';
@@ -7,6 +7,7 @@ describe('AgentChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
   let sendMessage: jest.Mock;
+  let respondToApproval: jest.Mock;
   let getEvents: jest.Mock;
   let connect: jest.Mock;
   let agentChat: AgentChat;
@@ -14,9 +15,10 @@ describe('AgentChat', () => {
   beforeEach(() => {
     emitter = new NovuEventEmitter();
     sendMessage = jest.fn();
+    respondToApproval = jest.fn();
     getEvents = jest.fn();
     connect = jest.fn().mockResolvedValue({ data: undefined });
-    const agentChatService = { sendMessage, getEvents } as unknown as AgentChatService;
+    const agentChatService = { sendMessage, respondToApproval, getEvents } as unknown as AgentChatService;
     agentChat = new AgentChat({
       inboxServiceInstance,
       eventEmitterInstance: emitter,
@@ -1088,5 +1090,219 @@ describe('AgentChat', () => {
       'msg_live0000002',
     ]);
     expect(snapshot?.hasMore).toBe(false);
+  });
+
+  function approvalHistoryPage(approvalId: string) {
+    return {
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' as const },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 2,
+          timestamp: '2026-08-07T12:00:01.000Z',
+          event: { type: 'message-start' as const, messageId: 'msg_asst0000001' },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 3,
+          timestamp: '2026-08-07T12:00:02.000Z',
+          event: {
+            type: 'tool-approval-request' as const,
+            approvalId,
+            toolUseId: 'tu_0000001',
+            toolName: 'deleteOrder',
+            input: { orderId: '123' },
+            approveActionId: `tool-approval:approve:${approvalId}`,
+            denyActionId: `tool-approval:deny:${approvalId}`,
+          },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 4,
+          timestamp: '2026-08-07T12:00:03.000Z',
+          event: { type: 'run-finish' as const, outcome: 'paused' as const },
+        },
+      ],
+      olderCursor: null,
+    };
+  }
+
+  it('loadConversation exposes messages that derive pending approvals after fold', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const snapshot = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(derivePendingApprovals(snapshot?.messages ?? [])).toEqual([
+      {
+        type: 'approval',
+        approvalId: 'approval_000001',
+        toolUseId: 'tu_0000001',
+        toolName: 'deleteOrder',
+        input: { orderId: '123' },
+        state: 'pending',
+        approveActionId: 'tool-approval:approve:approval_000001',
+        denyActionId: 'tool-approval:deny:approval_000001',
+      },
+    ]);
+  });
+
+  it('respondToApproval POSTs echoed actionId and does not flip pending state optimistically', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+    respondToApproval.mockResolvedValue({
+      identifier: 'conv_abcdefghijkl',
+    });
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await agentChat.respondToApproval({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      approvalId: 'approval_000001',
+      decision: 'approved',
+    });
+
+    expect(result).toEqual({
+      data: { conversationId: 'conv_abcdefghijkl' },
+    });
+    expect(respondToApproval).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'tool-approval:approve:approval_000001',
+    });
+
+    const snapshot = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(derivePendingApprovals(snapshot?.messages ?? [])[0]?.state).toBe('pending');
+  });
+
+  it('respondToApproval resolves pending state only after tool-approval-response envelope', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+    respondToApproval.mockResolvedValue({
+      identifier: 'conv_abcdefghijkl',
+    });
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    await agentChat.respondToApproval({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      approvalId: 'approval_000001',
+      decision: 'approved',
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 't1',
+        sequence: 5,
+        timestamp: '2026-08-07T12:00:04.000Z',
+        event: {
+          type: 'tool-approval-response',
+          approvalId: 'approval_000001',
+          decision: 'approved',
+        },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(derivePendingApprovals(snapshot?.messages ?? [])).toEqual([]);
+    expect(snapshot?.messages[0]?.parts.find((part) => part.type === 'approval')).toMatchObject({
+      approvalId: 'approval_000001',
+      state: 'approved',
+    });
+  });
+
+  it('respondToApproval returns error without POST when pending approval is missing', async () => {
+    getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await agentChat.respondToApproval({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      approvalId: 'approval_missing',
+      decision: 'denied',
+    });
+
+    expect(result.error).toBeDefined();
+    expect(respondToApproval).not.toHaveBeenCalled();
+  });
+
+  it('respondToApproval returns error without POST when pending approval lacks action id', async () => {
+    const page = approvalHistoryPage('approval_000001');
+    const requestEvent = page.events[2]?.event as {
+      type: 'tool-approval-request';
+      approveActionId?: string;
+      denyActionId?: string;
+    };
+    delete requestEvent.approveActionId;
+    delete requestEvent.denyActionId;
+    getEvents.mockResolvedValue(page);
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await agentChat.respondToApproval({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      approvalId: 'approval_000001',
+      decision: 'denied',
+    });
+
+    expect(result.error).toBeDefined();
+    expect(respondToApproval).not.toHaveBeenCalled();
   });
 });

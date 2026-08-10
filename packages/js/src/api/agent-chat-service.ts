@@ -29,6 +29,17 @@ export type AgentChatGetEventsResponse = {
   olderCursor: string | null;
 };
 
+export type AgentChatRespondToApprovalArgs = {
+  agentId: string;
+  conversationId: string;
+  /** Server-minted approve/deny action id echoed from the pending approval part. */
+  actionId: string;
+};
+
+export type AgentChatRespondToApprovalResponse = {
+  identifier: string;
+};
+
 export class AgentChatService {
   #httpClient: HttpClient;
 
@@ -41,6 +52,14 @@ export class AgentChatService {
       agentId: args.agentId,
       text: args.text,
       ...(args.conversationId ? { conversationIdentifier: args.conversationId } : {}),
+    });
+  }
+
+  async respondToApproval(args: AgentChatRespondToApprovalArgs): Promise<AgentChatRespondToApprovalResponse> {
+    return this.#httpClient.post(AGENT_CHAT_CONVERSATIONS_ROUTE, {
+      agentId: args.agentId,
+      conversationIdentifier: args.conversationId,
+      actionId: args.actionId,
     });
   }
 

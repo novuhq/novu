@@ -1,11 +1,14 @@
 import type {
+  AgentApprovalPart,
   AgentConversationStatus,
   AgentMessage,
   LoadConversationResult,
   NovuError,
+  RespondToApprovalResult,
   SendMessageResult,
 } from '@novu/js';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { derivePendingApprovals } from '@novu/js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
@@ -23,6 +26,7 @@ export type UseAgentChatProps = {
 
 export type UseAgentChatResult = {
   messages: AgentMessage[];
+  pendingApprovals: AgentApprovalPart[];
   conversationId?: string;
   error?: NovuError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
@@ -39,6 +43,10 @@ export type UseAgentChatResult = {
   }>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
+    error?: NovuError;
+  }>;
+  respondToApproval: (args: { approvalId: string; decision: 'approved' | 'denied' }) => Promise<{
+    data?: RespondToApprovalResult;
     error?: NovuError;
   }>;
 };
@@ -83,6 +91,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
   const fetchGenerationRef = useRef(0);
+
+  const pendingApprovals = useMemo(() => derivePendingApprovals(messages), [messages]);
 
   useEffect(() => {
     const agentChanged = prevAgentIdRef.current !== agentId;
@@ -248,9 +258,33 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
   );
 
+  const respondToApproval = useCallback(
+    async (args: { approvalId: string; decision: 'approved' | 'denied' }) => {
+      setError(undefined);
+
+      const response = await novu.agentChat.respondToApproval({
+        agentId,
+        key: sessionKeyRef.current,
+        conversationId: conversationIdRef.current,
+        approvalId: args.approvalId,
+        decision: args.decision,
+      });
+
+      if (response.error) {
+        setError(response.error);
+        propsRef.current.onError?.(response.error);
+      }
+
+      return response;
+    },
+    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+  );
+
   return {
     messages,
+    pendingApprovals,
     sendMessage,
+    respondToApproval,
     conversationId,
     error,
     isLoading,

@@ -72,12 +72,14 @@ describe('AgentConversationService', () => {
     conversationRepository: ConversationRepository,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activityRepository: any = makeActivityRepository(),
-    eventSequenceService = makeEventSequenceService()
+    eventSequenceService = makeEventSequenceService(),
+    webChatLiveActivityPublisher = { emit: sinon.stub().resolves(undefined) }
   ) {
     return new AgentConversationService(
       conversationRepository,
       activityRepository as any,
       eventSequenceService,
+      webChatLiveActivityPublisher as any,
       makeLogger() as any
     );
   }
@@ -132,6 +134,7 @@ describe('AgentConversationService', () => {
         conversationRepository,
         activityRepository as any,
         makeEventSequenceService(),
+        { emit: sinon.stub().resolves(undefined) } as any,
         logger as any
       );
 
@@ -224,6 +227,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
+      { emit: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -256,6 +260,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
+      { emit: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -284,6 +289,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
+      { emit: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 

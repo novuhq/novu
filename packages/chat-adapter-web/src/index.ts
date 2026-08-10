@@ -19,6 +19,7 @@ export {
   CONVERSATION_ID_PATTERN,
   conversationIdFromThreadId,
   extractCardPlainText,
+  isApprovalActionId,
   isValidConversationId,
   isValidMessageId,
   MESSAGE_ID_PATTERN,

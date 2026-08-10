@@ -11,6 +11,7 @@ import {
   ConversationActivityTypeEnum,
   type ConversationEventActivityFilter,
 } from '@novu/dal';
+import { mintApprovalActionIds } from '../shared/tool-approval/mint-approval-action-ids';
 
 /**
  * Which durable activities the web-chat history surface exposes as events.
@@ -65,12 +66,19 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         return null;
       }
 
+      const actionIds =
+        toolData.approveActionId && toolData.denyActionId
+          ? { approveActionId: toolData.approveActionId, denyActionId: toolData.denyActionId }
+          : mintApprovalActionIds({ approvalId: toolData.approvalId });
+
       return {
         type: 'tool-approval-request',
         approvalId: toolData.approvalId,
         toolUseId: toolData.toolCallId,
         toolName: toolData.toolName,
         input: toolData.input,
+        approveActionId: actionIds.approveActionId,
+        denyActionId: actionIds.denyActionId,
       };
     }
 
@@ -160,6 +168,22 @@ function toMappableActivity(
   }
 
   return { activity, event, sequence: activity.sequence };
+}
+
+/**
+ * Build a live WS envelope from a freshly persisted activity row.
+ * Returns null when the activity type is not mappable or lacks a sequence.
+ */
+export function buildLiveEnvelopeFromActivity(
+  activity: ConversationActivityEntity,
+  context: EventMapContext
+): AgentEventEnvelope | null {
+  const mappable = toMappableActivity(activity);
+  if (!mappable) {
+    return null;
+  }
+
+  return buildEnvelope(mappable.activity, mappable.event, mappable.sequence, context);
 }
 
 /**

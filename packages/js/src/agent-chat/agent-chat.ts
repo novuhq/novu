@@ -1,4 +1,5 @@
 import type { AgentEventEnvelope, AgentMessage } from '@novu/agent-event-protocol';
+import { derivePendingApprovals } from '@novu/agent-event-protocol';
 import { AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
@@ -11,6 +12,8 @@ import type {
   FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
+  RespondToApprovalArgs,
+  RespondToApprovalResult,
   SendMessageArgs,
   SendMessageResult,
 } from './types';
@@ -118,6 +121,51 @@ export class AgentChat extends BaseModule {
       status: entry.status,
       hasMore: entry.olderCursor != null,
     };
+  }
+
+  async respondToApproval(args: RespondToApprovalArgs): Result<RespondToApprovalResult> {
+    return this.callWithSession(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      if (!entry?.conversationId) {
+        return {
+          error: new NovuError(
+            'Cannot respond to approval without a conversation id',
+            new Error('missing conversation id')
+          ),
+        };
+      }
+
+      const pending = derivePendingApprovals(entry.messages).find((part) => part.approvalId === args.approvalId);
+      if (!pending) {
+        return { error: new NovuError('Pending approval not found', new Error('pending approval not found')) };
+      }
+
+      const actionId = args.decision === 'approved' ? pending.approveActionId : pending.denyActionId;
+      if (!actionId) {
+        return {
+          error: new NovuError(
+            'Pending approval is missing action id',
+            new Error('pending approval missing action id')
+          ),
+        };
+      }
+
+      try {
+        const data = await this.#agentChatService.respondToApproval({
+          agentId: args.agentId,
+          conversationId: entry.conversationId,
+          actionId,
+        });
+
+        return {
+          data: {
+            conversationId: data.identifier,
+          },
+        };
+      } catch (error) {
+        return { error: new NovuError('Failed to respond to approval', error) };
+      }
+    });
   }
 
   /**

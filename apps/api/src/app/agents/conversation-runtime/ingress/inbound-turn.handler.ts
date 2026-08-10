@@ -1154,14 +1154,6 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const actorType =
-      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
-        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
-        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
-    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
-
-    // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
-    // which owns its own action semantics.
     const [subscriber, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -1173,6 +1165,14 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
+    const actorType =
+      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
+        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
+
+    // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
+    // which owns its own action semantics.
     const context = await this.connectionContextResolver.resolve(config, rawEvent, userId);
 
     const runtime = this.runtimeResolver.resolve(agent);

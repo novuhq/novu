@@ -82,6 +82,38 @@ describe('AgentChatService', () => {
     );
   });
 
+  it('POSTs approval decision by echoing actionId', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ data: { identifier: 'conv_abcdefghijkl' } }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    httpClient.setAuthorizationToken('test-token');
+    const service = new AgentChatService({ httpClient });
+
+    const result = await service.respondToApproval({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'tool-approval:approve:approval_000001',
+    });
+
+    expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          agentId: 'agent_1',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          actionId: 'tool-approval:approve:approval_000001',
+        }),
+      })
+    );
+  });
+
   it('GETs older conversation events with before cursor', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

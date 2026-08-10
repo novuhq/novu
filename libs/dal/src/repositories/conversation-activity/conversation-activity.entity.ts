@@ -49,6 +49,10 @@ export interface ConversationActivityToolData {
   approved?: boolean;
   /** Executed tool output, or the `execution-denied` marker (result). */
   output?: unknown;
+  /** Server-minted action id for approve (request). Echoed by headless / card UIs. */
+  approveActionId?: string;
+  /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
+  denyActionId?: string;
 }
 
 export class ConversationActivityEntity {

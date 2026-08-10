@@ -8,8 +8,9 @@ import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
-import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum, usesProtocolEventApprovals } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { managedApprovalGrammar, mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
 import { HandleNovuResolveCommand } from '../novu-resolve/handle-novu-resolve.command';
@@ -404,9 +405,16 @@ export class HandlePendingToolApprovals {
     command: HandlePendingToolApprovalsCommand,
     tool: PendingToolApproval
   ): Promise<void> {
-    const delivery = buildManagedApprovalCard({
-      platform: command.platform,
-      tool,
+    const skipPortableCard = usesProtocolEventApprovals(command.platform);
+    const delivery = skipPortableCard
+      ? null
+      : buildManagedApprovalCard({
+          platform: command.platform,
+          tool,
+        });
+    const actionIds = mintApprovalActionIds({
+      approvalId: tool.toolUseId,
+      grammar: managedApprovalGrammar(tool.mcpServerName),
     });
 
     try {
@@ -418,21 +426,27 @@ export class HandlePendingToolApprovals {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          reply: delivery.content,
-          slackNative: delivery.slackNative,
+          ...(delivery ? { reply: delivery.content, slackNative: delivery.slackNative } : {}),
           toolApprovalRequest: {
             approvalId: tool.toolUseId,
             toolCallId: tool.toolUseId,
             name: tool.toolName,
             input: tool.input,
+            approveActionId: actionIds.approveActionId,
+            denyActionId: actionIds.denyActionId,
           },
         })
       );
     } catch (err) {
-      this.logger.error(err, `Failed to deliver tool-approval card for session ${command.sessionId}`);
+      this.logger.error(
+        err,
+        skipPortableCard
+          ? `Failed to ledger tool-approval request for session ${command.sessionId}`
+          : `Failed to deliver tool-approval card for session ${command.sessionId}`
+      );
       captureAgentException(err, {
         component: 'handle-pending-tool-approvals',
-        operation: 'deliver-tool-approval-card',
+        operation: skipPortableCard ? 'ledger-tool-approval-request' : 'deliver-tool-approval-card',
         sessionId: command.sessionId,
       });
 
