@@ -102,6 +102,8 @@ export interface EmailWebhookPayload {
   headers?: Record<string, string>;
   domain?: EmailWebhookDomainContext;
   route?: EmailWebhookRouteContext;
+  /** Decoded `Message._id` from a trailing `+nv{base36}` Reply-To token, when present. */
+  originToken?: string;
   /**
    * Sender-authentication verdicts computed by the inbound-mail service
    * (`'pass'` / `'failed'`). Because the `From` header is trivially spoofable,

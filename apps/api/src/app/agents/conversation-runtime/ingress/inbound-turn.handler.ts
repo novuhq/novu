@@ -223,6 +223,14 @@ function toProviderMessageLookupKey(platformThreadId: string): string {
   return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
 }
 
+/** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token on the inbound recipient. */
+function extractAgentEmailOriginToken(message: Message): string | null {
+  const raw = asRecord(message.raw);
+  const originToken = raw?.originToken;
+
+  return typeof originToken === 'string' && originToken.length > 0 ? originToken.toLowerCase() : null;
+}
+
 /** Slack provider id is `{channel}:{ts}` — channel ids never contain `:`. */
 function platformMessageIdFromProviderIdentifier(identifier: string): string | undefined {
   const colon = identifier.indexOf(':');
@@ -471,7 +479,7 @@ export class AgentInboundHandler implements OnModuleInit {
     // creates the Conversation that the gate just cleared.
     const workflowOriginMessage = existingConversation
       ? null
-      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId);
+      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId, message);
 
     const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
@@ -684,7 +692,8 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     platformThreadId: string,
-    subscriberId: string | null
+    subscriberId: string | null,
+    message: Message | null = null
   ): Promise<MessageEntity | null> {
     if (!subscriberId) {
       return null;
@@ -694,6 +703,10 @@ export class AgentInboundHandler implements OnModuleInit {
       const subscriber = await this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId);
       if (!subscriber) {
         return null;
+      }
+
+      if (config.platform === AgentPlatformEnum.EMAIL) {
+        return message ? await this.findEmailWorkflowOriginMessage(agentId, config, subscriber._id, message) : null;
       }
 
       const identifier = toProviderMessageLookupKey(platformThreadId);
@@ -719,6 +732,25 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  private async findEmailWorkflowOriginMessage(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    subscriberId: string,
+    message: Message
+  ): Promise<MessageEntity | null> {
+    const originId = extractAgentEmailOriginToken(message);
+    if (!originId) {
+      return null;
+    }
+
+    return this.messageRepository.findOne({
+      _id: originId,
+      _environmentId: config.environmentId,
+      _agentId: agentId,
+      _subscriberId: subscriberId,
+    });
+  }
+
   /** Fail-soft: write workflow-origin message + signal into conversation history. */
   private async hydrateWorkflowOrigin(
     agentId: string,
@@ -727,11 +759,17 @@ export class AgentInboundHandler implements OnModuleInit {
     platformThreadId: string,
     originMessage: MessageEntity
   ): Promise<void> {
-    if (!originMessage._notificationId || !originMessage.identifier) {
+    if (!originMessage._notificationId) {
       return;
     }
 
-    const platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
+    let platformMessageId: string | undefined;
+    if (config.platform === AgentPlatformEnum.EMAIL) {
+      platformMessageId = originMessage._id;
+    } else if (originMessage.identifier) {
+      platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
+    }
+
     if (!platformMessageId) {
       return;
     }
