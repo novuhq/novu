@@ -572,6 +572,27 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(createRes.status).to.equal(201);
     const conversation = await waitForConversation(createRes.body.data.identifier);
 
+    // Inbound ack starts typing on web_chat (PLATFORMS_WITH_TYPING_INDICATOR). Wait for
+    // that job, then drop it so the counts below only cover adapter-callback emits from ingest.
+    const ackTypingJobs = await pollFor(() => {
+      const typingJobs = addStub
+        .getCalls()
+        .map((call) => call.args[0])
+        .filter(
+          (job) =>
+            job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+            (job.data.payload as AgentEventEnvelope)?.event?.type === 'channel.typing'
+        );
+
+      return typingJobs.length > 0 ? typingJobs : null;
+    });
+    expect(ackTypingJobs).to.have.length(1);
+    expect((ackTypingJobs[0].data.payload as AgentEventEnvelope).event).to.deep.include({
+      type: 'channel.typing',
+      state: 'on',
+    });
+    addStub.resetHistory();
+
     const messageId = `msg-live-${Date.now()}`;
     const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
       events: [messageEnvelope(conversation._id, messageId)],
