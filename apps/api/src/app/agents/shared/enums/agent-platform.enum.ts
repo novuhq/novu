@@ -14,6 +14,7 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TEAMS,
   AgentPlatformEnum.TELEGRAM,
   AgentPlatformEnum.SENDBLUE,
+  AgentPlatformEnum.WEB_CHAT,
 ]);
 
 type PlatformEgressCapabilities = {

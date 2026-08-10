@@ -4,6 +4,7 @@ export type {
   AgentChatChange,
   AgentChatMessagesUpdated,
   AgentConversationStatus,
+  AgentConversationTyping,
   AgentEventEnvelope,
   AgentMessage,
   FetchMoreArgs,
