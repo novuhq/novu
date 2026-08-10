@@ -955,6 +955,52 @@ describe('AgentChat', () => {
     await waitForMessageIds(['msg_user0000001', 'msg_asst_first001', 'msg_asst_second01']);
   });
 
+  it('reconnect catch-up preserves previously fetched older pages and olderCursor', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], 'act_older0001')
+    );
+    await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    agentChat.subscribe();
+    getEvents.mockClear();
+    getEvents.mockResolvedValueOnce(
+      historyPage(
+        [
+          { sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' },
+          { sequence: 4, messageId: 'msg_asst_missed1', role: 'assistant', markdown: 'missed while offline' },
+        ],
+        'act_page0001'
+      )
+    );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const conversation = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(conversation?.messages.map((message) => message.id)).toEqual([
+      'msg_old0000001',
+      'msg_new0000001',
+      'msg_asst_missed1',
+    ]);
+    expect(conversation?.hasMore).toBe(true);
+  });
+
   it('does not catch up when nothing is subscribed', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });

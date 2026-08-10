@@ -15,12 +15,13 @@ const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    limitInBytes: 216_000,
+    // Raised for headless agentChat on Novu (NV-8445). Split to ./agent-chat later if needed.
+    limitInBytes: 224_000,
   },
   {
     name: 'UMD gzip',
     filePath: umdGzipPath,
-    limitInBytes: 60_000,
+    limitInBytes: 62_000,
   },
 ];
 

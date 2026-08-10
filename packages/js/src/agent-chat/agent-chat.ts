@@ -413,6 +413,9 @@ export class AgentChat extends BaseModule {
   async #catchUpConversation(conversationId: string, holders: ConversationEntry[]): Promise<void> {
     try {
       const page = await this.#agentChatService.getEvents({ conversationId });
+      // Fold only missed live envelopes. Do not rebuild from the newest history page —
+      // that would reorder/drop already-loaded older pages and reset `olderCursor`.
+      const envelopes = [...page.events].sort((left, right) => left.sequence - right.sequence);
 
       for (const holder of holders) {
         const entry = this.#store.get(holder.key);
@@ -420,7 +423,9 @@ export class AgentChat extends BaseModule {
           continue;
         }
 
-        this.#store.absorbHistoryPage(entry, page.events, page.olderCursor);
+        for (const envelope of envelopes) {
+          this.#store.applyLiveEnvelope(entry, envelope);
+        }
       }
     } catch {
       // Best-effort catch-up; buffered live envelopes still flush in the outer finally.
