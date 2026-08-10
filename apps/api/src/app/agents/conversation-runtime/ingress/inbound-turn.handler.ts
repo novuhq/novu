@@ -763,13 +763,12 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    // Email correlates via Reply-To token → Message._id; chat uses provider identifier.
-    const platformMessageId =
-      config.platform === AgentPlatformEnum.EMAIL
-        ? originMessage._id
-        : originMessage.identifier
-          ? platformMessageIdFromProviderIdentifier(originMessage.identifier)
-          : undefined;
+    let platformMessageId: string | undefined;
+    if (config.platform === AgentPlatformEnum.EMAIL) {
+      platformMessageId = originMessage._id;
+    } else if (originMessage.identifier) {
+      platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
+    }
 
     if (!platformMessageId) {
       return;

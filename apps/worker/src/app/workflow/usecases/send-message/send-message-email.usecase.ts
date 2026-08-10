@@ -896,10 +896,7 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
     senderName: overrides?.senderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
-    headers: {
-      ...options.headers,
-      ...overrides?.headers,
-    },
+    headers: overrides?.headers || {},
   };
 };
 

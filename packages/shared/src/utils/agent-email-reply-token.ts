@@ -1,10 +1,7 @@
 /**
- * Reply-To local-part origin token for agent-assigned workflow emails.
- *
- * Carries `Message._id` as `+nv{base36(ObjectId)}` so inbound replies can
- * recover the workflow origin even when the ESP rewrites MIME Message-ID.
- * Lives in `@novu/shared` so both the worker and `@novu/chat-adapter-email`
- * can strip/parse without importing `@novu/application-generic`.
+ * Reply-To local-part origin token (`+nv{base36(Message._id)}`) for agent-assigned
+ * workflow emails. Lives in `@novu/shared` so worker and chat-adapter-email can
+ * share encode/decode without depending on `@novu/application-generic`.
  */
 
 const OBJECT_ID_HEX_RE = /^[0-9a-f]{24}$/i;
@@ -28,12 +25,7 @@ function decodeObjectIdBase36(token: string): string | null {
 
   let value = 0n;
   for (const char of token.toLowerCase()) {
-    const digit = Number.parseInt(char, 36);
-    if (Number.isNaN(digit)) {
-      return null;
-    }
-
-    value = value * 36n + BigInt(digit);
+    value = value * 36n + BigInt(Number.parseInt(char, 36));
   }
 
   const hex = value.toString(16).padStart(24, '0');

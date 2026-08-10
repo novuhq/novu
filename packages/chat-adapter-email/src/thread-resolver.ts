@@ -142,14 +142,7 @@ export class ThreadResolver {
     return (await state.get<string>(agentAddressKey(threadId))) ?? undefined;
   }
 
-  /**
-   * Whether a tracked thread ID is owned by `recipientAddress`.
-   *
-   * Compared case-insensitively because inbound addresses arrive lowercased via
-   * `parseEmailAddress` while `openDM()` encodes the caller's raw address; a strict
-   * compare would fork a live thread. An undecodable stored value is treated as
-   * not-owned so a malformed entry can never fail the whole inbound webhook.
-   */
+  /** Case-insensitive owner check; malformed thread ids are treated as not owned. */
   private threadBelongsTo(threadId: string, recipientAddress: string): boolean {
     try {
       const owner = this.decodeThreadId(threadId).recipientAddress;

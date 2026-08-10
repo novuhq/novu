@@ -81,10 +81,7 @@ export interface NovuEmailRawMessage {
   headers?: Record<string, string>;
   domain?: EmailWebhookDomainContext;
   route?: EmailWebhookRouteContext;
-  /**
-   * Decoded Novu `Message._id` from a trailing `+nv{base36}` Reply-To token on
-   * the inbound recipient. Set by the inbound worker when present.
-   */
+  /** Decoded `Message._id` from a trailing `+nv{base36}` Reply-To token, when present. */
   originToken?: string;
   createdAt: string;
   attachments?: NovuEmailAttachment[];
