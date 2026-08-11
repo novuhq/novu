@@ -18,7 +18,6 @@ import {
   buildWorkflowOriginSummary,
   extractAgentEmailOriginToken,
   extractWhatsAppQuotedWamid,
-  parseEntityDate,
   resolvePlatformMessageId,
   toProviderMessageLookupKey,
   WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS,
@@ -212,10 +211,6 @@ export class WorkflowOriginService {
       });
     }
 
-    const lookbackFloor = new Date(Date.now() - WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS);
-    const lastActivityAt = parseEntityDate(existingConversation?.lastActivityAt);
-    const createdAfter = lastActivityAt && lastActivityAt > lookbackFloor ? lastActivityAt : lookbackFloor;
-
     const [origin] = await this.messageRepository.find(
       {
         _environmentId: config.environmentId,
@@ -224,7 +219,8 @@ export class WorkflowOriginService {
         providerId: config.providerId,
         channel: ChannelTypeEnum.CHAT,
         identifier: { $exists: true, $nin: [null, ''] },
-        createdAt: { $gt: createdAfter },
+        _notificationId: { $exists: true, $nin: [null, ''] },
+        createdAt: { $gt: new Date(Date.now() - WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS) },
       },
       '',
       {
@@ -233,7 +229,30 @@ export class WorkflowOriginService {
       }
     );
 
-    return origin ?? null;
+    if (!origin) {
+      return null;
+    }
+
+    // Conversation activity advances even when hydration failed, so only the hydration
+    // marker can tell an attached origin from a lost one that still needs a retry.
+    if (existingConversation && (await this.isAlreadyHydrated(config, existingConversation._id, origin))) {
+      return null;
+    }
+
+    return origin;
+  }
+
+  private async isAlreadyHydrated(
+    config: ResolvedAgentConfig,
+    conversationId: string,
+    origin: MessageEntity
+  ): Promise<boolean> {
+    const platformMessageId = resolvePlatformMessageId(config.platform, origin);
+    if (!platformMessageId) {
+      return false;
+    }
+
+    return this.conversationService.isWorkflowOriginHydrated(config.environmentId, conversationId, platformMessageId);
   }
 
   private async buildWorkflowOriginContext(

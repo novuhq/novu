@@ -28,12 +28,14 @@ describe('WorkflowOriginService', () => {
       find?: sinon.SinonStub;
       notificationFindOne?: sinon.SinonStub;
       persistWorkflowOriginHydration?: sinon.SinonStub;
+      isWorkflowOriginHydrated?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
     const conversationService = {
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistWorkflowOriginHydration: overrides.persistWorkflowOriginHydration ?? sinon.stub().resolves(undefined),
+      isWorkflowOriginHydrated: overrides.isWorkflowOriginHydrated ?? sinon.stub().resolves(false),
     };
     const subscriberRepository = {
       findBySubscriberId: overrides.findBySubscriberId ?? sinon.stub().resolves({ _id: 'subscriber-mongo-1' }),
@@ -313,18 +315,18 @@ describe('WorkflowOriginService', () => {
       });
       expect(query.createdAt.$gt.getTime()).to.be.at.least(before - WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS - 5);
       expect(query.createdAt.$gt.getTime()).to.be.at.most(after - WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS + 5);
+      expect(query._notificationId).to.deep.equal({ $exists: true, $nin: [null, ''] });
       expect(options).to.deep.equal({ sort: { createdAt: -1 }, limit: 1 });
       expect(result).to.deep.equal({ origin: whatsappOrigin, notificationId: 'wa-notif1' });
     });
 
-    it('catch-up hydrates an existing conversation when the query returns a newer origin', async () => {
-      const lastActivityAt = new Date(Date.now() - 3_600_000).toISOString();
+    it('catch-up hydrates an existing conversation when the origin is not hydrated yet', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt,
+        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
-      const { service, messageRepository } = makeService({
+      const { service, messageRepository, conversationService } = makeService({
         find: sinon.stub().resolves([whatsappOrigin]),
       });
 
@@ -338,19 +340,23 @@ describe('WorkflowOriginService', () => {
       });
 
       expect(messageRepository.find.calledOnce).to.equal(true);
-      expect(messageRepository.find.firstCall.args[0].createdAt.$gt.toISOString()).to.equal(lastActivityAt);
+      expect(conversationService.isWorkflowOriginHydrated.firstCall.args).to.deep.equal([
+        'env1',
+        'conversation1',
+        whatsappOrigin.identifier,
+      ]);
       expect(result).to.deep.equal({ origin: whatsappOrigin, notificationId: undefined });
     });
 
-    it('passes lastActivityAt as the exclusive createdAfter bound so stale origins are excluded by the query', async () => {
-      const lastActivityAt = new Date().toISOString();
+    it('skips an origin already hydrated into the conversation', async () => {
       const existingConversation = {
         ...conversation,
-        lastActivityAt,
+        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
         participants: [{ type: 'subscriber', id: 'sub1' }],
       };
-      const { service, messageRepository } = makeService({
-        find: sinon.stub().resolves([]),
+      const { service } = makeService({
+        find: sinon.stub().resolves([whatsappOrigin]),
+        isWorkflowOriginHydrated: sinon.stub().resolves(true),
       });
 
       const result = await service.resolve({
@@ -362,11 +368,33 @@ describe('WorkflowOriginService', () => {
         existingConversation: existingConversation as any,
       });
 
-      expect(messageRepository.find.firstCall.args[0].createdAt.$gt.toISOString()).to.equal(lastActivityAt);
       expect(result).to.equal(null);
     });
 
-    it('prefers a quoted wamid over latest-by-subscriber and bypasses the staleness guard', async () => {
+    it('re-resolves an unhydrated origin older than lastActivityAt so a failed hydration is retried', async () => {
+      const existingConversation = {
+        ...conversation,
+        // The failed turn still persisted its inbound message, so activity is newer than the origin.
+        lastActivityAt: new Date().toISOString(),
+        participants: [{ type: 'subscriber', id: 'sub1' }],
+      };
+      const { service } = makeService({
+        find: sinon.stub().resolves([whatsappOrigin]),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: whatsappConfig as any,
+        platformThreadId: 'whatsapp:15551234567',
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'again', author: { userId: '15551234567' }, raw: {} } as any,
+        existingConversation: existingConversation as any,
+      });
+
+      expect(result?.origin).to.equal(whatsappOrigin);
+    });
+
+    it('prefers a quoted wamid over latest-by-subscriber and bypasses the catch-up window', async () => {
       const lastActivityAt = new Date().toISOString();
       const existingConversation = {
         ...conversation,

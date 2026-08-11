@@ -218,6 +218,29 @@ describe('AgentConversationService', () => {
     });
   });
 
+  describe('isWorkflowOriginHydrated', () => {
+    it('matches the signal identifier written by persistWorkflowOriginHydration', async () => {
+      const activityRepository = { count: sinon.stub().resolves(1) };
+      const service = makeService({} as unknown as ConversationRepository, activityRepository);
+
+      const hydrated = await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc');
+
+      expect(hydrated).to.equal(true);
+      expect(activityRepository.count.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _conversationId: 'conv-1',
+        identifier: 'workflow-dispatch-origin:wamid.abc',
+      });
+    });
+
+    it('returns false when the signal is absent', async () => {
+      const activityRepository = { count: sinon.stub().resolves(0) };
+      const service = makeService({} as unknown as ConversationRepository, activityRepository);
+
+      expect(await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc')).to.equal(false);
+    });
+  });
+
   describe('event sequencing', () => {
     it('allocates a sequence for durable tool activities on any channel', async () => {
       const conversationRepository = {} as unknown as ConversationRepository;

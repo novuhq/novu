@@ -25,6 +25,11 @@ export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
 /** Default number of recent activities loaded as conversation history for every runtime. */
 export const AGENT_HISTORY_LIMIT = 50;
 
+/** Stable per-origin identifier for the workflow-origin signal — see `persistWorkflowOriginHydration`. */
+function workflowOriginSignalIdentifier(platformMessageId: string): string {
+  return `workflow-dispatch-origin:${platformMessageId}`;
+}
+
 export function getConversationTitle(firstMessageText: string): string {
   const trimmed = firstMessageText.trim();
 
@@ -878,6 +883,27 @@ export class AgentConversationService {
   }
 
   /**
+   * Whether this origin is already in the transcript. The signal is the final write of
+   * `persistWorkflowOriginHydration`, so a partially applied hydration reads as not hydrated.
+   */
+  async isWorkflowOriginHydrated(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<boolean> {
+    const count = await this.activityRepository.count(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        identifier: workflowOriginSignalIdentifier(platformMessageId),
+      },
+      1
+    );
+
+    return count > 0;
+  }
+
+  /**
    * Persist the workflow-origin message + signal. Stable `workflow-dispatch-*`
    * identifiers collide on the unique index under concurrency; both writes are
    * duplicate-key tolerant so a retry after a partial success is idempotent.
@@ -897,7 +923,7 @@ export class AgentConversationService {
 
     try {
       await this.activityRepository.createSignalActivity({
-        identifier: `workflow-dispatch-origin:${params.platformMessageId}`,
+        identifier: workflowOriginSignalIdentifier(params.platformMessageId),
         conversationId: params.conversationId,
         platform: params.channel.platform,
         integrationId: params.channel._integrationId,

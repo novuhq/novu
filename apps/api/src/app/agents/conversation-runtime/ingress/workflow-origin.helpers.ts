@@ -46,16 +46,6 @@ export function extractWhatsAppQuotedWamid(message: Message | null): string | nu
   return typeof quotedId === 'string' && quotedId.length > 0 ? quotedId : null;
 }
 
-export function parseEntityDate(value: string | Date | undefined | null): Date | null {
-  if (!value) {
-    return null;
-  }
-
-  const date = value instanceof Date ? value : new Date(value);
-
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 /** Email → Message._id; WhatsApp → wamid; Slack `{channel}:{ts}` → `ts`. */
 export function resolvePlatformMessageId(
   platform: AgentPlatformEnum,
