@@ -9,14 +9,29 @@ describe('activity-views', () => {
     }
   });
 
-  it('shows run lifecycle to clients but hides it from agent handoff history', () => {
+  it('shows run lifecycle to clients only, since it is bookkeeping rather than conversation content', () => {
     const lifecycle = ['run_start', 'run_finish', 'run_error'];
 
     expect(getKindsForView('client_events')).to.include.members(lifecycle);
     for (const kind of lifecycle) {
       expect(getKindsForView('agent_handoff')).to.not.include(kind);
       expect(getKindsForView('llm_transcript')).to.not.include(kind);
+      expect(getKindsForView('operator_timeline')).to.not.include(kind);
     }
+  });
+
+  it('keeps every kind the dashboard timeline renders, so scoping to a view is not a regression', () => {
+    expect(getKindsForView('operator_timeline')).to.include.members([
+      'message.subscriber',
+      'message.agent',
+      'message.platform_user',
+      'message.system',
+      'edit',
+      'delete',
+      'signal.other',
+      'tool_approval_request',
+      'tool_approval_decision',
+    ]);
   });
 
   it('keeps human messages in approval_activities so the approval requester can be resolved', () => {
