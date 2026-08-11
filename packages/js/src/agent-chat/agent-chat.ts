@@ -159,6 +159,7 @@ export class AgentChat extends BaseModule {
           agentId: args.agentId,
           conversationId: entry.conversationId,
           actionId,
+          agentHash: args.agentHash,
         });
 
         return {
@@ -255,6 +256,7 @@ export class AgentChat extends BaseModule {
             agentId: args.agentId,
             text: args.text,
             conversationId,
+            agentHash: args.agentHash,
           });
 
           this.#store.markSent(entry, {

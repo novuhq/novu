@@ -22,6 +22,11 @@ export type SendMessageArgs = {
    * Defaults to `conversationId` on resume, or a minted `local_*` key on create.
    */
   key?: string;
+  /**
+   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+   * integration has Security HMAC enabled.
+   */
+  agentHash?: string;
 };
 
 export type SendMessageResult = {
@@ -57,6 +62,11 @@ export type RespondToApprovalArgs = {
   decision: 'approved' | 'denied';
   conversationId?: string;
   key?: string;
+  /**
+   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+   * integration has Security HMAC enabled.
+   */
+  agentHash?: string;
 };
 
 export type RespondToApprovalResult = {

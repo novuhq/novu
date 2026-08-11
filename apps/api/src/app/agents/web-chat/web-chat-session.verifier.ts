@@ -6,8 +6,9 @@ import { AuthService } from '../../auth/services/auth.service';
 
 /**
  * Inbox subscriber JWT verification for web-chat POST ingress.
- * Injected into `@novu/chat-adapter-web` as `verifySession` (NV-8448);
- * NV-8442 `agentHash` joins this hook later.
+ * Injected into `@novu/chat-adapter-web` as `verifySession` (NV-8448).
+ * Optional `agentHash` HMAC (NV-8442) is enforced in `WebChatAgentHashService`
+ * until this hook receives the parsed body.
  */
 @Injectable()
 export class WebChatSessionVerifier {

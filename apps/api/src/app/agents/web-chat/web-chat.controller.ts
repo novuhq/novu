@@ -38,6 +38,7 @@ import { ListWebChatConversationEventsCommand } from './usecases/list-web-chat-c
 import { ListWebChatConversationEvents } from './usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
 import { ListWebChatConversationsCommand } from './usecases/list-web-chat-conversations/list-web-chat-conversations.command';
 import { ListWebChatConversations } from './usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
+import { WebChatAgentHashService } from './web-chat-agent-hash.service';
 import { WebChatPublicationService } from './web-chat-publication.service';
 import { WebChatSessionVerifier } from './web-chat-session.verifier';
 
@@ -47,6 +48,7 @@ export class WebChatController {
   constructor(
     private readonly sessionVerifier: WebChatSessionVerifier,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly agentHashService: WebChatAgentHashService,
     private readonly publicationService: WebChatPublicationService,
     private readonly inboundDispatcher: InboundDispatcher,
     private readonly listWebChatConversations: ListWebChatConversations,
@@ -75,6 +77,14 @@ export class WebChatController {
       if (!agentIdentifier) {
         throw new BadRequestException('agentId is required');
       }
+
+      const agentHash = typeof req.body?.agentHash === 'string' ? req.body.agentHash.trim() : undefined;
+      await this.agentHashService.assertAgentHashIfRequired({
+        agentIdentifier,
+        agentHash: agentHash || undefined,
+        environmentId: session.environmentId,
+        organizationId: session.organizationId,
+      });
 
       const published = await this.publicationService.resolvePublishedAgent(
         agentIdentifier,

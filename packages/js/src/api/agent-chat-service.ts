@@ -9,6 +9,11 @@ export type AgentChatSendMessageArgs = {
   text: string;
   /** Existing conversation id. Omit this field to create a new conversation. */
   conversationId?: string;
+  /**
+   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+   * integration has Security HMAC enabled.
+   */
+  agentHash?: string;
 };
 
 export type AgentChatSendMessageResponse = {
@@ -34,6 +39,11 @@ export type AgentChatRespondToApprovalArgs = {
   conversationId: string;
   /** Server-minted approve/deny action id echoed from the pending approval part. */
   actionId: string;
+  /**
+   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+   * integration has Security HMAC enabled.
+   */
+  agentHash?: string;
 };
 
 export type AgentChatRespondToApprovalResponse = {
@@ -52,6 +62,7 @@ export class AgentChatService {
       agentId: args.agentId,
       text: args.text,
       ...(args.conversationId ? { conversationIdentifier: args.conversationId } : {}),
+      ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }
 
@@ -60,6 +71,7 @@ export class AgentChatService {
       agentId: args.agentId,
       conversationIdentifier: args.conversationId,
       actionId: args.actionId,
+      ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }
 
