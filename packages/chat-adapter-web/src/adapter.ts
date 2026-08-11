@@ -213,6 +213,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       text: kind.text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
+      contextKeys: session.contextKeys ?? [],
     });
 
     this.chat!.processMessage(this, threadId, message, options);
@@ -253,7 +254,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
         messageId: kind.sourceMessageId ?? '',
         threadId,
         user,
-        raw: body,
+        raw: { ...body, contextKeys: session.contextKeys ?? [] },
       },
       options
     );

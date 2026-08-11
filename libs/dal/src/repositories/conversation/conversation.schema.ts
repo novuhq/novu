@@ -138,6 +138,10 @@ const conversationSchema = new Schema<ConversationDBModel>(
       type: Schema.Types.Number,
       default: 0,
     },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
     lastActivityAt: {
       type: Schema.Types.String,
     },
@@ -158,6 +162,8 @@ const conversationSchema = new Schema<ConversationDBModel>(
 conversationSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
 conversationSchema.index({ _environmentId: 1, 'channels.platformThreadId': 1 });
 conversationSchema.index({ _environmentId: 1, 'participants.id': 1, status: 1 });
+// Multikey alone — do not compound with participants (Mongo forbids parallel arrays).
+conversationSchema.index({ _environmentId: 1, contextKeys: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, _id: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, createdAt: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, lastActivityAt: 1 });

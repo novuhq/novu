@@ -2,6 +2,7 @@ export type WebChatSession = {
   subscriberId: string;
   environmentId: string;
   organizationId: string;
+  contextKeys?: string[];
 };
 
 export type WebChatDeliverMessageParams = {
@@ -68,6 +69,7 @@ export type WebChatRawMessage = {
   text: string;
   subscriberId: string;
   createdAt: string;
+  contextKeys?: string[];
 };
 
 export type WebChatRequestBody = {

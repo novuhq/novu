@@ -109,6 +109,7 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         after: query.after,
         before: query.before,
         limit: query.limit ?? 50,
@@ -130,6 +131,7 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
       })
     );
@@ -147,6 +149,7 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
         before: query.before,
         limit: query.limit ?? 50,
