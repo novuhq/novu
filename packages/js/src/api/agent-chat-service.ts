@@ -1,19 +1,15 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { AgentHashFields } from '../agent-chat/types';
 import { HttpClient } from './http-client';
 
 // TODO(NV-8553): rename path to `/agent-chat/conversations` when platform rename lands
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/web-chat/conversations';
 
-export type AgentChatSendMessageArgs = {
+export type AgentChatSendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
   /** Existing conversation id. Omit this field to create a new conversation. */
   conversationId?: string;
-  /**
-   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
-   * integration has Security HMAC enabled.
-   */
-  agentHash?: string;
 };
 
 export type AgentChatSendMessageResponse = {
@@ -34,16 +30,11 @@ export type AgentChatGetEventsResponse = {
   olderCursor: string | null;
 };
 
-export type AgentChatRespondToApprovalArgs = {
+export type AgentChatRespondToApprovalArgs = AgentHashFields & {
   agentId: string;
   conversationId: string;
   /** Server-minted approve/deny action id echoed from the pending approval part. */
   actionId: string;
-  /**
-   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
-   * integration has Security HMAC enabled.
-   */
-  agentHash?: string;
 };
 
 export type AgentChatRespondToApprovalResponse = {

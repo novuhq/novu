@@ -3,6 +3,7 @@ import type {
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
+  AgentHashFields,
   AgentMessage,
   LoadConversationResult,
   NovuError,
@@ -14,13 +15,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
-export type UseAgentChatProps = {
+export type UseAgentChatProps = AgentHashFields & {
   agentId: string;
-  /**
-   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
-   * integration has Security HMAC enabled. Mint on your backend alongside `subscriberHash`.
-   */
-  agentHash?: string;
   /**
    * Resume this conversation. The hook loads history on mount.
    * Omit this prop to start a new chat. The first send creates a conversation.

@@ -8,7 +8,15 @@ import type {
 
 export type { AgentApprovalPart, AgentConversationStatus, AgentConversationTyping, AgentEventEnvelope, AgentMessage };
 
-export type SendMessageArgs = {
+/**
+ * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+ * integration has Security HMAC enabled.
+ */
+export type AgentHashFields = {
+  agentHash?: string;
+};
+
+export type SendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
   /**
@@ -22,11 +30,6 @@ export type SendMessageArgs = {
    * Defaults to `conversationId` on resume, or a minted `local_*` key on create.
    */
   key?: string;
-  /**
-   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
-   * integration has Security HMAC enabled.
-   */
-  agentHash?: string;
 };
 
 export type SendMessageResult = {
@@ -56,17 +59,12 @@ export type FetchMoreResult = {
   hasMore: boolean;
 };
 
-export type RespondToApprovalArgs = {
+export type RespondToApprovalArgs = AgentHashFields & {
   agentId: string;
   approvalId: string;
   decision: 'approved' | 'denied';
   conversationId?: string;
   key?: string;
-  /**
-   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
-   * integration has Security HMAC enabled.
-   */
-  agentHash?: string;
 };
 
 export type RespondToApprovalResult = {

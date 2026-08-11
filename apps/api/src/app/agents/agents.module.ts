@@ -91,7 +91,6 @@ import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler
 import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
 import { WebChatController } from './web-chat/web-chat.controller';
-import { WebChatAgentHashService } from './web-chat/web-chat-agent-hash.service';
 import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
 import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
 import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
@@ -174,7 +173,6 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     NovuEmailProvisioningService,
     NovuWebChatProvisioningService,
     WebChatPublicationService,
-    WebChatAgentHashService,
     WebChatSessionVerifier,
     WebChatResumeAuthorizationService,
     WebChatEventFactory,

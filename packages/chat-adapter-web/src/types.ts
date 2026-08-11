@@ -72,11 +72,7 @@ export type WebChatRawMessage = {
 
 export type WebChatRequestBody = {
   agentId?: string;
-  /**
-   * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
-   * integration has Security HMAC enabled (NV-8442). Validated in Nest today;
-   * joins `verifySession` once that hook sees the parsed body.
-   */
+  /** Optional agent HMAC (NV-8442); validated in Nest `WebChatPublicationService` today. */
   agentHash?: string;
   /** Exactly one of `text` | `actionId` per request. */
   text?: string;
