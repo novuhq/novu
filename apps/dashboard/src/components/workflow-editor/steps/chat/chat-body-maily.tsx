@@ -7,7 +7,7 @@ import { useFormContext } from 'react-hook-form';
 import { EditorOverlays } from '@/components/editor-overlays';
 import { createChatEditorBlocks } from '@/components/maily/chat-blocks';
 import { Maily } from '@/components/maily/maily';
-import { isMailyJson, plainTextToMailyJson, wrapLegacyCardButtons } from '@/components/maily/maily-utils';
+import { isMailyJson, wrapLegacyCardButtons } from '@/components/maily/maily-utils';
 import { VariableFrom } from '@/components/maily/types';
 import {
   MailyVariablesListView,
@@ -271,14 +271,15 @@ export const ChatBodyMaily = () => {
       name="body"
       render={({ field }) => {
         const rawBody: string = field.value ?? '';
-        // Back-compat: Maily JSON loads as-is; a legacy plain string opens as
-        // text blocks; an empty body starts a fresh block editor.
+        // Only load Maily JSON in the block editor. Legacy plain/Liquid bodies
+        // are routed to the text editor via deriveChatEditorType — never
+        // silently convert them here.
         const getEditorValue = () => {
           if (isMailyJson(rawBody)) {
             return wrapLegacyCardButtons(rawBody);
           }
 
-          return rawBody.length > 0 ? plainTextToMailyJson(rawBody) : '';
+          return '';
         };
 
         return (
