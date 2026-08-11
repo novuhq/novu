@@ -118,6 +118,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }
             }}
             tooltip="Source URL"
+            placeholder="Image URL"
             icon={ImageDown}
             editor={editor}
             isVariable={state.isSrcVariable}
