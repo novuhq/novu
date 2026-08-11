@@ -4,12 +4,7 @@ import type { ISubscriberJwt } from '@novu/shared';
 import jwt from 'jsonwebtoken';
 import { AuthService } from '../../auth/services/auth.service';
 
-/**
- * Inbox subscriber JWT verification for web-chat POST ingress.
- * Injected into `@novu/chat-adapter-web` as `verifySession` (NV-8448).
- * Optional `agentHash` HMAC (NV-8442) is enforced in `WebChatPublicationService`
- * until this hook receives the parsed body.
- */
+/** Inbox subscriber JWT verification for web-chat POST ingress. */
 @Injectable()
 export class WebChatSessionVerifier {
   constructor(private readonly authService: AuthService) {}

@@ -72,7 +72,7 @@ export type WebChatRawMessage = {
 
 export type WebChatRequestBody = {
   agentId?: string;
-  /** Optional agent HMAC (NV-8442); validated in Nest `WebChatPublicationService` today. */
+  /** HMAC of `agentId`; required when web-chat Security HMAC is enabled. */
   agentHash?: string;
   /** Exactly one of `text` | `actionId` per request. */
   text?: string;

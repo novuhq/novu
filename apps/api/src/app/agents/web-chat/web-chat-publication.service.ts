@@ -12,10 +12,6 @@ export type PublishedWebChatAgent = {
   integrationIdentifier: string;
 };
 
-/**
- * Publication gate + optional Inbox-shaped `agentHash` HMAC (NV-8442).
- * Long-term HMAC home is adapter `verifySession` once that hook sees the body.
- */
 @Injectable()
 export class WebChatPublicationService {
   constructor(
