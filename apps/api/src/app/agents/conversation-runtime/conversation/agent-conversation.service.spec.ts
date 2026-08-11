@@ -185,6 +185,7 @@ describe('AgentConversationService', () => {
         conversationRepository,
         activityRepository as any,
         makeEventSequenceService(),
+        { emit: sinon.stub().resolves(undefined) } as any,
         logger as any
       );
 
