@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { WebChatSession } from '@novu/chat-adapter-web';
 import { ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { withWebChatContextFilter } from './web-chat-context-query.util';
 
 @Injectable()
 export class WebChatResumeAuthorizationService {
@@ -12,11 +13,15 @@ export class WebChatResumeAuthorizationService {
    */
   async canResume(params: { conversationId: string; session: WebChatSession; agentId: string }): Promise<boolean> {
     const conversation = await this.conversationRepository.findOne(
-      {
-        identifier: params.conversationId,
-        _environmentId: params.session.environmentId,
-        _organizationId: params.session.organizationId,
-      },
+      withWebChatContextFilter(
+        this.conversationRepository,
+        {
+          identifier: params.conversationId,
+          _environmentId: params.session.environmentId,
+          _organizationId: params.session.organizationId,
+        },
+        params.session.contextKeys
+      ),
       '*'
     );
 

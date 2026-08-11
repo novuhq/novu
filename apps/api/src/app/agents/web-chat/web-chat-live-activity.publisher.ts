@@ -81,7 +81,7 @@ export class WebChatLiveActivityPublisher {
           _organizationId: params.organizationId,
           subscriberId: subscriber.subscriberId,
           payload: envelope as unknown as Record<string, unknown>,
-          contextKeys: [],
+          contextKeys: params.conversation.contextKeys ?? [],
         },
         groupId: params.organizationId,
       });

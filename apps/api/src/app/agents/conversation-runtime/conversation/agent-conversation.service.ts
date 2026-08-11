@@ -78,6 +78,7 @@ export interface CreateOrGetConversationParams {
   identifier?: string;
   /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
   notificationId?: string;
+  contextKeys?: string[];
 }
 
 export interface PersistInboundMessageParams {
@@ -217,6 +218,21 @@ export class AgentConversationService {
       platformThreadId
     );
     if (existing) {
+      if (params.contextKeys !== undefined) {
+        const contextMatch = await this.conversationRepository.findOne(
+          {
+            _id: existing._id,
+            _environmentId: environmentId,
+            _organizationId: organizationId,
+            $and: [this.conversationRepository.buildContextExactMatchQuery(params.contextKeys)],
+          },
+          '_id'
+        );
+        if (!contextMatch) {
+          throw new BadRequestException('Conversation context mismatch');
+        }
+      }
+
       if (existing.status === ConversationStatusEnum.RESOLVED) {
         await this.conversationRepository.updateStatus(
           environmentId,
@@ -254,6 +270,7 @@ export class AgentConversationService {
       title: getConversationTitle(params.firstMessageText),
       metadata: {},
       isDirectMessage: params.isDirectMessage,
+      ...(params.contextKeys !== undefined ? { contextKeys: [...params.contextKeys].sort() } : {}),
       _environmentId: environmentId,
       _organizationId: organizationId,
       lastActivityAt: new Date().toISOString(),

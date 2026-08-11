@@ -39,6 +39,7 @@ export class WebChatSessionVerifier {
         subscriberId: subscriber.subscriberId,
         environmentId: subscriber._environmentId,
         organizationId: subscriber._organizationId,
+        contextKeys: Array.isArray(payload.contextKeys) ? payload.contextKeys : [],
       };
     } catch {
       return null;
