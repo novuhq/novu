@@ -2,6 +2,29 @@ import { AgentChatService } from './agent-chat-service';
 import { HttpClient } from './http-client';
 
 describe('AgentChatService', () => {
+  it('throws AgentChatPlanLimitError on 402 accept response', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 402,
+      json: async () => ({
+        reason: 'agents',
+        message: 'Upgrade your plan to activate this agent.',
+      }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    httpClient.setAuthorizationToken('test-token');
+    const service = new AgentChatService({ httpClient });
+
+    await expect(service.sendMessage({ agentId: 'agent_1', text: 'hello' })).rejects.toMatchObject({
+      name: 'AgentChatPlanLimitError',
+      reason: 'agents',
+      message: 'Upgrade your plan to activate this agent.',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('POSTs a new conversation message', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
@@ -50,6 +73,35 @@ describe('AgentChatService', () => {
           agentId: 'agent_1',
           text: 'again',
           conversationIdentifier: 'conv_abcdefghijkl',
+        }),
+      })
+    );
+  });
+
+  it('includes agentHash when provided', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    await service.sendMessage({
+      agentId: 'agent_1',
+      text: 'hello',
+      agentHash: 'signed-agent-hash',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations',
+      expect.objectContaining({
+        body: JSON.stringify({
+          agentId: 'agent_1',
+          text: 'hello',
+          agentHash: 'signed-agent-hash',
         }),
       })
     );

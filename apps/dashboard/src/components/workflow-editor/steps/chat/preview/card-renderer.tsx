@@ -6,8 +6,10 @@ import type {
   CardElementLinkElement,
   CardElementTextElement,
 } from '@novu/shared';
+import { useState } from 'react';
 
 import { cn } from '@/utils/ui';
+import { CHAT_IMAGE_BOUNDS, fitChatImage } from './chat-image-sizing';
 import { renderInlineMarkdown } from './inline-markdown';
 
 /**
@@ -70,6 +72,20 @@ function MessageText({ element }: { element: CardElementTextElement }) {
 }
 
 function MessageImage({ src, alt }: { src: string; alt: string }) {
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [hasError, setHasError] = useState(false);
+  const [loadedSrc, setLoadedSrc] = useState(src);
+
+  if (loadedSrc !== src) {
+    setLoadedSrc(src);
+    setDimensions(null);
+    setHasError(false);
+  }
+
+  if (hasError) {
+    return null;
+  }
+
   return (
     <img
       src={src}
@@ -77,7 +93,22 @@ function MessageImage({ src, alt }: { src: string; alt: string }) {
       loading="lazy"
       decoding="async"
       draggable={false}
-      className="pointer-events-none my-2 max-h-60 w-full max-w-full object-contain object-left"
+      className="pointer-events-none my-2 max-w-full object-contain object-left"
+      style={
+        dimensions
+          ? {
+              width: dimensions.width,
+              maxWidth: '100%',
+              height: 'auto',
+              aspectRatio: `${dimensions.width} / ${dimensions.height}`,
+            }
+          : { maxWidth: '100%', maxHeight: CHAT_IMAGE_BOUNDS.maxHeight, visibility: 'hidden' }
+      }
+      onLoad={(event) => {
+        const target = event.currentTarget;
+        setDimensions(fitChatImage(target.naturalWidth, target.naturalHeight));
+      }}
+      onError={() => setHasError(true)}
     />
   );
 }

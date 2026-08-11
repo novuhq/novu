@@ -12,6 +12,7 @@ import {
   mapNewestFirstEventActivities,
   WEB_CHAT_EVENT_ACTIVITY_FILTER,
 } from '../../activity-to-events';
+import { withWebChatContextFilter } from '../../web-chat-context-query.util';
 import { ListWebChatConversationEventsCommand } from './list-web-chat-conversation-events.command';
 
 interface EventPageResult {
@@ -30,11 +31,15 @@ export class ListWebChatConversationEvents {
 
   async execute(command: ListWebChatConversationEventsCommand): Promise<EventPageResult> {
     const conversation = await this.conversationRepository.findOne(
-      {
-        identifier: command.conversationIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
+      withWebChatContextFilter(
+        this.conversationRepository,
+        {
+          identifier: command.conversationIdentifier,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        command.contextKeys
+      ),
       '*'
     );
 
