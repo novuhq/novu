@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { AgentEntitlementsService, PinoLogger } from '@novu/application-generic';
 import { ConversationEntity } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
@@ -87,6 +87,7 @@ export class PlanLimitGateService {
   constructor(
     private readonly logger: PinoLogger,
     private readonly agentEntitlements: AgentEntitlementsService,
+    @Inject(forwardRef(() => OutboundGateway))
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationActivation: ConversationActivationService,
     private readonly conversationService: AgentConversationService

@@ -2,7 +2,7 @@ import type { SlackAdapter } from '@chat-adapter/slack';
 import type { TeamsAdapter } from '@chat-adapter/teams';
 import type { TelegramAdapter } from '@chat-adapter/telegram';
 import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
-import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuWebChatAdapter } from '@novu/chat-adapter-web';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
@@ -123,6 +123,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly webChatSessionVerifier: WebChatSessionVerifier,
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
     private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
+    @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: PlanLimitGateService
   ) {
     this.logger.setContext(this.constructor.name);
