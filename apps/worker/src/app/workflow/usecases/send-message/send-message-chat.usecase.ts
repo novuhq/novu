@@ -301,6 +301,7 @@ export class SendMessageChat extends SendMessageBase {
             channel.data as IChannelSettings,
             messageContext.step,
             messageContext.content,
+            messageContext.assignedAgentId,
             messageContext.card
           );
         }
@@ -495,6 +496,7 @@ export class SendMessageChat extends SendMessageBase {
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
     content: string,
+    assignedAgentId: string | null,
     card?: CardElement
   ): Promise<SendMessageResult> {
     /**
@@ -542,7 +544,15 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     if (channelData) {
-      return await this.sendMessage(channelData, integration, content, card, message, command);
+      return await this.sendMessage(
+        channelData,
+        integration,
+        content,
+        card,
+        message,
+        command,
+        assignedAgentId ?? undefined
+      );
     }
 
     return await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);

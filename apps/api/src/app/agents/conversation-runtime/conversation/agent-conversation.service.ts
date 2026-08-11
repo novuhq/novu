@@ -879,7 +879,8 @@ export class AgentConversationService {
 
   /**
    * Persist the workflow-origin message + signal. Stable `workflow-dispatch-*`
-   * identifiers make a concurrent first-turn race lose on the unique index.
+   * identifiers collide on the unique index under concurrency; both writes are
+   * duplicate-key tolerant so a retry after a partial success is idempotent.
    */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
     await this.persistAgentMessage({
@@ -894,21 +895,32 @@ export class AgentConversationService {
       content: params.messageContent,
     });
 
-    await this.activityRepository.createSignalActivity({
-      identifier: `workflow-dispatch-origin:${params.platformMessageId}`,
-      conversationId: params.conversationId,
-      platform: params.channel.platform,
-      integrationId: params.channel._integrationId,
-      platformThreadId: params.platformThreadId,
-      agentId: params.agentIdentifier,
-      content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
-      signalData: {
-        type: 'workflow_origin',
-        payload: params.signalData,
-      },
-      platformMessageId: params.platformMessageId,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
+    try {
+      await this.activityRepository.createSignalActivity({
+        identifier: `workflow-dispatch-origin:${params.platformMessageId}`,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: params.platformThreadId,
+        agentId: params.agentIdentifier,
+        content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
+        signalData: {
+          type: 'workflow_origin',
+          payload: params.signalData,
+        },
+        platformMessageId: params.platformMessageId,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      this.logger.warn(
+        { platformMessageId: params.platformMessageId, conversationId: params.conversationId },
+        'Workflow origin already hydrated'
+      );
+    }
   }
 }

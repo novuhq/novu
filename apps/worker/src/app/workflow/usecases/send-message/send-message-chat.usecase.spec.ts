@@ -630,4 +630,76 @@ describe('SendMessageChat - agent assigned path', () => {
     sinon.assert.calledOnce(updateMessage);
     expect(updateMessage.firstCall.args[1].$set._agentId).to.equal('agent_from_workflow');
   });
+
+  it('stamps _agentId on legacy WhatsApp phone sends when an agent is assigned', async () => {
+    const chatHandlerSend = sinon.stub().resolves({
+      id: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+      date: new Date().toISOString(),
+    });
+    const updateMessage = sinon.stub().resolves(undefined);
+    const whatsappIntegration = {
+      _id: 'integration_wa',
+      identifier: 'whatsapp-main',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'token', phoneNumberIdentification: '123' },
+    };
+
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({
+      send: chatHandlerSend,
+      resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
+    } as never);
+
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+      updateMessageStatus: sinon.stub().resolves(undefined),
+      update: updateMessage,
+    };
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return whatsappIntegration;
+        }
+
+        return null;
+      }),
+    };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      { listLinkedIntegrationIdentifiers: sinon.stub().resolves([]) } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    const command = buildAgentCommand({ jobAgentId: 'agent_1' });
+    (command.compileContext.subscriber as { phone?: string; channels?: unknown[] }).phone = '+15551234567';
+    (command.compileContext.subscriber as { channels?: unknown[] }).channels = [];
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[1]).to.deep.equal({
+      $set: {
+        identifier: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+        _agentId: 'agent_1',
+      },
+    });
+  });
 });
