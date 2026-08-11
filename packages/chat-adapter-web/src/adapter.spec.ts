@@ -125,7 +125,11 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(response.status).toBe(402);
     expect(body).toEqual({ reason: 'agents', message: 'Upgrade your plan' });
     expect(processMessage).not.toHaveBeenCalled();
-    expect(checkAcceptLimits).toHaveBeenCalledWith({ session: SESSION, isNewThread: true });
+    expect(checkAcceptLimits).toHaveBeenCalledWith({
+      session: SESSION,
+      isNewThread: true,
+      conversationId: undefined,
+    });
   });
 
   it('returns 402 on resume when checkAcceptLimits blocks agent/channel limits', async () => {
@@ -143,7 +147,29 @@ describe('NovuWebChatAdapterImpl', () => {
 
     expect(response.status).toBe(402);
     expect(processMessage).not.toHaveBeenCalled();
-    expect(checkAcceptLimits).toHaveBeenCalledWith({ session: SESSION, isNewThread: false });
+    expect(checkAcceptLimits).toHaveBeenCalledWith({
+      session: SESSION,
+      isNewThread: false,
+      conversationId: 'conv_abcdefghijkl',
+    });
+  });
+
+  it('returns 404 before 402 when resume is unauthorized even if limits would block', async () => {
+    const checkAcceptLimits = vi.fn(async () => ({
+      reason: 'agents' as const,
+      message: 'Upgrade your plan',
+    }));
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({ checkAcceptLimits, authorizeResume: async () => false })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'nope', conversationIdentifier: 'conv_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(404);
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(checkAcceptLimits).not.toHaveBeenCalled();
   });
 
   it('dispatches processMessage then returns 201', async () => {

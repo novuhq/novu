@@ -102,16 +102,27 @@ export class PlanLimitGateService {
   async checkWebChatAcceptLimits(
     agentId: string,
     config: ResolvedAgentConfig,
-    isNewThread: boolean
+    params: { isNewThread: boolean; conversationId?: string }
   ): Promise<{ reason: PlanLimitBlockReason; message: string } | null> {
     if (config.isKeyless) {
       return null;
     }
 
     try {
+      let conversation: ConversationEntity | undefined;
+      if (params.conversationId) {
+        conversation =
+          (await this.conversationService.findByPublicIdentifier(
+            config.environmentId,
+            config.organizationId,
+            params.conversationId
+          )) ?? undefined;
+      }
+
       const block = await this.resolvePlanLimitBlock(agentId, config, {
-        includeConversationLimit: isNewThread,
+        includeConversationLimit: params.isNewThread || Boolean(params.conversationId),
         isDirectMessage: true,
+        conversation,
       });
 
       return block ? { reason: block, message: PLAN_LIMIT_BLOCK_MESSAGES[block] } : null;

@@ -1,5 +1,6 @@
 import type {
   AgentApprovalPart,
+  AgentChatPlanLimitError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
@@ -24,7 +25,7 @@ export type UseAgentChatProps = AgentHashFields & {
    */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
-  onError?: (error: NovuError) => void;
+  onError?: (error: NovuError | AgentChatPlanLimitError) => void;
   /**
    * Fires once per message, when the message id first appears on the conversation.
    * History pages are silent: only new activity fires.
@@ -52,7 +53,7 @@ export type UseAgentChatResult = {
   messages: AgentMessage[];
   pendingApprovals: AgentApprovalPart[];
   conversationId?: string;
-  error?: NovuError;
+  error?: NovuError | AgentChatPlanLimitError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isFetching: boolean;
@@ -68,11 +69,11 @@ export type UseAgentChatResult = {
   }>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
-    error?: NovuError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
   respondToApproval: (args: { approvalId: string; decision: 'approved' | 'denied' }) => Promise<{
     data?: RespondToApprovalResult;
-    error?: NovuError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
 };
 
@@ -146,7 +147,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [typing, setTyping] = useState<AgentConversationTyping>();
   const [status, setStatus] = useState<AgentConversationStatus>('active');
   const [hasMore, setHasMore] = useState(false);
-  const [error, setError] = useState<NovuError>();
+  const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
   const fetchGenerationRef = useRef(0);

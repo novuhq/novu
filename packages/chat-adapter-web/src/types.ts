@@ -55,6 +55,8 @@ export type WebChatCheckAcceptLimitsParams = {
   session: WebChatSession;
   /** `true` when the client did not supply a resume conversation id. */
   isNewThread: boolean;
+  /** Authorized resume id; omitted for brand-new threads. */
+  conversationId?: string;
 };
 
 export type WebChatAdapterConfig = {
