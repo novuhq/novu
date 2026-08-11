@@ -22,7 +22,7 @@ export function isLinkButtonActionId(id: string | undefined): boolean {
 /** Which plan entitlement caused an over-limit agent/channel/conversation to be soft-blocked at runtime. */
 export type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
 
-const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
+export const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
   agents:
     "This agent isn't active on your current Novu plan — you've reached the number of agents included in your plan. Please upgrade your plan to activate it.",
   channels:
@@ -98,6 +98,59 @@ export class PlanLimitGateService {
    * channel is over the plan limit. Posts the upgrade card unless the trigger
    * is a link-button action (see class docs).
    */
+  /**
+   * Sync gate for web chat accept (`POST /web-chat/conversations`) before minting
+   * `conv_*`. Returns block payload for HTTP 402; `null` when the turn may proceed.
+   * Keyless orgs skip; entitlement errors fail open (same as runtime gate).
+   */
+  async checkWebChatAcceptLimits(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    isNewThread: boolean
+  ): Promise<{ reason: PlanLimitBlockReason; message: string } | null> {
+    if (config.isKeyless) {
+      return null;
+    }
+
+    try {
+      const { agentWithinLimit, channelWithinLimit } = await this.agentEntitlements.checkRuntimeLimits(
+        config.organizationId,
+        config.environmentId,
+        agentId,
+        config.providerId
+      );
+
+      if (!agentWithinLimit) {
+        return { reason: 'agents', message: PLAN_LIMIT_BLOCK_MESSAGES.agents };
+      }
+
+      if (!channelWithinLimit) {
+        return { reason: 'channels', message: PLAN_LIMIT_BLOCK_MESSAGES.channels };
+      }
+
+      if (isNewThread) {
+        const { blocked } = await this.conversationActivation.shouldBlockFreeTier({
+          conversation: undefined,
+          platform: config.platform,
+          organizationId: config.organizationId,
+          environmentId: config.environmentId,
+          agentId,
+          isDirectMessage: true,
+        });
+
+        if (blocked) {
+          return { reason: 'conversations', message: PLAN_LIMIT_BLOCK_MESSAGES.conversations };
+        }
+      }
+
+      return null;
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Web chat accept limit check failed, failing open`);
+
+      return null;
+    }
+  }
+
   async maybeBlock(
     agentId: string,
     config: ResolvedAgentConfig,

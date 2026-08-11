@@ -199,6 +199,12 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     body: WebChatRequestBody,
     options?: WebhookOptions
   ): Promise<Response> {
+    const isNewThread = this.resolveResumeConversationId(body) === null;
+    const blocked = await this.checkAcceptLimits(session, isNewThread);
+    if (blocked) {
+      return blocked;
+    }
+
     const conversationId = await this.resolveConversationId(body, session, { requireExisting: false });
     if (conversationId instanceof Response) {
       return conversationId;
@@ -231,6 +237,11 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     body: WebChatRequestBody,
     options?: WebhookOptions
   ): Promise<Response> {
+    const blocked = await this.checkAcceptLimits(session, false);
+    if (blocked) {
+      return blocked;
+    }
+
     const conversationId = await this.resolveConversationId(body, session, { requireExisting: true });
     if (conversationId instanceof Response) {
       return conversationId;
@@ -260,6 +271,20 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     );
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
+  }
+
+  /** Sync plan-limit gate before minting or dispatching. */
+  private async checkAcceptLimits(session: WebChatSession, isNewThread: boolean): Promise<Response | null> {
+    if (!this.config.checkAcceptLimits) {
+      return null;
+    }
+
+    const block = await this.config.checkAcceptLimits({ session, isNewThread });
+    if (!block) {
+      return null;
+    }
+
+    return jsonResponse({ reason: block.reason, message: block.message }, 402);
   }
 
   /**

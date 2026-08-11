@@ -19,6 +19,7 @@ import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resum
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
+import { PlanLimitGateService } from './plan-limit-gate.service';
 
 /**
  * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
@@ -118,7 +119,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentEmailSender: AgentEmailSender,
     private readonly webChatSessionVerifier: WebChatSessionVerifier,
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
-    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService
+    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
+    private readonly planLimitGate: PlanLimitGateService
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -486,6 +488,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
             authorizeResume: ({ conversationId, session }) =>
               this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
+            checkAcceptLimits: ({ isNewThread }) =>
+              this.planLimitGate.checkWebChatAcceptLimits(agentId, config, isNewThread),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
