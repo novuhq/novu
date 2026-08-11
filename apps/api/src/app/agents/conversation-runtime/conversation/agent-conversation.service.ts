@@ -14,7 +14,6 @@ import {
   isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
-import { usesProtocolEventApprovals } from '../../shared/enums/agent-platform.enum';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
@@ -378,15 +377,6 @@ export class AgentConversationService {
     }
   }
 
-  async getHistory(
-    environmentId: string,
-    conversationId: string,
-    limit = AGENT_HISTORY_LIMIT
-  ): Promise<ConversationActivityEntity[]> {
-    return this.activityRepository.findByConversation(environmentId, conversationId, limit);
-  }
-
-  /** Resolves the stored activity a reaction targets, matched by platform-native message id. */
   async findSourceActivity(
     environmentId: string,
     conversationId: string,
@@ -594,7 +584,14 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
+    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
 
     return activity;
   }
@@ -779,7 +776,14 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
+    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
 
     return activity;
   }
@@ -807,28 +811,12 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
-  }
-
-  private async emitProtocolEventActivity(
-    params: ConversationActivityContext,
-    activity: ConversationActivityEntity
-  ): Promise<void> {
-    if (!usesProtocolEventApprovals(params.channel.platform)) {
-      return;
-    }
-
-    const conversation = await this.getConversation(params.conversationId, params.environmentId, params.organizationId);
-    if (!conversation) {
-      return;
-    }
-
-    await this.webChatLiveActivityPublisher.emit({
-      agentId: conversation._agentId,
-      agentIdentifier: params.agentIdentifier,
+    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
-      conversation,
+      agentIdentifier: params.agentIdentifier,
       activity,
     });
   }

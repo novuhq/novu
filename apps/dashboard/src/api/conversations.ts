@@ -131,7 +131,17 @@ export type ConversationActivityDto = {
   _id: string;
   identifier: string;
   _conversationId: string;
-  type: 'message' | 'edit' | 'update' | 'signal' | 'tool_approval_request' | 'tool_approval_decision' | 'tool_result';
+  type:
+    | 'message'
+    | 'edit'
+    | 'update'
+    | 'signal'
+    | 'tool_approval_request'
+    | 'tool_approval_decision'
+    | 'tool_result'
+    | 'run_start'
+    | 'run_finish'
+    | 'run_error';
   content: string;
   platform: string;
   _integrationId: string;

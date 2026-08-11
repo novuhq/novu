@@ -1,5 +1,11 @@
 import { ConversationActivityDto } from '@/api/conversations';
 
+const RUN_LIFECYCLE_ACTIVITY_TYPES = new Set(['run_start', 'run_finish', 'run_error']);
+
+function isRunLifecycleActivityType(type: string): boolean {
+  return RUN_LIFECYCLE_ACTIVITY_TYPES.has(type);
+}
+
 function buildApprovalCardMessageIds(activities: ConversationActivityDto[]): Set<string> {
   const ids = new Set<string>();
 
@@ -18,6 +24,10 @@ function buildApprovalCardMessageIds(activities: ConversationActivityDto[]): Set
  */
 function isHiddenTimelineActivity(activity: ConversationActivityDto, approvalCardMessageIds: Set<string>): boolean {
   if (activity.type === 'tool_result') {
+    return true;
+  }
+
+  if (isRunLifecycleActivityType(activity.type)) {
     return true;
   }
 
