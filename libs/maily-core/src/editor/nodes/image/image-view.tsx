@@ -168,6 +168,11 @@ export function ImageView(props: NodeViewProps) {
 
   const imageOptions = getNodeOptions<ImageExtensionOptions>(editor, 'image');
   const { alignment = imageOptions?.defaultAlignment ?? 'center', width, height, src, borderRadius } = node.attrs || {};
+  const fitToMaxBounds = imageOptions?.fitToMaxBounds === true;
+  const fittedWidth = width && width !== 'auto' ? Number(width) : null;
+  const fittedHeight = height && height !== 'auto' ? Number(height) : null;
+  const hasFittedSize =
+    fittedWidth != null && !Number.isNaN(fittedWidth) && fittedHeight != null && !Number.isNaN(fittedHeight);
 
   const {
     externalLink,
@@ -345,11 +350,20 @@ export function ImageView(props: NodeViewProps) {
       className={cn('mly-image-drop-zone', isDraggingOver && 'mly-drag-over')}
       style={{
         ...(hasImageSrc && status === 'loaded'
-          ? {
-              width: width ? `${width}px` : undefined,
-              height: height ? `${height}px` : undefined,
-              ...resizingStyle,
-            }
+          ? fitToMaxBounds
+            ? {
+                // Keep aspect ratio when `maxWidth: 100%` shrinks below the fitted width
+                // (fixed height + object-fit:fill would otherwise stretch the image).
+                width: hasFittedSize ? `${fittedWidth}px` : undefined,
+                maxWidth: '100%',
+                height: 'auto',
+                aspectRatio: hasFittedSize ? `${fittedWidth} / ${fittedHeight}` : undefined,
+              }
+            : {
+                width: width ? `${width}px` : undefined,
+                height: height ? `${height}px` : undefined,
+                ...resizingStyle,
+              }
           : {}),
         overflow: 'hidden',
         position: 'relative',
@@ -402,16 +416,28 @@ export function ImageView(props: NodeViewProps) {
           <img
             {...attrs}
             ref={imgRef}
-            style={{
-              ...resizingStyle,
-              cursor: 'default',
-              objectFit: 'fill',
-              marginBottom: 0,
-              borderRadius,
-              width: resizingStyle?.width ? `${resizingStyle.width}px` : width ? `${width}px` : 'auto',
-              height: resizingStyle?.height ? `${resizingStyle.height}px` : height ? `${height}px` : 'auto',
-              maxWidth: '100%',
-            }}
+            style={
+              fitToMaxBounds
+                ? {
+                    cursor: 'default',
+                    objectFit: 'contain',
+                    marginBottom: 0,
+                    borderRadius,
+                    width: '100%',
+                    height: 'auto',
+                    maxWidth: '100%',
+                  }
+                : {
+                    ...resizingStyle,
+                    cursor: 'default',
+                    objectFit: 'fill',
+                    marginBottom: 0,
+                    borderRadius,
+                    width: resizingStyle?.width ? `${resizingStyle.width}px` : width ? `${width}px` : 'auto',
+                    height: resizingStyle?.height ? `${resizingStyle.height}px` : height ? `${height}px` : 'auto',
+                    maxWidth: '100%',
+                  }
+            }
             draggable={editor.isEditable}
             className={cn(isPlaceholderImage && 'mly-animate-pulse mly-opacity-40')}
           />

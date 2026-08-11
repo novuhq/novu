@@ -96,7 +96,12 @@ function MessageImage({ src, alt }: { src: string; alt: string }) {
       className="pointer-events-none my-2 max-w-full object-contain object-left"
       style={
         dimensions
-          ? { width: dimensions.width, height: dimensions.height }
+          ? {
+              width: dimensions.width,
+              maxWidth: '100%',
+              height: 'auto',
+              aspectRatio: `${dimensions.width} / ${dimensions.height}`,
+            }
           : { maxWidth: '100%', maxHeight: CHAT_IMAGE_BOUNDS.maxHeight, visibility: 'hidden' }
       }
       onLoad={(event) => {
