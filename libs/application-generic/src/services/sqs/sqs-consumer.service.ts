@@ -1,4 +1,4 @@
-import { DeleteMessageCommand, type Message } from '@aws-sdk/client-sqs';
+import { ChangeMessageVisibilityCommand, DeleteMessageCommand, type Message } from '@aws-sdk/client-sqs';
 import { Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
@@ -245,6 +245,7 @@ export class SqsConsumerService {
   private pool: ConcurrencyPool;
   private queueUrl: string;
   private payloadOffload?: SqsPayloadOffloadService;
+  private visibilityTimeout: number;
   private isStarted = false;
   private isPaused = false;
 
@@ -263,17 +264,27 @@ export class SqsConsumerService {
 
     const batchSize = this.options.maxNumberOfMessages ?? SQS_DEFAULT_BATCH_SIZE;
     const waitTime = this.options.waitTimeSeconds ?? SQS_DEFAULT_WAIT_TIME_SECONDS;
-    const visibilityTimeout = this.options.visibilityTimeout ?? SQS_DEFAULT_VISIBILITY_TIMEOUT;
+    this.visibilityTimeout = this.options.visibilityTimeout ?? SQS_DEFAULT_VISIBILITY_TIMEOUT;
     const maxConcurrency = this.options.maxConcurrency ?? SQS_DEFAULT_MAX_CONCURRENCY;
 
     this.pool = new ConcurrencyPool(maxConcurrency);
+
+    /*
+     * `heartbeatInterval` covers the window where a received message is
+     * waiting for a concurrency slot (handleMessage is pending in
+     * pool.acquire): sqs-consumer keeps extending its visibility until
+     * handleMessage resolves. Once processing is dispatched, our own
+     * per-message heartbeat in processAndDelete takes over.
+     */
+    const heartbeatIntervalSeconds = Math.floor(this.visibilityTimeout / 2);
 
     this.consumer = Consumer.create({
       queueUrl: this.queueUrl,
       sqs: this.sqsService.getClient(),
       batchSize,
       waitTimeSeconds: waitTime,
-      visibilityTimeout,
+      visibilityTimeout: this.visibilityTimeout,
+      ...(heartbeatIntervalSeconds > 0 && { heartbeatInterval: heartbeatIntervalSeconds }),
       shouldDeleteMessages: false,
       messageSystemAttributeNames: ['ApproximateReceiveCount'],
       handleMessage: async (message: Message): Promise<Message> => {
@@ -298,9 +309,15 @@ export class SqsConsumerService {
    *
    * On success: delete the message from SQS (manual ack), release the slot.
    * On failure: don't delete - SQS retries via visibility timeout, release the slot.
+   *
+   * A visibility heartbeat runs for the whole processing window, mirroring
+   * BullMQ's lock renewal: a slow-but-healthy job keeps its message invisible
+   * for as long as the processor is alive, and redelivery only happens when
+   * the worker actually dies (heartbeat stops, visibility expires).
    */
   private processAndDelete(message: Message): void {
     const messageId = message.MessageId || 'unknown';
+    const stopVisibilityHeartbeat = this.startVisibilityHeartbeat(message, messageId);
 
     this.processMessage(message)
       .then(async () => {
@@ -319,8 +336,65 @@ export class SqsConsumerService {
         );
       })
       .finally(() => {
+        stopVisibilityHeartbeat();
         this.pool.release();
       });
+  }
+
+  /**
+   * Periodically resets the message's visibility timeout while its processor
+   * is running - the SQS equivalent of BullMQ's lock renewal (which extends
+   * the job lock at half the lock duration for as long as the worker is
+   * alive). Prevents redelivery of long-running jobs and the follow-up
+   * `ReceiptHandleIsInvalid` delete failures that push already-processed
+   * messages toward the DLQ.
+   *
+   * Returns a stop function; the caller must invoke it when processing ends
+   * (success or failure). The interval is unref'd so it never keeps the
+   * process alive on shutdown.
+   */
+  private startVisibilityHeartbeat(message: Message, messageId: string): () => void {
+    const intervalMs = Math.max(1_000, Math.floor((this.visibilityTimeout * 1000) / 2));
+
+    const timer = setInterval(() => {
+      this.sqsService
+        .getClient()
+        .send(
+          new ChangeMessageVisibilityCommand({
+            QueueUrl: this.queueUrl,
+            ReceiptHandle: message.ReceiptHandle,
+            VisibilityTimeout: this.visibilityTimeout,
+          })
+        )
+        .then(() => {
+          this.logger?.debug({ messageId, topic: this.topic }, 'Extended SQS message visibility (heartbeat)');
+        })
+        .catch((error: unknown) => {
+          const errorName = error instanceof Error ? error.name : undefined;
+          // MessageNotInflight / ReceiptHandleIsInvalid: the message already
+          // expired or was redelivered - further extensions are pointless.
+          const isPermanent = isNonRetryableDeleteError(error) || errorName === 'MessageNotInflight';
+
+          Logger.warn(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              errorName,
+              messageId,
+              topic: this.topic,
+              stoppingHeartbeat: isPermanent,
+            },
+            'Failed to extend SQS message visibility',
+            LOG_CONTEXT
+          );
+
+          if (isPermanent) {
+            clearInterval(timer);
+          }
+        });
+    }, intervalMs);
+    timer.unref();
+
+    return () => clearInterval(timer);
   }
 
   /**
