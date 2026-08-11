@@ -199,9 +199,33 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     body: WebChatRequestBody,
     options?: WebhookOptions
   ): Promise<Response> {
-    const conversationId = await this.resolveConversationId(body, session, { requireExisting: false });
-    if (conversationId instanceof Response) {
-      return conversationId;
+    const resumeId = this.resolveResumeConversationId(body);
+    if (resumeId === 'invalid') {
+      return jsonResponse({ message: 'Invalid conversation id' }, 400);
+    }
+
+    let conversationId: string;
+    if (resumeId) {
+      const allowed = this.config.authorizeResume
+        ? await this.config.authorizeResume({ conversationId: resumeId, session })
+        : false;
+      if (!allowed) {
+        return jsonResponse({ message: 'Conversation not found' }, 404);
+      }
+
+      const blocked = await this.checkAcceptLimits(session, false, resumeId);
+      if (blocked) {
+        return blocked;
+      }
+
+      conversationId = resumeId;
+    } else {
+      const blocked = await this.checkAcceptLimits(session, true);
+      if (blocked) {
+        return blocked;
+      }
+
+      conversationId = mintConversationId();
     }
 
     // Always mint message ids. Client `messageId` idempotency would ack a ghost
@@ -236,6 +260,11 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       return conversationId;
     }
 
+    const blocked = await this.checkAcceptLimits(session, false, conversationId);
+    if (blocked) {
+      return blocked;
+    }
+
     const threadId = this.encodeThreadId({ conversationId });
     const user = {
       userId: session.subscriberId,
@@ -260,6 +289,24 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     );
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
+  }
+
+  /** Sync plan-limit gate before minting or dispatching. */
+  private async checkAcceptLimits(
+    session: WebChatSession,
+    isNewThread: boolean,
+    conversationId?: string
+  ): Promise<Response | null> {
+    if (!this.config.checkAcceptLimits) {
+      return null;
+    }
+
+    const block = await this.config.checkAcceptLimits({ session, isNewThread, conversationId });
+    if (!block) {
+      return null;
+    }
+
+    return jsonResponse({ reason: block.reason, message: block.message }, 402);
   }
 
   /**

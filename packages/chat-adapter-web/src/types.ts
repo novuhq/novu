@@ -44,6 +44,21 @@ export type WebChatAuthorizeResumeParams = {
   session: WebChatSession;
 };
 
+export type WebChatAcceptLimitBlockReason = 'agents' | 'channels' | 'conversations';
+
+export type WebChatAcceptLimitBlock = {
+  reason: WebChatAcceptLimitBlockReason;
+  message: string;
+};
+
+export type WebChatCheckAcceptLimitsParams = {
+  session: WebChatSession;
+  /** `true` when the client did not supply a resume conversation id. */
+  isNewThread: boolean;
+  /** Authorized resume id; omitted for brand-new threads. */
+  conversationId?: string;
+};
+
 export type WebChatAdapterConfig = {
   userName?: string;
   verifySession: (request: Request) => Promise<WebChatSession | null>;
@@ -52,6 +67,11 @@ export type WebChatAdapterConfig = {
    * thread may be resumed (participant + web_chat + agent). Denied → adapter 404.
    */
   authorizeResume?: (params: WebChatAuthorizeResumeParams) => Promise<boolean>;
+  /**
+   * Sync plan-limit gate before minting a conversation id or dispatching the turn.
+   * When blocked, the adapter returns HTTP 402 with `{ reason, message }`.
+   */
+  checkAcceptLimits?: (params: WebChatCheckAcceptLimitsParams) => Promise<WebChatAcceptLimitBlock | null>;
   deliverMessage: (params: WebChatDeliverMessageParams) => Promise<WebChatDeliverMessageResult>;
   editMessage: (params: WebChatEditMessageParams) => Promise<WebChatDeliverMessageResult>;
   deleteMessage: (params: WebChatDeleteMessageParams) => Promise<void>;

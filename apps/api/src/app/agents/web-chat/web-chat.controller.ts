@@ -55,8 +55,9 @@ export class WebChatController {
   ) {}
 
   /**
-   * Adapter webhook ingress (same spine as other channels). Plan limits are
-   * enforced mid-turn by `PlanLimitGateService` in inbound-turn. Optional body
+   * Adapter webhook ingress (same spine as other channels). Plan limits on web
+   * chat accept are enforced synchronously (HTTP 402) before minting `conv_*`;
+   * other channels soft-block mid-turn via `PlanLimitGateService`. Optional body
    * `conversationIdentifier` / `id` resumes via ACL.
    */
   @Post('/conversations')

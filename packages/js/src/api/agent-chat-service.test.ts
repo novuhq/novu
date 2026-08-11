@@ -2,6 +2,29 @@ import { AgentChatService } from './agent-chat-service';
 import { HttpClient } from './http-client';
 
 describe('AgentChatService', () => {
+  it('throws AgentChatPlanLimitError on 402 accept response', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 402,
+      json: async () => ({
+        reason: 'agents',
+        message: 'Upgrade your plan to activate this agent.',
+      }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    httpClient.setAuthorizationToken('test-token');
+    const service = new AgentChatService({ httpClient });
+
+    await expect(service.sendMessage({ agentId: 'agent_1', text: 'hello' })).rejects.toMatchObject({
+      name: 'AgentChatPlanLimitError',
+      reason: 'agents',
+      message: 'Upgrade your plan to activate this agent.',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('POSTs a new conversation message', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

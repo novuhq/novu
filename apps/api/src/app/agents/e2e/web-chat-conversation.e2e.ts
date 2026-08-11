@@ -11,7 +11,7 @@ import { ChatProviderIdEnum, WebSocketEventEnum } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { PlanLimitGateService } from '../conversation-runtime/ingress/plan-limit-gate.service';
+import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
   AgentTestContext,
@@ -980,11 +980,10 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     ).to.equal(true);
   });
 
-  it('should soft-block plan-limit turns mid-inbound without activating the agent', async () => {
+  it('should return 402 on accept when agent is over plan limit without minting conv_*', async () => {
     await linkWebChat();
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
     const bridgeStub = bridgeExecutor.execute as sinon.SinonStub;
-    const maybeBlockSpy = sinon.spy(testServer.getService(PlanLimitGateService), 'maybeBlock');
 
     sinon.stub(testServer.getService(AgentEntitlementsService), 'checkRuntimeLimits').resolves({
       agentWithinLimit: false,
@@ -995,15 +994,60 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       agentId: ctx.agentIdentifier,
       text: 'Blocked by plan limit',
     });
-    // Same spine as other channels: accept returns 201; PlanLimitGate soft-blocks
-    // inside inbound-turn (upgrade card may be ephemeral for brand-new web threads).
-    expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.identifier).to.match(/^conv_/);
 
-    await pollFor(async () => (maybeBlockSpy.called && (await maybeBlockSpy.returnValues[0]) ? true : null));
+    expect(createRes.status).to.equal(402);
+    expect(createRes.body.reason).to.equal('agents');
+    expect(createRes.body.message).to.be.a('string').and.not.empty;
+    expect(createRes.body.data).to.equal(undefined);
     expect(bridgeStub.called).to.equal(false);
     const activations = await activationRepository.count({ _organizationId: ctx.session.organization._id });
     expect(activations).to.equal(0);
+  });
+
+  it('should return 402 on accept when channel is over plan limit without minting conv_*', async () => {
+    await linkWebChat();
+    const bridgeExecutor = testServer.getService(BridgeExecutorService);
+    const bridgeStub = bridgeExecutor.execute as sinon.SinonStub;
+
+    sinon.stub(testServer.getService(AgentEntitlementsService), 'checkRuntimeLimits').resolves({
+      agentWithinLimit: true,
+      channelWithinLimit: false,
+    });
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Blocked by channel limit',
+    });
+
+    expect(createRes.status).to.equal(402);
+    expect(createRes.body.reason).to.equal('channels');
+    expect(createRes.body.message).to.be.a('string').and.not.empty;
+    expect(bridgeStub.called).to.equal(false);
+  });
+
+  it('should return 402 on accept when free-tier conversation cap is reached on a new thread', async () => {
+    await linkWebChat();
+    const bridgeExecutor = testServer.getService(BridgeExecutorService);
+    const bridgeStub = bridgeExecutor.execute as sinon.SinonStub;
+
+    sinon.stub(testServer.getService(AgentEntitlementsService), 'checkRuntimeLimits').resolves({
+      agentWithinLimit: true,
+      channelWithinLimit: true,
+    });
+    sinon.stub(testServer.getService(ConversationActivationService), 'shouldBlockFreeTier').resolves({
+      blocked: true,
+      limit: 100,
+    });
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Blocked by conversation limit',
+    });
+
+    expect(createRes.status).to.equal(402);
+    expect(createRes.body.reason).to.equal('conversations');
+    expect(createRes.body.message).to.be.a('string').and.not.empty;
+    expect(bridgeStub.called).to.equal(false);
   });
 
   it('should initialize sequence allocation above legacy unsequenced history', async () => {
