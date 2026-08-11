@@ -1,5 +1,5 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { AgentChatService, InboxService } from '../api';
+import { AgentChatPlanLimitError, AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
@@ -127,8 +127,10 @@ export class AgentChat extends BaseModule {
     };
   }
 
-  async respondToApproval(args: RespondToApprovalArgs): Result<RespondToApprovalResult> {
-    return this.callWithSession(async () => {
+  async respondToApproval(
+    args: RespondToApprovalArgs
+  ): Result<RespondToApprovalResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<RespondToApprovalResult, NovuError | AgentChatPlanLimitError>(async () => {
       const entry = this.#resolveFetchEntry(args);
       if (!entry?.conversationId) {
         return {
@@ -168,6 +170,10 @@ export class AgentChat extends BaseModule {
           },
         };
       } catch (error) {
+        if (error instanceof AgentChatPlanLimitError) {
+          return { error };
+        }
+
         return { error: new NovuError('Failed to respond to approval', error) };
       }
     });
@@ -244,8 +250,8 @@ export class AgentChat extends BaseModule {
     });
   }
 
-  async sendMessage(args: SendMessageArgs): Result<SendMessageResult> {
-    return this.callWithSession(async () => {
+  async sendMessage(args: SendMessageArgs): Result<SendMessageResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<SendMessageResult, NovuError | AgentChatPlanLimitError>(async () => {
       const key = args.key ?? args.conversationId ?? createLocalConversationKey();
       const entry = this.#resolveSendEntry(args, key);
       const optimisticId = this.#store.appendSending(entry, args.text);
@@ -273,6 +279,10 @@ export class AgentChat extends BaseModule {
           };
         } catch (error) {
           this.#store.markFailed(entry, optimisticId);
+
+          if (error instanceof AgentChatPlanLimitError) {
+            return { error };
+          }
 
           return { error: new NovuError('Failed to send agent chat message', error) };
         }

@@ -17,6 +17,8 @@ export type {
   SendMessageResult,
 } from './agent-chat';
 export { derivePendingApprovals } from './agent-chat';
+export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
+export { AgentChatPlanLimitError } from './api/agent-chat-service';
 export type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
