@@ -273,6 +273,42 @@ describe('AgentConversationService', () => {
     expect(create.firstCall.args[0].contextKeys).to.deep.equal(['app:billing', 'tenant:acme']);
   });
 
+  it('rejects reuse when stored conversation has contextKeys but caller omits them', async () => {
+    const existing = {
+      _id: 'existing-conv',
+      status: ConversationStatusEnum.ACTIVE,
+      participants: [{ type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub-1' }],
+      channels: [],
+      contextKeys: ['tenant:acme'],
+    };
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(existing),
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emit: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    let threw = false;
+    try {
+      await service.createOrGetConversation({
+        ...baseCreateParams(),
+        platform: 'web_chat',
+      });
+    } catch (err) {
+      threw = true;
+      expect((err as Error).message).to.equal('Conversation context mismatch');
+    }
+    expect(threw).to.equal(true);
+  });
+
   it('rejects reuse when session contextKeys do not match stored conversation', async () => {
     const existing = {
       _id: 'existing-conv',

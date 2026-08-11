@@ -1354,6 +1354,10 @@ export class AgentInboundHandler implements OnModuleInit {
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
       notificationId: workflowOriginMessage?._notificationId,
+      contextKeys:
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? ((rawEvent as WebChatRawMessage | undefined)?.contextKeys ?? [])
+          : undefined,
     });
 
     if (workflowOriginMessage) {

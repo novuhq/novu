@@ -226,11 +226,13 @@ export class AgentConversationService {
             _organizationId: organizationId,
             $and: [this.conversationRepository.buildContextExactMatchQuery(params.contextKeys)],
           },
-          '_id'
+          ['_id']
         );
         if (!contextMatch) {
           throw new BadRequestException('Conversation context mismatch');
         }
+      } else if (existing.contextKeys?.length) {
+        throw new BadRequestException('Conversation context mismatch');
       }
 
       if (existing.status === ConversationStatusEnum.RESOLVED) {
