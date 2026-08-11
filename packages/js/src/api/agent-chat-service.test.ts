@@ -55,6 +55,35 @@ describe('AgentChatService', () => {
     );
   });
 
+  it('includes agentHash when provided', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    await service.sendMessage({
+      agentId: 'agent_1',
+      text: 'hello',
+      agentHash: 'signed-agent-hash',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/web-chat/conversations',
+      expect.objectContaining({
+        body: JSON.stringify({
+          agentId: 'agent_1',
+          text: 'hello',
+          agentHash: 'signed-agent-hash',
+        }),
+      })
+    );
+  });
+
   it('GETs conversation events', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,

@@ -5,6 +5,7 @@ export type {
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
+  AgentHashFields,
   AgentMessage,
   FetchMoreArgs,
   FetchMoreResult,

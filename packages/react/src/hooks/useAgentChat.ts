@@ -3,6 +3,7 @@ import type {
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
+  AgentHashFields,
   AgentMessage,
   LoadConversationResult,
   NovuError,
@@ -14,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
-export type UseAgentChatProps = {
+export type UseAgentChatProps = AgentHashFields & {
   agentId: string;
   /**
    * Resume this conversation. The hook loads history on mount.
@@ -124,7 +125,7 @@ function applyConversationSnapshot(
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
-  const { agentId, conversationId: conversationIdProp } = props;
+  const { agentId, agentHash, conversationId: conversationIdProp } = props;
   const propsRef = useDataRef(props);
   const novu = useNovu();
 
@@ -334,6 +335,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       const response = await novu.agentChat.sendMessage({
         agentId,
+        agentHash,
         text,
         key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
@@ -348,7 +350,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
   const respondToApproval = useCallback(
@@ -357,6 +359,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       const response = await novu.agentChat.respondToApproval({
         agentId,
+        agentHash,
         key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
         approvalId: args.approvalId,
@@ -370,7 +373,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
   return {

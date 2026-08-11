@@ -1,10 +1,11 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { AgentHashFields } from '../agent-chat/types';
 import { HttpClient } from './http-client';
 
 // TODO(NV-8553): rename path to `/agent-chat/conversations` when platform rename lands
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/web-chat/conversations';
 
-export type AgentChatSendMessageArgs = {
+export type AgentChatSendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
   /** Existing conversation id. Omit this field to create a new conversation. */
@@ -29,7 +30,7 @@ export type AgentChatGetEventsResponse = {
   olderCursor: string | null;
 };
 
-export type AgentChatRespondToApprovalArgs = {
+export type AgentChatRespondToApprovalArgs = AgentHashFields & {
   agentId: string;
   conversationId: string;
   /** Server-minted approve/deny action id echoed from the pending approval part. */
@@ -52,6 +53,7 @@ export class AgentChatService {
       agentId: args.agentId,
       text: args.text,
       ...(args.conversationId ? { conversationIdentifier: args.conversationId } : {}),
+      ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }
 
@@ -60,6 +62,7 @@ export class AgentChatService {
       agentId: args.agentId,
       conversationIdentifier: args.conversationId,
       actionId: args.actionId,
+      ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }
 

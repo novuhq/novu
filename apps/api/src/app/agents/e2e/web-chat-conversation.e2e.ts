@@ -1,10 +1,11 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { AgentEntitlementsService, WebSocketsQueueService } from '@novu/application-generic';
+import { AgentEntitlementsService, createHash, WebSocketsQueueService } from '@novu/application-generic';
 import {
   ConversationActivationRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
   ConversationParticipantTypeEnum,
+  IntegrationRepository,
 } from '@novu/dal';
 import { ChatProviderIdEnum, WebSocketEventEnum } from '@novu/shared';
 import { testServer } from '@novu/testing';
@@ -20,6 +21,7 @@ import {
 } from './helpers/agent-test-setup';
 
 const activationRepository = new ConversationActivationRepository();
+const integrationRepository = new IntegrationRepository();
 
 const POLL_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
@@ -85,10 +87,37 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   }
 
   function createConversation(
-    body: { agentId: string; text: string; id?: string; conversationIdentifier?: string },
+    body: {
+      agentId: string;
+      text: string;
+      id?: string;
+      conversationIdentifier?: string;
+      agentHash?: string;
+    },
     token = subscriberToken
   ) {
     return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
+  }
+
+  async function setWebChatHmac(enabled: boolean) {
+    await integrationRepository.update(
+      {
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        providerId: ChatProviderIdEnum.NovuWebChat,
+      },
+      {
+        $set: {
+          'credentials.hmac': enabled,
+        },
+      }
+    );
+  }
+
+  function mintAgentHash(agentIdentifier = ctx.agentIdentifier) {
+    const secretKey = ctx.session.environment.apiKeys[0].key;
+
+    return createHash(secretKey, agentIdentifier) as string;
   }
 
   function listConversations(token = subscriberToken, query: { after?: string; before?: string; limit?: number } = {}) {
@@ -206,6 +235,151 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     const res = await createConversation({
       agentId: unpublishedIdentifier,
       text: 'Should fail',
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('This agent is not available on web chat');
+  });
+
+  it('should allow create without agentHash when web-chat HMAC is off', async () => {
+    await linkWebChat();
+    await setWebChatHmac(false);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'No hash needed',
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.match(/^conv_/);
+  });
+
+  it('should allow resume without agentHash when web-chat HMAC is off', async () => {
+    await linkWebChat();
+    await setWebChatHmac(false);
+
+    const created = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Bootstrap thread',
+    });
+    expect(created.status).to.equal(201);
+    const identifier = created.body.data.identifier as string;
+    await waitForConversation(identifier);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Resume without hash',
+      conversationIdentifier: identifier,
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.equal(identifier);
+  });
+
+  it('should reject missing agentHash with 400 when web-chat HMAC is on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Missing hash',
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('Please provide a valid HMAC hash');
+  });
+
+  it('should reject invalid agentHash with 400 when web-chat HMAC is on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Bad hash',
+      agentHash: 'not-a-valid-hmac-digest',
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('Please provide a valid HMAC hash');
+  });
+
+  it('should create when agentHash is valid and agent is published with HMAC on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Signed agent',
+      agentHash: mintAgentHash(),
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.match(/^conv_/);
+    expect(res.body.data.messageId).to.match(/^msg_/);
+  });
+
+  it('should reject resume with missing agentHash when web-chat HMAC is on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(false);
+
+    const created = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Bootstrap thread',
+    });
+    expect(created.status).to.equal(201);
+    await waitForConversation(created.body.data.identifier);
+
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Resume without hash',
+      conversationIdentifier: created.body.data.identifier,
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('Please provide a valid HMAC hash');
+  });
+
+  it('should resume when agentHash is valid with HMAC on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+    const agentHash = mintAgentHash();
+
+    const created = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'First signed message',
+      agentHash,
+    });
+    expect(created.status).to.equal(201);
+    const identifier = created.body.data.identifier as string;
+    await waitForConversation(identifier);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Resume signed',
+      conversationIdentifier: identifier,
+      agentHash,
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.equal(identifier);
+  });
+
+  it('should still enforce publication when agentHash is valid', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const unpublishedIdentifier = `e2e-unpublished-hmac-${Date.now()}`;
+    await ctx.session.testAgent.post('/v1/agents').send({
+      name: 'Unpublished HMAC Agent',
+      identifier: unpublishedIdentifier,
+    });
+
+    const res = await createConversation({
+      agentId: unpublishedIdentifier,
+      text: 'Valid hash, unpublished agent',
+      agentHash: mintAgentHash(unpublishedIdentifier),
     });
 
     expect(res.status).to.equal(400);

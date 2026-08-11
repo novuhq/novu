@@ -76,10 +76,12 @@ export class WebChatController {
         throw new BadRequestException('agentId is required');
       }
 
+      const agentHash = typeof req.body?.agentHash === 'string' ? req.body.agentHash.trim() : undefined;
       const published = await this.publicationService.resolvePublishedAgent(
         agentIdentifier,
         session.environmentId,
-        session.organizationId
+        session.organizationId,
+        agentHash
       );
 
       await this.inboundDispatcher.handleWebhook(published.agentId, published.integrationIdentifier, req, res, {

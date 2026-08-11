@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { validateHmacEncryption } from '../../inbox/utils/encryption';
 
 const WEB_CHAT_UNAVAILABLE_MESSAGE = 'This agent is not available on web chat';
 
@@ -16,14 +17,46 @@ export class WebChatPublicationService {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly environmentRepository: EnvironmentRepository
   ) {}
 
   async resolvePublishedAgent(
     agentIdentifier: string,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    agentHash?: string
   ): Promise<PublishedWebChatAgent> {
+    const integration = await this.integrationRepository.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        providerId: ChatProviderIdEnum.NovuWebChat,
+      },
+      '_id identifier credentials'
+    );
+
+    if (!integration) {
+      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
+    }
+
+    if (integration.credentials?.hmac) {
+      const environment = await this.environmentRepository.findOne(
+        { _id: environmentId, _organizationId: organizationId },
+        'apiKeys'
+      );
+
+      if (!environment?.apiKeys?.length) {
+        throw new BadRequestException('Please provide a valid HMAC hash');
+      }
+
+      validateHmacEncryption({
+        apiKeys: environment.apiKeys.map((apiKey) => apiKey.key),
+        subscriberId: agentIdentifier,
+        subscriberHash: agentHash,
+      });
+    }
+
     const agent = await this.agentRepository.findOne(
       {
         identifier: agentIdentifier,
@@ -34,19 +67,6 @@ export class WebChatPublicationService {
     );
 
     if (!agent || agent.active === false) {
-      throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
-    }
-
-    const integration = await this.integrationRepository.findOne(
-      {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        providerId: ChatProviderIdEnum.NovuWebChat,
-      },
-      '_id identifier'
-    );
-
-    if (!integration) {
       throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
     }
 

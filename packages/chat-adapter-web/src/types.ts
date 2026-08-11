@@ -72,6 +72,8 @@ export type WebChatRawMessage = {
 
 export type WebChatRequestBody = {
   agentId?: string;
+  /** HMAC of `agentId`; required when web-chat Security HMAC is enabled. */
+  agentHash?: string;
   /** Exactly one of `text` | `actionId` per request. */
   text?: string;
   /** Interactive / approval button id (e.g. `tool-approval:approve:…`). XOR with `text`. */
