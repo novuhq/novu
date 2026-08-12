@@ -68,11 +68,7 @@ describe('InboundEmailParse terminal-trace policy', () => {
 
     await usecase.execute(command);
 
-    sinon.assert.calledOnceWithExactly(
-      domainRouteStrategy.execute,
-      command,
-      'support@verified-domain.com'
-    );
+    sinon.assert.calledOnceWithExactly(domainRouteStrategy.execute, command, 'support@verified-domain.com');
     sinon.assert.calledOnce(logInboundEmailRequest.execute);
   });
 
