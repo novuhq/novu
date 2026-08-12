@@ -123,7 +123,7 @@
     "liquidjs": "^10.27.1",
     "lodash": "^4.18.0",
     "lru-cache": "^11.5.1",
-    "nanoid": "^3.1.20",
+    "nanoid": "^5.1.16",
     "nest-raven": "10.1.0",
     "newrelic": "13.20.0",
     "nimma": "^0.6.0",

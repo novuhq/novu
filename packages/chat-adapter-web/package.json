@@ -21,7 +21,7 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
-    "nanoid": "^3.1.20"
+    "nanoid": "^5.1.16"
   },
   "peerDependencies": {
     "chat": ">=4.33.0"

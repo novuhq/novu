@@ -66,7 +66,7 @@
     "mailgun.js": "^8.0.1",
     "mailtrap": "^3.1.1",
     "messagebird": "^4.0.1",
-    "nanoid": "^3.1.20",
+    "nanoid": "^5.1.16",
     "node-fetch": "^3.2.10",
     "node-mailjet": "^6.0.8",
     "nodemailer": "^9.0.1",
