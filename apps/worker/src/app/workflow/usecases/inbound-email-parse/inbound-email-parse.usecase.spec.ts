@@ -114,6 +114,59 @@ describe('InboundEmailParse terminal-trace policy', () => {
     sinon.assert.calledOnce(logInboundEmailRequest.execute);
   });
 
+  it('checks subsequent recipients when an earlier Novu domain has no matching route', async () => {
+    const command = buildCommand();
+    command.to = [{ address: 'customer@example.com', name: '' }];
+    command.envelopeTo = [
+      { address: 'unmatched@verified-domain.com', args: false },
+      { address: 'support@verified-domain.com', args: false },
+    ];
+    domainRouteStrategy.execute.onFirstCall().resolves({
+      organizationId: 'org_1',
+      environmentId: 'env_1',
+      transactionId: 'txn_1',
+      strategy: 'domain-route',
+      status: 422,
+      message: 'No matching inbound route',
+    });
+    domainRouteStrategy.execute.onSecondCall().resolves({
+      organizationId: 'org_1',
+      environmentId: 'env_1',
+      transactionId: 'txn_1',
+      strategy: 'domain-route',
+      status: 200,
+    });
+
+    await usecase.execute(command);
+
+    sinon.assert.calledTwice(domainRouteStrategy.execute);
+    expect(domainRouteStrategy.execute.getCall(1).args[1]).to.equal('support@verified-domain.com');
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    expect(logInboundEmailRequest.execute.getCall(0).args[0].outcome.status).to.equal(200);
+  });
+
+  it('prefers the message header for reply-to routing and retains the envelope as fallback', async () => {
+    const command = buildCommand();
+    command.to = [{ address: 'parse+header-txn-nv-e=env@mail.domain.com', name: '' }];
+    command.envelopeTo = [{ address: 'parse+envelope-txn-nv-e=env@local-demo.com', args: false }];
+    replyToStrategy.execute.resolves({
+      organizationId: 'org_1',
+      environmentId: 'env_1',
+      transactionId: 'header-txn',
+      strategy: 'reply-to',
+      status: 200,
+    });
+
+    await usecase.execute(command);
+
+    sinon.assert.calledOnceWithExactly(
+      replyToStrategy.execute,
+      command,
+      'parse+header-txn-nv-e=env@mail.domain.com'
+    );
+    sinon.assert.notCalled(domainRouteStrategy.execute);
+  });
+
   it('traces 422 InboundParseProcessingError once and does not rethrow', async () => {
     domainRouteStrategy.execute.rejects(
       new InboundParseProcessingError('Domain is not verified', {

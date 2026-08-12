@@ -51,15 +51,16 @@ export class InboundEmailParse {
   }
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
-    const recipientAddresses = getRecipientAddresses(command);
+    const domainRouteAddresses = getRecipientAddresses(command, ['envelopeTo', 'to', 'cc']);
+    const replyToAddresses = getRecipientAddresses(command, ['to', 'cc', 'envelopeTo']);
 
-    this.logger.info({ recipientAddresses }, 'Received new email to parse');
+    this.logger.info({ recipientAddresses: domainRouteAddresses }, 'Received new email to parse');
 
     try {
-      const replyToAddress = recipientAddresses.find((address) => this.isReplyToAddress(address));
+      const replyToAddress = replyToAddresses.find((address) => this.isReplyToAddress(address));
       const outcome = replyToAddress
         ? await this.replyToStrategy.execute(command, replyToAddress)
-        : await this.executeDomainRoute(command, recipientAddresses);
+        : await this.executeDomainRoute(command, domainRouteAddresses);
 
       if (outcome) {
         await this.logInboundEmailRequest.execute({ command, outcome });
@@ -123,10 +124,18 @@ export class InboundEmailParse {
     recipientAddresses: string[]
   ): Promise<InboundParseOutcome | undefined> {
     let lastBadRequest: BadRequestException | undefined;
+    let unmatchedRouteOutcome: InboundParseOutcome | undefined;
 
     for (const recipientAddress of recipientAddresses) {
       try {
-        return await this.domainRouteStrategy.execute(command, recipientAddress);
+        const outcome = await this.domainRouteStrategy.execute(command, recipientAddress);
+
+        if (outcome?.status === 422 && outcome.message === 'No matching inbound route') {
+          unmatchedRouteOutcome = outcome;
+          continue;
+        }
+
+        return outcome;
       } catch (error) {
         if (!(error instanceof BadRequestException)) {
           throw error;
@@ -134,6 +143,10 @@ export class InboundEmailParse {
 
         lastBadRequest = error;
       }
+    }
+
+    if (unmatchedRouteOutcome) {
+      return unmatchedRouteOutcome;
     }
 
     throw lastBadRequest ?? new BadRequestException('Inbound email has no recipient address');
@@ -144,8 +157,10 @@ export class InboundEmailParse {
   }
 }
 
-function getRecipientAddresses(command: InboundEmailParseCommand): string[] {
-  const recipients: unknown[] = [...(command.envelopeTo ?? []), ...(command.to ?? []), ...(command.cc ?? [])];
+type RecipientField = 'envelopeTo' | 'to' | 'cc';
+
+function getRecipientAddresses(command: InboundEmailParseCommand, fieldOrder: RecipientField[]): string[] {
+  const recipients = fieldOrder.flatMap((field) => command[field] ?? []) as unknown[];
   const addresses = recipients
     .map(getRecipientAddress)
     .filter((address): address is string => Boolean(address))
