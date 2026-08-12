@@ -17,10 +17,13 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import {
   buildWorkflowOriginSummary,
   extractAgentEmailOriginToken,
+  extractTelegramChatIdFromThreadId,
+  extractTelegramQuotedMessageId,
   extractWhatsAppQuotedWamid,
+  RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
   toProviderMessageLookupKey,
-  WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS,
+  WORKFLOW_ORIGIN_LOOKBACK_MS,
 } from './workflow-origin.helpers';
 
 export interface WorkflowOriginResolution {
@@ -53,8 +56,8 @@ export class WorkflowOriginService {
       return null;
     }
 
-    // Thread/token platforms bind origin at open; WhatsApp re-checks later turns.
-    if (existingConversation && config.platform !== AgentPlatformEnum.WHATSAPP) {
+    // Thread/token platforms bind origin at open; recheck platforms re-check later turns.
+    if (existingConversation && !RECHECK_WORKFLOW_ORIGIN_PLATFORMS.has(config.platform)) {
       return null;
     }
 
@@ -71,14 +74,26 @@ export class WorkflowOriginService {
           origin = message ? await this.findEmailWorkflowOriginMessage(agentId, config, subscriber._id, message) : null;
           break;
         case AgentPlatformEnum.WHATSAPP:
-          origin = await this.findWhatsAppWorkflowOriginMessage(
+          origin = await this.findRecentChatWorkflowOriginMessage(
             agentId,
             config,
             subscriber._id,
-            message,
-            existingConversation
+            extractWhatsAppQuotedWamid(message)
           );
           break;
+        case AgentPlatformEnum.TELEGRAM: {
+          const chatId = extractTelegramChatIdFromThreadId(platformThreadId);
+          if (chatId) {
+            origin = await this.findRecentChatWorkflowOriginMessage(
+              agentId,
+              config,
+              subscriber._id,
+              extractTelegramQuotedMessageId(message),
+              { 'channelData.endpoint.chatId': chatId }
+            );
+          }
+          break;
+        }
         case AgentPlatformEnum.SLACK: {
           const identifier = toProviderMessageLookupKey(platformThreadId);
 
@@ -91,7 +106,6 @@ export class WorkflowOriginService {
           break;
         }
         case AgentPlatformEnum.TEAMS:
-        case AgentPlatformEnum.TELEGRAM:
         case AgentPlatformEnum.SENDBLUE:
         case AgentPlatformEnum.WEB_CHAT:
           break;
@@ -103,6 +117,15 @@ export class WorkflowOriginService {
       }
 
       if (!origin) {
+        return null;
+      }
+
+      // Conversation activity advances even when hydration failed, so only the hydration
+      // marker can tell an attached origin from a lost one that still needs a retry.
+      if (
+        existingConversation &&
+        (await this.isAlreadyHydrated(config, existingConversation._id, origin, platformThreadId))
+      ) {
         return null;
       }
 
@@ -138,7 +161,7 @@ export class WorkflowOriginService {
       return;
     }
 
-    const platformMessageId = resolvePlatformMessageId(config.platform, origin);
+    const platformMessageId = resolvePlatformMessageId(config.platform, origin, platformThreadId);
     if (!platformMessageId) {
       return;
     }
@@ -194,33 +217,36 @@ export class WorkflowOriginService {
     });
   }
 
-  private async findWhatsAppWorkflowOriginMessage(
+  private async findRecentChatWorkflowOriginMessage(
     agentId: string,
     config: ResolvedAgentConfig,
     subscriberMongoId: string,
-    message: Message | null,
-    existingConversation: ConversationEntity | null
+    quotedId: string | null,
+    extraFilter: Record<string, unknown> = {}
   ): Promise<MessageEntity | null> {
-    const quotedWamid = extractWhatsAppQuotedWamid(message);
-    if (quotedWamid) {
+    const base = {
+      _environmentId: config.environmentId,
+      _agentId: agentId,
+      _subscriberId: subscriberMongoId,
+      providerId: config.providerId,
+      channel: ChannelTypeEnum.CHAT,
+      // ObjectId path — an empty string is not castable, so only null is excluded.
+      _notificationId: { $exists: true, $ne: null },
+      ...extraFilter,
+    };
+
+    if (quotedId) {
       return this.messageRepository.findOne({
-        _environmentId: config.environmentId,
-        _agentId: agentId,
-        _subscriberId: subscriberMongoId,
-        identifier: quotedWamid,
+        ...base,
+        identifier: quotedId,
       });
     }
 
     const [origin] = await this.messageRepository.find(
       {
-        _environmentId: config.environmentId,
-        _agentId: agentId,
-        _subscriberId: subscriberMongoId,
-        providerId: config.providerId,
-        channel: ChannelTypeEnum.CHAT,
+        ...base,
         identifier: { $exists: true, $nin: [null, ''] },
-        _notificationId: { $exists: true, $nin: [null, ''] },
-        createdAt: { $gt: new Date(Date.now() - WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS) },
+        createdAt: { $gt: new Date(Date.now() - WORKFLOW_ORIGIN_LOOKBACK_MS) },
       },
       '',
       {
@@ -229,25 +255,16 @@ export class WorkflowOriginService {
       }
     );
 
-    if (!origin) {
-      return null;
-    }
-
-    // Conversation activity advances even when hydration failed, so only the hydration
-    // marker can tell an attached origin from a lost one that still needs a retry.
-    if (existingConversation && (await this.isAlreadyHydrated(config, existingConversation._id, origin))) {
-      return null;
-    }
-
-    return origin;
+    return origin ?? null;
   }
 
   private async isAlreadyHydrated(
     config: ResolvedAgentConfig,
     conversationId: string,
-    origin: MessageEntity
+    origin: MessageEntity,
+    platformThreadId: string
   ): Promise<boolean> {
-    const platformMessageId = resolvePlatformMessageId(config.platform, origin);
+    const platformMessageId = resolvePlatformMessageId(config.platform, origin, platformThreadId);
     if (!platformMessageId) {
       return false;
     }

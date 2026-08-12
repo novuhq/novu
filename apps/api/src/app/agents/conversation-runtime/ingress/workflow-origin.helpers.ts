@@ -4,7 +4,13 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { asRecord } from '../../shared/util/raw-record';
 
 export const WORKFLOW_ORIGIN_CONTENT_MAX_CHARS = 2_000;
-export const WHATSAPP_WORKFLOW_ORIGIN_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
+export const WORKFLOW_ORIGIN_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Platforms with no durable thread key — origin is re-checked on later turns, not just at open. */
+export const RECHECK_WORKFLOW_ORIGIN_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
+  AgentPlatformEnum.WHATSAPP,
+  AgentPlatformEnum.TELEGRAM,
+]);
 
 export function buildWorkflowOriginSummary(
   workflowIdentifier: string,
@@ -46,10 +52,49 @@ export function extractWhatsAppQuotedWamid(message: Message | null): string | nu
   return typeof quotedId === 'string' && quotedId.length > 0 ? quotedId : null;
 }
 
-/** Email → Message._id; WhatsApp → wamid; Slack `{channel}:{ts}` → `ts`. */
+/**
+ * Telegram quote-reply message_id from `message.raw.reply_to_message.message_id`
+ * (flat adapter shape) or `message.raw.message.reply_to_message.message_id` (nested fixtures).
+ * Coerces number|string to string so it matches the stored Message.identifier.
+ */
+export function extractTelegramQuotedMessageId(message: Message | null): string | null {
+  if (!message) {
+    return null;
+  }
+
+  const raw = asRecord(message.raw);
+  const flatReply = asRecord(raw?.reply_to_message);
+  const nestedMessage = asRecord(raw?.message);
+  const nestedReply = asRecord(nestedMessage?.reply_to_message);
+  const quotedId = flatReply?.message_id ?? nestedReply?.message_id;
+
+  if (typeof quotedId === 'number' && Number.isFinite(quotedId)) {
+    return String(quotedId);
+  }
+
+  return typeof quotedId === 'string' && quotedId.length > 0 ? quotedId : null;
+}
+
+/**
+ * Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}` (forum topics).
+ * Returns null when the prefix is absent or the segment is empty.
+ */
+export function extractTelegramChatIdFromThreadId(platformThreadId: string): string | null {
+  if (!platformThreadId.startsWith('telegram:')) {
+    return null;
+  }
+
+  const rest = platformThreadId.slice('telegram:'.length);
+  const chatId = rest.split(':')[0];
+
+  return chatId && chatId.length > 0 ? chatId : null;
+}
+
+/** Email → Message._id; WhatsApp → wamid; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
 export function resolvePlatformMessageId(
   platform: AgentPlatformEnum,
-  originMessage: MessageEntity
+  originMessage: MessageEntity,
+  platformThreadId?: string
 ): string | undefined {
   if (platform === AgentPlatformEnum.EMAIL) {
     return originMessage._id;
@@ -61,6 +106,19 @@ export function resolvePlatformMessageId(
 
   if (platform === AgentPlatformEnum.WHATSAPP) {
     return originMessage.identifier;
+  }
+
+  if (platform === AgentPlatformEnum.TELEGRAM) {
+    if (!platformThreadId) {
+      return undefined;
+    }
+
+    const chatId = extractTelegramChatIdFromThreadId(platformThreadId);
+    if (!chatId) {
+      return undefined;
+    }
+
+    return `${chatId}:${originMessage.identifier}`;
   }
 
   const colon = originMessage.identifier.indexOf(':');
