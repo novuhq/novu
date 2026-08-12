@@ -107,8 +107,6 @@ export class WorkflowOriginService {
           break;
         }
         case AgentPlatformEnum.SENDBLUE:
-          // Message has no _integrationId, so multi-line Sendblue agents may attach an
-          // origin sent from a different from-number than the inbound thread.
           origin = isSendblueDirectThreadId(platformThreadId)
             ? await this.findRecentChatWorkflowOriginMessage(agentId, config, subscriber._id, null)
             : null;
@@ -118,8 +116,9 @@ export class WorkflowOriginService {
           break;
         default: {
           const _exhaustive: never = config.platform;
+          void _exhaustive;
 
-          return _exhaustive;
+          return null;
         }
       }
 
