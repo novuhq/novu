@@ -1,5 +1,5 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
-import { AgentChatService } from '../api';
+import { AgentChatPlanLimitError, AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { AgentChat } from './agent-chat';
 import { derivePendingApprovals } from './agent-message.types';
@@ -95,6 +95,18 @@ describe('AgentChat', () => {
     expect(result.error).toBeDefined();
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.messages[0]?.status).toBe('failed');
+  });
+
+  it('returns AgentChatPlanLimitError when accept is blocked by plan limits', async () => {
+    sendMessage.mockRejectedValue(new AgentChatPlanLimitError('agents', 'Upgrade your plan to activate this agent.'));
+
+    const result = await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(result.error).toBeInstanceOf(AgentChatPlanLimitError);
+    expect(result.error).toMatchObject({
+      reason: 'agents',
+      message: 'Upgrade your plan to activate this agent.',
+    });
   });
 
   it('serializes overlapping creates on the same session key until conversationId is claimed', async () => {

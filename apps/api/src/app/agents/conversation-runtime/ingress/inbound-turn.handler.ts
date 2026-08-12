@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import type { WebChatRawMessage } from '@novu/chat-adapter-web';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -43,10 +44,7 @@ import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../sh
 import { extractWorkspaceId } from '../../shared/util/workspace-id';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
-import {
-  AgentConversationService,
-  getInboundActivityPreview,
-} from '../conversation/agent-conversation.service';
+import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import {
   AgentSubscriberResolver,
   BotAuthorSkippedError,
@@ -498,6 +496,10 @@ export class AgentInboundHandler implements OnModuleInit {
       workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
       identifier: this.webChatConversationIdentifier(config.platform, platformThreadId),
       notificationId: workflowOriginMessage?._notificationId,
+      contextKeys:
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? ((message.raw as WebChatRawMessage | undefined)?.contextKeys ?? [])
+          : undefined,
     });
 
     if (workflowOriginMessage) {
@@ -1352,6 +1354,10 @@ export class AgentInboundHandler implements OnModuleInit {
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
       notificationId: workflowOriginMessage?._notificationId,
+      contextKeys:
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? ((rawEvent as WebChatRawMessage | undefined)?.contextKeys ?? [])
+          : undefined,
     });
 
     if (workflowOriginMessage) {

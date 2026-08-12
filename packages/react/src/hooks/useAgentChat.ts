@@ -1,8 +1,10 @@
 import type {
   AgentApprovalPart,
+  AgentChatPlanLimitError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
+  AgentHashFields,
   AgentMessage,
   LoadConversationResult,
   NovuError,
@@ -14,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
-export type UseAgentChatProps = {
+export type UseAgentChatProps = AgentHashFields & {
   agentId: string;
   /**
    * Resume this conversation. The hook loads history on mount.
@@ -23,7 +25,7 @@ export type UseAgentChatProps = {
    */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
-  onError?: (error: NovuError) => void;
+  onError?: (error: NovuError | AgentChatPlanLimitError) => void;
   /**
    * Fires once per message, when the message id first appears on the conversation.
    * History pages are silent: only new activity fires.
@@ -51,7 +53,7 @@ export type UseAgentChatResult = {
   messages: AgentMessage[];
   pendingApprovals: AgentApprovalPart[];
   conversationId?: string;
-  error?: NovuError;
+  error?: NovuError | AgentChatPlanLimitError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isFetching: boolean;
@@ -67,11 +69,11 @@ export type UseAgentChatResult = {
   }>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
-    error?: NovuError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
   respondToApproval: (args: { approvalId: string; decision: 'approved' | 'denied' }) => Promise<{
     data?: RespondToApprovalResult;
-    error?: NovuError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
 };
 
@@ -124,7 +126,7 @@ function applyConversationSnapshot(
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
-  const { agentId, conversationId: conversationIdProp } = props;
+  const { agentId, agentHash, conversationId: conversationIdProp } = props;
   const propsRef = useDataRef(props);
   const novu = useNovu();
 
@@ -145,7 +147,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [typing, setTyping] = useState<AgentConversationTyping>();
   const [status, setStatus] = useState<AgentConversationStatus>('active');
   const [hasMore, setHasMore] = useState(false);
-  const [error, setError] = useState<NovuError>();
+  const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
   const fetchGenerationRef = useRef(0);
@@ -334,6 +336,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       const response = await novu.agentChat.sendMessage({
         agentId,
+        agentHash,
         text,
         key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
@@ -348,7 +351,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
   const respondToApproval = useCallback(
@@ -357,6 +360,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       const response = await novu.agentChat.respondToApproval({
         agentId,
+        agentHash,
         key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
         approvalId: args.approvalId,
@@ -370,7 +374,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
   return {

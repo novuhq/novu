@@ -271,7 +271,7 @@ export class WebChatPlatformDeliveryService {
           _organizationId: context.config.organizationId,
           subscriberId: subscriber.subscriberId,
           payload: envelope as unknown as Record<string, unknown>,
-          contextKeys: [],
+          contextKeys: conversation.contextKeys ?? [],
         },
         groupId: context.config.organizationId,
       });

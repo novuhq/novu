@@ -24,4 +24,16 @@ describe('dashboardSanitizeControlValues', () => {
 
     expect(sanitized).not.toHaveProperty('providerOverrides');
   });
+
+  it('keeps chat editorType when present', () => {
+    const sanitized = dashboardSanitizeControlValues(logger, { body: 'hello', editorType: 'text' }, StepTypeEnum.CHAT);
+
+    expect(sanitized).toEqual({ body: 'hello', editorType: 'text' });
+  });
+
+  it('omits chat editorType when absent', () => {
+    const sanitized = dashboardSanitizeControlValues(logger, { body: 'hello' }, StepTypeEnum.CHAT);
+
+    expect(sanitized).not.toHaveProperty('editorType');
+  });
 });
