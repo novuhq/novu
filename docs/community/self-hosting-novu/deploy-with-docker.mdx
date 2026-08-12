@@ -610,6 +610,16 @@ The Dashboard container is served separately on its configured port (default **4
     Link-local and cloud metadata addresses (`169.254.0.0/16`, `fe80::/10`, `metadata.google.internal`) cannot be allow-listed.
   </Accordion>
 
+  <Accordion title="Why is my provider webhook URL rejected?">
+    The same outbound SSRF protection applies to operator-configured provider destinations, not just bridge URLs. This covers the Email Webhook, Generic SMS, Chat Webhook, Push Webhook, and Tool Webhook integrations.
+
+    A private, loopback, link-local, or metadata destination is rejected when you save the integration, and again before each send. To point one of these integrations at an internal service, add its host or CIDR to `NOVU_SAFE_OUTBOUND_ALLOW` on both the API and Worker services:
+
+    ```bash
+    NOVU_SAFE_OUTBOUND_ALLOW=sms-gateway.internal,10.0.0.0/8
+    ```
+  </Accordion>
+
   <Accordion title="When is Local Tunnel Required?">
     If the application and Novu deployment reside on different networks, you can still interact with your self-hosted Novu instance using the Novu CLI. The CLI allows you to specify the Dashboard URL and Bridge Endpoint Origin to enable communication across networks via the Novu Cloud Local Tunnel.
 
