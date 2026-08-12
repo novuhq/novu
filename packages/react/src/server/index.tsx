@@ -84,6 +84,7 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
     isLoading: false,
     isFetching: false,
     isRunning: false,
+    typing: undefined,
     status: 'active',
     hasMore: false,
     refetch: () => Promise.resolve(),

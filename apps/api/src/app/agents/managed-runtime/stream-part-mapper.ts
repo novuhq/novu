@@ -19,7 +19,7 @@ interface RunEventBuilderIds {
 
 export function mapStreamPart(part: StreamPart): AgentEvent[] {
   switch (part.type) {
-    case 'stream-start':
+    case 'run-start':
       return [{ type: 'run-start' }];
 
     case 'message':

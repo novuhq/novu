@@ -21,6 +21,7 @@ import {
   SendWebhookMessage,
 } from '@novu/application-generic';
 import {
+  AgentRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
@@ -33,6 +34,7 @@ import {
 } from '@novu/dal';
 import { EmailOutput } from '@novu/framework/internal';
 import {
+  buildAgentReplyToAddress,
   ChannelTypeEnum,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
@@ -73,7 +75,8 @@ export class SendMessageEmail extends SendMessageBase {
     private featureFlagService: FeatureFlagsService,
     private getLayoutUseCaseV0: GetLayoutUseCaseV0,
     private sendWebhookMessage: SendWebhookMessage,
-    private resolveAgentInboundAddresses: ResolveAgentInboundAddresses
+    private resolveAgentInboundAddresses: ResolveAgentInboundAddresses,
+    private agentRepository: AgentRepository
   ) {
     super(
       messageRepository,
@@ -197,6 +200,8 @@ export class SendMessageEmail extends SendMessageBase {
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
+    const assignedAgentId = await this.resolveAssignedAgentId(command);
+
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
       _environmentId: command.environmentId,
@@ -217,6 +222,7 @@ export class SendMessageEmail extends SendMessageBase {
       tags: command.tags,
       severity: command.severity,
       contextKeys: command.contextKeys,
+      ...(assignedAgentId ? { _agentId: assignedAgentId } : {}),
     });
 
     let replyToAddress: string | undefined;
@@ -368,8 +374,8 @@ export class SendMessageEmail extends SendMessageBase {
     if (needsAgentReplyTo || needsAgentSender) {
       const agentEmailContext = await this.resolveWorkflowAgentEmailContext(command);
 
-      if (needsAgentReplyTo) {
-        replyToAddress = agentEmailContext.replyTo;
+      if (needsAgentReplyTo && agentEmailContext.replyTo) {
+        replyToAddress = buildAgentReplyToAddress(agentEmailContext.replyTo, message._id);
       }
 
       if (needsAgentSender) {
@@ -414,6 +420,32 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     return await this.sendMessage(integration, mailData, message, command);
+  }
+
+  private async resolveAssignedAgentId(command: SendMessageChannelCommand): Promise<string | null> {
+    if (command.job._agentId !== undefined) {
+      if (command.job._agentId === null) {
+        return null;
+      }
+
+      return String(command.job._agentId);
+    }
+
+    const workflowAgent = command.workflow?.agent;
+    if (!workflowAgent?.identifier) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: workflowAgent.identifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    return agent?._id ? String(agent._id) : null;
   }
 
   /**

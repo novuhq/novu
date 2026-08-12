@@ -43,6 +43,7 @@ import { AgentConversationService } from './conversation-runtime/conversation/ag
 import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
+import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger';
 import { ConversationEventSequenceService } from './conversation-runtime/conversation/conversation-event-sequence.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
@@ -145,6 +146,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentSubscriberResolver,
     AgentSubscriberAdoptionService,
     AgentConversationService,
+    ConversationActivityLedger,
     ConversationEventSequenceService,
     ConfirmLinkedAuthCards,
     ConversationActivationService,
@@ -198,6 +200,13 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentConversationEnabledGuard,
     WebChatEnabledGuard,
   ],
-  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway, ConfirmLinkedAuthCards],
+  exports: [
+    ...USE_CASES,
+    ChatInstanceRegistry,
+    InboundDispatcher,
+    OutboundGateway,
+    ConfirmLinkedAuthCards,
+    ConversationActivityLedger,
+  ],
 })
 export class AgentsModule {}

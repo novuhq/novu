@@ -1,13 +1,11 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import {
   type AgentConversationState,
-  type AgentEventEnvelope,
   type AgentMessage,
-  appendUserMessage,
-  applyEnvelope,
-  applyEnvelopes,
   createInitialAgentConversationState,
   derivePendingApprovals,
-} from '@novu/agent-event-protocol';
+} from './agent-message.types';
+import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 import type { AgentChatChange, AgentChatChangeSource } from './types';
 
 /**
@@ -68,12 +66,15 @@ function messagesAddedSince(previous: AgentMessage[], next: AgentMessage[]): Age
 }
 
 function applyState(entry: ConversationEntry, next: AgentConversationState): void {
-  entry.messages = next.messages;
-  entry.isRunning = next.isRunning;
-  entry.status = next.status;
-  entry.lastSequence = next.lastSequence;
-  entry.error = next.error;
-  entry.activeAssistantMessageId = next.activeAssistantMessageId;
+  Object.assign(entry, {
+    messages: next.messages,
+    isRunning: next.isRunning,
+    typing: next.typing,
+    status: next.status,
+    lastSequence: next.lastSequence,
+    error: next.error,
+    activeAssistantMessageId: next.activeAssistantMessageId,
+  });
 }
 
 /**

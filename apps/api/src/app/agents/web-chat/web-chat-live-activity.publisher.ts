@@ -5,9 +5,11 @@ import {
   ConversationActivityEntity,
   ConversationEntity,
   ConversationParticipantTypeEnum,
+  ConversationRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
+import { usesProtocolEventApprovals } from '../shared/enums/agent-platform.enum';
 import { buildLiveEnvelopeFromActivity } from './activity-to-events';
 
 export type WebChatLiveActivityEmitParams = {
@@ -19,14 +21,24 @@ export type WebChatLiveActivityEmitParams = {
   activity: ConversationActivityEntity;
 };
 
+export type PersistedClientEventEmitParams = {
+  channel: { platform: string };
+  conversationId: string;
+  environmentId: string;
+  organizationId: string;
+  agentIdentifier: string;
+  activity: ConversationActivityEntity;
+};
+
 /**
  * Emits durable web-chat activities on live WS from the persist seam only.
- * Keeps TOOL_APPROVAL_REQUEST/DECISION/RESULT ordering aligned with history.
+ * Keeps tool + run-lifecycle ordering aligned with GET history.
  */
 @Injectable()
 export class WebChatLiveActivityPublisher {
   constructor(
     private readonly subscriberRepository: SubscriberRepository,
+    private readonly conversationRepository: ConversationRepository,
     private readonly webSocketsQueueService: WebSocketsQueueService,
     private readonly logger: PinoLogger
   ) {
@@ -44,6 +56,35 @@ export class WebChatLiveActivityPublisher {
     }
 
     await this.emitBestEffort(params, envelope);
+  }
+
+  /** Gate + conversation lookup for rows persisted outside the web-chat module. */
+  async emitPersistedClientEvent(params: PersistedClientEventEmitParams): Promise<void> {
+    if (!usesProtocolEventApprovals(params.channel.platform)) {
+      return;
+    }
+
+    const conversation = await this.conversationRepository.findOne(
+      {
+        _id: params.conversationId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      '*'
+    );
+
+    if (!conversation) {
+      return;
+    }
+
+    await this.emit({
+      agentId: conversation._agentId,
+      agentIdentifier: params.agentIdentifier,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      conversation,
+      activity: params.activity,
+    });
   }
 
   private async emitBestEffort(params: WebChatLiveActivityEmitParams, envelope: AgentEventEnvelope): Promise<void> {
@@ -81,7 +122,7 @@ export class WebChatLiveActivityPublisher {
           _organizationId: params.organizationId,
           subscriberId: subscriber.subscriberId,
           payload: envelope as unknown as Record<string, unknown>,
-          contextKeys: [],
+          contextKeys: params.conversation.contextKeys ?? [],
         },
         groupId: params.organizationId,
       });

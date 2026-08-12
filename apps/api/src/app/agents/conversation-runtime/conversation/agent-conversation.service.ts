@@ -14,7 +14,6 @@ import {
   isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
-import { usesProtocolEventApprovals } from '../../shared/enums/agent-platform.enum';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
@@ -78,6 +77,7 @@ export interface CreateOrGetConversationParams {
   identifier?: string;
   /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
   notificationId?: string;
+  contextKeys?: string[];
 }
 
 export interface PersistInboundMessageParams {
@@ -217,6 +217,23 @@ export class AgentConversationService {
       platformThreadId
     );
     if (existing) {
+      if (params.contextKeys !== undefined) {
+        const contextMatch = await this.conversationRepository.findOne(
+          {
+            _id: existing._id,
+            _environmentId: environmentId,
+            _organizationId: organizationId,
+            $and: [this.conversationRepository.buildContextExactMatchQuery(params.contextKeys)],
+          },
+          ['_id']
+        );
+        if (!contextMatch) {
+          throw new BadRequestException('Conversation context mismatch');
+        }
+      } else if (existing.contextKeys?.length) {
+        throw new BadRequestException('Conversation context mismatch');
+      }
+
       if (existing.status === ConversationStatusEnum.RESOLVED) {
         await this.conversationRepository.updateStatus(
           environmentId,
@@ -254,6 +271,7 @@ export class AgentConversationService {
       title: getConversationTitle(params.firstMessageText),
       metadata: {},
       isDirectMessage: params.isDirectMessage,
+      ...(params.contextKeys !== undefined ? { contextKeys: [...params.contextKeys].sort() } : {}),
       _environmentId: environmentId,
       _organizationId: organizationId,
       lastActivityAt: new Date().toISOString(),
@@ -359,15 +377,6 @@ export class AgentConversationService {
     }
   }
 
-  async getHistory(
-    environmentId: string,
-    conversationId: string,
-    limit = AGENT_HISTORY_LIMIT
-  ): Promise<ConversationActivityEntity[]> {
-    return this.activityRepository.findByConversation(environmentId, conversationId, limit);
-  }
-
-  /** Resolves the stored activity a reaction targets, matched by platform-native message id. */
   async findSourceActivity(
     environmentId: string,
     conversationId: string,
@@ -575,7 +584,14 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
+    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
 
     return activity;
   }
@@ -760,7 +776,14 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
+    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
 
     return activity;
   }
@@ -788,28 +811,12 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
-  }
-
-  private async emitProtocolEventActivity(
-    params: ConversationActivityContext,
-    activity: ConversationActivityEntity
-  ): Promise<void> {
-    if (!usesProtocolEventApprovals(params.channel.platform)) {
-      return;
-    }
-
-    const conversation = await this.getConversation(params.conversationId, params.environmentId, params.organizationId);
-    if (!conversation) {
-      return;
-    }
-
-    await this.webChatLiveActivityPublisher.emit({
-      agentId: conversation._agentId,
-      agentIdentifier: params.agentIdentifier,
+    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
-      conversation,
+      agentIdentifier: params.agentIdentifier,
       activity,
     });
   }

@@ -1,13 +1,22 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
   AgentApprovalPart,
   AgentConversationStatus,
-  AgentEventEnvelope,
+  AgentConversationTyping,
   AgentMessage,
-} from '@novu/agent-event-protocol';
+} from './agent-message.types';
 
-export type { AgentApprovalPart, AgentConversationStatus, AgentEventEnvelope, AgentMessage };
+export type { AgentApprovalPart, AgentConversationStatus, AgentConversationTyping, AgentEventEnvelope, AgentMessage };
 
-export type SendMessageArgs = {
+/**
+ * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+ * integration has Security HMAC enabled.
+ */
+export type AgentHashFields = {
+  agentHash?: string;
+};
+
+export type SendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
   /**
@@ -50,7 +59,7 @@ export type FetchMoreResult = {
   hasMore: boolean;
 };
 
-export type RespondToApprovalArgs = {
+export type RespondToApprovalArgs = AgentHashFields & {
   agentId: string;
   approvalId: string;
   decision: 'approved' | 'denied';
@@ -86,6 +95,7 @@ export type AgentChatMessagesUpdated = {
   key: string;
   messages: AgentMessage[];
   isRunning: boolean;
+  typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;
   change: AgentChatChange;

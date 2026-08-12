@@ -570,6 +570,7 @@ export class ConversationRepository extends BaseRepositoryV2<
     identifier,
     provider,
     createdAfter,
+    contextKeys,
   }: {
     organizationId: string;
     environmentId: string;
@@ -585,6 +586,7 @@ export class ConversationRepository extends BaseRepositoryV2<
     identifier?: string;
     provider?: string[];
     createdAfter?: string;
+    contextKeys?: string[];
   }): Promise<{
     data: ConversationEntity[];
     next: string | null;
@@ -647,6 +649,11 @@ export class ConversationRepository extends BaseRepositoryV2<
 
     if (createdAfter) {
       query.createdAt = { $gte: new Date(createdAfter) };
+    }
+
+    if (contextKeys !== undefined) {
+      const contextQuery = this.buildContextExactMatchQuery(contextKeys);
+      query.$and = [...(query.$and ?? []), contextQuery];
     }
 
     return this.findWithCursorBasedPagination({

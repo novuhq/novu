@@ -41,7 +41,7 @@ overrides:
   minimatch@>=7.0.0 <7.4.8: ^7.4.8
   minimatch@>=8.0.0 <8.0.6: ^8.0.6
   minimatch@>=9.0.0 <9.0.7: ^9.0.7
-  nanoid@>=3.0.0 <3.3.8: ^3.3.8
+  nanoid@>=3.0.0 <3.3.17: ^3.3.17
   nth-check: ^2.1.1
   postcss@<8.5.23: ^8.5.23
   proxy-agent@<6.3.1: ^6.3.1
@@ -198,7 +198,7 @@ overrides:
   '@opentelemetry/resources@<2.8.0': ^2.8.0
   '@opentelemetry/context-async-hooks@<2.8.0': ^2.8.0
   '@opentelemetry/propagator-jaeger@<2.9.0': ^2.9.0
-  mermaid@>=11.0.0-alpha.1 <11.15.0: ^11.15.0
+  mermaid@>=11.0.0-alpha.1 <11.16.1: ^11.16.1
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
   samlify@<2.13.0: ^2.13.0
