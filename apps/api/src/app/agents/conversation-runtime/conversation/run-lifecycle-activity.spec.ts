@@ -8,16 +8,16 @@ import {
 } from './run-lifecycle-activity';
 
 describe('run-lifecycle-activity', () => {
-  it('prefers web_chat channel when resolving lifecycle channel', () => {
+  it('prefers agent_chat channel when resolving lifecycle channel', () => {
     const channel = resolveLifecycleChannel({
       _id: 'conv-1',
       channels: [
         { platform: 'slack', _integrationId: 'slack-int', platformThreadId: 't-slack' },
-        { platform: 'web_chat', _integrationId: 'web-int', platformThreadId: 't-web' },
+        { platform: 'agent_chat', _integrationId: 'web-int', platformThreadId: 't-web' },
       ],
     } as never);
 
-    expect(channel.platform).to.equal('web_chat');
+    expect(channel.platform).to.equal('agent_chat');
     expect(channel._integrationId).to.equal('web-int');
   });
 

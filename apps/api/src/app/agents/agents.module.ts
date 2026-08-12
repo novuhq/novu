@@ -32,10 +32,17 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
+import { AgentChatController } from './agent-chat/agent-chat.controller';
+import { AgentChatEventFactory } from './agent-chat/agent-chat-event.factory';
+import { AgentChatLiveActivityPublisher } from './agent-chat/agent-chat-live-activity.publisher';
+import { AgentChatPlatformDeliveryService } from './agent-chat/agent-chat-platform-delivery.service';
+import { AgentChatPublicationService } from './agent-chat/agent-chat-publication.service';
+import { AgentChatResumeAuthorizationService } from './agent-chat/agent-chat-resume-authorization.service';
+import { AgentChatSessionVerifier } from './agent-chat/agent-chat-session.verifier';
+import { NovuAgentChatProvisioningService } from './channels/agent-chat/find-or-create-novu-agent-chat/find-or-create-novu-agent-chat.service';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
-import { NovuWebChatProvisioningService } from './channels/web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -84,20 +91,13 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
+import { AgentChatEnabledGuard } from './shared/agent-chat-enabled.guard';
 import { AgentConversationEnabledGuard } from './shared/agent-conversation-enabled.guard';
 import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
 import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
-import { WebChatEnabledGuard } from './shared/web-chat-enabled.guard';
 import { USE_CASES } from './usecases';
-import { WebChatController } from './web-chat/web-chat.controller';
-import { WebChatEventFactory } from './web-chat/web-chat-event.factory';
-import { WebChatLiveActivityPublisher } from './web-chat/web-chat-live-activity.publisher';
-import { WebChatPlatformDeliveryService } from './web-chat/web-chat-platform-delivery.service';
-import { WebChatPublicationService } from './web-chat/web-chat-publication.service';
-import { WebChatResumeAuthorizationService } from './web-chat/web-chat-resume-authorization.service';
-import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
 
 @Module({
   imports: [
@@ -122,7 +122,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentEventsIngestController,
     AgentEmailActionsController,
     AgentsMcpOAuthController,
-    WebChatController,
+    AgentChatController,
   ],
   providers: [
     ...USE_CASES,
@@ -173,13 +173,13 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
-    NovuWebChatProvisioningService,
-    WebChatPublicationService,
-    WebChatSessionVerifier,
-    WebChatResumeAuthorizationService,
-    WebChatEventFactory,
-    WebChatPlatformDeliveryService,
-    WebChatLiveActivityPublisher,
+    NovuAgentChatProvisioningService,
+    AgentChatPublicationService,
+    AgentChatSessionVerifier,
+    AgentChatResumeAuthorizationService,
+    AgentChatEventFactory,
+    AgentChatPlatformDeliveryService,
+    AgentChatLiveActivityPublisher,
     OutboundDeliveryInfo,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
@@ -198,7 +198,7 @@ import { WebChatSessionVerifier } from './web-chat/web-chat-session.verifier';
     AgentEntitlementsService,
     PlanLimitGateService,
     AgentConversationEnabledGuard,
-    WebChatEnabledGuard,
+    AgentChatEnabledGuard,
   ],
   exports: [
     ...USE_CASES,

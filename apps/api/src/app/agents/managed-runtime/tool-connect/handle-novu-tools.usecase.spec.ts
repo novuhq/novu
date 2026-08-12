@@ -5,11 +5,11 @@ import { HandleNovuToolsCommand, NovuToolsActionEnum } from './handle-novu-tools
 import { HandleNovuTools } from './handle-novu-tools.usecase';
 
 describe('HandleNovuTools', () => {
-  it('persists a protocol connection request instead of delivering a card for web chat', async () => {
+  it('persists a protocol connection request instead of delivering a card for agent chat', async () => {
     const channel = {
-      platform: AgentPlatformEnum.WEB_CHAT,
+      platform: AgentPlatformEnum.AGENT_CHAT,
       _integrationId: 'integration-id',
-      platformThreadId: 'web_chat:conversation-id',
+      platformThreadId: 'agent_chat:conversation-id',
     };
     const generateMcpOAuthUrl = {
       executeForSetupCard: sinon.stub().resolves({
@@ -53,8 +53,8 @@ describe('HandleNovuTools', () => {
         integrationIdentifier: 'integration-identifier',
         subscriberId: 'subscriber-id',
         sessionId: 'session-id',
-        platform: AgentPlatformEnum.WEB_CHAT,
-        platformThreadId: 'web_chat:conversation-id',
+        platform: AgentPlatformEnum.AGENT_CHAT,
+        platformThreadId: 'agent_chat:conversation-id',
       })
     );
 

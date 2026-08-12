@@ -7,7 +7,7 @@ describe('ConversationActivityLedger', () => {
   const lifecycleParams = {
     conversationId: 'conv-1',
     channel: {
-      platform: 'web_chat',
+      platform: 'agent_chat',
       _integrationId: 'int-1',
       platformThreadId: 'thread-1',
     },

@@ -21,7 +21,7 @@ export type {
 };
 
 /**
- * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+ * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-agent-chat`
  * integration has Security HMAC enabled.
  */
 export type AgentHashFields = {

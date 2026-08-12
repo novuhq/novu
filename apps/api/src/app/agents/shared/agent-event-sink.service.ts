@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
+import { AgentChatLiveActivityPublisher } from '../agent-chat/agent-chat-live-activity.publisher';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { ConversationActivityLedger } from '../conversation-runtime/conversation/conversation-activity-ledger';
@@ -23,7 +24,6 @@ import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-poli
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
-import { WebChatLiveActivityPublisher } from '../web-chat/web-chat-live-activity.publisher';
 import {
   mapToolUseResultEvent,
   toActionRequired,
@@ -59,7 +59,7 @@ export interface AgentEventContext {
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
-  /** Conversation channel for durable activity persist (web-chat lifecycle, tool ledger, etc.). */
+  /** Conversation channel for durable activity persist (agent-chat lifecycle, tool ledger, etc.). */
   channel?: ConversationChannel;
   sessionId?: string;
   suppressReply?: boolean;
@@ -82,7 +82,7 @@ export class AgentEventSink {
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
-    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -774,7 +774,7 @@ export class AgentEventSink {
       });
 
       if (activity) {
-        await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+        await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
           channel,
           conversationId: context.conversationId,
           environmentId: context.environmentId,

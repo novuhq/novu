@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { getApiToken, subscribeApiToken } from './api-token';
 
-/** Mirrors `WebChatConversationMetadataDto` on the API. */
+/** Mirrors `AgentChatConversationMetadataDto` on the API. */
 export type ConversationSummary = {
   identifier: string;
   title: string;
@@ -16,7 +16,7 @@ export type ConversationSummary = {
 const RECENT_LIMIT = 5;
 
 async function fetchConversations(backendUrl: string, token: string): Promise<ConversationSummary[]> {
-  const url = new URL(`${backendUrl.replace(/\/+$/, '')}/v1/web-chat/conversations`);
+  const url = new URL(`${backendUrl.replace(/\/+$/, '')}/v1/agent-chat/conversations`);
   url.searchParams.set('limit', String(RECENT_LIMIT));
   url.searchParams.set('orderBy', 'lastActivityAt');
   url.searchParams.set('orderDirection', 'DESC');

@@ -14,8 +14,8 @@ import {
   isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
+import { AgentChatLiveActivityPublisher } from '../../agent-chat/agent-chat-live-activity.publisher';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
-import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
@@ -73,7 +73,7 @@ export interface CreateOrGetConversationParams {
    * installs. Absent for single-workspace platforms.
    */
   workspaceId?: string;
-  /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
+  /** Pre-minted durable identifier; for `agent_chat`, equals `platformThreadId`. */
   identifier?: string;
   /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
   notificationId?: string;
@@ -207,7 +207,7 @@ export class AgentConversationService {
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly eventSequenceService: ConversationEventSequenceService,
-    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -599,7 +599,7 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
       channel: params.channel,
       conversationId: params.conversationId,
       environmentId: params.environmentId,
@@ -793,7 +793,7 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
       channel: params.channel,
       conversationId: params.conversationId,
       environmentId: params.environmentId,
@@ -828,7 +828,7 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
       channel: params.channel,
       conversationId: params.conversationId,
       environmentId: params.environmentId,
@@ -858,7 +858,7 @@ export class AgentConversationService {
       'activity'
     );
 
-    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
       channel: params.channel,
       conversationId: params.conversationId,
       environmentId: params.environmentId,
@@ -889,7 +889,7 @@ export class AgentConversationService {
       'activity'
     );
 
-    await this.webChatLiveActivityPublisher.emitPersistedClientEvent({
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
       channel: params.channel,
       conversationId: params.conversationId,
       environmentId: params.environmentId,
