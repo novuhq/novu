@@ -205,6 +205,38 @@ describe('applyEnvelope', () => {
     expect(approval).toMatchObject({ type: 'approval', approvalId: 'a1', state: 'approved' });
   });
 
+  it('keeps replayed approval requests in their protocol message positions', () => {
+    const state = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, {
+        type: 'tool-approval-request',
+        messageId: 'approval-message-1',
+        approvalId: 'a1',
+        toolUseId: 'tu1',
+        toolName: 'firstTool',
+      }),
+      envelope(2, { type: 'run-finish', outcome: 'paused' }),
+      envelope(3, {
+        type: 'message',
+        role: 'user',
+        messageId: 'user-message-2',
+        content: { markdown: 'Continue' },
+      }),
+      envelope(4, {
+        type: 'tool-approval-request',
+        messageId: 'approval-message-2',
+        approvalId: 'a2',
+        toolUseId: 'tu2',
+        toolName: 'secondTool',
+      }),
+    ]);
+
+    expect(state.messages.map((message) => message.id)).toEqual([
+      'approval-message-1',
+      'user-message-2',
+      'approval-message-2',
+    ]);
+  });
+
   it('folds MCP connection requests and results into one action part', () => {
     const state = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, { type: 'message-start', messageId: 'm1' }),

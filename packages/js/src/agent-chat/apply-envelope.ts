@@ -131,26 +131,30 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
         parts: applyToolResult(message.parts, event.toolUseId, event.content, event.isError),
       }));
 
-    case 'tool-approval-request':
-      return clearTyping(
-        withActiveAssistantMessage(state, envelope, (message) => ({
-          ...message,
-          parts: [
-            ...message.parts,
-            {
-              type: 'approval',
-              approvalId: event.approvalId,
-              toolUseId: event.toolUseId,
-              toolName: event.toolName,
-              input: event.input,
-              source: event.source,
-              approveActionId: event.approveActionId,
-              denyActionId: event.denyActionId,
-              state: 'pending',
-            },
-          ],
-        }))
-      );
+    case 'tool-approval-request': {
+      const addApproval = (message: AgentMessage): AgentMessage => ({
+        ...message,
+        parts: [
+          ...message.parts,
+          {
+            type: 'approval',
+            approvalId: event.approvalId,
+            toolUseId: event.toolUseId,
+            toolName: event.toolName,
+            input: event.input,
+            source: event.source,
+            approveActionId: event.approveActionId,
+            denyActionId: event.denyActionId,
+            state: 'pending',
+          },
+        ],
+      });
+      const nextState = event.messageId
+        ? withAssistantMessage(state, envelope, event.messageId, addApproval)
+        : withActiveAssistantMessage(state, envelope, addApproval);
+
+      return clearTyping(nextState);
+    }
 
     case 'tool-approval-response':
       return applyApprovalResponse(state, event.approvalId, event.decision);
