@@ -6,10 +6,11 @@ import { asRecord } from '../../shared/util/raw-record';
 export const WORKFLOW_ORIGIN_CONTENT_MAX_CHARS = 2_000;
 export const WORKFLOW_ORIGIN_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Platforms with no durable thread key — origin is re-checked on later turns, not just at open. */
+/** Platforms that reuse one conversation indefinitely — origin is re-checked on later turns, not just at open. */
 export const RECHECK_WORKFLOW_ORIGIN_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
   AgentPlatformEnum.WHATSAPP,
   AgentPlatformEnum.TELEGRAM,
+  AgentPlatformEnum.SENDBLUE,
 ]);
 
 export function buildWorkflowOriginSummary(
@@ -90,7 +91,17 @@ export function extractTelegramChatIdFromThreadId(platformThreadId: string): str
   return chatId && chatId.length > 0 ? chatId : null;
 }
 
-/** Email → Message._id; WhatsApp → wamid; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
+/**
+ * Sendblue 1:1 threads are `sendblue:{from}:{contact}` (exactly 3 segments). Unrecognized
+ * shapes fail closed so a group thread never receives a personally-addressed payload.
+ */
+export function isSendblueDirectThreadId(platformThreadId: string): boolean {
+  const segments = platformThreadId.split(':');
+
+  return segments.length === 3 && segments[0] === 'sendblue' && segments[1].length > 0 && segments[2].length > 0;
+}
+
+/** Email → Message._id; WhatsApp → wamid; Sendblue → message_handle; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
 export function resolvePlatformMessageId(
   platform: AgentPlatformEnum,
   originMessage: MessageEntity,
@@ -104,7 +115,7 @@ export function resolvePlatformMessageId(
     return undefined;
   }
 
-  if (platform === AgentPlatformEnum.WHATSAPP) {
+  if (platform === AgentPlatformEnum.WHATSAPP || platform === AgentPlatformEnum.SENDBLUE) {
     return originMessage.identifier;
   }
 
