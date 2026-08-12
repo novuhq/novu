@@ -1,6 +1,6 @@
-import type { HumanInteractionEntity } from '@novu/dal';
+import type { HumanInteractionEntity, HumanInteractionOption } from '@novu/dal';
 import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
-import type { ActionsElement, ButtonElement, CardElement } from 'chat';
+import type { ActionsElement, ButtonElement, CardElement, TextElement } from 'chat';
 import {
   buildHumanApproveActionId,
   buildHumanDenyActionId,
@@ -9,10 +9,29 @@ import {
 } from './human-action-id';
 import type { ReplyContentDto } from '../shared/dtos/agent-reply-payload.dto';
 
-const DISAMBIGUATION_LABEL_MAX = 60;
+const LISTED_OPTION_LABEL_MAX = 200;
+
+/**
+ * Letters, not full labels, on `choose`/disambiguation buttons. Chat platform
+ * button UIs (Telegram inline keyboards especially) truncate or wrap long
+ * label text badly; the full text is always listed in the message body
+ * instead, and the button just needs to be tappable and short.
+ */
+const OPTION_LETTERS = 'ABCDEFGHIJ';
+
+function optionLetter(index: number): string {
+  return OPTION_LETTERS[index] ?? String(index + 1);
+}
 
 function button(id: string, label: string, style: 'default' | 'primary'): ButtonElement {
   return { type: 'button', id, label, style };
+}
+
+/** "A. <label>\nB. <label>\n..." — the full option text, always in the message. */
+function buildOptionsListText(labels: string[]): TextElement {
+  const lines = labels.map((label, index) => `*${optionLetter(index)}.* ${truncate(label, LISTED_OPTION_LABEL_MAX)}`);
+
+  return { type: 'text', content: lines.join('\n') };
 }
 
 function attribution(interaction: Pick<HumanInteractionEntity, 'fromLabel'>): string | undefined {
@@ -47,15 +66,17 @@ export function buildPendingContent(interaction: HumanInteractionEntity): ReplyC
     }
 
     case HumanInteractionKindEnum.CHOOSE: {
+      const options: HumanInteractionOption[] = interaction.options ?? [];
       const card: CardElement = {
         type: 'card',
         title: interaction.prompt,
         ...(subtitle ? { subtitle } : {}),
         children: [
+          buildOptionsListText(options.map((option) => option.label)),
           {
             type: 'actions',
-            children: (interaction.options ?? []).map((option) =>
-              button(buildHumanOptionActionId(interaction.identifier, option.id), option.label, 'default')
+            children: options.map((option, index) =>
+              button(buildHumanOptionActionId(interaction.identifier, option.id), optionLetter(index), 'default')
             ),
           } satisfies ActionsElement,
         ],
@@ -123,7 +144,7 @@ function resolveStatusLine(interaction: HumanInteractionEntity): string {
 
 /**
  * "Which question does this answer?" card shown when a bare reply arrives
- * while several asks are pending.
+ * while several asks are pending. Same letter-button convention as `choose`.
  */
 export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[]): CardElement {
   return {
@@ -131,10 +152,11 @@ export function buildDisambiguationCard(pendingAsks: HumanInteractionEntity[]): 
     title: 'Which question does this answer?',
     subtitle: 'You have several pending questions — pick the one your reply belongs to.',
     children: [
+      buildOptionsListText(pendingAsks.map((ask) => ask.prompt)),
       {
         type: 'actions',
-        children: pendingAsks.map((ask) =>
-          button(buildHumanDisambiguationActionId(ask.identifier), truncate(ask.prompt, DISAMBIGUATION_LABEL_MAX), 'default')
+        children: pendingAsks.map((ask, index) =>
+          button(buildHumanDisambiguationActionId(ask.identifier), optionLetter(index), 'default')
         ),
       } satisfies ActionsElement,
     ],

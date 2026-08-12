@@ -7,6 +7,7 @@
 npx @novu/human setup
 npx @novu/human setup telegram
 npx @novu/human setup slack
+npx @novu/human setup email
 
 # Forever after, by any agent on the machine:
 human ask "Which environment should I deploy to?"
@@ -17,7 +18,7 @@ human tell "Nightly build finished — 0 failures."
 
 ## How it works
 
-- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links a channel — Telegram via QR, Slack via app install. Run it again with another channel to add more; `human channels` lists them and `human channels --default slack` switches where interactions land by default.
+- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links a channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more; `human channels` lists them and `human channels --default slack` switches where interactions land by default.
 - Agents stay channel-blind: routing is the human's preference. `--via telegram|slack` exists as a rare per-call override.
 - Each command delivers a one-off message (with action buttons where relevant) and **blocks** until the human answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI resolves and your agent continues.
@@ -45,3 +46,19 @@ human tell "Nightly build finished — 0 failures."
 ## Auth
 
 `setup` stores credentials in `~/.novu/human.json`. Alternatively set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment.
+
+## Teaching your coding agent to use it
+
+`setup` offers to install a skill (the [agentskills.io](https://agentskills.io) `SKILL.md` format) that teaches
+Claude Code, Cursor, and other coding agents *when* to reach for `human` — background/autonomous runs, risky or
+irreversible actions, genuine multi-way decisions — versus just asking you directly in an active chat. It
+auto-detects which agents you have configured in the project (`.claude/`, `.cursor/`, etc.) and falls back to the
+most common ones if none are detected.
+
+```bash
+human setup                      # offers to install the skill at the end (Y/n prompt)
+human skill install               # install/reinstall explicitly, any time
+human skill install --host claude cursor   # target specific hosts
+```
+
+Pass `--skill` / `--no-skill` to `human setup` to force the choice non-interactively.

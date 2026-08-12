@@ -70,12 +70,23 @@ export class SetupHumanRelay {
   }
 
   private async ensureSubscriber(command: SetupHumanRelayCommand): Promise<void> {
+    const email = command.email?.trim().toLowerCase();
+
     const existing = await this.subscriberRepository.findOne({
       subscriberId: command.subscriberId,
       _environmentId: command.environmentId,
     });
 
     if (existing) {
+      // Email identity powers the email channel (delivery target + inbound
+      // reply resolution live on Subscriber.email — no ChannelEndpoint).
+      if (email && existing.email !== email) {
+        await this.subscriberRepository.update(
+          { subscriberId: command.subscriberId, _environmentId: command.environmentId },
+          { $set: { email } }
+        );
+      }
+
       return;
     }
 
@@ -83,6 +94,7 @@ export class SetupHumanRelay {
       subscriberId: command.subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      ...(email ? { email } : {}),
     });
   }
 }

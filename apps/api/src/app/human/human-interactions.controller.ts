@@ -171,6 +171,7 @@ export class HumanInteractionsController {
         userId: user._id,
         subscriberId: body.subscriberId,
         agentIdentifier: body.agentIdentifier,
+        email: body.email,
       })
     );
   }

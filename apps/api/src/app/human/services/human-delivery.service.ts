@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ChannelEndpointEntity, ChannelEndpointRepository, HumanInteractionEntity } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import {
+  ChannelEndpointEntity,
+  ChannelEndpointRepository,
+  HumanInteractionEntity,
+  IntegrationRepository,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { buildPendingContent } from '../../agents/human-relay/human-card.builder';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 
@@ -10,14 +16,17 @@ export interface ResolvedHumanTarget {
 }
 
 /**
- * Resolves where a human interaction gets delivered (the subscriber's linked
- * channel endpoint on the relay integration) and performs the one-off DM send
- * through the agents conversation-runtime.
+ * Resolves where a human interaction gets delivered and performs the one-off
+ * DM send through the agents conversation-runtime. Chat platforms bind the
+ * human via a ChannelEndpoint; email identity lives on `Subscriber.email`
+ * (same model as the agents email channel — no endpoint row).
  */
 @Injectable()
 export class HumanDeliveryService {
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly subscriberRepository: SubscriberRepository,
     private readonly outboundGateway: OutboundGateway
   ) {}
 
@@ -27,6 +36,22 @@ export class HumanDeliveryService {
     subscriberId: string;
     integrationIdentifier: string;
   }): Promise<ResolvedHumanTarget> {
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      identifier: params.integrationIdentifier,
+    });
+
+    if (!integration) {
+      throw new NotFoundException(
+        `Integration "${params.integrationIdentifier}" was not found. Run \`human setup\` to connect a channel.`
+      );
+    }
+
+    if (integration.channel === ChannelTypeEnum.EMAIL) {
+      return this.resolveEmailTarget(params);
+    }
+
     const endpoint = await this.channelEndpointRepository.findOne({
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
@@ -56,6 +81,24 @@ export class HumanDeliveryService {
     );
 
     return { platformMessageId: sent.messageId, platformThreadId: sent.platformThreadId };
+  }
+
+  private async resolveEmailTarget(params: {
+    environmentId: string;
+    subscriberId: string;
+  }): Promise<ResolvedHumanTarget> {
+    const subscriber = await this.subscriberRepository.findOne({
+      _environmentId: params.environmentId,
+      subscriberId: params.subscriberId,
+    });
+
+    if (!subscriber?.email) {
+      throw new NotFoundException(
+        `Human "${params.subscriberId}" has no email address on file. Run \`human setup email\` to add one.`
+      );
+    }
+
+    return { platform: 'email', platformUserId: subscriber.email };
   }
 
   private toTarget(endpoint: ChannelEndpointEntity): ResolvedHumanTarget {

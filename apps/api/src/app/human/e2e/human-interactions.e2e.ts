@@ -244,6 +244,15 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const interaction = createRes.body.data;
       expect(interaction.options).to.have.length(2);
 
+      // Full option text goes in the message body; buttons are just letters —
+      // Telegram (and most chat UIs) render long button labels badly.
+      const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
+      const sentPayload = JSON.stringify(sends[sends.length - 1].payload);
+      expect(sentPayload).to.include('Canary');
+      expect(sentPayload).to.include('Blue-green');
+      const markup = sends[sends.length - 1].payload.reply_markup as { inline_keyboard: Array<Array<{ text: string }>> };
+      expect(markup.inline_keyboard[0].map((btn) => btn.text)).to.deep.equal(['A', 'B']);
+
       await clickAction(`human:${interaction.id}:opt:${interaction.options[1].id}`);
 
       const getRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
@@ -341,6 +350,59 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
 
       const again = await session.testAgent.post(`/v1/human/interactions/${interaction.id}/cancel`);
       expect(again.body.data.status).to.equal(HumanInteractionStatusEnum.CANCELED);
+    });
+  });
+
+  describe('email channel', () => {
+    it('setup stamps the subscriber email and updates it on re-run', async () => {
+      const withEmail = await session.testAgent
+        .post('/v1/human/setup')
+        .send({ subscriberId, email: 'Human@Example.com' });
+      expect(withEmail.status).to.equal(200);
+
+      const { SubscriberRepository } = await import('@novu/dal');
+      const subscriberRepository = new SubscriberRepository();
+      let subscriber = await subscriberRepository.findOne({
+        _environmentId: session.environment._id,
+        subscriberId,
+      });
+      expect(subscriber?.email).to.equal('human@example.com');
+
+      await session.testAgent.post('/v1/human/setup').send({ subscriberId, email: 'other@example.com' });
+      subscriber = await subscriberRepository.findOne({ _environmentId: session.environment._id, subscriberId });
+      expect(subscriber?.email).to.equal('other@example.com');
+    });
+
+    it('rejects email-channel interactions when the human has no email on file', async () => {
+      const emailIntegration = await integrationRepository.create({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        providerId: 'novu-email' as never,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: {},
+        active: true,
+        identifier: `email-human-e2e-${Date.now()}`,
+        priority: 1,
+        primary: false,
+        deleted: false,
+      });
+      await agentIntegrationRepository.create({
+        _agentId: relayAgentId,
+        _integrationId: emailIntegration._id,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      });
+
+      const res = await session.testAgent.post('/v1/human/interactions').send({
+        kind: 'tell',
+        prompt: 'hello',
+        to: subscriberId,
+        integrationIdentifier: emailIntegration.identifier,
+        agentIdentifier: relayAgentIdentifier,
+      });
+
+      expect(res.status).to.equal(404);
+      expect(res.body.message).to.match(/no email address on file/i);
     });
   });
 

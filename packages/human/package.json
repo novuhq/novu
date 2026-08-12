@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.json",
+    "build": "pnpm prebuild && tsc -p tsconfig.json && node -e \"require('fs').cpSync('src/skills/content','dist/src/skills/content',{recursive:true})\"",
     "build:prod": "pnpm build",
     "test": "vitest run",
     "test:watch": "vitest --watch",

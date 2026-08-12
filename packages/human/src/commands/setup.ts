@@ -5,6 +5,7 @@ import pc from 'picocolors';
 import { createHumanApiClient, HumanApiError, type HumanApiClient } from '../api/client';
 import { createInteraction, setupHumanRelay } from '../api/human';
 import {
+  addAgentEmailIntegration,
   bootstrapKeylessSession,
   consumeTelegramMobileLink,
   createSlackIntegration,
@@ -32,13 +33,14 @@ import {
 import { handleError } from './interact';
 import { renderQR } from '../qr';
 import { pollUntil, sleep } from '../poll';
+import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
 
 const CHANNEL_POLL_INTERVAL_MS = 2_000;
 const CHANNEL_POLL_TIMEOUT_MS = 5 * 60_000;
 const CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
 const BOTFATHER_URL = 'https://t.me/botfather';
 
-const SUPPORTED_CHANNELS = ['telegram', 'slack'] as const;
+const SUPPORTED_CHANNELS = ['telegram', 'slack', 'email'] as const;
 type SetupChannel = (typeof SUPPORTED_CHANNELS)[number];
 
 interface SetupOptions {
@@ -46,7 +48,10 @@ interface SetupOptions {
   secretKey?: string;
   telegramBotToken?: string;
   slackConfigToken?: string;
+  email?: string;
   agentIdentifier?: string;
+  /** Tri-state: undefined = ask (TTY) / skip (non-TTY); true/false = explicit `--skill`/`--no-skill`. */
+  skill?: boolean;
 }
 
 export async function setupCommand(channelArg: string | undefined, options: SetupOptions): Promise<never> {
@@ -86,7 +91,9 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     const integrationIdentifier =
       channel === 'telegram'
         ? await connectTelegram(client, relay.agentIdentifier, subscriberId, options)
-        : await connectSlack(client, relay.agentId, relay.agentIdentifier, subscriberId, options);
+        : channel === 'slack'
+          ? await connectSlack(client, relay.agentId, relay.agentIdentifier, subscriberId, options)
+          : await connectEmail(client, relay.agentIdentifier, subscriberId, options);
 
     // 4. Persist config — first linked channel becomes the default.
     const channels = (existing?.channels ?? []).filter((entry) => entry.platform !== channel);
@@ -125,9 +132,48 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
         `  ${pc.bold('human approve "Deploy to production?"')}\n` +
         `  ${pc.bold('human tell "Build finished."')}\n`
     );
+
+    await maybeInstallSkill(options);
     process.exit(0);
   } catch (err) {
     handleError(err);
+  }
+}
+
+/**
+ * Offers to teach the coding agent running in this project (Claude Code,
+ * Cursor, ...) when to reach for `human`. Explicit `--skill`/`--no-skill`
+ * always wins; otherwise this prompts on a TTY and stays silent (no install)
+ * in headless runs, since dropping files into a CI checkout is a surprise.
+ */
+async function maybeInstallSkill(options: SetupOptions): Promise<void> {
+  if (options.skill === false) {
+    return;
+  }
+
+  if (options.skill !== true) {
+    if (!process.stdin.isTTY) {
+      return;
+    }
+
+    const answer = (await promptLine('\nTeach your coding agent how to use `human`? [Y/n] ')).trim().toLowerCase();
+    if (answer === 'n' || answer === 'no') {
+      return;
+    }
+  }
+
+  try {
+    const installed = installHumanSkill(process.cwd(), resolveSkillHosts(process.cwd()));
+    if (installed.length === 0) {
+      return;
+    }
+
+    info(`Installed the human-cli skill: ${installed.map((entry) => entry.destination).join(', ')}`);
+  } catch (err) {
+    // Non-fatal — setup itself already succeeded.
+    process.stdout.write(
+      `${pc.yellow('•')} Could not install the coding-agent skill (${err instanceof Error ? err.message : String(err)}). Run \`human skill install\` later.\n`
+    );
   }
 }
 
@@ -138,8 +184,8 @@ async function resolveChannelChoice(channelArg: string | undefined): Promise<Set
       return normalized as SetupChannel;
     }
 
-    if (normalized === 'whatsapp' || normalized === 'email') {
-      throw new Error(`${normalized} is not supported by \`human setup\` yet — use telegram or slack for now.`);
+    if (normalized === 'whatsapp') {
+      throw new Error('whatsapp is not supported by `human setup` yet — use telegram, slack, or email for now.');
     }
 
     throw new Error(`Unknown channel "${channelArg}". Supported: ${SUPPORTED_CHANNELS.join(', ')}.`);
@@ -152,7 +198,8 @@ async function resolveChannelChoice(channelArg: string | undefined): Promise<Set
   process.stdout.write(
     `\nWhere should agents reach you?\n` +
       `  ${pc.bold('1')}. Telegram ${pc.dim('(fastest — a private bot, QR link)')}\n` +
-      `  ${pc.bold('2')}. Slack    ${pc.dim('(your workspace — app install)')}\n\n`
+      `  ${pc.bold('2')}. Slack    ${pc.dim('(your workspace — app install)')}\n` +
+      `  ${pc.bold('3')}. Email    ${pc.dim('(buttons in your inbox, reply to answer)')}\n\n`
   );
 
   const answer = await promptLine(`Channel [1-${SUPPORTED_CHANNELS.length}]: `);
@@ -200,6 +247,51 @@ async function connectTelegram(
   info('Telegram connected.');
 
   return integrationIdentifier;
+}
+
+// --- Email ------------------------------------------------------------------
+
+/**
+ * Email needs no linking dance: the relay gets a per-agent Novu Email
+ * integration with a shared inbound address, and the human's identity is
+ * their email on the subscriber (delivery target + inbound reply resolution —
+ * no ChannelEndpoint involved).
+ */
+async function connectEmail(
+  client: HumanApiClient,
+  agentIdentifier: string,
+  subscriberId: string,
+  options: SetupOptions
+): Promise<string> {
+  info('Creating an email integration...');
+  const link = await addAgentEmailIntegration(client, agentIdentifier);
+  const integrationIdentifier = link.integration.identifier;
+  const inboundAddress = link.integration.sharedInboundAddress;
+
+  if (!options.email && !process.stdin.isTTY) {
+    throw new Error('Pass --email <address> when running `human setup email` non-interactively.');
+  }
+
+  const email = options.email?.trim().toLowerCase() ?? (await promptForEmail());
+
+  info('Registering your email address...');
+  await setupHumanRelay(client, { subscriberId, agentIdentifier, email });
+
+  if (inboundAddress) {
+    info(`Replies go to ${pc.bold(inboundAddress)} — answering an interaction is just replying to its email.`);
+  }
+
+  return integrationIdentifier;
+}
+
+async function promptForEmail(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const email = (await promptLine('Your email address: ')).trim().toLowerCase();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return email;
+    process.stdout.write(`${pc.yellow('That does not look like an email address.')}\n`);
+  }
+
+  throw new Error('No valid email address provided. Re-run `human setup email` or pass --email.');
 }
 
 // --- Slack ----------------------------------------------------------------

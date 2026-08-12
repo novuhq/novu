@@ -10,7 +10,14 @@ export interface IntegrationRecord {
 }
 
 export interface AgentIntegrationLink {
-  integration: { identifier: string; providerId: string; channel?: string; active?: boolean };
+  integration: {
+    _id?: string;
+    identifier: string;
+    providerId: string;
+    channel?: string;
+    active?: boolean;
+    sharedInboundAddress?: string;
+  };
   connectedAt?: string;
 }
 
@@ -72,6 +79,24 @@ export async function linkAgentIntegration(
   await client.axios.post(`/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`, {
     integrationIdentifier,
   });
+}
+
+/**
+ * `providerId: 'novu-email-agent'` triggers the server's special-case branch
+ * that auto-creates a per-agent Novu Email integration with a unique shared
+ * inbound address (e.g. `human-relay-abc@agentconnect.sh`) and links it in
+ * one shot.
+ */
+export async function addAgentEmailIntegration(
+  client: HumanApiClient,
+  agentIdentifier: string
+): Promise<AgentIntegrationLink> {
+  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
+    { providerId: 'novu-email-agent' }
+  );
+
+  return unwrap(res.data);
 }
 
 export interface TelegramMobileLink {

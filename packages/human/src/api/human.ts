@@ -89,7 +89,7 @@ export async function cancelInteraction(client: HumanApiClient, id: string): Pro
 
 export async function setupHumanRelay(
   client: HumanApiClient,
-  input: { subscriberId: string; agentIdentifier?: string }
+  input: { subscriberId: string; agentIdentifier?: string; email?: string }
 ): Promise<{ agentId: string; agentIdentifier: string; subscriberId: string }> {
   const res = await client.axios.post<
     { data?: { agentId: string; agentIdentifier: string; subscriberId: string } } | {

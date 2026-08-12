@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ChannelEndpointRepository, HumanInteractionRepository, SubscriberRepository } from '@novu/dal';
+import { ChannelEndpointRepository, HumanInteractionRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
@@ -23,6 +23,7 @@ import { WaitInteraction } from './usecases/wait-interaction/wait-interaction.us
   providers: [
     HumanInteractionRepository,
     ChannelEndpointRepository,
+    IntegrationRepository,
     SubscriberRepository,
     HumanDeliveryService,
     CreateInteraction,

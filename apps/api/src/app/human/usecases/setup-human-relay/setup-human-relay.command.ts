@@ -9,4 +9,8 @@ export class SetupHumanRelayCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   agentIdentifier?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
 }

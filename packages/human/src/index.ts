@@ -5,6 +5,7 @@ import { channelsCommand } from './commands/channels';
 import { runInteraction } from './commands/interact';
 import { cancelCommand, listCommand } from './commands/list';
 import { setupCommand } from './commands/setup';
+import { installSkillCommand } from './commands/skill';
 import { waitCommand } from './commands/wait';
 
 const program = new Command();
@@ -20,7 +21,7 @@ program
 function withCommonOptions(command: Command): Command {
   return command
     .option('--to <humanId>', 'address a specific human (defaults to the human from `human setup`)')
-    .option('--via <platform>', 'deliver on a specific linked channel (telegram, slack) instead of the default')
+    .option('--via <platform>', 'deliver on a specific linked channel (telegram, slack, email) instead of the default')
     .option('--from <name>', 'attribution label shown to the human (e.g. "deploy-bot")')
     .option('--ttl <duration>', 'time until the request expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
     .option('--timeout <duration>', 'max time to block waiting (default: block until answered/expired)')
@@ -86,12 +87,15 @@ program
 
 program
   .command('setup')
-  .argument('[channel]', 'channel to link: telegram or slack (interactive picker when omitted)')
+  .argument('[channel]', 'channel to link: telegram, slack, or email (interactive picker when omitted)')
   .option('--api-url <url>', 'Novu API URL override')
   .option('--secret-key <key>', 'use an existing Novu environment instead of keyless')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
   .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
+  .option('--email <address>', 'your email address for the email channel (skips the interactive prompt)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
+  .option('--skill', 'also install the human-cli skill for coding agents (default: prompt on a TTY)')
+  .option('--no-skill', 'skip the coding-agent skill install')
   .description('Connect yourself as the human — links a channel (run again to add more)')
   .action(setupCommand);
 
@@ -101,5 +105,18 @@ program
   .option('--json', 'print JSON')
   .description('List linked channels and manage the default')
   .action(channelsCommand);
+
+const skill = program.command('skill').description('Teach coding agents (Claude Code, Cursor, ...) how to use this CLI');
+
+skill
+  .command('install')
+  .option(
+    '--host <host...>',
+    'install for specific hosts (claude, cursor, windsurf, copilot, gemini, roo, opencode, kiro, agents) — default: auto-detect'
+  )
+  .option('--cwd <dir>', 'project directory to install into (default: current directory)')
+  .option('--json', 'print JSON')
+  .description('Install the human-cli skill so agents know when to ask/approve/choose/tell')
+  .action(installSkillCommand);
 
 program.parse(process.argv);
