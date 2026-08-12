@@ -1,6 +1,8 @@
+import * as dns from 'node:dns';
 import { BadRequestException } from '@nestjs/common';
 import { EmailProviderIdEnum, PushProviderIdEnum, SmsProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
+import { restore, stub } from 'sinon';
 import { validateOutboundIntegrationCredentials } from './validate-outbound-integration-credentials';
 
 async function expectRejection(promise: Promise<void>, messagePart: string): Promise<void> {
@@ -14,6 +16,18 @@ async function expectRejection(promise: Promise<void>, messagePart: string): Pro
 }
 
 describe('validateOutboundIntegrationCredentials', () => {
+  beforeEach(() => {
+    stub(dns.promises, 'lookup').callsFake(((hostname: string) => {
+      const address = hostname === 'private.example.test' ? '10.0.0.5' : '93.184.216.34';
+
+      return Promise.resolve([{ address, family: 4 }]);
+    }) as never);
+  });
+
+  afterEach(() => {
+    restore();
+  });
+
   it('should reject an email webhook URL pointing at the cloud metadata endpoint', async () => {
     await expectRejection(
       validateOutboundIntegrationCredentials(EmailProviderIdEnum.EmailWebhook, {
@@ -60,6 +74,23 @@ describe('validateOutboundIntegrationCredentials', () => {
         authenticateByToken: true,
       }),
       'Auth URL is not allowed'
+    );
+  });
+
+  it('should ignore a generic SMS auth URL when token authentication is disabled', async () => {
+    await validateOutboundIntegrationCredentials(SmsProviderIdEnum.GenericSms, {
+      baseUrl: 'https://sms.example.com/send',
+      domain: 'http://192.168.1.10/auth',
+      authenticateByToken: false,
+    });
+  });
+
+  it('should reject a hostname that resolves to a private network', async () => {
+    await expectRejection(
+      validateOutboundIntegrationCredentials(EmailProviderIdEnum.EmailWebhook, {
+        webhookUrl: 'https://private.example.test/novu',
+      }),
+      'Webhook URL is not allowed'
     );
   });
 

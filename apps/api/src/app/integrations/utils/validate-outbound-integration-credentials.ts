@@ -16,7 +16,7 @@ const { assertSafeSmtpOutboundTargetSync } =
   require('@novu/shared/utils/validate-smtp-outbound-target') as ValidateSmtpOutboundTargetModule;
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { assertSafeOutboundUrl, normalizeOutboundHttpUrl, SsrfBlockedError } =
+const { assertSafeOutboundUrl, normalizeOutboundHttpUrl, resolvePublicAddresses, SsrfBlockedError } =
   require('@novu/shared/utils/ssrf-url-validation') as SsrfUrlValidationModule;
 
 /**
@@ -25,7 +25,7 @@ const { assertSafeOutboundUrl, normalizeOutboundHttpUrl, SsrfBlockedError } =
  * mirrors the send-time guard in the providers; internal targets that are legitimately
  * required must be allow-listed via NOVU_SAFE_OUTBOUND_ALLOW.
  */
-function assertSafeCredentialUrl(rawUrl: string | undefined, fieldLabel: string): void {
+async function assertSafeCredentialUrl(rawUrl: string | undefined, fieldLabel: string): Promise<void> {
   if (!rawUrl?.trim()) {
     return;
   }
@@ -37,7 +37,8 @@ function assertSafeCredentialUrl(rawUrl: string | undefined, fieldLabel: string)
   }
 
   try {
-    assertSafeOutboundUrl(url);
+    const parsedUrl = assertSafeOutboundUrl(url);
+    await resolvePublicAddresses(parsedUrl.hostname);
   } catch (error) {
     if (error instanceof SsrfBlockedError) {
       throw new Error(`${fieldLabel} is not allowed: ${error.message}`);
@@ -73,12 +74,15 @@ export async function validateOutboundIntegrationCredentials(
       providerId === PushProviderIdEnum.PushWebhook ||
       providerId === ToolProviderIdEnum.Webhook
     ) {
-      assertSafeCredentialUrl(credentials.webhookUrl, 'Webhook URL');
+      await assertSafeCredentialUrl(credentials.webhookUrl, 'Webhook URL');
     }
 
     if (providerId === SmsProviderIdEnum.GenericSms) {
-      assertSafeCredentialUrl(credentials.baseUrl, 'Base URL');
-      assertSafeCredentialUrl(credentials.domain, 'Auth URL');
+      await assertSafeCredentialUrl(credentials.baseUrl, 'Base URL');
+
+      if (credentials.authenticateByToken) {
+        await assertSafeCredentialUrl(credentials.domain, 'Auth URL');
+      }
     }
   } catch (error) {
     if (error instanceof Error) {

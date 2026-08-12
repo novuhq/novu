@@ -611,9 +611,9 @@ The Dashboard container is served separately on its configured port (default **4
   </Accordion>
 
   <Accordion title="Why is my provider webhook URL rejected?">
-    The same outbound SSRF protection applies to operator-configured provider destinations, not just bridge URLs. This covers the Email Webhook, Generic SMS, Chat Webhook, Push Webhook, and Tool Webhook integrations.
+    The same outbound SSRF protection applies to provider destinations, not just bridge URLs. This covers the Email Webhook, Generic SMS, Chat Webhook, Push Webhook, and Tool Webhook integrations.
 
-    A private, loopback, link-local, or metadata destination is rejected when you save the integration, and again before each send. To point one of these integrations at an internal service, add its host or CIDR to `NOVU_SAFE_OUTBOUND_ALLOW` on both the API and Worker services:
+    Private, loopback, link-local, or metadata destinations configured on Email Webhook, Generic SMS, Push Webhook, and Tool Webhook integrations are rejected when you save the integration and checked again before each send. Chat Webhook destinations come from subscriber channel credentials, so they are checked during delivery. To point one of these integrations at an internal service, add its host or CIDR to `NOVU_SAFE_OUTBOUND_ALLOW` on both the API and Worker services:
 
     ```bash
     NOVU_SAFE_OUTBOUND_ALLOW=sms-gateway.internal,10.0.0.0/8
