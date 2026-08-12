@@ -200,10 +200,13 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Linked integration identifiers for an agent (one round trip).
+   * Linked integrations for an agent (one round trip), each with its `identifier`
+   * and `providerId`. Webhook/token channels (e.g. Slack) are matched by identifier,
+   * while phone-based providers (WhatsApp, Sendblue) are matched by providerId since
+   * their auto-resolved channels carry no integration identifier.
    * `disconnectedAt: null` is explicit — aggregation skips the schema exclusion hook.
    */
-  async listLinkedIntegrationIdentifiers({
+  async listLinkedIntegrationRefs({
     organizationId,
     environmentId,
     agentId,
@@ -211,7 +214,7 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
     organizationId: string;
     environmentId: string;
     agentId: string;
-  }): Promise<string[]> {
+  }): Promise<Array<{ identifier: string; providerId: string }>> {
     const result = await this.aggregate([
       {
         $match: {
@@ -233,16 +236,19 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
                 active: true,
               },
             },
-            { $project: { _id: 0, identifier: 1 } },
+            { $project: { _id: 0, identifier: 1, providerId: 1 } },
           ],
           as: 'integration',
         },
       },
       { $unwind: '$integration' },
-      { $group: { _id: '$integration.identifier' } },
+      { $group: { _id: '$integration.identifier', providerId: { $first: '$integration.providerId' } } },
     ]);
 
-    return (result as Array<{ _id: unknown }>).map((row) => String(row._id));
+    return (result as Array<{ _id: unknown; providerId: unknown }>).map((row) => ({
+      identifier: String(row._id),
+      providerId: String(row.providerId),
+    }));
   }
 
   async listAgentIntegrationsForAgent({

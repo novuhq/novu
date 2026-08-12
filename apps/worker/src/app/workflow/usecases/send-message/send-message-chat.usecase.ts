@@ -805,16 +805,16 @@ export class SendMessageChat extends SendMessageBase {
     assignedAgentId: string,
     command: SendMessageChannelCommand
   ): Promise<UnifiedChannel[]> {
-    const linkedIntegrationIdentifiers = new Set(
-      await this.agentIntegrationRepository.listLinkedIntegrationIdentifiers({
-        agentId: assignedAgentId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      })
-    );
+    const linkedRefs = await this.agentIntegrationRepository.listLinkedIntegrationRefs({
+      agentId: assignedAgentId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
+    const linkedIntegrationIdentifiers = new Set(linkedRefs.map((ref) => ref.identifier));
+    const linkedProviderIds = new Set(linkedRefs.map((ref) => ref.providerId));
 
     return channels.flatMap((channel) => {
-      const eligible = this.evaluateChannelForAgent(channel, linkedIntegrationIdentifiers);
+      const eligible = this.evaluateChannelForAgent(channel, linkedIntegrationIdentifiers, linkedProviderIds);
 
       return eligible ? [eligible] : [];
     });
@@ -822,16 +822,23 @@ export class SendMessageChat extends SendMessageBase {
 
   private evaluateChannelForAgent(
     channel: UnifiedChannel,
-    linkedIntegrationIdentifiers: Set<string>
+    linkedIntegrationIdentifiers: Set<string>,
+    linkedProviderIds: Set<string>
   ): UnifiedChannel | null {
-    if (channel.type !== 'new') {
-      return null;
+    if (channel.type === 'legacy') {
+      return this.evaluateLegacyChannelForAgent(channel, linkedProviderIds);
     }
 
     const channelGroup = channel.data as IntegrationEndpoints;
 
     if (!linkedIntegrationIdentifiers.has(channelGroup.integrationIdentifier)) {
       return null;
+    }
+
+    // Phone-based providers deliver to a phone number rather than a token-bearing webhook,
+    // so their endpoints are kept as-is once the integration is confirmed linked.
+    if (PHONE_BASED_CHAT_PROVIDERS.includes(channelGroup.providerId as ChatProviderIdEnum)) {
+      return channel;
     }
 
     const supported = filterAgentSupportedEndpoints(channelGroup.channelData);
@@ -843,6 +850,28 @@ export class SendMessageChat extends SendMessageBase {
     channelGroup.channelData = supported;
 
     return channel;
+  }
+
+  /**
+   * Auto-resolved phone-based chat channels (WhatsApp, Sendblue) carry no integration
+   * identifier and select their integration by providerId, so they are gated by matching
+   * the agent's linked provider ids. This keeps only the phone provider(s) the agent is
+   * actually connected to instead of fanning out to every configured phone channel.
+   */
+  private evaluateLegacyChannelForAgent(
+    channel: UnifiedChannel,
+    linkedProviderIds: Set<string>
+  ): UnifiedChannel | null {
+    const legacyChannel = channel.data as IChannelSettings;
+
+    if (
+      PHONE_BASED_CHAT_PROVIDERS.includes(legacyChannel.providerId as ChatProviderIdEnum) &&
+      linkedProviderIds.has(legacyChannel.providerId)
+    ) {
+      return channel;
+    }
+
+    return null;
   }
 
   private async isRichChatEnabled(command: SendMessageChannelCommand): Promise<boolean> {
@@ -900,6 +929,7 @@ export class SendMessageChat extends SendMessageBase {
       transactionId: command.transactionId,
       content: this.storeContent() ? content : null,
       providerId,
+      templateIdentifier: command.identifier,
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,

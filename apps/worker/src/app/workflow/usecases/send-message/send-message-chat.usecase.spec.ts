@@ -365,7 +365,9 @@ describe('SendMessageChat - agent assigned path', () => {
       findOne: sinon.stub().resolves(workflowAgentIdentifier ? { _id: 'agent_from_workflow' } : null),
     };
     const agentIntegrationRepository = {
-      listLinkedIntegrationIdentifiers: sinon.stub().resolves(linked ? ['slack-main'] : []),
+      listLinkedIntegrationRefs: sinon
+        .stub()
+        .resolves(linked ? [{ identifier: 'slack-main', providerId: ChatProviderIdEnum.Slack }] : []),
     };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
@@ -682,7 +684,11 @@ describe('SendMessageChat - agent assigned path', () => {
       { execute: sinon.stub().resolves(undefined) } as never,
       { execute: sinon.stub().resolves([]) } as never,
       { findOne: sinon.stub().resolves(null) } as never,
-      { listLinkedIntegrationIdentifiers: sinon.stub().resolves([]) } as never,
+      {
+        listLinkedIntegrationRefs: sinon
+          .stub()
+          .resolves([{ identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
+      } as never,
       { getFlag: sinon.stub().resolves(false) } as never
     );
 
@@ -701,5 +707,91 @@ describe('SendMessageChat - agent assigned path', () => {
         _agentId: 'agent_1',
       },
     });
+  });
+
+  it('gates to the agent-linked phone provider and drops other phone channels from fan-out', async () => {
+    const chatHandlerSend = sinon.stub().resolves({
+      id: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+      date: new Date().toISOString(),
+    });
+    const whatsappIntegration = {
+      _id: 'integration_wa',
+      identifier: 'whatsapp-main',
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { apiToken: 'token', phoneNumberIdentification: '123' },
+    };
+
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns({
+      send: chatHandlerSend,
+      resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
+    } as never);
+
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'message_1' }),
+      updateMessageStatus: sinon.stub().resolves(undefined),
+      update: sinon.stub().resolves(undefined),
+    };
+    // Both WhatsApp and Sendblue have active integrations selectable for this subscriber's phone.
+    const selectIntegration = {
+      execute: sinon.stub().callsFake(async (command: { providerId?: string }) => {
+        if (command.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
+          return whatsappIntegration;
+        }
+        if (command.providerId === ChatProviderIdEnum.Sendblue) {
+          return { ...whatsappIntegration, _id: 'integration_sb', providerId: ChatProviderIdEnum.Sendblue };
+        }
+
+        return null;
+      }),
+    };
+    const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
+
+    const usecase = new SendMessageChat(
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      selectIntegration as never,
+      {} as never,
+      { execute: sinon.stub().resolves({ messageTemplate: undefined }) } as never,
+      createExecutionDetails as never,
+      {
+        get: () => ({
+          getTranslationsList: async () => ({ namespaces: [], resources: {}, defaultLocale: 'en' }),
+        }),
+      } as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub().resolves([]) } as never,
+      { findOne: sinon.stub().resolves(null) } as never,
+      {
+        listLinkedIntegrationRefs: sinon
+          .stub()
+          .resolves([{ identifier: 'whatsapp-main', providerId: ChatProviderIdEnum.WhatsAppBusiness }]),
+      } as never,
+      { getFlag: sinon.stub().resolves(false) } as never
+    );
+
+    const command = buildAgentCommand({ jobAgentId: 'agent_1' });
+    (command.compileContext.subscriber as { phone?: string; channels?: unknown[] }).phone = '+15551234567';
+    (command.compileContext.subscriber as { channels?: unknown[] }).channels = [];
+
+    const result = await usecase.execute(command);
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    // Only the agent-linked WhatsApp send fires — Sendblue is gated out, so no fan-out.
+    sinon.assert.calledOnce(chatHandlerSend);
+    const usedFallback = createExecutionDetails.execute
+      .getCalls()
+      .some((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK);
+    expect(usedFallback).to.equal(false);
+    expect(messageRepository.create.firstCall.args[0].providerId).to.equal(ChatProviderIdEnum.WhatsAppBusiness);
+  });
+
+  it('persists templateIdentifier so workflow-origin hydration can name the workflow', async () => {
+    const { usecase, messageRepository } = buildAgentUsecase({ jobAgentId: 'agent_1' });
+
+    await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(messageRepository.create.firstCall.args[0].templateIdentifier).to.equal('wf-identifier');
   });
 });
