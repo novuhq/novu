@@ -53,6 +53,71 @@ describe('InboundEmailParse terminal-trace policy', () => {
     sandbox.restore();
   });
 
+  it('routes an email using the CC recipient from the SMTP envelope', async () => {
+    const command = buildCommand();
+    command.to = [{ address: 'customer@example.com', name: '' }];
+    command.cc = [{ address: 'support@verified-domain.com', name: '' }];
+    command.envelopeTo = [{ address: 'support@verified-domain.com', args: false }];
+    domainRouteStrategy.execute.resolves({
+      organizationId: 'org_1',
+      environmentId: 'env_1',
+      transactionId: 'txn_1',
+      strategy: 'domain-route',
+      status: 200,
+    });
+
+    await usecase.execute(command);
+
+    sinon.assert.calledOnceWithExactly(
+      domainRouteStrategy.execute,
+      command,
+      'support@verified-domain.com'
+    );
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+  });
+
+  it('routes an email using a BCC recipient that is only present in the SMTP envelope', async () => {
+    const command = buildCommand();
+    command.to = [{ address: 'customer@example.com', name: '' }];
+    command.cc = [];
+    command.envelopeTo = [{ address: 'agent@verified-domain.com', args: false }];
+    domainRouteStrategy.execute.resolves({
+      organizationId: 'org_1',
+      environmentId: 'env_1',
+      transactionId: 'txn_1',
+      strategy: 'agent',
+      status: 200,
+    });
+
+    await usecase.execute(command);
+
+    sinon.assert.calledOnceWithExactly(domainRouteStrategy.execute, command, 'agent@verified-domain.com');
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+  });
+
+  it('checks subsequent envelope recipients when an earlier recipient has no Novu domain', async () => {
+    const command = buildCommand();
+    command.to = [{ address: 'customer@example.com', name: '' }];
+    command.envelopeTo = [
+      { address: 'customer@example.com', args: false },
+      { address: 'support@verified-domain.com', args: false },
+    ];
+    domainRouteStrategy.execute.onFirstCall().rejects(new BadRequestException('No domain found'));
+    domainRouteStrategy.execute.onSecondCall().resolves({
+      organizationId: 'org_1',
+      environmentId: 'env_1',
+      transactionId: 'txn_1',
+      strategy: 'domain-route',
+      status: 200,
+    });
+
+    await usecase.execute(command);
+
+    sinon.assert.calledTwice(domainRouteStrategy.execute);
+    expect(domainRouteStrategy.execute.getCall(1).args[1]).to.equal('support@verified-domain.com');
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+  });
+
   it('traces 422 InboundParseProcessingError once and does not rethrow', async () => {
     domainRouteStrategy.execute.rejects(
       new InboundParseProcessingError('Domain is not verified', {

@@ -3,6 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
 import {
   InboundParseDroppedError,
+  InboundParseOutcome,
   InboundParseProcessingError,
   isRetriableInboundFailureStatus,
 } from './inbound-parse-outcome';
@@ -50,14 +51,15 @@ export class InboundEmailParse {
   }
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
-    const toAddress = command.to[0].address;
+    const recipientAddresses = getRecipientAddresses(command);
 
-    this.logger.info({ toAddress }, 'Received new email to parse');
+    this.logger.info({ recipientAddresses }, 'Received new email to parse');
 
     try {
-      const outcome = this.isReplyToAddress(toAddress)
-        ? await this.replyToStrategy.execute(command)
-        : await this.domainRouteStrategy.execute(command);
+      const replyToAddress = recipientAddresses.find((address) => this.isReplyToAddress(address));
+      const outcome = replyToAddress
+        ? await this.replyToStrategy.execute(command, replyToAddress)
+        : await this.executeDomainRoute(command, recipientAddresses);
 
       if (outcome) {
         await this.logInboundEmailRequest.execute({ command, outcome });
@@ -116,9 +118,54 @@ export class InboundEmailParse {
     }
   }
 
+  private async executeDomainRoute(
+    command: InboundEmailParseCommand,
+    recipientAddresses: string[]
+  ): Promise<InboundParseOutcome | undefined> {
+    let lastBadRequest: BadRequestException | undefined;
+
+    for (const recipientAddress of recipientAddresses) {
+      try {
+        return await this.domainRouteStrategy.execute(command, recipientAddress);
+      } catch (error) {
+        if (!(error instanceof BadRequestException)) {
+          throw error;
+        }
+
+        lastBadRequest = error;
+      }
+    }
+
+    throw lastBadRequest ?? new BadRequestException('Inbound email has no recipient address');
+  }
+
   private isReplyToAddress(address: string): boolean {
     return address.includes('-nv-e=');
   }
+}
+
+function getRecipientAddresses(command: InboundEmailParseCommand): string[] {
+  const recipients: unknown[] = [...(command.envelopeTo ?? []), ...(command.to ?? []), ...(command.cc ?? [])];
+  const addresses = recipients
+    .map(getRecipientAddress)
+    .filter((address): address is string => Boolean(address))
+    .map((address) => address.toLowerCase());
+
+  return [...new Set(addresses)];
+}
+
+function getRecipientAddress(recipient: unknown): string | undefined {
+  if (typeof recipient === 'string') {
+    return recipient;
+  }
+
+  if (!recipient || typeof recipient !== 'object' || !('address' in recipient)) {
+    return undefined;
+  }
+
+  const address = recipient.address;
+
+  return typeof address === 'string' ? address : undefined;
 }
 
 function extractMessage(error: unknown): string {

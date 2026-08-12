@@ -46,8 +46,11 @@ export class DomainRouteStrategy {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome | undefined> {
-    const toAddress = command.to[0].address;
+  async execute(
+    command: InboundEmailParseCommand,
+    recipientAddress = command.to[0].address
+  ): Promise<InboundParseOutcome | undefined> {
+    const toAddress = recipientAddress;
 
     this.logger.info({ toAddress }, 'Processing domain-route email');
 
