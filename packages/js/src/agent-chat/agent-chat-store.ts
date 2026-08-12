@@ -8,6 +8,11 @@ import {
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 import type { AgentChatChange, AgentChatChangeSource } from './types';
 
+type McpConnectionResult = {
+  status: 'connected' | 'failed';
+  message?: string;
+};
+
 /**
  * Stable local identity for one conversation holder.
  * The object reference does not change. Timeline fields are overwritten in place.
@@ -32,6 +37,8 @@ export type ConversationEntry = AgentConversationState & {
    * so a resolved action must not fall out and be reported again.
    */
   reportedActionIds: Set<string>;
+  /** Terminal MCP results retained while history pages load independently. */
+  mcpConnectionResults: Map<string, McpConnectionResult>;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
 };
@@ -115,6 +122,36 @@ export class AgentChatStore {
     }
   }
 
+  #recordMcpConnectionResults(entry: ConversationEntry, envelopes: AgentEventEnvelope[]): void {
+    for (const { event } of envelopes) {
+      if (event.type === 'mcp-connection-result') {
+        entry.mcpConnectionResults.set(event.actionId, {
+          status: event.status,
+          message: event.message,
+        });
+      }
+    }
+  }
+
+  #applyMcpConnectionResults(entry: ConversationEntry, messages: AgentMessage[]): AgentMessage[] {
+    if (entry.mcpConnectionResults.size === 0) {
+      return messages;
+    }
+
+    return messages.map((message) => ({
+      ...message,
+      parts: message.parts.map((part) => {
+        if (part.type !== 'mcp-connection') {
+          return part;
+        }
+
+        const result = entry.mcpConnectionResults.get(part.actionId);
+
+        return result ? { ...part, state: result.status, message: result.message } : part;
+      }),
+    }));
+  }
+
   clear(): void {
     this.#byKey.clear();
   }
@@ -176,6 +213,7 @@ export class AgentChatStore {
       key: args.key,
       olderCursor: null,
       reportedActionIds: new Set(),
+      mcpConnectionResults: new Map(),
     };
     this.#byKey.set(args.key, entry);
 
@@ -246,13 +284,14 @@ export class AgentChatStore {
     olderCursor: string | null
   ): ConversationEntry {
     const previous = entry.messages;
+    this.#recordMcpConnectionResults(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
     const localOnly = previous.filter((message) => !serverIds.has(message.id));
 
     applyState(entry, {
       ...folded,
-      messages: [...folded.messages, ...localOnly],
+      messages: this.#applyMcpConnectionResults(entry, [...folded.messages, ...localOnly]),
     });
     entry.olderCursor = olderCursor;
 
@@ -270,9 +309,13 @@ export class AgentChatStore {
     envelopes: AgentEventEnvelope[],
     olderCursor: string | null
   ): ConversationEntry {
+    this.#recordMcpConnectionResults(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const existingIds = new Set(entry.messages.map((message) => message.id));
-    const olderMessages = folded.messages.filter((message) => !existingIds.has(message.id));
+    const olderMessages = this.#applyMcpConnectionResults(
+      entry,
+      folded.messages.filter((message) => !existingIds.has(message.id))
+    );
 
     entry.messages = [...olderMessages, ...entry.messages];
     entry.olderCursor = olderCursor;
@@ -293,7 +336,12 @@ export class AgentChatStore {
     }
 
     const previous = entry.messages;
-    applyState(entry, applyEnvelope(entry, envelope));
+    this.#recordMcpConnectionResults(entry, [envelope]);
+    const next = applyEnvelope(entry, envelope);
+    applyState(entry, {
+      ...next,
+      messages: this.#applyMcpConnectionResults(entry, next.messages),
+    });
     this.#publish(entry, { kind: 'live', envelope }, messagesAddedSince(previous, entry.messages));
 
     return entry;

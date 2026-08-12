@@ -55,6 +55,7 @@ import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oaut
 import { type DcrTokenExchangeOutcome, resolveDcrTokenExchangeOutcome } from './token-exchange-outcome';
 
 const MAX_ERROR_MESSAGE_LEN = 256;
+const MCP_CONNECTION_FAILED_MESSAGE = 'Connection failed. Try again.';
 
 class AlreadyConnectedBailout extends Error {
   readonly status = 'connected' as const;
@@ -863,23 +864,27 @@ export class McpOAuthCallback {
     );
 
     if (stateData.platform === AgentPlatformEnum.WEB_CHAT && stateData.toolUseId && stateData.conversationId) {
-      const conversation = await this.agentConversationService.getConversation(
-        stateData.conversationId,
-        stateData.environmentId,
-        stateData.organizationId
-      );
-      if (conversation) {
-        await this.agentConversationService.persistMcpConnectionResult({
-          conversationId: stateData.conversationId,
-          environmentId: stateData.environmentId,
-          organizationId: stateData.organizationId,
-          agentIdentifier: stateData.agentIdentifier ?? '',
-          channel: this.agentConversationService.getPrimaryChannel(conversation),
-          actionId: stateData.toolUseId,
-          mcpId: stateData.mcpId,
-          status: 'failed',
-          message: error,
-        });
+      try {
+        const conversation = await this.agentConversationService.getConversation(
+          stateData.conversationId,
+          stateData.environmentId,
+          stateData.organizationId
+        );
+        if (conversation) {
+          await this.agentConversationService.persistMcpConnectionResult({
+            conversationId: stateData.conversationId,
+            environmentId: stateData.environmentId,
+            organizationId: stateData.organizationId,
+            agentIdentifier: stateData.agentIdentifier ?? '',
+            channel: this.agentConversationService.getPrimaryChannel(conversation),
+            actionId: stateData.toolUseId,
+            mcpId: stateData.mcpId,
+            status: 'failed',
+            message: MCP_CONNECTION_FAILED_MESSAGE,
+          });
+        }
+      } catch (err) {
+        this.logger.warn(err, 'Failed to record MCP connection failure');
       }
     }
   }
