@@ -58,10 +58,8 @@ afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
-describe('with SSRF protection (enterprise cloud)', () => {
+describe('with an allow-listed target', () => {
   beforeAll(() => {
-    process.env.NOVU_ENTERPRISE = 'true';
-    process.env.IS_SELF_HOSTED = 'false';
     process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = '127.0.0.1';
     const realLookup = dns.promises.lookup.bind(dns.promises);
     vi.spyOn(dns.promises, 'lookup').mockImplementation(((hostname: string, opts: unknown): unknown => {
@@ -78,8 +76,6 @@ describe('with SSRF protection (enterprise cloud)', () => {
   afterAll(() => {
     vi.restoreAllMocks();
     restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_ALLOW);
-    restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
-    restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
   });
 
   test('should trigger generic-sms library correctly', async () => {
@@ -173,18 +169,20 @@ describe('with SSRF protection (enterprise cloud)', () => {
   });
 });
 
-describe('without SSRF protection (self-hosted)', () => {
+describe('on self-hosted builds', () => {
   beforeAll(() => {
-    process.env.NOVU_ENTERPRISE = 'true';
+    delete process.env.NOVU_ENTERPRISE;
     process.env.IS_SELF_HOSTED = 'true';
+    delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
   });
 
   afterAll(() => {
     restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
     restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
+    restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_ALLOW);
   });
 
-  test('should allow requests to private IPs via axios', async () => {
+  test('should block loopback targets', async () => {
     const provider = new GenericSmsProvider({
       baseUrl: directServerUrl,
       apiKeyRequestHeader: 'apiKey',
@@ -194,12 +192,57 @@ describe('without SSRF protection (self-hosted)', () => {
       datePath: 'message.date',
     });
 
-    const result = await provider.sendMessage({
-      to: '+1234567890',
-      content: 'SMS Content form Generic SMS Provider',
+    await expect(
+      provider.sendMessage({
+        to: '+1234567890',
+        content: 'SMS Content form Generic SMS Provider',
+      })
+    ).rejects.toThrow(/Generic SMS URL blocked/);
+
+    expect(lastRequest).toBeNull();
+  });
+
+  test('should block the cloud metadata endpoint used as the auth URL', async () => {
+    const provider = new GenericSmsProvider({
+      baseUrl: 'https://sms.example.com/send',
+      apiKeyRequestHeader: 'apiKey',
+      apiKey: '123456',
+      from: 'sender-id',
+      authenticateByToken: true,
+      authenticationTokenKey: 'token',
+      domain: 'http://169.254.169.254/latest/meta-data/iam/security-credentials/novu',
     });
 
-    expect(lastRequest).not.toBeNull();
-    expect(result.id).toBeDefined();
+    await expect(
+      provider.sendMessage({
+        to: '+1234567890',
+        content: 'SMS Content form Generic SMS Provider',
+      })
+    ).rejects.toThrow(/Generic SMS auth URL blocked/);
+  });
+
+  test('should allow targets added to the outbound allow list', async () => {
+    process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = '127.0.0.1';
+
+    try {
+      const provider = new GenericSmsProvider({
+        baseUrl: directServerUrl,
+        apiKeyRequestHeader: 'apiKey',
+        apiKey: '123456',
+        from: 'sender-id',
+        idPath: 'message.id',
+        datePath: 'message.date',
+      });
+
+      const result = await provider.sendMessage({
+        to: '+1234567890',
+        content: 'SMS Content form Generic SMS Provider',
+      });
+
+      expect(lastRequest).not.toBeNull();
+      expect(result.id).toBeDefined();
+    } finally {
+      delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
+    }
   });
 });

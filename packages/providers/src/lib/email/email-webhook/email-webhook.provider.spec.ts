@@ -48,10 +48,8 @@ afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
-describe('with SSRF protection (enterprise cloud)', () => {
+describe('with an allow-listed target', () => {
   beforeAll(() => {
-    process.env.NOVU_ENTERPRISE = 'true';
-    process.env.IS_SELF_HOSTED = 'false';
     process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = '127.0.0.1';
     const realLookup = dns.promises.lookup.bind(dns.promises);
     vi.spyOn(dns.promises, 'lookup').mockImplementation(((hostname: string, opts: unknown): unknown => {
@@ -68,8 +66,6 @@ describe('with SSRF protection (enterprise cloud)', () => {
   afterAll(() => {
     vi.restoreAllMocks();
     restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_ALLOW);
-    restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
-    restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
   });
 
   test('should trigger email-webhook-provider library correctly', async () => {
@@ -177,18 +173,20 @@ describe('with SSRF protection (enterprise cloud)', () => {
   });
 });
 
-describe('without SSRF protection (self-hosted)', () => {
+describe('on self-hosted builds', () => {
   beforeAll(() => {
-    process.env.NOVU_ENTERPRISE = 'true';
+    delete process.env.NOVU_ENTERPRISE;
     process.env.IS_SELF_HOSTED = 'true';
+    delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
   });
 
   afterAll(() => {
     restoreEnv('NOVU_ENTERPRISE', ORIGINAL_ENTERPRISE);
     restoreEnv('IS_SELF_HOSTED', ORIGINAL_SELF_HOSTED);
+    restoreEnv('NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS', ORIGINAL_ALLOW);
   });
 
-  test('should allow requests to private IPs via axios', async () => {
+  test('should block loopback targets', async () => {
     const provider = new EmailWebhookProvider({
       webhookUrl: directServerUrl,
       hmacSecretKey: 'super-secret-key',
@@ -196,15 +194,61 @@ describe('without SSRF protection (self-hosted)', () => {
       retryCount: 1,
     });
 
-    await provider.sendMessage({
-      to: ['johndoe@example.com'],
-      from: 'janedoe@example.com',
-      subject: 'test',
-      html: '<h1>test</h1>',
-      text: 'test',
+    await expect(
+      provider.sendMessage({
+        to: ['johndoe@example.com'],
+        from: 'janedoe@example.com',
+        subject: 'test',
+        html: '<h1>test</h1>',
+        text: 'test',
+      })
+    ).rejects.toThrow(/Email webhook URL blocked/);
+
+    expect(lastRequest).toBeNull();
+  });
+
+  test('should block the cloud metadata endpoint', async () => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'http://169.254.169.254/latest/meta-data/iam/security-credentials/novu',
+      hmacSecretKey: 'super-secret-key',
+      retryDelay: 1,
+      retryCount: 1,
     });
 
-    expect(lastRequest).not.toBeNull();
-    expect(lastRequest?.method).toBe('POST');
+    await expect(
+      provider.sendMessage({
+        to: ['johndoe@example.com'],
+        from: 'janedoe@example.com',
+        subject: 'test',
+        html: '<h1>test</h1>',
+        text: 'test',
+      })
+    ).rejects.toThrow(/Email webhook URL blocked/);
+  });
+
+  test('should allow targets added to the outbound allow list', async () => {
+    process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = '127.0.0.1';
+
+    try {
+      const provider = new EmailWebhookProvider({
+        webhookUrl: directServerUrl,
+        hmacSecretKey: 'super-secret-key',
+        retryDelay: 1,
+        retryCount: 1,
+      });
+
+      await provider.sendMessage({
+        to: ['johndoe@example.com'],
+        from: 'janedoe@example.com',
+        subject: 'test',
+        html: '<h1>test</h1>',
+        text: 'test',
+      });
+
+      expect(lastRequest).not.toBeNull();
+      expect(lastRequest?.method).toBe('POST');
+    } finally {
+      delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
+    }
   });
 });
