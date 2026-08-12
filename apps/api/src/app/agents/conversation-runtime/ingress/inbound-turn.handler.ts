@@ -558,7 +558,11 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
-    const context = await this.connectionContextResolver.resolve(config, message.raw, message.author?.userId);
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      message.raw,
+      message.author?.userId
+    );
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -568,6 +572,7 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       subscriber,
       context,
+      bridgeUrlOverride,
       subscriberResolution: resolution,
       message,
       event,
@@ -1272,7 +1277,11 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
-    const context = await this.connectionContextResolver.resolve(config, event.raw, platformUserId);
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      event.raw,
+      platformUserId
+    );
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -1281,6 +1290,7 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       subscriber,
       context,
+      bridgeUrlOverride,
       subscriberResolution: reactionResolution,
       message: null,
       event: AgentEventEnum.ON_REACTION,
@@ -1400,7 +1410,11 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
-    const context = await this.connectionContextResolver.resolve(config, rawEvent, userId);
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      rawEvent,
+      userId
+    );
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -1410,6 +1424,7 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       subscriber,
       context,
+      bridgeUrlOverride,
       subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,
