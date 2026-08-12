@@ -146,7 +146,7 @@ describe('AgentChatService', () => {
     httpClient.setAuthorizationToken('test-token');
     const service = new AgentChatService({ httpClient });
 
-    const result = await service.respondToApproval({
+    const result = await service.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'tool-approval:approve:approval_000001',

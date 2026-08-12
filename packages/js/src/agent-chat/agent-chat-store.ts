@@ -3,7 +3,7 @@ import {
   type AgentConversationState,
   type AgentMessage,
   createInitialAgentConversationState,
-  derivePendingApprovals,
+  derivePendingActions,
 } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 import type { AgentChatChange, AgentChatChangeSource } from './types';
@@ -28,10 +28,10 @@ export type ConversationEntry = AgentConversationState & {
    */
   olderCursor: string | null;
   /**
-   * Approvals already reported as new. Add-only: an approvalId is never raised twice,
-   * so a resolved approval must not fall out and be reported again.
+   * Actions already reported as new. Add-only: an action id is never raised twice,
+   * so a resolved action must not fall out and be reported again.
    */
-  reportedApprovalIds: Set<string>;
+  reportedActionIds: Set<string>;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
 };
@@ -96,24 +96,22 @@ export class AgentChatStore {
    * leaving each consumer to guess from the snapshot alone.
    */
   #publish(entry: ConversationEntry, source: AgentChatChangeSource, addedMessages: AgentMessage[]): void {
-    const newApprovals = derivePendingApprovals(entry.messages).filter(
-      (approval) => !entry.reportedApprovalIds.has(approval.approvalId)
-    );
-    for (const approval of newApprovals) {
-      entry.reportedApprovalIds.add(approval.approvalId);
+    const newActions = derivePendingActions(entry.messages).filter((action) => !entry.reportedActionIds.has(action.id));
+    for (const action of newActions) {
+      entry.reportedActionIds.add(action.id);
     }
 
-    this.#onUpdate(entry, { ...source, addedMessages, newApprovals });
+    this.#onUpdate(entry, { ...source, addedMessages, newActions });
   }
 
   /**
-   * Mark a backfilled page's approvals as already reported.
+   * Mark a backfilled page's actions as already reported.
    * An older page can carry a request whose response is on a page already folded, which
    * leaves it looking pending. Paging backwards is never new activity.
    */
-  #suppressApprovals(entry: ConversationEntry, messages: AgentMessage[]): void {
-    for (const approval of derivePendingApprovals(messages)) {
-      entry.reportedApprovalIds.add(approval.approvalId);
+  #suppressActions(entry: ConversationEntry, messages: AgentMessage[]): void {
+    for (const action of derivePendingActions(messages)) {
+      entry.reportedActionIds.add(action.id);
     }
   }
 
@@ -177,7 +175,7 @@ export class AgentChatStore {
       conversationId: args.conversationId,
       key: args.key,
       olderCursor: null,
-      reportedApprovalIds: new Set(),
+      reportedActionIds: new Set(),
     };
     this.#byKey.set(args.key, entry);
 
@@ -278,7 +276,7 @@ export class AgentChatStore {
 
     entry.messages = [...olderMessages, ...entry.messages];
     entry.olderCursor = olderCursor;
-    this.#suppressApprovals(entry, olderMessages);
+    this.#suppressActions(entry, olderMessages);
 
     this.#publish(entry, { kind: 'history' }, olderMessages);
 

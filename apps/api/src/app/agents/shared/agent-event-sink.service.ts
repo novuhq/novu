@@ -203,6 +203,8 @@ export class AgentEventSink {
       case 'source':
       case 'custom':
       case 'tool-approval-response':
+      case 'mcp-connection-request':
+      case 'mcp-connection-result':
       case 'message-start':
       case 'message-end':
         this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Agent event no-op');

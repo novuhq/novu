@@ -6,14 +6,14 @@ import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
-import { type AgentMessage, derivePendingApprovals } from './agent-message.types';
+import { type AgentMessage, derivePendingActions } from './agent-message.types';
 import type {
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
-  RespondToApprovalArgs,
-  RespondToApprovalResult,
+  RespondToActionArgs,
+  RespondToActionResult,
   SendMessageArgs,
   SendMessageResult,
 } from './types';
@@ -127,23 +127,21 @@ export class AgentChat extends BaseModule {
     };
   }
 
-  async respondToApproval(
-    args: RespondToApprovalArgs
-  ): Result<RespondToApprovalResult, NovuError | AgentChatPlanLimitError> {
-    return this.callWithSession<RespondToApprovalResult, NovuError | AgentChatPlanLimitError>(async () => {
+  async respondToAction(args: RespondToActionArgs): Result<RespondToActionResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<RespondToActionResult, NovuError | AgentChatPlanLimitError>(async () => {
       const entry = this.#resolveFetchEntry(args);
       if (!entry?.conversationId) {
         return {
           error: new NovuError(
-            'Cannot respond to approval without a conversation id',
+            'Cannot respond to action without a conversation id',
             new Error('missing conversation id')
           ),
         };
       }
 
-      const pending = derivePendingApprovals(entry.messages).find((part) => part.approvalId === args.approvalId);
-      if (!pending) {
-        return { error: new NovuError('Pending approval not found', new Error('pending approval not found')) };
+      const pending = derivePendingActions(entry.messages).find((action) => action.id === args.actionId);
+      if (!pending || pending.type !== 'tool-approval') {
+        return { error: new NovuError('Pending action not found', new Error('pending action not found')) };
       }
 
       const actionId = args.decision === 'approved' ? pending.approveActionId : pending.denyActionId;
@@ -157,7 +155,7 @@ export class AgentChat extends BaseModule {
       }
 
       try {
-        const data = await this.#agentChatService.respondToApproval({
+        const data = await this.#agentChatService.respondToAction({
           agentId: args.agentId,
           conversationId: entry.conversationId,
           actionId,
@@ -174,7 +172,7 @@ export class AgentChat extends BaseModule {
           return { error };
         }
 
-        return { error: new NovuError('Failed to respond to approval', error) };
+        return { error: new NovuError('Failed to respond to action', error) };
       }
     });
   }

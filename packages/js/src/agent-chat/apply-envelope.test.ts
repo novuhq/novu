@@ -205,6 +205,34 @@ describe('applyEnvelope', () => {
     expect(approval).toMatchObject({ type: 'approval', approvalId: 'a1', state: 'approved' });
   });
 
+  it('folds MCP connection requests and results into one action part', () => {
+    const state = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, { type: 'message-start', messageId: 'm1' }),
+      envelope(2, {
+        type: 'mcp-connection-request',
+        actionId: 'connect-1',
+        mcpId: 'stripe',
+        displayName: 'Stripe',
+        authorizeUrl: 'https://example.com/authorize',
+      }),
+      envelope(3, {
+        type: 'mcp-connection-result',
+        actionId: 'connect-1',
+        mcpId: 'stripe',
+        status: 'connected',
+      }),
+    ]);
+
+    expect(state.messages[0]?.parts).toContainEqual({
+      type: 'mcp-connection',
+      actionId: 'connect-1',
+      mcpId: 'stripe',
+      displayName: 'Stripe',
+      authorizeUrl: 'https://example.com/authorize',
+      state: 'connected',
+    });
+  });
+
   it('folds durable user messages when role is user', () => {
     const state = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, {

@@ -65,4 +65,55 @@ describe('activity-to-events run lifecycle', () => {
     ]);
     expect(envelopes.every((envelope) => envelope.runId === 'run-1')).to.equal(true);
   });
+
+  it('maps MCP connection activities to protocol events', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT,
+          identifier: 'mcp-connection:connect-1:result',
+          sequence: 2,
+          richContent: {
+            mcpConnection: {
+              actionId: 'connect-1',
+              mcpId: 'stripe',
+              status: 'connected',
+            },
+          },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST,
+          identifier: 'mcp-connection:connect-1:request',
+          sequence: 1,
+          richContent: {
+            mcpConnection: {
+              actionId: 'connect-1',
+              mcpId: 'stripe',
+              displayName: 'Stripe',
+              authorizeUrl: 'https://example.com/authorize',
+            },
+          },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes.map((envelope) => envelope.event)).to.deep.equal([
+      {
+        type: 'mcp-connection-request',
+        actionId: 'connect-1',
+        mcpId: 'stripe',
+        displayName: 'Stripe',
+        authorizeUrl: 'https://example.com/authorize',
+        authorizeUrlWithAutoApprove: undefined,
+      },
+      {
+        type: 'mcp-connection-result',
+        actionId: 'connect-1',
+        mcpId: 'stripe',
+        status: 'connected',
+        message: undefined,
+      },
+    ]);
+  });
 });
