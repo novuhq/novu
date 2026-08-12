@@ -1,0 +1,126 @@
+---
+title: 'How to Write Chat Templates in Novu'
+sidebarTitle: 'Writing Chat Template'
+description: 'Compose chat notifications in the Novu Dashboard with the block editor or text editor. Use text, images, buttons, and provider previews while keeping existing plain-text steps working.'
+---
+
+You can compose Chat step content in the Novu Dashboard with either the **block editor** or the **text editor**.
+
+- **Block editor**: Visual blocks for structured messages (text, images, buttons, lists). Best when you want a shared rich message that Novu maps to each chat provider.
+- **Text editor**: Plain text and [Liquid](/platform/workflow/add-notification-content/personalize-content#apply-logic-with-liquidjs) for variables, conditions, and loops. Best when you already rely on Liquid-heavy templates, or when you need full control over a single string body.
+
+Both editors support variables and notification preview. For code-first workflows, see the [Framework chat step](/framework/typescript/steps/chat).
+
+{/* SCREENSHOT: Chat step editor showing Block editor / Text editor toggle and slash-command block menu */}
+
+## Choose an editor
+
+Open a Chat step in the workflow editor. Use the **Block editor** / **Text editor** control to switch modes.
+
+| Editor | When to use it | What you author |
+| --- | --- | --- |
+| Block editor | New rich messages, cards with images and link buttons, provider-aware previews | Structured blocks, saved as block JSON |
+| Text editor | Existing Liquid templates, digests built as a single string, provider-agnostic plain text | A string body with Liquid |
+
+### Backward compatibility
+
+Existing Chat steps keep working without changes.
+
+- Steps that already use a plain-text or Liquid body open in the **Text editor**.
+- Delivery for those steps stays the same.
+- New empty Chat steps default to the **Block editor**.
+- Novu does not auto-convert Liquid-heavy text templates into blocks. Keep those steps on **Text editor**, or rebuild the content in **Block editor** if you want the structured format.
+
+<Note>
+  Switching from **Block editor** to **Text editor** (or the other way) replaces the step content for that editor mode. Copy anything you need before switching if you are experimenting.
+</Note>
+
+## Block editor
+
+The block editor is a visual composer for chat cards. Add a block with the plus (`+`) control or by typing `/` in the editor. Choose a block from the menu, then edit its fields inline.
+
+### Supported blocks
+
+| Block | Description |
+| --- | --- |
+| **Text** | Message copy. Supports variables. |
+| **Image** | Image from an absolute URL. Optional alt text. |
+| **Button** | Link button with a label and redirect URL. Variables are supported in the label and URL. |
+| **Divider** | Horizontal separator between sections. |
+| **Bullet list** / **Numbered list** | Structured lists. |
+| **Blockquote** | Quoted text. |
+| **Hard break** | Line break. |
+| **Repeat** | Iterate over an array from the payload or digest, same idea as the [email Repeat block](/platform/integrations/email/writing-email-template#repeat-block). |
+| **Digest** | Insert digest summary content when a digest step runs before the Chat step. |
+
+Buttons in the Dashboard block editor are **link buttons** only. They open a URL. Interactive actions that call back into your app or an agent are not part of this editor.
+
+<Note>
+  Button URLs must be valid absolute URLs (for example `https://novu.co`). Values without a protocol can fail delivery on providers such as Slack.
+</Note>
+
+### Variables and personalization
+
+Use the variable picker or Liquid-style `{{ ... }}` placeholders inside text, button labels, and button URLs. The same subscriber, payload, and digest variables work as in other channel editors. See [Personalize notification content](/platform/workflow/add-notification-content/personalize-content).
+
+### Preview
+
+The Chat step preview can show how the message looks for providers configured in your environment (for example Slack or Microsoft Teams).
+
+Use the provider switcher in the preview panel to inspect each rendering. Some providers support native rich layouts (Slack Block Kit, Microsoft Teams Adaptive Cards). Others receive a text or markdown-style fallback derived from the same card.
+
+{/* SCREENSHOT: Chat preview panel with provider switcher (for example Slack) */}
+
+If a block cannot be represented fully on a provider, the preview may surface a warning. Treat that as a signal to simplify the card or add a [provider content override](/platform/integrations/chat#provider-content-overrides) for that provider.
+
+## Text editor
+
+The text editor is a single message body field. Write plain text or Liquid:
+
+```liquid
+{{ subscriber.firstName }}, your order {{ payload.orderId }} has shipped.
+```
+
+Use this mode when:
+
+- The step already uses Liquid conditionals or loops that you do not want to rebuild as blocks.
+- You only need a short plain-text notification.
+- You plan to supply the rich format through a [provider content override](/platform/integrations/chat#provider-content-overrides) (for example Slack Block Kit) and keep the default body as a fallback string.
+
+## Rich chat content vs provider overrides
+
+These layers solve different problems:
+
+| Approach | What it is | Use when |
+| --- | --- | --- |
+| **Block editor (default content)** | Novu card model, authored once, rendered per provider | You want one shared rich message across chat providers |
+| **Provider content override** | Provider-native JSON saved on the step (Slack Block Kit, WhatsApp fields, and so on) | You need a format or field that only that provider supports |
+| **Trigger overrides** | Provider payload passed at trigger time | The shape depends on runtime data outside the workflow definition |
+
+The block editor does not replace provider overrides. Overrides still apply for provider-specific APIs when you set them. If both exist, follow the precedence rules in [Provider content overrides](/platform/integrations/chat#provider-content-overrides) and [Trigger overrides](/platform/integrations/trigger-overrides).
+
+## Code-first and Framework
+
+If you define the Chat step in code with `@novu/framework`, return a `body` string, a `card` object, or both (at least one is required). The Dashboard block editor covers the common card subset. Framework accepts a wider card kit (sections, fields, tables, and more).
+
+See:
+
+- [Framework chat step](/framework/typescript/steps/chat)
+- [Code steps](/platform/workflow/add-and-configure-steps/code-steps) for publishing a handler from the Dashboard **Custom Code** toggle
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Chat channel overview" icon="messages-square" href="/platform/integrations/chat">
+    Delivery flow, credentials, and provider overrides.
+  </Card>
+  <Card title="Channels template editors" icon="panels-top-left" href="/platform/workflow/add-notification-content/channels-template-editors">
+    How template editors work across channels.
+  </Card>
+  <Card title="Framework chat step" icon="code" href="/framework/typescript/steps/chat">
+    `body` and `card` output for code-first workflows.
+  </Card>
+  <Card title="Slack integration" icon="slack" href="/platform/integrations/chat/slack">
+    Slack setup and Block Kit overrides when you need Slack-native payloads.
+  </Card>
+</Columns>

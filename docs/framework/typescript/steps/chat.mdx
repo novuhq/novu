@@ -1,11 +1,15 @@
 ---
 title: 'Chat'
-description: "Use the chat step in Novu Framework to send messages to Slack, Discord, Microsoft Teams, and other chat providers as part of a workflow."
+description: "Use the chat step in Novu Framework to send plain-text or rich card messages to Slack, Discord, Microsoft Teams, and other chat providers."
 ---
 
-The `chat` step allows you to send messages to various chat platforms like Slack, Discord, and Microsoft Teams.
+The `chat` step sends a message to chat platforms such as Slack, Discord, and Microsoft Teams.
 
-## Example Usage
+Return either a plain-text `body`, a rich `card`, or both. Existing workflows that only return `body` keep working without changes.
+
+## Example usage
+
+### Plain text body
 
 ```tsx
 await step.chat('chat', async () => {
@@ -15,12 +19,141 @@ await step.chat('chat', async () => {
 });
 ```
 
-## Chat Step Output
+### Rich card
 
-| Property | Type   | Required | Description                                |
-| -------- | ------ | -------- | ------------------------------------------ |
-| body     | string | Yes      | The message to be sent to the chat channel |
+Build cards with the Chat SDK helpers from `@novu/framework`. The same card model is used for agent replies.
 
-## Chat Step Result
+```tsx
+import {
+  Actions,
+  Card,
+  CardLink,
+  CardText,
+  Divider,
+  Image,
+} from '@novu/framework';
 
-The `chat` step does not return any result object.
+await step.chat('chat', async () => {
+  return {
+    card: Card({
+      title: 'Deploy finished',
+      children: [
+        CardText('All checks passed for production.'),
+        Divider(),
+        Image({
+          url: 'https://example.com/status.png',
+          alt: 'Status',
+        }),
+        Actions([
+          {
+            type: 'link-button',
+            id: 'view',
+            label: 'View deploy',
+            url: 'https://example.com/deploys/123',
+            style: 'primary',
+          },
+        ]),
+        CardLink({
+          url: 'https://example.com/deploys/123',
+          label: 'Open in dashboard',
+        }),
+      ],
+    }),
+  };
+});
+```
+
+You can also return a raw card object that matches the schema below. Prefer the helpers so TypeScript catches shape mistakes early.
+
+<Note>
+  Link button URLs must be absolute (include `https://`). Incomplete URLs can fail provider validation at send time.
+</Note>
+
+## Chat step output
+
+Provide at least one of `body` or `card`.
+
+### body
+
+- **Type**: `string`
+- **Required**: No (required if `card` is omitted)
+- **Description**: Plain-text message body. Use this for simple notifications or as a fallback string alongside a card.
+
+### card
+
+- **Type**: `object` (`CardElement`)
+- **Required**: No (required if `body` is omitted)
+- **Description**: Structured chat card. Novu renders it to each provider's native format when supported (for example Slack Block Kit or Microsoft Teams Adaptive Cards). Other providers receive a markdown or text fallback derived from the card.
+
+#### Card properties
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `type` | `'card'` | Yes | Discriminator. Set automatically when you use `Card()`. |
+| `title` | `string` | No | Card title. |
+| `subtitle` | `string` | No | Secondary title line. |
+| `imageUrl` | `string` | No | Optional header image URL. |
+| `children` | `array` | Yes | Ordered list of card child elements. |
+
+#### Card child types
+
+| Type | Helpers | Description |
+| --- | --- | --- |
+| `text` | `CardText` | Text block. Optional `style`: `plain`, `bold`, `muted`. |
+| `image` | `Image` | Image with `url` and optional `alt`. |
+| `divider` | `Divider` | Visual separator. |
+| `link` | `CardLink` | Inline link with `label` and `url`. |
+| `actions` | `Actions` | Wrapper for buttons and selects. |
+| `link-button` | (inside `Actions`) | Button that opens a URL. Requires `label` and `url`. Optional `style`: `primary`, `danger`, `default`. |
+| `button` | `Button` | Interactive button with `id` and `label`. Used heavily in [agent replies](/agents/custom-code-agent/building-blocks/reply#interactive-cards). Workflow reply routing for these actions is a separate capability. |
+| `select` / `radio_select` | `Select`, `SelectOption` | Choice controls. Same note as interactive buttons for workflow routing. |
+| `fields` | | Label/value pairs (`field` children). |
+| `table` | | Table with `headers` and `rows`. |
+| `section` | | Nested group of child elements. |
+
+The Dashboard [block editor](/platform/integrations/chat/writing-chat-template) authors a common subset of this model (text, image, divider, link buttons, lists, and related layout blocks). Framework can return the fuller card kit above.
+
+## Provider overrides
+
+When you need a provider-native payload that the shared card cannot express, use the step `providers` object. For example, Slack Block Kit:
+
+```tsx
+await step.chat(
+  'slack-rich',
+  async () => ({
+    body: 'Fallback text for notifications and plain-text clients',
+  }),
+  {
+    providers: {
+      slack: async ({ controls }) => ({
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: '*Deploy finished*',
+            },
+          },
+        ],
+      }),
+    },
+  }
+);
+```
+
+See [Providers overrides](/framework/typescript/steps#providers-overrides-object) and the [Chat channel](/platform/integrations/chat#provider-content-overrides) docs for Dashboard overrides.
+
+## Chat step result
+
+The `chat` step does not return a result object.
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Writing chat templates" icon="panels-top-left" href="/platform/integrations/chat/writing-chat-template">
+    Dashboard block and text editors, preview, and backward compatibility.
+  </Card>
+  <Card title="Agent interactive cards" icon="bot" href="/agents/custom-code-agent/building-blocks/reply#interactive-cards">
+    Full card kit usage for agent replies and `onAction`.
+  </Card>
+</Columns>
