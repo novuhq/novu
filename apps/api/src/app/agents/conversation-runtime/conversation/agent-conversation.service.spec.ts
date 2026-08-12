@@ -73,7 +73,7 @@ describe('AgentConversationService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activityRepository: any = makeActivityRepository(),
     eventSequenceService = makeEventSequenceService(),
-    webChatLiveActivityPublisher = { emit: sinon.stub().resolves(undefined) }
+    webChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
   ) {
     return new AgentConversationService(
       conversationRepository,
@@ -134,7 +134,7 @@ describe('AgentConversationService', () => {
         conversationRepository,
         activityRepository as any,
         makeEventSequenceService(),
-        { emit: sinon.stub().resolves(undefined) } as any,
+        { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
         logger as any
       );
 
@@ -319,7 +319,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -351,7 +351,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -384,7 +384,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -423,7 +423,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -461,7 +461,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -491,7 +491,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -520,7 +520,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 

@@ -32,5 +32,13 @@ export const envValidators = {
   SQS_DEFAULT_VISIBILITY_TIMEOUT: num({ default: undefined }),
   SQS_DEFAULT_BATCH_SIZE: num({ default: undefined }),
   SQS_DEFAULT_WAIT_TIME_SECONDS: num({ default: undefined }),
+  // SQS queue backend (optional - when unset, the WS service runs BullMQ-only)
+  SQS_QUEUE_URL_STANDARD: str({ default: undefined }),
+  SQS_QUEUE_URL_WORKFLOW: str({ default: undefined }),
+  SQS_QUEUE_URL_PROCESS_SUBSCRIBER: str({ default: undefined }),
+  SQS_QUEUE_URL_WEB_SOCKETS: str({ default: undefined }),
+  SQS_ENDPOINT: str({ default: undefined }),
+  SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
+  SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
   LAUNCH_DARKLY_SDK_KEY: str({ default: undefined }),
 } satisfies Record<string, ValidatorSpec<unknown>>;

@@ -299,6 +299,10 @@ describe('Should handle the new arrived mail', () => {
       userDomain || USER_MAIL_DOMAIN
     }`;
 
+    // Routing follows the SMTP envelope, which for a reply is the same
+    // tokenized address the mail was delivered to.
+    mail.envelopeTo = [{ address: mail.to[0].address, args: false }];
+
     return mail;
   }
 });
