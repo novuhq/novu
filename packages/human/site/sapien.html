@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>human.md — the human API for agents</title>
+<meta name="description" content="human.md gives AI agents a one-line way to reach a real person on Telegram or Slack, and block until they answer." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f3ead9;
+    --paper-2: #ece0ca;
+    --ink: #241d15;
+    --ink-soft: #4a4030;
+    --rust: #bf4d29;
+    --rust-dark: #9c3c1f;
+    --sage: #5c6e4f;
+    --line: rgba(36, 29, 21, 0.16);
+    --shadow: rgba(36, 29, 21, 0.22);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 18px;
+    line-height: 1.6;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(36,29,21,0.07) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  /* subtle paper grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  }
+
+  /* ---------- header ---------- */
+
+  header {
+    position: relative;
+    z-index: 10;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 22px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .wordmark {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .wordmark .dot { color: var(--rust); }
+
+  nav.top-links {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  nav.top-links a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1px;
+    white-space: nowrap;
+  }
+
+  nav.top-links a:hover { border-color: var(--rust); color: var(--rust-dark); }
+
+  .robot-tab {
+    background: var(--ink);
+    color: var(--paper) !important;
+    padding: 5px 10px;
+    border-radius: 3px;
+    border-bottom: none !important;
+  }
+
+  .robot-tab:hover { background: var(--rust); color: var(--paper) !important; }
+
+  /* ---------- hero ---------- */
+
+  .hero {
+    padding: 84px 0 54px;
+    position: relative;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--rust-dark);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 26px;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: var(--rust);
+  }
+
+  h1 {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: clamp(2.6rem, 6.2vw, 4.1rem);
+    line-height: 1.03;
+    letter-spacing: -0.015em;
+    margin: 0 0 28px;
+    color: var(--ink);
+  }
+
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--rust);
+  }
+
+  .lede {
+    font-size: 1.22rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 0 38px;
+  }
+
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  .install {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 15px 20px;
+    border-radius: 4px;
+    box-shadow: 4px 4px 0 var(--rust);
+  }
+
+  .install .mono {
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+  }
+
+  .install .prompt { color: #d99a86; }
+
+  .install button {
+    all: unset;
+    cursor: pointer;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem;
+    color: var(--paper);
+    opacity: 0.55;
+    border: 1px solid rgba(243,234,217,0.35);
+    padding: 4px 8px;
+    border-radius: 3px;
+    transition: opacity 0.15s ease;
+  }
+
+  .install button:hover { opacity: 1; border-color: var(--paper); }
+
+  /* ---------- steps ---------- */
+
+  .steps {
+    padding: 46px 0 58px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .steps h2 {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.6rem;
+    margin: 0 0 40px;
+    color: var(--ink);
+  }
+
+  .step-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 30px;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 18px;
+  }
+
+  .step .num {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: 2.1rem;
+    color: var(--rust);
+    line-height: 1;
+  }
+
+  .step h3 {
+    margin: 2px 0 6px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-family: "Source Serif 4", serif;
+  }
+
+  .step p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 1rem;
+  }
+
+  .step code {
+    background: var(--paper-2);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.87em;
+  }
+
+  /* ---------- phone / chat mock ---------- */
+
+  .scene {
+    padding: 64px 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  @media (min-width: 660px) {
+    .scene { grid-template-columns: 1fr 250px; align-items: center; }
+  }
+
+  .scene-copy h2 {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 2rem;
+    line-height: 1.12;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .scene-copy p {
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+    max-width: 46ch;
+  }
+
+  .scene-copy .who {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--rust-dark);
+  }
+
+  .chat-card {
+    background: #efe6d4;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 18px 34px -18px var(--shadow), 6px 6px 0 var(--paper-2);
+    transform: rotate(1.2deg);
+    justify-self: center;
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .chat-card .who-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+  }
+
+  .chat-card .who-row .avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--rust);
+  }
+
+  .bubble {
+    background: #fbf6ec;
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-size: 0.86rem;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 0 var(--line);
+  }
+
+  .bubble .tag {
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--rust-dark);
+    margin-bottom: 5px;
+  }
+
+  .bubble-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .bubble-actions span {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+  }
+
+  .bubble-actions .yes { background: var(--sage); color: #f3ead9; border-color: var(--sage); }
+  .bubble-actions .no { color: var(--ink-soft); }
+
+  /* ---------- reassurance ---------- */
+
+  .reassure {
+    padding: 56px 0 64px;
+    border-top: 1px solid var(--line);
+  }
+
+  .reassure blockquote {
+    margin: 0;
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    line-height: 1.32;
+    color: var(--ink);
+    max-width: 34ch;
+  }
+
+  .reassure blockquote::before { content: "“"; color: var(--rust); }
+  .reassure blockquote::after { content: "”"; color: var(--rust); }
+
+  .reassure cite {
+    display: block;
+    margin-top: 18px;
+    font-style: normal;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- footer ---------- */
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 40px 0 56px;
+  }
+
+  .footer-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 22px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+  }
+
+  .footer-links a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .footer-links a:hover { border-color: var(--rust); color: var(--rust-dark); }
+
+  .footer-note {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    opacity: 0.8;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="wordmark" href="/sapien.html">human<span class="dot">.md</span></a>
+    <nav class="top-links">
+      <a href="https://github.com/novuhq/novu/tree/main/packages/human">github</a>
+      <a href="https://www.npmjs.com/package/@novu/human">npm</a>
+      <a class="robot-tab" href="/index.txt">robots →</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <p class="eyebrow">the human API for agents</p>
+    <h1>Your agents can reach<br>everything — <em>except you.</em></h1>
+    <p class="lede">
+      <strong>human</strong> is a tiny CLI that gives any AI agent on your machine
+      a one-line way to text an actual person — you — on Telegram, and wait
+      for a real answer before it does something it shouldn't do alone.
+    </p>
+    <div class="install">
+      <span class="mono"><span class="prompt">$</span> npx @novu/human setup</span>
+      <button type="button" onclick="navigator.clipboard.writeText('npx @novu/human setup')">copy</button>
+    </div>
+  </section>
+
+  <section class="steps">
+    <h2>Three minutes, and it's done.</h2>
+    <ol class="step-list">
+      <li class="step">
+        <span class="num">01</span>
+        <div>
+          <h3>You run setup, once</h3>
+          <p>Scan a QR code, link Telegram (Slack is next), and you're the
+          default human for every agent on this machine. No account, no API keys.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="num">02</span>
+        <div>
+          <h3>Your agents start asking</h3>
+          <p>Any script or agent can now call <code>human ask</code>,
+          <code>human approve</code>, or <code>human choose</code> instead of
+          guessing, and it will wait for you.</p>
+        </div>
+      </li>
+      <li class="step">
+        <span class="num">03</span>
+        <div>
+          <h3>You answer from your phone</h3>
+          <p>A message lands in Telegram with the question and, when it
+          matters, buttons. Tap one, or just reply — the agent picks it up
+          and keeps going.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="scene">
+    <div class="scene-copy">
+      <p class="who">what you actually see</p>
+      <h2>A message, not a dashboard.</h2>
+      <p>No app to check, no tab to keep open. The agent's question shows up
+      wherever you already read messages, with enough context to decide in
+      five seconds — and it genuinely waits for you before moving on.</p>
+    </div>
+    <div class="chat-card">
+      <div class="who-row"><span class="avatar"></span> deploy-bot · via human.md</div>
+      <div class="bubble">
+        <span class="tag">approve</span>
+        Delete 342 stale records from prod?
+        <div class="bubble-actions">
+          <span class="yes">Approve</span>
+          <span class="no">Deny</span>
+        </div>
+      </div>
+      <div class="bubble">
+        <span class="tag">tell</span>
+        Nightly build finished — 0 failures.
+      </div>
+    </div>
+  </section>
+
+  <section class="reassure">
+    <blockquote>
+      Exit codes, retries and timeouts are the agent's problem.
+      Yours is just to answer.
+    </blockquote>
+    <cite>— every human running human.md</cite>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <div class="footer-links">
+      <a href="https://github.com/novuhq/novu/tree/main/packages/human">GitHub</a>
+      <a href="https://www.npmjs.com/package/@novu/human">npm</a>
+      <a href="https://novu.co">Novu</a>
+      <a href="/index.txt">Plain text</a>
+    </div>
+    <span class="footer-note">MIT License · built by Novu</span>
+  </div>
+</footer>
+
+</body>
+</html>

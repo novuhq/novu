@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { version } from '../package.json';
+import { channelsCommand } from './commands/channels';
 import { runInteraction } from './commands/interact';
 import { cancelCommand, listCommand } from './commands/list';
 import { setupCommand } from './commands/setup';
@@ -19,6 +20,7 @@ program
 function withCommonOptions(command: Command): Command {
   return command
     .option('--to <humanId>', 'address a specific human (defaults to the human from `human setup`)')
+    .option('--via <platform>', 'deliver on a specific linked channel (telegram, slack) instead of the default')
     .option('--from <name>', 'attribution label shown to the human (e.g. "deploy-bot")')
     .option('--ttl <duration>', 'time until the request expires (e.g. 90s, 10m, 2h; max 72h; default 24h)')
     .option('--timeout <duration>', 'max time to block waiting (default: block until answered/expired)')
@@ -84,11 +86,20 @@ program
 
 program
   .command('setup')
+  .argument('[channel]', 'channel to link: telegram or slack (interactive picker when omitted)')
   .option('--api-url <url>', 'Novu API URL override')
   .option('--secret-key <key>', 'use an existing Novu environment instead of keyless')
   .option('--telegram-bot-token <token>', 'BotFather token (skips the interactive prompt)')
+  .option('--slack-config-token <token>', 'Slack App Configuration Token (skips the interactive prompt)')
   .option('--agent-identifier <identifier>', 'relay agent identifier (default: human-relay)')
-  .description('Connect yourself as the human — creates the relay and links Telegram')
+  .description('Connect yourself as the human — links a channel (run again to add more)')
   .action(setupCommand);
+
+program
+  .command('channels')
+  .option('--default <platform>', 'switch the default channel')
+  .option('--json', 'print JSON')
+  .description('List linked channels and manage the default')
+  .action(channelsCommand);
 
 program.parse(process.argv);

@@ -3,8 +3,10 @@
 **The human API for agents.** Agents are connected to everything — except the humans they work for. `human` gives any agent a one-line way to reach a real person on Telegram (Slack coming next) and block until they answer.
 
 ```bash
-# One-time, by the human:
+# One-time, by the human (interactive picker, or name the channel):
 npx @novu/human setup
+npx @novu/human setup telegram
+npx @novu/human setup slack
 
 # Forever after, by any agent on the machine:
 human ask "Which environment should I deploy to?"
@@ -15,7 +17,8 @@ human tell "Nightly build finished — 0 failures."
 
 ## How it works
 
-- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links your Telegram via a QR code.
+- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links a channel — Telegram via QR, Slack via app install. Run it again with another channel to add more; `human channels` lists them and `human channels --default slack` switches where interactions land by default.
+- Agents stay channel-blind: routing is the human's preference. `--via telegram|slack` exists as a rare per-call override.
 - Each command delivers a one-off message (with action buttons where relevant) and **blocks** until the human answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI resolves and your agent continues.
 
@@ -37,6 +40,7 @@ human tell "Nightly build finished — 0 failures."
 - `--async` — don't block; print the interaction id immediately.
 - `--json` — full interaction object for programmatic parsing.
 - `--to <humanId>` — address a different human than the default from setup.
+- `--via <platform>` — deliver on a specific linked channel instead of the default.
 
 ## Auth
 

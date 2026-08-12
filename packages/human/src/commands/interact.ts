@@ -6,11 +6,13 @@ import {
   waitInteraction,
 } from '../api/human';
 import { createHumanApiClient, HumanApiError, type HumanApiClient } from '../api/client';
-import { resolveConfig } from '../config';
+import { NOT_SET_UP_MESSAGE, resolveChannel, resolveConfig } from '../config';
 import { emitResult, EXIT_TIMEOUT, fail } from '../output';
+import { startWaitIndicator } from '../spinner';
 
 export interface InteractOptions {
   to?: string;
+  via?: string;
   from?: string;
   option?: string[];
   ttl?: string;
@@ -38,18 +40,21 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
   try {
     const { client, config } = clientFromConfig(options.apiUrl);
 
-    const to = options.to ?? config.defaultHuman?.subscriberId;
-    const integrationIdentifier = config.defaultHuman?.integrationIdentifier;
+    const to = options.to ?? config.subscriberId;
 
-    if (!to || !integrationIdentifier) {
-      fail('No default human configured. Run `npx @novu/human setup` or pass --to.');
+    if (!to) {
+      fail(NOT_SET_UP_MESSAGE);
     }
+
+    // Channel choice is the human's preference (set at `human setup`);
+    // `--via` is the rare per-call override.
+    const channel = resolveChannel(config, options.via);
 
     const input: CreateInteractionInput = {
       kind,
       prompt,
       to,
-      integrationIdentifier,
+      integrationIdentifier: channel.integrationIdentifier,
       agentIdentifier: config.relayAgentIdentifier,
       ...(options.from ? { from: options.from } : {}),
       ...(options.option?.length ? { options: options.option } : {}),
@@ -76,21 +81,33 @@ export async function waitForResolution(
   const timeoutSeconds = options.timeout ? parseDuration(options.timeout) : Infinity;
   const deadline = Number.isFinite(timeoutSeconds) ? Date.now() + timeoutSeconds * 1000 : Infinity;
 
+  const stopIndicator = startWaitIndicator(
+    `Waiting for a human on ${interaction.platform} (${interaction.id})`,
+    `Ctrl-C detaches; resume with: human wait ${interaction.id}`
+  );
+
   let current = interaction;
 
-  while (current.status === 'pending') {
-    if (Date.now() >= deadline) {
-      if (options.json) {
-        process.stdout.write(`${JSON.stringify(current, null, 2)}\n`);
-      } else {
-        process.stdout.write(`Timed out waiting. Interaction ${current.id} is still pending — resume with: human wait ${current.id}\n`);
+  try {
+    while (current.status === 'pending') {
+      if (Date.now() >= deadline) {
+        stopIndicator();
+        if (options.json) {
+          process.stdout.write(`${JSON.stringify(current, null, 2)}\n`);
+        } else {
+          process.stdout.write(
+            `Timed out waiting. Interaction ${current.id} is still pending — resume with: human wait ${current.id}\n`
+          );
+        }
+
+        return EXIT_TIMEOUT;
       }
 
-      return EXIT_TIMEOUT;
+      const remaining = Number.isFinite(deadline) ? Math.max(1, Math.floor((deadline - Date.now()) / 1000)) : Infinity;
+      current = await waitInteraction(client, current.id, Math.min(SERVER_POLL_SECONDS, remaining));
     }
-
-    const remaining = Number.isFinite(deadline) ? Math.max(1, Math.floor((deadline - Date.now()) / 1000)) : Infinity;
-    current = await waitInteraction(client, current.id, Math.min(SERVER_POLL_SECONDS, remaining));
+  } finally {
+    stopIndicator();
   }
 
   return emitResult(current, Boolean(options.json));

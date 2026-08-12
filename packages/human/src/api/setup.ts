@@ -135,6 +135,87 @@ export async function issueTelegramSubscriberLink(
   return { deepLinkUrl: payload.url, botUsername: payload.providerMetadata?.botUsername ?? '' };
 }
 
+export async function createSlackIntegration(client: HumanApiClient, name: string): Promise<IntegrationRecord> {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+    providerId: 'slack',
+    channel: 'chat',
+    name,
+    active: true,
+    credentials: {},
+  });
+
+  return unwrap(res.data);
+}
+
+export async function slackQuickSetup(
+  client: HumanApiClient,
+  integrationId: string,
+  input: { configToken: string; agentId: string }
+): Promise<void> {
+  await client.axios.post(`/v1/integrations/${encodeURIComponent(integrationId)}/slack-quick-setup`, {
+    configToken: input.configToken,
+    agentId: input.agentId,
+  });
+}
+
+/**
+ * Builds the Slack install/authorize URL. `autoLinkUser` makes the OAuth
+ * callback create a SLACK_USER channel endpoint bound to the subscriber —
+ * that endpoint is what human-interaction delivery DMs.
+ */
+export async function generateConnectOauthUrl(
+  client: HumanApiClient,
+  input: { integrationIdentifier: string; agentIdentifier: string; subscriberId: string }
+): Promise<string> {
+  const res = await client.axios.post<{ data?: { url?: string } } | { url?: string } | string>(
+    '/v1/integrations/channel-connections/oauth',
+    {
+      integrationIdentifier: input.integrationIdentifier,
+      subscriberId: input.subscriberId,
+      connectionMode: 'subscriber',
+      autoLinkUser: true,
+      context: { agent: input.agentIdentifier },
+    }
+  );
+  const body = unwrap(res.data);
+  const url = typeof body === 'string' ? body : body?.url;
+
+  if (!url) {
+    throw new Error('The API did not return a Slack authorize URL.');
+  }
+
+  return url;
+}
+
+export async function issueSlackSetupLink(
+  client: HumanApiClient,
+  agentIdentifier: string,
+  integrationId: string
+): Promise<{ token: string; url: string; expiresAt: string }> {
+  const res = await client.axios.post<
+    { data?: { token: string; url: string; expiresAt: string } } | { token: string; url: string; expiresAt: string }
+  >(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/slack/setup-link`,
+    {}
+  );
+
+  return unwrap(res.data);
+}
+
+export async function getSlackSetupLinkStatus(
+  client: HumanApiClient,
+  token: string
+): Promise<{ valid: boolean; reason?: 'expired' | 'used' | 'invalid' }> {
+  const res = await client.axios.get<
+    { data?: { valid: boolean; reason?: 'expired' | 'used' | 'invalid' } } | {
+      valid: boolean;
+      reason?: 'expired' | 'used' | 'invalid';
+    }
+  >('/v1/agents/public/slack/setup/status', { params: { token } });
+
+  return unwrap(res.data);
+}
+
 export async function hasChannelEndpoint(
   client: HumanApiClient,
   integrationIdentifier: string,
