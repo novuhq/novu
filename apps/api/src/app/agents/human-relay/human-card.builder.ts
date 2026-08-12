@@ -27,11 +27,27 @@ function button(id: string, label: string, style: 'default' | 'primary'): Button
   return { type: 'button', id, label, style };
 }
 
-/** "A. <label>\nB. <label>\n..." — the full option text, always in the message. */
-function buildOptionsListText(labels: string[]): TextElement {
-  const lines = labels.map((label, index) => `*${optionLetter(index)}.* ${truncate(label, LISTED_OPTION_LABEL_MAX)}`);
+function textChild(content: string): TextElement {
+  return { type: 'text', content };
+}
 
-  return { type: 'text', content: lines.join('\n') };
+/**
+ * The portable-card renderer joins title/subtitle/body with a single `\n`
+ * (no blank line), which reads as one cramped block. A leading `\n` on the
+ * first body text child turns that single join newline into a real blank
+ * line — use this for whichever text child comes right after title/subtitle.
+ */
+function bodyText(content: string): TextElement {
+  return textChild(`\n${content}`);
+}
+
+/** "**A.** <label>\n**B.** <label>\n..." — the full option text, always in the message. */
+function buildOptionsListText(labels: string[]): TextElement {
+  const lines = labels.map(
+    (label, index) => `**${optionLetter(index)}.** ${truncate(label, LISTED_OPTION_LABEL_MAX)}`
+  );
+
+  return bodyText(lines.join('\n'));
 }
 
 function attribution(interaction: Pick<HumanInteractionEntity, 'fromLabel'>): string | undefined {
@@ -86,18 +102,26 @@ export function buildPendingContent(interaction: HumanInteractionEntity): ReplyC
     }
 
     case HumanInteractionKindEnum.ASK: {
-      const lines = [`❓ ${interaction.prompt}`];
-      if (subtitle) lines.push(`_${subtitle}_`);
-      lines.push('_Reply to this message to answer._');
+      const card: CardElement = {
+        type: 'card',
+        title: `❓ ${interaction.prompt}`,
+        ...(subtitle ? { subtitle } : {}),
+        children: [bodyText('_Reply to this message to answer._')],
+      };
 
-      return { markdown: lines.join('\n\n') } as ReplyContentDto;
+      return { card } as ReplyContentDto;
     }
 
+    // TELL — a plain FYI card, no actions and no reply expected.
     default: {
-      const lines = [interaction.prompt];
-      if (subtitle) lines.push(`_${subtitle}_`);
+      const card: CardElement = {
+        type: 'card',
+        title: interaction.prompt,
+        ...(subtitle ? { subtitle } : {}),
+        children: [],
+      };
 
-      return { markdown: lines.join('\n\n') } as ReplyContentDto;
+      return { card } as ReplyContentDto;
     }
   }
 }
@@ -107,13 +131,15 @@ export function buildPendingContent(interaction: HumanInteractionEntity): ReplyC
  * buttons disappear so the human can never click a dead control.
  */
 export function buildResolvedContent(interaction: HumanInteractionEntity): ReplyContentDto {
-  const statusLine = resolveStatusLine(interaction);
-  const lines = [interaction.prompt];
   const subtitle = attribution(interaction);
-  if (subtitle) lines.push(`_${subtitle}_`);
-  lines.push(statusLine);
+  const card: CardElement = {
+    type: 'card',
+    title: interaction.prompt,
+    ...(subtitle ? { subtitle } : {}),
+    children: [bodyText(resolveStatusLine(interaction))],
+  };
 
-  return { markdown: lines.join('\n\n') } as ReplyContentDto;
+  return { card } as ReplyContentDto;
 }
 
 function resolveStatusLine(interaction: HumanInteractionEntity): string {
@@ -121,19 +147,19 @@ function resolveStatusLine(interaction: HumanInteractionEntity): string {
 
   switch (interaction.status) {
     case HumanInteractionStatusEnum.APPROVED:
-      return `✅ *Approved*${by}`;
+      return `✅ **Approved**${by}`;
     case HumanInteractionStatusEnum.DENIED:
-      return `⛔ *Denied*${by}`;
+      return `⛔ **Denied**${by}`;
     case HumanInteractionStatusEnum.ANSWERED: {
       if (interaction.response?.optionId) {
         const label =
           interaction.options?.find((option) => option.id === interaction.response?.optionId)?.label ??
           interaction.response.optionId;
 
-        return `✅ *${label}*${by}`;
+        return `✅ **${label}**${by}`;
       }
 
-      return `✅ *Answered*${by}`;
+      return `✅ **Answered**${by}`;
     }
     case HumanInteractionStatusEnum.CANCELED:
       return '🚫 _Canceled by the requesting agent._';

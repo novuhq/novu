@@ -67,6 +67,11 @@ human tell "Nightly build finished — 0 failures, deployed to staging."
 
 - `ask` / `choose` return the human's answer as plain text on stdout.
 - `approve` / `choose` deliver buttons; the human taps one.
+- `choose` renders each option's full text in the message and labels the
+  buttons themselves just A/B/C (chat button UIs, Telegram especially,
+  truncate or wrap long button labels badly). Write full, descriptive
+  `--option` values — don't shorten them to fit a button, that's handled for
+  you. Cap it at 10 options (A–J); past that, ask a plain question instead.
 - `tell` is one-way — it returns as soon as it's delivered, never blocks.
 
 ## Exit codes — branch on these, don't parse prose

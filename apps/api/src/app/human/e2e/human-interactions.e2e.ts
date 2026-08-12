@@ -249,7 +249,10 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
       const sentPayload = JSON.stringify(sends[sends.length - 1].payload);
       expect(sentPayload).to.include('Canary');
-      expect(sentPayload).to.include('Blue-green');
+      // MarkdownV2-escapes the hyphen (and JSON.stringify escapes that escape again),
+      // so check the words rather than the literal "Blue-green" substring.
+      expect(sentPayload).to.include('Blue');
+      expect(sentPayload).to.include('green');
       const markup = sends[sends.length - 1].payload.reply_markup as { inline_keyboard: Array<Array<{ text: string }>> };
       expect(markup.inline_keyboard[0].map((btn) => btn.text)).to.deep.equal(['A', 'B']);
 
@@ -270,6 +273,12 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
     it('a bare reply settles the single pending ask', async () => {
       const createRes = await createInteraction({ kind: 'ask', prompt: 'Which region should I use?' });
       const interaction = createRes.body.data;
+
+      // ASK delivers as a structured card (bold title, italic reply hint), not a plain markdown blob.
+      const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
+      const sentPayload = JSON.stringify(sends[sends.length - 1].payload);
+      expect(sentPayload).to.include('Which region should I use');
+      expect(sentPayload).to.include('Reply to this message to answer');
 
       await sendMessageToRelay('eu-west-1');
 
@@ -407,10 +416,15 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   });
 
   describe('tell and caps', () => {
-    it('tell resolves to delivered immediately', async () => {
+    it('tell resolves to delivered immediately and renders as a card with no buttons', async () => {
       const createRes = await createInteraction({ kind: 'tell', prompt: 'Build finished.' });
       expect(createRes.status).to.equal(201);
       expect(createRes.body.data.status).to.equal(HumanInteractionStatusEnum.DELIVERED);
+
+      const sends = telegramApiStub.calls.filter((call) => call.method === 'sendMessage');
+      const sent = sends[sends.length - 1].payload;
+      expect(JSON.stringify(sent)).to.include('Build finished');
+      expect(sent.reply_markup).to.equal(undefined);
     });
 
     it('rejects new interactions once the pending cap is reached', async () => {
