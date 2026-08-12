@@ -159,11 +159,7 @@ describe('InboundEmailParse terminal-trace policy', () => {
 
     await usecase.execute(command);
 
-    sinon.assert.calledOnceWithExactly(
-      replyToStrategy.execute,
-      command,
-      'parse+header-txn-nv-e=env@mail.domain.com'
-    );
+    sinon.assert.calledOnceWithExactly(replyToStrategy.execute, command, 'parse+header-txn-nv-e=env@mail.domain.com');
     sinon.assert.notCalled(domainRouteStrategy.execute);
   });
 
