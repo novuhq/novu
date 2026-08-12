@@ -77,9 +77,11 @@ export class SessionObserver extends Agent<Env, State> {
     const controller = new AbortController();
     this.abortController = controller;
 
-    void this.runFiber('observe', async (ctx) => {
-      ctx.stash(params);
-      await this.observeSSE(params, ctx, controller.signal);
+    await new Promise<void>((resolve, reject) => {
+      void this.runFiber('observe', async (ctx) => {
+        ctx.stash(params);
+        await this.observeSSE(params, ctx, controller.signal, resolve);
+      }).catch(reject);
     });
   }
 
@@ -153,7 +155,7 @@ export class SessionObserver extends Agent<Env, State> {
     if (ctx.name !== 'observe') return;
     const snapshot = ctx.snapshot as ObservationParams | null;
     if (!snapshot || !this.state.observation) return;
-    void this.startObserving(snapshot);
+    await this.startObserving(snapshot);
   }
 
   /* ---------- Internal: SSE observation + event processing ---------- */
@@ -161,7 +163,8 @@ export class SessionObserver extends Agent<Env, State> {
   private async observeSSE(
     params: ObservationParams,
     fiberCtx: { stash(data: unknown): void },
-    signal: AbortSignal
+    signal: AbortSignal,
+    onConnected: () => void
   ): Promise<void> {
     const parser = providers[params.provider];
     if (!parser) {
@@ -189,6 +192,8 @@ export class SessionObserver extends Agent<Env, State> {
       });
       throw new Error(`SSE connection failed: ${response.status}`);
     }
+
+    onConnected();
 
     const eventStream = response.body.pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream());
 
