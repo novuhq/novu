@@ -17,6 +17,7 @@ import { DomainRouteTypeEnum, DomainStatusEnum, splitAgentReplyLocalPart } from 
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import {
   getDeliveryFailureDiagnostics,
+  INBOUND_UNMATCHED_ROUTE_MESSAGE,
   InboundParseDroppedError,
   InboundParseOutcome,
   InboundParseProcessingError,
@@ -117,7 +118,7 @@ export class DomainRouteStrategy {
     if (!route) {
       this.logger.info({ toAddress, domain: domain.name }, 'No route matched the inbound email');
 
-      return { ...baseResolved, strategy: 'domain-route', status: 422, message: 'No matching inbound route' };
+      return { ...baseResolved, strategy: 'domain-route', status: 422, message: INBOUND_UNMATCHED_ROUTE_MESSAGE };
     }
 
     const mail = this.commandToMail(command);

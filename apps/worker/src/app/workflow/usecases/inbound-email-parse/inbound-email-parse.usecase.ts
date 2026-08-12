@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
 import {
+  INBOUND_UNMATCHED_ROUTE_MESSAGE,
   InboundParseDroppedError,
   InboundParseOutcome,
   InboundParseProcessingError,
@@ -10,6 +11,19 @@ import {
 import { LogInboundEmailRequest } from './log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from './strategies/domain-route.strategy';
 import { ReplyToStrategy } from './strategies/reply-to.strategy';
+
+/**
+ * Result of walking the recipient list through `DomainRouteStrategy`.
+ *
+ * `resolved` carries the first recipient that produced a verdict for its
+ * tenant, `unmatched` means a verified Novu domain was found but no route
+ * covered the address, and `unroutable` means no recipient belonged to Novu
+ * at all.
+ */
+type DomainRouteAttempt =
+  | { kind: 'resolved'; outcome: InboundParseOutcome | undefined }
+  | { kind: 'unmatched'; outcome: InboundParseOutcome }
+  | { kind: 'unroutable'; error?: BadRequestException };
 
 /**
  * Worker entry point for inbound email parsing.
@@ -51,16 +65,15 @@ export class InboundEmailParse {
   }
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
-    const domainRouteAddresses = getRecipientAddresses(command, ['envelopeTo', 'to', 'cc']);
-    const replyToAddresses = getRecipientAddresses(command, ['to', 'cc', 'envelopeTo']);
+    const recipients = getRoutingRecipients(command);
 
-    this.logger.info({ recipientAddresses: domainRouteAddresses }, 'Received new email to parse');
+    this.logger.info(
+      { recipientCount: recipients.length, envelopeRecipientCount: command.envelopeTo?.length ?? 0 },
+      'Received new email to parse'
+    );
 
     try {
-      const replyToAddress = replyToAddresses.find((address) => this.isReplyToAddress(address));
-      const outcome = replyToAddress
-        ? await this.replyToStrategy.execute(command, replyToAddress)
-        : await this.executeDomainRoute(command, domainRouteAddresses);
+      const outcome = await this.route(command, recipients);
 
       if (outcome) {
         await this.logInboundEmailRequest.execute({ command, outcome });
@@ -119,23 +132,81 @@ export class InboundEmailParse {
     }
   }
 
+  private async route(
+    command: InboundEmailParseCommand,
+    recipients: string[]
+  ): Promise<InboundParseOutcome | undefined> {
+    const replyToAddress = recipients.find(isReplyToAddress);
+
+    if (!replyToAddress) {
+      return this.executeDomainRoute(command, recipients);
+    }
+
+    try {
+      return await this.replyToStrategy.execute(command, replyToAddress);
+    } catch (error) {
+      if (!isNonRetriableFailure(error)) {
+        throw error;
+      }
+
+      /*
+       * The reply-to marker is only a substring of the local part, so any
+       * recipient can carry it without being a usable reply token. Retry the
+       * remaining recipients as domain routes instead of dropping the message,
+       * so one unusable address cannot suppress delivery for a legitimate
+       * route on the same email. The original failure is surfaced when nothing
+       * else is deliverable, keeping the reply-to diagnostics intact.
+       */
+      const fallback = await this.attemptDomainRoutes(
+        command,
+        recipients.filter((address) => address !== replyToAddress)
+      );
+
+      if (fallback.kind === 'resolved' && fallback.outcome && isDelivered(fallback.outcome)) {
+        return fallback.outcome;
+      }
+
+      throw error;
+    }
+  }
+
   private async executeDomainRoute(
     command: InboundEmailParseCommand,
-    recipientAddresses: string[]
+    recipients: string[]
   ): Promise<InboundParseOutcome | undefined> {
+    const attempt = await this.attemptDomainRoutes(command, recipients);
+
+    if (attempt.kind === 'unroutable') {
+      throw attempt.error ?? new BadRequestException('Inbound email has no recipient address');
+    }
+
+    return attempt.outcome;
+  }
+
+  /**
+   * Walk the recipients in order and stop on the first one that resolves to a
+   * tenant verdict. Recipients that belong to no Novu domain
+   * (`BadRequestException`) or to a domain without a covering route are
+   * skipped, so an address in Cc or Bcc still routes when the primary
+   * recipient is someone else.
+   */
+  private async attemptDomainRoutes(
+    command: InboundEmailParseCommand,
+    recipients: string[]
+  ): Promise<DomainRouteAttempt> {
+    let unmatched: InboundParseOutcome | undefined;
     let lastBadRequest: BadRequestException | undefined;
-    let unmatchedRouteOutcome: InboundParseOutcome | undefined;
 
-    for (const recipientAddress of recipientAddresses) {
+    for (const recipient of recipients) {
       try {
-        const outcome = await this.domainRouteStrategy.execute(command, recipientAddress);
+        const outcome = await this.domainRouteStrategy.execute(command, recipient);
 
-        if (outcome?.status === 422 && outcome.message === 'No matching inbound route') {
-          unmatchedRouteOutcome = outcome;
+        if (outcome && isUnmatchedRoute(outcome)) {
+          unmatched = outcome;
           continue;
         }
 
-        return outcome;
+        return { kind: 'resolved', outcome };
       } catch (error) {
         if (!(error instanceof BadRequestException)) {
           throw error;
@@ -145,31 +216,45 @@ export class InboundEmailParse {
       }
     }
 
-    if (unmatchedRouteOutcome) {
-      return unmatchedRouteOutcome;
+    if (unmatched) {
+      return { kind: 'unmatched', outcome: unmatched };
     }
 
-    throw lastBadRequest ?? new BadRequestException('Inbound email has no recipient address');
-  }
-
-  private isReplyToAddress(address: string): boolean {
-    return address.includes('-nv-e=');
+    return { kind: 'unroutable', error: lastBadRequest };
   }
 }
 
-type RecipientField = 'envelopeTo' | 'to' | 'cc';
+/**
+ * Recipients that routing decisions are allowed to use.
+ *
+ * Only SMTP envelope recipients (`RCPT TO`) are trusted: they record where the
+ * message was actually delivered, and they cover Cc and Bcc recipients — Bcc
+ * is deliberately absent from the message headers. The `To`/`Cc` headers are
+ * written by the sender and may name any address, including another tenant's
+ * inbound address, so they are consulted only for payloads that carry no
+ * envelope recipients at all (queue payloads predating envelope capture).
+ */
+function getRoutingRecipients(command: InboundEmailParseCommand): string[] {
+  const envelopeRecipients = collectAddresses(command.envelopeTo);
 
-function getRecipientAddresses(command: InboundEmailParseCommand, fieldOrder: RecipientField[]): string[] {
-  const recipients = fieldOrder.flatMap((field) => command[field] ?? []) as unknown[];
-  const addresses = recipients
-    .map(getRecipientAddress)
+  if (envelopeRecipients.length > 0) {
+    return envelopeRecipients;
+  }
+
+  return collectAddresses([...(command.to ?? []), ...(command.cc ?? [])]);
+}
+
+function collectAddresses(recipients: unknown[] | undefined): string[] {
+  const addresses = (recipients ?? [])
+    .map(toRecipientAddress)
     .filter((address): address is string => Boolean(address))
-    .map((address) => address.toLowerCase());
+    .map((address) => address.trim().toLowerCase())
+    .filter((address) => address.length > 0);
 
   return [...new Set(addresses)];
 }
 
-function getRecipientAddress(recipient: unknown): string | undefined {
+function toRecipientAddress(recipient: unknown): string | undefined {
   if (typeof recipient === 'string') {
     return recipient;
   }
@@ -181,6 +266,30 @@ function getRecipientAddress(recipient: unknown): string | undefined {
   const address = recipient.address;
 
   return typeof address === 'string' ? address : undefined;
+}
+
+function isReplyToAddress(address: string): boolean {
+  return address.includes('-nv-e=');
+}
+
+function isUnmatchedRoute(outcome: InboundParseOutcome): boolean {
+  return outcome.status === 422 && outcome.message === INBOUND_UNMATCHED_ROUTE_MESSAGE;
+}
+
+function isDelivered(outcome: InboundParseOutcome): boolean {
+  return outcome.status >= 200 && outcome.status < 300;
+}
+
+function isNonRetriableFailure(error: unknown): boolean {
+  if (error instanceof BadRequestException) {
+    return true;
+  }
+
+  return (
+    error instanceof InboundParseProcessingError &&
+    Boolean(error.outcome) &&
+    !isRetriableInboundFailureStatus(error.outcome?.status ?? 0)
+  );
 }
 
 function extractMessage(error: unknown): string {
