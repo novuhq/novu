@@ -1,3 +1,5 @@
+export type AgentMessageRole = 'user' | 'assistant';
+
 export type AgentToolSource = { type: 'builtin' } | { type: 'custom' } | { type: 'mcp'; serverName: string };
 
 export type AgentToolResultContent =

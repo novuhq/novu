@@ -1,16 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentRepository, ConversationEntity, ConversationRepository } from '@novu/dal';
+import { DirectionEnum } from '@novu/shared';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
-import type { WebChatConversationMetadataDto } from '../../dtos/web-chat-conversation.dto';
+import type {
+  ListWebChatConversationsResponseDto,
+  WebChatConversationMetadataDto,
+} from '../../dtos/web-chat-conversation.dto';
 import { ListWebChatConversationsCommand } from './list-web-chat-conversations.command';
-
-type ListResult = {
-  data: WebChatConversationMetadataDto[];
-  next: string | null;
-  previous: string | null;
-  totalCount: number;
-  totalCountCapped: boolean;
-};
 
 @Injectable()
 export class ListWebChatConversations {
@@ -19,7 +15,7 @@ export class ListWebChatConversations {
     private readonly agentRepository: AgentRepository
   ) {}
 
-  async execute(command: ListWebChatConversationsCommand): Promise<ListResult> {
+  async execute(command: ListWebChatConversationsCommand): Promise<ListWebChatConversationsResponseDto> {
     if (command.after && command.before) {
       throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
     }
@@ -29,11 +25,13 @@ export class ListWebChatConversations {
       organizationId: command.organizationId,
       subscriberId: command.subscriberId,
       provider: [AgentPlatformEnum.WEB_CHAT],
+      contextKeys: command.contextKeys ?? [],
       after: command.after,
       before: command.before,
       limit: command.limit,
-      sortBy: 'lastActivityAt',
-      sortDirection: -1,
+      sortBy: command.orderBy,
+      sortDirection: command.orderDirection === DirectionEnum.ASC ? 1 : -1,
+      includeCursor: command.includeCursor,
     });
 
     const agentIdentifierById = await this.resolveAgentIdentifiers(

@@ -37,6 +37,10 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
   const popoverRef = useRef<VariableSuggestionsPopoverRef>(null);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Enter-arrow hint: only when the field is empty and idle (not focused).
+  const showEnterHint = !isFocused && value.trim() === '';
 
   // Get available providers and detect active suggestion
   const providers = useSuggestionProviders(editor, enabledProviders);
@@ -129,8 +133,17 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
     const beforeTrigger = value.slice(0, activeSuggestion.triggerIndex);
     const newValue = beforeTrigger + formattedValue;
 
+    // When a selection handler is provided it owns the commit (value + variable flag). Calling the
+    // plain `onValueChange` first would commit an intermediate, unflagged value; on mouse selection
+    // that intermediate (plain text, no variable) is what survives — the picked variable turns into
+    // regular text. So commit exactly once, atomically.
+    if (onSelectSuggestion) {
+      onSelectSuggestion(activeSuggestion.provider, item, newValue);
+
+      return;
+    }
+
     onValueChange(newValue);
-    onSelectSuggestion?.(activeSuggestion.provider, item, newValue);
   };
 
   const isTriggering = !!activeSuggestion && suggestions.length > 0;
@@ -150,8 +163,17 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
           onChange={(e) => {
             onValueChange(e.target.value);
           }}
+          onFocus={(e) => {
+            setIsFocused(true);
+            inputProps.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            inputProps.onBlur?.(e);
+          }}
           className={cn(
-            'mly-box-border mly-h-7 mly-w-40 mly-rounded-md mly-bg-white mly-px-2 mly-pr-6 mly-text-sm mly-text-midnight-gray hover:mly-bg-soft-gray focus:mly-bg-soft-gray focus:mly-outline-none',
+            'mly-box-border mly-h-7 mly-w-40 mly-rounded-md mly-bg-white mly-px-2 mly-text-sm mly-text-midnight-gray hover:mly-bg-soft-gray focus:mly-bg-soft-gray focus:mly-outline-none',
+            showEnterHint && 'mly-pr-6',
             className
           )}
           onKeyDown={(e) => {
@@ -173,9 +195,11 @@ export const SuggestionInput = forwardRef<HTMLInputElement, SuggestionInputProps
           }}
           spellCheck={false}
         />
-        <div className="mly-pointer-events-none mly-absolute mly-inset-y-0 mly-right-1 mly-flex mly-items-center">
-          <CornerDownLeft className="mly-h-3 mly-w-3 mly-stroke-[2.5] mly-text-midnight-gray" />
-        </div>
+        {showEnterHint ? (
+          <div className="mly-pointer-events-none mly-absolute mly-inset-y-0 mly-right-1 mly-flex mly-items-center">
+            <CornerDownLeft className="mly-h-3 mly-w-3 mly-stroke-[2.5] mly-text-midnight-gray" />
+          </div>
+        ) : null}
       </label>
 
       {isTriggering && VariableSuggestionPopoverComponent && (

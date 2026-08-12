@@ -1,4 +1,8 @@
-import type { AgentEventEnvelope } from './agent-event.types';
+/**
+ * Folds `AgentEventEnvelope` streams into a parts-based `AgentMessage[]` timeline.
+ * Runs on clients only (live WS + durable history); the server append-only stores envelopes.
+ */
+import type { AgentEventEnvelope, AgentFileRef, AgentMessageContent } from '@novu/agent-event-protocol';
 import type {
   AgentConversationState,
   AgentMessage,
@@ -9,7 +13,6 @@ import type {
   AgentToolPart,
 } from './agent-message.types';
 import { createInitialAgentConversationState } from './agent-message.types';
-import type { AgentFileRef, AgentMessageContent } from './wire-content.types';
 
 export function applyEnvelopes(
   initialState: AgentConversationState = createInitialAgentConversationState(),
@@ -53,10 +56,12 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
       return { ...state, status: 'resolved' };
 
     case 'message-start':
-      return withAssistantMessage(state, envelope, event.messageId, (message) => ({
-        ...message,
-        parts: [...message.parts, createStreamingTextPart('')],
-      }));
+      return clearTyping(
+        withAssistantMessage(state, envelope, event.messageId, (message) => ({
+          ...message,
+          parts: [...message.parts, createStreamingTextPart('')],
+        }))
+      );
 
     case 'message-delta':
       return withAssistantMessage(state, envelope, event.messageId, (message) => ({
@@ -70,12 +75,19 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
         parts: finalizeMessageEndParts(message.parts, event.content, event.files),
       }));
 
-    case 'message':
-      return withAssistantMessage(state, envelope, event.messageId, (message) => ({
+    case 'message': {
+      const next = withMessage(state, envelope, event.messageId, event.role, (message) => ({
         ...message,
         parts: applyDurableMessageParts(message.parts, event.content, event.files),
         status: 'sent',
       }));
+
+      if (event.role === 'assistant') {
+        return clearTyping(next);
+      }
+
+      return next;
+    }
 
     case 'thinking-start':
       return withActiveAssistantMessage(state, envelope, (message) => ({
@@ -120,21 +132,25 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
       }));
 
     case 'tool-approval-request':
-      return withActiveAssistantMessage(state, envelope, (message) => ({
-        ...message,
-        parts: [
-          ...message.parts,
-          {
-            type: 'approval',
-            approvalId: event.approvalId,
-            toolUseId: event.toolUseId,
-            toolName: event.toolName,
-            input: event.input,
-            source: event.source,
-            state: 'pending',
-          },
-        ],
-      }));
+      return clearTyping(
+        withActiveAssistantMessage(state, envelope, (message) => ({
+          ...message,
+          parts: [
+            ...message.parts,
+            {
+              type: 'approval',
+              approvalId: event.approvalId,
+              toolUseId: event.toolUseId,
+              toolName: event.toolName,
+              input: event.input,
+              source: event.source,
+              approveActionId: event.approveActionId,
+              denyActionId: event.denyActionId,
+              state: 'pending',
+            },
+          ],
+        }))
+      );
 
     case 'tool-approval-response':
       return applyApprovalResponse(state, event.approvalId, event.decision);
@@ -163,9 +179,20 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
         messages: state.messages.filter((message) => message.id !== event.messageId),
       };
 
+    case 'channel.typing':
+      if (event.state === 'on') {
+        const status = event.status?.trim();
+
+        return {
+          ...state,
+          typing: status ? { status } : {},
+        };
+      }
+
+      return clearTyping(state);
+
     case 'step-start':
     case 'step-end':
-    case 'channel.typing':
     case 'channel.reaction':
     case 'connection.error':
     case 'signal':
@@ -177,13 +204,14 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
   }
 }
 
-function withAssistantMessage(
+function withMessage(
   state: AgentConversationState,
   envelope: AgentEventEnvelope,
   messageId: string,
+  role: AgentMessageRole,
   update: (message: AgentMessage) => AgentMessage
 ): AgentConversationState {
-  const { messages, index } = ensureAssistantMessage(state, envelope, messageId);
+  const { messages, index } = ensureMessage(state, envelope, messageId, role);
   const existing = messages[index];
   if (!existing) {
     return state;
@@ -194,8 +222,17 @@ function withAssistantMessage(
   return {
     ...state,
     messages: nextMessages,
-    activeAssistantMessageId: messageId,
+    ...(role === 'assistant' ? { activeAssistantMessageId: messageId } : {}),
   };
+}
+
+function withAssistantMessage(
+  state: AgentConversationState,
+  envelope: AgentEventEnvelope,
+  messageId: string,
+  update: (message: AgentMessage) => AgentMessage
+): AgentConversationState {
+  return withMessage(state, envelope, messageId, 'assistant', update);
 }
 
 function withActiveAssistantMessage(
@@ -204,27 +241,17 @@ function withActiveAssistantMessage(
   update: (message: AgentMessage) => AgentMessage
 ): AgentConversationState {
   const messageId = state.activeAssistantMessageId ?? envelope.runId;
-  const { messages, index } = ensureAssistantMessage(state, envelope, messageId);
-  const existing = messages[index];
-  if (!existing) {
-    return state;
-  }
-  const nextMessages = messages.slice();
-  nextMessages[index] = update(existing);
 
-  return {
-    ...state,
-    messages: nextMessages,
-    activeAssistantMessageId: messageId,
-  };
+  return withMessage(state, envelope, messageId, 'assistant', update);
 }
 
-function ensureAssistantMessage(
+function ensureMessage(
   state: AgentConversationState,
   envelope: AgentEventEnvelope,
-  messageId: string
+  messageId: string,
+  role: AgentMessageRole
 ): { messages: AgentMessage[]; index: number } {
-  const existingIndex = state.messages.findIndex((message) => message.id === messageId && message.role === 'assistant');
+  const existingIndex = state.messages.findIndex((message) => message.id === messageId && message.role === role);
 
   if (existingIndex >= 0) {
     return { messages: state.messages, index: existingIndex };
@@ -232,7 +259,7 @@ function ensureAssistantMessage(
 
   const message: AgentMessage = {
     id: messageId,
-    role: 'assistant',
+    role,
     parts: [],
     createdAt: envelope.timestamp,
     status: 'sent',
@@ -515,6 +542,24 @@ function editMessage(
   nextMessages[index] = edited;
 
   return { ...state, messages: nextMessages };
+}
+
+/**
+ * Clears ephemeral typing. Call sites are intentional and small:
+ * - `channel.typing` state `off`
+ * - assistant `message-start` / durable assistant `message` (content replaced waiting)
+ * - `tool-approval-request` (human input replaced waiting)
+ * Do not clear on `run-finish` / `run-error` here — that lifecycle stays separate.
+ */
+function clearTyping(state: AgentConversationState): AgentConversationState {
+  if (state.typing === undefined) {
+    return state;
+  }
+
+  return {
+    ...state,
+    typing: undefined,
+  };
 }
 
 function finalizeOpenStreamingParts(state: AgentConversationState): AgentConversationState {

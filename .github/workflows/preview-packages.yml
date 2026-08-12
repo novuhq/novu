@@ -28,7 +28,7 @@ jobs:
 
       - uses: useblacksmith/setup-node@65c6ca86fdeb0ab3d85e78f57e4f6a7e4780b391 # v5
         with:
-          node-version: 22.22.1
+          node-version: 22.23.0
           cache: 'pnpm'
 
       - name: Install pnpm

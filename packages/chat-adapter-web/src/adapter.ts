@@ -20,6 +20,7 @@ import type {
 import {
   ADAPTER_NAME,
   conversationIdFromThreadId,
+  isApprovalActionId,
   isValidConversationId,
   mintActivityId,
   mintConversationId,
@@ -41,7 +42,7 @@ const JSON_HEADERS = { 'content-type': 'application/json' } as const;
 
 type IngressKind =
   | { type: 'message'; text: string }
-  | { type: 'action'; actionId: string; sourceMessageId: string; value?: string };
+  | { type: 'action'; actionId: string; sourceMessageId?: string; value?: string };
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
@@ -173,18 +174,23 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       return { type: 'message', text };
     }
 
-    if (hasAction) {
-      const sourceMessageId = typeof body.sourceMessageId === 'string' ? body.sourceMessageId.trim() : '';
-      if (!sourceMessageId) {
-        return jsonResponse({ message: 'sourceMessageId is required with actionId' }, 400);
-      }
-
-      const value = typeof body.value === 'string' ? body.value : undefined;
-
-      return { type: 'action', actionId, sourceMessageId, value };
+    if (!hasAction) {
+      return jsonResponse({ message: 'text or actionId is required' }, 400);
     }
 
-    return jsonResponse({ message: 'text or actionId is required' }, 400);
+    const sourceMessageId = typeof body.sourceMessageId === 'string' ? body.sourceMessageId.trim() : '';
+    if (!isApprovalActionId(actionId) && !sourceMessageId) {
+      return jsonResponse({ message: 'sourceMessageId is required with actionId' }, 400);
+    }
+
+    const value = typeof body.value === 'string' ? body.value : undefined;
+
+    return {
+      type: 'action',
+      actionId,
+      ...(sourceMessageId ? { sourceMessageId } : {}),
+      value,
+    };
   }
 
   private async handleMessageIngress(
@@ -193,26 +199,53 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     body: WebChatRequestBody,
     options?: WebhookOptions
   ): Promise<Response> {
-    const conversationId = await this.resolveConversationId(body, session, { requireExisting: false });
-    if (conversationId instanceof Response) {
-      return conversationId;
+    const resumeId = this.resolveResumeConversationId(body);
+    if (resumeId === 'invalid') {
+      return jsonResponse({ message: 'Invalid conversation id' }, 400);
+    }
+
+    let conversationId: string;
+    if (resumeId) {
+      const allowed = this.config.authorizeResume
+        ? await this.config.authorizeResume({ conversationId: resumeId, session })
+        : false;
+      if (!allowed) {
+        return jsonResponse({ message: 'Conversation not found' }, 404);
+      }
+
+      const blocked = await this.checkAcceptLimits(session, false, resumeId);
+      if (blocked) {
+        return blocked;
+      }
+
+      conversationId = resumeId;
+    } else {
+      const blocked = await this.checkAcceptLimits(session, true);
+      if (blocked) {
+        return blocked;
+      }
+
+      conversationId = mintConversationId();
     }
 
     // Always mint message ids. Client `messageId` idempotency would ack a ghost
     // turn if checked before durable create; keep server-minted ids for now.
     const threadId = this.encodeThreadId({ conversationId });
+    const messageId = mintMessageId();
     const message = this.parseMessage({
-      id: mintMessageId(),
+      id: messageId,
       text: kind.text,
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
+      contextKeys: session.contextKeys ?? [],
     });
 
     this.chat!.processMessage(this, threadId, message, options);
 
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
     // `web_chat:conv_*` so `chat.thread()` can resolve this adapter by prefix.
-    return jsonResponse({ data: { identifier: conversationId } }, 201);
+    // `messageId` lets the client reconcile optimistic bubbles with history/live.
+    return jsonResponse({ data: { identifier: conversationId, messageId } }, 201);
   }
 
   /** Button / approval click — mirrors Telegram `handleCallbackQuery`. */
@@ -225,6 +258,11 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
     const conversationId = await this.resolveConversationId(body, session, { requireExisting: true });
     if (conversationId instanceof Response) {
       return conversationId;
+    }
+
+    const blocked = await this.checkAcceptLimits(session, false, conversationId);
+    if (blocked) {
+      return blocked;
     }
 
     const threadId = this.encodeThreadId({ conversationId });
@@ -241,15 +279,34 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
         adapter: this,
         actionId: kind.actionId,
         value: kind.value,
-        messageId: kind.sourceMessageId,
+        // Chat ActionEvent requires messageId; headless approvals have no card carrier.
+        messageId: kind.sourceMessageId ?? '',
         threadId,
         user,
-        raw: body,
+        raw: { ...body, contextKeys: session.contextKeys ?? [] },
       },
       options
     );
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
+  }
+
+  /** Sync plan-limit gate before minting or dispatching. */
+  private async checkAcceptLimits(
+    session: WebChatSession,
+    isNewThread: boolean,
+    conversationId?: string
+  ): Promise<Response | null> {
+    if (!this.config.checkAcceptLimits) {
+      return null;
+    }
+
+    const block = await this.config.checkAcceptLimits({ session, isNewThread, conversationId });
+    if (!block) {
+      return null;
+    }
+
+    return jsonResponse({ reason: block.reason, message: block.message }, 402);
   }
 
   /**
@@ -268,7 +325,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
 
     if (!resumeId) {
       if (opts.requireExisting) {
-        return jsonResponse({ message: 'conversationIdentifier is required with actionId' }, 400);
+        return jsonResponse({ message: 'conversationIdentifier is required for actions' }, 400);
       }
 
       return mintConversationId();

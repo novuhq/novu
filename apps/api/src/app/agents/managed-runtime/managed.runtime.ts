@@ -120,9 +120,8 @@ export class ManagedRuntime implements AgentRuntime {
    * have no bridge onAction to forward to, and link buttons are handled in ingress).
    */
   private async handleAction(turn: ConversationTurn): Promise<void> {
-    const toolApproval = parseToolApprovalActionId(turn.action?.id);
-
-    if (!toolApproval) {
+    const parsed = parseToolApprovalActionId(turn.action?.id);
+    if (!parsed) {
       return;
     }
 
@@ -137,7 +136,7 @@ export class ManagedRuntime implements AgentRuntime {
         agentId: turn.agentId,
         subscriberId: turn.subscriber?.subscriberId ?? undefined,
         platform: turn.config.platform,
-        parsed: toolApproval,
+        parsed,
         sourceMessageId: turn.action?.sourceMessageId,
         platformThreadId: turn.platformThreadId,
         actionValue: turn.action?.value,

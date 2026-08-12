@@ -2,6 +2,7 @@ export type WebChatSession = {
   subscriberId: string;
   environmentId: string;
   organizationId: string;
+  contextKeys?: string[];
 };
 
 export type WebChatDeliverMessageParams = {
@@ -43,6 +44,21 @@ export type WebChatAuthorizeResumeParams = {
   session: WebChatSession;
 };
 
+export type WebChatAcceptLimitBlockReason = 'agents' | 'channels' | 'conversations';
+
+export type WebChatAcceptLimitBlock = {
+  reason: WebChatAcceptLimitBlockReason;
+  message: string;
+};
+
+export type WebChatCheckAcceptLimitsParams = {
+  session: WebChatSession;
+  /** `true` when the client did not supply a resume conversation id. */
+  isNewThread: boolean;
+  /** Authorized resume id; omitted for brand-new threads. */
+  conversationId?: string;
+};
+
 export type WebChatAdapterConfig = {
   userName?: string;
   verifySession: (request: Request) => Promise<WebChatSession | null>;
@@ -51,6 +67,11 @@ export type WebChatAdapterConfig = {
    * thread may be resumed (participant + web_chat + agent). Denied → adapter 404.
    */
   authorizeResume?: (params: WebChatAuthorizeResumeParams) => Promise<boolean>;
+  /**
+   * Sync plan-limit gate before minting a conversation id or dispatching the turn.
+   * When blocked, the adapter returns HTTP 402 with `{ reason, message }`.
+   */
+  checkAcceptLimits?: (params: WebChatCheckAcceptLimitsParams) => Promise<WebChatAcceptLimitBlock | null>;
   deliverMessage: (params: WebChatDeliverMessageParams) => Promise<WebChatDeliverMessageResult>;
   editMessage: (params: WebChatEditMessageParams) => Promise<WebChatDeliverMessageResult>;
   deleteMessage: (params: WebChatDeleteMessageParams) => Promise<void>;
@@ -68,15 +89,21 @@ export type WebChatRawMessage = {
   text: string;
   subscriberId: string;
   createdAt: string;
+  contextKeys?: string[];
 };
 
 export type WebChatRequestBody = {
   agentId?: string;
+  /** HMAC of `agentId`; required when web-chat Security HMAC is enabled. */
+  agentHash?: string;
   /** Exactly one of `text` | `actionId` per request. */
   text?: string;
   /** Interactive / approval button id (e.g. `tool-approval:approve:…`). XOR with `text`. */
   actionId?: string;
-  /** Platform message id of the clicked card/button; required with `actionId`. */
+  /**
+   * Platform message id of the clicked card/button.
+   * Required with non-approval `actionId`; optional for approval action ids (headless).
+   */
   sourceMessageId?: string;
   /** Optional button/select value alongside `actionId`. */
   value?: string;

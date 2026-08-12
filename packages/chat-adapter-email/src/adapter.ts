@@ -10,6 +10,7 @@ import type {
   ThreadInfo,
   WebhookOptions,
 } from 'chat';
+import { stripAgentReplyToken } from '@novu/shared';
 import type { CardNode } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
 import { MessageParser } from './message-parser.js';
@@ -108,7 +109,9 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       references: payload.references,
     });
 
-    const agentAddress = payload.to[0]?.address;
+    const agentAddress = payload.to[0]?.address
+      ? stripAgentReplyToken(payload.to[0].address)
+      : undefined;
     await Promise.all([
       this.threadResolver.trackSubject(threadId, payload.subject),
       agentAddress ? this.threadResolver.trackAgentAddress(threadId, agentAddress) : Promise.resolve(),
@@ -125,7 +128,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       id: payload.messageId,
       messageId: payload.messageId,
       from: payload.from.name ? `${payload.from.name} <${payload.from.address}>` : payload.from.address,
-      to: payload.to.map((t: { address: string; name?: string }) => t.address),
+      to: payload.to.map((t: { address: string; name?: string }) => stripAgentReplyToken(t.address)),
       subject: payload.subject,
       text: payload.text,
       html: payload.html,
@@ -134,6 +137,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       headers: payload.headers,
       domain: payload.domain,
       route: payload.route,
+      originToken: payload.originToken,
       createdAt: payload.date,
       attachments: payload.attachments,
       dkim: payload.dkim,

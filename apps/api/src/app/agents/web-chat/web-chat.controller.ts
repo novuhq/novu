@@ -13,6 +13,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { FeatureFlagsService } from '@novu/application-generic';
+import { DirectionEnum } from '@novu/shared';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import {
   SubscriberSession,
@@ -54,8 +55,9 @@ export class WebChatController {
   ) {}
 
   /**
-   * Adapter webhook ingress (same spine as other channels). Plan limits are
-   * enforced mid-turn by `PlanLimitGateService` in inbound-turn. Optional body
+   * Adapter webhook ingress (same spine as other channels). Plan limits on web
+   * chat accept are enforced synchronously (HTTP 402) before minting `conv_*`;
+   * other channels soft-block mid-turn via `PlanLimitGateService`. Optional body
    * `conversationIdentifier` / `id` resumes via ACL.
    */
   @Post('/conversations')
@@ -75,10 +77,12 @@ export class WebChatController {
         throw new BadRequestException('agentId is required');
       }
 
+      const agentHash = typeof req.body?.agentHash === 'string' ? req.body.agentHash.trim() : undefined;
       const published = await this.publicationService.resolvePublishedAgent(
         agentIdentifier,
         session.environmentId,
-        session.organizationId
+        session.organizationId,
+        agentHash
       );
 
       await this.inboundDispatcher.handleWebhook(published.agentId, published.integrationIdentifier, req, res, {
@@ -106,9 +110,13 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         after: query.after,
         before: query.before,
         limit: query.limit ?? 50,
+        orderBy: query.orderBy || 'lastActivityAt',
+        orderDirection: query.orderDirection || DirectionEnum.DESC,
+        includeCursor: query.includeCursor,
       })
     );
   }
@@ -124,6 +132,7 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
       })
     );
@@ -141,10 +150,9 @@ export class WebChatController {
         environmentId: subscriberSession.environmentId,
         organizationId: subscriberSession.organizationId,
         subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
-        after: query.after,
         before: query.before,
-        afterSequence: query.afterSequence ?? 0,
         limit: query.limit ?? 50,
       })
     );

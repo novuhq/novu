@@ -1,16 +1,17 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { AgentEntitlementsService, WebSocketsQueueService } from '@novu/application-generic';
+import { AgentEntitlementsService, createHash, WebSocketsQueueService } from '@novu/application-generic';
 import {
   ConversationActivationRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
   ConversationParticipantTypeEnum,
+  IntegrationRepository,
 } from '@novu/dal';
 import { ChatProviderIdEnum, WebSocketEventEnum } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { PlanLimitGateService } from '../conversation-runtime/ingress/plan-limit-gate.service';
+import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
   AgentTestContext,
@@ -20,6 +21,7 @@ import {
 } from './helpers/agent-test-setup';
 
 const activationRepository = new ConversationActivationRepository();
+const integrationRepository = new IntegrationRepository();
 
 const POLL_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 50;
@@ -85,10 +87,37 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   }
 
   function createConversation(
-    body: { agentId: string; text: string; id?: string; conversationIdentifier?: string },
+    body: {
+      agentId: string;
+      text: string;
+      id?: string;
+      conversationIdentifier?: string;
+      agentHash?: string;
+    },
     token = subscriberToken
   ) {
     return ctx.session.testAgent.post('/v1/web-chat/conversations').set('Authorization', `Bearer ${token}`).send(body);
+  }
+
+  async function setWebChatHmac(enabled: boolean) {
+    await integrationRepository.update(
+      {
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        providerId: ChatProviderIdEnum.NovuWebChat,
+      },
+      {
+        $set: {
+          'credentials.hmac': enabled,
+        },
+      }
+    );
+  }
+
+  function mintAgentHash(agentIdentifier = ctx.agentIdentifier) {
+    const secretKey = ctx.session.environment.apiKeys[0].key;
+
+    return createHash(secretKey, agentIdentifier) as string;
   }
 
   function listConversations(token = subscriberToken, query: { after?: string; before?: string; limit?: number } = {}) {
@@ -104,7 +133,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
   function getEvents(
     conversationIdentifier: string,
     token = subscriberToken,
-    query: { after?: string; before?: string; afterSequence?: number; limit?: number } = {}
+    query: { before?: string; limit?: number } = {}
   ) {
     return ctx.session.testAgent
       .get(`/v1/web-chat/conversations/${conversationIdentifier}/events`)
@@ -146,6 +175,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       timestamp: new Date().toISOString(),
       event: {
         type: 'message',
+        role: 'assistant',
         messageId,
         content: { markdown: `Agent reply ${messageId}` },
       },
@@ -162,6 +192,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     expect(res.status).to.equal(201);
     expect(res.body.data.identifier).to.match(/^conv_/);
+    expect(res.body.data.messageId).to.match(/^msg_/);
 
     const conversation = await pollFor(() =>
       conversationRepository.findOne(
@@ -189,7 +220,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       return subscriberMessage ?? null;
     });
     expect(activities.content).to.equal('Hello from web chat');
-    expect(activities.identifier).to.match(/^msg_/);
+    expect(activities.identifier).to.equal(res.body.data.messageId);
     expect(conversation.channels.some((channel) => channel.platform === 'web_chat')).to.equal(true);
     expect(conversation.channels[0]?.platformThreadId).to.equal(`web_chat:${res.body.data.identifier}`);
   });
@@ -204,6 +235,151 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     const res = await createConversation({
       agentId: unpublishedIdentifier,
       text: 'Should fail',
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('This agent is not available on web chat');
+  });
+
+  it('should allow create without agentHash when web-chat HMAC is off', async () => {
+    await linkWebChat();
+    await setWebChatHmac(false);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'No hash needed',
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.match(/^conv_/);
+  });
+
+  it('should allow resume without agentHash when web-chat HMAC is off', async () => {
+    await linkWebChat();
+    await setWebChatHmac(false);
+
+    const created = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Bootstrap thread',
+    });
+    expect(created.status).to.equal(201);
+    const identifier = created.body.data.identifier as string;
+    await waitForConversation(identifier);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Resume without hash',
+      conversationIdentifier: identifier,
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.equal(identifier);
+  });
+
+  it('should reject missing agentHash with 400 when web-chat HMAC is on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Missing hash',
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('Please provide a valid HMAC hash');
+  });
+
+  it('should reject invalid agentHash with 400 when web-chat HMAC is on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Bad hash',
+      agentHash: 'not-a-valid-hmac-digest',
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('Please provide a valid HMAC hash');
+  });
+
+  it('should create when agentHash is valid and agent is published with HMAC on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Signed agent',
+      agentHash: mintAgentHash(),
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.match(/^conv_/);
+    expect(res.body.data.messageId).to.match(/^msg_/);
+  });
+
+  it('should reject resume with missing agentHash when web-chat HMAC is on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(false);
+
+    const created = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Bootstrap thread',
+    });
+    expect(created.status).to.equal(201);
+    await waitForConversation(created.body.data.identifier);
+
+    await setWebChatHmac(true);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Resume without hash',
+      conversationIdentifier: created.body.data.identifier,
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.equal('Please provide a valid HMAC hash');
+  });
+
+  it('should resume when agentHash is valid with HMAC on', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+    const agentHash = mintAgentHash();
+
+    const created = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'First signed message',
+      agentHash,
+    });
+    expect(created.status).to.equal(201);
+    const identifier = created.body.data.identifier as string;
+    await waitForConversation(identifier);
+
+    const res = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Resume signed',
+      conversationIdentifier: identifier,
+      agentHash,
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.equal(identifier);
+  });
+
+  it('should still enforce publication when agentHash is valid', async () => {
+    await linkWebChat();
+    await setWebChatHmac(true);
+
+    const unpublishedIdentifier = `e2e-unpublished-hmac-${Date.now()}`;
+    await ctx.session.testAgent.post('/v1/agents').send({
+      name: 'Unpublished HMAC Agent',
+      identifier: unpublishedIdentifier,
+    });
+
+    const res = await createConversation({
+      agentId: unpublishedIdentifier,
+      text: 'Valid hash, unpublished agent',
+      agentHash: mintAgentHash(unpublishedIdentifier),
     });
 
     expect(res.status).to.equal(400);
@@ -284,8 +460,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
 
     const eventsRes = await getEvents(createRes.body.data.identifier);
     expect(eventsRes.status).to.equal(200);
-    expect(eventsRes.body.data.hasMore).to.equal(false);
-    expect(eventsRes.body.data.next).to.equal(null);
+    expect(eventsRes.body.data.olderCursor).to.equal(null);
     expect(eventsRes.body.data.events.length).to.be.greaterThan(0);
 
     const agentMessageEvent = eventsRes.body.data.events.find(
@@ -296,19 +471,20 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(agentMessageEvent.event.content.markdown).to.equal(`Agent reply ${messageId}`);
 
     const subscriberMessageEvent = eventsRes.body.data.events.find((envelope: AgentEventEnvelope) => {
-      if (envelope.event.type !== 'custom' || envelope.event.name !== 'subscriber.message') {
-        return false;
-      }
-      const data = envelope.event.data as { content?: { markdown?: string }; messageId?: string };
-
-      return data.content?.markdown === 'Start thread';
+      return (
+        envelope.event.type === 'message' &&
+        envelope.event.role === 'user' &&
+        envelope.event.content?.markdown === 'Start thread'
+      );
     });
     expect(subscriberMessageEvent).to.exist;
-    const subscriberData = subscriberMessageEvent.event.data as { messageId?: string };
-    expect(subscriberData.messageId).to.match(/^msg_/);
+    expect(subscriberMessageEvent.event.type).to.equal('message');
+    if (subscriberMessageEvent.event.type === 'message') {
+      expect(subscriberMessageEvent.event.messageId).to.match(/^msg_/);
+    }
   });
 
-  it('should paginate events with activity cursor', async () => {
+  it('should return the newest page by default and paginate older with before', async () => {
     await linkWebChat();
 
     const createRes = await createConversation({
@@ -331,19 +507,30 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       events: [messageEnvelope(conversation._id, `msg-page-${Date.now()}`)],
     });
 
-    const firstPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 1 });
-    expect(firstPage.status).to.equal(200);
-    expect(firstPage.body.data.events).to.have.length(1);
-    expect(firstPage.body.data.hasMore).to.equal(true);
-    expect(firstPage.body.data.next).to.be.a('string');
+    const newestPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 1 });
+    expect(newestPage.status).to.equal(200);
+    expect(newestPage.body.data.events).to.have.length(1);
+    expect(newestPage.body.data.olderCursor).to.be.a('string');
 
-    const secondPage = await ctx.session.testAgent
-      .get(`/v1/web-chat/conversations/${createRes.body.data.identifier}/events`)
-      .query({ after: firstPage.body.data.next, limit: 50 })
-      .set('Authorization', `Bearer ${subscriberToken}`);
-    expect(secondPage.status).to.equal(200);
-    expect(secondPage.body.data.events.length).to.be.greaterThan(0);
-    expect(secondPage.body.data.events[0].sequence).to.be.greaterThan(firstPage.body.data.events[0].sequence);
+    const newestSequences = newestPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence);
+    for (let index = 1; index < newestSequences.length; index += 1) {
+      expect(newestSequences[index]).to.be.greaterThan(newestSequences[index - 1]);
+    }
+
+    const olderPage = await getEvents(createRes.body.data.identifier, subscriberToken, {
+      before: newestPage.body.data.olderCursor,
+      limit: 50,
+    });
+    expect(olderPage.status).to.equal(200);
+    expect(olderPage.body.data.events.length).to.be.greaterThan(0);
+    expect(olderPage.body.data.events[olderPage.body.data.events.length - 1].sequence).to.be.lessThan(
+      newestPage.body.data.events[0].sequence
+    );
+
+    const olderSequences = olderPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence);
+    for (let index = 1; index < olderSequences.length; index += 1) {
+      expect(olderSequences[index]).to.be.greaterThan(olderSequences[index - 1]);
+    }
   });
 
   it('should reject GET events for another subscriber', async () => {
@@ -547,37 +734,6 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(second.body.data.identifier).to.match(/^conv_/);
   });
 
-  it('should paginate durable history with afterSequence', async () => {
-    await linkWebChat();
-
-    const createRes = await createConversation({
-      agentId: ctx.agentIdentifier,
-      text: 'Sequence start',
-    });
-    expect(createRes.status).to.equal(201);
-
-    const conversation = await waitForConversation(createRes.body.data.identifier);
-
-    await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
-      events: [messageEnvelope(conversation._id, `msg-seq-${Date.now()}`)],
-    });
-
-    const fullPage = await getEvents(createRes.body.data.identifier);
-    expect(fullPage.status).to.equal(200);
-    expect(fullPage.body.data.events.length).to.be.greaterThan(1);
-
-    const firstSequence = fullPage.body.data.events[0].sequence as number;
-    const gapFill = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: firstSequence,
-      limit: 50,
-    });
-    expect(gapFill.status).to.equal(200);
-    expect(gapFill.body.data.events.length).to.be.greaterThan(0);
-    for (const envelope of gapFill.body.data.events) {
-      expect(envelope.sequence).to.be.greaterThan(firstSequence);
-    }
-  });
-
   it('should emit exactly one live AGENT_EVENT per post/edit/delete/typing via adapter callbacks', async () => {
     await linkWebChat();
     const wsQueue = testServer.getService(WebSocketsQueueService);
@@ -589,6 +745,27 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     });
     expect(createRes.status).to.equal(201);
     const conversation = await waitForConversation(createRes.body.data.identifier);
+
+    // Inbound ack starts typing on web_chat (PLATFORMS_WITH_TYPING_INDICATOR). Wait for
+    // that job, then drop it so the counts below only cover adapter-callback emits from ingest.
+    const ackTypingJobs = await pollFor(() => {
+      const typingJobs = addStub
+        .getCalls()
+        .map((call) => call.args[0])
+        .filter(
+          (job) =>
+            job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+            (job.data.payload as AgentEventEnvelope)?.event?.type === 'channel.typing'
+        );
+
+      return typingJobs.length > 0 ? typingJobs : null;
+    });
+    expect(ackTypingJobs).to.have.length(1);
+    expect((ackTypingJobs[0].data.payload as AgentEventEnvelope).event).to.deep.include({
+      type: 'channel.typing',
+      state: 'on',
+    });
+    addStub.resetHistory();
 
     const messageId = `msg-live-${Date.now()}`;
     const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
@@ -682,7 +859,11 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(byType('channel.delete')).to.have.length(1);
 
     const liveMessage = byType('message')[0].data.payload as AgentEventEnvelope;
-    expect(liveMessage.event).to.deep.include({ type: 'message', messageId: platformMessageId });
+    expect(liveMessage.event).to.deep.include({
+      type: 'message',
+      role: 'assistant',
+      messageId: platformMessageId,
+    });
 
     const historyRes = await getEvents(createRes.body.data.identifier);
     expect(historyRes.status).to.equal(200);
@@ -754,6 +935,7 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(liveMessages).to.have.length(1);
     expect((liveMessages[0].data.payload as AgentEventEnvelope).event).to.deep.include({
       type: 'message',
+      role: 'assistant',
       messageId: activity.platformMessageId,
     });
   });
@@ -798,11 +980,10 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     ).to.equal(true);
   });
 
-  it('should soft-block plan-limit turns mid-inbound without activating the agent', async () => {
+  it('should return 402 on accept when agent is over plan limit without minting conv_*', async () => {
     await linkWebChat();
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
     const bridgeStub = bridgeExecutor.execute as sinon.SinonStub;
-    const maybeBlockSpy = sinon.spy(testServer.getService(PlanLimitGateService), 'maybeBlock');
 
     sinon.stub(testServer.getService(AgentEntitlementsService), 'checkRuntimeLimits').resolves({
       agentWithinLimit: false,
@@ -813,15 +994,60 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
       agentId: ctx.agentIdentifier,
       text: 'Blocked by plan limit',
     });
-    // Same spine as other channels: accept returns 201; PlanLimitGate soft-blocks
-    // inside inbound-turn (upgrade card may be ephemeral for brand-new web threads).
-    expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.identifier).to.match(/^conv_/);
 
-    await pollFor(async () => (maybeBlockSpy.called && (await maybeBlockSpy.returnValues[0]) ? true : null));
+    expect(createRes.status).to.equal(402);
+    expect(createRes.body.reason).to.equal('agents');
+    expect(createRes.body.message).to.be.a('string').and.not.empty;
+    expect(createRes.body.data).to.equal(undefined);
     expect(bridgeStub.called).to.equal(false);
     const activations = await activationRepository.count({ _organizationId: ctx.session.organization._id });
     expect(activations).to.equal(0);
+  });
+
+  it('should return 402 on accept when channel is over plan limit without minting conv_*', async () => {
+    await linkWebChat();
+    const bridgeExecutor = testServer.getService(BridgeExecutorService);
+    const bridgeStub = bridgeExecutor.execute as sinon.SinonStub;
+
+    sinon.stub(testServer.getService(AgentEntitlementsService), 'checkRuntimeLimits').resolves({
+      agentWithinLimit: true,
+      channelWithinLimit: false,
+    });
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Blocked by channel limit',
+    });
+
+    expect(createRes.status).to.equal(402);
+    expect(createRes.body.reason).to.equal('channels');
+    expect(createRes.body.message).to.be.a('string').and.not.empty;
+    expect(bridgeStub.called).to.equal(false);
+  });
+
+  it('should return 402 on accept when free-tier conversation cap is reached on a new thread', async () => {
+    await linkWebChat();
+    const bridgeExecutor = testServer.getService(BridgeExecutorService);
+    const bridgeStub = bridgeExecutor.execute as sinon.SinonStub;
+
+    sinon.stub(testServer.getService(AgentEntitlementsService), 'checkRuntimeLimits').resolves({
+      agentWithinLimit: true,
+      channelWithinLimit: true,
+    });
+    sinon.stub(testServer.getService(ConversationActivationService), 'shouldBlockFreeTier').resolves({
+      blocked: true,
+      limit: 100,
+    });
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Blocked by conversation limit',
+    });
+
+    expect(createRes.status).to.equal(402);
+    expect(createRes.body.reason).to.equal('conversations');
+    expect(createRes.body.message).to.be.a('string').and.not.empty;
+    expect(bridgeStub.called).to.equal(false);
   });
 
   it('should initialize sequence allocation above legacy unsequenced history', async () => {
@@ -867,22 +1093,15 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     );
     expect(agentActivity.sequence).to.be.greaterThan(1);
 
+    // Unsequenced legacy rows are excluded; only sequenced events appear, ascending.
     const eventsRes = await getEvents(createRes.body.data.identifier);
     expect(eventsRes.status).to.equal(200);
-    const sequences = eventsRes.body.data.events.map((event: AgentEventEnvelope) => event.sequence);
-    expect(new Set(sequences).size).to.equal(sequences.length);
-
-    const gapFillRes = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 1,
-      limit: 1,
-    });
-    expect(gapFillRes.status).to.equal(200);
-    expect(gapFillRes.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([
-      agentActivity.sequence,
-    ]);
+    expect(eventsRes.body.data.events).to.have.length(1);
+    expect(eventsRes.body.data.events[0].sequence).to.equal(agentActivity.sequence);
+    expect(eventsRes.body.data.olderCursor).to.equal(null);
   });
 
-  it('should return concurrent durable events in sequence order during gap-fill', async () => {
+  it('should return concurrent durable events in sequence order on the newest page', async () => {
     await linkWebChat();
     const createRes = await createConversation({
       agentId: ctx.agentIdentifier,
@@ -914,23 +1133,13 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     await new Promise((resolve) => setTimeout(resolve, 5));
     await createActivity(2);
 
-    const firstGapPage = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 1,
-      limit: 1,
-    });
-    expect(firstGapPage.status).to.equal(200);
-    expect(firstGapPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([2]);
-    expect(firstGapPage.body.data.hasMore).to.equal(true);
-
-    const secondGapPage = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 2,
-      limit: 1,
-    });
-    expect(secondGapPage.status).to.equal(200);
-    expect(secondGapPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([3]);
+    const newestPage = await getEvents(createRes.body.data.identifier, subscriberToken, { limit: 2 });
+    expect(newestPage.status).to.equal(200);
+    // Newest page is chronological within the page (seq 2 then 3), not insert order.
+    expect(newestPage.body.data.events.map((event: AgentEventEnvelope) => event.sequence)).to.deep.equal([2, 3]);
   });
 
-  it('should support ephemeral sequence gaps in durable afterSequence gap-fill', async () => {
+  it('should omit ephemeral sequence gaps from durable history', async () => {
     await linkWebChat();
     const createRes = await createConversation({
       agentId: ctx.agentIdentifier,
@@ -977,16 +1186,5 @@ describe('Web Chat - /web-chat/conversations #novu-v2', () => {
     expect(agentMsg.sequence).to.be.a('number');
     // Durable history has fewer events than the high-watermark (ephemeral left a gap).
     expect(eventsRes.body.data.events.length).to.be.lessThan(refreshed!.eventSequence!);
-
-    const afterUser = await getEvents(createRes.body.data.identifier, subscriberToken, {
-      afterSequence: 1,
-      limit: 50,
-    });
-    expect(afterUser.status).to.equal(200);
-    expect(
-      afterUser.body.data.events.some(
-        (e: AgentEventEnvelope) => e.event.type === 'message' && e.event.messageId === agentActivity.platformMessageId
-      )
-    ).to.equal(true);
   });
 });

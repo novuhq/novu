@@ -20,7 +20,19 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
   /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
+  /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
+  RUN_START = 'run_start',
+  /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
+  RUN_FINISH = 'run_finish',
+  /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
+  RUN_ERROR = 'run_error',
 }
+
+/** Storage types for protocol run lifecycle rows — visibility is governed by activity views. */
+export type RunLifecycleActivityType =
+  | ConversationActivityTypeEnum.RUN_START
+  | ConversationActivityTypeEnum.RUN_FINISH
+  | ConversationActivityTypeEnum.RUN_ERROR;
 
 export enum ConversationActivitySenderTypeEnum {
   SUBSCRIBER = 'subscriber',
@@ -49,6 +61,10 @@ export interface ConversationActivityToolData {
   approved?: boolean;
   /** Executed tool output, or the `execution-denied` marker (result). */
   output?: unknown;
+  /** Server-minted action id for approve (request). Echoed by headless / card UIs. */
+  approveActionId?: string;
+  /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
+  denyActionId?: string;
 }
 
 export class ConversationActivityEntity {

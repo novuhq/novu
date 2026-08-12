@@ -1,7 +1,14 @@
 import { SESv2Client } from '@aws-sdk/client-sesv2';
 import { EmailEventStatusEnum } from '@novu/stateless';
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { SESEmailProvider } from './ses.provider';
+
+// Restore spies between tests so each `vi.spyOn(SESv2Client.prototype, 'send')` starts with a
+// fresh call history. Without this, repeated spyOn calls share one accumulating mock and
+// `spy.mock.calls[0]` leaks the first test's invocation into every later test.
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 // Stub sns-validator so URL/structure tests don't perform real HTTPS cert downloads.
 // Tests assert the URL was either rejected before reaching the validator (Invalid AWS
@@ -187,6 +194,32 @@ test('should trigger ses library correctly with _passthrough', async () => {
   expect(spy).toHaveBeenCalled();
   expect(emailContent.includes('Subject: test subject _passthrough')).toBe(true);
   expect(response.id).toEqual('<mock-message-id@email.amazonses.com>');
+});
+
+test('should apply ConfigurationSetName when configurationSetName is set', async () => {
+  const mockResponse = { MessageId: 'mock-message-id' };
+  const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
+    return mockResponse as any;
+  });
+
+  const provider = new SESEmailProvider({ ...mockConfig, configurationSetName: 'my-config-set' });
+  await provider.sendMessage(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy.mock.calls[0][0].input['ConfigurationSetName']).toEqual('my-config-set');
+});
+
+test('should not set ConfigurationSetName when configurationSetName is absent', async () => {
+  const mockResponse = { MessageId: 'mock-message-id' };
+  const spy = vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
+    return mockResponse as any;
+  });
+
+  const provider = new SESEmailProvider(mockConfig);
+  await provider.sendMessage(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy.mock.calls[0][0].input['ConfigurationSetName']).toBeUndefined();
 });
 
 describe('getMessageId', () => {

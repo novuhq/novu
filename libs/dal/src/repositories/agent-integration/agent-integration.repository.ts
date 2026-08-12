@@ -199,6 +199,52 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
     return this.find(query, ['_agentId', '_integrationId']);
   }
 
+  /**
+   * Linked integration identifiers for an agent (one round trip).
+   * `disconnectedAt: null` is explicit — aggregation skips the schema exclusion hook.
+   */
+  async listLinkedIntegrationIdentifiers({
+    organizationId,
+    environmentId,
+    agentId,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+  }): Promise<string[]> {
+    const result = await this.aggregate([
+      {
+        $match: {
+          _organizationId: this.convertStringToObjectId(organizationId),
+          _environmentId: this.convertStringToObjectId(environmentId),
+          _agentId: this.convertStringToObjectId(agentId),
+          disconnectedAt: null,
+        },
+      },
+      {
+        $lookup: {
+          from: 'integrations',
+          localField: '_integrationId',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $match: {
+                deleted: { $ne: true },
+                active: true,
+              },
+            },
+            { $project: { _id: 0, identifier: 1 } },
+          ],
+          as: 'integration',
+        },
+      },
+      { $unwind: '$integration' },
+      { $group: { _id: '$integration.identifier' } },
+    ]);
+
+    return (result as Array<{ _id: unknown }>).map((row) => String(row._id));
+  }
+
   async listAgentIntegrationsForAgent({
     organizationId,
     environmentId,

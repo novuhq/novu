@@ -42,8 +42,11 @@ export class ReplyToStrategy {
     private attachmentRehydrator: AttachmentRehydrator
   ) {}
 
-  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome> {
-    const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
+  async execute(
+    command: InboundEmailParseCommand,
+    recipientAddress = command.to[0].address
+  ): Promise<InboundParseOutcome> {
+    const { domain, transactionId, environmentId } = this.splitTo(recipientAddress);
 
     Logger.log({ domain, transactionId, environmentId }, 'Processing reply-to email', LOG_CONTEXT);
 
