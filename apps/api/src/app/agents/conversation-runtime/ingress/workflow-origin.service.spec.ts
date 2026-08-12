@@ -763,7 +763,7 @@ describe('WorkflowOriginService', () => {
         notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-9' } }),
       });
 
-      await service.hydrate({
+      const content = await service.hydrate({
         agentId: 'agent1',
         config: telegramConfig as any,
         conversation: conversation as any,
@@ -777,6 +777,10 @@ describe('WorkflowOriginService', () => {
       expect(
         conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
       ).to.equal('order-alerts');
+      // Returned so a live managed session receives the origin it can no longer read from the transcript.
+      expect(content).to.equal(
+        'Your order shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-9"\n}'
+      );
     });
 
     it('no-ops hydrate when the thread id is unparseable', async () => {
@@ -784,7 +788,7 @@ describe('WorkflowOriginService', () => {
         notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-9' } }),
       });
 
-      await service.hydrate({
+      const content = await service.hydrate({
         agentId: 'agent1',
         config: telegramConfig as any,
         conversation: conversation as any,
@@ -793,6 +797,7 @@ describe('WorkflowOriginService', () => {
       });
 
       expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      expect(content).to.equal(null);
     });
 
     it('is fail-soft when lookup throws', async () => {

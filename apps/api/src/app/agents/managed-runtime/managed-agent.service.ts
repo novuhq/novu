@@ -21,6 +21,7 @@ import { ConversationActivityLedger } from '../conversation-runtime/conversation
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
+import { buildLiveSessionMessages } from './build-live-session-messages';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
@@ -31,6 +32,7 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
+  workflowOriginContent?: string;
   platformThreadId?: string;
   platformMessageId?: string;
 }
@@ -118,7 +120,7 @@ export class ManagedAgentService implements OnModuleInit {
     });
 
     const messages = sessionId
-      ? [{ role: MessageRole.USER, content: context.userMessageText }]
+      ? buildLiveSessionMessages(context)
       : await this.buildMessagesWithHistory(context);
 
     const sendResult = await provider.send({

@@ -148,22 +148,27 @@ export class WorkflowOriginService {
     }
   }
 
+  /**
+   * Returns the origin summary written to the transcript, or null when nothing was
+   * hydrated. Runtimes that keep history server-side (managed) only ever receive the
+   * new turn, so they need this value to see an origin attached mid-conversation.
+   */
   async hydrate(params: {
     agentId: string;
     config: ResolvedAgentConfig;
     conversation: ConversationEntity;
     platformThreadId: string;
     origin: MessageEntity;
-  }): Promise<void> {
+  }): Promise<string | null> {
     const { agentId, config, conversation, platformThreadId, origin } = params;
 
     if (!origin._notificationId) {
-      return;
+      return null;
     }
 
     const platformMessageId = resolvePlatformMessageId(config.platform, origin, platformThreadId);
     if (!platformMessageId) {
-      return;
+      return null;
     }
 
     try {
@@ -185,6 +190,8 @@ export class WorkflowOriginService {
         messageContent,
         signalData,
       });
+
+      return messageContent;
     } catch (err) {
       captureAgentWarning(err, {
         component: 'workflow-origin-service',
@@ -195,6 +202,8 @@ export class WorkflowOriginService {
         { err, agentId, platformThreadId, messageId: origin._id, notificationId: origin._notificationId },
         'Failed to hydrate workflow origin into conversation history'
       );
+
+      return null;
     }
   }
 
@@ -230,7 +239,6 @@ export class WorkflowOriginService {
       _subscriberId: subscriberMongoId,
       providerId: config.providerId,
       channel: ChannelTypeEnum.CHAT,
-      // ObjectId path — an empty string is not castable, so only null is excluded.
       _notificationId: { $exists: true, $ne: null },
       ...extraFilter,
     };
