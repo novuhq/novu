@@ -23,9 +23,11 @@ describe('ReplyApprovalInterceptor', () => {
   function makeDeps(history: unknown[] = [pendingRequest, requesterMessage]) {
     const channel = { platform: 'sendblue', platformThreadId: 'sendblue:+15551234567' };
     const conversationService = {
-      getHistory: sinon.stub().resolves(history),
       getPrimaryChannel: sinon.stub().returns(channel),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
+    };
+    const activityLedger = {
+      listForView: sinon.stub().resolves({ data: history, hasMore: false }),
     };
     const outboundGateway = {
       replyOnThread: sinon.stub().resolves({ messageId: 'ack-1', platformThreadId: channel.platformThreadId }),
@@ -35,9 +37,14 @@ describe('ReplyApprovalInterceptor', () => {
       warn: sinon.stub(),
       setContext: sinon.stub(),
     };
-    const interceptor = new ReplyApprovalInterceptor(conversationService as any, outboundGateway as any, logger as any);
+    const interceptor = new ReplyApprovalInterceptor(
+      conversationService as any,
+      activityLedger as any,
+      outboundGateway as any,
+      logger as any
+    );
 
-    return { interceptor, conversationService, outboundGateway };
+    return { interceptor, conversationService, activityLedger, outboundGateway };
   }
 
   function makeTurn(overrides: Record<string, unknown> = {}) {
@@ -288,14 +295,14 @@ describe('ReplyApprovalInterceptor', () => {
   });
 
   it('should fall through when the platform has interactive buttons', async () => {
-    const { interceptor, conversationService } = makeDeps();
+    const { interceptor, activityLedger } = makeDeps();
     const runtime = { dispatch: sinon.stub().resolves(undefined) };
     const turn = makeTurn({ config: { ...makeTurn().config, platform: 'slack' } });
 
     const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
 
     expect(consumed).to.equal(false);
-    expect(conversationService.getHistory.called).to.equal(false);
+    expect(activityLedger.listForView.called).to.equal(false);
     expect(runtime.dispatch.called).to.equal(false);
   });
 
@@ -559,38 +566,38 @@ describe('ReplyApprovalInterceptor', () => {
     });
 
     it('should fall through when the reaction was removed rather than added', async () => {
-      const { interceptor, conversationService } = makeDeps();
+      const { interceptor, activityLedger } = makeDeps();
       const runtime = { dispatch: sinon.stub().resolves(undefined) };
       const turn = makeReactionTurn({ reaction: { emoji: 'thumbs_up', added: false, messageId: 'msg-approval' } });
 
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(conversationService.getHistory.called).to.equal(false);
+      expect(activityLedger.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 
     it('should fall through for an emoji that is not a verdict', async () => {
-      const { interceptor, conversationService } = makeDeps();
+      const { interceptor, activityLedger } = makeDeps();
       const runtime = { dispatch: sinon.stub().resolves(undefined) };
       const turn = makeReactionTurn({ reaction: { emoji: 'heart', added: true, messageId: 'msg-approval' } });
 
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(conversationService.getHistory.called).to.equal(false);
+      expect(activityLedger.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 
     it('should fall through when the platform has interactive buttons', async () => {
-      const { interceptor, conversationService } = makeDeps();
+      const { interceptor, activityLedger } = makeDeps();
       const runtime = { dispatch: sinon.stub().resolves(undefined) };
       const turn = makeReactionTurn({ config: { ...makeTurn().config, platform: 'slack' } });
 
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(conversationService.getHistory.called).to.equal(false);
+      expect(activityLedger.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 

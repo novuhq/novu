@@ -384,6 +384,22 @@ export class ToolApprovalRequestPayloadDto {
   @IsOptional()
   @IsObject()
   input?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Server-minted approve action id. When omitted, self-hosted tool-approval:* is minted at persist.',
+    example: 'tool-approval:approve:apr_01HZX',
+  })
+  @IsOptional()
+  @IsString()
+  approveActionId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Server-minted deny action id. When omitted, self-hosted tool-approval:* is minted at persist.',
+    example: 'tool-approval:deny:apr_01HZX',
+  })
+  @IsOptional()
+  @IsString()
+  denyActionId?: string;
 }
 
 @ApiExtraModels(MarkdownReplyContentDto, CardReplyContentDto, ToolApprovalCardReplyContentDto, FileRefDto)

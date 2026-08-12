@@ -1,10 +1,12 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import {
   type AgentConversationState,
-  type AgentEventEnvelope,
-  appendUserMessage,
-  applyEnvelopes,
+  type AgentMessage,
   createInitialAgentConversationState,
-} from '@novu/agent-event-protocol';
+  derivePendingApprovals,
+} from './agent-message.types';
+import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
+import type { AgentChatChange, AgentChatChangeSource } from './types';
 
 /**
  * Stable local identity for one conversation holder.
@@ -20,6 +22,16 @@ export type ConversationEntry = AgentConversationState & {
    * Create sessions use `local_*`. Resume sessions use the `conv_*` id.
    */
   key: string;
+  /**
+   * Cursor toward older history (`before` on the next page). Null when unknown,
+   * exhausted, or on a create-only holder before any history load.
+   */
+  olderCursor: string | null;
+  /**
+   * Approvals already reported as new. Add-only: an approvalId is never raised twice,
+   * so a resolved approval must not fall out and be reported again.
+   */
+  reportedApprovalIds: Set<string>;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
 };
@@ -47,13 +59,22 @@ function createOptimisticMessageId(): string {
   return mintClientId('opt');
 }
 
+function messagesAddedSince(previous: AgentMessage[], next: AgentMessage[]): AgentMessage[] {
+  const known = new Set(previous.map((message) => message.id));
+
+  return next.filter((message) => !known.has(message.id));
+}
+
 function applyState(entry: ConversationEntry, next: AgentConversationState): void {
-  entry.messages = next.messages;
-  entry.isRunning = next.isRunning;
-  entry.status = next.status;
-  entry.lastSequence = next.lastSequence;
-  entry.error = next.error;
-  entry.activeAssistantMessageId = next.activeAssistantMessageId;
+  Object.assign(entry, {
+    messages: next.messages,
+    isRunning: next.isRunning,
+    typing: next.typing,
+    status: next.status,
+    lastSequence: next.lastSequence,
+    error: next.error,
+    activeAssistantMessageId: next.activeAssistantMessageId,
+  });
 }
 
 /**
@@ -63,10 +84,37 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
  */
 export class AgentChatStore {
   #byKey = new Map<string, ConversationEntry>();
-  #onUpdate: (entry: ConversationEntry) => void;
+  #onUpdate: (entry: ConversationEntry, change: AgentChatChange) => void;
 
-  constructor(onUpdate: (entry: ConversationEntry) => void) {
+  constructor(onUpdate: (entry: ConversationEntry, change: AgentChatChange) => void) {
     this.#onUpdate = onUpdate;
+  }
+
+  /**
+   * Notify listeners with the folded snapshot and what the fold added.
+   * Only this store can tell the three sources apart, so it reports them instead of
+   * leaving each consumer to guess from the snapshot alone.
+   */
+  #publish(entry: ConversationEntry, source: AgentChatChangeSource, addedMessages: AgentMessage[]): void {
+    const newApprovals = derivePendingApprovals(entry.messages).filter(
+      (approval) => !entry.reportedApprovalIds.has(approval.approvalId)
+    );
+    for (const approval of newApprovals) {
+      entry.reportedApprovalIds.add(approval.approvalId);
+    }
+
+    this.#onUpdate(entry, { ...source, addedMessages, newApprovals });
+  }
+
+  /**
+   * Mark a backfilled page's approvals as already reported.
+   * An older page can carry a request whose response is on a page already folded, which
+   * leaves it looking pending. Paging backwards is never new activity.
+   */
+  #suppressApprovals(entry: ConversationEntry, messages: AgentMessage[]): void {
+    for (const approval of derivePendingApprovals(messages)) {
+      entry.reportedApprovalIds.add(approval.approvalId);
+    }
   }
 
   clear(): void {
@@ -88,6 +136,30 @@ export class AgentChatStore {
     return undefined;
   }
 
+  /** All holders that already claimed this conversation id (create + resume can both exist). */
+  findByConversationId(agentId: string, conversationId: string): ConversationEntry[] {
+    const matches: ConversationEntry[] = [];
+    for (const entry of this.#byKey.values()) {
+      if (entry.agentId === agentId && entry.conversationId === conversationId) {
+        matches.push(entry);
+      }
+    }
+
+    return matches;
+  }
+
+  /** Holders that already have a public conversation id (eligible for reconnect catch-up). */
+  listClaimed(): Array<ConversationEntry & { conversationId: string }> {
+    const claimed: Array<ConversationEntry & { conversationId: string }> = [];
+    for (const entry of this.#byKey.values()) {
+      if (entry.conversationId) {
+        claimed.push(entry as ConversationEntry & { conversationId: string });
+      }
+    }
+
+    return claimed;
+  }
+
   /**
    * Return the entry for `key`, or create an empty holder.
    * This method does not reuse a holder that only shares `conversationId`.
@@ -104,13 +176,19 @@ export class AgentChatStore {
       agentId: args.agentId,
       conversationId: args.conversationId,
       key: args.key,
+      olderCursor: null,
+      reportedApprovalIds: new Set(),
     };
     this.#byKey.set(args.key, entry);
 
     return entry;
   }
 
-  /** Append a user message with status `sending`. Returns the optimistic message id. */
+  /**
+   * Append a user message with status `sending`. Returns the optimistic message id.
+   * The optimistic message is not reported as added: `markSent` reports it once under
+   * the server id, and `markFailed` never reports it.
+   */
   appendSending(entry: ConversationEntry, text: string): string {
     const messageId = createOptimisticMessageId();
     applyState(
@@ -122,7 +200,7 @@ export class AgentChatStore {
         parts: [{ type: 'text', text, state: 'done' }],
       })
     );
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'local' }, []);
 
     return messageId;
   }
@@ -135,6 +213,7 @@ export class AgentChatStore {
     entry: ConversationEntry,
     args: { optimisticMessageId: string; serverMessageId: string; conversationId: string }
   ): ConversationEntry {
+    const previous = entry.messages;
     entry.messages = entry.messages.map((message) =>
       message.id === args.optimisticMessageId
         ? { ...message, id: args.serverMessageId, status: 'sent' as const }
@@ -145,7 +224,7 @@ export class AgentChatStore {
       entry.conversationId = args.conversationId;
     }
 
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'local' }, messagesAddedSince(previous, entry.messages));
 
     return entry;
   }
@@ -154,7 +233,7 @@ export class AgentChatStore {
     entry.messages = entry.messages.map((message) =>
       message.id === messageId ? { ...message, status: 'failed' as const } : message
     );
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'local' }, []);
 
     return entry;
   }
@@ -163,17 +242,61 @@ export class AgentChatStore {
    * Merge a history page into this holder.
    * Server message ids win. Local-only messages stay on the holder.
    */
-  absorbHistoryPage(entry: ConversationEntry, envelopes: AgentEventEnvelope[]): ConversationEntry {
+  absorbHistoryPage(
+    entry: ConversationEntry,
+    envelopes: AgentEventEnvelope[],
+    olderCursor: string | null
+  ): ConversationEntry {
+    const previous = entry.messages;
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
-    const localOnly = entry.messages.filter((message) => !serverIds.has(message.id));
+    const localOnly = previous.filter((message) => !serverIds.has(message.id));
 
     applyState(entry, {
       ...folded,
       messages: [...folded.messages, ...localOnly],
     });
+    entry.olderCursor = olderCursor;
 
-    this.#onUpdate(entry);
+    this.#publish(entry, { kind: 'history' }, messagesAddedSince(previous, entry.messages));
+
+    return entry;
+  }
+
+  /**
+   * Fold an older history page into this holder without resetting live timeline fields.
+   * Preserves `lastSequence` so the live sequence gate stays valid after pagination.
+   */
+  prependOlderPage(
+    entry: ConversationEntry,
+    envelopes: AgentEventEnvelope[],
+    olderCursor: string | null
+  ): ConversationEntry {
+    const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
+    const existingIds = new Set(entry.messages.map((message) => message.id));
+    const olderMessages = folded.messages.filter((message) => !existingIds.has(message.id));
+
+    entry.messages = [...olderMessages, ...entry.messages];
+    entry.olderCursor = olderCursor;
+    this.#suppressApprovals(entry, olderMessages);
+
+    this.#publish(entry, { kind: 'history' }, olderMessages);
+
+    return entry;
+  }
+
+  /**
+   * Apply one live envelope onto this holder and notify listeners.
+   * Drops envelopes at or behind `lastSequence` so catch-up HTTP + buffered WS overlap is safe.
+   */
+  applyLiveEnvelope(entry: ConversationEntry, envelope: AgentEventEnvelope): ConversationEntry {
+    if (envelope.sequence <= entry.lastSequence) {
+      return entry;
+    }
+
+    const previous = entry.messages;
+    applyState(entry, applyEnvelope(entry, envelope));
+    this.#publish(entry, { kind: 'live', envelope }, messagesAddedSince(previous, entry.messages));
 
     return entry;
   }

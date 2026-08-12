@@ -1,5 +1,10 @@
-import type { AgentMessageRole } from './agent-message.types';
-import type { AgentFileRef, AgentMessageContent, AgentToolResultContent, AgentToolSource } from './wire-content.types';
+import type {
+  AgentFileRef,
+  AgentMessageContent,
+  AgentMessageRole,
+  AgentToolResultContent,
+  AgentToolSource,
+} from './wire-content.types';
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 
@@ -18,6 +23,12 @@ export interface AgentApprovalRequest {
   toolName: string;
   input?: Record<string, unknown>;
   source?: AgentToolSource;
+  /**
+   * Server-minted platform action ids for headless / card UIs to echo back.
+   * Clients must not invent these — grammars differ across runtimes.
+   */
+  approveActionId?: string;
+  denyActionId?: string;
 }
 
 export type AgentSignal =

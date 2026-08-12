@@ -25,6 +25,7 @@ export class ListWebChatConversations {
       organizationId: command.organizationId,
       subscriberId: command.subscriberId,
       provider: [AgentPlatformEnum.WEB_CHAT],
+      contextKeys: command.contextKeys ?? [],
       after: command.after,
       before: command.before,
       limit: command.limit,

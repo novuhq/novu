@@ -45,6 +45,15 @@ export function conversationIdFromThreadId(threadId: string): string {
   return threadId;
 }
 
+/** Approval action ids may omit sourceMessageId (headless / no card carrier). */
+export function isApprovalActionId(actionId: string): boolean {
+  return (
+    actionId.startsWith('tool-approval:') ||
+    actionId.startsWith('mcp-approval:') ||
+    actionId.startsWith('direct-approval:')
+  );
+}
+
 /** Flatten card title + text/link children for live/history markdown parity. */
 export function extractCardPlainText(card: CardElement): string {
   const title = typeof card.title === 'string' ? card.title.trim() : '';

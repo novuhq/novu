@@ -61,14 +61,19 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       if (response.data !== 'ok') {
         throw new Error(`Slack Webhook Error`);
       }
-    } else {
-      if (!response.data.ok) {
-        throw new Error(`Slack API Error: ${response.data.error}`);
-      }
+
+      return {
+        id: response.headers['x-slack-req-id'] || `webhook-id-${Date.now()}`,
+        date: new Date().toISOString(),
+      };
+    }
+
+    if (!response.data.ok) {
+      throw new Error(`Slack API Error: ${response.data.error}`);
     }
 
     return {
-      id: response.headers['x-slack-req-id'] || `webhook-id-${Date.now()}`,
+      id: `${response.data.channel}:${response.data.ts}`,
       date: new Date().toISOString(),
     };
   }
