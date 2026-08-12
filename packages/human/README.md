@@ -1,0 +1,43 @@
+# @novu/human
+
+**The human API for agents.** Agents are connected to everything — except the humans they work for. `human` gives any agent a one-line way to reach a real person on Telegram (Slack coming next) and block until they answer.
+
+```bash
+# One-time, by the human:
+npx @novu/human setup
+
+# Forever after, by any agent on the machine:
+human ask "Which environment should I deploy to?"
+human approve "Delete 342 stale records from prod?"
+human choose "Pick a release strategy" --option canary --option blue-green
+human tell "Nightly build finished — 0 failures."
+```
+
+## How it works
+
+- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links your Telegram via a QR code.
+- Each command delivers a one-off message (with action buttons where relevant) and **blocks** until the human answers, the `--ttl` expires, or `--timeout` elapses.
+- Answers flow back through button clicks or plain replies; the CLI resolves and your agent continues.
+
+## Exit codes (stable contract for agents)
+
+| Code | Meaning |
+| ---- | ------- |
+| `0`  | answered / approved / chosen / delivered |
+| `10` | denied |
+| `11` | timed out waiting — still pending, resume with `human wait <id>` |
+| `12` | expired or canceled |
+| `1`  | error |
+
+## Useful flags
+
+- `--from deploy-bot` — attribution shown to the human ("Requested by deploy-bot").
+- `--ttl 2h` — how long the request stays answerable (default 24h, max 72h).
+- `--timeout 10m` — max time this invocation blocks; on timeout it prints the id so `human wait <id>` can resume.
+- `--async` — don't block; print the interaction id immediately.
+- `--json` — full interaction object for programmatic parsing.
+- `--to <humanId>` — address a different human than the default from setup.
+
+## Auth
+
+`setup` stores credentials in `~/.novu/human.json`. Alternatively set `NOVU_SECRET_KEY` (and optionally `NOVU_API_URL`) for an existing Novu environment.

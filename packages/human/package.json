@@ -1,0 +1,53 @@
+{
+  "name": "@novu/human",
+  "version": "0.1.0",
+  "description": "The human API for agents — ask, approve, choose, tell. Agents reach a human on Telegram/Slack and block until the human answers.",
+  "main": "dist/src/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novuhq/novu.git"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "pnpm prebuild && tsc -p tsconfig.json",
+    "build:prod": "pnpm build",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "start:prod": "node dist/src/index.js"
+  },
+  "keywords": [
+    "novu",
+    "human-in-the-loop",
+    "agents",
+    "cli",
+    "approval"
+  ],
+  "author": "Novu Team <engineering@novu.co>",
+  "license": "MIT",
+  "bin": {
+    "human": "./dist/src/index.js"
+  },
+  "dependencies": {
+    "@novu/human": "link:",
+    "axios": "^1.6.8",
+    "commander": "^9.4.0",
+    "picocolors": "1.1.1",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.15.0",
+    "@types/qrcode": "^1.5.5",
+    "rimraf": "^3.0.2",
+    "typescript": "5.6.2",
+    "vitest": "^3.2.4"
+  }
+}
