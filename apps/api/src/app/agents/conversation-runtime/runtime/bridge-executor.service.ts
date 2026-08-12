@@ -35,7 +35,7 @@ import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.servic
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
-import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { ConversationActivityLedger } from '../conversation/conversation-activity-ledger';
 
 const MAX_RETRIES = 2;
 
@@ -165,7 +165,7 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly conversationService: AgentConversationService,
+    private readonly activityLedger: ConversationActivityLedger,
     private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -322,7 +322,12 @@ export class BridgeExecutorService {
     const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const history = await this.loadHistory(config.environmentId, conversation._id, agentIdentifier);
+    const history = await this.loadHistory(
+      config.environmentId,
+      conversation._id,
+      agentIdentifier,
+      config.organizationId
+    );
 
     const apiOrigin = resolveAgentReplyApiOrigin();
     const replyUrl = `${apiOrigin}/v1/agents/${agentIdentifier}/reply`;
@@ -385,10 +390,18 @@ export class BridgeExecutorService {
   private async loadHistory(
     environmentId: string,
     conversationId: string,
-    agentIdentifier: string
+    agentIdentifier: string,
+    organizationId: string
   ): Promise<ConversationActivityEntity[]> {
     try {
-      return await this.conversationService.getHistory(environmentId, conversationId);
+      const page = await this.activityLedger.listForView({
+        view: 'agent_handoff',
+        environmentId,
+        organizationId,
+        conversationId,
+      });
+
+      return page.data;
     } catch (err) {
       this.logger.warn(err, `[agent:${agentIdentifier}] Failed to load conversation history; continuing without it`);
       captureAgentWarning(err, {

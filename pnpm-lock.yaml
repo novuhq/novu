@@ -18,7 +18,7 @@ overrides:
   minimatch@>=7.0.0 <7.4.8: ^7.4.8
   minimatch@>=8.0.0 <8.0.6: ^8.0.6
   minimatch@>=9.0.0 <9.0.7: ^9.0.7
-  nanoid@>=3.0.0 <3.3.8: ^3.3.8
+  nanoid@>=3.0.0 <3.3.17: ^3.3.17
   nth-check: ^2.1.1
   postcss@<8.5.23: ^8.5.23
   proxy-agent@<6.3.1: ^6.3.1
@@ -460,8 +460,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: 0.1.0-alpha.16
-        version: 0.1.0-alpha.16(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
+        specifier: 0.1.0-alpha.18
+        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -589,8 +589,8 @@ importers:
         specifier: ^11.5.1
         version: 11.5.1
       nanoid:
-        specifier: ^3.3.8
-        version: 3.3.8
+        specifier: ^3.3.17
+        version: 3.3.18
       nest-raven:
         specifier: 10.1.0
         version: 10.1.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@sentry/node@10.63.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0)))(class-transformer@0.5.1)(class-validator@0.15.1)(graphql@16.9.0)(reflect-metadata@0.2.2)(rxjs@7.8.2)(ts-morph@24.0.0)
@@ -1062,8 +1062,8 @@ importers:
         specifier: ^11.18.2
         version: 11.18.2(@emotion/is-prop-valid@1.2.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nanoid:
-        specifier: ^3.3.8
-        version: 3.3.8
+        specifier: ^3.3.17
+        version: 3.3.18
       next-themes:
         specifier: ^0.3.0
         version: 0.3.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2695,8 +2695,8 @@ importers:
         specifier: ^0.17.0
         version: 0.17.0
       nanoid:
-        specifier: ^3.3.8
-        version: 3.3.8
+        specifier: ^3.3.17
+        version: 3.3.18
       nestjs-otel:
         specifier: 6.2.0
         version: 6.2.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)
@@ -3515,8 +3515,8 @@ importers:
   packages/chat-adapter-web:
     dependencies:
       nanoid:
-        specifier: ^3.3.8
-        version: 3.3.16
+        specifier: ^3.3.17
+        version: 3.3.18
     devDependencies:
       chat:
         specifier: ^4.33.0
@@ -4108,8 +4108,8 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1
       nanoid:
-        specifier: ^3.3.8
-        version: 3.3.8
+        specifier: ^3.3.17
+        version: 3.3.18
       node-fetch:
         specifier: ^3.2.10
         version: 3.3.2
@@ -9284,8 +9284,8 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@0.1.0-alpha.16':
-    resolution: {integrity: sha512-mVVCXE/vsFe9XSnkLGD6W8Mb784MoVibnAXYeSq7REi6/cmi5FFQG8fPPfcTyn1G0pX8EAA3WnQsnsz/RJlX1Q==}
+  '@novu/thalamus@0.1.0-alpha.18':
+    resolution: {integrity: sha512-ZAYIeepTPr71vTOv/G6AvzFlkjKSarH/vzQCfFGeTBKcuh8SdW7AJGt5oiB4ufCBCZgAXUIVNvV3Fs3HnZwbxQ==}
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
       '@anthropic-ai/sdk': '>=0.86.0'
@@ -22552,13 +22552,8 @@ packages:
   nanoclone@0.2.1:
     resolution: {integrity: sha512-wynEP02LmIbLpcYw8uBKpcfF6dmg2vcpKqxeH5UcoKEYdExslsdUA4ugFauuaeYdTB76ez6gJW8XAZ6CgkXYxA==}
 
-  nanoid@3.3.16:
-    resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
-  nanoid@3.3.8:
-    resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
+  nanoid@3.3.18:
+    resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -35500,7 +35495,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@0.1.0-alpha.16(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
+  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
       '@aws-crypto/sha256-js': 5.2.0
@@ -39656,7 +39651,7 @@ snapshots:
       lodash: 4.18.1
       lodash-es: 4.18.1
       markdown-to-jsx: 7.4.1(react@19.2.3)
-      nanoid: 3.3.16
+      nanoid: 3.3.18
       prop-types: 15.8.1
       react: 19.2.3
 
@@ -39796,7 +39791,7 @@ snapshots:
     dependencies:
       '@sanity/eventsource': 5.0.2
       get-it: 8.7.3
-      nanoid: 3.3.16
+      nanoid: 3.3.18
       rxjs: 7.8.2
 
   '@sanity/eventsource@5.0.2':
@@ -53136,7 +53131,7 @@ snapshots:
       log-symbols: 4.1.0
       minimatch: 5.1.9
       ms: 2.1.3
-      nanoid: 3.3.16
+      nanoid: 3.3.18
       serialize-javascript: 7.0.5
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
@@ -53162,7 +53157,7 @@ snapshots:
       log-symbols: 4.0.0
       minimatch: 3.1.5
       ms: 2.1.3
-      nanoid: 3.3.16
+      nanoid: 3.3.18
       serialize-javascript: 7.0.5
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
@@ -53350,9 +53345,7 @@ snapshots:
 
   nanoclone@0.2.1: {}
 
-  nanoid@3.3.16: {}
-
-  nanoid@3.3.8: {}
+  nanoid@3.3.18: {}
 
   nanoid@5.1.6: {}
 
@@ -55119,7 +55112,7 @@ snapshots:
 
   postcss@8.5.25:
     dependencies:
-      nanoid: 3.3.16
+      nanoid: 3.3.18
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
@@ -56743,7 +56736,7 @@ snapshots:
 
   shortid@2.2.17:
     dependencies:
-      nanoid: 3.3.16
+      nanoid: 3.3.18
 
   side-channel-list@1.0.0:
     dependencies:
