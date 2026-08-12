@@ -96,6 +96,21 @@ export type AgentEvent =
       reason?: string;
       automatic?: boolean;
     }
+  | {
+      type: 'mcp-connection-request';
+      actionId: string;
+      mcpId: string;
+      displayName: string;
+      authorizeUrl: string;
+      authorizeUrlWithAutoApprove?: string;
+    }
+  | {
+      type: 'mcp-connection-result';
+      actionId: string;
+      mcpId: string;
+      status: 'connected' | 'failed';
+      message?: string;
+    }
   // Conversation ops
   | { type: 'resolve'; summary?: string }
   | { type: 'signal'; signal: AgentSignal }

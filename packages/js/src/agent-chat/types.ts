@@ -1,12 +1,24 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
-  AgentApprovalPart,
   AgentConversationStatus,
   AgentConversationTyping,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
   AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalAction,
 } from './agent-message.types';
 
-export type { AgentApprovalPart, AgentConversationStatus, AgentConversationTyping, AgentEventEnvelope, AgentMessage };
+export type {
+  AgentConversationStatus,
+  AgentConversationTyping,
+  AgentEventEnvelope,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
+  AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalAction,
+};
 
 /**
  * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
@@ -59,15 +71,15 @@ export type FetchMoreResult = {
   hasMore: boolean;
 };
 
-export type RespondToApprovalArgs = AgentHashFields & {
+export type RespondToActionArgs = AgentHashFields & {
   agentId: string;
-  approvalId: string;
+  actionId: string;
   decision: 'approved' | 'denied';
   conversationId?: string;
   key?: string;
 };
 
-export type RespondToApprovalResult = {
+export type RespondToActionResult = {
   conversationId: string;
 };
 
@@ -84,8 +96,8 @@ export type AgentChatChangeSource =
 export type AgentChatChange = AgentChatChangeSource & {
   /** Messages this fold added. A fold that only changes existing messages adds none. */
   addedMessages: AgentMessage[];
-  /** Approvals that became pending in this fold. One approval is reported one time. */
-  newApprovals: AgentApprovalPart[];
+  /** Actions that became pending in this fold. One action is reported one time. */
+  newActions: AgentPendingAction[];
 };
 
 export type AgentChatMessagesUpdated = {

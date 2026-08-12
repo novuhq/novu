@@ -16,6 +16,16 @@ import {
 } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { mintApprovalActionIds } from '../shared/tool-approval/mint-approval-action-ids';
 
+type McpConnectionActivityData = {
+  actionId?: string;
+  mcpId?: string;
+  displayName?: string;
+  authorizeUrl?: string;
+  authorizeUrlWithAutoApprove?: string;
+  status?: 'connected' | 'failed';
+  message?: string;
+};
+
 function filesFromRichContent(richContent?: Record<string, unknown>) {
   const files = richContent?.files;
   if (!Array.isArray(files) || files.length === 0) {
@@ -93,6 +103,37 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         type: 'tool-use-result',
         toolUseId: toolData.toolCallId,
         content: [{ type: 'text', text: String(toolData.output ?? activity.content) }],
+      };
+    }
+
+    case ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST: {
+      const data = activity.richContent?.mcpConnection as McpConnectionActivityData | undefined;
+      if (!data?.actionId || !data.mcpId || !data.displayName || !data.authorizeUrl) {
+        return null;
+      }
+
+      return {
+        type: 'mcp-connection-request',
+        actionId: data.actionId,
+        mcpId: data.mcpId,
+        displayName: data.displayName,
+        authorizeUrl: data.authorizeUrl,
+        authorizeUrlWithAutoApprove: data.authorizeUrlWithAutoApprove,
+      };
+    }
+
+    case ConversationActivityTypeEnum.MCP_CONNECTION_RESULT: {
+      const data = activity.richContent?.mcpConnection as McpConnectionActivityData | undefined;
+      if (!data?.actionId || !data.mcpId || !data.status) {
+        return null;
+      }
+
+      return {
+        type: 'mcp-connection-result',
+        actionId: data.actionId,
+        mcpId: data.mcpId,
+        status: data.status,
+        message: data.message,
       };
     }
 

@@ -80,7 +80,7 @@ export function useNovu() {
 export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
   return {
     messages: [],
-    pendingApprovals: [],
+    pendingActions: [],
     isLoading: false,
     isFetching: false,
     isRunning: false,
@@ -90,7 +90,7 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
     refetch: () => Promise.resolve(),
     fetchMore: () => Promise.resolve({ data: undefined, error: undefined }),
     sendMessage: () => Promise.resolve({ data: undefined, error: undefined }),
-    respondToApproval: () => Promise.resolve({ data: undefined, error: undefined }),
+    respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
   };
 }
 
