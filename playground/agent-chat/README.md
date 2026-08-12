@@ -1,6 +1,16 @@
 # useAgentChat playground
 
-Minimal Next.js app for exercising headless `useAgentChat` from `@novu/react`.
+Minimal Next.js app that shows how to wire headless `useAgentChat` from `@novu/react` to your own UI.
+
+## Read this first
+
+| File | Role |
+| --- | --- |
+| [`src/components/agent-chat.tsx`](src/components/agent-chat.tsx) | **The example.** Calls `useAgentChat` and passes results into UI. |
+| [`src/components/chat-panel.tsx`](src/components/chat-panel.tsx) | Stand-in UI. Swap for your components. |
+| [`src/app/playground.tsx`](src/app/playground.tsx) | Playground shell: `NovuProvider`, session switching, debug tools. |
+
+Copy the pattern in `agent-chat.tsx`. Treat everything under the sidebar / debug panel as playground tooling, not part of the integration recipe.
 
 ## Run
 
@@ -39,7 +49,7 @@ SOCKET_WORKER_URL=http://127.0.0.1:8787
 
 Playground already defaults to that URL with `NEXT_PUBLIC_NOVU_SOCKET_TYPE=cloud`.
 
-## Surface under test
+## Hook surface under test
 
 | Hook | Behavior today |
 | --- | --- |
@@ -60,5 +70,3 @@ The playground keeps the conversation id in memory only, so remount it explicitl
 1. Send a message that keeps the agent busy for a few seconds, then copy the `Conversation` id
 2. While the pill still says `running`, reload the page and paste the id into `Resume by ID`
 3. Pill shows `running · restored`, and the composer stays disabled until `run-finish` arrives
-
-Later slices can extend `src/app/chat.tsx` in place.

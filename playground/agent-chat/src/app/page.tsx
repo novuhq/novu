@@ -1,4 +1,4 @@
-import { AgentChatPlayground } from './chat';
+import { AgentChatPlayground } from './playground';
 
 export default function Page() {
   return <AgentChatPlayground />;
