@@ -20,7 +20,7 @@ describe('Context bridgeUrl override - /contexts #novu-v2', () => {
   });
 
   it('persists and returns bridgeUrl on create', async () => {
-    const bridgeUrl = 'https://tenant-acme.example.com/api/novu';
+    const bridgeUrl = 'https://example.com/api/novu';
 
     const res = await session.testAgent.post('/v2/contexts').send({
       type: 'tenant',
@@ -51,7 +51,7 @@ describe('Context bridgeUrl override - /contexts #novu-v2', () => {
       data: { region: 'us-east-1' },
     });
 
-    const bridgeUrl = 'https://tenant-acme.example.com/api/novu';
+    const bridgeUrl = 'https://example.com/api/novu';
     const res = await session.testAgent.patch('/v2/contexts/tenant/bridge-update-acme').send({
       data: { region: 'us-west-2' },
       bridgeUrl,
@@ -71,7 +71,7 @@ describe('Context bridgeUrl override - /contexts #novu-v2', () => {
   });
 
   it('preserves an existing bridgeUrl when update omits it', async () => {
-    const bridgeUrl = 'https://tenant-acme.example.com/api/novu';
+    const bridgeUrl = 'https://example.com/api/novu';
     await contextRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -98,7 +98,7 @@ describe('Context bridgeUrl override - /contexts #novu-v2', () => {
       id: 'bridge-clear-acme',
       key: 'tenant:bridge-clear-acme',
       data: {},
-      bridgeUrl: 'https://tenant-acme.example.com/api/novu',
+      bridgeUrl: 'https://example.com/api/novu',
     });
 
     const res = await session.testAgent.patch('/v2/contexts/tenant/bridge-clear-acme').send({
@@ -122,7 +122,7 @@ describe('Context bridgeUrl override - /contexts #novu-v2', () => {
     const res = await session.testAgent.post('/v2/contexts').send({
       type: 'tenant',
       id: 'bridge-ssrf-loopback',
-      bridgeUrl: 'http://127.0.0.1:3000/api/novu',
+      bridgeUrl: 'http://localhost:4000/api/novu',
     });
 
     expect(res.status).to.equal(400);
