@@ -570,7 +570,7 @@ export class McpOAuthCallback {
       return;
     }
 
-    if (stateData.platform === AgentPlatformEnum.WEB_CHAT && stateData.toolUseId && stateData.conversationId) {
+    if (stateData.platform === AgentPlatformEnum.AGENT_CHAT && stateData.toolUseId && stateData.conversationId) {
       try {
         const conversation = await this.agentConversationService.getConversation(
           stateData.conversationId,
@@ -863,7 +863,7 @@ export class McpOAuthCallback {
       }
     );
 
-    if (stateData.platform === AgentPlatformEnum.WEB_CHAT && stateData.toolUseId && stateData.conversationId) {
+    if (stateData.platform === AgentPlatformEnum.AGENT_CHAT && stateData.toolUseId && stateData.conversationId) {
       try {
         const conversation = await this.agentConversationService.getConversation(
           stateData.conversationId,

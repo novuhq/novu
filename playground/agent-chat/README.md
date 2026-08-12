@@ -20,9 +20,9 @@ pnpm --filter @novu/js build
 pnpm --filter @novu/react build
 
 cp playground/agent-chat/.env.example playground/agent-chat/.env
-# set APP_ID, SUBSCRIBER_ID, AGENT_ID (agent must expose web-chat / agent_chat)
+# set APP_ID, SUBSCRIBER_ID, AGENT_ID (agent must expose agent_chat)
 
-# API needs agent web chat on
+# API needs agent chat on
 # IS_AGENT_WEB_CHAT_ENABLED=true
 
 pnpm --filter agent-chat dev

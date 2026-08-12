@@ -2,7 +2,7 @@
  * Subscriber JWT captured from session init.
  *
  * The sidebar calls one endpoint the SDK does not wrap yet
- * (`GET /v1/web-chat/conversations`), and it needs the same Bearer token.
+ * (`GET /v1/agent-chat/conversations`), and it needs the same Bearer token.
  */
 let token: string | undefined;
 

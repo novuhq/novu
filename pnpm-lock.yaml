@@ -432,9 +432,9 @@ importers:
       '@novu/chat-adapter-sendblue':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-sendblue
-      '@novu/chat-adapter-web':
+      '@novu/chat-adapter-agent-chat':
         specifier: workspace:*
-        version: link:../../packages/chat-adapter-web
+        version: link:../../packages/chat-adapter-agent-chat
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -3512,7 +3512,7 @@ importers:
         specifier: 3.25.20
         version: 3.25.20
 
-  packages/chat-adapter-web:
+  packages/chat-adapter-agent-chat:
     dependencies:
       nanoid:
         specifier: ^3.3.17

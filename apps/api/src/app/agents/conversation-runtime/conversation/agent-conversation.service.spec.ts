@@ -73,13 +73,13 @@ describe('AgentConversationService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activityRepository: any = makeActivityRepository(),
     eventSequenceService = makeEventSequenceService(),
-    webChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
+    agentChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
   ) {
     return new AgentConversationService(
       conversationRepository,
       activityRepository as any,
       eventSequenceService,
-      webChatLiveActivityPublisher as any,
+      agentChatLiveActivityPublisher as any,
       makeLogger() as any
     );
   }
@@ -150,7 +150,7 @@ describe('AgentConversationService', () => {
   });
 
   describe('MCP connection activities', () => {
-    it('persists request and result activities and publishes both to web chat', async () => {
+    it('persists request and result activities and publishes both to agent chat', async () => {
       const activityRepository = makeActivityRepository();
       activityRepository.createAgentActivity.callsFake(async (params: Record<string, unknown>) => ({
         _id: `activity-${activityRepository.createAgentActivity.callCount}`,
@@ -169,7 +169,7 @@ describe('AgentConversationService', () => {
       const context = {
         ...basePersistParams(),
         channel: {
-          platform: 'web_chat',
+          platform: 'agent_chat',
           _integrationId: 'integration-a',
           platformThreadId: 'thread-1',
         },
@@ -336,7 +336,7 @@ describe('AgentConversationService', () => {
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
-      platform: 'web_chat',
+      platform: 'agent_chat',
       contextKeys: ['tenant:acme', 'app:billing'],
     });
 
@@ -371,7 +371,7 @@ describe('AgentConversationService', () => {
     try {
       await service.createOrGetConversation({
         ...baseCreateParams(),
-        platform: 'web_chat',
+        platform: 'agent_chat',
       });
     } catch (err) {
       threw = true;
@@ -410,7 +410,7 @@ describe('AgentConversationService', () => {
     try {
       await service.createOrGetConversation({
         ...baseCreateParams(),
-        platform: 'web_chat',
+        platform: 'agent_chat',
         contextKeys: ['tenant:globex'],
       });
     } catch (err) {
