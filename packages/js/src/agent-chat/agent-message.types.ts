@@ -1,6 +1,6 @@
-import type { AgentToolResultContent, AgentToolSource } from './wire-content.types';
+import type { AgentMessageRole, AgentToolResultContent, AgentToolSource } from '@novu/agent-event-protocol';
 
-export type AgentMessageRole = 'user' | 'assistant';
+export type { AgentMessageRole };
 
 export type AgentMessageStatus = 'sending' | 'sent' | 'failed';
 
@@ -41,6 +41,10 @@ export type AgentApprovalPart = {
   input?: Record<string, unknown>;
   source?: AgentToolSource;
   state: AgentApprovalPartState;
+  /** Server-minted; echo via respondToApproval. Do not invent client-side. */
+  approveActionId?: string;
+  /** Server-minted; echo via respondToApproval. Do not invent client-side. */
+  denyActionId?: string;
 };
 
 export type AgentSourcePart = {
@@ -87,10 +91,16 @@ export type AgentConversationError = {
   code?: string;
 };
 
+/** Ephemeral typing indicator. Absent when not typing. */
+export type AgentConversationTyping = {
+  status?: string;
+};
+
 /** Timeline state produced by folding `AgentEventEnvelope`s. */
 export type AgentConversationState = {
   messages: AgentMessage[];
   isRunning: boolean;
+  typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   lastSequence: number;
   error?: AgentConversationError;

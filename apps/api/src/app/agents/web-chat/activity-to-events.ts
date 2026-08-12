@@ -9,23 +9,12 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
-  type ConversationEventActivityFilter,
 } from '@novu/dal';
-
-/**
- * Which durable activities the web-chat history surface exposes as events.
- * Must stay in lockstep with `mapActivityToEvent` below.
- */
-export const WEB_CHAT_EVENT_ACTIVITY_FILTER: ConversationEventActivityFilter = {
-  messageSenderTypes: [ConversationActivitySenderTypeEnum.AGENT, ConversationActivitySenderTypeEnum.SUBSCRIBER],
-  eventTypes: [
-    ConversationActivityTypeEnum.EDIT,
-    ConversationActivityTypeEnum.DELETE,
-    ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
-    ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
-    ConversationActivityTypeEnum.TOOL_RESULT,
-  ],
-};
+import {
+  mapRunLifecycleActivityToEvent,
+  runIdFromLifecycleIdentifier,
+} from '../conversation-runtime/conversation/run-lifecycle-activity';
+import { mintApprovalActionIds } from '../shared/tool-approval/mint-approval-action-ids';
 
 function filesFromRichContent(richContent?: Record<string, unknown>) {
   const files = richContent?.files;
@@ -65,12 +54,19 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         return null;
       }
 
+      const actionIds =
+        toolData.approveActionId && toolData.denyActionId
+          ? { approveActionId: toolData.approveActionId, denyActionId: toolData.denyActionId }
+          : mintApprovalActionIds({ approvalId: toolData.approvalId });
+
       return {
         type: 'tool-approval-request',
         approvalId: toolData.approvalId,
         toolUseId: toolData.toolCallId,
         toolName: toolData.toolName,
         input: toolData.input,
+        approveActionId: actionIds.approveActionId,
+        denyActionId: actionIds.denyActionId,
       };
     }
 
@@ -113,6 +109,11 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         messageId: activity.platformMessageId ?? activity.identifier,
       };
 
+    case ConversationActivityTypeEnum.RUN_START:
+    case ConversationActivityTypeEnum.RUN_FINISH:
+    case ConversationActivityTypeEnum.RUN_ERROR:
+      return mapRunLifecycleActivityToEvent(activity);
+
     default:
       return null;
   }
@@ -130,12 +131,14 @@ function buildEnvelope(
   sequence: number,
   context: EventMapContext
 ): AgentEventEnvelope {
+  const lifecycleRunId = runIdFromLifecycleIdentifier(activity.identifier);
+
   return {
     version: AGENT_EVENT_PROTOCOL_VERSION,
     conversationId: context.conversationId,
     conversationIdentifier: context.conversationIdentifier,
     agentId: context.agentIdentifier,
-    runId: 'history',
+    runId: lifecycleRunId ?? 'history',
     turnId: activity.identifier,
     sequence,
     timestamp: activity.createdAt,
@@ -160,6 +163,22 @@ function toMappableActivity(
   }
 
   return { activity, event, sequence: activity.sequence };
+}
+
+/**
+ * Build a live WS envelope from a freshly persisted activity row.
+ * Returns null when the activity type is not mappable or lacks a sequence.
+ */
+export function buildLiveEnvelopeFromActivity(
+  activity: ConversationActivityEntity,
+  context: EventMapContext
+): AgentEventEnvelope | null {
+  const mappable = toMappableActivity(activity);
+  if (!mappable) {
+    return null;
+  }
+
+  return buildEnvelope(mappable.activity, mappable.event, mappable.sequence, context);
 }
 
 /**

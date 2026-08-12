@@ -33,18 +33,18 @@ describe('BridgeExecutorService', () => {
   ) {
     const logger = makeLogger();
     const attachmentStorage = overrides.attachmentStorage ?? { signRead: sinon.stub().resolves('https://signed/read') };
-    const conversationService = { getHistory: sinon.stub().resolves([]) };
+    const activityLedger = { listForView: sinon.stub().resolves({ data: [], hasMore: false }) };
     const featureFlagsService = makeFeatureFlagsService(overrides.isEventProtocolEnabled);
 
     const service = new BridgeExecutorService(
       {} as any,
       logger as any,
       attachmentStorage as any,
-      conversationService as any,
+      activityLedger as any,
       featureFlagsService as unknown as FeatureFlagsService
     );
 
-    return { service, logger, attachmentStorage, conversationService, featureFlagsService };
+    return { service, logger, attachmentStorage, activityLedger, featureFlagsService };
   }
 
   function makeExecutionParams() {

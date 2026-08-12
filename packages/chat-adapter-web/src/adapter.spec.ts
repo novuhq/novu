@@ -112,6 +112,66 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(processAction).not.toHaveBeenCalled();
   });
 
+  it('returns 402 when checkAcceptLimits blocks a new thread', async () => {
+    const checkAcceptLimits = vi.fn(async () => ({
+      reason: 'agents' as const,
+      message: 'Upgrade your plan',
+    }));
+    const { adapter, processMessage } = await createAdapter(createConfig({ checkAcceptLimits }));
+
+    const response = await adapter.handleWebhook(jsonRequest({ agentId: 'agent_1', text: 'Hello' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(402);
+    expect(body).toEqual({ reason: 'agents', message: 'Upgrade your plan' });
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(checkAcceptLimits).toHaveBeenCalledWith({
+      session: SESSION,
+      isNewThread: true,
+      conversationId: undefined,
+    });
+  });
+
+  it('returns 402 on resume when checkAcceptLimits blocks agent/channel limits', async () => {
+    const checkAcceptLimits = vi.fn(async () => ({
+      reason: 'channels' as const,
+      message: 'Channel limit reached',
+    }));
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({ checkAcceptLimits, authorizeResume: async () => true })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'follow up', conversationIdentifier: 'conv_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(402);
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(checkAcceptLimits).toHaveBeenCalledWith({
+      session: SESSION,
+      isNewThread: false,
+      conversationId: 'conv_abcdefghijkl',
+    });
+  });
+
+  it('returns 404 before 402 when resume is unauthorized even if limits would block', async () => {
+    const checkAcceptLimits = vi.fn(async () => ({
+      reason: 'agents' as const,
+      message: 'Upgrade your plan',
+    }));
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({ checkAcceptLimits, authorizeResume: async () => false })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'nope', conversationIdentifier: 'conv_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(404);
+    expect(processMessage).not.toHaveBeenCalled();
+    expect(checkAcceptLimits).not.toHaveBeenCalled();
+  });
+
   it('dispatches processMessage then returns 201', async () => {
     const { adapter, processMessage } = await createAdapter();
 
@@ -218,20 +278,20 @@ describe('NovuWebChatAdapterImpl', () => {
     });
   });
 
-  it('returns 400 when actionId is missing conversationIdentifier or sourceMessageId', async () => {
+  it('returns 400 when actionId is missing conversationIdentifier or non-approval sourceMessageId', async () => {
     const { adapter, processAction } = await createAdapter(createConfig({ authorizeResume: async () => true }));
 
     const missingConv = await adapter.handleWebhook(
       jsonRequest({
         agentId: 'a',
-        actionId: 'tool-approval:approve:tc1',
+        actionId: 'some-button-id',
         sourceMessageId: 'act_card0000001',
       })
     );
     const missingSource = await adapter.handleWebhook(
       jsonRequest({
         agentId: 'a',
-        actionId: 'tool-approval:approve:tc1',
+        actionId: 'some-button-id',
         conversationIdentifier: 'conv_abcdefghijkl',
       })
     );
@@ -239,6 +299,28 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(missingConv.status).toBe(400);
     expect(missingSource.status).toBe(400);
     expect(processAction).not.toHaveBeenCalled();
+  });
+
+  it('dispatches approval actionId without sourceMessageId', async () => {
+    const { adapter, processAction } = await createAdapter(createConfig({ authorizeResume: async () => true }));
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(processAction).toHaveBeenCalledOnce();
+    expect(processAction.mock.calls[0]?.[0]).toMatchObject({
+      actionId: 'tool-approval:approve:tc1',
+      messageId: '',
+      threadId: 'web_chat:conv_abcdefghijkl',
+    });
   });
 
   it('postMessage delegates to deliverMessage without inventing mongo semantics', async () => {

@@ -2,7 +2,7 @@ import type { SlackAdapter } from '@chat-adapter/slack';
 import type { TeamsAdapter } from '@chat-adapter/teams';
 import type { TelegramAdapter } from '@chat-adapter/telegram';
 import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
-import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuWebChatAdapter } from '@novu/chat-adapter-web';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
@@ -14,11 +14,15 @@ import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
-import { WebChatPlatformDeliveryService } from '../../web-chat/web-chat-platform-delivery.service';
+import {
+  type WebChatPlatformDeliveryContext,
+  WebChatPlatformDeliveryService,
+} from '../../web-chat/web-chat-platform-delivery.service';
 import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
 import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
+import { PlanLimitGateService } from './plan-limit-gate.service';
 
 /**
  * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
@@ -118,7 +122,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentEmailSender: AgentEmailSender,
     private readonly webChatSessionVerifier: WebChatSessionVerifier,
     private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
-    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService
+    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
+    @Inject(forwardRef(() => PlanLimitGateService))
+    private readonly planLimitGate: PlanLimitGateService
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -199,9 +205,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     config: ResolvedAgentConfig,
     adapterFingerprint: string
   ): Promise<ChatWithAdapters> {
-    const chat = await this.createChatInstance(instanceKey, agentId, platform, config);
+    const cached: CachedChat = {
+      chat: null as unknown as ChatWithAdapters,
+      config,
+      adapterFingerprint,
+    };
+    const chat = await this.createChatInstance(instanceKey, agentId, platform, cached);
     await chat.initialize();
-    const cached: CachedChat = { chat, config, adapterFingerprint };
+    cached.chat = chat;
     this.registerEventHandlers(agentId, cached);
     this.instances.set(instanceKey, cached);
 
@@ -238,14 +249,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     instanceKey: string,
     agentId: string,
     platform: AgentPlatformEnum,
-    config: ResolvedAgentConfig
+    cached: CachedChat
   ): Promise<ChatWithAdapters> {
     const [{ Chat: ChatCtor }, { createIoRedisState }] = await Promise.all([
       esmImport('chat'),
       esmImport('@chat-adapter/state-ioredis'),
     ]);
 
-    const adapters = await this.buildAdapters(agentId, platform, config);
+    const adapters = await this.buildAdapters(agentId, platform, cached);
     const client = this.cacheService.client;
     if (!client) {
       throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
@@ -305,8 +316,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
   private async buildAdapters(
     agentId: string,
     platform: AgentPlatformEnum,
-    config: ResolvedAgentConfig
+    cached: CachedChat
   ): Promise<Record<string, unknown>> {
+    const config = cached.config;
     const { credentials, connectionAccessToken } = config;
 
     switch (platform) {
@@ -478,7 +490,12 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       }
       case AgentPlatformEnum.WEB_CHAT: {
         const { createWebChatAdapter } = await esmImport('@novu/chat-adapter-web');
-        const deliveryContext = { agentId, config };
+        const deliveryContext: WebChatPlatformDeliveryContext = {
+          agentId,
+          get config() {
+            return cached.config;
+          },
+        };
 
         return {
           web_chat: createWebChatAdapter({
@@ -486,6 +503,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
             authorizeResume: ({ conversationId, session }) =>
               this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
+            checkAcceptLimits: ({ isNewThread, conversationId }) =>
+              this.planLimitGate.checkWebChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
             deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),

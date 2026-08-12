@@ -14,6 +14,7 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TEAMS,
   AgentPlatformEnum.TELEGRAM,
   AgentPlatformEnum.SENDBLUE,
+  AgentPlatformEnum.WEB_CHAT,
 ]);
 
 type PlatformEgressCapabilities = {
@@ -68,4 +69,9 @@ export function requiresShortConnectUrl(platform: string): boolean {
 /** Platforms without callback buttons approve tools by texting back YES / NO. */
 export function usesReplyBasedApprovals(platform: string): boolean {
   return !resolvePlatformEgressCapabilities(platform).interactiveButtons;
+}
+
+/** Platforms that surface tool approvals via agent-event protocol instead of portable cards. */
+export function usesProtocolEventApprovals(platform: string): boolean {
+  return platform === AgentPlatformEnum.WEB_CHAT;
 }

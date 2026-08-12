@@ -7,7 +7,7 @@ import { useFormContext } from 'react-hook-form';
 import { EditorOverlays } from '@/components/editor-overlays';
 import { createChatEditorBlocks } from '@/components/maily/chat-blocks';
 import { Maily } from '@/components/maily/maily';
-import { isMailyJson, plainTextToMailyJson, wrapLegacyCardButtons } from '@/components/maily/maily-utils';
+import { isMailyJson, wrapLegacyCardButtons } from '@/components/maily/maily-utils';
 import { VariableFrom } from '@/components/maily/types';
 import {
   MailyVariablesListView,
@@ -18,6 +18,7 @@ import { FormField } from '@/components/primitives/form/form';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { ControlInput } from '@/components/workflow-editor/control-input';
+import { CHAT_IMAGE_BOUNDS } from '@/components/workflow-editor/steps/chat/preview/chat-image-sizing';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
@@ -42,11 +43,13 @@ const CHAT_MENU_CONFIG = {
   },
 } as const;
 
+/** Slack-measured bounds — must match preview `MessageImage` / `fitChatImage`. Chat-only. */
 const CHAT_IMAGE_EXTENSION_OPTIONS = {
   resizable: false,
   defaultAlignment: 'left' as const,
-  // Match chat preview `MessageImage` (`max-h-60` → 240px) so editor size matches preview.
-  maxHeight: 240,
+  fitToMaxBounds: true,
+  maxWidth: CHAT_IMAGE_BOUNDS.maxWidth,
+  maxHeight: CHAT_IMAGE_BOUNDS.maxHeight,
 };
 
 const CHAT_ADDITIONAL_EXTENSIONS = [CardActionsExtension, CardButtonExtension];
@@ -268,14 +271,15 @@ export const ChatBodyMaily = () => {
       name="body"
       render={({ field }) => {
         const rawBody: string = field.value ?? '';
-        // Back-compat: Maily JSON loads as-is; a legacy plain string opens as
-        // text blocks; an empty body starts a fresh block editor.
+        // Only load Maily JSON in the block editor. Legacy plain/Liquid bodies
+        // are routed to the text editor via deriveChatEditorType — never
+        // silently convert them here.
         const getEditorValue = () => {
           if (isMailyJson(rawBody)) {
             return wrapLegacyCardButtons(rawBody);
           }
 
-          return rawBody.length > 0 ? plainTextToMailyJson(rawBody) : '';
+          return '';
         };
 
         return (

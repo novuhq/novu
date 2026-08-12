@@ -6,7 +6,7 @@ const AGENT_TEMPLATE_ID_KEY = 'novu.onboarding.agentTemplateId';
 
 export const AGENT_TEMPLATE_ID_PARAM = 'agentTemplateId';
 
-export function persistAgentTemplateId(id: string): void {
+function persistAgentTemplateId(id: string): void {
   try {
     sessionStorage.setItem(AGENT_TEMPLATE_ID_KEY, id);
   } catch {
@@ -14,7 +14,7 @@ export function persistAgentTemplateId(id: string): void {
   }
 }
 
-export function readPersistedAgentTemplateId(): string | undefined {
+function readPersistedAgentTemplateId(): string | undefined {
   try {
     const raw = sessionStorage.getItem(AGENT_TEMPLATE_ID_KEY)?.trim();
 

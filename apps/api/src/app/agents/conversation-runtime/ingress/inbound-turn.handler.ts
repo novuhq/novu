@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import type { WebChatRawMessage } from '@novu/chat-adapter-web';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -43,10 +44,7 @@ import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../sh
 import { extractWorkspaceId } from '../../shared/util/workspace-id';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
-import {
-  AgentConversationService,
-  getInboundActivityPreview,
-} from '../conversation/agent-conversation.service';
+import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import {
   AgentSubscriberResolver,
   BotAuthorSkippedError,
@@ -221,6 +219,14 @@ function getActionPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, 
 /** Conversation uses `slack:{channel}:{ts}`; Message.identifier stores bare `{channel}:{ts}`. */
 function toProviderMessageLookupKey(platformThreadId: string): string {
   return platformThreadId.startsWith('slack:') ? platformThreadId.slice('slack:'.length) : platformThreadId;
+}
+
+/** Decoded Novu Message._id from a trailing `+nv{base36}` Reply-To token on the inbound recipient. */
+function extractAgentEmailOriginToken(message: Message): string | null {
+  const raw = asRecord(message.raw);
+  const originToken = raw?.originToken;
+
+  return typeof originToken === 'string' && originToken.length > 0 ? originToken.toLowerCase() : null;
 }
 
 /** Slack provider id is `{channel}:{ts}` — channel ids never contain `:`. */
@@ -471,7 +477,7 @@ export class AgentInboundHandler implements OnModuleInit {
     // creates the Conversation that the gate just cleared.
     const workflowOriginMessage = existingConversation
       ? null
-      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId);
+      : await this.findWorkflowOriginMessage(agentId, config, platformThreadId, subscriberId, message);
 
     const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
@@ -490,6 +496,10 @@ export class AgentInboundHandler implements OnModuleInit {
       workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
       identifier: this.webChatConversationIdentifier(config.platform, platformThreadId),
       notificationId: workflowOriginMessage?._notificationId,
+      contextKeys:
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? ((message.raw as WebChatRawMessage | undefined)?.contextKeys ?? [])
+          : undefined,
     });
 
     if (workflowOriginMessage) {
@@ -684,7 +694,8 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     platformThreadId: string,
-    subscriberId: string | null
+    subscriberId: string | null,
+    message: Message | null = null
   ): Promise<MessageEntity | null> {
     if (!subscriberId) {
       return null;
@@ -694,6 +705,10 @@ export class AgentInboundHandler implements OnModuleInit {
       const subscriber = await this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId);
       if (!subscriber) {
         return null;
+      }
+
+      if (config.platform === AgentPlatformEnum.EMAIL) {
+        return message ? await this.findEmailWorkflowOriginMessage(agentId, config, subscriber._id, message) : null;
       }
 
       const identifier = toProviderMessageLookupKey(platformThreadId);
@@ -719,6 +734,25 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  private async findEmailWorkflowOriginMessage(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    subscriberId: string,
+    message: Message
+  ): Promise<MessageEntity | null> {
+    const originId = extractAgentEmailOriginToken(message);
+    if (!originId) {
+      return null;
+    }
+
+    return this.messageRepository.findOne({
+      _id: originId,
+      _environmentId: config.environmentId,
+      _agentId: agentId,
+      _subscriberId: subscriberId,
+    });
+  }
+
   /** Fail-soft: write workflow-origin message + signal into conversation history. */
   private async hydrateWorkflowOrigin(
     agentId: string,
@@ -727,11 +761,17 @@ export class AgentInboundHandler implements OnModuleInit {
     platformThreadId: string,
     originMessage: MessageEntity
   ): Promise<void> {
-    if (!originMessage._notificationId || !originMessage.identifier) {
+    if (!originMessage._notificationId) {
       return;
     }
 
-    const platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
+    let platformMessageId: string | undefined;
+    if (config.platform === AgentPlatformEnum.EMAIL) {
+      platformMessageId = originMessage._id;
+    } else if (originMessage.identifier) {
+      platformMessageId = platformMessageIdFromProviderIdentifier(originMessage.identifier);
+    }
+
     if (!platformMessageId) {
       return;
     }
@@ -1314,6 +1354,10 @@ export class AgentInboundHandler implements OnModuleInit {
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
       notificationId: workflowOriginMessage?._notificationId,
+      contextKeys:
+        config.platform === AgentPlatformEnum.WEB_CHAT
+          ? ((rawEvent as WebChatRawMessage | undefined)?.contextKeys ?? [])
+          : undefined,
     });
 
     if (workflowOriginMessage) {
@@ -1337,14 +1381,6 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const actorType =
-      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
-        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
-        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
-    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
-
-    // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
-    // which owns its own action semantics.
     const [subscriber, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -1356,6 +1392,14 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
+    const actorType =
+      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
+        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
+
+    // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
+    // which owns its own action semantics.
     const context = await this.connectionContextResolver.resolve(config, rawEvent, userId);
 
     const runtime = this.runtimeResolver.resolve(agent);

@@ -306,11 +306,59 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
+
+### Push step content
+
+The Push step in the workflow editor has two content fields. Each one can hold static text or dynamic values using `{{subscriber.*}}` and `{{payload.*}}` variables, which Novu resolves at send time.
+
+| Push step field | Delivered as | APNS payload key |
+| --- | --- | --- |
+| Subject | Notification title | `aps.alert.title` |
+| Body | Notification message | `aps.alert.body` |
+
+For example, a step with the subject `New comment from {{payload.authorName}}` and the body `{{payload.commentText}}` is delivered to the device like this:
+
+```json
+{
+  "aps": {
+    "alert": {
+      "title": "New comment from Albert",
+      "body": "Looks great, ship it!"
+    }
+  }
+}
+```
+
+<Note>
+  The Subject and Body you set in the step are the default title and body. You can replace them for a specific trigger by sending `title` or `body` under `overrides.providers.apns`, described below.
+</Note>
+
 ## Customizing notifications with overrides
 
-Novu supports an `overrides` field that lets you attach APNS-specific payload parameters when triggering a workflow.
+Novu's APNS integration is built on the [`@parse/node-apn`](https://github.com/parse-community/node-apn) library. When you pass overrides under `providers.apns` at trigger time, Novu forwards those fields to the library, which builds the notification payload (the `aps` dictionary) and sets the matching APNS request headers, such as `apns-priority` and `apns-topic`, for you.
 
-The `overrides` field supports all [APNS Notification payload](https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/generating_a_remote_notification?language=objc) values. Here is an example:
+You do not need to hand-build the `aps` dictionary or set raw headers yourself. Use the field names below and Novu maps them to the correct APNS payload keys and headers.
+
+| Override field | Maps to | Type or values | Notes |
+| --- | --- | --- | --- |
+| `title` | `aps.alert.title` | `string` | Overrides the push step title |
+| `body` | `aps.alert.body` | `string` | Overrides the push step body |
+| `subtitle` | `aps.alert.subtitle` | `string` | Secondary line under the title |
+| `sound` | `aps.sound` | `string` or object | Use `"default"` for the standard sound |
+| `badge` | `aps.badge` | `number` | App icon badge count |
+| `category` | `aps.category` | `string` | Actionable notification category |
+| `threadId` | `aps.thread-id` | `string` | Groups related notifications |
+| `priority` | `apns-priority` header | `10` (default) or `5` | `10` delivers immediately, `5` conserves device power |
+| `topic` | `apns-topic` header | `string` | Defaults to your integration Bundle ID |
+| `collapseId` | `apns-collapse-id` header | `string` | Collapses notifications that share the same id |
+| `pushType` | `apns-push-type` header | `"alert"` or `"background"` | Must match the payload contents |
+| `expiry` | `apns-expiration` header | `number` (UNIX timestamp) | `0` tells APNS not to retry |
+
+<Note>
+  Anything you send in the trigger `payload` is delivered alongside the `aps` dictionary as the notification's custom data, so you usually do not need to override the payload to pass app-specific values.
+</Note>
+
+Here is an example that sets the sound and badge, and adjusts the `apns-priority` and `apns-topic` headers. The `topic` field is optional since it defaults to your integration Bundle ID:
 
 <Tabs>
   <Tab title="Node.js">
@@ -326,20 +374,15 @@ await novu.trigger({
     "abc": "def"
 },
   overrides: {
-    "apns": {
-        "payload": {
-            "aps": {
-                "notification": {
-                    "title": "Test",
-                    "body": "Test push"
-                },
-                "data": {
-                    "key": "value"
-                }
-            }
-        }
-    }
-},
+    providers: {
+      apns: {
+        sound: "default",
+        badge: 1,
+        priority: 5,
+        topic: "com.acme.app",
+      },
+    },
+  },
 });
 ```
   </Tab>
@@ -357,20 +400,15 @@ with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
         "abc": "def"
 },
         overrides={
-        "apns": {
-                "payload": {
-                        "aps": {
-                                "notification": {
-                                        "title": "Test",
-                                        "body": "Test push"
-                                },
-                                "data": {
-                                        "key": "value"
-                                }
-                        }
-                }
-        }
-},
+            "providers": {
+                "apns": {
+                    "sound": "default",
+                    "badge": 1,
+                    "priority": 5,
+                    "topic": "com.acme.app",
+                },
+            },
+        },
     ))
 ```
   </Tab>
@@ -394,18 +432,13 @@ res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
     Payload: map[string]any{
         "abc": "def",
     },
-    Overrides: map[string]any{
-        "apns": map[string]any{
-            "payload": map[string]any{
-                "aps": map[string]any{
-                    "notification": map[string]any{
-                        "title": "Test",
-                        "body":  "Test push",
-                    },
-                    "data": map[string]any{
-                        "key": "value",
-                    },
-                },
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "apns": map[string]any{
+                "sound":    "default",
+                "badge":    1,
+                "priority": 5,
+                "topic":    "com.acme.app",
             },
         },
     },
@@ -425,17 +458,12 @@ $sdk->trigger(
         to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
         payload: ['abc' => 'def'],
         overrides: [
-            'apns' => [
-                'payload' => [
-                    'aps' => [
-                        'notification' => [
-                            'title' => 'Test',
-                            'body' => 'Test push',
-                        ],
-                        'data' => [
-                            'key' => 'value',
-                        ],
-                    ],
+            'providers' => [
+                'apns' => [
+                    'sound' => 'default',
+                    'badge' => 1,
+                    'priority' => 5,
+                    'topic' => 'com.acme.app',
                 ],
             ],
         ],
@@ -458,17 +486,12 @@ await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
         { "abc", "def" },
     },
     Overrides = new Overrides() {
-        Push = new Dictionary<string, object>() {
-            { "payload", new Dictionary<string, object>() {
-                { "aps", new Dictionary<string, object>() {
-                    { "notification", new Dictionary<string, object>() {
-                        { "title", "Test" },
-                        { "body", "Test push" },
-                    } },
-                    { "data", new Dictionary<string, object>() {
-                        { "key", "value" },
-                    } },
-                } },
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "apns", new Dictionary<string, object>() {
+                { "sound", "default" },
+                { "badge", 1 },
+                { "priority", 5 },
+                { "topic", "com.acme.app" },
             } },
         },
     },
@@ -489,11 +512,11 @@ novu.trigger()
         .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
         .payload(Map.of("abc", "def"))
         .overrides(TriggerEventRequestDtoOverrides.builder()
-            .additionalProperties(Map.of("apns", Map.of(
-                "payload", Map.of(
-                    "aps", Map.of(
-                        "notification", Map.of("title", "Test", "body", "Test push"),
-                        "data", Map.of("key", "value"))))))
+            .additionalProperties(Map.of("providers", Map.of("apns", Map.ofEntries(
+                Map.entry("sound", "default"),
+                Map.entry("badge", 1),
+                Map.entry("priority", 5),
+                Map.entry("topic", "com.acme.app")))))
             .build())
         .build())
     .call();
@@ -513,17 +536,12 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
         "abc": "def"
     },
     "overrides": {
-        "apns": {
-            "payload": {
-                "aps": {
-                    "notification": {
-                        "title": "Test",
-                        "body": "Test push"
-                    },
-                    "data": {
-                        "key": "value"
-                    }
-                }
+        "providers": {
+            "apns": {
+                "sound": "default",
+                "badge": 1,
+                "priority": 5,
+                "topic": "com.acme.app"
             }
         }
     }
@@ -531,3 +549,35 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
+
+### Sending custom data
+
+Novu builds the `aps` dictionary for you from the fields in the table above. Any keys you send in the trigger `payload` are delivered at the root of the notification, next to `aps`, as your app's custom data. You do not need a separate `data` field.
+
+For example, triggering the workflow with this payload:
+
+```json
+"payload": {
+  "orderId": "12345",
+  "deepLink": "app://orders/12345"
+}
+```
+
+delivers the following notification to the device:
+
+```json
+{
+  "orderId": "12345",
+  "deepLink": "app://orders/12345",
+  "aps": {
+    "alert": {
+      "title": "Your order shipped",
+      "body": "Order 12345 is on its way"
+    }
+  }
+}
+```
+
+<Note>
+  Because Novu generates the `aps` dictionary from the fields in the table above, an `aps` object nested inside a `payload` override is not applied. Use the fields above to shape `aps`, and the trigger `payload` to pass custom data.
+</Note>

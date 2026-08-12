@@ -13,10 +13,11 @@ import {
   DomainRouteRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
+import { DomainRouteTypeEnum, DomainStatusEnum, splitAgentReplyLocalPart } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import {
   getDeliveryFailureDiagnostics,
+  INBOUND_UNMATCHED_ROUTE_MESSAGE,
   InboundParseDroppedError,
   InboundParseOutcome,
   InboundParseProcessingError,
@@ -46,21 +47,27 @@ export class DomainRouteStrategy {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome | undefined> {
-    const toAddress = command.to[0].address;
+  async execute(
+    command: InboundEmailParseCommand,
+    recipientAddress = command.to[0].address
+  ): Promise<InboundParseOutcome | undefined> {
+    const toAddress = recipientAddress;
 
     this.logger.info({ toAddress }, 'Processing domain-route email');
 
     const [rawLocalPart, rawDomainName] = toAddress.split('@');
     const localPart = rawLocalPart?.toLowerCase();
     const domainName = rawDomainName?.toLowerCase();
+    const { strippedLocalPart, originToken } = localPart
+      ? splitAgentReplyLocalPart(localPart)
+      : { strippedLocalPart: localPart, originToken: null };
 
     if (!domainName) {
       this.throwError(`No domain found for address ${toAddress}`);
     }
 
     if (isAgentSharedInboxEnabled() && domainName === getSharedAgentDomain()) {
-      return this.deliverSharedAgentInbox(command, toAddress, localPart);
+      return this.deliverSharedAgentInbox(command, toAddress, strippedLocalPart, originToken);
     }
 
     const domain = await this.domainRepository.findByName(domainName);
@@ -89,18 +96,29 @@ export class DomainRouteStrategy {
       );
     }
 
+    const addressCandidates = Array.from(
+      new Set([localPart, strippedLocalPart, '*'].filter((value): value is string => Boolean(value)))
+    );
     const routes = await this.domainRouteRepository.findByDomainAndAddresses({
       domainId: domain._id,
       environmentId: domain._environmentId,
       organizationId: domain._organizationId,
-      addresses: [localPart, '*'],
+      addresses: addressCandidates,
     });
-    const route = routes.find((r) => r.address === localPart) ?? routes.find((r) => r.address === '*');
+    let route = localPart ? routes.find((r) => r.address === localPart) : undefined;
+
+    if (!route && strippedLocalPart && strippedLocalPart !== localPart) {
+      route = routes.find((r) => r.address === strippedLocalPart);
+    }
+
+    if (!route) {
+      route = routes.find((r) => r.address === '*');
+    }
 
     if (!route) {
       this.logger.info({ toAddress, domain: domain.name }, 'No route matched the inbound email');
 
-      return { ...baseResolved, strategy: 'domain-route', status: 422, message: 'No matching inbound route' };
+      return { ...baseResolved, strategy: 'domain-route', status: 422, message: INBOUND_UNMATCHED_ROUTE_MESSAGE };
     }
 
     const mail = this.commandToMail(command);
@@ -134,6 +152,7 @@ export class DomainRouteStrategy {
           route,
           mail,
           toAddress,
+          originToken: originToken ?? undefined,
         });
       } catch (err) {
         this.failDelivery(resolved, err);
@@ -194,7 +213,8 @@ export class DomainRouteStrategy {
   private async deliverSharedAgentInbox(
     command: InboundEmailParseCommand,
     toAddress: string,
-    localPart: string | undefined
+    localPart: string | undefined,
+    originToken: string | null
   ): Promise<InboundParseOutcome | undefined> {
     if (!localPart) {
       this.logger.info({ toAddress }, 'Shared agent domain: missing local part - dropping');
@@ -316,6 +336,7 @@ export class DomainRouteStrategy {
         route: syntheticRoute,
         mail: this.commandToMail(command),
         toAddress,
+        originToken: originToken ?? undefined,
       });
       this.logger.info(
         { toAddress, agentId: agent._id, messageId: command.messageId, dkim: command.dkim, spf: command.spf },

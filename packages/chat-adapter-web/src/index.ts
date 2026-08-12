@@ -2,8 +2,11 @@ import { NovuWebChatAdapterImpl } from './adapter.js';
 import type { WebChatAdapterConfig } from './types.js';
 
 export type {
+  WebChatAcceptLimitBlock,
+  WebChatAcceptLimitBlockReason,
   WebChatAdapterConfig,
   WebChatAuthorizeResumeParams,
+  WebChatCheckAcceptLimitsParams,
   WebChatDeleteMessageParams,
   WebChatDeliverMessageParams,
   WebChatDeliverMessageResult,
@@ -19,6 +22,7 @@ export {
   CONVERSATION_ID_PATTERN,
   conversationIdFromThreadId,
   extractCardPlainText,
+  isApprovalActionId,
   isValidConversationId,
   isValidMessageId,
   MESSAGE_ID_PATTERN,

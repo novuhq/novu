@@ -72,12 +72,14 @@ describe('AgentConversationService', () => {
     conversationRepository: ConversationRepository,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activityRepository: any = makeActivityRepository(),
-    eventSequenceService = makeEventSequenceService()
+    eventSequenceService = makeEventSequenceService(),
+    webChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
   ) {
     return new AgentConversationService(
       conversationRepository,
       activityRepository as any,
       eventSequenceService,
+      webChatLiveActivityPublisher as any,
       makeLogger() as any
     );
   }
@@ -132,6 +134,7 @@ describe('AgentConversationService', () => {
         conversationRepository,
         activityRepository as any,
         makeEventSequenceService(),
+        { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
         logger as any
       );
 
@@ -224,6 +227,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -234,6 +238,145 @@ describe('AgentConversationService', () => {
 
     expect(create.calledOnce).to.equal(true);
     expect(create.firstCall.args[0].title).to.equal(DEFAULT_CONVERSATION_TITLE);
+  });
+
+  it('stamps sorted contextKeys on create when provided', async () => {
+    const create = sinon.stub().resolves({
+      _id: 'new-conv',
+      participants: [],
+      channels: [],
+      status: ConversationStatusEnum.ACTIVE,
+    });
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(null),
+      create,
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    await service.createOrGetConversation({
+      ...baseCreateParams(),
+      platform: 'web_chat',
+      contextKeys: ['tenant:acme', 'app:billing'],
+    });
+
+    expect(create.calledOnce).to.equal(true);
+    expect(create.firstCall.args[0].contextKeys).to.deep.equal(['app:billing', 'tenant:acme']);
+  });
+
+  it('rejects reuse when stored conversation has contextKeys but caller omits them', async () => {
+    const existing = {
+      _id: 'existing-conv',
+      status: ConversationStatusEnum.ACTIVE,
+      participants: [{ type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub-1' }],
+      channels: [],
+      contextKeys: ['tenant:acme'],
+    };
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(existing),
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    let threw = false;
+    try {
+      await service.createOrGetConversation({
+        ...baseCreateParams(),
+        platform: 'web_chat',
+      });
+    } catch (err) {
+      threw = true;
+      expect((err as Error).message).to.equal('Conversation context mismatch');
+    }
+    expect(threw).to.equal(true);
+  });
+
+  it('rejects reuse when session contextKeys do not match stored conversation', async () => {
+    const existing = {
+      _id: 'existing-conv',
+      status: ConversationStatusEnum.ACTIVE,
+      participants: [{ type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub-1' }],
+      channels: [],
+      contextKeys: ['tenant:acme'],
+    };
+
+    const findOne = sinon.stub().resolves(null);
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(existing),
+      findOne,
+      buildContextExactMatchQuery: sinon.stub().returns({ contextKeys: { $all: ['tenant:globex'], $size: 1 } }),
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    let threw = false;
+    try {
+      await service.createOrGetConversation({
+        ...baseCreateParams(),
+        platform: 'web_chat',
+        contextKeys: ['tenant:globex'],
+      });
+    } catch (err) {
+      threw = true;
+      expect((err as Error).message).to.equal('Conversation context mismatch');
+    }
+    expect(threw).to.equal(true);
+    expect(findOne.calledOnce).to.equal(true);
+  });
+
+  it('omits contextKeys on create when not provided', async () => {
+    const create = sinon.stub().resolves({
+      _id: 'new-conv',
+      participants: [],
+      channels: [],
+      status: ConversationStatusEnum.ACTIVE,
+    });
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(null),
+      create,
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    await service.createOrGetConversation(baseCreateParams());
+
+    expect(create.calledOnce).to.equal(true);
+    expect(create.firstCall.args[0]).to.not.have.property('contextKeys');
   });
 
   it('scopes createOrGetConversation lookup by agent id and integration id', async () => {
@@ -256,6 +399,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -284,6 +428,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
