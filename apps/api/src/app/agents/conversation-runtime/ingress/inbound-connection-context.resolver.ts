@@ -22,6 +22,18 @@ function toContextValue(context: ContextEntity): AgentContextValue {
 }
 
 /**
+ * The connect-time context resolved for an inbound turn, plus an optional per-context bridge URL
+ * override. When `bridgeUrl` is set, the bridge executor routes this turn's bridge call there
+ * instead of the agent's default bridge URL.
+ */
+export interface ResolvedInboundContext {
+  context: AgentContextPayload | null;
+  bridgeUrl?: string;
+}
+
+const EMPTY_RESOLVED_CONTEXT: ResolvedInboundContext = { context: null };
+
+/**
  * Resolves the connect-time context bound to an inbound chat so a Novu-hosted multi-tenant agent
  * (e.g. NovuCopilot) can learn which customer tenant a turn belongs to. Two scopes are supported,
  * matching where the connect flow persisted the context:
@@ -64,7 +76,7 @@ export class InboundConnectionContextResolver {
     config: ResolvedAgentConfig,
     rawEvent: unknown,
     platformUserId?: string | null
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     const extractWorkspaceId = WORKSPACE_ID_EXTRACTORS[config.platform];
 
     if (extractWorkspaceId) {
@@ -87,25 +99,30 @@ export class InboundConnectionContextResolver {
     config: ResolvedAgentConfig,
     workspaceId: string | null,
     platformUserId: string | null
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     // Resolve the workspace connection first so the per-user endpoint lookup can be scoped to it.
     const connection = await this.findWorkspaceConnection(config, workspaceId);
 
-    const [workspaceContext, endpointContext] = await Promise.all([
+    const [workspaceResult, endpointResult] = await Promise.all([
       this.buildWorkspaceContext(config, connection, workspaceId),
       // Scope the per-user endpoint to the resolved workspace connection. Without it, a platform
       // user (e.g. a Slack `userId`) linked in another customer org — which shares Novu's hosted
       // env/integration — could match here and override the current workspace's tenant.
       platformUserId && connection
         ? this.resolveByEndpoint(config, platformUserId, connection.identifier)
-        : Promise.resolve(null),
+        : Promise.resolve(EMPTY_RESOLVED_CONTEXT),
     ]);
 
-    if (!workspaceContext && !endpointContext) {
-      return null;
+    if (!workspaceResult.context && !endpointResult.context) {
+      return EMPTY_RESOLVED_CONTEXT;
     }
 
-    return { ...(workspaceContext ?? {}), ...(endpointContext ?? {}) };
+    return {
+      context: { ...(workspaceResult.context ?? {}), ...(endpointResult.context ?? {}) },
+      // The verified per-user endpoint context takes precedence over the workspace hint, so its
+      // bridge URL override wins on conflict; the workspace override is the fallback.
+      bridgeUrl: endpointResult.bridgeUrl ?? workspaceResult.bridgeUrl,
+    };
   }
 
   private async findWorkspaceConnection(
@@ -134,9 +151,9 @@ export class InboundConnectionContextResolver {
     config: ResolvedAgentConfig,
     connection: ChannelConnectionEntity | null,
     workspaceId: string | null
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     if (!connection) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
 
     try {
@@ -144,7 +161,7 @@ export class InboundConnectionContextResolver {
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'workspace', workspaceId });
 
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
   }
 
@@ -157,11 +174,11 @@ export class InboundConnectionContextResolver {
     config: ResolvedAgentConfig,
     platformUserId: string | null,
     connectionIdentifier?: string
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     const endpointConfig = PLATFORM_ENDPOINT_CONFIG[config.platform];
 
     if (!endpointConfig || !platformUserId) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
 
     try {
@@ -179,31 +196,73 @@ export class InboundConnectionContextResolver {
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'endpoint', platformUserId });
 
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
   }
 
   private async buildContextFromKeys(
     config: ResolvedAgentConfig,
     contextKeys: string[] | undefined
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ResolvedInboundContext> {
     if (!contextKeys?.length) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
 
     const contexts = await this.contextRepository.findByKeys(config.environmentId, config.organizationId, contextKeys);
 
     if (!contexts.length) {
-      return null;
+      return EMPTY_RESOLVED_CONTEXT;
     }
+
+    // Deterministic order so bridge URL selection and conflict logging are stable across turns.
+    const sorted = [...contexts].sort((a, b) => a.key.localeCompare(b.key));
 
     const payload: AgentContextPayload = {};
 
-    for (const context of contexts) {
+    for (const context of sorted) {
       payload[context.type] = toContextValue(context);
     }
 
-    return payload;
+    return {
+      context: payload,
+      bridgeUrl: this.selectBridgeUrlOverride(config, sorted),
+    };
+  }
+
+  /**
+   * Any resolved context may carry a `bridgeUrl` override. When several within the same scope set
+   * one, pick the first by sorted key (stable) and warn on divergent values so misconfiguration is
+   * diagnosable.
+   */
+  private selectBridgeUrlOverride(config: ResolvedAgentConfig, sortedContexts: ContextEntity[]): string | undefined {
+    const withBridgeUrl = sortedContexts.filter((context) => !!context.bridgeUrl);
+
+    if (!withBridgeUrl.length) {
+      return undefined;
+    }
+
+    const selected = withBridgeUrl[0];
+    const distinct = new Set(withBridgeUrl.map((context) => context.bridgeUrl));
+
+    if (distinct.size > 1) {
+      this.logger.warn(
+        {
+          platform: config.platform,
+          integrationIdentifier: config.integrationIdentifier,
+          selectedContextKey: selected.key,
+          conflictingContextKeys: withBridgeUrl.map((context) => context.key),
+        },
+        'Multiple resolved contexts define different bridge URLs; using the first by sorted key'
+      );
+      captureAgentWarning(new Error('Conflicting context bridge URL overrides'), {
+        component: 'inbound-connection-context-resolver',
+        operation: 'select-bridge-url-override',
+        platform: config.platform,
+        integrationIdentifier: config.integrationIdentifier,
+      });
+    }
+
+    return selected.bridgeUrl;
   }
 
   private logResolveFailure(err: unknown, config: ResolvedAgentConfig, extra: Record<string, unknown>): void {

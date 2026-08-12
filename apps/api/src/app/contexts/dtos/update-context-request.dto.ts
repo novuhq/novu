@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsValidContextData } from '@novu/application-generic';
 import { ContextData } from '@novu/shared';
-import { IsDefined } from 'class-validator';
+import { IsDefined, IsOptional, IsUrl } from 'class-validator';
 
 export class UpdateContextRequestDto {
   @ApiProperty({
@@ -14,4 +14,17 @@ export class UpdateContextRequestDto {
   @IsDefined()
   @IsValidContextData()
   data: ContextData;
+
+  @ApiPropertyOptional({
+    description:
+      'Optional bridge URL override for agent connect. When an inbound agent turn resolves this context, ' +
+      'its bridge call is routed here instead of the agent default bridge URL. Must be a publicly reachable URL. ' +
+      'Pass null to clear an existing override.',
+    example: 'https://tenant-acme.example.com/api/novu',
+    type: String,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  bridgeUrl?: string | null;
 }
