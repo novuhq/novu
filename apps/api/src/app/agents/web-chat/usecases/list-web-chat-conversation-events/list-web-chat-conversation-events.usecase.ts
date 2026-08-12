@@ -1,17 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import {
-  AgentRepository,
-  ConversationActivityRepository,
-  ConversationParticipantTypeEnum,
-  ConversationRepository,
-} from '@novu/dal';
+import { AgentRepository, ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
+import { ConversationActivityLedger } from '../../../conversation-runtime/conversation/conversation-activity-ledger';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
-import {
-  type EventMapContext,
-  mapNewestFirstEventActivities,
-  WEB_CHAT_EVENT_ACTIVITY_FILTER,
-} from '../../activity-to-events';
+import { type EventMapContext, mapNewestFirstEventActivities } from '../../activity-to-events';
 import { withWebChatContextFilter } from '../../web-chat-context-query.util';
 import { ListWebChatConversationEventsCommand } from './list-web-chat-conversation-events.command';
 
@@ -25,7 +17,7 @@ interface EventPageResult {
 export class ListWebChatConversationEvents {
   constructor(
     private readonly conversationRepository: ConversationRepository,
-    private readonly activityRepository: ConversationActivityRepository,
+    private readonly activityLedger: ConversationActivityLedger,
     private readonly agentRepository: AgentRepository
   ) {}
 
@@ -79,13 +71,13 @@ export class ListWebChatConversationEvents {
       agentIdentifier: agent.identifier,
     };
 
-    const page = await this.activityRepository.listEventActivities({
+    const page = await this.activityLedger.listForView({
+      view: 'client_events',
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       conversationId: conversation._id,
       before: command.before,
       limit: command.limit,
-      filter: WEB_CHAT_EVENT_ACTIVITY_FILTER,
     });
 
     // Repo returns newest-first; mapper flips to chronological for the client.

@@ -460,8 +460,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: 0.1.0-alpha.16
-        version: 0.1.0-alpha.16(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
+        specifier: 0.1.0-alpha.18
+        version: 0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -9284,8 +9284,8 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@0.1.0-alpha.16':
-    resolution: {integrity: sha512-mVVCXE/vsFe9XSnkLGD6W8Mb784MoVibnAXYeSq7REi6/cmi5FFQG8fPPfcTyn1G0pX8EAA3WnQsnsz/RJlX1Q==}
+  '@novu/thalamus@0.1.0-alpha.18':
+    resolution: {integrity: sha512-ZAYIeepTPr71vTOv/G6AvzFlkjKSarH/vzQCfFGeTBKcuh8SdW7AJGt5oiB4ufCBCZgAXUIVNvV3Fs3HnZwbxQ==}
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
       '@anthropic-ai/sdk': '>=0.86.0'
@@ -35495,7 +35495,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@0.1.0-alpha.16(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
+  '@novu/thalamus@0.1.0-alpha.18(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.21.0)(zod@3.25.20))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
       '@aws-crypto/sha256-js': 5.2.0
