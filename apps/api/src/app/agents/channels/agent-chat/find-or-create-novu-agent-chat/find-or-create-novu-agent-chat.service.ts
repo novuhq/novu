@@ -12,6 +12,10 @@ import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
+import {
+  agentLinkAwaitingInboundConnectionFilter,
+  hasAgentInboundConnection,
+} from '../../../shared/util/agent-inbound-connection';
 
 export type FindOrCreateNovuAgentChatResult = {
   response: AgentIntegrationResponseDto;
@@ -46,13 +50,17 @@ export class NovuAgentChatProvisioningService {
 
     const existing = await this.findExistingLink(agent, environmentId, organizationId);
     if (existing) {
-      return { response: existing, provisionedNewLink: false };
+      const response = await this.ensureConnectedAt(existing, environmentId, organizationId);
+
+      return { response, provisionedNewLink: false };
     }
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
       const recheck = await this.findExistingLink(agent, environmentId, organizationId);
       if (recheck) {
-        return { response: recheck, provisionedNewLink: false };
+        const response = await this.ensureConnectedAt(recheck, environmentId, organizationId, session);
+
+        return { response, provisionedNewLink: false };
       }
 
       const integration = await this.findOrCreateEnvironmentIntegration(environmentId, organizationId, session);
@@ -167,6 +175,52 @@ export class NovuAgentChatProvisioningService {
       session,
     });
 
-    return toAgentIntegrationResponse(link, integration, agent);
+    // Agent Chat has no third-party OAuth or credentials step — the channel is ready as soon as
+    // the integration is linked. Stamp connectedAt at provision so the Dashboard shows Connected
+    // instead of waiting for the first in-app message.
+    const connectedAt = hasAgentInboundConnection(link.connectedAt) ? link.connectedAt : new Date();
+    if (!hasAgentInboundConnection(link.connectedAt)) {
+      await this.agentIntegrationRepository.update(
+        {
+          _id: link._id,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          ...agentLinkAwaitingInboundConnectionFilter(),
+        },
+        { $set: { connectedAt } },
+        { session }
+      );
+    }
+
+    return toAgentIntegrationResponse({ ...link, connectedAt }, integration, agent);
+  }
+
+  /**
+   * Backfill connectedAt for Agent Chat links created before provision-time stamping.
+   * Idempotent when the link is already connected.
+   */
+  private async ensureConnectedAt(
+    response: AgentIntegrationResponseDto,
+    environmentId: string,
+    organizationId: string,
+    session: ClientSession | null = null
+  ): Promise<AgentIntegrationResponseDto> {
+    if (hasAgentInboundConnection(response.connectedAt)) {
+      return response;
+    }
+
+    const connectedAt = new Date();
+    await this.agentIntegrationRepository.update(
+      {
+        _id: response._id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        ...agentLinkAwaitingInboundConnectionFilter(),
+      },
+      { $set: { connectedAt } },
+      { session }
+    );
+
+    return { ...response, connectedAt: connectedAt.toISOString() };
   }
 }

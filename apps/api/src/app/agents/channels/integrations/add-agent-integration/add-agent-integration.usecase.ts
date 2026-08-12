@@ -196,7 +196,22 @@ export class AddAgentIntegration {
       organizationId: command.organizationId,
     });
 
-    const response = toAgentIntegrationResponse(link, integration, agent);
+    // Agent Chat is ready on link (same as NovuAgentChatProvisioningService).
+    let linked = link;
+    if (integration.providerId === ChatProviderIdEnum.NovuAgentChat && !link.connectedAt) {
+      const connectedAt = new Date();
+      await this.agentIntegrationRepository.update(
+        {
+          _id: link._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        { $set: { connectedAt } }
+      );
+      linked = { ...link, connectedAt: connectedAt.toISOString() };
+    }
+
+    const response = toAgentIntegrationResponse(linked, integration, agent);
 
     trackAgentIntegrationConnected(this.analyticsService, {
       userId: command.userId,
