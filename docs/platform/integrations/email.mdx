@@ -120,7 +120,7 @@ Common MIME types you may need:
 </Note>
 
 <Note>
-  If your `file` value is a base64 data URL that starts with `data:...;base64,`, strip that prefix before triggering. Novu expects the raw base64 payload only. Passing a data URL fails validation with the message: `Each attachment must include file content as a base64-encoded string or Buffer`.
+  If your `file` value is a base64 data URL that starts with `data:...;base64,`, strip that prefix before triggering. Novu expects the raw base64 payload only; passing the complete data URL produces invalid attachment content.
 </Note>
 
 <Tabs>
