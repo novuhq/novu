@@ -71,6 +71,7 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
 
       return {
         type: 'tool-approval-request',
+        messageId: activity.identifier,
         approvalId: toolData.approvalId,
         toolUseId: toolData.toolCallId,
         toolName: toolData.toolName,

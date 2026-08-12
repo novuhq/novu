@@ -116,4 +116,39 @@ describe('activity-to-events run lifecycle', () => {
       },
     ]);
   });
+
+  it('uses immutable activity ids for approval request messages', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+          identifier: 'approval-activity-2',
+          platformMessageId: 'platform-message-2',
+          sequence: 2,
+          toolData: {
+            approvalId: 'approval-2',
+            toolCallId: 'tool-use-2',
+            toolName: 'secondTool',
+          },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+          identifier: 'approval-activity-1',
+          sequence: 1,
+          toolData: {
+            approvalId: 'approval-1',
+            toolCallId: 'tool-use-1',
+            toolName: 'firstTool',
+          },
+        }),
+      ],
+      context
+    );
+
+    expect(
+      envelopes.map((envelope) =>
+        envelope.event.type === 'tool-approval-request' ? envelope.event.messageId : undefined
+      )
+    ).to.deep.equal(['approval-activity-1', 'approval-activity-2']);
+  });
 });

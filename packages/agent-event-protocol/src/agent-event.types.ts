@@ -86,6 +86,8 @@ export type AgentEvent =
   | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
   | ({
       type: 'tool-approval-request';
+      /** Stable assistant message id used to preserve the approval's timeline position during history replay. */
+      messageId?: string;
       /** When true, no companion message carries the approval UI. The consumer should render its default approval card. */
       deliverCard?: boolean;
     } & AgentApprovalRequest)
