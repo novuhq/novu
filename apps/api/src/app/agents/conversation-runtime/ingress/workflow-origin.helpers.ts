@@ -11,6 +11,7 @@ export const RECHECK_WORKFLOW_ORIGIN_PLATFORMS: ReadonlySet<AgentPlatformEnum> =
   AgentPlatformEnum.WHATSAPP,
   AgentPlatformEnum.TELEGRAM,
   AgentPlatformEnum.SENDBLUE,
+  AgentPlatformEnum.TEAMS,
 ]);
 
 export function buildWorkflowOriginSummary(
@@ -101,7 +102,7 @@ export function isSendblueDirectThreadId(platformThreadId: string): boolean {
   return segments.length === 3 && segments[0] === 'sendblue' && segments[1].length > 0 && segments[2].length > 0;
 }
 
-/** Email → Message._id; WhatsApp → wamid; Sendblue → message_handle; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
+/** Email → Message._id; WhatsApp → wamid; Sendblue → message_handle; Teams → activity id; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
 export function resolvePlatformMessageId(
   platform: AgentPlatformEnum,
   originMessage: MessageEntity,
@@ -115,7 +116,11 @@ export function resolvePlatformMessageId(
     return undefined;
   }
 
-  if (platform === AgentPlatformEnum.WHATSAPP || platform === AgentPlatformEnum.SENDBLUE) {
+  if (
+    platform === AgentPlatformEnum.WHATSAPP ||
+    platform === AgentPlatformEnum.SENDBLUE ||
+    platform === AgentPlatformEnum.TEAMS
+  ) {
     return originMessage.identifier;
   }
 
@@ -132,6 +137,7 @@ export function resolvePlatformMessageId(
     return `${chatId}:${originMessage.identifier}`;
   }
 
+  // Slack-only: Message.identifier is `{channel}:{ts}`; hydration keys off the bare `ts`.
   const colon = originMessage.identifier.indexOf(':');
   if (colon <= 0 || colon === originMessage.identifier.length - 1) {
     return undefined;

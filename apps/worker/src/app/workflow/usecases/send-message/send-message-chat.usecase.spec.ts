@@ -336,17 +336,28 @@ describe('SendMessageChat - agent assigned path', () => {
     sinon.restore();
   });
 
-  function buildAgentUsecase(options: {
-    channelData?: unknown[];
-    linked?: boolean;
-    chatHandlerSend?: sinon.SinonStub;
-    updateMessage?: sinon.SinonStub;
-    jobAgentId?: string | null;
-    workflowAgentIdentifier?: string;
-  } = {}) {
+  function buildAgentUsecase(
+    options: {
+      channelData?: unknown[];
+      linked?: boolean;
+      linkedRefs?: Array<{ identifier: string; providerId: string }>;
+      integration?: {
+        _id: string;
+        identifier: string;
+        providerId: ChatProviderIdEnum;
+        channel: ChannelTypeEnum;
+        credentials: Record<string, unknown>;
+      };
+      chatHandlerSend?: sinon.SinonStub;
+      updateMessage?: sinon.SinonStub;
+      jobAgentId?: string | null;
+      workflowAgentIdentifier?: string;
+    } = {}
+  ) {
     const {
       channelData = [slackUserData],
       linked = true,
+      integration = slackIntegration,
       chatHandlerSend = sinon.stub().resolves({
         id: 'D123:1777837477.371619',
         date: new Date().toISOString(),
@@ -355,6 +366,9 @@ describe('SendMessageChat - agent assigned path', () => {
       jobAgentId,
       workflowAgentIdentifier,
     } = options;
+    const linkedRefs =
+      options.linkedRefs ??
+      (linked ? [{ identifier: integration.identifier, providerId: integration.providerId }] : []);
 
     sinon.stub(ChatFactory.prototype, 'getHandler').returns({
       send: chatHandlerSend,
@@ -365,9 +379,7 @@ describe('SendMessageChat - agent assigned path', () => {
       findOne: sinon.stub().resolves(workflowAgentIdentifier ? { _id: 'agent_from_workflow' } : null),
     };
     const agentIntegrationRepository = {
-      listLinkedIntegrationRefs: sinon
-        .stub()
-        .resolves(linked ? [{ identifier: 'slack-main', providerId: ChatProviderIdEnum.Slack }] : []),
+      listLinkedIntegrationRefs: sinon.stub().resolves(linkedRefs),
     };
     const createExecutionDetails = { execute: sinon.stub().resolves(undefined) };
     const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
@@ -377,7 +389,7 @@ describe('SendMessageChat - agent assigned path', () => {
       update: updateMessage,
     };
     const selectIntegration = {
-      execute: sinon.stub().resolves(slackIntegration),
+      execute: sinon.stub().resolves(integration),
     };
     const featureFlagsService = {
       getFlag: sinon.stub().resolves(false),
@@ -400,8 +412,8 @@ describe('SendMessageChat - agent assigned path', () => {
       {
         execute: sinon.stub().resolves([
           {
-            integrationIdentifier: 'slack-main',
-            providerId: ChatProviderIdEnum.Slack,
+            integrationIdentifier: integration.identifier,
+            providerId: integration.providerId,
             channelData,
           },
         ]),
@@ -454,9 +466,7 @@ describe('SendMessageChat - agent assigned path', () => {
           content: 'agent hello',
         },
       } as never,
-      workflow: workflowAgentIdentifier
-        ? ({ agent: { identifier: workflowAgentIdentifier } } as never)
-        : undefined,
+      workflow: workflowAgentIdentifier ? ({ agent: { identifier: workflowAgentIdentifier } } as never) : undefined,
       job: {
         _id: 'job_1',
         _environmentId: 'env_1',
@@ -618,6 +628,48 @@ describe('SendMessageChat - agent assigned path', () => {
           "No chat channels linked to the assigned agent were available; sent using the subscriber's configured channels",
       }),
     });
+  });
+
+  it('routes agent-assigned MS Teams user endpoints without the chat-channels fallback', async () => {
+    const teamsActivityId = 'activity-abc123';
+    const chatHandlerSend = sinon.stub().resolves({ id: teamsActivityId, date: new Date().toISOString() });
+    const { usecase, updateMessage, createExecutionDetails } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      chatHandlerSend,
+      integration: {
+        _id: 'integration_teams',
+        identifier: 'msteams-main',
+        providerId: ChatProviderIdEnum.MsTeams,
+        channel: ChannelTypeEnum.CHAT,
+        credentials: {},
+      },
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.MS_TEAMS_USER,
+          identifier: 'ep_teams_user',
+          token: 'bot-framework-token',
+          endpoint: { userId: '29:user1' },
+          subscriberTenantId: 'tenant-1',
+          clientId: 'client-1',
+        },
+      ],
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.calledOnce(updateMessage);
+    expect(updateMessage.firstCall.args[1]).to.deep.equal({
+      $set: {
+        identifier: teamsActivityId,
+        _agentId: 'agent_1',
+      },
+    });
+    const fallbackWarning = createExecutionDetails.execute
+      .getCalls()
+      .find((call) => call.args[0]?.detail === DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK);
+    expect(fallbackWarning).to.equal(undefined);
   });
 
   it('resolves workflow.agent when job._agentId is unset and stamps with that agent', async () => {

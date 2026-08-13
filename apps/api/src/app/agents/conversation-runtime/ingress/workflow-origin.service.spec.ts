@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -991,6 +991,201 @@ describe('WorkflowOriginService', () => {
       expect(messageRepository.findOne.called).to.equal(false);
       expect(messageRepository.find.calledOnce).to.equal(true);
       expect(result?.origin.identifier).to.equal(sendblueOrigin.identifier);
+    });
+  });
+
+  describe('Teams', () => {
+    const teamsDmThreadId = 'teams:YToxMjM:aHR0cHM6Ly9zbWJhLnRyYWZmaWNtYW5hZ2VyLm5ldC90ZWFtcw';
+    const teamsConfig = {
+      environmentId: 'env1',
+      organizationId: 'org1',
+      platform: AgentPlatformEnum.TEAMS,
+      agentIdentifier: 'support-agent',
+      providerId: 'msteams',
+    };
+
+    const teamsOrigin = {
+      _id: 'teams-msg1',
+      _notificationId: 'teams-notif1',
+      _jobId: 'teams-job1',
+      transactionId: 'teams-txn1',
+      templateIdentifier: 'order-alerts',
+      stepId: 'chat-1',
+      content: 'Your order shipped',
+      identifier: 'activity-abc123',
+      createdAt: new Date(Date.now() - 60_000).toISOString(),
+      providerId: 'msteams',
+    };
+
+    it('hydrates the latest ms_teams_user origin on a new DM conversation', async () => {
+      const { service, messageRepository } = makeService({
+        find: sinon.stub().resolves([teamsOrigin]),
+      });
+
+      const before = Date.now();
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        platformThreadId: teamsDmThreadId,
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'hi', author: { userId: '29:user1' }, raw: {} } as any,
+        existingConversation: null,
+        isDirectMessage: true,
+      });
+      const after = Date.now();
+
+      expect(messageRepository.find.calledOnce).to.equal(true);
+      const [query, , options] = messageRepository.find.firstCall.args;
+      expect(query).to.include({
+        _environmentId: 'env1',
+        _agentId: 'agent1',
+        _subscriberId: 'subscriber-mongo-1',
+        providerId: 'msteams',
+        channel: ChannelTypeEnum.CHAT,
+        'channelData.type': ENDPOINT_TYPES.MS_TEAMS_USER,
+      });
+      expect(query._notificationId).to.deep.equal({ $exists: true, $ne: null });
+      expect(query.createdAt.$gt.getTime()).to.be.at.least(before - WORKFLOW_ORIGIN_LOOKBACK_MS - 5);
+      expect(query.createdAt.$gt.getTime()).to.be.at.most(after - WORKFLOW_ORIGIN_LOOKBACK_MS + 5);
+      expect(options).to.deep.equal({ sort: { createdAt: -1 }, limit: 1 });
+      expect(result).to.deep.equal({ origin: teamsOrigin, notificationId: 'teams-notif1' });
+    });
+
+    it('catch-up hydrates an existing DM conversation when the origin is not hydrated yet', async () => {
+      const existingConversation = {
+        ...conversation,
+        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
+        participants: [{ type: 'subscriber', id: 'sub1' }],
+      };
+      const { service, messageRepository, conversationService } = makeService({
+        find: sinon.stub().resolves([teamsOrigin]),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        platformThreadId: teamsDmThreadId,
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'hi', author: { userId: '29:user1' }, raw: {} } as any,
+        existingConversation: existingConversation as any,
+        isDirectMessage: true,
+      });
+
+      expect(messageRepository.find.calledOnce).to.equal(true);
+      expect(conversationService.isWorkflowOriginHydrated.firstCall.args).to.deep.equal([
+        'env1',
+        'conversation1',
+        teamsOrigin.identifier,
+      ]);
+      expect(result).to.deep.equal({ origin: teamsOrigin, notificationId: undefined });
+    });
+
+    it('skips an origin already hydrated into the conversation', async () => {
+      const existingConversation = {
+        ...conversation,
+        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
+        participants: [{ type: 'subscriber', id: 'sub1' }],
+      };
+      const { service } = makeService({
+        find: sinon.stub().resolves([teamsOrigin]),
+        isWorkflowOriginHydrated: sinon.stub().resolves(true),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        platformThreadId: teamsDmThreadId,
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'hi', author: { userId: '29:user1' }, raw: {} } as any,
+        existingConversation: existingConversation as any,
+        isDirectMessage: true,
+      });
+
+      expect(result).to.equal(null);
+    });
+
+    it('fails closed for non-DM turns without looking up an origin', async () => {
+      const { service, messageRepository } = makeService({
+        find: sinon.stub().resolves([teamsOrigin]),
+      });
+
+      for (const isDirectMessage of [false, undefined] as const) {
+        messageRepository.find.resetHistory();
+        messageRepository.findOne.resetHistory();
+
+        const result = await service.resolve({
+          agentId: 'agent1',
+          config: teamsConfig as any,
+          platformThreadId: teamsDmThreadId,
+          subscriberId: 'sub1',
+          message: { id: 'inbound', text: 'hi', author: { userId: '29:user1' }, raw: {} } as any,
+          existingConversation: null,
+          ...(isDirectMessage === undefined ? {} : { isDirectMessage }),
+        });
+
+        expect(result).to.equal(null);
+        expect(messageRepository.find.called).to.equal(false);
+        expect(messageRepository.findOne.called).to.equal(false);
+      }
+    });
+
+    it('resolves on action turns without a message using latest-by-subscriber', async () => {
+      const { service, messageRepository } = makeService({
+        find: sinon.stub().resolves([teamsOrigin]),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        platformThreadId: teamsDmThreadId,
+        subscriberId: 'sub1',
+        message: null,
+        existingConversation: null,
+        isDirectMessage: true,
+      });
+
+      expect(messageRepository.find.calledOnce).to.equal(true);
+      expect(result?.notificationId).to.equal('teams-notif1');
+    });
+
+    it('scopes the origin lookup to the resolved subscriber', async () => {
+      const { service, messageRepository } = makeService({
+        findBySubscriberId: sinon.stub().resolves({ _id: 'attacker-mongo' }),
+        find: sinon.stub().resolves([]),
+      });
+
+      await service.resolve({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        platformThreadId: teamsDmThreadId,
+        subscriberId: 'attacker-subscriber',
+        message: { id: 'inbound', text: 'hi', author: { userId: '29:user1' }, raw: {} } as any,
+        existingConversation: null,
+        isDirectMessage: true,
+      });
+
+      expect(messageRepository.find.firstCall.args[0]._subscriberId).to.equal('attacker-mongo');
+    });
+
+    it('hydrates using the bare activity id as platformMessageId', async () => {
+      const { service, conversationService } = makeService({
+        notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-9' } }),
+      });
+
+      await service.hydrate({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        conversation: conversation as any,
+        platformThreadId: teamsDmThreadId,
+        origin: teamsOrigin as any,
+      });
+
+      expect(conversationService.persistWorkflowOriginHydration.firstCall.args[0].platformMessageId).to.equal(
+        teamsOrigin.identifier
+      );
+      expect(
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
+      ).to.equal('order-alerts');
     });
   });
 });
