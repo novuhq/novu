@@ -5,7 +5,7 @@ description: "Use the chat step in Novu Framework to send plain-text or rich car
 
 The `chat` step sends a message to chat platforms such as Slack, Discord, and Microsoft Teams.
 
-Return either a plain-text `body`, a rich `card`, or both. Existing workflows that only return `body` keep working without changes.
+Return a plain-text `body` or a rich `card`. If you return both, Novu uses `card`. Existing workflows that only return `body` keep working without changes.
 
 ## Example usage
 
@@ -21,7 +21,7 @@ await step.chat('chat', async () => {
 
 ### Rich card
 
-Build cards with the Chat SDK helpers from `@novu/framework`. The same card model is used for agent replies.
+Build cards with the Card DSL helpers from `@novu/framework`. The Card DSL extends the raw Chat SDK card model with provider-agnostic Markdown formatting. Novu converts that formatting to the syntax each provider supports.
 
 ```tsx
 import {
@@ -38,7 +38,7 @@ await step.chat('chat', async () => {
     card: Card({
       title: 'Deploy finished',
       children: [
-        CardText('All checks passed for production.'),
+        CardText('All checks **passed** for `production`.'),
         Divider(),
         Image({
           url: 'https://example.com/status.png',
@@ -65,6 +65,8 @@ await step.chat('chat', async () => {
 
 You can also return a raw card object that matches the schema below. Prefer the helpers so TypeScript catches shape mistakes early.
 
+Card text supports `**bold**`, `_italic_`, `~~strikethrough~~`, inline code, and `[links](https://example.com)`. For example, Slack receives equivalent `mrkdwn`, while Novu converts the same source text for other providers.
+
 <Note>
   Link button URLs must be absolute (include `https://`). Incomplete URLs can fail provider validation at send time.
 </Note>
@@ -77,13 +79,13 @@ Provide at least one of `body` or `card`.
 
 - **Type**: `string`
 - **Required**: No (required if `card` is omitted)
-- **Description**: Plain-text message body. Use this for simple notifications or as a fallback string alongside a card.
+- **Description**: Plain-text message body. If the output also includes `card`, Novu uses the card and ignores `body`.
 
 ### card
 
 - **Type**: `object` (`CardElement`)
 - **Required**: No (required if `body` is omitted)
-- **Description**: Structured chat card. Novu renders it to each provider's native format when supported (for example Slack Block Kit or Microsoft Teams Adaptive Cards). Other providers receive a markdown or text fallback derived from the card.
+- **Description**: Structured chat card. Novu provides provider-specific rendering for Slack, Microsoft Teams, WhatsApp, and Telegram. Other providers receive a Markdown fallback generated from the card.
 
 #### Card properties
 
@@ -103,15 +105,13 @@ Provide at least one of `body` or `card`.
 | `image` | `Image` | Image with `url` and optional `alt`. |
 | `divider` | `Divider` | Visual separator. |
 | `link` | `CardLink` | Inline link with `label` and `url`. |
-| `actions` | `Actions` | Wrapper for buttons and selects. |
+| `actions` | `Actions` | Wrapper for link buttons. |
 | `link-button` | (inside `Actions`) | Button that opens a URL. Requires `label` and `url`. Optional `style`: `primary`, `danger`, `default`. |
-| `button` | `Button` | Interactive button with `id` and `label`. Used heavily in [agent replies](/agents/custom-code-agent/building-blocks/reply#interactive-cards). Workflow reply routing for these actions is a separate capability. |
-| `select` / `radio_select` | `Select`, `SelectOption` | Choice controls. Same note as interactive buttons for workflow routing. |
 | `fields` | | Label/value pairs (`field` children). |
 | `table` | | Table with `headers` and `rows`. |
 | `section` | | Nested group of child elements. |
 
-The Dashboard [block editor](/platform/integrations/chat/writing-chat-template) authors a common subset of this model (text, image, divider, link buttons, lists, and related layout blocks). Framework can return the fuller card kit above.
+The Dashboard [block editor](/platform/integrations/chat/writing-chat-template) authors a common subset of this model (text, image, divider, link buttons, lists, and related layout blocks). Framework also supports the layout elements listed above, including sections, fields, and tables.
 
 ## Provider overrides
 

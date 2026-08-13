@@ -11,8 +11,6 @@ You can compose Chat step content in the Novu Dashboard with either the **block 
 
 Both editors support variables and notification preview. For code-first workflows, see the [Framework chat step](/framework/typescript/steps/chat).
 
-{/* SCREENSHOT: Chat step editor showing Block editor / Text editor toggle and slash-command block menu */}
-
 ## Choose an editor
 
 Open a Chat step in the workflow editor. Use the **Block editor** / **Text editor** control to switch modes.
@@ -65,11 +63,9 @@ Use the variable picker or Liquid-style `{{ ... }}` placeholders inside text, bu
 
 ### Preview
 
-The Chat step preview can show how the message looks for providers configured in your environment (for example Slack or Microsoft Teams).
+The Chat step preview gives you an approximate view of the message for providers configured in your environment, such as Slack or Microsoft Teams. The delivered message can look different because each provider has its own layout, spacing, and supported features.
 
-Use the provider switcher in the preview panel to inspect each rendering. Some providers support native rich layouts (Slack Block Kit, Microsoft Teams Adaptive Cards). Others receive a text or markdown-style fallback derived from the same card.
-
-{/* SCREENSHOT: Chat preview panel with provider switcher (for example Slack) */}
+Use the provider switcher in the preview panel to inspect each rendering. Some providers support native rich layouts (Slack Block Kit, Microsoft Teams Adaptive Cards). Others receive a text or Markdown-style fallback derived from the same card.
 
 If a block cannot be represented fully on a provider, the preview may surface a warning. Treat that as a signal to simplify the card or add a [provider content override](/platform/integrations/chat#provider-content-overrides) for that provider.
 
@@ -99,9 +95,11 @@ These layers solve different problems:
 
 The block editor does not replace provider overrides. Overrides still apply for provider-specific APIs when you set them. If both exist, follow the precedence rules in [Provider content overrides](/platform/integrations/chat#provider-content-overrides) and [Trigger overrides](/platform/integrations/trigger-overrides).
 
+Use provider content overrides when you need more control over one provider's payload than the shared blocks offer. The block editor supports variables, but it does not support Liquid conditions or loops. Use the text editor when you need Liquid logic.
+
 ## Code-first and Framework
 
-If you define the Chat step in code with `@novu/framework`, return a `body` string, a `card` object, or both (at least one is required). The Dashboard block editor covers the common card subset. Framework accepts a wider card kit (sections, fields, tables, and more).
+If you define the Chat step in code with `@novu/framework`, return a `body` string or a `card` object. If you return both, Novu uses `card`. The Dashboard block editor covers the common card subset. Framework also supports sections, fields, tables, and other layout elements.
 
 See:
 
