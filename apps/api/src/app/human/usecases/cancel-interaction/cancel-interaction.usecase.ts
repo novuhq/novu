@@ -24,12 +24,15 @@ export class CancelInteraction {
       throw new NotFoundException(`Interaction "${command.identifier}" was not found.`);
     }
 
-    if (interaction.status !== HumanInteractionStatusEnum.PENDING) {
+    // Align with get/list: overdue pending rows expire before cancel can claim them.
+    const current = await this.settlement.expireIfOverdue(interaction);
+
+    if (current.status !== HumanInteractionStatusEnum.PENDING) {
       // Cancel is idempotent on terminal states — return the row as-is.
-      return toInteractionResponse(interaction);
+      return toInteractionResponse(current);
     }
 
-    const settled = await this.settlement.settle(interaction, HumanInteractionStatusEnum.CANCELED);
+    const settled = await this.settlement.settle(current, HumanInteractionStatusEnum.CANCELED);
 
     if (settled) {
       return toInteractionResponse(settled);
@@ -38,6 +41,6 @@ export class CancelInteraction {
     // Lost the race to a click/expiry — return whatever won.
     const latest = await this.humanInteractionRepository.findByIdentifier(command.environmentId, command.identifier);
 
-    return toInteractionResponse(latest ?? interaction);
+    return toInteractionResponse(latest ?? current);
   }
 }

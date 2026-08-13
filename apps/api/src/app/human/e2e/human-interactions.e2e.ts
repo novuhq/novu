@@ -206,7 +206,10 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
 
       const edits = telegramApiStub.calls.filter((call) => call.method === 'editMessageText');
       expect(edits.length).to.be.greaterThan(0);
-      expect(JSON.stringify(edits[edits.length - 1].payload)).to.include('Approved');
+      const editedText = edits[edits.length - 1].payload.text as string;
+      expect(editedText).to.include('Approved');
+      // The subtitle and status line must be visually separated, not crammed together.
+      expect(editedText).to.match(/\n\s*\n/);
     });
 
     it('resolves deny clicks to denied', async () => {
@@ -359,6 +362,20 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
 
       const again = await session.testAgent.post(`/v1/human/interactions/${interaction.id}/cancel`);
       expect(again.body.data.status).to.equal(HumanInteractionStatusEnum.CANCELED);
+    });
+
+    it('cancel of an overdue pending interaction expires instead of canceling', async () => {
+      const createRes = await createInteraction({ kind: 'approve', prompt: 'Already late?' });
+      const interaction = createRes.body.data;
+
+      const row = await humanInteractionRepository.findByIdentifier(session.environment._id, interaction.id);
+      await humanInteractionRepository.update(
+        { _id: row!._id, _environmentId: session.environment._id },
+        { $set: { expiresAt: new Date(Date.now() - 1000).toISOString() } }
+      );
+
+      const cancelRes = await session.testAgent.post(`/v1/human/interactions/${interaction.id}/cancel`);
+      expect(cancelRes.body.data.status).to.equal(HumanInteractionStatusEnum.EXPIRED);
     });
   });
 

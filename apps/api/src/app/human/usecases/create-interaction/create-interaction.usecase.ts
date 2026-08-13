@@ -89,9 +89,11 @@ export class CreateInteraction {
     interaction: HumanInteractionEntity,
     target: Awaited<ReturnType<HumanDeliveryService['resolveTarget']>>
   ): Promise<HumanInteractionEntity> {
+    let deliveryRefs: Awaited<ReturnType<HumanDeliveryService['deliver']>> | null = null;
+
     try {
-      const refs = await this.deliveryService.deliver(interaction, target);
-      await this.humanInteractionRepository.stampDelivery(interaction._environmentId, interaction._id, refs);
+      deliveryRefs = await this.deliveryService.deliver(interaction, target);
+      await this.humanInteractionRepository.stampDelivery(interaction._environmentId, interaction._id, deliveryRefs);
 
       if (interaction.kind === HumanInteractionKindEnum.TELL) {
         // `tell` has nothing to wait on — flip straight to its terminal state.
@@ -101,18 +103,31 @@ export class CreateInteraction {
           HumanInteractionStatusEnum.DELIVERED
         );
 
-        return settled ?? { ...interaction, ...refs, status: HumanInteractionStatusEnum.DELIVERED };
+        return settled ?? { ...interaction, ...deliveryRefs, status: HumanInteractionStatusEnum.DELIVERED };
       }
 
-      return { ...interaction, ...refs };
+      return { ...interaction, ...deliveryRefs };
     } catch (err) {
-      // The row was never delivered — remove it so it can't be answered or listed.
-      await this.humanInteractionRepository
-        .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
-        .catch(() => undefined);
+      if (!deliveryRefs) {
+        // Never reached the platform — remove the row so it can't be answered or listed.
+        await this.humanInteractionRepository
+          .delete({ _id: interaction._id, _environmentId: interaction._environmentId })
+          .catch(() => undefined);
+      } else {
+        // Card is already live. Keep the row and best-effort stamp refs so clicks
+        // can still settle instead of orphaning a message for a deleted interaction.
+        await this.humanInteractionRepository
+          .stampDelivery(interaction._environmentId, interaction._id, deliveryRefs)
+          .catch(() => undefined);
+      }
 
       this.logger.warn(
-        { err, interactionIdentifier: interaction.identifier, platform: interaction.platform },
+        {
+          err,
+          interactionIdentifier: interaction.identifier,
+          platform: interaction.platform,
+          delivered: Boolean(deliveryRefs),
+        },
         'Human interaction delivery failed'
       );
 
