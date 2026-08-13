@@ -202,18 +202,15 @@ describe('AgentInboundHandler', () => {
       maybeBlockConversation: sinon.stub().resolves(false),
     };
     const connectionContextResolver = {
-      resolve: sinon.stub().resolves(null),
+      resolve: sinon.stub().resolves({ context: null }),
     };
     const replyApprovalInterceptor = {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),
       tryHandleAsApprovalReaction: sinon.stub().resolves(false),
     };
-    const notificationRepository = {
-      findOne: sinon.stub().resolves(null),
-    };
-    const messageRepository = {
-      findOne: sinon.stub().resolves(null),
-      findByAgentIdentifier: sinon.stub().resolves(null),
+    const workflowOriginService = {
+      resolve: sinon.stub().resolves(null),
+      hydrate: sinon.stub().resolves(undefined),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -236,8 +233,7 @@ describe('AgentInboundHandler', () => {
       inboundAck as any,
       connectionContextResolver as any,
       replyApprovalInterceptor as any,
-      notificationRepository as any,
-      messageRepository as any
+      workflowOriginService as any
     );
 
     return {
@@ -247,8 +243,7 @@ describe('AgentInboundHandler', () => {
       attachmentStorage,
       bridgeExecutor,
       conversationService,
-      notificationRepository,
-      messageRepository,
+      workflowOriginService,
       linkTelegramChatToSubscriber,
       subscriberResolver,
       startCodeService,
@@ -431,23 +426,16 @@ describe('AgentInboundHandler', () => {
       expect(thread.post.calledOnce).to.equal(true);
     });
 
-    it('should hydrate workflow origin into conversation history on first reply', async () => {
-      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
-        makeResolvedSubscriberOverrides()
-      );
-
-      conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.resolves({
+    it('should resolve and hydrate workflow origin through WorkflowOriginService on first reply', async () => {
+      const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
+      const origin = {
         _id: 'msg1',
         _notificationId: 'notif1',
-        _jobId: 'job1',
-        transactionId: 'txn1',
-        templateIdentifier: 'order-alerts',
-        stepId: 'chat-1',
-        content: 'Order ORD-1 shipped',
         identifier: 'D123:1777837477.371619',
-      });
-      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
 
       const thread = makeSlackDmThread();
       const message = {
@@ -458,254 +446,35 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
-      expect(messageRepository.findByAgentIdentifier.calledOnce).to.equal(true);
-      expect(messageRepository.findByAgentIdentifier.firstCall.args).to.deep.equal([
-        'env1',
-        'agent1',
-        'D123:1777837477.371619',
-        'subscriber-mongo-1',
-      ]);
+      expect(workflowOriginService.resolve.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolve.firstCall.args[0]).to.include({
+        agentId: 'agent1',
+        platformThreadId: 'slack:D123:1777837477.371619',
+        subscriberId: 'sub1',
+        existingConversation: null,
+      });
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
-      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
-      const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
-      expect(hydrateArgs.messageContent).to.equal(
-        'Order ORD-1 shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-1"\n}'
-      );
-      expect(hydrateArgs.platformMessageId).to.equal('1777837477.371619');
-      expect(hydrateArgs.platformThreadId).to.equal('slack:D123:1777837477.371619');
-      expect(hydrateArgs.signalData.payload).to.deep.equal({ orderId: 'ORD-1' });
-      expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
+      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
+      expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
     });
 
-    it("should not hydrate another subscriber's workflow origin from the same platform thread", async () => {
-      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
-        makeResolvedSubscriberOverrides('attacker-subscriber', 'attacker-mongo')
-      );
+    it('should not hydrate when WorkflowOriginService.resolve returns null', async () => {
+      const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.callsFake(
-        (_environmentId: string, _agentId: string, _identifier: string, subscriberId?: string) =>
-          subscriberId
-            ? null
-            : {
-                _id: 'victim-message',
-                _notificationId: 'victim-notification',
-                _subscriberId: 'victim-mongo',
-                content: 'Your password reset token is secret',
-                identifier: 'D123:1777837477.371619',
-              }
-      );
-      notificationRepository.findOne.resolves({ payload: { resetToken: 'secret' } });
+      workflowOriginService.resolve.resolves(null);
 
       await handler.handle(
         'agent1',
         config as any,
         makeSlackDmThread() as any,
-        {
-          ...makeSlackDmMessage(),
-          id: '1777837480.1',
-          raw: { thread_ts: '1777837477.371619' },
-        } as any,
+        makeSlackDmMessage() as any,
         AgentEventEnum.ON_MESSAGE
       );
 
-      expect(messageRepository.findByAgentIdentifier.firstCall.args).to.deep.equal([
-        'env1',
-        'agent1',
-        'D123:1777837477.371619',
-        'attacker-mongo',
-      ]);
+      expect(workflowOriginService.resolve.calledOnce).to.equal(true);
+      expect(workflowOriginService.hydrate.called).to.equal(false);
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal(undefined);
-      expect(notificationRepository.findOne.called).to.equal(false);
-      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
-    });
-
-    it('should not hydrate when no workflow origin message exists', async () => {
-      const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
-
-      conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.resolves(null);
-
-      await handler.handle(
-        'agent1',
-        config as any,
-        makeSlackDmThread() as any,
-        makeSlackDmMessage() as any,
-        AgentEventEnum.ON_MESSAGE
-      );
-
-      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
-    });
-
-    it('should still dispatch the reply when the workflow origin lookup fails', async () => {
-      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler(
-        makeResolvedSubscriberOverrides()
-      );
-
-      conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.rejects(new Error('mongo timeout'));
-
-      await handler.handle(
-        'agent1',
-        config as any,
-        makeSlackDmThread() as any,
-        makeSlackDmMessage() as any,
-        AgentEventEnum.ON_MESSAGE
-      );
-
-      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
-      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
-    });
-
-    it('should not look up the origin message or re-hydrate on later replies to an existing conversation', async () => {
-      const { handler, conversationService, messageRepository } = makeHandler();
-
-      const existingConversation = {
-        ...conversation,
-        _notificationId: 'notif1',
-        participants: [{ type: 'subscriber', id: 'sub1' }],
-      };
-      conversationService.findByPlatformThread.resolves(existingConversation);
-      conversationService.createOrGetConversation.resolves(existingConversation);
-
-      await handler.handle(
-        'agent1',
-        config as any,
-        makeSlackDmThread() as any,
-        {
-          ...makeSlackDmMessage(),
-          id: '1777837480.1',
-          raw: { thread_ts: '1777837477.371619' },
-        } as any,
-        AgentEventEnum.ON_MESSAGE
-      );
-
-      expect(messageRepository.findByAgentIdentifier.called).to.equal(false);
-      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
-    });
-
-    describe('email workflow origin hydration', () => {
-      const ORIGIN_MESSAGE_ID = '65f1a2b3c4d5e6f7a8b9c0d1';
-      const emailConfig = {
-        ...config,
-        platform: AgentPlatformEnum.EMAIL,
-        integrationIdentifier: 'email-main',
-      };
-
-      function makeEmailReply(raw: Record<string, unknown>) {
-        const message = makeEmailDmMessage('member@example.com');
-
-        return { ...message, raw: { ...message.raw, ...raw } };
-      }
-
-      function makeOriginMessage() {
-        return {
-          _id: ORIGIN_MESSAGE_ID,
-          _notificationId: 'notif1',
-          _jobId: 'job1',
-          transactionId: 'txn1',
-          templateIdentifier: 'order-alerts',
-          stepId: 'email-1',
-          content: 'Order ORD-1 shipped',
-          identifier: 'provider-send-id',
-        };
-      }
-
-      it('should hydrate the workflow origin referenced by originToken', async () => {
-        const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
-          makeResolvedSubscriberOverrides()
-        );
-
-        conversationService.findByPlatformThread.resolves(null);
-        messageRepository.findOne.resolves(makeOriginMessage());
-        notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
-
-        await handler.handle(
-          'agent1',
-          emailConfig as any,
-          makeEmailDmThread() as any,
-          makeEmailReply({ originToken: ORIGIN_MESSAGE_ID }) as any,
-          AgentEventEnum.ON_MESSAGE
-        );
-
-        expect(messageRepository.findByAgentIdentifier.called).to.equal(false);
-        expect(messageRepository.findOne.calledOnce).to.equal(true);
-        expect(messageRepository.findOne.firstCall.args[0]).to.deep.equal({
-          _id: ORIGIN_MESSAGE_ID,
-          _environmentId: 'env1',
-          _agentId: 'agent1',
-          _subscriberId: 'subscriber-mongo-1',
-        });
-        expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
-
-        const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
-        expect(hydrateArgs.platformMessageId).to.equal(ORIGIN_MESSAGE_ID);
-        expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
-        expect(hydrateArgs.messageContent).to.equal(
-          'Order ORD-1 shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-1"\n}'
-        );
-      });
-
-      it('should not hydrate when the referenced message belongs to another subscriber', async () => {
-        const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
-          makeResolvedSubscriberOverrides('attacker-subscriber', 'attacker-mongo')
-        );
-
-        conversationService.findByPlatformThread.resolves(null);
-        messageRepository.findOne.callsFake(async (query: { _subscriberId: string }) =>
-          query._subscriberId === 'subscriber-mongo-1' ? makeOriginMessage() : null
-        );
-
-        await handler.handle(
-          'agent1',
-          emailConfig as any,
-          makeEmailDmThread() as any,
-          makeEmailReply({ originToken: ORIGIN_MESSAGE_ID }) as any,
-          AgentEventEnum.ON_MESSAGE
-        );
-
-        expect(messageRepository.findOne.firstCall.args[0]._subscriberId).to.equal('attacker-mongo');
-        expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal(undefined);
-        expect(notificationRepository.findOne.called).to.equal(false);
-        expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
-      });
-
-      it('should ignore References / In-Reply-To without an originToken', async () => {
-        const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
-
-        conversationService.findByPlatformThread.resolves(null);
-
-        await handler.handle(
-          'agent1',
-          emailConfig as any,
-          makeEmailDmThread() as any,
-          makeEmailReply({
-            references: '<CAJ1x0y2@mail.gmail.com> <novu-65f1a2b3c4d5e6f7a8b9c0d1@agentconnect.sh>',
-            inReplyTo: '<010001900abc@eu-west-1.amazonses.com>',
-          }) as any,
-          AgentEventEnum.ON_MESSAGE
-        );
-
-        expect(messageRepository.findOne.called).to.equal(false);
-        expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
-      });
-
-      it('should not query when the reply carries no originToken', async () => {
-        const { handler, conversationService, messageRepository } = makeHandler(makeResolvedSubscriberOverrides());
-
-        conversationService.findByPlatformThread.resolves(null);
-
-        await handler.handle(
-          'agent1',
-          emailConfig as any,
-          makeEmailDmThread() as any,
-          makeEmailDmMessage('member@example.com') as any,
-          AgentEventEnum.ON_MESSAGE
-        );
-
-        expect(messageRepository.findOne.called).to.equal(false);
-        expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
-      });
     });
 
     it('should store and forward inbound WhatsApp attachments', async () => {
@@ -1705,21 +1474,18 @@ describe('AgentInboundHandler', () => {
     });
 
     it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {
-      const { handler, conversationService, notificationRepository, messageRepository, bridgeExecutor } =
-        makeHandler(makeResolvedSubscriberOverrides());
-
-      conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.resolves({
+      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const origin = {
         _id: 'msg1',
         _notificationId: 'notif1',
-        _jobId: 'job1',
-        transactionId: 'txn1',
         templateIdentifier: 'order-alerts',
-        stepId: 'chat-1',
-        content: 'Order ORD-1 shipped',
         identifier: 'thread1:1777837477.371619',
-      });
-      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
 
       await handler.handleAction(
         'agent1',
@@ -1729,30 +1495,25 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
-      const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
-      expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
+      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
+      expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
       // The origin must reach history before the runtime reads the conversation.
-      expect(conversationService.persistWorkflowOriginHydration.calledBefore(bridgeExecutor.execute)).to.equal(true);
+      expect(workflowOriginService.hydrate.calledBefore(bridgeExecutor.execute)).to.equal(true);
     });
 
-    it('should use the clicked Slack message timestamp to hydrate an action-only thread', async () => {
-      const { handler, conversationService, notificationRepository, messageRepository, bridgeExecutor } =
-        makeHandler(makeResolvedSubscriberOverrides());
+    it('should use the clicked Slack message timestamp when resolving an action-only thread', async () => {
+      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
       const platformThreadId = 'slack:D123:1777837477.371619';
-
-      conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.resolves({
+      const origin = {
         _id: 'msg1',
         _notificationId: 'notif1',
-        _jobId: 'job1',
-        transactionId: 'txn1',
-        templateIdentifier: 'order-alerts',
-        stepId: 'chat-1',
-        content: 'Order ORD-1 shipped',
         identifier: 'D123:1777837477.371619',
-      });
-      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
 
       await handler.handleAction(
         'agent1',
@@ -1763,21 +1524,14 @@ describe('AgentInboundHandler', () => {
       );
 
       expect(conversationService.findByPlatformThread.firstCall.args[4]).to.equal(platformThreadId);
-      expect(messageRepository.findByAgentIdentifier.firstCall.args).to.deep.equal([
-        'env1',
-        'agent1',
-        'D123:1777837477.371619',
-        'subscriber-mongo-1',
-      ]);
+      expect(workflowOriginService.resolve.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
       expect(conversationService.createOrGetConversation.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
-      expect(conversationService.persistWorkflowOriginHydration.firstCall.args[0].platformThreadId).to.equal(
-        platformThreadId
-      );
+      expect(workflowOriginService.hydrate.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(platformThreadId);
     });
 
-    it('should not hydrate workflow origin for link-button actions', async () => {
-      const { handler, conversationService, messageRepository } = makeHandler();
+    it('should not hydrate workflow origin for link-button actions when resolve returns null', async () => {
+      const { handler, workflowOriginService } = makeHandler();
 
       await handler.handleAction(
         'agent1',
@@ -1787,31 +1541,21 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(messageRepository.findByAgentIdentifier.called).to.equal(false);
-      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      expect(workflowOriginService.hydrate.called).to.equal(false);
     });
 
     it('should still hydrate workflow origin when a link-button click is the first-ever interaction on a seeded thread', async () => {
-      const { handler, conversationService, notificationRepository, messageRepository } = makeHandler(
-        makeResolvedSubscriberOverrides()
-      );
+      const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
 
       // Regression: create + hydrate must be atomic. A link-button click swallowed
       // right after conversation creation must not skip the one-shot hydration —
       // otherwise `_notificationId` gets stamped with no origin content ever written,
       // permanently blocking every later retry.
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.resolves({
-        _id: 'msg1',
-        _notificationId: 'notif1',
-        _jobId: 'job1',
-        transactionId: 'txn1',
-        templateIdentifier: 'order-alerts',
-        stepId: 'chat-1',
-        content: 'Order ORD-1 shipped',
-        identifier: 'thread1:1777837477.371619',
+      workflowOriginService.resolve.resolves({
+        origin: { _id: 'msg1', _notificationId: 'notif1' },
+        notificationId: 'notif1',
       });
-      notificationRepository.findOne.resolves({ payload: { orderId: 'ORD-1' } });
 
       await handler.handleAction(
         'agent1',
@@ -1822,16 +1566,16 @@ describe('AgentInboundHandler', () => {
       );
 
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
-      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
     });
 
-    it('should still dispatch the action when workflow origin hydration fails', async () => {
-      const { handler, conversationService, messageRepository, bridgeExecutor } = makeHandler(
+    it('should still dispatch the action when workflow origin resolve returns null', async () => {
+      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
         makeResolvedSubscriberOverrides()
       );
 
       conversationService.findByPlatformThread.resolves(null);
-      messageRepository.findByAgentIdentifier.rejects(new Error('mongo timeout'));
+      workflowOriginService.resolve.resolves(null);
 
       await handler.handleAction(
         'agent1',
@@ -1841,7 +1585,7 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      expect(workflowOriginService.hydrate.called).to.equal(false);
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });
   });
