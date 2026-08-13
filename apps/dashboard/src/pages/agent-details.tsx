@@ -1,3 +1,4 @@
+import { buildDashboardAgentChatSubscriberId } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
@@ -16,8 +17,10 @@ import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
+import { AgentTryItTab } from '@/components/agents/agent-try-it-tab';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { hasAgentChatLink } from '@/components/agents/is-agent-integration-connected';
 import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -35,6 +38,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
+import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
@@ -43,6 +47,7 @@ import { QueryKeys } from '@/utils/query-keys';
 import {
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
+  AGENT_DETAILS_TRY_IT_TAB,
   type AgentDetailsTab,
   buildRoute,
   parseAgentDetailsTab,
@@ -92,6 +97,7 @@ export function AgentDetailsPage() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const { currentEnvironment, readOnly } = useEnvironment();
+  const { currentUser } = useAuth();
   const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const agentRoutes = useAgentRoutes();
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
@@ -155,6 +161,11 @@ export function AgentDetailsPage() {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
+  const hasAgentChat = useMemo(
+    () => hasAgentChatLink(agentIntegrationsQuery.data?.data),
+    [agentIntegrationsQuery.data?.data]
+  );
+
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
   const showSetupModal =
@@ -167,6 +178,10 @@ export function AgentDetailsPage() {
 
   const integrationIdentifier = integrationIdentifierParam ? decodeURIComponent(integrationIdentifierParam) : undefined;
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
+  const tryItSubscriberId =
+    currentTab === AGENT_DETAILS_TRY_IT_TAB && currentUser?._id
+      ? buildDashboardAgentChatSubscriberId(currentUser._id)
+      : undefined;
 
   useEffect(() => {
     if (!areAgentsAvailable || !agentIdentifier || !agentQuery.data) {
@@ -203,6 +218,24 @@ export function AgentDetailsPage() {
   }
 
   if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
+    return (
+      <Navigate
+        replace
+        to={`${buildRoute(agentRoutes.detailsTab, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })}${location.search}`}
+      />
+    );
+  }
+
+  if (
+    currentTab === AGENT_DETAILS_TRY_IT_TAB &&
+    agentIntegrationsQuery.isSuccess &&
+    !hasAgentChat &&
+    currentEnvironment?.slug
+  ) {
     return (
       <Navigate
         replace
@@ -292,7 +325,7 @@ export function AgentDetailsPage() {
       <PageMeta title={pageTitle} />
       <DashboardLayout headerStartItems={headerStartItems}>
         {/* Below header: Inbox must not nest under this customer-env NovuProvider. */}
-        <ConnectSubscriberProvider>
+        <ConnectSubscriberProvider subscriberIdOverride={tryItSubscriberId}>
           {isNotFound ? (
             <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">
               <p>This agent does not exist or was removed.</p>
@@ -333,6 +366,11 @@ export function AgentDetailsPage() {
                   <TabsTrigger variant="regular" value="integrations" size="xl">
                     Channels
                   </TabsTrigger>
+                  {hasAgentChat ? (
+                    <TabsTrigger variant="regular" value={AGENT_DETAILS_TRY_IT_TAB} size="xl">
+                      Try it
+                    </TabsTrigger>
+                  ) : null}
                 </TabsList>
 
                 <TabsContent value="overview" className="outline-none">
@@ -343,6 +381,11 @@ export function AgentDetailsPage() {
                     <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
                   ) : null}
                 </TabsContent>
+                {hasAgentChat ? (
+                  <TabsContent value={AGENT_DETAILS_TRY_IT_TAB} className="outline-none">
+                    {currentTab === AGENT_DETAILS_TRY_IT_TAB ? <AgentTryItTab agent={agent} /> : null}
+                  </TabsContent>
+                ) : null}
               </Tabs>
 
               <DeleteAgentDialog

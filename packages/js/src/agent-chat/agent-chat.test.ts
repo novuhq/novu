@@ -902,6 +902,59 @@ describe('AgentChat', () => {
     expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
   });
 
+  it('catch-up after send claims a conversation that received live events early', async () => {
+    agentChat.subscribe();
+
+    let sendStarted = false;
+    let resolveSend!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage.mockImplementationOnce(() => {
+      sendStarted = true;
+
+      return new Promise((resolve) => {
+        resolveSend = resolve;
+      });
+    });
+
+    getEvents.mockResolvedValue(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_early001', role: 'assistant', markdown: 'beat the ack' },
+      ])
+    );
+
+    const sent = agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    await new Promise<void>((resolve) => {
+      const tick = () => {
+        if (sendStarted) {
+          resolve();
+
+          return;
+        }
+
+        setTimeout(tick, 0);
+      };
+
+      tick();
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_early001',
+        markdown: 'beat the ack',
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await sent;
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_early001']);
+    expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
   it('buffers live envelopes during catch-up and applies them after', async () => {
     await openClaimedConversation();
 

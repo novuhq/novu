@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { AgentChatSetupSteps } from '@/components/agents/agent-chat-setup-steps';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { AGENT_DETAILS_TRY_IT_TAB, buildRoute } from '@/utils/routes';
 import { ListeningStatus, ProviderSetupStepperRail, SetupStepperRail } from './setup-guide-primitives';
 
 export type AgentChatSetupGuideProps = {
@@ -16,8 +20,9 @@ export type AgentChatSetupGuideProps = {
 };
 
 /**
- * Agent Chat has no OAuth or credentials after Connect. Teach embed (Cursor prompt
- * or docs) → first real message (ListeningStatus). Connected matches Slack: first inbound only.
+ * Agent Chat has no OAuth or credentials after Connect. Try in the dashboard
+ * first, then teach embed (Cursor prompt or docs). Connected still matches
+ * Slack: first inbound from the customer's app only.
  */
 export function AgentChatSetupGuide({
   agent,
@@ -27,6 +32,10 @@ export function AgentChatSetupGuide({
   embedded = false,
 }: AgentChatSetupGuideProps) {
   const prompt = useAgentChatPrompt(agent);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const agentRoutes = useAgentRoutes();
+  const { currentEnvironment } = useEnvironment();
   const [isConnected, setIsConnected] = useState(false);
 
   const handleConnected = useCallback(() => {
@@ -34,11 +43,30 @@ export function AgentChatSetupGuide({
     onStepsCompleted?.();
   }, [onStepsCompleted]);
 
+  const handleOpenTryIt = useCallback(() => {
+    if (!currentEnvironment?.slug) {
+      return;
+    }
+
+    void navigate(
+      `${buildRoute(agentRoutes.detailsTab, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(agent.identifier),
+        agentTab: AGENT_DETAILS_TRY_IT_TAB,
+      })}${location.search}`
+    );
+  }, [agent.identifier, agentRoutes.detailsTab, currentEnvironment?.slug, location.search, navigate]);
+
   const base = stepOffset;
-  const firstIncompleteStep = isConnected ? base + 2 : base;
+  const firstIncompleteStep = isConnected ? base + 3 : base;
 
   const stepsColumn = (
-    <AgentChatSetupSteps prompt={prompt} stepOffset={stepOffset} firstIncompleteStep={firstIncompleteStep} />
+    <AgentChatSetupSteps
+      prompt={prompt}
+      stepOffset={stepOffset}
+      firstIncompleteStep={firstIncompleteStep}
+      onOpenTryIt={handleOpenTryIt}
+    />
   );
 
   const listening = (

@@ -269,6 +269,10 @@ export class AgentChat extends BaseModule {
             conversationId: data.identifier,
           });
 
+          // Live WS can arrive before the HTTP ack claims conversationId; those
+          // envelopes are dropped by #applyLiveEnvelope. Catch up immediately.
+          this.#requestCatchUp();
+
           return {
             data: {
               conversationId: data.identifier,

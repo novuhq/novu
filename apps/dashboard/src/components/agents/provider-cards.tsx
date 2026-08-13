@@ -42,7 +42,7 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [ChatProviderIdEnum.WhatsAppBusiness]: '~ 5 minutes',
   [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
   [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
-  [ChatProviderIdEnum.NovuAgentChat]: '~ 2 minutes',
+  [ChatProviderIdEnum.NovuAgentChat]: '~ 30 seconds',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
   linear: '~ 2 minutes',
@@ -166,6 +166,7 @@ function ProviderPill({
   connected,
   connecting,
   inSetup,
+  idleLabel = 'Connect',
 }: {
   loading: boolean;
   comingSoon: boolean;
@@ -173,6 +174,7 @@ function ProviderPill({
   connected: boolean;
   connecting: boolean;
   inSetup: boolean;
+  idleLabel?: string;
 }) {
   let label: string;
   if (comingSoon) {
@@ -186,7 +188,7 @@ function ProviderPill({
   } else if (connecting) {
     label = 'Connecting...';
   } else {
-    label = 'Connect';
+    label = idleLabel;
   }
 
   return (
@@ -355,6 +357,7 @@ function ProviderCard({
           connected={effectiveConnected}
           connecting={showConnecting}
           inSetup={showInSetup}
+          idleLabel={item.providerId === ChatProviderIdEnum.NovuAgentChat ? 'Try in dashboard' : 'Connect'}
         />
       </div>
     </button>

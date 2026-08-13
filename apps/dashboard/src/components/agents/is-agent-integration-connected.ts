@@ -1,3 +1,4 @@
+import { ChatProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink } from '@/api/agents';
 
 /** Whether a real inbound message has landed (API stamped `connectedAt`). */
@@ -14,4 +15,8 @@ export function hasAgentInboundConnection(connectedAt: string | null | undefined
 /** Whether an agent–integration link should be presented as "Connected" in the dashboard. */
 export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'connectedAt'>): boolean {
   return hasAgentInboundConnection(link.connectedAt);
+}
+
+export function hasAgentChatLink(links: Array<{ integration: { providerId: string } }> | undefined): boolean {
+  return Boolean(links?.some((link) => link.integration.providerId === ChatProviderIdEnum.NovuAgentChat));
 }

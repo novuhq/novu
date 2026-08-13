@@ -29,7 +29,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { withOnboardingSource } from '@/utils/onboarding-redirect';
-import { buildRoute } from '@/utils/routes';
+import { AGENT_DETAILS_TRY_IT_TAB, buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { AgentIntegrationGuideTransition } from './agent-integration-guides/agent-integration-guide-transition';
@@ -62,9 +62,9 @@ function resolveProviderGuideReservedSteps(providerId: string | undefined): numb
     return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
   }
 
-  // Agent Chat: embed (prompt/snippet) + send test message — install lives inside those.
+  // Agent Chat: try in dashboard + embed + go live from the customer app.
   if (providerId === ChatProviderIdEnum.NovuAgentChat) {
-    return 2;
+    return 3;
   }
 
   return PROVIDER_GUIDE_RESERVED_STEPS;
@@ -568,13 +568,32 @@ export function AgentSetupSteps({
         if (isOnboarding && shouldShowProviderSetupGuide(providerId)) {
           onChannelGuideActiveChangeRef.current?.(true);
         }
+
+        if (!isOnboarding && providerId === ChatProviderIdEnum.NovuAgentChat && currentEnvironment?.slug) {
+          void navigate(
+            `${buildRoute(agentRoutes.detailsTab, {
+              environmentSlug: currentEnvironment.slug,
+              agentIdentifier: encodeURIComponent(agent.identifier),
+              agentTab: AGENT_DETAILS_TRY_IT_TAB,
+            })}${location.search}`
+          );
+        }
       }
 
       if (isOnboarding && providerId === EmailProviderIdEnum.NovuAgent && integration?.identifier) {
         requestEmailWelcome(integration.identifier);
       }
     },
-    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
+    [
+      agent.identifier,
+      agentRoutes.detailsTab,
+      currentEnvironment?.slug,
+      isOnboarding,
+      location.search,
+      navigate,
+      requestEmailWelcome,
+      telemetry,
+    ]
   );
 
   useEffect(() => {
