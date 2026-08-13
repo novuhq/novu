@@ -96,6 +96,8 @@
     "check-exports": "attw --pack .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {
@@ -112,12 +114,18 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
     "@types/node": "^22.0.0",
     "@types/react": "*",
     "@types/react-dom": "*",
     "esbuild-plugin-file-path-extensions": "^2.1.4",
+    "jsdom": "^26.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tsup": "^8.2.1",
-    "typescript": "5.6.2"
+    "typescript": "5.6.2",
+    "vitest": "^4.1.0"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0 || ^19.0.0-0",
