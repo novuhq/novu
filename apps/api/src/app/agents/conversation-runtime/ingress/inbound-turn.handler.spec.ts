@@ -210,7 +210,7 @@ describe('AgentInboundHandler', () => {
     };
     const workflowOriginService = {
       resolve: sinon.stub().resolves(null),
-      hydrate: sinon.stub().resolves(undefined),
+      hydrate: sinon.stub().resolves(null),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -456,6 +456,92 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
       expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
       expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
+    });
+
+    it('should forward the hydrated origin to a managed dispatch on an existing Telegram conversation', async () => {
+      // A live managed session only receives the new turn, so a mid-conversation
+      // hydration write is invisible unless it rides along on the dispatch.
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+
+      conversationService.findByPlatformThread.resolves({
+        _id: 'conv1',
+        externalSessionId: 'ses_live',
+        channels: [{ platform: AgentPlatformEnum.TELEGRAM, _integrationId: 'int1', platformThreadId: 'telegram:42' }],
+        participants: [],
+      });
+      workflowOriginService.resolve.resolves({ origin: { _id: 'msg1', _notificationId: 'notif1', identifier: '42' } });
+      workflowOriginService.hydrate.resolves('Your order shipped');
+
+      const thread = {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
+      };
+      const message = {
+        id: 'msg-2',
+        threadId: 'telegram:42',
+        text: 'where is it?',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.firstCall.args[0].workflowOriginContent).to.equal('Your order shipped');
+    });
+
+    it('should leave workflowOriginContent unset when nothing was hydrated', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves(null);
+
+      const thread = {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
+      };
+      const message = {
+        id: 'msg-2',
+        threadId: 'telegram:42',
+        text: 'hello',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.firstCall.args[0].workflowOriginContent).to.equal(undefined);
     });
 
     it('should not hydrate when WorkflowOriginService.resolve returns null', async () => {

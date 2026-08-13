@@ -456,15 +456,15 @@ export class AgentInboundHandler implements OnModuleInit {
           : undefined,
     });
 
-    if (workflowOrigin) {
-      await this.workflowOriginService.hydrate({
-        agentId,
-        config,
-        conversation,
-        platformThreadId,
-        origin: workflowOrigin.origin,
-      });
-    }
+    const workflowOriginContent = workflowOrigin
+      ? await this.workflowOriginService.hydrate({
+          agentId,
+          config,
+          conversation,
+          platformThreadId,
+          origin: workflowOrigin.origin,
+        })
+      : null;
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
@@ -539,6 +539,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
+      workflowOriginContent: workflowOriginContent ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
@@ -1170,15 +1171,15 @@ export class AgentInboundHandler implements OnModuleInit {
           : undefined,
     });
 
-    if (workflowOrigin) {
-      await this.workflowOriginService.hydrate({
-        agentId,
-        config,
-        conversation,
-        platformThreadId,
-        origin: workflowOrigin.origin,
-      });
-    }
+    const workflowOriginContent = workflowOrigin
+      ? await this.workflowOriginService.hydrate({
+          agentId,
+          config,
+          conversation,
+          platformThreadId,
+          origin: workflowOrigin.origin,
+        })
+      : null;
 
     trackAgentInboundAction(this.analyticsService, {
       organizationId: config.organizationId,
@@ -1237,6 +1238,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       action,
+      workflowOriginContent: workflowOriginContent ?? undefined,
     };
 
     await runtime.dispatch(turn);
