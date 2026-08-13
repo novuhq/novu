@@ -107,7 +107,7 @@ export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
   },
   {
     value: ChatProviderIdEnum.NovuAgentChat,
-    label: 'In app',
+    label: 'Agent Chat',
     icon: <Laptop className="size-4" strokeWidth={1.5} />,
     accent: '#525866',
   },
