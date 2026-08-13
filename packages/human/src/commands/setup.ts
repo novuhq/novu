@@ -87,16 +87,15 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     info('Setting up your human relay...');
     const relay = await setupHumanRelay(client, { subscriberId, agentIdentifier: relayIdentifier });
 
-    // 3. Channel linking — only the platform name is persisted locally; the
-    // API resolves the concrete integration on each create.
+    // 3. Channel linking — linked channels live on the server; locally we only
+    // remember a default preference for when the caller does not pass `--via`.
     await (channel === 'telegram'
       ? connectTelegram(client, relay.agentIdentifier, subscriberId, options)
       : channel === 'slack'
         ? connectSlack(client, relay.agentId, relay.agentIdentifier, subscriberId, options)
         : connectEmail(client, relay.agentIdentifier, subscriberId, options));
 
-    // 4. Persist config — first linked channel becomes the default.
-    const channels = [...new Set([...(existing?.channels ?? []).filter((entry) => entry !== channel), channel])];
+    // 4. Persist config — first setup becomes the default preference.
     const defaultChannel = existing?.defaultChannel ?? channel;
 
     const config: HumanCliConfig = {
@@ -104,7 +103,6 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
       auth,
       relayAgentIdentifier: relay.agentIdentifier,
       subscriberId,
-      channels,
       defaultChannel,
     };
     saveConfig(config);

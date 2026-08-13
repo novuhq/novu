@@ -39,11 +39,11 @@ HOW IT WORKS
 ------------
   - `setup` provisions a keyless Novu environment (no account needed), a
     hidden relay agent, and links a channel — Telegram via QR, Slack via
-    app install. Run it again with another channel to add more.
-    `human channels` lists linked channels; `human channels --default slack`
-    switches the default.
+    app install. Run it again with another channel to add more. Linked
+    channels live on the server; `human channels --default slack` sets
+    the local preference when you don't pass `--via`.
   - Agents stay channel-blind: routing is the human's preference.
-    `--via telegram|slack` exists as a rare per-call override.
+    `--via telegram|slack|email` exists as a rare per-call override.
   - Each command delivers a one-off message (with action buttons where
     relevant) and BLOCKS until the human answers, the --ttl expires, or
     --timeout elapses.

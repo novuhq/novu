@@ -18,8 +18,8 @@ human tell "Nightly build finished — 0 failures."
 
 ## How it works
 
-- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links a channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more; `human channels` lists them and `human channels --default slack` switches where interactions land by default.
-- Agents stay channel-blind: routing is the human's preference. `--via telegram|slack` exists as a rare per-call override.
+- `setup` provisions a keyless Novu environment (no account needed), a hidden relay agent, and links a channel — Telegram via QR, Slack via app install, Email by registering your address (approvals arrive as button emails; answer asks by replying). Run it again with another channel to add more. Linked channels live on the server; `human channels --default slack` sets a local preference for where interactions land when you don't pass `--via`.
+- Agents stay channel-blind: routing is the human's preference. `--via telegram|slack|email` exists as a rare per-call override.
 - Each command delivers a one-off message (with action buttons where relevant) and **blocks** until the human answers, the `--ttl` expires, or `--timeout` elapses.
 - Answers flow back through button clicks or plain replies; the CLI resolves and your agent continues.
 

@@ -121,8 +121,8 @@ other useful work to do while you wait.
 - `--to <humanId>` / `--via <telegram|slack|email>` — only needed for
   multi-human or multi-channel setups; the default human and channel from
   `human setup` are almost always right. Don't guess a channel — if you
-  genuinely need a specific one and `--via` fails, the error message tells
-  you which channels are actually linked.
+  need a specific one, pass `--via`; the API errors if that channel is not
+  linked yet (`human setup <channel>`).
 - `--ttl 2h` — how long the request stays answerable before it expires
   (default 24h, max 72h). Shorten this for anything time-sensitive so a
   stale approval can't be actioned days later.

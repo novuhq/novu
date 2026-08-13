@@ -6,7 +6,7 @@ import {
   type InteractionKind,
 } from '../api/human';
 import { createHumanApiClient, HumanApiError, type HumanApiClient } from '../api/client';
-import { NOT_SET_UP_MESSAGE, resolveChannel, resolveConfig } from '../config';
+import { NOT_SET_UP_MESSAGE, resolveConfig, resolveVia } from '../config';
 import { emitResult, EXIT_TIMEOUT, fail } from '../output';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
@@ -47,16 +47,15 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
       fail(NOT_SET_UP_MESSAGE);
     }
 
-    // Channel choice is the human's preference (set at `human setup`);
-    // `--via` is the rare per-call override. The API resolves the concrete
-    // integration from the relay's linked channels.
-    const via = resolveChannel(config, options.via);
+    // `--via` or the saved defaultChannel preference; omit via and the API
+    // picks when only one channel is linked.
+    const via = resolveVia(config, options.via);
 
     const input: CreateInteractionInput = {
       kind,
       prompt,
       to,
-      via,
+      ...(via ? { via } : {}),
       agentIdentifier: config.relayAgentIdentifier,
       ...(options.from ? { from: options.from } : {}),
       ...(options.option?.length ? { options: options.option } : {}),

@@ -13,9 +13,11 @@ export interface HumanCliConfig {
   };
   relayAgentIdentifier: string;
   subscriberId?: string;
-  /** Platforms the human has linked; `human setup <channel>` appends here. */
-  channels?: HumanChannelPlatform[];
-  /** Platform used when the caller passes no `--via`. */
+  /**
+   * Preferred delivery platform when the caller does not pass `--via`.
+   * Linked channels themselves live on the server (relay integrations +
+   * endpoints) — this is only a local preference.
+   */
   defaultChannel?: HumanChannelPlatform;
 }
 
@@ -29,34 +31,15 @@ export function configPath(): string {
   return process.env.NOVU_HUMAN_CONFIG ?? join(homedir(), '.novu', 'human.json');
 }
 
-/**
- * Normalize older config shapes that stored `{ platform, integrationIdentifier }`
- * or a single `defaultHuman` block into the current platform-only list.
- */
+/** Drop obsolete local channel lists; keep auth + preference fields. */
 function migrate(raw: Record<string, unknown>): HumanCliConfig {
-  const channels: HumanChannelPlatform[] = [];
-
-  if (Array.isArray(raw.channels)) {
-    for (const entry of raw.channels) {
-      if (typeof entry === 'string') {
-        channels.push(entry);
-      } else if (entry && typeof entry === 'object' && 'platform' in entry) {
-        channels.push(String((entry as { platform: string }).platform));
-      }
-    }
-  }
-
   const legacy = raw.defaultHuman as { subscriberId?: string; platform?: string } | undefined;
-  if (legacy?.platform && !channels.includes(legacy.platform)) {
-    channels.push(legacy.platform);
-  }
 
   return {
     apiUrl: String(raw.apiUrl ?? DEFAULT_API_URL),
     auth: raw.auth as HumanCliConfig['auth'],
     relayAgentIdentifier: String(raw.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER),
     subscriberId: (raw.subscriberId as string | undefined) ?? legacy?.subscriberId,
-    channels: channels.length > 0 ? channels : undefined,
     defaultChannel: (raw.defaultChannel as string | undefined) ?? legacy?.platform,
   };
 }
@@ -72,7 +55,8 @@ export function loadConfig(): HumanCliConfig | null {
 export function saveConfig(config: HumanCliConfig): void {
   const path = configPath();
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  const { channels: _ignored, ...persisted } = config as HumanCliConfig & { channels?: unknown };
+  writeFileSync(path, `${JSON.stringify(persisted, null, 2)}\n`, { mode: 0o600 });
 }
 
 /**
@@ -114,31 +98,14 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
 }
 
 /**
- * Pick the channel an interaction should deliver on: `--via <platform>` wins,
- * otherwise the configured default. Channel choice is the human's preference —
- * agents normally never pass `--via`. Returns the platform name the API accepts
- * as `via`.
+ * Channel preference for create: `--via` wins, otherwise the configured
+ * default. When neither is set, returns undefined and the API picks the sole
+ * linked channel (or errors if several are linked).
  */
-export function resolveChannel(config: HumanCliConfig, via?: string): HumanChannelPlatform {
-  const channels = config.channels ?? [];
-
-  if (channels.length === 0) {
-    throw new Error(NOT_SET_UP_MESSAGE);
-  }
-
+export function resolveVia(config: HumanCliConfig, via?: string): HumanChannelPlatform | undefined {
   if (via) {
-    const match = channels.find((channel) => channel === via.toLowerCase());
-    if (!match) {
-      const linked = channels.join(', ');
-      throw new Error(
-        `No ${via} channel is linked (linked: ${linked}). Ask your human to run: npx @novu/human setup ${via.toLowerCase()}`
-      );
-    }
-
-    return match;
+    return via.toLowerCase();
   }
 
-  const preferred = channels.find((channel) => channel === config.defaultChannel);
-
-  return preferred ?? channels[0];
+  return config.defaultChannel;
 }
