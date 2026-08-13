@@ -1,15 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { AgentResponse } from '@/api/agents';
-import {
-  AgentChatEmbedResources,
-  APPLICATION_IDENTIFIER_PLACEHOLDER,
-  buildAgentChatPrompt,
-  SUBSCRIBER_ID_PLACEHOLDER,
-} from '@/components/agents/agent-chat-setup-content';
-import { useAuth } from '@/context/auth/hooks';
-import { useEnvironment } from '@/context/environment/hooks';
-import { ListeningStatus, ProviderSetupStepperRail, SetupStep, SetupStepperRail } from './setup-guide-primitives';
-import { deriveStepStatus } from './setup-guide-step-utils';
+import { AgentChatSetupSteps } from '@/components/agents/agent-chat-setup-steps';
+import { useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
+import { ListeningStatus, ProviderSetupStepperRail, SetupStepperRail } from './setup-guide-primitives';
 
 export type AgentChatSetupGuideProps = {
   agent: AgentResponse;
@@ -20,8 +13,6 @@ export type AgentChatSetupGuideProps = {
   onStepsCompleted?: () => void;
   /** Integrations tab: same content without Overview chrome */
   embedded?: boolean;
-  isOnboarding?: boolean;
-  onWelcomeSent?: () => void;
 };
 
 /**
@@ -35,16 +26,8 @@ export function AgentChatSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: AgentChatSetupGuideProps) {
-  const { currentEnvironment } = useEnvironment();
-  const { currentUser } = useAuth();
+  const prompt = useAgentChatPrompt(agent);
   const [isConnected, setIsConnected] = useState(false);
-
-  const applicationIdentifier = currentEnvironment?.identifier || APPLICATION_IDENTIFIER_PLACEHOLDER;
-  const subscriberId = currentUser?._id || SUBSCRIBER_ID_PLACEHOLDER;
-  const prompt = useMemo(
-    () => buildAgentChatPrompt(agent.name, agent.identifier, applicationIdentifier, subscriberId),
-    [agent.name, agent.identifier, applicationIdentifier, subscriberId]
-  );
 
   const handleConnected = useCallback(() => {
     setIsConnected(true);
@@ -55,22 +38,7 @@ export function AgentChatSetupGuide({
   const firstIncompleteStep = isConnected ? base + 2 : base;
 
   const stepsColumn = (
-    <>
-      <SetupStep
-        index={base}
-        status={deriveStepStatus(base, firstIncompleteStep)}
-        title="Add Agent Chat to your application"
-        description="Open the prompt in Cursor to wire up useAgentChat, or follow the docs."
-        fullWidthContent={<AgentChatEmbedResources prompt={prompt} />}
-      />
-
-      <SetupStep
-        index={base + 1}
-        status={deriveStepStatus(base + 1, firstIncompleteStep)}
-        title="Send a test message"
-        description="Open your app and send a message in Agent Chat."
-      />
-    </>
+    <AgentChatSetupSteps prompt={prompt} stepOffset={stepOffset} firstIncompleteStep={firstIncompleteStep} />
   );
 
   const listening = (

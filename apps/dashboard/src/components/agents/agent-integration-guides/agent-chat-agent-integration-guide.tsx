@@ -1,10 +1,22 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import { type ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
+import { RiArrowRightSLine, RiCheckLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { AgentChatSetupGuide } from '@/components/agents/agent-chat-setup-guide';
-import { hasAgentInboundConnection } from '@/components/agents/is-agent-integration-connected';
+import { AgentChatSetupSteps } from '@/components/agents/agent-chat-setup-steps';
+import { ConnectionConfetti } from '@/components/agents/connection-confetti';
+import {
+  hasAgentInboundConnection,
+  isAgentIntegrationConnected,
+} from '@/components/agents/is-agent-integration-connected';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
-import { AgentChatAgentConnectedDetails } from './agent-chat-agent-connected-details';
+import { SetupStepperRail } from '@/components/agents/setup-guide-primitives';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { SectionLinkButton } from './agent-connected-details-shell';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 
@@ -73,9 +85,86 @@ function AgentChatSetupGuideWithHeader({
   );
 }
 
+type AgentChatConnectedRecapProps = {
+  agent: AgentResponse;
+  integrationLink: AgentIntegrationLink;
+  canRemoveIntegration: boolean;
+  onRequestRemoveIntegration?: () => void;
+  isRemovingIntegration?: boolean;
+  justConnected?: boolean;
+};
+
+function AgentChatConnectedRecap({
+  agent,
+  integrationLink,
+  canRemoveIntegration,
+  onRequestRemoveIntegration,
+  isRemovingIntegration,
+  justConnected = false,
+}: AgentChatConnectedRecapProps) {
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const prompt = useAgentChatPrompt(agent);
+
+  const isConnected = isAgentIntegrationConnected(integrationLink);
+  const persistKey = `agent-chat-setup-recap:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
+
+  const viewActivityHref = useMemo(() => {
+    if (!currentEnvironment?.slug) {
+      return undefined;
+    }
+
+    const path = buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug });
+
+    return `${path}?agentId=${encodeURIComponent(agent.identifier)}`;
+  }, [agent.identifier, currentEnvironment?.slug]);
+
+  const handleViewActivity = () => {
+    if (viewActivityHref) {
+      void navigate(viewActivityHref);
+    }
+  };
+
+  return (
+    <div className="flex w-full max-w-[1100px] flex-col gap-4">
+      <ConnectionConfetti active={justConnected} />
+      <AgentIntegrationGuideHeader
+        providerId={ChatProviderIdEnum.NovuAgentChat}
+        providerDisplayName={AGENT_CHAT_DISPLAY_NAME}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+
+      <div
+        className={cn(
+          'border-stroke-soft bg-bg-weak/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2',
+          isConnected ? 'border-l-success-base border-l-2' : 'border-l-warning-base border-l-2'
+        )}
+      >
+        <div className="text-text-sub text-label-xs flex min-w-0 items-center gap-1.5 leading-4">
+          <RiCheckLine className={cn('size-4 shrink-0', isConnected ? 'text-success-base' : 'text-warning-base')} />
+          <span className="text-text-strong font-medium">{isConnected ? 'Connected' : 'Action needed'}</span>
+          {isConnected ? <span className="text-text-soft hidden sm:inline">— Your app reached this agent.</span> : null}
+        </div>
+        {viewActivityHref ? (
+          <SectionLinkButton icon={RiArrowRightSLine} onClick={handleViewActivity}>
+            View activity
+          </SectionLinkButton>
+        ) : null}
+      </div>
+
+      <SetupGuideCard label="Setup steps" persistKey={persistKey} defaultExpanded={false}>
+        <SetupStepperRail className="gap-8 py-6 pb-3 pr-3 md:pr-6">
+          <AgentChatSetupSteps prompt={prompt} />
+        </SetupStepperRail>
+      </SetupGuideCard>
+    </div>
+  );
+}
+
 export function AgentChatAgentIntegrationGuide({
-  onBack: _onBack,
-  embedded: _embedded = false,
   agent,
   integrationLink,
   canRemoveIntegration,
@@ -104,7 +193,7 @@ export function AgentChatAgentIntegrationGuide({
           </AgentChatSetupGuideWithHeader>
         )}
         renderConnectedView={(justConnected) => (
-          <AgentChatAgentConnectedDetails
+          <AgentChatConnectedRecap
             agent={agent}
             integrationLink={integrationLink}
             canRemoveIntegration={canRemoveIntegration}

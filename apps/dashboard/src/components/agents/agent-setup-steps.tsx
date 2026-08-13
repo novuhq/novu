@@ -462,8 +462,8 @@ export function AgentSetupSteps({
   // behind the same generic Continue step the details page uses for non-whats-next providers
   // (`ConnectionSuccessFooter` with `hasUserRolloutPhase={false}`) instead of auto-advancing the
   // moment they connect, so the guide stays visible with every step checked off.
-  // Agent Chat stamps connectedAt on link — hold managed onboarding behind Continue so the
-  // embed snippet stays on screen instead of completing the moment Connect succeeds.
+  // Agent Chat has no user-rollout phase; hold managed onboarding behind Continue until the
+  // user embeds useAgentChat and sends a first message (Connected = first inbound, like Slack).
   const genericContinueGateProviders = useMemo(
     () => new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.NovuAgentChat]),
     []
