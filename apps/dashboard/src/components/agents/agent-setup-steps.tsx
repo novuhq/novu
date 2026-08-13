@@ -62,9 +62,9 @@ function resolveProviderGuideReservedSteps(providerId: string | undefined): numb
     return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
   }
 
-  // Agent Chat guide is a single embed panel (no numbered SetupSteps).
+  // Agent Chat: embed (prompt/snippet) + send test message — install lives inside those.
   if (providerId === ChatProviderIdEnum.NovuAgentChat) {
-    return 0;
+    return 2;
   }
 
   return PROVIDER_GUIDE_RESERVED_STEPS;

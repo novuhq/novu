@@ -12,10 +12,6 @@ import shortid from 'shortid';
 
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
-import {
-  agentLinkAwaitingInboundConnectionFilter,
-  hasAgentInboundConnection,
-} from '../../../shared/util/agent-inbound-connection';
 
 export type FindOrCreateNovuAgentChatResult = {
   response: AgentIntegrationResponseDto;
@@ -33,6 +29,9 @@ export class NovuAgentChatProvisioningService {
   /**
    * Ensure the environment has a `novu-agent-chat` integration and link the agent
    * to it. Idempotent — safe to call repeatedly for the same agent.
+   *
+   * Does not stamp `connectedAt`. Same as Slack: Connected only after the first
+   * genuine inbound user message (via the shared inbound handler).
    */
   async execute(
     agentId: string,
@@ -50,17 +49,13 @@ export class NovuAgentChatProvisioningService {
 
     const existing = await this.findExistingLink(agent, environmentId, organizationId);
     if (existing) {
-      const response = await this.ensureConnectedAt(existing, environmentId, organizationId);
-
-      return { response, provisionedNewLink: false };
+      return { response: existing, provisionedNewLink: false };
     }
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
       const recheck = await this.findExistingLink(agent, environmentId, organizationId);
       if (recheck) {
-        const response = await this.ensureConnectedAt(recheck, environmentId, organizationId, session);
-
-        return { response, provisionedNewLink: false };
+        return { response: recheck, provisionedNewLink: false };
       }
 
       const integration = await this.findOrCreateEnvironmentIntegration(environmentId, organizationId, session);
@@ -175,52 +170,6 @@ export class NovuAgentChatProvisioningService {
       session,
     });
 
-    // Agent Chat has no third-party OAuth or credentials step — the channel is ready as soon as
-    // the integration is linked. Stamp connectedAt at provision so the Dashboard shows Connected
-    // instead of waiting for the first in-app message.
-    const connectedAt = hasAgentInboundConnection(link.connectedAt) ? link.connectedAt : new Date();
-    if (!hasAgentInboundConnection(link.connectedAt)) {
-      await this.agentIntegrationRepository.update(
-        {
-          _id: link._id,
-          _environmentId: environmentId,
-          _organizationId: organizationId,
-          ...agentLinkAwaitingInboundConnectionFilter(),
-        },
-        { $set: { connectedAt } },
-        { session }
-      );
-    }
-
-    return toAgentIntegrationResponse({ ...link, connectedAt }, integration, agent);
-  }
-
-  /**
-   * Backfill connectedAt for Agent Chat links created before provision-time stamping.
-   * Idempotent when the link is already connected.
-   */
-  private async ensureConnectedAt(
-    response: AgentIntegrationResponseDto,
-    environmentId: string,
-    organizationId: string,
-    session: ClientSession | null = null
-  ): Promise<AgentIntegrationResponseDto> {
-    if (hasAgentInboundConnection(response.connectedAt)) {
-      return response;
-    }
-
-    const connectedAt = new Date();
-    await this.agentIntegrationRepository.update(
-      {
-        _id: response._id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        ...agentLinkAwaitingInboundConnectionFilter(),
-      },
-      { $set: { connectedAt } },
-      { session }
-    );
-
-    return { ...response, connectedAt: connectedAt.toISOString() };
+    return toAgentIntegrationResponse(link, integration, agent);
   }
 }

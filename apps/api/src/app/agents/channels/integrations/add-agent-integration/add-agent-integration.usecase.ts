@@ -189,6 +189,8 @@ export class AddAgentIntegration {
 
     // Revives a tombstoned (disconnected) link when one exists for this pair —
     // a plain create would violate the unique (_agentId, _integrationId) index.
+    // Agent Chat (and every other channel) leaves connectedAt null until the first
+    // genuine inbound user message — same install ≠ connected split as Slack.
     const link = await this.agentIntegrationRepository.createOrReviveLink({
       agentId: agent._id,
       integrationId: integration._id,
@@ -196,22 +198,7 @@ export class AddAgentIntegration {
       organizationId: command.organizationId,
     });
 
-    // Agent Chat is ready on link (same as NovuAgentChatProvisioningService).
-    let linked = link;
-    if (integration.providerId === ChatProviderIdEnum.NovuAgentChat && !link.connectedAt) {
-      const connectedAt = new Date();
-      await this.agentIntegrationRepository.update(
-        {
-          _id: link._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { $set: { connectedAt } }
-      );
-      linked = { ...link, connectedAt: connectedAt.toISOString() };
-    }
-
-    const response = toAgentIntegrationResponse(linked, integration, agent);
+    const response = toAgentIntegrationResponse(link, integration, agent);
 
     trackAgentIntegrationConnected(this.analyticsService, {
       userId: command.userId,

@@ -1,96 +1,101 @@
+import { useCallback, useMemo, useState } from 'react';
 import type { AgentResponse } from '@/api/agents';
-import { CodeBlock } from '@/components/primitives/code-block';
+import {
+  AgentChatEmbedResources,
+  APPLICATION_IDENTIFIER_PLACEHOLDER,
+  buildAgentChatPrompt,
+  SUBSCRIBER_ID_PLACEHOLDER,
+} from '@/components/agents/agent-chat-setup-content';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
-
-const AGENT_CHAT_REACT_PACKAGE = '@novu/react';
-const APPLICATION_IDENTIFIER_PLACEHOLDER = '<YOUR_NOVU_APPLICATION_IDENTIFIER>';
+import { ListeningStatus, ProviderSetupStepperRail, SetupStep, SetupStepperRail } from './setup-guide-primitives';
+import { deriveStepStatus } from './setup-guide-step-utils';
 
 export type AgentChatSetupGuideProps = {
   agent: AgentResponse;
-  /** Selected integration Mongo `_id` — kept for Setup Agent / Overview call-site parity. */
+  /** Selected integration Mongo `_id` */
   integrationId: string;
+  /** First step index (Overview uses `2`, Integrations detail uses `1`) */
   stepOffset?: number;
   onStepsCompleted?: () => void;
+  /** Integrations tab: same content without Overview chrome */
   embedded?: boolean;
   isOnboarding?: boolean;
   onWelcomeSent?: () => void;
 };
 
-function escapeJsxStringAttributeValue(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
+/**
+ * Agent Chat has no OAuth or credentials after Connect. Teach embed (Cursor prompt
+ * or docs) → first real message (ListeningStatus). Connected matches Slack: first inbound only.
+ */
+export function AgentChatSetupGuide({
+  agent,
+  integrationId,
+  stepOffset = 1,
+  onStepsCompleted,
+  embedded = false,
+}: AgentChatSetupGuideProps) {
+  const { currentEnvironment } = useEnvironment();
+  const { currentUser } = useAuth();
+  const [isConnected, setIsConnected] = useState(false);
 
-function buildAgentChatSnippet(agentIdentifier: string, applicationIdentifier: string): string {
-  const safeApplicationIdentifier = escapeJsxStringAttributeValue(applicationIdentifier);
-  const safeAgentIdentifier = escapeJsxStringAttributeValue(agentIdentifier);
+  const applicationIdentifier = currentEnvironment?.identifier || APPLICATION_IDENTIFIER_PLACEHOLDER;
+  const subscriberId = currentUser?._id || SUBSCRIBER_ID_PLACEHOLDER;
+  const prompt = useMemo(
+    () => buildAgentChatPrompt(agent.name, agent.identifier, applicationIdentifier, subscriberId),
+    [agent.name, agent.identifier, applicationIdentifier, subscriberId]
+  );
 
-  return `import { NovuProvider, useAgentChat } from '${AGENT_CHAT_REACT_PACKAGE}';
+  const handleConnected = useCallback(() => {
+    setIsConnected(true);
+    onStepsCompleted?.();
+  }, [onStepsCompleted]);
 
-function AgentChat() {
-  const { messages, sendMessage, respondToAction, isRunning, isLoading, error } = useAgentChat({
-    agentId: "${safeAgentIdentifier}",
-  });
+  const base = stepOffset;
+  const firstIncompleteStep = isConnected ? base + 2 : base;
 
-  return (
+  const stepsColumn = (
     <>
-      {error ? <p>{error.message}</p> : null}
-      {/* Render messages, approvals (respondToAction), and a composer that calls sendMessage */}
-      <pre>{JSON.stringify({ messages, isRunning, isLoading }, null, 2)}</pre>
+      <SetupStep
+        index={base}
+        status={deriveStepStatus(base, firstIncompleteStep)}
+        title="Add Agent Chat to your application"
+        description="Open the prompt in Cursor to wire up useAgentChat, or follow the docs."
+        fullWidthContent={<AgentChatEmbedResources prompt={prompt} />}
+      />
+
+      <SetupStep
+        index={base + 1}
+        status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        title="Send a test message"
+        description="Open your app and send a message in Agent Chat."
+      />
     </>
   );
-}
 
-// Wrap the chat in a NovuProvider configured for the signed-in end user.
-// Replace subscriberId with the current user's id.
-export function App() {
-  return (
-    <NovuProvider
-      applicationIdentifier="${safeApplicationIdentifier}"
-      subscriberId="YOUR_SUBSCRIBER_ID"
-    >
-      <AgentChat />
-    </NovuProvider>
-  );
-}`;
-}
-
-/**
- * Agent Chat needs no OAuth or credentials after Connect — teach the embed step only.
- * Overview (Setup Agent) and the Integrations detail guide both render this panel.
- */
-export function AgentChatSetupGuide({ agent, embedded = false }: AgentChatSetupGuideProps) {
-  const { currentEnvironment } = useEnvironment();
-  const applicationIdentifier = currentEnvironment?.identifier || APPLICATION_IDENTIFIER_PLACEHOLDER;
-  const snippet = buildAgentChatSnippet(agent.identifier, applicationIdentifier);
-
-  const body = (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <h3 className="text-text-strong text-label-sm font-medium leading-5">Embed Agent Chat in your app</h3>
-        <p className="text-text-soft text-label-sm leading-5">
-          The channel is ready. Install{' '}
-          <code className="bg-bg-weak text-text-strong rounded px-1 py-0.5 font-code text-[12px]">
-            {AGENT_CHAT_REACT_PACKAGE}
-          </code>
-          , wrap your UI in <code className="bg-bg-weak rounded px-1 py-0.5 font-code text-[12px]">NovuProvider</code>,
-          and call <code className="bg-bg-weak rounded px-1 py-0.5 font-code text-[12px]">useAgentChat</code> with this
-          agent&apos;s id.
-        </p>
-      </div>
-
-      <CodeBlock code={snippet} language="tsx" title="useAgentChat.tsx" />
-
-      <p className="text-text-soft text-label-xs leading-4">
-        Optional: turn on Security HMAC encryption for this integration under{' '}
-        <span className="text-text-sub font-medium">Integrations</span>, then pass the matching subscriber hash into{' '}
-        <code className="bg-bg-weak rounded px-1 py-0.5 font-code text-[11px]">NovuProvider</code>.
-      </p>
-    </div>
+  const listening = (
+    <ListeningStatus
+      agentIdentifier={agent.identifier}
+      watchedIntegrationId={integrationId}
+      onConnected={handleConnected}
+      connectedMessage="Agent Chat is connected. Your app reached this agent."
+      listeningMessage="Send a message in your app. We mark the channel Connected when it arrives."
+    />
   );
 
   if (embedded) {
-    return <div className="flex flex-col gap-0 py-2">{body}</div>;
+    return (
+      <div className="flex flex-col gap-0">
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsColumn}</SetupStepperRail>
+        <div className="pl-8">{listening}</div>
+      </div>
+    );
   }
 
-  return <div className="flex flex-col gap-0 py-2 pr-3 md:pr-6">{body}</div>;
+  return (
+    <>
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
+      <div className="pl-8">{listening}</div>
+    </>
+  );
 }

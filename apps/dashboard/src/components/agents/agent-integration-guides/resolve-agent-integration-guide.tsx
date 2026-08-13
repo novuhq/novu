@@ -121,7 +121,7 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  // Agent Chat is ready on link (no OAuth). One embed guide; no What's next phase.
+  // Agent Chat: setup → connected transition; no What's next (embed is the user surface).
   if (providerId === ChatProviderIdEnum.NovuAgentChat) {
     return (
       <AgentChatAgentIntegrationGuide
