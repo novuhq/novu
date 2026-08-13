@@ -93,7 +93,7 @@ export class WorkflowOriginService {
         case AgentPlatformEnum.TEAMS:
         case AgentPlatformEnum.TELEGRAM:
         case AgentPlatformEnum.SENDBLUE:
-        case AgentPlatformEnum.WEB_CHAT:
+        case AgentPlatformEnum.AGENT_CHAT:
           break;
         default: {
           const _exhaustive: never = config.platform;
