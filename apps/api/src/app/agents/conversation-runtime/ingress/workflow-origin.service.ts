@@ -20,6 +20,7 @@ import {
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
   extractWhatsAppQuotedWamid,
+  isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
   toProviderMessageLookupKey,
@@ -105,14 +106,19 @@ export class WorkflowOriginService {
           });
           break;
         }
-        case AgentPlatformEnum.TEAMS:
         case AgentPlatformEnum.SENDBLUE:
+          origin = isSendblueDirectThreadId(platformThreadId)
+            ? await this.findRecentChatWorkflowOriginMessage(agentId, config, subscriber._id, null)
+            : null;
+          break;
+        case AgentPlatformEnum.TEAMS:
         case AgentPlatformEnum.AGENT_CHAT:
           break;
         default: {
           const _exhaustive: never = config.platform;
+          void _exhaustive;
 
-          return _exhaustive;
+          return null;
         }
       }
 
