@@ -11,10 +11,10 @@ export async function channelsCommand(options: { default?: string; json?: boolea
 
   if (options.default) {
     const target = options.default.toLowerCase();
-    const match = config.channels.find((channel) => channel.platform === target);
+    const match = config.channels.find((channel) => channel === target);
 
     if (!match) {
-      const linked = config.channels.map((channel) => channel.platform).join(', ');
+      const linked = config.channels.join(', ');
       fail(`No ${target} channel is linked (linked: ${linked}). Run: human setup ${target}`);
     }
 
@@ -31,11 +31,9 @@ export async function channelsCommand(options: { default?: string; json?: boolea
   }
 
   for (const channel of config.channels) {
-    const isDefault = channel.platform === config.defaultChannel;
+    const isDefault = channel === config.defaultChannel;
     process.stdout.write(
-      `${isDefault ? pc.green('●') : pc.dim('○')} ${channel.platform.padEnd(10)} ${pc.dim(channel.integrationIdentifier)}${
-        isDefault ? pc.dim('  (default)') : ''
-      }\n`
+      `${isDefault ? pc.green('●') : pc.dim('○')} ${channel}${isDefault ? pc.dim('  (default)') : ''}\n`
     );
   }
   process.stdout.write(`\n${pc.dim('Switch default: human channels --default <platform> · add: human setup <channel>')}\n`);

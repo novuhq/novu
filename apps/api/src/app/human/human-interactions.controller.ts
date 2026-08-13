@@ -62,7 +62,7 @@ export class HumanInteractionsController {
         prompt: body.prompt,
         options: body.options,
         to: body.to,
-        integrationIdentifier: body.integrationIdentifier,
+        via: body.via,
         agentIdentifier: body.agentIdentifier,
         from: body.from,
         ttlSeconds: body.ttlSeconds,

@@ -1,4 +1,4 @@
-import { HumanInteractionKindEnum } from '@novu/shared';
+import { HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
 import { IsArray, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -18,9 +18,9 @@ export class CreateInteractionCommand extends EnvironmentWithUserCommand {
   @IsNotEmpty()
   to: string;
 
-  @IsString()
-  @IsNotEmpty()
-  integrationIdentifier: string;
+  @IsOptional()
+  @IsEnum(HumanChannelViaEnum)
+  via?: HumanChannelViaEnum;
 
   @IsOptional()
   @IsString()

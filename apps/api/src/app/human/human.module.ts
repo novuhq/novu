@@ -1,5 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ChannelEndpointRepository, HumanInteractionRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
+import {
+  AgentIntegrationRepository,
+  ChannelEndpointRepository,
+  HumanInteractionRepository,
+  IntegrationRepository,
+  SubscriberRepository,
+} from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
@@ -21,6 +27,7 @@ import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.
   controllers: [HumanInteractionsController],
   providers: [
     HumanInteractionRepository,
+    AgentIntegrationRepository,
     ChannelEndpointRepository,
     IntegrationRepository,
     SubscriberRepository,

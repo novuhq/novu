@@ -95,7 +95,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
   async function createInteraction(body: Record<string, unknown>) {
     return session.testAgent.post('/v1/human/interactions').send({
       to: subscriberId,
-      integrationIdentifier,
+      via: 'telegram',
       agentIdentifier: relayAgentIdentifier,
       ...body,
     });
@@ -447,7 +447,7 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
         kind: 'tell',
         prompt: 'hello',
         to: subscriberId,
-        integrationIdentifier: emailIntegration.identifier,
+        via: 'email',
         agentIdentifier: relayAgentIdentifier,
       });
 

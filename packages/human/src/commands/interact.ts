@@ -48,14 +48,15 @@ export async function runInteraction(kind: InteractionKind, prompt: string, opti
     }
 
     // Channel choice is the human's preference (set at `human setup`);
-    // `--via` is the rare per-call override.
-    const channel = resolveChannel(config, options.via);
+    // `--via` is the rare per-call override. The API resolves the concrete
+    // integration from the relay's linked channels.
+    const via = resolveChannel(config, options.via);
 
     const input: CreateInteractionInput = {
       kind,
       prompt,
       to,
-      integrationIdentifier: channel.integrationIdentifier,
+      via,
       agentIdentifier: config.relayAgentIdentifier,
       ...(options.from ? { from: options.from } : {}),
       ...(options.option?.length ? { options: options.option } : {}),

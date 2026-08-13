@@ -37,7 +37,7 @@ export interface CreateInteractionInput {
   prompt: string;
   options?: string[];
   to: string;
-  integrationIdentifier: string;
+  via?: string;
   agentIdentifier?: string;
   from?: string;
   ttlSeconds?: number;

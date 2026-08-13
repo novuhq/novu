@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 describe('config migration', () => {
-  it('folds the legacy defaultHuman shape into subscriberId + channels', () => {
+  it('folds legacy channel objects and defaultHuman into platform strings', () => {
     const path = join(mkdtempSync(join(tmpdir(), 'human-config-')), 'human.json');
     process.env.NOVU_HUMAN_CONFIG = path;
     writeFileSync(
@@ -23,27 +23,32 @@ describe('config migration', () => {
       JSON.stringify({
         ...base,
         defaultHuman: { subscriberId: 'human_abc', integrationIdentifier: 'tg-1', platform: 'telegram' },
+        channels: [{ platform: 'slack', integrationIdentifier: 'sl-1' }],
       })
     );
 
     const config = loadConfig();
     expect(config?.subscriberId).toBe('human_abc');
-    expect(config?.channels).toEqual([{ platform: 'telegram', integrationIdentifier: 'tg-1' }]);
+    expect(config?.channels).toEqual(['slack', 'telegram']);
     expect(config?.defaultChannel).toBe('telegram');
   });
 
-  it('drops the legacy shape on save', () => {
+  it('persists platforms only', () => {
     const path = join(mkdtempSync(join(tmpdir(), 'human-config-')), 'human.json');
     process.env.NOVU_HUMAN_CONFIG = path;
     saveConfig({
       ...base,
       subscriberId: 'human_abc',
-      channels: [{ platform: 'telegram', integrationIdentifier: 'tg-1' }],
+      channels: ['telegram'],
       defaultChannel: 'telegram',
-      defaultHuman: { subscriberId: 'human_abc', integrationIdentifier: 'tg-1', platform: 'telegram' },
     });
 
-    expect(JSON.parse(readFileSync(path, 'utf8'))).to.not.have.property('defaultHuman');
+    expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
+      ...base,
+      subscriberId: 'human_abc',
+      channels: ['telegram'],
+      defaultChannel: 'telegram',
+    });
   });
 });
 
@@ -51,23 +56,20 @@ describe('resolveChannel', () => {
   const config: HumanCliConfig = {
     ...base,
     subscriberId: 'human_abc',
-    channels: [
-      { platform: 'telegram', integrationIdentifier: 'tg-1' },
-      { platform: 'slack', integrationIdentifier: 'sl-1' },
-    ],
+    channels: ['telegram', 'slack'],
     defaultChannel: 'slack',
   };
 
   it('uses the default channel when no --via is passed', () => {
-    expect(resolveChannel(config).integrationIdentifier).toBe('sl-1');
+    expect(resolveChannel(config)).toBe('slack');
   });
 
   it('honors --via overrides case-insensitively', () => {
-    expect(resolveChannel(config, 'Telegram').integrationIdentifier).toBe('tg-1');
+    expect(resolveChannel(config, 'Telegram')).toBe('telegram');
   });
 
   it('falls back to the first channel when the default is dangling', () => {
-    expect(resolveChannel({ ...config, defaultChannel: 'whatsapp' }).integrationIdentifier).toBe('tg-1');
+    expect(resolveChannel({ ...config, defaultChannel: 'whatsapp' })).toBe('telegram');
   });
 
   it('names the linked channels when --via misses', () => {

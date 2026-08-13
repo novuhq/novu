@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { HUMAN_INTERACTION_MAX_TTL_SECONDS, HumanInteractionKindEnum } from '@novu/shared';
+import { HUMAN_INTERACTION_MAX_TTL_SECONDS, HumanChannelViaEnum, HumanInteractionKindEnum } from '@novu/shared';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -42,10 +42,14 @@ export class CreateInteractionRequestDto {
   @IsNotEmpty()
   to: string;
 
-  @ApiProperty({ description: 'Integration identifier of the channel to deliver on.' })
-  @IsString()
-  @IsNotEmpty()
-  integrationIdentifier: string;
+  @ApiPropertyOptional({
+    enum: HumanChannelViaEnum,
+    description:
+      'Delivery channel preference. Required when the human is reachable on more than one linked channel; otherwise the sole linked channel is used.',
+  })
+  @IsOptional()
+  @IsEnum(HumanChannelViaEnum)
+  via?: HumanChannelViaEnum;
 
   @ApiPropertyOptional({ description: 'Relay agent identifier. Defaults to `human-relay`.' })
   @IsOptional()

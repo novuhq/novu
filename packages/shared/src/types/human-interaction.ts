@@ -53,6 +53,17 @@ export type HumanInteractionResponse = {
   respondedAt: string;
 };
 
+/**
+ * Delivery channel preference on create. The API resolves the concrete
+ * integration from the relay agent's linked integrations + the human's
+ * endpoints — callers never pass an integration identifier.
+ */
+export enum HumanChannelViaEnum {
+  TELEGRAM = 'telegram',
+  SLACK = 'slack',
+  EMAIL = 'email',
+}
+
 /** Default lifetime of a pending interaction. */
 export const HUMAN_INTERACTION_DEFAULT_TTL_SECONDS = 24 * 60 * 60;
 

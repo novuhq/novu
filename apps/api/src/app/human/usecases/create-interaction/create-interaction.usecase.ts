@@ -53,11 +53,12 @@ export class CreateInteraction {
       }
     }
 
-    const target = await this.deliveryService.resolveTarget({
+    const target = await this.deliveryService.resolveChannel({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
+      agentId: agent._id,
       subscriberId: command.to,
-      integrationIdentifier: command.integrationIdentifier,
+      via: command.via,
     });
 
     const ttlSeconds = command.ttlSeconds ?? HUMAN_INTERACTION_DEFAULT_TTL_SECONDS;
@@ -73,7 +74,7 @@ export class CreateInteraction {
       ...(command.from ? { fromLabel: command.from } : {}),
       subscriberId: command.to,
       _agentId: agent._id,
-      integrationIdentifier: command.integrationIdentifier,
+      integrationIdentifier: target.integrationIdentifier,
       platform: target.platform,
       expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
       _environmentId: command.environmentId,
@@ -87,7 +88,7 @@ export class CreateInteraction {
 
   private async deliverOrRollback(
     interaction: HumanInteractionEntity,
-    target: Awaited<ReturnType<HumanDeliveryService['resolveTarget']>>
+    target: Awaited<ReturnType<HumanDeliveryService['resolveChannel']>>
   ): Promise<HumanInteractionEntity> {
     let deliveryRefs: Awaited<ReturnType<HumanDeliveryService['deliver']>> | null = null;
 

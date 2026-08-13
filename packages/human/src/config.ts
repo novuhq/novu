@@ -2,10 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-export interface HumanChannel {
-  platform: string;
-  integrationIdentifier: string;
-}
+export type HumanChannelPlatform = 'telegram' | 'slack' | 'email' | string;
 
 export interface HumanCliConfig {
   apiUrl: string;
@@ -16,16 +13,10 @@ export interface HumanCliConfig {
   };
   relayAgentIdentifier: string;
   subscriberId?: string;
-  /** Channels the human has linked; `human setup <channel>` appends here. */
-  channels?: HumanChannel[];
+  /** Platforms the human has linked; `human setup <channel>` appends here. */
+  channels?: HumanChannelPlatform[];
   /** Platform used when the caller passes no `--via`. */
-  defaultChannel?: string;
-  /** Legacy single-channel shape (pre multi-channel) — migrated on load. */
-  defaultHuman?: {
-    subscriberId: string;
-    integrationIdentifier: string;
-    platform: string;
-  };
+  defaultChannel?: HumanChannelPlatform;
 }
 
 export const DEFAULT_API_URL = 'https://api.novu.co';
@@ -38,30 +29,41 @@ export function configPath(): string {
   return process.env.NOVU_HUMAN_CONFIG ?? join(homedir(), '.novu', 'human.json');
 }
 
-/** Folds the legacy `defaultHuman` shape into `subscriberId` + `channels`. */
-function migrate(config: HumanCliConfig): HumanCliConfig {
-  if (!config.defaultHuman) {
-    return config;
+/**
+ * Normalize older config shapes that stored `{ platform, integrationIdentifier }`
+ * or a single `defaultHuman` block into the current platform-only list.
+ */
+function migrate(raw: Record<string, unknown>): HumanCliConfig {
+  const channels: HumanChannelPlatform[] = [];
+
+  if (Array.isArray(raw.channels)) {
+    for (const entry of raw.channels) {
+      if (typeof entry === 'string') {
+        channels.push(entry);
+      } else if (entry && typeof entry === 'object' && 'platform' in entry) {
+        channels.push(String((entry as { platform: string }).platform));
+      }
+    }
   }
 
-  const legacy = config.defaultHuman;
-  const channels = config.channels ?? [];
-  const hasLegacyChannel = channels.some((channel) => channel.platform === legacy.platform);
+  const legacy = raw.defaultHuman as { subscriberId?: string; platform?: string } | undefined;
+  if (legacy?.platform && !channels.includes(legacy.platform)) {
+    channels.push(legacy.platform);
+  }
 
   return {
-    ...config,
-    subscriberId: config.subscriberId ?? legacy.subscriberId,
-    channels: hasLegacyChannel
-      ? channels
-      : [...channels, { platform: legacy.platform, integrationIdentifier: legacy.integrationIdentifier }],
-    defaultChannel: config.defaultChannel ?? legacy.platform,
-    defaultHuman: undefined,
+    apiUrl: String(raw.apiUrl ?? DEFAULT_API_URL),
+    auth: raw.auth as HumanCliConfig['auth'],
+    relayAgentIdentifier: String(raw.relayAgentIdentifier ?? DEFAULT_RELAY_AGENT_IDENTIFIER),
+    subscriberId: (raw.subscriberId as string | undefined) ?? legacy?.subscriberId,
+    channels: channels.length > 0 ? channels : undefined,
+    defaultChannel: (raw.defaultChannel as string | undefined) ?? legacy?.platform,
   };
 }
 
 export function loadConfig(): HumanCliConfig | null {
   try {
-    return migrate(JSON.parse(readFileSync(configPath(), 'utf8')) as HumanCliConfig);
+    return migrate(JSON.parse(readFileSync(configPath(), 'utf8')) as Record<string, unknown>);
   } catch {
     return null;
   }
@@ -70,8 +72,7 @@ export function loadConfig(): HumanCliConfig | null {
 export function saveConfig(config: HumanCliConfig): void {
   const path = configPath();
   mkdirSync(dirname(path), { recursive: true });
-  const { defaultHuman: _legacy, ...persisted } = config;
-  writeFileSync(path, `${JSON.stringify(persisted, null, 2)}\n`, { mode: 0o600 });
+  writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
 }
 
 /**
@@ -115,9 +116,10 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
 /**
  * Pick the channel an interaction should deliver on: `--via <platform>` wins,
  * otherwise the configured default. Channel choice is the human's preference —
- * agents normally never pass `--via`.
+ * agents normally never pass `--via`. Returns the platform name the API accepts
+ * as `via`.
  */
-export function resolveChannel(config: HumanCliConfig, via?: string): HumanChannel {
+export function resolveChannel(config: HumanCliConfig, via?: string): HumanChannelPlatform {
   const channels = config.channels ?? [];
 
   if (channels.length === 0) {
@@ -125,9 +127,9 @@ export function resolveChannel(config: HumanCliConfig, via?: string): HumanChann
   }
 
   if (via) {
-    const match = channels.find((channel) => channel.platform === via.toLowerCase());
+    const match = channels.find((channel) => channel === via.toLowerCase());
     if (!match) {
-      const linked = channels.map((channel) => channel.platform).join(', ');
+      const linked = channels.join(', ');
       throw new Error(
         `No ${via} channel is linked (linked: ${linked}). Ask your human to run: npx @novu/human setup ${via.toLowerCase()}`
       );
@@ -136,7 +138,7 @@ export function resolveChannel(config: HumanCliConfig, via?: string): HumanChann
     return match;
   }
 
-  const preferred = channels.find((channel) => channel.platform === config.defaultChannel);
+  const preferred = channels.find((channel) => channel === config.defaultChannel);
 
   return preferred ?? channels[0];
 }

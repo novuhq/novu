@@ -1,18 +1,43 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  AgentIntegrationRepository,
   ChannelEndpointEntity,
   ChannelEndpointRepository,
   HumanInteractionEntity,
+  IntegrationEntity,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  ENDPOINT_TYPES,
+  HumanChannelViaEnum,
+} from '@novu/shared';
 import { buildPendingContent } from '../../agents/human-relay/human-card.builder';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
 
 export interface ResolvedHumanTarget {
   platform: string;
   platformUserId: string;
+  integrationIdentifier: string;
+}
+
+const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = {
+  [HumanChannelViaEnum.TELEGRAM]: [ChatProviderIdEnum.Telegram],
+  [HumanChannelViaEnum.SLACK]: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu],
+  [HumanChannelViaEnum.EMAIL]: [EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu],
+};
+
+function viaForProviderId(providerId: string): HumanChannelViaEnum | null {
+  for (const [via, providerIds] of Object.entries(VIA_PROVIDER_IDS) as Array<[HumanChannelViaEnum, readonly string[]]>) {
+    if (providerIds.includes(providerId)) {
+      return via;
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -20,52 +45,92 @@ export interface ResolvedHumanTarget {
  * DM send through the agents conversation-runtime. Chat platforms bind the
  * human via a ChannelEndpoint; email identity lives on `Subscriber.email`
  * (same model as the agents email channel — no endpoint row).
+ *
+ * Callers pass a channel preference (`via`) — never a concrete integration id.
+ * The concrete integration is chosen from the relay agent's linked integrations
+ * that the human can actually receive on.
  */
 @Injectable()
 export class HumanDeliveryService {
   constructor(
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly outboundGateway: OutboundGateway
   ) {}
 
-  async resolveTarget(params: {
+  async resolveChannel(params: {
     environmentId: string;
     organizationId: string;
+    agentId: string;
     subscriberId: string;
-    integrationIdentifier: string;
+    via?: HumanChannelViaEnum;
   }): Promise<ResolvedHumanTarget> {
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-      identifier: params.integrationIdentifier,
-    });
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _agentId: params.agentId,
+        disconnectedAt: null,
+      },
+      '*'
+    );
 
-    if (!integration) {
+    if (links.length === 0) {
       throw new NotFoundException(
-        `Integration "${params.integrationIdentifier}" was not found. Run \`human setup\` to connect a channel.`
+        `Relay agent has no linked channels. Run \`human setup\` to connect telegram, slack, or email.`
       );
     }
 
-    if (integration.channel === ChannelTypeEnum.EMAIL) {
-      return this.resolveEmailTarget(params);
-    }
-
-    const endpoint = await this.channelEndpointRepository.findOne({
+    const integrations = await this.integrationRepository.find({
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
-      subscriberId: params.subscriberId,
-      integrationIdentifier: params.integrationIdentifier,
+      _id: { $in: links.map((link) => link._integrationId) },
     });
 
-    if (!endpoint) {
+    const candidates = params.via
+      ? integrations.filter((integration) => VIA_PROVIDER_IDS[params.via!].includes(integration.providerId))
+      : integrations;
+
+    if (params.via && candidates.length === 0) {
       throw new NotFoundException(
-        `Human "${params.subscriberId}" has no linked channel on integration "${params.integrationIdentifier}". Run \`human setup\` to connect one.`
+        `No ${params.via} channel is linked to the relay. Run \`human setup ${params.via}\` first.`
       );
     }
 
-    return this.toTarget(endpoint);
+    const deliverable: ResolvedHumanTarget[] = [];
+
+    for (const integration of candidates) {
+      const resolved = await this.tryResolveTarget(params, integration);
+      if (resolved) {
+        deliverable.push(resolved);
+      }
+    }
+
+    if (deliverable.length === 0) {
+      if (params.via === HumanChannelViaEnum.EMAIL) {
+        throw new NotFoundException(
+          `Human "${params.subscriberId}" has no email address on file. Run \`human setup email\` to add one.`
+        );
+      }
+
+      throw new NotFoundException(
+        params.via
+          ? `Human "${params.subscriberId}" has no linked ${params.via} endpoint. Run \`human setup ${params.via}\`.`
+          : `Human "${params.subscriberId}" has no linked channel. Run \`human setup\` to connect one.`
+      );
+    }
+
+    if (!params.via && deliverable.length > 1) {
+      const platforms = [...new Set(deliverable.map((target) => target.platform))].join(', ');
+
+      throw new BadRequestException(
+        `Human "${params.subscriberId}" is reachable on multiple channels (${platforms}). Pass \`via\` to pick one.`
+      );
+    }
+
+    return deliverable[0];
   }
 
   /** Delivers the pending message and returns the platform refs for stamping. */
@@ -83,38 +148,78 @@ export class HumanDeliveryService {
     return { platformMessageId: sent.messageId, platformThreadId: sent.platformThreadId };
   }
 
-  private async resolveEmailTarget(params: {
-    environmentId: string;
-    subscriberId: string;
-  }): Promise<ResolvedHumanTarget> {
-    const subscriber = await this.subscriberRepository.findOne({
-      _environmentId: params.environmentId,
-      subscriberId: params.subscriberId,
-    });
-
-    if (!subscriber?.email) {
-      throw new NotFoundException(
-        `Human "${params.subscriberId}" has no email address on file. Run \`human setup email\` to add one.`
-      );
+  private async tryResolveTarget(
+    params: { environmentId: string; organizationId: string; subscriberId: string },
+    integration: IntegrationEntity
+  ): Promise<ResolvedHumanTarget | null> {
+    const via = viaForProviderId(integration.providerId);
+    if (!via) {
+      return null;
     }
 
-    return { platform: 'email', platformUserId: subscriber.email };
+    if (integration.channel === ChannelTypeEnum.EMAIL) {
+      const subscriber = await this.subscriberRepository.findOne({
+        _environmentId: params.environmentId,
+        subscriberId: params.subscriberId,
+      });
+
+      if (!subscriber?.email) {
+        return null;
+      }
+
+      return {
+        platform: HumanChannelViaEnum.EMAIL,
+        platformUserId: subscriber.email,
+        integrationIdentifier: integration.identifier,
+      };
+    }
+
+    const endpoint = await this.channelEndpointRepository.findOne({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      subscriberId: params.subscriberId,
+      integrationIdentifier: integration.identifier,
+    });
+
+    if (!endpoint) {
+      return null;
+    }
+
+    return this.toTarget(endpoint, via, integration.identifier);
   }
 
-  private toTarget(endpoint: ChannelEndpointEntity): ResolvedHumanTarget {
+  private toTarget(
+    endpoint: ChannelEndpointEntity,
+    via: HumanChannelViaEnum,
+    integrationIdentifier: string
+  ): ResolvedHumanTarget | null {
     switch (endpoint.type) {
       case ENDPOINT_TYPES.TELEGRAM_CHAT:
-        return { platform: 'telegram', platformUserId: (endpoint.endpoint as { chatId: string }).chatId };
+        return {
+          platform: via,
+          platformUserId: (endpoint.endpoint as { chatId: string }).chatId,
+          integrationIdentifier,
+        };
       case ENDPOINT_TYPES.SLACK_USER:
-        return { platform: 'slack', platformUserId: (endpoint.endpoint as { userId: string }).userId };
+        return {
+          platform: via,
+          platformUserId: (endpoint.endpoint as { userId: string }).userId,
+          integrationIdentifier,
+        };
       case ENDPOINT_TYPES.SLACK_CHANNEL:
-        return { platform: 'slack', platformUserId: (endpoint.endpoint as { channelId: string }).channelId };
+        return {
+          platform: via,
+          platformUserId: (endpoint.endpoint as { channelId: string }).channelId,
+          integrationIdentifier,
+        };
       case ENDPOINT_TYPES.MS_TEAMS_USER:
-        return { platform: 'teams', platformUserId: (endpoint.endpoint as { userId: string }).userId };
+        return {
+          platform: via,
+          platformUserId: (endpoint.endpoint as { userId: string }).userId,
+          integrationIdentifier,
+        };
       default:
-        throw new NotFoundException(
-          `Channel endpoint type "${endpoint.type}" is not supported for human interactions yet.`
-        );
+        return null;
     }
   }
 }
