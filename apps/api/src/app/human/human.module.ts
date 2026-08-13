@@ -10,7 +10,6 @@ import { CreateInteraction } from './usecases/create-interaction/create-interact
 import { GetInteraction } from './usecases/get-interaction/get-interaction.usecase';
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
-import { WaitInteraction } from './usecases/wait-interaction/wait-interaction.usecase';
 
 /**
  * The human-in-the-loop interaction API behind the `@novu/human` CLI. State
@@ -28,7 +27,6 @@ import { WaitInteraction } from './usecases/wait-interaction/wait-interaction.us
     HumanDeliveryService,
     CreateInteraction,
     GetInteraction,
-    WaitInteraction,
     ListInteractions,
     CancelInteraction,
     SetupHumanRelay,

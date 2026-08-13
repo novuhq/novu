@@ -57,16 +57,6 @@ export async function getInteraction(client: HumanApiClient, id: string): Promis
   return unwrap(res.data);
 }
 
-/** Server-side long-poll — returns as soon as the interaction leaves `pending`. */
-export async function waitInteraction(client: HumanApiClient, id: string, timeoutSeconds: number): Promise<Interaction> {
-  const res = await client.axios.get<{ data?: Interaction } | Interaction>(
-    `/v1/human/interactions/${encodeURIComponent(id)}/wait`,
-    { params: { timeoutSeconds }, timeout: (timeoutSeconds + 15) * 1000 }
-  );
-
-  return unwrap(res.data);
-}
-
 export async function listInteractions(
   client: HumanApiClient,
   query: { status?: InteractionStatus; to?: string; limit?: number }

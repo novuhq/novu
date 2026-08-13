@@ -1,13 +1,14 @@
 import {
   createInteraction,
+  getInteraction,
   type CreateInteractionInput,
   type Interaction,
   type InteractionKind,
-  waitInteraction,
 } from '../api/human';
 import { createHumanApiClient, HumanApiError, type HumanApiClient } from '../api/client';
 import { NOT_SET_UP_MESSAGE, resolveChannel, resolveConfig } from '../config';
 import { emitResult, EXIT_TIMEOUT, fail } from '../output';
+import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 
 export interface InteractOptions {
@@ -22,7 +23,7 @@ export interface InteractOptions {
   apiUrl?: string;
 }
 
-const SERVER_POLL_SECONDS = 25;
+const POLL_INTERVAL_MS = 2000;
 
 export function clientFromConfig(apiUrl?: string): { client: HumanApiClient; config: ReturnType<typeof resolveConfig> } {
   const config = resolveConfig({ apiUrl });
@@ -103,8 +104,10 @@ export async function waitForResolution(
         return EXIT_TIMEOUT;
       }
 
-      const remaining = Number.isFinite(deadline) ? Math.max(1, Math.floor((deadline - Date.now()) / 1000)) : Infinity;
-      current = await waitInteraction(client, current.id, Math.min(SERVER_POLL_SECONDS, remaining));
+      // Client-side polling: each request is independent and short, so aborting
+      // (Ctrl-C) stops all work immediately — no server-held long-poll to leak.
+      await sleep(POLL_INTERVAL_MS);
+      current = await getInteraction(client, current.id);
     }
   } finally {
     stopIndicator();

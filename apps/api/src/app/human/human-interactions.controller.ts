@@ -31,11 +31,6 @@ import { ListInteractionsCommand } from './usecases/list-interactions/list-inter
 import { ListInteractions } from './usecases/list-interactions/list-interactions.usecase';
 import { SetupHumanRelayCommand } from './usecases/setup-human-relay/setup-human-relay.command';
 import { SetupHumanRelay } from './usecases/setup-human-relay/setup-human-relay.usecase';
-import { WaitInteractionCommand } from './usecases/wait-interaction/wait-interaction.command';
-import { WaitInteraction } from './usecases/wait-interaction/wait-interaction.usecase';
-
-const DEFAULT_WAIT_TIMEOUT_SECONDS = 25;
-const MAX_WAIT_TIMEOUT_SECONDS = 30;
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @Controller('/human')
@@ -46,7 +41,6 @@ export class HumanInteractionsController {
   constructor(
     private readonly createInteractionUsecase: CreateInteraction,
     private readonly getInteractionUsecase: GetInteraction,
-    private readonly waitInteractionUsecase: WaitInteraction,
     private readonly listInteractionsUsecase: ListInteractions,
     private readonly cancelInteractionUsecase: CancelInteraction,
     private readonly setupHumanRelayUsecase: SetupHumanRelay
@@ -109,31 +103,6 @@ export class HumanInteractionsController {
         organizationId: user.organizationId,
         userId: user._id,
         identifier,
-      })
-    );
-  }
-
-  @Get('/interactions/:identifier/wait')
-  @KeylessAccessible()
-  @RequirePermissions(PermissionsEnum.AGENT_READ)
-  waitInteraction(
-    @UserSession() user: UserSessionData,
-    @Param('identifier') identifier: string,
-    @Query('timeoutSeconds') timeoutSeconds?: string
-  ): Promise<InteractionResponseDto> {
-    const parsed = Number(timeoutSeconds);
-    const bounded =
-      Number.isFinite(parsed) && parsed >= 1
-        ? Math.min(Math.floor(parsed), MAX_WAIT_TIMEOUT_SECONDS)
-        : DEFAULT_WAIT_TIMEOUT_SECONDS;
-
-    return this.waitInteractionUsecase.execute(
-      WaitInteractionCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        identifier,
-        timeoutSeconds: bounded,
       })
     );
   }

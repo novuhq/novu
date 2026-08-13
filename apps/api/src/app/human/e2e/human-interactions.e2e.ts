@@ -222,16 +222,16 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(getRes.body.data.status).to.equal(HumanInteractionStatusEnum.DENIED);
     });
 
-    it('wait returns pending at timeout and resolved after the click', async () => {
+    it('get returns pending until a click resolves it', async () => {
       const createRes = await createInteraction({ kind: 'approve', prompt: 'Ship it?' });
       const interaction = createRes.body.data;
 
-      const pendingRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}/wait?timeoutSeconds=1`);
+      const pendingRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
       expect(pendingRes.body.data.status).to.equal(HumanInteractionStatusEnum.PENDING);
 
       await clickAction(`human:${interaction.id}:approve`);
 
-      const resolvedRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}/wait?timeoutSeconds=1`);
+      const resolvedRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
       expect(resolvedRes.body.data.status).to.equal(HumanInteractionStatusEnum.APPROVED);
     });
   });
