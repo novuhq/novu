@@ -1,5 +1,5 @@
-import type { HumanInteractionEntity, HumanInteractionOption } from '@novu/dal';
-import { HumanInteractionKindEnum, HumanInteractionStatusEnum } from '@novu/shared';
+import type { HumanInteractionEntity } from '@novu/dal';
+import { HumanInteractionKindEnum, HumanInteractionStatusEnum, type HumanInteractionOption } from '@novu/shared';
 import type { ActionsElement, ButtonElement, CardElement, TextElement } from 'chat';
 import {
   buildHumanApproveActionId,
