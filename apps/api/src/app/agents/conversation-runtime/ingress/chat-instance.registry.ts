@@ -4,22 +4,22 @@ import type { TelegramAdapter } from '@chat-adapter/telegram';
 import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { NovuWebChatAdapter } from '@novu/chat-adapter-web';
+import type { NovuAgentChatAdapter } from '@novu/chat-adapter-agent-chat';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import {
+  type AgentChatPlatformDeliveryContext,
+  AgentChatPlatformDeliveryService,
+} from '../../agent-chat/agent-chat-platform-delivery.service';
+import { AgentChatResumeAuthorizationService } from '../../agent-chat/agent-chat-resume-authorization.service';
+import { AgentChatSessionVerifier } from '../../agent-chat/agent-chat-session.verifier';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
-import {
-  type WebChatPlatformDeliveryContext,
-  WebChatPlatformDeliveryService,
-} from '../../web-chat/web-chat-platform-delivery.service';
-import { WebChatResumeAuthorizationService } from '../../web-chat/web-chat-resume-authorization.service';
-import { WebChatSessionVerifier } from '../../web-chat/web-chat-session.verifier';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
@@ -43,7 +43,7 @@ export type PlatformAdapters = {
   teams: TeamsAdapter;
   telegram: TelegramAdapter;
   whatsapp: WhatsAppAdapter;
-  web_chat: NovuWebChatAdapter;
+  agent_chat: NovuAgentChatAdapter;
   email: Adapter;
   sendblue: Adapter;
 };
@@ -120,9 +120,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly emailActionTokenService: AgentEmailActionTokenService,
     private readonly agentActionTokenService: AgentActionTokenService,
     private readonly agentEmailSender: AgentEmailSender,
-    private readonly webChatSessionVerifier: WebChatSessionVerifier,
-    private readonly webChatPlatformDelivery: WebChatPlatformDeliveryService,
-    private readonly webChatResumeAuthorization: WebChatResumeAuthorizationService,
+    private readonly agentChatSessionVerifier: AgentChatSessionVerifier,
+    private readonly agentChatPlatformDelivery: AgentChatPlatformDeliveryService,
+    private readonly agentChatResumeAuthorization: AgentChatResumeAuthorizationService,
     @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: PlanLimitGateService
   ) {
@@ -488,9 +488,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           }),
         };
       }
-      case AgentPlatformEnum.WEB_CHAT: {
-        const { createWebChatAdapter } = await esmImport('@novu/chat-adapter-web');
-        const deliveryContext: WebChatPlatformDeliveryContext = {
+      case AgentPlatformEnum.AGENT_CHAT: {
+        const { createAgentChatAdapter } = await esmImport('@novu/chat-adapter-agent-chat');
+        const deliveryContext: AgentChatPlatformDeliveryContext = {
           agentId,
           get config() {
             return cached.config;
@@ -498,17 +498,17 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         };
 
         return {
-          web_chat: createWebChatAdapter({
+          agent_chat: createAgentChatAdapter({
             userName: config.agentName,
-            verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
+            verifySession: (request) => this.agentChatSessionVerifier.verifySession(request),
             authorizeResume: ({ conversationId, session }) =>
-              this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
+              this.agentChatResumeAuthorization.canResume({ conversationId, session, agentId }),
             checkAcceptLimits: ({ isNewThread, conversationId }) =>
-              this.planLimitGate.checkWebChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
-            deliverMessage: this.webChatPlatformDelivery.createDeliverMessage(deliveryContext),
-            editMessage: this.webChatPlatformDelivery.createEditMessage(deliveryContext),
-            deleteMessage: this.webChatPlatformDelivery.createDeleteMessage(deliveryContext),
-            startTyping: this.webChatPlatformDelivery.createStartTyping(deliveryContext),
+              this.planLimitGate.checkAgentChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
+            deliverMessage: this.agentChatPlatformDelivery.createDeliverMessage(deliveryContext),
+            editMessage: this.agentChatPlatformDelivery.createEditMessage(deliveryContext),
+            deleteMessage: this.agentChatPlatformDelivery.createDeleteMessage(deliveryContext),
+            startTyping: this.agentChatPlatformDelivery.createStartTyping(deliveryContext),
           }),
         };
       }

@@ -89,7 +89,7 @@ overrides:
   express@<4.20.0: ^4.20.0
   serve-static@<1.16.0: ^1.16.0
   send@<0.19.0: ^0.19.0
-  dompurify@>=3.1.3 <3.4.12: ^3.4.12
+  dompurify@>=3.1.3 <3.4.13: ^3.4.13
   '@octokit/endpoint@>=9.0.5 <9.0.6': ^9.0.6
   '@octokit/request-error@<5.1.1': ^5.1.1
   '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
@@ -134,7 +134,7 @@ overrides:
   aws-lambda>aws-sdk: '-'
   esbuild@<0.28.1: ^0.28.1
   follow-redirects@<=1.15.11: ^1.16.0
-  hono@<4.12.27: ^4.12.27
+  hono@<4.12.34: ^4.12.34
   '@hono/node-server@<2.0.5': ^2.0.5
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
@@ -426,15 +426,15 @@ importers:
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
+      '@novu/chat-adapter-agent-chat':
+        specifier: workspace:*
+        version: link:../../packages/chat-adapter-agent-chat
       '@novu/chat-adapter-email':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-email
       '@novu/chat-adapter-sendblue':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-sendblue
-      '@novu/chat-adapter-web':
-        specifier: workspace:*
-        version: link:../../packages/chat-adapter-web
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -729,7 +729,7 @@ importers:
         version: 1.6.0
       emulate:
         specifier: ^0.5.0
-        version: 0.5.0(hono@4.12.31)
+        version: 0.5.0(hono@4.12.34)
       get-port:
         specifier: ^5.1.1
         version: 5.1.1
@@ -3453,6 +3453,28 @@ importers:
         specifier: ^4.1.0
         version: 4.1.7(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
 
+  packages/chat-adapter-agent-chat:
+    dependencies:
+      nanoid:
+        specifier: ^3.3.17
+        version: 3.3.18
+    devDependencies:
+      chat:
+        specifier: ^4.33.0
+        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      zod:
+        specifier: 3.25.20
+        version: 3.25.20
+
   packages/chat-adapter-email:
     dependencies:
       '@novu/shared':
@@ -3495,28 +3517,6 @@ importers:
       chat-adapter-sendblue:
         specifier: ^0.2.0
         version: 0.2.0(chat@4.33.0(zod@3.25.20))
-    devDependencies:
-      chat:
-        specifier: ^4.33.0
-        version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
-      rimraf:
-        specifier: ~3.0.2
-        version: 3.0.2
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
-      vitest:
-        specifier: ^4.1.0
-        version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
-      zod:
-        specifier: 3.25.20
-        version: 3.25.20
-
-  packages/chat-adapter-web:
-    dependencies:
-      nanoid:
-        specifier: ^3.3.17
-        version: 3.3.18
     devDependencies:
       chat:
         specifier: ^4.33.0
@@ -3619,8 +3619,8 @@ importers:
         specifier: ^1.15.9
         version: 1.15.9
       hono:
-        specifier: ^4.12.27
-        version: 4.12.31
+        specifier: ^4.12.34
+        version: 4.12.34
       langchain:
         specifier: ^1.2.16
         version: 1.2.16(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(ws@8.21.0)(zod-to-json-schema@3.23.3(zod@3.25.20))
@@ -4347,6 +4347,40 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
+  playground/agent-chat:
+    dependencies:
+      '@novu/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      next:
+        specifier: ^16.2.11
+        version: 16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      react-markdown:
+        specifier: ^10.1.0
+        version: 10.1.0(@types/react@19.2.8)(react@18.3.1)
+      remark-gfm:
+        specifier: ^4.0.1
+        version: 4.0.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.15.13
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.8
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.8)
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
   playground/nestjs:
     dependencies:
       '@nestjs/common':
@@ -4561,8 +4595,8 @@ importers:
         specifier: ^11.18.2
         version: 11.18.2(@emotion/is-prop-valid@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nanoid:
-        specifier: ^5.1.6
-        version: 5.1.6
+        specifier: ^5.1.16
+        version: 5.1.16
       next:
         specifier: 15.5.21
         version: 15.5.21(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -7765,7 +7799,7 @@ packages:
     resolution: {integrity: sha512-bjD221KPLoJTWUwso1J6fGKiTXEUFedG/s0visavY4zakFPkeGURMRNly+FhBHs7T8Dz4qHaZIMX9ZoJHSJtKA==}
     engines: {node: '>=20'}
     peerDependencies:
-      hono: ^4.12.27
+      hono: ^4.12.34
 
   '@hookform/devtools@4.3.1':
     resolution: {integrity: sha512-CrWxEoHQZaOXJZVQ8KBgOuAa8p2LI8M0DAN5GTRTmdCieRwFVjVDEmuTAVazWVRRkpEQSgSt3KYp7VmmqXdEnw==}
@@ -18163,8 +18197,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.4.12:
-    resolution: {integrity: sha512-zQvGet8Z2sWbQhCmfFz/T5QWH2oBmjnqK3qvOjaqaNLrLEF912WamU+ohnTp0TCep/MFVHpdJuCZEdFOdTnEFg==}
+  dompurify@3.4.13:
+    resolution: {integrity: sha512-2vmYIoqjze2d+kakP8S/nS5shfsl587kzwEjcGlTdiksUVgFHnFCsLYDVj/JNqJVOQZGSYBTmuycv0PodwmnMQ==}
 
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
@@ -19688,8 +19722,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.12.31:
-    resolution: {integrity: sha512-zJIHFrl6bq3RDd2YusFNCDlM8qUprxKswyi/OPzPyzKDdyBXDqWx8bZlZ7R+saTdSTatUmb3O7K4SspGPaEOQg==}
+  hono@4.12.34:
+    resolution: {integrity: sha512-GqXJqY/xJkJmuloTrnV1ZEXG3fqte+VjkUqoRNZXcrUidiUOP4fMSIHHY4tsqZBK++kVyWmt/AAfSUuy57/eSA==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@2.8.9:
@@ -22561,8 +22595,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@5.1.6:
-    resolution: {integrity: sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg==}
+  nanoid@5.1.16:
+    resolution: {integrity: sha512-kVrnsrJqMR8+oLJnGEmSWw9BivK5mt7H3FZatVRjrc5wGqFYuBxX1yG7+A7Gi5AefkX6t/oCkizcQgpu0cY1dQ==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -24472,6 +24506,12 @@ packages:
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
+
+  react-markdown@10.1.0:
+    resolution: {integrity: sha512-qKxVopLT/TyA6BX3Ue5NwabOsAzm0Q7kAPwq6L+wWDwisYs7R8vZ0nRXqq6rkueboxpkjvLGU9fWifiX/ZZFxQ==}
+    peerDependencies:
+      '@types/react': '>=18'
+      react: '>=18'
 
   react-markdown@9.0.3:
     resolution: {integrity: sha512-Yk7Z94dbgYTOrdk41Z74GoKA7rThnsbbqBTRYuxoe08qvfQ9tJVhmAKw6BJS/ZORG7kTy/s1QvYzSuaoBA1qfw==}
@@ -33364,9 +33404,9 @@ snapshots:
     dependencies:
       '@hapi/hoek': 11.0.7
 
-  '@hono/node-server@2.0.11(hono@4.12.31)':
+  '@hono/node-server@2.0.11(hono@4.12.34)':
     dependencies:
-      hono: 4.12.31
+      hono: 4.12.34
 
   '@hookform/devtools@4.3.1(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -34779,7 +34819,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(@cfworker/json-schema@4.1.1)(zod@3.25.20)':
     dependencies:
-      '@hono/node-server': 2.0.11(hono@4.12.31)
+      '@hono/node-server': 2.0.11(hono@4.12.34)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -34789,7 +34829,7 @@ snapshots:
       eventsource-parser: 3.0.6
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
-      hono: 4.12.31
+      hono: 4.12.34
       jose: 6.1.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -47374,7 +47414,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.4.12:
+  dompurify@3.4.13:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -47543,9 +47583,9 @@ snapshots:
 
   emojilib@2.4.0: {}
 
-  emulate@0.5.0(hono@4.12.31):
+  emulate@0.5.0(hono@4.12.34):
     dependencies:
-      '@hono/node-server': 2.0.11(hono@4.12.31)
+      '@hono/node-server': 2.0.11(hono@4.12.34)
       commander: 14.0.3
       picocolors: 1.1.1
       yaml: 2.8.3
@@ -49404,7 +49444,7 @@ snapshots:
 
   hast-util-to-jsx-runtime@2.3.6:
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/hast': 3.0.4
       '@types/unist': 3.0.3
       comma-separated-tokens: 2.0.3
@@ -49483,7 +49523,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.12.31: {}
+  hono@4.12.34: {}
 
   hosted-git-info@2.8.9: {}
 
@@ -52710,7 +52750,7 @@ snapshots:
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.14
       dayjs: 1.11.21
-      dompurify: 3.4.12
+      dompurify: 3.4.13
       es-toolkit: 1.47.0
       katex: 0.16.47
       khroma: 2.1.0
@@ -53350,7 +53390,7 @@ snapshots:
 
   nanoid@3.3.18: {}
 
-  nanoid@5.1.6: {}
+  nanoid@5.1.16: {}
 
   nanostores@1.2.0: {}
 
@@ -55599,6 +55639,24 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.18
       '@types/react-dom': 18.3.5(@types/react@18.3.18)
+
+  react-markdown@10.1.0(@types/react@19.2.8)(react@18.3.1):
+    dependencies:
+      '@types/hast': 3.0.4
+      '@types/mdast': 4.0.4
+      '@types/react': 19.2.8
+      devlop: 1.1.0
+      hast-util-to-jsx-runtime: 2.3.6
+      html-url-attributes: 3.0.1
+      mdast-util-to-hast: 13.2.1
+      react: 18.3.1
+      remark-parse: 11.0.0
+      remark-rehype: 11.1.2
+      unified: 11.0.5
+      unist-util-visit: 5.0.0
+      vfile: 6.0.2
+    transitivePeerDependencies:
+      - supports-color
 
   react-markdown@9.0.3(@types/react@19.2.8)(react@19.2.3):
     dependencies:

@@ -202,7 +202,7 @@ describe('AgentInboundHandler', () => {
       maybeBlockConversation: sinon.stub().resolves(false),
     };
     const connectionContextResolver = {
-      resolve: sinon.stub().resolves(null),
+      resolve: sinon.stub().resolves({ context: null }),
     };
     const replyApprovalInterceptor = {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),

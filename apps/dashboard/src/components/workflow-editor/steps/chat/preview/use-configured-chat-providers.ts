@@ -45,7 +45,7 @@ const PROVIDER_ORDER: readonly string[] = [
 const ALWAYS_AVAILABLE_PROVIDER_IDS: readonly string[] = [ChatProviderIdEnum.Slack, ChatProviderIdEnum.MsTeams];
 
 /** Novu-managed demo/hosted chat providers — not useful as preview platform targets. */
-const EXCLUDED_PROVIDER_IDS = new Set<string>([ChatProviderIdEnum.Novu, ChatProviderIdEnum.NovuWebChat]);
+const EXCLUDED_PROVIDER_IDS = new Set<string>([ChatProviderIdEnum.Novu, ChatProviderIdEnum.NovuAgentChat]);
 
 export function getProviderDisplayName(providerId: string): string {
   return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;

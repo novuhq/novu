@@ -73,13 +73,13 @@ describe('AgentConversationService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activityRepository: any = makeActivityRepository(),
     eventSequenceService = makeEventSequenceService(),
-    webChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
+    agentChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
   ) {
     return new AgentConversationService(
       conversationRepository,
       activityRepository as any,
       eventSequenceService,
-      webChatLiveActivityPublisher as any,
+      agentChatLiveActivityPublisher as any,
       makeLogger() as any
     );
   }
@@ -241,6 +241,77 @@ describe('AgentConversationService', () => {
     });
   });
 
+  describe('MCP connection activities', () => {
+    it('persists request and result activities and publishes both to agent chat', async () => {
+      const activityRepository = makeActivityRepository();
+      activityRepository.createAgentActivity.callsFake(async (params: Record<string, unknown>) => ({
+        _id: `activity-${activityRepository.createAgentActivity.callCount}`,
+        ...params,
+      }));
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const service = makeService(
+        conversationRepository,
+        activityRepository,
+        makeEventSequenceService(sinon.stub().onFirstCall().resolves(10).onSecondCall().resolves(11)),
+        publisher
+      );
+      const context = {
+        ...basePersistParams(),
+        channel: {
+          platform: 'agent_chat',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+      };
+
+      await service.persistMcpConnectionRequest({
+        ...context,
+        actionId: 'tool-use-1',
+        mcpId: 'stripe',
+        displayName: 'Stripe',
+        authorizeUrl: 'https://example.com/authorize',
+      });
+      await service.persistMcpConnectionResult({
+        ...context,
+        actionId: 'tool-use-1',
+        mcpId: 'stripe',
+        status: 'connected',
+      });
+
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        identifier: 'mcp-connection:tool-use-1:request',
+        type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST,
+        sequence: 10,
+        richContent: {
+          mcpConnection: {
+            actionId: 'tool-use-1',
+            mcpId: 'stripe',
+            displayName: 'Stripe',
+            authorizeUrl: 'https://example.com/authorize',
+            authorizeUrlWithAutoApprove: undefined,
+          },
+        },
+      });
+      expect(activityRepository.createAgentActivity.secondCall.args[0]).to.deep.include({
+        identifier: 'mcp-connection:tool-use-1:result',
+        type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT,
+        sequence: 11,
+        richContent: {
+          mcpConnection: {
+            actionId: 'tool-use-1',
+            mcpId: 'stripe',
+            status: 'connected',
+            message: undefined,
+          },
+        },
+      });
+      expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
+    });
+  });
+
   describe('event sequencing', () => {
     it('allocates a sequence for durable tool activities on any channel', async () => {
       const conversationRepository = {} as unknown as ConversationRepository;
@@ -357,7 +428,7 @@ describe('AgentConversationService', () => {
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
-      platform: 'web_chat',
+      platform: 'agent_chat',
       contextKeys: ['tenant:acme', 'app:billing'],
     });
 
@@ -392,7 +463,7 @@ describe('AgentConversationService', () => {
     try {
       await service.createOrGetConversation({
         ...baseCreateParams(),
-        platform: 'web_chat',
+        platform: 'agent_chat',
       });
     } catch (err) {
       threw = true;
@@ -431,7 +502,7 @@ describe('AgentConversationService', () => {
     try {
       await service.createOrGetConversation({
         ...baseCreateParams(),
-        platform: 'web_chat',
+        platform: 'agent_chat',
         contextKeys: ['tenant:globex'],
       });
     } catch (err) {

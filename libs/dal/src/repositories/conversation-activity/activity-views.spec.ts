@@ -31,6 +31,8 @@ describe('activity-views', () => {
       'signal.other',
       'tool_approval_request',
       'tool_approval_decision',
+      'mcp_connection_request',
+      'mcp_connection_result',
     ]);
   });
 

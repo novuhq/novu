@@ -1235,6 +1235,43 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     expect(contextKeys).to.include('projectId:project-456');
   });
 
+  it('does not let a session context payload set a root bridgeUrl override', async () => {
+    // Security regression: agent bridge routing reads the Context root `bridgeUrl`, which is writable
+    // only via the trusted /v2/contexts API. A subscriber-facing session payload only carries
+    // `{ id, data }`, so a `data.bridgeUrl` must never surface as a routable root override.
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
+
+    const context: ContextPayload = {
+      tenant: { id: 'attacker', data: { bridgeUrl: 'https://attacker.example.com/api/novu' } },
+    };
+
+    const { body, status } = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      context,
+    });
+
+    expect(status).to.equal(201);
+    expect(body.data.contextKeys).to.deep.equal(['tenant:attacker']);
+
+    const stored = await contextRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      type: 'tenant',
+      id: 'attacker',
+    });
+
+    expect(stored, 'context created from session payload').to.exist;
+    expect(stored?.bridgeUrl, 'root bridgeUrl must not be settable via a session context payload').to.equal(undefined);
+    expect((stored?.data as Record<string, unknown>)?.bridgeUrl, 'the value stays inert inside data').to.equal(
+      'https://attacker.example.com/api/novu'
+    );
+  });
+
   it('should reuse existing contexts on subsequent sessions', async () => {
     await setIntegrationConfig({
       _environmentId: session.environment._id,

@@ -26,6 +26,8 @@ export interface ICredentials {
   redirectUrl?: string;
   hmac?: boolean;
   ipPoolName?: string;
+  /** Amazon SES: name of the Configuration Set applied to sent emails. */
+  configurationSetName?: string;
   apiKeyRequestHeader?: string;
   secretKeyRequestHeader?: string;
   idPath?: string;
