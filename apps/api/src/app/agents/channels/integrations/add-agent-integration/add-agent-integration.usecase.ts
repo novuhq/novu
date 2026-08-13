@@ -189,6 +189,8 @@ export class AddAgentIntegration {
 
     // Revives a tombstoned (disconnected) link when one exists for this pair —
     // a plain create would violate the unique (_agentId, _integrationId) index.
+    // Agent Chat (and every other channel) leaves connectedAt null until the first
+    // genuine inbound user message — same install ≠ connected split as Slack.
     const link = await this.agentIntegrationRepository.createOrReviveLink({
       agentId: agent._id,
       integrationId: integration._id,
