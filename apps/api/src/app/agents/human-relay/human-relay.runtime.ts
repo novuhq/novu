@@ -68,6 +68,12 @@ export class HumanRelayRuntime implements AgentRuntime {
       return;
     }
 
+    if (!this.isAddressedHuman(turn, interaction)) {
+      await this.rejectForeignResponder(turn, interaction);
+
+      return;
+    }
+
     if (parsed.type === 'disambiguation-pick') {
       await this.handleDisambiguationPick(turn, interaction);
 
@@ -208,6 +214,12 @@ export class HumanRelayRuntime implements AgentRuntime {
     text: string,
     turn: ConversationTurn
   ): Promise<void> {
+    if (!this.isAddressedHuman(turn, interaction)) {
+      await this.rejectForeignResponder(turn, interaction);
+
+      return;
+    }
+
     const current = await this.settlement.expireIfOverdue(interaction);
     if (current.status !== HumanInteractionStatusEnum.PENDING) {
       await this.replyOnThread(turn, this.lateClickReply(current));
@@ -232,6 +244,39 @@ export class HumanRelayRuntime implements AgentRuntime {
 
   private resolveResponder(turn: ConversationTurn): string | undefined {
     return turn.subscriber?.subscriberId ?? turn.message?.author?.userName ?? undefined;
+  }
+
+  /**
+   * An interaction is addressed to exactly one human, and the whole point of
+   * the product is that *that* human answered. Delivery can land on a shared
+   * surface (a Slack channel endpoint, a Telegram group), where every member
+   * sees the same buttons and can reply in the same thread — so the responder's
+   * resolved subscriber must match the addressee before anything settles.
+   * Unidentifiable senders fail closed: an actor we cannot name can never carry
+   * an approval.
+   */
+  private isAddressedHuman(turn: ConversationTurn, interaction: HumanInteractionEntity): boolean {
+    const responder = turn.subscriber?.subscriberId;
+
+    return Boolean(responder) && responder === interaction.subscriberId;
+  }
+
+  private async rejectForeignResponder(turn: ConversationTurn, interaction: HumanInteractionEntity): Promise<void> {
+    this.logger.warn(
+      {
+        interactionIdentifier: interaction.identifier,
+        environmentId: turn.config.environmentId,
+        addressedTo: interaction.subscriberId,
+        responder: turn.subscriber?.subscriberId,
+        responderResolution: turn.subscriberResolution?.outcome,
+      },
+      'Human interaction response rejected — responder is not the addressed human'
+    );
+
+    await this.replyOnThread(
+      turn,
+      'This one is waiting on someone else — only the person it was sent to can answer it.'
+    );
   }
 
   private lateClickReply(interaction: HumanInteractionEntity): string {

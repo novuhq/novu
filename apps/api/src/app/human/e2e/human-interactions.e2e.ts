@@ -129,16 +129,10 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
     return configResolver.resolve(relayAgentId, integrationIdentifier, { source: 'webhook_message' });
   }
 
-  async function clickAction(actionId: string) {
+  async function clickAction(actionId: string, fromChatId: string = TELEGRAM_CHAT_ID) {
     const inboundHandler = testServer.getService(AgentInboundHandler);
     const config = await resolveConfig();
-    await inboundHandler.handleAction(
-      relayAgentId,
-      config,
-      makeTelegramThread() as any,
-      { id: actionId },
-      TELEGRAM_CHAT_ID
-    );
+    await inboundHandler.handleAction(relayAgentId, config, makeTelegramThread() as any, { id: actionId }, fromChatId);
   }
 
   async function sendMessageToRelay(text: string, raw: Record<string, unknown> = {}) {
@@ -210,6 +204,36 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       expect(editedText).to.include('Approved');
       // The subtitle and status line must be visually separated, not crammed together.
       expect(editedText).to.match(/\n\s*\n/);
+    });
+
+    it('ignores clicks from anyone other than the addressed human', async () => {
+      const foreignChatId = '777002';
+      await channelEndpointRepository.create({
+        identifier: `ce-human-e2e-foreign-${Date.now()}`,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        integrationIdentifier,
+        providerId: ChatProviderIdEnum.Telegram,
+        channel: ChannelTypeEnum.CHAT,
+        subscriberId: `${subscriberId}-bystander`,
+        contextKeys: [],
+        type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+        endpoint: { chatId: foreignChatId },
+      });
+
+      const createRes = await createInteraction({ kind: 'approve', prompt: 'Deploy to production?' });
+      const interaction = createRes.body.data;
+
+      await clickAction(`human:${interaction.id}:approve`, foreignChatId);
+
+      const getRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
+      expect(getRes.body.data.status).to.equal(HumanInteractionStatusEnum.PENDING);
+
+      // The addressed human can still answer it afterwards.
+      await clickAction(`human:${interaction.id}:approve`);
+
+      const afterRes = await session.testAgent.get(`/v1/human/interactions/${interaction.id}`);
+      expect(afterRes.body.data.status).to.equal(HumanInteractionStatusEnum.APPROVED);
     });
 
     it('resolves deny clicks to denied', async () => {
