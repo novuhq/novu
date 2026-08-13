@@ -324,6 +324,13 @@ export const sesConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ConfigurationSetName,
+    displayName: 'Configuration Set Name',
+    description: 'The name of the SES Configuration Set to apply to sent emails',
+    type: 'string',
+    required: false,
+  },
   ...mailConfigBase,
 ];
 
@@ -1044,8 +1051,8 @@ export const novuInAppConfig: IConfigCredential[] = [
   },
 ];
 
-/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for web chat. */
-export const novuWebChatConfig: IConfigCredential[] = novuInAppConfig;
+/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for agent chat. */
+export const novuAgentChatConfig: IConfigCredential[] = novuInAppConfig;
 
 export const sendchampConfig: IConfigCredential[] = [
   {

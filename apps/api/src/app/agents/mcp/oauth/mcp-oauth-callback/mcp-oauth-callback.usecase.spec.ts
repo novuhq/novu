@@ -1,8 +1,12 @@
-import type { McpConnectionOAuthClient } from '@novu/dal';
+import type { McpConnectionEntity, McpConnectionOAuthClient } from '@novu/dal';
 import { expect } from 'chai';
+import sinon from 'sinon';
 
+import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import type { McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import {
   buildTokenExchangeAuth,
+  McpOAuthCallback,
   mapUpstreamCallbackErrorCode,
   parseUpstreamErrorToken,
 } from './mcp-oauth-callback.usecase';
@@ -140,5 +144,112 @@ describe('buildTokenExchangeAuth', () => {
     expect(headers.Authorization).to.equal(undefined);
     expect(params.get('client_id')).to.equal('client-id');
     expect(params.get('client_secret')).to.equal(null);
+  });
+});
+
+describe('McpOAuthCallback managed chat resume', () => {
+  it('resumes the parked agent-chat tool call when publishing the connected result fails', async () => {
+    const channel = {
+      platform: AgentPlatformEnum.AGENT_CHAT,
+      _integrationId: 'integration-id',
+      platformThreadId: 'agent_chat:conversation-id',
+    };
+    const subscriberRepository = {
+      findOne: sinon.stub().resolves({ subscriberId: 'subscriber-external-id' }),
+    };
+    const managedAgentService = {
+      sendToolResult: sinon.stub().resolves(undefined),
+    };
+    const agentConversationService = {
+      getConversation: sinon.stub().resolves({ _id: 'conversation-id' }),
+      getPrimaryChannel: sinon.stub().returns(channel),
+      persistMcpConnectionResult: sinon.stub().rejects(new Error('publisher unavailable')),
+    };
+    const outboundGateway = {
+      startTypingInConversation: sinon.stub().resolves(undefined),
+    };
+    const logger = {
+      setContext: sinon.stub(),
+      warn: sinon.stub(),
+    };
+    const callback = new McpOAuthCallback(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      subscriberRepository as never,
+      {} as never,
+      {} as never,
+      managedAgentService as never,
+      agentConversationService as never,
+      outboundGateway as never,
+      {} as never,
+      {} as never,
+      logger as never
+    );
+    const resumeSessionAfterConnect = (
+      callback as unknown as {
+        resumeSessionAfterConnect(stateData: McpOAuthState, connection: McpConnectionEntity): Promise<void>;
+      }
+    ).resumeSessionAfterConnect.bind(callback);
+    const stateData = {
+      environmentId: 'environment-id',
+      organizationId: 'organization-id',
+      agentId: 'agent-id',
+      agentMcpServerId: 'agent-mcp-server-id',
+      subscriberId: 'subscriber-mongo-id',
+      mcpId: 'example-mcp',
+      scope: 'subscriber',
+      timestamp: Date.now(),
+      conversationId: 'conversation-id',
+      agentIdentifier: 'agent-identifier',
+      integrationIdentifier: 'integration-identifier',
+      toolUseId: 'tool-use-id',
+      platform: AgentPlatformEnum.AGENT_CHAT,
+      platformThreadId: 'agent_chat:conversation-id',
+    } as McpOAuthState;
+
+    await resumeSessionAfterConnect(stateData, {} as McpConnectionEntity);
+
+    expect(
+      agentConversationService.persistMcpConnectionResult.calledOnceWithExactly({
+        conversationId: 'conversation-id',
+        environmentId: 'environment-id',
+        organizationId: 'organization-id',
+        agentIdentifier: 'agent-identifier',
+        channel,
+        actionId: 'tool-use-id',
+        mcpId: 'example-mcp',
+        status: 'connected',
+      })
+    ).to.equal(true);
+    expect(
+      managedAgentService.sendToolResult.calledOnceWithExactly({
+        conversationId: 'conversation-id',
+        environmentId: 'environment-id',
+        organizationId: 'organization-id',
+        agentIdentifier: 'agent-identifier',
+        integrationIdentifier: 'integration-identifier',
+        subscriberId: 'subscriber-external-id',
+        toolUseId: 'tool-use-id',
+        content: 'OK',
+        followUpMessage:
+          "example-mcp is now connected and ready. Resume the user's original request. Use the available tools directly. Do not output any preamble or mention the connection — go straight to action.",
+        platform: AgentPlatformEnum.AGENT_CHAT,
+        platformThreadId: 'agent_chat:conversation-id',
+        suppressReply: true,
+      })
+    ).to.equal(true);
+    expect(
+      agentConversationService.persistMcpConnectionResult.calledBefore(managedAgentService.sendToolResult)
+    ).to.equal(true);
+    expect(
+      logger.warn.calledOnceWithExactly(
+        sinon.match.instanceOf(Error),
+        'Failed to record MCP connection result; continuing session resume'
+      )
+    ).to.equal(true);
   });
 });

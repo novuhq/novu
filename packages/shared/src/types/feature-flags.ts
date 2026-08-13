@@ -108,9 +108,10 @@ export enum FeatureFlagsKeysEnum {
   /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
   IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
   /**
-   * Enable the agent web-chat channel (subscriber `/v1/web-chat/*`, useAgentChat wayfinder).
+   * Enable the agent-chat channel (subscriber `/v1/agent-chat/*`, useAgentChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
    * `IS_AGENT_WEB_CHAT_ENABLED` when self-hosted (`VITE_IS_AGENT_WEB_CHAT_ENABLED` for dashboard).
+   * Flag key kept as IS_AGENT_WEB_CHAT_ENABLED (LaunchDarkly / env already deployed).
    */
   IS_AGENT_WEB_CHAT_ENABLED = 'IS_AGENT_WEB_CHAT_ENABLED',
   /** Enable the "What's next" section on the agent overview. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_WHATS_NEXT_ENABLED` when self-hosted. */

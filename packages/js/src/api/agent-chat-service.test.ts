@@ -41,7 +41,7 @@ describe('AgentChatService', () => {
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/web-chat/conversations',
+      'https://test.novu.co/v1/agent-chat/conversations',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ agentId: 'agent_1', text: 'hello' }),
@@ -67,7 +67,7 @@ describe('AgentChatService', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/web-chat/conversations',
+      'https://test.novu.co/v1/agent-chat/conversations',
       expect.objectContaining({
         body: JSON.stringify({
           agentId: 'agent_1',
@@ -96,7 +96,7 @@ describe('AgentChatService', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/web-chat/conversations',
+      'https://test.novu.co/v1/agent-chat/conversations',
       expect.objectContaining({
         body: JSON.stringify({
           agentId: 'agent_1',
@@ -129,7 +129,7 @@ describe('AgentChatService', () => {
 
     expect(result).toEqual({ events: [], olderCursor: null });
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/events',
+      'https://test.novu.co/v1/agent-chat/conversations/conv_abcdefghijkl/events',
       expect.objectContaining({ method: 'GET' })
     );
   });
@@ -146,7 +146,7 @@ describe('AgentChatService', () => {
     httpClient.setAuthorizationToken('test-token');
     const service = new AgentChatService({ httpClient });
 
-    const result = await service.respondToApproval({
+    const result = await service.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'tool-approval:approve:approval_000001',
@@ -154,7 +154,7 @@ describe('AgentChatService', () => {
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/web-chat/conversations',
+      'https://test.novu.co/v1/agent-chat/conversations',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({
@@ -190,7 +190,7 @@ describe('AgentChatService', () => {
 
     expect(result).toEqual({ events: [], olderCursor: 'act_older0001' });
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/web-chat/conversations/conv_abcdefghijkl/events?before=act_page0001&limit=50',
+      'https://test.novu.co/v1/agent-chat/conversations/conv_abcdefghijkl/events?before=act_page0001&limit=50',
       expect.objectContaining({ method: 'GET' })
     );
   });

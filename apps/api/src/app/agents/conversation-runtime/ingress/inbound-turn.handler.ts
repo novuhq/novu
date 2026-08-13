@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import type { WebChatRawMessage } from '@novu/chat-adapter-web';
+import type { AgentChatRawMessage } from '@novu/chat-adapter-agent-chat';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -448,11 +448,11 @@ export class AgentInboundHandler implements OnModuleInit {
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
-      identifier: this.webChatConversationIdentifier(config.platform, platformThreadId),
+      identifier: this.agentChatConversationIdentifier(config.platform, platformThreadId),
       notificationId: workflowOrigin?.notificationId,
       contextKeys:
-        config.platform === AgentPlatformEnum.WEB_CHAT
-          ? ((message.raw as WebChatRawMessage | undefined)?.contextKeys ?? [])
+        config.platform === AgentPlatformEnum.AGENT_CHAT
+          ? ((message.raw as AgentChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 
@@ -518,7 +518,11 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
-    const context = await this.connectionContextResolver.resolve(config, message.raw, message.author?.userId);
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      message.raw,
+      message.author?.userId
+    );
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -528,6 +532,7 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       subscriber,
       context,
+      bridgeUrlOverride,
       subscriberResolution: resolution,
       message,
       event,
@@ -639,14 +644,14 @@ export class AgentInboundHandler implements OnModuleInit {
 
   /**
    * Public conversation identifier is bare `conv_*`; chat-sdk thread ids are
-   * `web_chat:conv_*` so the registry can resolve the adapter by prefix.
+   * `agent_chat:conv_*` so the registry can resolve the adapter by prefix.
    */
-  private webChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
-    if (platform !== AgentPlatformEnum.WEB_CHAT) {
+  private agentChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
+    if (platform !== AgentPlatformEnum.AGENT_CHAT) {
       return undefined;
     }
 
-    return platformThreadId.startsWith('web_chat:') ? platformThreadId.slice('web_chat:'.length) : platformThreadId;
+    return platformThreadId.startsWith('agent_chat:') ? platformThreadId.slice('agent_chat:'.length) : platformThreadId;
   }
 
   private async storeInboundAttachments(
@@ -709,7 +714,7 @@ export class AgentInboundHandler implements OnModuleInit {
       richContent,
       hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
-      identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
+      identifier: config.platform === AgentPlatformEnum.AGENT_CHAT ? message.id : undefined,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
@@ -1067,7 +1072,11 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
-    const context = await this.connectionContextResolver.resolve(config, event.raw, platformUserId);
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      event.raw,
+      platformUserId
+    );
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -1076,6 +1085,7 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       subscriber,
       context,
+      bridgeUrlOverride,
       subscriberResolution: reactionResolution,
       message: null,
       event: AgentEventEnum.ON_REACTION,
@@ -1155,8 +1165,8 @@ export class AgentInboundHandler implements OnModuleInit {
       workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
       notificationId: workflowOrigin?.notificationId,
       contextKeys:
-        config.platform === AgentPlatformEnum.WEB_CHAT
-          ? ((rawEvent as WebChatRawMessage | undefined)?.contextKeys ?? [])
+        config.platform === AgentPlatformEnum.AGENT_CHAT
+          ? ((rawEvent as AgentChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 
@@ -1206,7 +1216,11 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
-    const context = await this.connectionContextResolver.resolve(config, rawEvent, userId);
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      rawEvent,
+      userId
+    );
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -1216,6 +1230,7 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       subscriber,
       context,
+      bridgeUrlOverride,
       subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,

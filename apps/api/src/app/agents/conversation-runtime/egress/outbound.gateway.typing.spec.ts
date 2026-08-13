@@ -86,11 +86,11 @@ describe('OutboundGateway typing', () => {
 
   it('delegates stop to the adapter stopTyping capability when present', async () => {
     const stopTyping = sinon.stub().resolves();
-    const { gateway, setAssistantStatus } = makeGateway({ platform: AgentPlatformEnum.WEB_CHAT, stopTyping });
+    const { gateway, setAssistantStatus } = makeGateway({ platform: AgentPlatformEnum.AGENT_CHAT, stopTyping });
 
-    await gateway.stopTypingInConversation(agentId, integrationIdentifier, 'web_chat:conv_abc123def456');
+    await gateway.stopTypingInConversation(agentId, integrationIdentifier, 'agent_chat:conv_abc123def456');
 
-    expect(stopTyping.calledOnceWithExactly('web_chat:conv_abc123def456')).to.equal(true);
+    expect(stopTyping.calledOnceWithExactly('agent_chat:conv_abc123def456')).to.equal(true);
     expect(setAssistantStatus.called).to.equal(false);
   });
 

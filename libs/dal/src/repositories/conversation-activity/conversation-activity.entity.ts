@@ -20,6 +20,10 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
   /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
+  /** An MCP OAuth connection is required before the agent can continue. */
+  MCP_CONNECTION_REQUEST = 'mcp_connection_request',
+  /** Outcome of a previously requested MCP OAuth connection. */
+  MCP_CONNECTION_RESULT = 'mcp_connection_result',
   /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
   RUN_START = 'run_start',
   /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
