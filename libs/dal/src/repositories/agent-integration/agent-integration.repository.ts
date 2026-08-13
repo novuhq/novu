@@ -201,9 +201,8 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
 
   /**
    * Linked integrations for an agent (one round trip), each with its `identifier`
-   * and `providerId`. Webhook/token channels (e.g. Slack) are matched by identifier,
-   * while phone-based providers (WhatsApp, Sendblue) are matched by providerId since
-   * their auto-resolved channels carry no integration identifier.
+   * and `providerId`. Callers match by identifier; for phone-based providers without a
+   * channel-level integration id, bind dispatch to a linked identifier for that provider.
    * `disconnectedAt: null` is explicit — aggregation skips the schema exclusion hook.
    */
   async listLinkedIntegrationRefs({
