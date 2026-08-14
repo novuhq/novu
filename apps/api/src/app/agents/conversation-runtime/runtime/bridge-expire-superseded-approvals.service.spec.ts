@@ -34,9 +34,11 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const channel = { platform: 'slack', platformThreadId: 'thread-1' };
     const conversationService = {
-      getHistory: sinon.stub().resolves([pendingRequest]),
       getPrimaryChannel: sinon.stub().returns(channel),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
+    };
+    const activityLedger = {
+      listForView: sinon.stub().resolves({ data: [pendingRequest], hasMore: false }),
     };
     const outboundGateway = {
       deleteInConversation: sinon.stub().resolves(undefined),
@@ -44,6 +46,7 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
+      activityLedger as any,
       outboundGateway as any,
       makeLogger() as any
     );
@@ -88,15 +91,18 @@ describe('BridgeExpireSupersededApprovalsService', () => {
       toolData: { approvalId: 'approval-1', approved: true },
     };
     const conversationService = {
-      getHistory: sinon.stub().resolves([approvedDecision, request]),
       getPrimaryChannel: sinon.stub().returns({ platform: 'slack', platformThreadId: 'thread-1' }),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
+    };
+    const activityLedger = {
+      listForView: sinon.stub().resolves({ data: [approvedDecision, request], hasMore: false }),
     };
     const outboundGateway = {
       deleteInConversation: sinon.stub().resolves(undefined),
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
+      activityLedger as any,
       outboundGateway as any,
       makeLogger() as any
     );
@@ -117,15 +123,18 @@ describe('BridgeExpireSupersededApprovalsService', () => {
       toolData: { approvalId: 'approval-1', toolCallId: 'tc-1', toolName: 'issueRefund' },
     };
     const conversationService = {
-      getHistory: sinon.stub().resolves([pendingRequest]),
       getPrimaryChannel: sinon.stub().returns({ platform: 'slack', platformThreadId: 'thread-1' }),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
+    };
+    const activityLedger = {
+      listForView: sinon.stub().resolves({ data: [pendingRequest], hasMore: false }),
     };
     const outboundGateway = {
       deleteInConversation: sinon.stub().resolves(undefined),
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
+      activityLedger as any,
       outboundGateway as any,
       makeLogger() as any
     );

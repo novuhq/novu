@@ -31,6 +31,10 @@ const contextSchema = new Schema<ContextDBModel>(
       required: false,
       default: {},
     },
+    bridgeUrl: {
+      type: Schema.Types.String,
+      required: false,
+    },
   },
   { ...schemaOptions, minimize: false }
 );

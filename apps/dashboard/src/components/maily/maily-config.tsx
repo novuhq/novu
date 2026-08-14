@@ -340,12 +340,14 @@ export const useCreateExtensions = ({
     isAllowedVariable: IsAllowedVariable
   ) => (props: NodeViewProps) => JSX.Element;
   translationValueInput: TranslationValueInputComponent;
-  /** Chat-specific image defaults (left align, no resize, preview-sized). Email keeps kit defaults. */
+  /** Chat-specific image defaults (left align, no resize, Slack-like bounds). Email keeps kit defaults. */
   imageExtensionOptions?: {
     resizable?: boolean;
     defaultAlignment?: 'left' | 'center' | 'right';
     maxWidth?: number;
     maxHeight?: number;
+    /** Chat-only: preview-matching max-bounds fit. Leave unset for email. */
+    fitToMaxBounds?: boolean;
   };
 }) => {
   /**

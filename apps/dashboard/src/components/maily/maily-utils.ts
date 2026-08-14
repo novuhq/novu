@@ -1,3 +1,6 @@
+import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
+import { parseVariable, VARIABLE_REGEX_STRING } from '@/utils/liquid';
+
 export const isEmptyMailyJson = (value: unknown): boolean => {
   if (typeof value !== 'string') return false;
 
@@ -18,10 +21,92 @@ export const isEmptyMailyJson = (value: unknown): boolean => {
   }
 };
 
+type MailyInlineNode =
+  | { type: 'text'; text: string }
+  | {
+      type: 'variable';
+      attrs: {
+        id: string;
+        label: null;
+        fallback: null;
+        required: false;
+        aliasFor: null;
+      };
+    };
+
+function createVariableNode(id: string): MailyInlineNode {
+  return {
+    type: 'variable',
+    attrs: {
+      id,
+      label: null,
+      fallback: null,
+      required: false,
+      aliasFor: null,
+    },
+  };
+}
+
+function isTranslationVariable(expression: string): boolean {
+  // Keep {{t.key}} as text so InlineDecoratorExtension can render translation pills.
+  return TRANSLATION_KEY_SINGLE_REGEX.test(expression);
+}
+
+/**
+ * Splits a plain-text line into TipTap inline nodes, turning Liquid
+ * `{{ variable }}` expressions (including filters) into variable nodes so they
+ * render as pills. Translation markers (`{{t.key}}`) stay as text for the
+ * translation decorator.
+ */
+function lineToInlineContent(line: string): MailyInlineNode[] {
+  if (line.length === 0) return [];
+
+  const content: MailyInlineNode[] = [];
+  const regex = new RegExp(VARIABLE_REGEX_STRING, 'g');
+  let lastIndex = 0;
+
+  for (const match of line.matchAll(regex)) {
+    const matchedExpression = match[0];
+    const matchIndex = match.index ?? 0;
+
+    // Leave translation keys in the text stream for the decorator plugin.
+    if (isTranslationVariable(matchedExpression)) {
+      continue;
+    }
+
+    const parsed = parseVariable(matchedExpression);
+    // Preserve filters (`| default: 'x'`, `| upcase`, etc.) on the variable id.
+    const variableId = parsed?.fullLiquidExpression;
+
+    if (!variableId) {
+      continue;
+    }
+
+    if (matchIndex > lastIndex) {
+      content.push({ type: 'text', text: line.slice(lastIndex, matchIndex) });
+    }
+
+    content.push(createVariableNode(variableId));
+    lastIndex = matchIndex + matchedExpression.length;
+  }
+
+  if (lastIndex < line.length) {
+    content.push({ type: 'text', text: line.slice(lastIndex) });
+  }
+
+  // No convertible variables matched — keep the original line as a single text node.
+  if (content.length === 0) {
+    return [{ type: 'text', text: line }];
+  }
+
+  return content;
+}
+
 /**
  * Wraps a legacy plain-string body into a minimal Maily/TipTap document so it
  * can be opened in the block editor as text blocks. Each line becomes its own
- * paragraph; empty lines are preserved as empty paragraphs.
+ * paragraph; empty lines are preserved as empty paragraphs. Liquid variables
+ * are converted to variable nodes so they appear as pills in the editor.
  */
 export const plainTextToMailyJson = (value: string): string => {
   const content = value
@@ -29,7 +114,7 @@ export const plainTextToMailyJson = (value: string): string => {
     .split('\n')
     .map((line) => ({
       type: 'paragraph',
-      content: line.length > 0 ? [{ type: 'text', text: line }] : [],
+      content: lineToInlineContent(line),
     }));
 
   return JSON.stringify({ type: 'doc', content });

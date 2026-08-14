@@ -56,6 +56,8 @@ type MailyProps = HTMLAttributes<HTMLDivElement> & {
     defaultAlignment?: 'left' | 'center' | 'right';
     maxWidth?: number;
     maxHeight?: number;
+    /** Chat-only: preview-matching max-bounds fit. Leave unset for email. */
+    fitToMaxBounds?: boolean;
   };
 };
 

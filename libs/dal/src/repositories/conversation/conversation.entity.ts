@@ -151,6 +151,8 @@ export class ConversationEntity {
    */
   eventSequence?: number;
 
+  contextKeys?: string[];
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

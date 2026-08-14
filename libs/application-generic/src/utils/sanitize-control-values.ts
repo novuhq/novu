@@ -142,6 +142,7 @@ function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
   const mappedValues: ChatControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
+    editorType: controlValues.editorType,
   };
 
   return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);

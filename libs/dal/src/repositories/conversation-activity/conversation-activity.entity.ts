@@ -20,7 +20,19 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
   /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
+  /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
+  RUN_START = 'run_start',
+  /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
+  RUN_FINISH = 'run_finish',
+  /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
+  RUN_ERROR = 'run_error',
 }
+
+/** Storage types for protocol run lifecycle rows — visibility is governed by activity views. */
+export type RunLifecycleActivityType =
+  | ConversationActivityTypeEnum.RUN_START
+  | ConversationActivityTypeEnum.RUN_FINISH
+  | ConversationActivityTypeEnum.RUN_ERROR;
 
 export enum ConversationActivitySenderTypeEnum {
   SUBSCRIBER = 'subscriber',
