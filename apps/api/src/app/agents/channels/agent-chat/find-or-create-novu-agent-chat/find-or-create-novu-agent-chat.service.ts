@@ -29,6 +29,9 @@ export class NovuAgentChatProvisioningService {
   /**
    * Ensure the environment has a `novu-agent-chat` integration and link the agent
    * to it. Idempotent — safe to call repeatedly for the same agent.
+   *
+   * Does not stamp `connectedAt`. Same as Slack: Connected only after the first
+   * genuine inbound user message (via the shared inbound handler).
    */
   async execute(
     agentId: string,

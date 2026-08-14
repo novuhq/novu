@@ -149,6 +149,98 @@ describe('AgentConversationService', () => {
     });
   });
 
+  describe('persistWorkflowOriginHydration', () => {
+    function makeHydrationParams() {
+      return {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'whatsapp',
+          _integrationId: 'integration-a',
+          platformThreadId: 'whatsapp:15551234567',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        platformMessageId: 'wamid.abc',
+        platformThreadId: 'whatsapp:15551234567',
+        messageContent: 'Your order shipped',
+        signalData: { workflowIdentifier: 'order-alerts' },
+      };
+    }
+
+    it('swallows duplicate-key errors from the signal write', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const activityRepository = {
+        createAgentActivity: sinon
+          .stub()
+          .resolves({ _id: 'activity-1', identifier: 'workflow-dispatch-msg:wamid.abc' }),
+        createSignalActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves(null),
+      };
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const logger = makeLogger();
+      const service = new AgentConversationService(
+        conversationRepository,
+        activityRepository as any,
+        makeEventSequenceService(),
+        { emit: sinon.stub().resolves(undefined) } as any,
+        logger as any
+      );
+
+      await service.persistWorkflowOriginHydration(makeHydrationParams());
+
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+      expect(logger.warn.calledOnce).to.equal(true);
+      expect(logger.warn.firstCall.args[1]).to.equal('Workflow origin already hydrated');
+    });
+
+    it('rethrows non-duplicate errors from the signal write', async () => {
+      const activityRepository = {
+        createAgentActivity: sinon
+          .stub()
+          .resolves({ _id: 'activity-1', identifier: 'workflow-dispatch-msg:wamid.abc' }),
+        createSignalActivity: sinon.stub().rejects(new Error('mongo timeout')),
+        findOne: sinon.stub().resolves(null),
+      };
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const service = makeService(conversationRepository, activityRepository);
+
+      try {
+        await service.persistWorkflowOriginHydration(makeHydrationParams());
+        expect.fail('expected persistWorkflowOriginHydration to throw');
+      } catch (err) {
+        expect((err as Error).message).to.equal('mongo timeout');
+      }
+    });
+  });
+
+  describe('isWorkflowOriginHydrated', () => {
+    it('matches the signal identifier written by persistWorkflowOriginHydration', async () => {
+      const activityRepository = { count: sinon.stub().resolves(1) };
+      const service = makeService({} as unknown as ConversationRepository, activityRepository);
+
+      const hydrated = await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc');
+
+      expect(hydrated).to.equal(true);
+      expect(activityRepository.count.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _conversationId: 'conv-1',
+        identifier: 'workflow-dispatch-origin:wamid.abc',
+      });
+    });
+
+    it('returns false when the signal is absent', async () => {
+      const activityRepository = { count: sinon.stub().resolves(0) };
+      const service = makeService({} as unknown as ConversationRepository, activityRepository);
+
+      expect(await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc')).to.equal(false);
+    });
+  });
+
   describe('MCP connection activities', () => {
     it('persists request and result activities and publishes both to agent chat', async () => {
       const activityRepository = makeActivityRepository();

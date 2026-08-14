@@ -32,4 +32,5 @@ export interface ConversationTurn {
   storedAttachments?: StoredAttachment[];
   action?: AgentAction;
   reaction?: BridgeReaction;
+  workflowOriginContent?: string;
 }
