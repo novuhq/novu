@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-description: "Feature support matrix for Novu Connect on Slack, Microsoft Teams, WhatsApp, Telegram, and email."
+description: "Feature support matrix for Novu Connect on Slack, Microsoft Teams, WhatsApp, Telegram, email, and Agent Chat."
 sidebarTitle: Overview
 ---
 
@@ -8,25 +8,25 @@ Novu normalizes inbound events and outbound replies, but each provider exposes a
 
 ## Supported capabilities
 
-| Capability | Slack | Teams | WhatsApp | Telegram | Email |
-| --- | --- | --- | --- | --- | --- |
-| Full context history | Yes | Yes | Yes | Yes | Yes |
-| Threaded replies | Yes | Yes | Yes | Yes | Yes |
-| Live typing indicator | Yes | Yes | Yes | Yes | No |
-| React with eyes on new message | Yes | Yes | Yes | Yes | Yes |
-| Plan card (chain of thought) | Yes (native) | Markdown edit-in-place | No | Markdown edit-in-place | No |
-| Rich text styling | Yes | Yes | Bold / italics | Yes | HTML |
-| Tap-to-respond (buttons) | Yes | Yes | Yes (up to 3) | Yes | Yes (action links) |
-| Emoji reactions | Yes | Yes | Yes | Yes | Gmail only |
-| Message edits in place | Yes | Yes | Yes | Yes | No |
-| Action / tool approval | Yes | Yes | Yes | Yes | Yes |
-| MCP tool approval | Yes | Yes | Yes | Yes | Yes |
-| MCP connect card | Yes | Yes | Yes | Yes | Yes |
-| Resolve conversation | Yes | Yes | Yes | Yes | Yes |
-| Message queueing | Yes | Yes | Yes | Yes | Yes |
-| Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet |
+| Capability | Slack | Teams | WhatsApp | Telegram | Email | Agent Chat |
+| --- | --- | --- | --- | --- | --- | --- |
+| Full context history | Yes | Yes | Yes | Yes | Yes | Yes |
+| Threaded replies | Yes | Yes | Yes | Yes | Yes | Yes |
+| Live typing indicator | Yes | Yes | Yes | Yes | No | Yes |
+| React with eyes on new message | Yes | Yes | Yes | Yes | Yes | No |
+| Plan card (chain of thought) | Yes (native) | Markdown edit-in-place | No | Markdown edit-in-place | No | Yes (thinking parts) |
+| Rich text styling | Yes | Yes | Bold / italics | Yes | HTML | Yes (your UI) |
+| Tap-to-respond (buttons) | Yes | Yes | Yes (up to 3) | Yes | Yes (action links) | Yes |
+| Emoji reactions | Yes | Yes | Yes | Yes | Gmail only | No |
+| Message edits in place | Yes | Yes | Yes | Yes | No | Yes |
+| Action / tool approval | Yes | Yes | Yes | Yes | Yes | Yes |
+| MCP tool approval | Yes | Yes | Yes | Yes | Yes | Yes |
+| MCP connect card | Yes | Yes | Yes | Yes | Yes | Yes |
+| Resolve conversation | Yes | Yes | Yes | Yes | Yes | Yes |
+| Message queueing | Yes | Yes | Yes | Yes | Yes | Yes |
+| Outbound file attachments | Yes | Yes | Not yet | Not yet | Not yet | Yes (file parts) |
 
-Word-by-word streaming is not supported on any live channel yet.
+Word-by-word streaming is not supported on Slack, Teams, WhatsApp, Telegram, or email. Agent Chat updates text parts over the live socket while the turn runs.
 
 ## Channel pages
 
@@ -45,6 +45,9 @@ Word-by-word streaming is not supported on any live channel yet.
   </Card>
   <Card title="Email" icon="mail" href="/agents/channels/email">
     Threaded HTML, action-link approvals.
+  </Card>
+  <Card title="Agent Chat" icon="message-circle" href="/agents/channels/agent-chat">
+    In-app headless hook, typing, tool approval.
   </Card>
 </Columns>
 

@@ -357,6 +357,7 @@ function ProviderCard({
           connected={effectiveConnected}
           connecting={showConnecting}
           inSetup={showInSetup}
+          idleLabel={item.providerId === ChatProviderIdEnum.NovuAgentChat ? 'Try in dashboard' : 'Connect'}
         />
       </div>
     </button>

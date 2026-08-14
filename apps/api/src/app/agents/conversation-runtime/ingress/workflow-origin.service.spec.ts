@@ -778,9 +778,7 @@ describe('WorkflowOriginService', () => {
         conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
       ).to.equal('order-alerts');
       // Returned so a live managed session receives the origin it can no longer read from the transcript.
-      expect(content).to.equal(
-        'Your order shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-9"\n}'
-      );
+      expect(content).to.equal('Your order shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-9"\n}');
     });
 
     it('no-ops hydrate when the thread id is unparseable', async () => {
@@ -816,6 +814,183 @@ describe('WorkflowOriginService', () => {
 
       expect(result).to.equal(null);
       expect(logger.warn.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('Sendblue', () => {
+    const USER_PHONE = '+19998887777';
+    const sendblueDmThreadId = 'sendblue:+15122164639:+19998887777';
+    const sendblueGroupThreadId = 'sendblue:+15122164639:g:group-1';
+
+    const sendblueConfig = {
+      environmentId: 'env1',
+      organizationId: 'org1',
+      platform: AgentPlatformEnum.SENDBLUE,
+      agentIdentifier: 'support-agent',
+      providerId: 'sendblue',
+    };
+
+    const sendblueOrigin = {
+      _id: 'sb-msg1',
+      _notificationId: 'sb-notif1',
+      _jobId: 'sb-job1',
+      transactionId: 'sb-txn1',
+      templateIdentifier: 'order-alerts',
+      stepId: 'chat-1',
+      content: 'Your order shipped',
+      identifier: 'sb-handle-abc123',
+      createdAt: new Date(Date.now() - 60_000).toISOString(),
+      providerId: 'sendblue',
+    };
+
+    it('hydrates the latest agent-attributed Sendblue origin on a new conversation', async () => {
+      const { service, messageRepository } = makeService({
+        find: sinon.stub().resolves([sendblueOrigin]),
+      });
+
+      const before = Date.now();
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: sendblueConfig as any,
+        platformThreadId: sendblueDmThreadId,
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'hi', author: { userId: USER_PHONE }, raw: {} } as any,
+        existingConversation: null,
+      });
+      const after = Date.now();
+
+      expect(messageRepository.find.calledOnce).to.equal(true);
+      const [query, , options] = messageRepository.find.firstCall.args;
+      expect(query).to.include({
+        _environmentId: 'env1',
+        _agentId: 'agent1',
+        _subscriberId: 'subscriber-mongo-1',
+        providerId: 'sendblue',
+      });
+      expect(query.createdAt.$gt.getTime()).to.be.at.least(before - WORKFLOW_ORIGIN_LOOKBACK_MS - 5);
+      expect(query.createdAt.$gt.getTime()).to.be.at.most(after - WORKFLOW_ORIGIN_LOOKBACK_MS + 5);
+      expect(query._notificationId).to.deep.equal({ $exists: true, $ne: null });
+      expect(options).to.deep.equal({ sort: { createdAt: -1 }, limit: 1 });
+      expect(result).to.deep.equal({ origin: sendblueOrigin, notificationId: 'sb-notif1' });
+    });
+
+    it('catch-up hydrates an existing conversation when the origin is not hydrated yet', async () => {
+      const existingConversation = {
+        ...conversation,
+        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
+        participants: [{ type: 'subscriber', id: 'sub1' }],
+      };
+      const { service, messageRepository, conversationService } = makeService({
+        find: sinon.stub().resolves([sendblueOrigin]),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: sendblueConfig as any,
+        platformThreadId: sendblueDmThreadId,
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'hi', author: { userId: USER_PHONE }, raw: {} } as any,
+        existingConversation: existingConversation as any,
+      });
+
+      expect(messageRepository.find.calledOnce).to.equal(true);
+      expect(conversationService.isWorkflowOriginHydrated.firstCall.args).to.deep.equal([
+        'env1',
+        'conversation1',
+        sendblueOrigin.identifier,
+      ]);
+      expect(result).to.deep.equal({ origin: sendblueOrigin, notificationId: undefined });
+    });
+
+    it('skips an origin already hydrated into the conversation', async () => {
+      const existingConversation = {
+        ...conversation,
+        lastActivityAt: new Date(Date.now() - 3_600_000).toISOString(),
+        participants: [{ type: 'subscriber', id: 'sub1' }],
+      };
+      const { service } = makeService({
+        find: sinon.stub().resolves([sendblueOrigin]),
+        isWorkflowOriginHydrated: sinon.stub().resolves(true),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: sendblueConfig as any,
+        platformThreadId: sendblueDmThreadId,
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'hi', author: { userId: USER_PHONE }, raw: {} } as any,
+        existingConversation: existingConversation as any,
+      });
+
+      expect(result).to.equal(null);
+    });
+
+    it('skips group threads without looking up an origin', async () => {
+      const { service, messageRepository } = makeService({
+        find: sinon.stub().resolves([sendblueOrigin]),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: sendblueConfig as any,
+        platformThreadId: sendblueGroupThreadId,
+        subscriberId: 'sub1',
+        message: { id: 'inbound', text: 'hi', author: { userId: USER_PHONE }, raw: {} } as any,
+        existingConversation: null,
+      });
+
+      expect(messageRepository.find.called).to.equal(false);
+      expect(messageRepository.findOne.called).to.equal(false);
+      expect(result).to.equal(null);
+    });
+
+    it('hydrates using the bare message_handle as platformMessageId', async () => {
+      const { service, conversationService } = makeService({
+        notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-9' } }),
+      });
+
+      await service.hydrate({
+        agentId: 'agent1',
+        config: sendblueConfig as any,
+        conversation: conversation as any,
+        platformThreadId: sendblueDmThreadId,
+        origin: sendblueOrigin as any,
+      });
+
+      expect(conversationService.persistWorkflowOriginHydration.firstCall.args[0].platformMessageId).to.equal(
+        sendblueOrigin.identifier
+      );
+      expect(
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
+      ).to.equal('order-alerts');
+    });
+
+    it('ignores quote-reply context and uses latest-by-subscriber only', async () => {
+      const { service, messageRepository } = makeService({
+        find: sinon.stub().resolves([sendblueOrigin]),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: sendblueConfig as any,
+        platformThreadId: sendblueDmThreadId,
+        subscriberId: 'sub1',
+        message: {
+          id: 'inbound',
+          text: 'hi',
+          author: { userId: USER_PHONE },
+          raw: {
+            message: {
+              context: { id: 'sb-handle-quoted' },
+            },
+          },
+        } as any,
+        existingConversation: null,
+      });
+
+      expect(messageRepository.findOne.called).to.equal(false);
+      expect(messageRepository.find.calledOnce).to.equal(true);
+      expect(result?.origin.identifier).to.equal(sendblueOrigin.identifier);
     });
   });
 });
