@@ -101,8 +101,6 @@ export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
 
 export const AGENT_DETAILS_CHAT_TAB = 'chat';
 
-export const AGENT_DETAILS_LEGACY_TRY_IT_TAB = 'try-it';
-
 export const AGENT_DETAILS_TABS = ['overview', 'integrations', AGENT_DETAILS_CHAT_TAB] as const;
 
 export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];

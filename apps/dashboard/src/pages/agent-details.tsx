@@ -45,7 +45,6 @@ import { QueryKeys } from '@/utils/query-keys';
 import {
   AGENT_DETAILS_CHAT_TAB,
   AGENT_DETAILS_DEFAULT_TAB,
-  AGENT_DETAILS_LEGACY_TRY_IT_TAB,
   AGENT_DETAILS_TABS,
   type AgentDetailsTab,
   buildRoute,
@@ -210,19 +209,6 @@ export function AgentDetailsPage() {
 
   if (!agentIdentifier) {
     return <Navigate to={agentsListPath} replace />;
-  }
-
-  if (agentTabParam === AGENT_DETAILS_LEGACY_TRY_IT_TAB && currentEnvironment?.slug) {
-    return (
-      <Navigate
-        replace
-        to={`${buildRoute(agentRoutes.detailsTab, {
-          environmentSlug: currentEnvironment.slug,
-          agentIdentifier: encodeURIComponent(agentIdentifier),
-          agentTab: AGENT_DETAILS_CHAT_TAB,
-        })}${location.search}`}
-      />
-    );
   }
 
   if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
