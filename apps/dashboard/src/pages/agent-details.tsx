@@ -12,12 +12,14 @@ import {
   listAgentIntegrations,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentChatPanel } from '@/components/agents/agent-chat-panel';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { getAgentChatIntegrationIdentifier } from '@/components/agents/is-agent-integration-connected';
 import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -41,6 +43,7 @@ import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversatio
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QueryKeys } from '@/utils/query-keys';
 import {
+  AGENT_DETAILS_CHAT_TAB,
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
   type AgentDetailsTab,
@@ -155,6 +158,12 @@ export function AgentDetailsPage() {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
+  const agentChatIntegrationIdentifier = useMemo(
+    () => getAgentChatIntegrationIdentifier(agentIntegrationsQuery.data?.data),
+    [agentIntegrationsQuery.data?.data]
+  );
+  const hasAgentChat = Boolean(agentChatIntegrationIdentifier);
+
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
   const showSetupModal =
@@ -203,6 +212,24 @@ export function AgentDetailsPage() {
   }
 
   if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
+    return (
+      <Navigate
+        replace
+        to={`${buildRoute(agentRoutes.detailsTab, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })}${location.search}`}
+      />
+    );
+  }
+
+  if (
+    currentTab === AGENT_DETAILS_CHAT_TAB &&
+    agentIntegrationsQuery.isSuccess &&
+    !hasAgentChat &&
+    currentEnvironment?.slug
+  ) {
     return (
       <Navigate
         replace
@@ -291,93 +318,104 @@ export function AgentDetailsPage() {
     <>
       <PageMeta title={pageTitle} />
       <DashboardLayout headerStartItems={headerStartItems}>
-        {/* Below header: Inbox must not nest under this customer-env NovuProvider. */}
-        <ConnectSubscriberProvider>
-          {isNotFound ? (
-            <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">
-              <p>This agent does not exist or was removed.</p>
-              <Link to={agentsListPath} className="text-primary-base mt-3 inline-block text-label-sm font-medium">
-                Back to agents
-              </Link>
-            </div>
-          ) : null}
+        {isNotFound ? (
+          <div className="text-text-soft text-label-sm max-w-3xl px-4 py-6 md:px-6">
+            <p>This agent does not exist or was removed.</p>
+            <Link to={agentsListPath} className="text-primary-base mt-3 inline-block text-label-sm font-medium">
+              Back to agents
+            </Link>
+          </div>
+        ) : null}
 
-          {error && !isNotFound ? (
-            <div className="text-error-base text-label-sm max-w-3xl px-4 py-6 md:px-6">
-              Could not load this agent. Try again later.
-            </div>
-          ) : null}
+        {error && !isNotFound ? (
+          <div className="text-error-base text-label-sm max-w-3xl px-4 py-6 md:px-6">
+            Could not load this agent. Try again later.
+          </div>
+        ) : null}
 
-          {!error && isLoading ? (
-            <>
-              <AgentDetailsHeader agent={undefined} isLoading />
-              <AgentDetailsTabsSkeleton />
-            </>
-          ) : null}
+        {!error && isLoading ? (
+          <>
+            <AgentDetailsHeader agent={undefined} isLoading />
+            <AgentDetailsTabsSkeleton />
+          </>
+        ) : null}
 
-          {!error && !isLoading && agent ? (
-            <>
-              <AgentDetailsHeader agent={agent} isLoading={false} onRequestDelete={setAgentToDelete} />
+        {!error && !isLoading && agent ? (
+          <>
+            <AgentDetailsHeader agent={agent} isLoading={false} onRequestDelete={setAgentToDelete} />
 
-              {agent.exceedsPlanLimit ? (
-                <div className="px-4 pb-2 md:px-6">
-                  <AgentExceedsPlanBanner />
-                </div>
-              ) : null}
+            {agent.exceedsPlanLimit ? (
+              <div className="px-4 pb-2 md:px-6">
+                <AgentExceedsPlanBanner />
+              </div>
+            ) : null}
 
-              <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
-                <TabsList align="start" variant="regular" className="border-t-transparent px-4 py-0! md:px-6">
-                  <TabsTrigger variant="regular" value="overview" size="xl">
-                    Overview
+            <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
+              <TabsList align="start" variant="regular" className="border-t-transparent px-4 py-0! md:px-6">
+                <TabsTrigger variant="regular" value="overview" size="xl">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger variant="regular" value="integrations" size="xl">
+                  Channels
+                </TabsTrigger>
+                {hasAgentChat ? (
+                  <TabsTrigger variant="regular" value={AGENT_DETAILS_CHAT_TAB} size="xl">
+                    Chat
                   </TabsTrigger>
-                  <TabsTrigger variant="regular" value="integrations" size="xl">
-                    Channels
-                  </TabsTrigger>
-                </TabsList>
+                ) : null}
+              </TabsList>
 
-                <TabsContent value="overview" className="outline-none">
-                  <AgentOverviewTab agent={agent} />
-                </TabsContent>
-                <TabsContent value="integrations" className="outline-none">
-                  {currentTab === 'integrations' ? (
+              <TabsContent value="overview" className="outline-none">
+                <AgentOverviewTab agent={agent} />
+              </TabsContent>
+              <TabsContent value="integrations" className="outline-none">
+                {currentTab === 'integrations' ? (
+                  <ConnectSubscriberProvider>
                     <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
+                  </ConnectSubscriberProvider>
+                ) : null}
+              </TabsContent>
+              {hasAgentChat ? (
+                <TabsContent value={AGENT_DETAILS_CHAT_TAB} className="outline-none">
+                  {currentTab === AGENT_DETAILS_CHAT_TAB ? (
+                    <AgentChatPanel agent={agent} agentChatIntegrationIdentifier={agentChatIntegrationIdentifier} />
                   ) : null}
                 </TabsContent>
-              </Tabs>
+              ) : null}
+            </Tabs>
 
-              <DeleteAgentDialog
-                open={Boolean(agentToDelete)}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setAgentToDelete(null);
-                  }
-                }}
-                onConfirm={({ deleteFromProvider }) => {
-                  if (agentToDelete) {
-                    deleteMutation.mutate({
-                      identifier: agentToDelete.identifier,
-                      name: agentToDelete.name,
-                      deleteFromProvider,
-                    });
-                  }
-                }}
-                agentName={agentToDelete?.name ?? ''}
-                agentIdentifier={agentToDelete?.identifier ?? ''}
-                isDeleting={deleteMutation.isPending}
-                isManagedRuntime={agentToDelete?.runtime === 'managed'}
-              />
+            <DeleteAgentDialog
+              open={Boolean(agentToDelete)}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setAgentToDelete(null);
+                }
+              }}
+              onConfirm={({ deleteFromProvider }) => {
+                if (agentToDelete) {
+                  deleteMutation.mutate({
+                    identifier: agentToDelete.identifier,
+                    name: agentToDelete.name,
+                    deleteFromProvider,
+                  });
+                }
+              }}
+              agentName={agentToDelete?.name ?? ''}
+              agentIdentifier={agentToDelete?.identifier ?? ''}
+              isDeleting={deleteMutation.isPending}
+              isManagedRuntime={agentToDelete?.runtime === 'managed'}
+            />
 
-              <AgentSetupModal
-                isOpen={showSetupModal}
-                onClose={() => setSetupModalDismissed(true)}
-                onSetupClick={() => {
-                  setSetupModalDismissed(true);
-                  handleTabChange('integrations');
-                }}
-              />
-            </>
-          ) : null}
-        </ConnectSubscriberProvider>
+            <AgentSetupModal
+              isOpen={showSetupModal}
+              onClose={() => setSetupModalDismissed(true)}
+              onSetupClick={() => {
+                setSetupModalDismissed(true);
+                handleTabChange('integrations');
+              }}
+            />
+          </>
+        ) : null}
       </DashboardLayout>
     </>
   );

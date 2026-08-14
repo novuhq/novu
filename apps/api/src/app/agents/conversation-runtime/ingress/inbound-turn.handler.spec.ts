@@ -1,4 +1,4 @@
-import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, buildDashboardAgentChatSubscriberId } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
@@ -1378,6 +1378,26 @@ describe('AgentInboundHandler', () => {
       const message = makeStartMessage('/start dashcode');
 
       await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+    });
+
+    it('does not mark connectedAt when the dashboard Agent Chat tester identity sends a message', async () => {
+      const dashboardSubscriberId = buildDashboardAgentChatSubscriberId('user-123');
+      const { handler, agentIntegrationRepository } = makeHandler({
+        ...makeResolvedSubscriberOverrides(dashboardSubscriberId),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('hello from dashboard tester');
+
+      await handler.handle(
+        'agent1',
+        { ...telegramConfig, isManaged: true } as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
 
       expect(agentIntegrationRepository.updateOne.called).to.equal(false);
     });
