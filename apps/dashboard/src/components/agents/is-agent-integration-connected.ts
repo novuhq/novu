@@ -17,6 +17,9 @@ export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'co
   return hasAgentInboundConnection(link.connectedAt);
 }
 
-export function hasAgentChatLink(links: Array<{ integration: { providerId: string } }> | undefined): boolean {
-  return Boolean(links?.some((link) => link.integration.providerId === ChatProviderIdEnum.NovuAgentChat));
+export function getAgentChatIntegrationIdentifier(
+  links: Array<{ integration: { providerId: string; identifier: string } }> | undefined
+): string | undefined {
+  return links?.find((link) => link.integration.providerId === ChatProviderIdEnum.NovuAgentChat)?.integration
+    .identifier;
 }

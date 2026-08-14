@@ -5,7 +5,7 @@ import { AgentChatSetupSteps } from '@/components/agents/agent-chat-setup-steps'
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { AGENT_DETAILS_TRY_IT_TAB, buildRoute } from '@/utils/routes';
+import { AGENT_DETAILS_CHAT_TAB, buildRoute } from '@/utils/routes';
 import { ListeningStatus, ProviderSetupStepperRail, SetupStepperRail } from './setup-guide-primitives';
 
 export type AgentChatSetupGuideProps = {
@@ -43,7 +43,7 @@ export function AgentChatSetupGuide({
     onStepsCompleted?.();
   }, [onStepsCompleted]);
 
-  const handleOpenTryIt = useCallback(() => {
+  const handleOpenChat = useCallback(() => {
     if (!currentEnvironment?.slug) {
       return;
     }
@@ -52,7 +52,7 @@ export function AgentChatSetupGuide({
       `${buildRoute(agentRoutes.detailsTab, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
-        agentTab: AGENT_DETAILS_TRY_IT_TAB,
+        agentTab: AGENT_DETAILS_CHAT_TAB,
       })}${location.search}`
     );
   }, [agent.identifier, agentRoutes.detailsTab, currentEnvironment?.slug, location.search, navigate]);
@@ -65,7 +65,7 @@ export function AgentChatSetupGuide({
       prompt={prompt}
       stepOffset={stepOffset}
       firstIncompleteStep={firstIncompleteStep}
-      onOpenTryIt={handleOpenTryIt}
+      onOpenChat={handleOpenChat}
     />
   );
 

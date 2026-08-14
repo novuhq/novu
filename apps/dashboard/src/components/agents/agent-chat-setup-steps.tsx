@@ -9,14 +9,14 @@ type AgentChatSetupStepsProps = {
   stepOffset?: number;
   /** Omit to show all steps as completed (connected recap). */
   firstIncompleteStep?: number;
-  onOpenTryIt?: () => void;
+  onOpenChat?: () => void;
 };
 
 export function AgentChatSetupSteps({
   prompt,
   stepOffset = 1,
   firstIncompleteStep,
-  onOpenTryIt,
+  onOpenChat,
 }: AgentChatSetupStepsProps) {
   const base = stepOffset;
   const recap = firstIncompleteStep === undefined;
@@ -26,19 +26,19 @@ export function AgentChatSetupSteps({
       <SetupStep
         index={base}
         status={recap ? 'completed' : deriveStepStatus(base, firstIncompleteStep)}
-        title="Try it in the dashboard"
-        description="Chat as yourself to test prompts, tools, and MCPs. This does not connect your app."
+        title="Your agent can already chat"
+        description="Open Chat and send a message. Try it here before you add it to your app."
         extraContent={
-          recap || !onOpenTryIt ? undefined : (
+          !onOpenChat ? undefined : (
             <Button
               type="button"
               variant="primary"
               size="xs"
-              onClick={onOpenTryIt}
+              onClick={onOpenChat}
               trailingIcon={RiArrowRightSLine}
               className="self-start"
             >
-              Open Try it tab
+              Open Chat
             </Button>
           )
         }

@@ -1,10 +1,4 @@
-import {
-  ChannelTypeEnum,
-  ChatProviderIdEnum,
-  type IIntegration,
-  providers as novuProviders,
-  PermissionsEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
@@ -28,7 +22,7 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
-import { AGENT_DETAILS_TRY_IT_TAB, buildRoute } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { AddChannelPicker } from './add-channel-picker';
@@ -316,19 +310,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     integrationIdentifier,
   ]);
 
-  const handleProviderDropdownSelect = (providerId: string, integration?: IIntegration) => {
-    if (providerId === ChatProviderIdEnum.NovuAgentChat && currentEnvironment?.slug) {
-      void navigate(
-        `${buildRoute(agentRoutes.detailsTab, {
-          environmentSlug: currentEnvironment.slug,
-          agentIdentifier: encodeURIComponent(agent.identifier),
-          agentTab: AGENT_DETAILS_TRY_IT_TAB,
-        })}${location.search}`
-      );
-
-      return;
-    }
-
+  const handleProviderDropdownSelect = (_providerId: string, integration?: IIntegration) => {
     if (integration?.identifier) {
       navigateToGuide(integration.identifier);
     }

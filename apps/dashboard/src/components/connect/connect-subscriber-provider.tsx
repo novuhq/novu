@@ -20,18 +20,16 @@ export const useConnectSubscriber = createContextHook(ConnectSubscriberContext);
 
 type ConnectSubscriberProviderProps = {
   children?: ReactNode;
-  /** When set, the customer-env Novu session uses this id instead of the dashboard user id. */
-  subscriberIdOverride?: string;
 };
 
 type NovuProviderChildren = ComponentProps<typeof NovuProvider>['children'];
 
-export function ConnectSubscriberProvider({ children, subscriberIdOverride }: ConnectSubscriberProviderProps) {
+export function ConnectSubscriberProvider({ children }: ConnectSubscriberProviderProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
 
   const isReady = isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier;
-  const subscriberId = subscriberIdOverride || currentUser?._id || '';
+  const subscriberId = currentUser?._id || '';
   const routedContent = (children === undefined ? <Outlet /> : children) as NovuProviderChildren;
   const subscriber = useMemo(
     () => ({
