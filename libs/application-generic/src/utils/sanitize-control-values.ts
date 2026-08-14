@@ -19,6 +19,7 @@ import {
   ToolControlType,
 } from '../schemas/control';
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
+import { resolveChatEditorType } from './resolve-chat-editor-type';
 
 // Cast input T_Type to trigger Ajv validation errors - possible undefined
 function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
@@ -139,10 +140,11 @@ function keepProviderOverrides(
 }
 
 function sanitizeChat(controlValues: WithProviderOverrides<ChatControlType>) {
+  const editorType = resolveChatEditorType(controlValues.body, controlValues.editorType);
   const mappedValues: ChatControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
-    editorType: controlValues.editorType,
+    ...(editorType ? { editorType } : {}),
   };
 
   return keepProviderOverrides(filterNullishValues(mappedValues) as Record<string, unknown>, controlValues);
