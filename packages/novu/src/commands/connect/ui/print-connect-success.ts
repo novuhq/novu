@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { channelDisplayName } from '../dashboard-urls';
+import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import type { ConnectUI } from './ui';
 
@@ -19,9 +19,11 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     return;
   }
 
-  const agentUrl = result.environmentSlug
-    ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
-    : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
+  const agentUrl = buildConnectAgentDetailsUrl({
+    connectDashboardUrl: result.connectDashboardUrl,
+    environmentSlug: result.environmentSlug,
+    agentIdentifier: result.agent.identifier,
+  });
   const channelLabel = (() => {
     if (result.connectedChannel === 'slack') return 'Slack';
     if (result.connectedChannel === 'telegram') return 'Telegram';

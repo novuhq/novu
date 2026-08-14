@@ -4,7 +4,7 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
-import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import { buildConnectAgentDetailsUrl, channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
@@ -533,9 +533,11 @@ function SuccessView({
     aiSdkOutcome,
     langChainOutcome,
   } = phase;
-  const agentUrl = environmentSlug
-    ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
-    : `${connectDashboardUrl}/connect/agents/${encodeURIComponent(agent.identifier)}`;
+  const agentUrl = buildConnectAgentDetailsUrl({
+    connectDashboardUrl,
+    environmentSlug,
+    agentIdentifier: agent.identifier,
+  });
 
   const channelLabel = (() => {
     if (connectedChannel === 'slack') return 'Slack';

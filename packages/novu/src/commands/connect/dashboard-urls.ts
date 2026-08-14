@@ -15,13 +15,11 @@ export function buildConnectAgentDetailsUrl(input: {
   tab?: 'integrations' | 'overview';
 }): string {
   const base = input.connectDashboardUrl.replace(/\/$/, '');
+  const tab = input.tab ?? 'overview';
+  const encodedIdentifier = encodeURIComponent(input.agentIdentifier);
   const agentPath = input.environmentSlug
-    ? `/env/${input.environmentSlug}/connect/agents/${encodeURIComponent(input.agentIdentifier)}`
-    : `/connect/agents/${encodeURIComponent(input.agentIdentifier)}`;
-
-  if (input.tab === 'integrations') {
-    return `${base}${agentPath}/integrations`;
-  }
+    ? `/env/${input.environmentSlug}/agents/${encodedIdentifier}/${tab}`
+    : `/agents/${encodedIdentifier}/${tab}`;
 
   return `${base}${agentPath}`;
 }
