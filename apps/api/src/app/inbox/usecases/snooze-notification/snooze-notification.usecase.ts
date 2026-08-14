@@ -10,6 +10,7 @@ import {
   AnalyticsService,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeferReasonEnum,
   DetailEnum,
   getEffectiveJobPayload,
   PinoLogger,
@@ -116,6 +117,7 @@ export class SnoozeNotification {
       },
       groupId: job._organizationId,
       options: { delay, attempts: this.RETRY_ATTEMPTS, backoff: { type: 'exponential', delay: 5000 } },
+      deferReason: DeferReasonEnum.SNOOZE,
     });
   }
 

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Test } from '@nestjs/testing';
 import {
+  EventBridgeSchedulerService,
   FeatureFlagsService,
   JobsOptions,
   PinoLogger,
@@ -70,6 +71,12 @@ const mockLogger = {
   error: () => {},
 } as unknown as PinoLogger;
 
+const mockSchedulerService = {
+  isConfigured: () => false,
+  createDelayedFire: async () => {},
+  deleteSchedule: async () => {},
+} as unknown as EventBridgeSchedulerService;
+
 describe('Standard Worker', () => {
   let jobRepository: JobRepository;
   let notificationRepository: NotificationRepository;
@@ -131,7 +138,8 @@ describe('Standard Worker', () => {
       mockSqsService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
-      mockLogger
+      mockLogger,
+      mockSchedulerService
     );
     await standardQueueService.queue.obliterate();
   });
