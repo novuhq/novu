@@ -20,6 +20,8 @@ import {
   throttleUiSchema,
   toolControlSchema,
   toolUiSchema,
+  waitControlSchema,
+  waitUiSchema,
 } from '../schemas/control';
 import { isStepResolverActive } from './step-resolver-control-state';
 
@@ -68,6 +70,10 @@ const stepTypeToControlSchemaMap: Record<ControlSchemaStepType, ControlSchemas> 
   [ActionStepEnum.THROTTLE]: {
     schema: throttleControlSchema,
     uiSchema: throttleUiSchema,
+  },
+  [ActionStepEnum.WAIT]: {
+    schema: waitControlSchema,
+    uiSchema: waitUiSchema,
   },
   [ActionStepEnum.CUSTOM]: {
     schema: PERMISSIVE_EMPTY_SCHEMA,

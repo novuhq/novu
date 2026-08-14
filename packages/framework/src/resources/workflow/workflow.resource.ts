@@ -6,6 +6,7 @@ import {
   digestActionSchemas,
   emptySchema,
   throttleActionSchemas,
+  waitActionSchemas,
 } from '../../schemas';
 import {
   type CancelEventTriggerResponse,
@@ -172,6 +173,12 @@ export function workflow<
           ActionStepEnum.THROTTLE,
           throttleActionSchemas.output,
           throttleActionSchemas.result
+        ),
+        wait: await discoverActionStepFactory(
+          newWorkflow,
+          ActionStepEnum.WAIT,
+          waitActionSchemas.output,
+          waitActionSchemas.result
         ),
         custom: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.CUSTOM),
         httpRequest: await discoverCustomStepFactory(newWorkflow, ActionStepEnum.HTTP_REQUEST),

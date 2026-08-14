@@ -308,6 +308,7 @@ function mapJobToDto(item: JobFeedItem): ActivityNotificationJobResponseDto {
     status: item.status,
     updatedAt: item.updatedAt,
     scheduleExtensionsCount: item.scheduleExtensionsCount,
+    stepOutput: item.stepOutput,
   };
 }
 

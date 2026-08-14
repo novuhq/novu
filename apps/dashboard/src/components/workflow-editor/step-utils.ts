@@ -30,6 +30,8 @@ import {
   DEFAULT_CONTROL_THROTTLE_TYPE,
   DEFAULT_CONTROL_THROTTLE_UNIT,
   DEFAULT_CONTROL_THROTTLE_WINDOW,
+  DEFAULT_CONTROL_WAIT_AMOUNT,
+  DEFAULT_CONTROL_WAIT_UNIT,
   STEP_TYPE_LABELS,
 } from '@/utils/constants';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
@@ -247,6 +249,11 @@ export const createStep = (
     controlValue.amount = DEFAULT_CONTROL_DELAY_AMOUNT;
     controlValue.unit = DEFAULT_CONTROL_DELAY_UNIT;
     controlValue.cron = DEFAULT_CONTROL_DELAY_CRON;
+  }
+
+  if (type === StepTypeEnum.WAIT) {
+    controlValue.amount = DEFAULT_CONTROL_WAIT_AMOUNT;
+    controlValue.unit = DEFAULT_CONTROL_WAIT_UNIT;
   }
 
   if (type === StepTypeEnum.THROTTLE) {

@@ -7,3 +7,4 @@ export * from './in-app-control.dto';
 export * from './push-control.dto';
 export * from './sms-control.dto';
 export * from './throttle-control.dto';
+export * from './wait-control.dto';

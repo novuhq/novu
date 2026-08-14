@@ -5,6 +5,7 @@ import {
   RiCodeBlock,
   RiFlashlightFill,
   RiHourglassFill,
+  RiPauseCircleFill,
   RiShadowLine,
   RiSpeedUpFill,
 } from 'react-icons/ri';
@@ -19,6 +20,7 @@ export const STEP_TYPE_TO_ICON: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.CHAT]: RiChatThreadFill,
   [StepTypeEnum.CUSTOM]: RiCodeBlock,
   [StepTypeEnum.DELAY]: RiHourglassFill,
+  [StepTypeEnum.WAIT]: RiPauseCircleFill,
   [StepTypeEnum.DIGEST]: RiShadowLine,
   [StepTypeEnum.EMAIL]: Mail3Fill as IconType,
   [StepTypeEnum.HTTP_REQUEST]: Api as IconType,

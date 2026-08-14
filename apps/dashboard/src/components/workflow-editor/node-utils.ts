@@ -23,6 +23,7 @@ import {
   ThrottleNode,
   ToolNode,
   TriggerNode,
+  WaitNode,
 } from './nodes';
 
 // y distance = node height + space between nodes
@@ -38,6 +39,7 @@ export const nodeTypes = {
   chat: ChatNode,
   tool: ToolNode,
   delay: DelayNode,
+  wait: WaitNode,
   digest: DigestNode,
   throttle: ThrottleNode,
   custom: CustomNode,
@@ -54,6 +56,7 @@ export const NODE_TYPE_TO_STEP_TYPE: Omit<Record<keyof typeof nodeTypes, StepTyp
   chat: StepTypeEnum.CHAT,
   tool: StepTypeEnum.TOOL,
   delay: StepTypeEnum.DELAY,
+  wait: StepTypeEnum.WAIT,
   digest: StepTypeEnum.DIGEST,
   throttle: StepTypeEnum.THROTTLE,
   custom: StepTypeEnum.CUSTOM,
@@ -75,6 +78,8 @@ export const mapStepToNodeContent = (
     switch (stepType) {
       case StepTypeEnum.DELAY:
         return 'Delay duration controlled by code';
+      case StepTypeEnum.WAIT:
+        return 'Wait duration controlled by code';
       case StepTypeEnum.DIGEST:
         return 'Digest window controlled by code';
       case StepTypeEnum.THROTTLE:
@@ -110,6 +115,11 @@ export const mapStepToNodeContent = (
               : `Delay for ${controlValues.amount} ${controlValues.unit}`;
 
       return delayMessage;
+    }
+    case StepTypeEnum.WAIT: {
+      return workflowOrigin === ResourceOriginEnum.EXTERNAL
+        ? 'Wait duration defined in code'
+        : `Wait for ${controlValues.amount} ${controlValues.unit}`;
     }
     case StepTypeEnum.DIGEST:
       return 'Batches events into one coherent message before delivery to the subscriber.';

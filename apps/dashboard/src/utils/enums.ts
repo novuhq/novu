@@ -8,6 +8,7 @@ export enum StepTypeEnum {
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',
+  WAIT = 'wait',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
   HTTP_REQUEST = 'http_request',

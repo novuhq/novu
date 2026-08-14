@@ -122,6 +122,7 @@ export class GetActiveIntegrationsStatus {
       const stepType = step.template?.type;
       const skipStep =
         stepType === StepTypeEnum.DELAY ||
+        stepType === StepTypeEnum.WAIT ||
         stepType === StepTypeEnum.DIGEST ||
         stepType === StepTypeEnum.TRIGGER ||
         stepType === StepTypeEnum.CUSTOM ||

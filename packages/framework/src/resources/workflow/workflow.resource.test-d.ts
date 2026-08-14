@@ -21,6 +21,7 @@ describe('workflow function types', () => {
           tool: unknown;
           digest: unknown;
           delay: unknown;
+          wait: unknown;
           custom: unknown;
         }>();
       });

@@ -20,6 +20,7 @@ const typeMap: Record<string, StepTypeEnum> = {
   push: StepTypeEnum.PUSH,
   chat: StepTypeEnum.CHAT,
   delay: StepTypeEnum.DELAY,
+  wait: StepTypeEnum.WAIT,
   digest: StepTypeEnum.DIGEST,
   custom: StepTypeEnum.CUSTOM,
   http_request: StepTypeEnum.HTTP_REQUEST,

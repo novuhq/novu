@@ -509,6 +509,7 @@ export class Client {
             chat: this.executeStepFactory(validatedEvent, setResult, hasResult),
             custom: this.executeStepFactory(validatedEvent, setResult, hasResult),
             throttle: this.executeStepFactory(validatedEvent, setResult, hasResult),
+            wait: this.executeStepFactory(validatedEvent, setResult, hasResult),
             tool: this.executeStepFactory(validatedEvent, setResult, hasResult),
           },
         }),

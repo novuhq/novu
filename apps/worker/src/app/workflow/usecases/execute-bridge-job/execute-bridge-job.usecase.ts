@@ -36,6 +36,7 @@ import {
   PostActionEnum,
   State,
   ThrottleResult,
+  WaitResult,
 } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
@@ -340,6 +341,16 @@ export class ExecuteBridgeJob {
         return {
           duration: Date.now() - new Date(job.createdAt).getTime(),
         } satisfies DelayResult;
+      }
+      case 'wait': {
+        const stepOutput = job.stepOutput as WaitResult | undefined;
+
+        return (
+          stepOutput ??
+          ({
+            status: 'expired',
+          } satisfies WaitResult)
+        );
       }
       case 'digest': {
         const digestJobs = await this.jobRepository.find(

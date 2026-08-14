@@ -59,6 +59,7 @@ import { SendMessagePush } from './send-message-push.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageTool } from './send-message-tool.usecase';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
+import { SendMessageWait } from './send-message-wait.usecase';
 import { Throttle } from './throttle';
 
 @Injectable()
@@ -75,6 +76,7 @@ export class SendMessage {
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private sendMessageDelay: SendMessageDelay,
+    private sendMessageWait: SendMessageWait,
     private throttle: Throttle,
     private executeCodeFirstCustomStep: ExecuteCodeFirstCustomStep,
     private executeHttpRequestStep: ExecuteHttpRequestStep,
@@ -213,6 +215,9 @@ export class SendMessage {
       }
       case StepTypeEnum.DELAY: {
         return await this.sendMessageDelay.execute(command);
+      }
+      case StepTypeEnum.WAIT: {
+        return await this.sendMessageWait.execute(command);
       }
       case StepTypeEnum.THROTTLE: {
         return await this.throttle.execute(command);

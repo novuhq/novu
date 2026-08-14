@@ -40,6 +40,7 @@ import {
 import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
 import { ThrottleOutputRendererUsecase } from './usecases/output-renderers/throttle-output-renderer.usecase';
+import { WaitOutputRendererUsecase } from './usecases/output-renderers/wait-output-renderer.usecase';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -80,6 +81,7 @@ export const featureFlagsService = {
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
     ThrottleOutputRendererUsecase,
+    WaitOutputRendererUsecase,
     AnalyticsService,
     GetLayoutUseCaseV0,
     LayoutVariablesSchemaUseCase,

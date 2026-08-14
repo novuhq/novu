@@ -17,6 +17,7 @@ import {
   PushControlType,
   SmsControlType,
   ToolControlType,
+  WaitControlType,
 } from '../schemas/control';
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 
@@ -359,6 +360,9 @@ export function dashboardSanitizeControlValues(
       case StepTypeEnum.DELAY:
         normalizedValues = sanitizeDelay(controlValues as DelayControlType);
         break;
+      case StepTypeEnum.WAIT:
+        normalizedValues = sanitizeWait(controlValues as WaitControlType);
+        break;
       case 'layout':
         normalizedValues = sanitizeLayout(controlValues as LayoutControlType);
         break;
@@ -396,4 +400,12 @@ function isDynamicDelayControl(controlValues: unknown): controlValues is DelayDy
 
 function isRegularDelayControl(controlValues: unknown): controlValues is DelayRegularControlType {
   return !isTimedDelayControl(controlValues) && !isDynamicDelayControl(controlValues);
+}
+
+function sanitizeWait(controlValues: WaitControlType) {
+  return filterNullishValues({
+    skip: controlValues.skip,
+    amount: controlValues.amount,
+    unit: controlValues.unit,
+  });
 }

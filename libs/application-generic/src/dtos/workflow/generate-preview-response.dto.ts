@@ -332,6 +332,12 @@ export class GeneratePreviewResponseDto {
           preview: { $ref: getSchemaPath(DigestRegularOutput) },
         },
       },
+      {
+        properties: {
+          type: { enum: [ActionTypeEnum.WAIT] },
+          preview: { $ref: getSchemaPath(DigestRegularOutput) },
+        },
+      },
     ],
   })
   result:
@@ -374,6 +380,10 @@ export class GeneratePreviewResponseDto {
         preview: DigestRenderOutput;
       }
     | {
+        type: ActionTypeEnum.WAIT;
+        preview: DigestRenderOutput;
+      }
+    | {
         type:
           | ChannelTypeEnum.EMAIL
           | ChannelTypeEnum.IN_APP
@@ -382,7 +392,8 @@ export class GeneratePreviewResponseDto {
           | ChannelTypeEnum.CHAT
           | ChannelTypeEnum.TOOL
           | ActionTypeEnum.DELAY
-          | ActionTypeEnum.DIGEST;
+          | ActionTypeEnum.DIGEST
+          | ActionTypeEnum.WAIT;
         preview: Record<string, unknown>;
         error?: PreviewErrorDto;
       };

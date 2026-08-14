@@ -59,6 +59,7 @@ export enum UiSchemaGroupEnum {
   EMAIL = 'EMAIL',
   DIGEST = 'DIGEST',
   DELAY = 'DELAY',
+  WAIT = 'WAIT',
   THROTTLE = 'THROTTLE',
   SMS = 'SMS',
   CHAT = 'CHAT',

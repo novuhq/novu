@@ -30,6 +30,7 @@ export type JobFeedItem = Pick<
   | 'updatedAt'
   | 'digest'
   | 'scheduleExtensionsCount'
+  | 'stepOutput'
 > & {
   executionDetails: ExecutionDetailFeedItem[]; // Assuming ExecutionDetailFeedItem is defined
   type: StepTypeEnum;

@@ -851,7 +851,12 @@ export class RunJob {
   ): Promise<{ canceled: boolean; activeDigestFollower: JobEntity | null }> {
     let activeDigestFollower: JobEntity | null = null;
 
-    if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY && job.type !== StepTypeEnum.THROTTLE) {
+    if (
+      job.type !== StepTypeEnum.DIGEST &&
+      job.type !== StepTypeEnum.DELAY &&
+      job.type !== StepTypeEnum.THROTTLE &&
+      job.type !== StepTypeEnum.WAIT
+    ) {
       return { canceled: false, activeDigestFollower };
     }
 
@@ -977,6 +982,7 @@ export class RunJob {
     if (
       job.type === StepTypeEnum.TRIGGER ||
       job.type === StepTypeEnum.DELAY ||
+      job.type === StepTypeEnum.WAIT ||
       job.type === StepTypeEnum.DIGEST ||
       job.type === StepTypeEnum.CUSTOM ||
       job.type === StepTypeEnum.THROTTLE
@@ -1065,6 +1071,7 @@ export class RunJob {
       job.type === StepTypeEnum.TRIGGER ||
       job.type === StepTypeEnum.IN_APP ||
       job.type === StepTypeEnum.DELAY ||
+      job.type === StepTypeEnum.WAIT ||
       job.type === StepTypeEnum.DIGEST ||
       job.type === StepTypeEnum.HTTP_REQUEST ||
       critical

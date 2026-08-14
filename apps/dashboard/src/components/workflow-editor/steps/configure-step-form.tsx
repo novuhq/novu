@@ -54,6 +54,7 @@ import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-co
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
 import { ConfigureToolStepPreview } from '@/components/workflow-editor/steps/tool/configure-tool-step-preview';
+import { WaitControlValues } from '@/components/workflow-editor/steps/wait/wait-control-values';
 import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { IS_CLOUD } from '@/config';
@@ -76,6 +77,7 @@ import { DEFAULT_STEP_ICON, STEP_TYPE_ICONS } from './constants/preview-context.
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
+  [StepTypeEnum.WAIT]: WaitControlValues,
   [StepTypeEnum.DIGEST]: DigestControlValues,
   [StepTypeEnum.THROTTLE]: ThrottleControlValues,
   [StepTypeEnum.IN_APP]: () => null,
@@ -101,6 +103,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.TRIGGER]: null,
   [StepTypeEnum.DIGEST]: null,
   [StepTypeEnum.DELAY]: null,
+  [StepTypeEnum.WAIT]: null,
   [StepTypeEnum.THROTTLE]: null,
 };
 
@@ -141,6 +144,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.EMAIL,
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
+    StepTypeEnum.WAIT,
     StepTypeEnum.THROTTLE,
     StepTypeEnum.HTTP_REQUEST,
   ];

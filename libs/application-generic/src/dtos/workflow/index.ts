@@ -20,6 +20,7 @@ export * from './step-responses/push-step.response.dto';
 export * from './step-responses/sms-step.response.dto';
 export * from './step-responses/throttle-step.response.dto';
 export * from './step-responses/tool-step.response.dto';
+export * from './step-responses/wait-step.response.dto';
 export * from './tool-control.dto';
 export * from './workflow-agent-config.dto';
 export * from './workflow-commons.dto';

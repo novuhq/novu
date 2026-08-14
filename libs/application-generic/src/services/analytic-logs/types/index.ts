@@ -11,4 +11,5 @@ export type StepType =
   | 'custom'
   | 'throttle'
   | 'http_request'
+  | 'wait'
   | '';

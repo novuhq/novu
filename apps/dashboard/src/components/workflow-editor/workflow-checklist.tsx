@@ -195,7 +195,8 @@ function useChecklistItems(steps: Step[]) {
         isCompleted: (steps: Step[]) =>
           steps?.filter(
             (step) =>
-              step.type !== StepTypeEnum.TRIGGER && ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY].includes(step.type)
+              step.type !== StepTypeEnum.TRIGGER &&
+              ![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.WAIT].includes(step.type)
           ).length > 0,
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Add a step' });

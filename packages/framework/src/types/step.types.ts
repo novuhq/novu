@@ -254,6 +254,10 @@ export type ThrottleOutput = FromSchema<(typeof actionStepSchemas)['throttle']['
 export type ThrottleOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)['throttle']['output']>;
 export type ThrottleResult = FromSchema<(typeof actionStepSchemas)['throttle']['result']>;
 
+export type WaitOutput = FromSchema<(typeof actionStepSchemas)['wait']['output']>;
+export type WaitOutputUnvalidated = FromSchemaUnvalidated<(typeof actionStepSchemas)['wait']['output']>;
+export type WaitResult = FromSchema<(typeof actionStepSchemas)['wait']['result']>;
+
 /**
  * The step type.
  */
@@ -274,6 +278,8 @@ export type Step = {
   digest: ActionStep<DigestOutputUnvalidated, DigestResult>;
   /** Delay the workflow for a period of time. */
   delay: ActionStep<DelayOutputUnvalidated, DelayResult>;
+  /** Park the workflow until Resume or Expiry. */
+  wait: ActionStep<WaitOutputUnvalidated, WaitResult>;
   /** Throttle workflow executions within a time window. */
   throttle: ActionStep<ThrottleOutputUnvalidated, ThrottleResult>;
   /** Execute custom code */

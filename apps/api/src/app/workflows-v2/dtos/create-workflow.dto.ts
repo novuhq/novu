@@ -11,6 +11,7 @@ import {
   SmsControlDto,
   ThrottleControlDto,
   ToolControlDto,
+  WaitControlDto,
   WorkflowCommonsFields,
 } from '@novu/application-generic';
 import {
@@ -35,6 +36,7 @@ import {
   SmsStepUpsertDto,
   ThrottleStepUpsertDto,
   ToolStepUpsertDto,
+  WaitStepUpsertDto,
 } from './create-step.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
 
@@ -45,6 +47,7 @@ export type StepCreateDto =
   | PushStepUpsertDto
   | ChatStepUpsertDto
   | DelayStepUpsertDto
+  | WaitStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto
   | ToolStepUpsertDto
@@ -58,6 +61,7 @@ export type StepCreateDto =
   PushStepUpsertDto,
   ChatStepUpsertDto,
   DelayStepUpsertDto,
+  WaitStepUpsertDto,
   DigestStepUpsertDto,
   ThrottleStepUpsertDto,
   ToolStepUpsertDto,
@@ -69,6 +73,7 @@ export type StepCreateDto =
   PushControlDto,
   ChatControlDto,
   DelayControlDto,
+  WaitControlDto,
   DigestControlDto,
   ThrottleControlDto,
   ToolControlDto,
@@ -94,6 +99,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(PushStepUpsertDto) },
         { $ref: getSchemaPath(ChatStepUpsertDto) },
         { $ref: getSchemaPath(DelayStepUpsertDto) },
+        { $ref: getSchemaPath(WaitStepUpsertDto) },
         { $ref: getSchemaPath(DigestStepUpsertDto) },
         { $ref: getSchemaPath(ThrottleStepUpsertDto) },
         { $ref: getSchemaPath(ToolStepUpsertDto) },
@@ -109,6 +115,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
           [StepTypeEnum.PUSH]: getSchemaPath(PushStepUpsertDto),
           [StepTypeEnum.CHAT]: getSchemaPath(ChatStepUpsertDto),
           [StepTypeEnum.DELAY]: getSchemaPath(DelayStepUpsertDto),
+          [StepTypeEnum.WAIT]: getSchemaPath(WaitStepUpsertDto),
           [StepTypeEnum.DIGEST]: getSchemaPath(DigestStepUpsertDto),
           [StepTypeEnum.THROTTLE]: getSchemaPath(ThrottleStepUpsertDto),
           [StepTypeEnum.TOOL]: getSchemaPath(ToolStepUpsertDto),
@@ -130,6 +137,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.PUSH, value: PushStepUpsertDto },
         { name: StepTypeEnum.CHAT, value: ChatStepUpsertDto },
         { name: StepTypeEnum.DELAY, value: DelayStepUpsertDto },
+        { name: StepTypeEnum.WAIT, value: WaitStepUpsertDto },
         { name: StepTypeEnum.DIGEST, value: DigestStepUpsertDto },
         { name: StepTypeEnum.THROTTLE, value: ThrottleStepUpsertDto },
         { name: StepTypeEnum.TOOL, value: ToolStepUpsertDto },
@@ -146,6 +154,7 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
     | PushStepUpsertDto
     | ChatStepUpsertDto
     | DelayStepUpsertDto
+    | WaitStepUpsertDto
     | DigestStepUpsertDto
     | ThrottleStepUpsertDto
     | ToolStepUpsertDto

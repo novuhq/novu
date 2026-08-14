@@ -474,6 +474,34 @@ export const DelayNode = (props: NodeProps<NodeType>) => {
   );
 };
 
+export const WaitNode = (props: NodeProps<NodeType>) => {
+  const { id, data } = props;
+  const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.WAIT];
+
+  return (
+    <NodeWrapper id={id} type={StepTypeEnum.WAIT}>
+      <StepNode id={id} data={data} type={StepTypeEnum.WAIT}>
+        <NodeHeader type={StepTypeEnum.WAIT}>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.WAIT]}
+            Icon={Icon}
+          />
+          <NodeName>{data.name || 'Wait Step'}</NodeName>
+        </NodeHeader>
+        <NodeBody type={StepTypeEnum.WAIT} controlValues={data.controlValues ?? {}}>
+          {data.content}
+        </NodeBody>
+        {data.error && <NodeError>{data.error}</NodeError>}
+        {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
+        <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
+        {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
+        <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
+      </StepNode>
+    </NodeWrapper>
+  );
+};
+
 export const DigestNode = (props: NodeProps<NodeType>) => {
   const { id, data } = props;
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.DIGEST];

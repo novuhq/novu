@@ -12,6 +12,7 @@ import {
   SmsControlDto,
   ThrottleControlDto,
   ToolControlDto,
+  WaitControlDto,
 } from '@novu/application-generic';
 import {
   SLUG_IDENTIFIER_REGEX,
@@ -196,6 +197,25 @@ export class DelayStepUpsertDto extends BaseStepConfigDto {
   controlValues?: DelayControlDto | Record<string, unknown> | null;
 }
 
+export class WaitStepUpsertDto extends BaseStepConfigDto {
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.WAIT,
+    description: 'Type of the step',
+  })
+  @IsEnum(StepTypeEnum)
+  readonly type: StepTypeEnum = 'wait' as StepTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the Wait step.',
+    oneOf: [{ $ref: getSchemaPath(WaitControlDto) }, { type: 'object', additionalProperties: true }],
+  })
+  @IsOptional()
+  @IsObject()
+  controlValues?: WaitControlDto | Record<string, unknown> | null;
+}
+
 export class DigestStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({
     enum: StepTypeEnum,
@@ -284,6 +304,7 @@ export type StepUpsertDto =
   | ChatStepUpsertDto
   | ToolStepUpsertDto
   | DelayStepUpsertDto
+  | WaitStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto
   | CustomStepUpsertDto

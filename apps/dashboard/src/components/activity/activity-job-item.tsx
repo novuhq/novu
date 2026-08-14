@@ -215,6 +215,27 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
 
       return '';
     }
+    case StepTypeEnum.WAIT: {
+      const waitStatus = job.stepOutput?.status;
+
+      if (job.status === JobStatusEnum.COMPLETED) {
+        if (waitStatus === 'resumed') {
+          return 'Resumed';
+        }
+
+        if (waitStatus === 'expired') {
+          return 'Expired';
+        }
+
+        return 'Wait completed';
+      }
+
+      if (job.status === JobStatusEnum.DELAYED) {
+        return 'Waiting';
+      }
+
+      return '';
+    }
     default:
       if (job.status === JobStatusEnum.COMPLETED) {
         return 'Message sent successfully';

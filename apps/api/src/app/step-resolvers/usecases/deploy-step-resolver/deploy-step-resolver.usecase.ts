@@ -28,7 +28,7 @@ import { generateStepResolverWorkerId } from '../../utils/generate-step-resolver
 import { DeployStepResolverCommand, DeployStepResolverManifestStepCommand } from './deploy-step-resolver.command';
 
 const MAX_BUNDLE_SIZE_BYTES = 10 * 1024 * 1024;
-const ACTION_STEP_TYPES = new Set([StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE]);
+const ACTION_STEP_TYPES = new Set([StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE, StepTypeEnum.WAIT]);
 // cspell:disable-next-line
 const STEP_RESOLVER_HASH_ALPHABET = '0123456789abcdefghjkmnpqrstvwxyz';
 const STEP_RESOLVER_HASH_LENGTH = 10;

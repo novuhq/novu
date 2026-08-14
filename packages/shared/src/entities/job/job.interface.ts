@@ -32,4 +32,5 @@ export interface IJob {
   type?: StepTypeEnum;
   _actorId?: string;
   scheduleExtensionsCount?: number;
+  stepOutput?: Record<string, unknown>;
 }

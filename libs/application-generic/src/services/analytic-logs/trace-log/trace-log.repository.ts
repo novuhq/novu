@@ -352,6 +352,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step queued';
     case 'step_delayed':
       return 'Step delayed';
+    case 'step_waiting':
+      return 'Step waiting';
+    case 'step_expired':
+      return 'Step expired';
+    case 'step_resumed':
+      return 'Step resumed';
     case 'step_digested':
       return 'Step digested';
     case 'step_filtered':

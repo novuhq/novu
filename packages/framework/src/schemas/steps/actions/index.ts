@@ -3,6 +3,7 @@ import type { JsonSchema } from '../../../types/schema.types';
 import { delayActionSchemas } from './delay.schema';
 import { digestActionSchemas } from './digest.schema';
 import { throttleActionSchemas } from './throttle.schema';
+import { waitActionSchemas } from './wait.schema';
 
 type RegularActionStepSchema = Exclude<ActionStepEnum, ActionStepEnum.CUSTOM | ActionStepEnum.HTTP_REQUEST>;
 
@@ -10,4 +11,5 @@ export const actionStepSchemas = {
   delay: delayActionSchemas,
   digest: digestActionSchemas,
   throttle: throttleActionSchemas,
+  wait: waitActionSchemas,
 } satisfies Record<RegularActionStepSchema, { output: JsonSchema; result: JsonSchema }>;

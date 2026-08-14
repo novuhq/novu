@@ -71,6 +71,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'custom';
       case StepTypeEnum.HTTP_REQUEST:
         return 'http_request';
+      case StepTypeEnum.WAIT:
+        return 'wait';
       default: {
         const _exhaustiveCheck: never = stepType;
 

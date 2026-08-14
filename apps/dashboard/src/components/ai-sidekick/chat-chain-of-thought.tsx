@@ -206,6 +206,7 @@ function WorkflowStepItem({
 
     const stepRoute =
       routeStepType === StepTypeEnum.DELAY ||
+      routeStepType === StepTypeEnum.WAIT ||
       routeStepType === StepTypeEnum.DIGEST ||
       routeStepType === StepTypeEnum.THROTTLE
         ? ROUTES.EDIT_STEP

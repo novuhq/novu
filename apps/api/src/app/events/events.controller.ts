@@ -28,6 +28,8 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
 import {
   BulkTriggerEventDto,
+  ResumeWaitRequestDto,
+  ResumeWaitResponseDto,
   TestSendEmailRequestDto,
   TriggerEventRequestDto,
   TriggerEventResponseDto,
@@ -36,6 +38,7 @@ import {
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
+import { ResumeWait, ResumeWaitCommand } from './usecases/resume-wait';
 import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
@@ -61,6 +64,7 @@ function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnu
 export class EventsController {
   constructor(
     private cancelDelayedUsecase: CancelDelayed,
+    private resumeWaitUsecase: ResumeWait,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
@@ -268,6 +272,42 @@ export class EventsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         transactionId,
+      })
+    );
+  }
+
+  @KeylessAccessible()
+  @ExternalApiAccessible()
+  @OAuthAccessible()
+  @Post('/trigger/:transactionId/resume')
+  @ApiOkResponse({
+    type: ResumeWaitResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Resume a Wait step',
+    description: `
+    Resume DELAYED Wait jobs for a previous trigger. Identity is transactionId + stepId + to.
+    Recipients that have no matching parked Wait return 200 with resumed: false.
+    `,
+  })
+  @SdkMethodName('resume')
+  @SdkUsageExample('Resume Wait Step')
+  @SdkGroupName('')
+  @RequirePermissions(PermissionsEnum.EVENT_WRITE)
+  async resume(
+    @UserSession() user: UserSessionData,
+    @Param('transactionId') transactionId: string,
+    @Body() body: ResumeWaitRequestDto
+  ): Promise<ResumeWaitResponseDto> {
+    return await this.resumeWaitUsecase.execute(
+      ResumeWaitCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        transactionId,
+        stepId: body.stepId,
+        to: body.to,
+        data: body.data,
       })
     );
   }

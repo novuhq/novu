@@ -8,6 +8,7 @@ export const AUTOCOMPLETE_PASSWORD_MANAGERS_OFF = {
 
 export const INLINE_CONFIGURABLE_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.DELAY,
+  StepTypeEnum.WAIT,
   StepTypeEnum.DIGEST,
   StepTypeEnum.THROTTLE,
 ];
@@ -29,6 +30,7 @@ export const STEP_RESOLVER_SUPPORTED_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
   StepTypeEnum.DELAY,
+  StepTypeEnum.WAIT,
   StepTypeEnum.DIGEST,
   StepTypeEnum.THROTTLE,
 ];
@@ -42,11 +44,15 @@ export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
   [StepTypeEnum.TOOL]: 'Tool',
   [StepTypeEnum.DIGEST]: 'Digest',
   [StepTypeEnum.DELAY]: 'Delay',
+  [StepTypeEnum.WAIT]: 'Wait',
   [StepTypeEnum.THROTTLE]: 'Throttle',
   [StepTypeEnum.TRIGGER]: 'Trigger',
   [StepTypeEnum.CUSTOM]: 'Custom',
   [StepTypeEnum.HTTP_REQUEST]: 'HTTP Request',
 };
+
+export const DEFAULT_CONTROL_WAIT_AMOUNT = 24;
+export const DEFAULT_CONTROL_WAIT_UNIT = TimeUnitEnum.HOURS;
 
 export const DEFAULT_CONTROL_DELAY_AMOUNT = 30;
 export const DEFAULT_CONTROL_DELAY_UNIT = TimeUnitEnum.SECONDS;

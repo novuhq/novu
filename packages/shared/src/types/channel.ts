@@ -11,6 +11,7 @@ export enum ActionTypeEnum {
   TRIGGER = 'trigger',
   DIGEST = 'digest',
   DELAY = 'delay',
+  WAIT = 'wait',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
   HTTP_REQUEST = 'http_request',
@@ -28,6 +29,7 @@ export enum StepTypeEnum {
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',
+  WAIT = 'wait',
   THROTTLE = 'throttle',
   CUSTOM = 'custom',
   HTTP_REQUEST = 'http_request',
@@ -69,4 +71,4 @@ export enum SystemAvatarIconEnum {
 }
 
 export const CHANNELS_WITH_PRIMARY: readonly ChannelTypeEnum[] = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS];
-export const DELAYED_STEPS = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];
+export const DELAYED_STEPS = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.WAIT];

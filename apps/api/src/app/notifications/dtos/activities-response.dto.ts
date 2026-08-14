@@ -286,6 +286,13 @@ export class ActivityNotificationJobResponseDto {
     type: Number,
   })
   scheduleExtensionsCount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Persisted step result, such as a Wait status and resume data',
+    type: 'object',
+    additionalProperties: true,
+  })
+  stepOutput?: Record<string, unknown>;
 }
 
 // Activity Notification Subscriber Response DTO

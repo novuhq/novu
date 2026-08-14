@@ -241,6 +241,10 @@ describe('Novu Client', () => {
           amount: 1,
           unit: 'hours',
         }));
+
+        await step.wait('await-answer', async () => ({
+          expiresIn: '24h',
+        }));
       });
 
       await client.addWorkflows([newWorkflow]);
@@ -328,6 +332,12 @@ describe('Novu Client', () => {
       expect(stepDelay.type).toBe('delay');
       expect(stepDelay.code).toContain(`amount: 1`);
       expect(stepDelay.code).toContain(`unit: "hours"`);
+
+      const stepWait = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'await-answer');
+      expect(stepWait).toBeDefined();
+      if (stepWait === undefined) throw new Error('stepWait is undefined');
+      expect(stepWait.type).toBe('wait');
+      expect(stepWait.code).toContain(`expiresIn: "24h"`);
     });
 
     it('should discover a slack provide with blocks', async () => {

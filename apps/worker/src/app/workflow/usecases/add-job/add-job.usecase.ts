@@ -22,6 +22,7 @@ import {
   NormalizeVariablesCommand,
   PinoLogger,
   RedisThrottleService,
+  resolveWaitDuration,
   StandardQueueService,
   StepRunRepository,
   StepRunStatus,
@@ -343,6 +344,14 @@ export class AddJob {
       }
     }
 
+    if (job.type === StepTypeEnum.WAIT) {
+      delayAmount = await this.handleWait({
+        command,
+        job,
+        bridgeResponse,
+      });
+    }
+
     if ((digestAmount || delayAmount) && filtered) {
       this.logger.trace(`Delay for job ${job._id} will be 0 because job was filtered`);
     }
@@ -482,6 +491,29 @@ export class AddJob {
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
 
     this.logger.debug(`Delay step Amount is: ${delayAmount}`);
+
+    return delayAmount;
+  }
+
+  private async handleWait({
+    command,
+    job,
+    bridgeResponse,
+  }: {
+    command: AddJobCommand;
+    job: JobEntity;
+    bridgeResponse: ExecuteOutput | null;
+  }) {
+    const outputs = (bridgeResponse?.outputs ?? job.step.controlVariables ?? {}) as {
+      amount?: number;
+      unit?: string;
+      expiresIn?: string;
+    };
+    const delayAmount = resolveWaitDuration(outputs);
+
+    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.DELAYED);
+
+    this.logger.debug(`Wait step Amount is: ${delayAmount}`);
 
     return delayAmount;
   }
@@ -1122,31 +1154,45 @@ export class AddJob {
   }
 
   private async createDelayExecutionDetails(job: JobEntity, delay: number, untilDate: Date | null, timezone?: string) {
-    const logMessage =
-      job.type === StepTypeEnum.DELAY
-        ? 'Delay is active, Creating execution details'
-        : job.type === StepTypeEnum.DIGEST
-          ? 'Digest is active, Creating execution details'
-          : 'Unexpected job type, Creating execution details';
+    let logMessage = 'Unexpected job type, Creating execution details';
+    if (job.type === StepTypeEnum.DELAY) {
+      logMessage = 'Delay is active, Creating execution details';
+    } else if (job.type === StepTypeEnum.WAIT) {
+      logMessage = 'Wait is active, Creating execution details';
+    } else if (job.type === StepTypeEnum.DIGEST) {
+      logMessage = 'Digest is active, Creating execution details';
+    }
 
     this.logger.trace(logMessage);
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify({
+    const isWait = job.type === StepTypeEnum.WAIT;
+    const raw = isWait
+      ? { wait: delay }
+      : {
           delay,
           ...(untilDate && {
             untilDate: timezone
               ? formatInTimeZone(untilDate, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
               : untilDate.toISOString(),
           }),
-        }),
+        };
+
+    let detail = DetailEnum.STEP_DIGESTED;
+    if (isWait) {
+      detail = DetailEnum.STEP_WAITING;
+    } else if (job.type === StepTypeEnum.DELAY) {
+      detail = DetailEnum.STEP_DELAYED;
+    }
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(raw),
       })
     );
   }
@@ -1175,6 +1221,7 @@ const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
   [StepTypeEnum.DELAY]: true,
   [StepTypeEnum.DIGEST]: true,
   [StepTypeEnum.THROTTLE]: true,
+  [StepTypeEnum.WAIT]: true,
   [StepTypeEnum.TRIGGER]: false,
   [StepTypeEnum.CUSTOM]: false,
   [StepTypeEnum.HTTP_REQUEST]: false,

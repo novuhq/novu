@@ -82,6 +82,11 @@ export class DelayRenderOutput extends RenderOutput {
   unit: TimeUnitEnum;
 }
 
+export class WaitRenderOutput extends RenderOutput {
+  amount: number;
+  unit: TimeUnitEnum;
+}
+
 export type ThrottleRenderOutput = RenderOutput & {
   type: 'fixed' | 'dynamic';
   // Fixed throttle fields
@@ -198,5 +203,9 @@ export class GeneratePreviewResponseDto {
     | {
         type: ActionTypeEnum.THROTTLE;
         preview: ThrottleRenderOutput;
+      }
+    | {
+        type: ActionTypeEnum.WAIT;
+        preview: WaitRenderOutput;
       };
 }

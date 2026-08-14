@@ -21,7 +21,12 @@ interface StepPreviewProps {
 }
 
 export function StepPreview({ type, controlValues }: StepPreviewProps) {
-  if (type === StepTypeEnum.TRIGGER || type === StepTypeEnum.DELAY || type === StepTypeEnum.DIGEST) {
+  if (
+    type === StepTypeEnum.TRIGGER ||
+    type === StepTypeEnum.DELAY ||
+    type === StepTypeEnum.WAIT ||
+    type === StepTypeEnum.DIGEST
+  ) {
     return null;
   }
 

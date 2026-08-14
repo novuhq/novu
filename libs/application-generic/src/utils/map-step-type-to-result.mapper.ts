@@ -20,6 +20,7 @@ export function computeResultSchema({
     [ChannelStepEnum.IN_APP]: channelStepSchemas[ChannelStepEnum.IN_APP].result,
     [ChannelStepEnum.TOOL]: channelStepSchemas[ChannelStepEnum.TOOL].result,
     [ActionStepEnum.DELAY]: actionStepSchemas[ActionStepEnum.DELAY].result,
+    [ActionStepEnum.WAIT]: actionStepSchemas[ActionStepEnum.WAIT].result,
     [ActionStepEnum.DIGEST]: buildDigestResult({ payloadSchema }),
     [ActionStepEnum.HTTP_REQUEST]: responseBodySchema ?? {
       type: JsonSchemaTypeEnum.OBJECT,

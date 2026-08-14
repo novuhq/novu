@@ -14,6 +14,7 @@ export const STEP_TYPE_TO_COLOR: Record<StepTypeEnum, ProviderColorToken> = {
   [StepTypeEnum.CUSTOM]: 'alert',
   [StepTypeEnum.DIGEST]: 'highlighted',
   [StepTypeEnum.DELAY]: 'warning',
+  [StepTypeEnum.WAIT]: 'warning',
   [StepTypeEnum.THROTTLE]: 'destructive',
   [StepTypeEnum.HTTP_REQUEST]: 'feature',
 };

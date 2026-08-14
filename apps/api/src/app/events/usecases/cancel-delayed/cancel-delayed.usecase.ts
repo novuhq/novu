@@ -196,6 +196,8 @@ export class CancelDelayed {
         return 'trigger';
       case StepTypeEnum.DELAY:
         return 'delay';
+      case StepTypeEnum.WAIT:
+        return 'wait';
       case StepTypeEnum.CUSTOM:
         return 'custom';
       case StepTypeEnum.HTTP_REQUEST:
