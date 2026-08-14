@@ -54,7 +54,6 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
     <ConnectSubscriberContext.Provider value={{ subscriberId, isReady: true }}>
       <NovuProvider
         key={subscriberId}
-        subscriberId={subscriberId}
         subscriber={subscriber}
         applicationIdentifier={currentEnvironment.identifier}
         apiUrl={apiHostnameManager.getHostname()}

@@ -56,7 +56,6 @@ export function AgentChatPanel({ agent, agentChatIntegrationIdentifier }: AgentC
   return (
     <NovuProvider
       key={testerSubscriberId}
-      subscriberId={testerSubscriberId}
       subscriber={subscriber}
       applicationIdentifier={currentEnvironment.identifier}
       apiUrl={apiHostnameManager.getHostname()}
