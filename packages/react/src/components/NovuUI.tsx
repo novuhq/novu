@@ -1,6 +1,5 @@
 import { Novu } from '@novu/js';
-import type { NovuUIOptions as JsNovuUIOptions } from '@novu/js/ui';
-import { NovuUI as NovuUIClass } from '@novu/js/ui';
+import type { NovuUI as NovuUIClass, NovuUIOptions as JsNovuUIOptions } from '@novu/js/ui';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NovuUIProvider } from '../context/NovuUIContext';
 import { useRenderer } from '../context/RendererContext';
@@ -65,15 +64,27 @@ export const NovuUI = ({ options, novu, children }: NovuUIProps) => {
   const [novuUI, setNovuUI] = useState<NovuUIClass | undefined>();
 
   useEffect(() => {
+    let cancelled = false;
+    let instance: NovuUIClass | undefined;
     const parentShadowRoot = findParentShadowRoot(shadowRootDetector.current);
-    const instance = new NovuUIClass({
-      ...optionsRef.current,
-      container: optionsRef.current.container ?? parentShadowRoot,
+
+    // Loaded dynamically so this client-only module (and its DOM-dependent
+    // Solid components) is never evaluated during server-side rendering.
+    import('@novu/js/ui').then(({ NovuUI: NovuUIConstructor }) => {
+      if (cancelled) {
+        return;
+      }
+
+      instance = new NovuUIConstructor({
+        ...optionsRef.current,
+        container: optionsRef.current.container ?? parentShadowRoot,
+      });
+      setNovuUI(instance);
     });
-    setNovuUI(instance);
 
     return () => {
-      instance.unmount();
+      cancelled = true;
+      instance?.unmount();
     };
   }, []);
 
