@@ -11,6 +11,7 @@ import { McpIcon } from '@/components/agents/mcp-icon';
 import { Button } from '@/components/primitives/button';
 import { MarkdownText } from '@/components/primitives/markdown-text';
 import { cn } from '@/utils/ui';
+import { toSafeExternalUrl } from '@/utils/url';
 
 const STARTER_PROMPTS = ['Hello', 'What can you do?', 'List my MCP tools'] as const;
 
@@ -211,7 +212,10 @@ export function ChatPendingActionCard({
   onRespond: (decision: 'approved' | 'denied') => void;
 }) {
   if (action.type === 'mcp-connection') {
-    const authorizeUrl = action.authorizeUrlWithAutoApprove || action.authorizeUrl;
+    // The authorize URL comes from the MCP server's OAuth discovery document,
+    // so it is external input. Reject anything that is not an absolute http(s)
+    // URL (e.g. `javascript:`) before it can reach `window.open`.
+    const authorizeUrl = toSafeExternalUrl(action.authorizeUrlWithAutoApprove || action.authorizeUrl);
 
     return (
       <div className="animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex flex-wrap items-center gap-3 rounded-xl border p-3 duration-200">
