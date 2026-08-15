@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  type AgentEmailContext,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CreateExecutionDetails,
@@ -14,11 +15,13 @@ import {
   InstrumentUsecase,
   MailFactory,
   messageWebhookMapper,
+  ResolveAgentInboundAddresses,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
 } from '@novu/application-generic';
 import {
+  AgentRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
@@ -31,6 +34,7 @@ import {
 } from '@novu/dal';
 import { EmailOutput } from '@novu/framework/internal';
 import {
+  buildAgentReplyToAddress,
   ChannelTypeEnum,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
@@ -70,7 +74,9 @@ export class SendMessageEmail extends SendMessageBase {
     protected moduleRef: ModuleRef,
     private featureFlagService: FeatureFlagsService,
     private getLayoutUseCaseV0: GetLayoutUseCaseV0,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private resolveAgentInboundAddresses: ResolveAgentInboundAddresses,
+    private agentRepository: AgentRepository
   ) {
     super(
       messageRepository,
@@ -175,12 +181,16 @@ export class SendMessageEmail extends SendMessageBase {
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
-    const bridgeFrom = (bridgeOutputs as EmailOutput)?.from;
+    const bridgeEmailOutput = bridgeOutputs as EmailOutput | undefined;
+    const bridgeFrom = bridgeEmailOutput?.from;
+    const useProviderDefaults = bridgeEmailOutput?.useProviderDefaults === true;
+    const stepReplyTo = bridgeEmailOutput?.replyTo?.trim() || undefined;
+    const controlPreheader = bridgeEmailOutput?.preheader?.trim() || undefined;
 
     const payload = {
       senderName: step.template.senderName,
       subject,
-      preheader: step.template.preheader,
+      preheader: controlPreheader || step.template.preheader,
       content: step.template.content,
       layoutId: overrideLayoutId || (overrideLayoutId === null ? null : step.template._layoutId),
       contentType: step.template.contentType ? step.template.contentType : 'editor',
@@ -189,6 +199,8 @@ export class SendMessageEmail extends SendMessageBase {
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
+
+    const assignedAgentId = await this.resolveAssignedAgentId(command);
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
@@ -210,6 +222,7 @@ export class SendMessageEmail extends SendMessageBase {
       tags: command.tags,
       severity: command.severity,
       contextKeys: command.contextKeys,
+      ...(assignedAgentId ? { _agentId: assignedAgentId } : {}),
     });
 
     let replyToAddress: string | undefined;
@@ -223,6 +236,10 @@ export class SendMessageEmail extends SendMessageBase {
           payload.payload.step.reply_to_address = replyTo;
         }
       }
+    }
+
+    if (!replyToAddress && !command.overrides?.email?.replyTo && stepReplyTo) {
+      replyToAddress = stepReplyTo;
     }
 
     try {
@@ -348,15 +365,36 @@ export class SendMessageEmail extends SendMessageBase {
       return await this.sendErrors(email, integration, message, command);
     }
 
+    let resolvedFromEmail = bridgeFrom?.email || undefined;
+    let resolvedSenderName = bridgeFrom?.name || senderName;
+
+    const needsAgentReplyTo = !replyToAddress && !command.overrides?.email?.replyTo;
+    const needsAgentSender = (!resolvedFromEmail || !resolvedSenderName) && !useProviderDefaults;
+
+    if (needsAgentReplyTo || needsAgentSender) {
+      const agentEmailContext = await this.resolveWorkflowAgentEmailContext(command);
+
+      if (needsAgentReplyTo && agentEmailContext.replyTo) {
+        replyToAddress = buildAgentReplyToAddress(agentEmailContext.replyTo, message._id);
+      }
+
+      if (needsAgentSender) {
+        resolvedFromEmail = resolvedFromEmail || agentEmailContext.senderEmail;
+        resolvedSenderName = resolvedSenderName || agentEmailContext.senderName;
+      }
+    }
+
+    resolvedFromEmail = resolvedFromEmail || integration?.credentials.from || 'no-reply@novu.co';
+
     const mailData: IEmailOptions = createMailData(
       {
         // @ts-expect-error
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
-        from: bridgeFrom?.email || integration?.credentials.from || 'no-reply@novu.co',
+        from: resolvedFromEmail,
         attachments,
-        senderName: bridgeFrom?.name || senderName,
+        senderName: resolvedSenderName,
         id: message._id,
         replyTo: replyToAddress,
         notificationDetails: {
@@ -382,6 +420,80 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     return await this.sendMessage(integration, mailData, message, command);
+  }
+
+  private async resolveAssignedAgentId(command: SendMessageChannelCommand): Promise<string | null> {
+    if (command.job._agentId !== undefined) {
+      if (command.job._agentId === null) {
+        return null;
+      }
+
+      return String(command.job._agentId);
+    }
+
+    const workflowAgent = command.workflow?.agent;
+    if (!workflowAgent?.identifier) {
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: workflowAgent.identifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    return agent?._id ? String(agent._id) : null;
+  }
+
+  /**
+   * Resolve reply-to / sender defaults: job `_agentId` override, else workflow agent.
+   */
+  private async resolveWorkflowAgentEmailContext(command: SendMessageChannelCommand): Promise<AgentEmailContext> {
+    if (command.job._agentId !== undefined) {
+      if (command.job._agentId === null) {
+        return {};
+      }
+
+      try {
+        return await this.resolveAgentInboundAddresses.resolveAgentEmailContextById({
+          agentId: command.job._agentId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
+      } catch (error) {
+        Logger.warn(
+          { error, agentId: command.job._agentId },
+          'Failed to resolve workflow agent email context by ObjectId',
+          LOG_CONTEXT
+        );
+
+        return {};
+      }
+    }
+
+    const workflowAgent = command.workflow?.agent;
+    if (!workflowAgent) {
+      return {};
+    }
+
+    try {
+      return await this.resolveAgentInboundAddresses.resolveAgentEmailContext({
+        agent: workflowAgent,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+    } catch (error) {
+      Logger.warn(
+        { error, agentIdentifier: workflowAgent.identifier },
+        'Failed to resolve workflow agent email context',
+        LOG_CONTEXT
+      );
+
+      return {};
+    }
   }
 
   private async getReplyTo(command: SendMessageChannelCommand, messageId: string): Promise<string | null> {

@@ -1,13 +1,13 @@
 ---
 title: "Agents and providers"
-description: "Understand how Novu agents and provider connections work together to route messages, resolve identities, and deliver replies across supported channels."
+description: "How Novu agents and provider connections route messages, resolve identity, and deliver replies across supported channels."
 ---
 
 ## Agents
 
 An agent is the entity you create in Novu when you want to expose agent logic through one or more communication providers.
 
-Each agent has a name, an identifier, and a set of event handlers that define how your application responds to conversation events. An agent can be connected to one or more providers, such as Slack, Microsoft Teams, WhatsApp, or email.
+Each agent has a name, an identifier, and a set of event handlers that define how your application responds to conversation events. An agent can be connected to one or more providers, such as Slack, Microsoft Teams, WhatsApp, email, or in-app Agent Chat.
 
 ## Provider connections
 
@@ -21,13 +21,14 @@ Your handlers stay provider-agnostic. Novu translates replies into whatever Slac
 
 Novu supports the following providers:
 
-- Slack
-- Microsoft Teams
-- WhatsApp
-- Email
-- Telegram
+- [Slack](/agents/channels/slack)
+- [Microsoft Teams](/agents/channels/microsoft-teams)
+- [WhatsApp](/agents/channels/whatsapp)
+- [Telegram](/agents/channels/telegram)
+- [Email](/agents/channels/email)
+- [Agent Chat](/agents/channels/agent-chat)
 
-While adding a new provider to an agent, Novu will guide you through the setup process for the provider.
+While adding a new provider to an agent, Novu will guide you through the setup process for the provider. For what each channel can do (typing, buttons, approvals, edits), see [Channels overview](/agents/channels/overview).
 
 ## Manage agents with the API
 

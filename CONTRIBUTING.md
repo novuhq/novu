@@ -19,28 +19,28 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Requirements
 
-- Node.js v22.22.1 (LTS)
+- Node.js v22.23.0 (LTS)
 
-  - To install Node.js v22.22.1 (LTS) through NVM (Node Version Manager), follow these steps:
+  - To install Node.js v22.23.0 (LTS) through NVM (Node Version Manager), follow these steps:
 
     1. Open your terminal.
 
     2. Install NVM if you haven't already. You can install NVM by following the instructions at [NVM GitHub](https://github.com/nvm-sh/nvm).
 
-    3. Once NVM is installed, run the following command to install and use Node.js v22.22.1:
+    3. Once NVM is installed, run the following command to install and use Node.js v22.23.0:
 
        ```bash
-       nvm install 22.22.1
+       nvm install 22.23.0
 
-       nvm use 22.22.1
+       nvm use 22.23.0
 
-       node -v # output: v22.22.1
+       node -v # output: v22.23.0
        ```
 
-    4. You can set Node.js v22.22.1 as your default version with the following command:
+    4. You can set Node.js v22.23.0 as your default version with the following command:
 
        ```bash
-       nvm alias default 22.22.1
+       nvm alias default 22.23.0
 
        ```
 

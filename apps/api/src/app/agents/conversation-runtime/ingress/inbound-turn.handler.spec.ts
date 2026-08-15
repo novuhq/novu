@@ -1,4 +1,4 @@
-import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, buildDashboardAgentChatSubscriberId } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
@@ -28,7 +28,12 @@ describe('AgentInboundHandler', () => {
   const conversation = {
     _id: 'conversation1',
     channels: [{ platformThreadId: 'thread1', platform: 'slack', _integrationId: 'integration1' }],
+    participants: [{ type: 'subscriber', id: 'sub1' }],
   };
+
+  afterEach(() => {
+    delete (conversation as { _notificationId?: string })._notificationId;
+  });
 
   function makeLogger() {
     return {
@@ -37,6 +42,14 @@ describe('AgentInboundHandler', () => {
       debug: sinon.stub(),
       info: sinon.stub(),
       setContext: sinon.stub(),
+    };
+  }
+
+  function makeResolvedSubscriberOverrides(subscriberId = 'sub1', internalSubscriberId = 'subscriber-mongo-1') {
+    return {
+      subscriberResolve: sinon.stub().resolves(subscriberId),
+      subscriberResolveOrProvision: sinon.stub().resolves({ outcome: 'resolved', subscriberId }),
+      subscriberFindById: sinon.stub().resolves({ _id: internalSubscriberId, subscriberId }),
     };
   }
 
@@ -80,10 +93,12 @@ describe('AgentInboundHandler', () => {
       createOrGetConversation: sinon.stub().resolves(conversation),
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
-      persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
+      persistAgentMessage: sinon.stub().resolves({ activity: { _id: 'agent-activity1' }, created: true }),
+      persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      persistToolApprovalDecision: sinon.stub().resolves({ _id: 'decision-1' }),
       findSourceActivity: sinon
         .stub()
         .callsFake(
@@ -159,7 +174,11 @@ describe('AgentInboundHandler', () => {
     const linkTelegramChatToSubscriber = {
       execute:
         overrides.linkTelegramExecute ??
-        sinon.stub().resolves({ created: true, subscriberId: 'sub-1', agentIdentifier: 'support-agent' }),
+        sinon.stub().resolves({
+          created: true,
+          subscriberId: 'sub-1',
+          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+        }),
     };
     const startCodeService = {
       consumeIfMatches: overrides.startCodeConsume ?? sinon.stub().resolves({ status: 'missing' }),
@@ -183,11 +202,15 @@ describe('AgentInboundHandler', () => {
       maybeBlockConversation: sinon.stub().resolves(false),
     };
     const connectionContextResolver = {
-      resolve: sinon.stub().resolves(null),
+      resolve: sinon.stub().resolves({ context: null }),
     };
     const replyApprovalInterceptor = {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),
       tryHandleAsApprovalReaction: sinon.stub().resolves(false),
+    };
+    const workflowOriginService = {
+      resolve: sinon.stub().resolves(null),
+      hydrate: sinon.stub().resolves(null),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -209,7 +232,8 @@ describe('AgentInboundHandler', () => {
       planLimitGate as any,
       inboundAck as any,
       connectionContextResolver as any,
-      replyApprovalInterceptor as any
+      replyApprovalInterceptor as any,
+      workflowOriginService as any
     );
 
     return {
@@ -219,6 +243,7 @@ describe('AgentInboundHandler', () => {
       attachmentStorage,
       bridgeExecutor,
       conversationService,
+      workflowOriginService,
       linkTelegramChatToSubscriber,
       subscriberResolver,
       startCodeService,
@@ -401,6 +426,143 @@ describe('AgentInboundHandler', () => {
       expect(thread.post.calledOnce).to.equal(true);
     });
 
+    it('should resolve and hydrate workflow origin through WorkflowOriginService on first reply', async () => {
+      const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        identifier: 'D123:1777837477.371619',
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+
+      const thread = makeSlackDmThread();
+      const message = {
+        ...makeSlackDmMessage(),
+        id: '1777837480.1',
+        raw: { thread_ts: '1777837477.371619' },
+      };
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(workflowOriginService.resolve.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolve.firstCall.args[0]).to.include({
+        agentId: 'agent1',
+        platformThreadId: 'slack:D123:1777837477.371619',
+        subscriberId: 'sub1',
+        existingConversation: null,
+      });
+      expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
+      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
+      expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
+    });
+
+    it('should forward the hydrated origin to a managed dispatch on an existing Telegram conversation', async () => {
+      // A live managed session only receives the new turn, so a mid-conversation
+      // hydration write is invisible unless it rides along on the dispatch.
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+
+      conversationService.findByPlatformThread.resolves({
+        _id: 'conv1',
+        externalSessionId: 'ses_live',
+        channels: [{ platform: AgentPlatformEnum.TELEGRAM, _integrationId: 'int1', platformThreadId: 'telegram:42' }],
+        participants: [],
+      });
+      workflowOriginService.resolve.resolves({ origin: { _id: 'msg1', _notificationId: 'notif1', identifier: '42' } });
+      workflowOriginService.hydrate.resolves('Your order shipped');
+
+      const thread = {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
+      };
+      const message = {
+        id: 'msg-2',
+        threadId: 'telegram:42',
+        text: 'where is it?',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.firstCall.args[0].workflowOriginContent).to.equal('Your order shipped');
+    });
+
+    it('should leave workflowOriginContent unset when nothing was hydrated', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves(null);
+
+      const thread = {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
+      };
+      const message = {
+        id: 'msg-2',
+        threadId: 'telegram:42',
+        text: 'hello',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.firstCall.args[0].workflowOriginContent).to.equal(undefined);
+    });
+
+    it('should not hydrate when WorkflowOriginService.resolve returns null', async () => {
+      const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves(null);
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(workflowOriginService.resolve.calledOnce).to.equal(true);
+      expect(workflowOriginService.hydrate.called).to.equal(false);
+      expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal(undefined);
+    });
+
     it('should store and forward inbound WhatsApp attachments', async () => {
       const storedAttachments = [
         {
@@ -483,29 +645,6 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
         markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
       });
-    });
-
-    it('should dispatch custom-code restricted agents so the framework posts the auth card when the sender is unknown', async () => {
-      const restrictedConfig = {
-        ...config,
-        isManaged: false,
-        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
-      };
-      const { handler, bridgeExecutor, outboundGateway, inboundAck } = makeHandler({
-        subscriberResolve: sinon.stub().resolves(null),
-        subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
-      });
-      const thread = makeSlackDmThread();
-      const message = makeSlackDmMessage();
-
-      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      // Bypass the plain API reply: the framework's auth gate builds the CTA card on the bridge.
-      expect(outboundGateway.replyOnThread.called).to.equal(false);
-      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
-      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
-      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
     });
 
     it('should still reply for custom-code restricted agents when subscriber resolution errors', async () => {
@@ -1140,7 +1279,7 @@ describe('AgentInboundHandler', () => {
     const matchingStartPayload = {
       _environmentId: 'env1',
       _organizationId: 'org1',
-      agentIdentifier: 'support-agent',
+      linkScope: { mode: 'agent' as const, agentIdentifier: 'support-agent' },
       _integrationId: 'integration1',
       subscriberId: 'ext-sub-1',
     };
@@ -1170,9 +1309,11 @@ describe('AgentInboundHandler', () => {
     }
 
     it('atomically consumes start code and links subscriber on matching scope, skipping bridge', async () => {
-      const linkTelegramExecute = sinon
-        .stub()
-        .resolves({ created: true, subscriberId: 'ext-sub-1', agentIdentifier: 'support-agent' });
+      const linkTelegramExecute = sinon.stub().resolves({
+        created: true,
+        subscriberId: 'ext-sub-1',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+      });
       const startCodeConsume = sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload });
       const { handler, bridgeExecutor, linkTelegramChatToSubscriber, conversationService, startCodeService } =
         makeHandler({
@@ -1190,22 +1331,25 @@ describe('AgentInboundHandler', () => {
         environmentId: 'env1',
         organizationId: 'org1',
         integrationId: 'integration1',
-        agentIdentifier: 'support-agent',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
       });
       expect(linkTelegramChatToSubscriber.execute.calledOnce).to.equal(true);
       const cmd = linkTelegramChatToSubscriber.execute.firstCall.args[0];
       expect(cmd.environmentId).to.equal('env1');
       expect(cmd.subscriberId).to.equal('ext-sub-1');
       expect(cmd.chatId).to.equal('42');
+      expect(cmd.linkScope).to.deep.equal({ mode: 'agent', agentIdentifier: 'support-agent' });
       expect(thread.post.calledOnce).to.equal(true);
       expect(bridgeExecutor.execute.called).to.equal(false);
       expect(conversationService.createOrGetConversation.called).to.equal(false);
     });
 
     it('replies with the duplicate message when the chat was already linked', async () => {
-      const linkTelegramExecute = sinon
-        .stub()
-        .resolves({ created: false, subscriberId: 'sub-1', agentIdentifier: 'support-agent' });
+      const linkTelegramExecute = sinon.stub().resolves({
+        created: false,
+        subscriberId: 'sub-1',
+        linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+      });
       const { handler, bridgeExecutor } = makeHandler({
         linkTelegramExecute,
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
@@ -1223,15 +1367,37 @@ describe('AgentInboundHandler', () => {
     it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
       const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
       const { handler, agentIntegrationRepository } = makeHandler({
-        linkTelegramExecute: sinon
-          .stub()
-          .resolves({ created: true, subscriberId: 'user-123', agentIdentifier: 'support-agent' }),
+        linkTelegramExecute: sinon.stub().resolves({
+          created: true,
+          subscriberId: 'user-123',
+          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+        }),
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
       });
       const thread = makeTelegramThread();
       const message = makeStartMessage('/start dashcode');
 
       await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+    });
+
+    it('does not mark connectedAt when the dashboard Agent Chat tester identity sends a message', async () => {
+      const dashboardSubscriberId = buildDashboardAgentChatSubscriberId('user-123');
+      const { handler, agentIntegrationRepository } = makeHandler({
+        ...makeResolvedSubscriberOverrides(dashboardSubscriberId),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('hello from dashboard tester');
+
+      await handler.handle(
+        'agent1',
+        { ...telegramConfig, isManaged: true } as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
 
       expect(agentIntegrationRepository.updateOne.called).to.equal(false);
     });
@@ -1257,9 +1423,11 @@ describe('AgentInboundHandler', () => {
 
     it('does not mark the integration connected (Layer 2) when a genuine end user links via /start', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
-        linkTelegramExecute: sinon
-          .stub()
-          .resolves({ created: true, subscriberId: 'ext-sub-1', agentIdentifier: 'support-agent' }),
+        linkTelegramExecute: sinon.stub().resolves({
+          created: true,
+          subscriberId: 'ext-sub-1',
+          linkScope: { mode: 'agent', agentIdentifier: 'support-agent' },
+        }),
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
       });
       const thread = makeTelegramThread();
@@ -1409,6 +1577,122 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
       expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_ACTION);
       expect(bridgeExecutor.execute.firstCall.args[0].action).to.deep.equal(action);
+    });
+
+    it('should hydrate workflow origin when an action is the first interaction on the thread', async () => {
+      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        templateIdentifier: 'order-alerts',
+        identifier: 'thread1:1777837477.371619',
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'ack', value: undefined } as any,
+        'user1'
+      );
+
+      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
+      expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
+      // The origin must reach history before the runtime reads the conversation.
+      expect(workflowOriginService.hydrate.calledBefore(bridgeExecutor.execute)).to.equal(true);
+    });
+
+    it('should use the clicked Slack message timestamp when resolving an action-only thread', async () => {
+      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const platformThreadId = 'slack:D123:1777837477.371619';
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        identifier: 'D123:1777837477.371619',
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        { id: 'ack', sourceMessageId: '1777837477.371619' } as any,
+        'user1'
+      );
+
+      expect(conversationService.findByPlatformThread.firstCall.args[4]).to.equal(platformThreadId);
+      expect(workflowOriginService.resolve.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
+      expect(conversationService.createOrGetConversation.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
+      expect(workflowOriginService.hydrate.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
+      expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(platformThreadId);
+    });
+
+    it('should not hydrate workflow origin for link-button actions when resolve returns null', async () => {
+      const { handler, workflowOriginService } = makeHandler();
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'link-https://novu.co/pricing', value: undefined } as any,
+        'user1'
+      );
+
+      expect(workflowOriginService.hydrate.called).to.equal(false);
+    });
+
+    it('should still hydrate workflow origin when a link-button click is the first-ever interaction on a seeded thread', async () => {
+      const { handler, conversationService, workflowOriginService } = makeHandler(makeResolvedSubscriberOverrides());
+
+      // Regression: create + hydrate must be atomic. A link-button click swallowed
+      // right after conversation creation must not skip the one-shot hydration —
+      // otherwise `_notificationId` gets stamped with no origin content ever written,
+      // permanently blocking every later retry.
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({
+        origin: { _id: 'msg1', _notificationId: 'notif1' },
+        notificationId: 'notif1',
+      });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'link-https://novu.co/pricing', value: undefined } as any,
+        'user1'
+      );
+
+      expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
+      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
+    });
+
+    it('should still dispatch the action when workflow origin resolve returns null', async () => {
+      const { handler, conversationService, workflowOriginService, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves(null);
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'ack', value: undefined } as any,
+        'user1'
+      );
+
+      expect(workflowOriginService.hydrate.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });
   });
 

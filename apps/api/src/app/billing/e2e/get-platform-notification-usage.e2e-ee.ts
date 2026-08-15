@@ -17,7 +17,7 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   const notificationRepo = new NotificationRepository();
   const communityOrganizationRepo = new CommunityOrganizationRepository();
 
-  const mockWorkflowRunRepository = {
+  const mockWorkflowRunCountRepository = {
     getPlatformUsageByDateRange: sinon.stub().resolves([]),
   };
 
@@ -32,7 +32,7 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
 
   const createUseCase = () => {
     return new GetPlatformNotificationUsage(
-      mockWorkflowRunRepository,
+      mockWorkflowRunCountRepository,
       environmentRepo,
       notificationRepo,
       communityOrganizationRepo,
@@ -46,8 +46,8 @@ describe('GetPlatformNotificationUsage #novu-v2', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    mockWorkflowRunRepository.getPlatformUsageByDateRange.reset();
-    mockWorkflowRunRepository.getPlatformUsageByDateRange.resolves([]);
+    mockWorkflowRunCountRepository.getPlatformUsageByDateRange.reset();
+    mockWorkflowRunCountRepository.getPlatformUsageByDateRange.resolves([]);
     mockFeatureFlagsService.getFlag.reset();
     mockFeatureFlagsService.getFlag.resolves(false);
   });

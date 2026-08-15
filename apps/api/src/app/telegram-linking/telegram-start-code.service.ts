@@ -3,6 +3,12 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 
 import { mintAutolinkSafeOpaqueToken } from '../shared/helpers';
+import {
+  isTelegramLinkScope,
+  type TelegramLinkScope,
+  telegramLinkScopeAgentIdentifier,
+  telegramLinkScopeMode,
+} from './telegram-link-scope';
 
 /**
  * Telegram `?start=` allows at most 64 base64url chars; we use 32-char opaque
@@ -16,21 +22,27 @@ const CACHE_KEY_PREFIX = 'telegram-start-code:';
 export interface TelegramStartCodePayload {
   _environmentId: string;
   _organizationId: string;
-  agentIdentifier: string;
+  linkScope: TelegramLinkScope;
   _integrationId: string;
   subscriberId: string;
   /**
-   * Optional context bound at issue time. Rebuilt into the endpoint's
-   * `contextKeys` when the `/start` code is consumed. Absent for plain links.
+   * Optional context bound at issue time. Resolved into the endpoint's
+   * `contextKeys` when the `/start` code is consumed (when `contextKeys`
+   * below are absent). Absent for plain links.
    */
   context?: ContextPayload;
+  /**
+   * Pre-resolved context keys from a subscriber session. When present these are
+   * persisted verbatim on the endpoint and take precedence over `context`.
+   */
+  contextKeys?: string[];
 }
 
 export interface TelegramStartCodeScope {
   environmentId: string;
   organizationId: string;
   integrationId: string;
-  agentIdentifier: string;
+  linkScope: TelegramLinkScope;
 }
 
 export type ConsumeStartCodeResult =
@@ -43,6 +55,8 @@ export type ConsumeStartCodeResult =
  * deletes (one-time use); scope mismatch leaves the row so the legitimate bot
  * can still consume it. Returning the encoded JSON keeps decoding in Node
  * rather than relying on cjson semantics inside Redis.
+ *
+ * ARGV: envId, orgId, integrationId, linkScope.mode, agentIdentifier (empty for integration)
  */
 const CONSUME_IF_MATCHES_SCRIPT = `
 local v = redis.call('get', KEYS[1])
@@ -52,10 +66,20 @@ if not ok then
   redis.call('del', KEYS[1])
   return ''
 end
+local linkScope = payload.linkScope
+if type(linkScope) ~= 'table' then
+  return 'X' .. v
+end
+local modeMatches = linkScope.mode == ARGV[4]
+local agentMatches = true
+if ARGV[4] == 'agent' then
+  agentMatches = linkScope.agentIdentifier == ARGV[5]
+end
 if payload._environmentId == ARGV[1]
    and payload._organizationId == ARGV[2]
    and payload._integrationId == ARGV[3]
-   and payload.agentIdentifier == ARGV[4] then
+   and modeMatches
+   and agentMatches then
   redis.call('del', KEYS[1])
   return 'M' .. v
 end
@@ -74,19 +98,21 @@ export class TelegramStartCodeService {
   async issue(params: {
     environmentId: string;
     organizationId: string;
-    agentIdentifier: string;
+    linkScope: TelegramLinkScope;
     integrationId: string;
     subscriberId: string;
     context?: ContextPayload;
+    contextKeys?: string[];
   }): Promise<{ code: string; expiresAt: string }> {
     const code = mintAutolinkSafeOpaqueToken();
     const payload: TelegramStartCodePayload = {
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
-      agentIdentifier: params.agentIdentifier,
+      linkScope: params.linkScope,
       _integrationId: params.integrationId,
       subscriberId: params.subscriberId,
-      ...(params.context ? { context: params.context } : {}),
+      ...(params.contextKeys?.length ? { contextKeys: params.contextKeys } : {}),
+      ...(params.context && !params.contextKeys?.length ? { context: params.context } : {}),
     };
 
     if (!this.cacheService.cacheEnabled()) {
@@ -119,7 +145,13 @@ export class TelegramStartCodeService {
       raw = await this.cacheService.eval<string | null>(
         CONSUME_IF_MATCHES_SCRIPT,
         [this.cacheKey(code)],
-        [scope.environmentId, scope.organizationId, scope.integrationId, scope.agentIdentifier]
+        [
+          scope.environmentId,
+          scope.organizationId,
+          scope.integrationId,
+          telegramLinkScopeMode(scope.linkScope),
+          telegramLinkScopeAgentIdentifier(scope.linkScope),
+        ]
       );
     } catch (err) {
       this.logger.warn(`Failed to consume telegram start code: ${(err as Error).message}`);
@@ -169,7 +201,7 @@ export class TelegramStartCodeService {
       if (
         !parsed?._environmentId ||
         !parsed?._organizationId ||
-        !parsed?.agentIdentifier ||
+        !isTelegramLinkScope(parsed?.linkScope) ||
         !parsed?._integrationId ||
         !parsed?.subscriberId
       ) {

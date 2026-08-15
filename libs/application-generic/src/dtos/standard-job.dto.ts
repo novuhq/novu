@@ -6,10 +6,9 @@ export class IStandardDataDto {
   _organizationId: string;
   _id: string;
   /*
-   * skipProcessing flag for CF Scheduler migration
+   * skipProcessing flag for the queue backend migration
    * When true, the consumer should skip processing this job
-   * Used in LIVE mode where BullMQ job is shadow and CF Scheduler result is real
-   * Used by API when CF Scheduler calls in SHADOW mode (BullMQ is real)
+   * Set on the shadow copy of a job so only the live backend produces a real result
    */
   skipProcessing?: boolean;
   /*

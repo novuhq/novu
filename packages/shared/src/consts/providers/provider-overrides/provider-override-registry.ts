@@ -162,8 +162,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
     primaryContentKey: TELEGRAM_PRIMARY_CONTENT_KEY,
   },
   [ChatProviderIdEnum.Sendblue]: escapeHatch('content'),
-  // Agent web chat has no stable override schema yet — free-form passthrough keyed like Discord.
-  [ChatProviderIdEnum.NovuWebChat]: escapeHatch('content'),
+  // Agent chat has no stable override schema yet — free-form passthrough keyed like Discord.
+  [ChatProviderIdEnum.NovuAgentChat]: escapeHatch('content'),
   // Google Chat incoming webhooks take the message text in `text`.
   [ChatProviderIdEnum.GoogleChat]: escapeHatch('text'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;

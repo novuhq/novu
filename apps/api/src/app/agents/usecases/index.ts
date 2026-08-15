@@ -1,3 +1,6 @@
+import { GetAgentChatConversation } from '../agent-chat/usecases/get-agent-chat-conversation/get-agent-chat-conversation.usecase';
+import { ListAgentChatConversationEvents } from '../agent-chat/usecases/list-agent-chat-conversation-events/list-agent-chat-conversation-events.usecase';
+import { ListAgentChatConversations } from '../agent-chat/usecases/list-agent-chat-conversations/list-agent-chat-conversations.usecase';
 import { AddAgentIntegration } from '../channels/integrations/add-agent-integration/add-agent-integration.usecase';
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
@@ -24,6 +27,7 @@ import { GenerateManagedAgent } from '../management/usecases/generate-managed-ag
 import { GetAgent } from '../management/usecases/get-agent/get-agent.usecase';
 import { GetAgentDemoQuota } from '../management/usecases/get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { GetAgentRuntimeConfig } from '../management/usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
+import { GetAgentUsage } from '../management/usecases/get-agent-usage/get-agent-usage.usecase';
 import { ListAgents } from '../management/usecases/list-agents/list-agents.usecase';
 import { MigrateAgentRuntime } from '../management/usecases/migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { ProvisionManagedAgent } from '../management/usecases/provision-managed-agent/provision-managed-agent.usecase';
@@ -44,9 +48,6 @@ import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generat
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { IngestAgentEvents } from '../shared/ingest-agent-events/ingest-agent-events.usecase';
-import { GetWebChatConversation } from '../web-chat/usecases/get-web-chat-conversation/get-web-chat-conversation.usecase';
-import { ListWebChatConversationEvents } from '../web-chat/usecases/list-web-chat-conversation-events/list-web-chat-conversation-events.usecase';
-import { ListWebChatConversations } from '../web-chat/usecases/list-web-chat-conversations/list-web-chat-conversations.usecase';
 
 export { ConsumeSlackSetupLink, GetSlackSetupLinkStatus, IssueSlackSetupLink };
 
@@ -55,6 +56,7 @@ export const USE_CASES = [
   ConsumeSlackSetupLink,
   GetAgent,
   GetAgentRuntimeConfig,
+  GetAgentUsage,
   GetSlackSetupLinkStatus,
   ListAgents,
   UpdateAgent,
@@ -97,7 +99,7 @@ export const USE_CASES = [
   HandleNovuTools,
   HandleNovuResolve,
   IngestAgentEvents,
-  GetWebChatConversation,
-  ListWebChatConversations,
-  ListWebChatConversationEvents,
+  GetAgentChatConversation,
+  ListAgentChatConversations,
+  ListAgentChatConversationEvents,
 ];

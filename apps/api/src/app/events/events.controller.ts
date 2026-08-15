@@ -127,6 +127,7 @@ export class EventsController {
         bridgeUrl: body.bridgeUrl,
         controls: body.controls,
         requestId: req._nvRequestId,
+        ...(body.agentId !== undefined && { agentId: body.agentId }),
       })
     );
 
@@ -214,6 +215,7 @@ export class EventsController {
         actor: body.actor,
         context: body.context,
         requestId: req._nvRequestId,
+        ...(body.agentId !== undefined && { agentId: body.agentId }),
       })
     );
   }

@@ -1,0 +1,61 @@
+---
+title: "Agent Chat"
+description: "Connect your agent to in-app Agent Chat: live typing, tool approval, thinking parts, and a headless React hook in your product UI."
+sidebarTitle: Overview
+---
+
+<Note>
+  Agent Chat is in closed beta. Contact us at support@novu.co to get access.
+</Note>
+
+Agent Chat is an ACI channel. The messaging surface is your product UI.
+
+The agent brain, conversation history, tool approval, and dashboard observability match other ACI channels. The client is [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat) from `@novu/react`. You render the messages and the composer.
+
+## Capabilities
+
+| Capability | Support |
+| --- | --- |
+| Full context history | Yes |
+| Threaded replies (one conversation per thread) | Yes |
+| Live typing indicator | Yes |
+| React with eyes on inbound messages | No |
+| Plan card (thinking parts) | Yes |
+| Rich text | Yes (your UI renders message parts) |
+| Tap-to-respond | Yes (tool approval and cards) |
+| Emoji reactions | No |
+| Message edits in place | Yes |
+| Action / MCP tool approval | Yes |
+| MCP connect card | Yes |
+| Resolve conversation | Yes |
+| File parts | Yes |
+| Streaming text parts | Yes (live socket) |
+
+Full matrix: [Channels overview](/agents/channels/overview).
+
+## Examples
+
+### In-app turn
+
+A subscriber sends a message in your UI. Novu loads conversation history, runs the agent brain, and streams the reply over the socket. Typing and thinking parts update while the turn runs.
+
+### Tool approval
+
+A gated tool pauses the turn. `pendingActions` includes a `tool-approval` item. Call `respondToAction` with `approved` or `denied`. The turn resumes after the decision.
+
+## Setup
+
+1. Create an agent and keep it **active**.
+2. In the Novu dashboard, open the agent and add **Agent Chat** as a channel. Novu creates the `novu-agent-chat` integration if it does not exist.
+3. Embed the chat in your app. Follow [Build the UI](/agents/channels/agent-chat/quickstart).
+
+## Related
+
+<Columns cols={2}>
+  <Card href="/agents/channels/agent-chat/quickstart" title="Build the UI" icon="rocket">
+    Install `@novu/react`, wrap `NovuProvider`, and send a message.
+  </Card>
+  <Card href="/platform/sdks/react/hooks/use-agent-chat" title="useAgentChat" icon="code">
+    Hook props, return value, and callbacks.
+  </Card>
+</Columns>

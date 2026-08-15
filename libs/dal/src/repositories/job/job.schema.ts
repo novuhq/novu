@@ -30,6 +30,10 @@ const jobSchema = new Schema<JobDBModel>(
     overrides: {
       type: Schema.Types.Mixed,
     },
+    _agentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Agent',
+    },
     tenant: {
       type: Schema.Types.Mixed,
     },

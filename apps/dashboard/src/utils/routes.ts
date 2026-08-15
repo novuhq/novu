@@ -9,6 +9,7 @@ export const ROUTES = {
   SSO_SIGN_IN: '/auth/sso',
   VERIFY_EMAIL: '/auth/verify-email',
   USECASE_SELECT: '/onboarding/usecase',
+  AGENTS_PERSONALIZE: '/onboarding/agents/personalize',
   AGENTS_SETUP: '/onboarding/agents/setup',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',
@@ -37,6 +38,7 @@ export const ROUTES = {
   WELCOME: '/env/:environmentSlug/welcome',
   HOME: '/env/:environmentSlug/home',
   EDIT_WORKFLOW_PREFERENCES: 'preferences',
+  EDIT_WORKFLOW_AGENT: 'agent',
   EDIT_STEP: 'steps/:stepSlug',
 
   EDIT_STEP_TEMPLATE: 'steps/:stepSlug/editor',
@@ -97,7 +99,9 @@ export const ROUTES = {
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
 
-export const AGENT_DETAILS_TABS = ['overview', 'integrations'] as const;
+export const AGENT_DETAILS_CHAT_TAB = 'chat';
+
+export const AGENT_DETAILS_TABS = ['overview', 'integrations', AGENT_DETAILS_CHAT_TAB] as const;
 
 export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
 

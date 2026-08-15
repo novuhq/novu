@@ -40,6 +40,8 @@ export type TextMenuConfig = {
 export type ImageMenuConfig = {
   showAlignment?: boolean;
   showExternalLink?: boolean;
+  /** When false, hide width/height/lock/border-radius controls. Default true. */
+  showSizeControls?: boolean;
 };
 
 export type MenuConfig = {

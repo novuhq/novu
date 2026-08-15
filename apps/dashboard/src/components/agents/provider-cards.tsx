@@ -1,6 +1,5 @@
 import {
   ChatProviderIdEnum,
-  CONVERSATIONAL_PROVIDERS,
   type ConversationalProvider,
   EmailProviderIdEnum,
   type IIntegration,
@@ -19,12 +18,13 @@ import type { AgentIntegrationLink } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { useConversationalProviders } from '@/hooks/use-conversational-providers';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
+import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent-channel-branding';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
-import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
@@ -42,31 +42,19 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [ChatProviderIdEnum.WhatsAppBusiness]: '~ 5 minutes',
   [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
   [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
+  [ChatProviderIdEnum.NovuAgentChat]: '~ 30 seconds',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
   linear: '~ 2 minutes',
   zoom: '~ 2 minutes',
 };
 
-// The carousel is the only surface that brands the Sendblue channel as "iMessage" (label + icon);
-// every other surface keeps the canonical Sendblue name via getAgentChannelDisplayName.
-const CAROUSEL_IMESSAGE_LABEL = 'iMessage';
-const CAROUSEL_IMESSAGE_ICON_FILE = 'imessages';
-
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
   if (providerId === ChatProviderIdEnum.Sendblue) {
-    return CAROUSEL_IMESSAGE_LABEL;
+    return AGENT_IMESSAGE_LABEL;
   }
 
   return getAgentChannelDisplayName(providerId, displayName);
-}
-
-function getProviderCardIconFileName(providerId: string): string {
-  if (providerId === ChatProviderIdEnum.Sendblue) {
-    return CAROUSEL_IMESSAGE_ICON_FILE;
-  }
-
-  return getProviderSquareIconFileName(providerId);
 }
 
 const CARD_PROVIDER_ICON_CLASS = 'size-6 shrink-0 object-contain';
@@ -76,7 +64,7 @@ function CardProviderIcon({ providerId, displayName }: { providerId: string; dis
     <ProviderIcon
       providerId={providerId}
       providerDisplayName={displayName}
-      iconFileName={getProviderCardIconFileName(providerId)}
+      iconFileName={getAgentChannelIconFileName(providerId)}
       className={CARD_PROVIDER_ICON_CLASS}
     />
   );
@@ -178,6 +166,7 @@ function ProviderPill({
   connected,
   connecting,
   inSetup,
+  idleLabel = 'Connect',
 }: {
   loading: boolean;
   comingSoon: boolean;
@@ -185,6 +174,7 @@ function ProviderPill({
   connected: boolean;
   connecting: boolean;
   inSetup: boolean;
+  idleLabel?: string;
 }) {
   let label: string;
   if (comingSoon) {
@@ -198,7 +188,7 @@ function ProviderPill({
   } else if (connecting) {
     label = 'Connecting...';
   } else {
-    label = 'Connect';
+    label = idleLabel;
   }
 
   return (
@@ -459,12 +449,13 @@ export function ProviderCards({
 }: ProviderCardsProps) {
   const { integrations } = useFetchIntegrations();
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
+  const conversationalProviders = useConversationalProviders();
   const navigate = useNavigate();
 
   // Email (NovuAgent) renders like every other connectable channel card; its integration + link
   // are only provisioned when the user clicks Connect.
   const items = useMemo(() => {
-    const built = buildCardItems(CONVERSATIONAL_PROVIDERS, integrations).filter(
+    const built = buildCardItems(conversationalProviders, integrations).filter(
       // Agent email is Enterprise/Cloud-only — never surface the card on Community.
       (item) => !(IS_SELF_HOSTED_CE && item.providerId === EmailProviderIdEnum.NovuAgent)
     );
@@ -475,7 +466,7 @@ export function ProviderCards({
 
       return 0;
     });
-  }, [integrations]);
+  }, [conversationalProviders, integrations]);
 
   const linkedIntegrationIds = useMemo(
     () => new Set(existingLinks?.map((link) => link.integration._id) ?? []),

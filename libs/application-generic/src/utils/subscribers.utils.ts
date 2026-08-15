@@ -21,6 +21,7 @@ export function mapSubscribersToJobs(
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
+        ...(command._agentId !== undefined && { _agentId: command._agentId }),
         subscriber,
         topics: subscriber.topics,
         templateId: command.template._id,

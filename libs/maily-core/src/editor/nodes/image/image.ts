@@ -22,6 +22,23 @@ export type ImageAttributes = {
   showIfKey?: string;
 };
 
+export type ImageExtensionOptions = {
+  /** When false, hide corner drag handles (e.g. rich chat). Default true. */
+  resizable?: boolean;
+  /** Default horizontal alignment for newly inserted images. Default `center`. */
+  defaultAlignment?: 'left' | 'center' | 'right';
+  /** Cap applied when auto-sizing a newly loaded image. */
+  maxWidth?: number;
+  /** Cap applied when auto-sizing a newly loaded image (e.g. chat Slack-like bounds). */
+  maxHeight?: number;
+  /**
+   * When true (rich chat only), size images with maxWidth/maxHeight scale math that matches
+   * the chat preview — ignores editor container width and re-syncs stale attrs. Email keeps
+   * the default container-based fit (leave unset / false).
+   */
+  fitToMaxBounds?: boolean;
+};
+
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     imageOverride: {
@@ -30,8 +47,21 @@ declare module '@tiptap/core' {
   }
 }
 
-export const ImageExtension = TiptapImage.extend({
+export const ImageExtension = TiptapImage.extend<ImageExtensionOptions>({
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      resizable: true,
+      defaultAlignment: 'center',
+      maxWidth: undefined,
+      maxHeight: undefined,
+      fitToMaxBounds: false,
+    };
+  },
+
   addAttributes() {
+    const defaultAlignment = this.options.defaultAlignment ?? 'center';
+
     return {
       ...this.parent?.(),
       width: {
@@ -57,9 +87,9 @@ export const ImageExtension = TiptapImage.extend({
         renderHTML: ({ height }) => ({ height }),
       },
       alignment: {
-        default: 'center',
+        default: defaultAlignment,
         renderHTML: ({ alignment }) => ({ 'data-alignment': alignment }),
-        parseHTML: (element) => element.getAttribute('data-alignment') || 'center',
+        parseHTML: (element) => element.getAttribute('data-alignment') || defaultAlignment,
       },
 
       externalLink: {

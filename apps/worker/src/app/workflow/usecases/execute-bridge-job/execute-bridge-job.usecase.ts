@@ -41,6 +41,7 @@ import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IAttachmentOptions,
   ITriggerPayload,
   JobStatusEnum,
   ResourceOriginEnum,
@@ -207,7 +208,44 @@ export class ExecuteBridgeJob {
     // Remove internal params
     const { __source, ...payload } = originalPayload;
 
-    return payload;
+    if (!Array.isArray(payload.attachments) || payload.attachments.length === 0) {
+      return payload;
+    }
+
+    /*
+     * Rehydrated attachment files are Node Buffers. JSON.stringify turns those into
+     * `{"type":"Buffer","data":[...]}` (~3.4x the raw size), which overflows the API
+     * bridge body limit for files larger than ~5–7 MB. Encode as base64 for the bridge
+     * wire format (same shape clients send on trigger) without mutating the original
+     * payload used later for channel delivery.
+     *
+     * Cast: IAttachmentOptions.file is typed as Buffer, but the bridge JSON body must
+     * carry a base64 string. Runtime consumers of this normalized payload expect that.
+     */
+    const attachments = payload.attachments.map((attachment) => {
+      const file: unknown = attachment?.file;
+
+      if (Buffer.isBuffer(file)) {
+        return {
+          ...attachment,
+          file: file.toString('base64'),
+        };
+      }
+
+      if (file instanceof Uint8Array) {
+        return {
+          ...attachment,
+          file: Buffer.from(file).toString('base64'),
+        };
+      }
+
+      return attachment;
+    }) as IAttachmentOptions[];
+
+    return {
+      ...payload,
+      attachments,
+    };
   }
 
   public async buildStepsMap(job: JobEntity, environmentId: string): Promise<Record<string, Record<string, unknown>>> {

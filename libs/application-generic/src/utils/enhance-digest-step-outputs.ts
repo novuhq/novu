@@ -19,12 +19,7 @@ export function enhanceDigestStepOutputs(outputs: Record<string, unknown>): Reco
     ...outputs,
     eventCount,
     countSummary: pluralize(eventCount, DEFAULT_COUNT_SINGULAR, DEFAULT_COUNT_PLURAL),
-    sentenceSummary: toSentence(
-      events,
-      DEFAULT_SENTENCE_KEY_PATH,
-      DEFAULT_SENTENCE_LIMIT,
-      DEFAULT_SENTENCE_OVERFLOW
-    ),
+    sentenceSummary: toSentence(events, DEFAULT_SENTENCE_KEY_PATH, DEFAULT_SENTENCE_LIMIT, DEFAULT_SENTENCE_OVERFLOW),
   };
 }
 

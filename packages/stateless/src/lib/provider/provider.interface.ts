@@ -107,23 +107,181 @@ export interface IChatOptions {
   phoneNumber?: string;
   channelData?: ChannelData;
   content: string;
-  blocks?: IBlock[];
+  /**
+   * Rich Chat: the provider-native payload the caller (worker) already produced from a
+   * `CardElement` via this provider's `render()` (Slack `{ blocks }`, Teams `{ attachments }`).
+   * The provider spreads it into its outgoing body; `content` carries the markdown fallback text.
+   */
+  nativePayload?: Record<string, unknown>;
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;
 }
 
-export interface IBlock {
-  type: 'section' | 'header';
-  text: {
-    type: 'mrkdwn';
-    text: string;
-  };
+/**
+ * Cross-platform card content (Rich Chat), rendered natively per provider at delivery
+ * (Slack Block Kit, MS Teams Adaptive Cards) and degraded to markdown text elsewhere.
+ *
+ * Structural superset of the dashboard `@novu/shared` CardElement (v1 subset). Duplicated
+ * here because `@novu/stateless` has no dependency on `@novu/shared`. Code-first `step.chat`
+ * may emit the full Chat SDK kit (section/fields/table + interactive button/select/radio_select);
+ * the dashboard Maily editor still authors the v1 subset only.
+ */
+export type CardElementTextElement = {
+  type: 'text';
+  content: string;
+  style?: 'plain' | 'bold' | 'muted';
+};
+
+export type CardElementImageElement = {
+  type: 'image';
+  url: string;
+  alt?: string;
+};
+
+export type CardElementDividerElement = {
+  type: 'divider';
+};
+
+/** Presentational inline hyperlink (Chat SDK `CardLink`). */
+export type CardElementLinkElement = {
+  type: 'link';
+  label: string;
+  url: string;
+};
+
+export type CardElementLinkButtonElement = {
+  type: 'link-button';
+  label: string;
+  url: string;
+  style?: 'primary' | 'danger' | 'default';
+  /** Optional author-provided id; platform serializers use it (e.g. Slack `action_id`). */
+  id?: string;
+};
+
+/** Interactive action button (Chat SDK `Button`). Renders on Slack/Teams; no callback wiring on classic `step.chat`. */
+export type CardElementButtonElement = {
+  type: 'button';
+  id: string;
+  label: string;
+  style?: 'primary' | 'danger' | 'default';
+  actionType?: 'action' | 'modal';
+  callbackUrl?: string;
+  value?: string;
+  disabled?: boolean;
+};
+
+export type CardElementSelectOptionElement = {
+  label: string;
+  value: string;
+  description?: string;
+};
+
+/** Chat SDK `Select`. Renders on Slack/Teams; no callback wiring on classic `step.chat`. */
+export type CardElementSelectElement = {
+  type: 'select';
+  id: string;
+  label: string;
+  options: CardElementSelectOptionElement[];
+  initialOption?: string;
+  optional?: boolean;
+  placeholder?: string;
+};
+
+/** Chat SDK `RadioSelect`. Renders on Slack/Teams; no callback wiring on classic `step.chat`. */
+export type CardElementRadioSelectElement = {
+  type: 'radio_select';
+  id: string;
+  label: string;
+  options: CardElementSelectOptionElement[];
+  initialOption?: string;
+  optional?: boolean;
+};
+
+export type CardElementActionChild =
+  | CardElementLinkButtonElement
+  | CardElementButtonElement
+  | CardElementSelectElement
+  | CardElementRadioSelectElement;
+
+export type CardElementActionsElement = {
+  type: 'actions';
+  children: CardElementActionChild[];
+};
+
+export type CardElementFieldElement = {
+  type: 'field';
+  label: string;
+  value: string;
+};
+
+export type CardElementFieldsElement = {
+  type: 'fields';
+  children: CardElementFieldElement[];
+};
+
+export type CardElementTableElement = {
+  type: 'table';
+  headers: string[];
+  rows: string[][];
+  align?: Array<'left' | 'center' | 'right'>;
+};
+
+export type CardElementSectionElement = {
+  type: 'section';
+  children: CardElementChild[];
+};
+
+export type CardElementChild =
+  | CardElementTextElement
+  | CardElementImageElement
+  | CardElementDividerElement
+  | CardElementLinkElement
+  | CardElementActionsElement
+  | CardElementSectionElement
+  | CardElementFieldsElement
+  | CardElementTableElement;
+
+export type CardElement = {
+  type: 'card';
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  children: CardElementChild[];
+};
+
+export enum ChatRenderValidationLevelEnum {
+  WARNING = 'warning',
+  ERROR = 'error',
+}
+
+/**
+ * A deterministic, post-render platform-limit finding (e.g. "Slack section text
+ * truncated to 3000 chars", "WhatsApp only delivers the first 3 buttons"). Warnings
+ * are non-blocking; the worker logs them and still delivers.
+ */
+export interface IChatRenderValidation {
+  level: ChatRenderValidationLevelEnum;
+  code: string;
+  message: string;
+}
+
+/**
+ * Result of serializing a `CardElement` for a specific chat provider.
+ * `nativePayload` is the provider-native payload (Slack blocks, Teams Adaptive Card, ...),
+ * `content` is the provider-flavored text used as `text` and on card-less surfaces.
+ */
+export interface IChatRenderResult {
+  nativePayload: Record<string, unknown>;
+  content: string;
+  validation: IChatRenderValidation[];
 }
 
 export interface ISendMessageSuccessResponse {
   id?: string;
   ids?: string[];
   date?: string;
+  /** Provider-local conversation id when distinct from the send address (e.g. Slack DM `D…`). */
+  channel?: string;
 }
 
 export enum EmailEventStatusEnum {
@@ -212,6 +370,16 @@ export interface ISmsProvider extends IProvider {
 export interface IChatProvider extends IProvider {
   sendMessage(options: IChatOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
   channelType: ChannelTypeEnum.CHAT;
+
+  /**
+   * Rich Chat: serialize a `CardElement` DSL into this provider's native payload.
+   * Rich providers (Slack, Teams, ...) return a native `nativePayload`; providers without
+   * a native serializer omit this method and the caller falls back to markdown text.
+   * Async because the underlying Chat SDK serializers are ESM-only and lazily imported.
+   * Pure/side-effect free: the handler invokes it once before `sendMessage` (forwarding
+   * `nativePayload`/`content` via `IChatOptions`) and the editor preview reuses it.
+   */
+  render?: (card: CardElement) => Promise<IChatRenderResult>;
 
   getMessageId?: (body: any | any[]) => string[];
 

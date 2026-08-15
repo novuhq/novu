@@ -1,104 +1,113 @@
 ---
 title: "Novu Connect - Agent Communication Infrastructure (ACI)"
-description: "Connect AI agents to Slack, Teams, WhatsApp, and email with Novu's Agent Communication Infrastructure. Route messages, preserve context, and deliver replies."
+description: "Connect AI agents to Slack, Teams, WhatsApp, Telegram, and email. Route inbound messages, preserve conversation context, and deliver replies through Novu ACI."
 sidebarTitle: Overview
 ---
 
+Novu Connect is based on the [Agent Communication Infrastructure (ACI)](/agents/get-started/what-is-aci). It ingests channel webhooks, normalizes events, maintains conversation state, and delivers replies so you can run one agent across Slack, Microsoft Teams, WhatsApp, Telegram, email, and in-app [Agent Chat](/agents/channels/agent-chat) without rebuilding each integration.
 
-Novu Connect is built on the [Agent Communication Infrastructure (ACI)](/agents/get-started/what-is-aci), the infrastructure layer that handles how agents communicate, so your agents can hold real conversations across messaging platforms with users, on the channels they already use.
+ACI separates two layers:
 
-ACI draws a hard boundary between two concerns:
+* **Communication infrastructure**: Webhook ingestion, message normalization, conversation state, identity resolution, and delivery. Owned by ACI.
 
-* **Communication infrastructure**: Webhook ingestion, message normalization, conversation state, identity resolution, and delivery across channels. ACI owns this layer.
+* **Agent intelligence**: Your LLM, prompts, tools, managed agent config, business logic, or custom runtime. Owned by you.
 
-* **Agent intelligence**: Your LLM, prompts, tools, managed agent configuration, business logic, or custom runtime. You own this layer.
+## Common patterns
 
-The result is that you can create an agent once and make it available across connected channels. ACI routes messages in, sends replies out, preserves conversation context, and removes the need to rebuild communication plumbing for every platform.
+### Inbound conversations
 
-<Card href="/agents/get-started/what-is-aci" title="What is ACI?" icon="circle-question-mark">
-  Learn how ACI works, what it solves, and where it draws the line between infrastructure and intelligence.
-</Card>
+Users message the agent on a connected channel (DM, @mention, email, or in-app Agent Chat). Novu loads the conversation history and forwards it to your agent brain with the current turn. Replies go back to the same thread.
 
-## Connect the agent
+### Tool approval
 
-Novu Connect accepts two kinds of [agent brains](/platform/additional-resources/glossary#agent-brain). You choose how you want to bring it.
+Before a sensitive tool runs, the agent can pause and post Approve / Deny in the channel. The turn resumes after the user decides. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval).
 
-### External connectors
+## Connect your agent
 
-Delegate the agent logic entirely to a managed platform such as Claude Managed Agents. You configure the agent's behavior, system prompt, tools, skills, and MCP servers and the platform runs the intelligence.
-
-<Card href="/agents/managed-agent/overview" title="Managed agent" icon="sparkles">
-  Set up a fully managed agent powered by Claude. No custom server code required.
-</Card>
-
-### Custom code
-
-Write your own agent logic. Handle events, call any LLM or API, and reply using the Novu agent SDK. Compatible with AI SDK, LangChain, Mastra, OpenAI SDK, and any custom code of your choosing.
+Choose how the agent brain runs:
 
 <Columns cols={3}>
-  <Card href="/agents/get-started/ai-sdk" title="AI SDK" icon="sparkles">
-    Build with the Vercel AI SDK and `@novu/framework/ai-sdk`.
+  <Card title="Custom code" icon="plug" href="/agents/get-started/ai-sdk">
+    AI SDK, LangChain, Mastra, or custom handlers on your bridge.
   </Card>
-  <Card href="/agents/get-started/langchain" title="LangChain" icon="link">
-    Build with LangChain and `@novu/framework/langchain`.
+  <Card title="Claude managed agent" icon="sparkles" href="/agents/get-started/claude-managed">
+    Anthropic Claude. No bridge server.
   </Card>
-  <Card href="/agents/get-started/mastra" title="Mastra" icon="boxes">
-    Build with Mastra and `@novu/framework`.
+  <Card title="AWS Claude managed agent" icon="cloud" href="/agents/get-started/aws-claude">
+    Claude Platform on AWS. No bridge server.
+  </Card>
+</Columns>
+
+### Frameworks
+
+<Columns cols={3}>
+  <Card title="AI SDK" icon="sparkles" href="/agents/get-started/ai-sdk">
+    `@novu/framework/ai-sdk` + Vercel AI SDK.
+  </Card>
+  <Card title="LangChain" icon="link" href="/agents/get-started/langchain">
+    `@novu/framework/langchain`.
+  </Card>
+  <Card title="Mastra" icon="boxes" href="/agents/get-started/mastra">
+    `@novu/framework` calling Mastra `generate()`.
   </Card>
 </Columns>
 
-## How a conversation flows
+### Channels
 
-ACI turns channel-specific messages into a standard communication flow between the user and your agent brain.
-
-1. A user sends a message on Slack, Teams, WhatsApp, or another supported channel.
-2. Novu ingests the webhook, normalizes the event, and resolves the user's identity.
-3. Novu sends the event to your agent brain with full conversation context.
-4. Your agent processes the message and responds. 
-5. Novu delivers the reply back to the correct platform thread.
-6. Novu persists the conversation and makes it visible in the Connect dashboard.
-
-## Start building
-
-<Columns cols={2}>
-  <Card href="/agents/get-started/ai-sdk" title="AI SDK quickstart" icon="sparkles">
-    Connect an AI SDK agent to Slack, Teams, WhatsApp, Telegram, or email.
+<Columns cols={3}>
+  <Card title="Slack" icon="hash" href="/agents/channels/slack">
+    Typing, plan cards, Block Kit, tool approval.
   </Card>
-  <Card href="/agents/get-started/langchain" title="LangChain quickstart" icon="link">
-    Connect a LangChain agent to your messaging channels.
+  <Card title="Microsoft Teams" icon="users" href="/agents/channels/microsoft-teams">
+    Adaptive Cards, typing, tool approval.
   </Card>
-  <Card href="/agents/get-started/mastra" title="Mastra quickstart" icon="boxes">
-    Connect a Mastra agent to your messaging channels.
+  <Card title="WhatsApp" icon="message-circle" href="/agents/channels/whatsapp">
+    Quick-reply buttons, session context.
   </Card>
-  <Card href="/agents/managed-agent/quickstart" title="Managed agent quickstart" icon="sparkles">
-    Create a Claude-powered agent with the CLI and send your first message.
+  <Card title="Telegram" icon="send" href="/agents/channels/telegram">
+    Inline keyboards, typing, edit-in-place.
+  </Card>
+  <Card title="Email" icon="mail" href="/agents/channels/email">
+    Threaded HTML, action-link approvals.
+  </Card>
+  <Card title="Agent Chat" icon="message-circle" href="/agents/channels/agent-chat">
+    In-app headless hook, typing, tool approval.
   </Card>
 </Columns>
+
+Platform differences are listed in [Channels overview](/agents/channels/overview).
+
+## Message flow
+
+1. A user sends a message on a connected channel.
+2. Novu ingests the webhook, normalizes the event, and resolves identity.
+3. Novu forwards the event and conversation history to your agent brain.
+4. Your agent returns a reply (and may wait on tool approval).
+5. Novu delivers the reply to the correct thread.
+6. The conversation is stored and visible in the [Novu dashboard](https://dashboard.novu.co/agents).
 
 ## Learn more
 
-Explore the full documentation to go deeper on any part of Novu Connect.
-
-<Columns cols={2}>
+<Columns cols={3}>
   <Card href="/agents/get-started/what-is-aci" title="What is ACI?" icon="circle-question-mark">
-    Understand the infrastructure layer and the problem it solves.
+    Architecture and scope of the communication layer.
   </Card>
   <Card href="/agents/get-started/mental-model" title="Mental model" icon="brain-circuit">
-    How inbound messages flow from a channel through to your agent and back.
+    Inbound path from channel to agent and back.
   </Card>
   <Card href="/agents/get-started/agents-and-providers" title="Agents and providers" icon="blocks">
-    How agents and provider connections work, and which channels are supported.
+    Agent entities and provider connections.
   </Card>
-  <Card href="/agents/managed-agent/overview" title="Managed agent" icon="sparkles">
-    Configure a fully-managed agent powered by Claude.
+  <Card href="/agents/channels/overview" title="Channels overview" icon="table">
+    Feature support by platform.
   </Card>
-  <Card href="/agents/get-started/ai-sdk" title="AI SDK quickstart" icon="zap">
-    Build a custom code agent with the Vercel AI SDK.
+  <Card href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval" icon="shield-check">
+    Pause the turn until the user approves a tool call.
   </Card>
   <Card href="/agents/conversations" title="Conversation observability" icon="messages-square">
-    Monitor, inspect, and manage live agent conversations.
+    Inspect live conversations in the dashboard.
   </Card>
-  <Card href="/api-reference/agents/agent-schema" title="Agents API reference" icon="code">
-    Create, configure, and manage agents programmatically with the REST API.
+  <Card href="/agents/channels/agent-chat/quickstart" title="Build the Agent Chat UI" icon="message-circle">
+    Headless `useAgentChat` in your product UI.
   </Card>
 </Columns>

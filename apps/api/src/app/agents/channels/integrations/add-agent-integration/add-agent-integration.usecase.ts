@@ -30,7 +30,7 @@ import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
-import { NovuWebChatProvisioningService } from '../../web-chat/find-or-create-novu-web-chat/find-or-create-novu-web-chat.service';
+import { NovuAgentChatProvisioningService } from '../../agent-chat/find-or-create-novu-agent-chat/find-or-create-novu-agent-chat.service';
 import { AddAgentIntegrationCommand } from './add-agent-integration.command';
 
 @Injectable()
@@ -42,7 +42,7 @@ export class AddAgentIntegration {
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
-    private readonly findOrCreateNovuWebChat: NovuWebChatProvisioningService,
+    private readonly findOrCreateNovuAgentChat: NovuAgentChatProvisioningService,
     private readonly analyticsService: AnalyticsService
   ) {}
 
@@ -95,8 +95,8 @@ export class AddAgentIntegration {
       return response;
     }
 
-    if (command.providerId === ChatProviderIdEnum.NovuWebChat) {
-      const { response, provisionedNewLink } = await this.findOrCreateNovuWebChat.execute(
+    if (command.providerId === ChatProviderIdEnum.NovuAgentChat) {
+      const { response, provisionedNewLink } = await this.findOrCreateNovuAgentChat.execute(
         agent._id,
         command.environmentId,
         command.organizationId
@@ -113,7 +113,7 @@ export class AddAgentIntegration {
           integrationIdentifier: response.integration.identifier,
           providerId: response.integration.providerId,
           channel: response.integration.channel,
-          connectionSource: 'novu_web_chat_provisioned',
+          connectionSource: 'novu_agent_chat_provisioned',
         });
       }
 
@@ -189,6 +189,8 @@ export class AddAgentIntegration {
 
     // Revives a tombstoned (disconnected) link when one exists for this pair —
     // a plain create would violate the unique (_agentId, _integrationId) index.
+    // Agent Chat (and every other channel) leaves connectedAt null until the first
+    // genuine inbound user message — same install ≠ connected split as Slack.
     const link = await this.agentIntegrationRepository.createOrReviveLink({
       agentId: agent._id,
       integrationId: integration._id,

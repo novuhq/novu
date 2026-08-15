@@ -119,7 +119,7 @@ describe('InboxService.linkChannelEndpoint network contract', () => {
     global.fetch = originalFetch;
   });
 
-  it('POSTs to /v1/inbox/channel-endpoints/link with only the integration identifier', async () => {
+  it('POSTs to /v1/inbox/channel-endpoints/link with integration identifier, context, and contextHash', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -128,13 +128,21 @@ describe('InboxService.linkChannelEndpoint network contract', () => {
     global.fetch = fetchMock as unknown as typeof fetch;
 
     const service = new InboxService({ apiUrl: 'https://test.novu.co' });
-    const response = await service.linkChannelEndpoint({ integrationIdentifier: 'telegram-bot' });
+    const response = await service.linkChannelEndpoint({
+      integrationIdentifier: 'telegram-bot',
+      context: { key: 'value2' },
+      contextHash: 'signed-hash',
+    });
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://test.novu.co/v1/inbox/channel-endpoints/link',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ integrationIdentifier: 'telegram-bot' }),
+        body: JSON.stringify({
+          integrationIdentifier: 'telegram-bot',
+          context: { key: 'value2' },
+          contextHash: 'signed-hash',
+        }),
       })
     );
     expect(response).toEqual(TELEGRAM_LINK_RESPONSE);

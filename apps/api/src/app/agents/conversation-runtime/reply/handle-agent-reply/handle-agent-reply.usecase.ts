@@ -20,7 +20,11 @@ import type {
 } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
-import { AgentPlatformEnum, usesReplyBasedApprovals } from '../../../shared/enums/agent-platform.enum';
+import {
+  AgentPlatformEnum,
+  usesProtocolEventApprovals,
+  usesReplyBasedApprovals,
+} from '../../../shared/enums/agent-platform.enum';
 import { adaptApprovalContentForReplyBasedPlatform } from '../../../shared/tool-approval/reply-based-approval';
 import {
   buildSelfHostedApprovalCard,
@@ -159,6 +163,13 @@ export class HandleAgentReply {
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
+      const skipProtocolPortableApprovalCard =
+        usesProtocolEventApprovals(channel.platform) &&
+        !!command.toolApprovalRequest &&
+        !!command.reply.toolApprovalCard &&
+        command.reply.markdown === undefined &&
+        command.reply.card === undefined;
+
       // System-generated replies (e.g. runtime error notices) are always
       // delivered but never count an active conversation, and they bypass the
       // free-tier gate so an error message is never swallowed by a 402.
@@ -174,7 +185,9 @@ export class HandleAgentReply {
         });
       }
 
-      replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
+      if (!skipProtocolPortableApprovalCard) {
+        replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
+      }
 
       if (toolApprovalActivityId && replyInfo) {
         await this.linkToolApprovalRequestCard(command, conversation, toolApprovalActivityId, replyInfo.messageId);
@@ -204,7 +217,6 @@ export class HandleAgentReply {
           this.outboundGateway.reactToMessage(
             conversation._agentId,
             command.integrationIdentifier,
-            channel.platform,
             channel.platformThreadId,
             r.messageId,
             r.emojiName,
@@ -220,10 +232,17 @@ export class HandleAgentReply {
           this.outboundGateway.deleteInConversation(
             conversation._agentId,
             command.integrationIdentifier,
-            channel.platform,
             channel.platformThreadId,
             d.messageId,
-            channel.workspace?.id
+            channel.workspace?.id,
+            {
+              conversationId: conversation._id,
+              channel,
+              agentIdentifier: command.agentIdentifier,
+              agentName,
+              environmentId: command.environmentId,
+              organizationId: command.organizationId,
+            }
           )
         )
       );
@@ -559,6 +578,8 @@ export class HandleAgentReply {
         toolCallId: request.toolCallId,
         toolName: request.name,
         input: request.input,
+        approveActionId: request.approveActionId,
+        denyActionId: request.denyActionId,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       });
@@ -761,7 +782,6 @@ export class HandleAgentReply {
     await this.outboundGateway.reactToMessage(
       conversation._agentId,
       config.integrationIdentifier,
-      channel.platform,
       channel.platformThreadId,
       firstMessageId,
       config.reactionOnResolved,

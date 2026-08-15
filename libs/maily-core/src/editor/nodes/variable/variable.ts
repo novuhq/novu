@@ -18,6 +18,9 @@ export type Variable = {
   required?: boolean;
   // default is true
   valid?: boolean;
+  /** Dashboard: marks a "Create <name>" suggestion for payload schema. */
+  type?: string;
+  displayLabel?: string;
 };
 
 export type VariableFunctionOptions = {
@@ -65,10 +68,22 @@ export type VariableOptions = {
    * @default VariableSuggestionPopover
    */
   variableSuggestionsPopover: VariableSuggestionsPopoverType;
+
+  /**
+   * Called when the user picks a variable that is not yet in the payload schema
+   * (content suggestions and bubble-menu fields).
+   */
+  onCreateNewVariable?: (variableName: string) => void | Promise<void>;
 };
 
 export type VariableStorage = {
   popover: boolean;
+  /**
+   * When a Configure Variable popover is open, whether the card Actions bubble should stay visible
+   * underneath it. Set true when the popover is opened from a card button's Label/URL field pill
+   * (the popover renders on top of the bubble), false when opened from the button content on canvas.
+   */
+  keepCardActionsMenu: boolean;
 };
 
 export const VariablePluginKey = new PluginKey('variable');
@@ -83,6 +98,7 @@ export const VariableExtension = Node.create<VariableOptions, VariableStorage>({
   addStorage() {
     return {
       popover: false,
+      keepCardActionsMenu: false,
     };
   },
 
@@ -91,6 +107,7 @@ export const VariableExtension = Node.create<VariableOptions, VariableStorage>({
       variables: DEFAULT_VARIABLES,
       variableSuggestionsPopover: DEFAULT_VARIABLE_SUGGESTION_POPOVER,
       renderVariable: DEFAULT_RENDER_VARIABLE_FUNCTION,
+      onCreateNewVariable: undefined,
 
       renderLabel(props) {
         const { node } = props;

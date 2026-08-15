@@ -66,6 +66,39 @@ const oauthStateSchema = new Schema({
     required: false,
   },
   /**
+   * Opaque nonce carried in the compact signed OAuth `state` parameter.
+   * See `mcp-oauth-state.ts` / Campfire 512-char `state` limit.
+   */
+  stateNonce: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  /**
+   * Fat callback fields (conversation / tool / platform resume) kept off
+   * the authorize URL so AS state-length limits are not exceeded.
+   */
+  callbackContext: {
+    type: new Schema(
+      {
+        agentId: { type: Schema.Types.String, required: true },
+        agentMcpServerId: { type: Schema.Types.String, required: true },
+        subscriberId: { type: Schema.Types.String, required: true },
+        mcpId: { type: Schema.Types.String, required: true },
+        scope: { type: Schema.Types.String, required: true },
+        conversationId: { type: Schema.Types.String, required: false },
+        userId: { type: Schema.Types.String, required: false },
+        source: { type: Schema.Types.String, required: false },
+        toolUseId: { type: Schema.Types.String, required: false },
+        agentIdentifier: { type: Schema.Types.String, required: false },
+        integrationIdentifier: { type: Schema.Types.String, required: false },
+        platform: { type: Schema.Types.String, required: false },
+        platformThreadId: { type: Schema.Types.String, required: false },
+      },
+      { _id: false }
+    ),
+    required: false,
+  },
+  /**
    * `novu-app` mode only: AS `token_endpoint` copied from the catalog at
    * authorize time so the callback can do the token exchange without a
    * persistent `oauthClient` row. Cleared with the rest of `oauthState`

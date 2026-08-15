@@ -27,6 +27,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
 
   const showAlignment = imageMenuConfig?.showAlignment ?? true;
   const showExternalLink = imageMenuConfig?.showExternalLink ?? true;
+  const showSizeControls = imageMenuConfig?.showSizeControls ?? true;
 
   const { textMenuConfig: _textMenuConfig, imageMenuConfig: _imageMenuConfig, ...restProps } = props;
   const bubbleMenuProps: EditorBubbleMenuProps = {
@@ -117,6 +118,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }
             }}
             tooltip="Source URL"
+            placeholder="Image URL"
             icon={ImageDown}
             editor={editor}
             isVariable={state.isSrcVariable}
@@ -141,7 +143,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
           )}
         </div>
 
-        {state.isImageActive && state.imageSrc && (
+        {showSizeControls && state.isImageActive && state.imageSrc && (
           <>
             <Divider />
 

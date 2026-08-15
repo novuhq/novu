@@ -15,6 +15,11 @@ export interface ConversationTurn {
   subscriber: SubscriberEntity | null;
   context?: AgentContextPayload | null;
   /**
+   * Optional per-context bridge URL override resolved from the connect-time context. When set, the
+   * bridge executor routes this turn here instead of the agent's default bridge URL.
+   */
+  bridgeUrlOverride?: string;
+  /**
    * How `subscriber` was (or wasn't) resolved. Lets the unresolved-subscriber
    * gate distinguish a genuine unknown sender from a resolution failure and
    * log/reply accordingly.
@@ -27,4 +32,5 @@ export interface ConversationTurn {
   storedAttachments?: StoredAttachment[];
   action?: AgentAction;
   reaction?: BridgeReaction;
+  workflowOriginContent?: string;
 }

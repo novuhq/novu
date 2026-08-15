@@ -1,6 +1,9 @@
 import { JSONContent as MailyJSONContent } from '@novu/maily-render';
 import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
+import { Liquid } from 'liquidjs';
 import { MAILY_FIRST_CITIZEN_VARIABLE_KEY, MailyAttrsEnum, MailyContentTypeEnum } from '../types/maily.types';
+
+type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export const isStringifiedMailyJSONContent = (value: unknown): value is string => {
   if (typeof value !== 'string') return false;
@@ -142,10 +145,325 @@ export const variableAttributeConfig = (type: MailyContentTypeEnum) => {
     return [{ attr: MailyAttrsEnum.HREF, flag: MailyAttrsEnum.IS_URL_VARIABLE }, ...commonConfig];
   }
 
+  // Rich Chat `cardButton` node (see libs/maily-core card-button). Its variable attrs use
+  // dedicated flags that are not part of MailyAttrsEnum, so they are referenced by literal key.
+  if ((type as string) === CHAT_CARD_BUTTON_NODE_TYPE) {
+    return [
+      { attr: 'label' as MailyAttrsEnum, flag: 'isLabelVariable' as MailyAttrsEnum },
+      { attr: MailyAttrsEnum.URL, flag: 'isUrlVariable' as MailyAttrsEnum },
+      { attr: 'actionId' as MailyAttrsEnum, flag: 'isActionIdVariable' as MailyAttrsEnum },
+      ...commonConfig,
+    ];
+  }
+
   return commonConfig;
 };
 
+const CHAT_CARD_BUTTON_NODE_TYPE = 'cardButton';
+
+const LIQUID_EXPRESSION_PATTERN = /^\{\{[\s\S]*\}\}$/;
+
+function isLiquidExpression(value: string): boolean {
+  return LIQUID_EXPRESSION_PATTERN.test(value.trim());
+}
+
+function isCardButtonNode(type: unknown): boolean {
+  return type === CHAT_CARD_BUTTON_NODE_TYPE;
+}
+
+/**
+ * An attribute is wrapped into a liquid output only when its variable flag is set. Chat card
+ * buttons no longer auto-wrap bare paths (e.g. `payload.foo`): the only variable format is an
+ * explicit `{{ payload.foo }}` liquid expression, which a later liquid render resolves directly,
+ * so a bare path is delivered as literal text.
+ */
+function shouldWrapVariableAttr(flagValue: unknown): boolean {
+  return Boolean(flagValue);
+}
+
+/**
+ * Converts inline Maily `variable` nodes into plain text nodes carrying the (already
+ * liquid-wrapped) variable expression, so a subsequent Liquid render resolves them.
+ * Mirrors the email renderer's `processVariableNodeTypes`, but as a pure recursive pass
+ * for the chat compile pipeline. Returns a new tree; the input is not mutated.
+ */
+export const resolveMailyVariableNodesToText = (node: MailyJSONContent): MailyJSONContent => {
+  const isVariable = node.type === MailyContentTypeEnum.VARIABLE && typeof node.attrs?.id === 'string';
+
+  if (isVariable) {
+    return { type: 'text', text: (node.attrs as { id: string }).id };
+  }
+
+  if (!node.content) {
+    return node;
+  }
+
+  return { ...node, content: node.content.map(resolveMailyVariableNodesToText) };
+};
+
+/**
+ * Resolves Maily control-flow nodes in place, mirroring the email renderer's pipeline so chat
+ * cards support the same authoring features:
+ * - `showIfKey` conditionals: the node is dropped from its parent when the condition is falsy.
+ * - `each`/repeat loops: the node's content is multiplied per iterable item, with array indexes
+ *   injected into the liquid expressions of the cloned children.
+ * - `variable` nodes: normalized into liquid-ready `text` nodes.
+ *
+ * A Liquid engine is required to evaluate show conditions and iterable expressions. The passed
+ * `variables` should already be JSON-escaped by the caller. Returns the (mutated) root node.
+ */
+export const transformMailyContent = async (
+  node: MailyJSONContent,
+  variables: object,
+  liquidEngine: Liquid,
+  parent?: MailyJSONContent
+): Promise<MailyJSONContent> => {
+  const queue: Array<{ node: MailyJSONContent; parent?: MailyJSONContent }> = [{ node, parent }];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
+
+    if (hasShow(current.node)) {
+      const shouldShow = await handleShowNode(current.node, variables, liquidEngine, current.parent);
+
+      if (!shouldShow) {
+        continue;
+      }
+    }
+
+    if (isRepeatNode(current.node)) {
+      await handleEachNode(current.node, variables, liquidEngine, current.parent);
+    }
+
+    if (isVariableNode(current.node)) {
+      processVariableNodeTypes(current.node);
+    }
+
+    if (current.node.content) {
+      for (const childNode of current.node.content) {
+        queue.push({ node: childNode, parent: current.node });
+      }
+    }
+  }
+
+  return node;
+};
+
+const handleShowNode = async (
+  node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
+  variables: object,
+  liquidEngine: Liquid,
+  parent?: MailyJSONContent
+): Promise<boolean> => {
+  const shouldShow = await evaluateShowCondition(variables, node, liquidEngine);
+  if (!shouldShow && parent?.content) {
+    parent.content = parent.content.filter((pNode) => pNode !== node);
+  }
+
+  delete (node.attrs as Record<string, string>)[MailyAttrsEnum.SHOW_IF_KEY];
+
+  return shouldShow;
+};
+
+const handleEachNode = async (
+  node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
+  variables: object,
+  liquidEngine: Liquid,
+  parent?: MailyJSONContent
+): Promise<void> => {
+  const newContent = await multiplyForEachNode(node, variables, liquidEngine);
+
+  if (parent?.content) {
+    const nodeIndex = parent.content.indexOf(node);
+    parent.content = [...parent.content.slice(0, nodeIndex), ...newContent, ...parent.content.slice(nodeIndex + 1)];
+  } else {
+    node.content = newContent;
+  }
+};
+
+const evaluateShowCondition = async (
+  variables: object,
+  node: MailyJSONContent & { attrs: { [MailyAttrsEnum.SHOW_IF_KEY]: string } },
+  liquidEngine: Liquid
+): Promise<boolean> => {
+  const { [MailyAttrsEnum.SHOW_IF_KEY]: showIfKey } = node.attrs;
+  const parsedShowIfValue = await liquidEngine.parseAndRender(showIfKey, variables);
+
+  return stringToBoolean(parsedShowIfValue);
+};
+
+const processVariableNodeTypes = (node: MailyJSONContent) => {
+  node.type = 'text'; // set 'variable' to 'text' so Liquid recognizes it
+  node.text = node.attrs?.id || '';
+};
+
+/**
+ * For an 'each' node, multiply the content by the number of items in the iterable array
+ * and add indexes to the placeholders. If the iterations attribute is set, limits the number
+ * of iterations to that value, otherwise renders all items.
+ */
+const multiplyForEachNode = async (
+  node: MailyJSONContent & { attrs: { [MailyAttrsEnum.EACH_KEY]: string } },
+  variables: object,
+  liquidEngine: Liquid
+): Promise<MailyJSONContent[]> => {
+  const iterablePath = node.attrs[MailyAttrsEnum.EACH_KEY];
+  const iterations = node.attrs[MailyAttrsEnum.ITERATIONS_KEY];
+  const forEachNodes = node.content || [];
+  const iterableArray = await getIterableArray(iterablePath, variables, liquidEngine);
+  const limitedIterableArray = iterations ? iterableArray.slice(0, iterations) : iterableArray;
+
+  return limitedIterableArray.flatMap((_, index) => processForEachNodes(forEachNodes, iterablePath, index));
+};
+
+const getIterableArray = async (iterablePath: string, variables: object, liquidEngine: Liquid): Promise<unknown[]> => {
+  // evalValue returns the real JS array; avoids a lossy " <-> ' JSON round-trip that
+  // breaks on apostrophes in string values (e.g. digest events with `John's order`).
+  const cleanPath = iterablePath.replace(/\{\{|\}\}/g, '').trim();
+
+  let value: unknown;
+  try {
+    value = await liquidEngine.evalValue(cleanPath, variables);
+  } catch (error) {
+    throw new Error(
+      `Failed to resolve iterable value for "${iterablePath}": ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`Iterable "${iterablePath}" is not an array`);
+  }
+
+  return value;
+};
+
+const processForEachNodes = (
+  nodes: MailyJSONContent[],
+  iterablePath: string,
+  index: number
+): Array<MailyJSONContent | MailyJSONMarks> => {
+  return nodes.map((node) => {
+    const processedNode = structuredClone(node);
+
+    if (isVariableNode(processedNode)) {
+      processVariableNodeTypes(processedNode);
+      if (processedNode.text) {
+        processedNode.text = addIndexToLiquidExpression(processedNode.text, iterablePath, index);
+      }
+
+      return processedNode;
+    }
+
+    if (isButtonNode(processedNode)) {
+      if (processedNode.attrs?.text) {
+        processedNode.attrs.text = addIndexToLiquidExpression(processedNode.attrs.text, iterablePath, index);
+      }
+
+      if (processedNode.attrs?.url) {
+        processedNode.attrs.url = addIndexToLiquidExpression(processedNode.attrs.url, iterablePath, index);
+      }
+
+      return processedNode;
+    }
+
+    if (isCardButtonNode(processedNode.type)) {
+      for (const attr of ['label', 'url', 'actionId'] as const) {
+        const value = processedNode.attrs?.[attr];
+
+        if (typeof value === 'string' && value) {
+          processedNode.attrs[attr] = addIndexToLiquidExpression(value, iterablePath, index);
+        }
+      }
+
+      return processedNode;
+    }
+
+    if (isImageNode(processedNode)) {
+      if (processedNode.attrs?.src) {
+        processedNode.attrs.src = addIndexToLiquidExpression(processedNode.attrs.src, iterablePath, index);
+      }
+
+      if (processedNode.attrs?.externalLink) {
+        processedNode.attrs.externalLink = addIndexToLiquidExpression(
+          processedNode.attrs.externalLink,
+          iterablePath,
+          index
+        );
+      }
+
+      return processedNode;
+    }
+
+    if (isLinkNode(processedNode)) {
+      if (processedNode.attrs?.href) {
+        processedNode.attrs.href = addIndexToLiquidExpression(processedNode.attrs.href, iterablePath, index);
+      }
+
+      return processedNode;
+    }
+
+    if (processedNode.content?.length) {
+      processedNode.content = processForEachNodes(processedNode.content, iterablePath, index);
+    }
+
+    if (processedNode.marks?.length) {
+      processedNode.marks = processForEachNodes(processedNode.marks, iterablePath, index) as Array<MailyJSONMarks>;
+    }
+
+    return processedNode;
+  });
+};
+
+/**
+ * Add the index to the liquid expression if it doesn't already have an array index.
+ *
+ * @example
+ * text: '{{ payload.comments.author }}'
+ * iterablePath: '{{ payload.comments }}'
+ * index: 0
+ * result: '{{ payload.comments[0].author }}'
+ */
+const addIndexToLiquidExpression = (text: string, iterablePath: string, index: number): string => {
+  const cleanPath = iterablePath.replace(/\{\{|\}\}/g, '').trim();
+  const liquidMatch = text.match(/\{\{\s*(.*?)\s*\}\}/);
+
+  if (!liquidMatch) {
+    return text;
+  }
+
+  const [path, ...filters] = liquidMatch[1].split('|').map((part) => part.trim());
+  if (path.includes('[')) {
+    return text;
+  }
+
+  const newPath = path.replace(cleanPath, `${cleanPath}[${index}]`);
+
+  return filters.length ? `{{ ${newPath} | ${filters.join(' | ')} }}` : `{{ ${newPath} }}`;
+};
+
+const stringToBoolean = (value: string): boolean => {
+  const normalized = value.toLowerCase().trim();
+  if (normalized === 'false' || normalized === 'null' || normalized === 'undefined') {
+    return false;
+  }
+
+  try {
+    return Boolean(JSON.parse(normalized));
+  } catch {
+    return Boolean(normalized);
+  }
+};
+
 const wrapInLiquidOutput = (variableName: string, fallback?: string, aliasFor?: string): string => {
+  const trimmed = variableName.trim();
+
+  if (isLiquidExpression(trimmed)) {
+    return trimmed;
+  }
+
   const actualVariableName = aliasFor || variableName;
   const fallbackSuffix = fallback ? ` | default: '${fallback}'` : '';
 
@@ -189,7 +507,11 @@ const processVariableNodeAttributes = ({
     const attrValue = attrs[attr];
     const flagValue = attrs[flag];
 
-    if (!flagValue || !attrValue || typeof attrValue !== 'string') {
+    if (!attrValue || typeof attrValue !== 'string') {
+      return;
+    }
+
+    if (!shouldWrapVariableAttr(flagValue)) {
       return;
     }
 
@@ -198,9 +520,11 @@ const processVariableNodeAttributes = ({
       processedAttrs[attr] = processAttr(attrArgs);
     }
 
-    const flagArgs = { flagValue, flagKey: flag, attrs };
-    if (shouldProcessFlag?.(flagArgs) && processFlag) {
-      processedAttrs[flag] = processFlag(flagArgs);
+    if (flagValue) {
+      const flagArgs = { flagValue, flagKey: flag, attrs };
+      if (shouldProcessFlag?.(flagArgs) && processFlag) {
+        processedAttrs[flag] = processFlag(flagArgs);
+      }
     }
   });
 

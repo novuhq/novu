@@ -16,7 +16,7 @@ The Novu CLI connects AI agents to real communication channels — Slack, Email,
 
 Describe what your agent should do, pick a channel, and Novu provisions credentials, identity, and delivery so your agent can message users where they already are.
 
-Learn more in the [managed agent quickstart](https://docs.novu.co/agents/managed-agent/quickstart).
+Learn more in the [managed agent quickstart](https://docs.novu.co/agents/get-started/claude-managed).
 
 ## Quickstart
 
@@ -230,7 +230,7 @@ npx novu@latest dev --port 3002 --dashboard-url https://eu.dashboard.novu.co
 
 ## Links
 
-- [Managed agent docs](https://docs.novu.co/agents/managed-agent/quickstart)
+- [Managed agent docs](https://docs.novu.co/agents/get-started/claude-managed)
 - [Agent onboarding guide for AI assistants](../shared/docs/agent-onboarding.md)
 - [Novu documentation](https://docs.novu.co)
 - [Discord community](https://discord.novu.co)

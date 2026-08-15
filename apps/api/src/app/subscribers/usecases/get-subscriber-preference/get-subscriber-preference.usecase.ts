@@ -177,6 +177,7 @@ export class GetSubscriberPreference {
             in_app: true,
             chat: true,
             push: true,
+            tool: true,
           },
           includedChannels
         );

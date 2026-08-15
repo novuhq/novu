@@ -6,6 +6,12 @@ export enum ConversationActivityTypeEnum {
   MESSAGE = 'message',
   /** In-place edit of a previously sent agent message, via replyHandle.edit() */
   EDIT = 'edit',
+  /**
+   * Immutable delete tombstone for a previously sent agent message.
+   * Append-only ledger for all channels (dashboard timeline + web history).
+   * Does not hard-delete the original MESSAGE activity.
+   */
+  DELETE = 'delete',
   /** System-generated timeline event (e.g. workflow triggered, conversation resolved) */
   SIGNAL = 'signal',
   /** Agent proposed a tool call that requires human approval before it runs. Carries `{ approvalId, toolCallId, toolName, input }` in `toolData`. */
@@ -14,7 +20,23 @@ export enum ConversationActivityTypeEnum {
   TOOL_APPROVAL_DECISION = 'tool_approval_decision',
   /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
   TOOL_RESULT = 'tool_result',
+  /** An MCP OAuth connection is required before the agent can continue. */
+  MCP_CONNECTION_REQUEST = 'mcp_connection_request',
+  /** Outcome of a previously requested MCP OAuth connection. */
+  MCP_CONNECTION_RESULT = 'mcp_connection_result',
+  /** Agent run began. Client fold sets `isRunning`; excluded from model/bridge history. */
+  RUN_START = 'run_start',
+  /** Agent run ended (`richContent.lifecycle` holds outcome). Excluded from model/bridge history. */
+  RUN_FINISH = 'run_finish',
+  /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
+  RUN_ERROR = 'run_error',
 }
+
+/** Storage types for protocol run lifecycle rows — visibility is governed by activity views. */
+export type RunLifecycleActivityType =
+  | ConversationActivityTypeEnum.RUN_START
+  | ConversationActivityTypeEnum.RUN_FINISH
+  | ConversationActivityTypeEnum.RUN_ERROR;
 
 export enum ConversationActivitySenderTypeEnum {
   SUBSCRIBER = 'subscriber',
@@ -43,6 +65,10 @@ export interface ConversationActivityToolData {
   approved?: boolean;
   /** Executed tool output, or the `execution-denied` marker (result). */
   output?: unknown;
+  /** Server-minted action id for approve (request). Echoed by headless / card UIs. */
+  approveActionId?: string;
+  /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
+  denyActionId?: string;
 }
 
 export class ConversationActivityEntity {
@@ -76,6 +102,12 @@ export class ConversationActivityEntity {
 
   /** Platform-native message ID (e.g. Slack ts) — used for deduplication */
   platformMessageId?: string;
+
+  /**
+   * Conversation event sequence when allocated at live emit / durable persist.
+   * Ephemeral typing sequences create intentional gaps in durable history.
+   */
+  sequence?: number;
 
   /** Structured content for markdown, card, or file messages — absent for plain text */
   richContent?: Record<string, unknown>;

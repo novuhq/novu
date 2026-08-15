@@ -25,11 +25,23 @@ export type CardElementDividerElement = {
   type: 'divider';
 };
 
+/** Presentational inline hyperlink (Chat SDK `CardLink`). Interactive elements stay agent-only. */
+export type CardElementLinkElement = {
+  type: 'link';
+  label: string;
+  url: string;
+};
+
 export type CardElementLinkButtonElement = {
   type: 'link-button';
   label: string;
   url: string;
   style?: 'primary' | 'danger' | 'default';
+  /**
+   * Optional stable identifier authored in the editor. Platform serializers that require a
+   * per-button id (e.g. Slack's `action_id`) use it; when omitted they derive one from the URL.
+   */
+  id?: string;
 };
 
 export type CardElementActionsElement = {
@@ -41,6 +53,7 @@ export type CardElementChild =
   | CardElementTextElement
   | CardElementImageElement
   | CardElementDividerElement
+  | CardElementLinkElement
   | CardElementActionsElement;
 
 export type CardElement = {

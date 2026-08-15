@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { type ConversationChannel } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { type SessionEventContext, type StreamCallbacks, type StreamPart } from '@novu/thalamus';
 import { AgentEventContext, AgentEventSink } from '../shared/agent-event-sink.service';
@@ -47,6 +48,7 @@ export class ManagedAgentEventHandler {
       subscriberId: metadata.subscriberId,
       platform: parsePlatform(metadata.platform),
       platformThreadId: metadata.platformThreadId,
+      channel: channelFromWebhookMetadata(metadata),
       sessionId,
       suppressReply: metadata.suppressReply === 'true',
       source: 'managed',
@@ -152,6 +154,19 @@ export class ManagedAgentEventHandler {
       environment: { _id: environmentId },
     });
   }
+}
+
+function channelFromWebhookMetadata(metadata: Record<string, string>): ConversationChannel | undefined {
+  const { platform, platformThreadId, integrationId } = metadata;
+  if (!platform || !platformThreadId || !integrationId) {
+    return undefined;
+  }
+
+  return {
+    platform,
+    _integrationId: integrationId,
+    platformThreadId,
+  };
 }
 
 function parsePlatform(value?: string): AgentPlatformEnum | undefined {

@@ -199,6 +199,57 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
     return this.find(query, ['_agentId', '_integrationId']);
   }
 
+  /**
+   * Linked integrations for an agent (one round trip), each with its `identifier`
+   * and `providerId`. Callers match by identifier; for phone-based providers without a
+   * channel-level integration id, bind dispatch to a linked identifier for that provider.
+   * `disconnectedAt: null` is explicit — aggregation skips the schema exclusion hook.
+   */
+  async listLinkedIntegrationRefs({
+    organizationId,
+    environmentId,
+    agentId,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+  }): Promise<Array<{ identifier: string; providerId: string }>> {
+    const result = await this.aggregate([
+      {
+        $match: {
+          _organizationId: this.convertStringToObjectId(organizationId),
+          _environmentId: this.convertStringToObjectId(environmentId),
+          _agentId: this.convertStringToObjectId(agentId),
+          disconnectedAt: null,
+        },
+      },
+      {
+        $lookup: {
+          from: 'integrations',
+          localField: '_integrationId',
+          foreignField: '_id',
+          pipeline: [
+            {
+              $match: {
+                deleted: { $ne: true },
+                active: true,
+              },
+            },
+            { $project: { _id: 0, identifier: 1, providerId: 1 } },
+          ],
+          as: 'integration',
+        },
+      },
+      { $unwind: '$integration' },
+      { $group: { _id: '$integration.identifier', providerId: { $first: '$integration.providerId' } } },
+    ]);
+
+    return (result as Array<{ _id: unknown; providerId: unknown }>).map((row) => ({
+      identifier: String(row._id),
+      providerId: String(row.providerId),
+    }));
+  }
+
   async listAgentIntegrationsForAgent({
     organizationId,
     environmentId,

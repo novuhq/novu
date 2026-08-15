@@ -22,12 +22,21 @@ const cardElementDividerZodSchema = z
   })
   .strict();
 
+const cardElementLinkZodSchema = z
+  .object({
+    type: z.literal('link'),
+    label: z.string(),
+    url: z.string(),
+  })
+  .strict();
+
 const cardElementLinkButtonZodSchema = z
   .object({
     type: z.literal('link-button'),
     label: z.string(),
     url: z.string(),
     style: z.enum(['primary', 'danger', 'default']).optional(),
+    id: z.string().optional(),
   })
   .strict();
 
@@ -42,6 +51,7 @@ const cardElementChildZodSchema = z.discriminatedUnion('type', [
   cardElementTextZodSchema,
   cardElementImageZodSchema,
   cardElementDividerZodSchema,
+  cardElementLinkZodSchema,
   cardElementActionsZodSchema,
 ]);
 

@@ -1,11 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  ConversationActivityRepository,
+  type ConversationChannel,
+  ConversationRepository,
+} from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
+import { AgentChatLiveActivityPublisher } from '../agent-chat/agent-chat-live-activity.publisher';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import { ConversationActivityLedger } from '../conversation-runtime/conversation/conversation-activity-ledger';
+import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
@@ -24,7 +32,7 @@ import {
   toReplyContent,
   toThalamusUsage,
 } from './agent-event-mappers';
-import { AgentPlatformEnum } from './enums/agent-platform.enum';
+import { AgentPlatformEnum, usesProtocolEventApprovals } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
 import { McpConnectionErrorHandler } from './mcp-connection-error.handler';
 
@@ -51,6 +59,8 @@ export interface AgentEventContext {
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
+  /** Conversation channel for durable activity persist (agent-chat lifecycle, tool ledger, etc.). */
+  channel?: ConversationChannel;
   sessionId?: string;
   suppressReply?: boolean;
 }
@@ -68,9 +78,11 @@ export class AgentEventSink {
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
+    private readonly activityLedger: ConversationActivityLedger,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
+    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -152,7 +164,14 @@ export class AgentEventSink {
           event.deliverCard === true && context.source === 'bridge'
         );
 
+      case 'run-start':
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+
+        return 'accepted';
+
       case 'run-finish':
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+
         if (event.outcome === 'paused') {
           await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
 
@@ -164,6 +183,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'run-error':
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
         await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
 
         return 'accepted';
@@ -173,7 +193,6 @@ export class AgentEventSink {
 
         return 'accepted';
 
-      case 'run-start':
       case 'step-start':
       case 'step-end':
       case 'thinking-start':
@@ -184,6 +203,8 @@ export class AgentEventSink {
       case 'source':
       case 'custom':
       case 'tool-approval-response':
+      case 'mcp-connection-request':
+      case 'mcp-connection-result':
       case 'message-start':
       case 'message-end':
         this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Agent event no-op');
@@ -220,7 +241,10 @@ export class AgentEventSink {
     };
 
     try {
-      const shouldDeliverCard = autoDeliverCard && !context.suppressReply;
+      const shouldDeliverCard =
+        autoDeliverCard &&
+        !context.suppressReply &&
+        !(context.platform && usesProtocolEventApprovals(context.platform));
 
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
@@ -270,6 +294,14 @@ export class AgentEventSink {
     context: AgentEventContext,
     runId: string
   ): Promise<IngestOutcome> {
+    // Runtime ingest accepts assistant messages only. Subscriber turns arrive
+    // through the inbound HTTP endpoint, not through this path.
+    if (event.role !== 'assistant') {
+      throw new BadRequestException(
+        `Rejecting durable message with role "${event.role}": ingest accepts assistant messages only`
+      );
+    }
+
     if (context.suppressReply) {
       return 'accepted';
     }
@@ -395,7 +427,6 @@ export class AgentEventSink {
         await this.outboundGateway.removeReaction(
           agentId,
           context.integrationIdentifier,
-          context.platform,
           context.platformThreadId,
           activity.platformMessageId,
           event.emoji
@@ -710,6 +741,59 @@ export class AgentEventSink {
         operation: 'deliver-error-message',
         sessionId: context.sessionId,
       });
+    }
+  }
+
+  private async persistRunLifecycleFromEvent(
+    context: AgentEventContext,
+    runId: string,
+    event: RunLifecycleEvent
+  ): Promise<void> {
+    const channel = context.channel;
+    if (!channel) {
+      const message = 'run lifecycle persist skipped: missing channel on AgentEventContext';
+      this.logger.error({ runId, conversationId: context.conversationId }, message);
+      captureAgentException(new Error(message), {
+        component: 'agent-event-sink',
+        operation: 'persist-run-lifecycle',
+        sessionId: context.sessionId,
+      });
+
+      return;
+    }
+
+    try {
+      const activity = await this.activityLedger.persistProtocolEvent({
+        conversationId: context.conversationId,
+        channel,
+        agentIdentifier: context.agentIdentifier,
+        environmentId: context.environmentId,
+        organizationId: context.organizationId,
+        runId,
+        event,
+      });
+
+      if (activity) {
+        await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
+          channel,
+          conversationId: context.conversationId,
+          environmentId: context.environmentId,
+          organizationId: context.organizationId,
+          agentIdentifier: context.agentIdentifier,
+          activity,
+        });
+      }
+    } catch (err) {
+      this.logger.error(err, `run lifecycle persist failed: run=${runId}`);
+      captureAgentException(err, {
+        component: 'agent-event-sink',
+        operation: 'persist-run-lifecycle',
+        sessionId: context.sessionId,
+      });
+
+      if (event.type === 'run-start') {
+        throw err;
+      }
     }
   }
 
