@@ -1,11 +1,12 @@
 import { useId, useState } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { readClerkRedirectUrlParam, resolveSameOriginRedirectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
+import { SocialAuthButtons } from './SocialAuthButtons';
 import { buildSsoSignInPath } from '../sso-redirect';
 import { useAuthConfig } from '../use-auth-config';
 
@@ -14,29 +15,42 @@ export function SignIn() {
   const [searchParams] = useSearchParams();
   const { emailPasswordAuthEnabled, isLoading: isAuthConfigLoading } = useAuthConfig();
   const postSignInRedirectUrl = resolveSameOriginRedirectUrl(readClerkRedirectUrlParam(searchParams));
+
   const emailId = useId();
   const passwordId = useId();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showResendVerification, setShowResendVerification] = useState(false);
+
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
 
+  const targetCallbackUrl = postSignInRedirectUrl
+    ? `${window.location.origin}${postSignInRedirectUrl}`
+    : undefined;
+
   const handleResendVerification = async () => {
+    const targetEmail = unverifiedEmail || email;
+    if (!targetEmail) return;
+
     setIsResending(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       await authClient.sendVerificationEmail({
-        email,
-        callbackURL: window.location.origin + ROUTES.SIGN_IN,
+        email: targetEmail,
+        callbackURL: `${window.location.origin}${ROUTES.SIGN_IN}`,
       });
 
-      setError('Verification email sent! Please check your inbox.');
-      setShowResendVerification(false);
-    } catch (e: any) {
-      setError(e.message || 'Failed to send verification email.');
+      setSuccessMessage('Verification email sent! Please check your inbox.');
+      setUnverifiedEmail(null);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to send verification email.';
+      setError(message);
     } finally {
       setIsResending(false);
     }
@@ -45,7 +59,8 @@ export function SignIn() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    setShowResendVerification(false);
+    setSuccessMessage(null);
+    setUnverifiedEmail(null);
     setIsLoading(true);
 
     try {
@@ -56,7 +71,7 @@ export function SignIn() {
 
       if (authError) {
         if (authError.status === 403) {
-          setShowResendVerification(true);
+          setUnverifiedEmail(email);
           throw new Error('Please verify your email address before signing in.');
         }
 
@@ -72,28 +87,25 @@ export function SignIn() {
       const pendingInvitationId = sessionStorage.getItem('pendingInvitationId');
 
       if (pendingInvitationId) {
-        window.location.href = `${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}`;
-
+        navigate(`${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}`);
         return;
       }
 
       if (postSignInRedirectUrl) {
-        window.location.href = postSignInRedirectUrl;
-
+        navigate(postSignInRedirectUrl);
         return;
       }
 
-      window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
-    } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred.');
+      navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'An unexpected error occurred.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isAuthConfigLoading) {
-    return null;
-  }
+  if (isAuthConfigLoading) return null;
 
   if (!emailPasswordAuthEnabled) {
     return <Navigate to={buildSsoSignInPath(searchParams)} replace />;
@@ -102,6 +114,18 @@ export function SignIn() {
   return (
     <div className="mx-auto w-full max-w-md pt-12">
       <h2 className="mb-6 text-center text-xl font-semibold">Sign In</h2>
+
+      <SocialAuthButtons callbackURL={targetCallbackUrl} disabled={isLoading} />
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-neutral-300" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-foreground-500">Or continue with</span>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor={emailId} className="mb-1 block text-sm font-medium text-foreground-700">
@@ -110,6 +134,8 @@ export function SignIn() {
           <Input
             type="email"
             id={emailId}
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -117,26 +143,24 @@ export function SignIn() {
             className="w-full"
           />
         </div>
+
         <div>
           <div className="mb-1 flex items-center justify-between">
             <label htmlFor={passwordId} className="block text-sm font-medium text-foreground-700">
               Password
             </label>
-            <span
-              role="button"
-              tabIndex={0}
-              className="text-primary-base focus:ring-primary-base/50 cursor-pointer text-sm font-medium hover:underline focus:outline-none focus:ring-2"
-              onClick={() => navigate(ROUTES.FORGOT_PASSWORD)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.FORGOT_PASSWORD);
-              }}
+            <Link
+              to={ROUTES.FORGOT_PASSWORD}
+              className="text-sm font-medium text-primary-base hover:underline focus:outline-none focus:ring-2 focus:ring-primary-base/50"
             >
               Forgot password?
-            </span>
+            </Link>
           </div>
           <Input
             type="password"
             id={passwordId}
+            name="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="Password"
@@ -144,10 +168,17 @@ export function SignIn() {
             className="w-full"
           />
         </div>
+
+        {successMessage && (
+          <p className="text-sm text-green-600" role="status">
+            {successMessage}
+          </p>
+        )}
+
         {error && (
-          <div className="space-y-2">
+          <div className="space-y-2" role="alert">
             <p className="text-sm text-red-600">{error}</p>
-            {showResendVerification && (
+            {unverifiedEmail && (
               <Button
                 type="button"
                 variant="secondary"
@@ -161,29 +192,27 @@ export function SignIn() {
             )}
           </div>
         )}
+
         <Button type="submit" disabled={isLoading} variant="primary" mode="filled" className="w-full">
           {isLoading ? 'Signing In...' : 'Sign In'}
         </Button>
+
         <p className="mt-4 text-center text-sm text-foreground-600">
           Don&apos;t have an account?{' '}
-          <span
-            role="button"
-            tabIndex={0}
-            className="text-primary-base focus:ring-primary-base/50 cursor-pointer font-medium hover:underline focus:outline-none focus:ring-2"
-            onClick={() => navigate(ROUTES.SIGN_UP)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') navigate(ROUTES.SIGN_UP);
-            }}
+          <Link
+            to={ROUTES.SIGN_UP}
+            className="font-medium text-primary-base hover:underline focus:outline-none focus:ring-2 focus:ring-primary-base/50"
           >
             Sign Up
-          </span>
+          </Link>
         </p>
       </form>
+
       {IS_SELF_HOSTED_EE && (
         <>
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-300"></div>
+              <div className="w-full border-t border-neutral-300" />
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="bg-white px-2 text-foreground-500">Or</span>
