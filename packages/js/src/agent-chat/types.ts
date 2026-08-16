@@ -1,13 +1,34 @@
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
-  AgentApprovalPart,
   AgentConversationStatus,
-  AgentEventEnvelope,
+  AgentConversationTyping,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
   AgentMessage,
-} from '@novu/agent-event-protocol';
+  AgentPendingAction,
+  AgentToolApprovalAction,
+} from './agent-message.types';
 
-export type { AgentApprovalPart, AgentConversationStatus, AgentEventEnvelope, AgentMessage };
+export type {
+  AgentConversationStatus,
+  AgentConversationTyping,
+  AgentEventEnvelope,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
+  AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalAction,
+};
 
-export type SendMessageArgs = {
+/**
+ * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-agent-chat`
+ * integration has Security HMAC enabled.
+ */
+export type AgentHashFields = {
+  agentHash?: string;
+};
+
+export type SendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
   /**
@@ -50,15 +71,15 @@ export type FetchMoreResult = {
   hasMore: boolean;
 };
 
-export type RespondToApprovalArgs = {
+export type RespondToActionArgs = AgentHashFields & {
   agentId: string;
-  approvalId: string;
+  actionId: string;
   decision: 'approved' | 'denied';
   conversationId?: string;
   key?: string;
 };
 
-export type RespondToApprovalResult = {
+export type RespondToActionResult = {
   conversationId: string;
 };
 
@@ -75,8 +96,8 @@ export type AgentChatChangeSource =
 export type AgentChatChange = AgentChatChangeSource & {
   /** Messages this fold added. A fold that only changes existing messages adds none. */
   addedMessages: AgentMessage[];
-  /** Approvals that became pending in this fold. One approval is reported one time. */
-  newApprovals: AgentApprovalPart[];
+  /** Actions that became pending in this fold. One action is reported one time. */
+  newActions: AgentPendingAction[];
 };
 
 export type AgentChatMessagesUpdated = {
@@ -86,6 +107,7 @@ export type AgentChatMessagesUpdated = {
   key: string;
   messages: AgentMessage[];
   isRunning: boolean;
+  typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;
   change: AgentChatChange;

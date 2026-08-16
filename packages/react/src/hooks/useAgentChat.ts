@@ -1,19 +1,22 @@
 import type {
-  AgentApprovalPart,
+  AgentChatPlanLimitError,
   AgentConversationStatus,
+  AgentConversationTyping,
   AgentEventEnvelope,
+  AgentHashFields,
   AgentMessage,
+  AgentPendingAction,
   LoadConversationResult,
   NovuError,
-  RespondToApprovalResult,
+  RespondToActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { derivePendingApprovals } from '@novu/js';
+import { derivePendingActions } from '@novu/js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
-export type UseAgentChatProps = {
+export type UseAgentChatProps = AgentHashFields & {
   agentId: string;
   /**
    * Resume this conversation. The hook loads history on mount.
@@ -22,7 +25,7 @@ export type UseAgentChatProps = {
    */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
-  onError?: (error: NovuError) => void;
+  onError?: (error: NovuError | AgentChatPlanLimitError) => void;
   /**
    * Fires once per message, when the message id first appears on the conversation.
    * History pages are silent: only new activity fires.
@@ -32,11 +35,10 @@ export type UseAgentChatProps = {
    */
   onMessage?: (message: AgentMessage) => void;
   /**
-   * Fires once per approval request, including approvals still pending on mount, so a
+   * Fires once per pending action, including actions still pending on mount, so a
    * resumed conversation reports what it is blocked on. Paging backwards is silent.
-   * The run waits until `respondToApproval` answers.
    */
-  onApprovalRequested?: (approval: AgentApprovalPart) => void;
+  onActionRequested?: (action: AgentPendingAction) => void;
   /**
    * Raw envelopes for this conversation, before the derived callbacks for the same fold.
    * A duplicate envelope that the store drops does not fire. Neither does an envelope that
@@ -48,13 +50,14 @@ export type UseAgentChatProps = {
 
 export type UseAgentChatResult = {
   messages: AgentMessage[];
-  pendingApprovals: AgentApprovalPart[];
+  pendingActions: AgentPendingAction[];
   conversationId?: string;
-  error?: NovuError;
+  error?: NovuError | AgentChatPlanLimitError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isFetching: boolean;
   isRunning: boolean;
+  typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   /** True when older history pages are available via `fetchMore`. */
   hasMore: boolean;
@@ -65,11 +68,11 @@ export type UseAgentChatResult = {
   }>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
-    error?: NovuError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
-  respondToApproval: (args: { approvalId: string; decision: 'approved' | 'denied' }) => Promise<{
-    data?: RespondToApprovalResult;
-    error?: NovuError;
+  respondToAction: (args: { actionId: string; decision: 'approved' | 'denied' }) => Promise<{
+    data?: RespondToActionResult;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
 };
 
@@ -88,8 +91,41 @@ function createLocalSessionKey(): string {
   return `local_${Date.now().toString(36)}`;
 }
 
+type ConversationSnapshot = {
+  messages: AgentMessage[];
+  isRunning: boolean;
+  typing?: AgentConversationTyping;
+  status: AgentConversationStatus;
+  hasMore: boolean;
+};
+
+const EMPTY_CONVERSATION: ConversationSnapshot = {
+  messages: [],
+  isRunning: false,
+  typing: undefined,
+  status: 'active',
+  hasMore: false,
+};
+
+function applyConversationSnapshot(
+  snapshot: ConversationSnapshot,
+  setters: {
+    setMessages: (messages: AgentMessage[]) => void;
+    setIsRunning: (isRunning: boolean) => void;
+    setTyping: (typing?: AgentConversationTyping) => void;
+    setStatus: (status: AgentConversationStatus) => void;
+    setHasMore: (hasMore: boolean) => void;
+  }
+): void {
+  setters.setMessages(snapshot.messages);
+  setters.setIsRunning(snapshot.isRunning);
+  setters.setTyping(snapshot.typing);
+  setters.setStatus(snapshot.status);
+  setters.setHasMore(snapshot.hasMore);
+}
+
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
-  const { agentId, conversationId: conversationIdProp } = props;
+  const { agentId, agentHash, conversationId: conversationIdProp } = props;
   const propsRef = useDataRef(props);
   const novu = useNovu();
 
@@ -107,14 +143,26 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [typing, setTyping] = useState<AgentConversationTyping>();
   const [status, setStatus] = useState<AgentConversationStatus>('active');
   const [hasMore, setHasMore] = useState(false);
-  const [error, setError] = useState<NovuError>();
+  const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isFetching, setIsFetching] = useState(false);
   const fetchGenerationRef = useRef(0);
 
-  const pendingApprovals = useMemo(() => derivePendingApprovals(messages), [messages]);
+  const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
+
+  const snapshotSetters = useMemo(
+    () => ({
+      setMessages,
+      setIsRunning,
+      setTyping,
+      setStatus,
+      setHasMore,
+    }),
+    []
+  );
 
   useEffect(() => {
     const agentChanged = prevAgentIdRef.current !== agentId;
@@ -125,10 +173,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     if (agentChanged) {
       setAssignedConversationId(undefined);
       setLocalSessionKey(createLocalSessionKey());
-      setMessages([]);
-      setIsRunning(false);
-      setStatus('active');
-      setHasMore(false);
+      applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
       setError(undefined);
       setIsLoading(Boolean(conversationIdProp));
 
@@ -145,12 +190,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     if (prevConversationIdProp !== undefined) {
       setAssignedConversationId(undefined);
       setLocalSessionKey(createLocalSessionKey());
-      setMessages([]);
-      setIsRunning(false);
-      setStatus('active');
-      setHasMore(false);
+      applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
     }
-  }, [agentId, conversationIdProp]);
+  }, [agentId, conversationIdProp, snapshotSetters]);
 
   const fetchConversation = useCallback(
     async (targetConversationId: string) => {
@@ -192,24 +234,27 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       conversationId: conversationIdProp,
     });
     if (snapshot) {
-      setMessages(snapshot.messages);
-      setIsRunning(snapshot.isRunning);
-      setStatus(snapshot.status);
-      setHasMore(snapshot.hasMore);
+      applyConversationSnapshot(
+        {
+          messages: snapshot.messages,
+          isRunning: snapshot.isRunning,
+          typing: snapshot.typing,
+          status: snapshot.status,
+          hasMore: snapshot.hasMore,
+        },
+        snapshotSetters
+      );
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
 
-      // The store reports each approval once per holder, and a holder outlives a mount.
+      // The store reports each action once per holder, and a holder outlives a mount.
       // Replay from the snapshot so a remount still learns what the run is blocked on.
-      for (const approval of derivePendingApprovals(snapshot.messages)) {
-        propsRef.current.onApprovalRequested?.(approval);
+      for (const action of derivePendingActions(snapshot.messages)) {
+        propsRef.current.onActionRequested?.(action);
       }
     } else if (!conversationIdProp) {
-      setMessages([]);
-      setIsRunning(false);
-      setStatus('active');
-      setHasMore(false);
+      applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
     }
 
     const cleanup = novu.on('agent_chat.messages.updated', ({ data }) => {
@@ -217,10 +262,16 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         return;
       }
 
-      setMessages(data.messages);
-      setIsRunning(data.isRunning);
-      setStatus(data.status);
-      setHasMore(data.hasMore);
+      applyConversationSnapshot(
+        {
+          messages: data.messages,
+          isRunning: data.isRunning,
+          typing: data.typing,
+          status: data.status,
+          hasMore: data.hasMore,
+        },
+        snapshotSetters
+      );
       if (data.conversationId && !propsRef.current.conversationId) {
         setAssignedConversationId(data.conversationId);
       }
@@ -236,8 +287,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         }
       }
 
-      for (const approval of change.newApprovals) {
-        propsRef.current.onApprovalRequested?.(approval);
+      for (const action of change.newActions) {
+        propsRef.current.onActionRequested?.(action);
       }
     });
 
@@ -249,7 +300,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       cleanup();
       novu.agentChat.unsubscribe();
     };
-  }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, propsRef, fetchConversation]);
+  }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, propsRef, fetchConversation, snapshotSetters]);
 
   const refetch = useCallback(async () => {
     const id = conversationIdRef.current;
@@ -284,6 +335,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       const response = await novu.agentChat.sendMessage({
         agentId,
+        agentHash,
         text,
         key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
@@ -298,18 +350,19 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
-  const respondToApproval = useCallback(
-    async (args: { approvalId: string; decision: 'approved' | 'denied' }) => {
+  const respondToAction = useCallback(
+    async (args: { actionId: string; decision: 'approved' | 'denied' }) => {
       setError(undefined);
 
-      const response = await novu.agentChat.respondToApproval({
+      const response = await novu.agentChat.respondToAction({
         agentId,
+        agentHash,
         key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
-        approvalId: args.approvalId,
+        actionId: args.actionId,
         decision: args.decision,
       });
 
@@ -320,19 +373,20 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
       return response;
     },
-    [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
   return {
     messages,
-    pendingApprovals,
+    pendingActions,
     sendMessage,
-    respondToApproval,
+    respondToAction,
     conversationId,
     error,
     isLoading,
     isFetching,
     isRunning,
+    typing,
     status,
     hasMore,
     refetch,

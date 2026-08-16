@@ -75,6 +75,14 @@ export function inboundTransactionIdFromMessageId(messageId: string | undefined)
 /** Customer-visible message for downstream/system delivery failures (5xx). */
 export const INBOUND_DELIVERY_FAILURE_CUSTOMER_MESSAGE = 'Inbound delivery failed due to a temporary internal error';
 
+/**
+ * Emitted when a recipient resolves to a verified domain that has no route for
+ * the address. Callers walking several recipients use it to tell "this address
+ * is not routable" apart from a tenant-level failure, so the message is shared
+ * rather than duplicated as a literal.
+ */
+export const INBOUND_UNMATCHED_ROUTE_MESSAGE = 'No matching inbound route';
+
 /** 5xx outcomes are retriable — terminal traces are written once retries exhaust. */
 export function isRetriableInboundFailureStatus(status: number): boolean {
   return status >= 500;

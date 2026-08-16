@@ -119,7 +119,13 @@ export class QueueBaseService implements OnModuleDestroy {
       return await this.addToBullMQ(params);
     }
 
-    if (!this.sqsService || !this.featureFlagsService) {
+    /*
+     * When no SQS queue URL is configured for this topic (community edition,
+     * self-hosted, or a partially rolled-out deployment), skip the whole
+     * routing path - including the organization lookup and feature flag
+     * evaluation - and enqueue straight to BullMQ like before the migration.
+     */
+    if (!this.sqsService?.isConfigured(this.topic) || !this.featureFlagsService) {
       return await this.addToBullMQ(params);
     }
 
@@ -321,7 +327,8 @@ export class QueueBaseService implements OnModuleDestroy {
   public async addBulk(data: IBulkJobParams[]) {
     this.logBulkPayloadMetrics(data);
 
-    if (!this.sqsService || !this.featureFlagsService) {
+    // See add(): unconfigured topics bypass the routing path entirely.
+    if (!this.sqsService?.isConfigured(this.topic) || !this.featureFlagsService) {
       return await this.bullMqService.addBulk(data);
     }
 

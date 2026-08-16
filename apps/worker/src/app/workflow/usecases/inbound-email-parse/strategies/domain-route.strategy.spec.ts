@@ -6,11 +6,11 @@ import {
   DomainRouteRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { DomainRouteTypeEnum, DomainStatusEnum, EmailProviderIdEnum } from '@novu/shared';
+import { buildAgentReplyToAddress, DomainRouteTypeEnum, DomainStatusEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
-import { InboundParseProcessingError } from '../inbound-parse-outcome';
+import { InboundParseDroppedError, InboundParseProcessingError } from '../inbound-parse-outcome';
 import { DomainRouteStrategy } from './domain-route.strategy';
 
 const ENV_ID = 'env-001';
@@ -118,6 +118,59 @@ describe('DomainRouteStrategy', () => {
     const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
     expect(agentCall.args[0].mail.dkim).to.equal('pass');
     expect(agentCall.args[0].mail.spf).to.equal('pass');
+  });
+
+  it('should match the domain using the selected envelope recipient', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
+    const command = makeCommand('customer');
+    command.to = [{ address: 'customer@other.com', name: '' }];
+    command.cc = [{ address: `support@${DOMAIN_NAME}`, name: '' }];
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(command, `support@${DOMAIN_NAME}`);
+
+    sinon.assert.calledOnceWithExactly(domainRepository.findByName as any, DOMAIN_NAME);
+    const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+    expect(agentCall.args[0].toAddress).to.equal(`support@${DOMAIN_NAME}`);
+    expect(agentCall.args[0].mail.to).to.deep.equal(command.to);
+    expect(agentCall.args[0].mail.cc).to.deep.equal(command.cc);
+  });
+
+  it('should strip a +nv reply token and prefer exact then stripped custom-domain routes', async () => {
+    const originId = '65f1a2b3c4d5e6f7a8b9c0d1';
+    const tokenized = buildAgentReplyToAddress('support@example.com', originId);
+    const tokenizedLocal = tokenized.split('@')[0]!;
+    const routes = makeRoutes([
+      { address: 'sales+vip', type: DomainRouteTypeEnum.AGENT, destination: 'agent-literal' },
+      { address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' },
+    ]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(makeCommand(tokenizedLocal));
+
+    const lookup = domainRouteRepository.findByDomainAndAddresses.getCall(0).args[0];
+    expect(lookup.addresses).to.deep.equal([tokenizedLocal, 'support', '*']);
+
+    const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+    expect(agentCall.args[0].route.destination).to.equal('agent-001');
+    expect(agentCall.args[0].originToken).to.equal(originId);
+  });
+
+  it('should preserve an exact custom-domain route that contains a literal +', async () => {
+    const routes = makeRoutes([
+      { address: 'sales+vip', type: DomainRouteTypeEnum.AGENT, destination: 'agent-literal' },
+      { address: 'sales', type: DomainRouteTypeEnum.AGENT, destination: 'agent-stripped' },
+    ]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    await strategy.execute(makeCommand('sales+vip'));
+
+    const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+    expect(agentCall.args[0].route.destination).to.equal('agent-literal');
+    expect(agentCall.args[0].originToken).to.equal(undefined);
   });
 
   it('should sanitize downstream 5xx delivery failures for customer traces', async () => {
@@ -360,8 +413,29 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.notCalled(domainRepository.findByName as any);
     });
 
+    it('strips a +nv reply token before shared-inbox routing and forwards originToken', async () => {
+      const originId = '65f1a2b3c4d5e6f7a8b9c0d1';
+      const tokenized = buildAgentReplyToAddress(`wine-bot-${ROUTING_KEY}@${SHARED_DOMAIN}`, originId);
+      const tokenizedLocal = tokenized.split('@')[0]!;
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(makeIntegration() as any);
+      agentIntegrationRepository.findOne.resolves(makeLink() as any);
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(tokenizedLocal));
+
+      sinon.assert.calledOnceWithExactly(integrationRepository.findAgentInboundByInboxRoutingKey as any, ROUTING_KEY);
+      const call = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+      expect(call.args[0].originToken).to.equal(originId);
+      expect(call.args[0].route.address).to.equal(`wine-bot-${ROUTING_KEY}`);
+    });
+
     it('drops mail when local-part has no recognizable routing key', async () => {
-      await strategy.execute(makeSharedCommand('garbage-localpart'));
+      try {
+        await strategy.execute(makeSharedCommand('garbage-localpart'));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
 
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
       sinon.assert.notCalled(integrationRepository.findAgentInboundByInboxRoutingKey as any);
@@ -371,7 +445,12 @@ describe('DomainRouteStrategy', () => {
     it('drops mail when no integration exists for the routing key', async () => {
       integrationRepository.findAgentInboundByInboxRoutingKey.resolves(null);
 
-      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
 
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
       sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
@@ -381,7 +460,12 @@ describe('DomainRouteStrategy', () => {
     it('drops mail when the integration is inactive', async () => {
       integrationRepository.findAgentInboundByInboxRoutingKey.resolves({ ...makeIntegration(), active: false } as any);
 
-      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
 
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
       sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
@@ -392,7 +476,12 @@ describe('DomainRouteStrategy', () => {
       integration.credentials = { ...integration.credentials, sharedInboxDisabled: true };
       integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
 
-      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
 
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
       sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
@@ -403,7 +492,12 @@ describe('DomainRouteStrategy', () => {
       integrationRepository.findAgentInboundByInboxRoutingKey.resolves(makeIntegration() as any);
       agentIntegrationRepository.findOne.resolves(null);
 
-      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
 
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
       sinon.assert.notCalled(agentRepository.findByIdForWebhook as any);
@@ -414,7 +508,12 @@ describe('DomainRouteStrategy', () => {
       agentIntegrationRepository.findOne.resolves(makeLink() as any);
       agentRepository.findByIdForWebhook.resolves(null);
 
-      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
 
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
     });
@@ -424,7 +523,12 @@ describe('DomainRouteStrategy', () => {
       agentIntegrationRepository.findOne.resolves(makeLink() as any);
       agentRepository.findByIdForWebhook.resolves({ ...makeAgent(), active: false } as any);
 
-      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+        throw new Error('Expected InboundParseDroppedError');
+      } catch (error) {
+        expect(error).to.be.instanceOf(InboundParseDroppedError);
+      }
 
       sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
     });

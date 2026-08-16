@@ -14,9 +14,8 @@ import {
   isDuplicateKeyError,
 } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
-import { usesProtocolEventApprovals } from '../../shared/enums/agent-platform.enum';
+import { AgentChatLiveActivityPublisher } from '../../agent-chat/agent-chat-live-activity.publisher';
 import { mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
-import { WebChatLiveActivityPublisher } from '../../web-chat/web-chat-live-activity.publisher';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
@@ -24,6 +23,11 @@ export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
 
 /** Default number of recent activities loaded as conversation history for every runtime. */
 export const AGENT_HISTORY_LIMIT = 50;
+
+/** Stable per-origin identifier for the workflow-origin signal — see `persistWorkflowOriginHydration`. */
+function workflowOriginSignalIdentifier(platformMessageId: string): string {
+  return `workflow-dispatch-origin:${platformMessageId}`;
+}
 
 export function getConversationTitle(firstMessageText: string): string {
   const trimmed = firstMessageText.trim();
@@ -74,10 +78,11 @@ export interface CreateOrGetConversationParams {
    * installs. Absent for single-workspace platforms.
    */
   workspaceId?: string;
-  /** Pre-minted durable identifier; for `web_chat`, equals `platformThreadId`. */
+  /** Pre-minted durable identifier; for `agent_chat`, equals `platformThreadId`. */
   identifier?: string;
   /** Originating Notification id when opening from a workflow-seeded platform thread (create only). */
   notificationId?: string;
+  contextKeys?: string[];
 }
 
 export interface PersistInboundMessageParams {
@@ -186,13 +191,28 @@ export interface PersistToolResultParams extends ConversationActivityContext {
   preview?: string;
 }
 
+export interface PersistMcpConnectionRequestParams extends ConversationActivityContext {
+  actionId: string;
+  mcpId: string;
+  displayName: string;
+  authorizeUrl: string;
+  authorizeUrlWithAutoApprove?: string;
+}
+
+export interface PersistMcpConnectionResultParams extends ConversationActivityContext {
+  actionId: string;
+  mcpId: string;
+  status: 'connected' | 'failed';
+  message?: string;
+}
+
 @Injectable()
 export class AgentConversationService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
     private readonly activityRepository: ConversationActivityRepository,
     private readonly eventSequenceService: ConversationEventSequenceService,
-    private readonly webChatLiveActivityPublisher: WebChatLiveActivityPublisher,
+    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -217,6 +237,23 @@ export class AgentConversationService {
       platformThreadId
     );
     if (existing) {
+      if (params.contextKeys !== undefined) {
+        const contextMatch = await this.conversationRepository.findOne(
+          {
+            _id: existing._id,
+            _environmentId: environmentId,
+            _organizationId: organizationId,
+            $and: [this.conversationRepository.buildContextExactMatchQuery(params.contextKeys)],
+          },
+          ['_id']
+        );
+        if (!contextMatch) {
+          throw new BadRequestException('Conversation context mismatch');
+        }
+      } else if (existing.contextKeys?.length) {
+        throw new BadRequestException('Conversation context mismatch');
+      }
+
       if (existing.status === ConversationStatusEnum.RESOLVED) {
         await this.conversationRepository.updateStatus(
           environmentId,
@@ -254,6 +291,7 @@ export class AgentConversationService {
       title: getConversationTitle(params.firstMessageText),
       metadata: {},
       isDirectMessage: params.isDirectMessage,
+      ...(params.contextKeys !== undefined ? { contextKeys: [...params.contextKeys].sort() } : {}),
       _environmentId: environmentId,
       _organizationId: organizationId,
       lastActivityAt: new Date().toISOString(),
@@ -359,15 +397,6 @@ export class AgentConversationService {
     }
   }
 
-  async getHistory(
-    environmentId: string,
-    conversationId: string,
-    limit = AGENT_HISTORY_LIMIT
-  ): Promise<ConversationActivityEntity[]> {
-    return this.activityRepository.findByConversation(environmentId, conversationId, limit);
-  }
-
-  /** Resolves the stored activity a reaction targets, matched by platform-native message id. */
   async findSourceActivity(
     environmentId: string,
     conversationId: string,
@@ -575,7 +604,14 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
 
     return activity;
   }
@@ -609,7 +645,9 @@ export class AgentConversationService {
   }
 
   private async persistAgentActivity(
-    params: PersistAgentActivityParams & { toolData?: ConversationActivityToolData },
+    params: PersistAgentActivityParams & {
+      toolData?: ConversationActivityToolData;
+    },
     type: ConversationActivityTypeEnum,
     touch: 'activity' | 'preview'
   ): Promise<ConversationActivityEntity> {
@@ -760,7 +798,14 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
 
     return activity;
   }
@@ -788,30 +833,77 @@ export class AgentConversationService {
       organizationId: params.organizationId,
     });
 
-    await this.emitProtocolEventActivity(params, activity);
-  }
-
-  private async emitProtocolEventActivity(
-    params: ConversationActivityContext,
-    activity: ConversationActivityEntity
-  ): Promise<void> {
-    if (!usesProtocolEventApprovals(params.channel.platform)) {
-      return;
-    }
-
-    const conversation = await this.getConversation(params.conversationId, params.environmentId, params.organizationId);
-    if (!conversation) {
-      return;
-    }
-
-    await this.webChatLiveActivityPublisher.emit({
-      agentId: conversation._agentId,
-      agentIdentifier: params.agentIdentifier,
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
       environmentId: params.environmentId,
       organizationId: params.organizationId,
-      conversation,
+      agentIdentifier: params.agentIdentifier,
       activity,
     });
+  }
+
+  async persistMcpConnectionRequest(params: PersistMcpConnectionRequestParams): Promise<ConversationActivityEntity> {
+    const activity = await this.persistAgentActivity(
+      {
+        ...params,
+        identifier: `mcp-connection:${params.actionId}:request`,
+        content: `Connect ${params.displayName}`,
+        richContent: {
+          mcpConnection: {
+            actionId: params.actionId,
+            mcpId: params.mcpId,
+            displayName: params.displayName,
+            authorizeUrl: params.authorizeUrl,
+            authorizeUrlWithAutoApprove: params.authorizeUrlWithAutoApprove,
+          },
+        },
+      },
+      ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST,
+      'activity'
+    );
+
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
+
+    return activity;
+  }
+
+  async persistMcpConnectionResult(params: PersistMcpConnectionResultParams): Promise<ConversationActivityEntity> {
+    const activity = await this.persistAgentActivity(
+      {
+        ...params,
+        identifier: `mcp-connection:${params.actionId}:result`,
+        content: params.status === 'connected' ? 'Connection completed' : (params.message ?? 'Connection failed'),
+        richContent: {
+          mcpConnection: {
+            actionId: params.actionId,
+            mcpId: params.mcpId,
+            status: params.status,
+            message: params.message,
+          },
+        },
+      },
+      ConversationActivityTypeEnum.MCP_CONNECTION_RESULT,
+      'activity'
+    );
+
+    await this.agentChatLiveActivityPublisher.emitPersistedClientEvent({
+      channel: params.channel,
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      activity,
+    });
+
+    return activity;
   }
 
   /**
@@ -859,8 +951,30 @@ export class AgentConversationService {
   }
 
   /**
+   * Whether this origin is already in the transcript. The signal is the final write of
+   * `persistWorkflowOriginHydration`, so a partially applied hydration reads as not hydrated.
+   */
+  async isWorkflowOriginHydrated(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<boolean> {
+    const count = await this.activityRepository.count(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        identifier: workflowOriginSignalIdentifier(platformMessageId),
+      },
+      1
+    );
+
+    return count > 0;
+  }
+
+  /**
    * Persist the workflow-origin message + signal. Stable `workflow-dispatch-*`
-   * identifiers make a concurrent first-turn race lose on the unique index.
+   * identifiers collide on the unique index under concurrency; both writes are
+   * duplicate-key tolerant so a retry after a partial success is idempotent.
    */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
     await this.persistAgentMessage({
@@ -875,21 +989,32 @@ export class AgentConversationService {
       content: params.messageContent,
     });
 
-    await this.activityRepository.createSignalActivity({
-      identifier: `workflow-dispatch-origin:${params.platformMessageId}`,
-      conversationId: params.conversationId,
-      platform: params.channel.platform,
-      integrationId: params.channel._integrationId,
-      platformThreadId: params.platformThreadId,
-      agentId: params.agentIdentifier,
-      content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
-      signalData: {
-        type: 'workflow_origin',
-        payload: params.signalData,
-      },
-      platformMessageId: params.platformMessageId,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
+    try {
+      await this.activityRepository.createSignalActivity({
+        identifier: workflowOriginSignalIdentifier(params.platformMessageId),
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: params.platformThreadId,
+        agentId: params.agentIdentifier,
+        content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
+        signalData: {
+          type: 'workflow_origin',
+          payload: params.signalData,
+        },
+        platformMessageId: params.platformMessageId,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      this.logger.warn(
+        { platformMessageId: params.platformMessageId, conversationId: params.conversationId },
+        'Workflow origin already hydrated'
+      );
+    }
   }
 }

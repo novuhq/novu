@@ -16,6 +16,7 @@ import {
   resolveApprovalRequesterId,
 } from '../../shared/tool-approval/unresolved-approvals';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { ConversationActivityLedger } from '../conversation/conversation-activity-ledger';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from '../runtime/agent-runtime.port';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -61,6 +62,7 @@ function quoteContainsToolName(normalizedQuote: string, toolName: string): boole
 export class ReplyApprovalInterceptor {
   constructor(
     private readonly conversationService: AgentConversationService,
+    private readonly activityLedger: ConversationActivityLedger,
     private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger
   ) {
@@ -358,9 +360,14 @@ export class ReplyApprovalInterceptor {
     const { config, conversation } = turn;
 
     try {
-      const activities = await this.conversationService.getHistory(config.environmentId, conversation._id);
+      const page = await this.activityLedger.listForView({
+        view: 'approval_activities',
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        conversationId: conversation._id,
+      });
 
-      return { activities, pending: findUnresolvedToolApprovalRequests(activities) };
+      return { activities: page.data, pending: findUnresolvedToolApprovalRequests(page.data) };
     } catch (err) {
       this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to load history for reply-based approval check`);
       captureAgentWarning(err, {

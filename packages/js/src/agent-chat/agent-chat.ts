@@ -1,19 +1,19 @@
-import type { AgentEventEnvelope, AgentMessage } from '@novu/agent-event-protocol';
-import { derivePendingApprovals } from '@novu/agent-event-protocol';
-import { AgentChatService, InboxService } from '../api';
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { AgentChatPlanLimitError, AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
+import { type AgentMessage, derivePendingActions } from './agent-message.types';
 import type {
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
-  RespondToApprovalArgs,
-  RespondToApprovalResult,
+  RespondToActionArgs,
+  RespondToActionResult,
   SendMessageArgs,
   SendMessageResult,
 } from './types';
@@ -52,6 +52,7 @@ export class AgentChat extends BaseModule {
           key: entry.key,
           messages: entry.messages,
           isRunning: entry.isRunning,
+          typing: entry.typing,
           status: entry.status,
           hasMore: entry.olderCursor != null,
           change,
@@ -100,6 +101,7 @@ export class AgentChat extends BaseModule {
         messages: AgentMessage[];
         key: string;
         isRunning: boolean;
+        typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
         hasMore: boolean;
       }
@@ -119,26 +121,27 @@ export class AgentChat extends BaseModule {
       messages: entry.messages,
       key: entry.key,
       isRunning: entry.isRunning,
+      typing: entry.typing,
       status: entry.status,
       hasMore: entry.olderCursor != null,
     };
   }
 
-  async respondToApproval(args: RespondToApprovalArgs): Result<RespondToApprovalResult> {
-    return this.callWithSession(async () => {
+  async respondToAction(args: RespondToActionArgs): Result<RespondToActionResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<RespondToActionResult, NovuError | AgentChatPlanLimitError>(async () => {
       const entry = this.#resolveFetchEntry(args);
       if (!entry?.conversationId) {
         return {
           error: new NovuError(
-            'Cannot respond to approval without a conversation id',
+            'Cannot respond to action without a conversation id',
             new Error('missing conversation id')
           ),
         };
       }
 
-      const pending = derivePendingApprovals(entry.messages).find((part) => part.approvalId === args.approvalId);
-      if (!pending) {
-        return { error: new NovuError('Pending approval not found', new Error('pending approval not found')) };
+      const pending = derivePendingActions(entry.messages).find((action) => action.id === args.actionId);
+      if (!pending || pending.type !== 'tool-approval') {
+        return { error: new NovuError('Pending action not found', new Error('pending action not found')) };
       }
 
       const actionId = args.decision === 'approved' ? pending.approveActionId : pending.denyActionId;
@@ -152,10 +155,11 @@ export class AgentChat extends BaseModule {
       }
 
       try {
-        const data = await this.#agentChatService.respondToApproval({
+        const data = await this.#agentChatService.respondToAction({
           agentId: args.agentId,
           conversationId: entry.conversationId,
           actionId,
+          agentHash: args.agentHash,
         });
 
         return {
@@ -164,7 +168,11 @@ export class AgentChat extends BaseModule {
           },
         };
       } catch (error) {
-        return { error: new NovuError('Failed to respond to approval', error) };
+        if (error instanceof AgentChatPlanLimitError) {
+          return { error };
+        }
+
+        return { error: new NovuError('Failed to respond to action', error) };
       }
     });
   }
@@ -240,8 +248,8 @@ export class AgentChat extends BaseModule {
     });
   }
 
-  async sendMessage(args: SendMessageArgs): Result<SendMessageResult> {
-    return this.callWithSession(async () => {
+  async sendMessage(args: SendMessageArgs): Result<SendMessageResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<SendMessageResult, NovuError | AgentChatPlanLimitError>(async () => {
       const key = args.key ?? args.conversationId ?? createLocalConversationKey();
       const entry = this.#resolveSendEntry(args, key);
       const optimisticId = this.#store.appendSending(entry, args.text);
@@ -252,6 +260,7 @@ export class AgentChat extends BaseModule {
             agentId: args.agentId,
             text: args.text,
             conversationId,
+            agentHash: args.agentHash,
           });
 
           this.#store.markSent(entry, {
@@ -259,6 +268,10 @@ export class AgentChat extends BaseModule {
             serverMessageId: data.messageId,
             conversationId: data.identifier,
           });
+
+          // Live WS can arrive before the HTTP ack claims conversationId; those
+          // envelopes are dropped by #applyLiveEnvelope. Catch up immediately.
+          this.#requestCatchUp();
 
           return {
             data: {
@@ -268,6 +281,10 @@ export class AgentChat extends BaseModule {
           };
         } catch (error) {
           this.#store.markFailed(entry, optimisticId);
+
+          if (error instanceof AgentChatPlanLimitError) {
+            return { error };
+          }
 
           return { error: new NovuError('Failed to send agent chat message', error) };
         }

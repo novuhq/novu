@@ -73,13 +73,13 @@ describe('AgentConversationService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     activityRepository: any = makeActivityRepository(),
     eventSequenceService = makeEventSequenceService(),
-    webChatLiveActivityPublisher = { emit: sinon.stub().resolves(undefined) }
+    agentChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
   ) {
     return new AgentConversationService(
       conversationRepository,
       activityRepository as any,
       eventSequenceService,
-      webChatLiveActivityPublisher as any,
+      agentChatLiveActivityPublisher as any,
       makeLogger() as any
     );
   }
@@ -134,7 +134,7 @@ describe('AgentConversationService', () => {
         conversationRepository,
         activityRepository as any,
         makeEventSequenceService(),
-        { emit: sinon.stub().resolves(undefined) } as any,
+        { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
         logger as any
       );
 
@@ -146,6 +146,169 @@ describe('AgentConversationService', () => {
       expect(result.activity).to.equal(existingActivity);
       expect(result.created).to.equal(false);
       expect(logger.warn.calledOnce).to.equal(true);
+    });
+  });
+
+  describe('persistWorkflowOriginHydration', () => {
+    function makeHydrationParams() {
+      return {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'whatsapp',
+          _integrationId: 'integration-a',
+          platformThreadId: 'whatsapp:15551234567',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        platformMessageId: 'wamid.abc',
+        platformThreadId: 'whatsapp:15551234567',
+        messageContent: 'Your order shipped',
+        signalData: { workflowIdentifier: 'order-alerts' },
+      };
+    }
+
+    it('swallows duplicate-key errors from the signal write', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const activityRepository = {
+        createAgentActivity: sinon
+          .stub()
+          .resolves({ _id: 'activity-1', identifier: 'workflow-dispatch-msg:wamid.abc' }),
+        createSignalActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves(null),
+      };
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const logger = makeLogger();
+      const service = new AgentConversationService(
+        conversationRepository,
+        activityRepository as any,
+        makeEventSequenceService(),
+        { emit: sinon.stub().resolves(undefined) } as any,
+        logger as any
+      );
+
+      await service.persistWorkflowOriginHydration(makeHydrationParams());
+
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+      expect(logger.warn.calledOnce).to.equal(true);
+      expect(logger.warn.firstCall.args[1]).to.equal('Workflow origin already hydrated');
+    });
+
+    it('rethrows non-duplicate errors from the signal write', async () => {
+      const activityRepository = {
+        createAgentActivity: sinon
+          .stub()
+          .resolves({ _id: 'activity-1', identifier: 'workflow-dispatch-msg:wamid.abc' }),
+        createSignalActivity: sinon.stub().rejects(new Error('mongo timeout')),
+        findOne: sinon.stub().resolves(null),
+      };
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const service = makeService(conversationRepository, activityRepository);
+
+      try {
+        await service.persistWorkflowOriginHydration(makeHydrationParams());
+        expect.fail('expected persistWorkflowOriginHydration to throw');
+      } catch (err) {
+        expect((err as Error).message).to.equal('mongo timeout');
+      }
+    });
+  });
+
+  describe('isWorkflowOriginHydrated', () => {
+    it('matches the signal identifier written by persistWorkflowOriginHydration', async () => {
+      const activityRepository = { count: sinon.stub().resolves(1) };
+      const service = makeService({} as unknown as ConversationRepository, activityRepository);
+
+      const hydrated = await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc');
+
+      expect(hydrated).to.equal(true);
+      expect(activityRepository.count.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env-1',
+        _conversationId: 'conv-1',
+        identifier: 'workflow-dispatch-origin:wamid.abc',
+      });
+    });
+
+    it('returns false when the signal is absent', async () => {
+      const activityRepository = { count: sinon.stub().resolves(0) };
+      const service = makeService({} as unknown as ConversationRepository, activityRepository);
+
+      expect(await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc')).to.equal(false);
+    });
+  });
+
+  describe('MCP connection activities', () => {
+    it('persists request and result activities and publishes both to agent chat', async () => {
+      const activityRepository = makeActivityRepository();
+      activityRepository.createAgentActivity.callsFake(async (params: Record<string, unknown>) => ({
+        _id: `activity-${activityRepository.createAgentActivity.callCount}`,
+        ...params,
+      }));
+      const conversationRepository = {
+        touchActivity: sinon.stub().resolves(undefined),
+      } as unknown as ConversationRepository;
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const service = makeService(
+        conversationRepository,
+        activityRepository,
+        makeEventSequenceService(sinon.stub().onFirstCall().resolves(10).onSecondCall().resolves(11)),
+        publisher
+      );
+      const context = {
+        ...basePersistParams(),
+        channel: {
+          platform: 'agent_chat',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+      };
+
+      await service.persistMcpConnectionRequest({
+        ...context,
+        actionId: 'tool-use-1',
+        mcpId: 'stripe',
+        displayName: 'Stripe',
+        authorizeUrl: 'https://example.com/authorize',
+      });
+      await service.persistMcpConnectionResult({
+        ...context,
+        actionId: 'tool-use-1',
+        mcpId: 'stripe',
+        status: 'connected',
+      });
+
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        identifier: 'mcp-connection:tool-use-1:request',
+        type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST,
+        sequence: 10,
+        richContent: {
+          mcpConnection: {
+            actionId: 'tool-use-1',
+            mcpId: 'stripe',
+            displayName: 'Stripe',
+            authorizeUrl: 'https://example.com/authorize',
+            authorizeUrlWithAutoApprove: undefined,
+          },
+        },
+      });
+      expect(activityRepository.createAgentActivity.secondCall.args[0]).to.deep.include({
+        identifier: 'mcp-connection:tool-use-1:result',
+        type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT,
+        sequence: 11,
+        richContent: {
+          mcpConnection: {
+            actionId: 'tool-use-1',
+            mcpId: 'stripe',
+            status: 'connected',
+            message: undefined,
+          },
+        },
+      });
+      expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
     });
   });
 
@@ -227,7 +390,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -238,6 +401,145 @@ describe('AgentConversationService', () => {
 
     expect(create.calledOnce).to.equal(true);
     expect(create.firstCall.args[0].title).to.equal(DEFAULT_CONVERSATION_TITLE);
+  });
+
+  it('stamps sorted contextKeys on create when provided', async () => {
+    const create = sinon.stub().resolves({
+      _id: 'new-conv',
+      participants: [],
+      channels: [],
+      status: ConversationStatusEnum.ACTIVE,
+    });
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(null),
+      create,
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    await service.createOrGetConversation({
+      ...baseCreateParams(),
+      platform: 'agent_chat',
+      contextKeys: ['tenant:acme', 'app:billing'],
+    });
+
+    expect(create.calledOnce).to.equal(true);
+    expect(create.firstCall.args[0].contextKeys).to.deep.equal(['app:billing', 'tenant:acme']);
+  });
+
+  it('rejects reuse when stored conversation has contextKeys but caller omits them', async () => {
+    const existing = {
+      _id: 'existing-conv',
+      status: ConversationStatusEnum.ACTIVE,
+      participants: [{ type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub-1' }],
+      channels: [],
+      contextKeys: ['tenant:acme'],
+    };
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(existing),
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    let threw = false;
+    try {
+      await service.createOrGetConversation({
+        ...baseCreateParams(),
+        platform: 'agent_chat',
+      });
+    } catch (err) {
+      threw = true;
+      expect((err as Error).message).to.equal('Conversation context mismatch');
+    }
+    expect(threw).to.equal(true);
+  });
+
+  it('rejects reuse when session contextKeys do not match stored conversation', async () => {
+    const existing = {
+      _id: 'existing-conv',
+      status: ConversationStatusEnum.ACTIVE,
+      participants: [{ type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub-1' }],
+      channels: [],
+      contextKeys: ['tenant:acme'],
+    };
+
+    const findOne = sinon.stub().resolves(null);
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(existing),
+      findOne,
+      buildContextExactMatchQuery: sinon.stub().returns({ contextKeys: { $all: ['tenant:globex'], $size: 1 } }),
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    let threw = false;
+    try {
+      await service.createOrGetConversation({
+        ...baseCreateParams(),
+        platform: 'agent_chat',
+        contextKeys: ['tenant:globex'],
+      });
+    } catch (err) {
+      threw = true;
+      expect((err as Error).message).to.equal('Conversation context mismatch');
+    }
+    expect(threw).to.equal(true);
+    expect(findOne.calledOnce).to.equal(true);
+  });
+
+  it('omits contextKeys on create when not provided', async () => {
+    const create = sinon.stub().resolves({
+      _id: 'new-conv',
+      participants: [],
+      channels: [],
+      status: ConversationStatusEnum.ACTIVE,
+    });
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(null),
+      create,
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = new AgentConversationService(
+      conversationRepository,
+      {} as any,
+      makeEventSequenceService(),
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
+      makeLogger() as any
+    );
+
+    await service.createOrGetConversation(baseCreateParams());
+
+    expect(create.calledOnce).to.equal(true);
+    expect(create.firstCall.args[0]).to.not.have.property('contextKeys');
   });
 
   it('scopes createOrGetConversation lookup by agent id and integration id', async () => {
@@ -260,7 +562,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 
@@ -289,7 +591,7 @@ describe('AgentConversationService', () => {
       conversationRepository,
       {} as any,
       makeEventSequenceService(),
-      { emit: sinon.stub().resolves(undefined) } as any,
+      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
       makeLogger() as any
     );
 

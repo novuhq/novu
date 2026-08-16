@@ -72,6 +72,10 @@ type UnifiedChannel = {
   data: IntegrationEndpoints | IChannelSettings;
 };
 
+type LegacyChannelWithBoundIntegration = IChannelSettings & {
+  integrationIdentifier?: string;
+};
+
 type MessageContext = {
   command: SendMessageChannelCommand;
   step: NotificationStepEntity;
@@ -301,6 +305,7 @@ export class SendMessageChat extends SendMessageBase {
             channel.data as IChannelSettings,
             messageContext.step,
             messageContext.content,
+            messageContext.assignedAgentId,
             messageContext.card
           );
         }
@@ -495,22 +500,25 @@ export class SendMessageChat extends SendMessageBase {
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
     content: string,
+    assignedAgentId: string | null,
     card?: CardElement
   ): Promise<SendMessageResult> {
     /**
      * Workaround: phone-based chat providers (WhatsApp, Sendblue) behave more like SMS than our
      * webhook-based chat implementation, so they select their integration by providerId rather
      * than by the subscriber channel's _integrationId (which is absent on auto-resolved channels).
+     * Agent gating may stamp `integrationIdentifier` to pin dispatch to a linked integration.
      */
-    const integrationId = PHONE_BASED_CHAT_PROVIDERS.includes(subscriberChannel.providerId as ChatProviderIdEnum)
-      ? undefined
-      : subscriberChannel._integrationId;
+    const isPhoneBased = PHONE_BASED_CHAT_PROVIDERS.includes(subscriberChannel.providerId as ChatProviderIdEnum);
+    const agentBoundIdentifier = (subscriberChannel as LegacyChannelWithBoundIntegration).integrationIdentifier;
+    const integrationId = isPhoneBased ? undefined : subscriberChannel._integrationId;
+    const integrationIdentifier = isPhoneBased ? agentBoundIdentifier : undefined;
 
     const { integration, error } = await this.getAndValidateIntegration(
       command,
       subscriberChannel.providerId,
       integrationId,
-      undefined
+      integrationIdentifier
     );
     if (error) return error;
 
@@ -542,7 +550,15 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     if (channelData) {
-      return await this.sendMessage(channelData, integration, content, card, message, command);
+      return await this.sendMessage(
+        channelData,
+        integration,
+        content,
+        card,
+        message,
+        command,
+        assignedAgentId ?? undefined
+      );
     }
 
     return await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
@@ -795,16 +811,25 @@ export class SendMessageChat extends SendMessageBase {
     assignedAgentId: string,
     command: SendMessageChannelCommand
   ): Promise<UnifiedChannel[]> {
-    const linkedIntegrationIdentifiers = new Set(
-      await this.agentIntegrationRepository.listLinkedIntegrationIdentifiers({
-        agentId: assignedAgentId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      })
-    );
+    const linkedRefs = await this.agentIntegrationRepository.listLinkedIntegrationRefs({
+      agentId: assignedAgentId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
+    const linkedIntegrationIdentifiers = new Set(linkedRefs.map((ref) => ref.identifier));
+    const linkedIdentifierByProviderId = new Map<string, string>();
+    for (const ref of linkedRefs) {
+      if (!linkedIdentifierByProviderId.has(ref.providerId)) {
+        linkedIdentifierByProviderId.set(ref.providerId, ref.identifier);
+      }
+    }
 
     return channels.flatMap((channel) => {
-      const eligible = this.evaluateChannelForAgent(channel, linkedIntegrationIdentifiers);
+      const eligible = this.evaluateChannelForAgent(
+        channel,
+        linkedIntegrationIdentifiers,
+        linkedIdentifierByProviderId
+      );
 
       return eligible ? [eligible] : [];
     });
@@ -812,16 +837,23 @@ export class SendMessageChat extends SendMessageBase {
 
   private evaluateChannelForAgent(
     channel: UnifiedChannel,
-    linkedIntegrationIdentifiers: Set<string>
+    linkedIntegrationIdentifiers: Set<string>,
+    linkedIdentifierByProviderId: Map<string, string>
   ): UnifiedChannel | null {
-    if (channel.type !== 'new') {
-      return null;
+    if (channel.type === 'legacy') {
+      return this.evaluateLegacyChannelForAgent(channel, linkedIdentifierByProviderId);
     }
 
     const channelGroup = channel.data as IntegrationEndpoints;
 
     if (!linkedIntegrationIdentifiers.has(channelGroup.integrationIdentifier)) {
       return null;
+    }
+
+    // Phone-based providers deliver to a phone number rather than a token-bearing webhook,
+    // so their endpoints are kept as-is once the integration is confirmed linked.
+    if (PHONE_BASED_CHAT_PROVIDERS.includes(channelGroup.providerId as ChatProviderIdEnum)) {
+      return channel;
     }
 
     const supported = filterAgentSupportedEndpoints(channelGroup.channelData);
@@ -831,6 +863,30 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     channelGroup.channelData = supported;
+
+    return channel;
+  }
+
+  /**
+   * Auto-resolved phone channels carry no integration id; bind to the agent's linked
+   * integration for that provider before allowing the channel through.
+   */
+  private evaluateLegacyChannelForAgent(
+    channel: UnifiedChannel,
+    linkedIdentifierByProviderId: Map<string, string>
+  ): UnifiedChannel | null {
+    const legacyChannel = channel.data as LegacyChannelWithBoundIntegration;
+
+    if (!PHONE_BASED_CHAT_PROVIDERS.includes(legacyChannel.providerId as ChatProviderIdEnum)) {
+      return null;
+    }
+
+    const linkedIdentifier = linkedIdentifierByProviderId.get(legacyChannel.providerId);
+    if (!linkedIdentifier) {
+      return null;
+    }
+
+    legacyChannel.integrationIdentifier = linkedIdentifier;
 
     return channel;
   }
@@ -890,6 +946,7 @@ export class SendMessageChat extends SendMessageBase {
       transactionId: command.transactionId,
       content: this.storeContent() ? content : null,
       providerId,
+      templateIdentifier: command.identifier,
       _jobId: command.jobId,
       tags: command.tags,
       severity: command.severity,

@@ -1,17 +1,23 @@
 export { AgentChat } from './agent-chat';
+export { derivePendingActions } from './agent-message.types';
 export type {
-  AgentApprovalPart,
   AgentChatChange,
   AgentChatMessagesUpdated,
   AgentConversationStatus,
+  AgentConversationTyping,
   AgentEventEnvelope,
+  AgentHashFields,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
   AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalAction,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
-  RespondToApprovalArgs,
-  RespondToApprovalResult,
+  RespondToActionArgs,
+  RespondToActionResult,
   SendMessageArgs,
   SendMessageResult,
 } from './types';

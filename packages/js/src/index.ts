@@ -1,20 +1,27 @@
-export { derivePendingApprovals } from '@novu/agent-event-protocol';
 export type * from 'json-logic-js';
 export type {
-  AgentApprovalPart,
   AgentChatChange,
   AgentConversationStatus,
+  AgentConversationTyping,
   AgentEventEnvelope,
+  AgentHashFields,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
   AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalAction,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
-  RespondToApprovalArgs,
-  RespondToApprovalResult,
+  RespondToActionArgs,
+  RespondToActionResult,
   SendMessageArgs,
   SendMessageResult,
 } from './agent-chat';
+export { derivePendingActions } from './agent-chat';
+export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
+export { AgentChatPlanLimitError } from './api/agent-chat-service';
 export type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,

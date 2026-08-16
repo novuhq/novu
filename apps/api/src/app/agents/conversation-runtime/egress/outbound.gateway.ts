@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
@@ -95,6 +95,7 @@ export interface ThreadReplyPersistContext {
 @Injectable()
 export class OutboundGateway {
   constructor(
+    @Inject(forwardRef(() => ChatInstanceRegistry))
     private readonly registry: ChatInstanceRegistry,
     private readonly conversation: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,

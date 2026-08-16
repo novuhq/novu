@@ -1,14 +1,15 @@
-import { AGENT_EVENT_PROTOCOL_VERSION, derivePendingApprovals } from '@novu/agent-event-protocol';
-import { AgentChatService } from '../api';
+import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
+import { AgentChatPlanLimitError, AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { AgentChat } from './agent-chat';
+import { derivePendingActions } from './agent-message.types';
 import type { AgentChatChange } from './types';
 
 describe('AgentChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
   let sendMessage: jest.Mock;
-  let respondToApproval: jest.Mock;
+  let respondToAction: jest.Mock;
   let getEvents: jest.Mock;
   let connect: jest.Mock;
   let agentChat: AgentChat;
@@ -16,10 +17,10 @@ describe('AgentChat', () => {
   beforeEach(() => {
     emitter = new NovuEventEmitter();
     sendMessage = jest.fn();
-    respondToApproval = jest.fn();
+    respondToAction = jest.fn();
     getEvents = jest.fn();
     connect = jest.fn().mockResolvedValue({ data: undefined });
-    const agentChatService = { sendMessage, respondToApproval, getEvents } as unknown as AgentChatService;
+    const agentChatService = { sendMessage, respondToAction, getEvents } as unknown as AgentChatService;
     agentChat = new AgentChat({
       inboxServiceInstance,
       eventEmitterInstance: emitter,
@@ -94,6 +95,18 @@ describe('AgentChat', () => {
     expect(result.error).toBeDefined();
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.messages[0]?.status).toBe('failed');
+  });
+
+  it('returns AgentChatPlanLimitError when accept is blocked by plan limits', async () => {
+    sendMessage.mockRejectedValue(new AgentChatPlanLimitError('agents', 'Upgrade your plan to activate this agent.'));
+
+    const result = await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    expect(result.error).toBeInstanceOf(AgentChatPlanLimitError);
+    expect(result.error).toMatchObject({
+      reason: 'agents',
+      message: 'Upgrade your plan to activate this agent.',
+    });
   });
 
   it('serializes overlapping creates on the same session key until conversationId is claimed', async () => {
@@ -601,6 +614,51 @@ describe('AgentChat', () => {
     expect(updates.at(-1)).toEqual({ isRunning: false, status: 'resolved' });
   });
 
+  it('tracks typing on messages.updated and getConversation after channel.typing', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: Array<{ typing?: { status?: string } }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        updates.push({ typing: data.typing });
+      }
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: { type: 'channel.typing', state: 'on', status: 'Searching the docs…' },
+      },
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 2,
+        timestamp: '2026-08-07T12:00:01.000Z',
+        event: { type: 'channel.typing', state: 'off' },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.typing).toBeUndefined();
+    expect(updates.some((update) => update.typing?.status === 'Searching the docs…')).toBe(true);
+    expect(updates.at(-1)).toEqual({ typing: undefined });
+  });
+
   it('folds a live agent_chat.agent_event into the matching conversation holder', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
@@ -841,6 +899,59 @@ describe('AgentChat', () => {
     emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
     await waitForMessageIds(['msg_user0000001', 'msg_asst_missed1']);
 
+    expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
+  it('catch-up after send claims a conversation that received live events early', async () => {
+    agentChat.subscribe();
+
+    let sendStarted = false;
+    let resolveSend!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage.mockImplementationOnce(() => {
+      sendStarted = true;
+
+      return new Promise((resolve) => {
+        resolveSend = resolve;
+      });
+    });
+
+    getEvents.mockResolvedValue(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_early001', role: 'assistant', markdown: 'beat the ack' },
+      ])
+    );
+
+    const sent = agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    await new Promise<void>((resolve) => {
+      const tick = () => {
+        if (sendStarted) {
+          resolve();
+
+          return;
+        }
+
+        setTimeout(tick, 0);
+      };
+
+      tick();
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_early001',
+        markdown: 'beat the ack',
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await sent;
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_early001']);
     expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
   });
 
@@ -1306,23 +1417,23 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    expect(derivePendingApprovals(snapshot?.messages ?? [])).toEqual([
+    expect(derivePendingActions(snapshot?.messages ?? [])).toEqual([
       {
-        type: 'approval',
+        type: 'tool-approval',
+        id: 'approval_000001',
         approvalId: 'approval_000001',
         toolUseId: 'tu_0000001',
         toolName: 'deleteOrder',
         input: { orderId: '123' },
-        state: 'pending',
         approveActionId: 'tool-approval:approve:approval_000001',
         denyActionId: 'tool-approval:deny:approval_000001',
       },
     ]);
   });
 
-  it('respondToApproval POSTs echoed actionId and does not flip pending state optimistically', async () => {
+  it('respondToAction POSTs echoed actionId and does not flip pending state optimistically', async () => {
     getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
-    respondToApproval.mockResolvedValue({
+    respondToAction.mockResolvedValue({
       identifier: 'conv_abcdefghijkl',
     });
 
@@ -1331,17 +1442,17 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    const result = await agentChat.respondToApproval({
+    const result = await agentChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      approvalId: 'approval_000001',
+      actionId: 'approval_000001',
       decision: 'approved',
     });
 
     expect(result).toEqual({
       data: { conversationId: 'conv_abcdefghijkl' },
     });
-    expect(respondToApproval).toHaveBeenCalledWith({
+    expect(respondToAction).toHaveBeenCalledWith({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'tool-approval:approve:approval_000001',
@@ -1351,12 +1462,12 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(derivePendingApprovals(snapshot?.messages ?? [])[0]?.state).toBe('pending');
+    expect(derivePendingActions(snapshot?.messages ?? [])[0]?.type).toBe('tool-approval');
   });
 
-  it('respondToApproval resolves pending state only after tool-approval-response envelope', async () => {
+  it('respondToAction resolves pending state only after tool-approval-response envelope', async () => {
     getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
-    respondToApproval.mockResolvedValue({
+    respondToAction.mockResolvedValue({
       identifier: 'conv_abcdefghijkl',
     });
 
@@ -1365,10 +1476,10 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    await agentChat.respondToApproval({
+    await agentChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      approvalId: 'approval_000001',
+      actionId: 'approval_000001',
       decision: 'approved',
     });
 
@@ -1394,14 +1505,14 @@ describe('AgentChat', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
     });
-    expect(derivePendingApprovals(snapshot?.messages ?? [])).toEqual([]);
+    expect(derivePendingActions(snapshot?.messages ?? [])).toEqual([]);
     expect(snapshot?.messages[0]?.parts.find((part) => part.type === 'approval')).toMatchObject({
       approvalId: 'approval_000001',
       state: 'approved',
     });
   });
 
-  it('respondToApproval returns error without POST when pending approval is missing', async () => {
+  it('respondToAction returns error without POST when pending approval is missing', async () => {
     getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
 
     await agentChat.loadConversation({
@@ -1409,18 +1520,18 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    const result = await agentChat.respondToApproval({
+    const result = await agentChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      approvalId: 'approval_missing',
+      actionId: 'approval_missing',
       decision: 'denied',
     });
 
     expect(result.error).toBeDefined();
-    expect(respondToApproval).not.toHaveBeenCalled();
+    expect(respondToAction).not.toHaveBeenCalled();
   });
 
-  it('respondToApproval returns error without POST when pending approval lacks action id', async () => {
+  it('respondToAction returns error without POST when pending approval lacks action id', async () => {
     const page = approvalHistoryPage('approval_000001');
     const requestEvent = page.events[2]?.event as {
       type: 'tool-approval-request';
@@ -1436,15 +1547,15 @@ describe('AgentChat', () => {
       conversationId: 'conv_abcdefghijkl',
     });
 
-    const result = await agentChat.respondToApproval({
+    const result = await agentChat.respondToAction({
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
-      approvalId: 'approval_000001',
+      actionId: 'approval_000001',
       decision: 'denied',
     });
 
     expect(result.error).toBeDefined();
-    expect(respondToApproval).not.toHaveBeenCalled();
+    expect(respondToAction).not.toHaveBeenCalled();
   });
 
   function recordChanges(key: string) {
@@ -1575,8 +1686,8 @@ describe('AgentChat', () => {
     await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
-    expect(changes[0]?.newApprovals.map((approval) => approval.approvalId)).toEqual(['approval_000001']);
-    expect(changes[1]?.newApprovals).toEqual([]);
+    expect(changes[0]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
+    expect(changes[1]?.newActions).toEqual([]);
   });
 
   it('reports a live approval on the fold that raises it, adding no message', async () => {
@@ -1603,10 +1714,10 @@ describe('AgentChat', () => {
       })
     );
 
-    expect(changes[0]?.newApprovals).toEqual([]);
+    expect(changes[0]?.newActions).toEqual([]);
     expect(changes[1]?.kind).toBe('live');
     expect(changes[1]?.addedMessages).toEqual([]);
-    expect(changes[1]?.newApprovals.map((approval) => approval.approvalId)).toEqual(['approval_000001']);
+    expect(changes[1]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
   });
 
   it('stays silent for an approval discovered by paging backwards', async () => {
@@ -1620,10 +1731,8 @@ describe('AgentChat', () => {
     await agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
 
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-    expect(derivePendingApprovals(snapshot?.messages ?? []).map((approval) => approval.approvalId)).toEqual([
-      'approval_000001',
-    ]);
+    expect(derivePendingActions(snapshot?.messages ?? []).map((action) => action.id)).toEqual(['approval_000001']);
     expect(changes[0]?.kind).toBe('history');
-    expect(changes[0]?.newApprovals).toEqual([]);
+    expect(changes[0]?.newActions).toEqual([]);
   });
 });
