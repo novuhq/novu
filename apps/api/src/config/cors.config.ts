@@ -31,6 +31,16 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 
     if (ALLOWED_ORIGINS_REGEX.test(requestOrigin)) {
       corsOptions.origin.push(requestOrigin);
+    } else if (isDevelopmentEnvironment()) {
+      const alternateOrigin = requestOrigin.includes('localhost')
+        ? requestOrigin.replace('localhost', '127.0.0.1')
+        : requestOrigin.includes('127.0.0.1')
+          ? requestOrigin.replace('127.0.0.1', 'localhost')
+          : '';
+
+      if (alternateOrigin && ALLOWED_ORIGINS_REGEX.test(alternateOrigin)) {
+        corsOptions.origin.push(requestOrigin);
+      }
     }
     if (process.env.WIDGET_BASE_URL) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
