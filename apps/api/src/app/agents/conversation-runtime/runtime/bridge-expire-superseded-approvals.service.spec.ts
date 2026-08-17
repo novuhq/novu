@@ -36,8 +36,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     const conversationService = {
       getPrimaryChannel: sinon.stub().returns(channel),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
-    };
-    const activityLedger = {
       listForView: sinon.stub().resolves({ data: [pendingRequest], hasMore: false }),
     };
     const outboundGateway = {
@@ -46,7 +44,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
-      activityLedger as any,
       outboundGateway as any,
       makeLogger() as any
     );
@@ -93,8 +90,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     const conversationService = {
       getPrimaryChannel: sinon.stub().returns({ platform: 'slack', platformThreadId: 'thread-1' }),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
-    };
-    const activityLedger = {
       listForView: sinon.stub().resolves({ data: [approvedDecision, request], hasMore: false }),
     };
     const outboundGateway = {
@@ -102,7 +97,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
-      activityLedger as any,
       outboundGateway as any,
       makeLogger() as any
     );
@@ -125,8 +119,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     const conversationService = {
       getPrimaryChannel: sinon.stub().returns({ platform: 'slack', platformThreadId: 'thread-1' }),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
-    };
-    const activityLedger = {
       listForView: sinon.stub().resolves({ data: [pendingRequest], hasMore: false }),
     };
     const outboundGateway = {
@@ -134,7 +126,6 @@ describe('BridgeExpireSupersededApprovalsService', () => {
     };
     const service = new BridgeExpireSupersededApprovalsService(
       conversationService as any,
-      activityLedger as any,
       outboundGateway as any,
       makeLogger() as any
     );

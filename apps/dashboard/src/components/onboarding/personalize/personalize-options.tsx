@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
-import { Laptop, Mails } from 'lucide-react';
+import { Mails } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent-channel-branding';
 
@@ -63,7 +63,7 @@ const providerIcon = (providerId: AgentChannel) => (
 
 export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
   {
-    // Agent email and agent chat have no square brand asset — they use a generic glyph, per the design.
+    // Agent email has no square brand asset — generic glyph, per the design.
     value: EmailProviderIdEnum.NovuAgent,
     label: 'Email',
     icon: <Mails className="size-4" strokeWidth={1.5} />,
@@ -107,8 +107,8 @@ export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
   },
   {
     value: ChatProviderIdEnum.NovuAgentChat,
-    label: 'In app',
-    icon: <Laptop className="size-4" strokeWidth={1.5} />,
-    accent: '#525866',
+    label: 'Agent Chat',
+    icon: providerIcon(ChatProviderIdEnum.NovuAgentChat),
+    accent: '#DC224E',
   },
 ];

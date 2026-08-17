@@ -247,6 +247,26 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
     expect(res.body.message).to.equal('This agent is not available on agent chat');
   });
 
+  it('should resolve the Agent Chat integration linked to the requested agent when several exist', async () => {
+    await linkAgentChat();
+
+    const otherIdentifier = `e2e-other-agent-chat-${Date.now()}`;
+    const createOther = await ctx.session.testAgent.post('/v1/agents').send({
+      name: 'Other Agent Chat Agent',
+      identifier: otherIdentifier,
+    });
+    expect(createOther.status).to.equal(201);
+    await linkAgentChat(otherIdentifier);
+
+    const res = await createConversation({
+      agentId: otherIdentifier,
+      text: 'Hello from the second published agent',
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.identifier).to.match(/^conv_/);
+  });
+
   it('should allow create without agentHash when agent-chat HMAC is off', async () => {
     await linkAgentChat();
     await setAgentChatHmac(false);

@@ -48,6 +48,17 @@ export type AgentChatRespondToActionArgs = AgentHashFields & {
   actionId: string;
 };
 
+export type AgentChatSendActionArgs = AgentHashFields & {
+  agentId: string;
+  conversationId: string;
+  /** `id` of the clicked Card button. */
+  actionId: string;
+  /** Platform message id of the message that carries the Card. */
+  sourceMessageId: string;
+  /** `value` of the clicked Card button, if set. */
+  value?: string;
+};
+
 export type AgentChatRespondToActionResponse = {
   identifier: string;
 };
@@ -73,6 +84,17 @@ export class AgentChatService {
       agentId: args.agentId,
       conversationIdentifier: args.conversationId,
       actionId: args.actionId,
+      ...(args.agentHash ? { agentHash: args.agentHash } : {}),
+    });
+  }
+
+  async sendAction(args: AgentChatSendActionArgs): Promise<AgentChatRespondToActionResponse> {
+    return this.#postAccept({
+      agentId: args.agentId,
+      conversationIdentifier: args.conversationId,
+      actionId: args.actionId,
+      sourceMessageId: args.sourceMessageId,
+      ...(args.value !== undefined ? { value: args.value } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
   }

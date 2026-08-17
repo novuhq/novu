@@ -14,6 +14,8 @@ import type {
   LoadConversationResult,
   RespondToActionArgs,
   RespondToActionResult,
+  SendActionArgs,
+  SendActionResult,
   SendMessageArgs,
   SendMessageResult,
 } from './types';
@@ -128,53 +130,61 @@ export class AgentChat extends BaseModule {
   }
 
   async respondToAction(args: RespondToActionArgs): Result<RespondToActionResult, NovuError | AgentChatPlanLimitError> {
-    return this.callWithSession<RespondToActionResult, NovuError | AgentChatPlanLimitError>(async () => {
-      const entry = this.#resolveFetchEntry(args);
-      if (!entry?.conversationId) {
-        return {
-          error: new NovuError(
-            'Cannot respond to action without a conversation id',
-            new Error('missing conversation id')
-          ),
-        };
-      }
+    return this.#withConversationAction(
+      args,
+      'Cannot respond to action without a conversation id',
+      'Failed to respond to action',
+      async (entry, conversationId) => {
+        const pending = derivePendingActions(entry.messages).find((action) => action.id === args.actionId);
+        if (!pending || pending.type !== 'tool-approval') {
+          return { error: new NovuError('Pending action not found', new Error('pending action not found')) };
+        }
 
-      const pending = derivePendingActions(entry.messages).find((action) => action.id === args.actionId);
-      if (!pending || pending.type !== 'tool-approval') {
-        return { error: new NovuError('Pending action not found', new Error('pending action not found')) };
-      }
+        const actionId = args.decision === 'approved' ? pending.approveActionId : pending.denyActionId;
+        if (!actionId) {
+          return {
+            error: new NovuError(
+              'Pending approval is missing action id',
+              new Error('pending approval missing action id')
+            ),
+          };
+        }
 
-      const actionId = args.decision === 'approved' ? pending.approveActionId : pending.denyActionId;
-      if (!actionId) {
-        return {
-          error: new NovuError(
-            'Pending approval is missing action id',
-            new Error('pending approval missing action id')
-          ),
-        };
-      }
-
-      try {
-        const data = await this.#agentChatService.respondToAction({
+        return this.#agentChatService.respondToAction({
           agentId: args.agentId,
-          conversationId: entry.conversationId,
+          conversationId,
           actionId,
           agentHash: args.agentHash,
         });
+      }
+    );
+  }
 
-        return {
-          data: {
-            conversationId: data.identifier,
-          },
-        };
-      } catch (error) {
-        if (error instanceof AgentChatPlanLimitError) {
-          return { error };
+  async sendAction(args: SendActionArgs): Result<SendActionResult, NovuError | AgentChatPlanLimitError> {
+    return this.#withConversationAction(
+      args,
+      'Cannot send action without a conversation id',
+      'Failed to send action',
+      async (_entry, conversationId) => {
+        const actionId = args.actionId.trim();
+        const sourceMessageId = args.sourceMessageId.trim();
+        if (!actionId) {
+          return { error: new NovuError('actionId is required', new Error('missing action id')) };
+        }
+        if (!sourceMessageId) {
+          return { error: new NovuError('sourceMessageId is required', new Error('missing source message id')) };
         }
 
-        return { error: new NovuError('Failed to respond to action', error) };
+        return this.#agentChatService.sendAction({
+          agentId: args.agentId,
+          conversationId,
+          actionId,
+          sourceMessageId,
+          value: args.value,
+          agentHash: args.agentHash,
+        });
       }
-    });
+    );
   }
 
   /**
@@ -269,6 +279,10 @@ export class AgentChat extends BaseModule {
             conversationId: data.identifier,
           });
 
+          // Live WS can arrive before the HTTP ack claims conversationId; those
+          // envelopes are dropped by #applyLiveEnvelope. Catch up immediately.
+          this.#requestCatchUp();
+
           return {
             data: {
               conversationId: data.identifier,
@@ -285,6 +299,42 @@ export class AgentChat extends BaseModule {
           return { error: new NovuError('Failed to send agent chat message', error) };
         }
       });
+    });
+  }
+
+  /**
+   * Shared session + conversation + plan-limit wrapper for `respondToAction` and `sendAction`.
+   * The two public methods stay separate: they take different ids and extra fields.
+   */
+  async #withConversationAction(
+    args: { agentId: string; conversationId?: string; key?: string },
+    missingConversationMessage: string,
+    failureMessage: string,
+    run: (entry: ConversationEntry, conversationId: string) => Promise<{ identifier: string } | { error: NovuError }>
+  ): Result<{ conversationId: string }, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<{ conversationId: string }, NovuError | AgentChatPlanLimitError>(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      const conversationId = entry?.conversationId;
+      if (!entry || !conversationId) {
+        return {
+          error: new NovuError(missingConversationMessage, new Error('missing conversation id')),
+        };
+      }
+
+      try {
+        const result = await run(entry, conversationId);
+        if ('error' in result) {
+          return { error: result.error };
+        }
+
+        return { data: { conversationId: result.identifier } };
+      } catch (error) {
+        if (error instanceof AgentChatPlanLimitError) {
+          return { error };
+        }
+
+        return { error: new NovuError(failureMessage, error) };
+      }
     });
   }
 

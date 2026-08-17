@@ -1,0 +1,91 @@
+---
+title: "useAgentChat"
+description: "API reference for the useAgentChat hook: conversation state, sendMessage, tool approval, live typing, and history pagination in the Novu React SDK."
+---
+
+<Note>
+  Agent Chat is in closed beta. Contact us at support@novu.co to get access.
+</Note>
+
+The `useAgentChat` hook is the headless client for [Agent Chat](/agents/channels/agent-chat). It loads conversation history, sends messages, streams live turns over the socket, and exposes pending tool approvals.
+
+Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). Product guide: [Build the UI](/agents/channels/agent-chat/quickstart).
+
+## Hook parameters
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `agentId` | `string` | Required. Public agent identifier from the dashboard. |
+| `conversationId` | `string` | Resume this conversation and load history on mount. Omit to start a new chat. The first `sendMessage` creates the conversation. |
+| `agentHash` | `string` | HMAC-SHA256 of `agentId` with the environment secret. Required when Security HMAC is on for the Agent Chat integration. |
+| `onSuccess` | `(data: LoadConversationResult) => void` | Fires after a history fetch succeeds. |
+| `onError` | `(error: NovuError \| AgentChatPlanLimitError) => void` | Fires when a load, send, or action response fails. |
+| `onMessage` | `(message: AgentMessage) => void` | Fires once per new message id. History pages are silent. The first envelope of a turn can create an empty assistant message before text arrives. A send that never reaches the server does not fire. The message status becomes `failed` instead. |
+| `onActionRequested` | `(action: AgentPendingAction) => void` | Fires once per pending action, including actions still pending on mount. Paging backwards is silent. |
+| `onEvent` | `(envelope: AgentEventEnvelope) => void` | Raw live envelopes for this conversation. Duplicate envelopes that the store drops do not fire. |
+
+## Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `messages` | `AgentMessage[]` | Folded timeline for the current conversation. |
+| `pendingActions` | `AgentPendingAction[]` | Tool approvals and MCP connect items that are still pending. Derived from `messages`. |
+| `conversationId` | `string \| undefined` | Server conversation id after create or resume. Undefined until the first successful send on a new chat. |
+| `error` | `NovuError \| AgentChatPlanLimitError` | Last error from load, send, `respondToAction`, or `sendAction`. |
+| `isLoading` | `boolean` | True until the first history fetch completes. False when there is no `conversationId` prop. |
+| `isFetching` | `boolean` | True while a history request is in flight. |
+| `isRunning` | `boolean` | True while the agent turn is in progress. |
+| `typing` | `AgentConversationTyping \| undefined` | Ephemeral typing indicator. Absent when the agent is not typing. |
+| `status` | `AgentConversationStatus` | `active` or `resolved`. |
+| `hasMore` | `boolean` | True when older history pages are available via `fetchMore`. |
+| `refetch` | `() => Promise<void>` | Reload the newest history page. No-op when there is no conversation id. |
+| `fetchMore` | `() => Promise<{ data?: { messages: AgentMessage[]; hasMore: boolean }; error?: NovuError }>` | Load an older history page. |
+| `sendMessage` | `(text: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| AgentChatPlanLimitError }>` | Send a user message. Creates a conversation when `conversationId` is omitted. |
+| `respondToAction` | `(args: { actionId: string; decision: 'approved' \| 'denied' }) => Promise<{ data?: RespondToActionResult; error?: NovuError \| AgentChatPlanLimitError }>` | Approve or deny a pending `tool-approval`. Pass `action.id` from `pendingActions`. |
+| `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| AgentChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. Render walk: [Cards](/agents/channels/agent-chat/quickstart#cards). |
+
+## Message type
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Message id. Optimistic local ids are replaced after the server ack. |
+| `role` | `AgentMessageRole` | Sender role (`user` or `assistant`). |
+| `parts` | `AgentMessagePart[]` | Ordered content. See part types below. |
+| `createdAt` | `string` | ISO timestamp. |
+| `status` | `'sending' \| 'sent' \| 'failed'` | Delivery status for the local send. |
+
+### Part types
+
+| `type` | When you see it |
+| --- | --- |
+| `text` | Visible message text. `state` is `streaming` or `done`. |
+| `thinking` | Chain-of-thought / plan text while the agent reasons. |
+| `tool` | Tool call and result. |
+| `approval` | Gated tool waiting on the subscriber. Use `pendingActions` + `respondToAction`. |
+| `mcp-connection` | MCP server connect card. Open `authorizeUrl` in the browser. |
+| `card` | Structured Card tree (`card` object). Draw it in your UI. Button clicks call `sendAction`. Agents send Cards with [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). Client walk: [Cards](/agents/channels/agent-chat/quickstart#cards). |
+| `file` | File attachment metadata. |
+| `source` | Citation (`url` or `document`). |
+
+## Pending actions
+
+`pendingActions` is derived from pending `approval` and `mcp-connection` parts.
+
+| `type` | What to do |
+| --- | --- |
+| `tool-approval` | Call `respondToAction({ actionId: action.id, decision: 'approved' \| 'denied' })`. |
+| `mcp-connection` | Open `authorizeUrl` in the browser. Do not invent action ids. |
+
+## Plan limit error
+
+`AgentChatPlanLimitError` is thrown (and returned on the hook `error` field) when the organization is over a plan limit. The HTTP status is `402`.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `name` | `'AgentChatPlanLimitError'` | Discriminator. |
+| `reason` | `'agents' \| 'channels' \| 'conversations'` | Which limit blocked the request. |
+| `message` | `string` | Human-readable error. |
+
+## JavaScript SDK
+
+The same client lives on `novu.agentChat` in [`@novu/js`](/platform/sdks/javascript#agent-chat): `sendMessage`, `loadConversation`, `fetchMore`, `respondToAction`, `sendAction`, `subscribe`, `unsubscribe`.

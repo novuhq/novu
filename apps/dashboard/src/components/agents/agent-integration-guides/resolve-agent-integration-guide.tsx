@@ -8,6 +8,7 @@ import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { AgentChatAgentIntegrationGuide } from './agent-chat-agent-integration-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
@@ -109,6 +110,21 @@ export function ResolveAgentIntegrationGuide({
   if (providerId === EmailProviderIdEnum.NovuAgent) {
     return (
       <EmailAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  // Agent Chat: setup → connected transition; no What's next (embed is the user surface).
+  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
+    return (
+      <AgentChatAgentIntegrationGuide
         embedded={embedded}
         onBack={onBack}
         agent={agent}

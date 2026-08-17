@@ -10,6 +10,7 @@ describe('AgentChat', () => {
   let emitter: NovuEventEmitter;
   let sendMessage: jest.Mock;
   let respondToAction: jest.Mock;
+  let sendAction: jest.Mock;
   let getEvents: jest.Mock;
   let connect: jest.Mock;
   let agentChat: AgentChat;
@@ -18,9 +19,10 @@ describe('AgentChat', () => {
     emitter = new NovuEventEmitter();
     sendMessage = jest.fn();
     respondToAction = jest.fn();
+    sendAction = jest.fn();
     getEvents = jest.fn();
     connect = jest.fn().mockResolvedValue({ data: undefined });
-    const agentChatService = { sendMessage, respondToAction, getEvents } as unknown as AgentChatService;
+    const agentChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as AgentChatService;
     agentChat = new AgentChat({
       inboxServiceInstance,
       eventEmitterInstance: emitter,
@@ -902,6 +904,59 @@ describe('AgentChat', () => {
     expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
   });
 
+  it('catch-up after send claims a conversation that received live events early', async () => {
+    agentChat.subscribe();
+
+    let sendStarted = false;
+    let resolveSend!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage.mockImplementationOnce(() => {
+      sendStarted = true;
+
+      return new Promise((resolve) => {
+        resolveSend = resolve;
+      });
+    });
+
+    getEvents.mockResolvedValue(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_early001', role: 'assistant', markdown: 'beat the ack' },
+      ])
+    );
+
+    const sent = agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    await new Promise<void>((resolve) => {
+      const tick = () => {
+        if (sendStarted) {
+          resolve();
+
+          return;
+        }
+
+        setTimeout(tick, 0);
+      };
+
+      tick();
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_early001',
+        markdown: 'beat the ack',
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await sent;
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_early001']);
+    expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+  });
+
   it('buffers live envelopes during catch-up and applies them after', async () => {
     await openClaimedConversation();
 
@@ -1503,6 +1558,44 @@ describe('AgentChat', () => {
 
     expect(result.error).toBeDefined();
     expect(respondToAction).not.toHaveBeenCalled();
+  });
+
+  it('sendAction POSTs actionId, value, and sourceMessageId', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    sendAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hi', key: 'local_card' });
+    const result = await agentChat.sendAction({
+      agentId: 'agent_1',
+      key: 'local_card',
+      actionId: 'topic-billing',
+      sourceMessageId: 'act_card0000001',
+      value: 'billing',
+    });
+
+    expect(result).toEqual({ data: { conversationId: 'conv_abcdefghijkl' } });
+    expect(sendAction).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'topic-billing',
+      sourceMessageId: 'act_card0000001',
+      value: 'billing',
+    });
+  });
+
+  it('sendAction returns error without POST when sourceMessageId is empty', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hi', key: 'local_card_empty' });
+    const result = await agentChat.sendAction({
+      agentId: 'agent_1',
+      key: 'local_card_empty',
+      actionId: 'topic-billing',
+      sourceMessageId: '   ',
+    });
+
+    expect(result.error).toBeDefined();
+    expect(sendAction).not.toHaveBeenCalled();
   });
 
   function recordChanges(key: string) {

@@ -8,15 +8,13 @@ import {
   type AgentChatEditMessageParams,
   type AgentChatStartTypingParams,
   conversationIdFromThreadId,
-  extractCardPlainText,
 } from '@novu/chat-adapter-agent-chat';
 import { type ConversationEntity, ConversationParticipantTypeEnum, SubscriberRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
-import type { CardElement } from 'chat';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
-import { ConversationEventSequenceService } from '../conversation-runtime/conversation/conversation-event-sequence.service';
 import { OutboundDeliveryInfo } from '../conversation-runtime/egress/outbound-delivery-info.service';
+import { messageContentFromStored } from './activity-to-events';
 import { AgentChatEventFactory } from './agent-chat-event.factory';
 
 export type AgentChatPlatformDeliveryContext = {
@@ -36,7 +34,6 @@ export type AgentChatPlatformDeliveryContext = {
 export class AgentChatPlatformDeliveryService {
   constructor(
     private readonly conversationService: AgentConversationService,
-    private readonly eventSequenceService: ConversationEventSequenceService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly webSocketsQueueService: WebSocketsQueueService,
     private readonly eventFactory: AgentChatEventFactory,
@@ -61,13 +58,12 @@ export class AgentChatPlatformDeliveryService {
       this.deliveryInfo.report({ messageId: platformMessageId, sequence });
 
       if (conversation && sequence !== undefined) {
-        const markdown = this.markdownForLiveEnvelope(content, richContent);
         const envelope = this.eventFactory.createMessageEnvelope({
           conversationId: conversation._id,
           conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId,
-          content: { markdown },
+          content: messageContentFromStored({ content, richContent }),
           sequence,
         });
         await this.emitBestEffort(context, conversation, envelope);
@@ -89,13 +85,12 @@ export class AgentChatPlatformDeliveryService {
       this.deliveryInfo.report({ sequence });
 
       if (conversation && sequence !== undefined) {
-        const markdown = this.markdownForLiveEnvelope(content, richContent);
         const envelope = this.eventFactory.createEditEnvelope({
           conversationId: conversation._id,
           conversationIdentifier: conversation.identifier,
           agentId: context.config.agentIdentifier,
           platformMessageId: messageId,
-          content: { markdown },
+          content: messageContentFromStored({ content, richContent }),
           sequence,
         });
         await this.emitBestEffort(context, conversation, envelope);
@@ -208,25 +203,11 @@ export class AgentChatPlatformDeliveryService {
       return undefined;
     }
 
-    return this.eventSequenceService.mint({
+    return this.conversationService.mintEventSequence({
       environmentId: context.config.environmentId,
       organizationId: context.config.organizationId,
       conversationId: conversation._id,
     });
-  }
-
-  private markdownForLiveEnvelope(content: string, richContent?: Record<string, unknown>): string {
-    const trimmed = content?.trim() ?? '';
-    if (trimmed && trimmed !== '[Card]') {
-      return trimmed;
-    }
-
-    const card = richContent?.card;
-    if (card && typeof card === 'object') {
-      return extractCardPlainText(card as CardElement);
-    }
-
-    return trimmed || '[Card]';
   }
 
   private async emitBestEffort(

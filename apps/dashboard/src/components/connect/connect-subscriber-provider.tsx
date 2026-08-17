@@ -1,5 +1,5 @@
 import { NovuProvider } from '@novu/react';
-import { type ComponentProps, createContext, type ReactNode } from 'react';
+import { type ComponentProps, createContext, type ReactNode, useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -29,8 +29,18 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
   const { currentEnvironment } = useEnvironment();
 
   const isReady = isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier;
-  const subscriberId = currentUser?._id ?? '';
+  const subscriberId = currentUser?._id || '';
   const routedContent = (children === undefined ? <Outlet /> : children) as NovuProviderChildren;
+  const subscriber = useMemo(
+    () => ({
+      subscriberId,
+      firstName: currentUser?.firstName ?? '',
+      lastName: currentUser?.lastName ?? '',
+      email: currentUser?.email ?? '',
+      avatar: currentUser?.profilePicture ?? '',
+    }),
+    [subscriberId, currentUser?.firstName, currentUser?.lastName, currentUser?.email, currentUser?.profilePicture]
+  );
 
   if (!isReady) {
     return (
@@ -43,13 +53,8 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
   return (
     <ConnectSubscriberContext.Provider value={{ subscriberId, isReady: true }}>
       <NovuProvider
-        subscriber={{
-          subscriberId,
-          firstName: currentUser.firstName ?? '',
-          lastName: currentUser.lastName ?? '',
-          email: currentUser.email ?? '',
-          avatar: currentUser.profilePicture ?? '',
-        }}
+        key={subscriberId}
+        subscriber={subscriber}
         applicationIdentifier={currentEnvironment.identifier}
         apiUrl={apiHostnameManager.getHostname()}
         socketUrl={apiHostnameManager.getWebSocketHostname()}

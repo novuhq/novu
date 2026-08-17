@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiCodeSSlashFill, RiDashboardLine } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -27,6 +27,16 @@ export const ChatEditorSelect = ({
   const { control, setValue } = useFormContext();
   const [pendingEditorType, setPendingEditorType] = useState<ChatEditorType | null>(null);
   const body = useWatch({ name: 'body', control });
+  const editorType = useWatch({ name: 'editorType', control });
+
+  useEffect(() => {
+    const resolvedEditorType = deriveChatEditorType(body, editorType, true);
+    if (editorType === resolvedEditorType) {
+      return;
+    }
+
+    setValue('editorType', resolvedEditorType, { shouldDirty: false, shouldValidate: false });
+  }, [body, editorType, setValue]);
 
   return (
     <FormField
