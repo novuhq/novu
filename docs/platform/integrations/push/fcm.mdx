@@ -568,6 +568,169 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
   </Tab>
 </Tabs>
 
+## Customizing notifications with overrides
+
+Novu's FCM integration is built on the [`firebase-admin`](https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging) SDK. When you pass overrides under `providers.fcm` at trigger time, Novu forwards those fields to the SDK, which builds the outgoing message. Send the FCM V1 message fields directly under `providers.fcm` — no `_passthrough` wrapper is needed for these keys.
+
+### Supported override fields
+
+| Field | Type | Purpose |
+|---|---|---|
+| `topic` | `string` | Send to an [FCM topic](https://firebase.google.com/docs/cloud-messaging/js/topic-messaging) instead of the subscriber's device tokens. |
+| `notification` | `object` | Extra keys merged into the notification (title and body are set from the step subject and body). |
+| `data` | `object` of `string` values | Custom data payload delivered to the app. FCM requires all values to be strings. |
+| `android` | `object` | [Android-specific config](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidconfig) (channel, priority, sound, etc.). |
+| `apns` | `object` | [APNS-specific config](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#apnsconfig) when routing iOS traffic through FCM. |
+| `webPush` | `object` | [Web push config](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#webpushconfig), including `fcmOptions.link` for click-through URLs. |
+| `fcmOptions` | `object` | Platform-independent [FCM options](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#fcmoptions), such as `analyticsLabel`. |
+| `type` | `"data"` | Send a data-only message. When set to `"data"`, Novu delivers `title`, `body`, and the trigger `payload` inside `data` instead of `notification`. |
+
+<Note>
+  `topic` and device tokens are mutually exclusive. When `topic` is set, Novu sends to that topic and ignores the subscriber's registered device tokens.
+</Note>
+
+### Platform-specific example
+
+Send the same push with distinct Android and iOS configuration in a single trigger:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "subscriberId" },
+  payload: { orderId: "12345" },
+  overrides: {
+    providers: {
+      fcm: {
+        data: { orderId: "12345" },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "orders",
+            sound: "cha_ching.wav",
+          },
+        },
+        apns: {
+          headers: { "apns-priority": "10" },
+          payload: {
+            aps: {
+              sound: "cha_ching.caf",
+              badge: 1,
+            },
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={"orderId": "12345"},
+        overrides={
+            "providers": {
+                "fcm": {
+                    "data": {"orderId": "12345"},
+                    "android": {
+                        "priority": "high",
+                        "notification": {
+                            "channelId": "orders",
+                            "sound": "cha_ching.wav",
+                        },
+                    },
+                    "apns": {
+                        "headers": {"apns-priority": "10"},
+                        "payload": {
+                            "aps": {
+                                "sound": "cha_ching.caf",
+                                "badge": 1,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "subscriberId" },
+    "payload": { "orderId": "12345" },
+    "overrides": {
+        "providers": {
+            "fcm": {
+                "data": { "orderId": "12345" },
+                "android": {
+                    "priority": "high",
+                    "notification": {
+                        "channelId": "orders",
+                        "sound": "cha_ching.wav"
+                    }
+                },
+                "apns": {
+                    "headers": { "apns-priority": "10" },
+                    "payload": {
+                        "aps": {
+                            "sound": "cha_ching.caf",
+                            "badge": 1
+                        }
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+### Data-only messages
+
+To send a silent/data-only message that the OS delivers to your app without showing a system notification, set `type` to `"data"`. Novu moves `title`, `body`, and the trigger `payload` into the message's `data` object:
+
+```json
+{
+  "name": "workflowId",
+  "to": { "subscriberId": "subscriberId" },
+  "payload": { "syncKey": "abc123" },
+  "overrides": {
+    "providers": {
+      "fcm": {
+        "type": "data"
+      }
+    }
+  }
+}
+```
+
+<Note>
+  FCM requires every value in `data` to be a string. Novu automatically stringifies non-string payload values before sending.
+</Note>
+
+### Extra fields via `_passthrough`
+
+If you need to send a field that isn't listed above, wrap it in `_passthrough` and Novu forwards it to the FCM SDK as-is. See [Trigger overrides](/platform/integrations/trigger-overrides#sending-extra-fields-supported-by-provider-sdk) for the general pattern.
+
 ## Frequently asked questions
 
 <AccordionGroup>
