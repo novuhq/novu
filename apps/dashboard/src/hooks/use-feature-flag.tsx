@@ -2,6 +2,7 @@ import { FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/sha
 import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useState } from 'react';
 import { IS_SELF_HOSTED_EE, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
+import { agentRedirectDebugLog } from '@/utils/agent-redirect-debug';
 
 function isLaunchDarklyEnabled() {
   if (!!LAUNCH_DARKLY_CLIENT_SIDE_ID && IS_SELF_HOSTED_EE) {
@@ -55,18 +56,62 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false):
   const flags = useFlags();
 
   if (!isLaunchDarklyEnabled()) {
+    const windowEnvValue = (window as unknown as { _env_?: Record<string, string> })?._env_?.[`VITE_${key}`];
+    const importMetaValue = import.meta.env[`VITE_${key}`];
+    const processValue = typeof process !== 'undefined' ? process?.env?.[key] : undefined;
     const envValue =
       // Check runtime env first (for self-hosted flexibility)
-      (window as unknown as { _env_?: Record<string, string> })?._env_?.[`VITE_${key}`] ??
+      windowEnvValue ??
       // Check if the feature flag is exported as an environment variable
-      import.meta.env[`VITE_${key}`] ??
+      importMetaValue ??
       // Then check process.env if process exists
-      (typeof process !== 'undefined' ? process?.env?.[key] : undefined);
+      processValue;
 
-    return prepareBooleanStringFeatureFlag(envValue, defaultValue);
+    const resolved = prepareBooleanStringFeatureFlag(envValue, defaultValue);
+
+    // #region agent log
+    if (key === FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED) {
+      agentRedirectDebugLog({
+        hypothesisId: 'E',
+        location: 'use-feature-flag.tsx:env-path',
+        message: 'useFeatureFlag agents (LD disabled)',
+        data: {
+          key,
+          defaultValue,
+          windowEnvValue: windowEnvValue ?? null,
+          importMetaValue: importMetaValue ?? null,
+          processValue: processValue ?? null,
+          envValue: envValue ?? null,
+          resolved,
+          ldEnabled: false,
+        },
+      });
+    }
+    // #endregion
+
+    return resolved;
   }
 
-  return flags[key] ?? defaultValue;
+  const ldResolved = flags[key] ?? defaultValue;
+
+  // #region agent log
+  if (key === FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED) {
+    agentRedirectDebugLog({
+      hypothesisId: 'E',
+      location: 'use-feature-flag.tsx:ld-path',
+      message: 'useFeatureFlag agents (LD enabled)',
+      data: {
+        key,
+        defaultValue,
+        flagFromLd: flags[key] ?? null,
+        ldResolved,
+        ldEnabled: true,
+      },
+    });
+  }
+  // #endregion
+
+  return ldResolved;
 };
 
 export const useNumericFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = 0): number => {

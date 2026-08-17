@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -37,10 +38,13 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
+import { IS_EU, IS_SELF_HOSTED_CE, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
+import { useFeatureFlag, useLaunchDarklyReady } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { agentRedirectDebugLog, nextAgentDetailsRenderSeq } from '@/utils/agent-redirect-debug';
 import { QueryKeys } from '@/utils/query-keys';
 import {
   AGENT_DETAILS_CHAT_TAB,
@@ -94,8 +98,10 @@ export function AgentDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { currentEnvironment, readOnly } = useEnvironment();
+  const { currentEnvironment, readOnly, areEnvironmentsInitialLoading } = useEnvironment();
   const areAgentsAvailable = useAreConversationalAgentsAvailable();
+  const rawAgentsFlag = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const isLaunchDarklyReady = useLaunchDarklyReady();
   const agentRoutes = useAgentRoutes();
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
   const [setupModalDismissed, setSetupModalDismissed] = useState(false);
@@ -105,6 +111,38 @@ export function AgentDetailsPage() {
   const agentsListPath = buildRoute(agentRoutes.list, {
     environmentSlug: currentEnvironment?.slug ?? '',
   });
+
+  // #region agent log
+  const renderSeq = nextAgentDetailsRenderSeq();
+  const windowEnvAgents = (window as unknown as { _env_?: Record<string, string> })?._env_?.[
+    'VITE_IS_CONVERSATIONAL_AGENTS_ENABLED'
+  ];
+  const importMetaAgents = import.meta.env.VITE_IS_CONVERSATIONAL_AGENTS_ENABLED;
+  agentRedirectDebugLog({
+    hypothesisId: 'A',
+    location: 'agent-details.tsx:render',
+    message: 'AgentDetailsPage render',
+    data: {
+      renderSeq,
+      pathname: location.pathname,
+      agentIdentifier,
+      agentTabParam: agentTabParam ?? null,
+      integrationIdentifierParam: integrationIdentifierParam ?? null,
+      areAgentsAvailable,
+      rawAgentsFlag,
+      isLaunchDarklyReady,
+      ldClientSideIdPresent: Boolean(LAUNCH_DARKLY_CLIENT_SIDE_ID),
+      IS_EU,
+      IS_SELF_HOSTED_CE,
+      currentEnvironmentSlug: currentEnvironment?.slug ?? null,
+      currentEnvironmentId: currentEnvironment?._id ?? null,
+      areEnvironmentsInitialLoading,
+      agentsListPath,
+      windowEnvAgents: windowEnvAgents ?? null,
+      importMetaAgents: importMetaAgents ?? null,
+    },
+  });
+  // #endregion
 
   const agentQuery = useQuery({
     queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agentIdentifier),
@@ -204,14 +242,48 @@ export function AgentDetailsPage() {
   }, [agentIdentifier, agentQuery.data, currentTab, integrationIdentifier, areAgentsAvailable, track]);
 
   if (!areAgentsAvailable) {
+    // #region agent log
+    agentRedirectDebugLog({
+      hypothesisId: 'A',
+      location: 'agent-details.tsx:navigate-unavailable',
+      message: 'Navigate to agents list: !areAgentsAvailable',
+      data: {
+        renderSeq,
+        agentsListPath,
+        areAgentsAvailable,
+        rawAgentsFlag,
+        isLaunchDarklyReady,
+        pathname: location.pathname,
+      },
+    });
+    // #endregion
+
     return <Navigate to={agentsListPath} replace />;
   }
 
   if (!agentIdentifier) {
+    // #region agent log
+    agentRedirectDebugLog({
+      hypothesisId: 'C',
+      location: 'agent-details.tsx:navigate-no-identifier',
+      message: 'Navigate to agents list: !agentIdentifier',
+      data: { renderSeq, agentsListPath, pathname: location.pathname },
+    });
+    // #endregion
+
     return <Navigate to={agentsListPath} replace />;
   }
 
   if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
+    // #region agent log
+    agentRedirectDebugLog({
+      hypothesisId: 'D',
+      location: 'agent-details.tsx:navigate-invalid-tab',
+      message: 'Navigate rewrite invalid tab',
+      data: { renderSeq, agentTabParam, agentIdentifier, envSlug: currentEnvironment.slug },
+    });
+    // #endregion
+
     return (
       <Navigate
         replace
@@ -230,6 +302,15 @@ export function AgentDetailsPage() {
     !hasAgentChat &&
     currentEnvironment?.slug
   ) {
+    // #region agent log
+    agentRedirectDebugLog({
+      hypothesisId: 'D',
+      location: 'agent-details.tsx:navigate-chat-fallback',
+      message: 'Navigate rewrite chat tab to default',
+      data: { renderSeq, agentIdentifier, envSlug: currentEnvironment.slug },
+    });
+    // #endregion
+
     return (
       <Navigate
         replace
@@ -241,6 +322,21 @@ export function AgentDetailsPage() {
       />
     );
   }
+
+  // #region agent log
+  agentRedirectDebugLog({
+    hypothesisId: 'A',
+    location: 'agent-details.tsx:render-ok',
+    message: 'AgentDetailsPage rendering content (no redirect)',
+    data: {
+      renderSeq,
+      pathname: location.pathname,
+      currentTab,
+      agentQueryStatus: agentQuery.status,
+      isLoading: agentQuery.isLoading,
+    },
+  });
+  // #endregion
 
   const isLoading = agentQuery.isLoading;
   const error = agentQuery.error;

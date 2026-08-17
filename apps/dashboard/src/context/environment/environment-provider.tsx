@@ -6,6 +6,7 @@ import { EnvironmentContext } from '@/context/environment/environment-context';
 import { useFetchEnvironments } from '@/context/environment/hooks';
 import { useBootstrapOrganization } from '@/context/environment/use-bootstrap-organization';
 import { loadFromStorage, saveToStorage } from '@/utils/local-storage';
+import { agentRedirectDebugLog } from '@/utils/agent-redirect-debug';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 const PRODUCTION_ENVIRONMENT = 'Production';
@@ -87,14 +88,67 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       }
 
       if (pathname === ROUTES.ROOT || pathname === ROUTES.ENV || pathname === `${ROUTES.ENV}/`) {
+        // #region agent log
+        agentRedirectDebugLog({
+          hypothesisId: 'B',
+          location: 'environment-provider.tsx:nav-root',
+          message: 'EnvironmentProvider navigate from root/env',
+          data: {
+            pathname,
+            newEnvironmentSlug,
+            paramsEnvironmentSlug: paramsEnvironmentSlug ?? null,
+            isStaleEnvironmentSlug,
+            isNewEnvironmentDifferent,
+            envCount: allEnvironments.length,
+            orgId: currentOrganization?._id ?? null,
+          },
+        });
+        // #endregion
         navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: newEnvironmentSlug ?? '' }));
       } else if (pathname.includes(ROUTES.ENV) && isNewEnvironmentDifferent) {
         if (isStaleEnvironmentSlug && isAgentDetailsPath(pathname)) {
+          // #region agent log
+          agentRedirectDebugLog({
+            hypothesisId: 'B',
+            location: 'environment-provider.tsx:nav-stale-agent-details',
+            message: 'EnvironmentProvider navigate agent details → agents list (stale slug)',
+            data: {
+              pathname,
+              environmentSlug: environmentSlug ?? null,
+              newEnvironmentSlug,
+              paramsEnvironmentSlug: paramsEnvironmentSlug ?? null,
+              isStaleEnvironmentSlug,
+              isNewEnvironmentDifferent,
+              isAgentDetails: true,
+              envSlugs: allEnvironments.map((e) => e.slug),
+              orgId: currentOrganization?._id ?? null,
+            },
+          });
+          // #endregion
           // Agent detail pages can't survive an org switch — the agent doesn't exist in the new
           // organization — so land on the agents list instead of an error page.
           navigate(buildRoute(ROUTES.AGENTS, { environmentSlug: newEnvironmentSlug ?? '' }));
         } else {
           const newPath = pathname.replace(/\/env\/[^/]+(\/|$)/, `${ROUTES.ENV}/${newEnvironmentSlug}$1`);
+          // #region agent log
+          agentRedirectDebugLog({
+            hypothesisId: 'B',
+            location: 'environment-provider.tsx:nav-rewrite-env-slug',
+            message: 'EnvironmentProvider rewrite environment slug in path',
+            data: {
+              pathname,
+              newPath,
+              environmentSlug: environmentSlug ?? null,
+              newEnvironmentSlug,
+              paramsEnvironmentSlug: paramsEnvironmentSlug ?? null,
+              isStaleEnvironmentSlug,
+              isNewEnvironmentDifferent,
+              isAgentDetails: isAgentDetailsPath(pathname),
+              envSlugs: allEnvironments.map((e) => e.slug),
+              orgId: currentOrganization?._id ?? null,
+            },
+          });
+          // #endregion
           navigate(`${newPath}${search}${hash}`);
         }
       }

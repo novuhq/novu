@@ -1,9 +1,40 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import path from 'path';
 import { defineConfig, loadEnv, Plugin } from 'vite';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+
+/** Temporary: browser NDJSON → /opt/cursor/logs/debug.log for agent-detail redirect debug. */
+function agentRedirectDebugPlugin(): Plugin {
+  return {
+    name: 'agent-redirect-debug',
+    configureServer(server) {
+      server.middlewares.use('/__agent_redirect_debug', (req, res, next) => {
+        if (req.method !== 'POST') {
+          next();
+
+          return;
+        }
+
+        let body = '';
+        req.on('data', (chunk) => {
+          body += chunk;
+        });
+        req.on('end', () => {
+          try {
+            fs.appendFileSync('/opt/cursor/logs/debug.log', `${body.trim()}\n`);
+          } catch {
+            // ignore
+          }
+          res.statusCode = 204;
+          res.end();
+        });
+      });
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
@@ -57,6 +88,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      agentRedirectDebugPlugin(),
       excludeCloudFilesPlugin(),
       ViteEjsPlugin((viteConfig) => ({
         // viteConfig is the current Vite resolved config
