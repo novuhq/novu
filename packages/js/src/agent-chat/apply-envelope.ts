@@ -351,9 +351,7 @@ function applyDurableMessageParts(
     } else {
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }
-  }
-
-  if ('card' in content) {
+  } else {
     next = [...next, { type: 'card', card: content.card }];
   }
 

@@ -117,6 +117,37 @@ describe('activity-to-events run lifecycle', () => {
     ]);
   });
 
+  it('maps stored Card trees to protocol card content', () => {
+    const card = {
+      type: 'card',
+      title: 'Support Agent',
+      children: [{ type: 'text', content: 'How can I help?' }],
+    };
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.MESSAGE,
+          identifier: 'msg_card0000001',
+          platformMessageId: 'act_card0000001',
+          sequence: 1,
+          content: 'How can I help?',
+          richContent: { card },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes.map((envelope) => envelope.event)).to.deep.equal([
+      {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'act_card0000001',
+        content: { card },
+        files: undefined,
+      },
+    ]);
+  });
+
   it('uses immutable activity ids for approval request messages', () => {
     const envelopes = mapNewestFirstEventActivities(
       [

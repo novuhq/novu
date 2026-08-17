@@ -3,6 +3,7 @@ import {
   type AgentEvent,
   type AgentEventEnvelope,
   type AgentFileRef,
+  type AgentMessageContent,
   isDeltaEvent,
 } from '@novu/agent-event-protocol';
 import {
@@ -35,6 +36,23 @@ function filesFromRichContent(richContent?: Record<string, unknown>) {
   return files as AgentFileRef[];
 }
 
+function isCardTree(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'card';
+}
+
+/** Prefer the stored Card tree. Fall back to markdown when no Card is present. */
+export function messageContentFromStored(params: {
+  content?: string;
+  richContent?: Record<string, unknown>;
+}): AgentMessageContent {
+  const card = params.richContent?.card;
+  if (isCardTree(card)) {
+    return { card };
+  }
+
+  return { markdown: params.content ?? '' };
+}
+
 const MESSAGE_ROLE_BY_SENDER = {
   [ConversationActivitySenderTypeEnum.AGENT]: 'assistant',
   [ConversationActivitySenderTypeEnum.SUBSCRIBER]: 'user',
@@ -53,7 +71,7 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         role,
         // Browser-visible id is platformMessageId (aligned with live WS envelopes).
         messageId: activity.platformMessageId ?? activity.identifier,
-        content: { markdown: activity.content },
+        content: messageContentFromStored({ content: activity.content, richContent: activity.richContent }),
         files: filesFromRichContent(activity.richContent),
       };
     }
@@ -142,7 +160,7 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
       return {
         type: 'channel.edit',
         messageId: activity.platformMessageId ?? activity.identifier,
-        content: { markdown: activity.content },
+        content: messageContentFromStored({ content: activity.content, richContent: activity.richContent }),
       };
 
     case ConversationActivityTypeEnum.DELETE:

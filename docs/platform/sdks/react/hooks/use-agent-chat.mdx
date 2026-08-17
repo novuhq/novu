@@ -31,7 +31,7 @@ Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). Produc
 | `messages` | `AgentMessage[]` | Folded timeline for the current conversation. |
 | `pendingActions` | `AgentPendingAction[]` | Tool approvals and MCP connect items that are still pending. Derived from `messages`. |
 | `conversationId` | `string \| undefined` | Server conversation id after create or resume. Undefined until the first successful send on a new chat. |
-| `error` | `NovuError \| AgentChatPlanLimitError` | Last error from load, send, or `respondToAction`. |
+| `error` | `NovuError \| AgentChatPlanLimitError` | Last error from load, send, `respondToAction`, or `sendAction`. |
 | `isLoading` | `boolean` | True until the first history fetch completes. False when there is no `conversationId` prop. |
 | `isFetching` | `boolean` | True while a history request is in flight. |
 | `isRunning` | `boolean` | True while the agent turn is in progress. |
@@ -42,6 +42,7 @@ Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). Produc
 | `fetchMore` | `() => Promise<{ data?: { messages: AgentMessage[]; hasMore: boolean }; error?: NovuError }>` | Load an older history page. |
 | `sendMessage` | `(text: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| AgentChatPlanLimitError }>` | Send a user message. Creates a conversation when `conversationId` is omitted. |
 | `respondToAction` | `(args: { actionId: string; decision: 'approved' \| 'denied' }) => Promise<{ data?: RespondToActionResult; error?: NovuError \| AgentChatPlanLimitError }>` | Approve or deny a pending `tool-approval`. Pass `action.id` from `pendingActions`. |
+| `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| AgentChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. Render walk: [Cards](/agents/channels/agent-chat/quickstart#cards). |
 
 ## Message type
 
@@ -62,7 +63,7 @@ Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). Produc
 | `tool` | Tool call and result. |
 | `approval` | Gated tool waiting on the subscriber. Use `pendingActions` + `respondToAction`. |
 | `mcp-connection` | MCP server connect card. Open `authorizeUrl` in the browser. |
-| `card` | Structured card payload (`card` object). |
+| `card` | Structured Card tree (`card` object). Draw it in your UI. Button clicks call `sendAction`. Agents send Cards with [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). Client walk: [Cards](/agents/channels/agent-chat/quickstart#cards). |
 | `file` | File attachment metadata. |
 | `source` | Citation (`url` or `document`). |
 
@@ -87,4 +88,4 @@ Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). Produc
 
 ## JavaScript SDK
 
-The same client lives on `novu.agentChat` in [`@novu/js`](/platform/sdks/javascript#agent-chat): `sendMessage`, `loadConversation`, `fetchMore`, `respondToAction`, `subscribe`, `unsubscribe`.
+The same client lives on `novu.agentChat` in [`@novu/js`](/platform/sdks/javascript#agent-chat): `sendMessage`, `loadConversation`, `fetchMore`, `respondToAction`, `sendAction`, `subscribe`, `unsubscribe`.
