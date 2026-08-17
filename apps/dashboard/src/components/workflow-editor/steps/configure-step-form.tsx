@@ -369,6 +369,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                                       className="w-full text-right whitespace-nowrap overflow-x-hidden mask-none"
                                       size="xs"
                                       autoFocus
+                                      autoComplete="off"
                                       onBlur={() => {
                                         field.onBlur();
 

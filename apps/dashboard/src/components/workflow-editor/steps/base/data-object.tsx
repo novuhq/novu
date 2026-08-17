@@ -132,6 +132,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                       value={pair.key}
                       onChange={(e) => handleUpdatePair(index, 'key', e.target.value)}
                       onBlur={handleBlur}
+                      autoComplete="off"
                     />
                     <InputRoot>
                       <ControlInput

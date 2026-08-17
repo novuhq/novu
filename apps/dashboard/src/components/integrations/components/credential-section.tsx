@@ -224,6 +224,7 @@ function TextInputControl({
           name={field.name}
           hasError={!!fieldState.error}
           disabled={isReadOnly}
+          autoComplete="off"
         />
       </FormControl>
     </>
@@ -267,6 +268,7 @@ function PushResources({ credential, integrationId }: { credential: IConfigCrede
                   value={resource.value}
                   type="text"
                   readOnly={true}
+                  autoComplete="off"
                   trailingNode={<CopyButton valueToCopy={resource.value} />}
                 />
               </div>
