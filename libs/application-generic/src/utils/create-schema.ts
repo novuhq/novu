@@ -205,17 +205,3 @@ export const buildContextSchema = (context?: unknown) => {
     properties: contextProperties,
   };
 };
-
-export const buildTopicSchema = (topic?: unknown) => {
-  return {
-    type: JsonSchemaTypeEnum.OBJECT,
-    description: 'Primary topic associated with the notification when triggered to a topic',
-    properties: {
-      key: { type: JsonSchemaTypeEnum.STRING, description: 'Unique key of the topic' },
-      name: { type: JsonSchemaTypeEnum.STRING, description: 'Display name of the topic' },
-      data: buildVariablesSchema(topic && typeof topic === 'object' && 'data' in topic ? topic.data : {}),
-    },
-    required: ['key'],
-    additionalProperties: false,
-  };
-};

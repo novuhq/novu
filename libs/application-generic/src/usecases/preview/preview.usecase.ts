@@ -316,7 +316,6 @@ export class PreviewUsecase {
         payload: previewPayloadExample.payload || {},
         subscriber: previewPayloadExample.subscriber,
         actor: previewPayloadExample.actor,
-        topic: previewPayloadExample.topic,
         controls: controlValues || {},
         context: previewPayloadExample.context as ContextResolved,
         environmentId: command.user.environmentId,

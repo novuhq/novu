@@ -11,7 +11,7 @@ import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildContextFragmentFromKey, isValidContextVariable } from '@/utils/context-variable-utils';
 
-type VariableType = 'payload' | 'subscriber' | 'actor' | 'topic' | 'context';
+type VariableType = 'payload' | 'subscriber' | 'actor' | 'context';
 
 type VariableInfo = {
   type: VariableType;
@@ -23,7 +23,6 @@ const VARIABLE_PREFIXES = {
   PAYLOAD: 'payload.',
   SUBSCRIBER: 'subscriber.data.',
   ACTOR: 'actor.data.',
-  TOPIC: 'topic.data.',
   CONTEXT: 'context.',
 } as const;
 
@@ -35,7 +34,6 @@ function parseVariablePath(variablePath: string): VariableInfo | null {
     { prefix: VARIABLE_PREFIXES.PAYLOAD, type: 'payload' },
     { prefix: VARIABLE_PREFIXES.SUBSCRIBER, type: 'subscriber' },
     { prefix: VARIABLE_PREFIXES.ACTOR, type: 'actor' },
-    { prefix: VARIABLE_PREFIXES.TOPIC, type: 'topic' },
     { prefix: VARIABLE_PREFIXES.CONTEXT, type: 'context' },
   ];
 
@@ -90,7 +88,7 @@ export const useCreateVariable = () => {
   /**
    * Dynamic variables handling:
    * - payload.*: persisted in workflow.payloadSchema (edited via the schema editor = useWorkflowSchema)
-   * - subscriber.data.*, topic.data.*, and context.*: not persisted; derived from the preview payload
+   * - subscriber.data.* and context.*: not persisted; derived from the preview payload
    *
    * In StepEditorContext we update editorValue and persist the preview so the preview API returns
    * a dynamic schema (previewData.schema) including these keys; the UI reads it via useDynamicPreviewSchema
@@ -102,11 +100,10 @@ export const useCreateVariable = () => {
   const editorValue = stepEditor?.editorValue;
   const setEditorValue = stepEditor?.setEditorValue;
 
-  const { savePersistedSubscriber, savePersistedActor, savePersistedTopic, savePersistedContext } =
-    usePersistedPreviewContext({
-      workflowId: workflow?.workflowId || '',
-      environmentId: currentEnvironment?._id || '',
-    });
+  const { savePersistedSubscriber, savePersistedActor, savePersistedContext } = usePersistedPreviewContext({
+    workflowId: workflow?.workflowId || '',
+    environmentId: currentEnvironment?._id || '',
+  });
 
   const handlePayloadVariable = useCallback(
     async (variableInfo: VariableInfo) => {
@@ -167,28 +164,6 @@ export const useCreateVariable = () => {
     [setEditorValue, editorValue, savePersistedActor]
   );
 
-  const handleTopicVariable = useCallback(
-    (variableInfo: VariableInfo) => {
-      if (!editorValue || !setEditorValue) return;
-
-      const currentPreviewData = parseJsonValue(editorValue);
-      const currentTopic = currentPreviewData.topic || {};
-      const currentTopicData = currentTopic.data || {};
-
-      const newVariable = variableInfo.key
-        .split('.')
-        .reduceRight((value, key) => ({ [key]: value }), 'example_value' as unknown);
-
-      const updatedTopicData = merge({}, currentTopicData, newVariable);
-      const updatedTopic = { ...currentTopic, data: updatedTopicData };
-      const newPreviewData = { ...currentPreviewData, topic: updatedTopic };
-
-      setEditorValue(JSON.stringify(newPreviewData, null, 2));
-      savePersistedTopic(updatedTopic);
-    },
-    [setEditorValue, editorValue, savePersistedTopic]
-  );
-
   const handleContextVariable = useCallback(
     (variableInfo: VariableInfo) => {
       if (!editorValue || !setEditorValue) return;
@@ -225,7 +200,6 @@ export const useCreateVariable = () => {
           payload: handlePayloadVariable,
           subscriber: handleSubscriberVariable,
           actor: handleActorVariable,
-          topic: handleTopicVariable,
           context: handleContextVariable,
         } as const;
 
@@ -239,14 +213,7 @@ export const useCreateVariable = () => {
         showErrorToast(`Failed to create ${variableInfo.type} variable: ${error}`);
       }
     },
-    [
-      workflow,
-      handlePayloadVariable,
-      handleSubscriberVariable,
-      handleActorVariable,
-      handleTopicVariable,
-      handleContextVariable,
-    ]
+    [workflow, handlePayloadVariable, handleSubscriberVariable, handleActorVariable, handleContextVariable]
   );
 
   const openSchemaDrawer = useCallback((variableName?: string) => {

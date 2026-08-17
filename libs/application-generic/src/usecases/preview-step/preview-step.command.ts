@@ -2,7 +2,6 @@ import { ContextResolved } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../commands';
 import { SubscriberResponseDtoOptional } from '../../dtos/subscribers/subscriber-response.dto';
-import { PreviewTopicDto } from '../../dtos/workflow/preview-payload.dto';
 import { FrameworkPreviousStepsOutputState } from '../preview/preview.types';
 
 export class PreviewStepCommand extends EnvironmentWithUserCommand {
@@ -13,7 +12,6 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   context?: ContextResolved;
   subscriber?: SubscriberResponseDtoOptional;
   actor?: SubscriberResponseDtoOptional;
-  topic?: PreviewTopicDto;
   workflowOrigin: ResourceOriginEnum;
   state?: FrameworkPreviousStepsOutputState[];
   skipLayoutRendering?: boolean;

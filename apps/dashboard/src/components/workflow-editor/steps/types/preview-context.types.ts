@@ -3,11 +3,6 @@ import { JSONSchema7 } from 'json-schema';
 
 export type PayloadData = Record<string, unknown>;
 export type PreviewSubscriberData = Partial<SubscriberDto>;
-export type PreviewTopicData = {
-  key?: string;
-  name?: string;
-  data?: Record<string, unknown>;
-};
 export type StepsData = Record<string, unknown>;
 
 export type PreviewContextPanelProps = {
@@ -26,7 +21,6 @@ export type ParsedData = {
   payload: PayloadData;
   subscriber: PreviewSubscriberData;
   actor: PreviewSubscriberData;
-  topic: PreviewTopicData;
   steps: StepsData;
   context: ContextPayload;
   env: EnvData;
@@ -36,7 +30,6 @@ export type ValidationErrors = {
   payload: string | null;
   subscriber: string | null;
   actor: string | null;
-  topic: string | null;
   steps: string | null;
   context: string | null;
   env: string | null;
@@ -46,10 +39,7 @@ export type AccordionSectionProps = {
   errors: ValidationErrors;
   localParsedData: ParsedData;
   workflow?: WorkflowResponseDto;
-  onUpdate: (
-    section: keyof ParsedData,
-    data: PayloadData | PreviewSubscriberData | PreviewTopicData | StepsData | ContextPayload
-  ) => void;
+  onUpdate: (section: keyof ParsedData, data: PayloadData | PreviewSubscriberData | StepsData | ContextPayload) => void;
 };
 
 export type PayloadSectionProps = AccordionSectionProps & {

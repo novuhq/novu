@@ -35,11 +35,7 @@ export function buildVariables({
   } else if (isValidRule(variableControlValue as RulesLogic<AdditionalOperation>)) {
     const fields = extractFieldsFromRules(variableControlValue as RulesLogic<AdditionalOperation>)
       .filter(
-        (field) =>
-          field.startsWith('payload.') ||
-          field.startsWith('subscriber.data.') ||
-          field.startsWith('topic.data.') ||
-          field.startsWith('context.')
+        (field) => field.startsWith('payload.') || field.startsWith('subscriber.data.') || field.startsWith('context.')
       )
       .map((field) => `{{${field}}}`);
 

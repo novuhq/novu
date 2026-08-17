@@ -25,14 +25,12 @@ import {
   EnvironmentRepository,
   EnvironmentVariableRepository,
   JobEntity,
-  NotificationRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
-  TopicRepository,
 } from '@novu/dal';
-import { ContextResolved, ExecuteOutput, Topic } from '@novu/framework/internal';
+import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
@@ -85,8 +83,6 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private contextRepository: ContextRepository,
-    private notificationRepository: NotificationRepository,
-    private topicRepository: TopicRepository,
     private environmentVariableRepository: EnvironmentVariableRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
@@ -445,7 +441,7 @@ export class SendMessage {
   private async buildVariables(
     command: SendMessageCommand
   ): Promise<{ compileContext: ICompileContext; environment: EnvironmentEntity }> {
-    const [subscriber, actor, tenant, context, topic, envVars, environmentEntity] = await Promise.all([
+    const [subscriber, actor, tenant, context, envVars, environmentEntity] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
@@ -457,7 +453,6 @@ export class SendMessage {
         }),
       this.handleTenantExecution(command.job),
       this.resolveContext(command),
-      this.resolveTopic(command),
       this.getEnvironmentVariables(command),
       this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
     ]);
@@ -486,7 +481,6 @@ export class SendMessage {
       },
       ...(tenant && { tenant }),
       ...(actor && { actor }),
-      ...(topic && { topic }),
       ...(context && { context }),
       env,
     };
@@ -542,42 +536,6 @@ export class SendMessage {
       };
       return acc;
     }, {} as ContextResolved);
-  }
-
-  @Instrument()
-  private async resolveTopic(command: SendMessageCommand): Promise<Topic | undefined> {
-    const notification = await this.notificationRepository.findOne(
-      {
-        _id: command.notificationId,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      'topics'
-    );
-
-    const primaryTopic = notification?.topics?.[0];
-    if (!primaryTopic?._topicId) {
-      return undefined;
-    }
-
-    const topicEntity = await this.topicRepository.findOne(
-      {
-        _id: primaryTopic._topicId,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      'key name data'
-    );
-
-    if (!topicEntity) {
-      return undefined;
-    }
-
-    return {
-      key: topicEntity.key,
-      name: topicEntity.name,
-      data: topicEntity.data,
-    };
   }
 
   private async getWorkflow({ _id, environmentId }: { _id: string; environmentId: string }) {

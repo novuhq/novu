@@ -27,7 +27,6 @@ import {
   PreferencesRepository,
   SubscriberEntity,
   TopicPreferenceEvaluation,
-  TopicRepository,
 } from '@novu/dal';
 import type { ContextResolved } from '@novu/framework/internal';
 import {
@@ -56,11 +55,6 @@ type TopicSubscriptionConditionVariables = {
   subscriber: SubscriberEntity;
   actor?: SubscriberEntity;
   context: ContextResolved;
-  topic?: {
-    key: string;
-    name?: string;
-    data?: Record<string, string | string[] | boolean | number | undefined>;
-  };
 };
 
 @Injectable()
@@ -78,8 +72,7 @@ export class SubscriberJobBound {
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private contextRepository: ContextRepository,
-    private topicRepository: TopicRepository
+    private contextRepository: ContextRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -398,30 +391,13 @@ export class SubscriberJobBound {
   ): Promise<SubscriberTopicPreference[] | null> {
     const evaluatedTopics: SubscriberTopicPreference[] = [];
     let filteredCount = 0;
-    const baseConditionVariables = await this.buildTopicSubscriptionConditionVariables(command, subscriber);
-    const topicEntitiesById = await this.loadTopicsByIds(
-      topics.map((topic) => topic._topicId),
-      command.environmentId,
-      command.organizationId
-    );
+    const conditionVariables = await this.buildTopicSubscriptionConditionVariables(command, subscriber);
 
     for (const topic of topics) {
       if (!topic._topicSubscriptionId || !topic.subscriptionIdentifier) {
         evaluatedTopics.push(topic);
         continue;
       }
-
-      const topicEntity = topicEntitiesById.get(String(topic._topicId));
-      const conditionVariables: TopicSubscriptionConditionVariables = {
-        ...baseConditionVariables,
-        ...(topicEntity && {
-          topic: {
-            key: topicEntity.key,
-            name: topicEntity.name,
-            data: topicEntity.data,
-          },
-        }),
-      };
 
       const evaluationResult = await this.evaluateSubscriptionPreferences(
         command,
@@ -459,41 +435,6 @@ export class SubscriberJobBound {
     }
 
     return evaluatedTopics.length > 0 ? evaluatedTopics : null;
-  }
-
-  private async loadTopicsByIds(
-    topicIds: string[],
-    environmentId: string,
-    organizationId: string
-  ): Promise<Map<string, { key: string; name?: string; data?: Record<string, string | string[] | boolean | number | undefined> }>> {
-    const uniqueIds = [...new Set(topicIds.filter(Boolean))];
-    const topicsById = new Map<
-      string,
-      { key: string; name?: string; data?: Record<string, string | string[] | boolean | number | undefined> }
-    >();
-
-    if (uniqueIds.length === 0) {
-      return topicsById;
-    }
-
-    const topicEntities = await this.topicRepository.find(
-      {
-        _id: { $in: uniqueIds },
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      'key name data'
-    );
-
-    for (const topicEntity of topicEntities) {
-      topicsById.set(String(topicEntity._id), {
-        key: topicEntity.key,
-        name: topicEntity.name,
-        data: topicEntity.data,
-      });
-    }
-
-    return topicsById;
   }
 
   private async evaluateSubscriptionPreferences(

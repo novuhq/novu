@@ -499,7 +499,6 @@ export class Client {
           controls: {},
           subscriber: event.subscriber,
           context: event.context,
-          ...(event.topic && { topic: event.topic }),
           step: {
             email: this.executeStepFactory(validatedEvent, setResult, hasResult),
             sms: this.executeStepFactory(validatedEvent, setResult, hasResult),
@@ -795,7 +794,6 @@ export class Client {
         payload: event.payload,
         subscriber: event.subscriber,
         ...(event.actor && { actor: event.actor }),
-        ...(event.topic && { topic: event.topic }),
         context: event.context,
         steps: buildSteps(event.state),
         env: event.env ?? {},

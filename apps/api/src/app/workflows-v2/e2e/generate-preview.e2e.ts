@@ -15,7 +15,6 @@ import {
 } from '@novu/api/models/components';
 import {
   buildActorSchema,
-  buildTopicSchema,
   buildWorkflowSchema,
   DEFAULT_ARRAY_ELEMENTS,
   EmailControlType,
@@ -205,7 +204,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             additionalProperties: false,
           },
           actor: buildActorSchema(undefined),
-          topic: buildTopicSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
@@ -499,7 +497,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             type: 'object',
           },
           actor: buildActorSchema(undefined),
-          topic: buildTopicSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
