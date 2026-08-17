@@ -591,11 +591,15 @@ iOS incoming-call flows (CallKit / PushKit) need a true VoIP push. Apple require
 - `apns-topic` set to your app's VoIP topic (`<bundle-id>.voip`)
 - A [PushKit](https://developer.apple.com/documentation/pushkit) VoIP device token (not the regular remote-notification token)
 
-Novu supports this with the same APNS integration and the overrides above. The pattern that works in practice:
+Novu supports this with APNS overrides (`pushType`, `topic`, `rawPayload`). Unlike email or SMS, a Push step does **not** let you pin the send to one integration with `integrationIdentifier`. It delivers through every active push integration that has device tokens for that subscriber, and `overrides.providers.apns` is applied to each APNS integration the same way.
 
-1. Create a second APNS integration in the Integration Store for VoIP (for example identifier `apns-voip`). You can reuse the same `.p8` key, Key ID, and Team ID. Set **Bundle ID** to your VoIP topic (`com.example.app.voip`), or keep the app Bundle ID and override `topic` at trigger time.
-2. Register the PushKit VoIP token on that integration with `integrationIdentifier`, so it stays separate from regular alert tokens.
+Because of that, use a dedicated VoIP APNS integration and keep token types on the matching integration:
+
+1. Create an APNS integration used only for VoIP (for example identifier `apns-voip`). Reuse the same `.p8` key, Key ID, and Team ID if you already have an alert integration. Set **Bundle ID** to your VoIP topic (`com.example.app.voip`), or keep the app Bundle ID and override `topic` at trigger time.
+2. Register the PushKit VoIP token on that integration with `integrationIdentifier`. Store regular remote-notification tokens only on your alert APNS integration, not on the VoIP one.
 3. Trigger a workflow that includes a Push step, and set `pushType`, `topic`, and `rawPayload` under `overrides.providers.apns`.
+
+If a subscriber has tokens on both APNS integrations, an incoming-call trigger still attempts delivery on the alert integration with the VoIP overrides. APNS rejects that attempt; the VoIP send can still succeed, and the rejected attempt appears in activity. The same cross-talk happens in reverse on alert workflows. There is no push equivalent of email/SMS `integrationIdentifier` override to send through only one integration.
 
 Store the VoIP token on the VoIP integration:
 
@@ -942,10 +946,6 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
-
-<Note>
-  Keep PushKit VoIP tokens on the VoIP integration only, and regular remote-notification tokens on your alert APNS integration. A Push step delivers through every active push integration that has tokens for that subscriber, so mixing token types on the wrong integration can cause APNS rejections.
-</Note>
 
 <Note>
   Passing raw APNS HTTP headers under `_passthrough.headers` (for example `apns-push-type`) is not supported for the native APNS provider. Use `pushType`, `topic`, and `priority` instead. Those map to the correct headers through `@parse/node-apn`.
