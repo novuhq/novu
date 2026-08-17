@@ -13,6 +13,12 @@ const LOG_CONTEXT = 'QueueService';
 
 type OrganizationRouting = { _id: string; apiServiceLevel?: ApiServiceLevelEnum };
 
+/** The per-organization decisions `add` and `addBulk` share, resolved once per call. */
+interface IQueueRouting {
+  organization: OrganizationRouting;
+  backendMode: string;
+}
+
 function exceedsSqsDelayCap(delayMs: number | undefined): boolean {
   return (delayMs || 0) > SQS_MAX_DELAY_SECONDS * 1000;
 }
@@ -149,31 +155,60 @@ export class QueueBaseService implements OnModuleDestroy {
       return await this.addToBullMQ(params);
     }
 
-    const organization = await this.findOrganization(organizationId);
-    if (!organization) {
+    const routing = await this.resolveRouting(organizationId);
+    if (!routing) {
       return;
     }
 
-    const queueBackendMode = await this.getQueueBackendMode(organization);
+    return await this.dispatch([params], routing);
+  }
 
-    /*
-     * SQS caps a per-message delay at 900s, so a longer delay can only reach the
-     * queue through EventBridge Scheduler. Until that is enabled for the
-     * organization, such jobs keep going to BullMQ as they always have.
-     */
-    if (exceedsSqsDelayCap(params.options?.delay) && !(await this.isSchedulerEnabled(organization))) {
-      Logger.log(
-        { topic: this.topic, delay: params.options?.delay },
-        'Job delay exceeds SQS max (15min) and EventBridge Scheduler is off, routing to BullMQ',
-        LOG_CONTEXT
-      );
-
-      return await this.addToBullMQ(params);
+  /**
+   * Resolves every per-organization routing decision in one place so `add` and
+   * `addBulk` cannot drift apart. Returns undefined when the organization
+   * cannot be read, which callers treat as "skip the job".
+   */
+  private async resolveRouting(organizationId: string): Promise<IQueueRouting | undefined> {
+    const organization = await this.findOrganization(organizationId);
+    if (!organization) {
+      return undefined;
     }
 
-    Logger.debug({ topic: this.topic, queueBackendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
+    const backendMode = await this.getQueueBackendMode(organization);
 
-    return await this.routeByMode([params], queueBackendMode, organizationId);
+    Logger.debug({ topic: this.topic, backendMode, organizationId }, 'Queue backend mode evaluation', LOG_CONTEXT);
+
+    return { organization, backendMode };
+  }
+
+  /**
+   * The single gate for long delays. SQS caps a per-message delay at 900s, so
+   * anything longer can only reach the queue through EventBridge Scheduler;
+   * until that is enabled for the organization such jobs keep going to BullMQ
+   * as they always have. Everything past this point may assume a long-delayed
+   * job is allowed to be scheduled.
+   */
+  private async dispatch(jobs: (IJobParams | IBulkJobParams)[], routing: IQueueRouting): Promise<void> {
+    const { longDelayed, sqsEligible } = this.separateByDelay(jobs);
+
+    // Evaluated only when it can change the outcome, keeping the common
+    // short-delay path down to a single flag lookup.
+    if (longDelayed.length === 0 || (await this.isSchedulerEnabled(routing.organization))) {
+      return await this.routeByMode(jobs, routing);
+    }
+
+    Logger.debug(
+      { topic: this.topic, count: longDelayed.length },
+      'Job delay exceeds SQS max (15min) and EventBridge Scheduler is off, routing to BullMQ',
+      LOG_CONTEXT
+    );
+    await this.addJobsToBullMQ(longDelayed);
+
+    if (sqsEligible.length === 0) {
+      return;
+    }
+
+    return await this.routeByMode(sqsEligible, routing);
   }
 
   /**
@@ -228,11 +263,10 @@ export class QueueBaseService implements OnModuleDestroy {
     return jobs.map((job) => ({ ...job, data: { ...job.data, skipProcessing: true } }));
   }
 
-  private async routeByMode(
-    jobs: (IJobParams | IBulkJobParams)[],
-    queueBackendMode: string,
-    organizationId: string
-  ): Promise<void> {
+  private async routeByMode(jobs: (IJobParams | IBulkJobParams)[], routing: IQueueRouting): Promise<void> {
+    const { backendMode: queueBackendMode } = routing;
+    const organizationId = routing.organization._id;
+
     switch (queueBackendMode) {
       case QueueBackendMode.BULLMQ:
         return await this.addJobsToBullMQ(jobs);
@@ -327,9 +361,11 @@ export class QueueBaseService implements OnModuleDestroy {
 
   private async addJobsToSQS(jobs: (IJobParams | IBulkJobParams)[], organizationId: string): Promise<void> {
     /*
-     * A schedule is just a deferred send to this same queue, so splitting here
-     * lets long delays inherit whatever the mode already decided - including
-     * the BullMQ fallback that wraps every caller of this method.
+     * Transport detail, not policy: `dispatch` has already decided these jobs
+     * may use the scheduler, and all this picks is which AWS call delivers
+     * them. Splitting here rather than above keeps long delays inside the
+     * mode's existing BullMQ fallback, since a schedule is just a deferred
+     * send to this same queue.
      */
     const { longDelayed, sqsEligible } = this.separateByDelay(jobs);
 
@@ -433,31 +469,12 @@ export class QueueBaseService implements OnModuleDestroy {
       return await this.addJobsToBullMQ(data);
     }
 
-    const organization = await this.findOrganization(organizationId);
-    if (!organization) {
+    const routing = await this.resolveRouting(organizationId);
+    if (!routing) {
       return;
     }
 
-    const queueBackendMode = await this.getQueueBackendMode(organization);
-    const { longDelayed, sqsEligible } = this.separateByDelay(data);
-
-    // See add(): long delays only reach SQS once EventBridge Scheduler is on.
-    if (longDelayed.length > 0 && !(await this.isSchedulerEnabled(organization))) {
-      Logger.debug(
-        { topic: this.topic, count: longDelayed.length },
-        'Routing long-delayed jobs (>15min) to BullMQ',
-        LOG_CONTEXT
-      );
-      await this.addJobsToBullMQ(longDelayed);
-
-      if (sqsEligible.length === 0) {
-        return;
-      }
-
-      return await this.routeByMode(sqsEligible, queueBackendMode, organizationId);
-    }
-
-    return await this.routeByMode(data, queueBackendMode, organizationId);
+    return await this.dispatch(data, routing);
   }
 
   private separateByDelay<T extends IJobParams | IBulkJobParams>(
