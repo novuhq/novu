@@ -12,11 +12,13 @@ interface MessagePreviewProps {
   className?: string;
 }
 
+const BODY_NOT_STORED_LABEL = 'Message body was not stored for this delivery';
+
 export function MessagePreview({ channel, content, subject, title, className }: MessagePreviewProps) {
   const hasContent = typeof content === 'string' && content.length > 0;
 
   if (!hasContent && !subject && !title) {
-    return <EmptyPreview label="No message content stored for this step" />;
+    return <EmptyPreview label={BODY_NOT_STORED_LABEL} />;
   }
 
   switch (channel) {
@@ -95,7 +97,7 @@ function EmailChannelPreview({
             </pre>
           )
         ) : (
-          <EmptyPreview label="No email body stored for this message" />
+          <EmptyPreview label={BODY_NOT_STORED_LABEL} />
         )}
       </div>
     </PreviewShell>
@@ -104,6 +106,14 @@ function EmailChannelPreview({
 
 function SmsChannelPreview({ content, className }: { content?: string | null; className?: string }) {
   const body = typeof content === 'string' ? content : '';
+
+  if (!body) {
+    return (
+      <PreviewShell icon={<RiPhoneLine className="h-3.5 w-3.5" />} label="SMS preview" className={className}>
+        <EmptyPreview label={BODY_NOT_STORED_LABEL} />
+      </PreviewShell>
+    );
+  }
 
   return (
     <PreviewShell icon={<RiPhoneLine className="h-3.5 w-3.5" />} label="SMS preview" className={className}>
@@ -129,8 +139,11 @@ function PushChannelPreview({
     <PreviewShell icon={<RiNotification3Line className="h-3.5 w-3.5" />} label="Push preview" className={className}>
       <div className="flex max-w-sm flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-3 shadow-xs">
         {title ? <span className="text-foreground-950 text-sm font-semibold">{title}</span> : null}
-        {body ? <span className="text-foreground-600 text-xs">{body}</span> : null}
-        {!title && !body ? <span className="text-foreground-400 text-xs">No push content stored</span> : null}
+        {body ? (
+          <span className="text-foreground-600 text-xs">{body}</span>
+        ) : (
+          <span className="text-foreground-400 text-xs">{BODY_NOT_STORED_LABEL}</span>
+        )}
       </div>
     </PreviewShell>
   );
@@ -156,7 +169,7 @@ function TextChannelPreview({
             {body}
           </pre>
         ) : (
-          <EmptyPreview label="No message content stored" />
+          <EmptyPreview label={BODY_NOT_STORED_LABEL} />
         )}
       </div>
     </PreviewShell>
