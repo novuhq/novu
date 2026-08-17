@@ -1,5 +1,6 @@
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { providerSchemas } from '@novu/framework';
+import { Client, providerSchemas } from '@novu/framework';
+import { Event, PostActionEnum, Workflow } from '@novu/framework/internal';
 import {
   CHAT_CONTENT_OVERRIDE_PROVIDER_IDS,
   ChatProviderIdEnum,
@@ -133,5 +134,110 @@ describe('ConstructFrameworkWorkflow content-override channel steps', () => {
 
     expect(options.controlSchema.properties?.body, 'the step\u2019s own controls must survive').to.exist;
     expect(providerOverrides?.additionalProperties?.additionalProperties).to.equal(true);
+  });
+});
+
+/**
+ * Worker-executed steps are hydrated from the job state on the bridge, and the framework validates
+ * that state against the step's output schema with AJV set to strip additional properties. Without
+ * an explicit schema the whole HTTP response body was removed, so conditions on its fields never
+ * matched and the next step was always skipped (NV-8604).
+ */
+describe('ConstructFrameworkWorkflow worker-executed step hydration', () => {
+  const HTTP_STEP_ID = 'http-request-step';
+  const IN_APP_STEP_ID = 'in-app-step';
+  const WORKFLOW_ID = 'http-conditions-workflow';
+
+  const hydrationDbWorkflow = {
+    _id: 'workflow-id',
+    _environmentId: 'env-id',
+    _organizationId: 'org-id',
+    name: 'HTTP request conditions',
+    origin: ResourceOriginEnum.NOVU_CLOUD,
+    triggers: [{ identifier: WORKFLOW_ID }],
+    steps: [
+      {
+        stepId: HTTP_STEP_ID,
+        template: {
+          type: StepTypeEnum.HTTP_REQUEST,
+          controls: {
+            schema: {
+              type: 'object',
+              properties: { url: { type: 'string' }, method: { type: 'string' } },
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+      {
+        stepId: IN_APP_STEP_ID,
+        template: {
+          type: StepTypeEnum.IN_APP,
+          controls: {
+            schema: {
+              type: 'object',
+              properties: { body: { type: 'string' }, skip: { type: 'object', additionalProperties: true } },
+              additionalProperties: false,
+            },
+          },
+        },
+      },
+    ],
+  } as unknown as NotificationTemplateEntity;
+
+  function buildHydrationWorkflow(): Workflow {
+    const hydrationUsecase = Object.create(ConstructFrameworkWorkflow.prototype) as {
+      logger: { setContext: () => void; warn: () => void; error: () => void };
+      inAppOutputRendererUseCase: { execute: () => Promise<Record<string, unknown>> };
+      constructFrameworkWorkflow: (args: { dbWorkflow: NotificationTemplateEntity }) => Workflow;
+    };
+
+    hydrationUsecase.logger = { setContext: () => {}, warn: () => {}, error: () => {} };
+    hydrationUsecase.inAppOutputRendererUseCase = { execute: async () => ({ body: 'Enrolled' }) };
+
+    return hydrationUsecase.constructFrameworkWorkflow({ dbWorkflow: hydrationDbWorkflow });
+  }
+
+  function buildEvent(enrolmentCount: number): Event {
+    return {
+      action: PostActionEnum.EXECUTE,
+      workflowId: WORKFLOW_ID,
+      stepId: IN_APP_STEP_ID,
+      subscriber: {},
+      payload: {},
+      controls: {
+        body: 'Enrolled',
+        skip: { and: [{ '==': [{ var: `steps.${HTTP_STEP_ID}.enrolmentCount` }, 1] }] },
+      },
+      state: [
+        {
+          stepId: HTTP_STEP_ID,
+          outputs: { id: '123', message: { text: 'pawan' }, enrolmentCount },
+          state: { status: 'completed', error: false },
+        },
+      ],
+      context: {},
+      env: { name: 'Test', type: 'dev' },
+    } as unknown as Event;
+  }
+
+  async function executeInAppStep(enrolmentCount: number) {
+    const client = new Client({ secretKey: 'construct-framework-workflow-secret' });
+    await client.addWorkflows([buildHydrationWorkflow()]);
+
+    return client.executeWorkflow(buildEvent(enrolmentCount));
+  }
+
+  it('runs the next step when a condition matches a field of the hydrated HTTP response', async () => {
+    const result = await executeInAppStep(1);
+
+    expect(result.options?.skip).to.equal(false);
+    expect(result.outputs.body).to.equal('Enrolled');
+  });
+
+  it('skips the next step when the hydrated HTTP response does not satisfy the condition', async () => {
+    const result = await executeInAppStep(2);
+
+    expect(result.options?.skip).to.equal(true);
   });
 });
