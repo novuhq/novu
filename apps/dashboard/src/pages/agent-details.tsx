@@ -366,7 +366,9 @@ export function AgentDetailsPage() {
               </TabsList>
 
               <TabsContent value="overview" className="outline-none">
-                <AgentOverviewTab agent={agent} />
+                <ConnectSubscriberProvider>
+                  <AgentOverviewTab agent={agent} />
+                </ConnectSubscriberProvider>
               </TabsContent>
               <TabsContent value="integrations" className="outline-none">
                 {currentTab === 'integrations' ? (
