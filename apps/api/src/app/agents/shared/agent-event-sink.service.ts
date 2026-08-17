@@ -652,10 +652,8 @@ export class AgentEventSink {
     }
 
     if (approvals.length === 0) {
-      // Expected when the run is parked on a tool whose `tool_use` event was emitted in an
-      // earlier run: approvals are accumulated per run, and a resumed stream is a live tail,
-      // so it never re-sees them. Dispatch anyway — HandlePendingToolApprovals falls back to
-      // reading the still-pending approvals off the session.
+      // Empty when the pending tool_use came from an earlier run (resumed streams are a live
+      // tail). HandlePendingToolApprovals recovers from the session.
       this.logger.warn(
         { runId, sessionId },
         'paused run-finish carried zero approvals — recovering pending approvals from the session'
@@ -670,7 +668,7 @@ export class AgentEventSink {
         messages: [],
         finishReason: 'requires-action',
         usage: toThalamusUsage(event.usage),
-        actionsRequired: approvals.length > 0 ? approvals.map(toActionRequired) : undefined,
+        actionsRequired: approvals.map(toActionRequired),
       };
 
       await this.handlePendingToolApprovals.execute(
