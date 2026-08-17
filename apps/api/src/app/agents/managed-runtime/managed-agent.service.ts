@@ -3,7 +3,6 @@ import { type IAgentRuntimeProvider, PinoLogger } from '@novu/application-generi
 import {
   type AgentEntity,
   AgentRepository,
-  ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
   ConversationEntity,
@@ -17,7 +16,6 @@ import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
-import { ConversationActivityLedger } from '../conversation-runtime/conversation/conversation-activity-ledger';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
@@ -70,9 +68,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly eventHandler: ManagedAgentEventHandler,
     private readonly conversationRepository: ConversationRepository,
-    private readonly conversationActivityRepository: ConversationActivityRepository,
     private readonly conversationService: AgentConversationService,
-    private readonly activityLedger: ConversationActivityLedger,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpSessionService: AgentMcpSessionService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
@@ -119,9 +115,7 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberMongoId: context.subscriber?._id,
     });
 
-    const messages = sessionId
-      ? buildLiveSessionMessages(context)
-      : await this.buildMessagesWithHistory(context);
+    const messages = sessionId ? buildLiveSessionMessages(context) : await this.buildMessagesWithHistory(context);
 
     const sendResult = await provider.send({
       messages,
@@ -166,13 +160,10 @@ export class ManagedAgentService implements OnModuleInit {
     pendingPlatformMessageId: string;
     agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
   }): Promise<ManagedAgentDispatchResult | null> {
-    const activity = await this.conversationActivityRepository.findOne(
-      {
-        _conversationId: params.conversation._id,
-        _environmentId: params.config.environmentId,
-        platformMessageId: params.pendingPlatformMessageId,
-      },
-      '*'
+    const activity = await this.conversationService.findByPlatformMessageId(
+      params.config.environmentId,
+      String(params.conversation._id),
+      params.pendingPlatformMessageId
     );
 
     if (!activity) {
@@ -412,7 +403,7 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
-    const page = await this.activityLedger.listForView({
+    const page = await this.conversationService.listForView({
       view: 'llm_transcript',
       environmentId: context.config.environmentId,
       organizationId: context.config.organizationId,

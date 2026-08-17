@@ -35,7 +35,7 @@ import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.servic
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
-import { ConversationActivityLedger } from '../conversation/conversation-activity-ledger';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
 
 const MAX_RETRIES = 2;
 
@@ -171,7 +171,7 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly activityLedger: ConversationActivityLedger,
+    private readonly conversationService: AgentConversationService,
     private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -421,7 +421,7 @@ export class BridgeExecutorService {
     organizationId: string
   ): Promise<ConversationActivityEntity[]> {
     try {
-      const page = await this.activityLedger.listForView({
+      const page = await this.conversationService.listForView({
         view: 'agent_handoff',
         environmentId,
         organizationId,

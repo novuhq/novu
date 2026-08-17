@@ -15,7 +15,6 @@ import { WebSocketEventEnum } from '@novu/shared';
 import type { CardElement } from 'chat';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
-import { ConversationEventSequenceService } from '../conversation-runtime/conversation/conversation-event-sequence.service';
 import { OutboundDeliveryInfo } from '../conversation-runtime/egress/outbound-delivery-info.service';
 import { AgentChatEventFactory } from './agent-chat-event.factory';
 
@@ -36,7 +35,6 @@ export type AgentChatPlatformDeliveryContext = {
 export class AgentChatPlatformDeliveryService {
   constructor(
     private readonly conversationService: AgentConversationService,
-    private readonly eventSequenceService: ConversationEventSequenceService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly webSocketsQueueService: WebSocketsQueueService,
     private readonly eventFactory: AgentChatEventFactory,
@@ -208,7 +206,7 @@ export class AgentChatPlatformDeliveryService {
       return undefined;
     }
 
-    return this.eventSequenceService.mint({
+    return this.conversationService.mintEventSequence({
       environmentId: context.config.environmentId,
       organizationId: context.config.organizationId,
       conversationId: conversation._id,
