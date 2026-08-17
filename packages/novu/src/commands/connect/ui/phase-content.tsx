@@ -4,7 +4,13 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
-import { buildConnectAgentDetailsUrl, channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import {
+  type ConnectSuccessDestination,
+  channelDisplayName,
+  isDashboardOnlyChannel,
+  resolveConnectSuccessDestination,
+  UNCLAIMED_KEYLESS_HINT,
+} from '../dashboard-urls';
 import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
@@ -533,10 +539,12 @@ function SuccessView({
     aiSdkOutcome,
     langChainOutcome,
   } = phase;
-  const agentUrl = buildConnectAgentDetailsUrl({
+  const destination = resolveConnectSuccessDestination({
     connectDashboardUrl,
     environmentSlug,
     agentIdentifier: agent.identifier,
+    isKeyless,
+    claimUrl,
   });
 
   const channelLabel = (() => {
@@ -565,31 +573,31 @@ function SuccessView({
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
         {scaffoldMessage ? <Text color="cyan">{scaffoldMessage}</Text> : null}
-        {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
+        {renderSuccessNextStep(destination)}
       </Box>
     </Box>
   );
 }
 
-function renderSuccessNextStep(input: {
-  isKeyless: boolean;
-  claimUrl: string | null;
-  agentUrl: string;
-}): React.ReactElement {
-  if (input.isKeyless && input.claimUrl) {
+function renderSuccessNextStep(destination: ConnectSuccessDestination): React.ReactElement {
+  if (destination.kind === 'claim') {
     return (
       <>
         <Text>
-          <Text bold>Claim your agent:</Text> {input.claimUrl}
+          <Text bold>Claim your agent:</Text> {destination.url}
         </Text>
         <Text dimColor>Sign up to move your agent and conversation into your own account.</Text>
       </>
     );
   }
 
+  if (destination.kind === 'unclaimed') {
+    return <Text dimColor>{UNCLAIMED_KEYLESS_HINT}</Text>;
+  }
+
   return (
     <Text>
-      <Text bold>Dashboard:</Text> {input.agentUrl}
+      <Text bold>Dashboard:</Text> {destination.url}
     </Text>
   );
 }

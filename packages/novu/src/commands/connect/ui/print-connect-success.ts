@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
+import { channelDisplayName, resolveConnectSuccessDestination, UNCLAIMED_KEYLESS_HINT } from '../dashboard-urls';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import type { ConnectUI } from './ui';
 
@@ -19,10 +19,12 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     return;
   }
 
-  const agentUrl = buildConnectAgentDetailsUrl({
+  const destination = resolveConnectSuccessDestination({
     connectDashboardUrl: result.connectDashboardUrl,
     environmentSlug: result.environmentSlug,
     agentIdentifier: result.agent.identifier,
+    isKeyless: result.isKeyless,
+    claimUrl: result.claimUrl ?? null,
   });
   const channelLabel = (() => {
     if (result.connectedChannel === 'slack') return 'Slack';
@@ -47,11 +49,13 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
   } else {
     console.log(`  ${chalk.gray('No channel connected.')}`);
   }
-  if (result.isKeyless && result.claimUrl) {
-    console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
+  if (destination.kind === 'claim') {
+    console.log(`  ${chalk.bold('Claim your agent:')} ${destination.url}`);
     console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
+  } else if (destination.kind === 'dashboard') {
+    console.log(`  ${chalk.bold('Dashboard:')} ${destination.url}`);
   } else {
-    console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
+    console.log(`  ${chalk.gray(UNCLAIMED_KEYLESS_HINT)}`);
   }
   const followUp = resolveBridgeSetupFollowUpMessage(result.connectMode, {
     chatSdk: result.chatSdkOutcome,
