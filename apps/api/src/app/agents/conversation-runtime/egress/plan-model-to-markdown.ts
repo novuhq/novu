@@ -2,7 +2,7 @@ import type { PlanModel, PlanTaskStatus } from 'chat';
 import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleEmojiForPhase, planTitleForPhase } from './plan-phase';
 
 export function renderPlanModelAsMarkdown(plan: PlanModel, phase: PlanPhase): string {
-  const title = planTitleForPhase(phase);
+  const title = plan.title?.trim() ? plan.title : planTitleForPhase(phase);
   const header = `${planTitleEmojiForPhase(phase)} **${escapeMarkdownInline(title)}**`;
 
   const taskLines = plan.tasks

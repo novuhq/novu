@@ -6,7 +6,7 @@ import { OutboundDeliveryInfo } from './outbound-delivery-info.service';
 
 describe('OutboundGateway plan fallback', () => {
   const planModel = {
-    title: 'Thinking…',
+    title: 'Running search_files…',
     tasks: [{ id: 't1', title: 'search_files', status: 'in_progress' as const }],
   };
   const planPhase = 'thinking' as const;
@@ -53,7 +53,7 @@ describe('OutboundGateway plan fallback', () => {
 
     expect(postStub.calledOnce).to.equal(true);
     expect(postStub.firstCall.args[4]).to.deep.equal({
-      markdown: '🧠 **Thinking…**\n\n🔄 `search_files`',
+      markdown: '🧠 **Running search_files…**\n\n🔄 `search_files`',
     });
     expect(result).to.deep.equal({ messageId: 'msg-1', platformThreadId: 'thread-1' });
 
@@ -71,7 +71,7 @@ describe('OutboundGateway plan fallback', () => {
 
     expect(editStub.calledOnce).to.equal(true);
     expect(editStub.firstCall.args[5]).to.deep.equal({
-      markdown: '🧠 **Thinking…**\n\n🔄 `search_files`',
+      markdown: '🧠 **Running search_files…**\n\n🔄 `search_files`',
     });
 
     editStub.restore();

@@ -30,6 +30,27 @@ export function planTitleEmojiForPhase(phase: PlanPhase): string {
   return PHASE_TITLE_EMOJI[phase];
 }
 
+export function formatToolDisplayName(toolName: string | undefined, mcpServerName?: string): string {
+  const name = toolName?.trim() || 'Tool';
+
+  return mcpServerName ? `${mcpServerName}: ${name}` : name;
+}
+
+export function planTitleForCurrentTool(task: Pick<PlanTaskInput, 'title' | 'status'>): string {
+  const displayName = task.title?.trim() || 'Tool';
+
+  switch (task.status) {
+    case 'in_progress':
+      return `Running ${displayName}…`;
+    case 'complete':
+      return `Finished ${displayName}`;
+    case 'error':
+      return `${displayName} failed`;
+    default:
+      return planTitleForPhase('thinking');
+  }
+}
+
 export interface PlanTaskInput {
   id: string;
   title?: string;

@@ -345,24 +345,6 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
-  async findToolActivitiesByPlanMessageId(
-    environmentId: string,
-    conversationId: string,
-    planMessageId: string
-  ): Promise<ConversationActivityEntity[]> {
-    return this.find(
-      {
-        _environmentId: environmentId,
-        _conversationId: conversationId,
-        type: ConversationActivityTypeEnum.SIGNAL,
-        'signalData.type': 'tool-use',
-        'signalData.payload.planMessageId': planMessageId,
-      } as FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds,
-      '*',
-      { sort: { createdAt: 1 } }
-    );
-  }
-
   async listActivities({
     organizationId,
     environmentId,

@@ -83,7 +83,14 @@ export type AgentEvent =
       input?: Record<string, unknown>;
       source?: AgentToolSource;
     }
-  | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
+  | {
+      type: 'tool-use-result';
+      toolUseId: string;
+      toolName?: string;
+      source?: AgentToolSource;
+      content: AgentToolResultContent[];
+      isError?: boolean;
+    }
   | ({
       type: 'tool-approval-request';
       /** Stable assistant message id used to preserve the approval's timeline position during history replay. */

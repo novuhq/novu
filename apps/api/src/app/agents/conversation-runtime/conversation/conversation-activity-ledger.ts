@@ -535,42 +535,6 @@ export class ConversationActivityLedger {
     );
   }
 
-  async findToolActivitiesByPlanMessageId(
-    environmentId: string,
-    conversationId: string,
-    planMessageId: string
-  ): Promise<ConversationActivityEntity[]> {
-    return this.activityRepository.findToolActivitiesByPlanMessageId(environmentId, conversationId, planMessageId);
-  }
-
-  async persistToolUseSignal(
-    params: ConversationActivityContext & { content: string; payload: Record<string, unknown> }
-  ): Promise<void> {
-    await this.persistSignal({
-      ...params,
-      signalData: { type: 'tool-use', payload: params.payload },
-    });
-  }
-
-  async enrichToolUseSignal(params: {
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    activityId: string;
-    content: string;
-    payload: Record<string, unknown>;
-  }): Promise<void> {
-    await this.activityRepository.update(
-      {
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-        _conversationId: params.conversationId,
-        _id: params.activityId,
-      },
-      { $set: { content: params.content, 'signalData.payload': params.payload } }
-    );
-  }
-
   async repointSubscriberSender(params: {
     environmentId: string;
     organizationId: string;

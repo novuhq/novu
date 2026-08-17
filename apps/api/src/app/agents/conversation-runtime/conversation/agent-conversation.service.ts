@@ -450,31 +450,6 @@ export class AgentConversationService {
     return this.ledger.findAgentMessageByIdentifier(environmentId, conversationId, identifier);
   }
 
-  async findToolActivitiesByPlanMessageId(
-    environmentId: string,
-    conversationId: string,
-    planMessageId: string
-  ): Promise<ConversationActivityEntity[]> {
-    return this.ledger.findToolActivitiesByPlanMessageId(environmentId, conversationId, planMessageId);
-  }
-
-  async persistToolUseSignal(
-    params: ConversationActivityContext & { content: string; payload: Record<string, unknown> }
-  ): Promise<void> {
-    return this.ledger.persistToolUseSignal(params);
-  }
-
-  async enrichToolUseSignal(params: {
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    activityId: string;
-    content: string;
-    payload: Record<string, unknown>;
-  }): Promise<void> {
-    return this.ledger.enrichToolUseSignal(params);
-  }
-
   async repointSubscriberSender(params: {
     environmentId: string;
     organizationId: string;

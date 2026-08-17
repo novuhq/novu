@@ -10,7 +10,6 @@ import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
-import { formatToolInputSummary } from '../conversation-runtime/reply/handle-plan-progress/format-tool-input';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
@@ -138,8 +137,6 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'tool-use-done':
-        await this.handleToolUseDone(event, baseFields, context.sessionId);
-
         return 'accepted';
 
       case 'tool-use-result':
@@ -517,45 +514,6 @@ export class AgentEventSink {
     }
   }
 
-  private async handleToolUseDone(
-    event: Extract<AgentEvent, { type: 'tool-use-done' }>,
-    baseFields: BaseCommandFields,
-    sessionId?: string
-  ): Promise<void> {
-    try {
-      if (this.isInternalTool(event.toolName)) {
-        return;
-      }
-
-      if (!event.input || Object.keys(event.input).length === 0) {
-        return;
-      }
-
-      await this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({
-          ...baseFields,
-          event: {
-            kind: 'task',
-            task: {
-              id: event.toolUseId,
-              title: event.toolName,
-              group: this.mcpServerNameOf(event.source),
-              status: 'in_progress',
-              details: formatToolInputSummary(event.input),
-            },
-          },
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `tool-use-done failed: session=${sessionId}`);
-      captureAgentException(err, {
-        component: 'agent-event-sink',
-        operation: 'tool-use-done',
-        sessionId,
-      });
-    }
-  }
-
   private async handleToolUseResult(
     event: Extract<AgentEvent, { type: 'tool-use-result' }>,
     baseFields: BaseCommandFields,
@@ -573,13 +531,21 @@ export class AgentEventSink {
       return;
     }
 
+    const toolName = event.toolName;
+    const mcpServerName = event.source?.type === 'mcp' ? event.source.serverName : undefined;
+
     try {
       await this.handlePlanProgress.execute(
         HandlePlanProgressCommand.create({
           ...baseFields,
           event: {
             kind: 'task',
-            task: { id: event.toolUseId, status: event.isError === true ? 'error' : 'complete' },
+            task: {
+              id: event.toolUseId,
+              ...(toolName ? { title: toolName } : {}),
+              ...(mcpServerName ? { group: mcpServerName } : {}),
+              status: event.isError === true ? 'error' : 'complete',
+            },
           },
         })
       );

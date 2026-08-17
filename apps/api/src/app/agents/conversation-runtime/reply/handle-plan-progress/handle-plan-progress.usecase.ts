@@ -1,27 +1,18 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  AgentRepository,
-  ConversationActivityEntity,
-  type ConversationChannel,
-  ConversationEntity,
-  ConversationRepository,
-} from '@novu/dal';
+import { AgentRepository, ConversationEntity, ConversationRepository } from '@novu/dal';
 import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import type { PlanProgressPhase, PlanTaskInput } from '../../egress/plan-phase';
-import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleForPhase } from '../../egress/plan-phase';
+import {
+  formatToolDisplayName,
+  type PlanPhase,
+  planTitleForCurrentTool,
+  planTitleForPhase,
+} from '../../egress/plan-phase';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from './handle-plan-progress.command';
-
-interface ToolTask {
-  toolUseId: string;
-  toolName: string;
-  mcpServerName?: string;
-  status: PlanTaskStatus;
-  details?: string;
-}
 
 @Injectable()
 export class HandlePlanProgress {
@@ -47,24 +38,16 @@ export class HandlePlanProgress {
 
     await this.assertAgentOwnsConversation(command, conversation);
 
-    const channel = this.conversationService.getPrimaryChannel(conversation);
     const activePlanMessageId = conversation.activePlanMessageId;
-    const existingActivities = activePlanMessageId
-      ? await this.conversationService.findToolActivitiesByPlanMessageId(
-          command.environmentId,
-          command.conversationId,
-          activePlanMessageId
-        )
-      : [];
-
     const { event } = command;
+
     switch (event.kind) {
       case 'task':
-        return this.handleTask(command, channel, event.task, event.cardTitle, existingActivities, activePlanMessageId);
+        return this.handleTask(command, event.task, event.cardTitle, activePlanMessageId);
       case 'phase':
-        return this.handlePhase(command, event.phase, event.title, existingActivities, activePlanMessageId);
+        return this.handlePhase(command, event.phase, event.title, activePlanMessageId);
       case 'title':
-        return this.handleTitle(command, event.title, existingActivities, activePlanMessageId);
+        return this.handleTitle(command, event.title, activePlanMessageId);
       default:
         return assertNever(event);
     }
@@ -72,27 +55,11 @@ export class HandlePlanProgress {
 
   private async handleTask(
     command: HandlePlanProgressCommand,
-    channel: ConversationChannel,
     taskInput: PlanTaskInput,
     cardTitle: string | undefined,
-    existingActivities: ConversationActivityEntity[],
     activePlanMessageId: string | undefined
   ): Promise<void> {
-    const tasks = this.collectTasks(existingActivities);
-    const existing = tasks.get(taskInput.id);
-    const toolName = taskInput.title || existing?.toolName || 'Tool';
-    const mcpServerName = taskInput.group || existing?.mcpServerName;
-    const details = taskInput.details || existing?.details;
-
-    tasks.set(taskInput.id, {
-      toolUseId: taskInput.id,
-      toolName,
-      mcpServerName,
-      status: taskInput.status,
-      details,
-    });
-
-    const model = this.toModel('thinking', tasks, false, cardTitle);
+    const model = this.toModel('thinking', taskInput, false, cardTitle);
     const planMessageId = await this.postOrEditPlan(command, activePlanMessageId, model, 'thinking');
 
     if (planMessageId && planMessageId !== activePlanMessageId) {
@@ -103,35 +70,21 @@ export class HandlePlanProgress {
         planMessageId
       );
     }
-
-    await this.persistTaskActivity(
-      command,
-      channel,
-      taskInput,
-      toolName,
-      mcpServerName,
-      details,
-      planMessageId,
-      existingActivities,
-      existing
-    );
   }
 
   private async handlePhase(
     command: HandlePlanProgressCommand,
     phase: PlanProgressPhase,
     title: string | undefined,
-    existingActivities: ConversationActivityEntity[],
     activePlanMessageId: string | undefined
   ): Promise<void> {
     if (!activePlanMessageId) {
       return;
     }
 
-    const tasks = this.collectTasks(existingActivities);
     const isFinal = phase === 'finished' || phase === 'failed';
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(phase, tasks, isFinal, title), phase);
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(phase, undefined, isFinal, title), phase);
 
     if (isFinal) {
       await this.conversationRepository.clearActivePlanMessageId(
@@ -145,11 +98,9 @@ export class HandlePlanProgress {
   private async handleTitle(
     command: HandlePlanProgressCommand,
     title: string | undefined,
-    existingActivities: ConversationActivityEntity[],
     activePlanMessageId: string | undefined
   ): Promise<void> {
-    const tasks = this.collectTasks(existingActivities);
-    const model = this.toModel('thinking', tasks, false, title);
+    const model = this.toModel('thinking', undefined, false, title);
 
     if (activePlanMessageId) {
       await this.postOrEditPlan(command, activePlanMessageId, model, 'thinking');
@@ -167,83 +118,6 @@ export class HandlePlanProgress {
         planMessageId
       );
     }
-  }
-
-  /**
-   * Thalamus sends each tool event (start, input, result) as a separate webhook.
-   * We persist these so the next callback can rebuild the full plan card task list.
-   *
-   * This is plan-card scratch state only — tool approval and resume history use
-   * the tool_* activity types instead.
-   */
-  private async persistTaskActivity(
-    command: HandlePlanProgressCommand,
-    channel: ConversationChannel,
-    taskInput: PlanTaskInput,
-    toolName: string,
-    mcpServerName: string | undefined,
-    details: string | undefined,
-    planMessageId: string | undefined,
-    existingActivities: ConversationActivityEntity[],
-    existingTask: ToolTask | undefined
-  ): Promise<void> {
-    const payload = {
-      planMessageId,
-      toolUseId: taskInput.id,
-      toolName,
-      ...(mcpServerName ? { mcpServerName } : {}),
-      status: taskInput.status,
-      ...(details ? { details } : {}),
-    };
-    const content = `Tool: ${toolName} (${taskInput.status})`;
-
-    const isEnrichingInProgress =
-      taskInput.status === 'in_progress' && existingTask?.status === 'in_progress' && Boolean(taskInput.details);
-
-    if (isEnrichingInProgress) {
-      const activity = this.findLatestInProgressToolActivity(existingActivities, taskInput.id);
-      if (activity) {
-        await this.conversationService.enrichToolUseSignal({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          conversationId: command.conversationId,
-          activityId: activity._id,
-          content,
-          payload,
-        });
-
-        return;
-      }
-    }
-
-    await this.conversationService.persistToolUseSignal({
-      conversationId: command.conversationId,
-      channel,
-      agentIdentifier: command.agentIdentifier,
-      content,
-      payload,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
-  }
-
-  /** Latest `in_progress` ledger row for a tool — used to enrich Start with Done input instead of duplicating. */
-  private findLatestInProgressToolActivity(
-    activities: ConversationActivityEntity[],
-    toolUseId: string
-  ): ConversationActivityEntity | undefined {
-    let latest: ConversationActivityEntity | undefined;
-
-    for (const activity of activities) {
-      const row = activity.signalData?.payload;
-      if (String(row?.toolUseId) !== toolUseId || row?.status !== 'in_progress') {
-        continue;
-      }
-
-      latest = activity;
-    }
-
-    return latest;
   }
 
   private async postOrEditPlan(
@@ -273,63 +147,34 @@ export class HandlePlanProgress {
     }
   }
 
-  private collectTasks(activities: ConversationActivityEntity[]): Map<string, ToolTask> {
-    const tasks = new Map<string, ToolTask>();
-
-    for (const activity of activities) {
-      const payload = activity.signalData?.payload;
-      if (!payload?.toolUseId || !payload?.toolName || !payload?.status) continue;
-
-      const toolUseId = String(payload.toolUseId);
-      const rawStatus = String(payload.status);
-      const status: PlanTaskStatus = rawStatus === 'running' ? 'in_progress' : (rawStatus as PlanTaskStatus);
-      const details = typeof payload.details === 'string' ? payload.details : undefined;
-      const existing = tasks.get(toolUseId);
-
-      const isFinalStatus = status === 'complete' || status === 'error';
-      const shouldReplace = !existing || isFinalStatus;
-
-      if (shouldReplace) {
-        tasks.set(toolUseId, {
-          toolUseId,
-          toolName: String(payload.toolName),
-          mcpServerName: (payload.mcpServerName as string) || existing?.mcpServerName,
-          status,
-          details: details || existing?.details,
-        });
-      } else if (details && !existing.details) {
-        existing.details = details;
-      }
-    }
-
-    return tasks;
-  }
-
   private toModel(
     phase: PlanPhase,
-    tasks: Map<string, ToolTask>,
+    task: PlanTaskInput | undefined,
     isFinalized: boolean,
     titleOverride?: string
   ): PlanModel {
-    const terminalStatus: PlanTaskStatus = phase === 'failed' ? 'error' : 'complete';
-
-    const planTasks = [...tasks.values()].map((t) => ({
-      id: t.toolUseId,
-      title: t.mcpServerName ? `${t.mcpServerName}: ${t.toolName}` : t.toolName,
-      status: isFinalized && t.status !== 'complete' && t.status !== 'error' ? terminalStatus : t.status,
-      ...(t.details ? { details: { markdown: t.details } } : {}),
-    }));
-
-    const hasInProgress = planTasks.some((t) => t.status === 'in_progress');
-    if (!isFinalized && !hasInProgress) {
-      planTasks.push({
-        id: PLAN_THINKING_TASK_ID,
-        title: planTitleForPhase('thinking'),
-        status: 'in_progress' as PlanTaskStatus,
-      });
+    if (!task) {
+      return { title: titleOverride ?? planTitleForPhase(phase), tasks: [] };
     }
 
-    return { title: titleOverride ?? planTitleForPhase(phase), tasks: planTasks };
+    const displayName = formatToolDisplayName(task.title, task.group);
+    const terminalStatus: PlanTaskStatus = phase === 'failed' ? 'error' : 'complete';
+    const status = isFinalized && task.status !== 'complete' && task.status !== 'error' ? terminalStatus : task.status;
+    const title =
+      titleOverride ??
+      (phase === 'thinking' ? planTitleForCurrentTool({ ...task, title: displayName }) : planTitleForPhase(phase));
+
+    return {
+      title,
+      tasks: [
+        {
+          id: task.id,
+          title: displayName,
+          status,
+          ...(task.details ? { details: { markdown: task.details } } : {}),
+        },
+      ],
+    };
   }
 
   private async assertAgentOwnsConversation(
