@@ -348,14 +348,15 @@ You do not need to hand-build the `aps` dictionary or set raw headers yourself. 
 | `badge` | `aps.badge` | `number` | App icon badge count |
 | `category` | `aps.category` | `string` | Actionable notification category |
 | `threadId` | `aps.thread-id` | `string` | Groups related notifications |
-| `priority` | `apns-priority` header | `10` (default) or `5` | `10` delivers immediately, `5` conserves device power |
-| `topic` | `apns-topic` header | `string` | Defaults to your integration Bundle ID |
+| `priority` | `apns-priority` header | `10` (default) or `5` | `10` delivers immediately, `5` conserves device power. Use `10` for VoIP |
+| `topic` | `apns-topic` header | `string` | Defaults to your integration Bundle ID. For VoIP, use `<bundle-id>.voip` |
 | `collapseId` | `apns-collapse-id` header | `string` | Collapses notifications that share the same id |
-| `pushType` | `apns-push-type` header | `"alert"` or `"background"` | Must match the payload contents |
+| `pushType` | `apns-push-type` header | `"alert"`, `"background"`, or `"voip"` | Must match the payload contents. Use `"voip"` for CallKit / PushKit |
 | `expiry` | `apns-expiration` header | `number` (UNIX timestamp) | `0` tells APNS not to retry |
+| `rawPayload` | Full notification body | `object` | Sent as-is. Skips the usual `aps` / title / body mapping. Use this for CallKit payloads |
 
 <Note>
-  Anything you send in the trigger `payload` is delivered alongside the `aps` dictionary as the notification's custom data, so you usually do not need to override the payload to pass app-specific values.
+  Anything you send in the trigger `payload` is delivered alongside the `aps` dictionary as the notification's custom data, so you usually do not need to override the payload to pass app-specific values. If you set `rawPayload`, that object becomes the entire body instead.
 </Note>
 
 Here is an example that sets the sound and badge, and adjusts the `apns-priority` and `apns-topic` headers. The `topic` field is optional since it defaults to your integration Bundle ID:
@@ -580,4 +581,372 @@ delivers the following notification to the device:
 
 <Note>
   Because Novu generates the `aps` dictionary from the fields in the table above, an `aps` object nested inside a `payload` override is not applied. Use the fields above to shape `aps`, and the trigger `payload` to pass custom data.
+</Note>
+
+## VoIP pushes for CallKit and PushKit
+
+iOS incoming-call flows (CallKit / PushKit) need a true VoIP push. Apple requires:
+
+- `apns-push-type: voip`
+- `apns-topic` set to your app's VoIP topic (`<bundle-id>.voip`)
+- A [PushKit](https://developer.apple.com/documentation/pushkit) VoIP device token (not the regular remote-notification token)
+
+Novu supports this with the same APNS integration and the overrides above. The pattern that works in practice:
+
+1. Create a second APNS integration in the Integration Store for VoIP (for example identifier `apns-voip`). You can reuse the same `.p8` key, Key ID, and Team ID. Set **Bundle ID** to your VoIP topic (`com.example.app.voip`), or keep the app Bundle ID and override `topic` at trigger time.
+2. Register the PushKit VoIP token on that integration with `integrationIdentifier`, so it stays separate from regular alert tokens.
+3. Trigger a workflow that includes a Push step, and set `pushType`, `topic`, and `rawPayload` under `overrides.providers.apns`.
+
+Store the VoIP token on the VoIP integration:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Apns,
+    integrationIdentifier: "apns-voip",
+    credentials: { deviceTokens: [voipToken] },
+  },
+  "subscriberId"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.APNS,
+            "integration_identifier": "apns-voip",
+            "credentials": {"deviceTokens": [voip_token]},
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumApns,
+    IntegrationIdentifier: novugo.String("apns-voip"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{voipToken},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::Apns,
+        integrationIdentifier: 'apns-voip',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: [$voipToken],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.Apns,
+        IntegrationIdentifier = "apns-voip",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { voipToken },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.APNS)
+        .integrationIdentifier("apns-voip")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of(voipToken))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "apns",
+  "integrationIdentifier": "apns-voip",
+  "credentials": {
+    "deviceTokens": ["VOIP_DEVICE_TOKEN"]
+  }
+}'
+```
+  </Tab>
+</Tabs>
+
+Then trigger with VoIP overrides. `rawPayload` is the CallKit payload your app expects. When it is set, Novu sends that object as the full notification body (no generated `aps.alert` from the Push step Subject / Body):
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "incoming-call",
+  to: { subscriberId: "subscriberId" },
+  payload: {},
+  overrides: {
+    providers: {
+      apns: {
+        pushType: "voip",
+        topic: "com.example.app.voip",
+        priority: 10,
+        rawPayload: {
+          uuid: "019fef37-c728-709c-aac4-3a4740139a11",
+          nameCaller: "Jane Doe",
+          handle: "Handler",
+          isVideo: true,
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="incoming-call",
+        to={"subscriber_id": "subscriberId"},
+        payload={},
+        overrides={
+            "providers": {
+                "apns": {
+                    "pushType": "voip",
+                    "topic": "com.example.app.voip",
+                    "priority": 10,
+                    "rawPayload": {
+                        "uuid": "019fef37-c728-709c-aac4-3a4740139a11",
+                        "nameCaller": "Jane Doe",
+                        "handle": "Handler",
+                        "isVideo": True,
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "incoming-call",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "apns": map[string]any{
+                "pushType": "voip",
+                "topic":    "com.example.app.voip",
+                "priority": 10,
+                "rawPayload": map[string]any{
+                    "uuid":       "019fef37-c728-709c-aac4-3a4740139a11",
+                    "nameCaller": "Jane Doe",
+                    "handle":     "Handler",
+                    "isVideo":    true,
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'incoming-call',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [],
+        overrides: [
+            'providers' => [
+                'apns' => [
+                    'pushType' => 'voip',
+                    'topic' => 'com.example.app.voip',
+                    'priority' => 10,
+                    'rawPayload' => [
+                        'uuid' => '019fef37-c728-709c-aac4-3a4740139a11',
+                        'nameCaller' => 'Jane Doe',
+                        'handle' => 'Handler',
+                        'isVideo' => true,
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "incoming-call",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = new Dictionary<string, object>(),
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "apns", new Dictionary<string, object>() {
+                { "pushType", "voip" },
+                { "topic", "com.example.app.voip" },
+                { "priority", 10 },
+                { "rawPayload", new Dictionary<string, object>() {
+                    { "uuid", "019fef37-c728-709c-aac4-3a4740139a11" },
+                    { "nameCaller", "Jane Doe" },
+                    { "handle", "Handler" },
+                    { "isVideo", true },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("incoming-call")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload(Map.of())
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("apns", Map.ofEntries(
+                Map.entry("pushType", "voip"),
+                Map.entry("topic", "com.example.app.voip"),
+                Map.entry("priority", 10),
+                Map.entry("rawPayload", Map.of(
+                    "uuid", "019fef37-c728-709c-aac4-3a4740139a11",
+                    "nameCaller", "Jane Doe",
+                    "handle", "Handler",
+                    "isVideo", true))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "incoming-call",
+    "to": ["subscriberId"],
+    "payload": {},
+    "overrides": {
+        "providers": {
+            "apns": {
+                "pushType": "voip",
+                "topic": "com.example.app.voip",
+                "priority": 10,
+                "rawPayload": {
+                    "uuid": "019fef37-c728-709c-aac4-3a4740139a11",
+                    "nameCaller": "Jane Doe",
+                    "handle": "Handler",
+                    "isVideo": true
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+<Note>
+  Keep PushKit VoIP tokens on the VoIP integration only, and regular remote-notification tokens on your alert APNS integration. A Push step delivers through every active push integration that has tokens for that subscriber, so mixing token types on the wrong integration can cause APNS rejections.
+</Note>
+
+<Note>
+  Passing raw APNS HTTP headers under `_passthrough.headers` (for example `apns-push-type`) is not supported for the native APNS provider. Use `pushType`, `topic`, and `priority` instead. Those map to the correct headers through `@parse/node-apn`.
 </Note>
