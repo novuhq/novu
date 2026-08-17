@@ -73,8 +73,17 @@ export class SnoozeNotification {
       await this.messageRepository.withTransaction(async () => {
         scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
-        await this.enqueueJob(scheduledJob, snoozeDurationMs);
       });
+
+      /*
+       * Enqueueing has to stay outside the transaction: it is an external call,
+       * and once the snooze outlives the 900s SQS delay cap - which any snooze
+       * measured in hours does - it becomes a CreateSchedule round trip to
+       * EventBridge. Inside the transaction that held the Mongo session, and its
+       * locks, open for the length of an AWS call, and an abort after the call
+       * had succeeded would leave a schedule behind with no job left to wake.
+       */
+      await this.enqueueJob(scheduledJob, snoozeDurationMs);
 
       // fire and forget
       this.createExecutionDetails
