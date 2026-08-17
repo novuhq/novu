@@ -41,17 +41,28 @@ function pack(parts: string[], separator: string, limit: number, splitPart: (par
   return chunks;
 }
 
+/** Last resort for a single oversize line: prefer a nearby space, else hard-cut. */
 function sliceToLimit(text: string, limit: number): string[] {
   const chunks: string[] = [];
+  let remaining = text;
 
-  for (let index = 0; index < text.length; index += limit) {
-    chunks.push(text.slice(index, index + limit));
+  while (remaining.length > limit) {
+    const window = remaining.slice(0, limit);
+    const spaceAt = window.lastIndexOf(' ');
+    const cut = spaceAt > Math.floor(limit / 2) ? spaceAt + 1 : limit;
+
+    chunks.push(remaining.slice(0, cut));
+    remaining = remaining.slice(cut);
+  }
+
+  if (remaining) {
+    chunks.push(remaining);
   }
 
   return chunks;
 }
 
-/** Prefer paragraph breaks, then line breaks, then a hard cut at `limit`. */
+/** Prefer paragraph breaks, then line breaks, then a space-aware cut at `limit`. */
 export function splitForSlackSections(text: string, limit: number = SLACK_SECTION_TEXT_LIMIT): string[] {
   if (text.length <= limit) {
     return [text];

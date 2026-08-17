@@ -30,6 +30,16 @@ describe('slack-section-limits', () => {
       expect(chunks.every((chunk) => chunk.length <= LIMIT)).to.equal(true);
       expect(chunks.join('')).to.equal(unbroken);
     });
+
+    it('prefers a space near the limit over a mid-word hard cut', () => {
+      const head = `${'a'.repeat(2900)} `;
+      const tail = 'b'.repeat(200);
+      const line = `${head}${tail}`;
+      const chunks = splitForSlackSections(line);
+
+      expect(chunks).to.deep.equal([head, tail]);
+      expect(chunks.join('')).to.equal(line);
+    });
   });
 
   describe('splitOversizedSlackText', () => {
