@@ -83,6 +83,22 @@ export type RespondToActionResult = {
   conversationId: string;
 };
 
+export type SendActionArgs = AgentHashFields & {
+  agentId: string;
+  /** `id` of the clicked Card button. */
+  actionId: string;
+  /** Platform message id of the message that carries the Card. */
+  sourceMessageId: string;
+  /** `value` of the clicked Card button, if set. */
+  value?: string;
+  conversationId?: string;
+  key?: string;
+};
+
+export type SendActionResult = {
+  conversationId: string;
+};
+
 /** What caused a fold. A live fold carries the envelope that caused it. Internal to the store seam. */
 export type AgentChatChangeSource =
   | { kind: 'live'; envelope: AgentEventEnvelope }

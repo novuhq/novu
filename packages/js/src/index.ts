@@ -16,6 +16,8 @@ export type {
   LoadConversationResult,
   RespondToActionArgs,
   RespondToActionResult,
+  SendActionArgs,
+  SendActionResult,
   SendMessageArgs,
   SendMessageResult,
 } from './agent-chat';

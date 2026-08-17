@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import {
+  AGENT_EVENT_PROTOCOL_VERSION,
+  type AgentEvent,
+  type AgentEventEnvelope,
+  type AgentMessageContent,
+} from '@novu/agent-event-protocol';
 import { shortId } from '@novu/application-generic';
 
 type AgentChatFactoryBaseInput = {
@@ -14,12 +19,12 @@ type AgentChatFactoryBaseInput = {
 
 export type AgentChatFactoryMessageInput = AgentChatFactoryBaseInput & {
   platformMessageId: string;
-  content: { markdown: string };
+  content: AgentMessageContent;
 };
 
 export type AgentChatFactoryEditInput = AgentChatFactoryBaseInput & {
   platformMessageId: string;
-  content: { markdown: string };
+  content: AgentMessageContent;
 };
 
 export type AgentChatFactoryDeleteInput = AgentChatFactoryBaseInput & {
