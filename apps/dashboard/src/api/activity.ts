@@ -33,6 +33,11 @@ export interface StepRunDto {
   executionDetails: any[];
   digest?: any;
   scheduleExtensionsCount?: number;
+  messageId?: string;
+  channel?: string;
+  content?: string | null;
+  subject?: string | null;
+  title?: string | null;
 }
 
 export interface GetWorkflowRunsDto {
@@ -129,12 +134,11 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
           _organizationId: workflowRun.organizationId,
           _creatorId: '',
           type: step.stepType as any,
-          content: '',
+          content: step.content ?? '',
           variables: [],
           name: step.stepType,
-          subject: '',
-          title: step.stepType,
-          preheader: '',
+          subject: step.subject ?? '',
+          title: step.title ?? step.stepType,
           senderName: '',
           _feedId: '',
           cta: {
@@ -162,6 +166,13 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       createdAt: workflowRun.createdAt,
       updatedAt: workflowRun.updatedAt,
       scheduleExtensionsCount: step.scheduleExtensionsCount,
+      // Channel preview metadata used by the activity feed to render a
+      // channel-aware preview (email HTML, SMS text, push/chat body).
+      messageId: step.messageId,
+      channel: step.channel,
+      messageContent: step.content ?? null,
+      messageSubject: step.subject ?? null,
+      messageTitle: step.title ?? null,
     })),
   };
 }

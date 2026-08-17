@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StepRunStatus } from '@novu/application-generic';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsIn, IsObject, IsOptional, IsString } from 'class-validator';
 import { DigestMetadataDto } from '../../notifications/dtos/activities-response.dto';
@@ -98,6 +98,40 @@ export class StepRunDto {
     type: Number,
   })
   scheduleExtensionsCount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Identifier of the delivered message entity, used to render the channel preview',
+  })
+  @IsOptional()
+  @IsString()
+  messageId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Channel type of the delivered message (email, sms, push, chat, in_app)',
+    enum: ChannelTypeEnum,
+    enumName: 'ChannelTypeEnum',
+  })
+  @IsOptional()
+  @IsEnum(ChannelTypeEnum)
+  channel?: ChannelTypeEnum;
+
+  @ApiPropertyOptional({
+    description:
+      'Rendered message content. For email this is the final HTML; for sms/push/chat it is the plain text body.',
+  })
+  @IsOptional()
+  @IsString()
+  content?: string | null;
+
+  @ApiPropertyOptional({ description: 'Subject of the delivered message (email channel)' })
+  @IsOptional()
+  @IsString()
+  subject?: string | null;
+
+  @ApiPropertyOptional({ description: 'Title of the delivered message (push/in-app channels)' })
+  @IsOptional()
+  @IsString()
+  title?: string | null;
 }
 
 export class GetWorkflowRunResponseDto extends GetWorkflowRunResponseBaseDto {

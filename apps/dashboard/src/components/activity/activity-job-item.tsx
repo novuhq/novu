@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader } from '../primitives/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import TruncatedText from '../truncated-text';
+import { MessagePreview } from './components/message-preview';
 import { JOB_STATUS_CONFIG } from './constants';
 import { ExecutionDetailItem } from './execution-detail-item';
 
@@ -284,9 +285,28 @@ function getJobClasses(status: JobStatusEnum) {
 }
 
 function JobDetails({ job }: { job: IActivityJob }) {
+  const isDeliverableChannel =
+    job.type === StepTypeEnum.EMAIL ||
+    job.type === StepTypeEnum.SMS ||
+    job.type === StepTypeEnum.PUSH ||
+    job.type === StepTypeEnum.CHAT ||
+    job.type === StepTypeEnum.IN_APP;
+
+  const hasMessageContent = Boolean(job.messageId || job.messageContent || job.messageSubject || job.messageTitle);
+
+  const showPreview = isDeliverableChannel && hasMessageContent;
+
   return (
     <div className="border-t border-neutral-100 p-4">
       <div className="flex flex-col gap-4">
+        {showPreview && (
+          <MessagePreview
+            channel={job.channel}
+            content={job.messageContent}
+            subject={job.messageSubject}
+            title={job.messageTitle}
+          />
+        )}
         {job.executionDetails && job.executionDetails.length > 0 && (
           <div className="flex flex-col gap-2">
             {job.executionDetails.map((detail, index) => (

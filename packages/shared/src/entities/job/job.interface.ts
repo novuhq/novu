@@ -1,4 +1,4 @@
-import { EnvironmentId, ITenantDefine, OrganizationId, StepTypeEnum } from '../../types';
+import { ChannelTypeEnum, EnvironmentId, ITenantDefine, OrganizationId, StepTypeEnum } from '../../types';
 import { INotificationTemplateStep } from '../notification-template';
 import { IWorkflowStepMetadata } from '../step';
 import { JobStatusEnum } from './status.enum';
@@ -32,4 +32,12 @@ export interface IJob {
   type?: StepTypeEnum;
   _actorId?: string;
   scheduleExtensionsCount?: number;
+  // Activity feed channel preview metadata. Populated from the delivered
+  // MessageEntity so the activity feed can render the actual message content
+  // (email HTML, SMS text, push/chat body) without re-fetching per step.
+  messageId?: string;
+  channel?: ChannelTypeEnum;
+  messageContent?: string | null;
+  messageSubject?: string | null;
+  messageTitle?: string | null;
 }
