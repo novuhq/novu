@@ -461,15 +461,14 @@ export class AgentInboundHandler implements OnModuleInit {
           : undefined,
     });
 
-    const workflowOriginContent = workflowOrigin
-      ? await this.workflowOriginService.hydrate({
-          agentId,
-          config,
-          conversation,
-          platformThreadId,
-          origin: workflowOrigin.origin,
-        })
-      : null;
+    const workflowOriginData = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId,
+      resolution: workflowOrigin,
+      existingConversation,
+    });
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
@@ -544,7 +543,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-      workflowOriginContent: workflowOriginContent ?? undefined,
+      workflowOrigin: workflowOriginData ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
@@ -1176,15 +1175,14 @@ export class AgentInboundHandler implements OnModuleInit {
           : undefined,
     });
 
-    const workflowOriginContent = workflowOrigin
-      ? await this.workflowOriginService.hydrate({
-          agentId,
-          config,
-          conversation,
-          platformThreadId,
-          origin: workflowOrigin.origin,
-        })
-      : null;
+    const workflowOriginData = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId,
+      resolution: workflowOrigin,
+      existingConversation,
+    });
 
     trackAgentInboundAction(this.analyticsService, {
       organizationId: config.organizationId,
@@ -1243,7 +1241,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       action,
-      workflowOriginContent: workflowOriginContent ?? undefined,
+      workflowOrigin: workflowOriginData ?? undefined,
     };
 
     await runtime.dispatch(turn);

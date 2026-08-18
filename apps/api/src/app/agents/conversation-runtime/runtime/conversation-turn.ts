@@ -5,6 +5,7 @@ import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.s
 import type { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import type { StoredAttachment } from '../conversation/agent-attachment-storage.service';
+import type { WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 import type { BridgeReaction } from './bridge-executor.service';
 
 export interface ConversationTurn {
@@ -32,5 +33,10 @@ export interface ConversationTurn {
   storedAttachments?: StoredAttachment[];
   action?: AgentAction;
   reaction?: BridgeReaction;
-  workflowOriginContent?: string;
+  /**
+   * Most recent workflow-origin notification for this conversation, when one exists.
+   * Populated every turn (not only the hydration turn) so bridge consumers always
+   * see `ctx.notification`. Managed uses `source` to inject only once per session.
+   */
+  workflowOrigin?: WorkflowOriginSnapshot | null;
 }

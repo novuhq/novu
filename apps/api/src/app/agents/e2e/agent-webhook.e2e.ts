@@ -386,6 +386,71 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(call.platformContext.threadId).to.equal(threadId);
       expect(call.platformContext.channelId).to.equal('C_TEST');
       expect(call.platformContext.isDM).to.equal(false);
+      expect(call.workflowOrigin, 'no origin seeded on first touch').to.equal(undefined);
+    });
+
+    it('forwards the latest WORKFLOW_ORIGIN activity on later turns via workflowOrigin', async () => {
+      const subscriberRepository = new SubscriberRepository();
+      const subscriber = await subscriberRepository.create({
+        subscriberId: `sub-origin-${Date.now()}`,
+        firstName: 'Origin',
+        lastName: 'Test',
+        email: 'origin@test.com',
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      await seedChannelEndpoint(ctx, 'U_ORIGIN', subscriber.subscriberId);
+
+      const threadId = `T_ORIGIN_${Date.now()}`;
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'first' }));
+      await waitForBridgeCallCount(1);
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
+        threadId
+      );
+      expect(conversation).to.exist;
+
+      const originData = {
+        notificationId: 'notif-origin-1',
+        templateId: 'wf-origin-1',
+        workflowIdentifier: 'order-shipped',
+        messageId: 'msg-origin-1',
+        channel: 'chat',
+        platformMessageId: 'wamid.origin',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        payload: { orderId: 'ORD-42' },
+      };
+
+      await activityRepository.createWorkflowOriginActivity({
+        identifier: `workflow-dispatch-origin:wamid.origin.${Date.now()}`,
+        conversationId: conversation!._id,
+        platform: 'slack',
+        integrationId: ctx.integrationId,
+        platformThreadId: threadId,
+        agentId: ctx.agentId,
+        content: 'Triggered by workflow order-shipped',
+        originData,
+        platformMessageId: 'wamid.origin',
+        environmentId: ctx.session.environment._id,
+        organizationId: ctx.session.organization._id,
+      });
+
+      bridgeCalls = [];
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'where is my order?' }));
+      await waitForBridgeCallCount(1);
+
+      expect(bridgeCalls[0].workflowOrigin?.data).to.deep.include({
+        workflowIdentifier: 'order-shipped',
+        notificationId: 'notif-origin-1',
+        payload: { orderId: 'ORD-42' },
+      });
+      expect(bridgeCalls[0].workflowOrigin?.source).to.equal('existing');
+      expect(bridgeCalls[0].workflowOrigin?.content).to.equal('Triggered by workflow order-shipped');
     });
 
     it('Passes null subscriber in the bridge payload for first-time Slack senders on open custom-code', async () => {

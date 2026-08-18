@@ -1,0 +1,235 @@
+import {
+  ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
+  type ConversationActivityOriginData,
+} from '@novu/dal';
+import { MessageRole } from '@novu/thalamus';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import {
+  WORKFLOW_ORIGIN_CONTENT_MAX_CHARS,
+  type WorkflowOriginSnapshot,
+} from '../conversation-runtime/ingress/workflow-origin.helpers';
+import { buildLiveSessionMessages } from './build-live-session-messages';
+import { ManagedAgentService } from './managed-agent.service';
+
+const sampleOriginData: ConversationActivityOriginData = {
+  notificationId: 'notif-1',
+  templateId: 'wf-1',
+  workflowIdentifier: 'order-shipped',
+  messageId: 'msg-1',
+  channel: 'chat',
+  platformMessageId: 'wamid.abc',
+  sentAt: '2026-01-01T00:00:00.000Z',
+  payload: { orderId: 'ORD-1' },
+};
+
+const hydratedSnapshot: WorkflowOriginSnapshot = {
+  content: 'Your order ORD-1 shipped',
+  data: sampleOriginData,
+  source: 'hydrated',
+};
+
+const existingSnapshot: WorkflowOriginSnapshot = {
+  content: 'Your order ORD-1 shipped',
+  data: sampleOriginData,
+  source: 'existing',
+};
+
+describe('ManagedAgentService workflow-origin', () => {
+  function makeLogger() {
+    return {
+      warn: sinon.stub(),
+      error: sinon.stub(),
+      debug: sinon.stub(),
+      info: sinon.stub(),
+      setContext: sinon.stub(),
+    };
+  }
+
+  function makeService(overrides: {
+    findLatestWorkflowOrigin?: sinon.SinonStub;
+    listForView?: sinon.SinonStub;
+    findByPlatformMessageId?: sinon.SinonStub;
+    dispatch?: sinon.SinonStub;
+  } = {}) {
+    const conversationService = {
+      findLatestWorkflowOrigin: overrides.findLatestWorkflowOrigin ?? sinon.stub().resolves(null),
+      listForView: overrides.listForView ?? sinon.stub().resolves({ data: [], hasMore: false }),
+      findByPlatformMessageId: overrides.findByPlatformMessageId ?? sinon.stub().resolves(null),
+    };
+
+    const service = new ManagedAgentService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      conversationService as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      makeLogger() as any
+    );
+
+    if (overrides.dispatch) {
+      sinon.stub(service, 'dispatch').callsFake(overrides.dispatch as any);
+    }
+
+    return { service, conversationService };
+  }
+
+  function makeContext(overrides: Record<string, unknown> = {}) {
+    return {
+      config: {
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        agentIdentifier: 'agent-1',
+        integrationIdentifier: 'integration-1',
+      },
+      conversation: {
+        _id: 'conv-1',
+        channels: [{ platformThreadId: 'thread-1' }],
+      },
+      subscriber: { _id: 'sub-mongo', subscriberId: 'sub-1' },
+      userMessageText: 'where is my order?',
+      ...overrides,
+    };
+  }
+
+  describe('buildMessagesWithHistory', () => {
+    it('injects origin from context on reseed with the real outbound body', async () => {
+      const { service } = makeService();
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: existingSnapshot })
+      );
+
+      expect(messages[0].role).to.equal(MessageRole.ASSISTANT);
+      expect(String(messages[0].content)).to.include('Your order ORD-1 shipped');
+      expect(String(messages[0].content)).to.include('ORD-1');
+      expect(messages.filter((message: { role: string }) => message.role === MessageRole.USER)).to.have.lengthOf(1);
+      expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'where is my order?' });
+    });
+
+    it('does not re-query for origin when context already has a snapshot', async () => {
+      const findLatestWorkflowOrigin = sinon.stub().resolves({
+        content: 'stale',
+        originData: { ...sampleOriginData, workflowIdentifier: 'stale-workflow', payload: { stale: true } },
+      });
+      const { service } = makeService({ findLatestWorkflowOrigin });
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: hydratedSnapshot })
+      );
+
+      expect(findLatestWorkflowOrigin.called).to.equal(false);
+      expect(String(messages[0].content)).to.include('Your order ORD-1 shipped');
+      expect(String(messages[0].content)).to.not.include('stale-workflow');
+    });
+
+    it('keeps the injected origin under the content cap', async () => {
+      const bulkySnapshot: WorkflowOriginSnapshot = {
+        ...hydratedSnapshot,
+        data: { ...sampleOriginData, payload: { blob: 'x'.repeat(8_000) } },
+      };
+      const { service } = makeService();
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: bulkySnapshot })
+      );
+
+      expect(String(messages[0].content).length).to.be.at.most(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
+    });
+
+    it('skips injection when context has no origin', async () => {
+      const { service, conversationService } = makeService();
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: undefined })
+      );
+
+      expect(conversationService.findLatestWorkflowOrigin.called).to.equal(false);
+      expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'where is my order?' }]);
+    });
+  });
+
+  describe('live session injection gating', () => {
+    it('injects a freshly hydrated origin into a live session', () => {
+      const messages = buildLiveSessionMessages({
+        userMessageText: 'where is it?',
+        workflowOrigin: hydratedSnapshot,
+      });
+
+      expect(messages).to.have.lengthOf(2);
+      expect(String(messages[0].content)).to.include('Your order ORD-1 shipped');
+    });
+
+    it('does not re-inject an existing origin into a live session', () => {
+      // Caller (dispatch) drops `existing` before buildLiveSessionMessages.
+      const messages = buildLiveSessionMessages({
+        userMessageText: 'thanks',
+        workflowOrigin: null,
+      });
+
+      expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'thanks' }]);
+    });
+  });
+
+  describe('replayParkedInboundTurn', () => {
+    it('loads the parked activity and forwards the latest origin snapshot into dispatch', async () => {
+      const findByPlatformMessageId = sinon.stub().resolves({
+        content: 'parked hello',
+        type: ConversationActivityTypeEnum.MESSAGE,
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+      });
+      const findLatestWorkflowOrigin = sinon.stub().resolves({
+        content: 'Your order ORD-1 shipped',
+        originData: sampleOriginData,
+      });
+      const dispatch = sinon.stub().resolves({ status: 'active' });
+      const { service } = makeService({ findByPlatformMessageId, findLatestWorkflowOrigin, dispatch });
+
+      const result = await service.replayParkedInboundTurn({
+        conversation: {
+          _id: 'conv-1',
+          channels: [{ platformThreadId: 'thread-1' }],
+        } as any,
+        config: {
+          environmentId: 'env-1',
+          organizationId: 'org-1',
+          agentIdentifier: 'agent-1',
+          integrationIdentifier: 'integration-1',
+        } as any,
+        subscriber: { _id: 'sub-mongo', subscriberId: 'sub-1' } as any,
+        pendingPlatformMessageId: 'parked-msg-1',
+        agent: { _id: 'agent-mongo', managedRuntime: { providerId: 'anthropic' } } as any,
+      });
+
+      expect(result).to.deep.equal({ status: 'active' });
+      expect(dispatch.calledOnce).to.equal(true);
+      expect(dispatch.firstCall.args[0]).to.include({
+        userMessageText: 'parked hello',
+        platformMessageId: 'parked-msg-1',
+        platformThreadId: 'thread-1',
+      });
+      expect(dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(existingSnapshot);
+    });
+
+    it('returns null when the parked activity is missing', async () => {
+      const { service, conversationService } = makeService();
+
+      const result = await service.replayParkedInboundTurn({
+        conversation: { _id: 'conv-1', channels: [] } as any,
+        config: { environmentId: 'env-1' } as any,
+        subscriber: {} as any,
+        pendingPlatformMessageId: 'missing',
+        agent: { _id: 'agent-mongo' } as any,
+      });
+
+      expect(result).to.equal(null);
+      expect(conversationService.findByPlatformMessageId.calledOnce).to.equal(true);
+    });
+  });
+});

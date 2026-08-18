@@ -185,6 +185,47 @@ describe('BridgeExecutorService', () => {
       expect(payload).to.not.have.property('eventsUrl');
       expect(payload.replyUrl).to.match(/\/v1\/agents\/agent-1\/reply$/);
     });
+
+    it('should map workflowOrigin onto notification for the bridge wire', async () => {
+      const { service } = makeService();
+      const workflowOrigin = {
+        content: 'Your order ORD-1 shipped',
+        data: {
+          notificationId: 'notif-1',
+          templateId: 'wf-1',
+          workflowIdentifier: 'order-shipped',
+          messageId: 'msg-1',
+          channel: 'chat',
+          platformMessageId: 'wamid.abc',
+          sentAt: '2026-01-01T00:00:00.000Z',
+          payload: { orderId: 'ORD-1' },
+          jobId: 'job-1',
+        },
+        source: 'existing' as const,
+      };
+
+      const payload = await (service as any).buildPayload({
+        ...makeExecutionParams(),
+        workflowOrigin,
+      });
+
+      expect(payload.notification).to.deep.equal({
+        notificationId: 'notif-1',
+        workflowId: 'order-shipped',
+        messageId: 'msg-1',
+        platformMessageId: 'wamid.abc',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        payload: { orderId: 'ORD-1' },
+      });
+    });
+
+    it('should send notification null when no workflow origin is present', async () => {
+      const { service } = makeService();
+
+      const payload = await (service as any).buildPayload(makeExecutionParams());
+
+      expect(payload.notification).to.equal(null);
+    });
   });
 
   describe('mapRichContentForBridge', () => {

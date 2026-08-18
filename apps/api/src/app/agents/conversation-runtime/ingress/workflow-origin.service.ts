@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
+  ConversationActivityOriginData,
   ConversationEntity,
   ConversationParticipantTypeEnum,
   MessageEntity,
@@ -15,7 +16,8 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import {
-  buildWorkflowOriginSummary,
+  buildWorkflowOriginLine,
+  capWorkflowOriginPayload,
   extractAgentEmailOriginToken,
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
@@ -24,7 +26,9 @@ import {
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
   toProviderMessageLookupKey,
+  toWorkflowOriginSnapshot,
   WORKFLOW_ORIGIN_LOOKBACK_MS,
+  type WorkflowOriginSnapshot,
 } from './workflow-origin.helpers';
 
 export interface WorkflowOriginResolution {
@@ -155,9 +159,44 @@ export class WorkflowOriginService {
   }
 
   /**
-   * Returns the origin summary written to the transcript, or null when nothing was
-   * hydrated. Runtimes that keep history server-side (managed) only ever receive the
-   * new turn, so they need this value to see an origin attached mid-conversation.
+   * Resolve the turn-scoped origin snapshot: hydrate when a new origin was found,
+   * otherwise read the latest persisted row on an existing conversation.
+   */
+  async resolveForTurn(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    platformThreadId: string;
+    resolution: WorkflowOriginResolution | null;
+    existingConversation: ConversationEntity | null;
+  }): Promise<WorkflowOriginSnapshot | null> {
+    const { agentId, config, conversation, platformThreadId, resolution, existingConversation } = params;
+
+    if (resolution) {
+      return this.hydrate({
+        agentId,
+        config,
+        conversation,
+        platformThreadId,
+        origin: resolution.origin,
+      });
+    }
+
+    if (!existingConversation) {
+      return null;
+    }
+
+    const activity = await this.conversationService.findLatestWorkflowOrigin(
+      config.environmentId,
+      conversation._id
+    );
+
+    return toWorkflowOriginSnapshot(activity);
+  }
+
+  /**
+   * Persist the structured origin and return a `hydrated` snapshot. Prefer this return
+   * value over a re-read so there is no read-after-write dependency on the hydration turn.
    */
   async hydrate(params: {
     agentId: string;
@@ -165,7 +204,7 @@ export class WorkflowOriginService {
     conversation: ConversationEntity;
     platformThreadId: string;
     origin: MessageEntity;
-  }): Promise<string | null> {
+  }): Promise<WorkflowOriginSnapshot | null> {
     const { agentId, config, conversation, platformThreadId, origin } = params;
 
     if (!origin._notificationId) {
@@ -178,11 +217,12 @@ export class WorkflowOriginService {
     }
 
     try {
-      const { messageContent, signalData } = await this.buildWorkflowOriginContext(
+      const { content, originData } = await this.buildWorkflowOriginContext(
         origin,
         conversation,
         config.environmentId,
-        config.organizationId
+        config.organizationId,
+        platformMessageId
       );
 
       await this.conversationService.persistWorkflowOriginHydration({
@@ -193,11 +233,11 @@ export class WorkflowOriginService {
         organizationId: config.organizationId,
         platformMessageId,
         platformThreadId,
-        messageContent,
-        signalData,
+        content,
+        originData,
       });
 
-      return messageContent;
+      return { content, data: originData, source: 'hydrated' };
     } catch (err) {
       captureAgentWarning(err, {
         component: 'workflow-origin-service',
@@ -206,7 +246,7 @@ export class WorkflowOriginService {
       });
       this.logger.warn(
         { err, agentId, platformThreadId, messageId: origin._id, notificationId: origin._notificationId },
-        'Failed to hydrate workflow origin into conversation history'
+        'Failed to hydrate workflow origin into conversation'
       );
 
       return null;
@@ -290,10 +330,11 @@ export class WorkflowOriginService {
     originMessage: MessageEntity,
     conversation: ConversationEntity,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    platformMessageId: string
   ): Promise<{
-    messageContent: string;
-    signalData: Record<string, unknown>;
+    content: string;
+    originData: ConversationActivityOriginData;
   }> {
     const notification = await this.notificationRepository.findOne(
       {
@@ -304,31 +345,35 @@ export class WorkflowOriginService {
       'payload'
     );
 
-    const payload =
+    const rawPayload =
       notification?.payload && typeof notification.payload === 'object' && !Array.isArray(notification.payload)
         ? (notification.payload as Record<string, unknown>)
         : {};
+    const payload = capWorkflowOriginPayload(rawPayload);
 
     const storedContent = typeof originMessage.content === 'string' ? originMessage.content.trim() : '';
     const workflowIdentifier = originMessage.templateIdentifier || 'unknown';
-    const messageContent = buildWorkflowOriginSummary(workflowIdentifier, storedContent, payload);
+    const content = buildWorkflowOriginLine(workflowIdentifier, storedContent);
 
     const subscriberId = conversation.participants.find(
       (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
     )?.id;
 
-    return {
-      messageContent,
-      signalData: {
-        notificationId: originMessage._notificationId,
-        jobId: originMessage._jobId,
-        messageId: originMessage._id,
-        transactionId: originMessage.transactionId,
-        workflowIdentifier,
-        stepId: originMessage.stepId,
-        subscriberId,
-        payload,
-      },
+    const originData: ConversationActivityOriginData = {
+      notificationId: originMessage._notificationId!,
+      templateId: originMessage._templateId,
+      workflowIdentifier,
+      messageId: originMessage._id,
+      channel: originMessage.channel,
+      platformMessageId,
+      sentAt: originMessage.createdAt,
+      payload,
+      ...(originMessage._jobId ? { jobId: originMessage._jobId } : {}),
+      ...(originMessage.stepId ? { stepId: originMessage.stepId } : {}),
+      ...(originMessage.transactionId ? { transactionId: originMessage.transactionId } : {}),
+      ...(subscriberId ? { subscriberId } : {}),
     };
+
+    return { content, originData };
   }
 }

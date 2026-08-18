@@ -369,6 +369,13 @@ export class AgentConversationService {
     return this.ledger.isWorkflowOriginHydrated(environmentId, conversationId, platformMessageId);
   }
 
+  async findLatestWorkflowOrigin(
+    environmentId: string,
+    conversationId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.ledger.findLatestWorkflowOrigin(environmentId, conversationId);
+  }
+
   async listForView(params: {
     view: ActivityView;
     environmentId: string;

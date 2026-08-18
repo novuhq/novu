@@ -174,6 +174,10 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
     case ConversationActivityTypeEnum.RUN_ERROR:
       return mapRunLifecycleActivityToEvent(activity);
 
+    case ConversationActivityTypeEnum.SIGNAL:
+    case ConversationActivityTypeEnum.WORKFLOW_ORIGIN:
+      return null;
+
     default:
       return null;
   }

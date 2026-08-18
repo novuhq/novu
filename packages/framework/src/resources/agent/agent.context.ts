@@ -11,6 +11,7 @@ import type {
   AgentHistoryEntry,
   AgentMessage,
   AgentMessageContext,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentReplyPayload,
@@ -601,6 +602,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
   readonly context: AgentContextPayload | null;
+  readonly notification: AgentNotification | null;
   readonly history: AgentHistoryEntry[];
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
@@ -633,6 +635,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.conversation = request.conversation;
     this.subscriber = request.subscriber;
     this.context = request.context ?? null;
+    this.notification = request.notification ?? null;
     this.history = request.history;
     this.platform = request.platform;
     this.platformContext = request.platformContext;

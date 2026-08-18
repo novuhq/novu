@@ -37,6 +37,7 @@ describe('WorkflowOriginService', () => {
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistWorkflowOriginHydration: overrides.persistWorkflowOriginHydration ?? sinon.stub().resolves(undefined),
       isWorkflowOriginHydrated: overrides.isWorkflowOriginHydrated ?? sinon.stub().resolves(false),
+      findLatestWorkflowOrigin: sinon.stub().resolves(null),
     };
     const subscriberRepository = {
       findBySubscriberId: overrides.findBySubscriberId ?? sinon.stub().resolves({ _id: 'subscriber-mongo-1' }),
@@ -147,6 +148,7 @@ describe('WorkflowOriginService', () => {
         origin: {
           _id: 'msg1',
           _notificationId: 'notif1',
+          _templateId: 'template-1',
           _jobId: 'job1',
           transactionId: 'txn1',
           templateIdentifier: 'order-alerts',
@@ -160,10 +162,104 @@ describe('WorkflowOriginService', () => {
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
       expect(hydrateArgs.platformMessageId).to.equal('1777837477.371619');
-      expect(hydrateArgs.messageContent).to.equal(
-        'Order ORD-1 shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-1"\n}'
-      );
-      expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
+      expect(hydrateArgs.content).to.equal('Order ORD-1 shipped');
+      expect(hydrateArgs.originData.workflowIdentifier).to.equal('order-alerts');
+      expect(hydrateArgs.originData.templateId).to.equal('template-1');
+      expect(hydrateArgs.originData.payload).to.deep.equal({ orderId: 'ORD-1' });
+    });
+  });
+
+  describe('resolveForTurn', () => {
+    const config = {
+      environmentId: 'env1',
+      organizationId: 'org1',
+      platform: AgentPlatformEnum.SLACK,
+      agentIdentifier: 'support-agent',
+      providerId: 'slack',
+    };
+    const conversation = {
+      _id: 'conv1',
+      channels: [{ platform: AgentPlatformEnum.SLACK, _integrationId: 'int1', platformThreadId: 'slack:D123:' }],
+      participants: [{ type: 'subscriber', id: 'sub1' }],
+    };
+
+    it('hydrates when a resolution is present and returns a hydrated snapshot', async () => {
+      const { service, conversationService } = makeService({
+        notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-1' } }),
+      });
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        _templateId: 'template-1',
+        templateIdentifier: 'order-alerts',
+        content: 'Order ORD-1 shipped',
+        identifier: 'D123:1777837477.371619',
+        channel: 'chat',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      const snapshot = await service.resolveForTurn({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: conversation as any,
+        platformThreadId: 'slack:D123:1777837477.371619',
+        resolution: { origin: origin as any, notificationId: 'notif1' },
+        existingConversation: null,
+      });
+
+      expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
+      expect(snapshot?.source).to.equal('hydrated');
+      expect(snapshot?.content).to.equal('Order ORD-1 shipped');
+      expect(snapshot?.data.workflowIdentifier).to.equal('order-alerts');
+      expect(snapshot?.data.templateId).to.equal('template-1');
+    });
+
+    it('reads the latest persisted row on later turns of an existing conversation', async () => {
+      const findLatestWorkflowOrigin = sinon.stub().resolves({
+        content: 'Your order shipped',
+        originData: {
+          notificationId: 'notif1',
+          templateId: 'template-1',
+          workflowIdentifier: 'order-alerts',
+          messageId: 'msg1',
+          channel: 'chat',
+          platformMessageId: 'p1',
+          sentAt: '2026-01-01T00:00:00.000Z',
+          payload: { orderId: 'ORD-9' },
+        },
+      });
+      const { service, conversationService } = makeService();
+      conversationService.findLatestWorkflowOrigin = findLatestWorkflowOrigin;
+
+      const snapshot = await service.resolveForTurn({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: conversation as any,
+        platformThreadId: 'slack:D123:1777837477.371619',
+        resolution: null,
+        existingConversation: conversation as any,
+      });
+
+      expect(findLatestWorkflowOrigin.calledOnce).to.equal(true);
+      expect(snapshot?.source).to.equal('existing');
+      expect(snapshot?.content).to.equal('Your order shipped');
+      expect(snapshot?.data.payload).to.deep.equal({ orderId: 'ORD-9' });
+    });
+
+    it('returns null on a brand-new conversation with nothing to hydrate', async () => {
+      const { service, conversationService } = makeService();
+
+      const snapshot = await service.resolveForTurn({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: conversation as any,
+        platformThreadId: 'slack:D123:',
+        resolution: null,
+        existingConversation: null,
+      });
+
+      expect(snapshot).to.equal(null);
+      expect(conversationService.findLatestWorkflowOrigin.called).to.equal(false);
     });
   });
 
@@ -479,7 +575,7 @@ describe('WorkflowOriginService', () => {
         whatsappOrigin.identifier
       );
       expect(
-        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].originData.workflowIdentifier
       ).to.equal('order-alerts');
     });
 
@@ -514,6 +610,7 @@ describe('WorkflowOriginService', () => {
     const telegramOrigin = {
       _id: 'tg-msg1',
       _notificationId: 'tg-notif1',
+      _templateId: 'tg-template1',
       _jobId: 'tg-job1',
       transactionId: 'tg-txn1',
       templateIdentifier: 'order-alerts',
@@ -763,7 +860,7 @@ describe('WorkflowOriginService', () => {
         notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-9' } }),
       });
 
-      const content = await service.hydrate({
+      const originData = await service.hydrate({
         agentId: 'agent1',
         config: telegramConfig as any,
         conversation: conversation as any,
@@ -775,10 +872,11 @@ describe('WorkflowOriginService', () => {
         '777042:42'
       );
       expect(
-        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].originData.workflowIdentifier
       ).to.equal('order-alerts');
-      // Returned so a live managed session receives the origin it can no longer read from the transcript.
-      expect(content).to.equal('Your order shipped\n\nAdditional data for this message:\n{\n  "orderId": "ORD-9"\n}');
+      expect(originData?.data.workflowIdentifier).to.equal('order-alerts');
+      expect(originData?.data.payload).to.deep.equal({ orderId: 'ORD-9' });
+      expect(originData?.source).to.equal('hydrated');
     });
 
     it('no-ops hydrate when the thread id is unparseable', async () => {
@@ -961,7 +1059,7 @@ describe('WorkflowOriginService', () => {
         sendblueOrigin.identifier
       );
       expect(
-        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].originData.workflowIdentifier
       ).to.equal('order-alerts');
     });
 

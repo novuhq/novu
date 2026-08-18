@@ -16,10 +16,14 @@ import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import {
+  toWorkflowOriginSnapshot,
+  type WorkflowOriginSnapshot,
+} from '../conversation-runtime/ingress/workflow-origin.helpers';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
-import { buildLiveSessionMessages } from './build-live-session-messages';
+import { buildLiveSessionMessages, buildOriginAssistantMessage } from './build-live-session-messages';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
@@ -30,7 +34,7 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
-  workflowOriginContent?: string;
+  workflowOrigin?: WorkflowOriginSnapshot | null;
   platformThreadId?: string;
   platformMessageId?: string;
 }
@@ -115,7 +119,12 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberMongoId: context.subscriber?._id,
     });
 
-    const messages = sessionId ? buildLiveSessionMessages(context) : await this.buildMessagesWithHistory(context);
+    const messages = sessionId
+      ? buildLiveSessionMessages({
+          userMessageText: context.userMessageText,
+          workflowOrigin: context.workflowOrigin?.source === 'hydrated' ? context.workflowOrigin : null,
+        })
+      : await this.buildMessagesWithHistory(context);
 
     const sendResult = await provider.send({
       messages,
@@ -181,6 +190,12 @@ export class ManagedAgentService implements OnModuleInit {
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
+        workflowOrigin: toWorkflowOriginSnapshot(
+          await this.conversationService.findLatestWorkflowOrigin(
+            params.config.environmentId,
+            params.conversation._id
+          )
+        ),
         platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
       },
@@ -422,7 +437,17 @@ export class ManagedAgentService implements OnModuleInit {
 
     // New Anthropic session (no externalSessionId) — collapse so Thalamus does not
     // re-run every historical USER turn as a live event on reopen after resolve.
-    return collapseHistoryForNewSession(messages, context.userMessageText);
+    const collapsed = collapseHistoryForNewSession(messages, context.userMessageText);
+
+    if (!context.workflowOrigin) {
+      return collapsed;
+    }
+
+    const originBlock = buildOriginAssistantMessage(context.workflowOrigin);
+    const withoutLeadingAssistant =
+      collapsed.length > 0 && collapsed[0].role === MessageRole.ASSISTANT ? collapsed.slice(1) : collapsed;
+
+    return [originBlock, ...withoutLeadingAssistant];
   }
 
   private async resolveVaultIdsForTurn(

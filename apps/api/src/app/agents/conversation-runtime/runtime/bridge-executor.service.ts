@@ -11,19 +11,21 @@ import {
   SsrfBlockedError,
   safeOutboundJsonRequest,
 } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
+import { ConversationActivityEntity, ConversationEntity, type ConversationActivityOriginData, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
   AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentSubscriber,
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import type { WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 import {
   AGENT_PLATFORM_PROVISION_SOURCE,
   AGENT_PROVISION_DATA_KEYS,
@@ -145,6 +147,10 @@ export interface AgentExecutionParams {
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
+  /**
+   * Most recent workflow-origin notification for this conversation; forwarded as `ctx.notification`.
+   */
+  workflowOrigin?: WorkflowOriginSnapshot | null;
   /**
    * Per-context bridge URL override resolved from the connect-time context. Takes precedence over the
    * agent's default `bridgeUrl` (but not the active dev bridge). Re-validated by the SSRF guard on
@@ -399,6 +405,7 @@ export class BridgeExecutorService {
       subscriber: this.mapSubscriber(subscriber),
       subscriberAccess: config.subscriberAccess,
       context: params.context ?? null,
+      notification: params.workflowOrigin ? mapWorkflowOriginToNotification(params.workflowOrigin.data) : null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
@@ -692,4 +699,15 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
+}
+
+function mapWorkflowOriginToNotification(origin: ConversationActivityOriginData): AgentNotification {
+  return {
+    notificationId: origin.notificationId,
+    workflowId: origin.workflowIdentifier,
+    messageId: origin.messageId,
+    platformMessageId: origin.platformMessageId,
+    sentAt: origin.sentAt,
+    payload: origin.payload,
+  };
 }
