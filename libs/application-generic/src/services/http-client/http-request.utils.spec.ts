@@ -1,3 +1,4 @@
+import { SECRET_MASK } from '@novu/shared';
 import { expect } from 'chai';
 import {
   buildInvalidJsonBodyDetail,
@@ -143,6 +144,66 @@ describe('http-request.utils', () => {
       const detail = buildInvalidJsonBodyDetail('boom', '{}');
 
       expect(detail.error).to.equal('Invalid raw JSON body: Failed to parse raw JSON body');
+    });
+
+    it('should mask secret values that land inside the excerpt', () => {
+      const secret = 'sk_live_51NQpZmKq7xTvR3wY';
+      const body = `{"token":"${secret}","order":{"sku" }}`;
+      const position = body.indexOf('{"sku" }') + 7;
+      const detail = buildInvalidJsonBodyDetail(Object.assign(new Error('Colon expected'), { position }), body, [
+        secret,
+      ]);
+
+      expect(detail.bodyExcerpt).to.not.contain(secret);
+      expect(detail.bodyExcerpt).to.contain(SECRET_MASK);
+      expect(detail.bodyExcerpt).to.contain('"order":{"sku" }');
+    });
+
+    it('should mask a secret rendered in its JSON-escaped form', () => {
+      const secret = 'pa$$"word\nline';
+      const escaped = JSON.stringify(secret).slice(1, -1);
+      const body = `{"token":"${escaped}","order":{"sku" }}`;
+      const position = body.indexOf('{"sku" }') + 7;
+      const detail = buildInvalidJsonBodyDetail(Object.assign(new Error('Colon expected'), { position }), body, [
+        secret,
+      ]);
+
+      expect(detail.bodyExcerpt).to.not.contain(escaped);
+      expect(detail.bodyExcerpt).to.contain(SECRET_MASK);
+    });
+
+    it('should not leak a partial secret straddling the excerpt boundary', () => {
+      const secret = `sk_live_${'a'.repeat(80)}_tail`;
+      // Places the secret so that only its tail would fall inside an unmasked window.
+      const body = `{"token":"${secret}","order":{"sku" }}`;
+      const position = body.indexOf('{"sku" }') + 7;
+      const detail = buildInvalidJsonBodyDetail(Object.assign(new Error('Colon expected'), { position }), body, [
+        secret,
+      ]);
+
+      expect(detail.bodyExcerpt).to.not.contain('aaaa');
+      expect(detail.bodyExcerpt).to.not.contain('_tail');
+      expect(detail.bodyExcerpt).to.contain('"order":{"sku" }');
+    });
+
+    it('should keep the excerpt centered on the failure after masking', () => {
+      const secret = 'sk_live_51NQpZmKq7xTvR3wY';
+      const body = `{"token":"${secret}","padding":"${'y'.repeat(300)}","order":{"sku" }}`;
+      const position = body.indexOf('{"sku" }') + 7;
+      const detail = buildInvalidJsonBodyDetail(Object.assign(new Error('Colon expected'), { position }), body, [
+        secret,
+      ]);
+
+      expect(detail.bodyExcerpt).to.contain('"order":{"sku" }');
+    });
+
+    it('should ignore empty secret values', () => {
+      const body = '{"order":{"sku" }}';
+      const detail = buildInvalidJsonBodyDetail(Object.assign(new Error('Colon expected'), { position: 16 }), body, [
+        '',
+      ]);
+
+      expect(detail.bodyExcerpt).to.equal(body);
     });
   });
 });

@@ -26,6 +26,7 @@ import {
   ControlValuesLevelEnum,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
+  EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   isOutboundSsrfProtectionEnabled,
@@ -204,7 +205,9 @@ export class ExecuteHttpRequestStep extends SendMessageType {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(buildInvalidJsonBodyDetail(parseError, compiledBody)),
+          raw: JSON.stringify(
+            buildInvalidJsonBodyDetail(parseError, compiledBody, collectSecretEnvValues(command.compileContext?.env))
+          ),
         })
       );
 
@@ -425,6 +428,26 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     return rawControls;
   }
+}
+
+/**
+ * Compile-safe: adding a field to EnvironmentSystemVariables will cause a TS error here.
+ */
+const SYSTEM_ENV_KEYS: Record<keyof EnvironmentSystemVariables, true> = { name: true, type: true };
+
+/**
+ * `env` merges decrypted environment variables, which can hold API keys and tokens, with the
+ * environment's system variables. Only the user-defined values are treated as secrets: the system
+ * values are not sensitive, and masking strings as common as `prod` would gut the excerpt.
+ */
+function collectSecretEnvValues(env: unknown): string[] {
+  if (!env || typeof env !== 'object') {
+    return [];
+  }
+
+  return Object.entries(env as Record<string, unknown>)
+    .filter(([key, value]) => !(key in SYSTEM_ENV_KEYS) && typeof value === 'string' && value.length > 0)
+    .map(([, value]) => value as string);
 }
 
 function getSkipRules(controlValues: Record<string, unknown>): RulesLogic<AdditionalOperation> | undefined {

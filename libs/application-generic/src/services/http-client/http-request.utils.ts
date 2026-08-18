@@ -1,3 +1,5 @@
+import { SECRET_MASK } from '@novu/shared';
+
 export type KeyValuePair = { key: string; value: string };
 export type HttpRequestBodyControl = string | KeyValuePair[] | undefined;
 
@@ -72,25 +74,57 @@ function extractFailurePosition(error: unknown): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
-function buildBodyExcerpt(body: HttpRequestBodyControl, position: number | undefined): string | undefined {
+/**
+ * Replaces every occurrence of a secret, both raw and in the JSON-escaped form it takes once
+ * rendered into a JSON body.
+ */
+function maskSecrets(text: string, secretValues: readonly string[]): string {
+  return secretValues.filter(Boolean).reduce((masked, secret) => {
+    const escaped = JSON.stringify(secret).slice(1, -1);
+
+    return masked.split(secret).join(SECRET_MASK).split(escaped).join(SECRET_MASK);
+  }, text);
+}
+
+function buildBodyExcerpt(
+  body: HttpRequestBodyControl,
+  position: number | undefined,
+  secretValues: readonly string[]
+): string | undefined {
   if (typeof body !== 'string' || position === undefined) {
     return undefined;
   }
 
-  const start = Math.max(0, position - BODY_EXCERPT_RADIUS);
-  const end = Math.min(body.length, position + BODY_EXCERPT_RADIUS);
+  /**
+   * Mask the whole body before slicing: masking only the excerpt would leak a partial secret
+   * whenever one straddles the window boundary. Masking the prefix separately re-derives the
+   * reported position within the masked body so the excerpt stays centered on the failure.
+   */
+  const maskedBody = maskSecrets(body, secretValues);
+  const maskedPosition = maskSecrets(body.slice(0, position), secretValues).length;
 
-  return `${start > 0 ? '...' : ''}${body.slice(start, end)}${end < body.length ? '...' : ''}`;
+  const start = Math.max(0, maskedPosition - BODY_EXCERPT_RADIUS);
+  const end = Math.min(maskedBody.length, maskedPosition + BODY_EXCERPT_RADIUS);
+
+  return `${start > 0 ? '...' : ''}${maskedBody.slice(start, end)}${end < maskedBody.length ? '...' : ''}`;
 }
 
 /**
  * Turns a JSON parse/repair failure into something a user can act on. The parsers only report a
  * character offset into the rendered body, which nobody can locate by hand, so resolve it against
  * the body and show the surrounding text instead.
+ *
+ * `secretValues` are masked out of the excerpt. Callers that persist the result must pass every
+ * decrypted environment variable value, since execution details are readable by low-privilege
+ * roles through the activity feed.
  */
-export function buildInvalidJsonBodyDetail(error: unknown, body: HttpRequestBodyControl): InvalidJsonBodyDetail {
+export function buildInvalidJsonBodyDetail(
+  error: unknown,
+  body: HttpRequestBodyControl,
+  secretValues: readonly string[] = []
+): InvalidJsonBodyDetail {
   const message = error instanceof Error ? error.message : 'Failed to parse raw JSON body';
-  const bodyExcerpt = buildBodyExcerpt(body, extractFailurePosition(error));
+  const bodyExcerpt = buildBodyExcerpt(body, extractFailurePosition(error), secretValues);
 
   return {
     error: `Invalid raw JSON body: ${message}`,

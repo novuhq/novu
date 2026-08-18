@@ -1,3 +1,4 @@
+import { SECRET_MASK } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ExecuteHttpRequestStep } from './execute-http-request-step.usecase';
@@ -89,7 +90,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       .find((args) => args.raw?.includes('Invalid raw JSON body'));
   }
 
-  function buildCommand() {
+  function buildCommand(env: Record<string, string> = { name: 'Development', type: 'dev' }) {
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
       organizationId: 'org_1',
@@ -136,7 +137,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
           events: undefined,
           total_count: undefined,
         },
-        env: { name: 'Development', type: 'dev' },
+        env,
       } as never,
       bridgeData: null,
       environment: { _id: 'env_1' } as never,
@@ -233,5 +234,25 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     expect(result.status).to.equal(SendMessageStatus.FAILED);
     expect(result.shouldHalt).to.equal(false);
     expect(findFailureDetail(createExecutionDetails)).to.not.equal(undefined);
+  });
+
+  it('masks rendered environment variable secrets out of the persisted excerpt', async () => {
+    const secret = 'sk_live_51NQpZmKq7xTvR3wY';
+    const { usecase, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"token":"{{env.PARTNER_API_KEY}}","tier":"{{env.type}}","order":{"sku" }}',
+    });
+
+    const result = await usecase.execute(buildCommand({ name: 'Production', type: 'prod', PARTNER_API_KEY: secret }));
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+
+    const raw = JSON.parse(findFailureDetail(createExecutionDetails)?.raw ?? '{}');
+    expect(raw.bodyExcerpt, 'the excerpt must not carry the decrypted env secret').to.not.contain(secret);
+    expect(raw.bodyExcerpt).to.contain(SECRET_MASK);
+    // System env values are not secrets, and masking them would gut the excerpt.
+    expect(raw.bodyExcerpt).to.contain('"tier":"prod"');
+    expect(raw.bodyExcerpt).to.contain('"order":{"sku" }');
   });
 });
