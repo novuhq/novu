@@ -21,13 +21,17 @@ export type MintedApprovalActionIds = {
 export function mintApprovalActionIds(params: {
   approvalId: string;
   grammar?: ApprovalActionIdGrammar;
+  toolName?: string;
+  mcpServerName?: string;
 }): MintedApprovalActionIds {
   const grammar = params.grammar ?? { kind: 'self-hosted' };
 
   if (grammar.kind === 'managed') {
+    const identity = { toolName: params.toolName, mcpServerName: params.mcpServerName };
+
     return {
-      approveActionId: buildToolApprovalActionId(grammar.prefix, 'approve', params.approvalId),
-      denyActionId: buildToolApprovalActionId(grammar.prefix, 'deny', params.approvalId),
+      approveActionId: buildToolApprovalActionId(grammar.prefix, 'approve', params.approvalId, identity),
+      denyActionId: buildToolApprovalActionId(grammar.prefix, 'deny', params.approvalId, identity),
     };
   }
 

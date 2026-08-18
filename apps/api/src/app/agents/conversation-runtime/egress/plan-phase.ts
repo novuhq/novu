@@ -2,8 +2,6 @@ import type { PlanTaskStatus } from 'chat';
 
 export type PlanPhase = 'thinking' | 'awaiting-approval' | 'approved' | 'denied' | 'finished' | 'failed';
 
-export const PLAN_THINKING_TASK_ID = '__thinking__';
-
 const PHASE_TITLE: Record<PlanPhase, string> = {
   thinking: 'Thinking…',
   'awaiting-approval': 'Waiting for approval…',
@@ -42,10 +40,13 @@ export function planTitleForCurrentTool(task: Pick<PlanTaskInput, 'title' | 'sta
   switch (task.status) {
     case 'in_progress':
       return `Running ${displayName}…`;
+
     case 'complete':
       return `Finished ${displayName}`;
+
     case 'error':
       return `${displayName} failed`;
+
     default:
       return planTitleForPhase('thinking');
   }
@@ -63,6 +64,25 @@ export interface PlanTaskInput {
 export type PlanProgressPhase = Exclude<PlanPhase, 'thinking'>;
 
 export type PlanProgressEvent =
-  | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
-  | { kind: 'phase'; phase: PlanProgressPhase; title?: string; task?: PlanTaskInput }
-  | { kind: 'title'; title?: string };
+  | { kind: 'task'; task: PlanTaskInput }
+  | { kind: 'phase'; phase: PlanProgressPhase; title?: string; task?: PlanTaskInput };
+
+export function planTaskIfNamed(
+  id: string,
+  identity: { title?: string; group?: string },
+  status: PlanTaskStatus,
+  details?: string
+): PlanTaskInput | undefined {
+  const title = identity.title?.trim();
+  if (!title) {
+    return undefined;
+  }
+
+  return {
+    id,
+    title,
+    status,
+    group: identity.group,
+    ...(details ? { details } : {}),
+  };
+}

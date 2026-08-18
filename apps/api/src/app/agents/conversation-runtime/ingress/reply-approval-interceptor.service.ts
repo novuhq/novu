@@ -279,7 +279,9 @@ export class ReplyApprovalInterceptor {
     // framework grammar the bridge's onToolApproval handler expects.
     const isManagedAgent = turn.agent.runtime === 'managed' && Boolean(turn.agent.managedRuntime);
     const actionId = isManagedAgent
-      ? buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, approved ? 'approve' : 'deny', approvalId)
+      ? buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, approved ? 'approve' : 'deny', approvalId, {
+          toolName,
+        })
       : buildApprovalActionId(approved ? 'approve' : 'deny', approvalId);
 
     await runtime.dispatch({

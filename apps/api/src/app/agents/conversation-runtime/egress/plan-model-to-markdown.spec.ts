@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
-import { PLAN_THINKING_TASK_ID } from './plan-phase';
 
 describe('renderPlanModelAsMarkdown', () => {
   it('renders dynamic title and a single current task', () => {
@@ -13,21 +12,6 @@ describe('renderPlanModelAsMarkdown', () => {
     );
 
     expect(markdown).to.equal('🧠 **Running github: search_code…**\n\n🔄 `github: search_code`');
-  });
-
-  it('hides synthetic thinking task', () => {
-    const markdown = renderPlanModelAsMarkdown(
-      {
-        title: 'Running Linear: save_issue…',
-        tasks: [
-          { id: '1', title: 'Linear: save_issue', status: 'in_progress' },
-          { id: PLAN_THINKING_TASK_ID, title: 'Thinking…', status: 'in_progress' },
-        ],
-      },
-      'thinking'
-    );
-
-    expect(markdown).to.equal('🧠 **Running Linear: save_issue…**\n\n🔄 `Linear: save_issue`');
   });
 
   it('uses finished phase title when there are no tasks', () => {

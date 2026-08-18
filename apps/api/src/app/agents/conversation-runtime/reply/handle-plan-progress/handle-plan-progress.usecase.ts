@@ -43,11 +43,9 @@ export class HandlePlanProgress {
 
     switch (event.kind) {
       case 'task':
-        return this.handleTask(command, event.task, event.cardTitle, activePlanMessageId);
+        return this.handleTask(command, event.task, activePlanMessageId);
       case 'phase':
         return this.handlePhase(command, event.phase, event.title, event.task, activePlanMessageId);
-      case 'title':
-        return this.handleTitle(command, event.title, activePlanMessageId);
       default:
         return assertNever(event);
     }
@@ -56,10 +54,9 @@ export class HandlePlanProgress {
   private async handleTask(
     command: HandlePlanProgressCommand,
     taskInput: PlanTaskInput,
-    cardTitle: string | undefined,
     activePlanMessageId: string | undefined
   ): Promise<void> {
-    const model = this.toModel('thinking', taskInput, false, cardTitle);
+    const model = this.toModel('thinking', taskInput, false);
     const planMessageId = await this.postOrEditPlan(command, activePlanMessageId, model, 'thinking');
 
     if (planMessageId && planMessageId !== activePlanMessageId) {
@@ -92,31 +89,6 @@ export class HandlePlanProgress {
         command.environmentId,
         command.organizationId,
         command.conversationId
-      );
-    }
-  }
-
-  private async handleTitle(
-    command: HandlePlanProgressCommand,
-    title: string | undefined,
-    activePlanMessageId: string | undefined
-  ): Promise<void> {
-    const model = this.toModel('thinking', undefined, false, title);
-
-    if (activePlanMessageId) {
-      await this.postOrEditPlan(command, activePlanMessageId, model, 'thinking');
-
-      return;
-    }
-
-    const planMessageId = await this.postOrEditPlan(command, undefined, model, 'thinking');
-
-    if (planMessageId) {
-      await this.conversationRepository.setActivePlanMessageId(
-        command.environmentId,
-        command.organizationId,
-        command.conversationId,
-        planMessageId
       );
     }
   }

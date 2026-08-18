@@ -415,6 +415,8 @@ export class HandlePendingToolApprovals {
     const actionIds = mintApprovalActionIds({
       approvalId: tool.toolUseId,
       grammar: managedApprovalGrammar(tool.mcpServerName),
+      toolName: tool.toolName,
+      mcpServerName: tool.mcpServerName,
     });
 
     try {

@@ -109,12 +109,18 @@ function mcpToolApprovalSpec(tool: PendingToolApproval): ApprovalCardSpec {
     slackText: `Approve ${tool.toolName}?`,
     icon: { fallbackName: tool.mcpServerName },
     deny: {
-      id: buildToolApprovalActionId(MCP_TOOL_APPROVAL_ACTION_PREFIX, 'deny', tool.toolUseId),
+      id: buildToolApprovalActionId(MCP_TOOL_APPROVAL_ACTION_PREFIX, 'deny', tool.toolUseId, {
+        toolName: tool.toolName,
+        mcpServerName: tool.mcpServerName,
+      }),
       label: 'Deny',
       value: toolLabel,
     },
     approve: {
-      id: buildToolApprovalActionId(MCP_TOOL_APPROVAL_ACTION_PREFIX, 'approve', tool.toolUseId),
+      id: buildToolApprovalActionId(MCP_TOOL_APPROVAL_ACTION_PREFIX, 'approve', tool.toolUseId, {
+        toolName: tool.toolName,
+        mcpServerName: tool.mcpServerName,
+      }),
       label: 'Approve once',
       value: toolLabel,
     },
@@ -144,12 +150,16 @@ function directToolApprovalSpec(tool: PendingToolApproval): ApprovalCardSpec {
     slackText: `Approve ${tool.toolName}?`,
     icon: { fallbackName: undefined },
     deny: {
-      id: buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, 'deny', tool.toolUseId),
+      id: buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, 'deny', tool.toolUseId, {
+        toolName: tool.toolName,
+      }),
       label: 'Deny',
       value: toolLabel,
     },
     approve: {
-      id: buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, 'approve', tool.toolUseId),
+      id: buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, 'approve', tool.toolUseId, {
+        toolName: tool.toolName,
+      }),
       label: 'Approve once',
       value: toolLabel,
     },

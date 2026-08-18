@@ -12,15 +12,28 @@ export type ToolTrustTarget =
 export type ParsedToolApprovalAction = {
   toolUseId: string;
   approved: boolean;
+  toolName?: string;
+  mcpServerName?: string;
   trust?: ToolTrustTarget;
 };
 
 export function buildToolApprovalActionId(
   prefix: ToolApprovalActionPrefix,
   verdict: 'approve' | 'deny',
-  toolUseId: string
+  toolUseId: string,
+  identity?: { toolName?: string; mcpServerName?: string }
 ): string {
-  return `${prefix}:${verdict}:${toolUseId}`;
+  const base = `${prefix}:${verdict}:${toolUseId}`;
+  if (!identity?.toolName) {
+    return base;
+  }
+
+  const encodedName = encodeURIComponent(identity.toolName);
+  if (identity.mcpServerName === undefined) {
+    return `${base}:${encodedName}`;
+  }
+
+  return `${base}:${encodedName}:${encodeURIComponent(identity.mcpServerName)}`;
 }
 
 const TOOL_APPROVAL_VERDICTS = ['approve', 'deny', 'approve-tool', 'approve-server'] as const;
@@ -74,7 +87,7 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
   switch (verdict) {
     case 'approve':
     case 'deny':
-      return { toolUseId, approved };
+      return { toolUseId, approved, toolName, mcpServerName };
     // Persist verdicts are only ever emitted by our cards with all required
     // segments present. A missing/undecodable segment therefore means a
     // malformed or forged id, so we reject it (fail closed: no approval, no

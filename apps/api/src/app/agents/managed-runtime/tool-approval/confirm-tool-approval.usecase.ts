@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
+import { planTaskIfNamed } from '../../conversation-runtime/egress/plan-phase';
 import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { type ParsedToolApprovalAction } from '../../shared/tool-approval/action-id';
@@ -92,7 +93,13 @@ export class ConfirmToolApproval {
   }
 
   private updatePlanProgress(command: ConfirmToolApprovalCommand, parsed: ParsedToolApprovalAction): void {
+    const identity = {
+      title: parsed.toolName ?? (parsed.trust?.scope === 'tool' ? parsed.trust.toolName : undefined),
+      group: parsed.mcpServerName ?? parsed.trust?.mcpServerName,
+    };
+
     if (!parsed.approved) {
+      const task = planTaskIfNamed(parsed.toolUseId, identity, 'error', 'Denied');
       this.handlePlanProgress
         .execute(
           HandlePlanProgressCommand.create({
@@ -102,10 +109,7 @@ export class ConfirmToolApproval {
             conversationId: command.conversationId,
             agentIdentifier: command.agentIdentifier,
             integrationIdentifier: command.integrationIdentifier,
-            event: {
-              kind: 'task',
-              task: { id: parsed.toolUseId, status: 'error', details: 'Denied' },
-            },
+            event: task ? { kind: 'task', task } : { kind: 'phase', phase: 'denied' },
           })
         )
         .catch((err) => {
@@ -115,6 +119,7 @@ export class ConfirmToolApproval {
       return;
     }
 
+    const task = planTaskIfNamed(parsed.toolUseId, identity, 'in_progress');
     this.handlePlanProgress
       .execute(
         HandlePlanProgressCommand.create({
@@ -127,7 +132,7 @@ export class ConfirmToolApproval {
           event: {
             kind: 'phase',
             phase: 'approved',
-            task: { id: parsed.toolUseId, status: 'in_progress' },
+            ...(task ? { task } : {}),
           },
         })
       )

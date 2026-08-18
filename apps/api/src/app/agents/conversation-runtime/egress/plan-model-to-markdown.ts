@@ -1,13 +1,11 @@
 import type { PlanModel, PlanTaskStatus } from 'chat';
-import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleEmojiForPhase, planTitleForPhase } from './plan-phase';
+import { type PlanPhase, planTitleEmojiForPhase, planTitleForPhase } from './plan-phase';
 
 export function renderPlanModelAsMarkdown(plan: PlanModel, phase: PlanPhase): string {
   const title = plan.title?.trim() ? plan.title : planTitleForPhase(phase);
   const header = `${planTitleEmojiForPhase(phase)} **${escapeMarkdownInline(title)}**`;
 
-  const taskLines = plan.tasks
-    .filter((task) => task.id !== PLAN_THINKING_TASK_ID)
-    .map((task) => `${planTaskStatusEmoji(task.status)} ${formatTaskTitle(task.title)}`);
+  const taskLines = plan.tasks.map((task) => `${planTaskStatusEmoji(task.status)} ${formatTaskTitle(task.title)}`);
 
   if (taskLines.length === 0) {
     return header;
