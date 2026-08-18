@@ -11,7 +11,12 @@ import {
   SsrfBlockedError,
   safeOutboundJsonRequest,
 } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationEntity, type ConversationActivityOriginData, SubscriberEntity } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  type ConversationActivityOriginData,
+  ConversationEntity,
+  SubscriberEntity,
+} from '@novu/dal';
 import type {
   AgentAction,
   AgentContextPayload,
@@ -25,7 +30,6 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import type { WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 import {
   AGENT_PLATFORM_PROVISION_SOURCE,
   AGENT_PROVISION_DATA_KEYS,
@@ -38,6 +42,7 @@ import { captureAgentException, captureAgentWarning } from '../../shared/errors/
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
+import type { WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
 

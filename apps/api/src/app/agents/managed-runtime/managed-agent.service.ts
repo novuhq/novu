@@ -184,15 +184,18 @@ export class ManagedAgentService implements OnModuleInit {
       return null;
     }
 
+    const origin = await this.conversationService.findLatestWorkflowOrigin(
+      params.config.environmentId,
+      params.conversation._id
+    );
+
     return this.dispatch(
       {
         config: params.config,
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
-        workflowOrigin: toWorkflowOriginSnapshot(
-          await this.conversationService.findLatestWorkflowOrigin(params.config.environmentId, params.conversation._id)
-        ),
+        workflowOrigin: toWorkflowOriginSnapshot(origin),
         platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
       },

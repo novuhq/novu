@@ -174,12 +174,17 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
     case ConversationActivityTypeEnum.RUN_ERROR:
       return mapRunLifecycleActivityToEvent(activity);
 
+    // Operator/model-facing only — no client event.
     case ConversationActivityTypeEnum.SIGNAL:
     case ConversationActivityTypeEnum.WORKFLOW_ORIGIN:
       return null;
 
-    default:
+    default: {
+      const _exhaustive: never = activity.type;
+      void _exhaustive;
+
       return null;
+    }
   }
 }
 

@@ -237,13 +237,44 @@ describe('WorkflowOriginService', () => {
         conversation: conversation as any,
         platformThreadId: 'slack:D123:1777837477.371619',
         resolution: null,
-        existingConversation: conversation as any,
+        existingConversation: { ...conversation, _notificationId: 'notif1' } as any,
       });
 
       expect(findLatestWorkflowOrigin.calledOnce).to.equal(true);
       expect(snapshot?.source).to.equal('existing');
       expect(snapshot?.content).to.equal('Your order shipped');
       expect(snapshot?.data.payload).to.deep.equal({ orderId: 'ORD-9' });
+    });
+
+    it('skips the read on a conversation that was never opened from a workflow send', async () => {
+      const { service, conversationService } = makeService();
+
+      const snapshot = await service.resolveForTurn({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: conversation as any,
+        platformThreadId: 'slack:D123:1777837477.371619',
+        resolution: null,
+        existingConversation: conversation as any,
+      });
+
+      expect(snapshot).to.equal(null);
+      expect(conversationService.findLatestWorkflowOrigin.called).to.equal(false);
+    });
+
+    it('reads on a recheck platform even without a create-time notification stamp', async () => {
+      const { service, conversationService } = makeService();
+
+      await service.resolveForTurn({
+        agentId: 'agent1',
+        config: { ...config, platform: AgentPlatformEnum.WHATSAPP } as any,
+        conversation: conversation as any,
+        platformThreadId: 'whatsapp:15551234567',
+        resolution: null,
+        existingConversation: conversation as any,
+      });
+
+      expect(conversationService.findLatestWorkflowOrigin.calledOnce).to.equal(true);
     });
 
     it('returns null on a brand-new conversation with nothing to hydrate', async () => {

@@ -34,20 +34,18 @@ describe('isFromWorkflow', () => {
       payload: { trackingNumber: '1Z' },
     };
 
-    if (isFromWorkflow(notification, orderShipped)) {
-      expectTypeOf(notification.payload).toEqualTypeOf<OrderPayload>();
-    } else {
+    if (!isFromWorkflow(notification, orderShipped)) {
       expectTypeOf(notification.payload).toEqualTypeOf<Record<string, unknown>>();
     }
   });
 
-  it('rejects null notifications at the type level', () => {
+  it('excludes a null notification from the narrowed branch', () => {
     type OrderPayload = { trackingNumber: string };
     const orderShipped = { id: 'order-shipped' } as Workflow<OrderPayload>;
-    const notification: AgentNotification | null = null;
+    const notification = {} as AgentNotification | null;
 
-    if (!isFromWorkflow(notification, orderShipped)) {
-      expectTypeOf(notification).toEqualTypeOf<null>();
+    if (isFromWorkflow(notification, orderShipped)) {
+      expectTypeOf(notification.payload).toEqualTypeOf<OrderPayload>();
     }
   });
 });

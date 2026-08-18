@@ -12,6 +12,7 @@ import { ENDPOINT_TYPES } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
+import { Types } from 'mongoose';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
@@ -415,8 +416,9 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       );
       expect(conversation).to.exist;
 
+      const notificationId = new Types.ObjectId().toString();
       const originData = {
-        notificationId: 'notif-origin-1',
+        notificationId,
         templateId: 'wf-origin-1',
         workflowIdentifier: 'order-shipped',
         messageId: 'msg-origin-1',
@@ -425,6 +427,16 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         sentAt: '2026-01-01T00:00:00.000Z',
         payload: { orderId: 'ORD-42' },
       };
+
+      // Slack binds the origin at conversation create, so the stamp is part of the state under test.
+      await conversationRepository.update(
+        {
+          _id: conversation!._id,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
+        { $set: { _notificationId: notificationId } }
+      );
 
       await activityRepository.createWorkflowOriginActivity({
         identifier: `workflow-dispatch-origin:wamid.origin.${Date.now()}`,
@@ -446,7 +458,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(bridgeCalls[0].workflowOrigin?.data).to.deep.include({
         workflowIdentifier: 'order-shipped',
-        notificationId: 'notif-origin-1',
+        notificationId,
         payload: { orderId: 'ORD-42' },
       });
       expect(bridgeCalls[0].workflowOrigin?.source).to.equal('existing');

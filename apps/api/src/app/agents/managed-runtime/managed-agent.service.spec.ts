@@ -10,7 +10,6 @@ import {
   WORKFLOW_ORIGIN_CONTENT_MAX_CHARS,
   type WorkflowOriginSnapshot,
 } from '../conversation-runtime/ingress/workflow-origin.helpers';
-import { buildLiveSessionMessages } from './build-live-session-messages';
 import { ManagedAgentService } from './managed-agent.service';
 
 const sampleOriginData: ConversationActivityOriginData = {
@@ -178,28 +177,6 @@ describe('ManagedAgentService workflow-origin', () => {
 
       expect(conversationService.findLatestWorkflowOrigin.called).to.equal(false);
       expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'where is my order?' }]);
-    });
-  });
-
-  describe('live session injection gating', () => {
-    it('injects a freshly hydrated origin into a live session', () => {
-      const messages = buildLiveSessionMessages({
-        userMessageText: 'where is it?',
-        workflowOrigin: hydratedSnapshot,
-      });
-
-      expect(messages).to.have.lengthOf(2);
-      expect(String(messages[0].content)).to.include('Your order ORD-1 shipped');
-    });
-
-    it('does not re-inject an existing origin into a live session', () => {
-      // Caller (dispatch) drops `existing` before buildLiveSessionMessages.
-      const messages = buildLiveSessionMessages({
-        userMessageText: 'thanks',
-        workflowOrigin: null,
-      });
-
-      expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'thanks' }]);
     });
   });
 

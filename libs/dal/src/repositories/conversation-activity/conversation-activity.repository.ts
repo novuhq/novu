@@ -8,8 +8,8 @@ import { ActivityView, compileActivityViewMatch, viewUsesSequencePagination } fr
 import {
   ConversationActivityDBModel,
   ConversationActivityEntity,
-  ConversationActivitySenderTypeEnum,
   ConversationActivityOriginData,
+  ConversationActivitySenderTypeEnum,
   ConversationActivitySignalData,
   ConversationActivityToolData,
   ConversationActivityTypeEnum,

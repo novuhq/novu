@@ -181,13 +181,22 @@ export class WorkflowOriginService {
       });
     }
 
-    if (!existingConversation) {
+    if (!existingConversation || !this.canHoldWorkflowOrigin(config, existingConversation)) {
       return null;
     }
 
     const activity = await this.conversationService.findLatestWorkflowOrigin(config.environmentId, conversation._id);
 
     return toWorkflowOriginSnapshot(activity);
+  }
+
+  /**
+   * Whether a persisted origin is even possible, so the read is skipped on the platforms and
+   * conversations that can never hold one (`agent_chat`, `teams`, threads opened without a send).
+   * `_notificationId` is stamped at create; recheck platforms can attach an origin later, without it.
+   */
+  private canHoldWorkflowOrigin(config: ResolvedAgentConfig, existingConversation: ConversationEntity): boolean {
+    return Boolean(existingConversation._notificationId) || RECHECK_WORKFLOW_ORIGIN_PLATFORMS.has(config.platform);
   }
 
   /**

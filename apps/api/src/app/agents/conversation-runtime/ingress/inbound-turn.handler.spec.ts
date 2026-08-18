@@ -45,6 +45,30 @@ describe('AgentInboundHandler', () => {
     };
   }
 
+  function makeOriginSnapshot(
+    overrides: {
+      content?: string;
+      platformMessageId?: string;
+      payload?: Record<string, unknown>;
+      source?: 'hydrated' | 'existing';
+    } = {}
+  ) {
+    return {
+      content: overrides.content ?? 'Order alerts',
+      data: {
+        notificationId: 'notif1',
+        templateId: 'wf1',
+        workflowIdentifier: 'order-alerts',
+        messageId: 'msg1',
+        channel: 'chat',
+        platformMessageId: overrides.platformMessageId ?? '1777837477.371619',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        payload: overrides.payload ?? {},
+      },
+      source: overrides.source ?? ('hydrated' as const),
+    };
+  }
+
   function makeResolvedSubscriberOverrides(subscriberId = 'sub1', internalSubscriberId = 'subscriber-mongo-1') {
     return {
       subscriberResolve: sinon.stub().resolves(subscriberId),
@@ -434,20 +458,7 @@ describe('AgentInboundHandler', () => {
         _notificationId: 'notif1',
         identifier: 'D123:1777837477.371619',
       };
-      const snapshot = {
-        content: 'Order shipped',
-        data: {
-          notificationId: 'notif1',
-          templateId: 'wf1',
-          workflowIdentifier: 'order-alerts',
-          messageId: 'msg1',
-          channel: 'chat',
-          platformMessageId: '1777837477.371619',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: {},
-        },
-        source: 'hydrated' as const,
-      };
+      const snapshot = makeOriginSnapshot({ content: 'Order shipped' });
 
       conversationService.findByPlatformThread.resolves(null);
       workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
@@ -488,20 +499,7 @@ describe('AgentInboundHandler', () => {
         ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
-      const snapshot = {
-        content: 'Order alerts',
-        data: {
-          notificationId: 'notif1',
-          templateId: 'wf1',
-          workflowIdentifier: 'order-alerts',
-          messageId: 'msg1',
-          channel: 'chat',
-          platformMessageId: '42',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: {},
-        },
-        source: 'hydrated' as const,
-      };
+      const snapshot = makeOriginSnapshot({ platformMessageId: '42' });
 
       conversationService.findByPlatformThread.resolves({
         _id: 'conv1',
@@ -550,20 +548,12 @@ describe('AgentInboundHandler', () => {
         channels: [{ platform: AgentPlatformEnum.TELEGRAM, _integrationId: 'int1', platformThreadId: 'telegram:42' }],
         participants: [],
       };
-      const snapshot = {
+      const snapshot = makeOriginSnapshot({
         content: 'Your order shipped',
-        data: {
-          notificationId: 'notif1',
-          templateId: 'wf1',
-          workflowIdentifier: 'order-alerts',
-          messageId: 'msg1',
-          channel: 'chat',
-          platformMessageId: '42',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: { orderId: 'ORD-9' },
-        },
-        source: 'existing' as const,
-      };
+        platformMessageId: '42',
+        payload: { orderId: 'ORD-9' },
+        source: 'existing',
+      });
       const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
         ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
@@ -1687,20 +1677,7 @@ describe('AgentInboundHandler', () => {
         templateIdentifier: 'order-alerts',
         identifier: 'thread1:1777837477.371619',
       };
-      const snapshot = {
-        content: 'Order alerts',
-        data: {
-          notificationId: 'notif1',
-          templateId: 'wf1',
-          workflowIdentifier: 'order-alerts',
-          messageId: 'msg1',
-          channel: 'chat',
-          platformMessageId: '1777837477.371619',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: {},
-        },
-        source: 'hydrated' as const,
-      };
+      const snapshot = makeOriginSnapshot();
 
       conversationService.findByPlatformThread.resolves(null);
       workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
@@ -1734,20 +1711,7 @@ describe('AgentInboundHandler', () => {
 
       conversationService.findByPlatformThread.resolves(null);
       workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
-      workflowOriginService.resolveForTurn.resolves({
-        content: 'Order alerts',
-        data: {
-          notificationId: 'notif1',
-          templateId: 'wf1',
-          workflowIdentifier: 'order-alerts',
-          messageId: 'msg1',
-          channel: 'chat',
-          platformMessageId: '1777837477.371619',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: {},
-        },
-        source: 'hydrated',
-      });
+      workflowOriginService.resolveForTurn.resolves(makeOriginSnapshot());
 
       await handler.handleAction(
         'agent1',
@@ -1791,20 +1755,7 @@ describe('AgentInboundHandler', () => {
         origin: { _id: 'msg1', _notificationId: 'notif1' },
         notificationId: 'notif1',
       });
-      workflowOriginService.resolveForTurn.resolves({
-        content: 'Order alerts',
-        data: {
-          notificationId: 'notif1',
-          templateId: 'wf1',
-          workflowIdentifier: 'order-alerts',
-          messageId: 'msg1',
-          channel: 'chat',
-          platformMessageId: 'p1',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: {},
-        },
-        source: 'hydrated',
-      });
+      workflowOriginService.resolveForTurn.resolves(makeOriginSnapshot({ platformMessageId: 'p1' }));
 
       await handler.handleAction(
         'agent1',
