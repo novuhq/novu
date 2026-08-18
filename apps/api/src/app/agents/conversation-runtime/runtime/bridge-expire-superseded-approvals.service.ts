@@ -12,7 +12,6 @@ import {
   findUnresolvedToolApprovalRequests,
 } from '../../shared/tool-approval/unresolved-approvals';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import { ConversationActivityLedger } from '../conversation/conversation-activity-ledger';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { ConversationTurn } from './conversation-turn';
 
@@ -28,7 +27,6 @@ import type { ConversationTurn } from './conversation-turn';
 export class BridgeExpireSupersededApprovalsService {
   constructor(
     private readonly conversationService: AgentConversationService,
-    private readonly activityLedger: ConversationActivityLedger,
     private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger
   ) {
@@ -37,7 +35,7 @@ export class BridgeExpireSupersededApprovalsService {
 
   async expireOnNewMessage(turn: ConversationTurn): Promise<void> {
     const { config, conversation } = turn;
-    const page = await this.activityLedger.listForView({
+    const page = await this.conversationService.listForView({
       view: 'approval_activities',
       environmentId: config.environmentId,
       organizationId: config.organizationId,

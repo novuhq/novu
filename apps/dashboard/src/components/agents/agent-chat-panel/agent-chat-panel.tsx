@@ -87,9 +87,10 @@ function AgentChatSurface({
   const [draft, setDraft] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { messages, pendingActions, sendMessage, respondToAction, error, isRunning, isLoading, typing } = useAgentChat({
-    agentId,
-  });
+  const { messages, pendingActions, sendMessage, sendAction, respondToAction, error, isRunning, isLoading, typing } =
+    useAgentChat({
+      agentId,
+    });
 
   const composerDisabled = isRunning || isLoading;
   const canSend = !composerDisabled && Boolean(draft.trim());
@@ -146,6 +147,8 @@ function AgentChatSurface({
                 key={message.id}
                 message={message}
                 showAvatar={message.role !== 'user' && messages[index - 1]?.role !== message.role}
+                cardActionsDisabled={composerDisabled}
+                onCardAction={(action) => void sendAction(action)}
               />
             ))}
             {showTypingRow ? <ChatTypingRow status={typing?.status} /> : null}
