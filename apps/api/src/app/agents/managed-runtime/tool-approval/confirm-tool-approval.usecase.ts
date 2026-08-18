@@ -124,7 +124,11 @@ export class ConfirmToolApproval {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          event: { kind: 'phase', phase: 'approved' },
+          event: {
+            kind: 'phase',
+            phase: 'approved',
+            task: { id: parsed.toolUseId, status: 'in_progress' },
+          },
         })
       )
       .catch((err) => {

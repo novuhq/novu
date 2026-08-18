@@ -461,7 +461,16 @@ export class HandlePendingToolApprovals {
         conversationId: command.conversationId,
         agentIdentifier: command.agentIdentifier,
         integrationIdentifier: command.integrationIdentifier,
-        event: { kind: 'phase', phase: 'awaiting-approval' },
+        event: {
+          kind: 'phase',
+          phase: 'awaiting-approval',
+          task: {
+            id: tool.toolUseId,
+            title: tool.toolName,
+            status: 'in_progress',
+            group: tool.mcpServerName,
+          },
+        },
       })
     );
   }

@@ -64,5 +64,5 @@ export type PlanProgressPhase = Exclude<PlanPhase, 'thinking'>;
 
 export type PlanProgressEvent =
   | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
-  | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
+  | { kind: 'phase'; phase: PlanProgressPhase; title?: string; task?: PlanTaskInput }
   | { kind: 'title'; title?: string };

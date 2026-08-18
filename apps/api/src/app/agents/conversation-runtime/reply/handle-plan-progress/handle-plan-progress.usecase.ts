@@ -45,7 +45,7 @@ export class HandlePlanProgress {
       case 'task':
         return this.handleTask(command, event.task, event.cardTitle, activePlanMessageId);
       case 'phase':
-        return this.handlePhase(command, event.phase, event.title, activePlanMessageId);
+        return this.handlePhase(command, event.phase, event.title, event.task, activePlanMessageId);
       case 'title':
         return this.handleTitle(command, event.title, activePlanMessageId);
       default:
@@ -76,6 +76,7 @@ export class HandlePlanProgress {
     command: HandlePlanProgressCommand,
     phase: PlanProgressPhase,
     title: string | undefined,
+    task: PlanTaskInput | undefined,
     activePlanMessageId: string | undefined
   ): Promise<void> {
     if (!activePlanMessageId) {
@@ -84,7 +85,7 @@ export class HandlePlanProgress {
 
     const isFinal = phase === 'finished' || phase === 'failed';
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(phase, undefined, isFinal, title), phase);
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(phase, task, isFinal, title), phase);
 
     if (isFinal) {
       await this.conversationRepository.clearActivePlanMessageId(
