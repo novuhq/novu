@@ -14,7 +14,7 @@ import {
 import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
-import type { ChannelChoice } from '../types';
+import type { AgentChatSetupMode, ChannelChoice } from '../types';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
@@ -243,6 +243,7 @@ export function PhaseContent({
         { label: 'Email', value: 'email' },
         { label: 'iMessage (Sendblue)', value: 'sendblue' },
         { label: 'WhatsApp', value: 'whatsapp' },
+        { label: 'Agent Chat', value: 'agent-chat' },
         { label: 'Microsoft Teams', value: 'teams' },
         { label: 'Skip — set up later in dashboard', value: 'skip' },
       ];
@@ -271,6 +272,23 @@ export function PhaseContent({
 
     case 'adding-slack':
       return <Text color="cyan">Linking Slack to your agent…</Text>;
+
+    case 'adding-agent-chat':
+      return <Text color="cyan">Linking Agent Chat to your agent…</Text>;
+
+    case 'agent-chat-handoff':
+      return (
+        <AgentChatHandoffContent
+          dashboardUrl={phase.dashboardUrl}
+          embedPromptFile={phase.embedPromptFile}
+          onContinue={phase.resolve}
+        />
+      );
+
+    case 'pick-agent-chat-setup':
+      return (
+        <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />
+      );
 
     case 'paste-slack-token':
       return <PasteSlackConfigTokenContent phase={phase} />;
@@ -521,6 +539,64 @@ function DashboardChannelReadyContent({
   );
 }
 
+function AgentChatHandoffContent({
+  dashboardUrl,
+  embedPromptFile,
+  onContinue,
+}: {
+  dashboardUrl: string;
+  embedPromptFile?: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') onContinue();
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Agent Chat linked</Text>
+      <Text dimColor>Try chat in the dashboard, then add useAgentChat to your app.</Text>
+      <CopyableLink url={dashboardUrl} hint="Open Chat tab:" />
+      {embedPromptFile ? <Text dimColor>Embed prompt: {embedPromptFile}</Text> : null}
+      <Text dimColor>Press Enter to continue →</Text>
+    </Box>
+  );
+}
+
+function AgentChatSetupPickContent({
+  projectKind,
+  onResolve,
+}: {
+  projectKind: 'empty' | 'project';
+  onResolve: (mode: AgentChatSetupMode) => void;
+}): React.ReactElement {
+  useInput((input) => {
+    if (input === '1') onResolve('scaffold');
+    if (input === '2') onResolve('embed');
+    if (input === '3') onResolve('skip');
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Add Agent Chat to your app</Text>
+      <Text dimColor>
+        {projectKind === 'empty'
+          ? 'No project found here. Scaffold a small example app, or copy the embed prompt.'
+          : 'We found an existing project. Embed into it, or scaffold a new example app.'}
+      </Text>
+      <Text>
+        <Text color="cyan">1</Text> Scaffold example app
+      </Text>
+      <Text>
+        <Text color="cyan">2</Text> Embed prompt for my app
+      </Text>
+      <Text>
+        <Text color="cyan">3</Text> Skip for now
+      </Text>
+    </Box>
+  );
+}
+
 function SuccessView({
   phase,
 }: {
@@ -538,6 +614,8 @@ function SuccessView({
     chatSdkOutcome,
     aiSdkOutcome,
     langChainOutcome,
+    agentChatHandoff,
+    agentChatOutcome,
   } = phase;
   const destination = resolveConnectSuccessDestination({
     connectDashboardUrl,
@@ -553,6 +631,7 @@ function SuccessView({
     if (connectedChannel === 'email') return 'Email';
     if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
     if (connectedChannel === 'whatsapp') return 'WhatsApp';
+    if (connectedChannel === 'agent-chat') return 'Agent Chat';
 
     return null;
   })();
@@ -566,12 +645,26 @@ function SuccessView({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text color="green">✓ Your agent is live.</Text>
+      <Text color="green">
+        {connectedChannel === 'agent-chat' ? '✓ Agent Chat linked — add it to your app.' : '✓ Your agent is live.'}
+      </Text>
       <Box flexDirection="column">
         <Text>
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
-        {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
+        {connectedChannel === 'agent-chat' ? (
+          <>
+            {agentChatHandoff?.dashboardUrl ? (
+              <Text color="cyan">Try chat in the dashboard — link copied above.</Text>
+            ) : null}
+            {agentChatHandoff?.embedPromptFile ? (
+              <Text dimColor>Embed prompt: {agentChatHandoff.embedPromptFile}</Text>
+            ) : null}
+            {agentChatOutcome?.projectDir ? <Text color="cyan">Example app: {agentChatOutcome.projectDir}</Text> : null}
+          </>
+        ) : (
+          renderSuccessChannelMessage(channelLabel, redirectChannelLabel)
+        )}
         {scaffoldMessage ? <Text color="cyan">{scaffoldMessage}</Text> : null}
         {renderSuccessNextStep(destination)}
       </Box>

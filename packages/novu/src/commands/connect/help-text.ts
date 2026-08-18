@@ -119,7 +119,7 @@ Non-interactive (agent / CI) contract:
 
   Required for --ci mode:
     - Pass the agent description as the positional <prompt> argument or --prompt (managed path only).
-    - Pass --channel <slack|email|telegram|sendblue|whatsapp|skip> (teams only without --keyless).
+    - Pass --channel <slack|email|telegram|sendblue|whatsapp|agent-chat|skip> (teams only without --keyless).
     - Bridge path: pass --runtime ai-sdk or --runtime langchain (omit the positional description).
 
   Authentication (pick one):
@@ -134,6 +134,7 @@ Non-interactive (agent / CI) contract:
     - --channel sendblue → requires --sendblue-api-key, --sendblue-secret-key, --sendblue-from (E.164 agent/sender number), and --sendblue-test-phone (E.164 recipient phone); no secure setup page
     - --channel whatsapp → no extra flags; works with --keyless. When Meta Embedded Signup is available the CLI prints a public tokenized signup URL (valid ~30 min, no dashboard login needed), polls until signup completes in the browser (~15 min budget), then waits for an inbound WhatsApp message. When unavailable (flag off / self-hosted without Meta Tech Provider credentials) a keyless run prompts dashboard sign-in and retries; if still unavailable the CLI opens the dashboard integrations tab and exits.
     - --channel skip     → no extra flags (agent only, no channel)
+    - --channel agent-chat → no extra flags; works with --keyless. Links Agent Chat, prints dashboard Chat tab URL + embed prompt file. Use --agent-chat-setup scaffold|embed|skip in --ci (auto-detect when omitted).
 
   Optional CI-only escape hatches (secrets injected via env — never paste in chat):
     - --slack-config-token "xoxe.xoxp-…"    → skip the setup page; pass token directly

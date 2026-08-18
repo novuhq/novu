@@ -1,4 +1,6 @@
+export * from './agent-chat-connect-prompt';
 export * from './agent-email-reply-token';
+export * from './connect-agent-chat-dashboard-url';
 export * from './bridge.utils';
 export * from './buildWorkflowPreferences';
 export * from './chat-body';

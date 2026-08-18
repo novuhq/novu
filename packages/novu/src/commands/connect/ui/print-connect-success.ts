@@ -6,6 +6,10 @@ import type { ConnectUI } from './ui';
 type ConnectSuccessResult = Parameters<ConnectUI['success']>[0];
 
 export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): boolean {
+  if (result.connectedChannel === 'agent-chat') {
+    return false;
+  }
+
   return (
     result.customCodeOutcome?.scaffolded === true ||
     result.chatSdkOutcome?.scaffolded === true ||
@@ -32,6 +36,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     if (result.connectedChannel === 'email') return 'Email';
     if (result.connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
     if (result.connectedChannel === 'whatsapp') return 'WhatsApp';
+    if (result.connectedChannel === 'agent-chat') return 'Agent Chat';
 
     return null;
   })();
@@ -40,9 +45,23 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     : null;
 
   console.log('');
-  console.log(`${chalk.green('✓')} Your agent is live.`);
+  if (result.connectedChannel === 'agent-chat') {
+    console.log(`${chalk.green('✓')} Agent Chat linked — add it to your app.`);
+  } else {
+    console.log(`${chalk.green('✓')} Your agent is live.`);
+  }
   console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-  if (channelLabel) {
+  if (result.connectedChannel === 'agent-chat') {
+    if (result.agentChatHandoff?.dashboardUrl) {
+      console.log(`  ${chalk.cyan('→')} Try chat in the dashboard: ${result.agentChatHandoff.dashboardUrl}`);
+    }
+    if (result.agentChatHandoff?.embedPromptFile) {
+      console.log(`  ${chalk.cyan('→')} Embed prompt file: ${result.agentChatHandoff.embedPromptFile}`);
+    }
+    if (result.agentChatOutcome?.projectDir) {
+      console.log(`  ${chalk.cyan('→')} Example app: ${result.agentChatOutcome.projectDir}`);
+    }
+  } else if (channelLabel) {
     console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
   } else if (redirectChannelLabel) {
     console.log(`  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`);

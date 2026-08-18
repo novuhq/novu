@@ -544,6 +544,28 @@ function createUiController(
     slackSkipped() {
       // No interim screen — the success screen reports skipped state.
     },
+    addingAgentChatIntegration() {
+      store.phase.set({ kind: 'adding-agent-chat' });
+    },
+    awaitAgentChatHandoff({ dashboardUrl, embedPromptFile }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({
+          kind: 'agent-chat-handoff',
+          dashboardUrl,
+          embedPromptFile,
+          resolve,
+        });
+      });
+    },
+    pickAgentChatSetup({ projectKind }) {
+      return new Promise((resolve) => {
+        store.phase.set({
+          kind: 'pick-agent-chat-setup',
+          projectKind,
+          resolve,
+        });
+      });
+    },
     sendingWelcome() {
       store.phase.set({ kind: 'sending-welcome' });
     },
@@ -573,6 +595,8 @@ function createUiController(
         aiSdkOutcome: result.aiSdkOutcome,
         langChainOutcome: result.langChainOutcome,
         customCodeOutcome: result.customCodeOutcome,
+        agentChatOutcome: result.agentChatOutcome,
+        agentChatHandoff: result.agentChatHandoff,
       });
     },
     failure(message) {

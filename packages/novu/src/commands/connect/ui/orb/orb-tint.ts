@@ -8,6 +8,7 @@ const CHANNEL_TINTS: Record<ChannelChoice, string> = {
   whatsapp: '#25D366', // WhatsApp green
   teams: '#5059C9', // Teams indigo
   sendblue: '#34C759', // iMessage green
+  'agent-chat': '#6366F1', // Agent Chat indigo
   skip: 'white',
 };
 const DEFAULT_ORB_COLOR = 'white';
@@ -20,6 +21,7 @@ const CHANNEL_LABELS: Partial<Record<ChannelChoice, string>> = {
   whatsapp: 'WHATSAPP',
   teams: 'TEAMS',
   sendblue: 'IMESSAGE',
+  'agent-chat': 'AGENT CHAT',
 };
 
 function lerpHexColor(from: string, to: string, amount: number): string {

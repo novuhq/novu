@@ -1,3 +1,4 @@
+import { buildConnectAgentChatDashboardUrl as buildSharedConnectAgentChatDashboardUrl } from '@novu/shared';
 import type { ChannelChoice } from './types';
 
 export const DASHBOARD_ONLY_CHANNELS: ReadonlyArray<ChannelChoice> = ['teams'];
@@ -68,6 +69,14 @@ export function resolveConnectSuccessDestination(input: {
   };
 }
 
+export function buildConnectAgentChatDashboardUrl(input: {
+  connectDashboardUrl: string;
+  environmentSlug: string | null;
+  agentIdentifier: string;
+}): string {
+  return buildSharedConnectAgentChatDashboardUrl(input);
+}
+
 export function isDashboardOnlyChannel(channel: ChannelChoice): boolean {
   return DASHBOARD_ONLY_CHANNELS.includes(channel);
 }
@@ -86,6 +95,8 @@ export function channelDisplayName(channel: ChannelChoice): string {
       return 'Email';
     case 'sendblue':
       return 'iMessage (Sendblue)';
+    case 'agent-chat':
+      return 'Agent Chat';
     default:
       return channel;
   }

@@ -7,6 +7,9 @@ import type {
   AgentSummary,
   AiSdkConnectOutcome,
   BridgeRequirement,
+  AgentChatConnectOutcome,
+  AgentChatSetupMode,
+  BridgeProjectKind,
   ChannelChoice,
   ChatSdkConnectOutcome,
   CustomCodeConnectOutcome,
@@ -272,6 +275,15 @@ export interface ConnectUI {
   slackConnected(): void;
   slackSkipped(): void;
 
+  // Agent Chat path
+  addingAgentChatIntegration(): void;
+  awaitAgentChatHandoff(opts: {
+    dashboardUrl: string;
+    embedPrompt: string;
+    embedPromptFile?: string;
+  }): Promise<void>;
+  pickAgentChatSetup(opts: { projectKind: BridgeProjectKind }): Promise<AgentChatSetupMode>;
+
   // Welcome message
   sendingWelcome(): void;
 
@@ -290,6 +302,8 @@ export interface ConnectUI {
     aiSdkOutcome?: AiSdkConnectOutcome;
     langChainOutcome?: LangChainConnectOutcome;
     customCodeOutcome?: CustomCodeConnectOutcome;
+    agentChatOutcome?: AgentChatConnectOutcome;
+    agentChatHandoff?: { dashboardUrl: string; embedPromptFile?: string };
   }): void;
   failure(message: string): void;
 

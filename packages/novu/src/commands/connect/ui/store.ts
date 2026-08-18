@@ -5,6 +5,7 @@ import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
 import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
   AgentConnectMode,
+  AgentChatConnectOutcome,
   AgentSummary,
   AiSdkConnectOutcome,
   BridgeRequirement,
@@ -246,6 +247,18 @@ export type Phase =
       fromNumber: string;
       imessageUrl: string;
     }
+  | { kind: 'adding-agent-chat' }
+  | {
+      kind: 'agent-chat-handoff';
+      dashboardUrl: string;
+      embedPromptFile?: string;
+      resolve: () => void;
+    }
+  | {
+      kind: 'pick-agent-chat-setup';
+      projectKind: 'empty' | 'project';
+      resolve: (mode: import('../types').AgentChatSetupMode) => void;
+    }
   | { kind: 'sending-welcome' }
   | {
       kind: 'success';
@@ -264,6 +277,8 @@ export type Phase =
       aiSdkOutcome?: AiSdkConnectOutcome;
       langChainOutcome?: LangChainConnectOutcome;
       customCodeOutcome?: CustomCodeConnectOutcome;
+      agentChatOutcome?: AgentChatConnectOutcome;
+      agentChatHandoff?: { dashboardUrl: string; embedPromptFile?: string };
     }
   | { kind: 'error'; message: string };
 

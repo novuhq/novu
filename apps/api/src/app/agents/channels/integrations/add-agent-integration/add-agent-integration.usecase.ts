@@ -8,7 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AnalyticsService, encryptSecret, isAgentEmailEnabled } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret, FeatureFlagsService, isAgentEmailEnabled } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
@@ -31,6 +31,7 @@ import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
 import { NovuAgentChatProvisioningService } from '../../agent-chat/find-or-create-novu-agent-chat/find-or-create-novu-agent-chat.service';
+import { assertAgentChatEnabledForConnect } from '../../../shared/assert-agent-chat-enabled';
 import { AddAgentIntegrationCommand } from './add-agent-integration.command';
 
 @Injectable()
@@ -43,7 +44,8 @@ export class AddAgentIntegration {
     private readonly environmentRepository: EnvironmentRepository,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly findOrCreateNovuAgentChat: NovuAgentChatProvisioningService,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: AddAgentIntegrationCommand): Promise<AgentIntegrationResponseDto> {
@@ -96,6 +98,12 @@ export class AddAgentIntegration {
     }
 
     if (command.providerId === ChatProviderIdEnum.NovuAgentChat) {
+      await assertAgentChatEnabledForConnect(
+        this.featureFlagsService,
+        command.organizationId,
+        command.environmentId
+      );
+
       const { response, provisionedNewLink } = await this.findOrCreateNovuAgentChat.execute(
         agent._id,
         command.environmentId,

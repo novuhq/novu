@@ -20,9 +20,11 @@ import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AgentChatConnectOutcome,
   AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
+  ConnectAgentChatHandoff,
   ConnectCommandOptions,
   CustomCodeConnectOutcome,
   LangChainConnectOutcome,
@@ -37,6 +39,7 @@ import type { ConnectUI } from '../ui/ui';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
 import { connectEmailForAgent } from './channels/email';
+import { connectAgentChatForAgent } from './channels/agent-chat';
 import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
@@ -45,6 +48,7 @@ import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
 import { maybeRunLangChainTunnel, runLangChainProjectSetup } from './langchain';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
+import { runAgentChatProjectSetup } from './agent-chat/run-agent-chat-setup';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
@@ -158,6 +162,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let aiSdkOutcome: AiSdkConnectOutcome | undefined;
     let langChainOutcome: LangChainConnectOutcome | undefined;
     let customCodeOutcome: CustomCodeConnectOutcome | undefined;
+    let agentChatOutcome: AgentChatConnectOutcome | undefined;
+    let agentChatHandoff: ConnectAgentChatHandoff | undefined;
 
     if (isBridgeConnectMode(connectMode)) {
       const bridgeResult = await createBridgeAgentFlow(session.client, ui, options);
@@ -358,6 +364,20 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             await openDashboardChannelHandoff('teams');
             break;
           }
+          case 'agent-chat': {
+            const result = await connectAgentChatForAgent(
+              session.client,
+              agent,
+              ui,
+              options,
+              session.auth,
+              track
+            );
+            connectedIntegration = result.integration;
+            agentChatHandoff = result.handoff;
+            connectedChannel = 'agent-chat';
+            break;
+          }
           default:
             throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
         }
@@ -432,6 +452,22 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       });
     }
 
+    if (channel === 'agent-chat' && agentChatHandoff) {
+      agentChatOutcome = await runAgentChatProjectSetup({
+        options,
+        ui,
+        auth: session.auth,
+        agent,
+        handoff: agentChatHandoff,
+        bridgeProjectDir: resolveBridgeProjectDir({
+          chatSdkOutcome,
+          aiSdkOutcome,
+          langChainOutcome,
+          customCodeOutcome,
+        }),
+      });
+    }
+
     ui.success({
       agent,
       dashboardUrl: session.auth.dashboardUrl.replace(/\/$/, ''),
@@ -446,6 +482,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       aiSdkOutcome,
       langChainOutcome,
       customCodeOutcome,
+      agentChatOutcome,
+      agentChatHandoff,
     });
 
     track(CONNECT_EVENTS.COMPLETED, {
@@ -482,6 +520,20 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     return { exitCode: (await ui.shutdown()) || 1 };
   }
+}
+
+function resolveBridgeProjectDir(outcomes: {
+  chatSdkOutcome?: ChatSdkConnectOutcome;
+  aiSdkOutcome?: AiSdkConnectOutcome;
+  langChainOutcome?: LangChainConnectOutcome;
+  customCodeOutcome?: CustomCodeConnectOutcome;
+}): string | undefined {
+  return (
+    outcomes.chatSdkOutcome?.projectDir ??
+    outcomes.aiSdkOutcome?.projectDir ??
+    outcomes.langChainOutcome?.projectDir ??
+    outcomes.customCodeOutcome?.projectDir
+  );
 }
 
 async function resolveAgentConnectMode(ctx: PipelineContext): Promise<AgentConnectMode> {
