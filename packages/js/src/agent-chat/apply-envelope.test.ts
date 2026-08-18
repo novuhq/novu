@@ -210,6 +210,27 @@ describe('applyEnvelope', () => {
     expect(approval).toMatchObject({ type: 'approval', approvalId: 'a1', state: 'approved' });
   });
 
+  it('folds trust action ids onto approval parts', () => {
+    const state = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, {
+        type: 'tool-approval-request',
+        approvalId: 'a1',
+        toolUseId: 'tu1',
+        toolName: 'create_issue',
+        trustToolActionId: 'mcp-approval:approve-tool:tu1:create_issue:GitHub',
+        trustServerActionId: 'mcp-approval:approve-server:tu1:create_issue:GitHub',
+        source: { type: 'mcp', serverName: 'GitHub' },
+      }),
+    ]);
+
+    expect(state.messages[0]?.parts[0]).toMatchObject({
+      type: 'approval',
+      trustToolActionId: 'mcp-approval:approve-tool:tu1:create_issue:GitHub',
+      trustServerActionId: 'mcp-approval:approve-server:tu1:create_issue:GitHub',
+      source: { type: 'mcp', serverName: 'GitHub' },
+    });
+  });
+
   it('keeps replayed approval requests in their protocol message positions', () => {
     const state = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, {

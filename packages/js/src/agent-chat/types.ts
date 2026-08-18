@@ -7,6 +7,7 @@ import type {
   AgentMessage,
   AgentPendingAction,
   AgentToolApprovalAction,
+  AgentToolApprovalDecision,
 } from './agent-message.types';
 
 export type {
@@ -18,6 +19,7 @@ export type {
   AgentMessage,
   AgentPendingAction,
   AgentToolApprovalAction,
+  AgentToolApprovalDecision,
 };
 
 /**
@@ -74,7 +76,7 @@ export type FetchMoreResult = {
 export type RespondToActionArgs = AgentHashFields & {
   agentId: string;
   actionId: string;
-  decision: 'approved' | 'denied';
+  decision: AgentToolApprovalDecision;
   conversationId?: string;
   key?: string;
 };

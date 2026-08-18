@@ -400,6 +400,30 @@ export class ToolApprovalRequestPayloadDto {
   @IsOptional()
   @IsString()
   denyActionId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Server-minted always-allow-this-tool action id (managed MCP/direct tools).',
+    example: 'mcp-approval:approve-tool:call_1:issue_refund:GitHub',
+  })
+  @IsOptional()
+  @IsString()
+  trustToolActionId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Server-minted always-allow-MCP-server action id (managed MCP tools only).',
+    example: 'mcp-approval:approve-server:call_1:issue_refund:GitHub',
+  })
+  @IsOptional()
+  @IsString()
+  trustServerActionId?: string;
+
+  @ApiPropertyOptional({
+    description: 'MCP server name when the gated tool is from an MCP server (for UI labels).',
+    example: 'GitHub',
+  })
+  @IsOptional()
+  @IsString()
+  mcpServerName?: string;
 }
 
 @ApiExtraModels(MarkdownReplyContentDto, CardReplyContentDto, ToolApprovalCardReplyContentDto, FileRefDto)

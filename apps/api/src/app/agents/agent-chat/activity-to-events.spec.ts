@@ -182,4 +182,40 @@ describe('activity-to-events run lifecycle', () => {
       )
     ).to.deep.equal(['approval-activity-1', 'approval-activity-2']);
   });
+
+  it('replays trust action ids and MCP source from stored tool data', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+          identifier: 'approval-activity-mcp',
+          sequence: 1,
+          toolData: {
+            approvalId: 'call_1',
+            toolCallId: 'call_1',
+            toolName: 'create_issue',
+            approveActionId: 'mcp-approval:approve:call_1',
+            denyActionId: 'mcp-approval:deny:call_1',
+            trustToolActionId: 'mcp-approval:approve-tool:call_1:create_issue:GitHub',
+            trustServerActionId: 'mcp-approval:approve-server:call_1:create_issue:GitHub',
+            mcpServerName: 'GitHub',
+          },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes[0]?.event).to.deep.equal({
+      type: 'tool-approval-request',
+      messageId: 'approval-activity-mcp',
+      approvalId: 'call_1',
+      toolUseId: 'call_1',
+      toolName: 'create_issue',
+      approveActionId: 'mcp-approval:approve:call_1',
+      denyActionId: 'mcp-approval:deny:call_1',
+      trustToolActionId: 'mcp-approval:approve-tool:call_1:create_issue:GitHub',
+      trustServerActionId: 'mcp-approval:approve-server:call_1:create_issue:GitHub',
+      source: { type: 'mcp', serverName: 'GitHub' },
+    });
+  });
 });

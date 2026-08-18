@@ -6,6 +6,7 @@ import type {
   AgentHashFields,
   AgentMessage,
   AgentPendingAction,
+  AgentToolApprovalDecision,
   LoadConversationResult,
   NovuError,
   RespondToActionResult,
@@ -71,7 +72,7 @@ export type UseAgentChatResult = {
     data?: SendMessageResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
-  respondToAction: (args: { actionId: string; decision: 'approved' | 'denied' }) => Promise<{
+  respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
@@ -359,7 +360,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   );
 
   const respondToAction = useCallback(
-    async (args: { actionId: string; decision: 'approved' | 'denied' }) => {
+    async (args: { actionId: string; decision: AgentToolApprovalDecision }) => {
       setError(undefined);
 
       const response = await novu.agentChat.respondToAction({

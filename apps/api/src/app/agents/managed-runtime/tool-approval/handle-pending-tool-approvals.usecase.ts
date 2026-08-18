@@ -10,7 +10,7 @@ import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/hand
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { AgentPlatformEnum, usesProtocolEventApprovals } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import { managedApprovalGrammar, mintApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
+import { mintManagedApprovalActionIds } from '../../shared/tool-approval/mint-approval-action-ids';
 import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
 import { HandleNovuResolveCommand } from '../novu-resolve/handle-novu-resolve.command';
@@ -412,9 +412,10 @@ export class HandlePendingToolApprovals {
           platform: command.platform,
           tool,
         });
-    const actionIds = mintApprovalActionIds({
-      approvalId: tool.toolUseId,
-      grammar: managedApprovalGrammar(tool.mcpServerName),
+    const actionIds = mintManagedApprovalActionIds({
+      toolUseId: tool.toolUseId,
+      toolName: tool.toolName,
+      mcpServerName: tool.mcpServerName,
     });
 
     try {
@@ -434,6 +435,9 @@ export class HandlePendingToolApprovals {
             input: tool.input,
             approveActionId: actionIds.approveActionId,
             denyActionId: actionIds.denyActionId,
+            trustToolActionId: actionIds.trustToolActionId,
+            trustServerActionId: actionIds.trustServerActionId,
+            mcpServerName: tool.mcpServerName,
           },
         })
       );

@@ -580,6 +580,9 @@ export class HandleAgentReply {
         input: request.input,
         approveActionId: request.approveActionId,
         denyActionId: request.denyActionId,
+        trustToolActionId: request.trustToolActionId,
+        trustServerActionId: request.trustServerActionId,
+        mcpServerName: request.mcpServerName,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       });

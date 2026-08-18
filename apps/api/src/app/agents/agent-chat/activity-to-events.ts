@@ -84,7 +84,10 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
 
       const actionIds =
         toolData.approveActionId && toolData.denyActionId
-          ? { approveActionId: toolData.approveActionId, denyActionId: toolData.denyActionId }
+          ? {
+              approveActionId: toolData.approveActionId,
+              denyActionId: toolData.denyActionId,
+            }
           : mintApprovalActionIds({ approvalId: toolData.approvalId });
 
       return {
@@ -96,6 +99,9 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         input: toolData.input,
         approveActionId: actionIds.approveActionId,
         denyActionId: actionIds.denyActionId,
+        trustToolActionId: toolData.trustToolActionId,
+        trustServerActionId: toolData.trustServerActionId,
+        source: toolData.mcpServerName ? { type: 'mcp', serverName: toolData.mcpServerName } : undefined,
       };
     }
 

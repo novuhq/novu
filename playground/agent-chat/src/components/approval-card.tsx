@@ -1,13 +1,13 @@
 'use client';
 
-import type { AgentMessage, UseAgentChatResult } from '@novu/react';
+import type { AgentMessage, AgentToolApprovalDecision, UseAgentChatResult } from '@novu/react';
 import { useState } from 'react';
 import { CheckIcon, ChevronIcon, ShieldIcon, XIcon } from './icons';
 
 export type RespondToAction = UseAgentChatResult['respondToAction'];
 type AgentApprovalPart = Extract<AgentMessage['parts'][number], { type: 'approval' }>;
 
-type Decision = 'approved' | 'denied';
+type Decision = AgentToolApprovalDecision;
 
 const STATE_META: Record<AgentApprovalPart['state'], { label: string; tone: 'pending' | 'ok' | 'danger' }> = {
   pending: { label: 'Needs review', tone: 'pending' },
@@ -79,9 +79,11 @@ export function ApprovalCard({ part, onRespond }: ApprovalCardProps) {
     }
   }
 
-  // The SDK resolves the minted action id from the part; without it the call cannot be made.
   const canApprove = Boolean(part.approveActionId);
   const canDeny = Boolean(part.denyActionId);
+  const canTrustTool = Boolean(part.trustToolActionId);
+  const canTrustServer = Boolean(part.trustServerActionId) && part.source?.type === 'mcp';
+  const serverName = part.source?.type === 'mcp' ? part.source.serverName : undefined;
 
   return (
     <section
@@ -150,8 +152,30 @@ export function ApprovalCard({ part, onRespond }: ApprovalCardProps) {
               title={canApprove ? undefined : 'Server did not mint an approve action id'}
             >
               {busy === 'approved' ? <span className="spinner" aria-hidden /> : <CheckIcon size={12} />}
-              Approve
+              Approve once
             </button>
+            {canTrustTool ? (
+              <button
+                type="button"
+                className="action-btn action-btn-quiet"
+                onClick={() => respond('trust-tool')}
+                disabled={Boolean(busy) || !onRespond}
+              >
+                {busy === 'trust-tool' ? <span className="spinner" aria-hidden /> : null}
+                Always allow this tool
+              </button>
+            ) : null}
+            {canTrustServer && serverName ? (
+              <button
+                type="button"
+                className="action-btn action-btn-quiet"
+                onClick={() => respond('trust-server')}
+                disabled={Boolean(busy) || !onRespond}
+              >
+                {busy === 'trust-server' ? <span className="spinner" aria-hidden /> : null}
+                Always allow {serverName}
+              </button>
+            ) : null}
           </>
         ) : (
           <span className="action-resolved">

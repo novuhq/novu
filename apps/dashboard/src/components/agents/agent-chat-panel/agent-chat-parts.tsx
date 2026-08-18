@@ -413,7 +413,7 @@ export function ChatPendingActionCard({
 }: {
   action: AgentPendingAction;
   disabled: boolean;
-  onRespond: (decision: 'approved' | 'denied') => void;
+  onRespond: (decision: 'approved' | 'denied' | 'trust-tool' | 'trust-server') => void;
 }) {
   if (action.type === 'mcp-connection') {
     // The authorize URL comes from the MCP server's OAuth discovery document,
@@ -449,17 +449,19 @@ export function ChatPendingActionCard({
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex items-center gap-3 rounded-xl border p-3 duration-200">
-      <div className="bg-warning/10 flex size-8 shrink-0 items-center justify-center rounded-full">
-        <RiShieldCheckLine className="text-warning size-4" aria-hidden />
+    <div className="animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex flex-col gap-3 rounded-xl border p-3 duration-200 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="bg-warning/10 flex size-8 shrink-0 items-center justify-center rounded-full">
+          <RiShieldCheckLine className="text-warning size-4" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-label-xs text-text-strong truncate font-medium">
+            Run <span className="font-mono">{action.toolName}</span>?
+          </p>
+          <p className="text-label-xs text-text-soft">The agent is waiting for your approval.</p>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-label-xs text-text-strong truncate font-medium">
-          Run <span className="font-mono">{action.toolName}</span>?
-        </p>
-        <p className="text-label-xs text-text-soft">The agent is waiting for your approval.</p>
-      </div>
-      <div className="flex shrink-0 gap-1.5">
+      <div className="flex shrink-0 flex-wrap gap-1.5">
         <Button
           type="button"
           size="2xs"
@@ -471,8 +473,32 @@ export function ChatPendingActionCard({
           Deny
         </Button>
         <Button type="button" size="2xs" variant="primary" disabled={disabled} onClick={() => onRespond('approved')}>
-          Approve
+          Approve once
         </Button>
+        {action.trustToolActionId ? (
+          <Button
+            type="button"
+            size="2xs"
+            variant="secondary"
+            mode="outline"
+            disabled={disabled}
+            onClick={() => onRespond('trust-tool')}
+          >
+            Always allow this tool
+          </Button>
+        ) : null}
+        {action.trustServerActionId && action.source?.type === 'mcp' ? (
+          <Button
+            type="button"
+            size="2xs"
+            variant="secondary"
+            mode="outline"
+            disabled={disabled}
+            onClick={() => onRespond('trust-server')}
+          >
+            Always allow {action.source.serverName}
+          </Button>
+        ) : null}
       </div>
     </div>
   );

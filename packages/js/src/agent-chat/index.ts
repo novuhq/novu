@@ -12,6 +12,7 @@ export type {
   AgentMessage,
   AgentPendingAction,
   AgentToolApprovalAction,
+  AgentToolApprovalDecision,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
