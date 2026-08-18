@@ -202,13 +202,6 @@ import { USE_CASES } from './usecases';
     AgentConversationEnabledGuard,
     AgentChatEnabledGuard,
   ],
-  exports: [
-    ...USE_CASES,
-    ChatInstanceRegistry,
-    InboundDispatcher,
-    OutboundGateway,
-    ConfirmLinkedAuthCards,
-    ConversationActivityLedger,
-  ],
+  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway, ConfirmLinkedAuthCards],
 })
 export class AgentsModule {}

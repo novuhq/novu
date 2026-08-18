@@ -69,6 +69,8 @@ export interface ConversationActivityToolData {
   approveActionId?: string;
   /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
   denyActionId?: string;
+  /** MCP server name when the gated tool is from an MCP server (request). */
+  mcpServerName?: string;
 }
 
 export class ConversationActivityEntity {

@@ -13,7 +13,7 @@ import {
   getInboundActivityPreview,
   INBOUND_ATTACHMENT_ONLY_PREVIEW,
 } from './agent-conversation.service';
-import { ConversationEventSequenceService } from './conversation-event-sequence.service';
+import { ConversationActivityLedger } from './conversation-activity-ledger';
 
 describe('AgentConversationService', () => {
   function makeLogger() {
@@ -41,308 +41,53 @@ describe('AgentConversationService', () => {
     };
   }
 
-  function makeActivityRepository() {
+  function makeLedger(overrides: Partial<Record<keyof ConversationActivityLedger, sinon.SinonStub>> = {}) {
     return {
-      createAgentActivity: sinon.stub().resolves({ _id: 'activity-1', identifier: 'act_generated' }),
-      findOne: sinon.stub().resolves(null),
-    };
-  }
-
-  function basePersistParams() {
-    return {
-      conversationId: 'conv-1',
-      channel: {
-        platform: 'slack',
-        _integrationId: 'integration-a',
-        platformThreadId: 'thread-1',
-      },
-      platformMessageId: 'msg-1',
-      agentIdentifier: 'agent-a',
-      content: 'hello',
-      environmentId: 'env-1',
-      organizationId: 'org-1',
-    };
-  }
-
-  function makeEventSequenceService(mint = sinon.stub().resolves(undefined)) {
-    return { mint } as unknown as ConversationEventSequenceService;
+      persistAgentMessage: overrides.persistAgentMessage ?? sinon.stub().resolves({ activity: {}, created: true }),
+      persistWorkflowOriginHydration: overrides.persistWorkflowOriginHydration ?? sinon.stub().resolves(undefined),
+      isWorkflowOriginHydrated: overrides.isWorkflowOriginHydrated ?? sinon.stub().resolves(false),
+      persistMcpConnectionRequest: overrides.persistMcpConnectionRequest ?? sinon.stub().resolves({}),
+      persistMcpConnectionResult: overrides.persistMcpConnectionResult ?? sinon.stub().resolves({}),
+      persistToolResult: overrides.persistToolResult ?? sinon.stub().resolves(undefined),
+      persistInboundMessage: overrides.persistInboundMessage ?? sinon.stub().resolves({}),
+      listForView: overrides.listForView ?? sinon.stub().resolves({ data: [], hasMore: false }),
+      mint: overrides.mint ?? sinon.stub().resolves(1),
+    } as unknown as ConversationActivityLedger;
   }
 
   function makeService(
     conversationRepository: ConversationRepository,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    activityRepository: any = makeActivityRepository(),
-    eventSequenceService = makeEventSequenceService(),
-    agentChatLiveActivityPublisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) }
+    ledger: ConversationActivityLedger = makeLedger()
   ) {
-    return new AgentConversationService(
-      conversationRepository,
-      activityRepository as any,
-      eventSequenceService,
-      agentChatLiveActivityPublisher as any,
-      makeLogger() as any
-    );
+    return new AgentConversationService(conversationRepository, ledger, makeLogger() as any);
   }
 
-  describe('persistAgentMessage', () => {
-    it('uses the caller-supplied identifier when provided', async () => {
-      const activityRepository = makeActivityRepository();
-      const conversationRepository = {
-        touchActivity: sinon.stub().resolves(undefined),
-      } as unknown as ConversationRepository;
-      const service = makeService(conversationRepository, activityRepository);
-
-      const result = await service.persistAgentMessage({
-        ...basePersistParams(),
-        identifier: 'client-msg-123',
-      });
-
-      expect(result.created).to.equal(true);
-      expect(activityRepository.createAgentActivity.calledOnce).to.equal(true);
-      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('client-msg-123');
-      expect(activityRepository.createAgentActivity.firstCall.args[0].type).to.equal(
-        ConversationActivityTypeEnum.MESSAGE
-      );
-    });
-
-    it('mints an act_ identifier when none is supplied', async () => {
-      const activityRepository = makeActivityRepository();
-      const conversationRepository = {
-        touchActivity: sinon.stub().resolves(undefined),
-      } as unknown as ConversationRepository;
-      const service = makeService(conversationRepository, activityRepository);
-
-      await service.persistAgentMessage(basePersistParams());
-
-      const identifier = activityRepository.createAgentActivity.firstCall.args[0].identifier;
-
-      expect(identifier).to.match(/^act_/);
-    });
-
-    it('logs and returns the existing activity on duplicate identifier races', async () => {
-      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
-      const existingActivity = { _id: 'existing-1', identifier: 'client-msg-123' };
-      const activityRepository = {
-        createAgentActivity: sinon.stub().rejects(duplicateError),
-        findOne: sinon.stub().resolves(existingActivity),
-      };
-      const conversationRepository = {
-        touchActivity: sinon.stub().resolves(undefined),
-      } as unknown as ConversationRepository;
-      const logger = makeLogger();
-      const service = new AgentConversationService(
-        conversationRepository,
-        activityRepository as any,
-        makeEventSequenceService(),
-        { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-        logger as any
-      );
-
-      const result = await service.persistAgentMessage({
-        ...basePersistParams(),
-        identifier: 'client-msg-123',
-      });
-
-      expect(result.activity).to.equal(existingActivity);
-      expect(result.created).to.equal(false);
-      expect(logger.warn.calledOnce).to.equal(true);
-    });
-  });
-
-  describe('persistWorkflowOriginHydration', () => {
-    function makeHydrationParams() {
-      return {
+  describe('delegation', () => {
+    it('delegates persistAgentMessage to the ledger', async () => {
+      const ledger = makeLedger();
+      const service = makeService({} as unknown as ConversationRepository, ledger);
+      const params = {
         conversationId: 'conv-1',
-        channel: {
-          platform: 'whatsapp',
-          _integrationId: 'integration-a',
-          platformThreadId: 'whatsapp:15551234567',
-        },
+        channel: { platform: 'slack', _integrationId: 'int-1', platformThreadId: 'thread-1' },
         agentIdentifier: 'agent-a',
+        content: 'hello',
         environmentId: 'env-1',
         organizationId: 'org-1',
-        platformMessageId: 'wamid.abc',
-        platformThreadId: 'whatsapp:15551234567',
-        messageContent: 'Your order shipped',
-        signalData: { workflowIdentifier: 'order-alerts' },
-      };
-    }
-
-    it('swallows duplicate-key errors from the signal write', async () => {
-      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
-      const activityRepository = {
-        createAgentActivity: sinon
-          .stub()
-          .resolves({ _id: 'activity-1', identifier: 'workflow-dispatch-msg:wamid.abc' }),
-        createSignalActivity: sinon.stub().rejects(duplicateError),
-        findOne: sinon.stub().resolves(null),
-      };
-      const conversationRepository = {
-        touchActivity: sinon.stub().resolves(undefined),
-      } as unknown as ConversationRepository;
-      const logger = makeLogger();
-      const service = new AgentConversationService(
-        conversationRepository,
-        activityRepository as any,
-        makeEventSequenceService(),
-        { emit: sinon.stub().resolves(undefined) } as any,
-        logger as any
-      );
-
-      await service.persistWorkflowOriginHydration(makeHydrationParams());
-
-      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
-      expect(logger.warn.calledOnce).to.equal(true);
-      expect(logger.warn.firstCall.args[1]).to.equal('Workflow origin already hydrated');
-    });
-
-    it('rethrows non-duplicate errors from the signal write', async () => {
-      const activityRepository = {
-        createAgentActivity: sinon
-          .stub()
-          .resolves({ _id: 'activity-1', identifier: 'workflow-dispatch-msg:wamid.abc' }),
-        createSignalActivity: sinon.stub().rejects(new Error('mongo timeout')),
-        findOne: sinon.stub().resolves(null),
-      };
-      const conversationRepository = {
-        touchActivity: sinon.stub().resolves(undefined),
-      } as unknown as ConversationRepository;
-      const service = makeService(conversationRepository, activityRepository);
-
-      try {
-        await service.persistWorkflowOriginHydration(makeHydrationParams());
-        expect.fail('expected persistWorkflowOriginHydration to throw');
-      } catch (err) {
-        expect((err as Error).message).to.equal('mongo timeout');
-      }
-    });
-  });
-
-  describe('isWorkflowOriginHydrated', () => {
-    it('matches the signal identifier written by persistWorkflowOriginHydration', async () => {
-      const activityRepository = { count: sinon.stub().resolves(1) };
-      const service = makeService({} as unknown as ConversationRepository, activityRepository);
-
-      const hydrated = await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc');
-
-      expect(hydrated).to.equal(true);
-      expect(activityRepository.count.firstCall.args[0]).to.deep.equal({
-        _environmentId: 'env-1',
-        _conversationId: 'conv-1',
-        identifier: 'workflow-dispatch-origin:wamid.abc',
-      });
-    });
-
-    it('returns false when the signal is absent', async () => {
-      const activityRepository = { count: sinon.stub().resolves(0) };
-      const service = makeService({} as unknown as ConversationRepository, activityRepository);
-
-      expect(await service.isWorkflowOriginHydrated('env-1', 'conv-1', 'wamid.abc')).to.equal(false);
-    });
-  });
-
-  describe('MCP connection activities', () => {
-    it('persists request and result activities and publishes both to agent chat', async () => {
-      const activityRepository = makeActivityRepository();
-      activityRepository.createAgentActivity.callsFake(async (params: Record<string, unknown>) => ({
-        _id: `activity-${activityRepository.createAgentActivity.callCount}`,
-        ...params,
-      }));
-      const conversationRepository = {
-        touchActivity: sinon.stub().resolves(undefined),
-      } as unknown as ConversationRepository;
-      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
-      const service = makeService(
-        conversationRepository,
-        activityRepository,
-        makeEventSequenceService(sinon.stub().onFirstCall().resolves(10).onSecondCall().resolves(11)),
-        publisher
-      );
-      const context = {
-        ...basePersistParams(),
-        channel: {
-          platform: 'agent_chat',
-          _integrationId: 'integration-a',
-          platformThreadId: 'thread-1',
-        },
       };
 
-      await service.persistMcpConnectionRequest({
-        ...context,
-        actionId: 'tool-use-1',
-        mcpId: 'stripe',
-        displayName: 'Stripe',
-        authorizeUrl: 'https://example.com/authorize',
-      });
-      await service.persistMcpConnectionResult({
-        ...context,
-        actionId: 'tool-use-1',
-        mcpId: 'stripe',
-        status: 'connected',
-      });
+      await service.persistAgentMessage(params);
 
-      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
-        identifier: 'mcp-connection:tool-use-1:request',
-        type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST,
-        sequence: 10,
-        richContent: {
-          mcpConnection: {
-            actionId: 'tool-use-1',
-            mcpId: 'stripe',
-            displayName: 'Stripe',
-            authorizeUrl: 'https://example.com/authorize',
-            authorizeUrlWithAutoApprove: undefined,
-          },
-        },
-      });
-      expect(activityRepository.createAgentActivity.secondCall.args[0]).to.deep.include({
-        identifier: 'mcp-connection:tool-use-1:result',
-        type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT,
-        sequence: 11,
-        richContent: {
-          mcpConnection: {
-            actionId: 'tool-use-1',
-            mcpId: 'stripe',
-            status: 'connected',
-            message: undefined,
-          },
-        },
-      });
-      expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
+      expect(ledger.persistAgentMessage.calledOnceWithExactly(params)).to.equal(true);
     });
-  });
 
-  describe('event sequencing', () => {
-    it('allocates a sequence for durable tool activities on any channel', async () => {
-      const conversationRepository = {} as unknown as ConversationRepository;
-      const activityRepository = {
-        createToolActivity: sinon.stub().resolves({ _id: 'tool-activity' }),
-      };
-      const mint = sinon.stub().resolves(4);
-      const service = makeService(conversationRepository, activityRepository, makeEventSequenceService(mint));
+    it('delegates mintEventSequence to the ledger', async () => {
+      const ledger = makeLedger();
+      const service = makeService({} as unknown as ConversationRepository, ledger);
+      const params = { environmentId: 'env-1', organizationId: 'org-1', conversationId: 'conv-1' };
 
-      await service.persistToolResult({
-        conversationId: 'conv-1',
-        channel: {
-          platform: 'slack',
-          _integrationId: 'integration-a',
-          platformThreadId: 'thread-1',
-        },
-        agentIdentifier: 'agent-a',
-        environmentId: 'env-1',
-        organizationId: 'org-1',
-        toolCallId: 'tool-call-1',
-        output: 'done',
-      });
+      await service.mintEventSequence(params);
 
-      expect(activityRepository.createToolActivity.firstCall.args[0].sequence).to.equal(4);
-      expect(
-        mint.calledOnceWithExactly({
-          environmentId: 'env-1',
-          organizationId: 'org-1',
-          conversationId: 'conv-1',
-        })
-      ).to.equal(true);
+      expect(ledger.mint.calledOnceWithExactly(params)).to.equal(true);
     });
   });
 
@@ -386,13 +131,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(
-      conversationRepository,
-      {} as any,
-      makeEventSequenceService(),
-      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-      makeLogger() as any
-    );
+    const service = makeService(conversationRepository);
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
@@ -418,13 +157,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(
-      conversationRepository,
-      {} as any,
-      makeEventSequenceService(),
-      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-      makeLogger() as any
-    );
+    const service = makeService(conversationRepository);
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
@@ -451,13 +184,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(
-      conversationRepository,
-      {} as any,
-      makeEventSequenceService(),
-      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-      makeLogger() as any
-    );
+    const service = makeService(conversationRepository);
 
     let threw = false;
     try {
@@ -490,13 +217,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(
-      conversationRepository,
-      {} as any,
-      makeEventSequenceService(),
-      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-      makeLogger() as any
-    );
+    const service = makeService(conversationRepository);
 
     let threw = false;
     try {
@@ -528,13 +249,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(
-      conversationRepository,
-      {} as any,
-      makeEventSequenceService(),
-      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-      makeLogger() as any
-    );
+    const service = makeService(conversationRepository);
 
     await service.createOrGetConversation(baseCreateParams());
 
@@ -558,13 +273,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(
-      conversationRepository,
-      {} as any,
-      makeEventSequenceService(),
-      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-      makeLogger() as any
-    );
+    const service = makeService(conversationRepository);
 
     await service.createOrGetConversation(baseCreateParams());
 
@@ -587,16 +296,43 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(
-      conversationRepository,
-      {} as any,
-      makeEventSequenceService(),
-      { emitPersistedClientEvent: sinon.stub().resolves(undefined) } as any,
-      makeLogger() as any
-    );
+    const service = makeService(conversationRepository);
 
     await service.findByPlatformThread('e', 'o', 'agent-x', 'int-x', 'thread-z');
 
     expect(findByPlatformThread.calledOnceWithExactly('e', 'o', 'agent-x', 'int-x', 'thread-z')).to.equal(true);
+  });
+
+  it('orchestrates resolveConversation across repository and ledger', async () => {
+    const updateStatus = sinon.stub().resolves(undefined);
+    const markBillingResolved = sinon.stub().resolves(undefined);
+    const clearExternalSessionId = sinon.stub().resolves(undefined);
+    const persistResolveSignal = sinon.stub().resolves(undefined);
+    const conversationRepository = {
+      updateStatus,
+      markBillingResolved,
+      clearExternalSessionId,
+    } as unknown as ConversationRepository;
+    const ledger = makeLedger({ persistResolveSignal });
+    const service = makeService(conversationRepository, ledger);
+    const params = {
+      conversationId: 'conv-1',
+      channel: { platform: 'slack', _integrationId: 'int-1', platformThreadId: 'thread-1' },
+      agentIdentifier: 'agent-a',
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      summary: 'done',
+    };
+
+    await service.resolveConversation(params);
+
+    expect(updateStatus.calledOnce).to.equal(true);
+    expect(markBillingResolved.calledOnce).to.equal(true);
+    expect(clearExternalSessionId.calledOnce).to.equal(true);
+    expect(persistResolveSignal.calledOnce).to.equal(true);
+    expect(persistResolveSignal.firstCall.args[0]).to.include({
+      content: 'done',
+      summary: 'done',
+    });
   });
 });
