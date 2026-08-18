@@ -8,6 +8,7 @@ import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.servi
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import { planTaskIfNamed } from '../conversation-runtime/egress/plan-phase';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
@@ -531,8 +532,16 @@ export class AgentEventSink {
       return;
     }
 
-    const toolName = event.toolName;
     const mcpServerName = event.source?.type === 'mcp' ? event.source.serverName : undefined;
+    const task = planTaskIfNamed(
+      event.toolUseId,
+      { title: event.toolName, group: mcpServerName },
+      event.isError === true ? 'error' : 'complete'
+    );
+
+    if (!task) {
+      return;
+    }
 
     try {
       await this.handlePlanProgress.execute(
@@ -540,12 +549,7 @@ export class AgentEventSink {
           ...baseFields,
           event: {
             kind: 'task',
-            task: {
-              id: event.toolUseId,
-              ...(toolName ? { title: toolName } : {}),
-              ...(mcpServerName ? { group: mcpServerName } : {}),
-              status: event.isError === true ? 'error' : 'complete',
-            },
+            task,
           },
         })
       );
