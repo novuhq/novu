@@ -15,7 +15,8 @@ import {
   mapRunLifecycleActivityToEvent,
   runIdFromLifecycleIdentifier,
 } from '../conversation-runtime/conversation/run-lifecycle-activity';
-import { mintApprovalActionIds } from '../shared/tool-approval/mint-approval-action-ids';
+import { DIRECT_TOOL_APPROVAL_ACTION_PREFIX, MCP_TOOL_APPROVAL_ACTION_PREFIX } from '../shared/tool-approval/action-id';
+import { mintApprovalActionIds, mintManagedApprovalActionIds } from '../shared/tool-approval/mint-approval-action-ids';
 
 type McpConnectionActivityData = {
   actionId?: string;
@@ -38,6 +39,35 @@ function filesFromRichContent(richContent?: Record<string, unknown>) {
 
 function isCardTree(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'card';
+}
+
+function isManagedToolApprovalRequest(toolData: ConversationActivityEntity['toolData']): boolean {
+  const approveActionId = toolData?.approveActionId;
+  if (!approveActionId) {
+    return false;
+  }
+
+  return (
+    approveActionId.startsWith(`${MCP_TOOL_APPROVAL_ACTION_PREFIX}:`) ||
+    approveActionId.startsWith(`${DIRECT_TOOL_APPROVAL_ACTION_PREFIX}:`)
+  );
+}
+
+function mintTrustActionIdsFromStoredToolData(toolData: NonNullable<ConversationActivityEntity['toolData']>) {
+  if (!isManagedToolApprovalRequest(toolData) || !toolData.toolCallId || !toolData.toolName) {
+    return {};
+  }
+
+  const managed = mintManagedApprovalActionIds({
+    toolUseId: toolData.toolCallId,
+    toolName: toolData.toolName,
+    mcpServerName: toolData.mcpServerName,
+  });
+
+  return {
+    trustToolActionId: managed.trustToolActionId,
+    ...(managed.trustServerActionId ? { trustServerActionId: managed.trustServerActionId } : {}),
+  };
 }
 
 /** Prefer the stored Card tree. Fall back to markdown when no Card is present. */
@@ -99,8 +129,7 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
         input: toolData.input,
         approveActionId: actionIds.approveActionId,
         denyActionId: actionIds.denyActionId,
-        trustToolActionId: toolData.trustToolActionId,
-        trustServerActionId: toolData.trustServerActionId,
+        ...mintTrustActionIdsFromStoredToolData(toolData),
         source: toolData.mcpServerName ? { type: 'mcp', serverName: toolData.mcpServerName } : undefined,
       };
     }

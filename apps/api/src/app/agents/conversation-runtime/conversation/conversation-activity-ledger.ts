@@ -276,8 +276,6 @@ export class ConversationActivityLedger {
         input: params.input,
         approveActionId: actionIds.approveActionId,
         denyActionId: actionIds.denyActionId,
-        trustToolActionId: params.trustToolActionId,
-        trustServerActionId: params.trustServerActionId,
         mcpServerName: params.mcpServerName,
       },
       sequence,

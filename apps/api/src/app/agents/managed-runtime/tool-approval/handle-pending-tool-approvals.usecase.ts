@@ -435,8 +435,6 @@ export class HandlePendingToolApprovals {
             input: tool.input,
             approveActionId: actionIds.approveActionId,
             denyActionId: actionIds.denyActionId,
-            trustToolActionId: actionIds.trustToolActionId,
-            trustServerActionId: actionIds.trustServerActionId,
             mcpServerName: tool.mcpServerName,
           },
         })

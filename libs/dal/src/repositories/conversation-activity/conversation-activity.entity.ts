@@ -69,10 +69,6 @@ export interface ConversationActivityToolData {
   approveActionId?: string;
   /** Server-minted action id for deny (request). Echoed by headless / card UIs. */
   denyActionId?: string;
-  /** Server-minted always-allow-this-tool action id (request). Echoed by Agent Chat / card UIs. */
-  trustToolActionId?: string;
-  /** Server-minted always-allow-MCP-server action id (request, MCP tools only). */
-  trustServerActionId?: string;
   /** MCP server name when the gated tool is from an MCP server (request). */
   mcpServerName?: string;
 }
