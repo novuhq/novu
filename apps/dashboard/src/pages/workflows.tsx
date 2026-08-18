@@ -22,7 +22,6 @@ import {
 import { Link, Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchWorkflowSuggestions } from '@/api/ai';
 import { Shimmer } from '@/components/ai-elements/shimmer';
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { AiThinking } from '@/components/icons/ai-thinking';
 import { Broom } from '@/components/icons/broom';
 import { PageMeta } from '@/components/page-meta';
@@ -46,6 +45,7 @@ import { WorkflowTemplateModal } from '@/components/template-store/workflow-temp
 import { SortableColumn, WorkflowList } from '@/components/workflow-list';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PageHeader } from '@/context/page-header';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
@@ -253,285 +253,279 @@ export const WorkflowsPage = () => {
   return (
     <>
       <PageMeta title="Workflows" />
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Workflows</h1>}>
-        <div className="flex h-full w-full flex-col">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2 py-2.5">
-              <FacetedFormFilter
-                type="text"
-                size="small"
-                title="Search"
-                value={form.watch('query') || ''}
-                onChange={(value) => {
-                  form.setValue('query', value || '');
-                }}
-                placeholder="Search workflows..."
-              />
-              <FacetedFormFilter
-                size="small"
-                type="multi"
-                title="Tags"
-                placeholder="Filter by tags"
-                options={tags?.map((tag) => ({ label: tag.name, value: tag.name })) || []}
-                selected={form.watch('tags')}
-                onSelect={(values) => {
-                  form.setValue('tags', values, { shouldDirty: true, shouldTouch: true });
-                }}
-              />
-              <FacetedFormFilter
-                size="small"
-                type="multi"
-                title="Status"
-                placeholder="Filter by status"
-                options={[
-                  { label: 'Active', value: WorkflowStatusEnum.ACTIVE },
-                  { label: 'Inactive', value: WorkflowStatusEnum.INACTIVE },
-                  { label: 'Error', value: WorkflowStatusEnum.ERROR },
-                ]}
-                selected={form.watch('status')}
-                onSelect={(values) => {
-                  form.setValue('status', values, { shouldDirty: true, shouldTouch: true });
-                }}
-              />
+      <PageHeader>
+        <h1 className="text-foreground-950 flex items-center gap-1">Workflows</h1>
+      </PageHeader>
+      <div className="flex h-full w-full flex-col">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2 py-2.5">
+            <FacetedFormFilter
+              type="text"
+              size="small"
+              title="Search"
+              value={form.watch('query') || ''}
+              onChange={(value) => {
+                form.setValue('query', value || '');
+              }}
+              placeholder="Search workflows..."
+            />
+            <FacetedFormFilter
+              size="small"
+              type="multi"
+              title="Tags"
+              placeholder="Filter by tags"
+              options={tags?.map((tag) => ({ label: tag.name, value: tag.name })) || []}
+              selected={form.watch('tags')}
+              onSelect={(values) => {
+                form.setValue('tags', values, { shouldDirty: true, shouldTouch: true });
+              }}
+            />
+            <FacetedFormFilter
+              size="small"
+              type="multi"
+              title="Status"
+              placeholder="Filter by status"
+              options={[
+                { label: 'Active', value: WorkflowStatusEnum.ACTIVE },
+                { label: 'Inactive', value: WorkflowStatusEnum.INACTIVE },
+                { label: 'Error', value: WorkflowStatusEnum.ERROR },
+              ]}
+              selected={form.watch('status')}
+              onSelect={(values) => {
+                form.setValue('status', values, { shouldDirty: true, shouldTouch: true });
+              }}
+            />
 
-              {hasActiveFilters && (
-                <div className="flex items-center gap-1">
-                  <Button variant="secondary" mode="ghost" size="2xs" onClick={clearFilters}>
-                    Reset
-                  </Button>
-                  {isFetching && !isPending && <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />}
-                </div>
-              )}
-            </div>
-            <CreateWorkflowButton />
-          </div>
-          {shouldShowStartWithTemplatesSection && (
-            <div className="mb-2">
-              <div className="my-2 flex items-center justify-between">
-                <div className="text-label-xs text-text-soft">Start with</div>
-                <LinkButton
-                  size="sm"
-                  variant="gray"
-                  onClick={() =>
-                    navigate(
-                      `${buildRoute(ROUTES.TEMPLATE_STORE, {
-                        environmentSlug: environmentSlug || '',
-                      })}?source=start-with`
-                    )
-                  }
-                  trailingIcon={RiArrowRightSLine}
-                >
-                  Explore templates
-                </LinkButton>
+            {hasActiveFilters && (
+              <div className="flex items-center gap-1">
+                <Button variant="secondary" mode="ghost" size="2xs" onClick={clearFilters}>
+                  Reset
+                </Button>
+                {isFetching && !isPending && <RiLoader4Line className="h-3 w-3 animate-spin text-neutral-400" />}
               </div>
+            )}
+          </div>
+          <CreateWorkflowButton />
+        </div>
+        {shouldShowStartWithTemplatesSection && (
+          <div className="mb-2">
+            <div className="my-2 flex items-center justify-between">
+              <div className="text-label-xs text-text-soft">Start with</div>
+              <LinkButton
+                size="sm"
+                variant="gray"
+                onClick={() =>
+                  navigate(
+                    `${buildRoute(ROUTES.TEMPLATE_STORE, {
+                      environmentSlug: environmentSlug || '',
+                    })}?source=start-with`
+                  )
+                }
+                trailingIcon={RiArrowRightSLine}
+              >
+                Explore templates
+              </LinkButton>
+            </div>
 
-              <AnimatePresence mode="wait">
-                {/* State 1: Generating personalized suggestions */}
-                {isOnboardingGenerating && (
-                  <motion.div
-                    key="onboarding-generating"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.98, filter: 'blur(4px)' }}
-                    transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                    className="bg-bg-white border border-border-sub shadow-sm rounded-12 flex items-start gap-3 px-3 py-3"
-                  >
-                    <div className="flex flex-col gap-2">
-                      <span className="flex items-center gap-1 text-label-sm text-text-strong">
-                        <Broom fill="#525866" className="text-text-sub h-3 w-3 shrink-0 animate-pulse" />
-                        <Shimmer className="text-label-xs">Generating personal suggestions for you...</Shimmer>
-                      </span>
-                      <span className="text-paragraph-xs text-text-soft">
-                        Identifying common notification flows used by similar products. View{' '}
-                        <LinkButton
-                          size="sm"
-                          variant="gray"
-                          className="inline cursor-pointer"
-                          onClick={() =>
-                            navigate(
-                              `${buildRoute(ROUTES.TEMPLATE_STORE, {
-                                environmentSlug: environmentSlug || '',
-                              })}?source=generating-fallback`
-                            )
-                          }
-                        >
-                          Template library
-                        </LinkButton>{' '}
-                        instead →
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* State 2: Personalized suggestions ready */}
-                {hasPersonalizedSuggestions && !isOnboardingGenerating && (
-                  <motion.div
-                    key="onboarding-personalized"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6, transition: { duration: 0.18 } }}
-                    transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="w-full"
-                  >
-                    <ScrollArea className="w-full">
-                      <motion.div
-                        className="bg-bg-weak rounded-12 flex gap-4 p-3"
-                        initial="hidden"
-                        animate="visible"
-                        variants={startWithCardsRowVariants}
+            <AnimatePresence mode="wait">
+              {/* State 1: Generating personalized suggestions */}
+              {isOnboardingGenerating && (
+                <motion.div
+                  key="onboarding-generating"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                  className="bg-bg-white border border-border-sub shadow-sm rounded-12 flex items-start gap-3 px-3 py-3"
+                >
+                  <div className="flex flex-col gap-2">
+                    <span className="flex items-center gap-1 text-label-sm text-text-strong">
+                      <Broom fill="#525866" className="text-text-sub h-3 w-3 shrink-0 animate-pulse" />
+                      <Shimmer className="text-label-xs">Generating personal suggestions for you...</Shimmer>
+                    </span>
+                    <span className="text-paragraph-xs text-text-soft">
+                      Identifying common notification flows used by similar products. View{' '}
+                      <LinkButton
+                        size="sm"
+                        variant="gray"
+                        className="inline cursor-pointer"
+                        onClick={() =>
+                          navigate(
+                            `${buildRoute(ROUTES.TEMPLATE_STORE, {
+                              environmentSlug: environmentSlug || '',
+                            })}?source=generating-fallback`
+                          )
+                        }
                       >
-                        {isAiWorkflowGenerationEnabled && (
-                          <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
-                            <WorkflowCard
-                              name="Generate with Copilot"
-                              description="Create a workflow with AI assistance"
-                              steps={[]}
-                              onClick={() => {
-                                track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-                                navigate(
-                                  buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' })
-                                );
-                              }}
-                            >
-                              <AiThinking className="w-[100px]" />
-                            </WorkflowCard>
-                          </motion.div>
-                        )}
-                        {personalizedQuickTemplates.map((template, index) => (
-                          <motion.div key={template.workflowId} className="w-[250px] shrink-0" variants={itemVariants}>
-                            <WorkflowCard
-                              name={template.name}
-                              description={template.description}
-                              steps={template.steps}
-                              onClick={() => setSelectedOnboardingTemplate(personalizedSuggestions[index])}
-                            />
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                      <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
-                    <WorkflowTemplateModal
-                      open={!!selectedOnboardingTemplate}
-                      onOpenChange={(open) => {
-                        if (!open) setSelectedOnboardingTemplate(null);
-                      }}
-                      selectedTemplate={selectedOnboardingTemplate ?? undefined}
-                    />
-                  </motion.div>
-                )}
+                        Template library
+                      </LinkButton>{' '}
+                      instead →
+                    </span>
+                  </div>
+                </motion.div>
+              )}
 
-                {/* State 3: Fallback - no personalized suggestions available */}
-                {!hasPersonalizedSuggestions && !isOnboardingGenerating && (
-                  <motion.div
-                    key="onboarding-fallback"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6, transition: { duration: 0.18 } }}
-                    transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="w-full"
-                  >
-                    <ScrollArea className="w-full">
-                      <div className="bg-bg-weak rounded-12 flex flex-col gap-3 p-3">
-                        <div className="flex gap-4">
-                          {isLoadingQuickStart && (
-                            <>
-                              <Skeleton className="h-[140px] w-[250px] shrink-0" />
-                              <Skeleton className="h-[140px] w-[250px] shrink-0" />
-                              <Skeleton className="h-[140px] w-[250px] shrink-0" />
-                              <Skeleton className="h-[140px] w-[250px] shrink-0" />
-                              <Skeleton className="h-[140px] w-[250px] shrink-0" />
-                            </>
-                          )}
-                          {!isLoadingQuickStart && (
-                            <motion.div
-                              className="flex gap-4"
-                              initial="hidden"
-                              animate="visible"
-                              variants={startWithCardsRowVariants}
-                            >
-                              {isAiWorkflowGenerationEnabled && (
-                                <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
-                                  <WorkflowCard
-                                    name="Generate with Copilot"
-                                    description="Create a workflow with AI assistance"
-                                    steps={[]}
-                                    onClick={() => {
-                                      track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
-                                      navigate(
-                                        buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' })
-                                      );
-                                    }}
-                                  >
-                                    <AiThinking className="w-[100px]" />
-                                  </WorkflowCard>
-                                </motion.div>
-                              )}
-                              {quickStartTemplates.map((template) => (
-                                <motion.div
-                                  key={template.workflowId}
-                                  className="w-[250px] shrink-0"
-                                  variants={itemVariants}
+              {/* State 2: Personalized suggestions ready */}
+              {hasPersonalizedSuggestions && !isOnboardingGenerating && (
+                <motion.div
+                  key="onboarding-personalized"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6, transition: { duration: 0.18 } }}
+                  transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="w-full"
+                >
+                  <ScrollArea className="w-full">
+                    <motion.div
+                      className="bg-bg-weak rounded-12 flex gap-4 p-3"
+                      initial="hidden"
+                      animate="visible"
+                      variants={startWithCardsRowVariants}
+                    >
+                      {isAiWorkflowGenerationEnabled && (
+                        <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
+                          <WorkflowCard
+                            name="Generate with Copilot"
+                            description="Create a workflow with AI assistance"
+                            steps={[]}
+                            onClick={() => {
+                              track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+                              navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
+                            }}
+                          >
+                            <AiThinking className="w-[100px]" />
+                          </WorkflowCard>
+                        </motion.div>
+                      )}
+                      {personalizedQuickTemplates.map((template, index) => (
+                        <motion.div key={template.workflowId} className="w-[250px] shrink-0" variants={itemVariants}>
+                          <WorkflowCard
+                            name={template.name}
+                            description={template.description}
+                            steps={template.steps}
+                            onClick={() => setSelectedOnboardingTemplate(personalizedSuggestions[index])}
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
+                  <WorkflowTemplateModal
+                    open={!!selectedOnboardingTemplate}
+                    onOpenChange={(open) => {
+                      if (!open) setSelectedOnboardingTemplate(null);
+                    }}
+                    selectedTemplate={selectedOnboardingTemplate ?? undefined}
+                  />
+                </motion.div>
+              )}
+
+              {/* State 3: Fallback - no personalized suggestions available */}
+              {!hasPersonalizedSuggestions && !isOnboardingGenerating && (
+                <motion.div
+                  key="onboarding-fallback"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6, transition: { duration: 0.18 } }}
+                  transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="w-full"
+                >
+                  <ScrollArea className="w-full">
+                    <div className="bg-bg-weak rounded-12 flex flex-col gap-3 p-3">
+                      <div className="flex gap-4">
+                        {isLoadingQuickStart && (
+                          <>
+                            <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                            <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                            <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                            <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                            <Skeleton className="h-[140px] w-[250px] shrink-0" />
+                          </>
+                        )}
+                        {!isLoadingQuickStart && (
+                          <motion.div
+                            className="flex gap-4"
+                            initial="hidden"
+                            animate="visible"
+                            variants={startWithCardsRowVariants}
+                          >
+                            {isAiWorkflowGenerationEnabled && (
+                              <motion.div className="w-[250px] shrink-0" variants={itemVariants}>
+                                <WorkflowCard
+                                  name="Generate with Copilot"
+                                  description="Create a workflow with AI assistance"
+                                  steps={[]}
+                                  onClick={() => {
+                                    track(TelemetryEvent.CREATE_WORKFLOW_CLICK);
+                                    navigate(
+                                      buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' })
+                                    );
+                                  }}
                                 >
-                                  <WorkflowCard
-                                    name={template.name}
-                                    description={template.description}
-                                    steps={template.steps}
-                                    onClick={() => handleTemplateClick(template)}
-                                  />
-                                </motion.div>
-                              ))}
-                            </motion.div>
-                          )}
-                        </div>
-                        {onboardingStatus === 'skipped' && (
-                          <div className="text-paragraph-xs text-text-soft flex items-center gap-1.5 px-1">
-                            <RiInformation2Line className="text-icon-strong h-3 w-3 shrink-0" />
-                            <p>
-                              <span className="text-icon-strong">Tip: </span>Generate suggestions tailored to your
-                              product. Add your{' '}
-                              <Link
-                                to={ROUTES.SETTINGS_ORGANIZATION}
-                                className="inline cursor-pointer text-icon-strong"
+                                  <AiThinking className="w-[100px]" />
+                                </WorkflowCard>
+                              </motion.div>
+                            )}
+                            {quickStartTemplates.map((template) => (
+                              <motion.div
+                                key={template.workflowId}
+                                className="w-[250px] shrink-0"
+                                variants={itemVariants}
                               >
-                                domain →
-                              </Link>
-                            </p>
-                          </div>
+                                <WorkflowCard
+                                  name={template.name}
+                                  description={template.description}
+                                  steps={template.steps}
+                                  onClick={() => handleTemplateClick(template)}
+                                />
+                              </motion.div>
+                            ))}
+                          </motion.div>
                         )}
                       </div>
-                      <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-          {shouldShowStartWithTemplatesSection && (
-            <div className="text-label-xs text-text-soft my-2">Your Workflows</div>
-          )}
-          <WorkflowList
-            hasActiveFilters={!!hasActiveFilters}
-            onClearFilters={clearFilters}
-            orderBy={searchParams.get('orderBy') as SortableColumn}
-            orderDirection={searchParams.get('orderDirection') as DirectionEnum}
-            data={workflowsData}
-            isLoading={isPending}
-            isError={isError}
-            limit={limit}
-            onPageSizeChange={(newPageSize) => {
-              setPersistedPageSize(newPageSize);
-              setSearchParams((prev) => {
-                const sp = new URLSearchParams(prev);
-                sp.set('limit', newPageSize.toString());
-                sp.delete('offset');
+                      {onboardingStatus === 'skipped' && (
+                        <div className="text-paragraph-xs text-text-soft flex items-center gap-1.5 px-1">
+                          <RiInformation2Line className="text-icon-strong h-3 w-3 shrink-0" />
+                          <p>
+                            <span className="text-icon-strong">Tip: </span>Generate suggestions tailored to your
+                            product. Add your{' '}
+                            <Link to={ROUTES.SETTINGS_ORGANIZATION} className="inline cursor-pointer text-icon-strong">
+                              domain →
+                            </Link>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+        {shouldShowStartWithTemplatesSection && <div className="text-label-xs text-text-soft my-2">Your Workflows</div>}
+        <WorkflowList
+          hasActiveFilters={!!hasActiveFilters}
+          onClearFilters={clearFilters}
+          orderBy={searchParams.get('orderBy') as SortableColumn}
+          orderDirection={searchParams.get('orderDirection') as DirectionEnum}
+          data={workflowsData}
+          isLoading={isPending}
+          isError={isError}
+          limit={limit}
+          onPageSizeChange={(newPageSize) => {
+            setPersistedPageSize(newPageSize);
+            setSearchParams((prev) => {
+              const sp = new URLSearchParams(prev);
+              sp.set('limit', newPageSize.toString());
+              sp.delete('offset');
 
-                return sp;
-              });
-            }}
-          />
-        </div>
-        <Outlet />
-      </DashboardLayout>
+              return sp;
+            });
+          }}
+        />
+      </div>
+      <Outlet />
     </>
   );
 };

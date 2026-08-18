@@ -3,8 +3,8 @@ import { useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { PageHeader } from '@/context/page-header';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { DashboardLayout } from '../components/dashboard-layout';
 import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
 
@@ -20,13 +20,12 @@ export function IntegrationsListPage() {
   }, [navigate]);
 
   return (
-    <DashboardLayout
-      headerStartItems={
+    <>
+      <PageHeader>
         <h1 className="text-foreground-950 flex items-center gap-1">
           <span>Integration Store</span>
         </h1>
-      }
-    >
+      </PageHeader>
       <Tabs defaultValue="providers" className="-mx-2">
         <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
           <TabsList variant="regular" className="border-b-0 border-transparent p-0 px-2!">
@@ -50,6 +49,6 @@ export function IntegrationsListPage() {
         </TabsContent>
       </Tabs>
       <Outlet />
-    </DashboardLayout>
+    </>
   );
 }

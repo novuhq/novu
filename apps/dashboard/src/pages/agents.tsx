@@ -26,7 +26,6 @@ import { NovuApiError, post } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsList } from '@/components/agents/agents-list';
 import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -39,6 +38,7 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
 import { IS_CLOUD, IS_EU, IS_SELF_HOSTED } from '@/config';
+import { PageHeader } from '@/context/page-header';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
@@ -433,48 +433,45 @@ export function AgentsPage() {
       {!areAgentsAvailable && IS_CLOUD ? (
         <AgentsEarlyAccessDialog open={earlyAccessOpen} onOpenChange={setEarlyAccessOpen} />
       ) : null}
-      <DashboardLayout
-        headerStartItems={
-          <h1 className="text-foreground-950 flex items-center gap-1">
-            Agents{' '}
-            <Badge color="gray" size="sm" variant="lighter">
-              BETA
-            </Badge>
-          </h1>
-        }
-      >
-        {areAgentsAvailable ? (
-          <AgentsList />
-        ) : (
-          <AgentsEmptyTeaser
-            cta={
-              IS_SELF_HOSTED ? (
-                <Button
-                  variant="primary"
-                  mode="gradient"
-                  size="xs"
-                  leadingIcon={RiSparkling2Line}
-                  type="button"
-                  onClick={handleUpgradeClick}
-                >
-                  {UPGRADE_CTA_LABEL}
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
-                  mode="gradient"
-                  size="xs"
-                  trailingIcon={RiArrowRightSLine}
-                  type="button"
-                  onClick={() => setEarlyAccessOpen(true)}
-                >
-                  Request early access
-                </Button>
-              )
-            }
-          />
-        )}
-      </DashboardLayout>
+      <PageHeader>
+        <h1 className="text-foreground-950 flex items-center gap-1">
+          Agents{' '}
+          <Badge color="gray" size="sm" variant="lighter">
+            BETA
+          </Badge>
+        </h1>
+      </PageHeader>
+      {areAgentsAvailable ? (
+        <AgentsList />
+      ) : (
+        <AgentsEmptyTeaser
+          cta={
+            IS_SELF_HOSTED ? (
+              <Button
+                variant="primary"
+                mode="gradient"
+                size="xs"
+                leadingIcon={RiSparkling2Line}
+                type="button"
+                onClick={handleUpgradeClick}
+              >
+                {UPGRADE_CTA_LABEL}
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                mode="gradient"
+                size="xs"
+                trailingIcon={RiArrowRightSLine}
+                type="button"
+                onClick={() => setEarlyAccessOpen(true)}
+              >
+                Request early access
+              </Button>
+            )
+          }
+        />
+      )}
     </>
   );
 }

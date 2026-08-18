@@ -1,11 +1,13 @@
 import { ClerkLoaded } from '@clerk/react';
 import { ErrorBoundary, withProfiler } from '@sentry/react';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Suspense } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { Outlet } from 'react-router-dom';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { TooltipProvider } from '@/components/primitives/tooltip';
+import { RouteFallback } from '@/components/route-fallback';
 import { AuthProvider } from '@/context/auth/auth-provider';
 import { CustomerIoProvider } from '@/context/customer-io';
 import { EEAuthProvider as ClerkProvider } from '@/context/ee-auth-provider';
@@ -62,7 +64,9 @@ const RootRouteInternal = () => {
                         <HelmetProvider>
                           <TooltipProvider delayDuration={100}>
                             <EscapeKeyManagerProvider>
-                              <Outlet />
+                              <Suspense fallback={<RouteFallback />}>
+                                <Outlet />
+                              </Suspense>
                             </EscapeKeyManagerProvider>
                           </TooltipProvider>
                         </HelmetProvider>

@@ -5,7 +5,6 @@ import { RiAddLine, RiMore2Fill } from 'react-icons/ri';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { DomainResponse } from '@/api/domains';
 import { ConfirmationModal } from '@/components/confirmation-modal';
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { AddDomainDialog } from '@/components/domains/add-domain-dialog';
 import { DomainsIllustrationSvg, DomainsPaywallBanner } from '@/components/domains/domains-paywall-banner';
 import { PageMeta } from '@/components/page-meta';
@@ -31,6 +30,7 @@ import {
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PageHeader } from '@/context/page-header';
 import { useDeleteDomain, useFetchDomains } from '@/hooks/use-domains';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { usePersistedPageSize } from '@/hooks/use-persisted-page-size';
@@ -231,17 +231,21 @@ export function DomainsPage() {
 
   if (!domainsEnabled) {
     return (
-      <DashboardLayout
-        headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Inbound Email</h1>}
-      >
+      <>
+        <PageHeader>
+          <h1 className="text-foreground-950 flex items-center gap-1">Inbound Email</h1>
+        </PageHeader>
         <PageMeta title="Inbound Email" />
         <DomainsPaywallBanner />
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Inbound Email</h1>}>
+    <>
+      <PageHeader>
+        <h1 className="text-foreground-950 flex items-center gap-1">Inbound Email</h1>
+      </PageHeader>
       <PageMeta title="Inbound Email" />
       <div className="flex h-full w-full flex-col">
         {isEmptyDomainsState ? (
@@ -351,6 +355,6 @@ export function DomainsPage() {
         confirmButtonVariant="error"
         isLoading={deleteDomain.isPending}
       />
-    </DashboardLayout>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
+import { PageHeaderSlot } from '@/context/page-header';
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -25,7 +26,7 @@ export const DashboardLayout = ({
       )}
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         <HeaderNavigation
-          startItems={headerStartItems}
+          startItems={headerStartItems ?? <PageHeaderSlot />}
           hideBridgeUrl={!showBridgeUrl}
           showMobileNav={showSideNavigation}
         />

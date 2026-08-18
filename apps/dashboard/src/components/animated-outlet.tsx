@@ -1,8 +1,12 @@
 import { AnimatePresence } from 'motion/react';
-import React, { useRef } from 'react';
+import React, { Suspense, useRef } from 'react';
 import { useLocation, useOutlet } from 'react-router-dom';
 
-export const AnimatedOutlet = (): React.JSX.Element => {
+type AnimatedOutletProps = {
+  fallback?: React.ReactNode;
+};
+
+export const AnimatedOutlet = ({ fallback = null }: AnimatedOutletProps): React.JSX.Element => {
   const { pathname, state } = useLocation();
   const keyRef = useRef(pathname);
   const element = useOutlet();
@@ -12,8 +16,10 @@ export const AnimatedOutlet = (): React.JSX.Element => {
   }
 
   return (
-    <AnimatePresence mode="wait" initial>
-      {element && React.cloneElement(element, { key: keyRef.current })}
-    </AnimatePresence>
+    <Suspense fallback={fallback}>
+      <AnimatePresence mode="wait" initial>
+        {element && React.cloneElement(element, { key: keyRef.current })}
+      </AnimatePresence>
+    </Suspense>
   );
 };

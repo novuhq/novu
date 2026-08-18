@@ -2,7 +2,6 @@ import { WorkflowResponseDto } from '@novu/shared';
 import { FaCode } from 'react-icons/fa6';
 import { RiRefreshLine, RiTerminalBoxLine } from 'react-icons/ri';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { Badge } from '@/components/primitives/badge';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
@@ -10,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import TruncatedText from '@/components/truncated-text';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { useLocalMode } from '@/context/local-mode';
+import { PageHeader } from '@/context/page-header';
 import type { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { ConnectionStatus } from '@/utils/types';
@@ -157,15 +157,13 @@ export const LocalWorkflowsPage = () => {
   const isDisconnected = healthStatus === ConnectionStatus.DISCONNECTED && !workflows;
 
   return (
-    <DashboardLayout
-      showBridgeUrl={false}
-      headerStartItems={
+    <>
+      <PageHeader>
         <div className="flex items-center gap-2.5">
           <h1 className="text-foreground-950">Local workflows</h1>
           <LocalBridgePill />
         </div>
-      }
-    >
+      </PageHeader>
       {isDisconnected ? (
         <DisconnectedState />
       ) : isDiscoverPending && !workflows ? (
@@ -188,6 +186,6 @@ export const LocalWorkflowsPage = () => {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 };
