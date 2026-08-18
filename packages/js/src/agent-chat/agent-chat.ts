@@ -332,6 +332,10 @@ export class AgentChat extends BaseModule {
           return { error: result.error };
         }
 
+        // Resume paths (approvals, card clicks) can emit before the HTTP ack;
+        // catch up like sendMessage so live WS overlap is not dropped.
+        this.#requestCatchUp();
+
         return { data: { conversationId: result.identifier } };
       } catch (error) {
         if (error instanceof AgentChatPlanLimitError) {
