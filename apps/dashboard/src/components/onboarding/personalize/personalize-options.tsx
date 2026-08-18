@@ -130,7 +130,7 @@ const INTERACTION_ACCENT = '#525866';
 export const AGENT_INTERACTION_OPTIONS: InteractionOption[] = [
   {
     value: 'agent_reaches_out_or_asks',
-    label: 'The agent reaches out or asks for input',
+    label: 'Agent reaches out for input (human-in-the-loop)',
     icon: <Hash className="size-4" strokeWidth={1.5} />,
     accent: INTERACTION_ACCENT,
   },
