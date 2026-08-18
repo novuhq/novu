@@ -431,6 +431,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
   public async getExistingDelayedJobWithTheSameDigestValue(job: JobEntity, digestMeta?: IDigestBaseMetadata) {
     const findOne = await this._model.findOne(
       {
+        _id: { $ne: this.convertStringToObjectId(job._id) },
         status: JobStatusEnum.DELAYED,
         type: StepTypeEnum.DIGEST,
         _templateId: job._templateId,
