@@ -140,14 +140,12 @@ export class AgentChat extends BaseModule {
           return { error: new NovuError('Pending action not found', new Error('pending action not found')) };
         }
 
-        const actionId =
-          args.decision === 'approved'
-            ? pending.approveActionId
-            : args.decision === 'denied'
-              ? pending.denyActionId
-              : args.decision === 'trust-tool'
-                ? pending.trustToolActionId
-                : pending.trustServerActionId;
+        const actionId = {
+          approved: pending.approveActionId,
+          denied: pending.denyActionId,
+          'trust-tool': pending.trustToolActionId,
+          'trust-server': pending.trustServerActionId,
+        }[args.decision];
         if (!actionId) {
           return {
             error: new NovuError(
