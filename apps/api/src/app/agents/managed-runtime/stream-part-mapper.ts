@@ -83,7 +83,6 @@ export function mapStreamPart(part: StreamPart): AgentEvent[] {
         {
           type: 'tool-use-result',
           toolUseId: part.toolUseId,
-          toolName: part.toolName,
           source: part.source,
           content: part.content,
           isError: part.isError,
