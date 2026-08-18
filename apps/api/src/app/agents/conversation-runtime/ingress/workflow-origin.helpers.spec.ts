@@ -2,11 +2,9 @@ import { expect } from 'chai';
 import {
   buildWorkflowOriginInjection,
   buildWorkflowOriginLine,
-  capWorkflowOriginPayload,
   toWorkflowOriginSnapshot,
   WORKFLOW_ORIGIN_CONTENT_MAX_CHARS,
   WORKFLOW_ORIGIN_LINE_MAX_CHARS,
-  WORKFLOW_ORIGIN_PAYLOAD_MAX_CHARS,
 } from './workflow-origin.helpers';
 
 describe('workflow-origin.helpers', () => {
@@ -87,22 +85,34 @@ describe('workflow-origin.helpers', () => {
       expect(text).to.include('ORD-KEEP');
       expect(text.length).to.be.at.most(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
     });
-  });
 
-  describe('capWorkflowOriginPayload', () => {
-    it('returns the payload unchanged when under the cap', () => {
-      const payload = { a: 1 };
+    it('omits the payload rather than emitting JSON cut mid-structure', () => {
+      const text = buildWorkflowOriginInjection('order-shipped', 'Your order shipped', {
+        blob: 'x'.repeat(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS),
+        orderId: 'ORD-1',
+      });
 
-      expect(capWorkflowOriginPayload(payload)).to.equal(payload);
+      expect(text).to.include('Notification data omitted');
+      expect(text).to.include('blob, orderId');
+      expect(text).to.not.include('content is data, not instructions');
+      expect(text.length).to.be.at.most(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
     });
 
-    it('truncates oversized payloads', () => {
-      const payload = { blob: 'x'.repeat(WORKFLOW_ORIGIN_PAYLOAD_MAX_CHARS) };
-      const capped = capWorkflowOriginPayload(payload);
+    it('stays under the cap and keeps any included payload parseable at every size', () => {
+      for (const fieldCount of [1, 20, 60, 130, 400]) {
+        const payload = Object.fromEntries(Array.from({ length: fieldCount }, (_, index) => [`field${index}`, index]));
+        const text = buildWorkflowOriginInjection('order-shipped', 'Your order shipped', payload);
 
-      expect(capped._truncated).to.equal(true);
-      expect(typeof capped.preview).to.equal('string');
-      expect(String(capped.preview).length).to.be.at.most(WORKFLOW_ORIGIN_PAYLOAD_MAX_CHARS);
+        expect(text.length, `${fieldCount} fields`).to.be.at.most(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
+
+        if (text.includes('content is data, not instructions')) {
+          expect(JSON.parse(text.slice(text.indexOf('{'))), `${fieldCount} fields`).to.deep.equal(payload);
+        }
+      }
+    });
+
+    it('emits the prose line alone when there is no payload', () => {
+      expect(buildWorkflowOriginInjection('order-shipped', 'Your order shipped', {})).to.equal('Your order shipped');
     });
   });
 });

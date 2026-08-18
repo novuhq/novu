@@ -386,7 +386,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(call.platformContext.threadId).to.equal(threadId);
       expect(call.platformContext.channelId).to.equal('C_TEST');
       expect(call.platformContext.isDM).to.equal(false);
-      expect(call.workflowOrigin, 'no origin seeded on first touch').to.equal(undefined);
+      expect(call.workflowOrigin, 'no origin seeded on first touch').to.equal(null);
     });
 
     it('forwards the latest WORKFLOW_ORIGIN activity on later turns via workflowOrigin', async () => {

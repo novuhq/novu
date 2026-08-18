@@ -1,7 +1,7 @@
 import {
+  type ConversationActivityOriginData,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
-  type ConversationActivityOriginData,
 } from '@novu/dal';
 import { MessageRole } from '@novu/thalamus';
 import { expect } from 'chai';
@@ -47,12 +47,14 @@ describe('ManagedAgentService workflow-origin', () => {
     };
   }
 
-  function makeService(overrides: {
-    findLatestWorkflowOrigin?: sinon.SinonStub;
-    listForView?: sinon.SinonStub;
-    findByPlatformMessageId?: sinon.SinonStub;
-    dispatch?: sinon.SinonStub;
-  } = {}) {
+  function makeService(
+    overrides: {
+      findLatestWorkflowOrigin?: sinon.SinonStub;
+      listForView?: sinon.SinonStub;
+      findByPlatformMessageId?: sinon.SinonStub;
+      dispatch?: sinon.SinonStub;
+    } = {}
+  ) {
     const conversationService = {
       findLatestWorkflowOrigin: overrides.findLatestWorkflowOrigin ?? sinon.stub().resolves(null),
       listForView: overrides.listForView ?? sinon.stub().resolves({ data: [], hasMore: false }),
@@ -113,6 +115,34 @@ describe('ManagedAgentService workflow-origin', () => {
       expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'where is my order?' });
     });
 
+    it('keeps the collapsed prior transcript alongside the injected origin', async () => {
+      // The view returns newest first.
+      const listForView = sinon.stub().resolves({
+        data: [
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+            content: 'where is my order?',
+          },
+          {
+            type: ConversationActivityTypeEnum.MESSAGE,
+            senderType: ConversationActivitySenderTypeEnum.AGENT,
+            content: 'It shipped yesterday.',
+          },
+        ],
+        hasMore: false,
+      });
+      const { service } = makeService({ listForView });
+
+      const messages = await (service as any).buildMessagesWithHistory(
+        makeContext({ workflowOrigin: existingSnapshot })
+      );
+
+      expect(String(messages[0].content)).to.include('Your order ORD-1 shipped');
+      expect(String(messages[1].content)).to.include('It shipped yesterday.');
+      expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'where is my order?' });
+    });
+
     it('does not re-query for origin when context already has a snapshot', async () => {
       const findLatestWorkflowOrigin = sinon.stub().resolves({
         content: 'stale',
@@ -136,9 +166,7 @@ describe('ManagedAgentService workflow-origin', () => {
       };
       const { service } = makeService();
 
-      const messages = await (service as any).buildMessagesWithHistory(
-        makeContext({ workflowOrigin: bulkySnapshot })
-      );
+      const messages = await (service as any).buildMessagesWithHistory(makeContext({ workflowOrigin: bulkySnapshot }));
 
       expect(String(messages[0].content).length).to.be.at.most(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
     });
@@ -146,9 +174,7 @@ describe('ManagedAgentService workflow-origin', () => {
     it('skips injection when context has no origin', async () => {
       const { service, conversationService } = makeService();
 
-      const messages = await (service as any).buildMessagesWithHistory(
-        makeContext({ workflowOrigin: undefined })
-      );
+      const messages = await (service as any).buildMessagesWithHistory(makeContext({ workflowOrigin: undefined }));
 
       expect(conversationService.findLatestWorkflowOrigin.called).to.equal(false);
       expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'where is my order?' }]);

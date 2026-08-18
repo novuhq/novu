@@ -17,7 +17,6 @@ import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import {
   buildWorkflowOriginLine,
-  capWorkflowOriginPayload,
   extractAgentEmailOriginToken,
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
@@ -186,10 +185,7 @@ export class WorkflowOriginService {
       return null;
     }
 
-    const activity = await this.conversationService.findLatestWorkflowOrigin(
-      config.environmentId,
-      conversation._id
-    );
+    const activity = await this.conversationService.findLatestWorkflowOrigin(config.environmentId, conversation._id);
 
     return toWorkflowOriginSnapshot(activity);
   }
@@ -345,11 +341,14 @@ export class WorkflowOriginService {
       'payload'
     );
 
-    const rawPayload =
+    /**
+     * Stored verbatim: bridge handlers read `ctx.notification.payload` against the workflow's
+     * payload schema, so reshaping it here would surface expected fields as `undefined`.
+     */
+    const payload =
       notification?.payload && typeof notification.payload === 'object' && !Array.isArray(notification.payload)
         ? (notification.payload as Record<string, unknown>)
         : {};
-    const payload = capWorkflowOriginPayload(rawPayload);
 
     const storedContent = typeof originMessage.content === 'string' ? originMessage.content.trim() : '';
     const workflowIdentifier = originMessage.templateIdentifier || 'unknown';

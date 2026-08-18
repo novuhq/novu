@@ -191,10 +191,7 @@ export class ManagedAgentService implements OnModuleInit {
         subscriber: params.subscriber,
         userMessageText: activity.content,
         workflowOrigin: toWorkflowOriginSnapshot(
-          await this.conversationService.findLatestWorkflowOrigin(
-            params.config.environmentId,
-            params.conversation._id
-          )
+          await this.conversationService.findLatestWorkflowOrigin(params.config.environmentId, params.conversation._id)
         ),
         platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
@@ -443,11 +440,7 @@ export class ManagedAgentService implements OnModuleInit {
       return collapsed;
     }
 
-    const originBlock = buildOriginAssistantMessage(context.workflowOrigin);
-    const withoutLeadingAssistant =
-      collapsed.length > 0 && collapsed[0].role === MessageRole.ASSISTANT ? collapsed.slice(1) : collapsed;
-
-    return [originBlock, ...withoutLeadingAssistant];
+    return [buildOriginAssistantMessage(context.workflowOrigin), ...collapsed];
   }
 
   private async resolveVaultIdsForTurn(
