@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
+  buildInvalidJsonBodyDetail,
   buildNovuSignatureHeader,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -137,8 +138,6 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     const method = (compiled.method as string) ?? 'POST';
     const rawHeaders = (compiled.headers as Array<{ key: string; value: string }> | undefined) ?? [];
     const compiledBody = compiled.body as string | Array<{ key: string; value: string }> | undefined;
-    const rawBody =
-      typeof compiledBody === 'string' && compiledBody.trim() ? repairJsonString(compiledBody) : compiledBody;
     const timeout = (compiled.timeout as number | undefined) ?? 5000;
 
     if (!url) {
@@ -191,10 +190,12 @@ export class ExecuteHttpRequestStep extends SendMessageType {
 
     let bodyObject: Record<string, unknown> | unknown[] | undefined;
     try {
+      // `repairJsonString` throws on bodies it cannot repair, so it has to stay inside this
+      // try/catch to surface the failure as an execution detail instead of an unhandled job error.
+      const rawBody =
+        typeof compiledBody === 'string' && compiledBody.trim() ? repairJsonString(compiledBody) : compiledBody;
       bodyObject = resolveHttpRequestBody(rawBody);
     } catch (parseError) {
-      const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
-
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -203,7 +204,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ error: `Invalid raw JSON body: ${errorMessage}` }),
+          raw: JSON.stringify(buildInvalidJsonBodyDetail(parseError, compiledBody)),
         })
       );
 

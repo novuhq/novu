@@ -1,5 +1,11 @@
 import { expect } from 'chai';
-import { parseRawBody, resolveHttpRequestBody, toBodyRecord, toHeadersRecord } from './http-request.utils';
+import {
+  buildInvalidJsonBodyDetail,
+  parseRawBody,
+  resolveHttpRequestBody,
+  toBodyRecord,
+  toHeadersRecord,
+} from './http-request.utils';
 
 describe('http-request.utils', () => {
   describe('toBodyRecord', () => {
@@ -86,6 +92,57 @@ describe('http-request.utils', () => {
 
     it('should throw for invalid raw JSON string bodies', () => {
       expect(() => resolveHttpRequestBody('not json')).to.throw();
+    });
+  });
+
+  describe('buildInvalidJsonBodyDetail', () => {
+    const buildLongBody = (broken: string) => `{"padding":"${'x'.repeat(500)}","order":${broken}}`;
+
+    it('should excerpt the body around a position carried on the error', () => {
+      const body = buildLongBody('{"sku" }');
+      const position = body.indexOf('{"sku" }') + 7;
+      const detail = buildInvalidJsonBodyDetail(Object.assign(new Error('Colon expected'), { position }), body);
+
+      expect(detail.error).to.equal('Invalid raw JSON body: Colon expected');
+      expect(detail.bodyExcerpt).to.contain('"order":{"sku" }');
+      expect(detail.bodyExcerpt).to.contain('...');
+      expect(detail.bodyExcerpt).to.not.contain('x'.repeat(200));
+    });
+
+    it('should read the position out of a JSON.parse message when none is attached', () => {
+      const body = buildLongBody('{"sku" }');
+      let thrown: unknown;
+      try {
+        JSON.parse(body);
+      } catch (error) {
+        thrown = error;
+      }
+
+      const detail = buildInvalidJsonBodyDetail(thrown, body);
+
+      expect(detail.bodyExcerpt).to.contain('"order":{"sku" }');
+    });
+
+    it('should omit the excerpt when the position cannot be determined', () => {
+      const detail = buildInvalidJsonBodyDetail(new Error('Raw body must be a JSON object or array'), '"hello"');
+
+      expect(detail.error).to.equal('Invalid raw JSON body: Raw body must be a JSON object or array');
+      expect(detail.bodyExcerpt).to.equal(undefined);
+      expect(detail.hint).to.be.a('string');
+    });
+
+    it('should omit the excerpt for key-value pair bodies', () => {
+      const detail = buildInvalidJsonBodyDetail(Object.assign(new Error('Colon expected'), { position: 3 }), [
+        { key: 'name', value: 'test' },
+      ]);
+
+      expect(detail.bodyExcerpt).to.equal(undefined);
+    });
+
+    it('should fall back to a generic message for non-Error throwables', () => {
+      const detail = buildInvalidJsonBodyDetail('boom', '{}');
+
+      expect(detail.error).to.equal('Invalid raw JSON body: Failed to parse raw JSON body');
     });
   });
 });

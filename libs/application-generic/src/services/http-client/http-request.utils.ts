@@ -45,3 +45,56 @@ export function shouldIncludeBody(body: Record<string, unknown> | unknown[] | un
 
   return !!body && !methodsWithoutBody.includes(method);
 }
+
+export interface InvalidJsonBodyDetail {
+  error: string;
+  hint: string;
+  bodyExcerpt?: string;
+}
+
+const BODY_EXCERPT_RADIUS = 60;
+
+const INVALID_JSON_BODY_HINT =
+  'The body is parsed as JSON after Liquid variables are rendered. A variable that resolves to an unescaped quote, a line break, or a raw object can break the surrounding JSON.';
+
+/**
+ * `jsonrepair` exposes the offset as `position`; `JSON.parse` only mentions it in the message.
+ */
+function extractFailurePosition(error: unknown): number | undefined {
+  const { position } = (error ?? {}) as { position?: unknown };
+
+  if (typeof position === 'number' && Number.isFinite(position)) {
+    return position;
+  }
+
+  const match = error instanceof Error ? /position (\d+)/.exec(error.message) : null;
+
+  return match ? Number(match[1]) : undefined;
+}
+
+function buildBodyExcerpt(body: HttpRequestBodyControl, position: number | undefined): string | undefined {
+  if (typeof body !== 'string' || position === undefined) {
+    return undefined;
+  }
+
+  const start = Math.max(0, position - BODY_EXCERPT_RADIUS);
+  const end = Math.min(body.length, position + BODY_EXCERPT_RADIUS);
+
+  return `${start > 0 ? '...' : ''}${body.slice(start, end)}${end < body.length ? '...' : ''}`;
+}
+
+/**
+ * Turns a JSON parse/repair failure into something a user can act on. The parsers only report a
+ * character offset into the rendered body, which nobody can locate by hand, so resolve it against
+ * the body and show the surrounding text instead.
+ */
+export function buildInvalidJsonBodyDetail(error: unknown, body: HttpRequestBodyControl): InvalidJsonBodyDetail {
+  const message = error instanceof Error ? error.message : 'Failed to parse raw JSON body';
+  const bodyExcerpt = buildBodyExcerpt(body, extractFailurePosition(error));
+
+  return {
+    error: `Invalid raw JSON body: ${message}`,
+    hint: INVALID_JSON_BODY_HINT,
+    ...(bodyExcerpt ? { bodyExcerpt } : {}),
+  };
+}
