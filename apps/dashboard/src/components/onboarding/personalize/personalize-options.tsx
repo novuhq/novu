@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
-import { AtSign, Hash, Laptop, Mails } from 'lucide-react';
+import { AtSign, Hash, Mails } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent-channel-branding';
 
@@ -119,7 +119,7 @@ export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
 export type InteractionOption = {
   value: AgentInteraction;
   label: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   /** Brand colour the chip tints itself with while selected. */
   accent: string;
 };
@@ -143,7 +143,6 @@ export const AGENT_INTERACTION_OPTIONS: InteractionOption[] = [
   {
     value: 'both',
     label: 'Both',
-    icon: <Laptop className="size-4" strokeWidth={1.5} />,
     accent: INTERACTION_ACCENT,
   },
 ];
