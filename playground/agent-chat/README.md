@@ -35,10 +35,10 @@ Open http://localhost:4012
 To simulate cloud realtime, run the CF worker locally (not Nest `apps/ws`):
 
 ```bash
-cd enterprise/workers/socket
-cp .dev.vars.example .dev.vars   # if you don't already have .dev.vars
+# from repo root (after pnpm install)
+cp enterprise/workers/socket/.dev.vars.example enterprise/workers/socket/.dev.vars
 # fill JWT_SECRET + INTERNAL_API_KEY to match apps/api/src/.env
-npm run dev                      # http://127.0.0.1:8787
+pnpm dev:socket-worker              # http://127.0.0.1:8787
 ```
 
 Point API/worker at it (uncomment in their `.env`):
