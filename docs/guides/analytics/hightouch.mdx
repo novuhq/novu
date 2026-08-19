@@ -207,6 +207,8 @@ By the end, you'll have a working integration that creates subscribers and trigg
     }
     ```
 
+    The trailing comma after each looped object is intentional. Hightouch strips trailing commas from Liquid JSON templates before sending the request.
+
     - **Region**: EU accounts must use `https://eu.api.novu.co`. A US API key will not authenticate against the EU host, and the reverse is also true.
   </Accordion>
 </AccordionGroup>
