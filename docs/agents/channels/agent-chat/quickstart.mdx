@@ -226,7 +226,7 @@ Start with `type === 'text'`. Then handle the other part types as you need them.
 | `tool` | Tool call and result. |
 | `approval` | Gated tool. Use `pendingActions` and `respondToAction`. |
 | `mcp-connection` | MCP connect card. Open `authorizeUrl`. |
-| `card` | Structured card payload. |
+| `card` | Structured Card tree. Draw `part.card`. Button clicks call `sendAction`. See [Cards](#cards). |
 | `file` | File attachment metadata. |
 | `source` | Citation (`url` or `document`). |
 
@@ -264,6 +264,104 @@ const { messages } = useAgentChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
 </CodeGroup>
 
 Full field tables: [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat).
+
+## Cards
+
+A Card is a structured reply. It can include a title, text, images, links, and buttons.
+
+When the agent sends a Card, the message includes a part with `type: 'card'`. The data is on `part.card`.
+
+Agents create Cards with JSX or `Card({…})`. That authoring API is shared with Slack and the other ACI channels: [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). You can also post the JSON with [Send an agent reply](/api-reference/agents/send-an-agent-reply).
+
+The SDK does not type `part.card`. Read the fields that you support. Skip child types that you do not use.
+
+An Order card arrives as this object on `part.card`:
+
+```json
+{
+  "type": "card",
+  "title": "Order #1234",
+  "children": [
+    { "type": "text", "content": "Your order is ready for pickup." },
+    {
+      "type": "actions",
+      "children": [
+        { "type": "button", "id": "ack", "label": "Acknowledge" },
+        { "type": "button", "id": "escalate", "label": "Escalate", "style": "danger" }
+      ]
+    }
+  ]
+}
+```
+
+| Field | What it is |
+| --- | --- |
+| `title` | Optional heading. |
+| `subtitle` | Optional secondary heading. |
+| `imageUrl` | Optional header image. |
+| `children` | Ordered nodes. See the table below. |
+
+| `child.type` | Fields |
+| --- | --- |
+| `text` | `content` |
+| `divider` | None |
+| `image` | `url`, `alt` |
+| `link` | `url`, `label` |
+| `actions` | `children` of `button` |
+| `button` | `id`, `label`, optional `value` and `style` |
+
+Draw `title` and the `children` that you support. If the subscriber clicks a button, call `sendAction`. The agent receives the click in `onAction`.
+
+```tsx
+const { messages, sendAction } = useAgentChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+});
+
+{messages.map((message) =>
+  message.parts.map((part, i) => {
+    if (part.type !== 'card') {
+      return null;
+    }
+
+    const title = typeof part.card.title === 'string' ? part.card.title : null;
+    const children = Array.isArray(part.card.children) ? part.card.children : [];
+
+    return (
+      <article key={i}>
+        {title ? <h3>{title}</h3> : null}
+        {children.map((child, j) => {
+          if (child?.type === 'text') {
+            return <p key={j}>{child.content}</p>;
+          }
+
+          if (child?.type !== 'actions') {
+            return null;
+          }
+
+          return child.children?.map((button) => (
+            <button
+              key={button.id}
+              type="button"
+              onClick={() =>
+                void sendAction({
+                  actionId: button.id,
+                  value: button.value,
+                  sourceMessageId: message.id,
+                })
+              }
+            >
+              {button.label}
+            </button>
+          ));
+        })}
+      </article>
+    );
+  })
+)}
+```
+
+Do not send the button label with `sendMessage`. That call creates a new chat message.
+Do not call `respondToAction`. That function is for tool approval only.
 
 ## Thinking and running
 

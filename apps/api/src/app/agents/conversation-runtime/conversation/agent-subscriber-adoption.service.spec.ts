@@ -17,7 +17,7 @@ describe('AgentSubscriberAdoptionService', () => {
     const conversationRepository = {
       repointSubscriberParticipant: overrides.repointParticipant ?? sinon.stub().resolves(2),
     };
-    const conversationActivityRepository = {
+    const conversationService = {
       repointSubscriberSender: overrides.repointSender ?? sinon.stub().resolves(5),
     };
     const mcpConnectionRepository = {
@@ -40,7 +40,7 @@ describe('AgentSubscriberAdoptionService', () => {
 
     const service = new AgentSubscriberAdoptionService(
       conversationRepository as any,
-      conversationActivityRepository as any,
+      conversationService as any,
       mcpConnectionRepository as any,
       agentToolTrustRepository as any,
       subscriberRepository as any,
@@ -51,7 +51,7 @@ describe('AgentSubscriberAdoptionService', () => {
     return {
       service,
       conversationRepository,
-      conversationActivityRepository,
+      conversationService,
       mcpConnectionRepository,
       agentToolTrustRepository,
       subscriberRepository,
@@ -68,7 +68,7 @@ describe('AgentSubscriberAdoptionService', () => {
     const {
       service,
       conversationRepository,
-      conversationActivityRepository,
+      conversationService,
       mcpConnectionRepository,
       agentToolTrustRepository,
       subscriberRepository,
@@ -83,8 +83,8 @@ describe('AgentSubscriberAdoptionService', () => {
       fromSubscriberId: 'sub-phantom',
       toSubscriberId: 'sub-real',
     });
-    expect(conversationActivityRepository.repointSubscriberSender.calledOnce).to.equal(true);
-    expect(conversationActivityRepository.repointSubscriberSender.firstCall.args[0]).to.include({
+    expect(conversationService.repointSubscriberSender.calledOnce).to.equal(true);
+    expect(conversationService.repointSubscriberSender.firstCall.args[0]).to.include({
       environmentId: 'env-1',
       organizationId: 'org-1',
       fromSubscriberId: 'sub-phantom',

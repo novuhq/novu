@@ -164,10 +164,10 @@ await ctx.reply(
 );
 ```
 
-When a user clicks a button or selects a dropdown value, `onAction` fires with `action.id` and `action.value`. See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#onaction).
-
   </Tab>
 </Tabs>
+
+When a user clicks a button or selects a dropdown value, `onAction` fires with `action.id` and `action.value`. See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#onaction). On [Agent Chat](/agents/channels/agent-chat/quickstart#cards), the same tree arrives as a `card` part. The web UI draws it and calls `sendAction`.
 
 ### Available card components
 
@@ -198,5 +198,8 @@ The following table lists the card components you can use in replies:
   </Card>
   <Card icon="code" href="/api-reference/agents/send-an-agent-reply" title="Send an agent reply API">
     Send replies from your backend without a bridge handler.
+  </Card>
+  <Card icon="message-circle" href="/agents/channels/agent-chat/quickstart#cards" title="Agent Chat cards">
+    Draw `part.type === 'card'` in your product UI and call `sendAction`.
   </Card>
 </Columns>

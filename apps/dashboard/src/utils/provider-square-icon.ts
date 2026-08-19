@@ -1,10 +1,10 @@
 const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   whatsapp: 'whatsapp-business',
   'novu-email-agent': 'email',
-  // Agent Chat has no brand mark — same Novu square as In-App / Novu Anthropic.
-  'novu-agent-chat': 'novu',
+  // Conversation activity stores the platform id (`agent_chat`), not the provider id.
+  agent_chat: 'novu-agent-chat',
   // Pre-rename provider id still present on local/dev integrations.
-  'novu-web-chat': 'novu',
+  'novu-web-chat': 'novu-agent-chat',
   'novu-anthropic': 'novu',
   email: 'novu-email',
   teams: 'msteams',

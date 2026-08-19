@@ -1,4 +1,9 @@
-import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
+import {
+  AGENT_EVENT_PROTOCOL_VERSION,
+  type AgentEvent,
+  type AgentEventEnvelope,
+  type AgentMessageContent,
+} from '@novu/agent-event-protocol';
 import { type AgentMessage, createInitialAgentConversationState } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 
@@ -205,6 +210,27 @@ describe('applyEnvelope', () => {
     expect(approval).toMatchObject({ type: 'approval', approvalId: 'a1', state: 'approved' });
   });
 
+  it('folds trust action ids onto approval parts', () => {
+    const state = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, {
+        type: 'tool-approval-request',
+        approvalId: 'a1',
+        toolUseId: 'tu1',
+        toolName: 'create_issue',
+        trustToolActionId: 'mcp-approval:approve-tool:tu1:create_issue:GitHub',
+        trustServerActionId: 'mcp-approval:approve-server:tu1:create_issue:GitHub',
+        source: { type: 'mcp', serverName: 'GitHub' },
+      }),
+    ]);
+
+    expect(state.messages[0]?.parts[0]).toMatchObject({
+      type: 'approval',
+      trustToolActionId: 'mcp-approval:approve-tool:tu1:create_issue:GitHub',
+      trustServerActionId: 'mcp-approval:approve-server:tu1:create_issue:GitHub',
+      source: { type: 'mcp', serverName: 'GitHub' },
+    });
+  });
+
   it('keeps replayed approval requests in their protocol message positions', () => {
     const state = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, {
@@ -377,5 +403,39 @@ describe('applyEnvelope', () => {
     );
 
     expect(next.typing).toBeUndefined();
+  });
+
+  it('folds card content into a card part', () => {
+    const card = {
+      type: 'card',
+      title: 'Support Agent',
+      children: [{ type: 'text', content: 'How can I help?' }],
+    };
+    const next = applyEnvelope(
+      createInitialAgentConversationState(),
+      envelope(1, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm-card',
+        content: { card },
+      })
+    );
+
+    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'card', card }]);
+  });
+
+  it('folds exclusive durable content as markdown or card, not both', () => {
+    const card = { type: 'card', title: 'Support' };
+    const next = applyEnvelope(
+      createInitialAgentConversationState(),
+      envelope(1, {
+        type: 'message',
+        role: 'assistant',
+        messageId: 'm-both',
+        content: { markdown: 'Hello', card } as AgentMessageContent,
+      })
+    );
+
+    expect(assistantMessages(next.messages)[0]?.parts).toEqual([{ type: 'text', text: 'Hello', state: 'done' }]);
   });
 });

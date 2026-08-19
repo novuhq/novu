@@ -62,9 +62,9 @@ function resolveProviderGuideReservedSteps(providerId: string | undefined): numb
     return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
   }
 
-  // Agent Chat: embed (prompt/snippet) + send test message — install lives inside those.
+  // Agent Chat: try in dashboard + embed + go live from the customer app.
   if (providerId === ChatProviderIdEnum.NovuAgentChat) {
-    return 2;
+    return 3;
   }
 
   return PROVIDER_GUIDE_RESERVED_STEPS;

@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
-import { Laptop, Mails } from 'lucide-react';
+import { AtSign, Hash, Mails } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent-channel-branding';
 
@@ -11,6 +11,9 @@ import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent
 export type AgentReadiness = 'live_in_production' | 'in_development' | 'planned_not_started' | 'just_exploring';
 
 export type AgentAudience = 'customers_end_users' | 'employees_internal_teams' | 'both' | 'not_sure_yet';
+
+/** How users and the agent initiate conversations — optional survey answer. */
+export type AgentInteraction = 'agent_reaches_out_or_asks' | 'users_message_or_tag' | 'both';
 
 /** Survey channel ids only — real provider ids so they join the rest of the agent funnel. */
 export const AGENT_CHANNEL_VALUES = [
@@ -63,7 +66,7 @@ const providerIcon = (providerId: AgentChannel) => (
 
 export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
   {
-    // Agent email and agent chat have no square brand asset — they use a generic glyph, per the design.
+    // Agent email has no square brand asset — generic glyph, per the design.
     value: EmailProviderIdEnum.NovuAgent,
     label: 'Email',
     icon: <Mails className="size-4" strokeWidth={1.5} />,
@@ -108,7 +111,38 @@ export const AGENT_CHANNEL_OPTIONS: ChannelOption[] = [
   {
     value: ChatProviderIdEnum.NovuAgentChat,
     label: 'Agent Chat',
-    icon: <Laptop className="size-4" strokeWidth={1.5} />,
-    accent: '#525866',
+    icon: providerIcon(ChatProviderIdEnum.NovuAgentChat),
+    accent: '#DC224E',
+  },
+];
+
+export type InteractionOption = {
+  value: AgentInteraction;
+  label: string;
+  icon?: ReactNode;
+  /** Brand colour the chip tints itself with while selected. */
+  accent: string;
+};
+
+/** Neutral accent shared by interaction chips (no per-option brand colour). */
+const INTERACTION_ACCENT = '#525866';
+
+export const AGENT_INTERACTION_OPTIONS: InteractionOption[] = [
+  {
+    value: 'agent_reaches_out_or_asks',
+    label: 'Agent reaches out for input (human-in-the-loop)',
+    icon: <Hash className="size-4" strokeWidth={1.5} />,
+    accent: INTERACTION_ACCENT,
+  },
+  {
+    value: 'users_message_or_tag',
+    label: 'Users message or tag the agent',
+    icon: <AtSign className="size-4" strokeWidth={1.5} />,
+    accent: INTERACTION_ACCENT,
+  },
+  {
+    value: 'both',
+    label: 'Both',
+    accent: INTERACTION_ACCENT,
   },
 ];
