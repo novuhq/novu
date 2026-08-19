@@ -77,6 +77,31 @@ export function extractTelegramQuotedMessageId(message: Message | null): string 
   return typeof quotedId === 'string' && quotedId.length > 0 ? quotedId : null;
 }
 
+/** Teams quote-reply activity id from `message.raw.entities[].quotedReply.messageId`, else `replyToId`. */
+export function extractTeamsQuotedActivityId(message: Message | null): string | null {
+  if (!message) {
+    return null;
+  }
+
+  const raw = asRecord(message.raw);
+  const entities = Array.isArray(raw?.entities) ? raw.entities : [];
+  for (const entity of entities) {
+    const record = asRecord(entity);
+    if (record?.type !== 'quotedReply') {
+      continue;
+    }
+
+    const messageId = asRecord(record.quotedReply)?.messageId;
+    if (typeof messageId === 'string' && messageId.length > 0) {
+      return messageId;
+    }
+  }
+
+  const replyToId = raw?.replyToId;
+
+  return typeof replyToId === 'string' && replyToId.length > 0 ? replyToId : null;
+}
+
 /**
  * Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}` (forum topics).
  * Returns null when the prefix is absent or the segment is empty.

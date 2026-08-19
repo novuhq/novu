@@ -1051,6 +1051,82 @@ describe('WorkflowOriginService', () => {
       expect(result).to.deep.equal({ origin: teamsOrigin, notificationId: 'teams-notif1' });
     });
 
+    it('prefers a quotedReply entity messageId over latest-by-subscriber and bypasses the catch-up window', async () => {
+      const lastActivityAt = new Date().toISOString();
+      const existingConversation = {
+        ...conversation,
+        lastActivityAt,
+        participants: [{ type: 'subscriber', id: 'sub1' }],
+      };
+      const { service, messageRepository } = makeService({
+        findOne: sinon.stub().resolves({
+          ...teamsOrigin,
+          createdAt: new Date(Date.now() - 86_400_000).toISOString(),
+        }),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        platformThreadId: teamsDmThreadId,
+        subscriberId: 'sub1',
+        message: {
+          id: 'inbound',
+          text: 'hi',
+          author: { userId: '29:user1' },
+          raw: {
+            entities: [
+              { type: 'clientInfo' },
+              { type: 'quotedReply', quotedReply: { messageId: teamsOrigin.identifier } },
+            ],
+          },
+        } as any,
+        existingConversation: existingConversation as any,
+        isDirectMessage: true,
+      });
+
+      expect(messageRepository.findOne.calledOnce).to.equal(true);
+      expect(messageRepository.findOne.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env1',
+        _agentId: 'agent1',
+        _subscriberId: 'subscriber-mongo-1',
+        providerId: 'msteams',
+        channel: ChannelTypeEnum.CHAT,
+        _notificationId: { $exists: true, $ne: null },
+        'channelData.type': ENDPOINT_TYPES.MS_TEAMS_USER,
+        identifier: teamsOrigin.identifier,
+      });
+      expect(messageRepository.find.called).to.equal(false);
+      expect(result?.origin.identifier).to.equal(teamsOrigin.identifier);
+      expect(result?.notificationId).to.equal(undefined);
+    });
+
+    it('falls back to replyToId when no quotedReply entity is present', async () => {
+      const { service, messageRepository } = makeService({
+        findOne: sinon.stub().resolves(teamsOrigin),
+      });
+
+      const result = await service.resolve({
+        agentId: 'agent1',
+        config: teamsConfig as any,
+        platformThreadId: teamsDmThreadId,
+        subscriberId: 'sub1',
+        message: {
+          id: 'inbound',
+          text: 'hi',
+          author: { userId: '29:user1' },
+          raw: { replyToId: teamsOrigin.identifier },
+        } as any,
+        existingConversation: null,
+        isDirectMessage: true,
+      });
+
+      expect(messageRepository.findOne.calledOnce).to.equal(true);
+      expect(messageRepository.findOne.firstCall.args[0].identifier).to.equal(teamsOrigin.identifier);
+      expect(messageRepository.find.called).to.equal(false);
+      expect(result?.origin.identifier).to.equal(teamsOrigin.identifier);
+    });
+
     it('catch-up hydrates an existing DM conversation when the origin is not hydrated yet', async () => {
       const existingConversation = {
         ...conversation,

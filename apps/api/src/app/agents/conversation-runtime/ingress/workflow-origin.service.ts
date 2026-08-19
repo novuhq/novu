@@ -19,6 +19,7 @@ import {
   extractAgentEmailOriginToken,
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
+  extractTeamsQuotedActivityId,
   extractWhatsAppQuotedWamid,
   isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
@@ -114,9 +115,13 @@ export class WorkflowOriginService {
           break;
         case AgentPlatformEnum.TEAMS:
           origin = isDirectMessage
-            ? await this.findRecentChatWorkflowOriginMessage(agentId, config, subscriber._id, null, {
-                'channelData.type': ENDPOINT_TYPES.MS_TEAMS_USER,
-              })
+            ? await this.findRecentChatWorkflowOriginMessage(
+                agentId,
+                config,
+                subscriber._id,
+                extractTeamsQuotedActivityId(message),
+                { 'channelData.type': ENDPOINT_TYPES.MS_TEAMS_USER }
+              )
             : null;
           break;
         case AgentPlatformEnum.AGENT_CHAT:
