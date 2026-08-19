@@ -16,6 +16,7 @@ const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   'push-webhook': 'webhook',
   'tool-webhook': 'webhook',
   'generic-sms': 'webhook',
+  'photon-imessage': 'photon',
 };
 
 export function getProviderSquareIconFileName(platform: string): string {

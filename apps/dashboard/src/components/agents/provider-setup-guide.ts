@@ -1,6 +1,7 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { AgentChatSetupGuide } from './agent-chat-setup-guide';
 import { EmailSetupGuide } from './email-setup-guide';
+import { PhotonSetupGuide } from './photon-setup-guide';
 import { SendblueSetupGuide } from './sendblue-setup-guide';
 import { SlackSetupGuide } from './slack-setup-guide';
 import { TeamsSetupGuide } from './teams-setup-guide';
@@ -19,6 +20,8 @@ export function resolveProviderSetupGuide(providerId: string) {
       return TelegramSetupGuide;
     case ChatProviderIdEnum.Sendblue:
       return SendblueSetupGuide;
+    case ChatProviderIdEnum.PhotonImessage:
+      return PhotonSetupGuide;
     case ChatProviderIdEnum.NovuAgentChat:
       return AgentChatSetupGuide;
     case EmailProviderIdEnum.NovuAgent:

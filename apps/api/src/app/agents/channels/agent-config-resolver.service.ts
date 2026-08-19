@@ -264,6 +264,18 @@ export class AgentConfigResolver {
       throw new NotFoundException();
     }
 
+    // Same defense-in-depth for Photon: ConfigurePhotonWebhook is the only place that stores
+    // credentials.token (the Photon-issued Standard Webhooks signing secret). Without it the
+    // adapter has no secret to verify inbound deliveries against, so reject early and keep the
+    // public endpoint indistinguishable from "unknown agent / unknown integration".
+    if (platform === AgentPlatformEnum.PHOTON_IMESSAGE && !credentials.token) {
+      this.logger.warn(
+        { agentId, integrationIdentifier },
+        'Photon inbound webhook rejected: webhook signing secret not yet configured for this integration'
+      );
+      throw new NotFoundException();
+    }
+
     let connectionAccessToken: string | undefined;
     if (platform === AgentPlatformEnum.SLACK) {
       connectionAccessToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);

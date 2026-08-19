@@ -12,6 +12,7 @@ export const CONVERSATIONAL_PROVIDERS: ConversationalProvider[] = [
   { providerId: ChatProviderIdEnum.Slack, displayName: 'Slack' },
   { providerId: ChatProviderIdEnum.Telegram, displayName: 'Telegram' },
   { providerId: ChatProviderIdEnum.Sendblue, displayName: 'Sendblue' },
+  { providerId: ChatProviderIdEnum.PhotonImessage, displayName: 'Photon (iMessage)' },
   { providerId: ChatProviderIdEnum.WhatsAppBusiness, displayName: 'WhatsApp Business' },
   { providerId: ChatProviderIdEnum.MsTeams, displayName: 'MS Teams' },
   { providerId: ChatProviderIdEnum.NovuAgentChat, displayName: 'Agent Chat' },

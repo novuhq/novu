@@ -42,6 +42,7 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
   [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
   [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
+  [ChatProviderIdEnum.PhotonImessage]: '~ 2 minutes',
   [ChatProviderIdEnum.NovuAgentChat]: '~ 30 seconds',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
@@ -52,6 +53,11 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
   if (providerId === ChatProviderIdEnum.Sendblue) {
     return AGENT_IMESSAGE_LABEL;
+  }
+
+  // Two iMessage vendors exist; qualify Photon's card so the pair stays distinguishable.
+  if (providerId === ChatProviderIdEnum.PhotonImessage) {
+    return `${AGENT_IMESSAGE_LABEL} (Photon)`;
   }
 
   if (providerId === ChatProviderIdEnum.NovuAgentChat) {

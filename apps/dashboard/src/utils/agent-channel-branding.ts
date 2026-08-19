@@ -8,9 +8,9 @@ export const AGENT_IMESSAGE_LABEL = 'iMessage';
 
 const AGENT_IMESSAGE_ICON_FILE = 'imessages';
 
-/** Square icon filename for a conversational channel, honouring the iMessage rebrand of Sendblue. */
+/** Square icon filename for a conversational channel, honouring the iMessage rebrand of Sendblue/Photon. */
 export function getAgentChannelIconFileName(providerId: string): string {
-  if (providerId === ChatProviderIdEnum.Sendblue) {
+  if (providerId === ChatProviderIdEnum.Sendblue || providerId === ChatProviderIdEnum.PhotonImessage) {
     return AGENT_IMESSAGE_ICON_FILE;
   }
 

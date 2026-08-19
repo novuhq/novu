@@ -53,12 +53,12 @@ const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welc
 const BRAIN_STEPS = 1;
 // Provider guides reserve up to three numbered steps; the bridge section continues from there.
 const PROVIDER_GUIDE_RESERVED_STEPS = 3;
-// The iMessage (Sendblue) guide prepends a "Setup iMessage via" provider-select step, so it
-// reserves one extra step to keep the bridge/handler numbering aligned for self-hosted agents.
+// The iMessage guides (Sendblue, Photon) prepend a "Setup iMessage via" provider-select step, so
+// they reserve one extra step to keep the bridge/handler numbering aligned for self-hosted agents.
 const IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS = 4;
 
 function resolveProviderGuideReservedSteps(providerId: string | undefined): number {
-  if (providerId === ChatProviderIdEnum.Sendblue) {
+  if (providerId === ChatProviderIdEnum.Sendblue || providerId === ChatProviderIdEnum.PhotonImessage) {
     return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
   }
 
@@ -465,7 +465,8 @@ export function AgentSetupSteps({
   // Agent Chat has no user-rollout phase; hold managed onboarding behind Continue until the
   // user embeds useAgentChat and sends a first message (Connected = first inbound, like Slack).
   const genericContinueGateProviders = useMemo(
-    () => new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.NovuAgentChat]),
+    () =>
+      new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.PhotonImessage, ChatProviderIdEnum.NovuAgentChat]),
     []
   );
   const useGenericContinueGate =

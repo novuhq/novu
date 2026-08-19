@@ -12,6 +12,8 @@ export function resolveAgentProviderDisplayName(providerId: string): string {
       return 'WhatsApp Business';
     case ChatProviderIdEnum.Sendblue:
       return 'iMessage';
+    case ChatProviderIdEnum.PhotonImessage:
+      return 'iMessage';
     case ChatProviderIdEnum.NovuAgentChat:
       return 'Agent Chat';
     default:

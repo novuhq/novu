@@ -47,15 +47,33 @@ import {
   UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
 } from '../../shared/dtos';
+import { ConfigurePhotonWebhookResponseDto } from '../../shared/dtos/configure-photon-webhook-response.dto';
+import {
+  PollPhotonDeviceAuthRequestDto,
+  PollPhotonDeviceAuthResponseDto,
+  StartPhotonDeviceAuthResponseDto,
+} from '../../shared/dtos/photon-device-auth.dto';
 import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
 import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
+import {
+  RegisterPhotonRecipientRequestDto,
+  RegisterPhotonRecipientResponseDto,
+} from '../../shared/dtos/register-photon-recipient.dto';
+import {
+  RemovePhotonWebhooksRequestDto,
+  RemovePhotonWebhooksResponseDto,
+} from '../../shared/dtos/remove-photon-webhooks.dto';
 import {
   RemoveSendblueWebhooksRequestDto,
   RemoveSendblueWebhooksResponseDto,
 } from '../../shared/dtos/remove-sendblue-webhooks.dto';
 import { SendAgentTestEmailRequestDto } from '../../shared/dtos/send-agent-test-email-request.dto';
 import { SendAgentWelcomeMessageRequestDto } from '../../shared/dtos/send-agent-welcome-message-request.dto';
+import {
+  SendPhotonTestMessageRequestDto,
+  SendPhotonTestMessageResponseDto,
+} from '../../shared/dtos/send-photon-test-message.dto';
 import {
   SendSendblueTestMessageRequestDto,
   SendSendblueTestMessageResponseDto,
@@ -64,6 +82,18 @@ import {
   SendWhatsAppTestTemplateRequestDto,
   SendWhatsAppTestTemplateResponseDto,
 } from '../../shared/dtos/send-whatsapp-test-template.dto';
+import { ConfigurePhotonWebhookCommand } from '../photon-imessage/configure-photon-webhook/configure-photon-webhook.command';
+import { ConfigurePhotonWebhook } from '../photon-imessage/configure-photon-webhook/configure-photon-webhook.usecase';
+import { PollPhotonDeviceAuthCommand } from '../photon-imessage/poll-photon-device-auth/poll-photon-device-auth.command';
+import { PollPhotonDeviceAuth } from '../photon-imessage/poll-photon-device-auth/poll-photon-device-auth.usecase';
+import { RegisterPhotonRecipientCommand } from '../photon-imessage/register-photon-recipient/register-photon-recipient.command';
+import { RegisterPhotonRecipient } from '../photon-imessage/register-photon-recipient/register-photon-recipient.usecase';
+import { StartPhotonDeviceAuthCommand } from '../photon-imessage/start-photon-device-auth/start-photon-device-auth.command';
+import { StartPhotonDeviceAuth } from '../photon-imessage/start-photon-device-auth/start-photon-device-auth.usecase';
+import { RemovePhotonWebhooksCommand } from '../photon-imessage/remove-photon-webhooks/remove-photon-webhooks.command';
+import { RemovePhotonWebhooks } from '../photon-imessage/remove-photon-webhooks/remove-photon-webhooks.usecase';
+import { SendPhotonTestMessageCommand } from '../photon-imessage/send-photon-test-message/send-photon-test-message.command';
+import { SendAgentPhotonTestMessage } from '../photon-imessage/send-photon-test-message/send-photon-test-message.usecase';
 import { ConfigureSendblueWebhookCommand } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.command';
 import { ConfigureSendblueWebhook } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
 import { RemoveSendblueWebhooksCommand } from '../sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.command';
@@ -105,6 +135,12 @@ export class AgentIntegrationsController {
     private readonly removeSendblueWebhooksUsecase: RemoveSendblueWebhooks,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
     private readonly sendAgentSendblueTestMessageUsecase: SendAgentSendblueTestMessage,
+    private readonly configurePhotonWebhookUsecase: ConfigurePhotonWebhook,
+    private readonly removePhotonWebhooksUsecase: RemovePhotonWebhooks,
+    private readonly sendAgentPhotonTestMessageUsecase: SendAgentPhotonTestMessage,
+    private readonly startPhotonDeviceAuthUsecase: StartPhotonDeviceAuth,
+    private readonly pollPhotonDeviceAuthUsecase: PollPhotonDeviceAuth,
+    private readonly registerPhotonRecipientUsecase: RegisterPhotonRecipient,
     private readonly issueSlackSetupLinkUsecase: IssueSlackSetupLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
   ) {}
@@ -378,6 +414,193 @@ export class AgentIntegrationsController {
   ): Promise<SendSendblueTestMessageResponseDto> {
     return this.sendAgentSendblueTestMessageUsecase.execute(
       SendSendblueTestMessageCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        subscriberId: body.subscriberId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/photon/device-auth/start')
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Start the Photon device-code connect flow for an agent integration',
+    description:
+      'Proxies the OAuth 2.0 device authorization request to Photon and returns the user code + verification URL. ' +
+      'Returns available:false (manual-credentials fallback) when connect is disabled or Photon is unreachable.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  startAgentPhotonDeviceAuth(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string
+  ): Promise<StartPhotonDeviceAuthResponseDto> {
+    return this.startPhotonDeviceAuthUsecase.execute(
+      StartPhotonDeviceAuthCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/photon/device-auth/poll')
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Poll the Photon device-code connect flow',
+    description:
+      'Forwards one poll to Photon’s device token endpoint. On authorization it provisions a Photon project ' +
+      '(iMessage platform enabled), stores the project credentials on the integration, registers the inbound ' +
+      'webhook, and discards the user access token — secrets never reach the browser.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  pollAgentPhotonDeviceAuth(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: PollPhotonDeviceAuthRequestDto
+  ): Promise<PollPhotonDeviceAuthResponseDto> {
+    return this.pollPhotonDeviceAuthUsecase.execute(
+      PollPhotonDeviceAuthCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        deviceCode: body.deviceCode,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/photon/register-recipient')
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Register a recipient on the Photon shared iMessage line',
+    description:
+      'Registers a phone number as a shared user on the Photon project (idempotent per phone; plan caps apply) ' +
+      'and optionally triggers an opt-in invite email. Returns the assigned Photon number the recipient can text ' +
+      'to opt in. Outbound sends only work toward registered, opted-in recipients on the shared line.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  registerAgentPhotonRecipient(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: RegisterPhotonRecipientRequestDto
+  ): Promise<RegisterPhotonRecipientResponseDto> {
+    return this.registerPhotonRecipientUsecase.execute(
+      RegisterPhotonRecipientCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        phoneNumber: body.phoneNumber,
+        email: body.email,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/photon/configure-webhook')
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Configure the Photon inbound webhook for an agent integration',
+    description:
+      'Enables the iMessage platform on the Photon project and registers the agent inbound URL as a webhook, so inbound iMessage messages are delivered to the agent. The Photon-issued signing secret is stored on the integration credentials. Falls back to manual configuration when the Photon API rejects the registration.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  configureAgentPhotonWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string
+  ): Promise<ConfigurePhotonWebhookResponseDto> {
+    return this.configurePhotonWebhookUsecase.execute(
+      ConfigurePhotonWebhookCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/photon/remove-webhooks')
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Remove stale Novu webhooks from a Photon project',
+    description:
+      "Deletes the supplied webhook URLs from the Photon project's webhook list. Only URLs matching the Novu " +
+      'agent webhook shape are removed, regardless of what is supplied — this lets the dashboard clean up ' +
+      'duplicate Novu registrations left behind by other agents, integrations, or environments sharing the ' +
+      'same Photon project credentials.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  removeAgentPhotonWebhooks(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: RemovePhotonWebhooksRequestDto
+  ): Promise<RemovePhotonWebhooksResponseDto> {
+    return this.removePhotonWebhooksUsecase.execute(
+      RemovePhotonWebhooksCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        webhookUrls: body.webhookUrls,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/photon/test-message')
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send a test message from the agent Photon integration',
+    description:
+      'Sends a plain-text welcome message via the Photon shared iMessage line to a recipient supplied by the ' +
+      'user, used at the end of the onboarding flow to verify outbound delivery. On the shared line the ' +
+      'recipient must have opted in (texted the assigned number) before Photon accepts the send.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentPhotonTestMessage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: SendPhotonTestMessageRequestDto
+  ): Promise<SendPhotonTestMessageResponseDto> {
+    return this.sendAgentPhotonTestMessageUsecase.execute(
+      SendPhotonTestMessageCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

@@ -76,6 +76,7 @@
     "pushpad": "1.0.0",
     "qs": "^6.11.0",
     "resend": "^6.0.3",
+    "spectrum-ts": "^12.7.0",
     "sms77-client": "^2.14.0",
     "sns-validator": "^0.3.5",
     "svix": "^1.96.1",

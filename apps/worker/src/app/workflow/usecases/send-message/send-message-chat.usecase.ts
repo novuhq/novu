@@ -99,6 +99,7 @@ export function hasChatContentOverride(providerId: string, overrides: Record<str
 const PHONE_BASED_CHAT_PROVIDERS: ChatProviderIdEnum[] = [
   ChatProviderIdEnum.WhatsAppBusiness,
   ChatProviderIdEnum.Sendblue,
+  ChatProviderIdEnum.PhotonImessage,
 ];
 
 type UnifiedChannel = {
@@ -1175,6 +1176,18 @@ export class SendMessageChat extends SendMessageBase {
     channelData: ChannelData
   ): Promise<SendMessageResult> {
     const redactedChannelData = this.redactChannelData(channelData);
+
+    /*
+     * Persist the provider message id (mirrors email/SMS) so inbound
+     * delivery-provider webhooks (delivered/read receipts) can correlate
+     * back to this message via the `identifier` index.
+     */
+    if (result.id) {
+      await this.messageRepository.update(
+        { _environmentId: command.environmentId, _id: message._id },
+        { $set: { identifier: result.id } }
+      );
+    }
 
     await this.createExecutionDetail(
       command,

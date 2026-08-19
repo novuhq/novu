@@ -47,6 +47,7 @@ export type PlatformAdapters = {
   agent_chat: NovuAgentChatAdapter;
   email: Adapter;
   sendblue: Adapter;
+  photon_imessage: Adapter;
 };
 
 export type ChatWithAdapters = Chat<PlatformAdapters>;
@@ -447,6 +448,31 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             apiKey: credentials.apiKey,
             secretKey: credentials.secretKey,
             fromNumber: credentials.from,
+            webhookSecret: credentials.token,
+            userName: config.agentName,
+          }),
+        };
+      }
+      case AgentPlatformEnum.PHOTON_IMESSAGE: {
+        if (!credentials.apiKey || !credentials.secretKey) {
+          throw new BadRequestException(
+            'Photon agent integration requires Project ID and Project Secret credentials'
+          );
+        }
+
+        if (!credentials.token) {
+          throw new BadRequestException(
+            'Photon agent integration requires a webhook signing secret. ' +
+              'Run the "Configure webhook" step to register the webhook before this integration can receive messages.'
+          );
+        }
+
+        const { createPhotonImessageAdapter } = await esmImport('@novu/chat-adapter-photon-imessage');
+
+        return {
+          photon_imessage: createPhotonImessageAdapter({
+            projectId: credentials.apiKey,
+            projectSecret: credentials.secretKey,
             webhookSecret: credentials.token,
             userName: config.agentName,
           }),

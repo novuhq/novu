@@ -5,6 +5,12 @@ import { AddAgentIntegration } from '../channels/integrations/add-agent-integrat
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
 import { UpdateAgentIntegration } from '../channels/integrations/update-agent-integration/update-agent-integration.usecase';
+import { ConfigurePhotonWebhook } from '../channels/photon-imessage/configure-photon-webhook/configure-photon-webhook.usecase';
+import { PollPhotonDeviceAuth } from '../channels/photon-imessage/poll-photon-device-auth/poll-photon-device-auth.usecase';
+import { RegisterPhotonRecipient } from '../channels/photon-imessage/register-photon-recipient/register-photon-recipient.usecase';
+import { RemovePhotonWebhooks } from '../channels/photon-imessage/remove-photon-webhooks/remove-photon-webhooks.usecase';
+import { StartPhotonDeviceAuth } from '../channels/photon-imessage/start-photon-device-auth/start-photon-device-auth.usecase';
+import { SendAgentPhotonTestMessage } from '../channels/photon-imessage/send-photon-test-message/send-photon-test-message.usecase';
 import { ConfigureSendblueWebhook } from '../channels/sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
 import { RemoveSendblueWebhooks } from '../channels/sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.usecase';
 import { SendAgentSendblueTestMessage } from '../channels/sendblue/send-sendblue-test-message/send-sendblue-test-message.usecase';
@@ -65,6 +71,7 @@ export const USE_CASES = [
   UploadCustomSkill,
   DeleteAgent,
   AddAgentIntegration,
+  ConfigurePhotonWebhook,
   ConfigureSendblueWebhook,
   ConfigureWhatsAppWebhook,
   GenerateManagedAgent,
@@ -75,10 +82,15 @@ export const USE_CASES = [
   GetAgentDemoQuota,
   MigrateAgentRuntime,
   RemoveAgentIntegration,
+  RemovePhotonWebhooks,
   RemoveSendblueWebhooks,
+  StartPhotonDeviceAuth,
+  PollPhotonDeviceAuth,
+  RegisterPhotonRecipient,
   HandleAgentReply,
   HandlePlanProgress,
   ProvisionManagedAgent,
+  SendAgentPhotonTestMessage,
   SendAgentSendblueTestMessage,
   SendAgentTestEmail,
   SendAgentWelcomeMessage,
