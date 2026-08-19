@@ -145,6 +145,8 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
             source: event.source,
             approveActionId: event.approveActionId,
             denyActionId: event.denyActionId,
+            trustToolActionId: event.trustToolActionId,
+            trustServerActionId: event.trustServerActionId,
             state: 'pending',
           },
         ],
