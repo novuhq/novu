@@ -652,9 +652,12 @@ export class AgentEventSink {
     }
 
     if (approvals.length === 0) {
-      this.logger.error({ runId }, 'paused run-finish carried zero approvals — skipping tool approval dispatch');
-
-      return;
+      // Empty when the pending tool_use came from an earlier run (resumed streams are a live
+      // tail). HandlePendingToolApprovals recovers from the session.
+      this.logger.warn(
+        { runId, sessionId },
+        'paused run-finish carried zero approvals — recovering pending approvals from the session'
+      );
     }
 
     try {
