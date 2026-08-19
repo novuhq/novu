@@ -45,13 +45,21 @@ import {
 } from '@novu/shared';
 import { IPushOptions } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
-import { merge } from 'lodash';
+import { cloneDeep, merge, mergeWith } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
+
+function replaceOverrideArrays(_targetValue: unknown, sourceValue: unknown): unknown[] | undefined {
+  if (Array.isArray(sourceValue)) {
+    return cloneDeep(sourceValue);
+  }
+
+  return undefined;
+}
 
 export const SUBSCRIBER_ERROR_PATTERNS: string[] = [
   'NotRegistered',
@@ -487,7 +495,13 @@ export class SendMessagePush extends SendMessageBase {
         : {};
 
 
-    return merge({}, deprecatedFlatProviderOverride, providerOverride, stepProviderOverride);
+    return mergeWith(
+      {},
+      deprecatedFlatProviderOverride,
+      providerOverride,
+      stepProviderOverride,
+      replaceOverrideArrays
+    );
   }
 
   /**
@@ -518,10 +532,11 @@ export class SendMessagePush extends SendMessageBase {
 
           if (existingIndex >= 0) {
             // Merge with existing overrides, with step overrides taking precedence
-            result[existingIndex].overrides = merge(
+            result[existingIndex].overrides = mergeWith(
               {},
               result[existingIndex].overrides,
-              overrides.steps[stepId].providers[providerId as ProvidersIdEnum]
+              overrides.steps[stepId].providers[providerId as ProvidersIdEnum],
+              replaceOverrideArrays
             );
           } else {
             // Add new provider overrides
