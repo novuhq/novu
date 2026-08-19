@@ -131,29 +131,57 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
         parts: applyToolResult(message.parts, event.toolUseId, event.content, event.isError),
       }));
 
-    case 'tool-approval-request':
+    case 'tool-approval-request': {
+      const addApproval = (message: AgentMessage): AgentMessage => ({
+        ...message,
+        parts: [
+          ...message.parts,
+          {
+            type: 'approval',
+            approvalId: event.approvalId,
+            toolUseId: event.toolUseId,
+            toolName: event.toolName,
+            input: event.input,
+            source: event.source,
+            approveActionId: event.approveActionId,
+            denyActionId: event.denyActionId,
+            trustToolActionId: event.trustToolActionId,
+            trustServerActionId: event.trustServerActionId,
+            state: 'pending',
+          },
+        ],
+      });
+      const nextState = event.messageId
+        ? withAssistantMessage(state, envelope, event.messageId, addApproval)
+        : withActiveAssistantMessage(state, envelope, addApproval);
+
+      return clearTyping(nextState);
+    }
+
+    case 'tool-approval-response':
+      return applyApprovalResponse(state, event.approvalId, event.decision);
+
+    case 'mcp-connection-request':
       return clearTyping(
         withActiveAssistantMessage(state, envelope, (message) => ({
           ...message,
           parts: [
             ...message.parts,
             {
-              type: 'approval',
-              approvalId: event.approvalId,
-              toolUseId: event.toolUseId,
-              toolName: event.toolName,
-              input: event.input,
-              source: event.source,
-              approveActionId: event.approveActionId,
-              denyActionId: event.denyActionId,
+              type: 'mcp-connection',
+              actionId: event.actionId,
+              mcpId: event.mcpId,
+              displayName: event.displayName,
+              authorizeUrl: event.authorizeUrl,
+              authorizeUrlWithAutoApprove: event.authorizeUrlWithAutoApprove,
               state: 'pending',
             },
           ],
         }))
       );
 
-    case 'tool-approval-response':
-      return applyApprovalResponse(state, event.approvalId, event.decision);
+    case 'mcp-connection-result':
+      return applyMcpConnectionResult(state, event.actionId, event.status, event.message);
 
     case 'source':
       return withAssistantMessage(state, envelope, event.messageId, (message) => ({
@@ -325,9 +353,7 @@ function applyDurableMessageParts(
     } else {
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }
-  }
-
-  if ('card' in content) {
+  } else {
     next = [...next, { type: 'card', card: content.card }];
   }
 
@@ -509,6 +535,23 @@ function applyApprovalResponse(
       ...message,
       parts: message.parts.map((part) =>
         part.type === 'approval' && part.approvalId === approvalId ? { ...part, state: nextState } : part
+      ),
+    })),
+  };
+}
+
+function applyMcpConnectionResult(
+  state: AgentConversationState,
+  actionId: string,
+  status: 'connected' | 'failed',
+  message?: string
+): AgentConversationState {
+  return {
+    ...state,
+    messages: state.messages.map((item) => ({
+      ...item,
+      parts: item.parts.map((part) =>
+        part.type === 'mcp-connection' && part.actionId === actionId ? { ...part, state: status, message } : part
       ),
     })),
   };

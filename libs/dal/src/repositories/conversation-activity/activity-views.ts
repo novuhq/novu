@@ -30,6 +30,8 @@ export const ACTIVITY_KINDS = [
   'tool_approval_request',
   'tool_approval_decision',
   'tool_result',
+  'mcp_connection_request',
+  'mcp_connection_result',
   'run_start',
   'run_finish',
   'run_error',
@@ -55,6 +57,8 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   tool_approval_request: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
   tool_approval_decision: ['agent_handoff', 'client_events', 'operator_timeline', 'approval_activities'],
   tool_result: ['agent_handoff', 'client_events', 'approval_activities'],
+  mcp_connection_request: ['client_events', 'operator_timeline'],
+  mcp_connection_result: ['client_events', 'operator_timeline'],
   run_start: ['client_events'],
   run_finish: ['client_events'],
   run_error: ['client_events'],
@@ -121,6 +125,12 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'tool_result':
       return { type: ConversationActivityTypeEnum.TOOL_RESULT };
+
+    case 'mcp_connection_request':
+      return { type: ConversationActivityTypeEnum.MCP_CONNECTION_REQUEST };
+
+    case 'mcp_connection_result':
+      return { type: ConversationActivityTypeEnum.MCP_CONNECTION_RESULT };
 
     case 'run_start':
       return { type: ConversationActivityTypeEnum.RUN_START };

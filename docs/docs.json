@@ -331,6 +331,7 @@
                     "pages": [
                       "platform/sdks/react/hooks/novu-provider",
                       "platform/sdks/react/hooks/subscription",
+                      "platform/sdks/react/hooks/use-agent-chat",
                       "platform/sdks/react/hooks/use-counts",
                       "platform/sdks/react/hooks/use-notifications",
                       "platform/sdks/react/hooks/use-novu",
@@ -464,7 +465,12 @@
               "agents/channels/microsoft-teams",
               "agents/channels/whatsapp",
               "agents/channels/telegram",
-              "agents/channels/email"
+              "agents/channels/email",
+              {
+                "group": "Agent Chat",
+                "root": "agents/channels/agent-chat",
+                "pages": ["agents/channels/agent-chat/quickstart"]
+              }
             ],
             "icon": "messages-square"
           },
@@ -1688,6 +1694,21 @@
     {
       "source": "/agents/channels/capabilities",
       "destination": "/agents/channels/overview",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/chat/agent-chat",
+      "destination": "/agents/channels/agent-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat",
+      "destination": "/agents/channels/agent-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat/quickstart",
+      "destination": "/agents/channels/agent-chat/quickstart",
       "permanent": true
     },
     {

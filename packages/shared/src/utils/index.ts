@@ -5,6 +5,7 @@ export * from './chat-body';
 export * from './chat-card-button';
 export * from './checkIsResponseError';
 export * from './connect-subscriber-id';
+export * from './dashboard-agent-chat-subscriber';
 export * from './data-filter';
 export * from './env';
 export * from './in-app-redirect-url';

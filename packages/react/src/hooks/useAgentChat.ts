@@ -1,17 +1,19 @@
 import type {
-  AgentApprovalPart,
   AgentChatPlanLimitError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
   AgentHashFields,
   AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalDecision,
   LoadConversationResult,
   NovuError,
-  RespondToApprovalResult,
+  RespondToActionResult,
+  SendActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { derivePendingApprovals } from '@novu/js';
+import { derivePendingActions } from '@novu/js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
@@ -35,11 +37,10 @@ export type UseAgentChatProps = AgentHashFields & {
    */
   onMessage?: (message: AgentMessage) => void;
   /**
-   * Fires once per approval request, including approvals still pending on mount, so a
+   * Fires once per pending action, including actions still pending on mount, so a
    * resumed conversation reports what it is blocked on. Paging backwards is silent.
-   * The run waits until `respondToApproval` answers.
    */
-  onApprovalRequested?: (approval: AgentApprovalPart) => void;
+  onActionRequested?: (action: AgentPendingAction) => void;
   /**
    * Raw envelopes for this conversation, before the derived callbacks for the same fold.
    * A duplicate envelope that the store drops does not fire. Neither does an envelope that
@@ -51,7 +52,7 @@ export type UseAgentChatProps = AgentHashFields & {
 
 export type UseAgentChatResult = {
   messages: AgentMessage[];
-  pendingApprovals: AgentApprovalPart[];
+  pendingActions: AgentPendingAction[];
   conversationId?: string;
   error?: NovuError | AgentChatPlanLimitError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
@@ -71,8 +72,12 @@ export type UseAgentChatResult = {
     data?: SendMessageResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
-  respondToApproval: (args: { approvalId: string; decision: 'approved' | 'denied' }) => Promise<{
-    data?: RespondToApprovalResult;
+  respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
+    data?: RespondToActionResult;
+    error?: NovuError | AgentChatPlanLimitError;
+  }>;
+  sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
+    data?: SendActionResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
 };
@@ -152,7 +157,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [isFetching, setIsFetching] = useState(false);
   const fetchGenerationRef = useRef(0);
 
-  const pendingApprovals = useMemo(() => derivePendingApprovals(messages), [messages]);
+  const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
 
   const snapshotSetters = useMemo(
     () => ({
@@ -249,10 +254,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         setAssignedConversationId(snapshot.conversationId);
       }
 
-      // The store reports each approval once per holder, and a holder outlives a mount.
+      // The store reports each action once per holder, and a holder outlives a mount.
       // Replay from the snapshot so a remount still learns what the run is blocked on.
-      for (const approval of derivePendingApprovals(snapshot.messages)) {
-        propsRef.current.onApprovalRequested?.(approval);
+      for (const action of derivePendingActions(snapshot.messages)) {
+        propsRef.current.onActionRequested?.(action);
       }
     } else if (!conversationIdProp) {
       applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
@@ -288,8 +293,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         }
       }
 
-      for (const approval of change.newApprovals) {
-        propsRef.current.onApprovalRequested?.(approval);
+      for (const action of change.newActions) {
+        propsRef.current.onActionRequested?.(action);
       }
     });
 
@@ -354,17 +359,41 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
-  const respondToApproval = useCallback(
-    async (args: { approvalId: string; decision: 'approved' | 'denied' }) => {
+  const respondToAction = useCallback(
+    async (args: { actionId: string; decision: AgentToolApprovalDecision }) => {
       setError(undefined);
 
-      const response = await novu.agentChat.respondToApproval({
+      const response = await novu.agentChat.respondToAction({
         agentId,
         agentHash,
         key: sessionKeyRef.current,
         conversationId: conversationIdRef.current,
-        approvalId: args.approvalId,
+        actionId: args.actionId,
         decision: args.decision,
+      });
+
+      if (response.error) {
+        setError(response.error);
+        propsRef.current.onError?.(response.error);
+      }
+
+      return response;
+    },
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
+  );
+
+  const sendAction = useCallback(
+    async (args: { actionId: string; sourceMessageId: string; value?: string }) => {
+      setError(undefined);
+
+      const response = await novu.agentChat.sendAction({
+        agentId,
+        agentHash,
+        key: sessionKeyRef.current,
+        conversationId: conversationIdRef.current,
+        actionId: args.actionId,
+        sourceMessageId: args.sourceMessageId,
+        value: args.value,
       });
 
       if (response.error) {
@@ -379,9 +408,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
   return {
     messages,
-    pendingApprovals,
+    pendingActions,
     sendMessage,
-    respondToApproval,
+    respondToAction,
+    sendAction,
     conversationId,
     error,
     isLoading,

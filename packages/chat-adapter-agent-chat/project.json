@@ -1,0 +1,28 @@
+{
+  "name": "@novu/chat-adapter-agent-chat",
+  "sourceRoot": "packages/chat-adapter-agent-chat/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/chat-adapter-agent-chat run build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/chat-adapter-agent-chat"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/chat-adapter-agent-chat run test",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  },
+  "tags": ["type:package"]
+}

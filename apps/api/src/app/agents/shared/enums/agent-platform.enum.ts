@@ -5,7 +5,7 @@ export enum AgentPlatformEnum {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
   SENDBLUE = 'sendblue',
-  WEB_CHAT = 'web_chat',
+  AGENT_CHAT = 'agent_chat',
 }
 
 export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
@@ -14,7 +14,7 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TEAMS,
   AgentPlatformEnum.TELEGRAM,
   AgentPlatformEnum.SENDBLUE,
-  AgentPlatformEnum.WEB_CHAT,
+  AgentPlatformEnum.AGENT_CHAT,
 ]);
 
 type PlatformEgressCapabilities = {
@@ -51,7 +51,7 @@ const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapa
     nativeUrlButtons: false,
     interactiveButtons: false,
   },
-  [AgentPlatformEnum.WEB_CHAT]: DEFAULT_EGRESS_CAPABILITIES,
+  [AgentPlatformEnum.AGENT_CHAT]: DEFAULT_EGRESS_CAPABILITIES,
 };
 
 function resolvePlatformEgressCapabilities(platform: string): PlatformEgressCapabilities {
@@ -73,5 +73,5 @@ export function usesReplyBasedApprovals(platform: string): boolean {
 
 /** Platforms that surface tool approvals via agent-event protocol instead of portable cards. */
 export function usesProtocolEventApprovals(platform: string): boolean {
-  return platform === AgentPlatformEnum.WEB_CHAT;
+  return platform === AgentPlatformEnum.AGENT_CHAT;
 }

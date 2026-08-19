@@ -2,8 +2,7 @@ import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type { AgentHashFields } from '../agent-chat/types';
 import { HttpClient } from './http-client';
 
-// TODO(NV-8553): rename path to `/agent-chat/conversations` when platform rename lands
-const AGENT_CHAT_CONVERSATIONS_ROUTE = '/web-chat/conversations';
+const AGENT_CHAT_CONVERSATIONS_ROUTE = '/agent-chat/conversations';
 
 export type AgentChatPlanLimitReason = 'agents' | 'channels' | 'conversations';
 
@@ -42,14 +41,25 @@ export type AgentChatGetEventsResponse = {
   olderCursor: string | null;
 };
 
-export type AgentChatRespondToApprovalArgs = AgentHashFields & {
+export type AgentChatRespondToActionArgs = AgentHashFields & {
   agentId: string;
   conversationId: string;
   /** Server-minted approve/deny action id echoed from the pending approval part. */
   actionId: string;
 };
 
-export type AgentChatRespondToApprovalResponse = {
+export type AgentChatSendActionArgs = AgentHashFields & {
+  agentId: string;
+  conversationId: string;
+  /** `id` of the clicked Card button. */
+  actionId: string;
+  /** Platform message id of the message that carries the Card. */
+  sourceMessageId: string;
+  /** `value` of the clicked Card button, if set. */
+  value?: string;
+};
+
+export type AgentChatRespondToActionResponse = {
   identifier: string;
 };
 
@@ -69,7 +79,7 @@ export class AgentChatService {
     });
   }
 
-  async respondToApproval(args: AgentChatRespondToApprovalArgs): Promise<AgentChatRespondToApprovalResponse> {
+  async respondToAction(args: AgentChatRespondToActionArgs): Promise<AgentChatRespondToActionResponse> {
     return this.#postAccept({
       agentId: args.agentId,
       conversationIdentifier: args.conversationId,
@@ -78,7 +88,18 @@ export class AgentChatService {
     });
   }
 
-  async #postAccept<T extends AgentChatSendMessageResponse | AgentChatRespondToApprovalResponse>(
+  async sendAction(args: AgentChatSendActionArgs): Promise<AgentChatRespondToActionResponse> {
+    return this.#postAccept({
+      agentId: args.agentId,
+      conversationIdentifier: args.conversationId,
+      actionId: args.actionId,
+      sourceMessageId: args.sourceMessageId,
+      ...(args.value !== undefined ? { value: args.value } : {}),
+      ...(args.agentHash ? { agentHash: args.agentHash } : {}),
+    });
+  }
+
+  async #postAccept<T extends AgentChatSendMessageResponse | AgentChatRespondToActionResponse>(
     body: Record<string, string>
   ): Promise<T> {
     try {

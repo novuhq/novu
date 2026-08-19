@@ -9,6 +9,9 @@ export type AgentTextPartState = 'streaming' | 'done';
 export type AgentToolPartState = 'input-streaming' | 'input-available' | 'output-available' | 'output-error';
 
 export type AgentApprovalPartState = 'pending' | 'approved' | 'denied';
+export type AgentMcpConnectionPartState = 'pending' | 'connected' | 'failed';
+
+export type AgentToolApprovalDecision = 'approved' | 'denied' | 'trust-tool' | 'trust-server';
 
 export type AgentTextPart = {
   type: 'text';
@@ -41,11 +44,37 @@ export type AgentApprovalPart = {
   input?: Record<string, unknown>;
   source?: AgentToolSource;
   state: AgentApprovalPartState;
-  /** Server-minted; echo via respondToApproval. Do not invent client-side. */
+  /** Server-minted; echo via respondToAction. Do not invent client-side. */
   approveActionId?: string;
-  /** Server-minted; echo via respondToApproval. Do not invent client-side. */
+  /** Server-minted; echo via respondToAction. Do not invent client-side. */
   denyActionId?: string;
+  /** Server-minted always-allow-this-tool action id. Present for managed tools with trust support. */
+  trustToolActionId?: string;
+  /** Server-minted always-allow-MCP-server action id. Present for MCP tools only. */
+  trustServerActionId?: string;
 };
+
+export type AgentMcpConnectionPart = {
+  type: 'mcp-connection';
+  actionId: string;
+  mcpId: string;
+  displayName: string;
+  authorizeUrl: string;
+  authorizeUrlWithAutoApprove?: string;
+  state: AgentMcpConnectionPartState;
+  message?: string;
+};
+
+export type AgentToolApprovalAction = Omit<AgentApprovalPart, 'type' | 'state'> & {
+  type: 'tool-approval';
+  id: string;
+};
+
+export type AgentMcpConnectionAction = Omit<AgentMcpConnectionPart, 'state' | 'message'> & {
+  id: string;
+};
+
+export type AgentPendingAction = AgentToolApprovalAction | AgentMcpConnectionAction;
 
 export type AgentSourcePart = {
   type: 'source';
@@ -72,6 +101,7 @@ export type AgentMessagePart =
   | AgentThinkingPart
   | AgentToolPart
   | AgentApprovalPart
+  | AgentMcpConnectionPart
   | AgentSourcePart
   | AgentFilePart
   | AgentCardPart;
@@ -120,13 +150,25 @@ export function createInitialAgentConversationState(): AgentConversationState {
   };
 }
 
-export function derivePendingApprovals(messages: AgentMessage[]): AgentApprovalPart[] {
-  const pending: AgentApprovalPart[] = [];
+export function derivePendingActions(messages: AgentMessage[]): AgentPendingAction[] {
+  const pending: AgentPendingAction[] = [];
 
   for (const message of messages) {
     for (const part of message.parts) {
       if (part.type === 'approval' && part.state === 'pending') {
-        pending.push(part);
+        const { state: _state, ...action } = part;
+        pending.push({
+          ...action,
+          type: 'tool-approval',
+          id: part.approvalId,
+        });
+      }
+      if (part.type === 'mcp-connection' && part.state === 'pending') {
+        const { state: _state, message: _message, ...action } = part;
+        pending.push({
+          ...action,
+          id: part.actionId,
+        });
       }
     }
   }

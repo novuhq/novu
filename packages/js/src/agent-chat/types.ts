@@ -1,15 +1,29 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
-  AgentApprovalPart,
   AgentConversationStatus,
   AgentConversationTyping,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
   AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalAction,
+  AgentToolApprovalDecision,
 } from './agent-message.types';
 
-export type { AgentApprovalPart, AgentConversationStatus, AgentConversationTyping, AgentEventEnvelope, AgentMessage };
+export type {
+  AgentConversationStatus,
+  AgentConversationTyping,
+  AgentEventEnvelope,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
+  AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalAction,
+  AgentToolApprovalDecision,
+};
 
 /**
- * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-web-chat`
+ * HMAC-SHA256(env secret, agentId) hex. Required when the env's `novu-agent-chat`
  * integration has Security HMAC enabled.
  */
 export type AgentHashFields = {
@@ -59,15 +73,31 @@ export type FetchMoreResult = {
   hasMore: boolean;
 };
 
-export type RespondToApprovalArgs = AgentHashFields & {
+export type RespondToActionArgs = AgentHashFields & {
   agentId: string;
-  approvalId: string;
-  decision: 'approved' | 'denied';
+  actionId: string;
+  decision: AgentToolApprovalDecision;
   conversationId?: string;
   key?: string;
 };
 
-export type RespondToApprovalResult = {
+export type RespondToActionResult = {
+  conversationId: string;
+};
+
+export type SendActionArgs = AgentHashFields & {
+  agentId: string;
+  /** `id` of the clicked Card button. */
+  actionId: string;
+  /** Platform message id of the message that carries the Card. */
+  sourceMessageId: string;
+  /** `value` of the clicked Card button, if set. */
+  value?: string;
+  conversationId?: string;
+  key?: string;
+};
+
+export type SendActionResult = {
   conversationId: string;
 };
 
@@ -84,8 +114,8 @@ export type AgentChatChangeSource =
 export type AgentChatChange = AgentChatChangeSource & {
   /** Messages this fold added. A fold that only changes existing messages adds none. */
   addedMessages: AgentMessage[];
-  /** Approvals that became pending in this fold. One approval is reported one time. */
-  newApprovals: AgentApprovalPart[];
+  /** Actions that became pending in this fold. One action is reported one time. */
+  newActions: AgentPendingAction[];
 };
 
 export type AgentChatMessagesUpdated = {
