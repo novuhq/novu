@@ -1177,18 +1177,6 @@ export class SendMessageChat extends SendMessageBase {
   ): Promise<SendMessageResult> {
     const redactedChannelData = this.redactChannelData(channelData);
 
-    /*
-     * Persist the provider message id (mirrors email/SMS) so inbound
-     * delivery-provider webhooks (delivered/read receipts) can correlate
-     * back to this message via the `identifier` index.
-     */
-    if (result.id) {
-      await this.messageRepository.update(
-        { _environmentId: command.environmentId, _id: message._id },
-        { $set: { identifier: result.id } }
-      );
-    }
-
     await this.createExecutionDetail(
       command,
       DetailEnum.MESSAGE_SENT,

@@ -168,11 +168,25 @@ export class SendAgentPhotonTestMessage {
       return { code: 'recipient_not_opted_in', message };
     }
 
+    /*
+     * Recipient registration can fail for unrelated reasons (plan cap, outage,
+     * bad project credentials) — only advise "check the phone number" when the
+     * underlying Photon error actually points at the number. Everything else
+     * falls through to photon_rejected so the real message is shown as-is.
+     */
     if (lowerMessage.includes('could not register recipient')) {
-      return {
-        code: 'invalid_recipient',
-        message: `Photon rejected the recipient phone number (${message}). Double-check the number includes the country code.`,
-      };
+      const looksLikeBadNumber =
+        lowerMessage.includes('e.164') ||
+        (lowerMessage.includes('invalid') && (lowerMessage.includes('phone') || lowerMessage.includes('number')));
+
+      if (looksLikeBadNumber) {
+        return {
+          code: 'invalid_recipient',
+          message: `Photon rejected the recipient phone number (${message}). Double-check the number includes the country code.`,
+        };
+      }
+
+      return { code: 'photon_rejected', message };
     }
 
     if (lowerMessage.includes('network')) {

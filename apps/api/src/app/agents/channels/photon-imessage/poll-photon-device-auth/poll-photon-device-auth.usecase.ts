@@ -15,6 +15,7 @@ import { ConfigurePhotonWebhook } from '../configure-photon-webhook/configure-ph
 import {
   createPhotonProject,
   getPhotonProjectCredentials,
+  isPhotonConnectEnabled,
   pollPhotonDeviceToken,
 } from '../shared/photon-account-client';
 import { PollPhotonDeviceAuthCommand } from './poll-photon-device-auth.command';
@@ -44,6 +45,19 @@ export class PollPhotonDeviceAuth {
 
   @InstrumentUsecase()
   async execute(command: PollPhotonDeviceAuthCommand): Promise<PollPhotonDeviceAuthResult> {
+    // Same kill switch as StartPhotonDeviceAuth: without this, a caller with a
+    // device code obtained out-of-band could still drive provisioning (and
+    // overwrite manually saved credentials) while connect is disabled.
+    if (!isPhotonConnectEnabled()) {
+      return {
+        status: 'error',
+        error: {
+          code: 'connect_disabled',
+          message: 'Photon connect is disabled — paste the Project ID and Project Secret manually.',
+        },
+      };
+    }
+
     const { integration } = await resolveAgentIntegrationForWebhook({
       agentRepository: this.agentRepository,
       integrationRepository: this.integrationRepository,
@@ -62,10 +76,12 @@ export class PollPhotonDeviceAuth {
     } catch (err) {
       this.logger.warn({ err }, 'Photon device token poll failed');
 
-      return {
-        status: 'error',
-        error: { code: 'photon_unreachable', message: 'Could not reach Photon — click Connect to start over.' },
-      };
+      /*
+       * Transport failures (network blip, one 5xx, timeout) are not terminal:
+       * the device authorization is still valid, so report pending and let the
+       * dashboard keep polling — its loop is bounded by the flow's expiry.
+       */
+      return { status: 'pending' };
     }
 
     if (poll.status !== 'complete') {
