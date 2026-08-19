@@ -706,7 +706,7 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 
 ### Data-only messages
 
-To send a silent/data-only message that the OS delivers to your app without showing a system notification, set `type` to `"data"`. Novu builds the message `data` from the trigger `payload`, any `providers.fcm.data` override, and `title` / `body` / `message` from the step:
+To send a silent/data-only message that the OS delivers to your app without showing a system notification, set `type` to `"data"`. Novu builds the message `data` from the trigger `payload`, step `title` / `body` / `message`, then any `providers.fcm.data` override (override keys win on conflict):
 
 ```json
 {
