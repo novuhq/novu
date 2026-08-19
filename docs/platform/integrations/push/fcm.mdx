@@ -577,13 +577,13 @@ Novu's FCM integration is built on the [`firebase-admin`](https://firebase.googl
 | Field | Type | Purpose |
 |---|---|---|
 | `topic` | `string` | Send to an [FCM topic](https://firebase.google.com/docs/cloud-messaging/js/topic-messaging) instead of the subscriber's device tokens. |
-| `notification` | `object` | Extra keys merged into the notification (title and body are set from the step subject and body). |
-| `data` | `object` of `string` values | Custom data payload delivered to the app. FCM requires all values to be strings. |
+| `notification` | `object` | Extra keys merged into the FCM `notification` object (title and body come from the step subject and body). Pass fields such as `imageUrl` here — do not nest another `notification` object. |
+| `data` | `object` of `string` values | Custom data payload delivered to the app. Merged into the message `data` for both standard and data-only sends. FCM requires all values to be strings. |
 | `android` | `object` | [Android-specific config](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidconfig) (channel, priority, sound, etc.). |
 | `apns` | `object` | [APNS-specific config](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#apnsconfig) when routing iOS traffic through FCM. |
 | `webPush` | `object` | [Web push config](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#webpushconfig), including `fcmOptions.link` for click-through URLs. |
 | `fcmOptions` | `object` | Platform-independent [FCM options](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#fcmoptions), such as `analyticsLabel`. |
-| `type` | `"data"` | Send a data-only message. When set to `"data"`, Novu delivers `title`, `body`, and the trigger `payload` inside `data` instead of `notification`. |
+| `type` | `"data"` | Send a data-only message. When set to `"data"`, Novu puts `title`, `body`, the trigger `payload`, and any `data` override into `data` instead of sending a `notification` object. |
 
 <Note>
   `topic` and device tokens are mutually exclusive. When `topic` is set, Novu sends to that topic and ignores the subscriber's registered device tokens.
@@ -706,7 +706,7 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 
 ### Data-only messages
 
-To send a silent/data-only message that the OS delivers to your app without showing a system notification, set `type` to `"data"`. Novu moves `title`, `body`, and the trigger `payload` into the message's `data` object:
+To send a silent/data-only message that the OS delivers to your app without showing a system notification, set `type` to `"data"`. Novu builds the message `data` from the trigger `payload`, any `providers.fcm.data` override, and `title` / `body` / `message` from the step:
 
 ```json
 {
@@ -716,7 +716,8 @@ To send a silent/data-only message that the OS delivers to your app without show
   "overrides": {
     "providers": {
       "fcm": {
-        "type": "data"
+        "type": "data",
+        "data": { "source": "sync-job" }
       }
     }
   }
@@ -724,7 +725,7 @@ To send a silent/data-only message that the OS delivers to your app without show
 ```
 
 <Note>
-  FCM requires every value in `data` to be a string. Novu automatically stringifies non-string payload values before sending.
+  Prefer the trigger `payload` for values your workflow already uses. Use `providers.fcm.data` when you need extra keys only for this FCM send. FCM requires every value in `data` to be a string — Novu stringifies non-string payload values before sending.
 </Note>
 
 ### Extra fields via `_passthrough`
