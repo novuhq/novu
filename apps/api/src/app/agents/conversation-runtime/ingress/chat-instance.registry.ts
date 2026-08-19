@@ -5,6 +5,7 @@ import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
 import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { NovuAgentChatAdapter } from '@novu/chat-adapter-agent-chat';
+import { stripAgentReplyToken } from '@novu/shared';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
@@ -465,6 +466,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
+            stripAgentReplyToken,
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
               const { url } = await this.emailActionTokenService.signActionToken({
