@@ -3,6 +3,7 @@ import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import { CONNECT_CHANNEL_PICKER_OPTIONS } from '../connect-channel-picker-options';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
 import {
   type ConnectSuccessDestination,
@@ -14,7 +15,7 @@ import {
 import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
-import type { ChannelChoice } from '../types';
+import type { AgentChatSetupMode, ChannelChoice } from '../types';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
@@ -237,15 +238,7 @@ export function PhaseContent({
       return <Text color="cyan">{`Creating agent "${phase.name}"…`}</Text>;
 
     case 'pick-channel': {
-      const options: Array<{ label: string; value: ChannelChoice }> = [
-        { label: 'Slack (recommended)', value: 'slack' },
-        { label: 'Telegram', value: 'telegram' },
-        { label: 'Email', value: 'email' },
-        { label: 'iMessage (Sendblue)', value: 'sendblue' },
-        { label: 'WhatsApp', value: 'whatsapp' },
-        { label: 'Microsoft Teams', value: 'teams' },
-        { label: 'Skip — set up later in dashboard', value: 'skip' },
-      ];
+      const options = [...CONNECT_CHANNEL_PICKER_OPTIONS];
 
       return (
         <Box flexDirection="column" gap={1} alignItems="flex-start">
@@ -271,6 +264,23 @@ export function PhaseContent({
 
     case 'adding-slack':
       return <Text color="cyan">Linking Slack to your agent…</Text>;
+
+    case 'adding-agent-chat':
+      return <Text color="cyan">Linking Agent Chat to your agent…</Text>;
+
+    case 'agent-chat-handoff':
+      return <AgentChatHandoffContent dashboardUrl={phase.dashboardUrl} onContinue={phase.resolve} />;
+
+    case 'pick-agent-chat-setup':
+      return <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />;
+
+    case 'scaffolding-agent-chat':
+      return (
+        <Box flexDirection="column" gap={1} alignItems="center">
+          <Text color="cyan">Scaffolding your Agent Chat example app…</Text>
+          <Text dimColor>Installing dependencies — this may take a minute.</Text>
+        </Box>
+      );
 
     case 'paste-slack-token':
       return <PasteSlackConfigTokenContent phase={phase} />;
@@ -400,37 +410,40 @@ function ChannelSelect({
   onChange: (value: ChannelChoice) => void;
   onHighlight: (value: ChannelChoice | null) => void;
 }): React.ReactElement {
+  const uniqueOptions = options.filter(
+    (opt, index, arr) => arr.findIndex((candidate) => candidate.value === opt.value) === index
+  );
   const [idx, setIdx] = React.useState(0);
 
   // Seed the parent with the initial highlight so the orb doesn't sit on
   // white for a frame before the user touches the arrow keys.
   React.useEffect(() => {
-    onHighlight(options[0]?.value ?? null);
+    onHighlight(uniqueOptions[0]?.value ?? null);
     // We only want to fire on mount; subsequent highlights flow through useInput.
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   }, []);
 
   useInput((_input, key) => {
     if (key.upArrow) {
-      const next = (idx - 1 + options.length) % options.length;
+      const next = (idx - 1 + uniqueOptions.length) % uniqueOptions.length;
       setIdx(next);
-      onHighlight(options[next].value);
+      onHighlight(uniqueOptions[next].value);
     } else if (key.downArrow) {
-      const next = (idx + 1) % options.length;
+      const next = (idx + 1) % uniqueOptions.length;
       setIdx(next);
-      onHighlight(options[next].value);
+      onHighlight(uniqueOptions[next].value);
     } else if (key.return) {
-      onChange(options[idx].value);
+      onChange(uniqueOptions[idx].value);
     }
   });
 
-  const highlighted = options[idx]?.value ?? null;
+  const highlighted = uniqueOptions[idx]?.value ?? null;
   const channelHint = highlighted !== null ? CHANNEL_HINTS[highlighted] : undefined;
 
   return (
     <Box flexDirection="column" gap={1} alignItems="flex-start">
       <Box flexDirection="column" alignItems="flex-start">
-        {options.map((opt, i) => {
+        {uniqueOptions.map((opt, i) => {
           const isSelected = i === idx;
           const opensInDashboard = isDashboardOnlyChannel(opt.value);
           const prefix = isSelected ? '› ' : '  ';
@@ -521,6 +534,83 @@ function DashboardChannelReadyContent({
   );
 }
 
+function AgentChatHandoffContent({
+  dashboardUrl,
+  onContinue,
+}: {
+  dashboardUrl: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') onContinue();
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Agent Chat linked</Text>
+      <Text dimColor>Open the dashboard chat, or continue to add Agent Chat to your app.</Text>
+      <CopyableLink url={dashboardUrl} hint="Chat tab in dashboard:" hyperlink={false} />
+      <Text dimColor>Press Enter to continue</Text>
+    </Box>
+  );
+}
+
+function AgentChatSetupPickContent({
+  projectKind,
+  onResolve,
+}: {
+  projectKind: 'empty' | 'project';
+  onResolve: (mode: AgentChatSetupMode) => void;
+}): React.ReactElement {
+  const options =
+    projectKind === 'empty'
+      ? [
+          { label: 'Scaffold example app', value: 'scaffold' as const },
+          { label: 'Save embed prompt for my app', value: 'embed' as const },
+          { label: 'Skip for now', value: 'skip' as const },
+        ]
+      : [
+          { label: 'Save embed prompt into this project', value: 'embed' as const },
+          { label: 'Scaffold a new example app', value: 'scaffold' as const },
+          { label: 'Skip for now', value: 'skip' as const },
+        ];
+  const [idx, setIdx] = React.useState(0);
+
+  useInput((_input, key) => {
+    if (key.upArrow) {
+      setIdx((current) => (current - 1 + options.length) % options.length);
+    } else if (key.downArrow) {
+      setIdx((current) => (current + 1) % options.length);
+    } else if (key.return) {
+      onResolve(options[idx].value);
+    }
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Add Agent Chat to your app</Text>
+      <Text dimColor>
+        {projectKind === 'empty'
+          ? 'No project found here. Scaffold a small example app, or save the embed prompt.'
+          : 'We found an existing project. Save the embed prompt here, or scaffold a new example app.'}
+      </Text>
+      {options.map((opt, rowIndex) => {
+        const isSelected = rowIndex === idx;
+
+        return (
+          <Text key={opt.value}>
+            <Text color={isSelected ? 'cyan' : undefined}>
+              {isSelected ? '› ' : '  '}
+              {opt.label}
+            </Text>
+          </Text>
+        );
+      })}
+      <Text dimColor>↑↓ to move · Enter to select</Text>
+    </Box>
+  );
+}
+
 function SuccessView({
   phase,
 }: {
@@ -538,6 +628,8 @@ function SuccessView({
     chatSdkOutcome,
     aiSdkOutcome,
     langChainOutcome,
+    agentChatHandoff,
+    agentChatOutcome,
   } = phase;
   const destination = resolveConnectSuccessDestination({
     connectDashboardUrl,
@@ -553,6 +645,7 @@ function SuccessView({
     if (connectedChannel === 'email') return 'Email';
     if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
     if (connectedChannel === 'whatsapp') return 'WhatsApp';
+    if (connectedChannel === 'agent-chat') return 'Agent Chat';
 
     return null;
   })();
@@ -566,12 +659,26 @@ function SuccessView({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text color="green">✓ Your agent is live.</Text>
+      <Text color="green">
+        {connectedChannel === 'agent-chat' ? '✓ Agent Chat linked — add it to your app.' : '✓ Your agent is live.'}
+      </Text>
       <Box flexDirection="column">
         <Text>
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
-        {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
+        {connectedChannel === 'agent-chat' ? (
+          <>
+            {agentChatHandoff?.dashboardUrl ? (
+              <Text color="cyan">Try chat in the dashboard — link copied above.</Text>
+            ) : null}
+            {agentChatOutcome?.embedPromptFile ? (
+              <Text dimColor>Embed prompt saved to {agentChatOutcome.embedPromptFile}</Text>
+            ) : null}
+            {agentChatOutcome?.projectDir ? <Text color="cyan">Example app: {agentChatOutcome.projectDir}</Text> : null}
+          </>
+        ) : (
+          renderSuccessChannelMessage(channelLabel, redirectChannelLabel)
+        )}
         {scaffoldMessage ? <Text color="cyan">{scaffoldMessage}</Text> : null}
         {renderSuccessNextStep(destination)}
       </Box>

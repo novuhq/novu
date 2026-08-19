@@ -28,6 +28,7 @@ export type BridgeAdapterSetupInput = {
   ui: ConnectUI;
   auth: ResolvedConnectAuth;
   agent: AgentSummary;
+  deferScaffoldSummary?: boolean;
 };
 
 export type BridgeAdapterScaffoldInput = {

@@ -251,6 +251,10 @@ program
     'Recipient phone (E.164) for the Sendblue test message. CI-only escape hatch — omit to enter interactively'
   )
   .option(
+    '--agent-chat-setup <mode>',
+    'Agent Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted)'
+  )
+  .option(
     '--ci',
     'Non-interactive mode (no Ink TUI). Requires a prompt (positional <prompt> or --prompt) and --channel; see examples below',
     false
@@ -321,6 +325,16 @@ program
       console.error(`Invalid --llm-auth value: "${options.llmAuth}". Expected one of: ${LLM_AUTH_CHOICES.join(', ')}.`);
       process.exit(1);
     }
+    const AGENT_CHAT_SETUP_CHOICES = ['scaffold', 'embed', 'skip'] as const;
+    if (
+      options.agentChatSetup &&
+      !AGENT_CHAT_SETUP_CHOICES.includes(options.agentChatSetup as 'scaffold' | 'embed' | 'skip')
+    ) {
+      console.error(
+        `Invalid --agent-chat-setup value: "${options.agentChatSetup}". Expected one of: ${AGENT_CHAT_SETUP_CHOICES.join(', ')}.`
+      );
+      process.exit(1);
+    }
     let resolved: ReturnType<typeof resolveConnectCommandOptions>;
     try {
       resolved = resolveConnectCommandOptions({
@@ -330,6 +344,7 @@ program
         channel: options.channel as ChannelChoice | undefined,
         runtime: options.runtime as AgentConnectMode | undefined,
         chatSdk: options.chatSdk,
+        agentChatSetup: options.agentChatSetup as import('./commands/connect/types').AgentChatSetupMode | undefined,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {

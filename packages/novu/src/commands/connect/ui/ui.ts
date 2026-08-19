@@ -3,9 +3,12 @@ import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
 import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
+  AgentChatConnectOutcome,
+  AgentChatSetupMode,
   AgentConnectMode,
   AgentSummary,
   AiSdkConnectOutcome,
+  BridgeProjectKind,
   BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
@@ -272,6 +275,12 @@ export interface ConnectUI {
   slackConnected(): void;
   slackSkipped(): void;
 
+  // Agent Chat path
+  addingAgentChatIntegration(): void;
+  awaitAgentChatHandoff(opts: { dashboardUrl: string; embedPrompt: string; embedPromptFile?: string }): Promise<void>;
+  pickAgentChatSetup(opts: { projectKind: BridgeProjectKind }): Promise<AgentChatSetupMode>;
+  scaffoldingAgentChat(): void;
+
   // Welcome message
   sendingWelcome(): void;
 
@@ -290,6 +299,8 @@ export interface ConnectUI {
     aiSdkOutcome?: AiSdkConnectOutcome;
     langChainOutcome?: LangChainConnectOutcome;
     customCodeOutcome?: CustomCodeConnectOutcome;
+    agentChatOutcome?: AgentChatConnectOutcome;
+    agentChatHandoff?: { dashboardUrl: string; embedPromptFile?: string };
   }): void;
   failure(message: string): void;
 

@@ -36,6 +36,7 @@ export type ChatSdkSetupInput = {
   ui: ConnectUI;
   auth: ResolvedConnectAuth;
   agent: AgentSummary;
+  deferScaffoldSummary?: boolean;
 };
 
 type ReconcileOptions = {
@@ -91,12 +92,14 @@ async function scaffoldThenReconcile(
 
   const envPaths = resolveProjectEnvPaths(scaffolded.root);
 
-  input.ui.bridgeScaffolded({
-    variant: 'chat-sdk',
-    projectDir: scaffolded.root,
-    envPaths,
-    skippedInstall: scaffolded.skippedInstall,
-  });
+  if (!input.deferScaffoldSummary) {
+    input.ui.bridgeScaffolded({
+      variant: 'chat-sdk',
+      projectDir: scaffolded.root,
+      envPaths,
+      skippedInstall: scaffolded.skippedInstall,
+    });
+  }
 
   return {
     projectKind: 'empty',

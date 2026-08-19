@@ -17,13 +17,15 @@ export type CopyableLinkProps = {
   url: string;
   hint?: string;
   color?: string;
+  /** When false, the URL is plain text (Enter won't follow OSC 8 links in some terminals). */
+  hyperlink?: boolean;
 };
 
 /**
  * Renders a URL on its own stable line with OSC 8 linking and keyboard shortcuts.
  * Pair with Ink `incrementalRendering: true` so orb animation does not redraw this line.
  */
-export function CopyableLink({ url, hint, color = 'cyan' }: CopyableLinkProps): React.ReactElement {
+export function CopyableLink({ url, hint, color = 'cyan', hyperlink = true }: CopyableLinkProps): React.ReactElement {
   const [actionHint, setActionHint] = React.useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
 
   useInput(
@@ -64,7 +66,7 @@ export function CopyableLink({ url, hint, color = 'cyan' }: CopyableLinkProps): 
   return (
     <Box flexDirection="column">
       {hint ? <Text dimColor>{hint}</Text> : null}
-      <Text color={color}>{`${OSC8_OPEN(url)}${url}${OSC8_CLOSE}`}</Text>
+      <Text color={color}>{hyperlink ? `${OSC8_OPEN(url)}${url}${OSC8_CLOSE}` : url}</Text>
       <Text dimColor>Press c to copy · o to open in browser</Text>
       {actionHint ? <Text color={actionHint.tone === 'ok' ? 'green' : 'red'}>{actionHint.text}</Text> : null}
     </Box>

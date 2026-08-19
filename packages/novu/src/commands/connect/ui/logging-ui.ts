@@ -268,7 +268,6 @@ export function createLoggingUI(): ConnectUI {
     },
     pickChannel() {
       stop();
-      // Non-interactive default: Slack.
       console.log(chalk.gray('Non-interactive mode: defaulting to Slack.'));
 
       return Promise.resolve('slack');
@@ -468,6 +467,27 @@ export function createLoggingUI(): ConnectUI {
     },
     slackSkipped() {
       console.log(chalk.gray('Slack step skipped (--skip-slack).'));
+    },
+    addingAgentChatIntegration() {
+      start('Linking Agent Chat to your agent…');
+    },
+    awaitAgentChatHandoff({ dashboardUrl, embedPrompt, embedPromptFile }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Try Agent Chat in the dashboard: ${chalk.underline(dashboardUrl)}`);
+      if (embedPromptFile) {
+        console.log(`${chalk.cyan('→')} Embed prompt saved to: ${chalk.bold(embedPromptFile)}`);
+      } else {
+        console.log(chalk.dim('Embed prompt ready for your app.'));
+      }
+      void embedPrompt;
+
+      return Promise.resolve();
+    },
+    pickAgentChatSetup({ projectKind }) {
+      return Promise.resolve(projectKind === 'empty' ? 'scaffold' : 'embed');
+    },
+    scaffoldingAgentChat() {
+      start('Scaffolding your Agent Chat example app…');
     },
     sendingWelcome() {
       start('Asking your agent to say hello in Slack…');
