@@ -11,6 +11,7 @@ import { extractCardPlainText } from '../../shared/util/card-plain-text.util';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { splitOversizedSlackText } from '../../shared/util/slack-section-limits';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry, type ChatWithAdapters, type PlatformAdapters } from '../ingress/chat-instance.registry';
@@ -932,7 +933,10 @@ export class OutboundGateway {
 
     if (deliveryContent.card) {
       return {
-        card: deliveryContent.card,
+        card:
+          branding.platform === AgentPlatformEnum.SLACK
+            ? splitOversizedSlackText(deliveryContent.card)
+            : deliveryContent.card,
         ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
       } as AdapterPostableMessage;
     }
