@@ -45,7 +45,7 @@ import {
 } from '@novu/shared';
 import { IPushOptions } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
-import { cloneDeep, merge, mergeWith } from 'lodash';
+import { cloneDeep, mergeWith } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import { combineProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
