@@ -437,6 +437,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         _environmentId: this.convertStringToObjectId(job._environmentId),
         _subscriberId: this.convertStringToObjectId(job._subscriberId),
         'digest.digestValue': digestMeta?.digestValue,
+        _id: { $ne: job._id },
       },
       '_id _notificationId'
     );
