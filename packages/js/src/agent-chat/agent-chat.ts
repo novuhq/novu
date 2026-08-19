@@ -140,7 +140,12 @@ export class AgentChat extends BaseModule {
           return { error: new NovuError('Pending action not found', new Error('pending action not found')) };
         }
 
-        const actionId = args.decision === 'approved' ? pending.approveActionId : pending.denyActionId;
+        const actionId = {
+          approved: pending.approveActionId,
+          denied: pending.denyActionId,
+          'trust-tool': pending.trustToolActionId,
+          'trust-server': pending.trustServerActionId,
+        }[args.decision];
         if (!actionId) {
           return {
             error: new NovuError(
@@ -326,6 +331,10 @@ export class AgentChat extends BaseModule {
         if ('error' in result) {
           return { error: result.error };
         }
+
+        // Resume paths (approvals, card clicks) can emit before the HTTP ack;
+        // catch up like sendMessage so live WS overlap is not dropped.
+        this.#requestCatchUp();
 
         return { data: { conversationId: result.identifier } };
       } catch (error) {

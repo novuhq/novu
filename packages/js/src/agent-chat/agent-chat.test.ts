@@ -1467,6 +1467,44 @@ describe('AgentChat', () => {
     expect(derivePendingActions(snapshot?.messages ?? [])[0]?.type).toBe('tool-approval');
   });
 
+  it('respondToAction POSTs trust-server action id when decision is trust-server', async () => {
+    const page = approvalHistoryPage('approval_000001');
+    const requestEvent = page.events[2]?.event as {
+      type: 'tool-approval-request';
+      trustToolActionId?: string;
+      trustServerActionId?: string;
+      source?: { type: 'mcp'; serverName: string };
+    };
+    requestEvent.trustToolActionId = 'mcp-approval:approve-tool:approval_000001:deleteOrder:GitHub';
+    requestEvent.trustServerActionId = 'mcp-approval:approve-server:approval_000001:deleteOrder:GitHub';
+    requestEvent.source = { type: 'mcp', serverName: 'GitHub' };
+    getEvents.mockResolvedValue(page);
+    respondToAction.mockResolvedValue({
+      identifier: 'conv_abcdefghijkl',
+    });
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    const result = await agentChat.respondToAction({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'approval_000001',
+      decision: 'trust-server',
+    });
+
+    expect(result).toEqual({
+      data: { conversationId: 'conv_abcdefghijkl' },
+    });
+    expect(respondToAction).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      actionId: 'mcp-approval:approve-server:approval_000001:deleteOrder:GitHub',
+    });
+  });
+
   it('respondToAction resolves pending state only after tool-approval-response envelope', async () => {
     getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
     respondToAction.mockResolvedValue({

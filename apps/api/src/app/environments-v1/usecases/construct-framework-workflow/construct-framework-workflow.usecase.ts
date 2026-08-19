@@ -27,6 +27,7 @@ import {
   ActionStep,
   ChannelStep,
   ChatOutputUnvalidated,
+  CustomStep,
   PostActionEnum,
   Schema,
   Step,
@@ -411,20 +412,13 @@ export class ConstructFrameworkWorkflow {
        * the workflow graph correctly. The resolve function is a passthrough because execution already happened.
        */
       case StepTypeEnum.HTTP_REQUEST:
-        return step.custom(
-          stepId,
-          async (controlValues) => {
-            return controlValues;
-          },
-          this.constructActionStepOptions(staticStep, skip)
-        );
       case StepTypeEnum.CUSTOM:
         return step.custom(
           stepId,
           async (controlValues) => {
             return controlValues;
           },
-          this.constructActionStepOptions(staticStep, skip)
+          this.constructCustomStepOptions(staticStep, skip)
         );
       default:
         throw new InternalServerErrorException(`Step type ${stepType} is not supported`);
@@ -538,6 +532,24 @@ export class ConstructFrameworkWorkflow {
       disableOutputSanitization: true,
       providers,
     } as Required<Parameters<ChannelStep>[2]>;
+  }
+
+  /**
+   * Worker-executed steps (HTTP request, custom) are hydrated from the job state when a later step
+   * calls the bridge, and the framework validates that state against the step's output schema with
+   * AJV configured to remove additional properties. Without an explicit schema the framework falls
+   * back to a closed empty schema, which strips the whole response body and leaves conditions such
+   * as `steps.http-request-step.enrolmentCount equals 1` evaluating against nothing (NV-8604).
+   */
+  @Instrument()
+  private constructCustomStepOptions(
+    staticStep: NotificationStepEntity,
+    skip: SkipFunction
+  ): NonNullable<Parameters<CustomStep>[2]> {
+    return {
+      ...this.constructActionStepOptions(staticStep, skip),
+      outputSchema: PERMISSIVE_EMPTY_SCHEMA as unknown as Schema,
+    };
   }
 
   @Instrument()

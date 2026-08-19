@@ -28,6 +28,11 @@ type AgentMessagePart = AgentMessage['parts'][number];
 type ToolPart = Extract<AgentMessagePart, { type: 'tool' }>;
 type TextPart = Extract<AgentMessagePart, { type: 'text' }>;
 type CardPart = Extract<AgentMessagePart, { type: 'card' }>;
+type ApprovalPart = Extract<AgentMessagePart, { type: 'approval' }>;
+type McpConnectionPart = Extract<AgentMessagePart, { type: 'mcp-connection' }>;
+
+export type ToolApprovalDecision = 'approved' | 'denied' | 'trust-tool' | 'trust-server';
+export type ToolApprovalRespondHandler = (decision: ToolApprovalDecision) => void;
 
 export type CardActionHandler = (args: { actionId: string; sourceMessageId: string; value?: string }) => void;
 
@@ -377,6 +382,207 @@ function ToolChip({ tool }: { tool: ToolPart }) {
   );
 }
 
+type ToolApprovalCardProps = {
+  id?: string;
+  toolName: string;
+  source?: ApprovalPart['source'];
+  state: ApprovalPart['state'];
+  trustToolActionId?: string;
+  trustServerActionId?: string;
+  disabled?: boolean;
+  onRespond?: ToolApprovalRespondHandler;
+  className?: string;
+};
+
+function ToolApprovalActions({
+  disabled,
+  onRespond,
+  trustToolActionId,
+  trustServerActionId,
+  source,
+}: {
+  disabled?: boolean;
+  onRespond?: ToolApprovalRespondHandler;
+  trustToolActionId?: string;
+  trustServerActionId?: string;
+  source?: ApprovalPart['source'];
+}) {
+  return (
+    <div className="flex shrink-0 flex-wrap gap-1.5">
+      <Button
+        type="button"
+        size="2xs"
+        variant="secondary"
+        mode="outline"
+        disabled={disabled || !onRespond}
+        onClick={() => onRespond?.('denied')}
+      >
+        Deny
+      </Button>
+      <Button
+        type="button"
+        size="2xs"
+        variant="primary"
+        disabled={disabled || !onRespond}
+        onClick={() => onRespond?.('approved')}
+      >
+        Approve once
+      </Button>
+      {trustToolActionId ? (
+        <Button
+          type="button"
+          size="2xs"
+          variant="secondary"
+          mode="outline"
+          disabled={disabled || !onRespond}
+          onClick={() => onRespond?.('trust-tool')}
+        >
+          Always allow this tool
+        </Button>
+      ) : null}
+      {trustServerActionId && source?.type === 'mcp' ? (
+        <Button
+          type="button"
+          size="2xs"
+          variant="secondary"
+          mode="outline"
+          disabled={disabled || !onRespond}
+          onClick={() => onRespond?.('trust-server')}
+        >
+          Always allow {source.serverName}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+export function ChatToolApprovalCard({
+  id,
+  toolName,
+  source,
+  state,
+  trustToolActionId,
+  trustServerActionId,
+  disabled,
+  onRespond,
+  className,
+}: ToolApprovalCardProps) {
+  const isPending = state === 'pending';
+
+  return (
+    <div
+      id={id}
+      className={cn(
+        'animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex flex-col gap-3 rounded-xl border p-3 duration-200 sm:flex-row sm:items-center',
+        className
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="bg-warning/10 flex size-8 shrink-0 items-center justify-center rounded-full">
+          <RiShieldCheckLine className="text-warning size-4" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-label-xs text-text-strong truncate font-medium">
+            Run <span className="font-mono">{toolName}</span>?
+          </p>
+          <p className="text-label-xs text-text-soft">
+            {isPending
+              ? 'The agent is waiting for your approval.'
+              : state === 'approved'
+                ? 'You approved this tool call.'
+                : 'You denied this tool call.'}
+          </p>
+        </div>
+      </div>
+      {isPending ? (
+        <ToolApprovalActions
+          disabled={disabled}
+          onRespond={onRespond}
+          trustToolActionId={trustToolActionId}
+          trustServerActionId={trustServerActionId}
+          source={source}
+        />
+      ) : (
+        <span
+          className={cn(
+            'text-label-xs shrink-0 font-medium',
+            state === 'approved' ? 'text-success-base' : 'text-error-base'
+          )}
+        >
+          {state === 'approved' ? 'Approved' : 'Denied'}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ChatMcpConnectionCard({
+  id,
+  mcpId,
+  displayName,
+  authorizeUrl,
+  authorizeUrlWithAutoApprove,
+  state,
+  message,
+}: {
+  id?: string;
+  mcpId: string;
+  displayName: string;
+  authorizeUrl: string;
+  authorizeUrlWithAutoApprove?: string;
+  state: McpConnectionPart['state'];
+  message?: string;
+}) {
+  const safeAuthorizeUrl = toSafeExternalUrl(authorizeUrlWithAutoApprove || authorizeUrl);
+  const isPending = state === 'pending';
+
+  return (
+    <div
+      id={id}
+      className="animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex flex-wrap items-center gap-3 rounded-xl border p-3 duration-200"
+    >
+      <div className="bg-bg-weak ring-stroke-soft flex size-8 shrink-0 items-center justify-center rounded-full ring-1">
+        <McpIcon mcpId={mcpId} className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-label-xs text-text-strong truncate font-medium">Connect {displayName}</p>
+        <p className="text-label-xs text-text-soft">
+          {isPending
+            ? 'The agent needs authorization to continue.'
+            : state === 'connected'
+              ? 'Connected successfully.'
+              : message || 'Connection failed.'}
+        </p>
+      </div>
+      {isPending ? (
+        <Button
+          type="button"
+          size="2xs"
+          variant="primary"
+          className="shrink-0"
+          trailingIcon={RiExternalLinkLine}
+          disabled={!safeAuthorizeUrl}
+          onClick={() => {
+            if (!safeAuthorizeUrl) return;
+            window.open(safeAuthorizeUrl, '_blank', 'noopener,noreferrer');
+          }}
+        >
+          Authorize
+        </Button>
+      ) : (
+        <span
+          className={cn(
+            'text-label-xs shrink-0 font-medium',
+            state === 'connected' ? 'text-success-base' : 'text-error-base'
+          )}
+        >
+          {state === 'connected' ? 'Connected' : 'Failed'}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function ChatTypingRow({ status }: { status?: string }) {
   // Server statuses often arrive with their own trailing ellipsis or dots.
   const label = status?.trim().replace(/[.\u2026]+$/, '');
@@ -413,67 +619,29 @@ export function ChatPendingActionCard({
 }: {
   action: AgentPendingAction;
   disabled: boolean;
-  onRespond: (decision: 'approved' | 'denied') => void;
+  onRespond: ToolApprovalRespondHandler;
 }) {
   if (action.type === 'mcp-connection') {
-    // The authorize URL comes from the MCP server's OAuth discovery document,
-    // so it is external input. Reject anything that is not an absolute http(s)
-    // URL (e.g. `javascript:`) before it can reach `window.open`.
-    const authorizeUrl = toSafeExternalUrl(action.authorizeUrlWithAutoApprove || action.authorizeUrl);
-
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex flex-wrap items-center gap-3 rounded-xl border p-3 duration-200">
-        <div className="bg-bg-weak ring-stroke-soft flex size-8 shrink-0 items-center justify-center rounded-full ring-1">
-          <McpIcon mcpId={action.mcpId} className="size-4" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-label-xs text-text-strong truncate font-medium">Connect {action.displayName}</p>
-          <p className="text-label-xs text-text-soft">The agent needs authorization to continue.</p>
-        </div>
-        <Button
-          type="button"
-          size="2xs"
-          variant="primary"
-          className="shrink-0"
-          trailingIcon={RiExternalLinkLine}
-          disabled={!authorizeUrl}
-          onClick={() => {
-            if (!authorizeUrl) return;
-            window.open(authorizeUrl, '_blank', 'noopener,noreferrer');
-          }}
-        >
-          Authorize
-        </Button>
-      </div>
+      <ChatMcpConnectionCard
+        mcpId={action.mcpId}
+        displayName={action.displayName}
+        authorizeUrl={action.authorizeUrl}
+        authorizeUrlWithAutoApprove={action.authorizeUrlWithAutoApprove}
+        state="pending"
+      />
     );
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex items-center gap-3 rounded-xl border p-3 duration-200">
-      <div className="bg-warning/10 flex size-8 shrink-0 items-center justify-center rounded-full">
-        <RiShieldCheckLine className="text-warning size-4" aria-hidden />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-label-xs text-text-strong truncate font-medium">
-          Run <span className="font-mono">{action.toolName}</span>?
-        </p>
-        <p className="text-label-xs text-text-soft">The agent is waiting for your approval.</p>
-      </div>
-      <div className="flex shrink-0 gap-1.5">
-        <Button
-          type="button"
-          size="2xs"
-          variant="secondary"
-          mode="outline"
-          disabled={disabled}
-          onClick={() => onRespond('denied')}
-        >
-          Deny
-        </Button>
-        <Button type="button" size="2xs" variant="primary" disabled={disabled} onClick={() => onRespond('approved')}>
-          Approve
-        </Button>
-      </div>
-    </div>
+    <ChatToolApprovalCard
+      toolName={action.toolName}
+      source={action.source}
+      state="pending"
+      trustToolActionId={action.trustToolActionId}
+      trustServerActionId={action.trustServerActionId}
+      disabled={disabled}
+      onRespond={onRespond}
+    />
   );
 }

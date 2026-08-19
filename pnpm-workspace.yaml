@@ -9,6 +9,7 @@ packages:
   - 'enterprise/packages/*'
   - 'enterprise/workers/step-resolver'
   - 'enterprise/workers/thalamus-observer'
+  - 'enterprise/workers/socket'
   # playground apps
   - 'playground/*'
 

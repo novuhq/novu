@@ -58,6 +58,7 @@ export interface PersistToolApprovalRequestParams extends ConversationActivityCo
   /** When omitted, self-hosted `tool-approval:*` ids are minted. */
   approveActionId?: string;
   denyActionId?: string;
+  mcpServerName?: string;
 }
 
 export type MetadataOp =
