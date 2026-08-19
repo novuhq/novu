@@ -385,6 +385,7 @@
               "platform/developer/environments",
               "platform/developer/environment-variables",
               "platform/developer/limits",
+              "platform/developer/delivery-retries",
               {
                 "group": "Inbound email",
                 "pages": ["platform/inbound-email/overview"]
