@@ -69,7 +69,7 @@ const spectrumSpy = ({
   const effectBuilder = vi.fn((content: unknown, effectValue: string) => ({ kind: 'effect', content, effectValue }));
 
   __setPhotonSpectrumImportForTests(async (specifier: string) => {
-    if (specifier === 'spectrum-ts') {
+    if (specifier === '@spectrum-ts/core') {
       return {
         Spectrum: spectrumFactory,
         markdown: (source: string) => ({ kind: 'markdown', source }),
@@ -78,7 +78,7 @@ const spectrumSpy = ({
         reply: (content: unknown, target: unknown) => ({ kind: 'reply', content, target }),
       };
     }
-    if (specifier === 'spectrum-ts/providers/imessage') {
+    if (specifier === '@spectrum-ts/imessage') {
       return { imessage: imessageNarrow, effect: effectBuilder };
     }
     throw new Error(`Unexpected import: ${specifier}`);

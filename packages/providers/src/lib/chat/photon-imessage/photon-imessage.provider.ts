@@ -9,10 +9,10 @@ import {
   isChannelDataOfType,
 } from '@novu/stateless';
 import Axios, { AxiosError, AxiosInstance } from 'axios';
-import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
+import { Webhook } from 'svix';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
-import { cardToPhotonMarkdown } from './card-render.utils';
+import { cardToFallbackMarkdown } from '../card-render.utils';
 import { IPhotonUserResponse } from './types/photon-imessage.types';
 
 const DEFAULT_SPECTRUM_URL = 'https://spectrum.photon.codes';
@@ -131,13 +131,19 @@ export const clearPhotonImessageCaches = () => {
   lastMessages.clear();
 };
 
-function evictIdleSpectrumApps() {
+/**
+ * `inUseKey` is exempt: the caller is about to send through that entry, and the
+ * eviction callback would otherwise run before the caller's `await` continuation
+ * (both are microtasks on an already-settled promise), stopping the app mid-send.
+ */
+function evictIdleSpectrumApps(inUseKey: string) {
   const now = Date.now();
-  for (const [projectId, pending] of spectrumApps.entries()) {
+  for (const [cacheKey, pending] of spectrumApps.entries()) {
+    if (cacheKey === inUseKey) continue;
     pending
       .then((handle) => {
-        if (now - handle.lastUsedAt > SPECTRUM_APP_IDLE_TTL_MS && spectrumApps.get(projectId) === pending) {
-          spectrumApps.delete(projectId);
+        if (now - handle.lastUsedAt > SPECTRUM_APP_IDLE_TTL_MS && spectrumApps.get(cacheKey) === pending) {
+          spectrumApps.delete(cacheKey);
           handle.app.stop().catch(() => {});
         }
       })
@@ -192,7 +198,7 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
   async render(card: CardElement): Promise<IChatRenderResult> {
     return {
       nativePayload: { format: 'markdown' },
-      content: cardToPhotonMarkdown(card),
+      content: cardToFallbackMarkdown(card),
       validation: [],
     };
   }
@@ -231,7 +237,9 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
     }
 
     return {
-      id: sentMessage?.id ?? randomUUID(),
+      // No fabricated fallback: a made-up id would be persisted for receipt
+      // correlation and could never match Photon's real message guid.
+      id: sentMessage?.id,
       date: new Date().toISOString(),
     };
   }
@@ -346,17 +354,26 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
       combined.includes('invalid token') ||
       combined.includes('invalid credentials')
     ) {
-      spectrumApps.delete(this.config.projectId);
+      spectrumApps.delete(this.spectrumCacheKey());
       throw new Error(`Photon rejected the project credentials for this send. (${raw})`);
     }
 
     throw new Error(raw || 'Photon failed to send the message');
   }
 
-  private async getSpectrumHandle(): Promise<SpectrumHandle> {
-    evictIdleSpectrumApps();
+  /**
+   * Includes the secret so rotating a project's credentials (or two integrations
+   * sharing a projectId with different secrets) never reuses an app that was
+   * authenticated with the other secret.
+   */
+  private spectrumCacheKey(): string {
+    return `${this.config.projectId}:${this.config.projectSecret}`;
+  }
 
-    const cacheKey = this.config.projectId;
+  private async getSpectrumHandle(): Promise<SpectrumHandle> {
+    const cacheKey = this.spectrumCacheKey();
+    evictIdleSpectrumApps(cacheKey);
+
     let pending = spectrumApps.get(cacheKey);
 
     if (!pending) {
@@ -378,8 +395,8 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
 
   private async buildSpectrumHandle(): Promise<SpectrumHandle> {
     const [core, provider] = await Promise.all([
-      spectrumImport('spectrum-ts'),
-      spectrumImport('spectrum-ts/providers/imessage'),
+      spectrumImport('@spectrum-ts/core'),
+      spectrumImport('@spectrum-ts/imessage'),
     ]);
 
     const spectrumFactory = core.Spectrum as (config: Record<string, unknown>) => Promise<SpectrumHandle['app']>;
@@ -484,41 +501,24 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
       return { success: true, message: 'Webhook signing key not configured; skipping signature verification' };
     }
 
-    const normalizedHeaders = Object.fromEntries(
-      Object.entries(headers ?? {}).map(([key, value]) => [key.toLowerCase(), value])
-    );
-    const webhookId = normalizedHeaders['webhook-id'];
-    const timestamp = normalizedHeaders['webhook-timestamp'];
-    const signatureHeader = normalizedHeaders['webhook-signature'];
-
-    if (!webhookId || !timestamp || !signatureHeader) {
-      return { success: false, message: 'Missing Standard Webhooks headers' };
-    }
-
-    const timestampSeconds = Number(timestamp);
-    if (!Number.isFinite(timestampSeconds) || Math.abs(Date.now() / 1000 - timestampSeconds) > 300) {
-      return { success: false, message: 'Stale or malformed webhook timestamp' };
-    }
-
     const bodyString = typeof rawBody === 'string' ? rawBody : (rawBody as Buffer | undefined)?.toString('utf8');
     if (typeof bodyString !== 'string') {
       return { success: false, message: 'Missing raw body for signature verification' };
     }
 
-    const key = Buffer.from(signingKey.replace(/^whsec_/, ''), 'base64');
-    const expected = Buffer.from(
-      createHmac('sha256', key).update(`${webhookId}.${timestamp}.${bodyString}`).digest('base64')
-    );
+    // svix implements Standard Webhooks (same scheme Resend uses): it reads the
+    // `webhook-id`/`webhook-timestamp`/`webhook-signature` headers, applies the
+    // replay-tolerance window, and handles rotation's multiple signatures.
+    try {
+      new Webhook(signingKey).verify(bodyString, headers ?? {});
 
-    const verified = signatureHeader.split(' ').some((entry) => {
-      const [version, signature] = entry.split(',');
-      if (version !== 'v1' || !signature) return false;
-      const candidate = Buffer.from(signature);
-
-      return candidate.length === expected.length && timingSafeEqual(candidate, expected);
-    });
-
-    return verified ? { success: true } : { success: false, message: 'Invalid webhook signature' };
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Invalid webhook signature',
+      };
+    }
   }
 
   /**

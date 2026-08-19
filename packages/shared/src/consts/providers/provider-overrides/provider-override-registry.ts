@@ -162,7 +162,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
     primaryContentKey: TELEGRAM_PRIMARY_CONTENT_KEY,
   },
   [ChatProviderIdEnum.Sendblue]: escapeHatch('content'),
-  [ChatProviderIdEnum.PhotonImessage]: escapeHatch('content'),
+  // Photon's provider reads `text` as its body override key (see photon-imessage.schema.ts).
+  [ChatProviderIdEnum.PhotonImessage]: escapeHatch('text'),
   // Agent chat has no stable override schema yet — free-form passthrough keyed like Discord.
   [ChatProviderIdEnum.NovuAgentChat]: escapeHatch('content'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
