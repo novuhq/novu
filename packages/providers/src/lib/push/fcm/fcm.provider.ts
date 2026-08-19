@@ -92,10 +92,10 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       if (isDataMessage) {
         topicConfig.data = {
           ...payload,
-          ...(data || {}),
           title: options.title,
           body: options.content,
           message: options.content,
+          ...(data || {}),
         };
       } else {
         topicConfig.notification = notificationPayload;
@@ -120,10 +120,10 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       if (isDataMessage) {
         multicastConfig.data = {
           ...payload,
-          ...(data || {}),
           title: options.title,
           body: options.content,
           message: options.content,
+          ...(data || {}),
         };
       } else {
         multicastConfig.notification = notificationPayload;

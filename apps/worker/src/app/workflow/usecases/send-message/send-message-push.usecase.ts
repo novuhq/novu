@@ -487,11 +487,7 @@ export class SendMessagePush extends SendMessageBase {
         : {};
 
 
-    return {
-      ...deprecatedFlatProviderOverride,
-      ...providerOverride,
-      ...stepProviderOverride,
-    };
+    return merge({}, deprecatedFlatProviderOverride, providerOverride, stepProviderOverride);
   }
 
   /**

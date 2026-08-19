@@ -498,6 +498,37 @@ describe('FcmPushProvider', () => {
     });
   });
 
+  test('should let data overrides win over generated title body and message', async () => {
+    await provider.sendMessage({
+      title: 'Test',
+      content: 'Test push',
+      target: ['tester'],
+      payload: {
+        syncKey: 'abc',
+      },
+      overrides: {
+        type: 'data',
+        data: {
+          title: 'Custom title',
+          body: 'Custom body',
+          message: 'Custom message',
+        },
+      },
+      subscriber,
+      step,
+    });
+
+    expect(spy).toHaveBeenCalledWith({
+      tokens: ['tester'],
+      data: {
+        syncKey: 'abc',
+        title: 'Custom title',
+        body: 'Custom body',
+        message: 'Custom message',
+      },
+    });
+  });
+
   test('should read data-only type from bridge provider data', async () => {
     await provider.sendMessage(
       {
