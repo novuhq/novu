@@ -1,0 +1,94 @@
+---
+title: 'Delivery Retry Policy for Channels, Providers, and Steps'
+description: "Reference for how Novu retries notification delivery: provider send attempts, bridge endpoint backoff, webhook condition retries, failure handling, and recovery options."
+sidebarTitle: Retry policy
+---
+
+Novu retries at several points along the delivery path, and the policy is different at each one. The most important thing to know is that a **provider send is attempted once** - if SendGrid, Twilio, or FCM rejects the request, Novu records the failure and moves on rather than retrying the send.
+
+This page documents each retry layer, the exact attempt counts and backoff, and what recovery options exist when a delivery fails.
+
+## Retry policy at a glance
+
+| Layer | Automatic retries | Attempts | Backoff | Ceiling |
+| --- | --- | --- | --- | --- |
+| Channel step send to a provider | No | 1 | - | - |
+| Bridge endpoint call (Framework) | Yes | 3 retries | `2^attempt × 500ms` | 4 seconds |
+| Outbound webhooks from Novu | Yes | 8 attempts | Fixed schedule | 10 hours |
+
+## Channel and provider sends
+
+When a channel step runs, Novu resolves the integration for that channel, renders the content, and makes **a single call** to the provider. There is no automatic retry, no backoff, and no ceiling, because there is no second attempt.
+
+If the provider call throws or returns no message identifier, Novu:
+
+1. Records an `Unexpected provider error` execution detail with a **Failed** status, including the raw provider response.
+2. Emits a [`messages.failed` webhook](/platform/developer/webhooks/event-types) so your system can react.
+3. Marks the step as failed in the [Activity Feed](/platform/workflow/monitor-and-debug-workflow).
+4. Continues to the next step in the workflow. See [When a step fails](#when-a-step-fails).
+
+This applies to email, SMS, chat, and push. Provider rejections are treated as terminal regardless of the status code - a `429 Too Many Requests` or a `503 Service Unavailable` from a provider is handled the same way as a `400 Bad Request`.
+
+<Warning>
+  Because provider sends are not retried, a transient provider outage results in permanently undelivered notifications for the affected workflow runs. Subscribe to `messages.failed` if you need to detect and respond to these.
+</Warning>
+
+### Per-channel details
+
+- **Push** sends to every registered device token across the subscriber's push integrations. If some tokens succeed and others fail, the step is recorded with a **Warning** status and the workflow continues. The step is only marked failed when every token fails.
+- **In-app (Inbox)** does not call an external provider, so there is no provider send to retry. The message is stored in Novu and pushed to connected clients over websocket.
+- **Email Webhook** is the one provider that retries internally. It re-posts to your configured webhook URL up to **3 times** with a fixed **30 second** delay between attempts before failing the step. This is provider-specific behavior, not the platform policy.
+
+### There is no automatic provider failover
+
+Novu selects one integration for a channel before the send - the primary integration, or the one specified by payload in override. If that provider fails, Novu does **not** fall back to another configured integration for the same channel.
+
+## Bridge endpoint calls
+
+When a workflow is defined with [Novu Framework](/framework/endpoint), Novu calls your bridge endpoint to resolve step content. Unlike provider sends, these calls **are** retried:
+
+| Retry | Delay |
+| --- | --- |
+| 1st | 1 second |
+| 2nd | 2 seconds |
+| 3rd | 4 seconds |
+
+Retries are triggered for HTTP `408`, `429`, `500`, `503`, `504`, `521`, `522`, and `524`, and for transient network errors such as `ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT`, and `ENOTFOUND`. Other responses, including most `4xx` codes, are not retried. Each request has a 5 second timeout.
+
+See [Retry behavior](/framework/endpoint#retry-behavior) for the full reference.
+
+## Outbound webhooks
+
+Webhooks that Novu sends to your endpoints follow a separate, much longer schedule: 8 attempts over roughly 24 hours, starting immediately and backing off to a 10 hour ceiling.
+
+See [Webhook retry schedule](/platform/developer/webhooks/webhooks#retry-schedule).
+
+## When a step fails
+
+A failed **channel** step does not stop the workflow. The failure is recorded and the next step is queued and runs normally, so a failed email step is still followed by the SMS step after it.
+
+A failed **action** step - digest, delay, or throttle - stops the run. Every remaining step for that subscriber is canceled and shown as canceled in the Activity Feed, because those later steps depend on a result the action step never produced.
+
+## FAQs
+
+<AccordionGroup>
+  <Accordion title="Why doesn't Novu retry a failed email or SMS send?">
+    A provider rejection is usually deterministic - an invalid recipient, a rejected template, a suspended account, or exhausted credits - and retrying it produces the same result while delaying the rest of the workflow. Novu surfaces the provider response in the Activity Feed and through the `messages.failed` webhook so you can decide what to do with the specific failure.
+  </Accordion>
+
+  <Accordion title="Can I configure the number of retry attempts for a channel step?">
+    No. Attempt counts and backoff are fixed at each layer and are not configurable per workflow, step, or integration.
+  </Accordion>
+
+  <Accordion title="Does a provider rate limit response get retried?">
+    No. A `429` from a provider fails the step like any other provider error. Use the [throttle step](/platform/workflow/add-and-configure-steps/configure-action-steps/throttle) to limit how often a workflow sends to a subscriber, and check your provider's own sending limits.
+  </Accordion>
+
+  <Accordion title="Is there a dead-letter queue I can inspect?">
+    No. Failed steps are recorded in the Activity Feed with the provider error attached, but they are not moved to a queue you can inspect or re-drive. Treat the Activity Feed and the `messages.failed` webhook as the record of failed deliveries.
+  </Accordion>
+
+  <Accordion title="What happens if my provider accepts the message but never delivers it?">
+    Novu marks the step as successful once the provider accepts the request. Downstream delivery status, such as a bounce or a carrier rejection, arrives through provider delivery receipts where supported and is reflected on the message. It does not trigger a retry.
+  </Accordion>
+</AccordionGroup>
