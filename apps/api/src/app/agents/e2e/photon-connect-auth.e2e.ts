@@ -2,17 +2,53 @@
  * Guards API-key access to the Photon agent endpoints (configure-webhook,
  * test-message, remove-webhooks): they must be reachable with a user API key
  * (`@ExternalApiAccessible()`), not only a dashboard JWT, so the keyless /
- * secret-key `novu connect` flow works. Unlike the Sendblue equivalent, the
- * Photon provider and webhook client honor `PHOTON_SPECTRUM_URL` /
- * `PHOTON_MESSAGING_URL`, so the outbound test-message path runs fully
- * against the in-process stub and asserts real success.
+ * secret-key `novu connect` flow works. The REST legs run against the
+ * in-process HTTP stub; the spectrum-ts gRPC send is faked through the
+ * provider's ESM-import seam so no test traffic ever leaves the process.
  */
 import { encryptCredentials } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
+import { __setPhotonSpectrumImportForTests, clearPhotonImessageCaches } from '@novu/providers';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { type PhotonApiStub, startPhotonApiStub } from './helpers/photon-api-stub';
+
+const STUB_SPECTRUM_MESSAGE_ID = 'e2e-spectrum-message-id';
+
+/**
+ * Fakes the spectrum-ts module graph the provider dynamically imports. Without
+ * this the test-message send would boot a real spectrum app and reach Photon's
+ * production line service over gRPC with the fabricated e2e credentials.
+ */
+function installSpectrumStub() {
+  const imessageNarrow = Object.assign(
+    (_app: unknown) => ({
+      user: async (address: string) => ({ address }),
+      space: { create: async () => ({ send: async () => ({ id: STUB_SPECTRUM_MESSAGE_ID }) }) },
+    }),
+    {
+      config: () => ({ platform: 'imessage' }),
+      effect: { message: {} },
+    }
+  );
+
+  __setPhotonSpectrumImportForTests(async (specifier: string) => {
+    if (specifier === '@spectrum-ts/core') {
+      return {
+        Spectrum: async () => ({ stop: async () => {} }),
+        markdown: (source: string) => ({ kind: 'markdown', source }),
+        attachment: (input: string) => ({ kind: 'attachment', input }),
+        voice: (input: string) => ({ kind: 'voice', input }),
+        reply: (content: unknown, target: unknown) => ({ kind: 'reply', content, target }),
+      };
+    }
+    if (specifier === '@spectrum-ts/imessage') {
+      return { imessage: imessageNarrow, effect: (content: unknown) => content };
+    }
+    throw new Error(`Unexpected spectrum import in e2e: ${specifier}`);
+  });
+}
 
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
@@ -29,6 +65,12 @@ describe('Photon connect endpoints - API key access #novu-v2', () => {
   before(async () => {
     (process.env as Record<string, string>).IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
     photonApiStub = await startPhotonApiStub();
+    installSpectrumStub();
+  });
+
+  after(() => {
+    __setPhotonSpectrumImportForTests(undefined);
+    clearPhotonImessageCaches();
   });
 
   beforeEach(async () => {
@@ -109,13 +151,11 @@ describe('Photon connect endpoints - API key access #novu-v2', () => {
       .set('authorization', apiKeyAuth())
       .send({ subscriberId });
 
-    // The API-key caller reaches the usecase (200, not a 401 auth rejection).
-    // We don't assert `success: true` because the outbound send goes over
-    // spectrum-ts gRPC to the real Photon line service, which the in-process
-    // HTTP stub cannot fake — the point here is auth, not delivery.
+    // The API-key caller reaches the usecase (200, not a 401 auth rejection),
+    // and with the spectrum import stubbed the send path completes end to end.
     expect(res.status).to.equal(200);
-    expect(res.body.data).to.have.property('success');
-    expect(res.body.data.success).to.be.a('boolean');
+    expect(res.body.data.success).to.equal(true);
+    expect(res.body.data.messageId).to.equal(STUB_SPECTRUM_MESSAGE_ID);
 
     // The REST leg (shared-user registration) does run against the stub.
     const userCall = photonApiStub.calls.find((call) => call.path.endsWith('/users'));

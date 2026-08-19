@@ -74,7 +74,9 @@ describe('RemovePhotonWebhooks usecase', () => {
 
   afterEach(() => {
     restore();
-    env.API_ROOT_URL = originalApiRootUrl;
+    // Assigning `undefined` to process.env stores the string "undefined" — delete instead.
+    if (originalApiRootUrl === undefined) delete env.API_ROOT_URL;
+    else env.API_ROOT_URL = originalApiRootUrl;
   });
 
   it('refuses to remove URLs that are not Novu agent webhooks', async () => {

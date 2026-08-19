@@ -1,7 +1,7 @@
 import { iMessageAdapter } from '@photon-ai/chat-adapter-imessage';
 import type { AdapterPostableMessage, CardElement, RawMessage } from 'chat';
 import { ConsoleLogger } from 'chat';
-import { renderCardAsText } from './card-renderer.js';
+import { renderCardAsMarkdown } from './card-renderer.js';
 import type { PhotonImessageAdapterConfig } from './types.js';
 import { buildStandardWebhookVerifier } from './verify-standard-webhook.js';
 
@@ -41,7 +41,8 @@ export class PhotonImessageAdapterImpl extends iMessageAdapter {
    * A bare `{ card }` postable (e.g. a tool-approval prompt with its buttons
    * already stripped by `adaptApprovalContentForReplyBasedPlatform`) should
    * prefer the caller-provided `fallbackText`; otherwise flatten the card via
-   * `renderCardAsText` so link URLs and fields survive as plain text.
+   * `renderCardAsMarkdown` — iMessage renders markdown natively, so links and
+   * field labels keep their styling.
    */
   private flattenCard(message: AdapterPostableMessage): AdapterPostableMessage {
     if (typeof message === 'string') {
@@ -57,6 +58,6 @@ export class PhotonImessageAdapterImpl extends iMessageAdapter {
 
     const fallbackText = typeof record.fallbackText === 'string' ? record.fallbackText : undefined;
 
-    return { markdown: fallbackText ?? renderCardAsText(card) };
+    return { markdown: fallbackText ?? renderCardAsMarkdown(card) };
   }
 }

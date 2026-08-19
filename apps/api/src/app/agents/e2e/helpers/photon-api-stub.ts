@@ -136,11 +136,13 @@ async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknow
 
 /**
  * Boots a minimal in-process Photon API stub and publishes its base URL via
- * `PHOTON_SPECTRUM_URL` and `PHOTON_MESSAGING_URL`, which both the
- * `PhotonImessageChatProvider` and the API-side photon-webhook-client read as
- * base-URL overrides. One server fakes both the Spectrum Cloud control plane
- * (platform enable, webhooks CRUD, shared users, token mint — enveloped
- * `{succeed, data}` responses) and the imessage-http send transcoder.
+ * `PHOTON_SPECTRUM_URL` (read by both the `PhotonImessageChatProvider` and the
+ * API-side photon-webhook-client as a base-URL override) and
+ * `PHOTON_DASHBOARD_API_URL` (device flow + project provisioning). It fakes the
+ * Spectrum Cloud REST control plane (platform enable, webhooks CRUD, shared
+ * users — enveloped `{succeed, data}` responses). The spectrum-ts gRPC send
+ * path reads no env vars — tests exercising an outbound send must fake the
+ * module graph via `__setPhotonSpectrumImportForTests` instead.
  */
 export async function startPhotonApiStub(): Promise<PhotonApiStub> {
   if (stub) return stub;
@@ -168,10 +170,6 @@ export async function startPhotonApiStub(): Promise<PhotonApiStub> {
   const { port } = server.address() as AddressInfo;
   const url = `http://127.0.0.1:${port}`;
   process.env.PHOTON_SPECTRUM_URL = url;
-  process.env.PHOTON_MESSAGING_URL = url;
-  // spectrum-ts (used by @photon-ai/chat-adapter-imessage) reads this for its
-  // own Spectrum Cloud calls (e.g. token minting on first send).
-  process.env.SPECTRUM_CLOUD_URL = url;
   // Device flow + project provisioning (photon-account-client).
   process.env.PHOTON_DASHBOARD_API_URL = url;
 
@@ -188,8 +186,6 @@ export async function startPhotonApiStub(): Promise<PhotonApiStub> {
       });
       stub = undefined;
       delete process.env.PHOTON_SPECTRUM_URL;
-      delete process.env.PHOTON_MESSAGING_URL;
-      delete process.env.SPECTRUM_CLOUD_URL;
       delete process.env.PHOTON_DASHBOARD_API_URL;
     },
   };
