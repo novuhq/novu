@@ -85,14 +85,16 @@ export const ChatEditor = (props: ChatEditorProps) => {
 
   if (defaultContentActions) {
     return (
-      <TabsSection className="flex min-h-0 flex-1 flex-col p-3">
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <div className="flex shrink-0 items-center justify-end">{defaultContentActions}</div>
-          <div className="rounded-12 bg-bg-weak flex min-h-0 flex-1 flex-col gap-2 border border-neutral-100 p-2">
-            {defaultContent}
+      <div className="-mx-3 -mt-3 flex h-full min-h-0 flex-col">
+        <TabsSection className="flex min-h-0 flex-1 flex-col p-3">
+          <div className="flex min-h-0 flex-1 flex-col gap-2">
+            <div className="flex shrink-0 items-center justify-end">{defaultContentActions}</div>
+            <div className="rounded-12 bg-bg-weak flex min-h-0 flex-1 flex-col gap-2 border border-neutral-100 p-2">
+              {defaultContent}
+            </div>
           </div>
-        </div>
-      </TabsSection>
+        </TabsSection>
+      </div>
     );
   }
 
