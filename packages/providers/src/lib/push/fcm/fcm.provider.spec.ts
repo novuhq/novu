@@ -1,10 +1,11 @@
 import { IPushOptions } from '@novu/stateless';
-import app from 'firebase-admin/app';
+import * as firebaseApp from 'firebase-admin/app';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { FcmPushProvider } from './fcm.provider';
 
 const sendEachForMulticast = vi.fn().mockResolvedValue({ successCount: 1 });
+const send = vi.fn().mockResolvedValue('topic-message-id');
 const mockApp = {
   appCheck: vi.fn() as any,
   auth: vi.fn() as any,
@@ -26,7 +27,7 @@ vi.mock('firebase-admin/messaging', async (importOriginal) => {
   return {
     ...actual,
     getMessaging: vi.fn(() => ({
-      send: vi.fn(),
+      send,
       sendEach: vi.fn(),
       sendAll: vi.fn(),
       sendEachForMulticast,
@@ -62,7 +63,7 @@ vi.mock('firebase-admin', async (importOriginal) => {
   };
 });
 
-describe.skip('FcmPushProvider', () => {
+describe('FcmPushProvider', () => {
   let provider: FcmPushProvider;
   let spy: ReturnType<typeof vi.spyOn>;
   const subscriber = {};
@@ -74,6 +75,8 @@ describe.skip('FcmPushProvider', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sendEachForMulticast.mockResolvedValue({ successCount: 1 });
+    send.mockResolvedValue('topic-message-id');
 
     provider = new FcmPushProvider({
       secretKey: '--BEGIN PRIVATE KEY--abc',
@@ -86,7 +89,7 @@ describe.skip('FcmPushProvider', () => {
       // @ts-expect-error
       .spyOn(provider.messaging, 'sendEachForMulticast')
       .mockImplementation(async () => {
-        return {} as any;
+        return { successCount: 1, failureCount: 0, responses: [{ success: true, messageId: '1' }] } as any;
       });
   });
 
@@ -109,8 +112,8 @@ describe.skip('FcmPushProvider', () => {
         },
       }
     );
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -119,6 +122,7 @@ describe.skip('FcmPushProvider', () => {
       },
       tokens: ['tester'],
       registration_ids: ['test'],
+      data: {},
     });
   });
 
@@ -139,8 +143,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -178,8 +182,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -226,8 +230,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -235,6 +239,7 @@ describe.skip('FcmPushProvider', () => {
         body: 'Test push',
       },
       tokens: ['tester'],
+      data: {},
       apns: {
         payload: {
           aps: {
@@ -280,8 +285,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -330,8 +335,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -385,8 +390,8 @@ describe.skip('FcmPushProvider', () => {
       subscriber,
       step,
     });
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       tokens: ['tester'],
@@ -420,8 +425,8 @@ describe.skip('FcmPushProvider', () => {
           subscriber,
           step,
         });
-        expect(app.initializeApp).toHaveBeenCalledTimes(1);
-        expect(app.cert).toHaveBeenCalledTimes(1);
+        expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+        expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalled();
         expect(spy).toHaveBeenCalledWith({
           tokens: [token],
@@ -430,10 +435,99 @@ describe.skip('FcmPushProvider', () => {
             body: 'Test push',
             message: 'Test push',
             sound: 'test_sound',
+            foo: 'bar',
           },
         });
       })
     );
+  });
+
+  test('should merge notification override keys into the notification object', async () => {
+    await provider.sendMessage({
+      title: 'Test',
+      content: 'Test push',
+      target: ['tester'],
+      payload: {},
+      overrides: {
+        notification: {
+          imageUrl: 'https://example.com/image.png',
+        },
+      } as IPushOptions['overrides'],
+      subscriber,
+      step,
+    });
+
+    expect(spy).toHaveBeenCalledWith({
+      tokens: ['tester'],
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+        imageUrl: 'https://example.com/image.png',
+      },
+      data: {},
+    });
+  });
+
+  test('should include data overrides in data-only messages', async () => {
+    await provider.sendMessage({
+      title: 'Test',
+      content: 'Test push',
+      target: ['tester'],
+      payload: {
+        syncKey: 'abc',
+      },
+      overrides: {
+        type: 'data',
+        data: {
+          source: 'sync-job',
+        },
+      },
+      subscriber,
+      step,
+    });
+
+    expect(spy).toHaveBeenCalledWith({
+      tokens: ['tester'],
+      data: {
+        syncKey: 'abc',
+        source: 'sync-job',
+        title: 'Test',
+        body: 'Test push',
+        message: 'Test push',
+      },
+    });
+  });
+
+  test('should read data-only type from bridge provider data', async () => {
+    await provider.sendMessage(
+      {
+        title: 'Test',
+        content: 'Test push',
+        target: ['tester'],
+        payload: {
+          syncKey: 'abc',
+        },
+        subscriber,
+        step,
+      },
+      {
+        type: 'data',
+        data: {
+          source: 'bridge',
+        },
+      }
+    );
+
+    expect(spy).toHaveBeenCalledWith({
+      tokens: ['tester'],
+      data: {
+        syncKey: 'abc',
+        source: 'bridge',
+        title: 'Test',
+        body: 'Test push',
+        message: 'Test push',
+      },
+    });
   });
 
   test('should trigger fcm correctly with _passthrough', async () => {
@@ -460,8 +554,8 @@ describe.skip('FcmPushProvider', () => {
         },
       }
     );
-    expect(app.initializeApp).toHaveBeenCalledTimes(1);
-    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.initializeApp).toHaveBeenCalledTimes(1);
+    expect(firebaseApp.cert).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalled();
     expect(spy).toHaveBeenCalledWith({
       notification: {
@@ -470,6 +564,7 @@ describe.skip('FcmPushProvider', () => {
       },
       tokens: ['tester', 'tokens'],
       registration_ids: ['test'],
+      data: {},
     });
   });
 });

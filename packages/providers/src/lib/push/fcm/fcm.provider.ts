@@ -50,15 +50,22 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       fcmOptions,
       webPush: webpush,
       data,
+      notification: notificationOverride,
+      topic: _topic,
+      tokens: _tokens,
       ...overridesData
     } = (options.overrides as IPushOptions['overrides'] & {
       deviceTokens?: string[];
+      notification?: Record<string, unknown>;
+      topic?: string;
+      tokens?: string[];
       webPush: { [key: string]: { [key: string]: string } | string };
     }) || {};
 
     const payload = this.cleanPayload(options.payload);
     const novuData = payload.__nvMessageId ? { __nvMessageId: payload.__nvMessageId } : {};
     const transformedBase = this.transform<MulticastMessage | TopicMessage>(bridgeProviderData, {});
+    const isDataMessage = type === 'data' || (transformedBase.body as { type?: string })?.type === 'data';
 
     const commonProps: Partial<MulticastMessage & TopicMessage> = {
       android,
@@ -67,18 +74,41 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       webpush,
     };
 
+    const notificationPayload = {
+      title: options.title,
+      body: options.content,
+      ...(notificationOverride || {}),
+      ...overridesData,
+    };
+
     let res;
 
     if ((transformedBase?.body as TopicMessage).topic) {
-      const topicMessage = this.transform<TopicMessage>(bridgeProviderData, {
+      const topicConfig: Partial<TopicMessage> = {
         topic: (transformedBase.body as TopicMessage).topic,
-        notification: {
+        ...commonProps,
+      };
+
+      if (isDataMessage) {
+        topicConfig.data = {
+          ...payload,
+          ...(data || {}),
           title: options.title,
           body: options.content,
-        },
-        data: { ...novuData, ...data },
-        ...commonProps,
-      }).body;
+          message: options.content,
+        };
+      } else {
+        topicConfig.notification = notificationPayload;
+        topicConfig.data = { ...novuData, ...(data || {}) };
+      }
+
+      const topicMessage = this.transform<TopicMessage>(
+        bridgeProviderData,
+        topicConfig as Record<string, unknown>
+      ).body;
+
+      // `type` is a Novu control field, not an FCM message field
+      delete (topicMessage as { type?: string }).type;
 
       res = await this.messaging.send(topicMessage);
     } else {
@@ -87,27 +117,26 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
         ...commonProps,
       };
 
-      // Add either data or notification based on type
-      if (type === 'data') {
+      if (isDataMessage) {
         multicastConfig.data = {
           ...payload,
+          ...(data || {}),
           title: options.title,
           body: options.content,
           message: options.content,
         };
       } else {
-        multicastConfig.notification = {
-          title: options.title,
-          body: options.content,
-          ...overridesData,
-        };
-        multicastConfig.data = { ...novuData, ...data };
+        multicastConfig.notification = notificationPayload;
+        multicastConfig.data = { ...novuData, ...(data || {}) };
       }
 
       const multicastMessage = this.transform<MulticastMessage>(
         bridgeProviderData,
         multicastConfig as Record<string, unknown>
       ).body;
+
+      // `type` is a Novu control field, not an FCM message field
+      delete (multicastMessage as { type?: string }).type;
 
       res = await this.messaging.sendEachForMulticast(multicastMessage);
     }
