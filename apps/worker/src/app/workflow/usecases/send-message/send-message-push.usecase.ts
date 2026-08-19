@@ -257,7 +257,11 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      let overrides: Record<string, unknown> = command.overrides[integration.providerId] || {};
+      let overrides: Record<string, unknown> = this.buildPushProviderOverrides(
+        command.overrides,
+        integration.providerId,
+        command.step?.stepId
+      );
       const target = (overrides as { deviceTokens?: string[] }).deviceTokens || deviceTokens;
 
       await this.sendSelectedIntegrationExecution(command.job, integration);
@@ -450,6 +454,43 @@ export class SendMessagePush extends SendMessageBase {
           },
         },
       },
+    };
+  }
+
+  /**
+   * Builds the merged provider overrides object for push sending.
+   *
+   * Provider-specific fields can arrive in two shapes:
+   *   1. Deprecated flat provider key:  `overrides.<providerId>`
+   *   2. Modern nested providers shape: `overrides.providers.<providerId>`
+   *                                     `overrides.steps.<stepId>.providers.<providerId>`
+   *
+   * All are merged (step-level wins) so values like `type`, `data`, and `android`
+   * reach the provider's `options.overrides`.
+   */
+  private buildPushProviderOverrides(
+    overrides: TriggerOverrides | undefined,
+    providerId: string,
+    stepId: string | undefined
+  ): Record<string, unknown> {
+    if (!overrides) {
+
+      return {};
+    }
+
+    const deprecatedFlatProviderOverride =
+      (overrides as Record<string, Record<string, unknown>>)?.[providerId] || {};
+    const providerOverride = overrides.providers?.[providerId as ProvidersIdEnum] || {};
+    const stepProviderOverride =
+      stepId && overrides.steps?.[stepId]?.providers
+        ? overrides.steps[stepId].providers?.[providerId as ProvidersIdEnum] || {}
+        : {};
+
+
+    return {
+      ...deprecatedFlatProviderOverride,
+      ...providerOverride,
+      ...stepProviderOverride,
     };
   }
 
