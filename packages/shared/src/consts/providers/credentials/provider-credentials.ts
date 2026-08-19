@@ -1398,10 +1398,10 @@ export const photonImessageConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Token,
     displayName: 'Webhook Signing Secret',
-    description: 'Issued by Photon when the inbound webhook is configured — used to verify webhook signatures',
+    description:
+      'Issued by Photon when the inbound webhook is registered — filled in automatically by "Configure webhook", or paste it here after adding the webhook manually in the Photon dashboard',
     type: 'string',
     required: false,
-    hidden: true,
   },
 ];
 

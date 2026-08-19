@@ -949,11 +949,12 @@ export type ConfigurePhotonWebhookResponse = {
 export async function configureAgentPhotonWebhook(
   environment: IEnvironment,
   agentIdentifier: string,
-  integrationIdentifier: string
+  integrationIdentifier: string,
+  options?: { force?: boolean }
 ): Promise<ConfigurePhotonWebhookResponse> {
   const response = await post<{ data: ConfigurePhotonWebhookResponse }>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/photon/configure-webhook`,
-    { environment }
+    { environment, body: { force: options?.force === true } }
   );
 
   return response.data;

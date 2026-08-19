@@ -45,7 +45,7 @@ export class ChatFactory implements IChatFactory {
 
     if (!handler) return null;
 
-    handler.buildProvider(integration.credentials);
+    handler.buildProvider({ ...integration.credentials, ...integration.configurations });
 
     return handler;
   }

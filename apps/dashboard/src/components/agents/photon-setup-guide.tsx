@@ -39,7 +39,7 @@ import {
 } from './setup-guide-primitives';
 import { buildImessageFallbackHref, deriveStepStatus, hasPhotonProjectCredentials } from './setup-guide-step-utils';
 
-const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
+import { PHONE_PATTERN } from './whatsapp-setup-guide-utils';
 
 const PHOTON_DASHBOARD_URL = 'https://app.photon.codes';
 
@@ -114,7 +114,9 @@ function ConnectPhotonPanel({
           size="xs"
           className="w-fit gap-1.5 px-2 py-1.5"
           onClick={connect}
-          disabled={state.phase === 'starting'}
+          // Also gated on the integration identifier: before useFetchIntegrations
+          // resolves it is '', which would post to a URL with an empty path segment.
+          disabled={!integrationIdentifier || state.phase === 'starting'}
           isLoading={state.phase === 'starting'}
         >
           {state.phase === 'starting' ? 'Connecting…' : 'Connect Photon'}
@@ -287,9 +289,12 @@ function ConnectWebhookPanel({
     setConnectStatus({ state: 'connecting' });
 
     try {
+      // "Reconfigure webhook" (a secret is already stored) forces re-registration:
+      // the stored secret may be stale and Photon only issues secrets at registration.
       const result = await configureWebhook({
         agentIdentifier: agent.identifier,
         integrationIdentifier,
+        force: hasWebhookSecret,
       });
 
       setStaleNovuWebhookUrls(result.existingNovuWebhookUrls ?? []);
@@ -322,7 +327,7 @@ function ConnectWebhookPanel({
         message: err instanceof Error ? err.message : 'Something went wrong contacting Photon.',
       });
     }
-  }, [agent.identifier, configureWebhook, integrationIdentifier, onConfigured]);
+  }, [agent.identifier, configureWebhook, hasWebhookSecret, integrationIdentifier, onConfigured]);
 
   const connectAttemptFinished = connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
   const showManualFallback = connectStatus.state === 'manual_fallback' && !manualMarkedConfigured;

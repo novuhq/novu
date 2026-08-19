@@ -1,4 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
+
+export class ConfigurePhotonWebhookRequestDto {
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'Recreate the webhook registration even when it looks intact, issuing a fresh signing secret. ' +
+      'Use to recover when the stored secret went stale (e.g. the webhook was deleted and re-added in the Photon dashboard).',
+  })
+  @IsOptional()
+  @IsBoolean()
+  force?: boolean;
+}
 
 export class ConfigurePhotonWebhookFailureDto {
   @ApiProperty({

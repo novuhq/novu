@@ -10,6 +10,8 @@ import { QueryKeys } from '@/utils/query-keys';
 type ConfigurePhotonWebhookVariables = {
   agentIdentifier: string;
   integrationIdentifier: string;
+  /** Recreate the registration for a fresh signing secret even when one is already stored. */
+  force?: boolean;
 };
 
 export function useConfigurePhotonWebhook() {
@@ -17,12 +19,12 @@ export function useConfigurePhotonWebhook() {
   const queryClient = useQueryClient();
 
   return useMutation<ConfigurePhotonWebhookResponse, Error, ConfigurePhotonWebhookVariables>({
-    mutationFn: async ({ agentIdentifier, integrationIdentifier }) => {
+    mutationFn: async ({ agentIdentifier, integrationIdentifier, force }) => {
       if (!currentEnvironment) {
         throw new Error('No environment selected');
       }
 
-      return configureAgentPhotonWebhook(currentEnvironment, agentIdentifier, integrationIdentifier);
+      return configureAgentPhotonWebhook(currentEnvironment, agentIdentifier, integrationIdentifier, { force });
     },
     onSuccess: (_result, { agentIdentifier }) => {
       // The Photon-issued signing secret lands on the integration credentials, so refresh both.

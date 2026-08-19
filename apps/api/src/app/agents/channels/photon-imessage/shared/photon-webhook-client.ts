@@ -44,11 +44,27 @@ function buildClient(credentials: PhotonWebhookClientCredentials): AxiosInstance
 }
 
 function unwrap<T>(envelope: PhotonEnvelope<T> | undefined, action: string): T {
-  if (!envelope?.succeed || envelope.data === null || envelope.data === undefined) {
-    throw new Error(envelope?.message ?? envelope?.code ?? `Photon rejected the ${action} request`);
+  assertSucceeded(envelope, action);
+
+  if (envelope.data === null || envelope.data === undefined) {
+    throw new Error(envelope.message ?? envelope.code ?? `Photon rejected the ${action} request`);
   }
 
   return envelope.data;
+}
+
+/**
+ * For calls whose success carries no payload (platform enable, webhook delete):
+ * Photon may legitimately return `{succeed: true, data: null}` there, which
+ * `unwrap` would misreport as a failure.
+ */
+function assertSucceeded(
+  envelope: PhotonEnvelope<unknown> | undefined,
+  action: string
+): asserts envelope is PhotonEnvelope<unknown> {
+  if (!envelope?.succeed) {
+    throw new Error(envelope?.message ?? envelope?.code ?? `Photon rejected the ${action} request`);
+  }
 }
 
 /**
@@ -59,7 +75,7 @@ function unwrap<T>(envelope: PhotonEnvelope<T> | undefined, action: string): T {
 export async function enablePhotonImessagePlatform(credentials: PhotonWebhookClientCredentials): Promise<void> {
   const client = buildClient(credentials);
   const { data } = await client.patch<PhotonEnvelope<unknown>>('/platforms', { platform: 'imessage', enabled: true });
-  unwrap(data, 'platform enable');
+  assertSucceeded(data, 'platform enable');
 }
 
 /**
@@ -125,6 +141,6 @@ export async function deletePhotonWebhooks(credentials: PhotonWebhookClientCrede
   const client = buildClient(credentials);
   for (const id of ids) {
     const { data } = await client.delete<PhotonEnvelope<unknown>>(`/webhooks/${id}`);
-    unwrap(data, 'webhook removal');
+    assertSucceeded(data, 'webhook removal');
   }
 }

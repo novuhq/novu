@@ -96,8 +96,10 @@ export class ConfigurePhotonWebhook {
        * Photon issues the signing secret once, at registration, and the list endpoint never
        * returns secrets. When our URL is already registered AND we still hold its secret, the
        * registration is intact — never delete a working registration we could not re-secure.
+       * `force` overrides this: the stored secret may be stale (webhook deleted and re-added
+       * in the Photon dashboard), and the only way to obtain a fresh one is to re-register.
        */
-      if (ownRegistrations.length > 0 && existingSecret) {
+      if (ownRegistrations.length > 0 && existingSecret && !command.force) {
         return {
           success: true,
           callbackUrl,
@@ -119,14 +121,30 @@ export class ConfigurePhotonWebhook {
       const createdWebhook = await createPhotonWebhook(photonCredentials, callbackUrl);
 
       // Photon-issued, returned once — persist immediately or the registration is unverifiable.
-      await this.integrationRepository.update(
-        {
-          _id: integration._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { $set: { 'credentials.token': encryptSecret(createdWebhook.standardSigningSecret) } }
-      );
+      try {
+        await this.integrationRepository.update(
+          {
+            _id: integration._id,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          { $set: { 'credentials.token': encryptSecret(createdWebhook.standardSigningSecret) } }
+        );
+      } catch (persistError) {
+        /*
+         * The secret is lost the moment this scope exits, and Photon 409s on a
+         * duplicate URL — an orphaned registration would make the manual-fallback
+         * instructions ("add it in the Photon dashboard") impossible to follow.
+         * Best-effort delete so both retry and the manual path stay viable.
+         */
+        await deletePhotonWebhooks(photonCredentials, [createdWebhook.id]).catch((cleanupError) => {
+          this.logger.error(
+            { err: cleanupError, integrationId: integration._id, webhookId: createdWebhook.id },
+            'Photon auto-configure: failed to clean up webhook after secret persistence failed — delete it in the Photon dashboard before reconfiguring'
+          );
+        });
+        throw persistError;
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.warn(

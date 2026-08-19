@@ -91,11 +91,17 @@ describe('ConfigurePhotonWebhook usecase', () => {
     deleteStub = stub(photonWebhookClient, 'deletePhotonWebhooks').resolves();
   });
 
+  // Assigning `undefined` to process.env stores the string "undefined" — delete instead.
+  const restoreEnv = (key: string, value: string | undefined) => {
+    if (value === undefined) delete env[key];
+    else env[key] = value;
+  };
+
   afterEach(() => {
     restore();
-    env.API_ROOT_URL = originalApiRootUrl;
-    env.AGENT_API_HOSTNAME = originalAgentApiHostname;
-    env.STORE_ENCRYPTION_KEY = originalEncryptionKey;
+    restoreEnv('API_ROOT_URL', originalApiRootUrl);
+    restoreEnv('AGENT_API_HOSTNAME', originalAgentApiHostname);
+    restoreEnv('STORE_ENCRYPTION_KEY', originalEncryptionKey);
   });
 
   it('returns missing_credentials when Photon credentials are incomplete', async () => {

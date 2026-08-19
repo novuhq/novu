@@ -47,7 +47,10 @@ import {
   UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
 } from '../../shared/dtos';
-import { ConfigurePhotonWebhookResponseDto } from '../../shared/dtos/configure-photon-webhook-response.dto';
+import {
+  ConfigurePhotonWebhookRequestDto,
+  ConfigurePhotonWebhookResponseDto,
+} from '../../shared/dtos/configure-photon-webhook-response.dto';
 import {
   PollPhotonDeviceAuthRequestDto,
   PollPhotonDeviceAuthResponseDto,
@@ -533,7 +536,8 @@ export class AgentIntegrationsController {
   configureAgentPhotonWebhook(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Param('integrationIdentifier') integrationIdentifier: string
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: ConfigurePhotonWebhookRequestDto
   ): Promise<ConfigurePhotonWebhookResponseDto> {
     return this.configurePhotonWebhookUsecase.execute(
       ConfigurePhotonWebhookCommand.create({
@@ -542,6 +546,7 @@ export class AgentIntegrationsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier,
+        force: body?.force === true,
       })
     );
   }
