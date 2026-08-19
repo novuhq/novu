@@ -11,6 +11,8 @@ export type AgentToolPartState = 'input-streaming' | 'input-available' | 'output
 export type AgentApprovalPartState = 'pending' | 'approved' | 'denied';
 export type AgentMcpConnectionPartState = 'pending' | 'connected' | 'failed';
 
+export type AgentToolApprovalDecision = 'approved' | 'denied' | 'trust-tool' | 'trust-server';
+
 export type AgentTextPart = {
   type: 'text';
   text: string;
@@ -46,6 +48,10 @@ export type AgentApprovalPart = {
   approveActionId?: string;
   /** Server-minted; echo via respondToAction. Do not invent client-side. */
   denyActionId?: string;
+  /** Server-minted always-allow-this-tool action id. Present for managed tools with trust support. */
+  trustToolActionId?: string;
+  /** Server-minted always-allow-MCP-server action id. Present for MCP tools only. */
+  trustServerActionId?: string;
 };
 
 export type AgentMcpConnectionPart = {

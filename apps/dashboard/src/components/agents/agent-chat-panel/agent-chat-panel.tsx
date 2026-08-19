@@ -96,7 +96,7 @@ function AgentChatSurface({
   const canSend = !composerDisabled && Boolean(draft.trim());
   const isEmpty = messages.length === 0 && !isRunning && !isLoading;
   const lastMessage = messages[messages.length - 1];
-  const showTypingRow = Boolean(typing) || (isRunning && lastMessage?.role !== 'assistant');
+  const showTypingRow = Boolean(typing) || isRunning;
   const lastMessageSignature = lastMessage
     ? `${lastMessage.id}:${lastMessage.parts.map((part) => (part.type === 'text' ? part.text : part.type)).join('\0')}`
     : '';

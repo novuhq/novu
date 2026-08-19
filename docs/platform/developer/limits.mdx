@@ -24,6 +24,12 @@ Novu enforces default limits on specific resources and configurations. These lim
 
 Reach out to us at support@novu.co if you are looking for a custom limit.
 
+## Fixed validation limits
+
+Some limits are fixed constraints that apply to all plans and cannot be customized:
+
+- **Topic subscription identifier**: A subscription `identifier` supplied when adding subscribers to a topic must not exceed **512 characters**. Longer values are rejected. Omit the field to let Novu generate an identifier automatically.
+
 ## Frequently Asked Questions
 
 <AccordionGroup>
