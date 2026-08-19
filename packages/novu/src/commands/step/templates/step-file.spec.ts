@@ -7,6 +7,7 @@ import {
   generateReactEmailStepFile,
   generateSmsStepFile,
   generateStepFileForType,
+  generateToolStepFile,
 } from './step-file';
 
 describe('generateReactEmailStepFile', () => {
@@ -115,6 +116,16 @@ describe('generateChatStepFile', () => {
   });
 });
 
+describe('generateToolStepFile', () => {
+  it('should match snapshot with zod', () => {
+    expect(generateToolStepFile('page-oncall', true)).toMatchSnapshot();
+  });
+
+  it('should match snapshot without zod', () => {
+    expect(generateToolStepFile('page-oncall', false)).toMatchSnapshot();
+  });
+});
+
 describe('generateInAppStepFile', () => {
   it('should match snapshot with zod', () => {
     expect(generateInAppStepFile('in-app-notify', true)).toMatchSnapshot();
@@ -144,5 +155,11 @@ describe('generateStepFileForType', () => {
     const result = generateStepFileForType('my-step', 'sms', false);
     expect(result).not.toContain("from 'zod'");
     expect(result).toContain('as const');
+  });
+
+  it('scaffolds a tool channel step', () => {
+    const result = generateStepFileForType('page-oncall', 'tool', false);
+    expect(result).toContain('step.tool(');
+    expect(result).toContain("'page-oncall'");
   });
 });
