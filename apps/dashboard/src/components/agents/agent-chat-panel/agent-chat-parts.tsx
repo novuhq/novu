@@ -1,5 +1,6 @@
 import type { AgentMessage, AgentPendingAction } from '@novu/react';
 import {
+  RiArrowRightSLine,
   RiChat3Fill,
   RiErrorWarningLine,
   RiExternalLinkLine,
@@ -13,7 +14,7 @@ import { MarkdownText } from '@/components/primitives/markdown-text';
 import { cn } from '@/utils/ui';
 import { toSafeExternalUrl } from '@/utils/url';
 
-const STARTER_PROMPTS = ['Hello', 'What can you do?', 'List my MCP tools'] as const;
+const STARTER_PROMPTS = ['What can you do?', 'Summarize my last conversation', 'Draft a reply to a customer'] as const;
 
 function stripPoweredByWatermark(text: string): string {
   return text
@@ -59,17 +60,10 @@ export function AgentAvatar({ className }: { className?: string }) {
 
 export function ChatEmptyState({ onPickStarter }: { onPickStarter: (text: string) => void }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-5 py-10 text-center">
-      <div
-        className="from-primary-base to-error-base flex size-12 items-center justify-center rounded-2xl bg-linear-to-br shadow-[0_12px_24px_-8px_hsl(var(--primary-alpha-24)),inset_0_1px_0_hsl(var(--white-alpha-24))]"
-        aria-hidden
-      >
-        <RiChat3Fill className="text-static-white size-6" />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <p className="text-label-md text-text-strong font-medium">Your agent is ready</p>
-        <p className="text-paragraph-xs text-text-soft max-w-xs leading-5">Send a message to see how it replies.</p>
-      </div>
+    <div className="flex h-full flex-col items-center justify-center gap-4 py-10 text-center">
+      <p className="text-paragraph-sm text-text-strong max-w-[280px] leading-5">
+        Hello, I&apos;m your agent. How can I help you today?
+      </p>
       <div className="flex flex-wrap justify-center gap-2">
         {STARTER_PROMPTS.map((prompt) => (
           <Button
@@ -120,7 +114,7 @@ export function ChatMessageRow({
           ) : null}
           <div
             className={cn(
-              'bg-bg-weak text-text-strong text-paragraph-sm max-w-[min(30rem,85%)] whitespace-pre-wrap break-words rounded-2xl rounded-br-md px-3.5 py-2 leading-5',
+              'bg-bg-weak text-text-strong text-paragraph-sm max-w-[min(30rem,85%)] whitespace-pre-wrap break-words rounded-xl px-3 py-2 leading-5',
               failed && 'ring-error-light ring-1'
             )}
           >
@@ -142,10 +136,10 @@ export function ChatMessageRow({
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-1 group flex items-start gap-2.5 duration-200">
-      {showAvatar ? <AgentAvatar className="mt-0.5" /> : <div className="w-7 shrink-0" aria-hidden />}
-      <div className="flex min-w-0 max-w-[min(34rem,calc(100%-3rem))] flex-col items-start gap-1.5">
+      {showAvatar ? <AgentAvatar className="mt-0.5" /> : null}
+      <div className="flex min-w-0 max-w-full flex-1 flex-col items-start gap-1.5">
         {text ? (
-          <div className="border-stroke-soft bg-bg-white shadow-regular-xs text-paragraph-sm text-text-strong rounded-2xl rounded-tl-md border px-3.5 py-2.5 leading-5">
+          <div className="text-paragraph-sm text-text-strong w-full leading-5">
             <MarkdownText className="text-paragraph-sm leading-5">{text}</MarkdownText>
             {isStreaming ? (
               <span className="bg-text-strong ml-0.5 inline-block h-3.5 w-0.5 animate-pulse align-middle" aria-hidden />
@@ -587,27 +581,19 @@ export function ChatTypingRow({ status }: { status?: string }) {
   // Server statuses often arrive with their own trailing ellipsis or dots.
   const label = status?.trim().replace(/[.\u2026]+$/, '');
 
+  if (label) {
+    return (
+      <output className="animate-in fade-in flex items-center gap-1 duration-200" aria-label={label}>
+        <RiArrowRightSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+        <span className="text-label-xs text-text-soft">{label}…</span>
+      </output>
+    );
+  }
+
   return (
-    <output
-      className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-2.5 duration-200"
-      aria-label={label || 'Agent is typing'}
-    >
-      <AgentAvatar className="mt-0.5" />
-      <span className="border-stroke-soft bg-bg-white shadow-regular-xs flex h-9 items-center rounded-2xl rounded-tl-md border px-3.5">
-        {label ? (
-          <span className="text-label-xs text-text-soft animate-pulse">{label}…</span>
-        ) : (
-          <span className="flex items-center gap-1" aria-hidden>
-            {[0, 150, 300].map((delay) => (
-              <span
-                key={delay}
-                className="bg-text-soft size-1.5 animate-bounce rounded-full"
-                style={{ animationDelay: `${delay}ms` }}
-              />
-            ))}
-          </span>
-        )}
-      </span>
+    <output className="animate-in fade-in flex items-center gap-1 duration-200" aria-label="Thinking">
+      <RiArrowRightSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+      <span className="text-label-xs text-text-soft">Thinking…</span>
     </output>
   );
 }

@@ -331,6 +331,7 @@ export function ListeningStatusView({
   inline = false,
   className,
   showStatusIndicator = true,
+  hideDocsLink = false,
 }: {
   connected: boolean;
   connectedTitle?: string;
@@ -340,6 +341,7 @@ export function ListeningStatusView({
   inline?: boolean;
   className?: string;
   showStatusIndicator?: boolean;
+  hideDocsLink?: boolean;
 }) {
   return (
     <div className={cn('flex flex-col gap-2', !inline && (className ?? 'py-4 pl-6'))}>
@@ -363,9 +365,11 @@ export function ListeningStatusView({
           {connected ? connectedMessage : listeningMessage}
         </p>
       </div>
-      <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
-        Learn more in docs
-      </ExternalLink>
+      {hideDocsLink ? null : (
+        <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
+          Learn more in docs
+        </ExternalLink>
+      )}
     </div>
   );
 }
@@ -376,14 +380,18 @@ export function ListeningStatus({
   onConnected,
   connectedMessage,
   listeningMessage,
+  listeningTitle,
   inline = false,
+  hideDocsLink = false,
 }: {
   agentIdentifier: string;
   watchedIntegrationId: string | undefined;
   onConnected?: () => void;
   connectedMessage: string;
   listeningMessage: string;
+  listeningTitle?: string;
   inline?: boolean;
+  hideDocsLink?: boolean;
 }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
@@ -496,7 +504,9 @@ export function ListeningStatus({
         connected={Boolean(connectedAt)}
         connectedMessage={connectedMessage}
         listeningMessage={listeningMessage}
+        listeningTitle={listeningTitle}
         inline={inline}
+        hideDocsLink={hideDocsLink}
       />
     </>
   );

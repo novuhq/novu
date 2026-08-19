@@ -1,8 +1,7 @@
 import { NovuProvider, useAgentChat } from '@novu/react';
 import { buildDashboardAgentChatSubscriberId } from '@novu/shared';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowUpLine, RiCodeSSlashLine, RiErrorWarningLine, RiLoader4Line } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { RiArrowUpLine, RiCloseFill, RiErrorWarningLine, RiLoader4Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import {
   ChatEmptyState,
@@ -10,27 +9,37 @@ import {
   ChatPendingActionCard,
   ChatTypingRow,
 } from '@/components/agents/agent-chat-panel/agent-chat-parts';
+import { AGENT_CHAT_DOCS_URL } from '@/components/agents/agent-chat-setup-content';
 import { Button } from '@/components/primitives/button';
-import { Kbd } from '@/components/primitives/kbd';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
 const COMPOSER_MAX_HEIGHT_PX = 128;
 
+const CHANNEL_PROMO_ICONS = [
+  { src: '/images/providers/light/square/slack.svg', label: 'Slack' },
+  { src: '/images/providers/light/square/msteams.svg', label: 'Microsoft Teams' },
+  { src: '/images/providers/light/square/whatsapp-business.svg', label: 'WhatsApp' },
+  { src: '/images/providers/light/square/imessages.svg', label: 'Messages' },
+] as const;
+
+const PREVIEW_STRIPE_STYLE = {
+  backgroundImage: [
+    'linear-gradient(to top, rgba(255,255,255,0) 20%, #fff 85%)',
+    'repeating-linear-gradient(-38deg, rgba(255,132,71,0.11) 0px, rgba(255,132,71,0.11) 1.5px, rgba(255,132,71,0.07) 1.5px, rgba(255,132,71,0.07) 5px)',
+  ].join(', '),
+} as const;
+
 type AgentChatPanelProps = {
   agent: AgentResponse;
-  agentChatIntegrationIdentifier?: string;
 };
 
-export function AgentChatPanel({ agent, agentChatIntegrationIdentifier }: AgentChatPanelProps) {
+export function AgentChatPanel({ agent }: AgentChatPanelProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
-  const testerName = currentUser?.firstName?.trim() || 'yourself';
   const testerSubscriberId = currentUser?._id ? buildDashboardAgentChatSubscriberId(currentUser._id) : '';
   const isReady = isUserLoaded && Boolean(testerSubscriberId) && Boolean(currentEnvironment?.identifier);
   const subscriber = useMemo(
@@ -46,9 +55,9 @@ export function AgentChatPanel({ agent, agentChatIntegrationIdentifier }: AgentC
 
   if (!isReady || !currentEnvironment) {
     return (
-      <div className="flex flex-col gap-3 px-4 py-4 md:px-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 py-4">
         <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-[460px] w-full rounded-xl" />
+        <Skeleton className="h-full w-full rounded-xl" />
       </div>
     );
   }
@@ -61,30 +70,16 @@ export function AgentChatPanel({ agent, agentChatIntegrationIdentifier }: AgentC
       apiUrl={apiHostnameManager.getHostname()}
       socketUrl={apiHostnameManager.getWebSocketHostname()}
     >
-      <div className="flex h-[max(560px,calc(100vh-11.25rem))] flex-col px-4 py-4 md:px-6">
-        <AgentChatSurface
-          agentId={agent.identifier}
-          agentName={agent.name}
-          testerName={testerName}
-          agentChatIntegrationIdentifier={agentChatIntegrationIdentifier}
-        />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <AgentChatSurface agentId={agent.identifier} agentName={agent.name} />
       </div>
     </NovuProvider>
   );
 }
 
-function AgentChatSurface({
-  agentId,
-  agentName,
-  testerName,
-  agentChatIntegrationIdentifier,
-}: {
-  agentId: string;
-  agentName: string;
-  testerName: string;
-  agentChatIntegrationIdentifier?: string;
-}) {
+function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: string }) {
   const [draft, setDraft] = useState('');
+  const [showChannelPromo, setShowChannelPromo] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { messages, pendingActions, sendMessage, sendAction, respondToAction, error, isRunning, isLoading, typing } =
@@ -110,6 +105,7 @@ function AgentChatSurface({
     el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT_PX)}px`;
   }, [draft]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll when the transcript changes
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!el || isEmpty) return;
@@ -127,26 +123,19 @@ function AgentChatSurface({
   };
 
   return (
-    <div className="border-stroke-soft bg-bg-white flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
-      <div className="border-stroke-soft flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2">
-        <p className="text-label-xs text-text-soft min-w-0 truncate">
-          Chatting as <span className="text-text-sub font-medium">{testerName}</span>
-        </p>
-        <AddToAppButton agentId={agentId} integrationIdentifier={agentChatIntegrationIdentifier} />
-      </div>
-
+    <div className="flex min-h-0 flex-1 flex-col">
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto" role="log" aria-live="polite">
         {isEmpty ? (
-          <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-4">
+          <div className="flex h-full w-full flex-col">
             <ChatEmptyState onPickStarter={handleSend} />
           </div>
         ) : (
-          <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 pt-5 pb-8">
-            {messages.map((message, index) => (
+          <div className="flex w-full flex-col gap-3 pt-4 pb-6">
+            {messages.map((message) => (
               <ChatMessageRow
                 key={message.id}
                 message={message}
-                showAvatar={message.role !== 'user' && messages[index - 1]?.role !== message.role}
+                showAvatar={false}
                 cardActionsDisabled={composerDisabled}
                 onCardAction={(action) => void sendAction(action)}
               />
@@ -156,8 +145,8 @@ function AgentChatSurface({
         )}
       </div>
 
-      <div className="relative shrink-0 before:pointer-events-none before:absolute before:inset-x-0 before:-top-6 before:h-6 before:bg-linear-to-t before:from-bg-white before:to-transparent">
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-2 px-4 pb-3 pt-3">
+      <div className="relative shrink-0 before:pointer-events-none before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-linear-to-t before:from-bg-white before:to-transparent">
+        <div className="flex flex-col gap-2 pb-3 pt-2">
           {pendingActions.map((action) => (
             <ChatPendingActionCard
               key={action.id}
@@ -183,13 +172,41 @@ function AgentChatSurface({
               handleSend(draft);
             }}
           >
+            {showChannelPromo ? (
+              <div className="border-stroke-soft bg-bg-weak mx-2.5 flex h-8 items-center gap-2 rounded-t-lg border border-b-0 px-2">
+                <p className="text-label-xs text-text-sub min-w-0 flex-1 truncate font-medium leading-4">
+                  Talk to your agent from wherever you work
+                </p>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {CHANNEL_PROMO_ICONS.map((icon) => (
+                    <img key={icon.label} src={icon.src} alt="" title={icon.label} className="size-3.5" />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowChannelPromo(false)}
+                  className="text-text-soft hover:text-text-sub shrink-0"
+                  aria-label="Dismiss"
+                >
+                  <RiCloseFill className="size-4" />
+                </button>
+              </div>
+            ) : null}
+
             <div
               className={cn(
-                'border-stroke-soft bg-bg-white shadow-xs flex items-end gap-2 rounded-2xl border p-1.5 pl-4',
-                'transition-[border-color,box-shadow] duration-150 ease-out',
-                'focus-within:border-stroke-sub focus-within:shadow-sm'
+                'bg-bg-white relative flex min-h-[108px] flex-col overflow-hidden rounded-xl',
+                'shadow-[0px_8px_12px_0px_rgba(25,25,25,0.03),0px_2px_6px_0px_rgba(25,25,25,0.03),0px_0px_0px_1px_rgba(42,28,0,0.07)]',
+                'transition-[box-shadow] duration-150 ease-out',
+                'focus-within:shadow-[0px_8px_12px_0px_rgba(25,25,25,0.03),0px_2px_6px_0px_rgba(25,25,25,0.03),0px_0px_0px_1px_rgba(42,28,0,0.14)]'
               )}
             >
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-[34px] rounded-b-xl"
+                style={PREVIEW_STRIPE_STYLE}
+                aria-hidden
+              />
+
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -197,7 +214,7 @@ function AgentChatSurface({
                 disabled={isLoading}
                 placeholder={`Message ${agentName}...`}
                 aria-label={`Message ${agentName}`}
-                className="text-paragraph-sm text-text-strong placeholder:text-text-soft min-h-8 w-full flex-1 resize-none bg-transparent py-1.5 leading-5 outline-hidden disabled:cursor-not-allowed"
+                className="text-[13px] text-text-strong placeholder:text-text-soft relative min-h-[60px] w-full flex-1 resize-none bg-transparent px-4 pt-3 font-medium leading-[1.1] outline-hidden disabled:cursor-not-allowed"
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
@@ -206,66 +223,39 @@ function AgentChatSurface({
                   }
                 }}
               />
-              <Button
-                type="submit"
-                variant="primary"
-                mode="filled"
-                size="xs"
-                className={cn('size-8 shrink-0 rounded-full p-0', isRunning && '[&_svg]:animate-spin')}
-                leadingIcon={isRunning ? RiLoader4Line : RiArrowUpLine}
-                disabled={!canSend}
-                aria-label={isRunning ? 'Agent is responding' : 'Send message'}
-              />
-            </div>
-            <div className="mt-1.5 flex items-center gap-1 px-1">
-              <Kbd className="h-4 px-1">Enter</Kbd>
-              <span className="text-text-soft text-[11px]">to send</span>
-              <span className="text-text-soft text-[11px]" aria-hidden>
-                ·
-              </span>
-              <Kbd className="h-4 px-1">Shift + Enter</Kbd>
-              <span className="text-text-soft text-[11px]">for a new line</span>
+              <div className="relative flex items-center justify-between gap-2 px-2 pb-2">
+                <div className="flex min-w-0 items-center gap-1.5 pl-2">
+                  <span className="text-warning-base font-code text-xs font-medium uppercase leading-3">Preview</span>
+                  <span className="bg-text-soft size-0.5 shrink-0 rounded-full" aria-hidden />
+                  <a
+                    href={AGENT_CHAT_DOCS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-label-xs text-text-strong hover:text-text-sub truncate font-medium leading-4"
+                  >
+                    Add web chat to your app →
+                  </a>
+                </div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  mode="filled"
+                  size="xs"
+                  className={cn(
+                    'size-7 shrink-0 rounded-full p-0',
+                    isRunning && '[&_svg]:animate-spin',
+                    !canSend &&
+                      'bg-[linear-gradient(90deg,rgba(42,28,0,0.07),rgba(42,28,0,0.07)),linear-gradient(90deg,#fff,#fff)] text-text-soft opacity-40 shadow-none hover:bg-[linear-gradient(90deg,rgba(42,28,0,0.07),rgba(42,28,0,0.07)),linear-gradient(90deg,#fff,#fff)]'
+                  )}
+                  leadingIcon={isRunning ? RiLoader4Line : RiArrowUpLine}
+                  disabled={!canSend}
+                  aria-label={isRunning ? 'Agent is responding' : 'Send message'}
+                />
+              </div>
             </div>
           </form>
         </div>
       </div>
     </div>
-  );
-}
-
-function AddToAppButton({ agentId, integrationIdentifier }: { agentId: string; integrationIdentifier?: string }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { currentEnvironment } = useEnvironment();
-  const agentRoutes = useAgentRoutes();
-
-  if (!currentEnvironment?.slug) {
-    return null;
-  }
-
-  const href = integrationIdentifier
-    ? `${buildRoute(agentRoutes.integrationDetail, {
-        environmentSlug: currentEnvironment.slug,
-        agentIdentifier: encodeURIComponent(agentId),
-        integrationIdentifier: encodeURIComponent(integrationIdentifier),
-      })}${location.search}`
-    : `${buildRoute(agentRoutes.detailsTab, {
-        environmentSlug: currentEnvironment.slug,
-        agentIdentifier: encodeURIComponent(agentId),
-        agentTab: 'integrations',
-      })}${location.search}`;
-
-  return (
-    <Button
-      type="button"
-      variant="secondary"
-      mode="outline"
-      size="2xs"
-      className="shrink-0"
-      leadingIcon={RiCodeSSlashLine}
-      onClick={() => void navigate(href)}
-    >
-      Add to your app
-    </Button>
   );
 }

@@ -37,9 +37,9 @@ import { type ProviderSwitcherStatus, resolveProviderCardDisplayState } from './
  */
 const PROVIDER_SETUP_TIME: Record<string, string> = {
   [EmailProviderIdEnum.NovuAgent]: '~ 30 seconds',
-  [ChatProviderIdEnum.Slack]: '~ 1 minute',
+  [ChatProviderIdEnum.Slack]: '~ 30 seconds',
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
-  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 5 minutes',
+  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
   [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
   [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
   [ChatProviderIdEnum.NovuAgentChat]: '~ 30 seconds',
@@ -52,6 +52,10 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
   if (providerId === ChatProviderIdEnum.Sendblue) {
     return AGENT_IMESSAGE_LABEL;
+  }
+
+  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
+    return 'Web chat';
   }
 
   return getAgentChannelDisplayName(providerId, displayName);
@@ -71,6 +75,10 @@ function CardProviderIcon({ providerId, displayName }: { providerId: string; dis
 }
 
 function getSetupTimeLabel(providerId: string): string {
+  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
+    return '';
+  }
+
   return PROVIDER_SETUP_TIME[providerId] ?? '~ 5 minutes';
 }
 
@@ -191,6 +199,14 @@ function ProviderPill({
     label = idleLabel;
   }
 
+  if (connecting) {
+    return (
+      <div className="bg-bg-weak flex w-full items-center justify-center rounded-[4px] p-1">
+        <span className="text-text-soft px-1 text-label-xs font-medium leading-4">{label}</span>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -256,22 +272,36 @@ function ScrollEdgeButton({
   );
 }
 
+function ConnectingBadge() {
+  return (
+    <span className="flex size-4 items-center justify-center rounded-full bg-[hsl(var(--yellow-alpha-10))]" aria-hidden>
+      <span className="flex size-3 items-center justify-center rounded-full border border-white/10 bg-[hsl(var(--yellow-alpha-16))]">
+        <span className="size-1.5 rounded-[3px] bg-[#f6b51e]/60" />
+      </span>
+    </span>
+  );
+}
+
 function TopRightIndicator({
   isLocked,
   showCheck,
+  showConnecting,
   showInSetup,
   comingSoon,
   setupTime,
 }: {
   isLocked: boolean;
   showCheck: boolean;
+  showConnecting: boolean;
   showInSetup: boolean;
   comingSoon: boolean;
   setupTime: string;
 }) {
   if (isLocked) return <LockedBadge />;
   if (showCheck) return <SelectedStatusBadge />;
+  if (showConnecting) return <ConnectingBadge />;
   if (showInSetup) return <InSetupBadge />;
+  if (!comingSoon && !setupTime) return null;
 
   return (
     <span className="text-text-soft shrink-0 whitespace-nowrap text-[10px] font-medium leading-[14px]">
@@ -340,6 +370,7 @@ function ProviderCard({
           <TopRightIndicator
             isLocked={isLocked}
             showCheck={showCheck}
+            showConnecting={showConnecting}
             showInSetup={showInSetup}
             comingSoon={item.comingSoon}
             setupTime={setupTime}
@@ -461,10 +492,18 @@ export function ProviderCards({
     );
 
     return [...built].sort((left, right) => {
-      if (left.providerId === EmailProviderIdEnum.NovuAgent) return -1;
-      if (right.providerId === EmailProviderIdEnum.NovuAgent) return 1;
+      const rank = (providerId: string) => {
+        if (providerId === ChatProviderIdEnum.NovuAgentChat) return 0;
+        if (providerId === ChatProviderIdEnum.Slack) return 1;
+        if (providerId === EmailProviderIdEnum.NovuAgent) return 2;
+        if (providerId === ChatProviderIdEnum.WhatsAppBusiness) return 3;
+        if (providerId === ChatProviderIdEnum.MsTeams) return 4;
+        if (providerId === ChatProviderIdEnum.Discord) return 5;
 
-      return 0;
+        return 6;
+      };
+
+      return rank(left.providerId) - rank(right.providerId);
     });
   }, [conversationalProviders, integrations]);
 

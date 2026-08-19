@@ -955,6 +955,52 @@ describe('AgentChat', () => {
 
     await waitForMessageIds(['msg_user0000001', 'msg_asst_early001']);
     expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
+    expect(
+      agentChat
+        .getConversation({ agentId: 'agent_1', key: 'local_session1' })
+        ?.messages.find((message) => message.role === 'user')?.parts
+    ).toEqual([{ type: 'text', text: 'hello', state: 'done' }]);
+  });
+
+  it('applies live events that arrived before the create ack even when catch-up has no assistant yet', async () => {
+    agentChat.subscribe();
+
+    let resolveSend!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }])
+    );
+
+    const sent = agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 2,
+        messageId: 'msg_asst_early001',
+        markdown: 'beat the ack',
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await sent;
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_early001']);
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages.find((message) => message.role === 'user')?.parts).toEqual([
+      { type: 'text', text: 'hello', state: 'done' },
+    ]);
+    expect(snapshot?.messages.find((message) => message.role === 'assistant')?.parts).toEqual([
+      { type: 'text', text: 'beat the ack', state: 'done' },
+    ]);
   });
 
   it('buffers live envelopes during catch-up and applies them after', async () => {
