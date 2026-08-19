@@ -240,7 +240,7 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       contextKeys: session.contextKeys ?? [],
     });
 
-    this.chat!.processMessage(this, threadId, message, options);
+    await this.chat!.processMessage(this, threadId, message, options);
 
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
     // `agent_chat:conv_*` so `chat.thread()` can resolve this adapter by prefix.
@@ -274,7 +274,7 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       isMe: false,
     };
 
-    this.chat!.processAction(
+    await this.chat!.processAction(
       {
         adapter: this,
         actionId: kind.actionId,

@@ -3,6 +3,7 @@ import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import { CONNECT_CHANNEL_PICKER_OPTIONS } from '../connect-channel-picker-options';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
 import {
   type ConnectSuccessDestination,
@@ -237,16 +238,7 @@ export function PhaseContent({
       return <Text color="cyan">{`Creating agent "${phase.name}"…`}</Text>;
 
     case 'pick-channel': {
-      const options: Array<{ label: string; value: ChannelChoice }> = [
-        { label: 'Slack (recommended)', value: 'slack' },
-        { label: 'Telegram', value: 'telegram' },
-        { label: 'Email', value: 'email' },
-        { label: 'iMessage (Sendblue)', value: 'sendblue' },
-        { label: 'WhatsApp', value: 'whatsapp' },
-        { label: 'Agent Chat', value: 'agent-chat' },
-        { label: 'Microsoft Teams', value: 'teams' },
-        { label: 'Skip — set up later in dashboard', value: 'skip' },
-      ];
+      const options = [...CONNECT_CHANNEL_PICKER_OPTIONS];
 
       return (
         <Box flexDirection="column" gap={1} alignItems="flex-start">
@@ -277,17 +269,17 @@ export function PhaseContent({
       return <Text color="cyan">Linking Agent Chat to your agent…</Text>;
 
     case 'agent-chat-handoff':
-      return (
-        <AgentChatHandoffContent
-          dashboardUrl={phase.dashboardUrl}
-          embedPromptFile={phase.embedPromptFile}
-          onContinue={phase.resolve}
-        />
-      );
+      return <AgentChatHandoffContent dashboardUrl={phase.dashboardUrl} onContinue={phase.resolve} />;
 
     case 'pick-agent-chat-setup':
+      return <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />;
+
+    case 'scaffolding-agent-chat':
       return (
-        <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />
+        <Box flexDirection="column" gap={1} alignItems="center">
+          <Text color="cyan">Scaffolding your Agent Chat example app…</Text>
+          <Text dimColor>Installing dependencies — this may take a minute.</Text>
+        </Box>
       );
 
     case 'paste-slack-token':
@@ -418,37 +410,40 @@ function ChannelSelect({
   onChange: (value: ChannelChoice) => void;
   onHighlight: (value: ChannelChoice | null) => void;
 }): React.ReactElement {
+  const uniqueOptions = options.filter(
+    (opt, index, arr) => arr.findIndex((candidate) => candidate.value === opt.value) === index
+  );
   const [idx, setIdx] = React.useState(0);
 
   // Seed the parent with the initial highlight so the orb doesn't sit on
   // white for a frame before the user touches the arrow keys.
   React.useEffect(() => {
-    onHighlight(options[0]?.value ?? null);
+    onHighlight(uniqueOptions[0]?.value ?? null);
     // We only want to fire on mount; subsequent highlights flow through useInput.
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   }, []);
 
   useInput((_input, key) => {
     if (key.upArrow) {
-      const next = (idx - 1 + options.length) % options.length;
+      const next = (idx - 1 + uniqueOptions.length) % uniqueOptions.length;
       setIdx(next);
-      onHighlight(options[next].value);
+      onHighlight(uniqueOptions[next].value);
     } else if (key.downArrow) {
-      const next = (idx + 1) % options.length;
+      const next = (idx + 1) % uniqueOptions.length;
       setIdx(next);
-      onHighlight(options[next].value);
+      onHighlight(uniqueOptions[next].value);
     } else if (key.return) {
-      onChange(options[idx].value);
+      onChange(uniqueOptions[idx].value);
     }
   });
 
-  const highlighted = options[idx]?.value ?? null;
+  const highlighted = uniqueOptions[idx]?.value ?? null;
   const channelHint = highlighted !== null ? CHANNEL_HINTS[highlighted] : undefined;
 
   return (
     <Box flexDirection="column" gap={1} alignItems="flex-start">
       <Box flexDirection="column" alignItems="flex-start">
-        {options.map((opt, i) => {
+        {uniqueOptions.map((opt, i) => {
           const isSelected = i === idx;
           const opensInDashboard = isDashboardOnlyChannel(opt.value);
           const prefix = isSelected ? '› ' : '  ';
@@ -541,11 +536,9 @@ function DashboardChannelReadyContent({
 
 function AgentChatHandoffContent({
   dashboardUrl,
-  embedPromptFile,
   onContinue,
 }: {
   dashboardUrl: string;
-  embedPromptFile?: string;
   onContinue: () => void;
 }): React.ReactElement {
   useInput((_input, key) => {
@@ -555,10 +548,9 @@ function AgentChatHandoffContent({
   return (
     <Box flexDirection="column" gap={1}>
       <Text bold>Agent Chat linked</Text>
-      <Text dimColor>Try chat in the dashboard, then add useAgentChat to your app.</Text>
-      <CopyableLink url={dashboardUrl} hint="Open Chat tab:" />
-      {embedPromptFile ? <Text dimColor>Embed prompt: {embedPromptFile}</Text> : null}
-      <Text dimColor>Press Enter to continue →</Text>
+      <Text dimColor>Open the dashboard chat, or continue to add Agent Chat to your app.</Text>
+      <CopyableLink url={dashboardUrl} hint="Chat tab in dashboard:" hyperlink={false} />
+      <Text dimColor>Press Enter to continue</Text>
     </Box>
   );
 }
@@ -570,10 +562,28 @@ function AgentChatSetupPickContent({
   projectKind: 'empty' | 'project';
   onResolve: (mode: AgentChatSetupMode) => void;
 }): React.ReactElement {
-  useInput((input) => {
-    if (input === '1') onResolve('scaffold');
-    if (input === '2') onResolve('embed');
-    if (input === '3') onResolve('skip');
+  const options =
+    projectKind === 'empty'
+      ? [
+          { label: 'Scaffold example app', value: 'scaffold' as const },
+          { label: 'Save embed prompt for my app', value: 'embed' as const },
+          { label: 'Skip for now', value: 'skip' as const },
+        ]
+      : [
+          { label: 'Save embed prompt into this project', value: 'embed' as const },
+          { label: 'Scaffold a new example app', value: 'scaffold' as const },
+          { label: 'Skip for now', value: 'skip' as const },
+        ];
+  const [idx, setIdx] = React.useState(0);
+
+  useInput((_input, key) => {
+    if (key.upArrow) {
+      setIdx((current) => (current - 1 + options.length) % options.length);
+    } else if (key.downArrow) {
+      setIdx((current) => (current + 1) % options.length);
+    } else if (key.return) {
+      onResolve(options[idx].value);
+    }
   });
 
   return (
@@ -581,18 +591,22 @@ function AgentChatSetupPickContent({
       <Text bold>Add Agent Chat to your app</Text>
       <Text dimColor>
         {projectKind === 'empty'
-          ? 'No project found here. Scaffold a small example app, or copy the embed prompt.'
-          : 'We found an existing project. Embed into it, or scaffold a new example app.'}
+          ? 'No project found here. Scaffold a small example app, or save the embed prompt.'
+          : 'We found an existing project. Save the embed prompt here, or scaffold a new example app.'}
       </Text>
-      <Text>
-        <Text color="cyan">1</Text> Scaffold example app
-      </Text>
-      <Text>
-        <Text color="cyan">2</Text> Embed prompt for my app
-      </Text>
-      <Text>
-        <Text color="cyan">3</Text> Skip for now
-      </Text>
+      {options.map((opt, rowIndex) => {
+        const isSelected = rowIndex === idx;
+
+        return (
+          <Text key={opt.value}>
+            <Text color={isSelected ? 'cyan' : undefined}>
+              {isSelected ? '› ' : '  '}
+              {opt.label}
+            </Text>
+          </Text>
+        );
+      })}
+      <Text dimColor>↑↓ to move · Enter to select</Text>
     </Box>
   );
 }
@@ -657,8 +671,8 @@ function SuccessView({
             {agentChatHandoff?.dashboardUrl ? (
               <Text color="cyan">Try chat in the dashboard — link copied above.</Text>
             ) : null}
-            {agentChatHandoff?.embedPromptFile ? (
-              <Text dimColor>Embed prompt: {agentChatHandoff.embedPromptFile}</Text>
+            {agentChatOutcome?.embedPromptFile ? (
+              <Text dimColor>Embed prompt saved to {agentChatOutcome.embedPromptFile}</Text>
             ) : null}
             {agentChatOutcome?.projectDir ? <Text color="cyan">Example app: {agentChatOutcome.projectDir}</Text> : null}
           </>

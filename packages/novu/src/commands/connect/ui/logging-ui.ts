@@ -486,6 +486,9 @@ export function createLoggingUI(): ConnectUI {
     pickAgentChatSetup({ projectKind }) {
       return Promise.resolve(projectKind === 'empty' ? 'scaffold' : 'embed');
     },
+    scaffoldingAgentChat() {
+      start('Scaffolding your Agent Chat example app…');
+    },
     sendingWelcome() {
       start('Asking your agent to say hello in Slack…');
     },

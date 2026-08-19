@@ -206,3 +206,42 @@ export function ChatIcon({ size = 22, className }: IconProps) {
     </svg>
   );
 }
+
+export function ToolIcon({ size = 14, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M14.7 6.3a4 4 0 0 0-5-5L7.4 3.6l3 3-4.7 4.7a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0l4.7-4.7 3 3 2.3-2.3a4 4 0 0 0-5-5l-3 3-3-3 3-3Z" />
+    </svg>
+  );
+}
+
+export function WarningIcon({ size = 14, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+  );
+}

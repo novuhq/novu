@@ -1,30 +1,42 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import type { UseAgentChatResult } from '@novu/react';
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { SendIcon } from './icons';
 
 type ComposerProps = {
-  pending: boolean;
+  isLoading: boolean;
   isRunning: boolean;
-  onSend: (text: string) => void;
+  onSend: UseAgentChatResult['sendMessage'];
 };
 
-export function Composer({ pending, isRunning, onSend }: ComposerProps) {
+const MAX_HEIGHT_PX = 128;
+
+export function Composer({ isLoading, isRunning, onSend }: ComposerProps) {
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const disabled = isLoading || isRunning;
 
   useEffect(() => {
-    if (!pending) {
+    if (!disabled) {
       inputRef.current?.focus();
     }
-  }, [pending]);
+  }, [disabled]);
+
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    input.style.height = '0px';
+    input.style.height = `${Math.min(input.scrollHeight, MAX_HEIGHT_PX)}px`;
+  }, [draft]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
     const text = draft.trim();
-    if (!text || pending) return;
+    if (!text || disabled) return;
     setDraft('');
-    onSend(text);
+    void onSend(text);
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
@@ -36,31 +48,32 @@ export function Composer({ pending, isRunning, onSend }: ComposerProps) {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
+            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault();
               event.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Message the agent…"
-          disabled={pending}
+          placeholder="Message your agent…"
+          disabled={isLoading}
           rows={1}
           autoComplete="off"
-          aria-label="Message"
+          aria-label="Message your agent"
         />
         <button
           type="submit"
           className="composer-send"
-          disabled={pending || !draft.trim()}
-          aria-label={pending ? (isRunning ? 'Agent running' : 'Sending') : 'Send message'}
+          disabled={disabled || !draft.trim()}
+          aria-label={isRunning ? 'Agent is responding' : 'Send message'}
         >
-          {pending ? <span className="spinner" aria-hidden /> : <SendIcon />}
+          {isRunning ? <span className="spinner" aria-hidden /> : <SendIcon />}
         </button>
       </div>
       <div className="composer-hints">
-        <span>
-          <kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> for newline
-        </span>
-        {isRunning ? <span>Agent is responding…</span> : null}
+        <kbd>Enter</kbd>
+        <span>to send</span>
+        <span aria-hidden>·</span>
+        <kbd>Shift + Enter</kbd>
+        <span>for a new line</span>
       </div>
     </form>
   );

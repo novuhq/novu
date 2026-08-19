@@ -8,8 +8,8 @@ export function buildConnectAgentChatDashboardUrl(input: {
 }): string {
   const base = input.connectDashboardUrl.replace(/\/$/, '');
   const agentPath = input.environmentSlug
-    ? `/env/${input.environmentSlug}/connect/agents/${encodeURIComponent(input.agentIdentifier)}`
-    : `/connect/agents/${encodeURIComponent(input.agentIdentifier)}`;
+    ? `/env/${input.environmentSlug}/agents/${encodeURIComponent(input.agentIdentifier)}`
+    : `/agents/${encodeURIComponent(input.agentIdentifier)}`;
 
   return `${base}${agentPath}/${CONNECT_AGENT_CHAT_TAB}`;
 }

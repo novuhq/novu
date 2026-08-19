@@ -1,19 +1,19 @@
-import open from 'open';
 import { buildAgentChatEmbedPromptForAuth } from '@novu/shared';
 import { CONNECT_EVENTS } from '../../analytics/events';
 import { addAgentChatIntegration } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import { NovuApiError } from '../../api/client';
 import type { IntegrationRecord } from '../../api/integrations';
+import { resolveConnectApplicationIdentifier } from '../../auth/resolve-connect-application-identifier';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
 import { buildConnectAgentChatDashboardUrl } from '../../dashboard-urls';
 import type { AgentSummary, ConnectAgentChatHandoff, ConnectCommandOptions } from '../../types';
-import type { ConnectUI } from '../../ui/ui';
 import {
   logAgentChatDashboardUrlHandoffEvent,
   logAgentChatEmbedPromptFileHandoffEvent,
   writeAgentChatEmbedPromptHandoffFile,
 } from '../../ui/handoff-events';
+import type { ConnectUI } from '../../ui/ui';
 
 export async function connectAgentChatForAgent(
   client: ConnectApiClient,
@@ -55,13 +55,14 @@ export async function connectAgentChatForAgent(
     agentIdentifier: agent.identifier,
   });
 
+  const applicationIdentifier = await resolveConnectApplicationIdentifier(auth);
   const embedPrompt = buildAgentChatEmbedPromptForAuth({
     agentName: agent.name,
     agentIdentifier: agent.identifier,
-    applicationIdentifier: auth.keylessApplicationIdentifier,
+    applicationIdentifier,
     subscriberId: auth.user?.id,
   });
-  const embedPromptFile = await writeAgentChatEmbedPromptHandoffFile(embedPrompt);
+  const embedPromptFile = ui.interactive ? undefined : await writeAgentChatEmbedPromptHandoffFile(embedPrompt);
 
   const handoff: ConnectAgentChatHandoff = {
     dashboardUrl,
@@ -75,9 +76,10 @@ export async function connectAgentChatForAgent(
     embedPromptFile,
   });
 
-  void open(dashboardUrl).catch(() => undefined);
-  logAgentChatDashboardUrlHandoffEvent({ dashboardUrl });
-  logAgentChatEmbedPromptFileHandoffEvent({ embedPromptFile });
+  if (!ui.interactive) {
+    logAgentChatDashboardUrlHandoffEvent({ dashboardUrl });
+    logAgentChatEmbedPromptFileHandoffEvent({ embedPromptFile: embedPromptFile! });
+  }
 
   return { integration, handoff };
 }

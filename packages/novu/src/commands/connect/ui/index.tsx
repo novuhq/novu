@@ -566,6 +566,9 @@ function createUiController(
         });
       });
     },
+    scaffoldingAgentChat() {
+      store.phase.set({ kind: 'scaffolding-agent-chat' });
+    },
     sendingWelcome() {
       store.phase.set({ kind: 'sending-welcome' });
     },

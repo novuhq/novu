@@ -4,8 +4,8 @@ import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
 import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
-  AgentConnectMode,
   AgentChatConnectOutcome,
+  AgentConnectMode,
   AgentSummary,
   AiSdkConnectOutcome,
   BridgeRequirement,
@@ -259,6 +259,7 @@ export type Phase =
       projectKind: 'empty' | 'project';
       resolve: (mode: import('../types').AgentChatSetupMode) => void;
     }
+  | { kind: 'scaffolding-agent-chat' }
   | { kind: 'sending-welcome' }
   | {
       kind: 'success';

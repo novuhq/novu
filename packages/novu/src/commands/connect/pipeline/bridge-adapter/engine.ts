@@ -98,13 +98,15 @@ async function scaffoldThenReconcile(
 
   const envPaths = resolveProjectEnvPaths(scaffolded.root);
 
-  input.ui.bridgeScaffolded({
-    variant: adapter.variant,
-    projectDir: scaffolded.root,
-    agentFilePath: scaffolded.agentFilePath,
-    envPaths,
-    skippedInstall: scaffolded.skippedInstall,
-  });
+  if (!input.deferScaffoldSummary) {
+    input.ui.bridgeScaffolded({
+      variant: adapter.variant,
+      projectDir: scaffolded.root,
+      agentFilePath: scaffolded.agentFilePath,
+      envPaths,
+      skippedInstall: scaffolded.skippedInstall,
+    });
+  }
 
   return {
     projectKind: 'empty',

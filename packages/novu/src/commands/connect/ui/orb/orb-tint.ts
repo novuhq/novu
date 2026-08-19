@@ -90,6 +90,11 @@ export function computeOrbTint(
       return CHANNEL_TINTS.sendblue;
     case 'dashboard-channel-ready':
       return CHANNEL_TINTS[phase.channel];
+    case 'adding-agent-chat':
+    case 'agent-chat-handoff':
+    case 'pick-agent-chat-setup':
+    case 'scaffolding-agent-chat':
+      return CHANNEL_TINTS['agent-chat'];
     case 'success': {
       const activeChannel = phase.connectedChannel ?? phase.dashboardRedirectChannel;
 
@@ -141,6 +146,11 @@ export function computeOrbLabel(
     case 'sending-sendblue-test':
     case 'sendblue-test-waiting':
       return CHANNEL_LABELS.sendblue;
+    case 'adding-agent-chat':
+    case 'agent-chat-handoff':
+    case 'pick-agent-chat-setup':
+    case 'scaffolding-agent-chat':
+      return CHANNEL_LABELS['agent-chat'];
     case 'dashboard-channel-ready':
       return CHANNEL_LABELS[phase.channel];
     case 'success': {

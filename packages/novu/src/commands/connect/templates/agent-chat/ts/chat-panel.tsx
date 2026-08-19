@@ -1,70 +1,82 @@
 'use client';
 
-import type { AgentConversationTyping, AgentMessage, AgentPendingAction } from '@novu/react';
-import type { RespondToAction } from './approval-card';
-import { ApprovalDock } from './approval-dock';
+import type { AgentConversationTyping, AgentMessage, AgentPendingAction, UseAgentChatResult } from '@novu/react';
 import { ChatThread } from './chat-thread';
 import { Composer } from './composer';
+import { PendingActionCard } from './pending-action-card';
 
 /**
  * Presentational shell. Swap this (and the components it uses) for your own UI —
  * it only consumes values from `useAgentChat`.
  */
 export type ChatPanelProps = {
-  conversationId?: string;
+  subscriberId: string;
   error?: { message: string };
   messages: AgentMessage[];
   pendingActions: AgentPendingAction[];
   isRunning: boolean;
+  isLoading: boolean;
   typing?: AgentConversationTyping;
   hasMore: boolean;
   isFetching: boolean;
   onFetchMore: () => Promise<unknown>;
-  onRespond: RespondToAction;
-  composerDisabled: boolean;
-  onSend: (text: string) => void;
+  onRespond: UseAgentChatResult['respondToAction'];
+  onCardAction: UseAgentChatResult['sendAction'];
+  onSend: UseAgentChatResult['sendMessage'];
 };
 
 export function ChatPanel({
-  conversationId,
+  subscriberId,
   error,
   messages,
   pendingActions,
   isRunning,
+  isLoading,
   typing,
   hasMore,
   isFetching,
   onFetchMore,
   onRespond,
-  composerDisabled,
+  onCardAction,
   onSend,
 }: ChatPanelProps) {
+  const interactionDisabled = isRunning || isLoading;
+
   return (
     <div className="chat-main">
       <header className="chat-topbar">
-        <h1>{conversationId ? 'Conversation' : 'New conversation'}</h1>
-        {conversationId ? <code>{conversationId}</code> : null}
+        <p>
+          Chatting as <strong>{subscriberId}</strong>
+        </p>
       </header>
-
-      {error ? (
-        <div className="banner-error" role="alert">
-          {error.message}
-        </div>
-      ) : null}
 
       <ChatThread
         messages={messages}
         isRunning={isRunning}
+        isLoading={isLoading}
         typing={typing}
         hasMore={hasMore}
         isFetching={isFetching}
         onFetchMore={onFetchMore}
-        onRespond={onRespond}
+        onCardAction={onCardAction}
+        cardActionsDisabled={interactionDisabled}
+        onSend={onSend}
       />
 
       <div className="chat-foot">
-        <ApprovalDock actions={pendingActions} />
-        <Composer pending={composerDisabled} isRunning={isRunning} onSend={onSend} />
+        <div className="chat-foot-inner">
+          {pendingActions.map((action) => (
+            <PendingActionCard key={action.id} action={action} disabled={interactionDisabled} onRespond={onRespond} />
+          ))}
+
+          {error ? (
+            <div className="banner-error" role="alert">
+              {error.message}
+            </div>
+          ) : null}
+
+          <Composer isLoading={isLoading} isRunning={isRunning} onSend={onSend} />
+        </div>
       </div>
     </div>
   );

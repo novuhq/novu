@@ -18,9 +18,9 @@ import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName }
 import { ConnectChannelBackError } from '../errors';
 import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
 import type {
+  AgentChatConnectOutcome,
   AgentConnectMode,
   AgentSummary,
-  AgentChatConnectOutcome,
   AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
@@ -36,10 +36,11 @@ import {
   isVanillaCustomCodeConnectMode,
 } from '../types';
 import type { ConnectUI } from '../ui/ui';
+import { runAgentChatProjectSetup } from './agent-chat/run-agent-chat-setup';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
-import { connectEmailForAgent } from './channels/email';
 import { connectAgentChatForAgent } from './channels/agent-chat';
+import { connectEmailForAgent } from './channels/email';
 import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
@@ -48,7 +49,6 @@ import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
 import { maybeRunLangChainTunnel, runLangChainProjectSetup } from './langchain';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
-import { runAgentChatProjectSetup } from './agent-chat/run-agent-chat-setup';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
@@ -365,14 +365,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             break;
           }
           case 'agent-chat': {
-            const result = await connectAgentChatForAgent(
-              session.client,
-              agent,
-              ui,
-              options,
-              session.auth,
-              track
-            );
+            const result = await connectAgentChatForAgent(session.client, agent, ui, options, session.auth, track);
             connectedIntegration = result.integration;
             agentChatHandoff = result.handoff;
             connectedChannel = 'agent-chat';
@@ -422,12 +415,19 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           })
         : null;
 
+    const deferScaffoldSummary =
+      channel === 'agent-chat' &&
+      Boolean(agentChatHandoff) &&
+      options.agentChatSetup !== 'embed' &&
+      options.agentChatSetup !== 'skip';
+
     if (connectMode === 'chat-sdk') {
       chatSdkOutcome = await runChatSdkProjectSetup({
         options,
         ui,
         auth: session.auth,
         agent,
+        deferScaffoldSummary,
       });
     } else if (isAiSdkConnectMode(connectMode)) {
       aiSdkOutcome = await runAiSdkProjectSetup({
@@ -435,6 +435,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         ui,
         auth: session.auth,
         agent,
+        deferScaffoldSummary,
       });
     } else if (isLangChainConnectMode(connectMode)) {
       langChainOutcome = await runLangChainProjectSetup({
@@ -442,6 +443,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         ui,
         auth: session.auth,
         agent,
+        deferScaffoldSummary,
       });
     } else if (isVanillaCustomCodeConnectMode(connectMode)) {
       customCodeOutcome = await runCustomCodeProjectSetup({
@@ -449,22 +451,25 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         ui,
         auth: session.auth,
         agent,
+        deferScaffoldSummary,
       });
     }
 
     if (channel === 'agent-chat' && agentChatHandoff) {
+      const bridgeProject = resolveBridgeProject({
+        chatSdkOutcome,
+        aiSdkOutcome,
+        langChainOutcome,
+        customCodeOutcome,
+      });
       agentChatOutcome = await runAgentChatProjectSetup({
         options,
         ui,
         auth: session.auth,
         agent,
         handoff: agentChatHandoff,
-        bridgeProjectDir: resolveBridgeProjectDir({
-          chatSdkOutcome,
-          aiSdkOutcome,
-          langChainOutcome,
-          customCodeOutcome,
-        }),
+        bridgeProjectDir: bridgeProject?.projectDir,
+        autoMergeIntoBridge: bridgeProject?.scaffolded === true,
       });
     }
 
@@ -522,18 +527,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
   }
 }
 
-function resolveBridgeProjectDir(outcomes: {
+function resolveBridgeProject(outcomes: {
   chatSdkOutcome?: ChatSdkConnectOutcome;
   aiSdkOutcome?: AiSdkConnectOutcome;
   langChainOutcome?: LangChainConnectOutcome;
   customCodeOutcome?: CustomCodeConnectOutcome;
-}): string | undefined {
-  return (
-    outcomes.chatSdkOutcome?.projectDir ??
-    outcomes.aiSdkOutcome?.projectDir ??
-    outcomes.langChainOutcome?.projectDir ??
-    outcomes.customCodeOutcome?.projectDir
-  );
+}): { projectDir: string; scaffolded: boolean } | undefined {
+  return outcomes.chatSdkOutcome ?? outcomes.aiSdkOutcome ?? outcomes.langChainOutcome ?? outcomes.customCodeOutcome;
 }
 
 async function resolveAgentConnectMode(ctx: PipelineContext): Promise<AgentConnectMode> {

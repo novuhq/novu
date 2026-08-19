@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { channelDisplayName, resolveConnectSuccessDestination, UNCLAIMED_KEYLESS_HINT } from '../dashboard-urls';
+import { printDevCommandBox } from '../pipeline/bridge/print-bridge-dev-next-steps';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import type { ConnectUI } from './ui';
 
@@ -20,6 +21,41 @@ export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): b
 
 export function printConnectSuccess(result: ConnectSuccessResult): void {
   if (shouldSkipConnectSuccessSummary(result)) {
+    return;
+  }
+
+  const bridgeOutcome =
+    result.chatSdkOutcome ?? result.aiSdkOutcome ?? result.langChainOutcome ?? result.customCodeOutcome;
+  if (
+    result.connectedChannel === 'agent-chat' &&
+    result.agentChatOutcome?.mergedIntoBridge &&
+    bridgeOutcome?.scaffolded
+  ) {
+    const agentFilePath = 'agentFilePath' in bridgeOutcome ? bridgeOutcome.agentFilePath : undefined;
+    const install = bridgeOutcome.skippedInstall ? 'npm install && ' : '';
+
+    console.log('');
+    console.log(`${chalk.green('✓')} Agent app scaffolded with Agent Chat.`);
+    console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
+    console.log(`  ${chalk.bold('Project:')} ${bridgeOutcome.projectDir}`);
+    if (agentFilePath) {
+      console.log(`  ${chalk.bold('Agent handler:')} ${agentFilePath}`);
+    }
+    console.log(`  ${chalk.bold('Agent Chat:')} / ${chalk.gray('(served by the same app)')}`);
+    printDevCommandBox(`cd ${JSON.stringify(bridgeOutcome.projectDir)} && ${install}npm run dev:novu`);
+
+    return;
+  }
+
+  if (
+    result.connectedChannel === 'agent-chat' &&
+    result.agentChatOutcome?.mode === 'scaffold' &&
+    result.agentChatOutcome.projectDir
+  ) {
+    console.log('');
+    console.log(`${chalk.green('✓')} Scaffolded Agent Chat app at ${result.agentChatOutcome.projectDir}`);
+    printDevCommandBox(`cd ${JSON.stringify(result.agentChatOutcome.projectDir)} && npm run dev`);
+
     return;
   }
 
@@ -55,8 +91,8 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     if (result.agentChatHandoff?.dashboardUrl) {
       console.log(`  ${chalk.cyan('→')} Try chat in the dashboard: ${result.agentChatHandoff.dashboardUrl}`);
     }
-    if (result.agentChatHandoff?.embedPromptFile) {
-      console.log(`  ${chalk.cyan('→')} Embed prompt file: ${result.agentChatHandoff.embedPromptFile}`);
+    if (result.agentChatOutcome?.embedPromptFile) {
+      console.log(`  ${chalk.cyan('→')} Embed prompt saved to: ${result.agentChatOutcome.embedPromptFile}`);
     }
     if (result.agentChatOutcome?.projectDir) {
       console.log(`  ${chalk.cyan('→')} Example app: ${result.agentChatOutcome.projectDir}`);
