@@ -401,6 +401,42 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       const cancelRes = await session.testAgent.post(`/v1/human/interactions/${interaction.id}/cancel`);
       expect(cancelRes.body.data.status).to.equal(HumanInteractionStatusEnum.EXPIRED);
     });
+
+    it('does not atomically settle an interaction after its expiry boundary', async () => {
+      const createRes = await createInteraction({ kind: 'approve', prompt: 'Boundary request?' });
+      const interaction = createRes.body.data;
+
+      const row = await humanInteractionRepository.findByIdentifier(session.environment._id, interaction.id);
+      if (!row) {
+        throw new Error('Expected the created human interaction to exist');
+      }
+
+      await humanInteractionRepository.update(
+        { _id: row._id, _environmentId: session.environment._id },
+        { $set: { expiresAt: new Date(Date.now() - 1000).toISOString() } }
+      );
+
+      const settled = await humanInteractionRepository.settleIfPending(
+        session.environment._id,
+        row._id,
+        HumanInteractionStatusEnum.CANCELED
+      );
+
+      expect(settled).to.equal(null);
+
+      await humanInteractionRepository.update(
+        { _id: row._id, _environmentId: session.environment._id },
+        { $set: { expiresAt: new Date(Date.now() + 60_000).toISOString() } }
+      );
+
+      const activeSettlement = await humanInteractionRepository.settleIfPending(
+        session.environment._id,
+        row._id,
+        HumanInteractionStatusEnum.CANCELED
+      );
+
+      expect(activeSettlement?.status).to.equal(HumanInteractionStatusEnum.CANCELED);
+    });
   });
 
   describe('email channel', () => {

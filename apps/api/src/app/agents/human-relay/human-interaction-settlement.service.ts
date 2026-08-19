@@ -36,6 +36,8 @@ export class HumanInteractionSettlementService {
 
     if (settled) {
       await this.editDeliveredMessage(settled);
+    } else {
+      await this.expireIfOverdue(interaction);
     }
 
     return settled;

@@ -105,8 +105,21 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
         _id: id,
         _environmentId: environmentId,
         status: HumanInteractionStatusEnum.PENDING,
+        expiresAt: { $gte: new Date().toISOString() },
       },
       { $set: { status, ...(response ? { response } : {}) } },
+      { new: true }
+    );
+  }
+
+  async markDeliveredIfPending(environmentId: string, id: string): Promise<HumanInteractionEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _id: id,
+        _environmentId: environmentId,
+        status: HumanInteractionStatusEnum.PENDING,
+      },
+      { $set: { status: HumanInteractionStatusEnum.DELIVERED } },
       { new: true }
     );
   }

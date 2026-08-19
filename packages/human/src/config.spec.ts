@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadConfig, resolveVia, saveConfig, type HumanCliConfig } from './config';
+import { type HumanCliConfig, loadConfig, resolveConfig, resolveVia, saveConfig } from './config';
 
 const base: HumanCliConfig = {
   apiUrl: 'https://api.novu.co',
@@ -12,6 +12,7 @@ const base: HumanCliConfig = {
 
 afterEach(() => {
   delete process.env.NOVU_HUMAN_CONFIG;
+  delete process.env.NOVU_SECRET_KEY;
 });
 
 describe('config migration', () => {
@@ -68,5 +69,28 @@ describe('resolveVia', () => {
 
   it('omits via when nothing is preferred so the API can pick', () => {
     expect(resolveVia({ ...base, subscriberId: 'human_abc' })).toBeUndefined();
+  });
+});
+
+describe('resolveConfig', () => {
+  it('uses NOVU_SECRET_KEY instead of keyless auth from the config file', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'human-config-')), 'human.json');
+    process.env.NOVU_HUMAN_CONFIG = path;
+    process.env.NOVU_SECRET_KEY = 'api_key_private';
+    writeFileSync(
+      path,
+      JSON.stringify({
+        ...base,
+        subscriberId: 'human_abc',
+        defaultChannel: 'telegram',
+      })
+    );
+
+    expect(resolveConfig()).toEqual({
+      ...base,
+      auth: { mode: 'apiKey', secretKey: 'api_key_private' },
+      subscriberId: 'human_abc',
+      defaultChannel: 'telegram',
+    });
   });
 });

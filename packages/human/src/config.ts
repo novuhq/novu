@@ -68,22 +68,21 @@ export function resolveConfig(overrides?: { apiUrl?: string }): HumanCliConfig {
   const file = loadConfig();
   const secretKey = process.env.NOVU_SECRET_KEY?.trim();
 
-  const config: HumanCliConfig | null = file
-    ? { ...file }
-    : secretKey
-      ? {
-          apiUrl: DEFAULT_API_URL,
-          auth: { mode: 'apiKey', secretKey },
-          relayAgentIdentifier: DEFAULT_RELAY_AGENT_IDENTIFIER,
-        }
-      : null;
+  let config: HumanCliConfig | null = null;
+  if (secretKey) {
+    config = {
+      ...(file ?? {
+        apiUrl: DEFAULT_API_URL,
+        relayAgentIdentifier: DEFAULT_RELAY_AGENT_IDENTIFIER,
+      }),
+      auth: { mode: 'apiKey', secretKey },
+    };
+  } else if (file) {
+    config = { ...file };
+  }
 
   if (!config) {
     throw new Error(NOT_SET_UP_MESSAGE);
-  }
-
-  if (secretKey && config.auth.mode === 'apiKey') {
-    config.auth.secretKey = secretKey;
   }
 
   if (overrides?.apiUrl) {

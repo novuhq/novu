@@ -98,10 +98,9 @@ export class CreateInteraction {
 
       if (interaction.kind === HumanInteractionKindEnum.TELL) {
         // `tell` has nothing to wait on — flip straight to its terminal state.
-        const settled = await this.humanInteractionRepository.settleIfPending(
+        const settled = await this.humanInteractionRepository.markDeliveredIfPending(
           interaction._environmentId,
-          interaction._id,
-          HumanInteractionStatusEnum.DELIVERED
+          interaction._id
         );
 
         return settled ?? { ...interaction, ...deliveryRefs, status: HumanInteractionStatusEnum.DELIVERED };
