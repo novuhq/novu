@@ -42,7 +42,8 @@ import { Novu } from '@novu/api';
 const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
 export async function handleAuth0Event(event: Auth0LogEvent) {
-  if (event.type === 's' && event.description === 'Success Signup') {
+  // Auth0 Success Signup is type "ss". Type "s" is Success Login.
+  if (event.type === 'ss') {
     await novu.trigger({
       workflowId: 'welcome-email',
       to: { subscriberId: event.user_id, email: event.user_name },
@@ -59,7 +60,8 @@ import novu_py
 from novu_py import Novu
 
 def handle_auth0_event(event):
-    if event["type"] == "s" and event["description"] == "Success Signup":
+    # Auth0 Success Signup is type "ss". Type "s" is Success Login.
+    if event["type"] == "ss":
         with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
             novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
                 workflow_id="welcome-email",
@@ -79,7 +81,8 @@ import (
 )
 
 func handleAuth0Event(event Auth0LogEvent) error {
-    if event.Type == "s" && event.Description == "Success Signup" {
+    // Auth0 Success Signup is type "ss". Type "s" is Success Login.
+    if event.Type == "ss" {
         s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
         _, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
             WorkflowID: "welcome-email",
@@ -104,7 +107,8 @@ use novu\Models\Components;
 
 function handleAuth0Event(array $event): void
 {
-    if ($event['type'] === 's' && $event['description'] === 'Success Signup') {
+    // Auth0 Success Signup is type "ss". Type "s" is Success Login.
+    if ($event['type'] === 'ss') {
         $sdk = novu\Novu::builder()
             ->setSecurity('<YOUR_SECRET_KEY_HERE>')
             ->build();
@@ -133,7 +137,8 @@ using System.Collections.Generic;
 
 async Task HandleAuth0Event(Auth0LogEvent auth0Event)
 {
-    if (auth0Event.Type == "s" && auth0Event.Description == "Success Signup")
+    // Auth0 Success Signup is type "ss". Type "s" is Success Login.
+    if (auth0Event.Type == "ss")
     {
         var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
 
@@ -158,7 +163,8 @@ import co.novu.models.components.*;
 import java.util.Map;
 
 void handleAuth0Event(Auth0LogEvent event) {
-    if ("s".equals(event.getType()) && "Success Signup".equals(event.getDescription())) {
+    // Auth0 Success Signup is type "ss". Type "s" is Success Login.
+    if ("ss".equals(event.getType())) {
         Novu novu = Novu.builder()
             .secretKey("<YOUR_SECRET_KEY_HERE>")
             .build();
@@ -205,6 +211,9 @@ curl -X POST 'https://api.novu.co/v1/events/trigger' \
 <AccordionGroup>
   <Accordion title="Should I use Auth0 Actions or log streams?">
     Auth0 Actions give you inline control during the auth flow. Log streams are better for post-event processing such as security alerts and analytics-driven notifications.
+  </Accordion>
+  <Accordion title="Which Auth0 log type is a successful signup?">
+    Successful signup is type `ss`. Type `s` is a successful login. Match on `event.type` rather than free-text descriptions, which can vary.
   </Accordion>
   <Accordion title="Where should I verify Auth0 webhook signatures?">
     Always verify signatures in your backend before triggering Novu workflows. Never expose your Novu secret key in client-side Auth0 Actions.
