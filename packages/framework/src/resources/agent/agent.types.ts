@@ -100,6 +100,8 @@ export interface AgentNotification<TPayload extends Record<string, unknown> = Re
   messageId: string;
   platformMessageId: string;
   sentAt: string;
+  /** Rendered outbound notification text, capped by `buildWorkflowOriginLine`. */
+  body: string;
   payload: TPayload;
 }
 

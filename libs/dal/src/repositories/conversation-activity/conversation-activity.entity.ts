@@ -30,12 +30,6 @@ export enum ConversationActivityTypeEnum {
   RUN_FINISH = 'run_finish',
   /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
   RUN_ERROR = 'run_error',
-  /**
-   * Snapshot of the Novu notification that opened (or re-attached to) this conversation.
-   * Carries typed `originData`. Visible on `operator_timeline` only — never in agent handoff
-   * history or the end-user feed.
-   */
-  WORKFLOW_ORIGIN = 'workflow_origin',
 }
 
 /** Storage types for protocol run lifecycle rows — visibility is governed by activity views. */
@@ -77,35 +71,6 @@ export interface ConversationActivityToolData {
   denyActionId?: string;
   /** MCP server name when the gated tool is from an MCP server (request). */
   mcpServerName?: string;
-}
-
-/**
- * Typed snapshot on a `WORKFLOW_ORIGIN` activity. Field optionality matches what
- * `MessageEntity` / conversation participants actually guarantee at write time —
- * missing optional fields are omitted rather than stored as `'unknown'`.
- */
-export interface ConversationActivityOriginData {
-  /** Notification._id that produced the outbound agent message. */
-  notificationId: string;
-  /** NotificationTemplate._id — stable across identifier renames; key rules on this. */
-  templateId: string;
-  /** User-facing workflow identifier (`MessageEntity.templateIdentifier`). */
-  workflowIdentifier: string;
-  /** Originating Message._id. */
-  messageId: string;
-  /** Message channel (e.g. `chat`, `email`). */
-  channel: string;
-  /** Platform-native id of the outbound message — correlates an origin to a quote-reply. */
-  platformMessageId: string;
-  /** ISO timestamp of the originating message (`MessageEntity.createdAt`). */
-  sentAt: string;
-  /** Customer payload from the notification; `{}` when none. */
-  payload: Record<string, unknown>;
-  jobId?: string;
-  stepId?: string;
-  transactionId?: string;
-  /** Conversation subscriber id when one is present among participants. */
-  subscriberId?: string;
 }
 
 export class ConversationActivityEntity {
@@ -154,9 +119,6 @@ export class ConversationActivityEntity {
 
   /** Populated only for the `TOOL_*` activity types — the tool call, decision, or result. */
   toolData?: ConversationActivityToolData;
-
-  /** Populated only when type === WORKFLOW_ORIGIN */
-  originData?: ConversationActivityOriginData;
 
   _environmentId: EnvironmentId;
 

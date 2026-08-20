@@ -4,7 +4,7 @@
  */
 export const WORKFLOW_ORIGIN_LINE_MAX_CHARS = 500;
 
-/** Prose-only line for the WORKFLOW_ORIGIN activity `content` (no payload dump). */
+/** Prose-only lead-in for `AgentNotification.body` and model injection (no payload dump). */
 export function buildWorkflowOriginLine(workflowIdentifier: string, messageContent: string): string {
   const message =
     messageContent.length > 0 ? messageContent : `A notification was sent by the ${workflowIdentifier} workflow.`;

@@ -36,9 +36,6 @@ describe('ConversationActivityLedger', () => {
         overrides.createAgentActivity ?? sinon.stub().resolves({ _id: 'activity-1', identifier: 'act_generated' }),
       createToolActivity: overrides.createToolActivity ?? sinon.stub().resolves({ _id: 'tool-activity' }),
       createSignalActivity: overrides.createSignalActivity ?? sinon.stub().resolves({}),
-      createWorkflowOriginActivity:
-        overrides.createWorkflowOriginActivity ?? sinon.stub().resolves({ _id: 'origin-activity' }),
-      findLatestWorkflowOrigin: overrides.findLatestWorkflowOrigin ?? sinon.stub().resolves(null),
       findOne: overrides.findOne ?? sinon.stub().resolves(null),
       count: overrides.count ?? sinon.stub().resolves(0),
       ...overrides,
@@ -203,38 +200,33 @@ describe('ConversationActivityLedger', () => {
         organizationId: 'org-1',
         platformMessageId: 'wamid.abc',
         platformThreadId: 'whatsapp:15551234567',
-        content: 'Your order shipped',
-        originData: {
+        signalData: {
           notificationId: 'notif-1',
-          templateId: 'wf-1',
           workflowIdentifier: 'order-alerts',
           messageId: 'msg-1',
-          channel: 'chat',
-          platformMessageId: 'wamid.abc',
-          sentAt: '2026-01-01T00:00:00.000Z',
           payload: { orderId: 'ORD-1' },
         },
       };
     }
 
-    it('swallows duplicate-key errors from the WORKFLOW_ORIGIN write', async () => {
+    it('swallows duplicate-key errors from the signal write', async () => {
       const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
       const activityRepository = makeActivityRepository({
-        createWorkflowOriginActivity: sinon.stub().rejects(duplicateError),
+        createSignalActivity: sinon.stub().rejects(duplicateError),
       });
       const logger = makeLogger();
       const ledger = makeLedger(activityRepository, undefined, undefined, undefined, logger);
 
       await ledger.persistWorkflowOriginHydration(makeHydrationParams());
 
-      expect(activityRepository.createWorkflowOriginActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
       expect(logger.warn.calledOnce).to.equal(true);
       expect(logger.warn.firstCall.args[1]).to.equal('Workflow origin already hydrated');
     });
 
-    it('rethrows non-duplicate errors from the WORKFLOW_ORIGIN write', async () => {
+    it('rethrows non-duplicate errors from the signal write', async () => {
       const activityRepository = makeActivityRepository({
-        createWorkflowOriginActivity: sinon.stub().rejects(new Error('mongo timeout')),
+        createSignalActivity: sinon.stub().rejects(new Error('mongo timeout')),
       });
       const ledger = makeLedger(activityRepository);
 
@@ -246,28 +238,34 @@ describe('ConversationActivityLedger', () => {
       }
     });
 
-    it('writes a single WORKFLOW_ORIGIN activity and no MESSAGE or SIGNAL row', async () => {
+    it('writes a single SIGNAL activity and no MESSAGE row', async () => {
       const activityRepository = makeActivityRepository({
-        createWorkflowOriginActivity: sinon.stub().resolves({ _id: 'activity-1' }),
-        createSignalActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
         createAgentActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
       });
       const ledger = makeLedger(activityRepository);
 
       await ledger.persistWorkflowOriginHydration(makeHydrationParams());
 
-      expect(activityRepository.createWorkflowOriginActivity.calledOnce).to.equal(true);
-      expect(activityRepository.createSignalActivity.called).to.equal(false);
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
       expect(activityRepository.createAgentActivity.called).to.equal(false);
-      const args = activityRepository.createWorkflowOriginActivity.firstCall.args[0];
+      const args = activityRepository.createSignalActivity.firstCall.args[0];
       expect(args.identifier).to.equal('workflow-dispatch-origin:wamid.abc');
-      expect(args.originData.workflowIdentifier).to.equal('order-alerts');
-      expect(args.content).to.equal('Your order shipped');
+      expect(args.content).to.equal('Workflow origin: order-alerts');
+      expect(args.signalData).to.deep.equal({
+        type: 'workflow_origin',
+        payload: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-alerts',
+          messageId: 'msg-1',
+          payload: { orderId: 'ORD-1' },
+        },
+      });
     });
   });
 
   describe('isWorkflowOriginHydrated', () => {
-    it('matches the WORKFLOW_ORIGIN identifier written by persistWorkflowOriginHydration', async () => {
+    it('matches the signal identifier written by persistWorkflowOriginHydration', async () => {
       const activityRepository = makeActivityRepository({ count: sinon.stub().resolves(1) });
       const ledger = makeLedger(activityRepository);
 
@@ -277,12 +275,11 @@ describe('ConversationActivityLedger', () => {
       expect(activityRepository.count.firstCall.args[0]).to.deep.equal({
         _environmentId: 'env-1',
         _conversationId: 'conv-1',
-        type: ConversationActivityTypeEnum.WORKFLOW_ORIGIN,
         identifier: 'workflow-dispatch-origin:wamid.abc',
       });
     });
 
-    it('returns false when the WORKFLOW_ORIGIN row is absent', async () => {
+    it('returns false when the signal is absent', async () => {
       const activityRepository = makeActivityRepository({ count: sinon.stub().resolves(0) });
       const ledger = makeLedger(activityRepository);
 

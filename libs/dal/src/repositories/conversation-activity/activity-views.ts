@@ -35,7 +35,6 @@ export const ACTIVITY_KINDS = [
   'run_start',
   'run_finish',
   'run_error',
-  'workflow_origin',
 ] as const;
 
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
@@ -63,8 +62,6 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   run_start: ['client_events'],
   run_finish: ['client_events'],
   run_error: ['client_events'],
-  // Operator audit only — never in agent_handoff / llm_transcript / client_events.
-  workflow_origin: ['operator_timeline'],
 };
 
 export function getKindsForView(view: ActivityView): ActivityKind[] {
@@ -143,9 +140,6 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'run_error':
       return { type: ConversationActivityTypeEnum.RUN_ERROR };
-
-    case 'workflow_origin':
-      return { type: ConversationActivityTypeEnum.WORKFLOW_ORIGIN };
   }
 }
 

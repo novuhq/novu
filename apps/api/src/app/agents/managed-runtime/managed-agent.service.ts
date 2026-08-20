@@ -16,10 +16,8 @@ import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
-import {
-  toWorkflowOriginSnapshot,
-  type WorkflowOriginSnapshot,
-} from '../conversation-runtime/ingress/workflow-origin.helpers';
+import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
+import { WorkflowOriginService } from '../conversation-runtime/ingress/workflow-origin.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
@@ -78,6 +76,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
     private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
+    private readonly workflowOriginService: WorkflowOriginService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -184,10 +183,14 @@ export class ManagedAgentService implements OnModuleInit {
       return null;
     }
 
-    const origin = await this.conversationService.findLatestWorkflowOrigin(
-      params.config.environmentId,
-      params.conversation._id
-    );
+    const platformThreadId = params.conversation.channels?.[0]?.platformThreadId ?? '';
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId: params.agent._id,
+      config: params.config,
+      conversation: params.conversation,
+      platformThreadId,
+      resolution: null,
+    });
 
     return this.dispatch(
       {
@@ -195,8 +198,8 @@ export class ManagedAgentService implements OnModuleInit {
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
-        workflowOrigin: toWorkflowOriginSnapshot(origin),
-        platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
+        workflowOrigin,
+        platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
       },
       params.agent

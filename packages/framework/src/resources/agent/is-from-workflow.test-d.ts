@@ -13,6 +13,7 @@ describe('isFromWorkflow', () => {
       messageId: 'm1',
       platformMessageId: 'p1',
       sentAt: '2026-01-01T00:00:00.000Z',
+      body: 'Your order shipped',
       payload: { trackingNumber: '1Z', orderId: 'ORD-1' },
     } satisfies AgentNotification;
 
@@ -31,6 +32,7 @@ describe('isFromWorkflow', () => {
       messageId: 'm1',
       platformMessageId: 'p1',
       sentAt: '2026-01-01T00:00:00.000Z',
+      body: 'Your order shipped',
       payload: { trackingNumber: '1Z' },
     };
 

@@ -4,15 +4,13 @@ import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/wor
 import { buildLiveSessionMessages } from './build-live-session-messages';
 
 const sampleSnapshot: WorkflowOriginSnapshot = {
-  content: 'Your order ORD-1 shipped',
   data: {
     notificationId: 'notif-1',
-    templateId: 'wf-1',
     workflowIdentifier: 'order-shipped',
     messageId: 'msg-1',
-    channel: 'chat',
     platformMessageId: 'wamid.abc',
     sentAt: '2026-01-01T00:00:00.000Z',
+    body: 'Your order ORD-1 shipped',
     payload: { orderId: 'ORD-1' },
   },
   source: 'hydrated',

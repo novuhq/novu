@@ -12,6 +12,10 @@ describe('WorkflowOriginService', () => {
     participants: [{ type: 'subscriber', id: 'sub1' }],
   };
 
+  afterEach(() => {
+    delete (conversation as { _notificationId?: string })._notificationId;
+  });
+
   function makeLogger() {
     return {
       warn: sinon.stub(),
@@ -37,7 +41,7 @@ describe('WorkflowOriginService', () => {
       getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
       persistWorkflowOriginHydration: overrides.persistWorkflowOriginHydration ?? sinon.stub().resolves(undefined),
       isWorkflowOriginHydrated: overrides.isWorkflowOriginHydrated ?? sinon.stub().resolves(false),
-      findLatestWorkflowOrigin: sinon.stub().resolves(null),
+      setNotificationId: sinon.stub().resolves(undefined),
     };
     const subscriberRepository = {
       findBySubscriberId: overrides.findBySubscriberId ?? sinon.stub().resolves({ _id: 'subscriber-mongo-1' }),
@@ -155,6 +159,7 @@ describe('WorkflowOriginService', () => {
           stepId: 'chat-1',
           content: 'Order ORD-1 shipped',
           identifier: 'D123:1777837477.371619',
+          createdAt: '2026-01-01T00:00:00.000Z',
         } as any,
       });
 
@@ -162,10 +167,9 @@ describe('WorkflowOriginService', () => {
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
       expect(hydrateArgs.platformMessageId).to.equal('1777837477.371619');
-      expect(hydrateArgs.content).to.equal('Order ORD-1 shipped');
-      expect(hydrateArgs.originData.workflowIdentifier).to.equal('order-alerts');
-      expect(hydrateArgs.originData.templateId).to.equal('template-1');
-      expect(hydrateArgs.originData.payload).to.deep.equal({ orderId: 'ORD-1' });
+      expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
+      expect(hydrateArgs.signalData.payload).to.deep.equal({ orderId: 'ORD-1' });
+      expect(conversationService.setNotificationId.calledOnce).to.equal(true);
     });
   });
 
@@ -182,6 +186,10 @@ describe('WorkflowOriginService', () => {
       channels: [{ platform: AgentPlatformEnum.SLACK, _integrationId: 'int1', platformThreadId: 'slack:D123:' }],
       participants: [{ type: 'subscriber', id: 'sub1' }],
     };
+
+    afterEach(() => {
+      delete (conversation as { _notificationId?: string })._notificationId;
+    });
 
     it('hydrates when a resolution is present and returns a hydrated snapshot', async () => {
       const { service, conversationService } = makeService({
@@ -204,50 +212,51 @@ describe('WorkflowOriginService', () => {
         conversation: conversation as any,
         platformThreadId: 'slack:D123:1777837477.371619',
         resolution: { origin: origin as any, notificationId: 'notif1' },
-        existingConversation: null,
       });
 
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       expect(snapshot?.source).to.equal('hydrated');
-      expect(snapshot?.content).to.equal('Order ORD-1 shipped');
+      expect(snapshot?.data.body).to.equal('Order ORD-1 shipped');
       expect(snapshot?.data.workflowIdentifier).to.equal('order-alerts');
-      expect(snapshot?.data.templateId).to.equal('template-1');
     });
 
-    it('reads the latest persisted row on later turns of an existing conversation', async () => {
-      const findLatestWorkflowOrigin = sinon.stub().resolves({
+    it('re-derives from conversation._notificationId on later turns', async () => {
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        templateIdentifier: 'order-alerts',
         content: 'Your order shipped',
-        originData: {
-          notificationId: 'notif1',
-          templateId: 'template-1',
-          workflowIdentifier: 'order-alerts',
-          messageId: 'msg1',
-          channel: 'chat',
-          platformMessageId: 'p1',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: { orderId: 'ORD-9' },
-        },
+        identifier: 'D123:1777837477.371619',
+        channel: 'chat',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+      const { service, conversationService, messageRepository } = makeService({
+        find: sinon.stub().resolves([origin]),
+        notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-9' } }),
       });
-      const { service, conversationService } = makeService();
-      conversationService.findLatestWorkflowOrigin = findLatestWorkflowOrigin;
 
       const snapshot = await service.resolveForTurn({
         agentId: 'agent1',
         config: config as any,
-        conversation: conversation as any,
+        conversation: { ...conversation, _notificationId: 'notif1' } as any,
         platformThreadId: 'slack:D123:1777837477.371619',
         resolution: null,
-        existingConversation: { ...conversation, _notificationId: 'notif1' } as any,
       });
 
-      expect(findLatestWorkflowOrigin.calledOnce).to.equal(true);
+      expect(conversationService.persistWorkflowOriginHydration.called).to.equal(false);
+      expect(messageRepository.find.calledOnce).to.equal(true);
+      expect(messageRepository.find.firstCall.args[0]).to.deep.equal({
+        _environmentId: 'env1',
+        _agentId: 'agent1',
+        _notificationId: 'notif1',
+      });
       expect(snapshot?.source).to.equal('existing');
-      expect(snapshot?.content).to.equal('Your order shipped');
+      expect(snapshot?.data.body).to.equal('Your order shipped');
       expect(snapshot?.data.payload).to.deep.equal({ orderId: 'ORD-9' });
     });
 
-    it('skips the read on a conversation that was never opened from a workflow send', async () => {
-      const { service, conversationService } = makeService();
+    it('skips the re-derive on a conversation that was never opened from a workflow send', async () => {
+      const { service, messageRepository } = makeService();
 
       const snapshot = await service.resolveForTurn({
         agentId: 'agent1',
@@ -255,30 +264,29 @@ describe('WorkflowOriginService', () => {
         conversation: conversation as any,
         platformThreadId: 'slack:D123:1777837477.371619',
         resolution: null,
-        existingConversation: conversation as any,
       });
 
       expect(snapshot).to.equal(null);
-      expect(conversationService.findLatestWorkflowOrigin.called).to.equal(false);
+      expect(messageRepository.find.called).to.equal(false);
     });
 
-    it('reads on a recheck platform even without a create-time notification stamp', async () => {
-      const { service, conversationService } = makeService();
+    it('skips the re-derive on a recheck platform without a notification stamp', async () => {
+      const { service, messageRepository } = makeService();
 
-      await service.resolveForTurn({
+      const snapshot = await service.resolveForTurn({
         agentId: 'agent1',
         config: { ...config, platform: AgentPlatformEnum.WHATSAPP } as any,
         conversation: conversation as any,
         platformThreadId: 'whatsapp:15551234567',
         resolution: null,
-        existingConversation: conversation as any,
       });
 
-      expect(conversationService.findLatestWorkflowOrigin.calledOnce).to.equal(true);
+      expect(snapshot).to.equal(null);
+      expect(messageRepository.find.called).to.equal(false);
     });
 
     it('returns null on a brand-new conversation with nothing to hydrate', async () => {
-      const { service, conversationService } = makeService();
+      const { service, messageRepository } = makeService();
 
       const snapshot = await service.resolveForTurn({
         agentId: 'agent1',
@@ -286,11 +294,10 @@ describe('WorkflowOriginService', () => {
         conversation: conversation as any,
         platformThreadId: 'slack:D123:',
         resolution: null,
-        existingConversation: null,
       });
 
       expect(snapshot).to.equal(null);
-      expect(conversationService.findLatestWorkflowOrigin.called).to.equal(false);
+      expect(messageRepository.find.called).to.equal(false);
     });
   });
 
@@ -606,7 +613,7 @@ describe('WorkflowOriginService', () => {
         whatsappOrigin.identifier
       );
       expect(
-        conversationService.persistWorkflowOriginHydration.firstCall.args[0].originData.workflowIdentifier
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
       ).to.equal('order-alerts');
     });
 
@@ -903,7 +910,7 @@ describe('WorkflowOriginService', () => {
         '777042:42'
       );
       expect(
-        conversationService.persistWorkflowOriginHydration.firstCall.args[0].originData.workflowIdentifier
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
       ).to.equal('order-alerts');
       expect(originData?.data.workflowIdentifier).to.equal('order-alerts');
       expect(originData?.data.payload).to.deep.equal({ orderId: 'ORD-9' });
@@ -1090,7 +1097,7 @@ describe('WorkflowOriginService', () => {
         sendblueOrigin.identifier
       );
       expect(
-        conversationService.persistWorkflowOriginHydration.firstCall.args[0].originData.workflowIdentifier
+        conversationService.persistWorkflowOriginHydration.firstCall.args[0].signalData.workflowIdentifier
       ).to.equal('order-alerts');
     });
 

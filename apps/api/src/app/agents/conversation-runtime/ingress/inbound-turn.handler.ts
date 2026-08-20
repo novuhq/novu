@@ -468,7 +468,6 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       platformThreadId,
       resolution: workflowOrigin,
-      existingConversation,
     });
 
     if (config.isKeyless) {
@@ -1084,6 +1083,24 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId
     );
     const runtime = this.runtimeResolver.resolve(agent);
+
+    const workflowOrigin = await this.workflowOriginService.resolve({
+      agentId,
+      config,
+      platformThreadId: threadId,
+      subscriberId,
+      message: event.message ?? null,
+      existingConversation: conversation,
+      isDirectMessage: event.thread?.isDM,
+    });
+    const workflowOriginData = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId: threadId,
+      resolution: workflowOrigin,
+    });
+
     const turn: ConversationTurn = {
       agentId,
       agent: agent ?? { _id: agentId },
@@ -1098,6 +1115,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
       platformThreadId: threadId,
       reaction: reactionPayload,
+      workflowOrigin: workflowOriginData ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval can be
@@ -1183,7 +1201,6 @@ export class AgentInboundHandler implements OnModuleInit {
       conversation,
       platformThreadId,
       resolution: workflowOrigin,
-      existingConversation,
     });
 
     trackAgentInboundAction(this.analyticsService, {

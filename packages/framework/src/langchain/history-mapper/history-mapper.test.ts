@@ -301,6 +301,7 @@ describe('toLangChainMessages', () => {
       messageId: 'm1',
       platformMessageId: 'p1',
       sentAt: '2026-01-01T00:00:00.000Z',
+      body: 'Your order shipped',
       payload: { orderId: 'ORD-42' },
     };
 
@@ -332,7 +333,7 @@ describe('toLangChainMessages', () => {
 
       expect(shapes(result)[0]).toEqual({ role: 'system', content: 'You are support.' });
       expect(shapes(result)[1].role).toBe('assistant');
-      expect(String(result[1].content)).toContain('order-shipped');
+      expect(String(result[1].content)).toContain('Your order shipped');
       expect(shapes(result)[2]).toEqual({ role: 'user', content: 'where is my order?' });
     });
 

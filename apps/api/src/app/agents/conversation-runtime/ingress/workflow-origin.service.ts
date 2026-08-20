@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
-  ConversationActivityOriginData,
   ConversationEntity,
   ConversationParticipantTypeEnum,
   MessageEntity,
@@ -18,16 +17,16 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import {
   buildWorkflowOriginLine,
   extractAgentEmailOriginToken,
+  extractTeamsQuotedActivityId,
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
-  extractTeamsQuotedActivityId,
   extractWhatsAppQuotedWamid,
   isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
   toProviderMessageLookupKey,
-  toWorkflowOriginSnapshot,
   WORKFLOW_ORIGIN_LOOKBACK_MS,
+  type WorkflowOriginData,
   type WorkflowOriginSnapshot,
 } from './workflow-origin.helpers';
 
@@ -171,7 +170,7 @@ export class WorkflowOriginService {
 
   /**
    * Resolve the turn-scoped origin snapshot: hydrate when a new origin was found,
-   * otherwise read the latest persisted row on an existing conversation.
+   * otherwise re-derive from `conversation._notificationId`.
    */
   async resolveForTurn(params: {
     agentId: string;
@@ -179,9 +178,8 @@ export class WorkflowOriginService {
     conversation: ConversationEntity;
     platformThreadId: string;
     resolution: WorkflowOriginResolution | null;
-    existingConversation: ConversationEntity | null;
   }): Promise<WorkflowOriginSnapshot | null> {
-    const { agentId, config, conversation, platformThreadId, resolution, existingConversation } = params;
+    const { agentId, config, conversation, platformThreadId, resolution } = params;
 
     if (resolution) {
       return this.hydrate({
@@ -193,27 +191,22 @@ export class WorkflowOriginService {
       });
     }
 
-    if (!existingConversation || !this.canHoldWorkflowOrigin(config, existingConversation)) {
+    if (!conversation._notificationId) {
       return null;
     }
 
-    const activity = await this.conversationService.findLatestWorkflowOrigin(config.environmentId, conversation._id);
-
-    return toWorkflowOriginSnapshot(activity);
+    return this.rederiveFromNotificationId({
+      agentId,
+      config,
+      conversation,
+      platformThreadId,
+    });
   }
 
   /**
-   * Whether a persisted origin is even possible, so the read is skipped on the platforms and
-   * conversations that can never hold one (`agent_chat`, `teams`, threads opened without a send).
-   * `_notificationId` is stamped at create; recheck platforms can attach an origin later, without it.
-   */
-  private canHoldWorkflowOrigin(config: ResolvedAgentConfig, existingConversation: ConversationEntity): boolean {
-    return Boolean(existingConversation._notificationId) || RECHECK_WORKFLOW_ORIGIN_PLATFORMS.has(config.platform);
-  }
-
-  /**
-   * Persist the structured origin and return a `hydrated` snapshot. Prefer this return
-   * value over a re-read so there is no read-after-write dependency on the hydration turn.
+   * Persist a logging SIGNAL, refresh `conversation._notificationId`, and return a
+   * `hydrated` snapshot. Prefer this return value over a re-read so there is no
+   * read-after-write dependency on the hydration turn.
    */
   async hydrate(params: {
     agentId: string;
@@ -224,7 +217,8 @@ export class WorkflowOriginService {
   }): Promise<WorkflowOriginSnapshot | null> {
     const { agentId, config, conversation, platformThreadId, origin } = params;
 
-    if (!origin._notificationId) {
+    const notificationId = origin._notificationId;
+    if (!notificationId) {
       return null;
     }
 
@@ -234,12 +228,13 @@ export class WorkflowOriginService {
     }
 
     try {
-      const { content, originData } = await this.buildWorkflowOriginContext(
+      const data = await this.buildWorkflowOriginData(
         origin,
         conversation,
         config.environmentId,
         config.organizationId,
-        platformMessageId
+        platformMessageId,
+        notificationId
       );
 
       await this.conversationService.persistWorkflowOriginHydration({
@@ -250,11 +245,27 @@ export class WorkflowOriginService {
         organizationId: config.organizationId,
         platformMessageId,
         platformThreadId,
-        content,
-        originData,
+        signalData: {
+          notificationId: data.notificationId,
+          jobId: data.jobId,
+          messageId: data.messageId,
+          transactionId: data.transactionId,
+          workflowIdentifier: data.workflowIdentifier,
+          stepId: data.stepId,
+          subscriberId: data.subscriberId,
+          payload: data.payload,
+        },
       });
 
-      return { content, data: originData, source: 'hydrated' };
+      await this.conversationService.setNotificationId(
+        config.environmentId,
+        config.organizationId,
+        conversation._id,
+        notificationId
+      );
+      conversation._notificationId = notificationId;
+
+      return { data, source: 'hydrated' };
     } catch (err) {
       captureAgentWarning(err, {
         component: 'workflow-origin-service',
@@ -264,6 +275,70 @@ export class WorkflowOriginService {
       this.logger.warn(
         { err, agentId, platformThreadId, messageId: origin._id, notificationId: origin._notificationId },
         'Failed to hydrate workflow origin into conversation'
+      );
+
+      return null;
+    }
+  }
+
+  /**
+   * Rebuild the origin snapshot from `conversation._notificationId` on later turns.
+   * Fail-soft: a lookup error must not drop the inbound turn.
+   */
+  private async rederiveFromNotificationId(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    platformThreadId: string;
+  }): Promise<WorkflowOriginSnapshot | null> {
+    const { agentId, config, conversation, platformThreadId } = params;
+    const notificationId = conversation._notificationId;
+    if (!notificationId) {
+      return null;
+    }
+
+    try {
+      const [origin] = await this.messageRepository.find(
+        {
+          _environmentId: config.environmentId,
+          _agentId: agentId,
+          _notificationId: notificationId,
+        },
+        '',
+        {
+          sort: { createdAt: -1 },
+          limit: 1,
+        }
+      );
+
+      if (!origin) {
+        return null;
+      }
+
+      const platformMessageId = resolvePlatformMessageId(config.platform, origin, platformThreadId);
+      if (!platformMessageId) {
+        return null;
+      }
+
+      const data = await this.buildWorkflowOriginData(
+        origin,
+        conversation,
+        config.environmentId,
+        config.organizationId,
+        platformMessageId,
+        notificationId
+      );
+
+      return { data, source: 'existing' };
+    } catch (err) {
+      captureAgentWarning(err, {
+        component: 'workflow-origin-service',
+        operation: 'rederive-workflow-origin',
+        agentId,
+      });
+      this.logger.warn(
+        { err, agentId, conversationId: conversation._id, notificationId },
+        'Failed to re-derive workflow origin from conversation notification id'
       );
 
       return null;
@@ -343,19 +418,17 @@ export class WorkflowOriginService {
     return this.conversationService.isWorkflowOriginHydrated(config.environmentId, conversationId, platformMessageId);
   }
 
-  private async buildWorkflowOriginContext(
+  private async buildWorkflowOriginData(
     originMessage: MessageEntity,
     conversation: ConversationEntity,
     environmentId: string,
     organizationId: string,
-    platformMessageId: string
-  ): Promise<{
-    content: string;
-    originData: ConversationActivityOriginData;
-  }> {
+    platformMessageId: string,
+    notificationId: string
+  ): Promise<WorkflowOriginData> {
     const notification = await this.notificationRepository.findOne(
       {
-        _id: originMessage._notificationId,
+        _id: notificationId,
         _environmentId: environmentId,
         _organizationId: organizationId,
       },
@@ -373,27 +446,24 @@ export class WorkflowOriginService {
 
     const storedContent = typeof originMessage.content === 'string' ? originMessage.content.trim() : '';
     const workflowIdentifier = originMessage.templateIdentifier || 'unknown';
-    const content = buildWorkflowOriginLine(workflowIdentifier, storedContent);
+    const body = buildWorkflowOriginLine(workflowIdentifier, storedContent);
 
     const subscriberId = conversation.participants.find(
       (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
     )?.id;
 
-    const originData: ConversationActivityOriginData = {
-      notificationId: originMessage._notificationId!,
-      templateId: originMessage._templateId,
+    return {
+      notificationId,
       workflowIdentifier,
       messageId: originMessage._id,
-      channel: originMessage.channel,
       platformMessageId,
       sentAt: originMessage.createdAt,
+      body,
       payload,
       ...(originMessage._jobId ? { jobId: originMessage._jobId } : {}),
       ...(originMessage.stepId ? { stepId: originMessage.stepId } : {}),
       ...(originMessage.transactionId ? { transactionId: originMessage.transactionId } : {}),
       ...(subscriberId ? { subscriberId } : {}),
     };
-
-    return { content, originData };
   }
 }

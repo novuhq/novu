@@ -91,7 +91,10 @@ export function toLangChainMessages(
   const index = buildApprovalIndex(history, freshResults);
   const mapped = history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
   const withOrigin = notification
-    ? [new AIMessage(buildWorkflowOriginInjection(notification.workflowId, '', notification.payload)), ...mapped]
+    ? [
+        new AIMessage(buildWorkflowOriginInjection(notification.workflowId, notification.body, notification.payload)),
+        ...mapped,
+      ]
     : mapped;
 
   if (!system) {

@@ -27,6 +27,6 @@ export function buildLiveSessionMessages(params: {
 export function buildOriginAssistantMessage(origin: WorkflowOriginSnapshot): Message {
   return {
     role: MessageRole.ASSISTANT,
-    content: buildWorkflowOriginInjection(origin.data.workflowIdentifier, origin.content, origin.data.payload),
+    content: buildWorkflowOriginInjection(origin.data.workflowIdentifier, origin.data.body, origin.data.payload),
   };
 }

@@ -43,12 +43,7 @@ export interface ListActivityViewParams {
   before?: string;
 }
 
-/**
- * Stable per-origin identifier for the WORKFLOW_ORIGIN activity row.
- * Purely an idempotency key against the unique `{ _environmentId, identifier }` index —
- * concurrent hydration retries collide here and are treated as success.
- */
-function workflowOriginActivityIdentifier(platformMessageId: string): string {
+function workflowOriginSignalIdentifier(platformMessageId: string): string {
   return `workflow-dispatch-origin:${platformMessageId}`;
 }
 
@@ -446,11 +441,6 @@ export class ConversationActivityLedger {
     });
   }
 
-  /**
-   * Whether this origin is already persisted as a WORKFLOW_ORIGIN activity.
-   * Filtered by both identifier and type so orphaned staging SIGNAL rows with the same
-   * identifier do not count as hydrated (create remains duplicate-key tolerant).
-   */
   async isWorkflowOriginHydrated(
     environmentId: string,
     conversationId: string,
@@ -460,8 +450,7 @@ export class ConversationActivityLedger {
       {
         _environmentId: environmentId,
         _conversationId: conversationId,
-        type: ConversationActivityTypeEnum.WORKFLOW_ORIGIN,
-        identifier: workflowOriginActivityIdentifier(platformMessageId),
+        identifier: workflowOriginSignalIdentifier(platformMessageId),
       },
       1
     );
@@ -469,32 +458,28 @@ export class ConversationActivityLedger {
     return count > 0;
   }
 
-  async findLatestWorkflowOrigin(
-    environmentId: string,
-    conversationId: string
-  ): Promise<ConversationActivityEntity | null> {
-    return this.activityRepository.findLatestWorkflowOrigin(environmentId, conversationId);
-  }
-
   /**
-   * Persist a single WORKFLOW_ORIGIN activity row. The stable
+   * Persist a logging-only SIGNAL that this conversation was opened (or re-attached)
+   * from a workflow send. Not part of agent history. The stable
    * `workflow-dispatch-origin:{platformMessageId}` identifier is the idempotency key —
    * duplicate-key collisions under concurrency are treated as success.
    */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
     try {
-      await this.activityRepository.createWorkflowOriginActivity({
-        identifier: workflowOriginActivityIdentifier(params.platformMessageId),
+      await this.persistSignal({
         conversationId: params.conversationId,
-        platform: params.channel.platform,
-        integrationId: params.channel._integrationId,
-        platformThreadId: params.platformThreadId,
-        agentId: params.agentIdentifier,
-        content: params.content,
-        originData: params.originData,
-        platformMessageId: params.platformMessageId,
+        channel: params.channel,
+        agentIdentifier: params.agentIdentifier,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
+        identifier: workflowOriginSignalIdentifier(params.platformMessageId),
+        platformThreadId: params.platformThreadId,
+        platformMessageId: params.platformMessageId,
+        content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
+        signalData: {
+          type: 'workflow_origin',
+          payload: params.signalData,
+        },
       });
     } catch (err) {
       if (!isDuplicateKeyError(err)) {

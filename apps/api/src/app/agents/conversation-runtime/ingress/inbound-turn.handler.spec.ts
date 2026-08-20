@@ -47,6 +47,7 @@ describe('AgentInboundHandler', () => {
 
   function makeOriginSnapshot(
     overrides: {
+      body?: string;
       content?: string;
       platformMessageId?: string;
       payload?: Record<string, unknown>;
@@ -54,15 +55,13 @@ describe('AgentInboundHandler', () => {
     } = {}
   ) {
     return {
-      content: overrides.content ?? 'Order alerts',
       data: {
         notificationId: 'notif1',
-        templateId: 'wf1',
         workflowIdentifier: 'order-alerts',
         messageId: 'msg1',
-        channel: 'chat',
         platformMessageId: overrides.platformMessageId ?? '1777837477.371619',
         sentAt: '2026-01-01T00:00:00.000Z',
+        body: overrides.body ?? overrides.content ?? 'Order alerts',
         payload: overrides.payload ?? {},
       },
       source: overrides.source ?? ('hydrated' as const),
@@ -586,7 +585,6 @@ describe('AgentInboundHandler', () => {
       expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
       expect(workflowOriginService.resolveForTurn.firstCall.args[0]).to.include({
         resolution: null,
-        existingConversation,
       });
       expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
       expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin.source).to.equal('existing');
@@ -1851,6 +1849,21 @@ describe('AgentInboundHandler', () => {
       expect(attachmentStorage.storeInbound.firstCall.args[1].platformMessageId).to.equal('source-msg');
       const params = bridgeExecutor.execute.firstCall.args[0];
       expect(params.reaction.sourceMessageStoredAttachments).to.deep.equal(storedAttachments);
+    });
+
+    it('attaches the workflow origin to the ON_REACTION turn', async () => {
+      const snapshot = makeOriginSnapshot();
+      const { handler, bridgeExecutor, workflowOriginService } = makeHandler();
+      workflowOriginService.resolveForTurn.resolves(snapshot);
+
+      await handler.handleReaction('agent1', config as any, makeReactionEvent() as any);
+
+      expect(workflowOriginService.resolve.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.event).to.equal(AgentEventEnum.ON_REACTION);
+      expect(params.workflowOrigin).to.deep.equal(snapshot);
     });
   });
 });

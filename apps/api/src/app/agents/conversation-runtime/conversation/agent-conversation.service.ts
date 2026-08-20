@@ -369,11 +369,13 @@ export class AgentConversationService {
     return this.ledger.isWorkflowOriginHydrated(environmentId, conversationId, platformMessageId);
   }
 
-  async findLatestWorkflowOrigin(
+  async setNotificationId(
     environmentId: string,
-    conversationId: string
-  ): Promise<ConversationActivityEntity | null> {
-    return this.ledger.findLatestWorkflowOrigin(environmentId, conversationId);
+    organizationId: string,
+    conversationId: string,
+    notificationId: string
+  ): Promise<void> {
+    await this.conversationRepository.setNotificationId(environmentId, organizationId, conversationId, notificationId);
   }
 
   async listForView(params: {

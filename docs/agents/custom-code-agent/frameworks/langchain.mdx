@@ -125,6 +125,7 @@ const messages = toLangChainMessages(ctx);
 ```
 
 - `ctx.history` already includes the current inbound message - do not append the `message` argument on top of it.
+- When `ctx.notification` is set, it includes `body` (capped outbound notification text) plus `payload`, `workflowId`, and ids.
 - Pass `system` only when you are **not** setting `system` on `LangChainAgentConfig` - Novu forwards that field to `createAgent({ prompt })` for you.
 - Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
 - Passing `ctx.history` instead of `ctx` skips origin injection. Use that when you cherry-pick typed fields with `isFromWorkflow`, then prepend your own `AIMessage`. Do not call `toLangChainMessages(ctx)` after a custom prepend — you would inject the origin twice.

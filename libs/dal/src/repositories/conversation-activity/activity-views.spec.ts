@@ -33,16 +33,7 @@ describe('activity-views', () => {
       'tool_approval_decision',
       'mcp_connection_request',
       'mcp_connection_result',
-      'workflow_origin',
     ]);
-  });
-
-  it('keeps workflow_origin on the operator timeline only', () => {
-    expect(getKindsForView('operator_timeline')).to.include('workflow_origin');
-    expect(getKindsForView('agent_handoff')).to.not.include('workflow_origin');
-    expect(getKindsForView('llm_transcript')).to.not.include('workflow_origin');
-    expect(getKindsForView('client_events')).to.not.include('workflow_origin');
-    expect(getKindsForView('approval_activities')).to.not.include('workflow_origin');
   });
 
   it('keeps human messages in approval_activities so the approval requester can be resolved', () => {

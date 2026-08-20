@@ -211,7 +211,6 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
 
     // Operator/model-facing only — no client event.
     case ConversationActivityTypeEnum.SIGNAL:
-    case ConversationActivityTypeEnum.WORKFLOW_ORIGIN:
       return null;
 
     default: {

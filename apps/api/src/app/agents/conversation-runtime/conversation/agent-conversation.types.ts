@@ -1,9 +1,4 @@
-import type {
-  ConversationActivityEntity,
-  ConversationActivityOriginData,
-  ConversationActivitySenderTypeEnum,
-  ConversationChannel,
-} from '@novu/dal';
+import type { ConversationActivityEntity, ConversationActivitySenderTypeEnum, ConversationChannel } from '@novu/dal';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 
 export interface PersistInboundMessageParams {
@@ -89,9 +84,7 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
 export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
   platformMessageId: string;
   platformThreadId: string;
-  /** Prose-only line for operator timeline — no payload dump. */
-  content: string;
-  originData: ConversationActivityOriginData;
+  signalData: Record<string, unknown>;
 }
 
 export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {

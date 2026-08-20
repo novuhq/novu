@@ -183,24 +183,15 @@ describe('activity-to-events run lifecycle', () => {
     ).to.deep.equal(['approval-activity-1', 'approval-activity-2']);
   });
 
-  it('drops WORKFLOW_ORIGIN and SIGNAL activities from client events', () => {
+  it('drops SIGNAL activities from client events', () => {
     const envelopes = mapNewestFirstEventActivities(
       [
         activity({
-          type: ConversationActivityTypeEnum.WORKFLOW_ORIGIN,
+          type: ConversationActivityTypeEnum.SIGNAL,
           identifier: 'workflow-dispatch-origin:wamid.1',
           sequence: 2,
-          content: 'Triggered by workflow order-shipped',
-          originData: {
-            notificationId: 'n1',
-            templateId: 'w1',
-            workflowIdentifier: 'order-shipped',
-            messageId: 'm1',
-            channel: 'chat',
-            platformMessageId: 'wamid.1',
-            sentAt: '2026-01-01T00:00:00.000Z',
-            payload: { orderId: 'ORD-1' },
-          },
+          content: 'Workflow origin: order-shipped',
+          signalData: { type: 'workflow_origin', payload: { workflowIdentifier: 'order-shipped' } },
         }),
         activity({
           type: ConversationActivityTypeEnum.SIGNAL,

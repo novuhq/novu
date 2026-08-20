@@ -8,7 +8,6 @@ import { ActivityView, compileActivityViewMatch, viewUsesSequencePagination } fr
 import {
   ConversationActivityDBModel,
   ConversationActivityEntity,
-  ConversationActivityOriginData,
   ConversationActivitySenderTypeEnum,
   ConversationActivitySignalData,
   ConversationActivityToolData,
@@ -281,60 +280,6 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
-  }
-
-  async createWorkflowOriginActivity(params: {
-    identifier: string;
-    conversationId: string;
-    platform: string;
-    integrationId: string;
-    platformThreadId: string;
-    agentId: string;
-    content: string;
-    originData: ConversationActivityOriginData;
-    platformMessageId: string;
-    environmentId: string;
-    organizationId: string;
-  }): Promise<ConversationActivityEntity> {
-    return this.create({
-      identifier: params.identifier,
-      _conversationId: params.conversationId,
-      type: ConversationActivityTypeEnum.WORKFLOW_ORIGIN,
-      platform: params.platform,
-      _integrationId: params.integrationId,
-      platformThreadId: params.platformThreadId,
-      senderType: ConversationActivitySenderTypeEnum.SYSTEM,
-      senderId: params.agentId,
-      content: params.content,
-      originData: params.originData,
-      platformMessageId: params.platformMessageId,
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-    });
-  }
-
-  /**
-   * Most recent workflow-origin snapshot for a conversation. Deliberately bypasses
-   * AGENT_HISTORY_LIMIT / listForView so early origins stay reachable on long threads.
-   */
-  async findLatestWorkflowOrigin(
-    environmentId: string,
-    conversationId: string
-  ): Promise<ConversationActivityEntity | null> {
-    const [origin] = await this.find(
-      {
-        _environmentId: environmentId,
-        _conversationId: conversationId,
-        type: ConversationActivityTypeEnum.WORKFLOW_ORIGIN,
-      },
-      '*',
-      {
-        sort: { createdAt: -1 },
-        limit: 1,
-      }
-    );
-
-    return origin ?? null;
   }
 
   async createToolActivity(params: {

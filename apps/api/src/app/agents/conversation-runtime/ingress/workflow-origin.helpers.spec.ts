@@ -2,49 +2,10 @@ import { expect } from 'chai';
 import {
   buildWorkflowOriginInjection,
   buildWorkflowOriginLine,
-  toWorkflowOriginSnapshot,
   WORKFLOW_ORIGIN_LINE_MAX_CHARS,
 } from './workflow-origin.helpers';
 
 describe('workflow-origin.helpers', () => {
-  describe('toWorkflowOriginSnapshot', () => {
-    it('maps a persisted activity into an existing snapshot', () => {
-      const snapshot = toWorkflowOriginSnapshot({
-        content: 'Your order shipped',
-        originData: {
-          notificationId: 'n1',
-          templateId: 't1',
-          workflowIdentifier: 'order-shipped',
-          messageId: 'm1',
-          channel: 'chat',
-          platformMessageId: 'p1',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: { orderId: 'ORD-1' },
-        },
-      });
-
-      expect(snapshot).to.deep.equal({
-        content: 'Your order shipped',
-        data: {
-          notificationId: 'n1',
-          templateId: 't1',
-          workflowIdentifier: 'order-shipped',
-          messageId: 'm1',
-          channel: 'chat',
-          platformMessageId: 'p1',
-          sentAt: '2026-01-01T00:00:00.000Z',
-          payload: { orderId: 'ORD-1' },
-        },
-        source: 'existing',
-      });
-    });
-
-    it('returns null when originData is missing', () => {
-      expect(toWorkflowOriginSnapshot({ content: 'x', originData: undefined })).to.equal(null);
-      expect(toWorkflowOriginSnapshot(null)).to.equal(null);
-    });
-  });
-
   describe('buildWorkflowOriginLine', () => {
     it('uses the stored message content when present', () => {
       expect(buildWorkflowOriginLine('order-shipped', 'Your order shipped')).to.equal('Your order shipped');

@@ -112,6 +112,7 @@ messages: toModelMessages(ctx);
 ```
 
 - `ctx.history` already includes the current inbound message - do not append the `message` argument on top of it.
+- When `ctx.notification` is set, it includes `body` (capped outbound notification text) plus `payload`, `workflowId`, and ids.
 - Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
 - Passing `ctx.history` instead of `ctx` skips origin injection (the array form is origin-blind). Use that when you cherry-pick typed fields with `isFromWorkflow`:
 

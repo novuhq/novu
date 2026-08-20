@@ -1,4 +1,4 @@
-import type { ConversationActivityEntity, ConversationActivityOriginData, MessageEntity } from '@novu/dal';
+import type { MessageEntity } from '@novu/dal';
 import {
   buildWorkflowOriginInjection,
   buildWorkflowOriginLine,
@@ -8,43 +8,40 @@ import type { Message } from 'chat';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { asRecord } from '../../shared/util/raw-record';
 
-export {
-  buildWorkflowOriginInjection,
-  buildWorkflowOriginLine,
-  WORKFLOW_ORIGIN_LINE_MAX_CHARS,
-};
+export { buildWorkflowOriginInjection, buildWorkflowOriginLine, WORKFLOW_ORIGIN_LINE_MAX_CHARS };
 
 /**
- * Turn-scoped origin snapshot. Carries prose + structured data so bridge and managed
- * can share one resolve path without losing the outbound body.
- *
- * `source` distinguishes a just-hydrated origin (new to a live model session) from one
- * read back on a later turn (already injected when the session was opened / reseeded).
+ * Structured origin snapshot for a turn. Shared by bridge (`ctx.notification`) and
+ * managed (ephemeral ASSISTANT inject). Not persisted as a typed activity.
  */
-export interface WorkflowOriginSnapshot {
-  /** Outbound message body from the WORKFLOW_ORIGIN activity. */
-  content: string;
-  data: ConversationActivityOriginData;
-  /**
-   * `hydrated` — persisted on this turn; a live model session has not seen it yet.
-   * `existing` — read back from a previous turn.
-   */
-  source: 'hydrated' | 'existing';
+export interface WorkflowOriginData {
+  notificationId: string;
+  workflowIdentifier: string;
+  messageId: string;
+  platformMessageId: string;
+  sentAt: string;
+  /** Rendered outbound notification text, capped by `buildWorkflowOriginLine`. */
+  body: string;
+  payload: Record<string, unknown>;
+  jobId?: string;
+  stepId?: string;
+  transactionId?: string;
+  subscriberId?: string;
 }
 
-/** Map a persisted WORKFLOW_ORIGIN row into an `existing` snapshot, or null when incomplete. */
-export function toWorkflowOriginSnapshot(
-  activity: Pick<ConversationActivityEntity, 'content' | 'originData'> | null | undefined
-): WorkflowOriginSnapshot | null {
-  if (!activity?.originData) {
-    return null;
-  }
-
-  return {
-    content: activity.content,
-    data: activity.originData,
-    source: 'existing',
-  };
+/**
+ * Turn-scoped origin snapshot.
+ *
+ * `source` distinguishes a just-hydrated origin (new to a live model session) from one
+ * re-derived on a later turn (already injected when the session was opened / reseeded).
+ */
+export interface WorkflowOriginSnapshot {
+  data: WorkflowOriginData;
+  /**
+   * `hydrated` — persisted on this turn; a live model session has not seen it yet.
+   * `existing` — re-derived from `conversation._notificationId`.
+   */
+  source: 'hydrated' | 'existing';
 }
 
 export const WORKFLOW_ORIGIN_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;

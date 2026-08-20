@@ -11,12 +11,7 @@ import {
   SsrfBlockedError,
   safeOutboundJsonRequest,
 } from '@novu/application-generic';
-import {
-  ConversationActivityEntity,
-  type ConversationActivityOriginData,
-  ConversationEntity,
-  SubscriberEntity,
-} from '@novu/dal';
+import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
   AgentContextPayload,
@@ -30,19 +25,14 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import {
-  AGENT_PLATFORM_PROVISION_SOURCE,
-  AGENT_PROVISION_DATA_KEYS,
-  AgentSubscriberAccessEnum,
-  FeatureFlagsKeysEnum,
-} from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import type { WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
+import type { WorkflowOriginData, WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
 
@@ -706,13 +696,14 @@ export class BridgeExecutorService {
   }
 }
 
-function mapWorkflowOriginToNotification(origin: ConversationActivityOriginData): AgentNotification {
+function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotification {
   return {
     id: origin.notificationId,
     workflowId: origin.workflowIdentifier,
     messageId: origin.messageId,
     platformMessageId: origin.platformMessageId,
     sentAt: origin.sentAt,
+    body: origin.body,
     payload: origin.payload,
   };
 }

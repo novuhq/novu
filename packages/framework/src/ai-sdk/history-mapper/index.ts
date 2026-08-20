@@ -98,7 +98,7 @@ export function toModelMessages(source: AgentTranscriptSource): ModelMessage[] {
   return [
     {
       role: 'assistant',
-      content: buildWorkflowOriginInjection(notification.workflowId, '', notification.payload),
+      content: buildWorkflowOriginInjection(notification.workflowId, notification.body, notification.payload),
     },
     ...mapped,
   ];
