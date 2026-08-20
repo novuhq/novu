@@ -38,7 +38,8 @@ describe('agent-chat-connect-prompt', () => {
     const prompt = buildOnboardingAgentPrompt('https://api.novu.co');
 
     expect(prompt).not.toContain('novu@rc');
-    expect(prompt).toContain('Add Agent Chat to my app');
+    expect(prompt).toContain('Connect a Novu agent to Agent Chat for this project');
+    expect(prompt).not.toContain('to my app');
     expect(prompt).toContain('https://novu.co/agents.md');
   });
 });

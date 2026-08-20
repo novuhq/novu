@@ -24,7 +24,8 @@ Do **not** ask Step 0 when the user only wants to connect a **channel** in the c
 
 **Mandatory routing rules:**
 
-- **Agent Chat / web chat named explicitly** → use `--channel agent-chat` and skip the channel picker. The dashboard prompt "Add Agent Chat to my app" selects the managed path: do not pass `--runtime` or `--agent-chat-setup`. Use the custom code bridge only when the user also asks for AI SDK, LangChain, or handler wiring. This rule takes precedence over generic "add an agent to my app" wording.
+- **Agent Chat / web chat named explicitly** → use `--channel agent-chat` and skip the channel picker. Use the custom code bridge only when the user also asks for AI SDK, LangChain, or handler wiring; otherwise use the managed path. On an Agent Chat-only request, do not pass `--runtime` or `--agent-chat-setup`. This rule takes precedence over generic "add an agent to my app" wording.
+- **MS Teams + no dashboard-login signal** → dashboard redirect. Do **not** run `npx novu connect`. Never pass `--channel teams` with `--keyless`.
 - **"Add an agent to my app"** (or equivalent) → **custom code bridge**. Never use the managed path.
 - **"Connect a Novu agent to \<channel\> for this project"** (or similar channel-only wording) → **managed**. **Never** bridge. *"For this project"* means the current workspace directory, not "wire my handler."
 - **"in my repo" / "in my codebase"** alone is **not** a bridge signal unless they also want AI SDK / LangChain / handler wiring.
@@ -631,7 +632,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
   | Empty bridge workspace | `✓ Agent app ready with Agent Chat.` | Complete the bridge requirements file. Run the printed `npm run dev:novu` command. |
   | Explicit `--agent-chat-setup skip` | `✓ Agent Chat linked — add it to your app.` | Report the dashboard Chat URL. Do not claim that local UI wiring is complete. |
 
-  On a bridge path, always complete the bridge requirements file. The Agent Chat setup action does not replace handler wiring. Begin the final response with the literal outcome-specific `✓` line printed by the CLI. A keyless Agent Chat run does not print a claim link, so do not promise one.
+  On a bridge path, always complete the bridge requirements file. The Agent Chat setup action does not replace handler wiring. The first line of the final user-facing message must be the exact outcome-specific `✓` line printed by the CLI. Do not list files, install steps, or process narration before that line. A keyless Agent Chat run does not print a claim link, so do not promise one.
 
 - **skip** — nothing to hand off; the agent is created without a channel.
 

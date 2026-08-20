@@ -68,7 +68,7 @@ export const catalog = {
     );
 
     return invalidCommand
-      ? fail('managed Agent Chat passed --runtime or an unrequested --agent-chat-setup override')
+      ? fail(`managed Agent Chat passed --runtime or an unrequested --agent-chat-setup override: ${invalidCommand}`)
       : 'pass';
   },
 

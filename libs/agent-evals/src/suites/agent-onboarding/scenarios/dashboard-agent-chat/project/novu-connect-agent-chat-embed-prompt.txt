@@ -2,4 +2,6 @@
 
 The CLI already wrote the Novu environment values.
 
-Add an Agent Chat UI to this project with `@novu/react`. Use `NovuProvider` and `useAgentChat`, and follow the existing project conventions.
+Add a minimal Agent Chat UI with `@novu/react` (`NovuProvider` and `useAgentChat`). After the UI change, the first line of your final user-facing message must be:
+
+✓ Agent Chat connected

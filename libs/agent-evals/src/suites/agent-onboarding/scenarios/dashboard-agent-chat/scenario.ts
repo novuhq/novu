@@ -10,7 +10,7 @@ export const scenario: EvalScenario<ConnectFlags> = {
   category: 'authenticated',
   description: 'Dashboard Agent Chat prompt uses the dedicated channel and follows the embed handoff.',
   userPrompt:
-    "I'm signed in to the Novu dashboard, so use dashboard login (not keyless mode). Add Agent Chat to my app following instructions from this markdown file: https://novu.co/agents.md",
+    "I'm signed in to the Novu dashboard, so use dashboard login (not keyless mode). Connect a Novu agent to Agent Chat for this project following instructions from this markdown file: https://novu.co/agents.md",
   projectRoot,
   scriptedAnswers: [{ questionContains: 'description', optionId: 'approve' }],
   tape: connectTape({
