@@ -76,6 +76,8 @@ export type AgentChatConnectOutcome = {
   embedPromptFile?: string;
   /** Env files updated during the embed path. */
   envPaths?: string[];
+  /** Project already has handler + chat UI wired — skip setup prompt by default. */
+  alreadyWired?: boolean;
 };
 
 export type ConnectAgentChatHandoff = {

@@ -260,13 +260,6 @@ export type Phase =
       projectKind: 'empty' | 'project';
       resolve: (mode: import('../types').AgentChatSetupMode) => void;
     }
-  | {
-      kind: 'agent-chat-embed-ready';
-      embedPrompt: string;
-      embedPromptFile?: string;
-      envPaths: string[];
-      resolve: () => void;
-    }
   | { kind: 'scaffolding-agent-chat' }
   | { kind: 'sending-welcome' }
   | {
@@ -288,6 +281,9 @@ export type Phase =
       customCodeOutcome?: CustomCodeConnectOutcome;
       agentChatOutcome?: AgentChatConnectOutcome;
       agentChatHandoff?: { dashboardUrl: string; embedPromptFile?: string };
+      embedPrompt?: string;
+      embedPromptFile?: string;
+      resolveDismiss?: () => void | Promise<void>;
     }
   | { kind: 'error'; message: string };
 

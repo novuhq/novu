@@ -93,7 +93,6 @@ export function computeOrbTint(
     case 'adding-agent-chat':
     case 'agent-chat-handoff':
     case 'pick-agent-chat-setup':
-    case 'agent-chat-embed-ready':
     case 'scaffolding-agent-chat':
       return CHANNEL_TINTS['agent-chat'];
     case 'success': {
@@ -150,7 +149,6 @@ export function computeOrbLabel(
     case 'adding-agent-chat':
     case 'agent-chat-handoff':
     case 'pick-agent-chat-setup':
-    case 'agent-chat-embed-ready':
     case 'scaffolding-agent-chat':
       return CHANNEL_LABELS['agent-chat'];
     case 'dashboard-channel-ready':

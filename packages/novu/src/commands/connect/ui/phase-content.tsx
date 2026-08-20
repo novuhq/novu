@@ -13,11 +13,12 @@ import {
   UNCLAIMED_KEYLESS_HINT,
 } from '../dashboard-urls';
 import { ConnectUserCancelledError } from '../errors';
+import { resolveConnectEmbedRuntime } from '../pipeline/agent-chat/run-agent-chat-setup';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
 import type { AgentChatSetupMode, ChannelChoice } from '../types';
+import { AgentChatEmbedFinishContent } from './agent-chat-embed-finish-content';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
-import { copyToClipboard } from './copy-to-clipboard';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { LlmAuthPicker } from './llm-auth-picker';
@@ -274,16 +275,6 @@ export function PhaseContent({
 
     case 'pick-agent-chat-setup':
       return <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />;
-
-    case 'agent-chat-embed-ready':
-      return (
-        <AgentChatEmbedReadyContent
-          embedPrompt={phase.embedPrompt}
-          embedPromptFile={phase.embedPromptFile}
-          envPaths={phase.envPaths}
-          onContinue={phase.resolve}
-        />
-      );
 
     case 'scaffolding-agent-chat':
       return (
@@ -611,12 +602,10 @@ function AgentChatSetupPickContent({
     projectKind === 'empty'
       ? [
           { label: 'Scaffold a new example app', value: 'scaffold' as const },
-          { label: 'Add to my existing app (env + AI prompt)', value: 'embed' as const },
           { label: 'Skip for now', value: 'skip' as const },
         ]
       : [
-          { label: 'Add to this project (env + AI prompt)', value: 'embed' as const },
-          { label: 'Scaffold a new example app nearby', value: 'scaffold' as const },
+          { label: 'Add to this project', value: 'embed' as const },
           { label: 'Skip for now', value: 'skip' as const },
         ];
   const [idx, setIdx] = React.useState(0);
@@ -636,8 +625,8 @@ function AgentChatSetupPickContent({
       <Text bold>Add Agent Chat to your app</Text>
       <Text dimColor>
         {projectKind === 'empty'
-          ? 'Scaffold a standalone example, or add env vars + an AI prompt for your existing app.'
-          : 'We found an existing project. Add env vars + a copy-paste prompt, or scaffold a new example app.'}
+          ? 'Start from a ready-made example in this folder.'
+          : 'We will add Novu env vars here, then give you a prompt to paste into your coding agent.'}
       </Text>
       {options.map((opt, rowIndex) => {
         const isSelected = rowIndex === idx;
@@ -652,53 +641,6 @@ function AgentChatSetupPickContent({
         );
       })}
       <Text dimColor>↑↓ to move · Enter to select</Text>
-    </Box>
-  );
-}
-
-function AgentChatEmbedReadyContent({
-  embedPrompt,
-  embedPromptFile,
-  envPaths,
-  onContinue,
-}: {
-  embedPrompt: string;
-  embedPromptFile?: string;
-  envPaths: string[];
-  onContinue: () => void;
-}): React.ReactElement {
-  const [copyState, setCopyState] = React.useState<'idle' | 'copied' | 'failed'>('idle');
-
-  useInput((input, key) => {
-    if (key.return) {
-      onContinue();
-
-      return;
-    }
-
-    if (input === 'c' || input === 'C') {
-      void copyToClipboard(embedPrompt).then((ok) => setCopyState(ok ? 'copied' : 'failed'));
-    }
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold>Ready to wire Agent Chat</Text>
-      <Text dimColor>Paste the prompt into Cursor, Claude Code, or your coding agent to finish wiring.</Text>
-      {envPaths.map((envPath) => (
-        <Text key={envPath} dimColor>{`Env: ${envPath}`}</Text>
-      ))}
-      <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={0}>
-        <Text wrap="wrap">{embedPrompt}</Text>
-      </Box>
-      {copyState === 'copied' ? <Text color="green">✓ Prompt copied to clipboard.</Text> : null}
-      {copyState === 'failed' && embedPromptFile ? (
-        <Text color="yellow">Clipboard unavailable — the prompt is saved at {embedPromptFile}</Text>
-      ) : null}
-      {copyState === 'failed' && !embedPromptFile ? (
-        <Text color="yellow">Clipboard unavailable — select and copy the prompt above.</Text>
-      ) : null}
-      <Text color="cyan">Enter · continue C · copy prompt</Text>
     </Box>
   );
 }
@@ -720,9 +662,24 @@ function SuccessView({
     chatSdkOutcome,
     aiSdkOutcome,
     langChainOutcome,
-    agentChatHandoff,
     agentChatOutcome,
+    embedPrompt,
+    embedPromptFile,
+    resolveDismiss,
   } = phase;
+  const isAgentChatEmbed =
+    connectedChannel === 'agent-chat' &&
+    agentChatOutcome?.mode === 'embed' &&
+    (Boolean(embedPrompt) || agentChatOutcome.alreadyWired);
+  const embedRuntime = resolveConnectEmbedRuntime(connectMode ?? 'ai-sdk');
+  const scaffoldMessage = isAgentChatEmbed
+    ? null
+    : resolveBridgeSetupFollowUpMessage(connectMode, {
+        chatSdk: chatSdkOutcome,
+        aiSdk: aiSdkOutcome,
+        langChain: langChainOutcome,
+        customCode: phase.customCodeOutcome,
+      });
   const destination = resolveConnectSuccessDestination({
     connectDashboardUrl,
     environmentSlug,
@@ -742,12 +699,22 @@ function SuccessView({
     return null;
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
-  const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
-    chatSdk: chatSdkOutcome,
-    aiSdk: aiSdkOutcome,
-    langChain: langChainOutcome,
-    customCode: phase.customCodeOutcome,
-  });
+
+  if (isAgentChatEmbed) {
+    return (
+      <Box flexDirection="column" gap={1}>
+        <Text color="green">✓ Agent Chat connected</Text>
+        <AgentChatEmbedFinishContent
+          embedPrompt={embedPrompt ?? ''}
+          embedPromptFile={embedPromptFile}
+          envPaths={agentChatOutcome?.envPaths}
+          connectMode={embedRuntime}
+          alreadyWired={agentChatOutcome?.alreadyWired}
+          onDismiss={resolveDismiss}
+        />
+      </Box>
+    );
+  }
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -760,17 +727,6 @@ function SuccessView({
         </Text>
         {connectedChannel === 'agent-chat' ? (
           <>
-            {agentChatHandoff?.dashboardUrl ? (
-              <Text color="cyan">Try chat in the dashboard — link copied above.</Text>
-            ) : null}
-            {agentChatOutcome?.mode === 'embed' ? (
-              <>
-                {agentChatOutcome.envPaths?.map((envPath) => (
-                  <Text key={envPath} dimColor>{`Env updated: ${envPath}`}</Text>
-                ))}
-                <Text dimColor>Press C on the previous screen to copy the AI prompt.</Text>
-              </>
-            ) : null}
             {agentChatOutcome?.projectDir && agentChatOutcome.mode === 'scaffold' ? (
               <Text color="cyan">Example app: {agentChatOutcome.projectDir}</Text>
             ) : null}

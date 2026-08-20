@@ -358,9 +358,15 @@ async function promptTunnelIfReady(opts: {
   coreReady: boolean;
   reconcilePlan: ReconcilePlanInput;
 }): Promise<boolean> {
-  await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
+  if (!opts.input.deferAgentPrompt) {
+    await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
+  }
 
   if (!opts.coreReady || opts.input.options.ci) {
+    return false;
+  }
+
+  if (opts.input.deferAgentPrompt) {
     return false;
   }
 

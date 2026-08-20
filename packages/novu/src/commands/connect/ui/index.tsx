@@ -4,10 +4,15 @@ import { render } from 'ink';
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
+import {
+  applyDeferredTunnelAcceptance,
+  offerDeferredBridgeTunnelIfReady,
+} from '../pipeline/agent-chat/deferred-bridge-tunnel';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import { restoreStdinForConsole } from '../restore-stdin-for-console';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
+import { isBridgeConnectMode } from '../types';
 import { App } from './app';
 import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
 import {
@@ -93,12 +98,19 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     console.log('');
   };
 
+  let embedSuccessDismissWait: Promise<void> | undefined;
+
   const shutdown = async () => {
     if (terminalReleased) {
       const exitCode = Number(process.exitCode ?? 0);
       resolveDoneOnce(exitCode);
 
       return exitCode;
+    }
+
+    if (embedSuccessDismissWait) {
+      await embedSuccessDismissWait;
+      embedSuccessDismissWait = undefined;
     }
 
     // Hold the final frame (error or success) on screen long enough for the
@@ -121,6 +133,9 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     releaseTerminal,
     isTerminalReleased: () => terminalReleased,
     pendingInteraction,
+    setEmbedSuccessDismissWait: (wait) => {
+      embedSuccessDismissWait = wait;
+    },
   });
 
   return { ui, done };
@@ -133,8 +148,30 @@ function createUiController(
     releaseTerminal: () => Promise<void>;
     isTerminalReleased: () => boolean;
     pendingInteraction: PendingInteractionRegistry;
+    setEmbedSuccessDismissWait: (wait: Promise<void> | undefined) => void;
   }
 ): ConnectUI {
+  const offerBridgeTunnelImpl = ({
+    projectDir,
+    devCommand,
+  }: {
+    projectDir: string;
+    devCommand: string;
+  }): Promise<BridgeTunnelOfferResult> => {
+    if (ctx.isTerminalReleased()) {
+      return promptBridgeTunnelInConsole({ projectDir, devCommand });
+    }
+
+    return new Promise<BridgeTunnelOfferResult>((resolve) => {
+      store.phase.set({
+        kind: 'bridge-tunnel-offer',
+        projectDir,
+        devCommand,
+        resolve,
+      });
+    });
+  };
+
   return {
     interactive: true,
     releaseTerminal: ctx.releaseTerminal,
@@ -348,20 +385,7 @@ function createUiController(
         });
       });
     },
-    offerBridgeTunnel({ projectDir, devCommand }) {
-      if (ctx.isTerminalReleased()) {
-        return promptBridgeTunnelInConsole({ projectDir, devCommand });
-      }
-
-      return new Promise<BridgeTunnelOfferResult>((resolve) => {
-        store.phase.set({
-          kind: 'bridge-tunnel-offer',
-          projectDir,
-          devCommand,
-          resolve,
-        });
-      });
-    },
+    offerBridgeTunnel: offerBridgeTunnelImpl,
     pickChannel() {
       return new Promise((resolve) => {
         store.phase.set({ kind: 'pick-channel', resolve });
@@ -567,17 +591,6 @@ function createUiController(
         });
       });
     },
-    awaitAgentChatEmbedReady({ embedPrompt, embedPromptFile, envPaths }) {
-      return new Promise<void>((resolve) => {
-        store.phase.set({
-          kind: 'agent-chat-embed-ready',
-          embedPrompt,
-          embedPromptFile,
-          envPaths,
-          resolve,
-        });
-      });
-    },
     scaffoldingAgentChat() {
       store.phase.set({ kind: 'scaffolding-agent-chat' });
     },
@@ -595,8 +608,15 @@ function createUiController(
         return;
       }
 
-      store.phase.set({
-        kind: 'success',
+      const embedPrompt = result.agentChatHandoff?.embedPrompt;
+      const alreadyWired = result.agentChatOutcome?.alreadyWired === true;
+      const awaitsEmbedDismiss =
+        result.connectedChannel === 'agent-chat' &&
+        result.agentChatOutcome?.mode === 'embed' &&
+        (Boolean(embedPrompt) || alreadyWired);
+
+      const successPhase = {
+        kind: 'success' as const,
         agent: result.agent,
         dashboardUrl: result.dashboardUrl,
         connectDashboardUrl: result.connectDashboardUrl,
@@ -612,7 +632,39 @@ function createUiController(
         customCodeOutcome: result.customCodeOutcome,
         agentChatOutcome: result.agentChatOutcome,
         agentChatHandoff: result.agentChatHandoff,
-      });
+        embedPrompt: awaitsEmbedDismiss ? embedPrompt : undefined,
+        embedPromptFile: awaitsEmbedDismiss
+          ? (result.agentChatHandoff?.embedPromptFile ?? result.agentChatOutcome?.embedPromptFile)
+          : undefined,
+        resolveDismiss: undefined as (() => void | Promise<void>) | undefined,
+      };
+
+      if (awaitsEmbedDismiss) {
+        const dismissWait = new Promise<void>((resolve) => {
+          successPhase.resolveDismiss = async () => {
+            const bridgeOutcome = result.aiSdkOutcome ?? result.langChainOutcome ?? result.chatSdkOutcome;
+            const projectDir = result.agentChatOutcome?.projectDir ?? bridgeOutcome?.projectDir ?? process.cwd();
+
+            if (bridgeOutcome && result.connectMode && isBridgeConnectMode(result.connectMode)) {
+              const accepted = await offerDeferredBridgeTunnelIfReady({
+                offerBridgeTunnel: offerBridgeTunnelImpl,
+                connectMode: result.connectMode,
+                bridgeOutcome,
+                projectDir,
+              });
+              applyDeferredTunnelAcceptance(bridgeOutcome, accepted);
+            }
+
+            resolve();
+          };
+          store.phase.set(successPhase);
+        });
+        ctx.setEmbedSuccessDismissWait(dismissWait);
+
+        return;
+      }
+
+      store.phase.set(successPhase);
     },
     failure(message) {
       if (ctx.isTerminalReleased()) {

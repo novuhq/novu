@@ -8,15 +8,17 @@ import type {
   AgentChatSetupMode,
   AgentConnectMode,
   AgentSummary,
-  AiSdkConnectOutcome,
-  ChatSdkConnectOutcome,
   ConnectAgentChatHandoff,
   ConnectCommandOptions,
-  CustomCodeConnectOutcome,
-  LangChainConnectOutcome,
 } from '../../types';
 import { logAgentChatEmbedPromptFileHandoffEvent, writeAgentChatEmbedPromptHandoffFile } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';
+import {
+  type AgentChatProjectWiringState,
+  type BridgeSetupSnapshot,
+  resolveAgentChatProjectWiringState,
+  resolveHandlerWired,
+} from './resolve-agent-chat-wiring-state';
 import {
   defaultAgentChatScaffoldDirName,
   detectAgentChatProjectKind,
@@ -24,11 +26,8 @@ import {
 } from './scaffold-agent-chat';
 import { mergeAgentChatEnv } from './wire-agent-chat-env';
 
-export type BridgeSetupSnapshot =
-  | AiSdkConnectOutcome
-  | LangChainConnectOutcome
-  | ChatSdkConnectOutcome
-  | CustomCodeConnectOutcome;
+export type { BridgeSetupSnapshot } from './resolve-agent-chat-wiring-state';
+export { resolveHandlerWired } from './resolve-agent-chat-wiring-state';
 
 export async function runAgentChatProjectSetup(input: {
   options: ConnectCommandOptions;
@@ -45,6 +44,14 @@ export async function runAgentChatProjectSetup(input: {
   const projectDir = path.resolve(input.options.projectDir ?? process.cwd());
   const projectKind = detectAgentChatProjectKind(projectDir);
   const explicitMode = resolveExplicitAgentChatSetupMode(input.options);
+  const wiringState =
+    projectKind === 'project'
+      ? resolveAgentChatProjectWiringState(projectDir, input.connectMode, input.bridgeOutcome)
+      : 'unwired';
+
+  if (!explicitMode && wiringState === 'wired') {
+    return runAgentChatAlreadyWiredSetup(input, projectDir);
+  }
 
   const mode =
     explicitMode ??
@@ -59,7 +66,7 @@ export async function runAgentChatProjectSetup(input: {
   }
 
   if (mode === 'embed') {
-    return runAgentChatEmbedSetup(input, projectDir);
+    return runAgentChatEmbedSetup(input, projectDir, wiringState);
   }
 
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
@@ -93,10 +100,8 @@ export async function runAgentChatProjectSetup(input: {
   };
 }
 
-async function runAgentChatEmbedSetup(
+async function runAgentChatAlreadyWiredSetup(
   input: {
-    options: ConnectCommandOptions;
-    ui: ConnectUI;
     auth: ResolvedConnectAuth;
     agent: AgentSummary;
     handoff: ConnectAgentChatHandoff;
@@ -114,6 +119,7 @@ async function runAgentChatEmbedSetup(
     agentIdentifier: input.agent.identifier,
     apiUrl: input.auth.apiUrl,
   });
+
   const embedPrompt = buildConnectEmbedPrompt({
     agentName: input.agent.name,
     agentIdentifier: input.agent.identifier,
@@ -121,7 +127,49 @@ async function runAgentChatEmbedSetup(
     subscriberId,
     envPaths: envResult.envPaths,
     connectMode: resolveConnectEmbedRuntime(input.connectMode),
-    handlerWired: resolveHandlerWired(input.bridgeOutcome),
+    handlerWired: true,
+  });
+  input.handoff.embedPrompt = embedPrompt;
+
+  return {
+    mode: 'embed',
+    projectDir,
+    envPaths: envResult.envPaths,
+    alreadyWired: true,
+  };
+}
+
+async function runAgentChatEmbedSetup(
+  input: {
+    options: ConnectCommandOptions;
+    ui: ConnectUI;
+    auth: ResolvedConnectAuth;
+    agent: AgentSummary;
+    handoff: ConnectAgentChatHandoff;
+    connectMode: AgentConnectMode;
+    bridgeOutcome?: BridgeSetupSnapshot;
+  },
+  projectDir: string,
+  _wiringState: AgentChatProjectWiringState
+): Promise<AgentChatConnectOutcome> {
+  const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
+  const subscriberId = input.auth.user?.id ?? SUBSCRIBER_ID_PLACEHOLDER;
+  const envResult = mergeAgentChatEnv({
+    projectDir,
+    applicationIdentifier,
+    subscriberId,
+    agentIdentifier: input.agent.identifier,
+    apiUrl: input.auth.apiUrl,
+  });
+  const handlerWired = resolveHandlerWired(input.bridgeOutcome);
+  const embedPrompt = buildConnectEmbedPrompt({
+    agentName: input.agent.name,
+    agentIdentifier: input.agent.identifier,
+    applicationIdentifier,
+    subscriberId,
+    envPaths: envResult.envPaths,
+    connectMode: resolveConnectEmbedRuntime(input.connectMode),
+    handlerWired,
   });
   input.handoff.embedPrompt = embedPrompt;
 
@@ -132,12 +180,6 @@ async function runAgentChatEmbedSetup(
   if (!input.ui.interactive && embedPromptFile) {
     logAgentChatEmbedPromptFileHandoffEvent({ embedPromptFile });
   }
-
-  await input.ui.awaitAgentChatEmbedReady({
-    embedPrompt,
-    embedPromptFile,
-    envPaths: envResult.envPaths,
-  });
 
   return {
     mode: 'embed',
@@ -161,25 +203,6 @@ export function resolveConnectEmbedRuntime(connectMode: AgentConnectMode): Conne
   }
 
   return 'ai-sdk';
-}
-
-export function resolveHandlerWired(bridgeOutcome?: BridgeSetupSnapshot): boolean {
-  if (!bridgeOutcome) {
-    return false;
-  }
-
-  if ('requirements' in bridgeOutcome && bridgeOutcome.requirements) {
-    const wiring = bridgeOutcome.requirements.find((req) => req.id === 'code-wiring');
-    if (wiring) {
-      return wiring.status === 'ok';
-    }
-  }
-
-  if ('agentFilePath' in bridgeOutcome && bridgeOutcome.agentFilePath) {
-    return true;
-  }
-
-  return false;
 }
 
 export function resolveAgentChatSetupMode(

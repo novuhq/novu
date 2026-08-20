@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { describeConnectEmbedPromptAction } from '@novu/shared';
 import chalk from 'chalk';
 import { channelDisplayName, resolveConnectSuccessDestination, UNCLAIMED_KEYLESS_HINT } from '../dashboard-urls';
+import { resolveConnectEmbedRuntime } from '../pipeline/agent-chat/run-agent-chat-setup';
 import { printDevCommandBox } from '../pipeline/bridge/print-bridge-dev-next-steps';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import type { AgentConnectMode } from '../types';
@@ -94,19 +96,35 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     result.agentChatOutcome?.mode === 'embed' &&
     result.agentChatOutcome.projectDir
   ) {
+    const embedPrompt = result.agentChatHandoff?.embedPrompt;
+    const envPaths = result.agentChatOutcome.envPaths ?? [];
+    const envNames = [...new Set(envPaths.map((envPath) => path.basename(envPath)))];
+    const envSummary = envNames.length > 0 ? envNames.join(', ') : null;
+
     console.log('');
-    console.log(`${chalk.green('✓')} Agent Chat ready to add to your app.`);
-    console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-    for (const envPath of result.agentChatOutcome.envPaths ?? []) {
-      console.log(`  ${chalk.bold('Env updated:')} ${envPath}`);
+    console.log(`${chalk.green('✓')} Agent Chat connected`);
+    if (result.agentChatOutcome.alreadyWired) {
+      if (envSummary) {
+        console.log(`  ${chalk.dim(`Refreshed ${envSummary} with your Novu keys.`)}`);
+      }
+      console.log(`  ${chalk.bold('Status:')} This project is already wired for Agent Chat.`);
+      console.log(`  ${chalk.dim('Run npm run dev:novu to start local dev.')}`);
+
+      return;
     }
+
+    if (envSummary) {
+      console.log(`  ${chalk.dim(`Updated ${envSummary} with your Novu keys.`)}`);
+    }
+    const connectMode = resolveConnectEmbedRuntime(result.connectMode ?? 'ai-sdk');
+    console.log(`  ${chalk.bold('Next:')} Copy the setup prompt below into your coding agent.`);
+    console.log(`  ${chalk.dim(describeConnectEmbedPromptAction(connectMode))}`);
     if (result.agentChatOutcome.embedPromptFile) {
-      console.log(`  ${chalk.bold('Prompt file:')} ${result.agentChatOutcome.embedPromptFile}`);
+      console.log(`  ${chalk.dim('Prompt file:')} ${result.agentChatOutcome.embedPromptFile}`);
     }
-    console.log('');
-    console.log(`  ${chalk.cyan('Next:')} Paste the prompt into Cursor, Claude Code, or your coding agent.`);
-    if (result.agentChatHandoff?.dashboardUrl) {
-      console.log(`  ${chalk.gray('Try chat in the dashboard:')} ${result.agentChatHandoff.dashboardUrl}`);
+    if (embedPrompt) {
+      console.log('');
+      console.log(embedPrompt);
     }
 
     return;

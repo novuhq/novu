@@ -145,3 +145,21 @@ export function mergeAgentChatEnv(input: AgentChatEnvInput): AgentChatEnvMergeRe
     updatedKeys: [...updatedKeys],
   };
 }
+
+export function hasAgentChatEnvConfigured(projectDir: string): boolean {
+  for (const envPath of resolveProjectEnvPaths(projectDir)) {
+    if (!fs.existsSync(envPath)) {
+      continue;
+    }
+
+    const entries = parseEnvFile(fs.readFileSync(envPath, 'utf8'));
+    const appId = entries.get('NEXT_PUBLIC_NOVU_APP_ID')?.trim();
+    const agentId = entries.get('NEXT_PUBLIC_NOVU_AGENT_ID')?.trim();
+
+    if (appId && agentId) {
+      return true;
+    }
+  }
+
+  return false;
+}

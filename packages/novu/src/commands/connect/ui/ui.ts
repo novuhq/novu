@@ -284,7 +284,6 @@ export interface ConnectUI {
   addingAgentChatIntegration(): void;
   awaitAgentChatHandoff(opts: { dashboardUrl: string; embedPrompt: string; embedPromptFile?: string }): Promise<void>;
   pickAgentChatSetup(opts: { projectKind: BridgeProjectKind }): Promise<AgentChatSetupMode>;
-  awaitAgentChatEmbedReady(opts: { embedPrompt: string; embedPromptFile?: string; envPaths: string[] }): Promise<void>;
   scaffoldingAgentChat(): void;
 
   // Welcome message
@@ -306,7 +305,7 @@ export interface ConnectUI {
     langChainOutcome?: LangChainConnectOutcome;
     customCodeOutcome?: CustomCodeConnectOutcome;
     agentChatOutcome?: AgentChatConnectOutcome;
-    agentChatHandoff?: { dashboardUrl: string; embedPromptFile?: string };
+    agentChatHandoff?: { dashboardUrl: string; embedPrompt?: string; embedPromptFile?: string };
   }): void;
   failure(message: string): void;
 

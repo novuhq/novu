@@ -26,6 +26,98 @@ export type ConnectEmbedPromptInput = {
 
 const SELF_HOSTED_RUNTIMES = new Set<ConnectEmbedRuntime>(['ai-sdk', 'langchain', 'custom-code', 'chat-sdk']);
 
+export function formatConnectEmbedRuntimeLabel(connectMode: ConnectEmbedRuntime): string {
+  switch (connectMode) {
+    case 'ai-sdk':
+      return 'AI SDK';
+    case 'langchain':
+      return 'LangChain';
+    case 'chat-sdk':
+      return 'Chat SDK';
+    case 'custom-code':
+      return 'custom code';
+    case 'claude':
+      return 'Claude managed';
+    case 'claude-aws':
+      return 'AWS Claude managed';
+    case 'demo':
+      return 'demo';
+    default:
+      return 'AI SDK';
+  }
+}
+
+export function describeConnectEmbedPromptAction(connectMode: ConnectEmbedRuntime): string {
+  if (!SELF_HOSTED_RUNTIMES.has(connectMode)) {
+    return 'The prompt guides your agent to connect Agent Chat in this project.';
+  }
+
+  const runtime = formatConnectEmbedRuntimeLabel(connectMode);
+  return `The prompt guides your agent to wire an ${runtime} agent and connect Agent Chat in this project.`;
+}
+
+export type ConnectEmbedDocLink = {
+  label: string;
+  url: string;
+};
+
+export function resolveConnectEmbedDocLinks(input: {
+  connectMode: ConnectEmbedRuntime;
+  handlerWired?: boolean;
+}): ConnectEmbedDocLink[] {
+  const links: ConnectEmbedDocLink[] = [];
+
+  if (shouldIncludeHandlerSection(input.connectMode, input.handlerWired)) {
+    switch (input.connectMode) {
+      case 'ai-sdk':
+        links.push(
+          { label: 'Agent handler (AI SDK)', url: 'https://docs.novu.co/agents/get-started/ai-sdk.md' },
+          {
+            label: 'Connecting your app',
+            url: 'https://docs.novu.co/agents/custom-code-agent/connecting-your-app.md',
+          }
+        );
+        break;
+      case 'langchain':
+        links.push(
+          { label: 'Agent handler (LangChain)', url: 'https://docs.novu.co/agents/get-started/langchain.md' },
+          {
+            label: 'Connecting your app',
+            url: 'https://docs.novu.co/agents/custom-code-agent/connecting-your-app.md',
+          }
+        );
+        break;
+      case 'chat-sdk':
+        links.push({
+          label: 'Chat SDK adapter',
+          url: 'https://www.npmjs.com/package/@novu/chat-sdk-adapter',
+        });
+        break;
+      case 'custom-code':
+        links.push(
+          {
+            label: 'Connecting your app',
+            url: 'https://docs.novu.co/agents/custom-code-agent/connecting-your-app.md',
+          },
+          {
+            label: 'Custom code patterns',
+            url: 'https://docs.novu.co/agents/custom-code-agent/frameworks/other.md',
+          }
+        );
+        break;
+      default:
+        break;
+    }
+  }
+
+  links.push(
+    { label: 'Agent Chat UI', url: 'https://docs.novu.co/agents/channels/agent-chat/quickstart.md' },
+    { label: 'useAgentChat hook', url: 'https://docs.novu.co/platform/sdks/react/hooks/use-agent-chat.md' }
+  );
+
+  return links;
+}
+
 export function buildConnectEmbedPrompt(input: ConnectEmbedPromptInput): string {
   const agentName = input.agentName.trim() || 'Agent';
   const agentId = input.agentIdentifier.trim();
@@ -195,6 +287,13 @@ Follow these docs (fetch as \`.md\`). **Skip** dashboard channel-setup steps.
 
 - https://docs.novu.co/agents/channels/agent-chat/quickstart.md — main UI guide
 - https://docs.novu.co/platform/sdks/react/hooks/use-agent-chat.md — hook reference
+
+Reference implementation (behavior only — do not copy UI or dashboard imports):
+
+- GitHub: https://github.com/novuhq/novu/tree/next/apps/dashboard/src/components/agents/agent-chat-panel
+- If the Novu monorepo is checked out locally, read \`apps/dashboard/src/components/agents/agent-chat-panel/\`
+- Study: \`NovuProvider\` (\`apiUrl\` + \`socketUrl\`), \`useAgentChat\`, \`message.parts\`, \`sendAction\`, \`respondToAction\`, composer disable while \`isRunning\` / \`isLoading\`
+- Adapt patterns to this project's framework and styling; do not import dashboard components or design tokens
 
 Hard rules (partly in docs, rest connect-specific):
 
