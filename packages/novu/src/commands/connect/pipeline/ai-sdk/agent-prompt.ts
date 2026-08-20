@@ -34,7 +34,7 @@ export const AI_SDK_AGENT_PROMPT = [
   '    return generateText({',
   '      model: /* reuse the project\u2019s existing provider + model */,',
   "      instructions: 'You are a helpful support agent.',",
-  '      messages: toModelMessages(ctx.history),',
+  '      messages: toModelMessages(ctx),',
   '    });',
   '  },',
   '});',

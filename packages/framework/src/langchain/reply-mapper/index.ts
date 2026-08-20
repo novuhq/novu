@@ -91,7 +91,7 @@ async function runAgentConfig(
   approvalConfig: ToolApprovalConfig | undefined
 ): Promise<void> {
   const freshResults = await executeApprovedTools(config.tools, ctx);
-  const messages = toLangChainMessages(ctx.history, undefined, freshResults);
+  const messages = toLangChainMessages(ctx, undefined, freshResults);
 
   const middleware: AgentMiddleware[] = [];
   if (config.needsApproval) {

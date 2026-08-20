@@ -83,7 +83,7 @@ export const supportBot = agent('support-bot', {
     generateText({
       model: openai('gpt-4o'),
       instructions: 'You are a helpful support agent. Keep answers short.',
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
     }),
 });
 ```
@@ -99,7 +99,7 @@ export const supportBot = agent('support-bot', {
     generateText({
       model: anthropic('claude-sonnet-4-20250514'),
       instructions: 'You are a helpful support agent. Keep answers short.',
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
     }),
 });
 ```
@@ -112,7 +112,7 @@ Export it from your agents index:
 export { supportBot } from './support-bot';
 ```
 
-`toModelMessages(ctx.history)` already includes the current inbound message. Returning `generateText(...)` delivers the reply. Do not call `ctx.reply()` on this path.
+`toModelMessages(ctx)` already includes the current inbound message, and prepends workflow-origin notification data when `ctx.notification` is set. Returning `generateText(...)` delivers the reply. Do not call `ctx.reply()` on this path.
 </Step>
 
 <Step>
@@ -167,7 +167,7 @@ export const supportBot = agent('support-bot', {
   onMessage: async (_message, ctx) =>
     generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),
@@ -203,7 +203,7 @@ For an existing codebase, use [Connect an existing app](#connect-an-existing-app
     No. Your app serves the bridge endpoint. Novu forwards the inbound event and conversation context, then delivers whatever the handler returns.
   </Accordion>
   <Accordion title="How do I pass conversation history to the model?">
-    Use `toModelMessages(ctx.history)`. Do not append the inbound `message` again. The current message is already included.
+    Use `toModelMessages(ctx)`. Do not append the inbound `message` again. The current message is already included. Passing `ctx` also prepends workflow-origin notification data when the conversation was opened from a workflow send.
   </Accordion>
   <Accordion title="Where is the adapter API documented?">
     [AI SDK reference](/agents/custom-code-agent/frameworks/ai-sdk): return types, tools, MCP, streaming edits, and `onError`.
@@ -226,7 +226,7 @@ Add Novu bridge + AI SDK handler to this repo and connect Slack. Prefer the exis
 ALWAYS:
 
 - Match `agent('id')` to the Novu dashboard agent Identifier
-- Use `toModelMessages(ctx.history)` for conversation context
+- Use `toModelMessages(ctx)` for conversation context
 - Keep handlers channel-agnostic
 - Follow the project's package manager and TypeScript conventions
 

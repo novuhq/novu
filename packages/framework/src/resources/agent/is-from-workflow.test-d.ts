@@ -8,7 +8,7 @@ describe('isFromWorkflow', () => {
     type OrderPayload = { trackingNumber: string; orderId: string };
     const orderShipped = { id: 'order-shipped' } as Workflow<OrderPayload>;
     const notification = {
-      notificationId: 'n1',
+      id: 'n1',
       workflowId: 'order-shipped',
       messageId: 'm1',
       platformMessageId: 'p1',
@@ -26,7 +26,7 @@ describe('isFromWorkflow', () => {
     type OrderPayload = { trackingNumber: string };
     const orderShipped = { id: 'order-shipped' } as Workflow<OrderPayload>;
     const notification: AgentNotification = {
-      notificationId: 'n1',
+      id: 'n1',
       workflowId: 'other-workflow',
       messageId: 'm1',
       platformMessageId: 'p1',

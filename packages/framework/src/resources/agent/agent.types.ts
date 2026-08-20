@@ -92,12 +92,9 @@ export interface AgentSubscriber {
   data?: Record<string, unknown>;
 }
 
-/**
- * The Novu notification that this conversation turn is replying to (workflow origin).
- * Singular — most-recent-wins. Payload typing is available via `isFromWorkflow`.
- */
+/** Workflow-origin notification for this turn. Most-recent-wins; `null` when there is none. */
 export interface AgentNotification<TPayload extends Record<string, unknown> = Record<string, unknown>> {
-  notificationId: string;
+  id: string;
   /** User-facing workflow slug — same string as `ctx.trigger(workflowId)`. */
   workflowId: string;
   messageId: string;

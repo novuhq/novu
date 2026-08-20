@@ -34,9 +34,8 @@ export interface ConversationTurn {
   action?: AgentAction;
   reaction?: BridgeReaction;
   /**
-   * Most recent workflow-origin notification for this conversation, when one exists.
-   * Populated every turn (not only the hydration turn) so bridge consumers always
-   * see `ctx.notification`. Managed uses `source` to inject only once per session.
+   * Most recent workflow-origin for this conversation. Present every turn once attached;
+   * managed injects only when `source === 'hydrated'`.
    */
   workflowOrigin?: WorkflowOriginSnapshot | null;
 }

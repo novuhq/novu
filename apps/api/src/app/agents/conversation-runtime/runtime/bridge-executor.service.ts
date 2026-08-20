@@ -153,7 +153,7 @@ export interface AgentExecutionParams {
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
   /**
-   * Most recent workflow-origin notification for this conversation; forwarded as `ctx.notification`.
+   * Most recent workflow-origin for this conversation; forwarded as `ctx.notification`.
    */
   workflowOrigin?: WorkflowOriginSnapshot | null;
   /**
@@ -708,7 +708,7 @@ export class BridgeExecutorService {
 
 function mapWorkflowOriginToNotification(origin: ConversationActivityOriginData): AgentNotification {
   return {
-    notificationId: origin.notificationId,
+    id: origin.notificationId,
     workflowId: origin.workflowIdentifier,
     messageId: origin.messageId,
     platformMessageId: origin.platformMessageId,

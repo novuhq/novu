@@ -11,10 +11,7 @@ export function isToolApprovalCard(value: unknown): value is ToolApprovalCard {
 }
 
 /**
- * Type guard: narrows `notification.payload` to the workflow's schema type when the
- * notification's `workflowId` (slug) matches `workflow.id`.
- *
- * Only serves code-first authors who have a `Workflow<T>` object in scope.
+ * Narrows `notification.payload` to the workflow's schema when `workflowId` matches `workflow.id`.
  */
 export function isFromWorkflow<T extends Record<string, unknown>>(
   notification: AgentNotification | null | undefined,

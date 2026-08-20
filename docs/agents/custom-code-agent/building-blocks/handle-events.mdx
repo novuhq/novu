@@ -126,13 +126,12 @@ import { generateText } from 'ai';
 export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     const userMessage = message.text ?? '';
-    const conversationHistory = ctx.history;
     const subscriber = ctx.subscriber;
 
     return generateText({
       model: openai('gpt-4o-mini'),
       instructions: 'You are a helpful support agent.',
-      messages: toModelMessages(conversationHistory),
+      messages: toModelMessages(ctx),
     });
   },
 });
@@ -297,7 +296,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),

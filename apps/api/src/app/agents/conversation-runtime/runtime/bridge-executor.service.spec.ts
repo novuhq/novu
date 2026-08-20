@@ -210,7 +210,7 @@ describe('BridgeExecutorService', () => {
       });
 
       expect(payload.notification).to.deep.equal({
-        notificationId: 'notif-1',
+        id: 'notif-1',
         workflowId: 'order-shipped',
         messageId: 'msg-1',
         platformMessageId: 'wamid.abc',

@@ -1,8 +1,6 @@
+import { buildWorkflowOriginInjection } from '@novu/framework/internal';
 import { type Message, MessageRole } from '@novu/thalamus';
-import {
-  buildWorkflowOriginInjection,
-  type WorkflowOriginSnapshot,
-} from '../conversation-runtime/ingress/workflow-origin.helpers';
+import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
 
 /**
  * Messages for a turn on an existing Anthropic session. The provider holds prior
