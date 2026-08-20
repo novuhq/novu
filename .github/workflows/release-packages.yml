@@ -82,14 +82,17 @@ jobs:
 
       - name: Set version for nightly or rc
         if: github.event.inputs.release_type != 'stable'
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           COMMIT_SHA=$(git rev-parse --short HEAD)
-          if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
+          if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
             DATE=$(date +'%Y%m%d')
-            echo "RELEASE_VERSION=${{ github.event.inputs.version }}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
+            echo "RELEASE_VERSION=${INPUT_VERSION}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
             echo "Using nightly version: $RELEASE_VERSION"
-          elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
-            echo "RELEASE_VERSION=${{ github.event.inputs.version }}-rc.${COMMIT_SHA}" >> $GITHUB_ENV
+          elif [ "$INPUT_RELEASE_TYPE" = "rc" ]; then
+            echo "RELEASE_VERSION=${INPUT_VERSION}-rc.${COMMIT_SHA}" >> $GITHUB_ENV
             echo "Using rc version: $RELEASE_VERSION"
           fi
 
@@ -99,31 +102,41 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Release version (without commit)
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_PACKAGES: ${{ github.event.inputs.packages }}
         run: |
-          if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
-            echo "Running nightly release with version: ${{ env.RELEASE_VERSION }}"
-            pnpm nx release version ${{ env.RELEASE_VERSION }} --projects=${{ github.event.inputs.packages }} --preid nightly --git-commit=false --verbose
-          elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
-            echo "Running rc release with version: ${{ env.RELEASE_VERSION }}"
-            pnpm nx release version ${{ env.RELEASE_VERSION }} --projects=${{ github.event.inputs.packages }} --preid rc --git-commit=false --verbose
+          if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
+            echo "Running nightly release with version: $RELEASE_VERSION"
+            pnpm nx release version "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --preid nightly --git-commit=false --verbose
+          elif [ "$INPUT_RELEASE_TYPE" = "rc" ]; then
+            echo "Running rc release with version: $RELEASE_VERSION"
+            pnpm nx release version "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --preid rc --git-commit=false --verbose
           else
-            echo "Running stable release with version: ${{ github.event.inputs.version }}"
-            pnpm nx release version ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --git-commit=false --verbose
+            echo "Running stable release with version: $INPUT_VERSION"
+            pnpm nx release version "$INPUT_VERSION" --projects="$INPUT_PACKAGES" --git-commit=false --verbose
           fi
 
       - name: Generate changelog (without commit)
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_PACKAGES: ${{ github.event.inputs.packages }}
+          INPUT_PREVIOUS_TAG: ${{ github.event.inputs.previous_tag }}
         run: |
-          if [ "${{ github.event.inputs.release_type }}" = "stable" ]; then
-            pnpm nx release changelog ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --git-commit=false
+          if [ "$INPUT_RELEASE_TYPE" = "stable" ]; then
+            pnpm nx release changelog "$INPUT_VERSION" --projects="$INPUT_PACKAGES" --from="$INPUT_PREVIOUS_TAG" --git-commit=false
           else
-            pnpm nx release changelog ${{ env.RELEASE_VERSION }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --git-commit=false
+            pnpm nx release changelog "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --from="$INPUT_PREVIOUS_TAG" --git-commit=false
           fi
 
       - name: Build packages
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
         run: |
-          if [ "${{ github.event.inputs.release_type }}" != "stable" ]; then
+          if [ "$INPUT_RELEASE_TYPE" != "stable" ]; then
             pnpm run build:packages
           else
             echo "Skipping build for stable release (will be built after PR merge)"
@@ -131,13 +144,16 @@ jobs:
 
       - name: Publish packages (nightly and rc only)
         if: github.event.inputs.release_type != 'stable'
+        env:
+          INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          INPUT_PACKAGES: ${{ github.event.inputs.packages }}
         run: |
-          if [ "${{ github.event.inputs.release_type }}" = "nightly" ]; then
+          if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
             echo "📦 Publishing nightly release with OIDC trusted publishing..."
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=nightly --provenance
-          elif [ "${{ github.event.inputs.release_type }}" = "rc" ]; then
+            pnpm nx run-many -t nx-release-publish --projects="$INPUT_PACKAGES" -- --tag=nightly --provenance
+          elif [ "$INPUT_RELEASE_TYPE" = "rc" ]; then
             echo "📦 Publishing RC release with OIDC trusted publishing..."
-            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }} -- --tag=next --provenance
+            pnpm nx run-many -t nx-release-publish --projects="$INPUT_PACKAGES" -- --tag=next --provenance
           fi
       - name: Create Pull Request
         if: github.event.inputs.release_type == 'stable'
@@ -187,9 +203,9 @@ jobs:
 
       - name: Extract version and packages from PR
         id: extract-info
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PR_TITLE='${{ github.event.pull_request.title }}'
-
           echo "=== PR Title ==="
           echo "$PR_TITLE"
           echo ""
@@ -243,20 +259,25 @@ jobs:
         run: pnpm run build:packages
 
       - name: Publish packages to NPM
+        env:
+          RELEASE_PACKAGES: ${{ steps.extract-info.outputs.packages }}
         run: |
           echo "📦 Publishing stable release with OIDC trusted publishing..."
-          pnpm nx run-many -t nx-release-publish --projects=${{ steps.extract-info.outputs.packages }} -- --tag=latest --provenance
+          pnpm nx run-many -t nx-release-publish --projects="$RELEASE_PACKAGES" -- --tag=latest --provenance
 
       - name: Create and push tags
+        env:
+          RELEASE_PACKAGES: ${{ steps.extract-info.outputs.packages }}
+          RELEASE_VERSION: ${{ steps.extract-info.outputs.version }}
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          echo "Creating tags for packages: ${{ steps.extract-info.outputs.packages }}"
-          IFS=',' read -ra PACKAGES <<< "${{ steps.extract-info.outputs.packages }}"
+          echo "Creating tags for packages: $RELEASE_PACKAGES"
+          IFS=',' read -ra PACKAGES <<< "$RELEASE_PACKAGES"
           for package in "${PACKAGES[@]}"; do
             package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            tag_name="${package}@${{ steps.extract-info.outputs.version }}"
+            tag_name="${package}@${RELEASE_VERSION}"
             echo "Creating tag: $tag_name"
             git tag "$tag_name"
             echo "Pushing tag: $tag_name"
@@ -266,18 +287,21 @@ jobs:
       - name: Create GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_PACKAGES: ${{ steps.extract-info.outputs.packages }}
+          RELEASE_VERSION: ${{ steps.extract-info.outputs.version }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          echo "Creating GitHub releases for packages: ${{ steps.extract-info.outputs.packages }}"
+          echo "Creating GitHub releases for packages: $RELEASE_PACKAGES"
 
-          IFS=',' read -ra PACKAGES <<< "${{ steps.extract-info.outputs.packages }}"
+          IFS=',' read -ra PACKAGES <<< "$RELEASE_PACKAGES"
           for package in "${PACKAGES[@]}"; do
             package=$(echo "$package" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            tag_name="${package}@${{ steps.extract-info.outputs.version }}"
+            tag_name="${package}@${RELEASE_VERSION}"
             
             echo "Creating GitHub release for $package with tag: $tag_name"
             
             package_name=$(echo $package | sed 's/@novu\///')
-            release_body="Release of ${package} version ${{ steps.extract-info.outputs.version }}"
+            release_body="Release of ${package} version ${RELEASE_VERSION}"
             
             possible_paths=(
               "packages/${package_name}/CHANGELOG.md"
@@ -288,7 +312,7 @@ jobs:
             for changelog_path in "${possible_paths[@]}"; do
               if [ -f "$changelog_path" ]; then
                 echo "Found changelog at: $changelog_path"
-                changelog_content=$(awk -v version="${{ steps.extract-info.outputs.version }}" '
+                changelog_content=$(awk -v version="$RELEASE_VERSION" '
                   BEGIN { capture=0 }
                   /^## / || /^# / || /^v[0-9]+\./ {
                     if (capture) exit
@@ -310,7 +334,7 @@ jobs:
             gh release create "$tag_name" \
               --title "$tag_name" \
               --notes "$release_body" \
-              --target ${{ github.event.pull_request.base.ref }}
+              --target "$PR_BASE_REF"
 
             echo "✅ Created GitHub release for $tag_name"
           done

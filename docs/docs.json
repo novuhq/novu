@@ -386,6 +386,7 @@
               "platform/developer/environments",
               "platform/developer/environment-variables",
               "platform/developer/limits",
+              "platform/developer/delivery-retries",
               {
                 "group": "Inbound email",
                 "pages": ["platform/inbound-email/overview"]
@@ -1002,7 +1003,8 @@
                   "framework/in-app-channel",
                   "framework/push-channel",
                   "framework/sms-channel",
-                  "framework/chat-channel"
+                  "framework/chat-channel",
+                  "framework/tool-channel"
                 ],
                 "icon": "radio"
               },
@@ -1039,6 +1041,7 @@
                       "framework/typescript/steps/inApp",
                       "framework/typescript/steps/push",
                       "framework/typescript/steps/sms",
+                      "framework/typescript/steps/tool",
                       "framework/typescript/steps/custom",
                       "framework/typescript/steps/delay",
                       "framework/typescript/steps/digest"
