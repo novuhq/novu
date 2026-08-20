@@ -1,0 +1,5 @@
+# Agent Chat embed prompt
+
+The CLI already wrote the Novu environment values.
+
+Add an Agent Chat UI to this project with `@novu/react`. Use `NovuProvider` and `useAgentChat`, and follow the existing project conventions.

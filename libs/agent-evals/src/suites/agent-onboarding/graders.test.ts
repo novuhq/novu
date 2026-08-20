@@ -93,6 +93,30 @@ describe('sendblue catalog graders', () => {
   });
 });
 
+describe('Agent Chat catalog graders', () => {
+  it('allows a report that explains no claim link is available', () => {
+    const result = buildResult({ finalText: 'Agent Chat does not provide a claim link.' });
+
+    expect(status(catalog.didNotPromiseAgentChatClaim(result))).toBe('pass');
+  });
+
+  it('rejects a report that tells the user to claim the agent', () => {
+    const result = buildResult({
+      finalText: 'Claim your agent: https://dashboard.novu.test/claim/token-abc',
+    });
+
+    expect(status(catalog.didNotPromiseAgentChatClaim(result))).toBe('fail');
+  });
+
+  it('rejects a captured claim URL', () => {
+    const result = buildResult({
+      capturedUrls: ['https://dashboard.novu.test/claim/token-abc'],
+    });
+
+    expect(status(catalog.didNotPromiseAgentChatClaim(result))).toBe('fail');
+  });
+});
+
 describe('bridge catalog graders', () => {
   it('passes usedRuntime when --runtime matches', () => {
     const result = buildResult({
