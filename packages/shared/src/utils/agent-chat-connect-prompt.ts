@@ -37,7 +37,7 @@ function signedInDashboardLine(apiUrl?: string | null): string {
  */
 export function buildAgentChatPrompt(agentName: string, agentIdentifier: string, apiUrl?: string | null): string {
   const lines = [
-    `${signedInDashboardLine(apiUrl)} Add Agent Chat to my app following instructions from this markdown file: ${AGENT_ONBOARDING_PLAYBOOK_URL}`,
+    `${signedInDashboardLine(apiUrl)} Connect a Novu agent to Agent Chat for this project following instructions from this markdown file: ${AGENT_ONBOARDING_PLAYBOOK_URL}`,
     buildNovuConnectStagingHint(apiUrl),
     `The dashboard already has "${agentName}" (id: ${agentIdentifier}) with Agent Chat linked for preview.`,
   ].filter((line): line is string => Boolean(line));
@@ -47,7 +47,7 @@ export function buildAgentChatPrompt(agentName: string, agentIdentifier: string,
 
 export function buildOnboardingAgentPrompt(apiUrl?: string | null): string {
   const lines = [
-    `${signedInDashboardLine(apiUrl)} Add an agent to my app following instructions from this markdown file: ${AGENT_ONBOARDING_PLAYBOOK_URL}`,
+    `${signedInDashboardLine(apiUrl)} Connect a Novu agent to Agent Chat for this project following instructions from this markdown file: ${AGENT_ONBOARDING_PLAYBOOK_URL}`,
     buildNovuConnectStagingHint(apiUrl),
   ].filter((line): line is string => Boolean(line));
 
