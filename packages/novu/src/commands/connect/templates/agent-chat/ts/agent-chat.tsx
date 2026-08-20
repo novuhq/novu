@@ -1,10 +1,12 @@
 'use client';
 
 import { useAgentChat } from '@novu/react';
-import { config } from '@/config';
 import { ChatPanel } from './chat-panel';
 
 export function AgentChat() {
+  const agentId = process.env.NEXT_PUBLIC_NOVU_AGENT_ID ?? '';
+  const subscriberId = process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '';
+
   const {
     messages,
     pendingActions = [],
@@ -18,11 +20,11 @@ export function AgentChat() {
     hasMore,
     isFetching,
     fetchMore,
-  } = useAgentChat({ agentId: config.agentId });
+  } = useAgentChat({ agentId });
 
   return (
     <ChatPanel
-      subscriberId={config.subscriberId}
+      subscriberId={subscriberId}
       error={error}
       messages={messages}
       pendingActions={pendingActions}

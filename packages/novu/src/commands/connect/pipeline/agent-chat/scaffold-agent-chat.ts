@@ -35,6 +35,19 @@ export function defaultAgentChatScaffoldDirName(agentIdentifier: string): string
   return `${agentIdentifier}-agent-chat`;
 }
 
+export function assertSafeScaffoldDirectoryName(name: string): void {
+  if (path.isAbsolute(name) || path.basename(name) !== name || name === '.' || name === '..') {
+    throw new Error(`Invalid scaffold directory name "${name}". Use a single relative directory name.`);
+  }
+}
+
+function resolveScaffoldAppName(input: ScaffoldAgentChatProjectInput): string {
+  const appName = input.appName?.trim() || defaultAgentChatScaffoldDirName(input.agentIdentifier);
+  assertSafeScaffoldDirectoryName(appName);
+
+  return appName;
+}
+
 export async function scaffoldAgentChatProject(
   input: ScaffoldAgentChatProjectInput
 ): Promise<ScaffoldAgentChatProjectResult> {
@@ -53,7 +66,7 @@ export async function scaffoldAgentChatProject(
   }
 
   const parentDir = path.resolve(input.parentDir);
-  const appName = input.appName?.trim() || defaultAgentChatScaffoldDirName(input.agentIdentifier);
+  const appName = resolveScaffoldAppName(input);
   const root = path.join(parentDir, appName);
 
   if (fs.existsSync(root) && !isFolderEmpty(root, appName)) {
@@ -87,19 +100,6 @@ async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgen
   );
 
   appendEnvExample(resolved, input);
-  const configPath = path.join(resolved, 'config.ts');
-  if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(
-      configPath,
-      renderConfigModule({
-        applicationIdentifier: input.applicationIdentifier,
-        subscriberId: input.subscriberId,
-        agentIdentifier: input.agentIdentifier,
-        apiUrl: input.apiUrl,
-      }),
-      'utf8'
-    );
-  }
 
   if (dependenciesChanged && (await getOnline())) {
     execFileSync(resolvePackageManager(resolved), ['install'], { cwd: resolved, stdio: 'inherit' });
