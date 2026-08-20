@@ -400,6 +400,14 @@ export class ToolApprovalRequestPayloadDto {
   @IsOptional()
   @IsString()
   denyActionId?: string;
+
+  @ApiPropertyOptional({
+    description: 'MCP server name when the gated tool is from an MCP server (for UI labels).',
+    example: 'GitHub',
+  })
+  @IsOptional()
+  @IsString()
+  mcpServerName?: string;
 }
 
 @ApiExtraModels(MarkdownReplyContentDto, CardReplyContentDto, ToolApprovalCardReplyContentDto, FileRefDto)

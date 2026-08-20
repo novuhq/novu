@@ -13,7 +13,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES, isDashboardAgentChatSubscriberId } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -396,11 +396,16 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const subscriberId = getResolvedSubscriberId(resolution);
+    const isDashboardTester = isDashboardAgentChatSubscriberId(subscriberId);
 
     // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
     // `BotAuthorSkippedError` above). This — not the raw webhook POST — is what
     // marks the agent–integration link connected and completes onboarding.
-    await this.markIntegrationConnectedOnFirstMessage(agentId, config);
+    // The dashboard Agent Chat tester uses a reserved subscriber the install
+    // prompt never copies, so those turns must not stamp Connected.
+    if (!isDashboardTester) {
+      await this.markIntegrationConnectedOnFirstMessage(agentId, config);
+    }
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
 
@@ -431,6 +436,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       message,
       existingConversation,
+      isDirectMessage: thread.isDM,
     });
 
     const conversation = await this.conversationService.createOrGetConversation({
@@ -1149,6 +1155,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       message: null,
       existingConversation,
+      isDirectMessage: thread.isDM,
     });
 
     const conversation = await this.conversationService.createOrGetConversation({

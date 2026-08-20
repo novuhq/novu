@@ -1,6 +1,6 @@
 ---
 title: '@novu/js'
-description: "Complete API reference for the @novu/js browser SDK, covering the Novu client, notification streams, preferences, counts, and session management."
+description: "Complete API reference for the @novu/js browser SDK, covering the Novu client, notification streams, preferences, counts, Agent Chat, and session management."
 ---
 
 
@@ -749,6 +749,66 @@ subscription.preferences.map((preference) => {
 ```
 await subscription.delete();
 ```
+
+## Agent Chat
+
+Two-way in-app chat with an agent. Use `novu.agentChat` from `@novu/js`, or the [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat) hook in React.
+
+Product guide: [Build the Agent Chat UI](/agents/channels/agent-chat/quickstart).
+
+Call `novu.agentChat.subscribe()` while the chat is open so the socket stays connected. Call `unsubscribe()` when the chat unmounts.
+
+### sendMessage
+
+Creates a conversation when `conversationId` is omitted. Later sends must pass the returned id.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `agentId` | `string` | Public agent identifier. |
+| `text` | `string` | User message. |
+| `conversationId` | `string` | Existing conversation to append to. |
+| `agentHash` | `string` | HMAC of `agentId`. Required when Agent Chat HMAC is on. |
+
+```typescript
+novu.agentChat.subscribe();
+
+const { data, error } = await novu.agentChat.sendMessage({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  text: 'Hello',
+});
+
+// data.conversationId, data.messageId
+```
+
+### loadConversation
+
+Loads the newest history page into the local store.
+
+```typescript
+const { data, error } = await novu.agentChat.loadConversation({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  conversationId: 'conv_YOUR_CONVERSATION_ID',
+});
+```
+
+### fetchMore
+
+Loads an older history page when `hasMore` is true.
+
+### respondToAction
+
+Approves or denies a pending tool. Pass the pending action id, not a client-invented id.
+
+```typescript
+await novu.agentChat.respondToAction({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  conversationId: 'conv_YOUR_CONVERSATION_ID',
+  actionId: 'YOUR_PENDING_ACTION_ID',
+  decision: 'approved',
+});
+```
+
+Live updates emit `agent_chat.messages.updated` on the Novu event emitter.
 
 ## Types
 

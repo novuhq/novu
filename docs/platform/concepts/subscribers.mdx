@@ -38,7 +38,7 @@ To deliver messages through push or chat-based channels, Novu also supports stor
 - `deviceTokens`: Used to target mobile devices via push notifications.
 - `webhookUrl`: Used by chat providers such as, Slack, Discord to reach the subscriber.
 
-These fields ensure Novu can deliver messages reliably to all supported destinations, even when the channel requires platform-specific configuration.
+These fields ensure Novu can deliver messages reliably to all supported destinations, even when the channel requires platform-specific configuration. You can manage them programmatically with the [subscriber credentials API](/api-reference/subscribers/update-provider-credentials) or visually from the **Credentials** tab on a subscriber in the dashboard.
 
 <Note>
   Each subscriber channel is limited to a maximum of **100 device tokens**. Requests that exceed this limit will be rejected. See [Platform Limits](/platform/developer/limits) for details.
@@ -596,6 +596,7 @@ The Novu dashboard provides a visual interface for exploring and editing subscri
 
 - Searching and filtering subscribers by ID, email, phone and name.
 - Inspecting user profiles, including structured fields, custom data, topic subscriptions and channel preferences.
+- Managing channel credentials, such as push device tokens and chat provider endpoints, from the subscriber's **Credentials** tab.
 - Performing manual updates or troubleshooting delivery issues
 
 This is ideal for non technical team members responsible for managing subscribers or teams that want to audit or manage subscriber data without relying on code.

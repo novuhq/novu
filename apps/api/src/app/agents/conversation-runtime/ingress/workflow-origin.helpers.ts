@@ -6,10 +6,12 @@ import { asRecord } from '../../shared/util/raw-record';
 export const WORKFLOW_ORIGIN_CONTENT_MAX_CHARS = 2_000;
 export const WORKFLOW_ORIGIN_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Platforms with no durable thread key — origin is re-checked on later turns, not just at open. */
+/** Platforms that reuse one conversation indefinitely — origin is re-checked on later turns, not just at open. */
 export const RECHECK_WORKFLOW_ORIGIN_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
   AgentPlatformEnum.WHATSAPP,
   AgentPlatformEnum.TELEGRAM,
+  AgentPlatformEnum.SENDBLUE,
+  AgentPlatformEnum.TEAMS,
 ]);
 
 export function buildWorkflowOriginSummary(
@@ -75,6 +77,31 @@ export function extractTelegramQuotedMessageId(message: Message | null): string 
   return typeof quotedId === 'string' && quotedId.length > 0 ? quotedId : null;
 }
 
+/** Teams quote-reply activity id from `message.raw.entities[].quotedReply.messageId`, else `replyToId`. */
+export function extractTeamsQuotedActivityId(message: Message | null): string | null {
+  if (!message) {
+    return null;
+  }
+
+  const raw = asRecord(message.raw);
+  const entities = Array.isArray(raw?.entities) ? raw.entities : [];
+  for (const entity of entities) {
+    const record = asRecord(entity);
+    if (record?.type !== 'quotedReply') {
+      continue;
+    }
+
+    const messageId = asRecord(record.quotedReply)?.messageId;
+    if (typeof messageId === 'string' && messageId.length > 0) {
+      return messageId;
+    }
+  }
+
+  const replyToId = raw?.replyToId;
+
+  return typeof replyToId === 'string' && replyToId.length > 0 ? replyToId : null;
+}
+
 /**
  * Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}` (forum topics).
  * Returns null when the prefix is absent or the segment is empty.
@@ -90,7 +117,17 @@ export function extractTelegramChatIdFromThreadId(platformThreadId: string): str
   return chatId && chatId.length > 0 ? chatId : null;
 }
 
-/** Email → Message._id; WhatsApp → wamid; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
+/**
+ * Sendblue 1:1 threads are `sendblue:{from}:{contact}` (exactly 3 segments). Unrecognized
+ * shapes fail closed so a group thread never receives a personally-addressed payload.
+ */
+export function isSendblueDirectThreadId(platformThreadId: string): boolean {
+  const segments = platformThreadId.split(':');
+
+  return segments.length === 3 && segments[0] === 'sendblue' && segments[1].length > 0 && segments[2].length > 0;
+}
+
+/** Email → Message._id; WhatsApp → wamid; Sendblue → message_handle; Teams → activity id; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
 export function resolvePlatformMessageId(
   platform: AgentPlatformEnum,
   originMessage: MessageEntity,
@@ -104,7 +141,11 @@ export function resolvePlatformMessageId(
     return undefined;
   }
 
-  if (platform === AgentPlatformEnum.WHATSAPP) {
+  if (
+    platform === AgentPlatformEnum.WHATSAPP ||
+    platform === AgentPlatformEnum.SENDBLUE ||
+    platform === AgentPlatformEnum.TEAMS
+  ) {
     return originMessage.identifier;
   }
 
@@ -121,6 +162,7 @@ export function resolvePlatformMessageId(
     return `${chatId}:${originMessage.identifier}`;
   }
 
+  // Slack-only: Message.identifier is `{channel}:{ts}`; hydration keys off the bare `ts`.
   const colon = originMessage.identifier.indexOf(':');
   if (colon <= 0 || colon === originMessage.identifier.length - 1) {
     return undefined;

@@ -6,9 +6,11 @@ import type {
   AgentHashFields,
   AgentMessage,
   AgentPendingAction,
+  AgentToolApprovalDecision,
   LoadConversationResult,
   NovuError,
   RespondToActionResult,
+  SendActionResult,
   SendMessageResult,
 } from '@novu/js';
 import { derivePendingActions } from '@novu/js';
@@ -70,8 +72,12 @@ export type UseAgentChatResult = {
     data?: SendMessageResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
-  respondToAction: (args: { actionId: string; decision: 'approved' | 'denied' }) => Promise<{
+  respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
+    error?: NovuError | AgentChatPlanLimitError;
+  }>;
+  sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
+    data?: SendActionResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
 };
@@ -354,7 +360,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   );
 
   const respondToAction = useCallback(
-    async (args: { actionId: string; decision: 'approved' | 'denied' }) => {
+    async (args: { actionId: string; decision: AgentToolApprovalDecision }) => {
       setError(undefined);
 
       const response = await novu.agentChat.respondToAction({
@@ -376,11 +382,36 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
+  const sendAction = useCallback(
+    async (args: { actionId: string; sourceMessageId: string; value?: string }) => {
+      setError(undefined);
+
+      const response = await novu.agentChat.sendAction({
+        agentId,
+        agentHash,
+        key: sessionKeyRef.current,
+        conversationId: conversationIdRef.current,
+        actionId: args.actionId,
+        sourceMessageId: args.sourceMessageId,
+        value: args.value,
+      });
+
+      if (response.error) {
+        setError(response.error);
+        propsRef.current.onError?.(response.error);
+      }
+
+      return response;
+    },
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
+  );
+
   return {
     messages,
     pendingActions,
     sendMessage,
     respondToAction,
+    sendAction,
     conversationId,
     error,
     isLoading,

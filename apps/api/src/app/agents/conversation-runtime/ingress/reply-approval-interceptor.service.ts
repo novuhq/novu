@@ -16,7 +16,6 @@ import {
   resolveApprovalRequesterId,
 } from '../../shared/tool-approval/unresolved-approvals';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
-import { ConversationActivityLedger } from '../conversation/conversation-activity-ledger';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from '../runtime/agent-runtime.port';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -62,7 +61,6 @@ function quoteContainsToolName(normalizedQuote: string, toolName: string): boole
 export class ReplyApprovalInterceptor {
   constructor(
     private readonly conversationService: AgentConversationService,
-    private readonly activityLedger: ConversationActivityLedger,
     private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger
   ) {
@@ -360,7 +358,7 @@ export class ReplyApprovalInterceptor {
     const { config, conversation } = turn;
 
     try {
-      const page = await this.activityLedger.listForView({
+      const page = await this.conversationService.listForView({
         view: 'approval_activities',
         environmentId: config.environmentId,
         organizationId: config.organizationId,

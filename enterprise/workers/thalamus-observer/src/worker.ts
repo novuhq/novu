@@ -1,3 +1,4 @@
+import { getAgentByName } from 'agents';
 import type { SessionObserver } from './session-observer';
 import type { Env } from './types';
 import { validateEnqueueParams, validateObservationParams } from './validation';
@@ -52,7 +53,7 @@ export default {
             { status: 400 }
           );
         }
-        const stub = env.SESSION_OBSERVER.getByName(body.sessionId) as DurableObjectStub<SessionObserver>;
+        const stub = await getAgentByName<Env, SessionObserver>(env.SESSION_OBSERVER, body.sessionId);
         const result = await stub.handleEnqueue(body);
 
         return Response.json(result, { status: 200 });
@@ -72,7 +73,7 @@ export default {
             { status: 400 }
           );
         }
-        const stub = env.SESSION_OBSERVER.getByName(body.sessionId) as DurableObjectStub<SessionObserver>;
+        const stub = await getAgentByName<Env, SessionObserver>(env.SESSION_OBSERVER, body.sessionId);
         await stub.startObserving(body);
 
         return new Response(null, { status: 204 });
@@ -80,7 +81,7 @@ export default {
 
       if (request.method === 'DELETE' && path.startsWith('/observe/')) {
         const sessionId = decodeURIComponent(path.slice('/observe/'.length));
-        const stub = env.SESSION_OBSERVER.getByName(sessionId) as DurableObjectStub<SessionObserver>;
+        const stub = await getAgentByName<Env, SessionObserver>(env.SESSION_OBSERVER, sessionId);
         await stub.stopObserving();
 
         return new Response(null, { status: 204 });

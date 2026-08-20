@@ -1,7 +1,7 @@
 import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { ExternalLink } from '@/components/shared/external-link';
 
-export const AGENT_CHAT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/agent-chat';
+export const AGENT_CHAT_DOCS_URL = 'https://docs.novu.co/agents/channels/agent-chat';
 export const APPLICATION_IDENTIFIER_PLACEHOLDER = '<YOUR_NOVU_APPLICATION_IDENTIFIER>';
 export const SUBSCRIBER_ID_PLACEHOLDER = 'YOUR_SUBSCRIBER_ID';
 

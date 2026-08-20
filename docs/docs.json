@@ -330,6 +330,7 @@
                     "pages": [
                       "platform/sdks/react/hooks/novu-provider",
                       "platform/sdks/react/hooks/subscription",
+                      "platform/sdks/react/hooks/use-agent-chat",
                       "platform/sdks/react/hooks/use-counts",
                       "platform/sdks/react/hooks/use-notifications",
                       "platform/sdks/react/hooks/use-novu",
@@ -384,6 +385,7 @@
               "platform/developer/environments",
               "platform/developer/environment-variables",
               "platform/developer/limits",
+              "platform/developer/delivery-retries",
               {
                 "group": "Inbound email",
                 "pages": ["platform/inbound-email/overview"]
@@ -463,7 +465,12 @@
               "agents/channels/microsoft-teams",
               "agents/channels/whatsapp",
               "agents/channels/telegram",
-              "agents/channels/email"
+              "agents/channels/email",
+              {
+                "group": "Agent Chat",
+                "root": "agents/channels/agent-chat",
+                "pages": ["agents/channels/agent-chat/quickstart"]
+              }
             ],
             "icon": "messages-square"
           },
@@ -887,50 +894,66 @@
             "item": "Guides",
             "groups": [
               {
-                "group": "Use Cases",
-                "pages": [
-                  "guides/use-cases/transactional-notifications",
-                  "guides/use-cases/password-reset-notifications",
-                  "guides/use-cases/digest-notifications",
-                  "guides/use-cases/multi-channel-fallback",
-                  "guides/use-cases/notification-preferences"
-                ],
-                "icon": "lightbulb"
-              },
-              {
                 "group": "Guides",
-                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"],
-                "icon": "book-open"
-              },
-              {
-                "group": "Inbound Webhooks",
+                "icon": "book-open",
                 "pages": [
-                  "guides/webhooks/clerk",
-                  "guides/webhooks/auth0",
-                  "guides/webhooks/stripe",
-                  "guides/webhooks/segment"
-                ],
-                "icon": "webhook"
-              },
-              {
-                "group": "Recipes",
-                "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"],
-                "icon": "chef-hat"
-              },
-              {
-                "group": "Framework",
-                "pages": ["guides/framework/using-translations"],
-                "icon": "blocks"
-              },
-              {
-                "group": "Migrate to Novu",
-                "pages": [
-                  "guides/migrate-from-courier-to-novu",
-                  "guides/migrate-from-knock-to-novu",
-                  "guides/migrate-from-magicbell-to-novu",
-                  "guides/migrate-from-in-house-to-novu"
-                ],
-                "icon": "arrow-right-left"
+                  "guides",
+                  {
+                    "group": "Use Cases",
+                    "expanded": false,
+                    "pages": [
+                      "guides/use-cases/transactional-notifications",
+                      "guides/use-cases/password-reset-notifications",
+                      "guides/use-cases/digest-notifications",
+                      "guides/use-cases/multi-channel-fallback",
+                      "guides/use-cases/notification-preferences"
+                    ]
+                  },
+                  {
+                    "group": "Workflow automation",
+                    "expanded": false,
+                    "pages": ["guides/inngest", "guides/triggerdotdev"]
+                  },
+                  {
+                    "group": "Webhooks",
+                    "expanded": false,
+                    "pages": [
+                      "guides/webhooks/clerk",
+                      "guides/webhooks/auth0",
+                      "guides/webhooks/stripe"
+                    ]
+                  },
+                  {
+                    "group": "Analytics & data",
+                    "expanded": false,
+                    "pages": [
+                      "guides/analytics/segment",
+                      "guides/analytics/hightouch"
+                    ]
+                  },
+                  {
+                    "group": "Recipes",
+                    "expanded": false,
+                    "pages": [
+                      "guides/recipes/managing-workflows",
+                      "guides/recipes/supabase-auth-notifications"
+                    ]
+                  },
+                  {
+                    "group": "Framework",
+                    "expanded": false,
+                    "pages": ["guides/framework/using-translations"]
+                  },
+                  {
+                    "group": "Migrate to Novu",
+                    "pages": [
+                      "guides/migrate-from-courier-to-novu",
+                      "guides/migrate-from-knock-to-novu",
+                      "guides/migrate-from-magicbell-to-novu",
+                      "guides/migrate-from-in-house-to-novu"
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -979,7 +1002,8 @@
                   "framework/in-app-channel",
                   "framework/push-channel",
                   "framework/sms-channel",
-                  "framework/chat-channel"
+                  "framework/chat-channel",
+                  "framework/tool-channel"
                 ],
                 "icon": "radio"
               },
@@ -1018,7 +1042,8 @@
                       "framework/typescript/steps/inApp",
                       "framework/typescript/steps",
                       "framework/typescript/steps/push",
-                      "framework/typescript/steps/sms"
+                      "framework/typescript/steps/sms",
+                      "framework/typescript/steps/tool"
                     ]
                   },
                   "framework/schema/zod",
@@ -1186,7 +1211,22 @@
     },
     {
       "source": "/guides/integrations/segment",
-      "destination": "/platform/integrations/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/guides/webhooks/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/guides/webhooks/hightouch",
+      "destination": "/guides/analytics/hightouch",
       "permanent": true
     },
     {
@@ -1687,6 +1727,21 @@
     {
       "source": "/agents/channels/capabilities",
       "destination": "/agents/channels/overview",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/chat/agent-chat",
+      "destination": "/agents/channels/agent-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat",
+      "destination": "/agents/channels/agent-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat/quickstart",
+      "destination": "/agents/channels/agent-chat/quickstart",
       "permanent": true
     },
     {

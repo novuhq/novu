@@ -8,7 +8,7 @@ import {
   NotificationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -19,7 +19,9 @@ import {
   extractAgentEmailOriginToken,
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
+  extractTeamsQuotedActivityId,
   extractWhatsAppQuotedWamid,
+  isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
   toProviderMessageLookupKey,
@@ -49,8 +51,9 @@ export class WorkflowOriginService {
     subscriberId: string | null;
     message: Message | null;
     existingConversation: ConversationEntity | null;
+    isDirectMessage?: boolean;
   }): Promise<WorkflowOriginResolution | null> {
-    const { agentId, config, platformThreadId, subscriberId, message, existingConversation } = params;
+    const { agentId, config, platformThreadId, subscriberId, message, existingConversation, isDirectMessage } = params;
 
     if (!subscriberId) {
       return null;
@@ -105,14 +108,29 @@ export class WorkflowOriginService {
           });
           break;
         }
-        case AgentPlatformEnum.TEAMS:
         case AgentPlatformEnum.SENDBLUE:
+          origin = isSendblueDirectThreadId(platformThreadId)
+            ? await this.findRecentChatWorkflowOriginMessage(agentId, config, subscriber._id, null)
+            : null;
+          break;
+        case AgentPlatformEnum.TEAMS:
+          origin = isDirectMessage
+            ? await this.findRecentChatWorkflowOriginMessage(
+                agentId,
+                config,
+                subscriber._id,
+                extractTeamsQuotedActivityId(message),
+                { 'channelData.type': ENDPOINT_TYPES.MS_TEAMS_USER }
+              )
+            : null;
+          break;
         case AgentPlatformEnum.AGENT_CHAT:
           break;
         default: {
           const _exhaustive: never = config.platform;
+          void _exhaustive;
 
-          return _exhaustive;
+          return null;
         }
       }
 

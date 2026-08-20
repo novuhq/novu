@@ -145,6 +145,8 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
             source: event.source,
             approveActionId: event.approveActionId,
             denyActionId: event.denyActionId,
+            trustToolActionId: event.trustToolActionId,
+            trustServerActionId: event.trustServerActionId,
             state: 'pending',
           },
         ],
@@ -351,9 +353,7 @@ function applyDurableMessageParts(
     } else {
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }
-  }
-
-  if ('card' in content) {
+  } else {
     next = [...next, { type: 'card', card: content.card }];
   }
 

@@ -1,8 +1,9 @@
+import { SECRET_MASK } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ExecuteHttpRequestStep } from './execute-http-request-step.usecase';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageStatus } from './send-message-type.usecase';
+import { SendMessageResultFailed, SendMessageStatus } from './send-message-type.usecase';
 
 describe('ExecuteHttpRequestStep - steps namespace', () => {
   function buildDigestStepsMap() {
@@ -78,10 +79,18 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
       usecase,
       httpClientService,
       executeBridgeJob,
+      createExecutionDetails,
     };
   }
 
-  function buildCommand() {
+  function findFailureDetail(createExecutionDetails: { execute: sinon.SinonStub }) {
+    return createExecutionDetails.execute
+      .getCalls()
+      .map((call) => call.args[0] as { detail: string; raw?: string })
+      .find((args) => args.raw?.includes('Invalid raw JSON body'));
+  }
+
+  function buildCommand(env: Record<string, string> = { name: 'Development', type: 'dev' }) {
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
       organizationId: 'org_1',
@@ -128,7 +137,7 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
           events: undefined,
           total_count: undefined,
         },
-        env: { name: 'Development', type: 'dev' },
+        env,
       } as never,
       bridgeData: null,
       environment: { _id: 'env_1' } as never,
@@ -188,5 +197,62 @@ describe('ExecuteHttpRequestStep - steps namespace', () => {
     expect(requestArgs.url).to.equal('https://example.com/2 notifications');
     expect(requestArgs.headers['X-Digest-Summary']).to.equal('Ada, Grace');
     expect(requestArgs.body).to.deep.equal({ summary: '2 notifications' });
+  });
+
+  it('records an execution detail when the compiled body cannot be repaired into valid JSON', async () => {
+    const { usecase, httpClientService, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"order":{"lines":[{"item":{"sku" }}]}}',
+    });
+
+    const result = (await usecase.execute(buildCommand())) as SendMessageResultFailed;
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+    expect(result.shouldHalt).to.equal(true);
+    expect(httpClientService.request.called).to.equal(false);
+
+    const failureDetail = findFailureDetail(createExecutionDetails);
+    expect(failureDetail, 'expected a failed execution detail for the unrepairable body').to.not.equal(undefined);
+
+    const raw = JSON.parse(failureDetail?.raw ?? '{}');
+    expect(raw.error).to.contain('Colon expected');
+    expect(raw.bodyExcerpt).to.contain('"sku"');
+    expect(raw.hint).to.be.a('string');
+  });
+
+  it('does not halt the chain for an unrepairable body when continueOnFailure is enabled', async () => {
+    const { usecase, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      continueOnFailure: true,
+      body: '{"order":{"lines":[{"item":{"sku" }}]}}',
+    });
+
+    const result = (await usecase.execute(buildCommand())) as SendMessageResultFailed;
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+    expect(result.shouldHalt).to.equal(false);
+    expect(findFailureDetail(createExecutionDetails)).to.not.equal(undefined);
+  });
+
+  it('masks rendered environment variable secrets out of the persisted excerpt', async () => {
+    const secret = 'sk_live_51NQpZmKq7xTvR3wY';
+    const { usecase, createExecutionDetails } = buildUsecase({
+      url: 'https://example.com/webhook',
+      method: 'POST',
+      body: '{"token":"{{env.PARTNER_API_KEY}}","tier":"{{env.type}}","order":{"sku" }}',
+    });
+
+    const result = await usecase.execute(buildCommand({ name: 'Production', type: 'prod', PARTNER_API_KEY: secret }));
+
+    expect(result.status).to.equal(SendMessageStatus.FAILED);
+
+    const raw = JSON.parse(findFailureDetail(createExecutionDetails)?.raw ?? '{}');
+    expect(raw.bodyExcerpt, 'the excerpt must not carry the decrypted env secret').to.not.contain(secret);
+    expect(raw.bodyExcerpt).to.contain(SECRET_MASK);
+    // System env values are not secrets, and masking them would gut the excerpt.
+    expect(raw.bodyExcerpt).to.contain('"tier":"prod"');
+    expect(raw.bodyExcerpt).to.contain('"order":{"sku" }');
   });
 });
