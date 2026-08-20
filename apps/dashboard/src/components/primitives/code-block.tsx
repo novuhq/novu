@@ -14,6 +14,7 @@ loadLanguage('typescript');
 loadLanguage('php');
 loadLanguage('go');
 loadLanguage('python');
+loadLanguage('html');
 
 const languageMap = {
   typescript: langs.typescript,
@@ -23,6 +24,7 @@ const languageMap = {
   php: langs.php,
   go: langs.go,
   python: langs.python,
+  html: langs.html,
 } as const;
 
 export type Language = keyof typeof languageMap;

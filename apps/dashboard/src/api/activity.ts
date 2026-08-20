@@ -26,6 +26,14 @@ export interface StepRunDto {
   stepRunId: string;
   stepId: string;
   stepType: string;
+  preview?: {
+    subject?: string;
+    content?: string | any[];
+    title?: string;
+    preheader?: string;
+    senderName?: string;
+    cta?: Record<string, unknown>;
+  };
   providerId?: string;
   status: StepRunStatus;
   createdAt: Date;
@@ -119,6 +127,7 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
       _subscriberId: workflowRun.internalSubscriberId,
       type: step.stepType as any,
       digest: step.digest,
+      preview: step.preview,
       executionDetails: step.executionDetails || [],
       step: {
         _id: step.stepRunId,
@@ -129,15 +138,15 @@ function mapWorkflowRunToActivity(workflowRun: GetWorkflowRunResponse | GetWorkf
           _organizationId: workflowRun.organizationId,
           _creatorId: '',
           type: step.stepType as any,
-          content: '',
+          content: step.preview?.content ?? '',
           variables: [],
           name: step.stepType,
-          subject: '',
-          title: step.stepType,
-          preheader: '',
-          senderName: '',
+          subject: step.preview?.subject ?? '',
+          title: step.preview?.title ?? step.stepType,
+          preheader: step.preview?.preheader ?? '',
+          senderName: step.preview?.senderName ?? '',
           _feedId: '',
-          cta: {
+          cta: step.preview?.cta ?? {
             type: 'redirect' as any,
             data: { url: '' },
           },

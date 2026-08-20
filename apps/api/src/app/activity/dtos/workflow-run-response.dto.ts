@@ -53,6 +53,15 @@ export class StepRunDto {
   @IsString()
   stepType: string;
 
+  @ApiPropertyOptional({
+    description: 'Preview data for the workflow step',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  preview?: Record<string, unknown>;
+
   @ApiPropertyOptional({ description: 'Provider identifier' })
   @IsOptional()
   @IsString()

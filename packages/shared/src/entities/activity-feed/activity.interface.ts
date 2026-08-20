@@ -3,9 +3,18 @@ import { ChannelTypeEnum, ISubscriber } from '../../types';
 import { IExecutionDetail } from '../execution-details';
 import { IJob as IJobBase } from '../job';
 import { INotificationTemplate } from '../notification-template';
+import { IMessageCTA } from '@novu/shared';
 
 export interface IActivityJob extends IJobBase {
   executionDetails: IExecutionDetail[];
+  preview?: {
+    subject?: string;
+    content?: string;
+    title?: string;
+    preheader?: string;
+    senderName?: string;
+    cta?: IMessageCTA;
+  };
 }
 
 export interface IActivity {

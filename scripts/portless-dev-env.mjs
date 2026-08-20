@@ -153,7 +153,7 @@ async function main() {
   const dashboardOriginRegex = dashboardUrl.replace(/^https?:\/\/(.+?)(:\d+)?$/, (_match, host, port = '') => {
     const optionalPort = port ? `(?:${escapeRegExp(port)})?` : '';
 
-    return `https://(.*\\.)?${escapeRegExp(host)}${optionalPort}`;
+    return `https?://(.*\\.)?${escapeRegExp(host)}${optionalPort}`;
   });
 
   const childEnv = {

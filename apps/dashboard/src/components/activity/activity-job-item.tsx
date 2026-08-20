@@ -21,6 +21,7 @@ import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import TruncatedText from '../truncated-text';
 import { JOB_STATUS_CONFIG } from './constants';
 import { ExecutionDetailItem } from './execution-detail-item';
+import { ActivityStepPreview } from './activity-step-preview';
 
 interface ActivityJobItemProps {
   job: IActivityJob;
@@ -297,25 +298,7 @@ function JobDetails({ job }: { job: IActivityJob }) {
             ))}
           </div>
         )}
-        {/*
-        TODO: Missing backend support for digest events widget
-        {job.type === 'digest' && job.digest?.events && (
-          <ActivityDetailCard title="Digest Events" expandable={true} open>
-            <div className="min-w-0 max-w-full font-mono">
-              {job.digest.events.map((event: DigestEvent, index: number) => (
-                <div key={index} className="group flex items-center gap-2 rounded-sm px-1 py-1.5 hover:bg-neutral-100">
-                  <RiCheckboxCircleLine className="text-success h-4 w-4 shrink-0" />
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="truncate text-xs text-neutral-500">{event.type}</span>
-                    <span className="text-xs text-neutral-400">
-                      {`${format(new Date(job.updatedAt), 'HH:mm')} UTC`}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ActivityDetailCard>
-        )} */}
+        <ActivityStepPreview job={job} />
       </div>
     </div>
   );

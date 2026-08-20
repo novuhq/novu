@@ -72,6 +72,7 @@ type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
 
 interface IStepRunWithDetails extends StepRunFetchResult {
   executionDetails?: TraceFetchResult[];
+  preview? : Record<string, unknown>;
 }
 
 @Injectable()
@@ -140,7 +141,7 @@ export class GetWorkflowRun {
   /**
    * BACKWARD COMPATIBILITY: This method fetches digest data from Job entities at runtime
    * for step runs that don't have digest data stored in ClickHouse.
-   * TODO: Remove this method as part of task nv-6576 once all step runs have digest data stored
+
    */
   private async getJobDigestDataByTransactionId(
     transactionId: string,
@@ -200,6 +201,56 @@ export class GetWorkflowRun {
     }
   }
 
+  private async getPreviewDataByStepRunId(
+    stepRuns: StepRunFetchResult[],
+    command: GetWorkflowRunCommand,
+    transactionId: string
+): Promise<Map<string, Record<string, unknown>>> {
+  const previewByStepRunId = new Map<string, Record<string, unknown>>();
+
+  try {
+    const jobs = await this.jobRepository.find({
+      transactionId,
+      _environmentId: command.environmentId,
+    });
+
+    for (const stepRun of stepRuns) {
+      const job = jobs.find((job) => job._id === stepRun.step_run_id);
+
+      if (!job?.step) {
+        continue;
+      }
+
+      const template = job.step.template;
+
+      if (!template) {
+        continue;
+      }
+
+      previewByStepRunId.set(stepRun.step_run_id, {
+        subject: template.subject,
+        content: template.content,
+        title: template.title,
+        preheader: template.preheader,
+        senderName: template.senderName,
+        cta: template.cta,
+      });
+    }
+  } catch (error) {
+    this.logger.warn(
+      {
+        nv: {
+          error: error.message,
+          transactionId,
+        },
+      },
+      'Failed to get step preview data'
+    );
+  }
+
+  return previewByStepRunId;
+}
+
   private async getStepRunsForWorkflowRun(
     command: GetWorkflowRunCommand,
     workflowRun: WorkflowRunFetchResult
@@ -225,11 +276,15 @@ export class GetWorkflowRun {
       }
 
       const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
-      const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(
-        stepRunIds,
-        command,
-        workflowRun.created_at ? new Date(`${workflowRun.created_at} UTC`) : undefined
-      );
+
+      const [executionDetailsByStepRunId, previewByStepRunId] = await Promise.all([
+        this.getExecutionDetailsByEntityId(
+          stepRunIds,
+          command,
+          workflowRun.created_at ? new Date(`${workflowRun.created_at} UTC`) : undefined
+        ),
+        this.getPreviewDataByStepRunId(stepRunsResult.data, command, workflowRun.transaction_id),
+      ]);
 
       // BACKWARD COMPATIBILITY: Check if any step runs are missing digest data
       // TODO: Remove this logic as part of task nv-6576 once all step runs have digest data stored
@@ -247,6 +302,7 @@ export class GetWorkflowRun {
             ...stepRun,
             executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
             digest: stepRun.digest ? stepRun.digest : digestDataByStepId.get(stepRun.step_run_id) || null,
+            preview: previewByStepRunId.get(stepRun.step_run_id),
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
@@ -332,6 +388,7 @@ export class GetWorkflowRun {
       stepRunId: stepRun.step_run_id,
       stepId: stepRun.step_id,
       stepType: stepRun.step_type,
+      preview: stepRun.preview,
       providerId: stepRun.provider_id || undefined,
       status: stepRun.status,
       createdAt: new Date(stepRun.created_at),

@@ -59,7 +59,8 @@ function pnpmRun(...args) {
   });
 }
 
-const hasSrcFolder = fs.existsSync(path.resolve(ROOT_PATH, 'src'));
+const srcPath = path.resolve(ROOT_PATH, 'src');
+const hasSrcFolder = fs.existsSync(srcPath) && fs.statSync(srcPath).isDirectory();
 if (hasSrcFolder) {
   await pnpmRun('build:esm');
 }
