@@ -5,6 +5,7 @@ import { defaultCustomCodeScaffoldDirName, resolveAgentHandlerPathIfExists } fro
 import { resolveEmptyDirScaffoldTarget } from '../bridge/confirm-empty-dir-scaffold';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
+import { describeLlmAuthChoice } from '../llm-auth/llm-auth-options';
 import { resolveLlmAuthChoice } from '../llm-auth/resolve-llm-auth';
 import type { LlmAuthChoice } from '../llm-auth/types';
 import type {
@@ -19,6 +20,12 @@ type ReconcileOptions = {
   skippedInstall?: boolean;
   agentFilePath?: string;
 };
+
+function deferInkInput(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
 
 export async function runBridgeAdapterProjectSetup(
   input: BridgeAdapterSetupInput,
@@ -56,10 +63,13 @@ export async function runBridgeAdapterProjectSetup(
     ui: input.ui,
   });
 
+  await deferInkInput();
+
   const confirmed = await input.ui.confirmScaffold({
     projectDir: target.projectDir,
     appName: target.appName,
     variant: adapter.variant,
+    llmAuthLabel: describeLlmAuthChoice(llmAuth),
   });
 
   if (!confirmed) {
@@ -157,7 +167,7 @@ async function reconcileProject(
       ? adapter.buildWiringInstructions(projectDir, input.agent.identifier)
       : undefined;
 
-  const agentPrompt = wiringInstructions ? adapter.agentPrompt : undefined;
+  const agentPrompt = wiringInstructions && !input.deferAgentPrompt ? adapter.agentPrompt : undefined;
 
   const requirementsFile = await adapter.writeRequirementsFile({
     projectDir,

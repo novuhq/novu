@@ -89,6 +89,7 @@ export type Phase =
       projectDir: string;
       appName: string;
       variant?: BridgeScaffoldVariant;
+      llmAuthLabel?: string;
       resolve: (confirmed: boolean) => void;
     }
   | { kind: 'scaffolding-bridge'; variant: BridgeScaffoldVariant }
@@ -258,6 +259,13 @@ export type Phase =
       kind: 'pick-agent-chat-setup';
       projectKind: 'empty' | 'project';
       resolve: (mode: import('../types').AgentChatSetupMode) => void;
+    }
+  | {
+      kind: 'agent-chat-embed-ready';
+      embedPrompt: string;
+      embedPromptFile?: string;
+      envPaths: string[];
+      resolve: () => void;
     }
   | { kind: 'scaffolding-agent-chat' }
   | { kind: 'sending-welcome' }

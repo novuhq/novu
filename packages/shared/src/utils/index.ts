@@ -6,6 +6,7 @@ export * from './chat-body';
 export * from './chat-card-button';
 export * from './checkIsResponseError';
 export * from './connect-agent-chat-dashboard-url';
+export * from './connect-embed-prompt';
 export * from './connect-subscriber-id';
 export * from './dashboard-agent-chat-subscriber';
 export * from './data-filter';

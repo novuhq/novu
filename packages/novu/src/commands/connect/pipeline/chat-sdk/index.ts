@@ -37,6 +37,7 @@ export type ChatSdkSetupInput = {
   auth: ResolvedConnectAuth;
   agent: AgentSummary;
   deferScaffoldSummary?: boolean;
+  deferAgentPrompt?: boolean;
 };
 
 type ReconcileOptions = {
@@ -145,7 +146,7 @@ async function reconcileChatSdkProject(
   const wiringInstructions =
     wiringReq && wiringReq.status !== 'ok' ? buildCodeWiringInstructions(projectDir) : undefined;
 
-  const agentPrompt = wiringInstructions ? CHAT_SDK_AGENT_PROMPT : undefined;
+  const agentPrompt = wiringInstructions && !input.deferAgentPrompt ? CHAT_SDK_AGENT_PROMPT : undefined;
 
   const requirementsFile = await writeChatSdkRequirementsFile({
     projectDir,

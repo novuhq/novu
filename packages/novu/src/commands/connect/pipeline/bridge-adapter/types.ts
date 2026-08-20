@@ -29,6 +29,8 @@ export type BridgeAdapterSetupInput = {
   auth: ResolvedConnectAuth;
   agent: AgentSummary;
   deferScaffoldSummary?: boolean;
+  /** When true, omit the mid-flow agent prompt (Agent Chat embed shows one merged prompt at the end). */
+  deferAgentPrompt?: boolean;
 };
 
 export type BridgeAdapterScaffoldInput = {

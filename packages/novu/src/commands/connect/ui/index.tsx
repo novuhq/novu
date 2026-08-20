@@ -65,11 +65,11 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
       patchConsole: false,
       exitOnCtrlC: false,
       /**
-       * Only re-emit terminal lines that changed between frames. Without this,
-       * the orb animation (~10 fps) redraws the whole screen and clears any
-       * active mouse selection on static URL lines (auth, Slack OAuth, etc.).
+       * Full redraw each frame. Incremental mode (~10 fps orb + arrow-key menu)
+       * corrupts Ink's cursor tracking and duplicates channel picker rows.
+       * Copyable URL phases pause the orb so URL lines are not redrawn every frame.
        */
-      incrementalRendering: true,
+      incrementalRendering: false,
       // No alternate-screen here: the connect flow is short and we want the
       // final success message to remain visible in scrollback after exit.
     }
@@ -263,9 +263,9 @@ function createUiController(
         });
       });
     },
-    confirmScaffold({ projectDir, appName, variant }) {
+    confirmScaffold({ projectDir, appName, variant, llmAuthLabel }) {
       if (ctx.isTerminalReleased()) {
-        return promptConfirmScaffoldInConsole({ projectDir, appName, variant });
+        return promptConfirmScaffoldInConsole({ projectDir, appName, variant, llmAuthLabel });
       }
 
       return new Promise<boolean>((resolve) => {
@@ -274,6 +274,7 @@ function createUiController(
           projectDir,
           appName,
           variant,
+          llmAuthLabel,
           resolve,
         });
       });
@@ -562,6 +563,17 @@ function createUiController(
         store.phase.set({
           kind: 'pick-agent-chat-setup',
           projectKind,
+          resolve,
+        });
+      });
+    },
+    awaitAgentChatEmbedReady({ embedPrompt, embedPromptFile, envPaths }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({
+          kind: 'agent-chat-embed-ready',
+          embedPrompt,
+          embedPromptFile,
+          envPaths,
           resolve,
         });
       });

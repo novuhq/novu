@@ -1,7 +1,10 @@
 export const AGENT_CHAT_DOCS_URL = 'https://docs.novu.co/agents/channels/agent-chat';
-export const APPLICATION_IDENTIFIER_PLACEHOLDER = '<YOUR_NOVU_APPLICATION_IDENTIFIER>';
-export const SUBSCRIBER_ID_PLACEHOLDER = 'YOUR_SUBSCRIBER_ID';
+export {
+  APPLICATION_IDENTIFIER_PLACEHOLDER,
+  SUBSCRIBER_ID_PLACEHOLDER,
+} from './connect-embed-prompt-constants';
 
+/** Dashboard / legacy UI-only prompt (handler assumed done). */
 export function buildAgentChatPrompt(
   agentName: string,
   agentIdentifier: string,
@@ -10,29 +13,23 @@ export function buildAgentChatPrompt(
 ): string {
   return `Add Novu Agent Chat to my app with useAgentChat from @novu/react so end users can chat with the "${agentName}" agent in-product.
 
-Context: I'm already signed in to the Novu dashboard and the "${agentName}" Agent Chat integration already exists (agent id: ${agentIdentifier}). This is purely a frontend code integration: do NOT run the Novu CLI, the agent-onboarding flow, or keyless mode.
+Context: I'm already signed in to the Novu dashboard and the "${agentName}" Agent Chat integration is linked (agent id: ${agentIdentifier}). npx novu connect already wrote the Novu env vars into my project — do NOT run the Novu CLI, the agent onboarding flow, or keyless mode.
+
+Docs (follow this integration guide): ${AGENT_CHAT_DOCS_URL}/quickstart.md
+
+Environment (already in .env.local when present — read from process.env, do not hardcode):
+- NEXT_PUBLIC_NOVU_APP_ID
+- NEXT_PUBLIC_NOVU_SUBSCRIBER_ID (use "${subscriberId}" only for a smoke test if my app has no auth yet)
+- NEXT_PUBLIC_NOVU_AGENT_ID
+- NEXT_PUBLIC_NOVU_BACKEND_URL (only if set — omit apiUrl on NovuProvider for US Cloud)
+- NEXT_PUBLIC_NOVU_SOCKET_URL (only if set — required for EU, staging, and local dev)
 
 Requirements:
 - Install @novu/react with my project's package manager.
-- Follow the Agent Chat docs: ${AGENT_CHAT_DOCS_URL}
-- Render a production-quality chat UI (message list from message.parts, composer, tool approvals via respondToAction). Match my app's styling — do not dump raw JSON.
-- Wrap that UI in <NovuProvider> configured for the currently signed-in end user.
-- Use applicationIdentifier="${applicationIdentifier}". Store applicationIdentifier in an environment variable rather than hardcoding it.
-- Pass the authenticated user's id as subscriberId: source it from my app's existing auth (Clerk, NextAuth, Firebase, Supabase, or custom). If no auth system exists yet, use "${subscriberId}" for a quick smoke test.
-- If my app enables Novu subscriber HMAC, pass the matching subscriber hash into NovuProvider (same pattern as Inbox).
-- Follow my app's existing framework, routing, styling, and TypeScript conventions, place the chat in a sensible spot in the UI, and add no unnecessary wrappers.`;
+- Wrap the chat UI in <NovuProvider> with applicationIdentifier, subscriberId, apiUrl, and socketUrl from the env vars above.
+- Use useAgentChat({ agentId: process.env.NEXT_PUBLIC_NOVU_AGENT_ID }) and render message.parts, a composer, and tool approvals via respondToAction.
+- Match my app's existing framework, routing, styling, and TypeScript conventions. Place the chat where it fits my product — do not copy a generic template wholesale.
+- If my app enables Novu subscriber HMAC, pass the matching subscriber hash into NovuProvider (same pattern as Inbox).`;
 }
 
-export function buildAgentChatEmbedPromptForAuth(input: {
-  agentName: string;
-  agentIdentifier: string;
-  applicationIdentifier?: string | null;
-  subscriberId?: string | null;
-}): string {
-  return buildAgentChatPrompt(
-    input.agentName,
-    input.agentIdentifier,
-    input.applicationIdentifier?.trim() || APPLICATION_IDENTIFIER_PLACEHOLDER,
-    input.subscriberId?.trim() || SUBSCRIBER_ID_PLACEHOLDER
-  );
-}
+export { buildAgentChatEmbedPromptForAuth } from './connect-embed-prompt';

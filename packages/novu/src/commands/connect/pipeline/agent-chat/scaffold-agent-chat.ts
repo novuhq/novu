@@ -5,6 +5,7 @@ import { tryGitInit } from '../../../init/helpers/git';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { detectBridgeProject } from '../bridge/detect-project';
+import { buildAgentChatEnvEntries, mergeAgentChatEnv } from './wire-agent-chat-env';
 
 export type ScaffoldAgentChatProjectInput = {
   parentDir: string;
@@ -24,6 +25,8 @@ export type ScaffoldAgentChatProjectResult = {
   appName: string;
   scaffolded: boolean;
   mergedIntoBridge: boolean;
+  /** Browser path where Agent Chat is served inside the app. */
+  chatPath: string;
 };
 
 const TEMPLATE_ROOT = path.join(__dirname, '../../templates/agent-chat/ts');
@@ -38,12 +41,14 @@ export async function scaffoldAgentChatProject(
   const mergeTarget = input.mergeIntoProjectDir?.trim();
   if (mergeTarget) {
     await mergeAgentChatIntoProject(mergeTarget, input);
+    const chatPath = input.mergeAtRoot ? '/' : '/agent-chat';
 
     return {
       projectDir: mergeTarget,
       appName: path.basename(mergeTarget),
       scaffolded: true,
       mergedIntoBridge: true,
+      chatPath,
     };
   }
 
@@ -59,7 +64,7 @@ export async function scaffoldAgentChatProject(
   await writeStandaloneAgentChatApp(root, input);
   tryGitInit(root);
 
-  return { projectDir: root, appName, scaffolded: true, mergedIntoBridge: false };
+  return { projectDir: root, appName, scaffolded: true, mergedIntoBridge: false, chatPath: '/' };
 }
 
 async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgentChatProjectInput): Promise<void> {
@@ -231,9 +236,12 @@ export default function Page() {
 
   return `'use client';
 
+import { Inter } from 'next/font/google';
 import { NovuProvider } from '@novu/react';
 import { AgentChat } from '@/components/agent-chat/agent-chat';
 import '@/components/agent-chat/globals.css';
+
+const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export default function AgentChatPage() {
   const applicationIdentifier = process.env.NEXT_PUBLIC_NOVU_APP_ID ?? '';
@@ -243,7 +251,7 @@ export default function AgentChatPage() {
 
   return (
     <NovuProvider applicationIdentifier={applicationIdentifier} subscriberId={subscriberId} apiUrl={apiUrl} socketUrl={socketUrl}>
-      <main className="novu-agent-chat agent-chat-page">
+      <main className={\`novu-agent-chat agent-chat-page \${inter.className}\`}>
         <AgentChat />
       </main>
     </NovuProvider>
@@ -268,27 +276,34 @@ function renderConfigModule(input: {
 `;
 }
 
-function renderEnvLocal(input: ScaffoldAgentChatProjectInput): string {
-  return renderEnvExample(input).replace('# Copy to .env.local', '');
+function renderEnvExample(input: ScaffoldAgentChatProjectInput): string {
+  const entries = buildAgentChatEnvEntries({
+    projectDir: '',
+    applicationIdentifier: input.applicationIdentifier,
+    subscriberId: input.subscriberId,
+    agentIdentifier: input.agentIdentifier,
+    apiUrl: input.apiUrl,
+  });
+  const lines = ['# Copy to .env.local', '# Agent Chat (added by npx novu connect)'];
+  for (const [key, value] of Object.entries(entries)) {
+    lines.push(`${key}=${value}`);
+  }
+
+  return `${lines.join('\n')}\n`;
 }
 
-function renderEnvExample(input: ScaffoldAgentChatProjectInput): string {
-  return `# Copy to .env.local
-NEXT_PUBLIC_NOVU_APP_ID=${input.applicationIdentifier}
-NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=${input.subscriberId}
-NEXT_PUBLIC_NOVU_AGENT_ID=${input.agentIdentifier}
-NEXT_PUBLIC_NOVU_BACKEND_URL=${input.apiUrl.replace(/\/$/, '')}
-`;
+function renderEnvLocal(input: ScaffoldAgentChatProjectInput): string {
+  return renderEnvExample(input).replace('# Copy to .env.local\n', '');
 }
 
 function appendEnvExample(projectDir: string, input: ScaffoldAgentChatProjectInput): void {
-  const envPath = path.join(projectDir, '.env.local');
-  const block = `\n# Agent Chat (added by npx novu connect)\nNEXT_PUBLIC_NOVU_APP_ID=${input.applicationIdentifier}\nNEXT_PUBLIC_NOVU_SUBSCRIBER_ID=${input.subscriberId}\nNEXT_PUBLIC_NOVU_AGENT_ID=${input.agentIdentifier}\nNEXT_PUBLIC_NOVU_BACKEND_URL=${input.apiUrl.replace(/\/$/, '')}\n`;
-  if (fs.existsSync(envPath)) {
-    fs.appendFileSync(envPath, block, 'utf8');
-  } else {
-    fs.writeFileSync(envPath, `${renderEnvExample(input)}${block}`, 'utf8');
-  }
+  mergeAgentChatEnv({
+    projectDir,
+    applicationIdentifier: input.applicationIdentifier,
+    subscriberId: input.subscriberId,
+    agentIdentifier: input.agentIdentifier,
+    apiUrl: input.apiUrl,
+  });
 }
 
 function findMonorepoReactPackageDir(): string | undefined {

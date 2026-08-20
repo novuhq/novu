@@ -17,6 +17,7 @@ import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outc
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
 import type { AgentChatSetupMode, ChannelChoice } from '../types';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
+import { copyToClipboard } from './copy-to-clipboard';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { LlmAuthPicker } from './llm-auth-picker';
@@ -274,6 +275,16 @@ export function PhaseContent({
     case 'pick-agent-chat-setup':
       return <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />;
 
+    case 'agent-chat-embed-ready':
+      return (
+        <AgentChatEmbedReadyContent
+          embedPrompt={phase.embedPrompt}
+          embedPromptFile={phase.embedPromptFile}
+          envPaths={phase.envPaths}
+          onContinue={phase.resolve}
+        />
+      );
+
     case 'scaffolding-agent-chat':
       return (
         <Box flexDirection="column" gap={1} alignItems="center">
@@ -400,6 +411,8 @@ const CHANNEL_HINTS: Partial<Record<ChannelChoice, string>> = {
 };
 /** Keeps the picker + hint from widening the centered layout when the hint appears. */
 const CHANNEL_PICKER_WIDTH = 48;
+/** WhatsApp hint wraps to 3 lines — reserve that height always so Ink incremental diffs don't shrink. */
+const CHANNEL_HINT_RESERVED_LINES = 3;
 
 function ChannelSelect({
   options,
@@ -439,6 +452,7 @@ function ChannelSelect({
 
   const highlighted = uniqueOptions[idx]?.value ?? null;
   const channelHint = highlighted !== null ? CHANNEL_HINTS[highlighted] : undefined;
+  const hintLines = buildChannelHintLines(channelHint);
 
   return (
     <Box flexDirection="column" gap={1} alignItems="flex-start">
@@ -458,19 +472,50 @@ function ChannelSelect({
         })}
       </Box>
       <Box flexDirection="column" width={CHANNEL_PICKER_WIDTH}>
-        {channelHint ? (
-          <Text dimColor wrap="wrap">
-            {channelHint}
+        {hintLines.map((line, lineIndex) => (
+          <Text key={lineIndex} dimColor={Boolean(channelHint && line.trim().length > 0)}>
+            {line.length > 0 ? line : ' '}
           </Text>
-        ) : (
-          <>
-            <Text> </Text>
-            <Text> </Text>
-          </>
-        )}
+        ))}
       </Box>
     </Box>
   );
+}
+
+function buildChannelHintLines(channelHint: string | undefined): string[] {
+  const lines = channelHint ? wrapHintLines(channelHint, CHANNEL_PICKER_WIDTH) : [];
+
+  while (lines.length < CHANNEL_HINT_RESERVED_LINES) {
+    lines.push('');
+  }
+
+  return lines.slice(0, CHANNEL_HINT_RESERVED_LINES);
+}
+
+function wrapHintLines(text: string, width: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    const candidate = current.length === 0 ? word : `${current} ${word}`;
+    if (candidate.length <= width) {
+      current = candidate;
+      continue;
+    }
+
+    if (current.length > 0) {
+      lines.push(current);
+    }
+
+    current = word;
+  }
+
+  if (current.length > 0) {
+    lines.push(current);
+  }
+
+  return lines;
 }
 function GeneratingContent(): React.ReactElement {
   const [elapsed, setElapsed] = React.useState(0);
@@ -565,13 +610,13 @@ function AgentChatSetupPickContent({
   const options =
     projectKind === 'empty'
       ? [
-          { label: 'Scaffold example app', value: 'scaffold' as const },
-          { label: 'Save embed prompt for my app', value: 'embed' as const },
+          { label: 'Scaffold a new example app', value: 'scaffold' as const },
+          { label: 'Add to my existing app (env + AI prompt)', value: 'embed' as const },
           { label: 'Skip for now', value: 'skip' as const },
         ]
       : [
-          { label: 'Save embed prompt into this project', value: 'embed' as const },
-          { label: 'Scaffold a new example app', value: 'scaffold' as const },
+          { label: 'Add to this project (env + AI prompt)', value: 'embed' as const },
+          { label: 'Scaffold a new example app nearby', value: 'scaffold' as const },
           { label: 'Skip for now', value: 'skip' as const },
         ];
   const [idx, setIdx] = React.useState(0);
@@ -591,8 +636,8 @@ function AgentChatSetupPickContent({
       <Text bold>Add Agent Chat to your app</Text>
       <Text dimColor>
         {projectKind === 'empty'
-          ? 'No project found here. Scaffold a small example app, or save the embed prompt.'
-          : 'We found an existing project. Save the embed prompt here, or scaffold a new example app.'}
+          ? 'Scaffold a standalone example, or add env vars + an AI prompt for your existing app.'
+          : 'We found an existing project. Add env vars + a copy-paste prompt, or scaffold a new example app.'}
       </Text>
       {options.map((opt, rowIndex) => {
         const isSelected = rowIndex === idx;
@@ -607,6 +652,53 @@ function AgentChatSetupPickContent({
         );
       })}
       <Text dimColor>↑↓ to move · Enter to select</Text>
+    </Box>
+  );
+}
+
+function AgentChatEmbedReadyContent({
+  embedPrompt,
+  embedPromptFile,
+  envPaths,
+  onContinue,
+}: {
+  embedPrompt: string;
+  embedPromptFile?: string;
+  envPaths: string[];
+  onContinue: () => void;
+}): React.ReactElement {
+  const [copyState, setCopyState] = React.useState<'idle' | 'copied' | 'failed'>('idle');
+
+  useInput((input, key) => {
+    if (key.return) {
+      onContinue();
+
+      return;
+    }
+
+    if (input === 'c' || input === 'C') {
+      void copyToClipboard(embedPrompt).then((ok) => setCopyState(ok ? 'copied' : 'failed'));
+    }
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Ready to wire Agent Chat</Text>
+      <Text dimColor>Paste the prompt into Cursor, Claude Code, or your coding agent to finish wiring.</Text>
+      {envPaths.map((envPath) => (
+        <Text key={envPath} dimColor>{`Env: ${envPath}`}</Text>
+      ))}
+      <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={0}>
+        <Text wrap="wrap">{embedPrompt}</Text>
+      </Box>
+      {copyState === 'copied' ? <Text color="green">✓ Prompt copied to clipboard.</Text> : null}
+      {copyState === 'failed' && embedPromptFile ? (
+        <Text color="yellow">Clipboard unavailable — the prompt is saved at {embedPromptFile}</Text>
+      ) : null}
+      {copyState === 'failed' && !embedPromptFile ? (
+        <Text color="yellow">Clipboard unavailable — select and copy the prompt above.</Text>
+      ) : null}
+      <Text color="cyan">Enter · continue C · copy prompt</Text>
     </Box>
   );
 }
@@ -671,10 +763,17 @@ function SuccessView({
             {agentChatHandoff?.dashboardUrl ? (
               <Text color="cyan">Try chat in the dashboard — link copied above.</Text>
             ) : null}
-            {agentChatOutcome?.embedPromptFile ? (
-              <Text dimColor>Embed prompt saved to {agentChatOutcome.embedPromptFile}</Text>
+            {agentChatOutcome?.mode === 'embed' ? (
+              <>
+                {agentChatOutcome.envPaths?.map((envPath) => (
+                  <Text key={envPath} dimColor>{`Env updated: ${envPath}`}</Text>
+                ))}
+                <Text dimColor>Press C on the previous screen to copy the AI prompt.</Text>
+              </>
             ) : null}
-            {agentChatOutcome?.projectDir ? <Text color="cyan">Example app: {agentChatOutcome.projectDir}</Text> : null}
+            {agentChatOutcome?.projectDir && agentChatOutcome.mode === 'scaffold' ? (
+              <Text color="cyan">Example app: {agentChatOutcome.projectDir}</Text>
+            ) : null}
           </>
         ) : (
           renderSuccessChannelMessage(channelLabel, redirectChannelLabel)

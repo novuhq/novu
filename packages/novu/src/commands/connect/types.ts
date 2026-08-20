@@ -70,8 +70,12 @@ export type AgentChatConnectOutcome = {
   projectDir?: string;
   scaffolded?: boolean;
   mergedIntoBridge?: boolean;
-  /** Project-local embed prompt file (interactive embed path only). */
+  /** Browser path where Agent Chat is served (for example `/` or `/agent-chat`). */
+  chatPath?: string;
+  /** Project-local embed prompt file (embed path). */
   embedPromptFile?: string;
+  /** Env files updated during the embed path. */
+  envPaths?: string[];
 };
 
 export type ConnectAgentChatHandoff = {

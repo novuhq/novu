@@ -220,8 +220,11 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve('skip');
     },
-    confirmScaffold({ projectDir, appName, variant = 'chat-sdk' }) {
+    confirmScaffold({ projectDir, appName, variant = 'chat-sdk', llmAuthLabel }) {
       console.log(chalk.cyan(`→ Scaffolding ${bridgeScaffoldLabel(variant)} "${appName}" in ${projectDir}`));
+      if (llmAuthLabel) {
+        console.log(chalk.gray(`  LLM wiring: ${llmAuthLabel}`));
+      }
 
       return Promise.resolve(true);
     },
@@ -485,6 +488,20 @@ export function createLoggingUI(): ConnectUI {
     },
     pickAgentChatSetup({ projectKind }) {
       return Promise.resolve(projectKind === 'empty' ? 'scaffold' : 'embed');
+    },
+    awaitAgentChatEmbedReady({ embedPrompt, embedPromptFile, envPaths }) {
+      console.log(`${chalk.green('✓')} Agent Chat env vars added.`);
+      for (const envPath of envPaths) {
+        console.log(`  ${chalk.bold('Env:')} ${envPath}`);
+      }
+      if (embedPromptFile) {
+        console.log(`  ${chalk.bold('Prompt file:')} ${embedPromptFile}`);
+      }
+      console.log(chalk.dim('Paste the prompt below into Cursor, Claude Code, or your coding agent.'));
+      console.log('');
+      console.log(embedPrompt);
+
+      return Promise.resolve();
     },
     scaffoldingAgentChat() {
       start('Scaffolding your Agent Chat example app…');

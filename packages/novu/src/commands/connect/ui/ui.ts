@@ -91,7 +91,12 @@ export interface ConnectUI {
   promptForAgentName(defaultName: string): Promise<string>;
   confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
   pickLlmAuthKind(opts: { connectMode: BridgeAdapterVariant }): Promise<LlmAuthKind>;
-  confirmScaffold(opts: { projectDir: string; appName: string; variant?: BridgeScaffoldVariant }): Promise<boolean>;
+  confirmScaffold(opts: {
+    projectDir: string;
+    appName: string;
+    variant?: BridgeScaffoldVariant;
+    llmAuthLabel?: string;
+  }): Promise<boolean>;
   scaffoldingBridge(opts: { variant: BridgeScaffoldVariant }): void;
   bridgeScaffolded(opts: {
     variant: BridgeScaffoldVariant;
@@ -279,6 +284,7 @@ export interface ConnectUI {
   addingAgentChatIntegration(): void;
   awaitAgentChatHandoff(opts: { dashboardUrl: string; embedPrompt: string; embedPromptFile?: string }): Promise<void>;
   pickAgentChatSetup(opts: { projectKind: BridgeProjectKind }): Promise<AgentChatSetupMode>;
+  awaitAgentChatEmbedReady(opts: { embedPrompt: string; embedPromptFile?: string; envPaths: string[] }): Promise<void>;
   scaffoldingAgentChat(): void;
 
   // Welcome message

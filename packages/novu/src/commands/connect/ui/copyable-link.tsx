@@ -23,7 +23,7 @@ export type CopyableLinkProps = {
 
 /**
  * Renders a URL on its own stable line with OSC 8 linking and keyboard shortcuts.
- * Pair with Ink `incrementalRendering: true` so orb animation does not redraw this line.
+ * Pair with a paused orb on URL phases so full-screen redraws do not run every frame.
  */
 export function CopyableLink({ url, hint, color = 'cyan', hyperlink = true }: CopyableLinkProps): React.ReactElement {
   const [actionHint, setActionHint] = React.useState<{ text: string; tone: 'ok' | 'error' } | null>(null);

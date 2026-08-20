@@ -421,6 +421,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       options.agentChatSetup !== 'embed' &&
       options.agentChatSetup !== 'skip';
 
+    const deferAgentPrompt = Boolean(agentChatHandoff);
+
     if (connectMode === 'chat-sdk') {
       chatSdkOutcome = await runChatSdkProjectSetup({
         options,
@@ -428,6 +430,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         auth: session.auth,
         agent,
         deferScaffoldSummary,
+        deferAgentPrompt,
       });
     } else if (isAiSdkConnectMode(connectMode)) {
       aiSdkOutcome = await runAiSdkProjectSetup({
@@ -436,6 +439,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         auth: session.auth,
         agent,
         deferScaffoldSummary,
+        deferAgentPrompt,
       });
     } else if (isLangChainConnectMode(connectMode)) {
       langChainOutcome = await runLangChainProjectSetup({
@@ -444,6 +448,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         auth: session.auth,
         agent,
         deferScaffoldSummary,
+        deferAgentPrompt,
       });
     } else if (isVanillaCustomCodeConnectMode(connectMode)) {
       customCodeOutcome = await runCustomCodeProjectSetup({
@@ -468,8 +473,11 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         auth: session.auth,
         agent,
         handoff: agentChatHandoff,
+        connectMode,
+        bridgeOutcome: bridgeProject,
         bridgeProjectDir: bridgeProject?.projectDir,
         autoMergeIntoBridge: bridgeProject?.scaffolded === true,
+        deferAgentPrompt,
       });
     }
 
