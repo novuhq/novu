@@ -436,6 +436,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       message,
       existingConversation,
+      isDirectMessage: thread.isDM,
     });
 
     const conversation = await this.conversationService.createOrGetConversation({
@@ -1153,6 +1154,7 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriberId,
       message: null,
       existingConversation,
+      isDirectMessage: thread.isDM,
     });
 
     const conversation = await this.conversationService.createOrGetConversation({

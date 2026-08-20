@@ -208,6 +208,16 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let channel: ChannelChoice = presetChannel ?? 'skip';
 
     const openDashboardChannelHandoff = async (handoffChannel: ChannelChoice) => {
+      // Finishing setup in the dashboard needs a real account: a keyless
+      // workspace has no dashboard to sign into and no environment to link to,
+      // so the agent is moved into the user's own environment first.
+      if (session.auth.isKeyless) {
+        agent = await upgradeKeylessSessionForChannel(session, ctx, agent, connectMode, {
+          source: `${handoffChannel}_dashboard_handoff_upgrade`,
+          statusMessage: `${channelDisplayName(handoffChannel)} setup happens in the Novu dashboard. Opening Novu dashboard sign-in to continue…`,
+        });
+      }
+
       const agentDetailsUrl = buildConnectAgentDetailsUrl({
         connectDashboardUrl: options.connectDashboardUrl,
         environmentSlug: session.auth.environmentSlug,
@@ -317,7 +327,11 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
               // Embedded signup isn't available for the keyless workspace
               // (flag off, self-hosted, older API) — fall back to a real
               // account and retry in the upgraded environment.
-              agent = await upgradeKeylessSessionForWhatsApp(session, ctx, agent, connectMode);
+              agent = await upgradeKeylessSessionForChannel(session, ctx, agent, connectMode, {
+                source: 'whatsapp_upgrade',
+                statusMessage:
+                  'WhatsApp needs a Novu account on this deployment. Opening Novu dashboard sign-in to continue…',
+              });
 
               result = await connectWhatsAppForAgent(
                 session.client,
@@ -559,25 +573,24 @@ function createManagedAgentFromSpec(
 }
 
 /**
- * Fallback when the tokenized Embedded Signup flow is unavailable for the
- * keyless workspace (flag off, self-hosted without Meta credentials, older
- * API): the keyless user is upgraded to a real account in place. The keyless
- * agent lives in a temporary workspace the upgraded session can no longer
- * reach, so the agent is recreated in the upgraded environment from the
- * retained generated spec.
+ * Moves a keyless run into a real account mid-flow, for channels that cannot
+ * complete in the temporary workspace — WhatsApp when the tokenized Embedded
+ * Signup flow is unavailable (flag off, self-hosted without Meta credentials,
+ * older API), or any channel that hands off to the dashboard. The keyless agent
+ * lives in a temporary workspace the upgraded session can no longer reach, so
+ * the agent is recreated in the upgraded environment from the retained
+ * generated spec.
  */
-async function upgradeKeylessSessionForWhatsApp(
+async function upgradeKeylessSessionForChannel(
   session: ConnectSession,
   ctx: PipelineContext,
   agent: AgentSummary,
-  connectMode: AgentConnectMode | undefined
+  connectMode: AgentConnectMode | undefined,
+  upgrade: { source: string; statusMessage: string }
 ): Promise<AgentSummary> {
   const { options, ui, track, sessionProps, createdSpec } = ctx;
 
-  await upgradeKeylessWithTracking(session, ctx, {
-    source: 'whatsapp_upgrade',
-    statusMessage: 'WhatsApp needs a Novu account on this deployment. Opening Novu dashboard sign-in to continue…',
-  });
+  await upgradeKeylessWithTracking(session, ctx, upgrade);
 
   // The upgraded environment may already hold this agent from a previous run.
   ui.listingAgents();

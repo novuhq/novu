@@ -29,6 +29,10 @@ export interface AgentApprovalRequest {
    */
   approveActionId?: string;
   denyActionId?: string;
+  /** Server-minted always-allow-this-tool action id. Echo via respondToAction / card click. */
+  trustToolActionId?: string;
+  /** Server-minted always-allow-MCP-server action id (MCP tools only). */
+  trustServerActionId?: string;
 }
 
 export type AgentSignal =

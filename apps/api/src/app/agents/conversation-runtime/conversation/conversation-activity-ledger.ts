@@ -280,6 +280,7 @@ export class ConversationActivityLedger {
         input: params.input,
         approveActionId: actionIds.approveActionId,
         denyActionId: actionIds.denyActionId,
+        mcpServerName: params.mcpServerName,
       },
       sequence,
       environmentId: params.environmentId,
