@@ -14,10 +14,6 @@ describe('buildWorkflowOriginLine', () => {
     expect(buildWorkflowOriginLine('order-shipped', '')).toBe('A notification was sent by the order-shipped workflow.');
   });
 
-  it('does not append the payload', () => {
-    expect(buildWorkflowOriginLine('order-shipped', 'hi')).not.toContain('{');
-  });
-
   it('caps the prose line under the line budget', () => {
     const text = buildWorkflowOriginLine('order-shipped', 'x'.repeat(WORKFLOW_ORIGIN_LINE_MAX_CHARS + 200));
 

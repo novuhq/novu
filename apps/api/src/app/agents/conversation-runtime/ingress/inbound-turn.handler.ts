@@ -429,7 +429,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const workflowOrigin = await this.workflowOriginService.resolve({
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
       platformThreadId,
@@ -455,19 +455,20 @@ export class AgentInboundHandler implements OnModuleInit {
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
       identifier: this.agentChatConversationIdentifier(config.platform, platformThreadId),
-      notificationId: workflowOrigin?.notificationId,
+      notificationId: workflowOriginResolution?.notificationId,
       contextKeys:
         config.platform === AgentPlatformEnum.AGENT_CHAT
           ? ((message.raw as AgentChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 
-    const workflowOriginData = await this.workflowOriginService.resolveForTurn({
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
       conversation,
       platformThreadId,
-      resolution: workflowOrigin,
+      subscriberId,
+      resolution: workflowOriginResolution,
     });
 
     if (config.isKeyless) {
@@ -543,7 +544,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-      workflowOrigin: workflowOriginData ?? undefined,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
@@ -1084,7 +1085,7 @@ export class AgentInboundHandler implements OnModuleInit {
     );
     const runtime = this.runtimeResolver.resolve(agent);
 
-    const workflowOrigin = await this.workflowOriginService.resolve({
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
       platformThreadId: threadId,
@@ -1093,12 +1094,13 @@ export class AgentInboundHandler implements OnModuleInit {
       existingConversation: conversation,
       isDirectMessage: event.thread?.isDM,
     });
-    const workflowOriginData = await this.workflowOriginService.resolveForTurn({
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
       conversation,
       platformThreadId: threadId,
-      resolution: workflowOrigin,
+      subscriberId,
+      resolution: workflowOriginResolution,
     });
 
     const turn: ConversationTurn = {
@@ -1115,7 +1117,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
       platformThreadId: threadId,
       reaction: reactionPayload,
-      workflowOrigin: workflowOriginData ?? undefined,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval can be
@@ -1165,7 +1167,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId
     );
 
-    const workflowOrigin = await this.workflowOriginService.resolve({
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
       platformThreadId,
@@ -1188,19 +1190,20 @@ export class AgentInboundHandler implements OnModuleInit {
       firstMessageText: `[action:${action.id}]`,
       isDirectMessage: thread.isDM,
       workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
-      notificationId: workflowOrigin?.notificationId,
+      notificationId: workflowOriginResolution?.notificationId,
       contextKeys:
         config.platform === AgentPlatformEnum.AGENT_CHAT
           ? ((rawEvent as AgentChatRawMessage | undefined)?.contextKeys ?? [])
           : undefined,
     });
 
-    const workflowOriginData = await this.workflowOriginService.resolveForTurn({
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
       agentId,
       config,
       conversation,
       platformThreadId,
-      resolution: workflowOrigin,
+      subscriberId,
+      resolution: workflowOriginResolution,
     });
 
     trackAgentInboundAction(this.analyticsService, {
@@ -1260,7 +1263,7 @@ export class AgentInboundHandler implements OnModuleInit {
       thread,
       platformThreadId,
       action,
-      workflowOrigin: workflowOriginData ?? undefined,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     await runtime.dispatch(turn);

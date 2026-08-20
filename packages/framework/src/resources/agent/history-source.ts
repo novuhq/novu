@@ -1,6 +1,6 @@
 import type { AgentHandlerContext, AgentHistoryEntry, AgentNotification } from './agent.types';
 
-/** Array form is origin-blind; object form reads `notification` for auto-injection. */
+/** Passing history directly skips notification injection. */
 export type AgentTranscriptSource = AgentHistoryEntry[] | Pick<AgentHandlerContext, 'history' | 'notification'>;
 
 export function resolveTranscriptSource(source: AgentTranscriptSource): {

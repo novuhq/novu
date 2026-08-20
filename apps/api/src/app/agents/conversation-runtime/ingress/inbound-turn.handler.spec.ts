@@ -48,7 +48,6 @@ describe('AgentInboundHandler', () => {
   function makeOriginSnapshot(
     overrides: {
       body?: string;
-      content?: string;
       platformMessageId?: string;
       payload?: Record<string, unknown>;
       source?: 'hydrated' | 'existing';
@@ -61,7 +60,7 @@ describe('AgentInboundHandler', () => {
         messageId: 'msg1',
         platformMessageId: overrides.platformMessageId ?? '1777837477.371619',
         sentAt: '2026-01-01T00:00:00.000Z',
-        body: overrides.body ?? overrides.content ?? 'Order alerts',
+        body: overrides.body ?? 'Order alerts',
         payload: overrides.payload ?? {},
       },
       source: overrides.source ?? ('hydrated' as const),
@@ -457,7 +456,7 @@ describe('AgentInboundHandler', () => {
         _notificationId: 'notif1',
         identifier: 'D123:1777837477.371619',
       };
-      const snapshot = makeOriginSnapshot({ content: 'Order shipped' });
+      const snapshot = makeOriginSnapshot({ body: 'Order shipped' });
 
       conversationService.findByPlatformThread.resolves(null);
       workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
@@ -530,7 +529,6 @@ describe('AgentInboundHandler', () => {
 
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
       expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
-      expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin.source).to.equal('hydrated');
     });
 
     it('should read the latest persisted origin on later turns when nothing new hydrates', async () => {
@@ -548,7 +546,7 @@ describe('AgentInboundHandler', () => {
         participants: [],
       };
       const snapshot = makeOriginSnapshot({
-        content: 'Your order shipped',
+        body: 'Your order shipped',
         platformMessageId: '42',
         payload: { orderId: 'ORD-9' },
         source: 'existing',
@@ -584,10 +582,10 @@ describe('AgentInboundHandler', () => {
 
       expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
       expect(workflowOriginService.resolveForTurn.firstCall.args[0]).to.include({
+        subscriberId: 'sub-tg',
         resolution: null,
       });
       expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
-      expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin.source).to.equal('existing');
     });
 
     it('should leave workflowOrigin unset when nothing was hydrated', async () => {

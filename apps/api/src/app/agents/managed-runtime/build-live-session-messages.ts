@@ -4,12 +4,7 @@ import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/wor
 
 /**
  * Messages for a turn on an existing Anthropic session. The provider holds prior
- * history server-side, so only the new turn is sent.
- *
- * When a workflow origin is present, it is injected as an ephemeral ASSISTANT row
- * ahead of the USER row (never persisted as a MESSAGE activity). Thalamus runs one
- * live turn per USER row, so this adds context without producing a second reply,
- * and ASSISTANT avoids elevating untrusted payload text the way a SYSTEM row would.
+ * history server-side, so only the new turn and newly hydrated origin are sent.
  */
 export function buildLiveSessionMessages(params: {
   userMessageText: string;

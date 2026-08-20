@@ -92,7 +92,7 @@ export interface AgentSubscriber {
   data?: Record<string, unknown>;
 }
 
-/** Workflow-origin notification for this turn. Most-recent-wins; `null` when there is none. */
+/** Workflow-origin notification for this turn. */
 export interface AgentNotification<TPayload extends Record<string, unknown> = Record<string, unknown>> {
   id: string;
   /** User-facing workflow slug — same string as `ctx.trigger(workflowId)`. */
@@ -100,7 +100,6 @@ export interface AgentNotification<TPayload extends Record<string, unknown> = Re
   messageId: string;
   platformMessageId: string;
   sentAt: string;
-  /** Rendered outbound notification text, capped by `buildWorkflowOriginLine`. */
   body: string;
   payload: TPayload;
 }

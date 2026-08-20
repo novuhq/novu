@@ -189,6 +189,7 @@ export class ManagedAgentService implements OnModuleInit {
       config: params.config,
       conversation: params.conversation,
       platformThreadId,
+      subscriberId: params.subscriber.subscriberId,
       resolution: null,
     });
 

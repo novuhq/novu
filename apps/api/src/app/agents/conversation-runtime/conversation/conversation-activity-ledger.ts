@@ -458,12 +458,7 @@ export class ConversationActivityLedger {
     return count > 0;
   }
 
-  /**
-   * Persist a logging-only SIGNAL that this conversation was opened (or re-attached)
-   * from a workflow send. Not part of agent history. The stable
-   * `workflow-dispatch-origin:{platformMessageId}` identifier is the idempotency key —
-   * duplicate-key collisions under concurrency are treated as success.
-   */
+  /** Persist a logging-only SIGNAL for the workflow origin. */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
     try {
       await this.persistSignal({

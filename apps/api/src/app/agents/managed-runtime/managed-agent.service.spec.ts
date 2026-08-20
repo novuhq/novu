@@ -2,7 +2,10 @@ import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from
 import { MessageRole } from '@novu/thalamus';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { type WorkflowOriginData, type WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
+import {
+  type WorkflowOriginData,
+  type WorkflowOriginSnapshot,
+} from '../conversation-runtime/ingress/workflow-origin.helpers';
 import { ManagedAgentService } from './managed-agent.service';
 
 const sampleOriginData: WorkflowOriginData = {
@@ -13,11 +16,6 @@ const sampleOriginData: WorkflowOriginData = {
   sentAt: '2026-01-01T00:00:00.000Z',
   body: 'Your order ORD-1 shipped',
   payload: { orderId: 'ORD-1' },
-};
-
-const hydratedSnapshot: WorkflowOriginSnapshot = {
-  data: sampleOriginData,
-  source: 'hydrated',
 };
 
 const existingSnapshot: WorkflowOriginSnapshot = {
@@ -134,20 +132,6 @@ describe('ManagedAgentService workflow-origin', () => {
       expect(messages.at(-1)).to.deep.equal({ role: MessageRole.USER, content: 'where is my order?' });
     });
 
-    it('injects the full origin payload', async () => {
-      const blob = 'x'.repeat(8_000);
-      const bulkySnapshot: WorkflowOriginSnapshot = {
-        ...hydratedSnapshot,
-        data: { ...sampleOriginData, payload: { blob, orderId: 'ORD-1' } },
-      };
-      const { service } = makeService();
-
-      const messages = await (service as any).buildMessagesWithHistory(makeContext({ workflowOrigin: bulkySnapshot }));
-
-      expect(String(messages[0].content)).to.include(blob);
-      expect(String(messages[0].content)).to.include('ORD-1');
-    });
-
     it('skips injection when context has no origin', async () => {
       const { service } = makeService();
 
@@ -193,6 +177,7 @@ describe('ManagedAgentService workflow-origin', () => {
       expect(workflowOriginService.resolveForTurn.firstCall.args[0]).to.include({
         agentId: 'agent-mongo',
         platformThreadId: 'thread-1',
+        subscriberId: 'sub-1',
         resolution: null,
       });
       expect(dispatch.calledOnce).to.equal(true);

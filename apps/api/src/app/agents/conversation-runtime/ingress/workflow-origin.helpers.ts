@@ -1,26 +1,14 @@
 import type { MessageEntity } from '@novu/dal';
-import {
-  buildWorkflowOriginInjection,
-  buildWorkflowOriginLine,
-  WORKFLOW_ORIGIN_LINE_MAX_CHARS,
-} from '@novu/framework/internal';
 import type { Message } from 'chat';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { asRecord } from '../../shared/util/raw-record';
 
-export { buildWorkflowOriginInjection, buildWorkflowOriginLine, WORKFLOW_ORIGIN_LINE_MAX_CHARS };
-
-/**
- * Structured origin snapshot for a turn. Shared by bridge (`ctx.notification`) and
- * managed (ephemeral ASSISTANT inject). Not persisted as a typed activity.
- */
 export interface WorkflowOriginData {
   notificationId: string;
   workflowIdentifier: string;
   messageId: string;
   platformMessageId: string;
   sentAt: string;
-  /** Rendered outbound notification text, capped by `buildWorkflowOriginLine`. */
   body: string;
   payload: Record<string, unknown>;
   jobId?: string;
@@ -29,18 +17,8 @@ export interface WorkflowOriginData {
   subscriberId?: string;
 }
 
-/**
- * Turn-scoped origin snapshot.
- *
- * `source` distinguishes a just-hydrated origin (new to a live model session) from one
- * re-derived on a later turn (already injected when the session was opened / reseeded).
- */
 export interface WorkflowOriginSnapshot {
   data: WorkflowOriginData;
-  /**
-   * `hydrated` — persisted on this turn; a live model session has not seen it yet.
-   * `existing` — re-derived from `conversation._notificationId`.
-   */
   source: 'hydrated' | 'existing';
 }
 

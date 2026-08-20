@@ -209,7 +209,6 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
     case ConversationActivityTypeEnum.RUN_ERROR:
       return mapRunLifecycleActivityToEvent(activity);
 
-    // Operator/model-facing only — no client event.
     case ConversationActivityTypeEnum.SIGNAL:
       return null;
 

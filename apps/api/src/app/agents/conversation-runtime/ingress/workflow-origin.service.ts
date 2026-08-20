@@ -8,6 +8,7 @@ import {
   NotificationRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { buildWorkflowOriginLine } from '@novu/framework/internal';
 import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
@@ -15,7 +16,6 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import {
-  buildWorkflowOriginLine,
   extractAgentEmailOriginToken,
   extractTeamsQuotedActivityId,
   extractTelegramChatIdFromThreadId,
@@ -168,18 +168,15 @@ export class WorkflowOriginService {
     }
   }
 
-  /**
-   * Resolve the turn-scoped origin snapshot: hydrate when a new origin was found,
-   * otherwise re-derive from `conversation._notificationId`.
-   */
   async resolveForTurn(params: {
     agentId: string;
     config: ResolvedAgentConfig;
     conversation: ConversationEntity;
     platformThreadId: string;
+    subscriberId: string | null;
     resolution: WorkflowOriginResolution | null;
   }): Promise<WorkflowOriginSnapshot | null> {
-    const { agentId, config, conversation, platformThreadId, resolution } = params;
+    const { agentId, config, conversation, platformThreadId, subscriberId, resolution } = params;
 
     if (resolution) {
       return this.hydrate({
@@ -191,7 +188,8 @@ export class WorkflowOriginService {
       });
     }
 
-    if (!conversation._notificationId) {
+    const notificationId = conversation._notificationId;
+    if (!notificationId) {
       return null;
     }
 
@@ -200,14 +198,11 @@ export class WorkflowOriginService {
       config,
       conversation,
       platformThreadId,
+      subscriberId,
+      notificationId,
     });
   }
 
-  /**
-   * Persist a logging SIGNAL, refresh `conversation._notificationId`, and return a
-   * `hydrated` snapshot. Prefer this return value over a re-read so there is no
-   * read-after-write dependency on the hydration turn.
-   */
   async hydrate(params: {
     agentId: string;
     config: ResolvedAgentConfig;
@@ -237,6 +232,17 @@ export class WorkflowOriginService {
         notificationId
       );
 
+      // The notification id has to land first: it is what later turns re-derive from, while the
+      // hydration marker suppresses re-hydration. Marking first and failing here would strand the
+      // conversation without any way back to its origin.
+      await this.conversationService.setNotificationId(
+        config.environmentId,
+        config.organizationId,
+        conversation._id,
+        notificationId
+      );
+      conversation._notificationId = notificationId;
+
       await this.conversationService.persistWorkflowOriginHydration({
         conversationId: conversation._id,
         channel: this.conversationService.getPrimaryChannel(conversation),
@@ -257,14 +263,6 @@ export class WorkflowOriginService {
         },
       });
 
-      await this.conversationService.setNotificationId(
-        config.environmentId,
-        config.organizationId,
-        conversation._id,
-        notificationId
-      );
-      conversation._notificationId = notificationId;
-
       return { data, source: 'hydrated' };
     } catch (err) {
       captureAgentWarning(err, {
@@ -281,27 +279,33 @@ export class WorkflowOriginService {
     }
   }
 
-  /**
-   * Rebuild the origin snapshot from `conversation._notificationId` on later turns.
-   * Fail-soft: a lookup error must not drop the inbound turn.
-   */
   private async rederiveFromNotificationId(params: {
     agentId: string;
     config: ResolvedAgentConfig;
     conversation: ConversationEntity;
     platformThreadId: string;
+    subscriberId: string | null;
+    notificationId: string;
   }): Promise<WorkflowOriginSnapshot | null> {
-    const { agentId, config, conversation, platformThreadId } = params;
-    const notificationId = conversation._notificationId;
-    if (!notificationId) {
+    const { agentId, config, conversation, platformThreadId, subscriberId, notificationId } = params;
+
+    if (!subscriberId) {
       return null;
     }
 
     try {
+      // A thread can carry turns from other participants (shared Slack channel, forwarded email),
+      // so the origin payload is only re-derived for the subscriber the notification was sent to.
+      const subscriber = await this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId);
+      if (!subscriber) {
+        return null;
+      }
+
       const [origin] = await this.messageRepository.find(
         {
           _environmentId: config.environmentId,
           _agentId: agentId,
+          _subscriberId: subscriber._id,
           _notificationId: notificationId,
         },
         '',
@@ -435,10 +439,6 @@ export class WorkflowOriginService {
       'payload'
     );
 
-    /**
-     * Stored verbatim: bridge handlers read `ctx.notification.payload` against the workflow's
-     * payload schema, so reshaping it here would surface expected fields as `undefined`.
-     */
     const payload =
       notification?.payload && typeof notification.payload === 'object' && !Array.isArray(notification.payload)
         ? (notification.payload as Record<string, unknown>)

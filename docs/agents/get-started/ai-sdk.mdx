@@ -203,7 +203,7 @@ For an existing codebase, use [Connect an existing app](#connect-an-existing-app
     No. Your app serves the bridge endpoint. Novu forwards the inbound event and conversation context, then delivers whatever the handler returns.
   </Accordion>
   <Accordion title="How do I pass conversation history to the model?">
-    Use `toModelMessages(ctx)`. Do not append the inbound `message` again. The current message is already included. Passing `ctx` also prepends workflow-origin notification data when the conversation was opened from a workflow send.
+    Use `toModelMessages(ctx)`. See the [AI SDK reference](/agents/custom-code-agent/frameworks/ai-sdk#tomodelmessages).
   </Accordion>
   <Accordion title="Where is the adapter API documented?">
     [AI SDK reference](/agents/custom-code-agent/frameworks/ai-sdk): return types, tools, MCP, streaming edits, and `onError`.

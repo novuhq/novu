@@ -105,7 +105,7 @@ const supportAgent = agent('support-bot', async (message, ctx) =>
 
 ## `toModelMessages()`
 
-Convert conversation context into AI SDK `ModelMessage[]`. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an assistant row — capped JSON, framed as data not instructions:
+Convert conversation context into AI SDK `ModelMessage[]`. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an assistant row with capped notification text and the full JSON payload:
 
 ```typescript
 messages: toModelMessages(ctx);
@@ -114,11 +114,11 @@ messages: toModelMessages(ctx);
 - `ctx.history` already includes the current inbound message - do not append the `message` argument on top of it.
 - When `ctx.notification` is set, it includes `body` (capped outbound notification text) plus `payload`, `workflowId`, and ids.
 - Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
-- Passing `ctx.history` instead of `ctx` skips origin injection (the array form is origin-blind). Use that when you cherry-pick typed fields with `isFromWorkflow`:
+- Pass `ctx.history` instead of `ctx` to skip automatic origin injection when handling typed fields with `isFromWorkflow`:
 
 ```typescript
 import { isFromWorkflow } from '@novu/framework';
-import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { toModelMessages } from '@novu/framework/ai-sdk';
 import { orderShipped } from './workflows/order-shipped';
 
 onMessage: async (message, ctx) => {

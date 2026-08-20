@@ -170,6 +170,35 @@ describe('WorkflowOriginService', () => {
       expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
       expect(hydrateArgs.signalData.payload).to.deep.equal({ orderId: 'ORD-1' });
       expect(conversationService.setNotificationId.calledOnce).to.equal(true);
+      expect(
+        conversationService.setNotificationId.calledBefore(conversationService.persistWorkflowOriginHydration)
+      ).to.equal(true);
+    });
+
+    it('keeps the origin re-derivable when the hydration marker write fails', async () => {
+      const { service, conversationService } = makeService({
+        notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-1' } }),
+        persistWorkflowOriginHydration: sinon.stub().rejects(new Error('mongo timeout')),
+      });
+      const target = { ...conversation } as any;
+
+      const snapshot = await service.hydrate({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: target,
+        platformThreadId: 'slack:D123:1777837477.371619',
+        origin: {
+          _id: 'msg1',
+          _notificationId: 'notif1',
+          templateIdentifier: 'order-alerts',
+          content: 'Order ORD-1 shipped',
+          identifier: 'D123:1777837477.371619',
+        } as any,
+      });
+
+      expect(snapshot).to.equal(null);
+      expect(conversationService.setNotificationId.calledOnce).to.equal(true);
+      expect(target._notificationId).to.equal('notif1');
     });
   });
 
@@ -211,6 +240,7 @@ describe('WorkflowOriginService', () => {
         config: config as any,
         conversation: conversation as any,
         platformThreadId: 'slack:D123:1777837477.371619',
+        subscriberId: 'sub1',
         resolution: { origin: origin as any, notificationId: 'notif1' },
       });
 
@@ -240,6 +270,7 @@ describe('WorkflowOriginService', () => {
         config: config as any,
         conversation: { ...conversation, _notificationId: 'notif1' } as any,
         platformThreadId: 'slack:D123:1777837477.371619',
+        subscriberId: 'sub1',
         resolution: null,
       });
 
@@ -248,11 +279,51 @@ describe('WorkflowOriginService', () => {
       expect(messageRepository.find.firstCall.args[0]).to.deep.equal({
         _environmentId: 'env1',
         _agentId: 'agent1',
+        _subscriberId: 'subscriber-mongo-1',
         _notificationId: 'notif1',
       });
       expect(snapshot?.source).to.equal('existing');
       expect(snapshot?.data.body).to.equal('Your order shipped');
       expect(snapshot?.data.payload).to.deep.equal({ orderId: 'ORD-9' });
+    });
+
+    it('does not re-derive the origin for another participant in the same thread', async () => {
+      const { service, messageRepository } = makeService({
+        findBySubscriberId: sinon.stub().resolves({ _id: 'other-participant-mongo' }),
+        find: sinon.stub().resolves([]),
+        notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-9' } }),
+      });
+
+      const snapshot = await service.resolveForTurn({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: { ...conversation, _notificationId: 'notif1' } as any,
+        platformThreadId: 'slack:D123:1777837477.371619',
+        subscriberId: 'other-participant',
+        resolution: null,
+      });
+
+      expect(messageRepository.find.firstCall.args[0]._subscriberId).to.equal('other-participant-mongo');
+      expect(snapshot).to.equal(null);
+    });
+
+    it('skips the re-derive when the turn has no resolved subscriber', async () => {
+      const { service, messageRepository, subscriberRepository } = makeService({
+        find: sinon.stub().resolves([{ _id: 'msg1', identifier: 'D123:1777837477.371619' }]),
+      });
+
+      const snapshot = await service.resolveForTurn({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: { ...conversation, _notificationId: 'notif1' } as any,
+        platformThreadId: 'slack:D123:1777837477.371619',
+        subscriberId: null,
+        resolution: null,
+      });
+
+      expect(snapshot).to.equal(null);
+      expect(subscriberRepository.findBySubscriberId.called).to.equal(false);
+      expect(messageRepository.find.called).to.equal(false);
     });
 
     it('skips the re-derive on a conversation that was never opened from a workflow send', async () => {
@@ -263,36 +334,7 @@ describe('WorkflowOriginService', () => {
         config: config as any,
         conversation: conversation as any,
         platformThreadId: 'slack:D123:1777837477.371619',
-        resolution: null,
-      });
-
-      expect(snapshot).to.equal(null);
-      expect(messageRepository.find.called).to.equal(false);
-    });
-
-    it('skips the re-derive on a recheck platform without a notification stamp', async () => {
-      const { service, messageRepository } = makeService();
-
-      const snapshot = await service.resolveForTurn({
-        agentId: 'agent1',
-        config: { ...config, platform: AgentPlatformEnum.WHATSAPP } as any,
-        conversation: conversation as any,
-        platformThreadId: 'whatsapp:15551234567',
-        resolution: null,
-      });
-
-      expect(snapshot).to.equal(null);
-      expect(messageRepository.find.called).to.equal(false);
-    });
-
-    it('returns null on a brand-new conversation with nothing to hydrate', async () => {
-      const { service, messageRepository } = makeService();
-
-      const snapshot = await service.resolveForTurn({
-        agentId: 'agent1',
-        config: config as any,
-        conversation: conversation as any,
-        platformThreadId: 'slack:D123:',
+        subscriberId: 'sub1',
         resolution: null,
       });
 

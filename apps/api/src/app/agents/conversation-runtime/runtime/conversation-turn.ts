@@ -33,9 +33,5 @@ export interface ConversationTurn {
   storedAttachments?: StoredAttachment[];
   action?: AgentAction;
   reaction?: BridgeReaction;
-  /**
-   * Most recent workflow-origin for this conversation. Present every turn once attached;
-   * managed injects on live sessions only when `source === 'hydrated'`.
-   */
   workflowOrigin?: WorkflowOriginSnapshot | null;
 }

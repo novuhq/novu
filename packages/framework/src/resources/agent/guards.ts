@@ -14,7 +14,7 @@ export function isToolApprovalCard(value: unknown): value is ToolApprovalCard {
  * Narrows `notification.payload` to the workflow's schema when `workflowId` matches `workflow.id`.
  */
 export function isFromWorkflow<T extends Record<string, unknown>>(
-  notification: AgentNotification | null | undefined,
+  notification: AgentNotification | null,
   workflow: Workflow<T>
 ): notification is AgentNotification<T> {
   return notification?.workflowId === workflow.id;

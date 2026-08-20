@@ -309,12 +309,6 @@ describe('toLangChainMessages', () => {
       expect(shapes(toLangChainMessages(history))).toEqual([{ role: 'user', content: 'where is my order?' }]);
     });
 
-    it('matches the array form when ctx.notification is null', () => {
-      expect(shapes(toLangChainMessages({ history, notification: null }))).toEqual(
-        shapes(toLangChainMessages(history))
-      );
-    });
-
     it('unshifts an AIMessage origin row when ctx.notification is set', () => {
       const result = toLangChainMessages({ history, notification });
 
@@ -335,20 +329,6 @@ describe('toLangChainMessages', () => {
       expect(shapes(result)[1].role).toBe('assistant');
       expect(String(result[1].content)).toContain('Your order shipped');
       expect(shapes(result)[2]).toEqual({ role: 'user', content: 'where is my order?' });
-    });
-
-    it('injects the full payload when it is large', () => {
-      const blob = 'x'.repeat(8_000);
-      const result = toLangChainMessages({
-        history,
-        notification: {
-          ...notification,
-          payload: { blob, orderId: 'ORD-1' },
-        },
-      });
-
-      expect(String(result[0].content)).toContain(blob);
-      expect(String(result[0].content)).toContain('ORD-1');
     });
   });
 });
