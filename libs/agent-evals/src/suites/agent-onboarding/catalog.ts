@@ -435,7 +435,7 @@ export const catalog = {
 export const sharedJudgeGraders = defineGraders({
   personaAudienceFit: labeled(
     'frames the agent for the product end-user audience in domain language',
-    judge(judgePrompts.personaAudienceFit, (result) => [descriptionText(result), transcriptText(result)].join('\n'))
+    judge(judgePrompts.personaAudienceFit, (result) => descriptionText(result))
   ),
   noInfraMcpSemantic: labeled(
     'avoids naming internal infrastructure in the drafted agent description',
