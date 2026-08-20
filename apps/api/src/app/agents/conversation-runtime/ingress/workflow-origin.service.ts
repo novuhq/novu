@@ -21,6 +21,7 @@ import {
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
   extractWhatsAppQuotedWamid,
+  isPhotonImessageDirectThreadId,
   isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
@@ -110,6 +111,11 @@ export class WorkflowOriginService {
         }
         case AgentPlatformEnum.SENDBLUE:
           origin = isSendblueDirectThreadId(platformThreadId)
+            ? await this.findRecentChatWorkflowOriginMessage(agentId, config, subscriber._id, null)
+            : null;
+          break;
+        case AgentPlatformEnum.PHOTON_IMESSAGE:
+          origin = isPhotonImessageDirectThreadId(platformThreadId)
             ? await this.findRecentChatWorkflowOriginMessage(agentId, config, subscriber._id, null)
             : null;
           break;

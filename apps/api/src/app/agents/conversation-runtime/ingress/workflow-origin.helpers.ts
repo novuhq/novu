@@ -11,6 +11,7 @@ export const RECHECK_WORKFLOW_ORIGIN_PLATFORMS: ReadonlySet<AgentPlatformEnum> =
   AgentPlatformEnum.WHATSAPP,
   AgentPlatformEnum.TELEGRAM,
   AgentPlatformEnum.SENDBLUE,
+  AgentPlatformEnum.PHOTON_IMESSAGE,
   AgentPlatformEnum.TEAMS,
 ]);
 
@@ -127,6 +128,21 @@ export function isSendblueDirectThreadId(platformThreadId: string): boolean {
   return segments.length === 3 && segments[0] === 'sendblue' && segments[1].length > 0 && segments[2].length > 0;
 }
 
+/**
+ * Photon threads are `imessage:{chatGuid}` (optionally `~{phone}` suffixed); a direct 1:1
+ * chatGuid carries the iMessage `;-;` marker while group guids use `;+;`. Unrecognized
+ * shapes fail closed so a group thread never receives a personally-addressed payload.
+ */
+export function isPhotonImessageDirectThreadId(platformThreadId: string): boolean {
+  if (!platformThreadId.startsWith('imessage:')) {
+    return false;
+  }
+
+  const chatGuid = platformThreadId.slice('imessage:'.length).split('~')[0];
+
+  return chatGuid.includes(';-;');
+}
+
 /** Email → Message._id; WhatsApp → wamid; Sendblue → message_handle; Teams → activity id; Slack `{channel}:{ts}` → `ts`; Telegram → `{chatId}:{message_id}`. */
 export function resolvePlatformMessageId(
   platform: AgentPlatformEnum,
@@ -144,6 +160,7 @@ export function resolvePlatformMessageId(
   if (
     platform === AgentPlatformEnum.WHATSAPP ||
     platform === AgentPlatformEnum.SENDBLUE ||
+    platform === AgentPlatformEnum.PHOTON_IMESSAGE ||
     platform === AgentPlatformEnum.TEAMS
   ) {
     return originMessage.identifier;
