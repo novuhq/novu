@@ -918,27 +918,17 @@
                   {
                     "group": "Webhooks",
                     "expanded": false,
-                    "pages": [
-                      "guides/webhooks/clerk",
-                      "guides/webhooks/auth0",
-                      "guides/webhooks/stripe"
-                    ]
+                    "pages": ["guides/webhooks/clerk", "guides/webhooks/auth0", "guides/webhooks/stripe"]
                   },
                   {
                     "group": "Analytics & data",
                     "expanded": false,
-                    "pages": [
-                      "guides/analytics/segment",
-                      "guides/analytics/hightouch"
-                    ]
+                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch"]
                   },
                   {
                     "group": "Recipes",
                     "expanded": false,
-                    "pages": [
-                      "guides/recipes/managing-workflows",
-                      "guides/recipes/supabase-auth-notifications"
-                    ]
+                    "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"]
                   },
                   {
                     "group": "Framework",

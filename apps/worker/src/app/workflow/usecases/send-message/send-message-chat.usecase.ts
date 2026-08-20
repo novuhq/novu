@@ -39,6 +39,8 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FeatureFlagsKeysEnum,
+  getAtPath,
+  getProviderOverrideConfig,
   IChannelSettings,
   ProvidersIdEnum,
   WebhookEventEnum,
@@ -57,6 +59,38 @@ import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
+
+/**
+ * True when overrides carry payload that replaces the compiled card (primary content key,
+ * seeded array content, or provider-native rich fields). Routing/metadata-only keys such as
+ * `webhookUrl` or endpoint identifiers must not suppress card resolution.
+ */
+export function hasChatContentOverride(providerId: string, overrides: Record<string, unknown>): boolean {
+  if (Object.keys(overrides).length === 0) {
+    return false;
+  }
+
+  const config = getProviderOverrideConfig(providerId);
+
+  if (config?.seedWhenAbsent && Array.isArray(overrides[config.seedWhenAbsent.key])) {
+    return true;
+  }
+
+  const primaryKey = config?.primaryContentKey;
+  if (primaryKey != null) {
+    const primaryValue = getAtPath(overrides, primaryKey);
+    if (primaryValue !== undefined && primaryValue !== null) {
+      return true;
+    }
+  }
+
+  // Native rich payloads that replace the compiled card (Slack Block Kit, Teams Adaptive Cards).
+  if (Array.isArray(overrides.blocks) || overrides.attachments !== undefined) {
+    return true;
+  }
+
+  return false;
+}
 
 /**
  * Chat providers that deliver to the subscriber's phone number rather than a webhook/channel.
@@ -709,12 +743,14 @@ export class SendMessageChat extends SendMessageBase {
       // Rich Chat: resolve the compiled card into transport-ready fields once, here — before
       // `send` — so the provider stays a pure transport and the editor preview can reuse the
       // same `render()`. Gated by `IS_CHAT_BLOCK_EDITOR_ENABLED`; when off, the legacy plain-text
-      // `content` path is used unchanged.
+      // `content` path is used unchanged. Skip when a content override is present — it replaces the
+      // card at delivery (otherwise Slack prefers default Block Kit `blocks` over override `text`).
       let messageContent = content;
       let nativePayload: Record<string, unknown> | undefined;
       const isRichChatEnabled = await this.isRichChatEnabled(command);
+      const hasContentOverride = hasChatContentOverride(integration.providerId, combinedOverrides);
 
-      if (card && isRichChatEnabled) {
+      if (card && isRichChatEnabled && !hasContentOverride) {
         const resolved = await chatHandler.resolveCardContent(card);
         messageContent = resolved.content;
         nativePayload = resolved.nativePayload;
