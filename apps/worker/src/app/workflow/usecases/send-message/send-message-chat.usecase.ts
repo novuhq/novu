@@ -89,7 +89,11 @@ type MessageContext = {
   assignedAgentId: string | null;
 };
 
-const AGENT_SUPPORTED_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.SLACK_CHANNEL]);
+const AGENT_SUPPORTED_ENDPOINT_TYPES = new Set<string>([
+  ENDPOINT_TYPES.SLACK_USER,
+  ENDPOINT_TYPES.SLACK_CHANNEL,
+  ENDPOINT_TYPES.MS_TEAMS_USER,
+]);
 
 function filterAgentSupportedEndpoints(endpoints: ChannelData[]): ChannelData[] {
   return endpoints.filter((endpoint) => {
