@@ -3,8 +3,15 @@ import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import { CONNECT_CHANNEL_PICKER_OPTIONS } from '../connect-channel-picker-options';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
-import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import {
+  type ConnectSuccessDestination,
+  channelDisplayName,
+  isDashboardOnlyChannel,
+  resolveConnectSuccessDestination,
+  UNCLAIMED_KEYLESS_HINT,
+} from '../dashboard-urls';
 import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
@@ -13,6 +20,11 @@ import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-re
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { LlmAuthPicker } from './llm-auth-picker';
+import {
+  AgentChatHandoffContent,
+  AgentChatInkSuccessContent,
+  AgentChatSetupPickContent,
+} from './phase-content/agent-chat-phases';
 import { EmailReadyContent, EmailWaitingContent } from './phase-content/email';
 import {
   SendblueCredentialContent,
@@ -231,15 +243,7 @@ export function PhaseContent({
       return <Text color="cyan">{`Creating agent "${phase.name}"…`}</Text>;
 
     case 'pick-channel': {
-      const options: Array<{ label: string; value: ChannelChoice }> = [
-        { label: 'Slack (recommended)', value: 'slack' },
-        { label: 'Telegram', value: 'telegram' },
-        { label: 'Email', value: 'email' },
-        { label: 'iMessage (Sendblue)', value: 'sendblue' },
-        { label: 'WhatsApp', value: 'whatsapp' },
-        { label: 'Microsoft Teams', value: 'teams' },
-        { label: 'Skip — set up later in dashboard', value: 'skip' },
-      ];
+      const options = [...CONNECT_CHANNEL_PICKER_OPTIONS];
 
       return (
         <Box flexDirection="column" gap={1} alignItems="flex-start">
@@ -265,6 +269,23 @@ export function PhaseContent({
 
     case 'adding-slack':
       return <Text color="cyan">Linking Slack to your agent…</Text>;
+
+    case 'adding-agent-chat':
+      return <Text color="cyan">Linking Agent Chat to your agent…</Text>;
+
+    case 'agent-chat-handoff':
+      return <AgentChatHandoffContent dashboardUrl={phase.dashboardUrl} onContinue={phase.resolve} />;
+
+    case 'pick-agent-chat-setup':
+      return <AgentChatSetupPickContent projectKind={phase.projectKind} onResolve={phase.resolve} />;
+
+    case 'scaffolding-agent-chat':
+      return (
+        <Box flexDirection="column" gap={1} alignItems="center">
+          <Text color="cyan">Scaffolding your Agent Chat example app…</Text>
+          <Text dimColor>Installing dependencies — this may take a minute.</Text>
+        </Box>
+      );
 
     case 'paste-slack-token':
       return <PasteSlackConfigTokenContent phase={phase} />;
@@ -384,6 +405,8 @@ const CHANNEL_HINTS: Partial<Record<ChannelChoice, string>> = {
 };
 /** Keeps the picker + hint from widening the centered layout when the hint appears. */
 const CHANNEL_PICKER_WIDTH = 48;
+/** WhatsApp hint wraps to 3 lines — reserve that height always so Ink incremental diffs don't shrink. */
+const CHANNEL_HINT_RESERVED_LINES = 3;
 
 function ChannelSelect({
   options,
@@ -394,37 +417,41 @@ function ChannelSelect({
   onChange: (value: ChannelChoice) => void;
   onHighlight: (value: ChannelChoice | null) => void;
 }): React.ReactElement {
+  const uniqueOptions = options.filter(
+    (opt, index, arr) => arr.findIndex((candidate) => candidate.value === opt.value) === index
+  );
   const [idx, setIdx] = React.useState(0);
 
   // Seed the parent with the initial highlight so the orb doesn't sit on
   // white for a frame before the user touches the arrow keys.
   React.useEffect(() => {
-    onHighlight(options[0]?.value ?? null);
+    onHighlight(uniqueOptions[0]?.value ?? null);
     // We only want to fire on mount; subsequent highlights flow through useInput.
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   }, []);
 
   useInput((_input, key) => {
     if (key.upArrow) {
-      const next = (idx - 1 + options.length) % options.length;
+      const next = (idx - 1 + uniqueOptions.length) % uniqueOptions.length;
       setIdx(next);
-      onHighlight(options[next].value);
+      onHighlight(uniqueOptions[next].value);
     } else if (key.downArrow) {
-      const next = (idx + 1) % options.length;
+      const next = (idx + 1) % uniqueOptions.length;
       setIdx(next);
-      onHighlight(options[next].value);
+      onHighlight(uniqueOptions[next].value);
     } else if (key.return) {
-      onChange(options[idx].value);
+      onChange(uniqueOptions[idx].value);
     }
   });
 
-  const highlighted = options[idx]?.value ?? null;
+  const highlighted = uniqueOptions[idx]?.value ?? null;
   const channelHint = highlighted !== null ? CHANNEL_HINTS[highlighted] : undefined;
+  const hintLines = buildChannelHintLines(channelHint);
 
   return (
     <Box flexDirection="column" gap={1} alignItems="flex-start">
       <Box flexDirection="column" alignItems="flex-start">
-        {options.map((opt, i) => {
+        {uniqueOptions.map((opt, i) => {
           const isSelected = i === idx;
           const opensInDashboard = isDashboardOnlyChannel(opt.value);
           const prefix = isSelected ? '› ' : '  ';
@@ -439,19 +466,50 @@ function ChannelSelect({
         })}
       </Box>
       <Box flexDirection="column" width={CHANNEL_PICKER_WIDTH}>
-        {channelHint ? (
-          <Text dimColor wrap="wrap">
-            {channelHint}
+        {hintLines.map((line, lineIndex) => (
+          <Text key={lineIndex} dimColor={Boolean(channelHint && line.trim().length > 0)}>
+            {line.length > 0 ? line : ' '}
           </Text>
-        ) : (
-          <>
-            <Text> </Text>
-            <Text> </Text>
-          </>
-        )}
+        ))}
       </Box>
     </Box>
   );
+}
+
+function buildChannelHintLines(channelHint: string | undefined): string[] {
+  const lines = channelHint ? wrapHintLines(channelHint, CHANNEL_PICKER_WIDTH) : [];
+
+  while (lines.length < CHANNEL_HINT_RESERVED_LINES) {
+    lines.push('');
+  }
+
+  return lines.slice(0, CHANNEL_HINT_RESERVED_LINES);
+}
+
+function wrapHintLines(text: string, width: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    const candidate = current.length === 0 ? word : `${current} ${word}`;
+    if (candidate.length <= width) {
+      current = candidate;
+      continue;
+    }
+
+    if (current.length > 0) {
+      lines.push(current);
+    }
+
+    current = word;
+  }
+
+  if (current.length > 0) {
+    lines.push(current);
+  }
+
+  return lines;
 }
 function GeneratingContent(): React.ReactElement {
   const [elapsed, setElapsed] = React.useState(0);
@@ -532,10 +590,55 @@ function SuccessView({
     chatSdkOutcome,
     aiSdkOutcome,
     langChainOutcome,
+    agentChatOutcome,
+    embedPrompt,
+    embedPromptFile,
+    resolveDismiss,
+    customCodeOutcome,
   } = phase;
-  const agentUrl = environmentSlug
-    ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
-    : `${connectDashboardUrl}/connect/agents/${encodeURIComponent(agent.identifier)}`;
+
+  const successResult = {
+    agent,
+    dashboardUrl: phase.dashboardUrl,
+    connectDashboardUrl,
+    environmentSlug,
+    connectedChannel,
+    dashboardRedirectChannel,
+    isKeyless,
+    claimUrl,
+    connectMode,
+    chatSdkOutcome,
+    aiSdkOutcome,
+    langChainOutcome,
+    customCodeOutcome,
+    agentChatOutcome,
+    agentChatHandoff: phase.agentChatHandoff,
+  };
+
+  const agentChatInk = AgentChatInkSuccessContent({
+    result: successResult,
+    embedPrompt,
+    embedPromptFile,
+    onDismiss: resolveDismiss,
+  });
+
+  if (agentChatInk) {
+    return agentChatInk;
+  }
+
+  const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
+    chatSdk: chatSdkOutcome,
+    aiSdk: aiSdkOutcome,
+    langChain: langChainOutcome,
+    customCode: customCodeOutcome,
+  });
+  const destination = resolveConnectSuccessDestination({
+    connectDashboardUrl,
+    environmentSlug,
+    agentIdentifier: agent.identifier,
+    isKeyless,
+    claimUrl,
+  });
 
   const channelLabel = (() => {
     if (connectedChannel === 'slack') return 'Slack';
@@ -543,16 +646,11 @@ function SuccessView({
     if (connectedChannel === 'email') return 'Email';
     if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
     if (connectedChannel === 'whatsapp') return 'WhatsApp';
+    if (connectedChannel === 'agent-chat') return 'Agent Chat';
 
     return null;
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
-  const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
-    chatSdk: chatSdkOutcome,
-    aiSdk: aiSdkOutcome,
-    langChain: langChainOutcome,
-    customCode: phase.customCodeOutcome,
-  });
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -563,31 +661,31 @@ function SuccessView({
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
         {scaffoldMessage ? <Text color="cyan">{scaffoldMessage}</Text> : null}
-        {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
+        {renderSuccessNextStep(destination)}
       </Box>
     </Box>
   );
 }
 
-function renderSuccessNextStep(input: {
-  isKeyless: boolean;
-  claimUrl: string | null;
-  agentUrl: string;
-}): React.ReactElement {
-  if (input.isKeyless && input.claimUrl) {
+function renderSuccessNextStep(destination: ConnectSuccessDestination): React.ReactElement {
+  if (destination.kind === 'claim') {
     return (
       <>
         <Text>
-          <Text bold>Claim your agent:</Text> {input.claimUrl}
+          <Text bold>Claim your agent:</Text> {destination.url}
         </Text>
         <Text dimColor>Sign up to move your agent and conversation into your own account.</Text>
       </>
     );
   }
 
+  if (destination.kind === 'unclaimed') {
+    return <Text dimColor>{UNCLAIMED_KEYLESS_HINT}</Text>;
+  }
+
   return (
     <Text>
-      <Text bold>Dashboard:</Text> {input.agentUrl}
+      <Text bold>Dashboard:</Text> {destination.url}
     </Text>
   );
 }
