@@ -225,8 +225,17 @@ describe('CreateNovuIntegrations - Novu Slack demo integration', () => {
   });
 
   afterEach(() => {
-    process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID = previousClientId;
-    process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET = previousClientSecret;
+    if (previousClientId === undefined) {
+      delete process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID;
+    } else {
+      process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID = previousClientId;
+    }
+
+    if (previousClientSecret === undefined) {
+      delete process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET;
+    } else {
+      process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET = previousClientSecret;
+    }
   });
 
   it('should NOT provision novu-slack even when credentials are set on Development', async () => {
