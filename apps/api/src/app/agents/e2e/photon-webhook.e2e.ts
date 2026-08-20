@@ -225,6 +225,18 @@ describe('Photon agent webhook - inbound flow #novu-v2', () => {
     expect(bridgeCalls.length).to.equal(0);
   });
 
+  it('acknowledges read receipts without dispatching to the bridge', async () => {
+    // A read receipt for the agent's own reply arrives as an inbound-direction
+    // event; routing it as a message makes the agent answer itself in a loop.
+    const res = await postPhotonWebhook(
+      buildInboundPayload({ message: { content: { type: 'read', target: { id: 'agent-msg-1' } } } })
+    );
+    expect(res.status).to.equal(200);
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(bridgeCalls.length).to.equal(0);
+  });
+
   it('rejects a delivery with an invalid signature', async () => {
     const payload = buildInboundPayload();
     const res = await postPhotonWebhook(payload, {
