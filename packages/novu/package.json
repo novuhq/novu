@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "pnpm prebuild && tsc -p tsconfig.json && tsc -p tsconfig.ui.json && node scripts/build-ui.mjs && cp -r src/commands/init/templates/app* dist/src/commands/init/templates && cp -r src/commands/init/templates/github dist/src/commands/init/templates && cp -r src/commands/wizard/skills/content dist/src/commands/wizard/skills",
+    "build": "pnpm prebuild && tsc -p tsconfig.json && tsc -p tsconfig.ui.json && node scripts/build-ui.mjs && cp -r src/commands/init/templates/app* dist/src/commands/init/templates && cp -r src/commands/init/templates/github dist/src/commands/init/templates && cp -r src/commands/connect/templates dist/src/commands/connect/templates && cp -r src/commands/wizard/skills/content dist/src/commands/wizard/skills",
     "build:prod": "pnpm prebuild && pnpm build",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
