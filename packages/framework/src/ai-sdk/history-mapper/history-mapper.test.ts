@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentHistoryEntry, AgentNotification } from '../../resources/agent/agent.types';
-import { WORKFLOW_ORIGIN_CONTENT_MAX_CHARS } from '../../resources/agent/workflow-origin-injection';
 import { toModelMessages } from './index';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
@@ -315,20 +314,20 @@ describe('toModelMessages', () => {
       expect(result[1]).toEqual({ role: 'user', content: 'where is my order?' });
     });
 
-    it('degrades an oversized payload to field names instead of truncated JSON', () => {
+    it('injects the full payload when it is large', () => {
+      const blob = 'x'.repeat(8_000);
       const result = toModelMessages({
         history,
         notification: {
           ...notification,
-          payload: { blob: 'x'.repeat(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS), orderId: 'ORD-1' },
+          payload: { blob, orderId: 'ORD-1' },
         },
       });
 
       const origin = result[0];
       expect(origin.role).toBe('assistant');
-      expect(String(origin.content)).toContain('Notification data omitted');
-      expect(String(origin.content)).toContain('blob, orderId');
-      expect(String(origin.content).length).toBeLessThanOrEqual(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
+      expect(String(origin.content)).toContain(blob);
+      expect(String(origin.content)).toContain('ORD-1');
     });
   });
 });

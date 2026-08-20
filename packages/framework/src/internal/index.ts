@@ -22,7 +22,6 @@ export { buildApprovalActionId, parseApprovalActionId } from '../resources/agent
 export {
   buildWorkflowOriginInjection,
   buildWorkflowOriginLine,
-  WORKFLOW_ORIGIN_CONTENT_MAX_CHARS,
   WORKFLOW_ORIGIN_LINE_MAX_CHARS,
 } from '../resources/agent/workflow-origin-injection';
 export { actionStepSchemas, channelStepSchemas } from '../schemas';

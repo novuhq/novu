@@ -7,7 +7,6 @@ import {
 } from '@langchain/core/messages';
 import { describe, expect, it } from 'vitest';
 import type { AgentHistoryEntry, AgentNotification } from '../../resources/agent/agent.types';
-import { WORKFLOW_ORIGIN_CONTENT_MAX_CHARS } from '../../resources/agent/workflow-origin-injection';
 import type { ToolResultPayload } from './approval-cycles';
 import { toLangChainMessages } from './index';
 
@@ -337,18 +336,18 @@ describe('toLangChainMessages', () => {
       expect(shapes(result)[2]).toEqual({ role: 'user', content: 'where is my order?' });
     });
 
-    it('degrades an oversized payload to field names instead of truncated JSON', () => {
+    it('injects the full payload when it is large', () => {
+      const blob = 'x'.repeat(8_000);
       const result = toLangChainMessages({
         history,
         notification: {
           ...notification,
-          payload: { blob: 'x'.repeat(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS), orderId: 'ORD-1' },
+          payload: { blob, orderId: 'ORD-1' },
         },
       });
 
-      expect(String(result[0].content)).toContain('Notification data omitted');
-      expect(String(result[0].content)).toContain('blob, orderId');
-      expect(String(result[0].content).length).toBeLessThanOrEqual(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
+      expect(String(result[0].content)).toContain(blob);
+      expect(String(result[0].content)).toContain('ORD-1');
     });
   });
 });

@@ -6,10 +6,7 @@ import {
 import { MessageRole } from '@novu/thalamus';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import {
-  WORKFLOW_ORIGIN_CONTENT_MAX_CHARS,
-  type WorkflowOriginSnapshot,
-} from '../conversation-runtime/ingress/workflow-origin.helpers';
+import { type WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
 import { ManagedAgentService } from './managed-agent.service';
 
 const sampleOriginData: ConversationActivityOriginData = {
@@ -158,16 +155,18 @@ describe('ManagedAgentService workflow-origin', () => {
       expect(String(messages[0].content)).to.not.include('stale-workflow');
     });
 
-    it('keeps the injected origin under the content cap', async () => {
+    it('injects the full origin payload', async () => {
+      const blob = 'x'.repeat(8_000);
       const bulkySnapshot: WorkflowOriginSnapshot = {
         ...hydratedSnapshot,
-        data: { ...sampleOriginData, payload: { blob: 'x'.repeat(8_000) } },
+        data: { ...sampleOriginData, payload: { blob, orderId: 'ORD-1' } },
       };
       const { service } = makeService();
 
       const messages = await (service as any).buildMessagesWithHistory(makeContext({ workflowOrigin: bulkySnapshot }));
 
-      expect(String(messages[0].content).length).to.be.at.most(WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
+      expect(String(messages[0].content)).to.include(blob);
+      expect(String(messages[0].content)).to.include('ORD-1');
     });
 
     it('skips injection when context has no origin', async () => {

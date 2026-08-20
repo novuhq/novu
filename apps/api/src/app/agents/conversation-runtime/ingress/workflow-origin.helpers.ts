@@ -2,7 +2,6 @@ import type { ConversationActivityEntity, ConversationActivityOriginData, Messag
 import {
   buildWorkflowOriginInjection,
   buildWorkflowOriginLine,
-  WORKFLOW_ORIGIN_CONTENT_MAX_CHARS,
   WORKFLOW_ORIGIN_LINE_MAX_CHARS,
 } from '@novu/framework/internal';
 import type { Message } from 'chat';
@@ -12,7 +11,6 @@ import { asRecord } from '../../shared/util/raw-record';
 export {
   buildWorkflowOriginInjection,
   buildWorkflowOriginLine,
-  WORKFLOW_ORIGIN_CONTENT_MAX_CHARS,
   WORKFLOW_ORIGIN_LINE_MAX_CHARS,
 };
 
