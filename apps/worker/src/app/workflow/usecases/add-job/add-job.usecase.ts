@@ -5,6 +5,7 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeferReasonEnum,
   DetailEnum,
   DurationUtils,
   getDigestType,
@@ -69,6 +70,17 @@ import { validateDigest } from './validation';
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
 }
+
+/**
+ * Groups the job's EventBridge schedule when the delay outlives the SQS cap.
+ * Only the deferring step types appear here; anything else that reaches
+ * queueJob is either immediate or a schedule extension, both handled below.
+ */
+const DEFER_REASON_BY_STEP_TYPE: Partial<Record<StepTypeEnum, DeferReasonEnum>> = {
+  [StepTypeEnum.DELAY]: DeferReasonEnum.DELAY,
+  [StepTypeEnum.DIGEST]: DeferReasonEnum.DIGEST,
+  [StepTypeEnum.THROTTLE]: DeferReasonEnum.THROTTLE,
+};
 
 /*
  * @description: This is the result of the add job usecase
@@ -1114,11 +1126,24 @@ export class AddJob {
       },
       groupId: job._organizationId,
       options,
+      deferReason: this.resolveDeferReason(job),
     });
 
     if (delay) {
       await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
     }
+  }
+
+  /**
+   * A quiet-hours extension re-queues a channel-typed job, so the step type
+   * alone cannot tell the two apart - the extension counter can.
+   */
+  private resolveDeferReason(job: JobEntity): DeferReasonEnum {
+    if (job.scheduleExtensionsCount) {
+      return DeferReasonEnum.SCHEDULE_EXTENSION;
+    }
+
+    return (job.type && DEFER_REASON_BY_STEP_TYPE[job.type]) || DeferReasonEnum.DELAY;
   }
 
   private async createDelayExecutionDetails(job: JobEntity, delay: number, untilDate: Date | null, timezone?: string) {

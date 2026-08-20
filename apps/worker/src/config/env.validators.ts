@@ -97,6 +97,13 @@ export const envValidators = {
   SQS_ENDPOINT: str({ default: undefined }),
   SQS_PAYLOAD_OFFLOAD_BUCKET: str({ default: undefined }),
   SQS_PAYLOAD_SIZE_THRESHOLD: num({ default: undefined }),
+  // EventBridge Scheduler for delays beyond the SQS 900s cap (optional - when
+  // unset, long delays keep going to BullMQ)
+  EVENTBRIDGE_SCHEDULER_GROUP_PREFIX: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_ROLE_ARN: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_DLQ_ARN: str({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_MAX_RETRY_ATTEMPTS: num({ default: undefined }),
+  EVENTBRIDGE_SCHEDULER_MAX_EVENT_AGE_SECONDS: num({ default: undefined }),
   SOCKET_WORKER_URL: str({ default: undefined }),
   INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),

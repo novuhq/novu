@@ -212,6 +212,14 @@ export enum FeatureFlagsKeysEnum {
    */
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
 
+  /**
+   * Route job delays longer than the SQS 900s per-message cap through
+   * EventBridge Scheduler instead of BullMQ. Only consulted once
+   * `QUEUE_BACKEND_MODE` has SQS as the primary backend; when false (default)
+   * long delays keep going to BullMQ.
+   */
+  IS_EVENTBRIDGE_SCHEDULER_ENABLED = 'IS_EVENTBRIDGE_SCHEDULER_ENABLED',
+
   // String flags
   QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"
   USAGE_REPORT_TRIGGER_SECRET = 'USAGE_REPORT_TRIGGER_SECRET',
