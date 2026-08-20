@@ -348,8 +348,9 @@ function applyDurableMessageParts(
   const streamingIndex = findStreamingTextPartIndex(next);
 
   if ('markdown' in content) {
-    if (streamingIndex >= 0) {
-      next[streamingIndex] = { type: 'text', text: content.markdown, state: 'done' };
+    const textIndex = streamingIndex >= 0 ? streamingIndex : next.findIndex((part) => part.type === 'text');
+    if (textIndex >= 0) {
+      next[textIndex] = { type: 'text', text: content.markdown, state: 'done' };
     } else {
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }
