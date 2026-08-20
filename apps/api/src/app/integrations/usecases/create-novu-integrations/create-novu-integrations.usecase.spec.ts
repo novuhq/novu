@@ -3,6 +3,7 @@ import { IntegrationRepository } from '@novu/dal';
 import {
   AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   EnvironmentEnum,
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
@@ -183,5 +184,68 @@ describe('CreateNovuIntegrations - managed Claude demo integration', () => {
       .find((call) => call.args[0].providerId === AgentRuntimeProviderIdEnum.NovuAnthropic);
 
     expect(managedClaudeCall).to.equal(undefined);
+  });
+});
+
+describe('CreateNovuIntegrations - Novu Slack demo integration', () => {
+  let useCase: CreateNovuIntegrations;
+  let createIntegration: sinon.SinonStubbedInstance<CreateIntegration>;
+  let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
+  let setIntegrationAsPrimary: sinon.SinonStubbedInstance<SetIntegrationAsPrimary>;
+  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
+  let analyticsService: sinon.SinonStubbedInstance<AnalyticsService>;
+  let previousClientId: string | undefined;
+  let previousClientSecret: string | undefined;
+  const validIntegrationId = '507f1f77bcf86cd799439011';
+
+  beforeEach(() => {
+    previousClientId = process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID;
+    previousClientSecret = process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET;
+    process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID = 'slack-client-id';
+    process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET = 'slack-client-secret';
+    process.env.NOVU_MANAGED_CLAUDE_API_KEY = '';
+
+    createIntegration = sinon.createStubInstance(CreateIntegration);
+    integrationRepository = sinon.createStubInstance(IntegrationRepository);
+    setIntegrationAsPrimary = sinon.createStubInstance(SetIntegrationAsPrimary);
+    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    analyticsService = sinon.createStubInstance(AnalyticsService);
+
+    integrationRepository.count.resolves(0);
+    featureFlagsService.getFlag.resolves(false);
+    createIntegration.execute.resolves({ _id: validIntegrationId } as any);
+
+    useCase = new CreateNovuIntegrations(
+      createIntegration as any,
+      integrationRepository as any,
+      setIntegrationAsPrimary as any,
+      featureFlagsService as any,
+      analyticsService as any
+    );
+  });
+
+  afterEach(() => {
+    process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID = previousClientId;
+    process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET = previousClientSecret;
+  });
+
+  it('should NOT provision novu-slack even when credentials are set on Development', async () => {
+    await useCase.execute(
+      CreateNovuIntegrationsCommand.create({
+        environmentId: 'env-id',
+        organizationId: 'org-id',
+        userId: 'user-id',
+        name: EnvironmentEnum.DEVELOPMENT,
+        environmentType: EnvironmentTypeEnum.DEV,
+        channels: [ChannelTypeEnum.CHAT],
+      })
+    );
+
+    const novuSlackCall = createIntegration.execute
+      .getCalls()
+      .find((call) => call.args[0].providerId === ChatProviderIdEnum.Novu);
+
+    expect(novuSlackCall).to.equal(undefined);
+    expect(createIntegration.execute.called).to.equal(false);
   });
 });
