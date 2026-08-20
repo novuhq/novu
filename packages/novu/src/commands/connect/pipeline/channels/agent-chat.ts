@@ -1,10 +1,10 @@
+import { buildConnectAgentChatDashboardUrl } from '@novu/shared';
 import { CONNECT_EVENTS } from '../../analytics/events';
 import { addAgentChatIntegration } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import { NovuApiError } from '../../api/client';
 import type { IntegrationRecord } from '../../api/integrations';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
-import { buildConnectAgentChatDashboardUrl } from '../../dashboard-urls';
 import type { AgentSummary, ConnectAgentChatHandoff, ConnectCommandOptions } from '../../types';
 import { logAgentChatDashboardUrlHandoffEvent } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';

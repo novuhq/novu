@@ -4,15 +4,10 @@ import { render } from 'ink';
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
-import {
-  applyDeferredTunnelAcceptance,
-  offerDeferredBridgeTunnelIfReady,
-} from '../pipeline/agent-chat/deferred-bridge-tunnel';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import { restoreStdinForConsole } from '../restore-stdin-for-console';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
-import { isBridgeConnectMode } from '../types';
 import { App } from './app';
 import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
 import {
@@ -641,22 +636,7 @@ function createUiController(
 
       if (awaitsEmbedDismiss) {
         const dismissWait = new Promise<void>((resolve) => {
-          successPhase.resolveDismiss = async () => {
-            const bridgeOutcome = result.aiSdkOutcome ?? result.langChainOutcome ?? result.chatSdkOutcome;
-            const projectDir = result.agentChatOutcome?.projectDir ?? bridgeOutcome?.projectDir ?? process.cwd();
-
-            if (bridgeOutcome && result.connectMode && isBridgeConnectMode(result.connectMode)) {
-              const accepted = await offerDeferredBridgeTunnelIfReady({
-                offerBridgeTunnel: offerBridgeTunnelImpl,
-                connectMode: result.connectMode,
-                bridgeOutcome,
-                projectDir,
-              });
-              applyDeferredTunnelAcceptance(bridgeOutcome, accepted);
-            }
-
-            resolve();
-          };
+          successPhase.resolveDismiss = () => resolve();
           store.phase.set(successPhase);
         });
         ctx.setEmbedSuccessDismissWait(dismissWait);

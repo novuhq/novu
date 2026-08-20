@@ -108,15 +108,13 @@ async function scaffoldThenReconcile(
 
   const envPaths = resolveProjectEnvPaths(scaffolded.root);
 
-  if (!input.deferScaffoldSummary) {
-    input.ui.bridgeScaffolded({
-      variant: adapter.variant,
-      projectDir: scaffolded.root,
-      agentFilePath: scaffolded.agentFilePath,
-      envPaths,
-      skippedInstall: scaffolded.skippedInstall,
-    });
-  }
+  input.ui.bridgeScaffolded({
+    variant: adapter.variant,
+    projectDir: scaffolded.root,
+    agentFilePath: scaffolded.agentFilePath,
+    envPaths,
+    skippedInstall: scaffolded.skippedInstall,
+  });
 
   return {
     projectKind: 'empty',
@@ -167,7 +165,7 @@ async function reconcileProject(
       ? adapter.buildWiringInstructions(projectDir, input.agent.identifier)
       : undefined;
 
-  const agentPrompt = wiringInstructions && !input.deferAgentPrompt ? adapter.agentPrompt : undefined;
+  const agentPrompt = wiringInstructions ? adapter.agentPrompt : undefined;
 
   const requirementsFile = await adapter.writeRequirementsFile({
     projectDir,
@@ -358,19 +356,15 @@ async function promptTunnelIfReady(opts: {
   coreReady: boolean;
   reconcilePlan: ReconcilePlanInput;
 }): Promise<boolean> {
-  if (!opts.input.deferAgentPrompt) {
-    await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
-  }
+  await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
 
   if (!opts.coreReady || opts.input.options.ci) {
     return false;
   }
 
-  if (opts.input.deferAgentPrompt) {
-    return false;
-  }
-
-  if (!isWiringReadyForTunnel(opts.adapter, opts.reconcilePlan.requirements, opts.reconcilePlan.projectDir)) {
+  if (
+    !isBridgeAdapterWiringReadyForTunnel(opts.adapter, opts.reconcilePlan.requirements, opts.reconcilePlan.projectDir)
+  ) {
     return false;
   }
 
@@ -421,14 +415,14 @@ function shouldRunTunnel(
     return false;
   }
 
-  if (!isWiringReadyForTunnel(adapter, outcome.requirements, outcome.projectDir, outcome.scaffolded)) {
+  if (!isBridgeAdapterWiringReadyForTunnel(adapter, outcome.requirements, outcome.projectDir, outcome.scaffolded)) {
     return false;
   }
 
   return outcome.tunnelAccepted === true;
 }
 
-function isWiringReadyForTunnel(
+export function isBridgeAdapterWiringReadyForTunnel(
   adapter: BridgeAdapter,
   requirements: BridgeRequirement[] | undefined,
   projectDir: string,

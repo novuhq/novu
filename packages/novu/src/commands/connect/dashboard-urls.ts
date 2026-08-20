@@ -1,4 +1,3 @@
-import { buildConnectAgentChatDashboardUrl as buildSharedConnectAgentChatDashboardUrl } from '@novu/shared';
 import type { ChannelChoice } from './types';
 
 export const DASHBOARD_ONLY_CHANNELS: ReadonlyArray<ChannelChoice> = ['teams'];
@@ -67,14 +66,6 @@ export function resolveConnectSuccessDestination(input: {
       agentIdentifier: input.agentIdentifier,
     }),
   };
-}
-
-export function buildConnectAgentChatDashboardUrl(input: {
-  connectDashboardUrl: string;
-  environmentSlug: string | null;
-  agentIdentifier: string;
-}): string {
-  return buildSharedConnectAgentChatDashboardUrl(input);
 }
 
 export function isDashboardOnlyChannel(channel: ChannelChoice): boolean {

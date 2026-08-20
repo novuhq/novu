@@ -14,7 +14,6 @@ import type {
 import { logAgentChatEmbedPromptFileHandoffEvent, writeAgentChatEmbedPromptHandoffFile } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';
 import {
-  type AgentChatProjectWiringState,
   type BridgeSetupSnapshot,
   resolveAgentChatProjectWiringState,
   resolveHandlerWired,
@@ -39,7 +38,6 @@ export async function runAgentChatProjectSetup(input: {
   bridgeOutcome?: BridgeSetupSnapshot;
   bridgeProjectDir?: string;
   autoMergeIntoBridge?: boolean;
-  deferAgentPrompt?: boolean;
 }): Promise<AgentChatConnectOutcome> {
   const projectDir = path.resolve(input.options.projectDir ?? process.cwd());
   const projectKind = detectAgentChatProjectKind(projectDir);
@@ -50,7 +48,7 @@ export async function runAgentChatProjectSetup(input: {
       : 'unwired';
 
   if (!explicitMode && wiringState === 'wired') {
-    return runAgentChatAlreadyWiredSetup(input, projectDir);
+    return runAgentChatEmbedSetup(input, projectDir, { alreadyWired: true });
   }
 
   const mode =
@@ -66,7 +64,7 @@ export async function runAgentChatProjectSetup(input: {
   }
 
   if (mode === 'embed') {
-    return runAgentChatEmbedSetup(input, projectDir, wiringState);
+    return runAgentChatEmbedSetup(input, projectDir, { alreadyWired: false });
   }
 
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
@@ -100,45 +98,6 @@ export async function runAgentChatProjectSetup(input: {
   };
 }
 
-async function runAgentChatAlreadyWiredSetup(
-  input: {
-    auth: ResolvedConnectAuth;
-    agent: AgentSummary;
-    handoff: ConnectAgentChatHandoff;
-    connectMode: AgentConnectMode;
-    bridgeOutcome?: BridgeSetupSnapshot;
-  },
-  projectDir: string
-): Promise<AgentChatConnectOutcome> {
-  const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
-  const subscriberId = input.auth.user?.id ?? SUBSCRIBER_ID_PLACEHOLDER;
-  const envResult = mergeAgentChatEnv({
-    projectDir,
-    applicationIdentifier,
-    subscriberId,
-    agentIdentifier: input.agent.identifier,
-    apiUrl: input.auth.apiUrl,
-  });
-
-  const embedPrompt = buildConnectEmbedPrompt({
-    agentName: input.agent.name,
-    agentIdentifier: input.agent.identifier,
-    applicationIdentifier,
-    subscriberId,
-    envPaths: envResult.envPaths,
-    connectMode: resolveConnectEmbedRuntime(input.connectMode),
-    handlerWired: true,
-  });
-  input.handoff.embedPrompt = embedPrompt;
-
-  return {
-    mode: 'embed',
-    projectDir,
-    envPaths: envResult.envPaths,
-    alreadyWired: true,
-  };
-}
-
 async function runAgentChatEmbedSetup(
   input: {
     options: ConnectCommandOptions;
@@ -150,7 +109,7 @@ async function runAgentChatEmbedSetup(
     bridgeOutcome?: BridgeSetupSnapshot;
   },
   projectDir: string,
-  _wiringState: AgentChatProjectWiringState
+  opts: { alreadyWired: boolean }
 ): Promise<AgentChatConnectOutcome> {
   const applicationIdentifier = await resolveConnectApplicationIdentifier(input.auth);
   const subscriberId = input.auth.user?.id ?? SUBSCRIBER_ID_PLACEHOLDER;
@@ -161,7 +120,7 @@ async function runAgentChatEmbedSetup(
     agentIdentifier: input.agent.identifier,
     apiUrl: input.auth.apiUrl,
   });
-  const handlerWired = resolveHandlerWired(input.bridgeOutcome);
+  const handlerWired = opts.alreadyWired ? true : resolveHandlerWired(input.bridgeOutcome);
   const embedPrompt = buildConnectEmbedPrompt({
     agentName: input.agent.name,
     agentIdentifier: input.agent.identifier,
@@ -173,7 +132,8 @@ async function runAgentChatEmbedSetup(
   });
   input.handoff.embedPrompt = embedPrompt;
 
-  const embedPromptFile = input.ui.interactive ? undefined : await writeAgentChatEmbedPromptHandoffFile(embedPrompt);
+  const embedPromptFile =
+    !opts.alreadyWired && !input.ui.interactive ? await writeAgentChatEmbedPromptHandoffFile(embedPrompt) : undefined;
 
   input.handoff.embedPromptFile = embedPromptFile;
 
@@ -186,6 +146,7 @@ async function runAgentChatEmbedSetup(
     projectDir,
     embedPromptFile,
     envPaths: envResult.envPaths,
+    alreadyWired: opts.alreadyWired,
   };
 }
 

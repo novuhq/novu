@@ -493,7 +493,7 @@ export function createLoggingUI(): ConnectUI {
       start('Scaffolding your Agent Chat example app…');
     },
     sendingWelcome() {
-      start('Asking your agent to say hello in Slack…');
+      start('Sending a welcome message from your agent…');
     },
     success(result) {
       stop();

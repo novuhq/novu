@@ -1,15 +1,13 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { describeConnectEmbedPromptAction } from '@novu/shared';
 import chalk from 'chalk';
 import { channelDisplayName, resolveConnectSuccessDestination, UNCLAIMED_KEYLESS_HINT } from '../dashboard-urls';
-import { resolveConnectEmbedRuntime } from '../pipeline/agent-chat/run-agent-chat-setup';
 import { printDevCommandBox } from '../pipeline/bridge/print-bridge-dev-next-steps';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
-import type { AgentConnectMode } from '../types';
+import {
+  type ConnectSuccessResult,
+  describeEmbedSuccessNextStep,
+  resolveAgentChatSuccessPresentation,
+} from './format-agent-chat-success';
 import type { ConnectUI } from './ui';
-
-type ConnectSuccessResult = Parameters<ConnectUI['success']>[0];
 
 export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): boolean {
   if (result.connectedChannel === 'agent-chat') {
@@ -24,88 +22,37 @@ export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): b
   );
 }
 
-function resolveScaffoldDevPort(projectDir: string): number {
-  try {
-    const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8')) as {
-      scripts?: Record<string, string>;
-    };
-    const scripts = Object.values(packageJson.scripts ?? {}).join('\n');
-    const portMatch = scripts.match(/--port[=\s]+(\d+)/) ?? scripts.match(/-p\s+(\d+)/) ?? scripts.match(/PORT=(\d+)/);
-
-    if (portMatch) {
-      return Number.parseInt(portMatch[1], 10);
-    }
-  } catch {
-    // Fall back to the default agent scaffold port.
-  }
-
-  return 4005;
-}
-
-function resolveBridgeHandlerRoute(connectMode: AgentConnectMode | undefined): string {
-  if (connectMode === 'chat-sdk') {
-    return 'POST /api/webhooks/novu';
-  }
-
-  return '/api/novu';
-}
-
-function formatLocalUrl(port: number, routePath: string): string {
-  const normalizedPath = routePath.startsWith('/') ? routePath : `/${routePath}`;
-
-  return `http://localhost:${port}${normalizedPath === '/' ? '' : normalizedPath}`;
-}
-
 export function printConnectSuccess(result: ConnectSuccessResult): void {
   if (shouldSkipConnectSuccessSummary(result)) {
     return;
   }
 
-  const bridgeOutcome =
-    result.chatSdkOutcome ?? result.aiSdkOutcome ?? result.langChainOutcome ?? result.customCodeOutcome;
-  if (
-    result.connectedChannel === 'agent-chat' &&
-    result.agentChatOutcome?.mergedIntoBridge &&
-    bridgeOutcome?.scaffolded
-  ) {
-    const install = bridgeOutcome.skippedInstall ? 'npm install && ' : '';
-    const port = resolveScaffoldDevPort(bridgeOutcome.projectDir);
-    const chatPath = result.agentChatOutcome.chatPath ?? '/';
-    const chatUrl = formatLocalUrl(port, chatPath);
-    const handlerRoute = resolveBridgeHandlerRoute(result.connectMode);
-    const appName = path.basename(bridgeOutcome.projectDir);
-
+  const agentChatPresentation = resolveAgentChatSuccessPresentation(result);
+  if (agentChatPresentation?.kind === 'merged-scaffold') {
     console.log('');
     console.log(`${chalk.green('✓')} Agent app ready with Agent Chat.`);
-    console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-    console.log(`  ${chalk.bold('App:')} ${appName}`);
+    console.log(
+      `  ${chalk.bold('Agent:')} ${agentChatPresentation.agentName} ${chalk.gray(`(${agentChatPresentation.agentIdentifier})`)}`
+    );
+    console.log(`  ${chalk.bold('App:')} ${agentChatPresentation.appName}`);
     console.log('');
     console.log(`  ${chalk.bold('One Next.js app serves both:')}`);
-    console.log(`    ${chalk.cyan('Agent Chat UI')}  ${chalk.underline(chatUrl)}`);
-    console.log(`    ${chalk.cyan('Agent handler')}  ${handlerRoute}`);
-    if (result.connectMode !== 'chat-sdk') {
-      console.log(`  ${chalk.gray(`Edit agent logic in app/novu/agents/${result.agent.identifier}.tsx`)}`);
+    console.log(`    ${chalk.cyan('Agent Chat UI')}  ${chalk.underline(agentChatPresentation.chatUrl)}`);
+    console.log(`    ${chalk.cyan('Agent handler')}  ${agentChatPresentation.handlerRoute}`);
+    if (agentChatPresentation.editAgentHint) {
+      console.log(`  ${chalk.gray(agentChatPresentation.editAgentHint)}`);
     }
-    printDevCommandBox(`cd ${JSON.stringify(bridgeOutcome.projectDir)} && ${install}npm run dev:novu`);
+    printDevCommandBox(agentChatPresentation.devCommand);
 
     return;
   }
 
-  if (
-    result.connectedChannel === 'agent-chat' &&
-    result.agentChatOutcome?.mode === 'embed' &&
-    result.agentChatOutcome.projectDir
-  ) {
-    const embedPrompt = result.agentChatHandoff?.embedPrompt;
-    const envPaths = result.agentChatOutcome.envPaths ?? [];
-    const envNames = [...new Set(envPaths.map((envPath) => path.basename(envPath)))];
-    const envSummary = envNames.length > 0 ? envNames.join(', ') : null;
-
+  if (agentChatPresentation?.kind === 'embed') {
     console.log('');
     console.log(`${chalk.green('✓')} Agent Chat connected`);
-    if (result.agentChatOutcome.alreadyWired) {
-      if (envSummary) {
-        console.log(`  ${chalk.dim(`Refreshed ${envSummary} with your Novu keys.`)}`);
+    if (agentChatPresentation.alreadyWired) {
+      if (agentChatPresentation.envSummary) {
+        console.log(`  ${chalk.dim(`Refreshed ${agentChatPresentation.envSummary} with your Novu keys.`)}`);
       }
       console.log(`  ${chalk.bold('Status:')} This project is already wired for Agent Chat.`);
       console.log(`  ${chalk.dim('Run npm run dev:novu to start local dev.')}`);
@@ -113,37 +60,27 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
       return;
     }
 
-    if (envSummary) {
-      console.log(`  ${chalk.dim(`Updated ${envSummary} with your Novu keys.`)}`);
+    if (agentChatPresentation.envSummary) {
+      console.log(`  ${chalk.dim(`Updated ${agentChatPresentation.envSummary} with your Novu keys.`)}`);
     }
-    const connectMode = resolveConnectEmbedRuntime(result.connectMode ?? 'ai-sdk');
     console.log(`  ${chalk.bold('Next:')} Copy the setup prompt below into your coding agent.`);
-    console.log(`  ${chalk.dim(describeConnectEmbedPromptAction(connectMode))}`);
-    if (result.agentChatOutcome.embedPromptFile) {
-      console.log(`  ${chalk.dim('Prompt file:')} ${result.agentChatOutcome.embedPromptFile}`);
+    console.log(`  ${chalk.dim(describeEmbedSuccessNextStep(agentChatPresentation.connectMode))}`);
+    if (agentChatPresentation.embedPromptFile) {
+      console.log(`  ${chalk.dim('Prompt file:')} ${agentChatPresentation.embedPromptFile}`);
     }
-    if (embedPrompt) {
+    if (agentChatPresentation.embedPrompt) {
       console.log('');
-      console.log(embedPrompt);
+      console.log(agentChatPresentation.embedPrompt);
     }
 
     return;
   }
 
-  if (
-    result.connectedChannel === 'agent-chat' &&
-    result.agentChatOutcome?.mode === 'scaffold' &&
-    result.agentChatOutcome.projectDir
-  ) {
-    const projectDir = result.agentChatOutcome.projectDir;
-    const port = resolveScaffoldDevPort(projectDir);
-    const chatPath = result.agentChatOutcome.chatPath ?? '/';
-    const chatUrl = formatLocalUrl(port, chatPath);
-
+  if (agentChatPresentation?.kind === 'standalone-scaffold') {
     console.log('');
     console.log(`${chalk.green('✓')} Agent Chat app ready.`);
-    console.log(`  ${chalk.bold('Local URL:')} ${chalk.underline(chatUrl)}`);
-    printDevCommandBox(`cd ${JSON.stringify(projectDir)} && npm run dev`);
+    console.log(`  ${chalk.bold('Local URL:')} ${chalk.underline(agentChatPresentation.chatUrl)}`);
+    printDevCommandBox(agentChatPresentation.devCommand);
 
     return;
   }
@@ -155,16 +92,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     isKeyless: result.isKeyless,
     claimUrl: result.claimUrl ?? null,
   });
-  const channelLabel = (() => {
-    if (result.connectedChannel === 'slack') return 'Slack';
-    if (result.connectedChannel === 'telegram') return 'Telegram';
-    if (result.connectedChannel === 'email') return 'Email';
-    if (result.connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
-    if (result.connectedChannel === 'whatsapp') return 'WhatsApp';
-    if (result.connectedChannel === 'agent-chat') return 'Agent Chat';
-
-    return null;
-  })();
+  const channelLabel = resolveChannelLabel(result.connectedChannel);
   const redirectChannelLabel = result.dashboardRedirectChannel
     ? channelDisplayName(result.dashboardRedirectChannel)
     : null;
@@ -176,15 +104,15 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     console.log(`${chalk.green('✓')} Your agent is live.`);
   }
   console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-  if (result.connectedChannel === 'agent-chat') {
-    if (result.agentChatHandoff?.dashboardUrl) {
-      console.log(`  ${chalk.cyan('→')} Try chat in the dashboard: ${result.agentChatHandoff.dashboardUrl}`);
+  if (agentChatPresentation?.kind === 'generic-linked') {
+    if (agentChatPresentation.dashboardUrl) {
+      console.log(`  ${chalk.cyan('→')} Try chat in the dashboard: ${agentChatPresentation.dashboardUrl}`);
     }
-    if (result.agentChatOutcome?.embedPromptFile) {
-      console.log(`  ${chalk.cyan('→')} Embed prompt saved to: ${result.agentChatOutcome.embedPromptFile}`);
+    if (agentChatPresentation.embedPromptFile) {
+      console.log(`  ${chalk.cyan('→')} Embed prompt saved to: ${agentChatPresentation.embedPromptFile}`);
     }
-    if (result.agentChatOutcome?.projectDir) {
-      console.log(`  ${chalk.cyan('→')} Example app: ${result.agentChatOutcome.projectDir}`);
+    if (agentChatPresentation.projectDir) {
+      console.log(`  ${chalk.cyan('→')} Example app: ${agentChatPresentation.projectDir}`);
     }
   } else if (channelLabel) {
     console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
@@ -218,4 +146,15 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
   ) {
     console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
   }
+}
+
+function resolveChannelLabel(connectedChannel: ConnectSuccessResult['connectedChannel']): string | null {
+  if (connectedChannel === 'slack') return 'Slack';
+  if (connectedChannel === 'telegram') return 'Telegram';
+  if (connectedChannel === 'email') return 'Email';
+  if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
+  if (connectedChannel === 'whatsapp') return 'WhatsApp';
+  if (connectedChannel === 'agent-chat') return 'Agent Chat';
+
+  return null;
 }

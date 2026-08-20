@@ -36,7 +36,12 @@ import {
   isVanillaCustomCodeConnectMode,
 } from '../types';
 import type { ConnectUI } from '../ui/ui';
+import { offerPostConnectBridgeTunnel } from './agent-chat/offer-post-connect-bridge-tunnel';
 import { runAgentChatProjectSetup } from './agent-chat/run-agent-chat-setup';
+import {
+  resolveAgentChatHandoffUiPolicy,
+  wrapUiForAgentChatHandoff,
+} from './agent-chat/wrap-ui-for-agent-chat-handoff';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
 import { connectAgentChatForAgent } from './channels/agent-chat';
@@ -415,48 +420,40 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           })
         : null;
 
-    const deferScaffoldSummary =
-      channel === 'agent-chat' &&
-      Boolean(agentChatHandoff) &&
-      options.agentChatSetup !== 'embed' &&
-      options.agentChatSetup !== 'skip';
-
-    const deferAgentPrompt = Boolean(agentChatHandoff);
+    const agentChatHandoffPolicy = resolveAgentChatHandoffUiPolicy({
+      channel,
+      agentChatHandoff: Boolean(agentChatHandoff),
+      agentChatSetup: options.agentChatSetup,
+    });
+    const setupUi = agentChatHandoffPolicy ? wrapUiForAgentChatHandoff(ui, agentChatHandoffPolicy) : ui;
 
     if (connectMode === 'chat-sdk') {
       chatSdkOutcome = await runChatSdkProjectSetup({
         options,
-        ui,
+        ui: setupUi,
         auth: session.auth,
         agent,
-        deferScaffoldSummary,
-        deferAgentPrompt,
       });
     } else if (isAiSdkConnectMode(connectMode)) {
       aiSdkOutcome = await runAiSdkProjectSetup({
         options,
-        ui,
+        ui: setupUi,
         auth: session.auth,
         agent,
-        deferScaffoldSummary,
-        deferAgentPrompt,
       });
     } else if (isLangChainConnectMode(connectMode)) {
       langChainOutcome = await runLangChainProjectSetup({
         options,
-        ui,
+        ui: setupUi,
         auth: session.auth,
         agent,
-        deferScaffoldSummary,
-        deferAgentPrompt,
       });
     } else if (isVanillaCustomCodeConnectMode(connectMode)) {
       customCodeOutcome = await runCustomCodeProjectSetup({
         options,
-        ui,
+        ui: setupUi,
         auth: session.auth,
         agent,
-        deferScaffoldSummary,
       });
     }
 
@@ -477,7 +474,6 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         bridgeOutcome: bridgeProject,
         bridgeProjectDir: bridgeProject?.projectDir,
         autoMergeIntoBridge: bridgeProject?.scaffolded === true,
-        deferAgentPrompt,
       });
     }
 
@@ -512,6 +508,16 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     // Tear down Ink before starting the bridge server so its stdout/console
     // output does not trigger a second orb render while the TUI is still mounted.
     const exitCode = await ui.shutdown();
+
+    await offerPostConnectBridgeTunnel({
+      connectMode,
+      chatSdkOutcome,
+      aiSdkOutcome,
+      langChainOutcome,
+      agentChatHandoff,
+      agentChatProjectDir: agentChatOutcome?.projectDir,
+      ci: options.ci,
+    });
 
     if (await maybeRunChatSdkTunnel({ outcome: chatSdkOutcome, ci: options.ci })) {
       return { exitCode: 0 };

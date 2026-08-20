@@ -13,15 +13,18 @@ import {
   UNCLAIMED_KEYLESS_HINT,
 } from '../dashboard-urls';
 import { ConnectUserCancelledError } from '../errors';
-import { resolveConnectEmbedRuntime } from '../pipeline/agent-chat/run-agent-chat-setup';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
-import type { AgentChatSetupMode, ChannelChoice } from '../types';
-import { AgentChatEmbedFinishContent } from './agent-chat-embed-finish-content';
+import type { ChannelChoice } from '../types';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { LlmAuthPicker } from './llm-auth-picker';
+import {
+  AgentChatHandoffContent,
+  AgentChatInkSuccessContent,
+  AgentChatSetupPickContent,
+} from './phase-content/agent-chat-phases';
 import { EmailReadyContent, EmailWaitingContent } from './phase-content/email';
 import {
   SendblueCredentialContent,
@@ -570,81 +573,6 @@ function DashboardChannelReadyContent({
   );
 }
 
-function AgentChatHandoffContent({
-  dashboardUrl,
-  onContinue,
-}: {
-  dashboardUrl: string;
-  onContinue: () => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.return || _input === ' ') onContinue();
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold>Agent Chat linked</Text>
-      <Text dimColor>Open the dashboard chat, or continue to add Agent Chat to your app.</Text>
-      <CopyableLink url={dashboardUrl} hint="Chat tab in dashboard:" hyperlink={false} />
-      <Text dimColor>Press Enter to continue</Text>
-    </Box>
-  );
-}
-
-function AgentChatSetupPickContent({
-  projectKind,
-  onResolve,
-}: {
-  projectKind: 'empty' | 'project';
-  onResolve: (mode: AgentChatSetupMode) => void;
-}): React.ReactElement {
-  const options =
-    projectKind === 'empty'
-      ? [
-          { label: 'Scaffold a new example app', value: 'scaffold' as const },
-          { label: 'Skip for now', value: 'skip' as const },
-        ]
-      : [
-          { label: 'Add to this project', value: 'embed' as const },
-          { label: 'Skip for now', value: 'skip' as const },
-        ];
-  const [idx, setIdx] = React.useState(0);
-
-  useInput((_input, key) => {
-    if (key.upArrow) {
-      setIdx((current) => (current - 1 + options.length) % options.length);
-    } else if (key.downArrow) {
-      setIdx((current) => (current + 1) % options.length);
-    } else if (key.return) {
-      onResolve(options[idx].value);
-    }
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold>Add Agent Chat to your app</Text>
-      <Text dimColor>
-        {projectKind === 'empty'
-          ? 'Start from a ready-made example in this folder.'
-          : 'We will add Novu env vars here, then give you a prompt to paste into your coding agent.'}
-      </Text>
-      {options.map((opt, rowIndex) => {
-        const isSelected = rowIndex === idx;
-
-        return (
-          <Text key={opt.value}>
-            <Text color={isSelected ? 'cyan' : undefined}>
-              {isSelected ? '› ' : '  '}
-              {opt.label}
-            </Text>
-          </Text>
-        );
-      })}
-      <Text dimColor>↑↓ to move · Enter to select</Text>
-    </Box>
-  );
-}
-
 function SuccessView({
   phase,
 }: {
@@ -666,20 +594,44 @@ function SuccessView({
     embedPrompt,
     embedPromptFile,
     resolveDismiss,
+    customCodeOutcome,
   } = phase;
-  const isAgentChatEmbed =
-    connectedChannel === 'agent-chat' &&
-    agentChatOutcome?.mode === 'embed' &&
-    (Boolean(embedPrompt) || agentChatOutcome.alreadyWired);
-  const embedRuntime = resolveConnectEmbedRuntime(connectMode ?? 'ai-sdk');
-  const scaffoldMessage = isAgentChatEmbed
-    ? null
-    : resolveBridgeSetupFollowUpMessage(connectMode, {
-        chatSdk: chatSdkOutcome,
-        aiSdk: aiSdkOutcome,
-        langChain: langChainOutcome,
-        customCode: phase.customCodeOutcome,
-      });
+
+  const successResult = {
+    agent,
+    dashboardUrl: phase.dashboardUrl,
+    connectDashboardUrl,
+    environmentSlug,
+    connectedChannel,
+    dashboardRedirectChannel,
+    isKeyless,
+    claimUrl,
+    connectMode,
+    chatSdkOutcome,
+    aiSdkOutcome,
+    langChainOutcome,
+    customCodeOutcome,
+    agentChatOutcome,
+    agentChatHandoff: phase.agentChatHandoff,
+  };
+
+  const agentChatInk = AgentChatInkSuccessContent({
+    result: successResult,
+    embedPrompt,
+    embedPromptFile,
+    onDismiss: resolveDismiss,
+  });
+
+  if (agentChatInk) {
+    return agentChatInk;
+  }
+
+  const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
+    chatSdk: chatSdkOutcome,
+    aiSdk: aiSdkOutcome,
+    langChain: langChainOutcome,
+    customCode: customCodeOutcome,
+  });
   const destination = resolveConnectSuccessDestination({
     connectDashboardUrl,
     environmentSlug,
@@ -700,40 +652,14 @@ function SuccessView({
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
 
-  if (isAgentChatEmbed) {
-    return (
-      <Box flexDirection="column" gap={1}>
-        <Text color="green">✓ Agent Chat connected</Text>
-        <AgentChatEmbedFinishContent
-          embedPrompt={embedPrompt ?? ''}
-          embedPromptFile={embedPromptFile}
-          envPaths={agentChatOutcome?.envPaths}
-          connectMode={embedRuntime}
-          alreadyWired={agentChatOutcome?.alreadyWired}
-          onDismiss={resolveDismiss}
-        />
-      </Box>
-    );
-  }
-
   return (
     <Box flexDirection="column" gap={1}>
-      <Text color="green">
-        {connectedChannel === 'agent-chat' ? '✓ Agent Chat linked — add it to your app.' : '✓ Your agent is live.'}
-      </Text>
+      <Text color="green">✓ Your agent is live.</Text>
       <Box flexDirection="column">
         <Text>
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
-        {connectedChannel === 'agent-chat' ? (
-          <>
-            {agentChatOutcome?.projectDir && agentChatOutcome.mode === 'scaffold' ? (
-              <Text color="cyan">Example app: {agentChatOutcome.projectDir}</Text>
-            ) : null}
-          </>
-        ) : (
-          renderSuccessChannelMessage(channelLabel, redirectChannelLabel)
-        )}
+        {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
         {scaffoldMessage ? <Text color="cyan">{scaffoldMessage}</Text> : null}
         {renderSuccessNextStep(destination)}
       </Box>

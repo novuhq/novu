@@ -13,7 +13,6 @@ export type CustomCodeSetupInput = {
   ui: ConnectUI;
   auth: ResolvedConnectAuth;
   agent: AgentSummary;
-  deferScaffoldSummary?: boolean;
 };
 
 export async function runCustomCodeProjectSetup(input: CustomCodeSetupInput): Promise<CustomCodeConnectOutcome> {
@@ -58,14 +57,12 @@ export async function runCustomCodeProjectSetup(input: CustomCodeSetupInput): Pr
       }),
   });
 
-  if (!input.deferScaffoldSummary) {
-    input.ui.bridgeScaffolded({
-      variant: 'custom-code',
-      projectDir: scaffolded.root,
-      agentFilePath: scaffolded.agentFilePath,
-      skippedInstall: scaffolded.skippedInstall,
-    });
-  }
+  input.ui.bridgeScaffolded({
+    variant: 'custom-code',
+    projectDir: scaffolded.root,
+    agentFilePath: scaffolded.agentFilePath,
+    skippedInstall: scaffolded.skippedInstall,
+  });
 
   return {
     projectDir: scaffolded.root,

@@ -36,8 +36,6 @@ export type ChatSdkSetupInput = {
   ui: ConnectUI;
   auth: ResolvedConnectAuth;
   agent: AgentSummary;
-  deferScaffoldSummary?: boolean;
-  deferAgentPrompt?: boolean;
 };
 
 type ReconcileOptions = {
@@ -93,14 +91,12 @@ async function scaffoldThenReconcile(
 
   const envPaths = resolveProjectEnvPaths(scaffolded.root);
 
-  if (!input.deferScaffoldSummary) {
-    input.ui.bridgeScaffolded({
-      variant: 'chat-sdk',
-      projectDir: scaffolded.root,
-      envPaths,
-      skippedInstall: scaffolded.skippedInstall,
-    });
-  }
+  input.ui.bridgeScaffolded({
+    variant: 'chat-sdk',
+    projectDir: scaffolded.root,
+    envPaths,
+    skippedInstall: scaffolded.skippedInstall,
+  });
 
   return {
     projectKind: 'empty',
@@ -146,7 +142,7 @@ async function reconcileChatSdkProject(
   const wiringInstructions =
     wiringReq && wiringReq.status !== 'ok' ? buildCodeWiringInstructions(projectDir) : undefined;
 
-  const agentPrompt = wiringInstructions && !input.deferAgentPrompt ? CHAT_SDK_AGENT_PROMPT : undefined;
+  const agentPrompt = wiringInstructions ? CHAT_SDK_AGENT_PROMPT : undefined;
 
   const requirementsFile = await writeChatSdkRequirementsFile({
     projectDir,
@@ -332,15 +328,9 @@ async function promptChatSdkTunnelIfReady(opts: {
   coreReady: boolean;
   reconcilePlan: ChatSdkReconcilePlanInput;
 }): Promise<boolean> {
-  if (!opts.input.deferAgentPrompt) {
-    await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
-  }
+  await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
 
   if (!opts.coreReady || opts.input.options.ci) {
-    return false;
-  }
-
-  if (opts.input.deferAgentPrompt) {
     return false;
   }
 
@@ -400,7 +390,7 @@ function shouldRunChatSdkTunnel(
   return outcome.tunnelAccepted === true;
 }
 
-function isChatSdkWiringReadyForTunnel(
+export function isChatSdkWiringReadyForTunnel(
   requirements: BridgeRequirement[] | undefined,
   projectDir: string,
   scaffolded = false
