@@ -148,6 +148,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         key: body.key,
         name: body.name,
+        data: body.data,
         failIfExists,
       })
     );
@@ -184,7 +185,7 @@ export class TopicsController {
   @SdkMethodName('update')
   @ApiOperation({
     summary: 'Update a topic',
-    description: `Update a topic name by its unique key identifier **topicKey**`,
+    description: `Update a topic name or data by its unique key identifier **topicKey**`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
@@ -201,6 +202,7 @@ export class TopicsController {
         userId: user._id,
         topicKey,
         name: body.name,
+        data: body.data,
       })
     );
   }
