@@ -2,10 +2,11 @@ import { RiArrowRightSLine } from 'react-icons/ri';
 import {
   AGENT_CHAT_DOCS_URL,
   AgentChatEmbedResources,
-  NOVU_CONNECT_AGENT_CHAT_TUI_COMMAND,
+  buildAgentChatTuiCommand,
 } from '@/components/agents/agent-chat-setup-content';
 import { CopyableTerminalBlock } from '@/components/primitives/copyable-terminal-block';
 import { ExternalLink } from '@/components/shared/external-link';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 
@@ -24,6 +25,7 @@ export function AgentChatSetupSteps({
   onOpenChat,
 }: AgentChatSetupStepsProps) {
   const base = stepOffset;
+  const tuiCommand = buildAgentChatTuiCommand(apiHostnameManager.getHostname());
 
   return (
     <>
@@ -64,12 +66,7 @@ export function AgentChatSetupSteps({
             </ExternalLink>
           </>
         }
-        extraContent={
-          <CopyableTerminalBlock
-            displayCommand={NOVU_CONNECT_AGENT_CHAT_TUI_COMMAND}
-            copyCommand={NOVU_CONNECT_AGENT_CHAT_TUI_COMMAND}
-          />
-        }
+        extraContent={<CopyableTerminalBlock displayCommand={tuiCommand} copyCommand={tuiCommand} />}
         rightContent={<AgentChatEmbedResources prompt={prompt} />}
       />
     </>

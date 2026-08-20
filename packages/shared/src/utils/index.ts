@@ -16,6 +16,7 @@ export * from './issues';
 export * from './locales';
 export * from './managed-integration-credentials';
 export * from './normalizeEmail';
+export * from './novu-connect-cli';
 export { safeJsonStringify } from './safe-json-stringify';
 export { createMockObjectFromSchema } from './schema/create-mock-object-from-schema';
 export { slugify } from './slugify';
