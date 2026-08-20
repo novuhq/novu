@@ -17,9 +17,9 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import {
   buildWorkflowOriginSummary,
   extractAgentEmailOriginToken,
+  extractTeamsQuotedActivityId,
   extractTelegramChatIdFromThreadId,
   extractTelegramQuotedMessageId,
-  extractTeamsQuotedActivityId,
   extractWhatsAppQuotedWamid,
   isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,

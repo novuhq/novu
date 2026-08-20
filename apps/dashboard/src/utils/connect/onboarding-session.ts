@@ -1,8 +1,8 @@
 import {
   AGENTS_STEP_COUNT,
   ONBOARDING_STEP_DELAY_MS,
-  PLATFORM_STEP_COUNT,
   type OnboardingLoaderVariant,
+  PLATFORM_STEP_COUNT,
 } from '@/components/onboarding/onboarding-loader';
 
 const ONBOARDING_PROVISIONING_KEY = 'novu.onboarding.provisioning';

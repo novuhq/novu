@@ -49,9 +49,7 @@ const createFooterPlainText: (props: { track: ReturnType<typeof useTelemetry> })
   };
 };
 
-const createFooterLogoWithTextStacked: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createFooterLogoWithTextStacked: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {
@@ -113,9 +111,7 @@ const createFooterLogoWithTextStacked: (props: { track: ReturnType<typeof useTel
   };
 };
 
-const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {
@@ -290,9 +286,7 @@ const createFooterLogoTextAndSocials: (props: { track: ReturnType<typeof useTele
   };
 };
 
-const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {

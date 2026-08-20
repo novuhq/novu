@@ -984,9 +984,7 @@ const PromptInputTabsList = ({ className, ...props }: PromptInputTabsListProps) 
 
 type PromptInputTabProps = HTMLAttributes<HTMLDivElement>;
 
-const PromptInputTab = ({ className, ...props }: PromptInputTabProps) => (
-  <div className={cn(className)} {...props} />
-);
+const PromptInputTab = ({ className, ...props }: PromptInputTabProps) => <div className={cn(className)} {...props} />;
 
 type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
