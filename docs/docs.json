@@ -194,6 +194,7 @@
                 "group": "Chat",
                 "root": "platform/integrations/chat",
                 "pages": [
+                  "platform/integrations/chat/writing-chat-template",
                   "platform/integrations/chat/discord",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
@@ -1034,16 +1035,16 @@
                   {
                     "group": "Steps",
                     "pages": [
+                      "framework/typescript/steps",
                       "framework/typescript/steps/chat",
-                      "framework/typescript/steps/custom",
-                      "framework/typescript/steps/delay",
-                      "framework/typescript/steps/digest",
                       "framework/typescript/steps/email",
                       "framework/typescript/steps/inApp",
-                      "framework/typescript/steps",
                       "framework/typescript/steps/push",
                       "framework/typescript/steps/sms",
-                      "framework/typescript/steps/tool"
+                      "framework/typescript/steps/tool",
+                      "framework/typescript/steps/custom",
+                      "framework/typescript/steps/delay",
+                      "framework/typescript/steps/digest"
                     ]
                   },
                   "framework/schema/zod",
