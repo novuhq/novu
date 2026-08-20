@@ -11,9 +11,19 @@ export interface RecordedPhotonCall {
 export interface PhotonApiStub {
   url: string;
   calls: RecordedPhotonCall[];
+  /**
+   * Device code the next `/api/auth/device/code` responses issue. Poll outcomes
+   * are keyed off the code (`pending-device-code`, `denied-device-code`, else
+   * complete), and the API only redeems codes its own start leg issued — so
+   * tests choose the outcome here and run the full start → poll flow.
+   */
+  setNextDeviceCode(code: string): void;
   reset(): void;
   close(): Promise<void>;
 }
+
+const DEFAULT_DEVICE_CODE = 'stub-device-code';
+let nextDeviceCode = DEFAULT_DEVICE_CODE;
 
 let stub: PhotonApiStub | undefined;
 
@@ -86,7 +96,7 @@ function buildResponse(method: string, path: string, payload: Record<string, unk
   // Photon Dashboard API surface (better-auth device flow + projects).
   if (path === '/api/auth/device/code' && method === 'POST') {
     return {
-      device_code: 'stub-device-code',
+      device_code: nextDeviceCode,
       user_code: 'STUB-CODE',
       verification_uri: '/sign-in/device',
       verification_uri_complete: '/sign-in/device?code=STUB-CODE',
@@ -176,9 +186,13 @@ export async function startPhotonApiStub(): Promise<PhotonApiStub> {
   stub = {
     url,
     calls,
+    setNextDeviceCode: (code: string) => {
+      nextDeviceCode = code;
+    },
     reset: () => {
       calls.length = 0;
       webhooksByProject.clear();
+      nextDeviceCode = DEFAULT_DEVICE_CODE;
     },
     close: async () => {
       await new Promise<void>((resolve, reject) => {

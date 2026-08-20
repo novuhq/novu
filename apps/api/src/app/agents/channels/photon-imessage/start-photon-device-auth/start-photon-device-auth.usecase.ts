@@ -5,6 +5,7 @@ import { ChatProviderIdEnum } from '@novu/shared';
 
 import { resolveAgentIntegrationForWebhook } from '../../shared/resolve-agent-integration-webhook.util';
 import { isPhotonConnectEnabled, startPhotonDeviceAuthorization } from '../shared/photon-account-client';
+import { PhotonDeviceAuthBindingService } from '../shared/photon-device-auth-binding.service';
 import { StartPhotonDeviceAuthCommand } from './start-photon-device-auth.command';
 
 export interface StartPhotonDeviceAuthResult {
@@ -30,6 +31,7 @@ export class StartPhotonDeviceAuth {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly deviceAuthBindingService: PhotonDeviceAuthBindingService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -58,6 +60,25 @@ export class StartPhotonDeviceAuth {
 
     try {
       const authorization = await startPhotonDeviceAuthorization();
+
+      /*
+       * Bind the code to its initiator before handing it out: the poll leg only
+       * redeems codes whose binding matches the caller, so a leaked code cannot
+       * be redeemed by another user or against another integration. storeBinding
+       * throws on cache failure — without a binding the flow could never
+       * complete, so fall through to the manual-credentials fallback instead.
+       */
+      await this.deviceAuthBindingService.storeBinding(
+        authorization.deviceCode,
+        {
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentIdentifier: command.agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
+        },
+        authorization.expiresIn
+      );
 
       return {
         available: true,

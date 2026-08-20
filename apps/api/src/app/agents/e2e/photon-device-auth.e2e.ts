@@ -18,6 +18,7 @@ const agentIntegrationRepository = new AgentIntegrationRepository();
 describe('Photon device-auth connect flow #novu-v2', () => {
   let session: UserSession;
   let agentIdentifier: string;
+  let agentId: string;
   let integrationIdentifier: string;
   let photonApiStub: PhotonApiStub;
 
@@ -35,7 +36,7 @@ describe('Photon device-auth connect flow #novu-v2', () => {
       name: 'Photon Device Auth Agent',
       identifier: agentIdentifier,
     });
-    const agentId = createRes.body.data._id as string;
+    agentId = createRes.body.data._id as string;
 
     const integration = await integrationRepository.create({
       _environmentId: session.environment._id,
@@ -82,22 +83,86 @@ describe('Photon device-auth connect flow #novu-v2', () => {
     expect(codeCall?.payload.client_id).to.be.a('string');
   });
 
+  /** Poll only redeems codes the start leg issued and bound — so every poll test starts first. */
+  const startFlow = async (deviceCode: string): Promise<string> => {
+    photonApiStub.setNextDeviceCode(deviceCode);
+    const res = await session.testAgent.post(`${baseUrl()}/start`).send({});
+    expect(res.body.data.available).to.equal(true);
+
+    return res.body.data.deviceCode as string;
+  };
+
   it('reports pending while the user has not approved yet', async () => {
-    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode: 'pending-device-code' });
+    const deviceCode = await startFlow('pending-device-code');
+    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode });
 
     expect(res.status).to.equal(200);
     expect(res.body.data.status).to.equal('pending');
   });
 
   it('reports denied when the user rejects the request', async () => {
-    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode: 'denied-device-code' });
+    const deviceCode = await startFlow('denied-device-code');
+    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode });
 
     expect(res.status).to.equal(200);
     expect(res.body.data.status).to.equal('denied');
   });
 
+  it('rejects a device code the start leg never issued', async () => {
+    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode: 'never-issued-code' });
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.status).to.equal('error');
+    expect(res.body.data.error.code).to.equal('unknown_device_code');
+    // The foreign code must never be redeemed against Photon.
+    const tokenCall = photonApiStub.calls.find((call) => call.path === '/api/auth/device/token');
+    expect(tokenCall).to.equal(undefined);
+  });
+
+  it('rejects a device code bound to a different integration', async () => {
+    // Bind a code on integration A, then try to redeem it against integration B.
+    const deviceCode = await startFlow('stub-device-code');
+
+    const otherIntegration = await integrationRepository.create({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: ChatProviderIdEnum.PhotonImessage,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: encryptCredentials({}),
+      active: true,
+      name: 'Photon Device Auth Other Integration',
+      identifier: `photon-da-e2e-other-${Date.now()}`,
+      priority: 1,
+      primary: false,
+      deleted: false,
+    });
+    await agentIntegrationRepository.create({
+      _agentId: agentId,
+      _integrationId: otherIntegration._id,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    const res = await session.testAgent
+      .post(`/v1/agents/${agentIdentifier}/integrations/${otherIntegration.identifier}/photon/device-auth/poll`)
+      .send({ deviceCode });
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.status).to.equal('error');
+    expect(res.body.data.error.code).to.equal('unknown_device_code');
+
+    // The victim integration's credentials were never touched.
+    const untouched = await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      identifier: otherIntegration.identifier,
+    });
+    expect(decryptCredentials(untouched?.credentials ?? {}).apiKey).to.equal(undefined);
+  });
+
   it('provisions the project, stores credentials, and registers the webhook on approval', async () => {
-    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode: 'stub-device-code' });
+    const deviceCode = await startFlow('stub-device-code');
+    const res = await session.testAgent.post(`${baseUrl()}/poll`).send({ deviceCode });
 
     expect(res.status).to.equal(200);
     expect(res.body.data.status).to.equal('complete');

@@ -42,6 +42,7 @@ import { AgentChatSessionVerifier } from './agent-chat/agent-chat-session.verifi
 import { NovuAgentChatProvisioningService } from './channels/agent-chat/find-or-create-novu-agent-chat/find-or-create-novu-agent-chat.service';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
+import { PhotonDeviceAuthBindingService } from './channels/photon-imessage/shared/photon-device-auth-binding.service';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
@@ -154,6 +155,7 @@ import { USE_CASES } from './usecases';
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
+    PhotonDeviceAuthBindingService,
     AgentInboundHandler,
     WorkflowOriginService,
     ReplyApprovalInterceptor,

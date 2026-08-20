@@ -18,6 +18,7 @@ import {
   isPhotonConnectEnabled,
   pollPhotonDeviceToken,
 } from '../shared/photon-account-client';
+import { PhotonDeviceAuthBindingService } from '../shared/photon-device-auth-binding.service';
 import { PollPhotonDeviceAuthCommand } from './poll-photon-device-auth.command';
 
 export interface PollPhotonDeviceAuthResult {
@@ -38,6 +39,7 @@ export class PollPhotonDeviceAuth {
     private readonly environmentRepository: EnvironmentRepository,
     private readonly organizationRepository: OrganizationRepository,
     private readonly configurePhotonWebhookUsecase: ConfigurePhotonWebhook,
+    private readonly deviceAuthBindingService: PhotonDeviceAuthBindingService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -70,6 +72,32 @@ export class PollPhotonDeviceAuth {
       providerLabel: 'Photon',
     });
 
+    /*
+     * Only redeem codes this flow issued to this caller (StartPhotonDeviceAuth
+     * stores the binding). Without this, a leaked device code from another
+     * user's connect flow could be redeemed here and its Photon credentials
+     * written onto this integration. One generic "start over" error for
+     * expired, unknown, and foreign codes alike — never confirm a foreign
+     * code exists.
+     */
+    const bindingCheck = await this.deviceAuthBindingService.checkBinding(command.deviceCode, {
+      userId: command.userId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentIdentifier: command.agentIdentifier,
+      integrationIdentifier: command.integrationIdentifier,
+    });
+
+    if (bindingCheck !== 'valid') {
+      return {
+        status: 'error',
+        error: {
+          code: 'unknown_device_code',
+          message: 'This connect session is no longer valid — click Connect to start over.',
+        },
+      };
+    }
+
     let poll: Awaited<ReturnType<typeof pollPhotonDeviceToken>>;
     try {
       poll = await pollPhotonDeviceToken(command.deviceCode);
@@ -85,8 +113,15 @@ export class PollPhotonDeviceAuth {
     }
 
     if (poll.status !== 'complete') {
+      if (poll.status === 'denied' || poll.status === 'expired') {
+        await this.deviceAuthBindingService.clearBinding(command.deviceCode);
+      }
+
       return { status: poll.status };
     }
+
+    // The code is consumed by the token exchange; the binding has done its job.
+    await this.deviceAuthBindingService.clearBinding(command.deviceCode);
 
     /*
      * Authorized. Provision synchronously, then drop the access token — it is
