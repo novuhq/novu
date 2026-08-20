@@ -47,6 +47,10 @@ function workflowOriginSignalIdentifier(platformMessageId: string): string {
   return `workflow-dispatch-origin:${platformMessageId}`;
 }
 
+function workflowOriginMessageIdentifier(platformMessageId: string): string {
+  return `workflow-origin-message:${platformMessageId}`;
+}
+
 @Injectable()
 export class ConversationActivityLedger {
   constructor(
@@ -458,8 +462,23 @@ export class ConversationActivityLedger {
     return count > 0;
   }
 
-  /** Persist a logging-only SIGNAL for the workflow origin. */
+  /** Persist a logging-only SIGNAL for the workflow origin, and an agent MESSAGE when a body exists. */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
+    const messageBody = params.messageBody?.trim() ?? '';
+
+    if (messageBody.length > 0) {
+      await this.persistAgentMessage({
+        conversationId: params.conversationId,
+        channel: params.channel,
+        agentIdentifier: params.agentIdentifier,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        identifier: workflowOriginMessageIdentifier(params.platformMessageId),
+        platformThreadId: params.platformThreadId,
+        content: messageBody,
+      });
+    }
+
     try {
       await this.persistSignal({
         conversationId: params.conversationId,

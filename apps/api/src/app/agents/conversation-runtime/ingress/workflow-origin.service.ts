@@ -24,6 +24,7 @@ import {
   isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
+  stripHtml,
   toProviderMessageLookupKey,
   WORKFLOW_ORIGIN_LOOKBACK_MS,
   type WorkflowOriginData,
@@ -243,6 +244,8 @@ export class WorkflowOriginService {
       );
       conversation._notificationId = notificationId;
 
+      const messageBody = this.extractHydrationMessageBody(config.platform, origin);
+
       await this.conversationService.persistWorkflowOriginHydration({
         conversationId: conversation._id,
         channel: this.conversationService.getPrimaryChannel(conversation),
@@ -261,6 +264,7 @@ export class WorkflowOriginService {
           subscriberId: data.subscriberId,
           payload: data.payload,
         },
+        ...(messageBody ? { messageBody } : {}),
       });
 
       return { data, source: 'hydrated' };
@@ -420,6 +424,19 @@ export class WorkflowOriginService {
     }
 
     return this.conversationService.isWorkflowOriginHydrated(config.environmentId, conversationId, platformMessageId);
+  }
+
+  private extractHydrationMessageBody(platform: AgentPlatformEnum, origin: MessageEntity): string {
+    const storedContent = typeof origin.content === 'string' ? origin.content.trim() : '';
+    if (!storedContent) {
+      return '';
+    }
+
+    if (platform === AgentPlatformEnum.EMAIL) {
+      return stripHtml(storedContent);
+    }
+
+    return storedContent;
   }
 
   private async buildWorkflowOriginData(

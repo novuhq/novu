@@ -167,12 +167,36 @@ describe('WorkflowOriginService', () => {
       expect(conversationService.persistWorkflowOriginHydration.calledOnce).to.equal(true);
       const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
       expect(hydrateArgs.platformMessageId).to.equal('1777837477.371619');
+      expect(hydrateArgs.messageBody).to.equal('Order ORD-1 shipped');
       expect(hydrateArgs.signalData.workflowIdentifier).to.equal('order-alerts');
       expect(hydrateArgs.signalData.payload).to.deep.equal({ orderId: 'ORD-1' });
       expect(conversationService.setNotificationId.calledOnce).to.equal(true);
       expect(
         conversationService.setNotificationId.calledBefore(conversationService.persistWorkflowOriginHydration)
       ).to.equal(true);
+    });
+
+    it('omits messageBody when the origin content is empty', async () => {
+      const { service, conversationService } = makeService({
+        notificationFindOne: sinon.stub().resolves({ payload: {} }),
+      });
+
+      await service.hydrate({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: conversation as any,
+        platformThreadId: 'slack:D123:1777837477.371619',
+        origin: {
+          _id: 'msg1',
+          _notificationId: 'notif1',
+          templateIdentifier: 'order-alerts',
+          content: '   ',
+          identifier: 'D123:1777837477.371619',
+        } as any,
+      });
+
+      const hydrateArgs = conversationService.persistWorkflowOriginHydration.firstCall.args[0];
+      expect(hydrateArgs).to.not.have.property('messageBody');
     });
 
     it('keeps the origin re-derivable when the hydration marker write fails', async () => {
@@ -441,6 +465,52 @@ describe('WorkflowOriginService', () => {
       expect(conversationService.persistWorkflowOriginHydration.firstCall.args[0].platformMessageId).to.equal(
         ORIGIN_MESSAGE_ID
       );
+    });
+
+    it('strips HTML from the origin body before passing messageBody', async () => {
+      const { service, conversationService } = makeService({
+        notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-1' } }),
+      });
+
+      await service.hydrate({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: conversation as any,
+        platformThreadId: 'email:thread1:',
+        origin: {
+          _id: ORIGIN_MESSAGE_ID,
+          _notificationId: 'notif1',
+          templateIdentifier: 'order-alerts',
+          content: '<p>Order <strong>ORD-1</strong> shipped</p>',
+          identifier: 'provider-send-id',
+        } as any,
+      });
+
+      expect(conversationService.persistWorkflowOriginHydration.firstCall.args[0].messageBody).to.equal(
+        'Order ORD-1 shipped'
+      );
+    });
+
+    it('omits messageBody when stripped HTML is empty', async () => {
+      const { service, conversationService } = makeService({
+        notificationFindOne: sinon.stub().resolves({ payload: {} }),
+      });
+
+      await service.hydrate({
+        agentId: 'agent1',
+        config: config as any,
+        conversation: conversation as any,
+        platformThreadId: 'email:thread1:',
+        origin: {
+          _id: ORIGIN_MESSAGE_ID,
+          _notificationId: 'notif1',
+          templateIdentifier: 'order-alerts',
+          content: '<p></p>',
+          identifier: 'provider-send-id',
+        } as any,
+      });
+
+      expect(conversationService.persistWorkflowOriginHydration.firstCall.args[0]).to.not.have.property('messageBody');
     });
   });
 

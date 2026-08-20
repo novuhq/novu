@@ -238,7 +238,7 @@ describe('ConversationActivityLedger', () => {
       }
     });
 
-    it('writes a single SIGNAL activity and no MESSAGE row', async () => {
+    it('writes a single SIGNAL activity and no MESSAGE row when messageBody is omitted', async () => {
       const activityRepository = makeActivityRepository({
         createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
         createAgentActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
@@ -261,6 +261,61 @@ describe('ConversationActivityLedger', () => {
           payload: { orderId: 'ORD-1' },
         },
       });
+    });
+
+    it('skips the MESSAGE row when messageBody is empty', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+        createAgentActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistWorkflowOriginHydration({ ...makeHydrationParams(), messageBody: '   ' });
+
+      expect(activityRepository.createAgentActivity.called).to.equal(false);
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+    });
+
+    it('writes the MESSAGE before the SIGNAL when messageBody is present', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+        createAgentActivity: sinon.stub().resolves({ _id: 'message-1' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistWorkflowOriginHydration({
+        ...makeHydrationParams(),
+        messageBody: 'Your order shipped',
+      });
+
+      expect(activityRepository.createAgentActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createAgentActivity.calledBefore(activityRepository.createSignalActivity)).to.equal(
+        true
+      );
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        identifier: 'workflow-origin-message:wamid.abc',
+        content: 'Your order shipped',
+        type: ConversationActivityTypeEnum.MESSAGE,
+      });
+      expect(activityRepository.createAgentActivity.firstCall.args[0].platformMessageId).to.equal(undefined);
+    });
+
+    it('still writes the SIGNAL when the MESSAGE identifier already exists', async () => {
+      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+      const activityRepository = makeActivityRepository({
+        createAgentActivity: sinon.stub().rejects(duplicateError),
+        findOne: sinon.stub().resolves({ _id: 'existing-message', identifier: 'workflow-origin-message:wamid.abc' }),
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistWorkflowOriginHydration({
+        ...makeHydrationParams(),
+        messageBody: 'Your order shipped',
+      });
+
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
     });
   });
 
