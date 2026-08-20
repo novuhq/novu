@@ -9,7 +9,7 @@ import {
   isChannelDataOfType,
 } from '@novu/stateless';
 import Axios, { AxiosError, AxiosInstance } from 'axios';
-import { Webhook } from 'svix';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { cardToFallbackMarkdown } from '../card-render.utils';
@@ -171,7 +171,7 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
     private config: {
       projectId: string;
       projectSecret: string;
-      /** `whsec_…` Standard Webhooks secret for the delivery-status webhook (configurations.inboundWebhookSigningKey). */
+      /** Spectrum v0 signing secret for the delivery-status webhook (configurations.inboundWebhookSigningKey). */
       webhookSigningKey?: string;
       spectrumUrl?: string;
     }
@@ -428,8 +428,8 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
 
   /**
    * Registers the Novu inbound delivery webhook on the Photon project so
-   * delivered/read receipts flow back. Photon issues the `whsec_` Standard
-   * Webhooks secret once, at registration — it is returned via
+   * delivered/read receipts flow back. Photon issues the v0 signing secret
+   * once, at registration — it is returned via
    * `configurations.inboundWebhookSigningKey` and persisted on the
    * integration by the auto-configure usecase.
    */
@@ -454,7 +454,7 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
 
       const { data: createResponse } = await this.axiosClient.post<{
         succeed: boolean;
-        data: { id: string; standardSigningSecret: string } | null;
+        data: { id: string; signingSecret: string } | null;
         message?: string;
         code?: string;
       }>(webhooksUrl, {
@@ -462,7 +462,7 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
         schemaVersion: 'normalized-events.v1',
       });
 
-      if (!createResponse?.succeed || !createResponse.data?.standardSigningSecret) {
+      if (!createResponse?.succeed || !createResponse.data?.signingSecret) {
         throw new Error(createResponse?.message ?? createResponse?.code ?? 'Photon rejected the webhook registration');
       }
 
@@ -470,7 +470,9 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
         success: true,
         configurations: {
           inboundWebhookEnabled: true,
-          inboundWebhookSigningKey: createResponse.data.standardSigningSecret,
+          // The native v0 secret — the only scheme Spectrum production signs
+          // with today (Standard Webhooks is a future Spectrum refactor).
+          inboundWebhookSigningKey: createResponse.data.signingSecret,
         },
       };
     } catch (error) {
@@ -484,9 +486,14 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
   }
 
   /**
-   * Verifies a Photon (Spectrum Cloud) delivery against the Standard Webhooks
-   * signature headers. Mirrors other providers' behavior when no signing key
-   * is configured: pass, so manual setups without a stored secret keep working.
+   * Verifies a Photon (Spectrum Cloud) delivery against the native v0 scheme:
+   * `X-Spectrum-Signature: v0=<hex>` where the digest is
+   * `HMAC-SHA256(secret, "v0:" + timestamp + ":" + rawBody)` with the
+   * `X-Spectrum-Timestamp` header (unix seconds, 300s replay tolerance) —
+   * mirrors `@spectrum-ts/core`'s own `verifySpectrumSignature`. Spectrum does
+   * not sign with Standard Webhooks yet (future Spectrum refactor). Mirrors
+   * other providers' behavior when no signing key is configured: pass, so
+   * manual setups without a stored secret keep working.
    */
   async verifySignature({
     rawBody,
@@ -506,19 +513,28 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
       return { success: false, message: 'Missing raw body for signature verification' };
     }
 
-    // svix implements Standard Webhooks (same scheme Resend uses): it reads the
-    // `webhook-id`/`webhook-timestamp`/`webhook-signature` headers, applies the
-    // replay-tolerance window, and handles rotation's multiple signatures.
-    try {
-      new Webhook(signingKey).verify(bodyString, headers ?? {});
+    const normalizedHeaders = Object.fromEntries(
+      Object.entries(headers ?? {}).map(([key, value]) => [key.toLowerCase(), value])
+    );
+    const signatureHeader = normalizedHeaders['x-spectrum-signature'];
+    const timestamp = normalizedHeaders['x-spectrum-timestamp'];
 
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Invalid webhook signature',
-      };
+    if (!signatureHeader || !timestamp) {
+      return { success: false, message: 'Missing Spectrum signature headers' };
     }
+
+    const timestampSeconds = Number(timestamp);
+    if (!Number.isFinite(timestampSeconds) || Math.abs(Date.now() / 1000 - timestampSeconds) > 300) {
+      return { success: false, message: 'Stale or malformed webhook timestamp' };
+    }
+
+    const expected = createHmac('sha256', signingKey).update(`v0:${timestamp}:${bodyString}`).digest();
+    const providedHex = signatureHeader.startsWith('v0=') ? signatureHeader.slice(3) : signatureHeader;
+    const provided = Buffer.from(providedHex, 'hex');
+
+    const verified = provided.length === expected.length && timingSafeEqual(provided, expected);
+
+    return verified ? { success: true } : { success: false, message: 'Invalid webhook signature' };
   }
 
   /**

@@ -128,7 +128,10 @@ export class ConfigurePhotonWebhook {
             _environmentId: command.environmentId,
             _organizationId: command.organizationId,
           },
-          { $set: { 'credentials.token': encryptSecret(createdWebhook.standardSigningSecret) } }
+          // The v0 secret: Spectrum production signs deliveries with the native
+          // X-Spectrum-Signature scheme only (Standard Webhooks is a future
+          // Spectrum refactor; standardSigningSecret is returned but unused).
+          { $set: { 'credentials.token': encryptSecret(createdWebhook.signingSecret) } }
         );
       } catch (persistError) {
         /*

@@ -57,8 +57,10 @@ function buildResponse(method: string, path: string, payload: Record<string, unk
       return succeed({
         ...entry,
         schemaVersion: payload.schemaVersion ?? 'normalized-events.v1',
+        // Mirrors production: both secrets returned, but only the v0 `signingSecret`
+        // is ever used for signing (Standard Webhooks is a future Spectrum refactor).
         standardSigningSecret: `whsec_stub-secret-${webhookIdCounter}`,
-        signingSecret: `legacy-stub-secret-${webhookIdCounter}`,
+        signingSecret: `v0-stub-secret-${webhookIdCounter}`,
       });
     }
   }

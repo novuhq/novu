@@ -3,7 +3,7 @@ import type { AdapterPostableMessage, CardElement, RawMessage } from 'chat';
 import { ConsoleLogger } from 'chat';
 import { renderCardAsMarkdown } from './card-renderer.js';
 import type { PhotonImessageAdapterConfig } from './types.js';
-import { buildStandardWebhookVerifier } from './verify-standard-webhook.js';
+import { buildSpectrumWebhookVerifier } from './verify-spectrum-webhook.js';
 
 /**
  * Thin subclass of the vendor-official `@photon-ai/chat-adapter-imessage`
@@ -27,7 +27,7 @@ export class PhotonImessageAdapterImpl extends iMessageAdapter {
     super({
       projectId: config.projectId,
       projectSecret: config.projectSecret,
-      webhookVerifier: buildStandardWebhookVerifier(config.webhookSecret),
+      webhookVerifier: buildSpectrumWebhookVerifier(config.webhookSecret),
       logger: config.logger ?? new ConsoleLogger('info').child('photon-imessage'),
     });
     this.userName = config.userName ?? 'photon-imessage-agent';

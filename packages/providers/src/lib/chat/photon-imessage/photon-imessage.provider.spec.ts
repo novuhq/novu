@@ -290,11 +290,10 @@ test('should fail with an actionable error when recipient registration fails', a
   await expect(provider.sendMessage(buildOptions())).rejects.toThrow(/could not register recipient/);
 });
 
-const SIGNING_KEY_BYTES = Buffer.from('delivery-webhook-signing-key!!!!');
-const SIGNING_KEY = `whsec_${SIGNING_KEY_BYTES.toString('base64')}`;
+const SIGNING_KEY = 'delivery-webhook-signing-key';
 
-const signDelivery = (webhookId: string, timestamp: string, rawBody: string) =>
-  createHmac('sha256', SIGNING_KEY_BYTES).update(`${webhookId}.${timestamp}.${rawBody}`).digest('base64');
+const signDelivery = (timestamp: string, rawBody: string) =>
+  createHmac('sha256', SIGNING_KEY).update(`v0:${timestamp}:${rawBody}`).digest('hex');
 
 const buildReadReceiptBody = () =>
   JSON.stringify({
@@ -307,7 +306,7 @@ const buildReadReceiptBody = () =>
     },
   });
 
-test('verifySignature accepts a valid Standard Webhooks signature and rejects a tampered one', async () => {
+test('verifySignature accepts a valid Spectrum v0 signature and rejects a tampered one', async () => {
   const provider = new PhotonImessageChatProvider({ ...mockProviderConfig, webhookSigningKey: SIGNING_KEY });
   const rawBody = buildReadReceiptBody();
   const timestamp = String(Math.floor(Date.now() / 1000));
@@ -315,9 +314,8 @@ test('verifySignature accepts a valid Standard Webhooks signature and rejects a 
   const valid = await provider.verifySignature({
     rawBody,
     headers: {
-      'Webhook-Id': 'evt_1',
-      'Webhook-Timestamp': timestamp,
-      'Webhook-Signature': `v1,${signDelivery('evt_1', timestamp, rawBody)}`,
+      'X-Spectrum-Timestamp': timestamp,
+      'X-Spectrum-Signature': `v0=${signDelivery(timestamp, rawBody)}`,
     },
   });
   expect(valid.success).toBe(true);
@@ -325,9 +323,8 @@ test('verifySignature accepts a valid Standard Webhooks signature and rejects a 
   const tampered = await provider.verifySignature({
     rawBody: `${rawBody} `,
     headers: {
-      'webhook-id': 'evt_1',
-      'webhook-timestamp': timestamp,
-      'webhook-signature': `v1,${signDelivery('evt_1', timestamp, rawBody)}`,
+      'x-spectrum-timestamp': timestamp,
+      'x-spectrum-signature': `v0=${signDelivery(timestamp, rawBody)}`,
     },
   });
   expect(tampered.success).toBe(false);
@@ -382,7 +379,7 @@ test('autoConfigureInboundWebhook registers the URL and returns the Photon-issue
   const mockDelete = vi.fn(async () => ({ data: { succeed: true, data: {} } }));
   const mockPost = vi.fn(async (url: string) => {
     if (url === webhooksUrl) {
-      return { data: { succeed: true, data: { id: 'wh-1', standardSigningSecret: 'whsec_new' } } };
+      return { data: { succeed: true, data: { id: 'wh-1', signingSecret: 'v0-secret-new', standardSigningSecret: 'whsec_new' } } };
     }
     throw new Error(`Unexpected POST to ${url}`);
   });
@@ -394,6 +391,6 @@ test('autoConfigureInboundWebhook registers the URL and returns the Photon-issue
   expect(mockDelete).toHaveBeenCalledWith(`${webhooksUrl}/stale-id`);
   expect(result).toEqual({
     success: true,
-    configurations: { inboundWebhookEnabled: true, inboundWebhookSigningKey: 'whsec_new' },
+    configurations: { inboundWebhookEnabled: true, inboundWebhookSigningKey: 'v0-secret-new' },
   });
 });

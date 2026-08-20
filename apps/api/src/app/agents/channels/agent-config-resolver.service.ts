@@ -265,7 +265,7 @@ export class AgentConfigResolver {
     }
 
     // Same defense-in-depth for Photon: ConfigurePhotonWebhook is the only place that stores
-    // credentials.token (the Photon-issued Standard Webhooks signing secret). Without it the
+    // credentials.token (the Photon-issued Spectrum v0 signing secret). Without it the
     // adapter has no secret to verify inbound deliveries against, so reject early and keep the
     // public endpoint indistinguishable from "unknown agent / unknown integration".
     if (platform === AgentPlatformEnum.PHOTON_IMESSAGE && !credentials.token) {

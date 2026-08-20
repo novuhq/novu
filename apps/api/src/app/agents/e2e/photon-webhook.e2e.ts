@@ -22,10 +22,9 @@ const agentRepository = new AgentRepository();
 const subscriberRepository = new SubscriberRepository();
 const conversationRepository = new ConversationRepository();
 
-// A `whsec_` Standard Webhooks secret with known key material, mirroring what
+// A Spectrum v0 signing secret with known material, mirroring what
 // ConfigurePhotonWebhook would have stored at `credentials.token`.
-const WEBHOOK_KEY_BYTES = Buffer.from('e2e-photon-webhook-signing-key!!');
-const PHOTON_WEBHOOK_SECRET = `whsec_${WEBHOOK_KEY_BYTES.toString('base64')}`;
+const PHOTON_WEBHOOK_SECRET = 'e2e-photon-webhook-signing-key';
 const USER_PHONE = '+19998887777';
 const CHAT_GUID = `any;-;${USER_PHONE}`;
 
@@ -75,17 +74,14 @@ function buildInboundPayload(
   };
 }
 
-function signStandardWebhook(rawBody: string): Record<string, string> {
-  const webhookId = `e2e-delivery-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+/** Signs the way Spectrum production does: HMAC-SHA256(secret, "v0:" + timestamp + ":" + rawBody). */
+function signSpectrumWebhook(rawBody: string): Record<string, string> {
   const timestamp = String(Math.floor(Date.now() / 1000));
-  const signature = createHmac('sha256', WEBHOOK_KEY_BYTES)
-    .update(`${webhookId}.${timestamp}.${rawBody}`)
-    .digest('base64');
+  const signature = createHmac('sha256', PHOTON_WEBHOOK_SECRET).update(`v0:${timestamp}:${rawBody}`).digest('hex');
 
   return {
-    'webhook-id': webhookId,
-    'webhook-timestamp': timestamp,
-    'webhook-signature': `v1,${signature}`,
+    'x-spectrum-timestamp': timestamp,
+    'x-spectrum-signature': `v0=${signature}`,
   };
 }
 
@@ -172,7 +168,7 @@ describe('Photon agent webhook - inbound flow #novu-v2', () => {
       .post(`/v1/agents/${agentId}/webhook/${integrationIdentifier}`)
       .set('content-type', 'application/json');
 
-    for (const [name, value] of Object.entries(headers ?? signStandardWebhook(rawBody))) {
+    for (const [name, value] of Object.entries(headers ?? signSpectrumWebhook(rawBody))) {
       request = request.set(name, value);
     }
 
@@ -232,9 +228,8 @@ describe('Photon agent webhook - inbound flow #novu-v2', () => {
   it('rejects a delivery with an invalid signature', async () => {
     const payload = buildInboundPayload();
     const res = await postPhotonWebhook(payload, {
-      'webhook-id': 'e2e-tampered',
-      'webhook-timestamp': String(Math.floor(Date.now() / 1000)),
-      'webhook-signature': `v1,${Buffer.from('not-the-signature').toString('base64')}`,
+      'x-spectrum-timestamp': String(Math.floor(Date.now() / 1000)),
+      'x-spectrum-signature': `v0=${Buffer.from('not-the-signature').toString('hex')}`,
     });
 
     expect(res.status).to.equal(401);

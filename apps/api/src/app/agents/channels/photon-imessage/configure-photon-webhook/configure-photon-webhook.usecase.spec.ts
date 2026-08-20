@@ -128,8 +128,9 @@ describe('ConfigurePhotonWebhook usecase', () => {
 
     expect(integrationRepository.update.calledOnce).to.equal(true);
     const [, update] = integrationRepository.update.firstCall.args;
-    // The Photon-issued secret is stored encrypted, never verbatim.
+    // The v0 secret (the scheme Spectrum production signs with) is stored encrypted, never verbatim.
     expect(update.$set['credentials.token']).to.be.a('string');
+    expect(update.$set['credentials.token']).to.not.equal('legacy-secret');
     expect(update.$set['credentials.token']).to.not.equal('whsec_new-secret');
   });
 

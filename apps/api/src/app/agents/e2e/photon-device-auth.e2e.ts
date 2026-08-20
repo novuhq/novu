@@ -192,6 +192,7 @@ describe('Photon device-auth connect flow #novu-v2', () => {
     const credentials = decryptCredentials(integration?.credentials ?? {});
     expect(credentials.apiKey).to.equal('stub-project-id');
     expect(credentials.secretKey).to.equal('stub-project-secret');
-    expect(credentials.token).to.match(/^whsec_/);
+    // The v0 signing secret — the scheme Spectrum production actually signs with.
+    expect(credentials.token).to.match(/^v0-stub-secret-/);
   });
 });

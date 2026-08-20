@@ -16,11 +16,16 @@ export type PhotonWebhookEntry = {
 
 export type PhotonCreatedWebhook = PhotonWebhookEntry & {
   /**
-   * The `whsec_` Standard Webhooks secret. Photon returns it exactly once, at
-   * registration — it cannot be recovered from the list endpoint later.
+   * `whsec_` Standard Webhooks secret. Returned by the API but NOT yet used
+   * for signing — Standard Webhooks support is a future Spectrum refactor.
    */
   standardSigningSecret: string;
-  /** Legacy `X-Spectrum-Signature` v0 secret, also returned once. */
+  /**
+   * The native `X-Spectrum-Signature` v0 secret — the scheme Spectrum
+   * production actually signs deliveries with. Photon returns both secrets
+   * exactly once, at registration — they cannot be recovered from the list
+   * endpoint later.
+   */
   signingSecret: string;
 };
 
@@ -92,7 +97,7 @@ export async function listPhotonWebhooks(credentials: PhotonWebhookClientCredent
 /**
  * Registers a webhook for inbound message events on the `normalized-events.v1`
  * schema. Photon issues the signing secrets and returns them ONCE in this
- * response — the caller must persist `standardSigningSecret` immediately.
+ * response — the caller must persist `signingSecret` immediately.
  * Returns 409 when an active webhook with the same URL already exists.
  */
 export async function createPhotonWebhook(
