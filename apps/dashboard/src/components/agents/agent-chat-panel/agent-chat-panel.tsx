@@ -2,16 +2,12 @@ import { NovuProvider, useAgentChat } from '@novu/react';
 import { buildDashboardAgentChatSubscriberId } from '@novu/shared';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowUpLine, RiCloseFill, RiErrorWarningLine, RiLoader4Line } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
-import {
-  ChatEmptyState,
-  ChatMessageRow,
-  ChatPendingActionCard,
-  ChatTypingRow,
-} from '@/components/agents/agent-chat-panel/agent-chat-parts';
-import { AGENT_CHAT_DOCS_URL } from '@/components/agents/agent-chat-setup-content';
+import { ChatEmptyState, ChatMessageRow, ChatTypingRow } from '@/components/agents/agent-chat-panel/agent-chat-parts';
 import { Button } from '@/components/primitives/button';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -35,9 +31,11 @@ const PREVIEW_STRIPE_STYLE = {
 
 type AgentChatPanelProps = {
   agent: AgentResponse;
+  showAddToAppCallouts?: boolean;
+  addToAppHref?: string;
 };
 
-export function AgentChatPanel({ agent }: AgentChatPanelProps) {
+export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHref }: AgentChatPanelProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardAgentChatSubscriberId(currentUser._id) : '';
@@ -71,13 +69,28 @@ export function AgentChatPanel({ agent }: AgentChatPanelProps) {
       socketUrl={apiHostnameManager.getWebSocketHostname()}
     >
       <div className="flex min-h-0 flex-1 flex-col">
-        <AgentChatSurface agentId={agent.identifier} agentName={agent.name} />
+        <AgentChatSurface
+          agentId={agent.identifier}
+          agentName={agent.name}
+          showAddToAppCallouts={showAddToAppCallouts}
+          addToAppHref={addToAppHref}
+        />
       </div>
     </NovuProvider>
   );
 }
 
-function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: string }) {
+function AgentChatSurface({
+  agentId,
+  agentName,
+  showAddToAppCallouts,
+  addToAppHref,
+}: {
+  agentId: string;
+  agentName: string;
+  showAddToAppCallouts: boolean;
+  addToAppHref?: string;
+}) {
   const [draft, setDraft] = useState('');
   const [showChannelPromo, setShowChannelPromo] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -91,7 +104,7 @@ function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: 
   const canSend = !composerDisabled && Boolean(draft.trim());
   const isEmpty = messages.length === 0 && !isRunning && !isLoading;
   const lastMessage = messages[messages.length - 1];
-  const showTypingRow = Boolean(typing) || isRunning;
+  const showTypingRow = (Boolean(typing) || isRunning) && pendingActions.length === 0;
   const lastMessageSignature = lastMessage
     ? `${lastMessage.id}:${lastMessage.parts.map((part) => (part.type === 'text' ? part.text : part.type)).join('\0')}`
     : '';
@@ -130,7 +143,7 @@ function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: 
             <ChatEmptyState onPickStarter={handleSend} />
           </div>
         ) : (
-          <div className="flex w-full flex-col gap-3 pt-4 pb-6">
+          <div className="flex w-full flex-col gap-3 px-4 pt-4 pb-6">
             {messages.map((message) => (
               <ChatMessageRow
                 key={message.id}
@@ -138,6 +151,7 @@ function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: 
                 showAvatar={false}
                 cardActionsDisabled={composerDisabled}
                 onCardAction={(action) => void sendAction(action)}
+                onRespondToAction={(action) => void respondToAction(action)}
               />
             ))}
             {showTypingRow ? <ChatTypingRow status={typing?.status} /> : null}
@@ -147,15 +161,6 @@ function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: 
 
       <div className="relative shrink-0 before:pointer-events-none before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-linear-to-t before:from-bg-white before:to-transparent">
         <div className="flex flex-col gap-2 pb-3 pt-2">
-          {pendingActions.map((action) => (
-            <ChatPendingActionCard
-              key={action.id}
-              action={action}
-              disabled={composerDisabled}
-              onRespond={(decision) => void respondToAction({ actionId: action.id, decision })}
-            />
-          ))}
-
           {error ? (
             <div
               className="border-error-light bg-red-alpha-10 text-error-base text-label-xs flex items-center gap-2 rounded-lg border px-3 py-2"
@@ -173,15 +178,24 @@ function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: 
             }}
           >
             {showChannelPromo ? (
-              <div className="border-stroke-soft bg-bg-weak mx-2.5 flex h-8 items-center gap-2 rounded-t-lg border border-b-0 px-2">
-                <p className="text-label-xs text-text-sub min-w-0 flex-1 truncate font-medium leading-4">
-                  Talk to your agent from wherever you work
-                </p>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {CHANNEL_PROMO_ICONS.map((icon) => (
-                    <img key={icon.label} src={icon.src} alt="" title={icon.label} className="size-3.5" />
-                  ))}
-                </div>
+              <div className="border-stroke-soft bg-bg-weak mx-2.5 flex h-8 items-center gap-1 rounded-t-lg border border-b-0 pr-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex min-w-0 flex-1 cursor-default items-center gap-2 px-2 py-1">
+                      <p className="text-label-xs text-text-sub min-w-0 flex-1 truncate font-medium leading-4">
+                        Talk to your agent from wherever you work
+                      </p>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        {CHANNEL_PROMO_ICONS.map((icon) => (
+                          <img key={icon.label} src={icon.src} alt="" title={icon.label} className="size-3.5" />
+                        ))}
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px]">
+                    Your users can natively connect to Slack, Teams, WhatsApp, and more to talk to this agent.
+                  </TooltipContent>
+                </Tooltip>
                 <button
                   type="button"
                   onClick={() => setShowChannelPromo(false)}
@@ -226,15 +240,17 @@ function AgentChatSurface({ agentId, agentName }: { agentId: string; agentName: 
               <div className="relative flex items-center justify-between gap-2 px-2 pb-2">
                 <div className="flex min-w-0 items-center gap-1.5 pl-2">
                   <span className="text-warning-base font-code text-xs font-medium uppercase leading-3">Preview</span>
-                  <span className="bg-text-soft size-0.5 shrink-0 rounded-full" aria-hidden />
-                  <a
-                    href={AGENT_CHAT_DOCS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-label-xs text-text-strong hover:text-text-sub truncate font-medium leading-4"
-                  >
-                    Add web chat to your app →
-                  </a>
+                  {showAddToAppCallouts && addToAppHref ? (
+                    <>
+                      <span className="bg-text-soft size-0.5 shrink-0 rounded-full" aria-hidden />
+                      <Link
+                        to={addToAppHref}
+                        className="text-label-xs text-text-strong hover:text-text-sub truncate font-medium leading-4"
+                      >
+                        Add web chat to your app →
+                      </Link>
+                    </>
+                  ) : null}
                 </div>
                 <Button
                   type="submit"

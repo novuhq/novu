@@ -18,8 +18,9 @@ export type AgentChatSetupGuideProps = {
 
 /**
  * Agent Chat has no OAuth or credentials after Connect. Preview in the dashboard
- * drawer first, then teach embed (Cursor prompt or docs). Connected still matches
- * Slack: first inbound from the customer's app only.
+ * drawer first, then embed via a coding-agent prompt (`npx novu connect --ci`) or
+ * the interactive TUI command. Connected still matches Slack: first inbound from
+ * the customer's app only.
  */
 export function AgentChatSetupGuide({
   agent,

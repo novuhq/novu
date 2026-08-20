@@ -75,10 +75,6 @@ function CardProviderIcon({ providerId, displayName }: { providerId: string; dis
 }
 
 function getSetupTimeLabel(providerId: string): string {
-  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
-    return '';
-  }
-
   return PROVIDER_SETUP_TIME[providerId] ?? '~ 5 minutes';
 }
 

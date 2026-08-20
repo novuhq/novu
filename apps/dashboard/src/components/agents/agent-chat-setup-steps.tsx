@@ -1,5 +1,10 @@
 import { RiArrowRightSLine } from 'react-icons/ri';
-import { AGENT_CHAT_DOCS_URL, AgentChatEmbedResources } from '@/components/agents/agent-chat-setup-content';
+import {
+  AGENT_CHAT_DOCS_URL,
+  AgentChatEmbedResources,
+  NOVU_CONNECT_AGENT_CHAT_TUI_COMMAND,
+} from '@/components/agents/agent-chat-setup-content';
+import { CopyableTerminalBlock } from '@/components/primitives/copyable-terminal-block';
 import { ExternalLink } from '@/components/shared/external-link';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
@@ -52,11 +57,18 @@ export function AgentChatSetupSteps({
         title="Add Web Chat to your app"
         description={
           <>
-            Use the prompt in Cursor to add <span className="font-code">useAgentChat</span>, or{' '}
+            Paste the prompt into your coding agent. It runs <span className="font-code">npx novu connect --ci</span>{' '}
+            and asks you questions. Or copy the command and run the TUI yourself.{' '}
             <ExternalLink href={AGENT_CHAT_DOCS_URL} className="inline-flex">
-              follow the docs
+              Read docs
             </ExternalLink>
           </>
+        }
+        extraContent={
+          <CopyableTerminalBlock
+            displayCommand={NOVU_CONNECT_AGENT_CHAT_TUI_COMMAND}
+            copyCommand={NOVU_CONNECT_AGENT_CHAT_TUI_COMMAND}
+          />
         }
         rightContent={<AgentChatEmbedResources prompt={prompt} />}
       />

@@ -19,7 +19,10 @@ import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
-import { getAgentChatIntegrationIdentifier } from '@/components/agents/is-agent-integration-connected';
+import {
+  getAgentChatIntegrationLink,
+  hasAgentInboundConnection,
+} from '@/components/agents/is-agent-integration-connected';
 import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -161,11 +164,13 @@ export function AgentDetailsPage() {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
-  const agentChatIntegrationIdentifier = useMemo(
-    () => getAgentChatIntegrationIdentifier(agentIntegrationsQuery.data?.data),
+  const agentChatLink = useMemo(
+    () => getAgentChatIntegrationLink(agentIntegrationsQuery.data?.data),
     [agentIntegrationsQuery.data?.data]
   );
+  const agentChatIntegrationIdentifier = agentChatLink?.integration.identifier;
   const hasAgentChat = Boolean(agentChatIntegrationIdentifier);
+  const showAddToAppCallouts = agentChatLink != null && !hasAgentInboundConnection(agentChatLink.connectedAt);
 
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
@@ -377,7 +382,21 @@ export function AgentDetailsPage() {
             </Tabs>
 
             {hasAgentChat ? (
-              <AgentChatDrawer open={isChatPreviewOpen} onOpenChange={setPreviewOpen} agent={agent} />
+              <AgentChatDrawer
+                open={isChatPreviewOpen}
+                onOpenChange={setPreviewOpen}
+                agent={agent}
+                showAddToAppCallouts={showAddToAppCallouts}
+                addToAppHref={
+                  currentEnvironment?.slug && agentChatIntegrationIdentifier
+                    ? buildRoute(agentRoutes.integrationDetail, {
+                        environmentSlug: currentEnvironment.slug,
+                        agentIdentifier: encodeURIComponent(agent.identifier),
+                        integrationIdentifier: encodeURIComponent(agentChatIntegrationIdentifier),
+                      })
+                    : undefined
+                }
+              />
             ) : null}
 
             <DeleteAgentDialog
