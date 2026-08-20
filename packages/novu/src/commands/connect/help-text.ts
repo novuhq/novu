@@ -193,6 +193,10 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
     NOVU_CONNECT_WHATSAPP_WA_ME_QR_PNG=<absolute png path>   (only when present)
     NOVU_CONNECT_WHATSAPP_PHONE_NUMBER=<number>       (only when present)
 
+  Agent Chat:
+    NOVU_CONNECT_AGENT_CHAT_DASHBOARD_URL=<url>
+    NOVU_CONNECT_AGENT_CHAT_EMBED_PROMPT_FILE=<absolute path>   (embed only; omitted on scaffold / skip)
+
   Chat SDK (requirements summary):
     NOVU_CONNECT_CHAT_SDK_REQUIREMENTS_FILE=<absolute path to requirements summary file>
 
@@ -209,6 +213,7 @@ Behavior & exit codes:
 
   - For slack, email, telegram, and sendblue: the CLI blocks and polls for the handoff (up to ~5 min).
   - For whatsapp (when embedded signup is available): the CLI polls signup completion for up to ~15 min, then the inbound test message for up to ~5 min. Re-running resumes where signup left off.
+  - For agent-chat: no inbound poll. Links the channel, prints NOVU_CONNECT_AGENT_CHAT_DASHBOARD_URL, then embed/scaffold (embed prints NOVU_CONNECT_AGENT_CHAT_EMBED_PROMPT_FILE).
   - Exit 0 on success (prints "✓ Your agent is live." with agent identifier and dashboard URL).
   - Non-zero exit on failure (prints "✗ ..." with an error message).
   - Safe to re-run on Slack OAuth timeout or "Failed to create Slack app" (the Slack app is reused).
