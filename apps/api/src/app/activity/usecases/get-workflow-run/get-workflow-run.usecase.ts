@@ -245,10 +245,7 @@ export class GetWorkflowRun {
 
       // Load the delivered message content for each step run so the activity feed
       // can render a channel-aware preview (email HTML, SMS text, push/chat body).
-      const messageIds = stepRunsResult.data
-        .map((stepRun) => stepRun.message_id)
-        .filter((id): id is string => Boolean(id));
-      const messagesByMessageId = await this.getMessagesByMessageId(messageIds, command);
+      const messagesByStepId = await this.getMessagesByTransactionId(workflowRun.transaction_id, command);
 
       return stepRunsResult.data.map(
         (stepRun) =>
@@ -256,7 +253,7 @@ export class GetWorkflowRun {
             ...stepRun,
             executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
             digest: stepRun.digest ? stepRun.digest : digestDataByStepId.get(stepRun.step_run_id) || null,
-            message: stepRun.message_id ? messagesByMessageId.get(stepRun.message_id) : undefined,
+            message: messagesByStepId.get(stepRun.step_id),
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
@@ -355,7 +352,7 @@ export class GetWorkflowRun {
       digest: stepRun.digest ? JSON.parse(stepRun.digest) : undefined,
       executionDetails: mapTraceToExecutionDetailDto(stepRun.executionDetails || []),
       scheduleExtensionsCount: stepRun.schedule_extensions_count,
-      messageId: stepRun.message_id || undefined,
+      messageId: stepRun.message_id || message?._id || undefined,
       channel: message?.channel,
       content: normalizedContent ?? null,
       subject: message?.subject ?? null,
@@ -366,7 +363,7 @@ export class GetWorkflowRun {
   /**
    * Email message content can be stored either as a rendered HTML string or as an
    * array of IEmailBlock. The activity feed preview only needs the HTML form, so we
-   * collapse block arrays to a best-effort text preview and leave strings untouched.
+   * return null for block arrays to avoid showing unresolved template variables.
    */
   private normalizeMessageContent(content: MessageEntity['content'] | undefined): string | null {
     if (content == null) {
@@ -377,56 +374,45 @@ export class GetWorkflowRun {
       return content.length > 0 ? content : null;
     }
 
-    if (Array.isArray(content)) {
-      const text = content
-        .map((block) => (typeof block?.content === 'string' ? block.content : ''))
-        .filter(Boolean)
-        .join('\n');
-
-      return text.length > 0 ? text : null;
-    }
-
     return null;
   }
 
-  private async getMessagesByMessageId(
-    messageIds: string[],
+  private async getMessagesByTransactionId(
+    transactionId: string,
     command: GetWorkflowRunCommand
   ): Promise<Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>> {
-    const messagesByMessageId = new Map<
+    const messagesByStepId = new Map<
       string,
       Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>
     >();
-
-    if (messageIds.length === 0) {
-      return messagesByMessageId;
-    }
 
     try {
       const messages = await this.messageRepository.find(
         {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
-          _id: { $in: messageIds },
+          transactionId,
         },
-        '_id content subject title channel'
+        '_id content subject title channel stepId'
       );
 
       for (const message of messages) {
-        messagesByMessageId.set(message._id, message);
+        if (message.stepId) {
+          messagesByStepId.set(message.stepId, message);
+        }
       }
 
-      return messagesByMessageId;
+      return messagesByStepId;
     } catch (error) {
       this.logger.warn(
         {
           error: error.message,
-          messageIds,
+          transactionId,
         },
         'Failed to get message content for step runs'
       );
 
-      return messagesByMessageId;
+      return messagesByStepId;
     }
   }
 
