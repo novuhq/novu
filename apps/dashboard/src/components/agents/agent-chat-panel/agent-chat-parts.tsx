@@ -442,6 +442,13 @@ function ChatCardPart({
 function ToolChip({ tool }: { tool: ToolPart }) {
   const isRunning = tool.state === 'input-streaming' || tool.state === 'input-available';
   const isFailed = tool.state === 'output-error';
+  let statusLabel = 'Used';
+
+  if (isRunning) {
+    statusLabel = 'Running';
+  } else if (isFailed) {
+    statusLabel = 'Failed';
+  }
 
   return (
     <span
@@ -452,7 +459,7 @@ function ToolChip({ tool }: { tool: ToolPart }) {
       ) : (
         <RiArrowRightSLine className="size-3.5 shrink-0" aria-hidden />
       )}
-      {isRunning ? 'Running' : isFailed ? 'Failed' : 'Used'} <span className="font-mono">{tool.toolName}</span>
+      {statusLabel} <span className="font-mono">{tool.toolName}</span>
     </span>
   );
 }
