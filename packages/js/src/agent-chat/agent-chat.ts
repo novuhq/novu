@@ -20,8 +20,6 @@ import type {
   SendMessageResult,
 } from './types';
 
-const MAX_UNCLAIMED_LIVE_EVENTS = 200;
-
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
   #store: AgentChatStore;
@@ -33,12 +31,6 @@ export class AgentChat extends BaseModule {
    */
   #catchUpBuffer: AgentEventEnvelope[] | null = null;
   #catchUpChain: Promise<void> = Promise.resolve();
-  /**
-   * Live envelopes that arrived before any holder claimed `conversationId`.
-   * The create HTTP ack is often slower than the first turn's WS stream, so
-   * those envelopes would otherwise be dropped and the first reply never shown.
-   */
-  #unclaimedLiveEvents = new Map<string, AgentEventEnvelope[]>();
 
   constructor({
     inboxServiceInstance,
@@ -103,7 +95,6 @@ export class AgentChat extends BaseModule {
   clearCache(): void {
     this.#store.clear();
     this.#catchUpBuffer = null;
-    this.#unclaimedLiveEvents.clear();
   }
 
   getConversation({ agentId, conversationId, key }: { agentId: string; conversationId?: string; key?: string }):
@@ -293,10 +284,8 @@ export class AgentChat extends BaseModule {
             conversationId: data.identifier,
           });
 
-          // Live WS can arrive before the HTTP ack claims conversationId.
-          // Flush any envelopes buffered against that id, then HTTP-catch-up
-          // in case the socket was also down for the first turn.
-          this.#flushUnclaimedLiveEvents(args.agentId, data.identifier);
+          // Live WS can arrive before the HTTP ack claims conversationId; those
+          // envelopes are dropped by #applyLiveEnvelope. Catch up immediately.
           this.#requestCatchUp();
 
           return {
@@ -420,10 +409,9 @@ export class AgentChat extends BaseModule {
   }
 
   /**
-   * Live WS path: apply envelopes into open conversations.
-   * Envelopes for a conversation that is still being created are buffered until
-   * the HTTP ack claims the id. During reconnect catch-up, live envelopes wait
-   * until the HTTP page is absorbed.
+   * Live WS path: apply envelopes into open conversations only.
+   * Unknown conversations are dropped — mount/resume creates the entry.
+   * During reconnect catch-up, all live envelopes are buffered until HTTP finishes.
    */
   #handleAgentEvent(envelope: AgentEventEnvelope): void {
     if (!envelope.conversationIdentifier) {
@@ -439,34 +427,6 @@ export class AgentChat extends BaseModule {
     this.#applyLiveEnvelope(envelope);
   }
 
-  #unclaimedLiveEventsKey(agentId: string, conversationId: string): string {
-    return `${agentId}:${conversationId}`;
-  }
-
-  #bufferUnclaimedLiveEvent(envelope: AgentEventEnvelope, conversationId: string): void {
-    const key = this.#unclaimedLiveEventsKey(envelope.agentId, conversationId);
-    const buffered = this.#unclaimedLiveEvents.get(key) ?? [];
-    if (buffered.length >= MAX_UNCLAIMED_LIVE_EVENTS) {
-      return;
-    }
-
-    buffered.push(envelope);
-    this.#unclaimedLiveEvents.set(key, buffered);
-  }
-
-  #flushUnclaimedLiveEvents(agentId: string, conversationId: string): void {
-    const key = this.#unclaimedLiveEventsKey(agentId, conversationId);
-    const buffered = this.#unclaimedLiveEvents.get(key);
-    if (!buffered || buffered.length === 0) {
-      return;
-    }
-
-    this.#unclaimedLiveEvents.delete(key);
-    for (const envelope of buffered) {
-      this.#applyLiveEnvelope(envelope);
-    }
-  }
-
   #applyLiveEnvelope(envelope: AgentEventEnvelope): void {
     const conversationId = envelope.conversationIdentifier;
     if (!conversationId) {
@@ -474,12 +434,6 @@ export class AgentChat extends BaseModule {
     }
 
     const entries = this.#store.findByConversationId(envelope.agentId, conversationId);
-    if (entries.length === 0) {
-      this.#bufferUnclaimedLiveEvent(envelope, conversationId);
-
-      return;
-    }
-
     for (const entry of entries) {
       this.#store.applyLiveEnvelope(entry, envelope);
     }

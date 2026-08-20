@@ -291,28 +291,6 @@ describe('applyEnvelope', () => {
     });
   });
 
-  it('replaces an optimistic user text part when the durable echo arrives', () => {
-    const optimistic = appendUserMessage(createInitialAgentConversationState(), {
-      id: 'msg_user0000001',
-      createdAt: '2026-07-28T12:00:00.000Z',
-      status: 'sent',
-      parts: [{ type: 'text', text: 'Hello', state: 'done' }],
-    });
-
-    const next = applyEnvelope(
-      optimistic,
-      envelope(1, {
-        type: 'message',
-        role: 'user',
-        messageId: 'msg_user0000001',
-        content: { markdown: 'Hello' },
-      })
-    );
-
-    expect(next.messages).toHaveLength(1);
-    expect(next.messages[0]?.parts).toEqual([{ type: 'text', text: 'Hello', state: 'done' }]);
-  });
-
   it('folds durable user messages when role is user', () => {
     const state = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, {

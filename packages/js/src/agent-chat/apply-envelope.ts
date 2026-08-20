@@ -325,16 +325,6 @@ function findStreamingTextPartIndex(parts: AgentMessagePart[]): number {
   return -1;
 }
 
-function findLastTextPartIndex(parts: AgentMessagePart[]): number {
-  for (let index = parts.length - 1; index >= 0; index -= 1) {
-    if (parts[index]?.type === 'text') {
-      return index;
-    }
-  }
-
-  return -1;
-}
-
 function appendToStreamingTextPart(parts: AgentMessagePart[], delta: string): AgentMessagePart[] {
   const index = findStreamingTextPartIndex(parts);
 
@@ -358,7 +348,7 @@ function applyDurableMessageParts(
   const streamingIndex = findStreamingTextPartIndex(next);
 
   if ('markdown' in content) {
-    const textIndex = streamingIndex >= 0 ? streamingIndex : findLastTextPartIndex(next);
+    const textIndex = streamingIndex >= 0 ? streamingIndex : next.findIndex((part) => part.type === 'text');
     if (textIndex >= 0) {
       next[textIndex] = { type: 'text', text: content.markdown, state: 'done' };
     } else {

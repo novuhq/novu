@@ -34,27 +34,8 @@ function transformSocketUrl(socketUrl?: string): string {
   return URL_TRANSFORMATIONS[socketUrl] || socketUrl;
 }
 
-function isLocalPartySocketUrl(socketUrl: string): boolean {
-  try {
-    const url = new URL(socketUrl);
-    const isLocal = url.hostname === '127.0.0.1' || url.hostname === 'localhost';
-    if (!isLocal) {
-      return false;
-    }
-
-    // Self-hosted socket.io (and accidental API hostname). Local wrangler is PartySocket.
-    if (url.port === '3002' || url.port === '3000') {
-      return false;
-    }
-
-    return url.protocol === 'ws:' || url.protocol === 'wss:' || url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
 function shouldUsePartySocket(socketUrl?: string): boolean {
-  return !socketUrl || PARTY_SOCKET_URLS.includes(socketUrl) || isLocalPartySocketUrl(socketUrl);
+  return !socketUrl || PARTY_SOCKET_URLS.includes(socketUrl);
 }
 
 function resolveSocketType(socketUrl?: string, explicitType?: SocketTypeOption): SocketType {
