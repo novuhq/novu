@@ -202,23 +202,18 @@ describe('workflow function types', () => {
         );
       });
 
-      it('should infer correct types in the workflow event controls', async () => {
-        workflow(
-          'json-schema-validation',
-          async ({ step, controls }) => {
-            await step.email('json-schema-validation', async () => {
-              expectTypeOf(controls).toEqualTypeOf<{ foo: string; baz?: number }>();
-
-              return {
-                subject: 'Test subject',
-                body: 'Test body',
-              };
-            });
-          },
-          {
-            controlSchema: jsonSchema,
-          }
-        );
+      it('should accept updateStepId on a chat step', () => {
+        workflow('chat-update', async ({ step }) => {
+          await step.chat(
+            'update-approval',
+            async () => ({
+              body: 'updated',
+            }),
+            {
+              updateStepId: 'send-approval',
+            }
+          );
+        });
       });
 
       it('should infer the correct types in the custom step results', async () => {

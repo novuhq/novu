@@ -23,6 +23,21 @@ export abstract class BaseChatHandler extends BaseHandler<IChatProvider> impleme
     return await this.provider.sendMessage(content, bridgeProviderData);
   }
 
+  async update(chatContent: IChatOptions, identifier: string) {
+    if (process.env.NODE_ENV === 'test') {
+      return { id: identifier };
+    }
+
+    // we don't support updating messages for all providers, so fallback to sending a new message
+    if (!this.provider.updateMessage) {
+      return await this.send(chatContent);
+    }
+
+    const { bridgeProviderData, ...content } = chatContent;
+
+    return await this.provider.updateMessage(content, identifier, bridgeProviderData);
+  }
+
   /**
    * Rich Chat: resolve a `CardElement` into transport-ready fields for this provider.
    * Rich providers (Slack, Teams) serialize it to a native `nativePayload` (+ markdown fallback);

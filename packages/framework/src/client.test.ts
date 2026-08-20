@@ -2528,6 +2528,37 @@ describe('Novu Client', () => {
       expect(executionResult.outputs.subject).toBe('Start of subject. ');
     });
 
+    it('should echo updateStepId onto execute output options for chat steps', async () => {
+      await client.addWorkflows([
+        workflow('test-workflow', async ({ step }) => {
+          await step.chat(
+            'update-approval',
+            async () => ({
+              body: 'updated',
+            }),
+            {
+              updateStepId: 'send-approval',
+            }
+          );
+        }),
+      ]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'test-workflow',
+        stepId: 'update-approval',
+        subscriber: {},
+        state: [],
+        payload: {},
+        controls: {},
+        context: {},
+        env: testEventEnv,
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult.options).toEqual({ skip: false, updateStepId: 'send-approval' });
+    });
+
     it('should NOT sanitize the step output of channel step type when `disableOutputSanitization: true`', async () => {
       const link =
         '/pipeline/Oee4d54-ca52-4d70-86b3-cd10a67b6810/requirements?requirementId=dc25a578-ecf1-4835-9310-2236f8244bd&commentId=e259b16b-68f9-43af-b252-fce68bc7cb2f';

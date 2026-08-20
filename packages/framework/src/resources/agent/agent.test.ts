@@ -9,6 +9,7 @@ import { agent } from './agent.resource';
 import { PendingApproval } from './agent.types';
 import { dispatchAgentEvent } from './agent-dispatch';
 import { createMockBridgeRequest } from './bridge-request.fixture';
+import { HITL_APPROVE_WORKFLOW_ID } from './hitl-workflow-ids';
 import { Button, Card, CardText } from './index';
 import { buildApprovalActionId } from './tool-approval/action-id';
 
@@ -331,6 +332,139 @@ describe('agent dispatch via NovuRequestHandler', () => {
       type: 'trigger',
       workflowId: 'post-resolve-workflow',
       payload: { reason: 'done' },
+    });
+  });
+
+  it('should pass trigger overrides through on ctx.trigger', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.trigger('escalation-email', {
+          payload: { reason: 'unresolved' },
+          overrides: { email: { from: 'agent@novu.co' } },
+        });
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const flushBody = JSON.parse(replyCall![1].body);
+
+    expect(flushBody.signals).toEqual([
+      {
+        type: 'trigger',
+        workflowId: 'escalation-email',
+        payload: { reason: 'unresolved' },
+        overrides: { email: { from: 'agent@novu.co' } },
+      },
+    ]);
+  });
+
+  it('should attach Slack thread_ts on ctx.approve from the platform thread', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.approve({ payload: { action: 'raise limit' } });
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          platformContext: { threadId: 'slack:D123:1712345678.000100', channelId: 'D123', isDM: true },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const flushBody = JSON.parse(replyCall![1].body);
+
+    expect(flushBody.signals).toEqual([
+      {
+        type: 'trigger',
+        workflowId: HITL_APPROVE_WORKFLOW_ID,
+        payload: { action: 'raise limit' },
+        overrides: { slack: { thread_ts: '1712345678.000100' } },
+      },
+    ]);
+  });
+
+  it('should let caller Slack overrides win over the inferred thread_ts', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.ask({
+          overrides: { slack: { thread_ts: '999.000200', unfurl_links: false } },
+        });
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          platformContext: { threadId: 'slack:D123:1712345678.000100', channelId: 'D123', isDM: true },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const flushBody = JSON.parse(replyCall![1].body);
+
+    expect(flushBody.signals[0].overrides).toEqual({
+      slack: { thread_ts: '999.000200', unfurl_links: false },
     });
   });
 

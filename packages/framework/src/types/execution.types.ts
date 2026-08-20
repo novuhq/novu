@@ -35,6 +35,8 @@ export type ExecuteOutputMetadata = {
 
 export type ExecuteOutputOptions = {
   skip: boolean;
+  /** When set, the chat step edits the message from this prior step instead of sending a new one. */
+  updateStepId?: string;
 };
 
 export type ExecuteOutput = {

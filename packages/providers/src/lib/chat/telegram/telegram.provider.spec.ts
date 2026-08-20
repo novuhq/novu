@@ -124,6 +124,66 @@ test('should use the bot token in the request URL', async () => {
   expect(mockPost).toHaveBeenCalledWith(baseUrl(customToken), expect.objectContaining({ chat_id: '987654321' }));
 });
 
+test('should update a Telegram message via editMessageText', async () => {
+  const messageId = Math.floor(Math.random() * 100000);
+
+  const { mockPost } = axiosSpy(buildResponse(messageId));
+
+  const provider = new TelegramChatProvider(mockProviderConfig);
+
+  const options: IChatOptions = {
+    content: 'Approved',
+    nativePayload: { parse_mode: 'HTML' },
+    channelData: {
+      identifier: 'chat-123',
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpoint: { chatId: '123456789' },
+    },
+  };
+
+  const res = await provider.updateMessage(options, String(messageId));
+
+  expect(mockPost).toHaveBeenCalledWith(editUrl(mockProviderConfig.botToken), {
+    chat_id: '123456789',
+    message_id: String(messageId),
+    text: 'Approved',
+    parse_mode: 'HTML',
+    reply_markup: { inline_keyboard: [] },
+  });
+  expect(res.id).toBe(String(messageId));
+});
+
+test('should keep reply_markup from native payload when updating a Telegram message', async () => {
+  const messageId = Math.floor(Math.random() * 100000);
+
+  const { mockPost } = axiosSpy(buildResponse(messageId));
+
+  const provider = new TelegramChatProvider(mockProviderConfig);
+  const replyMarkup = { inline_keyboard: [[{ text: 'Open', url: 'https://novu.co' }]] };
+
+  await provider.updateMessage(
+    {
+      content: 'Updated',
+      nativePayload: { reply_markup: replyMarkup },
+      channelData: {
+        identifier: 'chat-123',
+        type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+        endpoint: { chatId: '123456789' },
+      },
+    },
+    String(messageId)
+  );
+
+  expect(mockPost).toHaveBeenCalledWith(
+    editUrl(mockProviderConfig.botToken),
+    expect.objectContaining({ reply_markup: replyMarkup })
+  );
+});
+
 function baseUrl(botToken: string) {
   return `https://api.telegram.org/bot${botToken}/sendMessage`;
+}
+
+function editUrl(botToken: string) {
+  return `https://api.telegram.org/bot${botToken}/editMessageText`;
 }

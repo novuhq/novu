@@ -78,6 +78,60 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
     };
   }
 
+  async updateMessage(
+    data: IChatOptions,
+    identifier: string,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): Promise<ISendMessageSuccessResponse> {
+    switch (data.channelData?.type) {
+      case ENDPOINT_TYPES.WEBHOOK:
+        return this.sendMessage(data, bridgeProviderData);
+      case ENDPOINT_TYPES.SLACK_CHANNEL:
+      case ENDPOINT_TYPES.SLACK_USER:
+        return this.updateAppMessage(data, identifier, bridgeProviderData);
+      default:
+        throw new Error(`Unsupported endpoint format: ${data.channelData?.type}`);
+    }
+  }
+
+  private async updateAppMessage(
+    data: IChatOptions,
+    identifier: string,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>>
+  ): Promise<ISendMessageSuccessResponse> {
+    const target = parseSlackMessageIdentifier(identifier);
+    if (!target) {
+      throw new Error(`Slack message identifier "${identifier}" is not channel:ts`);
+    }
+
+    const token = slackTokenFromChannelData(data.channelData);
+    const response = await this.axiosInstance.post(
+      `${this.slackAPI}/chat.update`,
+      this.transform(bridgeProviderData, {
+        text: data.content,
+        ...data.nativePayload,
+        channel: target.channel,
+        ts: target.ts,
+        ...(data.customData || {}),
+      }).body,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.data.ok) {
+      throw new Error(`Slack API Error: ${response.data.error}`);
+    }
+
+    return {
+      id: `${response.data.channel ?? target.channel}:${response.data.ts ?? target.ts}`,
+      date: new Date().toISOString(),
+    };
+  }
+
   private sendMessageToEndpoint(
     data: IChatOptions,
     channelData: ChannelData,
@@ -168,4 +222,21 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       headers: response.headers,
     };
   }
+}
+
+function slackTokenFromChannelData(channelData: ChannelData | undefined): string {
+  if (channelData && 'token' in channelData && typeof channelData.token === 'string' && channelData.token.length > 0) {
+    return channelData.token;
+  }
+
+  throw new Error('Slack API token is required to update a message');
+}
+
+function parseSlackMessageIdentifier(identifier: string): { channel: string; ts: string } | null {
+  const separator = identifier.indexOf(':');
+  if (separator <= 0 || separator === identifier.length - 1) {
+    return null;
+  }
+
+  return { channel: identifier.slice(0, separator), ts: identifier.slice(separator + 1) };
 }

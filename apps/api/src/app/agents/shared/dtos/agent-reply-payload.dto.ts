@@ -552,6 +552,14 @@ export class TriggerSignalDto {
     example: { orderId: 'ORD-42' },
   })
   payload?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Provider/channel overrides forwarded to `events.trigger` as-is.',
+    type: 'object',
+    additionalProperties: true,
+    example: { slack: { thread_ts: '1712345678.000100' } },
+  })
+  overrides?: Record<string, unknown>;
 }
 
 @ApiExtraModels(MetadataSetSignalDto, MetadataDeleteSignalDto, MetadataClearSignalDto, TriggerSignalDto)

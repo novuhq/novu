@@ -16,6 +16,7 @@ import type {
   AgentReplyPayload,
   AgentSubscriber,
   AgentToolCall,
+  AgentTriggerOptions,
   DeleteMessagePayload,
   FileRef,
   MessageContent,
@@ -28,13 +29,14 @@ import type {
   ToolApprovalConfig,
   ToolApprovalControl,
   ToolResult,
-  TriggerRecipientsPayload,
   TypingControl,
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
 import { AgentEventOutbox } from './agent-event-outbox';
+import { HITL_APPROVE_WORKFLOW_ID, HITL_ASK_WORKFLOW_ID, HITL_CHOOSE_WORKFLOW_ID } from './hitl-workflow-ids';
 import { resolveCardContent } from './resolve-card-content';
+import { withInThreadSlackOverrides } from './slack.utils';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
 
@@ -733,8 +735,28 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._resolveSignal = { summary };
   }
 
-  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void {
+  trigger(workflowId: string, opts?: AgentTriggerOptions): void {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
+  }
+
+  ask(opts?: AgentTriggerOptions): void {
+    this.trigger(HITL_ASK_WORKFLOW_ID, this.withOverrides(opts));
+  }
+
+  approve(opts?: AgentTriggerOptions): void {
+    this.trigger(HITL_APPROVE_WORKFLOW_ID, this.withOverrides(opts));
+  }
+
+  choose(opts?: AgentTriggerOptions): void {
+    this.trigger(HITL_CHOOSE_WORKFLOW_ID, this.withOverrides(opts));
+  }
+
+  private withOverrides(opts?: AgentTriggerOptions): AgentTriggerOptions | undefined {
+    if (this.platform !== 'slack') {
+      return opts;
+    }
+
+    return withInThreadSlackOverrides(opts, this.platformContext);
   }
 
   /** @internal Queue a gated tool call for the ledger; flushed with the next reply. */

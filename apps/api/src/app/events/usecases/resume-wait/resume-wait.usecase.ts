@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PinoLogger, StandardQueueService } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger, StandardQueueService } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import {
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITopic,
   StepTypeEnum,
@@ -18,12 +19,25 @@ export class ResumeWait {
     private standardQueueService: StandardQueueService,
     private topicRepository: TopicRepository,
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   public async execute(command: ResumeWaitCommand): Promise<{ resumed: boolean }> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_INITIATED_MESSAGES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+    });
+
+    if (!isEnabled) {
+      return { resumed: false };
+    }
+
     const subscriberIds = await this.resolveSubscriberIds(command);
 
     if (subscriberIds.length === 0) {
@@ -36,7 +50,7 @@ export class ResumeWait {
       type: StepTypeEnum.WAIT,
       status: JobStatusEnum.DELAYED,
       subscriberId: { $in: subscriberIds },
-      $or: [{ 'step.stepId': command.stepId }, { 'step.uuid': command.stepId }],
+      ...(command.stepId ? { $or: [{ 'step.stepId': command.stepId }, { 'step.uuid': command.stepId }] } : {}),
     });
 
     if (!jobs.length) {

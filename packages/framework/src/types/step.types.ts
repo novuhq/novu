@@ -184,6 +184,11 @@ export type ChannelStep<
      * @default false
      */
     disableOutputSanitization?: boolean;
+    /**
+     * When set on a chat step, edit the message delivered by the named prior chat
+     * step in this run instead of sending a new message.
+     */
+    updateStepId?: string;
   }
 ) => StepOutput<T_Result>;
 

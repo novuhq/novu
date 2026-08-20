@@ -44,7 +44,13 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { CardElement, ChannelData, IChatRenderValidation, ISendMessageSuccessResponse } from '@novu/stateless';
+import {
+  CardElement,
+  ChannelData,
+  IChatOptions,
+  IChatRenderValidation,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { ResolveChannelEndpointsCommand } from './channel-endpoint-resolution/resolve-channel-endpoints.command';
@@ -717,13 +723,15 @@ export class SendMessageChat extends SendMessageBase {
         this.logCardRenderWarnings(resolved.validation, command);
       }
 
-      const result = await chatHandler.send({
+      const chatPayload = {
         channelData: overriddenChannelData,
         bridgeProviderData: combinedOverrides,
         customData: overrides,
         content: messageContent,
         nativePayload,
-      });
+      };
+      const updateStepId = await this.resolveChatUpdateStepId(command);
+      const result = await this.sendOrUpdatePreviousMessage(chatHandler, chatPayload, command, message, updateStepId);
 
       if (result.id) {
         await this.persistProviderIdentifier(result.id, message, command, assignedAgentId);
@@ -733,6 +741,59 @@ export class SendMessageChat extends SendMessageBase {
     } catch (error) {
       return await this.handleMessageSendError(error, message, command, overriddenChannelData);
     }
+  }
+
+  private async sendOrUpdatePreviousMessage(
+    chatHandler: ReturnType<SendMessageChat['setupChatHandler']>,
+    chatPayload: IChatOptions,
+    command: SendMessageChannelCommand,
+    message: MessageEntity,
+    updateStepId?: string
+  ): Promise<ISendMessageSuccessResponse> {
+    if (!updateStepId) {
+      return chatHandler.send(chatPayload);
+    }
+
+    const prior = await this.findPreviousChatMessage(command, updateStepId);
+    if (!prior?.identifier) {
+      await this.createExecutionDetail(
+        command,
+        DetailEnum.CHAT_UPDATE_PREVIOUS_MESSAGE_FALLBACK,
+        ExecutionDetailsStatusEnum.WARNING,
+        message._id,
+        {
+          updateStepId,
+          transactionId: command.transactionId,
+        }
+      );
+
+      return chatHandler.send(chatPayload);
+    }
+
+    return chatHandler.update(chatPayload, prior.identifier);
+  }
+
+  private async findPreviousChatMessage(
+    command: SendMessageChannelCommand,
+    updateStepId: string
+  ): Promise<MessageEntity | null> {
+    const [prior] = await this.messageRepository.find(
+      {
+        _environmentId: command.environmentId,
+        _subscriberId: command._subscriberId,
+        transactionId: command.transactionId,
+        stepId: updateStepId,
+        channel: ChannelTypeEnum.CHAT,
+        identifier: { $exists: true, $nin: [null, ''] },
+      },
+      '',
+      {
+        sort: { createdAt: -1 },
+        limit: 1,
+      }
+    );
+
+    return prior ?? null;
   }
 
   private async persistProviderIdentifier(
@@ -899,6 +960,22 @@ export class SendMessageChat extends SendMessageBase {
       organization: { _id: command.organizationId } as OrganizationEntity,
       user: { _id: command.userId } as UserEntity,
     });
+  }
+
+  private async resolveChatUpdateStepId(command: SendMessageChannelCommand): Promise<string | undefined> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_INITIATED_MESSAGES_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      user: { _id: command.userId } as UserEntity,
+    });
+
+    if (!isEnabled) {
+      return undefined;
+    }
+
+    return getChatUpdateStepId(command);
   }
 
   /**
@@ -1245,4 +1322,10 @@ export class SendMessageChat extends SendMessageBase {
       },
     };
   }
+}
+
+function getChatUpdateStepId(command: SendMessageChannelCommand): string | undefined {
+  const updateStepId = (command.bridgeData?.options as { updateStepId?: unknown } | undefined)?.updateStepId;
+
+  return typeof updateStepId === 'string' && updateStepId.length > 0 ? updateStepId : undefined;
 }

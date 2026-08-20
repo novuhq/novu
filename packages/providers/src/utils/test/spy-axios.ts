@@ -7,6 +7,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 type AxiosSpyReturnType = {
   mockPost: ReturnType<typeof vi.fn>;
+  mockPut: ReturnType<typeof vi.fn>;
   mockRequest: ReturnType<typeof vi.fn>;
   mockGet: ReturnType<typeof vi.fn>;
   axiosMockSpy: ReturnType<typeof vi.spyOn>;
@@ -23,6 +24,10 @@ export const axiosSpy = ({
     return { data, headers };
   });
 
+  const mockPut = vi.fn(() => {
+    return { data, headers };
+  });
+
   const mockRequest = vi.fn(() => {
     return { data, headers };
   });
@@ -34,10 +39,11 @@ export const axiosSpy = ({
   const axiosMockSpy = vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
       post: mockPost,
+      put: mockPut,
       get: mockGet,
       request: mockRequest,
     } as any;
   });
 
-  return { mockPost, mockRequest, mockGet, axiosMockSpy };
+  return { mockPost, mockPut, mockRequest, mockGet, axiosMockSpy };
 };

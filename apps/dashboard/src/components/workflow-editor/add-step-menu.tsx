@@ -94,6 +94,7 @@ export const AddStepMenu = ({
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
+  const isAgentInitiatedMessagesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_INITIATED_MESSAGES_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
     onMenuItemClick({ type: stepType });
@@ -161,9 +162,11 @@ export const AddStepMenu = ({
                 <MenuItem stepType={StepTypeEnum.DELAY} onClick={() => handleMenuItemClick(StepTypeEnum.DELAY)}>
                   Delay
                 </MenuItem>
-                <MenuItem stepType={StepTypeEnum.WAIT} onClick={() => handleMenuItemClick(StepTypeEnum.WAIT)}>
-                  Wait
-                </MenuItem>
+                {isAgentInitiatedMessagesEnabled && (
+                  <MenuItem stepType={StepTypeEnum.WAIT} onClick={() => handleMenuItemClick(StepTypeEnum.WAIT)}>
+                    Wait
+                  </MenuItem>
+                )}
                 <MenuItem stepType={StepTypeEnum.DIGEST} onClick={() => handleMenuItemClick(StepTypeEnum.DIGEST)}>
                   Digest
                 </MenuItem>

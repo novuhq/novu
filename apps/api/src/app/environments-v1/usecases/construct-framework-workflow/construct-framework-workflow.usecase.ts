@@ -71,6 +71,11 @@ interface ISkipEvaluationContext {
 }
 
 type SkipFunction = (controlValues: Record<string, unknown>) => Promise<boolean>;
+type ChannelStepOptions = NonNullable<Parameters<ChannelStep>[2]>;
+// TODO: the updateStepId should be available also for the dashboard chat step
+// TODO: the updateStepId should be available also for the dashboard chat step
+// TODO: the updateStepId should be available also for the dashboard chat step
+type DashboardChannelStepOptions = Required<Omit<ChannelStepOptions, 'updateStepId'>>;
 
 @Injectable()
 export class ConstructFrameworkWorkflow {
@@ -445,7 +450,7 @@ export class ConstructFrameworkWorkflow {
   private constructChannelStepOptions(
     staticStep: NotificationStepEntity,
     skip: SkipFunction
-  ): Required<Parameters<ChannelStep>[2]> {
+  ): DashboardChannelStepOptions {
     return {
       skip,
       controlSchema: staticStep.template!.controls!.schema as unknown as Schema,
@@ -509,7 +514,7 @@ export class ConstructFrameworkWorkflow {
     stepType: ProviderOverrideStepType,
     organization?: OrganizationEntity,
     locale?: string
-  ): Required<Parameters<ChannelStep>[2]> {
+  ): DashboardChannelStepOptions {
     const controlSchema = dbWorkflow.origin
       ? resolveStepControlSchemas({
           stepType,
@@ -547,7 +552,7 @@ export class ConstructFrameworkWorkflow {
       ) as unknown as Schema,
       disableOutputSanitization: true,
       providers,
-    } as Required<Parameters<ChannelStep>[2]>;
+    };
   }
 
   @Instrument()

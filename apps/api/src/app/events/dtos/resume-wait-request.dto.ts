@@ -4,13 +4,14 @@ import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { IsTriggerRecipientsPayload } from '../validators/is-trigger-recipients-payload.validator';
 
 export class ResumeWaitRequestDto {
-  @ApiProperty({
-    description: 'Identifier of the Wait step to resume',
+  @ApiPropertyOptional({
+    description:
+      'Identifier of the Wait step to resume. When omitted, any DELAYED Wait job for the transaction is resumed.',
     example: 'await-answer',
   })
   @IsString()
-  @IsDefined()
-  stepId: string;
+  @IsOptional()
+  stepId?: string;
 
   @ApiProperty({
     description: 'Recipients whose parked Wait jobs should resume. Same shape as trigger `to`.',

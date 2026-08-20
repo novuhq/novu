@@ -69,4 +69,32 @@ export class TelegramChatProvider extends BaseProvider implements IChatProvider 
       date: new Date(data.result.date != null ? data.result.date * 1000 : Date.now()).toISOString(),
     };
   }
+
+  async updateMessage(
+    options: IChatOptions,
+    identifier: string,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): Promise<ISendMessageSuccessResponse> {
+    if (!isChannelDataOfType(options.channelData, ENDPOINT_TYPES.TELEGRAM_CHAT)) {
+      throw new Error('Invalid channel data for Telegram provider');
+    }
+
+    const { chatId } = options.channelData.endpoint;
+    const nativePayload = options.nativePayload ?? {};
+
+    const payload = this.transform(bridgeProviderData, {
+      chat_id: chatId,
+      message_id: identifier,
+      text: options.content,
+      ...nativePayload,
+      reply_markup: nativePayload.reply_markup ?? { inline_keyboard: [] },
+    }).body;
+
+    const { data } = await this.axiosInstance.post<ISendMessageRes>(`${this.baseUrl}/editMessageText`, payload);
+
+    return {
+      id: String(data.result.message_id),
+      date: new Date(data.result.date != null ? data.result.date * 1000 : Date.now()).toISOString(),
+    };
+  }
 }

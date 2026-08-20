@@ -1,3 +1,4 @@
+import { HITL_APPROVE_WORKFLOW_ID, HITL_ASK_WORKFLOW_ID } from '@novu/framework';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -19,6 +20,7 @@ describe('AgentInboundHandler', () => {
     platform: 'slack',
     integrationIdentifier: 'slack-main',
     integrationId: 'integration1',
+    agentId: 'agent1',
     agentIdentifier: 'support-agent',
     acknowledgeOnReceived: false,
     // Default happy-path bridge tests use open access so unresolved senders still dispatch.
@@ -33,6 +35,7 @@ describe('AgentInboundHandler', () => {
 
   afterEach(() => {
     delete (conversation as { _notificationId?: string })._notificationId;
+    delete (conversation.channels[0] as { firstPlatformMessageId?: string }).firstPlatformMessageId;
   });
 
   function makeLogger() {
@@ -212,6 +215,7 @@ describe('AgentInboundHandler', () => {
       resolve: sinon.stub().resolves(null),
       hydrate: sinon.stub().resolves(null),
     };
+    const resumeWait = { execute: sinon.stub().resolves({ resumed: true }) };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -233,7 +237,8 @@ describe('AgentInboundHandler', () => {
       inboundAck as any,
       connectionContextResolver as any,
       replyApprovalInterceptor as any,
-      workflowOriginService as any
+      workflowOriginService as any,
+      resumeWait as any
     );
 
     return {
@@ -244,6 +249,7 @@ describe('AgentInboundHandler', () => {
       bridgeExecutor,
       conversationService,
       workflowOriginService,
+      resumeWait,
       linkTelegramChatToSubscriber,
       subscriberResolver,
       startCodeService,
@@ -395,6 +401,66 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handle', () => {
+    it('should resume a parked ask Wait job from an inbound reply and skip agent dispatch', async () => {
+      const { handler, workflowOriginService, resumeWait, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        transactionId: 'txn-ask-1',
+        templateIdentifier: HITL_ASK_WORKFLOW_ID,
+      };
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+      const message = { ...makeSlackDmMessage(), text: '  staging  ' };
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(resumeWait.execute.calledOnce).to.equal(true);
+      expect(resumeWait.execute.firstCall.args[0]).to.include({
+        transactionId: 'txn-ask-1',
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+      });
+      expect(resumeWait.execute.firstCall.args[0].data).to.deep.include({
+        verdict: 'answer',
+        value: 'staging',
+        respondedBy: 'sub1',
+      });
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('should not resume a Wait job from an inbound reply when the origin is not ask', async () => {
+      const { handler, workflowOriginService, resumeWait, bridgeExecutor } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      workflowOriginService.resolve.resolves({
+        origin: {
+          _id: 'msg1',
+          transactionId: 'txn-approve-1',
+          templateIdentifier: HITL_APPROVE_WORKFLOW_ID,
+        },
+        notificationId: 'notif1',
+      });
+
+      await handler.handle(
+        'agent1',
+        config as any,
+        makeSlackDmThread() as any,
+        makeSlackDmMessage() as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(resumeWait.execute.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
+
     it('should persist Slack DMs with a message-rooted platform thread id when the SDK thread id is empty', async () => {
       const { handler, bridgeExecutor, conversationService } = makeHandler();
       const thread = makeSlackDmThread();
@@ -1585,6 +1651,114 @@ describe('AgentInboundHandler', () => {
       expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
       // The origin must reach history before the runtime reads the conversation.
       expect(workflowOriginService.hydrate.calledBefore(bridgeExecutor.execute)).to.equal(true);
+    });
+
+    it('should resume a parked Wait job when an approve/choose workflow-origin card button is clicked', async () => {
+      const { handler, conversationService, workflowOriginService, resumeWait } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        transactionId: 'txn-approve-1',
+        templateIdentifier: HITL_APPROVE_WORKFLOW_ID,
+        identifier: 'thread1:1777837477.371619',
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'approve', value: undefined } as any,
+        'user1'
+      );
+
+      expect(resumeWait.execute.calledOnce).to.equal(true);
+      expect(resumeWait.execute.firstCall.args[0]).to.include({
+        transactionId: 'txn-approve-1',
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+      });
+      expect(resumeWait.execute.firstCall.args[0].data).to.deep.include({ verdict: 'approve' });
+      expect(resumeWait.execute.firstCall.args[0].to).to.deep.equal({ subscriberId: 'sub1' });
+    });
+
+    it('should not resume a Wait job for a tool-approval action', async () => {
+      const { handler, conversationService, workflowOriginService, resumeWait } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        transactionId: 'txn-approve-1',
+        templateIdentifier: HITL_APPROVE_WORKFLOW_ID,
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'tool-approval:approve:tc', value: undefined } as any,
+        'user1'
+      );
+
+      expect(resumeWait.execute.called).to.equal(false);
+    });
+
+    it('should not resume a Wait job for a non-HITL workflow origin action', async () => {
+      const { handler, conversationService, workflowOriginService, resumeWait } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        transactionId: 'txn-order-1',
+        templateIdentifier: 'order-alerts',
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'ack', value: undefined } as any,
+        'user1'
+      );
+
+      expect(resumeWait.execute.called).to.equal(false);
+    });
+
+    it('should not resume a Wait job for an ask workflow origin action', async () => {
+      const { handler, conversationService, workflowOriginService, resumeWait } = makeHandler(
+        makeResolvedSubscriberOverrides()
+      );
+      const origin = {
+        _id: 'msg1',
+        _notificationId: 'notif1',
+        transactionId: 'txn-ask-1',
+        templateIdentifier: HITL_ASK_WORKFLOW_ID,
+      };
+
+      conversationService.findByPlatformThread.resolves(null);
+      workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'ack', value: undefined } as any,
+        'user1'
+      );
+
+      expect(resumeWait.execute.called).to.equal(false);
     });
 
     it('should use the clicked Slack message timestamp when resolving an action-only thread', async () => {

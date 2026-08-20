@@ -82,6 +82,7 @@ type ChannelStepResolverOptions<
     ResolveEnv<TEnvSchema>
   >;
   disableOutputSanitization?: boolean;
+  updateStepId?: string;
 };
 
 export type EmailStepResolver<
@@ -157,6 +158,7 @@ export type ChatStepResolver<
     ResolveEnv<TEnvSchema>
   >;
   disableOutputSanitization?: boolean;
+  updateStepId?: string;
 };
 
 export type PushStepResolver<
@@ -368,6 +370,7 @@ function chat<
     skip: options?.skip,
     providers: options?.providers as ChatStepResolver<TControlSchema, TPayloadSchema, TEnvSchema>['providers'],
     disableOutputSanitization: options?.disableOutputSanitization,
+    updateStepId: options?.updateStepId,
   };
 }
 

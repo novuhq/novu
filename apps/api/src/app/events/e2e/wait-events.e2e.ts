@@ -17,6 +17,7 @@ describe('Trigger event - Wait step - /v1/events/trigger/:transactionId/resume (
   const messageRepository = new MessageRepository();
 
   beforeEach(async () => {
+    process.env.IS_AGENT_INITIATED_MESSAGES_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);

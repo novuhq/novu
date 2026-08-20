@@ -12,6 +12,7 @@ export enum DetailEnum {
   CHAT_AGENT_NO_ELIGIBLE_CHANNELS = 'No agent-linked Slack channels available for delivery',
   CHAT_AGENT_CHANNELS_FALLBACK = 'Fell back to subscriber chat channels',
   CHAT_AGENT_PLATFORM_THREAD_PERSIST_FAILED = 'Failed to persist platform thread on message for conversation hydration',
+  CHAT_UPDATE_PREVIOUS_MESSAGE_FALLBACK = 'Previous chat message to update was not found, sent a new message',
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',

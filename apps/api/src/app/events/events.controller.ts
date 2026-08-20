@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Param, Post, Req, Scope, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  NotFoundException,
+  Param,
+  Post,
+  Req,
+  Scope,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeatureFlagsService, RequirePermissions, ResourceCategory } from '@novu/application-generic';
 import {
@@ -286,7 +296,8 @@ export class EventsController {
   @ApiOperation({
     summary: 'Resume a Wait step',
     description: `
-    Resume DELAYED Wait jobs for a previous trigger. Identity is transactionId + stepId + to.
+    Resume DELAYED Wait jobs for a previous trigger. Identity is transactionId + to.
+    When stepId is omitted, any DELAYED Wait job for that transaction and recipient is resumed.
     Recipients that have no matching parked Wait return 200 with resumed: false.
     `,
   })
@@ -299,6 +310,18 @@ export class EventsController {
     @Param('transactionId') transactionId: string,
     @Body() body: ResumeWaitRequestDto
   ): Promise<ResumeWaitResponseDto> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_INITIATED_MESSAGES_ENABLED,
+      defaultValue: false,
+      organization: { _id: user.organizationId },
+      environment: { _id: user.environmentId },
+      user: { _id: user._id },
+    });
+
+    if (!isEnabled) {
+      throw new NotFoundException();
+    }
+
     return await this.resumeWaitUsecase.execute(
       ResumeWaitCommand.create({
         userId: user._id,

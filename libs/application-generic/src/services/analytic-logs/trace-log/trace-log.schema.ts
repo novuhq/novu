@@ -169,6 +169,7 @@ export type EventType =
   | 'chat_agent_no_eligible_channels'
   | 'chat_agent_channels_fallback'
   | 'chat_agent_platform_thread_persist_failed'
+  | 'chat_update_previous_message_fallback'
   | 'msteams_bot_not_installed'
   | 'msteams_channel_not_found'
   | 'msteams_user_not_found'

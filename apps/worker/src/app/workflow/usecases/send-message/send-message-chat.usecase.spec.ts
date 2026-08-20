@@ -4,6 +4,7 @@ import {
   ChatProviderIdEnum,
   ENDPOINT_TYPES,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   TriggerOverrides,
 } from '@novu/shared';
 import { expect } from 'chai';
@@ -336,14 +337,19 @@ describe('SendMessageChat - agent assigned path', () => {
     sinon.restore();
   });
 
-  function buildAgentUsecase(options: {
-    channelData?: unknown[];
-    linked?: boolean;
-    chatHandlerSend?: sinon.SinonStub;
-    updateMessage?: sinon.SinonStub;
-    jobAgentId?: string | null;
-    workflowAgentIdentifier?: string;
-  } = {}) {
+  function buildAgentUsecase(
+    options: {
+      channelData?: unknown[];
+      linked?: boolean;
+      chatHandlerSend?: sinon.SinonStub;
+      chatHandlerUpdate?: sinon.SinonStub;
+      updateMessage?: sinon.SinonStub;
+      findPreviousMessage?: sinon.SinonStub;
+      jobAgentId?: string | null;
+      workflowAgentIdentifier?: string;
+      agentInitiatedMessagesEnabled?: boolean;
+    } = {}
+  ) {
     const {
       channelData = [slackUserData],
       linked = true,
@@ -351,13 +357,20 @@ describe('SendMessageChat - agent assigned path', () => {
         id: 'D123:1777837477.371619',
         date: new Date().toISOString(),
       }),
+      chatHandlerUpdate = sinon.stub().resolves({
+        id: 'D123:1777837477.371619',
+        date: new Date().toISOString(),
+      }),
       updateMessage = sinon.stub().resolves(undefined),
+      findPreviousMessage = sinon.stub().resolves([]),
       jobAgentId,
       workflowAgentIdentifier,
+      agentInitiatedMessagesEnabled = true,
     } = options;
 
     sinon.stub(ChatFactory.prototype, 'getHandler').returns({
       send: chatHandlerSend,
+      update: chatHandlerUpdate,
       resolveCardContent: sinon.stub().resolves({ content: 'agent hello', nativePayload: {}, validation: [] }),
     } as never);
 
@@ -373,6 +386,7 @@ describe('SendMessageChat - agent assigned path', () => {
     const sendWebhookMessage = { execute: sinon.stub().resolves(undefined) };
     const messageRepository = {
       create: sinon.stub().resolves({ _id: 'message_1' }),
+      find: findPreviousMessage,
       updateMessageStatus: sinon.stub().resolves(undefined),
       update: updateMessage,
     };
@@ -380,7 +394,9 @@ describe('SendMessageChat - agent assigned path', () => {
       execute: sinon.stub().resolves(slackIntegration),
     };
     const featureFlagsService = {
-      getFlag: sinon.stub().resolves(false),
+      getFlag: sinon.stub().callsFake(async ({ key }: { key: FeatureFlagsKeysEnum }) => {
+        return key === FeatureFlagsKeysEnum.IS_AGENT_INITIATED_MESSAGES_ENABLED && agentInitiatedMessagesEnabled;
+      }),
     };
 
     const usecase = new SendMessageChat(
@@ -414,6 +430,7 @@ describe('SendMessageChat - agent assigned path', () => {
     return {
       usecase,
       chatHandlerSend,
+      chatHandlerUpdate,
       updateMessage,
       createExecutionDetails,
       sendWebhookMessage,
@@ -424,7 +441,9 @@ describe('SendMessageChat - agent assigned path', () => {
     };
   }
 
-  function buildAgentCommand(options: { jobAgentId?: string | null; workflowAgentIdentifier?: string } = {}) {
+  function buildAgentCommand(
+    options: { jobAgentId?: string | null; workflowAgentIdentifier?: string; updateStepId?: string } = {}
+  ) {
     const { jobAgentId, workflowAgentIdentifier } = options;
 
     return SendMessageChannelCommand.create({
@@ -445,7 +464,10 @@ describe('SendMessageChat - agent assigned path', () => {
       compileContext: {
         subscriber: { subscriberId: 'sub_1', locale: 'en', channels: [] },
       } as never,
-      bridgeData: { outputs: { body: 'agent hello' } } as never,
+      bridgeData: {
+        outputs: { body: 'agent hello' },
+        ...(options.updateStepId ? { options: { skip: false, updateStepId: options.updateStepId } } : {}),
+      } as never,
       step: {
         stepId: 'step_1',
         template: {
@@ -454,9 +476,7 @@ describe('SendMessageChat - agent assigned path', () => {
           content: 'agent hello',
         },
       } as never,
-      workflow: workflowAgentIdentifier
-        ? ({ agent: { identifier: workflowAgentIdentifier } } as never)
-        : undefined,
+      workflow: workflowAgentIdentifier ? ({ agent: { identifier: workflowAgentIdentifier } } as never) : undefined,
       job: {
         _id: 'job_1',
         _environmentId: 'env_1',
@@ -631,6 +651,183 @@ describe('SendMessageChat - agent assigned path', () => {
     sinon.assert.calledOnce(chatHandlerSend);
     sinon.assert.calledOnce(updateMessage);
     expect(updateMessage.firstCall.args[1].$set._agentId).to.equal('agent_from_workflow');
+  });
+
+  it('edits the prior chat message when updateStepId is set', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'D123:new', date: new Date().toISOString() });
+    const chatHandlerUpdate = sinon.stub().resolves({
+      id: 'D123:1712345678.000100',
+      date: new Date().toISOString(),
+    });
+    const { usecase } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      chatHandlerSend,
+      chatHandlerUpdate,
+      findPreviousMessage: sinon
+        .stub()
+        .resolves([{ _id: 'prior_1', identifier: 'D123:1712345678.000100', stepId: 'send-approval' }]),
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1', updateStepId: 'send-approval' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(chatHandlerSend);
+    sinon.assert.calledOnce(chatHandlerUpdate);
+    expect(chatHandlerUpdate.firstCall.args[1]).to.equal('D123:1712345678.000100');
+  });
+
+  it('sends a new chat message when updateStepId is set but the flag is off', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'D123:new', date: new Date().toISOString() });
+    const chatHandlerUpdate = sinon.stub().resolves({
+      id: 'D123:1712345678.000100',
+      date: new Date().toISOString(),
+    });
+    const { usecase } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      agentInitiatedMessagesEnabled: false,
+      chatHandlerSend,
+      chatHandlerUpdate,
+      findPreviousMessage: sinon
+        .stub()
+        .resolves([{ _id: 'prior_1', identifier: 'D123:1712345678.000100', stepId: 'send-approval' }]),
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1', updateStepId: 'send-approval' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.notCalled(chatHandlerUpdate);
+  });
+
+  it('edits the prior Telegram chat message when updateStepId is set', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: '99', date: new Date().toISOString() });
+    const chatHandlerUpdate = sinon.stub().resolves({ id: '42', date: new Date().toISOString() });
+    const { usecase } = buildAgentUsecase({
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+          identifier: 'ep_tg_1',
+          endpoint: { chatId: '123456789' },
+        },
+      ],
+      chatHandlerSend,
+      chatHandlerUpdate,
+      findPreviousMessage: sinon.stub().resolves([{ _id: 'prior_1', identifier: '42', stepId: 'send-approval' }]),
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ updateStepId: 'send-approval' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(chatHandlerSend);
+    sinon.assert.calledOnce(chatHandlerUpdate);
+    expect(chatHandlerUpdate.firstCall.args[1]).to.equal('42');
+  });
+
+  it('edits the prior Teams channel message when updateStepId is set', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'activity-new', date: new Date().toISOString() });
+    const chatHandlerUpdate = sinon.stub().resolves({ id: 'activity-1', date: new Date().toISOString() });
+    const { usecase } = buildAgentUsecase({
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
+          identifier: 'ep_teams_1',
+          token: 'teams-token',
+          subscriberTenantId: 'tenant-1',
+          endpoint: { teamId: 'team-1', channelId: 'channel-1' },
+        },
+      ],
+      chatHandlerSend,
+      chatHandlerUpdate,
+      findPreviousMessage: sinon
+        .stub()
+        .resolves([{ _id: 'prior_1', identifier: 'activity-1', stepId: 'send-approval' }]),
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ updateStepId: 'send-approval' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(chatHandlerSend);
+    sinon.assert.calledOnce(chatHandlerUpdate);
+    expect(chatHandlerUpdate.firstCall.args[1]).to.equal('activity-1');
+  });
+
+  it('falls back to send when updateStepId has no delivered prior message', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'D123:new', date: new Date().toISOString() });
+    const chatHandlerUpdate = sinon.stub().resolves({ id: 'D123:ts', date: new Date().toISOString() });
+    const { usecase, createExecutionDetails } = buildAgentUsecase({
+      jobAgentId: 'agent_1',
+      chatHandlerSend,
+      chatHandlerUpdate,
+      findPreviousMessage: sinon.stub().resolves([]),
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ jobAgentId: 'agent_1', updateStepId: 'send-approval' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(chatHandlerSend);
+    sinon.assert.notCalled(chatHandlerUpdate);
+    sinon.assert.calledWithMatch(createExecutionDetails.execute, {
+      detail: DetailEnum.CHAT_UPDATE_PREVIOUS_MESSAGE_FALLBACK,
+      status: ExecutionDetailsStatusEnum.WARNING,
+    });
+  });
+
+  it('calls update when updateStepId targets a webhook message', async () => {
+    const chatHandlerSend = sinon.stub().resolves({ id: 'webhook-id-2', date: new Date().toISOString() });
+    const chatHandlerUpdate = sinon.stub().resolves({ id: 'webhook-id-2', date: new Date().toISOString() });
+    const { usecase } = buildAgentUsecase({
+      chatHandlerSend,
+      chatHandlerUpdate,
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.WEBHOOK,
+          identifier: 'ep_webhook_1',
+          endpoint: { url: 'https://hooks.slack.com/services/test' },
+        },
+      ],
+      findPreviousMessage: sinon
+        .stub()
+        .resolves([{ _id: 'prior_1', identifier: 'webhook-id-1', stepId: 'send-approval' }]),
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ updateStepId: 'send-approval' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(chatHandlerSend);
+    sinon.assert.calledOnce(chatHandlerUpdate);
+    expect(chatHandlerUpdate.firstCall.args[1]).to.equal('webhook-id-1');
+  });
+
+  it('calls update when updateStepId targets a WhatsApp phone message', async () => {
+    const chatHandlerSend = sinon.stub().resolves({
+      id: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+      date: new Date().toISOString(),
+    });
+    const chatHandlerUpdate = sinon.stub().resolves({
+      id: 'wamid.HBgLMTU1NTEyMzQ1NjcVAgARGBI4QkY5',
+      date: new Date().toISOString(),
+    });
+    const { usecase } = buildAgentUsecase({
+      chatHandlerSend,
+      chatHandlerUpdate,
+      channelData: [
+        {
+          type: ENDPOINT_TYPES.PHONE,
+          identifier: 'ep_wa_1',
+          endpoint: { phoneNumber: '+15551234567' },
+        },
+      ],
+      findPreviousMessage: sinon
+        .stub()
+        .resolves([{ _id: 'prior_1', identifier: 'wamid.original', stepId: 'send-approval' }]),
+    });
+
+    const result = await usecase.execute(buildAgentCommand({ updateStepId: 'send-approval' }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(chatHandlerSend);
+    sinon.assert.calledOnce(chatHandlerUpdate);
+    expect(chatHandlerUpdate.firstCall.args[1]).to.equal('wamid.original');
   });
 
   it('stamps _agentId on legacy WhatsApp phone sends when an agent is assigned', async () => {

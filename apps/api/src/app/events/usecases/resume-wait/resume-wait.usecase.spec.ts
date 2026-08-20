@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { PinoLogger, StandardQueueService } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger, StandardQueueService } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, TopicRepository, TopicSubscribersRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -19,6 +19,7 @@ describe('ResumeWait', () => {
   let topicRepository: sinon.SinonStubbedInstance<TopicRepository>;
   let topicSubscribersRepository: sinon.SinonStubbedInstance<TopicSubscribersRepository>;
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
+  let featureFlagsService: { getFlag: sinon.SinonStub };
 
   beforeEach(() => {
     jobRepository = sinon.createStubInstance(JobRepository);
@@ -26,13 +27,15 @@ describe('ResumeWait', () => {
     topicRepository = sinon.createStubInstance(TopicRepository);
     topicSubscribersRepository = sinon.createStubInstance(TopicSubscribersRepository);
     logger = sinon.createStubInstance(PinoLogger);
+    featureFlagsService = { getFlag: sinon.stub().resolves(true) };
 
     usecase = new ResumeWait(
       jobRepository as unknown as JobRepository,
       standardQueueService as unknown as StandardQueueService,
       topicRepository as unknown as TopicRepository,
       topicSubscribersRepository as unknown as TopicSubscribersRepository,
-      logger as unknown as PinoLogger
+      logger as unknown as PinoLogger,
+      featureFlagsService as unknown as FeatureFlagsService
     );
   });
 
@@ -125,5 +128,32 @@ describe('ResumeWait', () => {
 
     expect(result).to.deep.equal({ resumed: false });
     expect(standardQueueService.add.called).to.equal(false);
+  });
+
+  it('matches any DELAYED Wait job when stepId is omitted', async () => {
+    const matched = delayedWaitJob('sub-1', 'job-1');
+    jobRepository.find.resolves([matched]);
+    jobRepository.update.resolves({ modified: 1, matched: 1 });
+    standardQueueService.add.resolves();
+
+    const result = await usecase.execute(command({ stepId: undefined }));
+
+    expect(result).to.deep.equal({ resumed: true });
+    expect(jobRepository.find.firstCall.args[0]).to.deep.include({
+      transactionId,
+      type: StepTypeEnum.WAIT,
+      status: JobStatusEnum.DELAYED,
+      subscriberId: { $in: ['sub-1'] },
+    });
+    expect(jobRepository.find.firstCall.args[0].$or).to.equal(undefined);
+  });
+
+  it('returns resumed false when the feature flag is off', async () => {
+    featureFlagsService.getFlag.resolves(false);
+
+    const result = await usecase.execute(command());
+
+    expect(result).to.deep.equal({ resumed: false });
+    expect(jobRepository.find.called).to.equal(false);
   });
 });

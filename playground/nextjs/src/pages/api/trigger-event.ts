@@ -15,6 +15,8 @@ type RequestBody = {
   name?: string;
   to?: unknown;
   payload?: unknown;
+  agentId?: string | null;
+  context?: unknown;
 };
 
 type ResponseData = Record<string, unknown>;

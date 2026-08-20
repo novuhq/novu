@@ -433,6 +433,7 @@ export interface AgentHandlerContext {
    * @param workflowId - Workflow identifier (e.g. `'escalation-email'`).
    * @param opts.to - Recipient(s). Omit to target the conversation's resolved subscriber.
    * @param opts.payload - Data forwarded to the workflow payload schema.
+   * @param opts.overrides - Provider/channel overrides forwarded to `events.trigger` as-is.
    *
    * @example
    *   // Target the conversation subscriber automatically
@@ -444,7 +445,25 @@ export interface AgentHandlerContext {
    *   // Topic broadcast
    *   ctx.trigger('team-alert', { to: { type: 'Topic', topicKey: 'support-team' } });
    */
-  trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void;
+  trigger(workflowId: string, opts?: AgentTriggerOptions): void;
+  /**
+   * Trigger the seeded `novu-ask` workflow (free-text question + wait).
+   * Fire-and-forget; the wait is resumed when the user replies or the card expires.
+   * On Slack, posts in the current thread unless `overrides.slack.thread_ts` is set.
+   */
+  ask(opts?: AgentTriggerOptions): void;
+  /**
+   * Trigger the seeded `novu-approve` workflow (Approve/Deny card + wait).
+   * Fire-and-forget; a button click resumes the wait and the follow-up chat step updates the card.
+   * On Slack, posts in the current thread unless `overrides.slack.thread_ts` is set.
+   */
+  approve(opts?: AgentTriggerOptions): void;
+  /**
+   * Trigger the seeded `novu-choose` workflow (pick-one card + wait).
+   * Fire-and-forget; a button click resumes the wait and the follow-up chat step updates the card.
+   * On Slack, posts in the current thread unless `overrides.slack.thread_ts` is set.
+   */
+  choose(opts?: AgentTriggerOptions): void;
   /**
    * Add an emoji reaction to any platform message.
    * Reactions are queued and sent with the next `ctx.reply()`, or flushed automatically
@@ -648,13 +667,18 @@ export type MetadataSignal =
  *   a topic, or arrays thereof. When omitted, Novu falls back to the conversation's resolved
  *   subscriber. If no subscriber can be resolved, the trigger is skipped and a warning is logged.
  * - `payload` — arbitrary data forwarded to the workflow's payload schema.
+ * - `overrides` — provider/channel overrides forwarded to `events.trigger` as-is.
  */
+export type AgentTriggerOptions = {
+  to?: TriggerRecipientsPayload;
+  payload?: Record<string, unknown>;
+  overrides?: Record<string, unknown>;
+};
+
 export type TriggerSignal = {
   type: 'trigger';
   workflowId: string;
-  to?: TriggerRecipientsPayload;
-  payload?: Record<string, unknown>;
-};
+} & AgentTriggerOptions;
 
 export type Signal = MetadataSignal | TriggerSignal;
 

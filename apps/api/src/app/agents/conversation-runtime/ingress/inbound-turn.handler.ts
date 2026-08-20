@@ -9,13 +9,20 @@ import {
   ConversationActivitySenderTypeEnum,
   ConversationEntity,
   ConversationParticipantTypeEnum,
+  MessageEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import type { AgentAction } from '@novu/framework';
+import {
+  type AgentAction,
+  HITL_APPROVE_WORKFLOW_ID,
+  HITL_ASK_WORKFLOW_ID,
+  HITL_CHOOSE_WORKFLOW_ID,
+} from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
+import { ResumeWait, ResumeWaitCommand } from '../../../events/usecases/resume-wait';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
@@ -24,6 +31,7 @@ import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-tel
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { parseHumanActionId } from '../../human-relay/human-action-id';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -272,7 +280,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly inboundAck: InboundAckService,
     private readonly connectionContextResolver: InboundConnectionContextResolver,
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
-    private readonly workflowOriginService: WorkflowOriginService
+    private readonly workflowOriginService: WorkflowOriginService,
+    private readonly resumeWait: ResumeWait
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -560,6 +569,19 @@ export class AgentInboundHandler implements OnModuleInit {
         conversationService: this.conversationService,
         emailSenderUnverified: !isVerifiedEmailSender,
       })
+    ) {
+      return;
+    }
+
+    if (
+      event === AgentEventEnum.ON_MESSAGE &&
+      (await this.resumeAskWaitFromOrigin({
+        config,
+        subscriberId,
+        origin: workflowOrigin?.origin ?? null,
+        text: message.text,
+        respondedBy: subscriber?.firstName || subscriberId || message.author?.userId,
+      }))
     ) {
       return;
     }
@@ -1214,6 +1236,13 @@ export class AgentInboundHandler implements OnModuleInit {
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER
         : ConversationActivitySenderTypeEnum.PLATFORM_USER;
     await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
+    await this.resumeWorkflowWaitFromOrigin({
+      config,
+      subscriberId,
+      origin: workflowOrigin?.origin ?? null,
+      action,
+      respondedBy: subscriber?.firstName || subscriberId || userId,
+    });
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
@@ -1242,6 +1271,100 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     await runtime.dispatch(turn);
+  }
+
+  private async resumeWorkflowWaitFromOrigin(params: {
+    config: ResolvedAgentConfig;
+    subscriberId: string | null;
+    origin: MessageEntity | null;
+    action: AgentAction;
+    respondedBy: string;
+  }): Promise<void> {
+    if (!params.origin?.transactionId || !params.subscriberId) {
+      return;
+    }
+
+    if (this.parseApprovalVerdict(params.action.id) || parseHumanActionId(params.action.id)) {
+      return;
+    }
+
+    const workflowId = params.origin.templateIdentifier;
+    if (workflowId !== HITL_APPROVE_WORKFLOW_ID && workflowId !== HITL_CHOOSE_WORKFLOW_ID) {
+      return;
+    }
+
+    await this.resumeWaitFromOrigin({
+      config: params.config,
+      subscriberId: params.subscriberId,
+      transactionId: params.origin.transactionId,
+      data: {
+        verdict: params.action.id,
+        ...(params.action.value !== undefined ? { value: params.action.value } : {}),
+        respondedBy: params.respondedBy,
+      },
+    });
+  }
+
+  private async resumeAskWaitFromOrigin(params: {
+    config: ResolvedAgentConfig;
+    subscriberId: string | null;
+    origin: MessageEntity | null;
+    text: string | undefined;
+    respondedBy: string;
+  }): Promise<boolean> {
+    const answer = params.text?.trim();
+    if (!params.origin?.transactionId || !params.subscriberId || !answer) {
+      return false;
+    }
+
+    if (params.origin.templateIdentifier !== HITL_ASK_WORKFLOW_ID) {
+      return false;
+    }
+
+    return await this.resumeWaitFromOrigin({
+      config: params.config,
+      subscriberId: params.subscriberId,
+      transactionId: params.origin.transactionId,
+      data: {
+        verdict: 'answer',
+        value: answer,
+        respondedBy: params.respondedBy,
+      },
+    });
+  }
+
+  private async resumeWaitFromOrigin(params: {
+    config: ResolvedAgentConfig;
+    subscriberId: string;
+    transactionId: string;
+    data: { verdict: string; value?: string; respondedBy: string };
+  }): Promise<boolean> {
+    try {
+      const result = await this.resumeWait.execute(
+        ResumeWaitCommand.create({
+          userId: params.config.agentId,
+          environmentId: params.config.environmentId,
+          organizationId: params.config.organizationId,
+          transactionId: params.transactionId,
+          to: { subscriberId: params.subscriberId },
+          data: params.data,
+        })
+      );
+
+      return result.resumed;
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `[agent:${params.config.agentIdentifier}] Failed to resume wait for workflow origin ${params.transactionId}`
+      );
+      captureAgentWarning(err, {
+        component: 'inbound-turn-handler',
+        operation: 'resume-workflow-wait',
+        agentIdentifier: params.config.agentIdentifier,
+      });
+
+      return false;
+    }
   }
 
   /**

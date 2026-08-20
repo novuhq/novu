@@ -397,10 +397,16 @@ export class Client {
       }
 
       if (stepId === event.stepId) {
+        const updateStepId =
+          typeof (options as ChannelStepOption | undefined)?.updateStepId === 'string'
+            ? (options as ChannelStepOption).updateStepId
+            : undefined;
+
         setResult({
           ...stepResult,
           options: {
             skip: false,
+            ...(updateStepId ? { updateStepId } : {}),
           },
         });
       }
@@ -968,5 +974,6 @@ function buildSteps(stateArray: State[]) {
 
 type ChannelStepOption = {
   disableOutputSanitization?: boolean;
+  updateStepId?: string;
   [key: string]: unknown;
 };

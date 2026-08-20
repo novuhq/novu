@@ -1,6 +1,9 @@
 import { Actions, Card, CardLink, CardText, Divider, Image, workflow } from '@novu/framework/next';
 import z from 'zod';
 
+export { approveWorkflow, askWorkflow, chooseWorkflow, tellWorkflow } from './human-workflows';
+export { usageLimitWorkflow } from './usage-limit-workflow';
+
 export const welcomeWorkflow = workflow(
   'welcome-workflow',
   async ({ step, payload }) => {

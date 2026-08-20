@@ -18,6 +18,7 @@ export interface IChatHandler extends IHandler {
   canHandle(providerId: string, channelType: ChannelTypeEnum);
   buildProvider(credentials: ICredentials);
   send(chatData: IChatOptions): Promise<ISendMessageSuccessResponse>;
+  update(chatData: IChatOptions, identifier: string): Promise<ISendMessageSuccessResponse>;
   /**
    * Rich Chat: resolve a `CardElement` into transport-ready `content` + native `nativePayload`
    * for this provider (native render for rich providers, markdown degradation otherwise).

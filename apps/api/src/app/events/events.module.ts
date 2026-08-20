@@ -17,6 +17,7 @@ import { WidgetsModule } from '../widgets/widgets.module';
 import { EventsController } from './events.controller';
 import { USE_CASES } from './usecases';
 import { ParseEventRequest } from './usecases/parse-event-request';
+import { ResumeWait } from './usecases/resume-wait';
 
 const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOrganizationRepository];
 
@@ -36,6 +37,6 @@ const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOr
   ],
   controllers: [EventsController],
   providers: [...PROVIDERS, ...USE_CASES, CommunityUserRepository],
-  exports: [ParseEventRequest],
+  exports: [ParseEventRequest, ResumeWait],
 })
 export class EventsModule {}

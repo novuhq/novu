@@ -202,6 +202,13 @@ export enum FeatureFlagsKeysEnum {
   IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED = 'IS_WORKFLOW_AGENT_ASSIGNMENT_ENABLED',
   /** Enable per-provider content overrides on chat steps (Slack schema, free-form elsewhere). */
   IS_CHAT_PROVIDER_OVERRIDES_ENABLED = 'IS_CHAT_PROVIDER_OVERRIDES_ENABLED',
+  /**
+   * Enable agent-initiated messages (ctx.ask / approve / choose, in-place chat updates)
+   * and the Wait step (dashboard add, parking, resume API). Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_AGENT_INITIATED_MESSAGES_ENABLED` when self-hosted
+   * (`VITE_IS_AGENT_INITIATED_MESSAGES_ENABLED` for dashboard).
+   */
+  IS_AGENT_INITIATED_MESSAGES_ENABLED = 'IS_AGENT_INITIATED_MESSAGES_ENABLED',
 
   /**
    * When true (default), the deprecated per-subscriber chat OAuth routes require

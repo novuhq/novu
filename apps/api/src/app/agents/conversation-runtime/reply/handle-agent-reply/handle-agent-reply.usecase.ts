@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ConversationChannel,
@@ -8,8 +8,14 @@ import {
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
+import { HITL_APPROVE_WORKFLOW_ID, HITL_ASK_WORKFLOW_ID, HITL_CHOOSE_WORKFLOW_ID } from '@novu/framework';
 import type { SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework/internal';
-import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
+import {
+  AddressingTypeEnum,
+  FeatureFlagsKeysEnum,
+  type TriggerRecipientsPayload,
+  TriggerRequestCategoryEnum,
+} from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../../events/usecases/parse-event-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../../channels/agent-config-resolver.service';
 import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analytics';
@@ -55,7 +61,8 @@ export class HandleAgentReply {
     private readonly analyticsService: AnalyticsService,
     private readonly outboundGateway: OutboundGateway,
     private readonly inboundAck: InboundAckService,
-    private readonly conversationActivation: ConversationActivationService
+    private readonly conversationActivation: ConversationActivationService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -654,8 +661,23 @@ export class HandleAgentReply {
     const subscriberParticipant = conversation.participants.find(
       (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
     );
+    const isAgentInitiatedMessagesEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_INITIATED_MESSAGES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+    });
 
     for (const signal of signals) {
+      if (!isAgentInitiatedMessagesEnabled && isHitlWorkflowId(signal.workflowId)) {
+        this.logger.warn(
+          { agentIdentifier: command.agentIdentifier, workflowId: signal.workflowId },
+          `[agent:${command.agentIdentifier}] Skipping HITL trigger for "${signal.workflowId}" — IS_AGENT_INITIATED_MESSAGES_ENABLED is off`
+        );
+        continue;
+      }
+
       const to = (signal.to as TriggerRecipientsPayload | undefined) ?? subscriberParticipant?.id;
 
       if (!to) {
@@ -675,7 +697,8 @@ export class HandleAgentReply {
             organizationId: command.organizationId,
             identifier: signal.workflowId,
             payload: signal.payload ?? {},
-            overrides: {},
+            overrides: signal.overrides ?? {},
+            agentId: command.agentIdentifier,
             to,
             addressingType: AddressingTypeEnum.MULTICAST,
             requestCategory: TriggerRequestCategoryEnum.SINGLE,
@@ -821,4 +844,12 @@ export class HandleAgentReply {
       }),
     });
   }
+}
+
+function isHitlWorkflowId(workflowId: string): boolean {
+  return (
+    workflowId === HITL_ASK_WORKFLOW_ID ||
+    workflowId === HITL_APPROVE_WORKFLOW_ID ||
+    workflowId === HITL_CHOOSE_WORKFLOW_ID
+  );
 }

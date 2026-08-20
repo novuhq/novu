@@ -369,6 +369,17 @@ export interface ISmsProvider extends IProvider {
 
 export interface IChatProvider extends IProvider {
   sendMessage(options: IChatOptions, bridgeProviderData: Record<string, unknown>): Promise<ISendMessageSuccessResponse>;
+  /**
+   * Edit a previously delivered chat message in place. `identifier` is the id returned
+   * from `sendMessage` (Slack `channel:ts`, Telegram `message_id`, Teams activity id).
+   * Each provider interprets that id. Providers that cannot edit should omit the method;
+   * the chat handler then sends a new message.
+   */
+  updateMessage?: (
+    options: IChatOptions,
+    identifier: string,
+    bridgeProviderData: Record<string, unknown>
+  ) => Promise<ISendMessageSuccessResponse>;
   channelType: ChannelTypeEnum.CHAT;
 
   /**

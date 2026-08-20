@@ -17,7 +17,7 @@ type HmacSession = {
 };
 
 const SLACK_INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_CHAT_INTEGRATION_IDENTIFIER ?? 'slack';
-const SLACK_CONNECTION_IDENTIFIER = 'slack-workspace-connection';
+const SLACK_CONNECTION_IDENTIFIER = 'chconn-slack-default-6a68871eabb25d05b08839e7';
 const SLACK_TEST_WORKFLOW_ID = process.env.NEXT_PUBLIC_CONNECT_CHAT_TEST_WORKFLOW_ID ?? '';
 const MSTEAMS_INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER ?? 'msteams';
 const MSTEAMS_CONNECTION_IDENTIFIER = 'msteams-workspace-connection';
@@ -192,8 +192,8 @@ export default function ConnectChatPage() {
       <NovuProvider
         {...novuConfig}
         context={context}
-        subscriberHash={hmacSession.subscriberHash}
-        contextHash={hmacSession.contextHash}
+        //subscriberHash={hmacSession.subscriberHash}
+        //contextHash={hmacSession.contextHash}
       >
         <div className="flex flex-col gap-10 p-4 max-w-xl">
           <div className="flex flex-col gap-6 rounded-lg border border-border p-5">
@@ -267,7 +267,7 @@ export default function ConnectChatPage() {
                     linkSlackUserButtonIcon: ({ linked }) => (linked ? '' : 'nt-hidden'),
                   },
                 }}
-                // connectionIdentifier={SLACK_CONNECTION_IDENTIFIER}
+                connectionIdentifier={SLACK_CONNECTION_IDENTIFIER}
               />
               <SlackLinkUser
                 integrationIdentifier={SLACK_INTEGRATION_IDENTIFIER}
@@ -319,7 +319,7 @@ export default function ConnectChatPage() {
             </section>
           </div>
 
-          <div className="flex flex-col gap-6 rounded-lg border border-border p-5">
+          {/* <div className="flex flex-col gap-6 rounded-lg border border-border p-5">
             <h3 className="text-base font-semibold">Microsoft Teams</h3>
 
             <section className="flex flex-col gap-3">
@@ -497,7 +497,7 @@ export default function ConnectChatPage() {
                 }}
               />
             </section>
-          </div>
+          </div> */}
 
           <section className="flex flex-col gap-3 rounded-lg border border-border p-5">
             <h3 className="text-base font-semibold">Test workflow trigger</h3>

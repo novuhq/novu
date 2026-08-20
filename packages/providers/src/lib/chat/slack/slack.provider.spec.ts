@@ -319,3 +319,96 @@ test('should not echo a channel for Slack webhook sends', async () => {
 
   expect(result.channel).toBeUndefined();
 });
+
+test('should update a Slack app message via chat.update', async () => {
+  const { mockPost } = axiosSpy({
+    data: {
+      ok: true,
+      channel: 'C1234567890',
+      ts: '1234567890.123456',
+    },
+  });
+
+  const provider = new SlackProvider();
+  const result = await provider.updateMessage(
+    {
+      channelData: {
+        token: 'xoxb-token-123',
+        type: ENDPOINT_TYPES.SLACK_CHANNEL,
+        identifier: 'test-slack-channel-identifier',
+        endpoint: {
+          channelId: 'C1234567890',
+        },
+      },
+      content: 'updated message',
+      nativePayload: { blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'updated' } }] },
+    },
+    'C1234567890:1234567890.123456'
+  );
+
+  expect(mockPost).toHaveBeenCalledWith(
+    'https://slack.com/api/chat.update',
+    {
+      text: 'updated message',
+      blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'updated' } }],
+      channel: 'C1234567890',
+      ts: '1234567890.123456',
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer xoxb-token-123',
+      },
+    }
+  );
+  expect(result.id).toBe('C1234567890:1234567890.123456');
+});
+
+test('should throw when a Slack app identifier is not channel:ts', async () => {
+  axiosSpy({ data: { ok: true } });
+
+  const provider = new SlackProvider();
+
+  await expect(
+    provider.updateMessage(
+      {
+        channelData: {
+          token: 'xoxb-token-123',
+          type: ENDPOINT_TYPES.SLACK_CHANNEL,
+          identifier: 'test-slack-channel-identifier',
+          endpoint: {
+            channelId: 'C1234567890',
+          },
+        },
+        content: 'updated message',
+      },
+      'not-a-slack-id'
+    )
+  ).rejects.toThrow('Slack message identifier "not-a-slack-id" is not channel:ts');
+});
+
+test('should send a new webhook message when updateMessage cannot edit in place', async () => {
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    body: 'ok',
+  });
+
+  const provider = new SlackProvider();
+  const result = await provider.updateMessage(
+    {
+      channelData: {
+        endpoint: {
+          url: 'https://hooks.slack.com/services/test',
+        },
+        type: ENDPOINT_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
+      },
+      content: 'updated message',
+    },
+    'webhook-id-1'
+  );
+
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledTimes(1);
+  expect(mockSafeOutboundJsonRequest.mock.calls[0][0].url).toBe('https://hooks.slack.com/services/test');
+  expect(mockSafeOutboundJsonRequest.mock.calls[0][0].body.text).toBe('updated message');
+  expect(result.id).toBeDefined();
+});

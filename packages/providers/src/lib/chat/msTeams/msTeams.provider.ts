@@ -89,6 +89,32 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
     throw new Error(`Invalid channel data type for MsTeams provider`);
   }
 
+  async updateMessage(
+    data: IChatOptions,
+    identifier: string,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
+  ): Promise<ISendMessageSuccessResponse> {
+    const { channelData } = data;
+
+    if (!channelData) {
+      throw new Error('Channel data is required for MS Teams provider');
+    }
+
+    if (isChannelDataOfType(channelData, ENDPOINT_TYPES.WEBHOOK)) {
+      return await this.sendWebhookMessage(channelData.endpoint.url, data, bridgeProviderData);
+    }
+
+    if (isChannelDataOfType(channelData, ENDPOINT_TYPES.MS_TEAMS_CHANNEL)) {
+      return await this.updateChannelMessage(channelData, data, identifier);
+    }
+
+    if (isChannelDataOfType(channelData, ENDPOINT_TYPES.MS_TEAMS_USER)) {
+      return await this.updateUserMessage(channelData, data, identifier);
+    }
+
+    throw new Error(`Invalid channel data type for MsTeams provider`);
+  }
+
   private async sendWebhookMessage(
     webhookUrl: string,
     data: IChatOptions,
@@ -208,6 +234,104 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
 
       return {
         id: messageResponse.data.id || `user-${Date.now()}`,
+        date: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.handleBotFrameworkError(error);
+      throw error;
+    }
+  }
+
+  private async updateChannelMessage(
+    channelData: MsTeamsChannelData,
+    data: IChatOptions,
+    activityId: string
+  ): Promise<ISendMessageSuccessResponse> {
+    const { endpoint, subscriberTenantId, token } = channelData;
+    const { teamId, channelId } = endpoint;
+
+    const payload = {
+      type: 'message',
+      id: activityId,
+      ...(data.nativePayload ?? { text: data.content }),
+      channelData: {
+        tenant: { id: subscriberTenantId },
+        team: { id: teamId },
+        channel: { id: channelId },
+      },
+    };
+
+    try {
+      const response = await this.axiosInstance.put(
+        `${MsTeamsProvider.BOT_FRAMEWORK_SERVICE_URL}/teams/v3/conversations/${encodeURIComponent(channelId)}/activities/${encodeURIComponent(activityId)}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return {
+        id: response.data.id || activityId,
+        date: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.handleBotFrameworkError(error);
+      throw error;
+    }
+  }
+
+  private async updateUserMessage(
+    channelData: MsTeamsUserData,
+    data: IChatOptions,
+    activityId: string
+  ): Promise<ISendMessageSuccessResponse> {
+    const { endpoint, subscriberTenantId, token, clientId } = channelData;
+    const { userId } = endpoint;
+
+    try {
+      const conversationPayload = {
+        isGroup: false,
+        bot: { id: clientId },
+        members: [{ id: userId }],
+        channelData: {
+          tenant: { id: subscriberTenantId },
+        },
+      };
+
+      const conversationResponse = await this.axiosInstance.post<CreateConversationResponse>(
+        `${MsTeamsProvider.BOT_FRAMEWORK_SERVICE_URL}/teams/v3/conversations`,
+        conversationPayload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const conversationId = conversationResponse.data.id;
+      const messagePayload = {
+        type: 'message',
+        id: activityId,
+        ...(data.nativePayload ?? { text: data.content }),
+      };
+
+      const messageResponse = await this.axiosInstance.put(
+        `${MsTeamsProvider.BOT_FRAMEWORK_SERVICE_URL}/teams/v3/conversations/${encodeURIComponent(conversationId)}/activities/${encodeURIComponent(activityId)}`,
+        messagePayload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return {
+        id: messageResponse.data.id || activityId,
         date: new Date().toISOString(),
       };
     } catch (error) {

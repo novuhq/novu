@@ -36,6 +36,7 @@ export type {
   AgentSubscriber,
   AgentSubscriberAccess,
   AgentToolCall,
+  AgentTriggerOptions,
   FileRef,
   MessageContent,
   ReplyHandle,
@@ -43,3 +44,4 @@ export type {
   ToolApprovalConfig,
   ToolApprovalDecision,
 } from './agent.types';
+export { HITL_APPROVE_WORKFLOW_ID, HITL_ASK_WORKFLOW_ID, HITL_CHOOSE_WORKFLOW_ID } from './hitl-workflow-ids';

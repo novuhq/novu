@@ -8,8 +8,8 @@ export class ResumeWaitCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsString()
-  @IsDefined()
-  stepId: string;
+  @IsOptional()
+  stepId?: string;
 
   @IsDefined()
   to: TriggerRecipientsPayload;

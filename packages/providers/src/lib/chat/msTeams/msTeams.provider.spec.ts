@@ -295,3 +295,146 @@ test('should send message to MS Teams user correctly', async () => {
   expect(result.id).toBe(activityId);
   expect(result.date).toBeDefined();
 });
+
+test('should update a Teams channel message via Bot Framework PUT', async () => {
+  const activityId = uuidv4();
+  const { mockPut: fakePut } = axiosSpy({
+    data: { id: activityId },
+  });
+
+  const provider = new MsTeamsProvider({});
+
+  const testContent = 'Updated channel message';
+  const testToken = 'test-bearer-token';
+  const testTeamId = 'team-123';
+  const testChannelId = 'channel-456';
+  const testTenantId = 'tenant-789';
+
+  const result = await provider.updateMessage(
+    {
+      channelData: {
+        endpoint: {
+          teamId: testTeamId,
+          channelId: testChannelId,
+        },
+        type: ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
+        identifier: 'test-channel-identifier',
+        subscriberTenantId: testTenantId,
+        token: testToken,
+      },
+      content: testContent,
+    },
+    activityId
+  );
+
+  expect(fakePut).toHaveBeenCalledWith(
+    `https://smba.trafficmanager.net/teams/v3/conversations/${encodeURIComponent(testChannelId)}/activities/${encodeURIComponent(activityId)}`,
+    {
+      type: 'message',
+      id: activityId,
+      text: testContent,
+      channelData: {
+        tenant: { id: testTenantId },
+        team: { id: testTeamId },
+        channel: { id: testChannelId },
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${testToken}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  expect(result.id).toBe(activityId);
+});
+
+test('should update a Teams user message after resolving the conversation', async () => {
+  const conversationId = uuidv4();
+  const activityId = uuidv4();
+  const { mockPost: fakePost, mockPut: fakePut } = axiosSpy();
+
+  fakePost.mockReturnValueOnce({
+    data: { id: conversationId },
+    headers: {},
+  });
+  fakePut.mockReturnValueOnce({
+    data: { id: activityId },
+    headers: {},
+  });
+
+  const provider = new MsTeamsProvider({});
+
+  const testContent = 'Updated user message';
+  const testToken = 'test-bearer-token';
+  const testUserId = 'user-123';
+  const testTenantId = 'tenant-789';
+  const testClientId = 'client-456';
+
+  const result = await provider.updateMessage(
+    {
+      channelData: {
+        endpoint: {
+          userId: testUserId,
+        },
+        type: ENDPOINT_TYPES.MS_TEAMS_USER,
+        identifier: 'test-user-identifier',
+        subscriberTenantId: testTenantId,
+        token: testToken,
+        clientId: testClientId,
+      },
+      content: testContent,
+    },
+    activityId
+  );
+
+  expect(fakePost).toHaveBeenCalledTimes(1);
+  expect(fakePut).toHaveBeenCalledWith(
+    `https://smba.trafficmanager.net/teams/v3/conversations/${encodeURIComponent(conversationId)}/activities/${encodeURIComponent(activityId)}`,
+    {
+      type: 'message',
+      id: activityId,
+      text: testContent,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${testToken}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  expect(result.id).toBe(activityId);
+});
+
+test('should send a new webhook message when Teams updateMessage cannot edit in place', async () => {
+  const { mockSafeOutboundJsonRequest: fakePost } = safeOutboundJsonSpy({
+    headers: { 'request-id': uuidv4() },
+  });
+
+  const provider = new MsTeamsProvider({});
+  const testWebhookUrl = 'https://mycompany.webhook.office.com';
+
+  const result = await provider.updateMessage(
+    {
+      channelData: {
+        endpoint: {
+          url: testWebhookUrl,
+        },
+        type: ENDPOINT_TYPES.WEBHOOK,
+        identifier: 'test-webhook-identifier',
+      },
+      content: 'Updated webhook message',
+    },
+    'webhook-id-1'
+  );
+
+  expect(fakePost).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
+      text: 'Updated webhook message',
+    },
+  });
+  expect(result.id).toBeDefined();
+});
