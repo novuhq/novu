@@ -15,10 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { EmptyStateSvg, WebhooksPaywallState } from '@/components/webhooks/webhooks-paywall-state';
 import { IS_CLOUD } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PageHeader } from '@/context/page-header';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { DashboardLayout } from '../components/dashboard-layout';
 import { Badge } from '../components/primitives/badge';
 import { QueryKeys } from '../utils/query-keys';
 
@@ -133,9 +133,12 @@ export function WebhooksPage() {
 
   if (IS_CLOUD && !isTierEligibleForWebhooks && !isLoadingEligibility) {
     return (
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
+      <>
+        <PageHeader>
+          <h1 className="text-foreground-950">Webhooks</h1>
+        </PageHeader>
         <WebhooksPaywallState />
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -144,7 +147,10 @@ export function WebhooksPage() {
 
   if (currentEnvironment && !currentEnvironment?.webhookAppId) {
     return (
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
+      <>
+        <PageHeader>
+          <h1 className="text-foreground-950">Webhooks</h1>
+        </PageHeader>
         <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-4">
           <div className="flex w-full max-w-[480px] flex-col items-center gap-6 text-center">
             <div className="flex w-full flex-col gap-3">
@@ -179,7 +185,7 @@ export function WebhooksPage() {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -199,7 +205,10 @@ export function WebhooksPage() {
   };
 
   return (
-    <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
+    <>
+      <PageHeader>
+        <h1 className="text-foreground-950">Webhooks</h1>
+      </PageHeader>
       <Tabs
         value={activeTabDefinition.value}
         onValueChange={(value) => {
@@ -278,6 +287,6 @@ export function WebhooksPage() {
           </>
         )}
       </Tabs>
-    </DashboardLayout>
+    </>
   );
 }

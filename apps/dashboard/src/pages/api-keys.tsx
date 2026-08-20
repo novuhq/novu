@@ -11,9 +11,9 @@ import { Input } from '@/components/primitives/input';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PageHeader } from '@/context/page-header';
 import { getRegionConfig, useRegion } from '@/context/region';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { DashboardLayout } from '../components/dashboard-layout';
 import { Button } from '../components/primitives/button';
 import { Container } from '../components/primitives/container';
 import { HelpTooltipIndicator } from '../components/primitives/help-tooltip-indicator';
@@ -107,143 +107,144 @@ export function ApiKeysPage() {
   return (
     <>
       <PageMeta title={`API Keys for ${currentEnvironment?.name} environment`} />
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">API Keys</h1>}>
-        <Container className="flex w-full max-w-[800px] flex-col gap-6">
-          <Form {...form}>
-            <Card className="w-full overflow-hidden shadow-none">
-              <CardHeader>
-                {'<Inbox />'}
-                <p className="text-foreground-500 mt-1 text-xs font-normal">
-                  {'Use the public application identifier in Novu <Inbox />. '}
-                  <ExternalLink href="https://docs.novu.co/platform/inbox/overview" className="text-foreground-500">
-                    Learn more
-                  </ExternalLink>
-                </p>
-              </CardHeader>
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
-                <div className="space-y-4">
-                  <SettingField
-                    label="Application Identifier"
-                    tooltip={`This is unique for the ${currentEnvironment.name} environment.`}
-                    value={form.getValues('identifier')}
-                    isLoading={isLoading}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="w-full overflow-hidden shadow-none">
-              <CardHeader>
-                Secret Keys
-                <p className="text-foreground-500 mt-1 text-xs font-normal">
-                  {'Use the secret key to authenticate your SDK requests. Keep it secure and never share it publicly. '}
-                  <ExternalLink href="https://docs.novu.co/platform/sdks/overview" className="text-foreground-500">
-                    Learn more
-                  </ExternalLink>
-                </p>
-              </CardHeader>
+      <PageHeader>
+        <h1 className="text-foreground-950">API Keys</h1>
+      </PageHeader>
+      <Container className="flex w-full max-w-[800px] flex-col gap-6">
+        <Form {...form}>
+          <Card className="w-full overflow-hidden shadow-none">
+            <CardHeader>
+              {'<Inbox />'}
+              <p className="text-foreground-500 mt-1 text-xs font-normal">
+                {'Use the public application identifier in Novu <Inbox />. '}
+                <ExternalLink href="https://docs.novu.co/platform/inbox/overview" className="text-foreground-500">
+                  Learn more
+                </ExternalLink>
+              </p>
+            </CardHeader>
+            <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+              <div className="space-y-4">
+                <SettingField
+                  label="Application Identifier"
+                  tooltip={`This is unique for the ${currentEnvironment.name} environment.`}
+                  value={form.getValues('identifier')}
+                  isLoading={isLoading}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="w-full overflow-hidden shadow-none">
+            <CardHeader>
+              Secret Keys
+              <p className="text-foreground-500 mt-1 text-xs font-normal">
+                {'Use the secret key to authenticate your SDK requests. Keep it secure and never share it publicly. '}
+                <ExternalLink href="https://docs.novu.co/platform/sdks/overview" className="text-foreground-500">
+                  Learn more
+                </ExternalLink>
+              </p>
+            </CardHeader>
 
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
-                {isMultipleSecretKeysAllowed ? (
-                  <div className="space-y-4">
-                    {isLoading && <SettingField label="Secret Key" secret isLoading />}
-                    {!isLoading &&
-                      apiKeys?.map((apiKey, index) => (
-                        <SettingField
-                          key={apiKey.hash ?? apiKey.key}
-                          label={index === 0 ? 'Secret Key' : 'Secret Key (new)'}
-                          tooltip="Keep it secure and never share it publicly"
-                          value={apiKey.key}
-                          secret
-                          showRegenerateButton={canRegenerateApiKeys && index === 0}
-                          onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
-                          isRegenerateLoading={regenerateApiKeysMutation.isPending}
-                          showDeleteButton={canRegenerateApiKeys && (apiKeys?.length ?? 0) > 1}
-                          onDeleteClick={() => setKeyPendingDeletion(apiKey)}
-                          isDeleteLoading={deleteApiKeyMutation.isPending && keyPendingDeletion?.hash === apiKey.hash}
-                        />
-                      ))}
-                    {canRegenerateApiKeys && (
-                      <div className="flex items-center justify-between gap-3 border-t border-neutral-100 pt-3">
-                        <p className="text-foreground-500 text-xs">
-                          Key rotation: generate a new key, switch your apps to it, then delete the old key.
-                        </p>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              <Button
-                                size="xs"
-                                variant="secondary"
-                                mode="outline"
-                                leadingIcon={RiAddLine}
-                                onClick={handleCreateKey}
-                                disabled={isLoading || hasMaxSecretKeys}
-                                isLoading={createApiKeyMutation.isPending}
-                              >
-                                Generate new key
-                              </Button>
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {hasMaxSecretKeys
-                              ? `You can have up to ${MAX_SECRET_KEYS} secret keys. Delete a key to generate a new one.`
-                              : 'Generate an additional secret key for a rolling rotation'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <SettingField
-                      label="Secret Key"
-                      tooltip="Keep it secure and never share it publicly"
-                      value={form.getValues('apiKey')}
-                      secret
-                      isLoading={isLoading}
-                      showRegenerateButton={canRegenerateApiKeys}
-                      onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
-                      isRegenerateLoading={regenerateApiKeysMutation.isPending}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            <Card className="w-full overflow-hidden shadow-none">
-              <CardHeader>
-                API URLs
-                <p className="text-foreground-500 mt-1 text-xs font-normal">
-                  {IS_SELF_HOSTED
-                    ? 'API and WebSocket endpoints for your self-hosted Novu instance. '
-                    : `API and WebSocket URLs for Novu Cloud in the ${region} region. `}
-                  <ExternalLink href="https://docs.novu.co/api-reference/overview" className="text-foreground-500">
-                    Learn more
-                  </ExternalLink>
-                </p>
-              </CardHeader>
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+            <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+              {isMultipleSecretKeysAllowed ? (
+                <div className="space-y-4">
+                  {isLoading && <SettingField label="Secret Key" secret isLoading />}
+                  {!isLoading &&
+                    apiKeys?.map((apiKey, index) => (
+                      <SettingField
+                        key={apiKey.hash ?? apiKey.key}
+                        label={index === 0 ? 'Secret Key' : 'Secret Key (new)'}
+                        tooltip="Keep it secure and never share it publicly"
+                        value={apiKey.key}
+                        secret
+                        showRegenerateButton={canRegenerateApiKeys && index === 0}
+                        onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
+                        isRegenerateLoading={regenerateApiKeysMutation.isPending}
+                        showDeleteButton={canRegenerateApiKeys && (apiKeys?.length ?? 0) > 1}
+                        onDeleteClick={() => setKeyPendingDeletion(apiKey)}
+                        isDeleteLoading={deleteApiKeyMutation.isPending && keyPendingDeletion?.hash === apiKey.hash}
+                      />
+                    ))}
+                  {canRegenerateApiKeys && (
+                    <div className="flex items-center justify-between gap-3 border-t border-neutral-100 pt-3">
+                      <p className="text-foreground-500 text-xs">
+                        Key rotation: generate a new key, switch your apps to it, then delete the old key.
+                      </p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              mode="outline"
+                              leadingIcon={RiAddLine}
+                              onClick={handleCreateKey}
+                              disabled={isLoading || hasMaxSecretKeys}
+                              isLoading={createApiKeyMutation.isPending}
+                            >
+                              Generate new key
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {hasMaxSecretKeys
+                            ? `You can have up to ${MAX_SECRET_KEYS} secret keys. Delete a key to generate a new one.`
+                            : 'Generate an additional secret key for a rolling rotation'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <div className="space-y-4">
                   <SettingField
-                    label="API Hostname"
-                    tooltip={
-                      IS_SELF_HOSTED ? 'Your self-hosted Novu API endpoint' : `For Novu Cloud in the ${region} region`
-                    }
-                    value={apiHostnameManager.getHostname()}
-                  />
-                  <SettingField
-                    label="WebSocket Hostname"
-                    tooltip={
-                      IS_SELF_HOSTED
-                        ? 'Your self-hosted Novu WebSocket endpoint'
-                        : `WebSocket endpoint for Novu Cloud in the ${region} region`
-                    }
-                    value={getWebSocketUrl(apiHostnameManager.getWebSocketHostname())}
+                    label="Secret Key"
+                    tooltip="Keep it secure and never share it publicly"
+                    value={form.getValues('apiKey')}
+                    secret
+                    isLoading={isLoading}
+                    showRegenerateButton={canRegenerateApiKeys}
+                    onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
+                    isRegenerateLoading={regenerateApiKeysMutation.isPending}
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </Form>
-        </Container>
-      </DashboardLayout>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="w-full overflow-hidden shadow-none">
+            <CardHeader>
+              API URLs
+              <p className="text-foreground-500 mt-1 text-xs font-normal">
+                {IS_SELF_HOSTED
+                  ? 'API and WebSocket endpoints for your self-hosted Novu instance. '
+                  : `API and WebSocket URLs for Novu Cloud in the ${region} region. `}
+                <ExternalLink href="https://docs.novu.co/api-reference/overview" className="text-foreground-500">
+                  Learn more
+                </ExternalLink>
+              </p>
+            </CardHeader>
+            <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+              <div className="space-y-4">
+                <SettingField
+                  label="API Hostname"
+                  tooltip={
+                    IS_SELF_HOSTED ? 'Your self-hosted Novu API endpoint' : `For Novu Cloud in the ${region} region`
+                  }
+                  value={apiHostnameManager.getHostname()}
+                />
+                <SettingField
+                  label="WebSocket Hostname"
+                  tooltip={
+                    IS_SELF_HOSTED
+                      ? 'Your self-hosted Novu WebSocket endpoint'
+                      : `WebSocket endpoint for Novu Cloud in the ${region} region`
+                  }
+                  value={getWebSocketUrl(apiHostnameManager.getWebSocketHostname())}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </Form>
+      </Container>
       <RegenerateApiKeysDialog
         environment={currentEnvironment}
         open={isRegenerateDialogOpen}

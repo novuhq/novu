@@ -11,10 +11,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { PageHeader, useIsPersistentLayout } from '@/context/page-header';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { AccessDeniedPage } from '@/pages';
+import { AccessDeniedPage } from '@/pages/access-denied-page';
 
 interface PermissionProtectedRouteProps {
   children: ReactNode;
@@ -34,6 +35,7 @@ export function PermissionProtectedRoute({
   const location = useLocation();
   const navigate = useNavigate();
   const isRbacFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_RBAC_ENABLED);
+  const isPersistentLayout = useIsPersistentLayout();
 
   const isRbacFeatureEnabled =
     getFeatureForTierAsBoolean(
@@ -62,12 +64,21 @@ export function PermissionProtectedRoute({
   }
 
   if (!hasAccess && !isDrawerRoute) {
+    const unauthorizedHeader = <h1 className="text-foreground-950">Unauthorized</h1>;
+
     return (
       <>
         <PageMeta title="Unauthorized" />
-        <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Unauthorized</h1>}>
-          <AccessDeniedPage />
-        </DashboardLayout>
+        {isPersistentLayout ? (
+          <>
+            <PageHeader>{unauthorizedHeader}</PageHeader>
+            <AccessDeniedPage />
+          </>
+        ) : (
+          <DashboardLayout headerStartItems={unauthorizedHeader}>
+            <AccessDeniedPage />
+          </DashboardLayout>
+        )}
       </>
     );
   }

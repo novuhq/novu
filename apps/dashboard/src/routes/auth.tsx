@@ -1,11 +1,15 @@
 import { RedirectToSignIn, Show, useAuth, useClerk } from '@clerk/react';
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth-layout';
+import { RouteFallback } from '@/components/route-fallback';
 
 export const AuthRoute = () => {
   return (
     <AuthLayout>
-      <Outlet />
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
     </AuthLayout>
   );
 };
@@ -22,7 +26,9 @@ export const ProtectedAuthRoute = () => {
     <>
       <Show when="signed-in">
         <AuthLayout>
-          <Outlet />
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </AuthLayout>
       </Show>
       <Show when="signed-out">

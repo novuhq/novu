@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ActivityFeedContent } from '@/components/activity/activity-feed-content';
 import { ConversationsContent } from '@/components/conversations/conversations-content';
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PageHeader } from '@/context/page-header';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -92,42 +92,39 @@ export function ActivityFeed() {
   return (
     <>
       <PageMeta title="Activity Feed" />
-      <DashboardLayout
-        headerStartItems={
-          <h1 className="text-foreground-950 flex items-center gap-1">
-            <span>Activity Feed</span>
-          </h1>
-        }
-      >
-        <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2">
-          <TabsList variant="regular" className="border-t-0">
-            <TabsTrigger value="workflow-runs" variant="regular" size="lg">
-              Workflow Runs
-            </TabsTrigger>
-            {areAgentsAvailable && (
-              <TabsTrigger value="conversations" variant="regular" size="lg">
-                Agent conversations
-              </TabsTrigger>
-            )}
-            {isHttpLogsPageEnabled && (
-              <TabsTrigger value="requests" variant="regular" size="lg">
-                Requests
-              </TabsTrigger>
-            )}
-          </TabsList>
-          <TabsContent value="workflow-runs">
-            <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
-          </TabsContent>
+      <PageHeader>
+        <h1 className="text-foreground-950 flex items-center gap-1">
+          <span>Activity Feed</span>
+        </h1>
+      </PageHeader>
+      <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2">
+        <TabsList variant="regular" className="border-t-0">
+          <TabsTrigger value="workflow-runs" variant="regular" size="lg">
+            Workflow Runs
+          </TabsTrigger>
           {areAgentsAvailable && (
-            <TabsContent value="conversations">
-              <ConversationsContent contentHeight="h-[calc(100vh-170px)]" />
-            </TabsContent>
+            <TabsTrigger value="conversations" variant="regular" size="lg">
+              Agent conversations
+            </TabsTrigger>
           )}
-          <TabsContent value="requests" className="h-[calc(100vh-140px)]">
-            <RequestsTable />
+          {isHttpLogsPageEnabled && (
+            <TabsTrigger value="requests" variant="regular" size="lg">
+              Requests
+            </TabsTrigger>
+          )}
+        </TabsList>
+        <TabsContent value="workflow-runs">
+          <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
+        </TabsContent>
+        {areAgentsAvailable && (
+          <TabsContent value="conversations">
+            <ConversationsContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>
-        </Tabs>
-      </DashboardLayout>
+        )}
+        <TabsContent value="requests" className="h-[calc(100vh-140px)]">
+          <RequestsTable />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

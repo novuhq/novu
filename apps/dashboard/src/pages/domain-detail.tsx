@@ -16,7 +16,6 @@ import {
 import { SiCloudflare, SiVercel } from 'react-icons/si';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ConfirmationModal } from '@/components/confirmation-modal';
-import { DashboardLayout } from '@/components/dashboard-layout';
 import {
   DetailsSidebar,
   DetailsSidebarCard,
@@ -50,6 +49,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
+import { PageHeader } from '@/context/page-header';
 import {
   useFetchDomain,
   useFetchDomainAutoConfigure,
@@ -359,7 +359,8 @@ export function DomainDetailPage() {
   );
 
   return (
-    <DashboardLayout headerStartItems={headerStartItems}>
+    <>
+      <PageHeader>{headerStartItems}</PageHeader>
       <PageMeta title={domain?.name ?? 'Domain'} />
 
       {showVerifiedConfetti &&
@@ -646,7 +647,7 @@ export function DomainDetailPage() {
         confirmButtonVariant="error"
         isLoading={deleteDomain.isPending}
       />
-    </DashboardLayout>
+    </>
   );
 }
 

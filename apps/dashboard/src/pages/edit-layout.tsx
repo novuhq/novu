@@ -1,9 +1,9 @@
 import { useParams } from 'react-router-dom';
-import { FullPageLayout } from '@/components/full-page-layout';
 import { LayoutBreadcrumbs } from '@/components/layouts/layout-breadcrumbs';
 import { LayoutEditor } from '@/components/layouts/layout-editor';
 import { LayoutEditorProvider } from '@/components/layouts/layout-editor-provider';
 import { PageMeta } from '@/components/page-meta';
+import { PageHeader } from '@/context/page-header';
 import { useFetchLayout } from '@/hooks/use-fetch-layout';
 import { LayoutEditorSkeleton } from '../components/layouts/layout-editor-skeleton';
 
@@ -17,9 +17,10 @@ export const EditLayoutPage = () => {
     return (
       <>
         <PageMeta title={`Edit Layout`} />
-        <FullPageLayout headerStartItems={<LayoutBreadcrumbs />}>
-          <LayoutEditorSkeleton />
-        </FullPageLayout>
+        <PageHeader>
+          <LayoutBreadcrumbs />
+        </PageHeader>
+        <LayoutEditorSkeleton />
       </>
     );
   }
@@ -27,11 +28,12 @@ export const EditLayoutPage = () => {
   return (
     <>
       <PageMeta title={`Edit ${layout?.name} Layout`} />
-      <FullPageLayout headerStartItems={<LayoutBreadcrumbs layout={layout} />}>
-        <LayoutEditorProvider layout={layout} layoutSlug={layoutSlug} isPending={isPending}>
-          <LayoutEditor />
-        </LayoutEditorProvider>
-      </FullPageLayout>
+      <PageHeader>
+        <LayoutBreadcrumbs layout={layout} />
+      </PageHeader>
+      <LayoutEditorProvider layout={layout} layoutSlug={layoutSlug} isPending={isPending}>
+        <LayoutEditor />
+      </LayoutEditorProvider>
     </>
   );
 };

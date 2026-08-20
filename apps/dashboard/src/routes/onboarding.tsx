@@ -1,6 +1,8 @@
 import { RedirectToSignIn, Show, useAuth } from '@clerk/react';
+import { Suspense } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
+import { RouteFallback } from '@/components/route-fallback';
 import { AuthLayout } from '../components/auth-layout';
 import { EnvironmentProvider } from '../context/environment/environment-provider';
 import { ROUTES } from '../utils/routes';
@@ -22,7 +24,9 @@ export const OnboardingParentRoute = () => {
       <Show when="signed-in">
         <EnvironmentProvider>
           <AuthLayout>
-            <AnimatedOutlet />
+            <Suspense fallback={<RouteFallback />}>
+              <AnimatedOutlet />
+            </Suspense>
           </AuthLayout>
         </EnvironmentProvider>
       </Show>

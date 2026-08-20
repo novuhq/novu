@@ -1,10 +1,13 @@
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { SettingsTabs } from '@/components/settings/settings-tabs';
+import { PageHeader } from '@/context/page-header';
 import { ROUTES } from '@/utils/routes';
 
 export function SettingsPage() {
   return (
-    <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
+    <>
+      <PageHeader>
+        <h1 className="text-foreground-950">Settings</h1>
+      </PageHeader>
       <SettingsTabs
         rootRoute={ROUTES.SETTINGS}
         routes={{
@@ -14,6 +17,6 @@ export function SettingsPage() {
           billing: ROUTES.SETTINGS_BILLING,
         }}
       />
-    </DashboardLayout>
+    </>
   );
 }

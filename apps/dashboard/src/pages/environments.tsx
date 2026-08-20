@@ -1,7 +1,7 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { useEffect } from 'react';
 import { PageMeta } from '@/components/page-meta';
-import { DashboardLayout } from '../components/dashboard-layout';
+import { PageHeader } from '@/context/page-header';
 import { CreateEnvironmentButton } from '../components/environments/create-environment-button';
 import { FreeTierState } from '../components/environments/environments-free-state';
 import { EnvironmentsList } from '../components/environments/environments-list';
@@ -36,18 +36,19 @@ export function EnvironmentsPage() {
   return (
     <>
       <PageMeta title={`Environments`} />
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Environments</h1>}>
-        {canAccessEnvironments ? (
-          <div className="flex flex-col justify-between gap-2 py-2">
-            <div className="flex justify-end">
-              <CreateEnvironmentButton />
-            </div>
-            <EnvironmentsList environments={environments} isLoading={areEnvironmentsInitialLoading} />
+      <PageHeader>
+        <h1 className="text-foreground-950">Environments</h1>
+      </PageHeader>
+      {canAccessEnvironments ? (
+        <div className="flex flex-col justify-between gap-2 py-2">
+          <div className="flex justify-end">
+            <CreateEnvironmentButton />
           </div>
-        ) : (
-          <FreeTierState />
-        )}
-      </DashboardLayout>
+          <EnvironmentsList environments={environments} isLoading={areEnvironmentsInitialLoading} />
+        </div>
+      ) : (
+        <FreeTierState />
+      )}
     </>
   );
 }

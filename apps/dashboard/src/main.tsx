@@ -5,98 +5,157 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import './index.css';
 
-import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
-import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
-import { ConfigureStep } from '@/components/workflow-editor/steps/configure-step';
-
-import {
-  ActivityFeed,
-  AnalyticsPage,
-  ApiKeysPage,
-  CreateLayoutPage,
-  CreateWorkflowPage,
-  ErrorPage,
-  IntegrationsListPage,
-  InvitationAcceptPage,
-  LayoutsPage,
-  OrganizationListPage,
-  SettingsPage,
-  SignInPage,
-  SignUpPage,
-  SSOSignInPage,
-  TemplateModal,
-  TranslationsPage,
-  VerifyEmailPage,
-  WelcomePage,
-  WorkflowsPage,
-} from '@/pages';
-import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
-import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
-import { Landing1SignUpPage } from '@/pages/landing-1-signup';
-import { SubscribersPage } from '@/pages/subscribers';
-import { TranslationSettingsPage } from '@/pages/translation-settings-page';
-import { WebhooksPage } from '@/pages/webhooks-page';
 import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
-import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
-import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
-import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
-import { WorkflowAgentAssignment } from './components/workflow-editor/workflow-agent-assignment';
 import { EE_AUTH_PROVIDER, IS_CLOUD, IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
-import { AgentDetailsPage } from './pages/agent-details';
-import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
-import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
-import { AgentWhatsAppSignupPage } from './pages/agent-whatsapp-signup-page';
-import { AgentsPage } from './pages/agents';
-import { AgentsPersonalizePage } from './pages/agents-personalize-page';
-import { AgentsSetupPage } from './pages/agents-setup-page';
-import { CliAuthPage } from './pages/cli-auth';
-import { ConnectClaimPage } from './pages/connect-claim';
-import { ContextsPage } from './pages/contexts';
-import { CreateContextPage } from './pages/create-context';
-import { CreateSubscriberPage } from './pages/create-subscriber';
-import { CreateTopicPage } from './pages/create-topic';
-import { DomainDetailPage } from './pages/domain-detail';
-import { DomainsPage } from './pages/domains';
-import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
-import { EditContextPage } from './pages/edit-context';
-import { EditLayoutPage } from './pages/edit-layout';
-import { EditSubscriberPage } from './pages/edit-subscriber-page';
-import { EditTopicPage } from './pages/edit-topic';
-import { EditTranslationPage } from './pages/edit-translation';
-import { EditWorkflowPage } from './pages/edit-workflow';
-import { EnvironmentsPage } from './pages/environments';
-import { ForgotPasswordPage } from './pages/forgot-password';
-import { InboxEmbedPage } from './pages/inbox-embed-page';
-import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
-import { InboxUsecasePage } from './pages/inbox-usecase-page';
-import { IntegrationStoreTelegramMobileSetupPage } from './pages/integration-store-telegram-mobile-setup-page';
-import { LocalEditWorkflowPage } from './pages/local-edit-workflow';
-import { LocalHandshakePage } from './pages/local-handshake';
-import { LocalWorkflowsPage } from './pages/local-workflows';
-import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
-import { ResetPasswordPage } from './pages/reset-password';
-import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
-import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
-import { TopicsPage } from './pages/topics';
-import { UpsertVariablePage } from './pages/upsert-variable';
-import { UsecaseSelectPage } from './pages/usecase-select-page';
-import { VariablesPage } from './pages/variables';
-import { VercelIntegrationPage } from './pages/vercel-integration-page';
+import { ErrorPage } from './pages/error-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
+import { EditorLayout } from './routes/editor-layout';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
+import { SideNavLayout } from './routes/side-nav-layout';
 import { captureAgentTemplateIdFromUrl } from './utils/agent-template-identity';
 import { captureConnectClaimTokenFromUrl } from './utils/connect-claim-pending';
+import { lazyPage } from './utils/lazy-page';
+import { DashboardRouteHandle } from './utils/route-handle';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 
+const Landing1SignUpPage = lazyPage(() => import('./pages/landing-1-signup'), 'Landing1SignUpPage');
+const CliAuthPage = lazyPage(() => import('./pages/cli-auth'), 'CliAuthPage');
+const ConnectClaimPage = lazyPage(() => import('./pages/connect-claim'), 'ConnectClaimPage');
+const AgentSlackSetupPage = lazyPage(() => import('./pages/agent-slack-setup-page'), 'AgentSlackSetupPage');
+const AgentTelegramMobileSetupPage = lazyPage(
+  () => import('./pages/agent-telegram-mobile-setup-page'),
+  'AgentTelegramMobileSetupPage'
+);
+const AgentWhatsAppSignupPage = lazyPage(() => import('./pages/agent-whatsapp-signup-page'), 'AgentWhatsAppSignupPage');
+const IntegrationStoreTelegramMobileSetupPage = lazyPage(
+  () => import('./pages/integration-store-telegram-mobile-setup-page'),
+  'IntegrationStoreTelegramMobileSetupPage'
+);
+const SignInPage = lazyPage(() => import('./pages/sign-in'), 'SignInPage');
+const SignUpPage = lazyPage(() => import('./pages/sign-up'), 'SignUpPage');
+const ForgotPasswordPage = lazyPage(() => import('./pages/forgot-password'), 'ForgotPasswordPage');
+const ResetPasswordPage = lazyPage(() => import('./pages/reset-password'), 'ResetPasswordPage');
+const SSOSignInPage = lazyPage(() => import('./pages/sso-sign-in'), 'SSOSignInPage');
+const VerifyEmailPage = lazyPage(() => import('./pages/verify-email'), 'VerifyEmailPage');
+const OrganizationListPage = lazyPage(() => import('./pages/organization-list'), 'OrganizationListPage');
+const InvitationAcceptPage = lazyPage(() => import('./pages/invitation-accept'), 'InvitationAcceptPage');
+const UsecaseSelectPage = lazyPage(() => import('./pages/usecase-select-page'), 'UsecaseSelectPage');
+const AgentsPersonalizePage = lazyPage(() => import('./pages/agents-personalize-page'), 'AgentsPersonalizePage');
+const AgentsSetupPage = lazyPage(() => import('./pages/agents-setup-page'), 'AgentsSetupPage');
+const InboxUsecasePage = lazyPage(() => import('./pages/inbox-usecase-page'), 'InboxUsecasePage');
+const InboxEmbedPage = lazyPage(() => import('./pages/inbox-embed-page'), 'InboxEmbedPage');
+const InboxEmbedSuccessPage = lazyPage(() => import('./pages/inbox-embed-success-page'), 'InboxEmbedSuccessPage');
+const WelcomePage = lazyPage(() => import('./pages/welcome-page'), 'WelcomePage');
+const WorkflowsPage = lazyPage(() => import('./pages/workflows'), 'WorkflowsPage');
+const TemplateModal = lazyPage(() => import('./pages/workflows'), 'TemplateModal');
+const CreateWorkflowPage = lazyPage(() => import('./pages/create-workflow'), 'CreateWorkflowPage');
+const DuplicateWorkflowPage = lazyPage(() => import('./pages/duplicate-workflow'), 'DuplicateWorkflowPage');
+const SubscribersPage = lazyPage(() => import('./pages/subscribers'), 'SubscribersPage');
+const EditSubscriberPage = lazyPage(() => import('./pages/edit-subscriber-page'), 'EditSubscriberPage');
+const CreateSubscriberPage = lazyPage(() => import('./pages/create-subscriber'), 'CreateSubscriberPage');
+const TopicsPage = lazyPage(() => import('./pages/topics'), 'TopicsPage');
+const CreateTopicPage = lazyPage(() => import('./pages/create-topic'), 'CreateTopicPage');
+const EditTopicPage = lazyPage(() => import('./pages/edit-topic'), 'EditTopicPage');
+const ContextsPage = lazyPage(() => import('./pages/contexts'), 'ContextsPage');
+const CreateContextPage = lazyPage(() => import('./pages/create-context'), 'CreateContextPage');
+const EditContextPage = lazyPage(() => import('./pages/edit-context'), 'EditContextPage');
+const LayoutsPage = lazyPage(() => import('./pages/layouts'), 'LayoutsPage');
+const CreateLayoutPage = lazyPage(() => import('./pages/create-layout'), 'CreateLayoutPage');
+const DuplicateLayoutPage = lazyPage(() => import('./pages/duplicate-layout-page'), 'DuplicateLayoutPage');
+const EditLayoutPage = lazyPage(() => import('./pages/edit-layout'), 'EditLayoutPage');
+const TranslationsPage = lazyPage(() => import('./pages/translations'), 'TranslationsPage');
+const TranslationSettingsPage = lazyPage(() => import('./pages/translation-settings-page'), 'TranslationSettingsPage');
+const EditTranslationPage = lazyPage(() => import('./pages/edit-translation'), 'EditTranslationPage');
+const AgentsPage = lazyPage(() => import('./pages/agents'), 'AgentsPage');
+const AgentDetailsPage = lazyPage(() => import('./pages/agent-details'), 'AgentDetailsPage');
+const DomainsPage = lazyPage(() => import('./pages/domains'), 'DomainsPage');
+const DomainDetailPage = lazyPage(() => import('./pages/domain-detail'), 'DomainDetailPage');
+const ApiKeysPage = lazyPage(() => import('./pages/api-keys'), 'ApiKeysPage');
+const EnvironmentsPage = lazyPage(() => import('./pages/environments'), 'EnvironmentsPage');
+const VariablesPage = lazyPage(() => import('./pages/variables'), 'VariablesPage');
+const UpsertVariablePage = lazyPage(() => import('./pages/upsert-variable'), 'UpsertVariablePage');
+const ActivityFeed = lazyPage(() => import('./pages/activity-feed'), 'ActivityFeed');
+const AnalyticsPage = lazyPage(() => import('./pages/analytics'), 'AnalyticsPage');
+const LocalWorkflowsPage = lazyPage(() => import('./pages/local-workflows'), 'LocalWorkflowsPage');
+const LocalEditWorkflowPage = lazyPage(() => import('./pages/local-edit-workflow'), 'LocalEditWorkflowPage');
+const EditWorkflowPage = lazyPage(() => import('./pages/edit-workflow'), 'EditWorkflowPage');
+const TestWorkflowRouteHandler = lazyPage(
+  () => import('./pages/test-workflow-route-handler'),
+  'TestWorkflowRouteHandler'
+);
+const TestWorkflowDrawerPage = lazyPage(() => import('./pages/test-workflow-drawer-page'), 'TestWorkflowDrawerPage');
+const WebhooksPage = lazyPage(() => import('./pages/webhooks-page'), 'WebhooksPage');
+const IntegrationsListPage = lazyPage(() => import('./pages/integrations-list-page'), 'IntegrationsListPage');
+const SettingsPage = lazyPage(() => import('./pages/settings'), 'SettingsPage');
+const VercelIntegrationPage = lazyPage(() => import('./pages/vercel-integration-page'), 'VercelIntegrationPage');
+const RedirectToLegacyStudioAuth = lazyPage(
+  () => import('./pages/redirect-to-legacy-studio-auth'),
+  'RedirectToLegacyStudioAuth'
+);
+const LocalHandshakePage = lazyPage(() => import('./pages/local-handshake'), 'LocalHandshakePage');
+const EditStepTemplateV2Page = lazyPage(() => import('./pages/edit-step-template-v2'), 'EditStepTemplateV2Page');
+const ConfigureWorkflow = lazyPage(
+  () => import('./components/workflow-editor/configure-workflow'),
+  'ConfigureWorkflow'
+);
+const ConfigureStep = lazyPage(() => import('./components/workflow-editor/steps/configure-step'), 'ConfigureStep');
+const EditStepConditions = lazyPage(
+  () => import('./components/workflow-editor/steps/conditions/edit-step-conditions'),
+  'EditStepConditions'
+);
+const ChannelPreferences = lazyPage(
+  () => import('./components/workflow-editor/channel-preferences'),
+  'ChannelPreferences'
+);
+const WorkflowAgentAssignment = lazyPage(
+  () => import('./components/workflow-editor/workflow-agent-assignment'),
+  'WorkflowAgentAssignment'
+);
+const CreateIntegrationSidebar = lazyPage(
+  () => import('./components/integrations/components/create-integration-sidebar'),
+  'CreateIntegrationSidebar'
+);
+const UpdateIntegrationSidebar = lazyPage(
+  () => import('./components/integrations/components/update-integration-sidebar'),
+  'UpdateIntegrationSidebar'
+);
+
+const hideBridgeUrlHandle: DashboardRouteHandle = { hideBridgeUrl: true };
+
+const editorChildren = [
+  {
+    element: <ConfigureWorkflow />,
+    index: true,
+  },
+  {
+    element: <ConfigureStep />,
+    path: ROUTES.EDIT_STEP,
+  },
+  {
+    element: <EditStepTemplateV2Page />,
+    path: ROUTES.EDIT_STEP_TEMPLATE,
+  },
+  {
+    element: <EditStepConditions />,
+    path: ROUTES.EDIT_STEP_CONDITIONS,
+  },
+  {
+    element: <ChannelPreferences />,
+    path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
+  },
+  {
+    element: <WorkflowAgentAssignment />,
+    path: ROUTES.EDIT_WORKFLOW_AGENT,
+  },
+];
+
 initializeSentry();
 overrideZodErrorMap();
-// Stash an incoming `?agentTemplateId=` before Clerk's auth redirects drop the query params.
 captureAgentTemplateIdFromUrl();
-// Stash an incoming connect claim token before Clerk's auth redirects drop the query params.
 captureConnectClaimTokenFromUrl();
 
 const router = createBrowserRouter([
@@ -117,27 +176,18 @@ const router = createBrowserRouter([
         element: <ConnectClaimPage />,
       },
       {
-        // Public, unauthenticated setup page for Slack. Mounted outside
-        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
         path: ROUTES.AGENT_SLACK_SETUP,
         element: <AgentSlackSetupPage />,
       },
       {
-        // Public, unauthenticated mobile setup page for Telegram. Mounted outside
-        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
         path: ROUTES.AGENT_TELEGRAM_MOBILE_SETUP,
         element: <AgentTelegramMobileSetupPage />,
       },
       {
-        // Public, unauthenticated WhatsApp Embedded Signup page opened by
-        // `npx novu connect`. Trust comes from the opaque token in the URL, so
-        // it is mounted outside AuthRoute (keyless CLI users have no session).
         path: ROUTES.AGENT_WHATSAPP_SIGNUP,
         element: <AgentWhatsAppSignupPage />,
       },
       {
-        // Public, unauthenticated mobile setup page for the Telegram integration
-        // store create flow. Creates a new integration server-side on submit.
         path: ROUTES.INTEGRATION_TELEGRAM_MOBILE_SETUP,
         element: <IntegrationStoreTelegramMobileSetupPage />,
       },
@@ -221,531 +271,513 @@ const router = createBrowserRouter([
         path: ROUTES.ROOT,
         element: <DashboardRoute />,
         children: [
-          /* Direct routes matching environment-specific paths (e.g., /topics -> /env/:envId/topics) 
-             will be automatically redirected by the CatchAllRoute component */
           {
             index: true,
             element: <CatchAllRoute />,
           },
           {
-            path: ROUTES.ENV,
+            element: <SideNavLayout />,
             children: [
               {
-                path: ROUTES.WELCOME,
-                element: <WelcomePage />,
-              },
-              {
-                path: ROUTES.WORKFLOWS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                    <WorkflowsPage />
-                  </ProtectedRoute>
-                ),
+                path: ROUTES.ENV,
                 children: [
                   {
-                    path: ROUTES.TEMPLATE_STORE,
-                    element: <TemplateModal />,
+                    path: ROUTES.WELCOME,
+                    element: <WelcomePage />,
                   },
                   {
-                    path: ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW,
+                    path: ROUTES.WORKFLOWS,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
-                        <TemplateModal />
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <WorkflowsPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      {
+                        path: ROUTES.TEMPLATE_STORE,
+                        element: <TemplateModal />,
+                      },
+                      {
+                        path: ROUTES.TEMPLATE_STORE_CREATE_WORKFLOW,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                            <TemplateModal />
+                          </ProtectedRoute>
+                        ),
+                      },
+                      {
+                        path: ROUTES.WORKFLOWS_CREATE,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                            <CreateWorkflowPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                      {
+                        path: ROUTES.WORKFLOWS_DUPLICATE,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                            <DuplicateWorkflowPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.SUBSCRIBERS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_READ}>
+                        <SubscribersPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      {
+                        path: ROUTES.EDIT_SUBSCRIBER,
+                        element: (
+                          <ProtectedRoute
+                            condition={(has) =>
+                              has({ permission: PermissionsEnum.SUBSCRIBER_WRITE }) ||
+                              has({ permission: PermissionsEnum.SUBSCRIBER_READ })
+                            }
+                            isDrawerRoute
+                          >
+                            <EditSubscriberPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                      {
+                        path: ROUTES.CREATE_SUBSCRIBER,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_WRITE} isDrawerRoute>
+                            <CreateSubscriberPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.TOPICS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.TOPIC_READ}>
+                        <TopicsPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      {
+                        path: ROUTES.TOPICS_CREATE,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.TOPIC_WRITE} isDrawerRoute>
+                            <CreateTopicPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                      {
+                        path: ROUTES.TOPICS_EDIT,
+                        element: (
+                          <ProtectedRoute
+                            condition={(has) =>
+                              has({ permission: PermissionsEnum.TOPIC_WRITE }) ||
+                              has({ permission: PermissionsEnum.TOPIC_READ })
+                            }
+                            isDrawerRoute
+                          >
+                            <EditTopicPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.CONTEXTS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <ContextsPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      {
+                        path: ROUTES.CONTEXTS_CREATE,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                            <CreateContextPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                      {
+                        path: ROUTES.CONTEXTS_EDIT,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ} isDrawerRoute>
+                            <EditContextPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.LAYOUTS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <LayoutsPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      {
+                        path: ROUTES.LAYOUTS_CREATE,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                            <CreateLayoutPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                      {
+                        path: ROUTES.LAYOUTS_DUPLICATE,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
+                            <DuplicateLayoutPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.TRANSLATIONS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <TranslationsPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      {
+                        path: ROUTES.TRANSLATION_SETTINGS,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                            <TranslationSettingsPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                      {
+                        path: ROUTES.TRANSLATIONS_EDIT,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                            <EditTranslationPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.AGENTS,
+                    element: <AgentsPage />,
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
                       </ProtectedRoute>
                     ),
                   },
                   {
-                    path: ROUTES.WORKFLOWS_CREATE,
+                    path: ROUTES.AGENT_DETAILS_TAB,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
-                        <CreateWorkflowPage />
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
                       </ProtectedRoute>
                     ),
                   },
                   {
-                    path: ROUTES.WORKFLOWS_DUPLICATE,
+                    path: ROUTES.AGENT_DETAILS,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
-                        <DuplicateWorkflowPage />
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
                       </ProtectedRoute>
                     ),
                   },
-                ],
-              },
-              {
-                path: ROUTES.SUBSCRIBERS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_READ}>
-                    <SubscribersPage />
-                  </ProtectedRoute>
-                ),
-                children: [
                   {
-                    path: ROUTES.EDIT_SUBSCRIBER,
+                    path: ROUTES.DOMAINS,
+                    element: !IS_SELF_HOSTED_CE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                  },
+                  {
+                    path: ROUTES.DOMAIN_DETAIL,
+                    element: !IS_SELF_HOSTED_CE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                  },
+                  {
+                    path: ROUTES.API_KEYS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
+                        <ApiKeysPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.ENVIRONMENTS,
+                    element: <EnvironmentsPage />,
+                  },
+                  {
+                    path: ROUTES.VARIABLES,
+                    element: <VariablesPage />,
+                    children: [
+                      {
+                        path: ROUTES.VARIABLES_CREATE,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.ORG_SETTINGS_WRITE} isDrawerRoute>
+                            <UpsertVariablePage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.ACTIVITY_FEED,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                        <ActivityFeed />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.ACTIVITY_WORKFLOW_RUNS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                        <ActivityFeed />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.ACTIVITY_REQUESTS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                        <ActivityFeed />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.ACTIVITY_CONVERSATIONS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                        <ActivityFeed />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.ANALYTICS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                        <AnalyticsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.LOCAL_WORKFLOWS,
+                    handle: hideBridgeUrlHandle,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
+                        <LocalWorkflowsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.WEBHOOKS_ENDPOINTS,
                     element: (
                       <ProtectedRoute
                         condition={(has) =>
-                          has({ permission: PermissionsEnum.SUBSCRIBER_WRITE }) ||
-                          has({ permission: PermissionsEnum.SUBSCRIBER_READ })
+                          has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                          has({ permission: PermissionsEnum.WEBHOOK_WRITE })
                         }
-                        isDrawerRoute
                       >
-                        <EditSubscriberPage />
+                        <WebhooksPage />
                       </ProtectedRoute>
                     ),
                   },
                   {
-                    path: ROUTES.CREATE_SUBSCRIBER,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.SUBSCRIBER_WRITE} isDrawerRoute>
-                        <CreateSubscriberPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
-              },
-              {
-                path: ROUTES.TOPICS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.TOPIC_READ}>
-                    <TopicsPage />
-                  </ProtectedRoute>
-                ),
-                children: [
-                  {
-                    path: ROUTES.TOPICS_CREATE,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.TOPIC_WRITE} isDrawerRoute>
-                        <CreateTopicPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.TOPICS_EDIT,
+                    path: ROUTES.WEBHOOKS_EVENT_CATALOG,
                     element: (
                       <ProtectedRoute
                         condition={(has) =>
-                          has({ permission: PermissionsEnum.TOPIC_WRITE }) ||
-                          has({ permission: PermissionsEnum.TOPIC_READ })
+                          has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                          has({ permission: PermissionsEnum.WEBHOOK_WRITE })
+                        }
+                      >
+                        <WebhooksPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.WEBHOOKS_LOGS,
+                    element: (
+                      <ProtectedRoute
+                        condition={(has) =>
+                          has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                          has({ permission: PermissionsEnum.WEBHOOK_WRITE })
+                        }
+                      >
+                        <WebhooksPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.WEBHOOKS_ACTIVITY,
+                    element: (
+                      <ProtectedRoute
+                        condition={(has) =>
+                          has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                          has({ permission: PermissionsEnum.WEBHOOK_WRITE })
+                        }
+                      >
+                        <WebhooksPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.WEBHOOKS,
+                    element: (
+                      <ProtectedRoute
+                        condition={(has) =>
+                          has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
+                          has({ permission: PermissionsEnum.WEBHOOK_WRITE })
+                        }
+                      >
+                        <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: '*',
+                    element: <CatchAllRoute />,
+                  },
+                ],
+              },
+              {
+                path: ROUTES.INTEGRATIONS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_READ}>
+                    <IntegrationsListPage />
+                  </ProtectedRoute>
+                ),
+                children: [
+                  {
+                    path: ROUTES.INTEGRATIONS_CONNECT,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
+                        <CreateIntegrationSidebar isOpened />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.INTEGRATIONS_CONNECT_PROVIDER,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
+                        <CreateIntegrationSidebar isOpened />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.INTEGRATIONS_UPDATE,
+                    element: (
+                      <ProtectedRoute
+                        condition={(has) =>
+                          has({ permission: PermissionsEnum.INTEGRATION_WRITE }) ||
+                          has({ permission: PermissionsEnum.INTEGRATION_READ })
                         }
                         isDrawerRoute
                       >
-                        <EditTopicPage />
+                        <UpdateIntegrationSidebar isOpened />
                       </ProtectedRoute>
                     ),
                   },
                 ],
               },
               {
-                path: ROUTES.CONTEXTS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                    <ContextsPage />
-                  </ProtectedRoute>
-                ),
-                children: [
-                  {
-                    path: ROUTES.CONTEXTS_CREATE,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
-                        <CreateContextPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.CONTEXTS_EDIT,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ} isDrawerRoute>
-                        <EditContextPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
+                path: ROUTES.SETTINGS,
+                element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
               },
               {
-                path: ROUTES.LAYOUTS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                    <LayoutsPage />
-                  </ProtectedRoute>
-                ),
-                children: [
-                  {
-                    path: ROUTES.LAYOUTS_CREATE,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
-                        <CreateLayoutPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.LAYOUTS_DUPLICATE,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
-                        <DuplicateLayoutPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
+                path: ROUTES.SETTINGS_ACCOUNT,
+                element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
               },
               {
-                path: ROUTES.LAYOUTS_EDIT,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                    <EditLayoutPage />
-                  </ProtectedRoute>
-                ),
+                path: ROUTES.SETTINGS_ORGANIZATION,
+                element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
               },
               {
-                path: ROUTES.TRANSLATIONS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                    <TranslationsPage />
-                  </ProtectedRoute>
-                ),
-                children: [
-                  {
-                    path: ROUTES.TRANSLATION_SETTINGS,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                        <TranslationSettingsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.TRANSLATIONS_EDIT,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                        <EditTranslationPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
+                path: ROUTES.SETTINGS_TEAM,
+                element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
               },
               {
-                path: ROUTES.AGENTS,
-                element: <AgentsPage />,
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_TAB,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.DOMAINS,
-                element: !IS_SELF_HOSTED_CE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
-              },
-              {
-                path: ROUTES.DOMAIN_DETAIL,
-                element: !IS_SELF_HOSTED_CE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
-              },
-              {
-                path: ROUTES.API_KEYS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
-                    <ApiKeysPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.ENVIRONMENTS,
-                element: <EnvironmentsPage />,
-              },
-              {
-                path: ROUTES.VARIABLES,
-                element: <VariablesPage />,
-                children: [
-                  {
-                    path: ROUTES.VARIABLES_CREATE,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.ORG_SETTINGS_WRITE} isDrawerRoute>
-                        <UpsertVariablePage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
-              },
-              {
-                path: ROUTES.ACTIVITY_FEED,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <ActivityFeed />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.ACTIVITY_WORKFLOW_RUNS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <ActivityFeed />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.ACTIVITY_REQUESTS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <ActivityFeed />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.ACTIVITY_CONVERSATIONS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <ActivityFeed />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.ANALYTICS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <AnalyticsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.LOCAL_WORKFLOWS,
-                element: (
-                  // BRIDGE_WRITE mirrors the stateless bridge API guard: local
-                  // mode signs requests to the caller's tunnel with the env key.
-                  <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
-                    <LocalWorkflowsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                // Workflow editor mounted on virtual local-bridge workflows;
-                // children mirror ROUTES.EDIT_WORKFLOW so relative step
-                // navigation behaves identically.
-                path: ROUTES.LOCAL_EDIT_WORKFLOW,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
-                    <LocalEditWorkflowPage />
-                  </ProtectedRoute>
-                ),
-                children: [
-                  {
-                    element: <ConfigureWorkflow />,
-                    index: true,
-                  },
-                  {
-                    element: <ConfigureStep />,
-                    path: ROUTES.EDIT_STEP,
-                  },
-                  {
-                    element: <EditStepTemplateV2Page />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE,
-                  },
-                  {
-                    element: <EditStepConditions />,
-                    path: ROUTES.EDIT_STEP_CONDITIONS,
-                  },
-                  {
-                    element: <ChannelPreferences />,
-                    path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
-                  },
-                  {
-                    element: <WorkflowAgentAssignment />,
-                    path: ROUTES.EDIT_WORKFLOW_AGENT,
-                  },
-                  {
-                    path: ROUTES.LOCAL_TRIGGER_WORKFLOW,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
-                        <TestWorkflowDrawerPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
-              },
-              {
-                path: ROUTES.EDIT_WORKFLOW,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                    <EditWorkflowPage />
-                  </ProtectedRoute>
-                ),
-                children: [
-                  {
-                    element: <ConfigureWorkflow />,
-                    index: true,
-                  },
-                  {
-                    element: <ConfigureStep />,
-                    path: ROUTES.EDIT_STEP,
-                  },
-
-                  {
-                    element: <EditStepTemplateV2Page />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE,
-                  },
-                  {
-                    element: <EditStepConditions />,
-                    path: ROUTES.EDIT_STEP_CONDITIONS,
-                  },
-                  {
-                    element: <ChannelPreferences />,
-                    path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
-                  },
-                  {
-                    element: <WorkflowAgentAssignment />,
-                    path: ROUTES.EDIT_WORKFLOW_AGENT,
-                  },
-                  {
-                    path: ROUTES.TRIGGER_WORKFLOW,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
-                        <TestWorkflowDrawerPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                ],
-              },
-              {
-                path: ROUTES.EDIT_WORKFLOW_ACTIVITY,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
-                    <EditWorkflowPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.TEST_WORKFLOW,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE}>
-                    <TestWorkflowRouteHandler />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.WEBHOOKS_ENDPOINTS,
-                element: (
-                  <ProtectedRoute
-                    condition={(has) =>
-                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
-                    }
-                  >
-                    <WebhooksPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.WEBHOOKS_EVENT_CATALOG,
-                element: (
-                  <ProtectedRoute
-                    condition={(has) =>
-                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
-                    }
-                  >
-                    <WebhooksPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.WEBHOOKS_LOGS,
-                element: (
-                  <ProtectedRoute
-                    condition={(has) =>
-                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
-                    }
-                  >
-                    <WebhooksPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.WEBHOOKS_ACTIVITY,
-                element: (
-                  <ProtectedRoute
-                    condition={(has) =>
-                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
-                    }
-                  >
-                    <WebhooksPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.WEBHOOKS,
-                element: (
-                  <ProtectedRoute
-                    condition={(has) =>
-                      has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
-                      has({ permission: PermissionsEnum.WEBHOOK_WRITE })
-                    }
-                  >
-                    <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: '*',
-                element: <CatchAllRoute />,
+                path: ROUTES.SETTINGS_BILLING,
+                element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
               },
             ],
           },
           {
-            path: ROUTES.INTEGRATIONS,
-            element: (
-              <ProtectedRoute permission={PermissionsEnum.INTEGRATION_READ}>
-                <IntegrationsListPage />
-              </ProtectedRoute>
-            ),
+            element: <EditorLayout />,
             children: [
               {
-                path: ROUTES.INTEGRATIONS_CONNECT,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
-                    <CreateIntegrationSidebar isOpened />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.INTEGRATIONS_CONNECT_PROVIDER,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
-                    <CreateIntegrationSidebar isOpened />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.INTEGRATIONS_UPDATE,
-                element: (
-                  <ProtectedRoute
-                    condition={(has) =>
-                      has({ permission: PermissionsEnum.INTEGRATION_WRITE }) ||
-                      has({ permission: PermissionsEnum.INTEGRATION_READ })
-                    }
-                    isDrawerRoute
-                  >
-                    <UpdateIntegrationSidebar isOpened />
-                  </ProtectedRoute>
-                ),
+                path: ROUTES.ENV,
+                children: [
+                  {
+                    path: ROUTES.LOCAL_EDIT_WORKFLOW,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
+                        <LocalEditWorkflowPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      ...editorChildren,
+                      {
+                        path: ROUTES.LOCAL_TRIGGER_WORKFLOW,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
+                            <TestWorkflowDrawerPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.EDIT_WORKFLOW,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <EditWorkflowPage />
+                      </ProtectedRoute>
+                    ),
+                    children: [
+                      ...editorChildren,
+                      {
+                        path: ROUTES.TRIGGER_WORKFLOW,
+                        element: (
+                          <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
+                            <TestWorkflowDrawerPage />
+                          </ProtectedRoute>
+                        ),
+                      },
+                    ],
+                  },
+                  {
+                    path: ROUTES.EDIT_WORKFLOW_ACTIVITY,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <EditWorkflowPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.TEST_WORKFLOW,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE}>
+                        <TestWorkflowRouteHandler />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.LAYOUTS_EDIT,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <EditLayoutPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
             ],
           },
@@ -761,31 +793,10 @@ const router = createBrowserRouter([
               ),
           },
           {
-            path: ROUTES.SETTINGS,
-            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
-          },
-          {
-            path: ROUTES.SETTINGS_ACCOUNT,
-            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
-          },
-          {
-            path: ROUTES.SETTINGS_ORGANIZATION,
-            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
-          },
-          {
-            path: ROUTES.SETTINGS_TEAM,
-            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
-          },
-          {
-            path: ROUTES.SETTINGS_BILLING,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
-          },
-          {
             path: ROUTES.LOCAL_STUDIO_AUTH,
             element: <RedirectToLegacyStudioAuth />,
           },
           {
-            // Handshake target opened by `novu dev` (new dashboard local mode).
             path: ROUTES.LOCAL_HANDSHAKE,
             element: (
               <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>

@@ -1,9 +1,11 @@
 import { useLocation, useMatch, useParams } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
-import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
+import { StepEditorSkeleton } from '@/components/workflow-editor/steps/step-editor-skeleton';
+import { EditorAsideSkeleton } from '@/components/workflow-editor/workflow-editor-skeleton';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
 import { WorkflowTabs } from '@/components/workflow-editor/workflow-tabs';
+import { PageHeader } from '@/context/page-header';
 import { ROUTES } from '@/utils/routes';
 
 // Define routes that should render without WorkflowTabs (full-page routes)
@@ -15,7 +17,7 @@ const FULL_PAGE_ROUTES = [
 function renderFullPageLayout() {
   return (
     <div className="flex h-full w-full">
-      <AnimatedOutlet />
+      <AnimatedOutlet fallback={<StepEditorSkeleton />} />
     </div>
   );
 }
@@ -34,7 +36,7 @@ function renderTraditionalLayout({ isNewWorkflowSlug }: { isNewWorkflowSlug: boo
       <WorkflowTabs />
       {!isNewWorkflowSlug && (
         <aside className="text-foreground-950 [&_textarea]:text-neutral-600'; flex h-full w-[350px] max-w-[350px] flex-col border-l [&_input]:text-xs [&_input]:text-neutral-600 [&_label]:text-xs [&_label]:font-medium [&_textarea]:text-xs">
-          <AnimatedOutlet />
+          <AnimatedOutlet fallback={<EditorAsideSkeleton />} />
         </aside>
       )}
     </div>
@@ -70,7 +72,10 @@ export const EditWorkflowPage = () => {
 
   return (
     <WorkflowProvider>
-      <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
+      <PageHeader>
+        <EditorBreadcrumbs />
+      </PageHeader>
+      {getLayoutContent()}
     </WorkflowProvider>
   );
 };
