@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { type AgentEvent, type AgentEventEnvelope, isDeltaEvent } from '@novu/agent-event-protocol';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationActivityRepository, ConversationRepository } from '@novu/dal';
+import { ConversationActivityEntity, type ConversationChannel, ConversationRepository } from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
@@ -24,7 +25,7 @@ import {
   toReplyContent,
   toThalamusUsage,
 } from './agent-event-mappers';
-import { AgentPlatformEnum } from './enums/agent-platform.enum';
+import { AgentPlatformEnum, usesProtocolEventApprovals } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
 import { McpConnectionErrorHandler } from './mcp-connection-error.handler';
 
@@ -51,6 +52,8 @@ export interface AgentEventContext {
   subscriberId?: string;
   platform?: AgentPlatformEnum;
   platformThreadId?: string;
+  /** Conversation channel for durable activity persist (agent-chat lifecycle, tool ledger, etc.). */
+  channel?: ConversationChannel;
   sessionId?: string;
   suppressReply?: boolean;
 }
@@ -67,7 +70,6 @@ export class AgentEventSink {
     private readonly inboundAck: InboundAckService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly conversationRepository: ConversationRepository,
-    private readonly activityRepository: ConversationActivityRepository,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
@@ -152,7 +154,14 @@ export class AgentEventSink {
           event.deliverCard === true && context.source === 'bridge'
         );
 
+      case 'run-start':
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+
+        return 'accepted';
+
       case 'run-finish':
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+
         if (event.outcome === 'paused') {
           await this.handlePausedRunFinish(event, context, metadata, envelope.runId);
 
@@ -164,6 +173,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'run-error':
+        await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
         await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
 
         return 'accepted';
@@ -173,7 +183,6 @@ export class AgentEventSink {
 
         return 'accepted';
 
-      case 'run-start':
       case 'step-start':
       case 'step-end':
       case 'thinking-start':
@@ -184,6 +193,8 @@ export class AgentEventSink {
       case 'source':
       case 'custom':
       case 'tool-approval-response':
+      case 'mcp-connection-request':
+      case 'mcp-connection-result':
       case 'message-start':
       case 'message-end':
         this.logger.debug({ eventType: event.type, runId: envelope.runId }, 'Agent event no-op');
@@ -220,7 +231,10 @@ export class AgentEventSink {
     };
 
     try {
-      const shouldDeliverCard = autoDeliverCard && !context.suppressReply;
+      const shouldDeliverCard =
+        autoDeliverCard &&
+        !context.suppressReply &&
+        !(context.platform && usesProtocolEventApprovals(context.platform));
 
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
@@ -638,9 +652,12 @@ export class AgentEventSink {
     }
 
     if (approvals.length === 0) {
-      this.logger.error({ runId }, 'paused run-finish carried zero approvals — skipping tool approval dispatch');
-
-      return;
+      // Empty when the pending tool_use came from an earlier run (resumed streams are a live
+      // tail). HandlePendingToolApprovals recovers from the session.
+      this.logger.warn(
+        { runId, sessionId },
+        'paused run-finish carried zero approvals — recovering pending approvals from the session'
+      );
     }
 
     try {
@@ -720,14 +737,57 @@ export class AgentEventSink {
     }
   }
 
+  private async persistRunLifecycleFromEvent(
+    context: AgentEventContext,
+    runId: string,
+    event: RunLifecycleEvent
+  ): Promise<void> {
+    const channel = context.channel;
+    if (!channel) {
+      const message = 'run lifecycle persist skipped: missing channel on AgentEventContext';
+      this.logger.error({ runId, conversationId: context.conversationId }, message);
+      captureAgentException(new Error(message), {
+        component: 'agent-event-sink',
+        operation: 'persist-run-lifecycle',
+        sessionId: context.sessionId,
+      });
+
+      return;
+    }
+
+    try {
+      await this.conversationService.persistRunLifecycle({
+        conversationId: context.conversationId,
+        channel,
+        agentIdentifier: context.agentIdentifier,
+        environmentId: context.environmentId,
+        organizationId: context.organizationId,
+        runId,
+        event,
+      });
+    } catch (err) {
+      this.logger.error(err, `run lifecycle persist failed: run=${runId}`);
+      captureAgentException(err, {
+        component: 'agent-event-sink',
+        operation: 'persist-run-lifecycle',
+        sessionId: context.sessionId,
+      });
+
+      if (event.type === 'run-start') {
+        throw err;
+      }
+    }
+  }
+
   private async isDuplicateMessage(environmentId: string, conversationId: string, messageId: string): Promise<boolean> {
     if (typeof messageId !== 'string' || messageId.length === 0) {
       return false;
     }
 
-    const existing = await this.activityRepository.findOne(
-      { _environmentId: environmentId, _conversationId: conversationId, identifier: messageId },
-      '*'
+    const existing = await this.conversationService.findAgentMessageByIdentifier(
+      environmentId,
+      conversationId,
+      messageId
     );
 
     return existing !== null;
@@ -753,9 +813,10 @@ export class AgentEventSink {
     }
 
     for (let attempt = 0; attempt < ACTIVITY_RESOLVE_MAX_ATTEMPTS; attempt += 1) {
-      const activity = await this.activityRepository.findOne(
-        { _environmentId: environmentId, _conversationId: conversationId, identifier: messageId },
-        '*'
+      const activity = await this.conversationService.findAgentMessageByIdentifier(
+        environmentId,
+        conversationId,
+        messageId
       );
 
       if (activity) {
@@ -767,7 +828,7 @@ export class AgentEventSink {
       }
     }
 
-    return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, messageId);
+    return this.conversationService.findByPlatformMessageId(environmentId, conversationId, messageId);
   }
 
   private async resolveConversationAgentId(context: AgentEventContext): Promise<string | null> {

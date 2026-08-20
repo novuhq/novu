@@ -3,7 +3,6 @@ import { type IAgentRuntimeProvider, PinoLogger } from '@novu/application-generi
 import {
   type AgentEntity,
   AgentRepository,
-  ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
   ConversationEntity,
@@ -20,6 +19,7 @@ import { AgentConversationService } from '../conversation-runtime/conversation/a
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
+import { buildLiveSessionMessages } from './build-live-session-messages';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
@@ -30,6 +30,7 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
+  workflowOriginContent?: string;
   platformThreadId?: string;
   platformMessageId?: string;
 }
@@ -40,6 +41,8 @@ interface WebhookSessionMetadata {
   organizationId: string;
   agentIdentifier: string;
   integrationIdentifier: string;
+  /** Mongo `_integrationId` for the active conversation channel. */
+  integrationId: string;
   agentId: string;
   subscriberId: string;
   platform: AgentPlatformEnum;
@@ -65,7 +68,6 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly eventHandler: ManagedAgentEventHandler,
     private readonly conversationRepository: ConversationRepository,
-    private readonly conversationActivityRepository: ConversationActivityRepository,
     private readonly conversationService: AgentConversationService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpSessionService: AgentMcpSessionService,
@@ -113,9 +115,7 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberMongoId: context.subscriber?._id,
     });
 
-    const messages = sessionId
-      ? [{ role: MessageRole.USER, content: context.userMessageText }]
-      : await this.buildMessagesWithHistory(context);
+    const messages = sessionId ? buildLiveSessionMessages(context) : await this.buildMessagesWithHistory(context);
 
     const sendResult = await provider.send({
       messages,
@@ -128,6 +128,7 @@ export class ManagedAgentService implements OnModuleInit {
         organizationId: context.config.organizationId,
         agentIdentifier: context.config.agentIdentifier,
         integrationIdentifier: context.config.integrationIdentifier,
+        integrationId: context.conversation.channels?.[0]?._integrationId ?? context.config.integrationId,
         agentId: agent._id,
         subscriberId: context.subscriber?.subscriberId ?? '',
         platform: context.config.platform,
@@ -159,13 +160,10 @@ export class ManagedAgentService implements OnModuleInit {
     pendingPlatformMessageId: string;
     agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
   }): Promise<ManagedAgentDispatchResult | null> {
-    const activity = await this.conversationActivityRepository.findOne(
-      {
-        _conversationId: params.conversation._id,
-        _environmentId: params.config.environmentId,
-        platformMessageId: params.pendingPlatformMessageId,
-      },
-      '*'
+    const activity = await this.conversationService.findByPlatformMessageId(
+      params.config.environmentId,
+      String(params.conversation._id),
+      params.pendingPlatformMessageId
     );
 
     if (!activity) {
@@ -268,6 +266,7 @@ export class ManagedAgentService implements OnModuleInit {
       organizationId: params.organizationId,
       agentIdentifier: params.agentIdentifier,
       integrationIdentifier: params.integrationIdentifier,
+      integrationId: channel?._integrationId ?? '',
       agentId: agent._id,
       subscriberId: params.subscriberId ?? '',
       platform: params.platform,
@@ -404,10 +403,13 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
-    const history = await this.conversationService.getHistory(
-      context.config.environmentId,
-      String(context.conversation._id)
-    );
+    const page = await this.conversationService.listForView({
+      view: 'llm_transcript',
+      environmentId: context.config.environmentId,
+      organizationId: context.config.organizationId,
+      conversationId: String(context.conversation._id),
+    });
+    const history = page.data;
 
     // TODO: should we persist just message activities? or all activities (tool calls, approvals, signals, etc.)?
     const messages: Message[] = history
@@ -450,6 +452,7 @@ export class ManagedAgentService implements OnModuleInit {
       organizationId: input.organizationId,
       agentIdentifier: input.agentIdentifier,
       integrationIdentifier: input.integrationIdentifier,
+      integrationId: input.integrationId,
       agentId: input.agentId,
       subscriberId: input.subscriberId,
       platform: input.platform,

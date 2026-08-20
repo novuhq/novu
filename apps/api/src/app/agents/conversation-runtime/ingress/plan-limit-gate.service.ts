@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { AgentEntitlementsService, PinoLogger } from '@novu/application-generic';
 import { ConversationEntity } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import type { CardElement, Thread } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAttributedNovuUrl } from '../../shared/util/novu-attribution-url';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -22,7 +23,7 @@ export function isLinkButtonActionId(id: string | undefined): boolean {
 /** Which plan entitlement caused an over-limit agent/channel/conversation to be soft-blocked at runtime. */
 export type PlanLimitBlockReason = 'agents' | 'channels' | 'conversations';
 
-const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
+export const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
   agents:
     "This agent isn't active on your current Novu plan — you've reached the number of agents included in your plan. Please upgrade your plan to activate it.",
   channels:
@@ -86,11 +87,51 @@ export class PlanLimitGateService {
   constructor(
     private readonly logger: PinoLogger,
     private readonly agentEntitlements: AgentEntitlementsService,
+    @Inject(forwardRef(() => OutboundGateway))
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationActivation: ConversationActivationService,
     private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  /**
+   * Sync gate for agent chat accept (`POST /agent-chat/conversations`) before minting
+   * `conv_*`. Returns block payload for HTTP 402; `null` when the turn may proceed.
+   * Keyless orgs skip; entitlement errors fail open (same as runtime gate).
+   */
+  async checkAgentChatAcceptLimits(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    params: { isNewThread: boolean; conversationId?: string }
+  ): Promise<{ reason: PlanLimitBlockReason; message: string } | null> {
+    if (config.isKeyless) {
+      return null;
+    }
+
+    try {
+      let conversation: ConversationEntity | undefined;
+      if (params.conversationId) {
+        conversation =
+          (await this.conversationService.findByPublicIdentifier(
+            config.environmentId,
+            config.organizationId,
+            params.conversationId
+          )) ?? undefined;
+      }
+
+      const block = await this.resolvePlanLimitBlock(agentId, config, {
+        includeConversationLimit: params.isNewThread || Boolean(params.conversationId),
+        isDirectMessage: true,
+        conversation,
+      });
+
+      return block ? { reason: block, message: PLAN_LIMIT_BLOCK_MESSAGES[block] } : null;
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Agent chat accept limit check failed, failing open`);
+
+      return null;
+    }
   }
 
   /**
@@ -108,25 +149,13 @@ export class PlanLimitGateService {
       return false;
     }
 
-    const { agentWithinLimit, channelWithinLimit } = await this.agentEntitlements.checkRuntimeLimits(
-      config.organizationId,
-      config.environmentId,
-      agentId,
-      config.providerId
-    );
-
-    let reason: PlanLimitBlockReason | null = null;
-    if (!agentWithinLimit) {
-      reason = 'agents';
-    } else if (!channelWithinLimit) {
-      reason = 'channels';
-    }
+    const reason = await this.resolveAgentChannelBlockReason(agentId, config);
 
     if (!reason) {
       return false;
     }
 
-    if (!isLinkButtonActionId(action?.id)) {
+    if (this.shouldPostUpgradeCard(config) && !isLinkButtonActionId(action?.id)) {
       await this.postUpgradeRequiredReply(agentId, config, thread, reason);
     }
 
@@ -155,12 +184,8 @@ export class PlanLimitGateService {
       return false;
     }
 
-    const { blocked } = await this.conversationActivation.shouldBlockFreeTier({
+    const blocked = await this.isConversationBlocked(agentId, config, {
       conversation,
-      platform: config.platform,
-      organizationId: config.organizationId,
-      environmentId: config.environmentId,
-      agentId,
       isDirectMessage: thread.isDM,
     });
 
@@ -168,9 +193,78 @@ export class PlanLimitGateService {
       return false;
     }
 
-    await this.postUpgradeRequiredReply(agentId, config, thread, 'conversations', conversation);
+    if (this.shouldPostUpgradeCard(config)) {
+      await this.postUpgradeRequiredReply(agentId, config, thread, 'conversations', conversation);
+    }
 
     return true;
+  }
+
+  /** Agent chat returns HTTP 402 on accept; skip in-thread upgrade cards at runtime. */
+  private shouldPostUpgradeCard(config: ResolvedAgentConfig): boolean {
+    return config.platform !== AgentPlatformEnum.AGENT_CHAT;
+  }
+
+  private async resolveAgentChannelBlockReason(
+    agentId: string,
+    config: ResolvedAgentConfig
+  ): Promise<Extract<PlanLimitBlockReason, 'agents' | 'channels'> | null> {
+    const { agentWithinLimit, channelWithinLimit } = await this.agentEntitlements.checkRuntimeLimits(
+      config.organizationId,
+      config.environmentId,
+      agentId,
+      config.providerId
+    );
+
+    if (!agentWithinLimit) {
+      return 'agents';
+    }
+
+    if (!channelWithinLimit) {
+      return 'channels';
+    }
+
+    return null;
+  }
+
+  private async isConversationBlocked(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    params: { conversation?: ConversationEntity; isDirectMessage: boolean }
+  ): Promise<boolean> {
+    const { blocked } = await this.conversationActivation.shouldBlockFreeTier({
+      conversation: params.conversation,
+      platform: config.platform,
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
+      isDirectMessage: params.isDirectMessage,
+    });
+
+    return blocked;
+  }
+
+  private async resolvePlanLimitBlock(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    params: { includeConversationLimit: boolean; isDirectMessage: boolean; conversation?: ConversationEntity }
+  ): Promise<PlanLimitBlockReason | null> {
+    const agentChannelReason = await this.resolveAgentChannelBlockReason(agentId, config);
+
+    if (agentChannelReason) {
+      return agentChannelReason;
+    }
+
+    if (!params.includeConversationLimit) {
+      return null;
+    }
+
+    const blocked = await this.isConversationBlocked(agentId, config, {
+      conversation: params.conversation,
+      isDirectMessage: params.isDirectMessage,
+    });
+
+    return blocked ? 'conversations' : null;
   }
 
   /** Fail-soft: failing to post the card must not crash the inbound webhook. */
@@ -186,7 +280,7 @@ export class PlanLimitGateService {
       // Pre-conversation gates (agents/channels, brand-new thread at conversations
       // limit) have nothing to attach history to — ephemeral platform delivery only.
       // When an existing conversation is blocked from a new activation, persist so
-      // the upgrade card appears in durable web-chat history.
+      // the upgrade card appears in durable agent-chat history.
       await this.outboundGateway.replyOnThreadWithCard(
         thread,
         card,

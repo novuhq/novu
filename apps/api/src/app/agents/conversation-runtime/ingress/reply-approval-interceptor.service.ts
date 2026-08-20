@@ -358,9 +358,14 @@ export class ReplyApprovalInterceptor {
     const { config, conversation } = turn;
 
     try {
-      const activities = await this.conversationService.getHistory(config.environmentId, conversation._id);
+      const page = await this.conversationService.listForView({
+        view: 'approval_activities',
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        conversationId: conversation._id,
+      });
 
-      return { activities, pending: findUnresolvedToolApprovalRequests(activities) };
+      return { activities: page.data, pending: findUnresolvedToolApprovalRequests(page.data) };
     } catch (err) {
       this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to load history for reply-based approval check`);
       captureAgentWarning(err, {

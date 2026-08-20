@@ -4,6 +4,7 @@ import { FilterQuery } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
+import { ActivityView, compileActivityViewMatch, viewUsesSequencePagination } from './activity-views';
 import {
   ConversationActivityDBModel,
   ConversationActivityEntity,
@@ -11,37 +12,12 @@ import {
   ConversationActivitySignalData,
   ConversationActivityToolData,
   ConversationActivityTypeEnum,
+  type RunLifecycleActivityType,
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
 
 const LIST_ACTIVITIES_SORT_FIELDS = ['_id', 'createdAt'] as const;
 type ListActivitiesSortField = (typeof LIST_ACTIVITIES_SORT_FIELDS)[number];
-
-/**
- * Which activity rows count as conversation events for a caller's read model.
- * The policy (types + sender types) is owned by the caller — e.g. the web-chat
- * module decides what its history surface exposes.
- */
-export interface ConversationEventActivityFilter {
-  /** MESSAGE rows count as events only for these sender types. */
-  messageSenderTypes: ConversationActivitySenderTypeEnum[];
-  /** Non-message activity types that count as events. */
-  eventTypes: ConversationActivityTypeEnum[];
-}
-
-function eventActivityQuery(filter: ConversationEventActivityFilter) {
-  return {
-    $or: [
-      {
-        type: ConversationActivityTypeEnum.MESSAGE,
-        senderType: { $in: filter.messageSenderTypes },
-      },
-      {
-        type: { $in: filter.eventTypes },
-      },
-    ],
-  };
-}
 
 function resolveListActivitiesSortBy(sortBy?: string): ListActivitiesSortField {
   if (sortBy && (LIST_ACTIVITIES_SORT_FIELDS as readonly string[]).includes(sortBy)) {
@@ -70,6 +46,77 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       sort: { createdAt: -1 },
       limit,
     });
+  }
+
+  async listForView(params: {
+    view: ActivityView;
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    limit: number;
+    /** Sequence cursor toward older history — only for `client_events`. */
+    before?: string;
+  }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
+    const viewMatch = compileActivityViewMatch(params.view);
+
+    if (viewUsesSequencePagination(params.view)) {
+      const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        sequence: { $type: 'number' },
+        ...viewMatch,
+      };
+
+      if (params.before) {
+        const cursor = await this.findOne(
+          {
+            _environmentId: params.environmentId,
+            _organizationId: params.organizationId,
+            _conversationId: params.conversationId,
+            _id: params.before,
+          },
+          '*'
+        );
+
+        if (!cursor || typeof cursor.sequence !== 'number') {
+          return { data: [], hasMore: false };
+        }
+
+        query.$and = [
+          {
+            $or: [{ sequence: { $lt: cursor.sequence } }, { sequence: cursor.sequence, _id: { $lt: cursor._id } }],
+          },
+        ];
+      }
+
+      const fetchLimit = params.limit + 1;
+      const data = await this.find(query, '*', {
+        sort: { sequence: -1, _id: -1 },
+        limit: fetchLimit,
+      });
+
+      return {
+        data: data.slice(0, params.limit),
+        hasMore: data.length > params.limit,
+      };
+    }
+
+    const data = await this.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        ...viewMatch,
+      },
+      '*',
+      {
+        sort: { createdAt: -1 },
+        limit: params.limit,
+      }
+    );
+
+    return { data, hasMore: false };
   }
 
   /** Resolves the activity for a specific platform-native message id (e.g. the message a reaction targets). */
@@ -103,61 +150,6 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       _organizationId: organizationId,
       _conversationId: conversationId,
     });
-  }
-
-  /**
-   * Newest-first page of event-capable activities that already carry a stored
-   * sequence. Used by web-chat history open/resume (`before` = older cursor).
-   */
-  async listEventActivities(params: {
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    /** Activity `_id` from the previous page's oldest row — fetch older history. */
-    before?: string;
-    limit: number;
-    filter: ConversationEventActivityFilter;
-  }): Promise<{ data: ConversationActivityEntity[]; hasMore: boolean }> {
-    const query: FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds = {
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-      _conversationId: params.conversationId,
-      sequence: { $type: 'number' },
-      ...eventActivityQuery(params.filter),
-    };
-
-    if (params.before) {
-      const cursor = await this.findOne(
-        {
-          _environmentId: params.environmentId,
-          _organizationId: params.organizationId,
-          _conversationId: params.conversationId,
-          _id: params.before,
-        },
-        '*'
-      );
-
-      if (!cursor || typeof cursor.sequence !== 'number') {
-        return { data: [], hasMore: false };
-      }
-
-      query.$and = [
-        {
-          $or: [{ sequence: { $lt: cursor.sequence } }, { sequence: cursor.sequence, _id: { $lt: cursor._id } }],
-        },
-      ];
-    }
-
-    const fetchLimit = params.limit + 1;
-    const data = await this.find(query, '*', {
-      sort: { sequence: -1, _id: -1 },
-      limit: fetchLimit,
-    });
-
-    return {
-      data: data.slice(0, params.limit),
-      hasMore: data.length > params.limit,
-    };
   }
 
   /**
@@ -322,6 +314,37 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  async createRunActivity(params: {
+    identifier: string;
+    conversationId: string;
+    platform: string;
+    integrationId: string;
+    platformThreadId: string;
+    senderId: string;
+    content: string;
+    type: RunLifecycleActivityType;
+    richContent?: Record<string, unknown>;
+    sequence?: number;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<ConversationActivityEntity> {
+    return this.create({
+      identifier: params.identifier,
+      _conversationId: params.conversationId,
+      type: params.type,
+      platform: params.platform,
+      _integrationId: params.integrationId,
+      platformThreadId: params.platformThreadId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      senderId: params.senderId,
+      content: params.content,
+      ...(params.richContent !== undefined ? { richContent: params.richContent } : {}),
+      ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+    });
+  }
+
   async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
@@ -350,6 +373,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     sortBy = 'createdAt',
     sortDirection = 1,
     includeCursor = false,
+    view,
   }: {
     organizationId: string;
     environmentId: string;
@@ -360,6 +384,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     sortBy?: string;
     sortDirection?: SortOrder;
     includeCursor?: boolean;
+    view?: ActivityView;
   }): Promise<{
     data: ConversationActivityEntity[];
     next: string | null;
@@ -401,9 +426,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       _environmentId: environmentId,
       _organizationId: organizationId,
       _conversationId: conversationId,
+      ...(view ? compileActivityViewMatch(view) : {}),
     };
 
-    return this.findWithCursorBasedPagination({
+    const pagination = await this.findWithCursorBasedPagination({
       after: afterCursor,
       before: beforeCursor,
       paginateField: '_id',
@@ -414,5 +440,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       query,
       select: '*',
     });
+
+    return pagination;
   }
 }

@@ -12,6 +12,7 @@ export interface NovuEmailAdapterConfig {
   senderName?: string;
   signingSecret: string;
   sendEmail: (params: SendEmailParams) => Promise<{ messageId?: string }>;
+  stripAgentReplyToken: (address: string) => string;
   /**
    * Resolves a URL for an interactive `<Button id="…">` rendered inside an outbound email.
    * Called once per button before the email HTML is rendered. When omitted, action buttons
@@ -81,6 +82,8 @@ export interface NovuEmailRawMessage {
   headers?: Record<string, string>;
   domain?: EmailWebhookDomainContext;
   route?: EmailWebhookRouteContext;
+  /** Decoded `Message._id` from a trailing `+nv{base36}` Reply-To token, when present. */
+  originToken?: string;
   createdAt: string;
   attachments?: NovuEmailAttachment[];
   /**

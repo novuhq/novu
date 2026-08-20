@@ -5,6 +5,7 @@ import { defaultCustomCodeScaffoldDirName, resolveAgentHandlerPathIfExists } fro
 import { resolveEmptyDirScaffoldTarget } from '../bridge/confirm-empty-dir-scaffold';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
+import { describeLlmAuthChoice } from '../llm-auth/llm-auth-options';
 import { resolveLlmAuthChoice } from '../llm-auth/resolve-llm-auth';
 import type { LlmAuthChoice } from '../llm-auth/types';
 import type {
@@ -19,6 +20,12 @@ type ReconcileOptions = {
   skippedInstall?: boolean;
   agentFilePath?: string;
 };
+
+function deferInkInput(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
 
 export async function runBridgeAdapterProjectSetup(
   input: BridgeAdapterSetupInput,
@@ -56,10 +63,13 @@ export async function runBridgeAdapterProjectSetup(
     ui: input.ui,
   });
 
+  await deferInkInput();
+
   const confirmed = await input.ui.confirmScaffold({
     projectDir: target.projectDir,
     appName: target.appName,
     variant: adapter.variant,
+    llmAuthLabel: describeLlmAuthChoice(llmAuth),
   });
 
   if (!confirmed) {
@@ -352,7 +362,9 @@ async function promptTunnelIfReady(opts: {
     return false;
   }
 
-  if (!isWiringReadyForTunnel(opts.adapter, opts.reconcilePlan.requirements, opts.reconcilePlan.projectDir)) {
+  if (
+    !isBridgeAdapterWiringReadyForTunnel(opts.adapter, opts.reconcilePlan.requirements, opts.reconcilePlan.projectDir)
+  ) {
     return false;
   }
 
@@ -403,14 +415,14 @@ function shouldRunTunnel(
     return false;
   }
 
-  if (!isWiringReadyForTunnel(adapter, outcome.requirements, outcome.projectDir, outcome.scaffolded)) {
+  if (!isBridgeAdapterWiringReadyForTunnel(adapter, outcome.requirements, outcome.projectDir, outcome.scaffolded)) {
     return false;
   }
 
   return outcome.tunnelAccepted === true;
 }
 
-function isWiringReadyForTunnel(
+export function isBridgeAdapterWiringReadyForTunnel(
   adapter: BridgeAdapter,
   requirements: BridgeRequirement[] | undefined,
   projectDir: string,

@@ -11,7 +11,6 @@ Novu provides a unified integration layer that connects your workflows to these 
 ## Key features
 
 - **Multi-provider support**: Integrate any major provider like SendGrid, SES, or Mailgun.
-- **Failover mechanisms**: Automatically retry with a backup provider to ensure reliability.
 - **Activity tracking**: Track delivery status, open rates, and more in the Novu dashboard. See [Activity Tracking](/platform/integrations/email/activity-tracking).
 
 <Note>
@@ -91,7 +90,37 @@ You can control advanced email features at runtime by passing data in your trigg
 
 You can send attachments by passing an `attachments` array in the `payload` of your trigger. The attachment file can be provided as a `buffer` or a `base64` encoded string.
 
-There is a total limit of 20MB for all attachments included in an email.
+Each attachment object requires three fields:
+
+| Field  | Type                | Description                                                                                   |
+| ------ | ------------------- | --------------------------------------------------------------------------------------------- |
+| `file` | `Buffer` \| `string`| The file contents. Provide a `Buffer` or a **pure base64 string** — do not include a `data:<mime>;base64,` prefix. |
+| `name` | `string`            | The file name, including its extension (for example `report.pdf`).                            |
+| `mime` | `string`            | The MIME type of the file (for example `application/pdf`).                                    |
+
+There is a total limit of 20MB for all attachments included in an email. Attachments are excluded from the 512KB trigger payload limit — see [Payload Limits](/api-reference/payload-limits).
+
+Common MIME types you may need:
+
+| File type              | MIME type                                                                 |
+| ---------------------- | ------------------------------------------------------------------------- |
+| PDF (`.pdf`)           | `application/pdf`                                                         |
+| Word (`.docx`)         | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` |
+| Word (`.doc`)          | `application/msword`                                                      |
+| Excel (`.xlsx`)        | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`       |
+| CSV (`.csv`)           | `text/csv`                                                                |
+| Plain text (`.txt`)    | `text/plain`                                                              |
+| PNG (`.png`)           | `image/png`                                                               |
+| JPEG (`.jpg`, `.jpeg`) | `image/jpeg`                                                              |
+| ZIP (`.zip`)           | `application/zip`                                                         |
+
+<Note>
+  Attachments belong in `payload`, not `overrides`. The `overrides.email` object is only for the fields listed in [Sending email overrides](#sending-email-overrides) (`bcc`, `cc`, `from`, `replyTo`, `replaceToRecipient`, `senderName`, `text`, `to`) — passing an `attachments` array there has no effect.
+</Note>
+
+<Note>
+  If your `file` value is a base64 data URL that starts with `data:...;base64,`, strip that prefix before triggering. Novu expects the raw base64 payload only; passing the complete data URL produces invalid attachment content.
+</Note>
 
 <Tabs>
   <Tab title="Node.js">

@@ -23,9 +23,9 @@ describe('ReplyApprovalInterceptor', () => {
   function makeDeps(history: unknown[] = [pendingRequest, requesterMessage]) {
     const channel = { platform: 'sendblue', platformThreadId: 'sendblue:+15551234567' };
     const conversationService = {
-      getHistory: sinon.stub().resolves(history),
       getPrimaryChannel: sinon.stub().returns(channel),
       persistToolApprovalDecision: sinon.stub().resolves(undefined),
+      listForView: sinon.stub().resolves({ data: history, hasMore: false }),
     };
     const outboundGateway = {
       replyOnThread: sinon.stub().resolves({ messageId: 'ack-1', platformThreadId: channel.platformThreadId }),
@@ -295,7 +295,7 @@ describe('ReplyApprovalInterceptor', () => {
     const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
 
     expect(consumed).to.equal(false);
-    expect(conversationService.getHistory.called).to.equal(false);
+    expect(conversationService.listForView.called).to.equal(false);
     expect(runtime.dispatch.called).to.equal(false);
   });
 
@@ -566,7 +566,7 @@ describe('ReplyApprovalInterceptor', () => {
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(conversationService.getHistory.called).to.equal(false);
+      expect(conversationService.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 
@@ -578,7 +578,7 @@ describe('ReplyApprovalInterceptor', () => {
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(conversationService.getHistory.called).to.equal(false);
+      expect(conversationService.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 
@@ -590,7 +590,7 @@ describe('ReplyApprovalInterceptor', () => {
       const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
-      expect(conversationService.getHistory.called).to.equal(false);
+      expect(conversationService.listForView.called).to.equal(false);
       expect(runtime.dispatch.called).to.equal(false);
     });
 

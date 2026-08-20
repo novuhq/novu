@@ -65,11 +65,11 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
       patchConsole: false,
       exitOnCtrlC: false,
       /**
-       * Only re-emit terminal lines that changed between frames. Without this,
-       * the orb animation (~10 fps) redraws the whole screen and clears any
-       * active mouse selection on static URL lines (auth, Slack OAuth, etc.).
+       * Full redraw each frame. Incremental mode (~10 fps orb + arrow-key menu)
+       * corrupts Ink's cursor tracking and duplicates channel picker rows.
+       * Copyable URL phases pause the orb so URL lines are not redrawn every frame.
        */
-      incrementalRendering: true,
+      incrementalRendering: false,
       // No alternate-screen here: the connect flow is short and we want the
       // final success message to remain visible in scrollback after exit.
     }
@@ -93,12 +93,19 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     console.log('');
   };
 
+  let embedSuccessDismissWait: Promise<void> | undefined;
+
   const shutdown = async () => {
     if (terminalReleased) {
       const exitCode = Number(process.exitCode ?? 0);
       resolveDoneOnce(exitCode);
 
       return exitCode;
+    }
+
+    if (embedSuccessDismissWait) {
+      await embedSuccessDismissWait;
+      embedSuccessDismissWait = undefined;
     }
 
     // Hold the final frame (error or success) on screen long enough for the
@@ -121,6 +128,9 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     releaseTerminal,
     isTerminalReleased: () => terminalReleased,
     pendingInteraction,
+    setEmbedSuccessDismissWait: (wait) => {
+      embedSuccessDismissWait = wait;
+    },
   });
 
   return { ui, done };
@@ -133,8 +143,30 @@ function createUiController(
     releaseTerminal: () => Promise<void>;
     isTerminalReleased: () => boolean;
     pendingInteraction: PendingInteractionRegistry;
+    setEmbedSuccessDismissWait: (wait: Promise<void> | undefined) => void;
   }
 ): ConnectUI {
+  const offerBridgeTunnelImpl = ({
+    projectDir,
+    devCommand,
+  }: {
+    projectDir: string;
+    devCommand: string;
+  }): Promise<BridgeTunnelOfferResult> => {
+    if (ctx.isTerminalReleased()) {
+      return promptBridgeTunnelInConsole({ projectDir, devCommand });
+    }
+
+    return new Promise<BridgeTunnelOfferResult>((resolve) => {
+      store.phase.set({
+        kind: 'bridge-tunnel-offer',
+        projectDir,
+        devCommand,
+        resolve,
+      });
+    });
+  };
+
   return {
     interactive: true,
     releaseTerminal: ctx.releaseTerminal,
@@ -263,9 +295,9 @@ function createUiController(
         });
       });
     },
-    confirmScaffold({ projectDir, appName, variant }) {
+    confirmScaffold({ projectDir, appName, variant, llmAuthLabel }) {
       if (ctx.isTerminalReleased()) {
-        return promptConfirmScaffoldInConsole({ projectDir, appName, variant });
+        return promptConfirmScaffoldInConsole({ projectDir, appName, variant, llmAuthLabel });
       }
 
       return new Promise<boolean>((resolve) => {
@@ -274,6 +306,7 @@ function createUiController(
           projectDir,
           appName,
           variant,
+          llmAuthLabel,
           resolve,
         });
       });
@@ -347,20 +380,7 @@ function createUiController(
         });
       });
     },
-    offerBridgeTunnel({ projectDir, devCommand }) {
-      if (ctx.isTerminalReleased()) {
-        return promptBridgeTunnelInConsole({ projectDir, devCommand });
-      }
-
-      return new Promise<BridgeTunnelOfferResult>((resolve) => {
-        store.phase.set({
-          kind: 'bridge-tunnel-offer',
-          projectDir,
-          devCommand,
-          resolve,
-        });
-      });
-    },
+    offerBridgeTunnel: offerBridgeTunnelImpl,
     pickChannel() {
       return new Promise((resolve) => {
         store.phase.set({ kind: 'pick-channel', resolve });
@@ -544,6 +564,31 @@ function createUiController(
     slackSkipped() {
       // No interim screen — the success screen reports skipped state.
     },
+    addingAgentChatIntegration() {
+      store.phase.set({ kind: 'adding-agent-chat' });
+    },
+    awaitAgentChatHandoff({ dashboardUrl, embedPromptFile }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({
+          kind: 'agent-chat-handoff',
+          dashboardUrl,
+          embedPromptFile,
+          resolve,
+        });
+      });
+    },
+    pickAgentChatSetup({ projectKind }) {
+      return new Promise((resolve) => {
+        store.phase.set({
+          kind: 'pick-agent-chat-setup',
+          projectKind,
+          resolve,
+        });
+      });
+    },
+    scaffoldingAgentChat() {
+      store.phase.set({ kind: 'scaffolding-agent-chat' });
+    },
     sendingWelcome() {
       store.phase.set({ kind: 'sending-welcome' });
     },
@@ -558,8 +603,15 @@ function createUiController(
         return;
       }
 
-      store.phase.set({
-        kind: 'success',
+      const embedPrompt = result.agentChatHandoff?.embedPrompt;
+      const alreadyWired = result.agentChatOutcome?.alreadyWired === true;
+      const awaitsEmbedDismiss =
+        result.connectedChannel === 'agent-chat' &&
+        result.agentChatOutcome?.mode === 'embed' &&
+        (Boolean(embedPrompt) || alreadyWired);
+
+      const successPhase = {
+        kind: 'success' as const,
         agent: result.agent,
         dashboardUrl: result.dashboardUrl,
         connectDashboardUrl: result.connectDashboardUrl,
@@ -573,7 +625,26 @@ function createUiController(
         aiSdkOutcome: result.aiSdkOutcome,
         langChainOutcome: result.langChainOutcome,
         customCodeOutcome: result.customCodeOutcome,
-      });
+        agentChatOutcome: result.agentChatOutcome,
+        agentChatHandoff: result.agentChatHandoff,
+        embedPrompt: awaitsEmbedDismiss ? embedPrompt : undefined,
+        embedPromptFile: awaitsEmbedDismiss
+          ? (result.agentChatHandoff?.embedPromptFile ?? result.agentChatOutcome?.embedPromptFile)
+          : undefined,
+        resolveDismiss: undefined as (() => void | Promise<void>) | undefined,
+      };
+
+      if (awaitsEmbedDismiss) {
+        const dismissWait = new Promise<void>((resolve) => {
+          successPhase.resolveDismiss = () => resolve();
+          store.phase.set(successPhase);
+        });
+        ctx.setEmbedSuccessDismissWait(dismissWait);
+
+        return;
+      }
+
+      store.phase.set(successPhase);
     },
     failure(message) {
       if (ctx.isTerminalReleased()) {

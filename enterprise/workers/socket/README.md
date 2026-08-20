@@ -4,19 +4,37 @@ Cloudflare Worker + Durable Object for Novu Cloud WebSockets (PartySocket).
 
 ## Local development
 
-This package is standalone (not in the pnpm workspace). From this directory:
+This package is part of the pnpm workspace (see `pnpm-workspace.yaml`).
+
+Install dependencies from the repo root:
 
 ```bash
-npm install
+pnpm install
+```
+
+Run from the repo root:
+
+```bash
+pnpm dev:socket-worker
+```
+
+Or run directly from this folder:
+
+```bash
+pnpm run dev
+```
+
+`pnpm run dev` runs `wrangler dev --env local` on **`http://127.0.0.1:8787`**.
+
+Local `thalamus-observer` uses **8788** so both workers can run at once; keep socket on 8787.
+
+First-time setup in this folder:
+
+```bash
 cp .dev.vars.example .dev.vars
 # Fill JWT_SECRET and INTERNAL_API_KEY from apps/api/src/.env
 # (INTERNAL_API_KEY must match INTERNAL_SERVICES_API_KEY)
-npm run dev
 ```
-
-`npm run dev` runs `wrangler dev --env local` (usually `http://127.0.0.1:8787`).
-
-Local `thalamus-observer` uses **8788** so both workers can run at once; keep socket on 8787.
 
 `.dev.vars` is gitignored. The `local` wrangler env sets `API_URL` to `http://127.0.0.1:3000`.
 

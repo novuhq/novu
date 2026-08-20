@@ -1,6 +1,8 @@
 import {
   AgentRepository,
+  ChannelConnectionRepository,
   ChannelEndpointRepository,
+  ContextRepository,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
@@ -392,6 +394,63 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(bridgeCalls.length).to.equal(1);
       expect(bridgeCalls[0].subscriber, 'custom-code open must Pass null, not auto-provision').to.equal(null);
+    });
+  });
+
+  describe('Context bridge URL override', () => {
+    const channelConnectionRepository = new ChannelConnectionRepository();
+    const contextRepository = new ContextRepository();
+
+    async function setWorkspaceContextKeys(contextKeys: string[]) {
+      await channelConnectionRepository.update(
+        {
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+          integrationIdentifier: ctx.integrationIdentifier,
+          'workspace.id': 'W_TEAM',
+        },
+        { $set: { contextKeys } }
+      );
+    }
+
+    async function createContext(type: string, id: string, bridgeUrl?: string) {
+      await contextRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        type,
+        id,
+        key: `${type}:${id}`,
+        data: {},
+        ...(bridgeUrl ? { bridgeUrl } : {}),
+      });
+    }
+
+    it('routes the bridge call to a resolved context bridgeUrl override', async () => {
+      const overrideUrl = 'https://tenant-acme.example.com/api/novu';
+      await createContext('tenant', 'wh-override-acme', overrideUrl);
+      await setWorkspaceContextKeys(['tenant:wh-override-acme']);
+
+      const threadId = `T_CTX_OVERRIDE_${Date.now()}`;
+      const msg = { ...mockMessage({ userId: 'U_CTX', text: 'route me' }), raw: { team_id: 'W_TEAM' } };
+
+      await invokeInbound(threadId, msg as any);
+
+      expect(bridgeCalls.length).to.equal(1);
+      expect(bridgeCalls[0].bridgeUrlOverride).to.equal(overrideUrl);
+      expect(bridgeCalls[0].context).to.have.property('tenant');
+    });
+
+    it('leaves bridgeUrlOverride undefined when the resolved context has no bridgeUrl', async () => {
+      await createContext('tenant', 'wh-plain-acme');
+      await setWorkspaceContextKeys(['tenant:wh-plain-acme']);
+
+      const threadId = `T_CTX_PLAIN_${Date.now()}`;
+      const msg = { ...mockMessage({ userId: 'U_CTX2', text: 'no override' }), raw: { team_id: 'W_TEAM' } };
+
+      await invokeInbound(threadId, msg as any);
+
+      expect(bridgeCalls.length).to.equal(1);
+      expect(bridgeCalls[0].bridgeUrlOverride).to.equal(undefined);
     });
   });
 

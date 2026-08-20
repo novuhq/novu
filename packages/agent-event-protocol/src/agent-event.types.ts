@@ -1,5 +1,10 @@
-import type { AgentMessageRole } from './agent-message.types';
-import type { AgentFileRef, AgentMessageContent, AgentToolResultContent, AgentToolSource } from './wire-content.types';
+import type {
+  AgentFileRef,
+  AgentMessageContent,
+  AgentMessageRole,
+  AgentToolResultContent,
+  AgentToolSource,
+} from './wire-content.types';
 
 export const AGENT_EVENT_PROTOCOL_VERSION = 1 as const;
 
@@ -18,6 +23,16 @@ export interface AgentApprovalRequest {
   toolName: string;
   input?: Record<string, unknown>;
   source?: AgentToolSource;
+  /**
+   * Server-minted platform action ids for headless / card UIs to echo back.
+   * Clients must not invent these — grammars differ across runtimes.
+   */
+  approveActionId?: string;
+  denyActionId?: string;
+  /** Server-minted always-allow-this-tool action id. Echo via respondToAction / card click. */
+  trustToolActionId?: string;
+  /** Server-minted always-allow-MCP-server action id (MCP tools only). */
+  trustServerActionId?: string;
 }
 
 export type AgentSignal =
@@ -75,6 +90,8 @@ export type AgentEvent =
   | { type: 'tool-use-result'; toolUseId: string; content: AgentToolResultContent[]; isError?: boolean }
   | ({
       type: 'tool-approval-request';
+      /** Stable assistant message id used to preserve the approval's timeline position during history replay. */
+      messageId?: string;
       /** When true, no companion message carries the approval UI. The consumer should render its default approval card. */
       deliverCard?: boolean;
     } & AgentApprovalRequest)
@@ -84,6 +101,21 @@ export type AgentEvent =
       decision: 'approved' | 'denied';
       reason?: string;
       automatic?: boolean;
+    }
+  | {
+      type: 'mcp-connection-request';
+      actionId: string;
+      mcpId: string;
+      displayName: string;
+      authorizeUrl: string;
+      authorizeUrlWithAutoApprove?: string;
+    }
+  | {
+      type: 'mcp-connection-result';
+      actionId: string;
+      mcpId: string;
+      status: 'connected' | 'failed';
+      message?: string;
     }
   // Conversation ops
   | { type: 'resolve'; summary?: string }

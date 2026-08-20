@@ -306,11 +306,60 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
+
+### Push step content
+
+The Push step in the workflow editor has two content fields. Each one can hold static text or dynamic values using `{{subscriber.*}}` and `{{payload.*}}` variables, which Novu resolves at send time.
+
+| Push step field | Delivered as | APNS payload key |
+| --- | --- | --- |
+| Subject | Notification title | `aps.alert.title` |
+| Body | Notification message | `aps.alert.body` |
+
+For example, a step with the subject `New comment from {{payload.authorName}}` and the body `{{payload.commentText}}` is delivered to the device like this:
+
+```json
+{
+  "aps": {
+    "alert": {
+      "title": "New comment from Albert",
+      "body": "Looks great, ship it!"
+    }
+  }
+}
+```
+
+<Note>
+  The Subject and Body you set in the step are the default title and body. You can replace them for a specific trigger by sending `title` or `body` under `overrides.providers.apns`, described below.
+</Note>
+
 ## Customizing notifications with overrides
 
-Novu supports an `overrides` field that lets you attach APNS-specific payload parameters when triggering a workflow.
+Novu's APNS integration is built on the [`@parse/node-apn`](https://github.com/parse-community/node-apn) library. When you pass overrides under `providers.apns` at trigger time, Novu forwards those fields to the library, which builds the notification payload (the `aps` dictionary) and sets the matching APNS request headers, such as `apns-priority` and `apns-topic`, for you.
 
-The `overrides` field supports all [APNS Notification payload](https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/generating_a_remote_notification?language=objc) values. Here is an example:
+You do not need to hand-build the `aps` dictionary or set raw headers yourself. Use the field names below and Novu maps them to the correct APNS payload keys and headers.
+
+| Override field | Maps to | Type or values | Notes |
+| --- | --- | --- | --- |
+| `title` | `aps.alert.title` | `string` | Overrides the push step title |
+| `body` | `aps.alert.body` | `string` | Overrides the push step body |
+| `subtitle` | `aps.alert.subtitle` | `string` | Secondary line under the title |
+| `sound` | `aps.sound` | `string` or object | Use `"default"` for the standard sound |
+| `badge` | `aps.badge` | `number` | App icon badge count |
+| `category` | `aps.category` | `string` | Actionable notification category |
+| `threadId` | `aps.thread-id` | `string` | Groups related notifications |
+| `priority` | `apns-priority` header | `10` (default) or `5` | `10` delivers immediately, `5` conserves device power. Use `10` for VoIP |
+| `topic` | `apns-topic` header | `string` | Defaults to your integration Bundle ID. For VoIP, use `<bundle-id>.voip` |
+| `collapseId` | `apns-collapse-id` header | `string` | Collapses notifications that share the same id |
+| `pushType` | `apns-push-type` header | `"alert"`, `"background"`, or `"voip"` | Must match the payload contents. Use `"voip"` for CallKit / PushKit |
+| `expiry` | `apns-expiration` header | `number` (UNIX timestamp) | `0` tells APNS not to retry |
+| `rawPayload` | Full notification body | `object` | Sent as-is. Skips the usual `aps` / title / body mapping. Use this for CallKit payloads |
+
+<Note>
+  Anything you send in the trigger `payload` is delivered alongside the `aps` dictionary as the notification's custom data, so you usually do not need to override the payload to pass app-specific values. If you set `rawPayload`, that object becomes the entire body instead.
+</Note>
+
+Here is an example that sets the sound and badge, and adjusts the `apns-priority` and `apns-topic` headers. The `topic` field is optional since it defaults to your integration Bundle ID:
 
 <Tabs>
   <Tab title="Node.js">
@@ -326,20 +375,15 @@ await novu.trigger({
     "abc": "def"
 },
   overrides: {
-    "apns": {
-        "payload": {
-            "aps": {
-                "notification": {
-                    "title": "Test",
-                    "body": "Test push"
-                },
-                "data": {
-                    "key": "value"
-                }
-            }
-        }
-    }
-},
+    providers: {
+      apns: {
+        sound: "default",
+        badge: 1,
+        priority: 5,
+        topic: "com.acme.app",
+      },
+    },
+  },
 });
 ```
   </Tab>
@@ -357,20 +401,15 @@ with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
         "abc": "def"
 },
         overrides={
-        "apns": {
-                "payload": {
-                        "aps": {
-                                "notification": {
-                                        "title": "Test",
-                                        "body": "Test push"
-                                },
-                                "data": {
-                                        "key": "value"
-                                }
-                        }
-                }
-        }
-},
+            "providers": {
+                "apns": {
+                    "sound": "default",
+                    "badge": 1,
+                    "priority": 5,
+                    "topic": "com.acme.app",
+                },
+            },
+        },
     ))
 ```
   </Tab>
@@ -394,18 +433,13 @@ res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
     Payload: map[string]any{
         "abc": "def",
     },
-    Overrides: map[string]any{
-        "apns": map[string]any{
-            "payload": map[string]any{
-                "aps": map[string]any{
-                    "notification": map[string]any{
-                        "title": "Test",
-                        "body":  "Test push",
-                    },
-                    "data": map[string]any{
-                        "key": "value",
-                    },
-                },
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "apns": map[string]any{
+                "sound":    "default",
+                "badge":    1,
+                "priority": 5,
+                "topic":    "com.acme.app",
             },
         },
     },
@@ -425,17 +459,12 @@ $sdk->trigger(
         to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
         payload: ['abc' => 'def'],
         overrides: [
-            'apns' => [
-                'payload' => [
-                    'aps' => [
-                        'notification' => [
-                            'title' => 'Test',
-                            'body' => 'Test push',
-                        ],
-                        'data' => [
-                            'key' => 'value',
-                        ],
-                    ],
+            'providers' => [
+                'apns' => [
+                    'sound' => 'default',
+                    'badge' => 1,
+                    'priority' => 5,
+                    'topic' => 'com.acme.app',
                 ],
             ],
         ],
@@ -458,17 +487,12 @@ await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
         { "abc", "def" },
     },
     Overrides = new Overrides() {
-        Push = new Dictionary<string, object>() {
-            { "payload", new Dictionary<string, object>() {
-                { "aps", new Dictionary<string, object>() {
-                    { "notification", new Dictionary<string, object>() {
-                        { "title", "Test" },
-                        { "body", "Test push" },
-                    } },
-                    { "data", new Dictionary<string, object>() {
-                        { "key", "value" },
-                    } },
-                } },
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "apns", new Dictionary<string, object>() {
+                { "sound", "default" },
+                { "badge", 1 },
+                { "priority", 5 },
+                { "topic", "com.acme.app" },
             } },
         },
     },
@@ -489,11 +513,11 @@ novu.trigger()
         .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
         .payload(Map.of("abc", "def"))
         .overrides(TriggerEventRequestDtoOverrides.builder()
-            .additionalProperties(Map.of("apns", Map.of(
-                "payload", Map.of(
-                    "aps", Map.of(
-                        "notification", Map.of("title", "Test", "body", "Test push"),
-                        "data", Map.of("key", "value"))))))
+            .additionalProperties(Map.of("providers", Map.of("apns", Map.ofEntries(
+                Map.entry("sound", "default"),
+                Map.entry("badge", 1),
+                Map.entry("priority", 5),
+                Map.entry("topic", "com.acme.app")))))
             .build())
         .build())
     .call();
@@ -513,16 +537,407 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
         "abc": "def"
     },
     "overrides": {
-        "apns": {
-            "payload": {
-                "aps": {
-                    "notification": {
-                        "title": "Test",
-                        "body": "Test push"
+        "providers": {
+            "apns": {
+                "sound": "default",
+                "badge": 1,
+                "priority": 5,
+                "topic": "com.acme.app"
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+### Sending custom data
+
+Novu builds the `aps` dictionary for you from the fields in the table above. Any keys you send in the trigger `payload` are delivered at the root of the notification, next to `aps`, as your app's custom data. You do not need a separate `data` field.
+
+For example, triggering the workflow with this payload:
+
+```json
+"payload": {
+  "orderId": "12345",
+  "deepLink": "app://orders/12345"
+}
+```
+
+delivers the following notification to the device:
+
+```json
+{
+  "orderId": "12345",
+  "deepLink": "app://orders/12345",
+  "aps": {
+    "alert": {
+      "title": "Your order shipped",
+      "body": "Order 12345 is on its way"
+    }
+  }
+}
+```
+
+<Note>
+  Because Novu generates the `aps` dictionary from the fields in the table above, an `aps` object nested inside a `payload` override is not applied. Use the fields above to shape `aps`, and the trigger `payload` to pass custom data.
+</Note>
+
+## VoIP pushes for CallKit and PushKit
+
+iOS incoming-call flows (CallKit / PushKit) need a true VoIP push. Apple requires:
+
+- `apns-push-type: voip`
+- `apns-topic` set to your app's VoIP topic (`<bundle-id>.voip`)
+- A [PushKit](https://developer.apple.com/documentation/pushkit) VoIP device token (not the regular remote-notification token)
+
+Novu supports this with APNS overrides (`pushType`, `topic`, `rawPayload`). Unlike email or SMS, a Push step does **not** let you pin the send to one integration with `integrationIdentifier`. It delivers through every active push integration that has device tokens for that subscriber, and `overrides.providers.apns` is applied to each APNS integration the same way.
+
+Because of that, use a dedicated VoIP APNS integration and keep token types on the matching integration:
+
+1. Create an APNS integration used only for VoIP (for example identifier `apns-voip`). Reuse the same `.p8` key, Key ID, and Team ID if you already have an alert integration. Set **Bundle ID** to your VoIP topic (`com.example.app.voip`), or keep the app Bundle ID and override `topic` at trigger time.
+2. Register the PushKit VoIP token on that integration with `integrationIdentifier`. Store regular remote-notification tokens only on your alert APNS integration, not on the VoIP one.
+3. Trigger a workflow that includes a Push step, and set `pushType`, `topic`, and `rawPayload` under `overrides.providers.apns`.
+
+If a subscriber has tokens on both APNS integrations, an incoming-call trigger still attempts delivery on the alert integration with the VoIP overrides. APNS rejects that attempt; the VoIP send can still succeed, and the rejected attempt appears in activity. The same cross-talk happens in reverse on alert workflows. There is no push equivalent of email/SMS `integrationIdentifier` override to send through only one integration.
+
+Store the VoIP token on the VoIP integration:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Apns,
+    integrationIdentifier: "apns-voip",
+    credentials: { deviceTokens: [voipToken] },
+  },
+  "subscriberId"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.APNS,
+            "integration_identifier": "apns-voip",
+            "credentials": {"deviceTokens": [voip_token]},
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumApns,
+    IntegrationIdentifier: novugo.String("apns-voip"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{voipToken},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::Apns,
+        integrationIdentifier: 'apns-voip',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: [$voipToken],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.Apns,
+        IntegrationIdentifier = "apns-voip",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { voipToken },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.APNS)
+        .integrationIdentifier("apns-voip")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of(voipToken))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "apns",
+  "integrationIdentifier": "apns-voip",
+  "credentials": {
+    "deviceTokens": ["VOIP_DEVICE_TOKEN"]
+  }
+}'
+```
+  </Tab>
+</Tabs>
+
+Then trigger with VoIP overrides. `rawPayload` is the CallKit payload your app expects. When it is set, Novu sends that object as the full notification body (no generated `aps.alert` from the Push step Subject / Body):
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "incoming-call",
+  to: { subscriberId: "subscriberId" },
+  payload: {},
+  overrides: {
+    providers: {
+      apns: {
+        pushType: "voip",
+        topic: "com.example.app.voip",
+        priority: 10,
+        rawPayload: {
+          uuid: "019fef37-c728-709c-aac4-3a4740139a11",
+          nameCaller: "Jane Doe",
+          handle: "Handler",
+          isVideo: true,
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="incoming-call",
+        to={"subscriber_id": "subscriberId"},
+        payload={},
+        overrides={
+            "providers": {
+                "apns": {
+                    "pushType": "voip",
+                    "topic": "com.example.app.voip",
+                    "priority": 10,
+                    "rawPayload": {
+                        "uuid": "019fef37-c728-709c-aac4-3a4740139a11",
+                        "nameCaller": "Jane Doe",
+                        "handle": "Handler",
+                        "isVideo": True,
                     },
-                    "data": {
-                        "key": "value"
-                    }
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "incoming-call",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "apns": map[string]any{
+                "pushType": "voip",
+                "topic":    "com.example.app.voip",
+                "priority": 10,
+                "rawPayload": map[string]any{
+                    "uuid":       "019fef37-c728-709c-aac4-3a4740139a11",
+                    "nameCaller": "Jane Doe",
+                    "handle":     "Handler",
+                    "isVideo":    true,
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'incoming-call',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [],
+        overrides: [
+            'providers' => [
+                'apns' => [
+                    'pushType' => 'voip',
+                    'topic' => 'com.example.app.voip',
+                    'priority' => 10,
+                    'rawPayload' => [
+                        'uuid' => '019fef37-c728-709c-aac4-3a4740139a11',
+                        'nameCaller' => 'Jane Doe',
+                        'handle' => 'Handler',
+                        'isVideo' => true,
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "incoming-call",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = new Dictionary<string, object>(),
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "apns", new Dictionary<string, object>() {
+                { "pushType", "voip" },
+                { "topic", "com.example.app.voip" },
+                { "priority", 10 },
+                { "rawPayload", new Dictionary<string, object>() {
+                    { "uuid", "019fef37-c728-709c-aac4-3a4740139a11" },
+                    { "nameCaller", "Jane Doe" },
+                    { "handle", "Handler" },
+                    { "isVideo", true },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("incoming-call")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload(Map.of())
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("apns", Map.ofEntries(
+                Map.entry("pushType", "voip"),
+                Map.entry("topic", "com.example.app.voip"),
+                Map.entry("priority", 10),
+                Map.entry("rawPayload", Map.of(
+                    "uuid", "019fef37-c728-709c-aac4-3a4740139a11",
+                    "nameCaller", "Jane Doe",
+                    "handle", "Handler",
+                    "isVideo", true))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "incoming-call",
+    "to": ["subscriberId"],
+    "payload": {},
+    "overrides": {
+        "providers": {
+            "apns": {
+                "pushType": "voip",
+                "topic": "com.example.app.voip",
+                "priority": 10,
+                "rawPayload": {
+                    "uuid": "019fef37-c728-709c-aac4-3a4740139a11",
+                    "nameCaller": "Jane Doe",
+                    "handle": "Handler",
+                    "isVideo": true
                 }
             }
         }
@@ -531,3 +946,7 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
+
+<Note>
+  Passing raw APNS HTTP headers under `_passthrough.headers` (for example `apns-push-type`) is not supported for the native APNS provider. Use `pushType`, `topic`, and `priority` instead. Those map to the correct headers through `@parse/node-apn`.
+</Note>

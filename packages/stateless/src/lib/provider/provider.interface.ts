@@ -280,6 +280,8 @@ export interface ISendMessageSuccessResponse {
   id?: string;
   ids?: string[];
   date?: string;
+  /** Provider-local conversation id when distinct from the send address (e.g. Slack DM `D…`). */
+  channel?: string;
 }
 
 export enum EmailEventStatusEnum {

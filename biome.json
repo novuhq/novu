@@ -269,6 +269,96 @@
       }
     },
     {
+      "includes": [
+        "apps/api/src/app/agents/**/*.{ts,tsx,js}",
+        "!apps/api/src/app/agents/agents.module.ts",
+        "!apps/api/src/app/agents/conversation-runtime/conversation/conversation-activity-ledger.ts",
+        "!apps/api/src/app/agents/conversation-runtime/conversation/conversation-event-sequence.service.ts",
+        "!apps/api/src/app/agents/conversation-runtime/conversation/agent-conversation.service.ts",
+        "!apps/api/src/app/agents/**/*.spec.ts",
+        "!apps/api/src/app/agents/**/*.test.ts",
+        "!apps/api/src/app/agents/**/*.e2e.ts",
+        "!apps/api/src/app/agents/e2e/**/*.{ts,tsx,js}"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+                  "@nestjs/common": {
+                    "importNames": ["Logger"],
+                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                  },
+                  "@novu/application-generic": {
+                    "importNames": ["Logger", "validateUrlSsrf"],
+                    "message": "Logger: use PinoLogger from @novu/application-generic. validateUrlSsrf: use safeOutboundRequest / safeOutboundJsonRequest (or HttpClientService with enforceSsrfProtection: true) — see https://novu.atlassian.net/browse/NV-7560"
+                  },
+                  "@novu/shared/utils/ssrf-url-validation": {
+                    "importNames": ["validateUrlSsrf"],
+                    "message": "validateUrlSsrf is a one-shot pre-flight check vulnerable to redirects and DNS rebinding. Use safeOutboundRequest / safeOutboundJsonRequest from '@novu/shared/utils/safe-outbound-http' (or HttpClientService with enforceSsrfProtection: true)."
+                  },
+                  "@novu/dal": {
+                    "importNames": ["ConversationActivityRepository"],
+                    "message": "Import ConversationActivityRepository only from agents.module.ts, conversation-activity-ledger.ts, conversation-event-sequence.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                  },
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  },
+                  "@nestjs/swagger": {
+                    "importNames": [
+                      "ApiOkResponse",
+                      "ApiCreatedResponse",
+                      "ApiAcceptedResponse",
+                      "ApiNoContentResponse",
+                      "ApiMovedPermanentlyResponse",
+                      "ApiFoundResponse",
+                      "ApiBadRequestResponse",
+                      "ApiUnauthorizedResponse",
+                      "ApiTooManyRequestsResponse",
+                      "ApiNotFoundResponse",
+                      "ApiInternalServerErrorResponse",
+                      "ApiBadGatewayResponse",
+                      "ApiConflictResponse",
+                      "ApiForbiddenResponse",
+                      "ApiGatewayTimeoutResponse",
+                      "ApiGoneResponse",
+                      "ApiMethodNotAllowedResponse",
+                      "ApiNotAcceptableResponse",
+                      "ApiNotImplementedResponse",
+                      "ApiPreconditionFailedResponse",
+                      "ApiPayloadTooLargeResponse",
+                      "ApiRequestTimeoutResponse",
+                      "ApiServiceUnavailableResponse",
+                      "ApiUnprocessableEntityResponse",
+                      "ApiUnsupportedMediaTypeResponse",
+                      "ApiDefaultResponse"
+                    ],
+                    "message": "Use 'Api<Error>Response' from '/shared/framework/response.decorator' instead."
+                  }
+                },
+                "patterns": [
+                  {
+                    "group": ["**/conversation-activity-ledger", "**/conversation-activity-ledger.ts"],
+                    "importNamePattern": "ConversationActivityLedger",
+                    "message": "Import ConversationActivityLedger only from agents.module.ts, agent-conversation.service.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                  },
+                  {
+                    "group": ["**/conversation-event-sequence.service", "**/conversation-event-sequence.service.ts"],
+                    "importNamePattern": "ConversationEventSequenceService",
+                    "message": "Import ConversationEventSequenceService only from agents.module.ts, conversation-activity-ledger.ts, or test files — see https://novu.atlassian.net/browse/NV-8576"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["libs/application-generic/**/*.{ts,tsx,js}"],
       "linter": {
         "rules": {

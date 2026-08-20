@@ -108,9 +108,10 @@ export enum FeatureFlagsKeysEnum {
   /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
   IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
   /**
-   * Enable the agent web-chat channel (subscriber `/v1/web-chat/*`, useAgentChat wayfinder).
+   * Enable the agent-chat channel (subscriber `/v1/agent-chat/*`, useAgentChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
    * `IS_AGENT_WEB_CHAT_ENABLED` when self-hosted (`VITE_IS_AGENT_WEB_CHAT_ENABLED` for dashboard).
+   * Flag key kept as IS_AGENT_WEB_CHAT_ENABLED (LaunchDarkly / env already deployed).
    */
   IS_AGENT_WEB_CHAT_ENABLED = 'IS_AGENT_WEB_CHAT_ENABLED',
   /** Enable the "What's next" section on the agent overview. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_WHATS_NEXT_ENABLED` when self-hosted. */
@@ -210,6 +211,14 @@ export enum FeatureFlagsKeysEnum {
    * `IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED=false` to disable enforcement.
    */
   IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED = 'IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED',
+
+  /**
+   * Route job delays longer than the SQS 900s per-message cap through
+   * EventBridge Scheduler instead of BullMQ. Only consulted once
+   * `QUEUE_BACKEND_MODE` has SQS as the primary backend; when false (default)
+   * long delays keep going to BullMQ.
+   */
+  IS_EVENTBRIDGE_SCHEDULER_ENABLED = 'IS_EVENTBRIDGE_SCHEDULER_ENABLED',
 
   // String flags
   QUEUE_BACKEND_MODE = 'QUEUE_BACKEND_MODE', // Values: "bullmq" | "shadow" | "live" | "complete"

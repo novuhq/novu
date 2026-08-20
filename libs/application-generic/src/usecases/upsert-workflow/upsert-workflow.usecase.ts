@@ -26,7 +26,7 @@ import { StepIssuesDto } from '../../dtos/step-issues.dto';
 import { EmailRenderOutput } from '../../dtos/workflow/generate-preview-response.dto';
 import { WorkflowResponseDto } from '../../dtos/workflow/workflow-response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import { EmailControlType } from '../../schemas/control';
+import { ChatControlType, EmailControlType } from '../../schemas/control';
 import { AnalyticsService } from '../../services';
 import {
   computeWorkflowStatus,
@@ -37,6 +37,7 @@ import {
   slugifyOrRandom,
 } from '../../utils';
 import { isStringifiedMailyJSONContent } from '../../utils/maily-utils';
+import { resolveChatEditorType } from '../../utils/resolve-chat-editor-type';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { NotificationStep } from '../../value-objects';
 import { SendWebhookMessage } from '../../webhooks';
@@ -523,6 +524,22 @@ export class UpsertWorkflowUseCase {
         } else if (emailControlValues.editorType === 'block' && !isMaily) {
           emailControlValues.body = '';
         }
+      }
+    }
+
+    if (
+      step.template?.type === StepTypeEnum.CHAT &&
+      (command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD ||
+        command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1) &&
+      !isStepResolverActive(step.template?.stepResolverHash)
+    ) {
+      const chatControlValues = newControlValues as ChatControlType;
+      const resolvedEditorType = resolveChatEditorType(chatControlValues.body, chatControlValues.editorType);
+
+      if (resolvedEditorType) {
+        chatControlValues.editorType = resolvedEditorType;
+      } else {
+        delete chatControlValues.editorType;
       }
     }
 

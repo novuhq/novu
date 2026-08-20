@@ -145,6 +145,12 @@ export interface AgentExecutionParams {
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
+  /**
+   * Per-context bridge URL override resolved from the connect-time context. Takes precedence over the
+   * agent's default `bridgeUrl` (but not the active dev bridge). Re-validated by the SSRF guard on
+   * every send attempt.
+   */
+  bridgeUrlOverride?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
@@ -177,7 +183,7 @@ export class BridgeExecutorService {
     try {
       const { config, event } = params;
 
-      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event);
+      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event, params.bridgeUrlOverride);
       if (!bridgeUrl) {
         throw new NoBridgeUrlError(agentIdentifier);
       }
@@ -295,11 +301,32 @@ export class BridgeExecutorService {
     });
   }
 
-  private resolveBridgeUrl(config: ResolvedAgentConfig, agentIdentifier: string, event: AgentEventEnum): string | null {
+  /** Host only (no path/query) so override routing can be diagnosed without logging a full URL. */
+  private safeHost(rawUrl: string): string {
+    try {
+      return new URL(rawUrl).host;
+    } catch {
+      return 'invalid-url';
+    }
+  }
+
+  private resolveBridgeUrl(
+    config: ResolvedAgentConfig,
+    agentIdentifier: string,
+    event: AgentEventEnum,
+    bridgeUrlOverride?: string
+  ): string | null {
     let baseUrl: string | undefined;
 
+    // Precedence: active dev bridge (local development) > per-context override > agent default.
     if (config.devBridgeActive && config.devBridgeUrl) {
       baseUrl = config.devBridgeUrl;
+    } else if (bridgeUrlOverride) {
+      baseUrl = bridgeUrlOverride;
+      this.logger.info(
+        { agentIdentifier, bridgeHost: this.safeHost(bridgeUrlOverride) },
+        `[agent:${agentIdentifier}] Routing bridge call to per-context bridge URL override`
+      );
     } else if (config.bridgeUrl) {
       baseUrl = config.bridgeUrl;
     }
@@ -322,7 +349,12 @@ export class BridgeExecutorService {
     const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const history = await this.loadHistory(config.environmentId, conversation._id, agentIdentifier);
+    const history = await this.loadHistory(
+      config.environmentId,
+      conversation._id,
+      agentIdentifier,
+      config.organizationId
+    );
 
     const apiOrigin = resolveAgentReplyApiOrigin();
     const replyUrl = `${apiOrigin}/v1/agents/${agentIdentifier}/reply`;
@@ -385,10 +417,18 @@ export class BridgeExecutorService {
   private async loadHistory(
     environmentId: string,
     conversationId: string,
-    agentIdentifier: string
+    agentIdentifier: string,
+    organizationId: string
   ): Promise<ConversationActivityEntity[]> {
     try {
-      return await this.conversationService.getHistory(environmentId, conversationId);
+      const page = await this.conversationService.listForView({
+        view: 'agent_handoff',
+        environmentId,
+        organizationId,
+        conversationId,
+      });
+
+      return page.data;
     } catch (err) {
       this.logger.warn(err, `[agent:${agentIdentifier}] Failed to load conversation history; continuing without it`);
       captureAgentWarning(err, {

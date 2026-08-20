@@ -9,7 +9,6 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS, SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE } from '@novu/shared';
-import type { CardElement } from 'chat';
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
 import { isKeylessOrganization } from '../../../../keyless/keyless-organization.helpers';
 import { buildConnectClaimUrl, buildKeylessWelcomeCard } from '../../../../keyless/keyless-signup.helpers';
@@ -93,6 +92,7 @@ export class SendAgentWelcomeMessage {
 
     const { platformUserId, workspaceId } = recipient;
     const welcomeText = getWelcomeText(platform);
+    const claimToken = await this.resolveKeylessClaimToken(command);
     const existingWelcomeConversation = await this.findExistingWelcomeConversation({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -105,12 +105,13 @@ export class SendAgentWelcomeMessage {
     });
 
     if (existingWelcomeConversation) {
-      return { sent: true, conversationId: existingWelcomeConversation._id };
+      return { sent: true, conversationId: existingWelcomeConversation._id, ...withClaimToken(claimToken) };
     }
 
     try {
-      const keylessWelcome = await this.resolveKeylessWelcomeCard(command, welcomeText);
-      const welcomeReplyCard = keylessWelcome?.card;
+      const welcomeReplyCard = claimToken
+        ? buildKeylessWelcomeCard(welcomeText, buildConnectClaimUrl(claimToken))
+        : undefined;
       const welcomeContent = welcomeReplyCard ? { card: welcomeReplyCard } : { markdown: welcomeText };
       const sent = await this.outboundGateway.sendDirectMessage(
         agent._id,
@@ -168,11 +169,11 @@ export class SendAgentWelcomeMessage {
         platform,
       });
 
-      return { sent: true, conversationId: conversation._id, claimToken: keylessWelcome?.claimToken };
+      return { sent: true, conversationId: conversation._id, ...withClaimToken(claimToken) };
     } catch (err) {
       this.logger.warn(err, `Failed to send welcome message for agent "${command.agentIdentifier}"`);
 
-      return { sent: false };
+      return { sent: false, ...withClaimToken(claimToken) };
     }
   }
 
@@ -299,12 +300,9 @@ export class SendAgentWelcomeMessage {
     });
   }
 
-  private async resolveKeylessWelcomeCard(
-    command: SendAgentWelcomeMessageCommand,
-    welcomeText: string
-  ): Promise<{ card: CardElement; claimToken: string } | null> {
+  private async resolveKeylessClaimToken(command: SendAgentWelcomeMessageCommand): Promise<string | undefined> {
     if (!isKeylessOrganization(command.organizationId)) {
-      return null;
+      return undefined;
     }
 
     try {
@@ -312,16 +310,15 @@ export class SendAgentWelcomeMessage {
         env: command.environmentId,
         org: command.organizationId,
       });
-      const claimUrl = buildConnectClaimUrl(token);
 
-      return { card: buildKeylessWelcomeCard(welcomeText, claimUrl), claimToken: token };
+      return token;
     } catch (err) {
       this.logger.warn(
         err,
-        `Failed to build keyless welcome signup link for agent "${command.agentIdentifier}" — sending plain welcome`
+        `Failed to issue keyless claim token for agent "${command.agentIdentifier}" — sending welcome without a signup link`
       );
 
-      return null;
+      return undefined;
     }
   }
 
@@ -387,4 +384,12 @@ export class SendAgentWelcomeMessage {
       return { sent: false };
     }
   }
+}
+
+function withClaimToken(claimToken: string | undefined): { claimToken?: string } {
+  if (!claimToken) {
+    return {};
+  }
+
+  return { claimToken };
 }

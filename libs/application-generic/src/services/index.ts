@@ -47,6 +47,7 @@ export {
 export * from './safe-outbound-http';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
+export * from './scheduler';
 export * from './socket-worker';
 export * from './sqs';
 export {

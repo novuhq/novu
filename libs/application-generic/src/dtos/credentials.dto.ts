@@ -158,6 +158,11 @@ export class CredentialsDto implements ICredentials {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  configurationSetName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
   apiKeyRequestHeader?: string;
 
   @ApiPropertyOptional()

@@ -216,17 +216,20 @@ test('should handle Slack webhook HTTP error correctly', async () => {
   ).rejects.toThrow('Request failed with status code 400');
 });
 
-test('should trigger Slack app correctly with OAuth', async () => {
+test('should trigger Slack app correctly with OAuth and return the message ts as id', async () => {
   const { mockPost } = axiosSpy({
     data: {
       ok: true,
       channel: 'C1234567890',
       ts: '1234567890.123456',
     },
+    headers: {
+      'x-slack-req-id': 'req-channel-1',
+    },
   });
 
   const provider = new SlackProvider();
-  await provider.sendMessage({
+  const result = await provider.sendMessage({
     channelData: {
       token: 'xoxb-token-123',
       type: ENDPOINT_TYPES.SLACK_CHANNEL,
@@ -252,4 +255,67 @@ test('should trigger Slack app correctly with OAuth', async () => {
       },
     }
   );
+  expect(result.id).toBe('C1234567890:1234567890.123456');
+});
+
+test('should echo the DM conversation from Slack response channel, not the user id we posted to', async () => {
+  const { mockPost } = axiosSpy({
+    data: {
+      ok: true,
+      channel: 'D999888777',
+      ts: '1777837477.371619',
+    },
+    headers: {
+      'x-slack-req-id': 'req-dm-1',
+    },
+  });
+
+  const provider = new SlackProvider();
+  const result = await provider.sendMessage({
+    channelData: {
+      token: 'xoxb-token-123',
+      type: ENDPOINT_TYPES.SLACK_USER,
+      identifier: 'test-slack-user-identifier',
+      endpoint: {
+        userId: 'U1234567890',
+      },
+    },
+    content: 'direct message via app',
+  });
+
+  expect(mockPost).toHaveBeenCalledWith(
+    'https://slack.com/api/chat.postMessage',
+    {
+      text: 'direct message via app',
+      blocks: undefined,
+      channel: 'U1234567890',
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer xoxb-token-123',
+      },
+    }
+  );
+  expect(result.id).toBe('D999888777:1777837477.371619');
+});
+
+test('should not echo a channel for Slack webhook sends', async () => {
+  safeOutboundJsonSpy({
+    body: 'ok',
+  });
+
+  const provider = new SlackProvider();
+  const result = await provider.sendMessage({
+    channelData: {
+      endpoint: {
+        url: 'https://hooks.slack.com/services/test',
+      },
+      type: ENDPOINT_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
+    content: 'chat message',
+  });
+
+  expect(result.channel).toBeUndefined();
 });
