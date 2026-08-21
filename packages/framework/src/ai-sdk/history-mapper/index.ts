@@ -1,4 +1,4 @@
-import type { ModelMessage } from 'ai';
+import type { ModelMessage, TextPart } from 'ai';
 import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
 import {
   type ApprovalIndex,
@@ -7,6 +7,7 @@ import {
   mapApprovalRequest,
   mapToolResult,
 } from './approval-cycles';
+import { mapUserAttachmentParts } from './attachment-parts';
 
 /**
  * Maps Novu conversation ledger entries to AI SDK `ModelMessage[]`.
@@ -36,15 +37,27 @@ function distinctHumanSenders(history: AgentHistoryEntry[]): number {
 }
 
 function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMessage | undefined {
-  if (!entry.content.trim()) {
+  const isAssistant = isAssistantRole(entry.role);
+  const hasText = !!entry.content.trim();
+
+  // Vision/document parts only ride on user turns; assistant rows stay text.
+  const fileParts = isAssistant ? [] : mapUserAttachmentParts(entry);
+
+  if (!hasText && fileParts.length === 0) {
     return undefined;
   }
 
-  const isAssistant = isAssistantRole(entry.role);
   const text =
     !isAssistant && multiSender && entry.senderName ? `${entry.senderName}: ${entry.content}` : entry.content;
 
-  return { role: isAssistant ? 'assistant' : 'user', content: text };
+  if (fileParts.length === 0) {
+    return { role: isAssistant ? 'assistant' : 'user', content: text };
+  }
+
+  // Files before text (providers recommend media-then-instruction ordering).
+  const content = hasText ? [...fileParts, { type: 'text', text } satisfies TextPart] : fileParts;
+
+  return { role: 'user', content };
 }
 
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): ModelMessage[] {
@@ -77,6 +90,9 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
  *
  * History already includes the current incoming message — do not append the handler's
  * `message` argument on top of it.
+ *
+ * For http/localhost attachment URLs (e.g. LocalStack), wrap the result in
+ * `hydrateUnreachableAttachmentUrls` before passing it to `generateText`.
  *
  * Pass the system prompt via the top-level `instructions` option of `streamText` /
  * `generateText`. AI SDK 7 rejects `system` messages inside the `messages` array by default,

@@ -1,4 +1,4 @@
-import { type Message, MessageRole } from '@novu/thalamus';
+import { type ContentPart, type Message, MessageRole } from '@novu/thalamus';
 
 /**
  * Messages for a turn on an existing Anthropic session. The provider holds prior
@@ -10,12 +10,19 @@ import { type Message, MessageRole } from '@novu/thalamus';
  * runs one live turn per USER row, so this adds the context without producing a
  * second reply, and ASSISTANT avoids elevating untrusted payload text the way a
  * SYSTEM row would.
+ *
+ * `userContent` carries the already-resolved USER turn body — either the plain
+ * text or multimodal content parts (inbound image/PDF attachments). It defaults
+ * to `params.userMessageText`, preserving the text-only behavior.
  */
-export function buildLiveSessionMessages(params: {
-  userMessageText: string;
-  workflowOriginContent?: string;
-}): Message[] {
-  const userMessage: Message = { role: MessageRole.USER, content: params.userMessageText };
+export function buildLiveSessionMessages(
+  params: {
+    userMessageText: string;
+    workflowOriginContent?: string;
+  },
+  userContent?: string | ContentPart[]
+): Message[] {
+  const userMessage: Message = { role: MessageRole.USER, content: userContent ?? params.userMessageText };
 
   if (!params.workflowOriginContent) {
     return [userMessage];

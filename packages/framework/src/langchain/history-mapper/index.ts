@@ -1,6 +1,7 @@
 import { AIMessage, type BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
 import { type ApprovalIndex, buildApprovalIndex, mapApprovalRequest, type ToolResultPayload } from './approval-cycles';
+import { mapUserAttachmentParts } from './attachment-parts';
 
 /**
  * Maps Novu conversation ledger entries to LangChain `BaseMessage[]`.
@@ -28,18 +29,27 @@ function distinctHumanSenders(history: AgentHistoryEntry[]): number {
 }
 
 function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): BaseMessage | undefined {
-  if (!entry.content.trim()) {
+  const isAssistant = isAssistantRole(entry.role);
+  const hasText = !!entry.content.trim();
+  const attachmentParts = isAssistant ? [] : mapUserAttachmentParts(entry);
+
+  if (!hasText && attachmentParts.length === 0) {
     return undefined;
   }
 
-  const isAssistant = isAssistantRole(entry.role);
   if (isAssistant) {
     return new AIMessage(entry.content);
   }
 
   const text = multiSender && entry.senderName ? `${entry.senderName}: ${entry.content}` : entry.content;
 
-  return new HumanMessage(text);
+  if (attachmentParts.length === 0) {
+    return new HumanMessage(text);
+  }
+
+  const content = hasText ? [...attachmentParts, { type: 'text' as const, text }] : attachmentParts;
+
+  return new HumanMessage({ content });
 }
 
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): BaseMessage[] {
@@ -63,6 +73,9 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
  *
  * History already includes the current incoming message — do not append the handler's
  * `message` argument on top of it.
+ *
+ * Returning a `LangChainAgentConfig` hydrates unreachable attachment URLs for you.
+ * If you invoke the agent yourself, wrap this result in `hydrateUnreachableAttachmentUrls`.
  *
  * @param system - Optional system prompt prepended as a `SystemMessage`. Omit it when the
  *   agent already receives a prompt (e.g. via `createAgent({ prompt })`) to avoid duplication.

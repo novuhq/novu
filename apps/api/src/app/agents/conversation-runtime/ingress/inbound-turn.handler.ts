@@ -670,13 +670,22 @@ export class AgentInboundHandler implements OnModuleInit {
       return undefined;
     }
 
-    return this.attachmentStorage.storeInbound(message.attachments, {
+    const stored = await this.attachmentStorage.storeInbound(message.attachments, {
       organizationId: config.organizationId,
       environmentId: config.environmentId,
       conversationId: String(conversation._id),
       platformMessageId: message.id ?? `unknown-${Date.now()}`,
       platform: config.platform,
     });
+
+    if (!stored.length) {
+      this.logger.warn(
+        { platform: config.platform, messageId: message.id, inboundCount: message.attachments.length },
+        'Inbound attachments were present but none could be stored'
+      );
+    }
+
+    return stored;
   }
 
   /** Persist the inbound activity, emit analytics, and capture the first platform message id. */

@@ -63,6 +63,7 @@ export class ManagedRuntime implements AgentRuntime {
           subscriber: turn.subscriber,
           userMessageText: turn.message?.text ?? '',
           workflowOriginContent: turn.workflowOriginContent,
+          storedAttachments: turn.storedAttachments,
           platformThreadId: turn.platformThreadId,
           platformMessageId: turn.message?.id,
         },

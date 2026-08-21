@@ -4,6 +4,7 @@ import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
 import type { ToolApprovalConfig } from '../../resources/agent/agent.types';
 import { isCardElement } from '../../resources/agent/guards';
 import { toLangChainMessages } from '../history-mapper';
+import { hydrateUnreachableAttachmentUrls } from '../history-mapper/hydrate-attachment-urls';
 import {
   createApprovalMiddleware,
   executeApprovedTools,
@@ -91,7 +92,7 @@ async function runAgentConfig(
   approvalConfig: ToolApprovalConfig | undefined
 ): Promise<void> {
   const freshResults = await executeApprovedTools(config.tools, ctx);
-  const messages = toLangChainMessages(ctx.history, undefined, freshResults);
+  const messages = await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx.history, undefined, freshResults));
 
   const middleware: AgentMiddleware[] = [];
   if (config.needsApproval) {

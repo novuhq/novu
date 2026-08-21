@@ -25,6 +25,12 @@ function userMessage(content: string): AgentHistoryEntry {
   return entry({ role: 'subscriber', type: 'message', content });
 }
 
+type HistoryAttachmentFixture = { type?: string; url?: string; name?: string; mimeType?: string; size?: number };
+
+function userMessageWithAttachments(content: string, attachments: HistoryAttachmentFixture[]): AgentHistoryEntry {
+  return entry({ role: 'subscriber', type: 'message', content, richContent: { attachments } });
+}
+
 function agentMessage(content: string): AgentHistoryEntry {
   return entry({ role: 'agent', type: 'message', content });
 }
@@ -181,6 +187,139 @@ describe('toLangChainMessages', () => {
         role: 'system',
         content: 'You are support.',
       });
+    });
+  });
+
+  describe('attachments', () => {
+    it('emits an image part before the text part for a whitelisted image', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('what is this?', [
+          { type: 'image', url: 'https://files.novu.co/photo.png', name: 'photo.png', mimeType: 'image/png' },
+        ]),
+      ]);
+
+      expect(shapes(result)).toEqual([
+        {
+          role: 'user',
+          content: [
+            { type: 'image', url: 'https://files.novu.co/photo.png', mimeType: 'image/png' },
+            { type: 'text', text: 'what is this?' },
+          ],
+        },
+      ]);
+    });
+
+    it('emits a PDF file part before the text part', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('summarize', [
+          { type: 'file', url: 'https://files.novu.co/report.pdf', name: 'report.pdf', mimeType: 'application/pdf' },
+        ]),
+      ]);
+
+      expect(shapes(result)).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'file',
+              url: 'https://files.novu.co/report.pdf',
+              mimeType: 'application/pdf',
+              metadata: { title: 'report.pdf' },
+            },
+            { type: 'text', text: 'summarize' },
+          ],
+        },
+      ]);
+    });
+
+    it('orders multiple files before the single text part', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('compare', [
+          { type: 'image', url: 'https://files.novu.co/a.png', mimeType: 'image/png' },
+          { type: 'file', url: 'https://files.novu.co/b.pdf', mimeType: 'application/pdf' },
+        ]),
+      ]);
+
+      const content = result[0].content as Array<{ type: string }>;
+      expect(content.map((part) => part.type)).toEqual(['image', 'file', 'text']);
+    });
+
+    it('emits only the attachment part when the user sent a file with no text', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('  ', [
+          { type: 'image', url: 'https://files.novu.co/photo.png', mimeType: 'image/png' },
+        ]),
+      ]);
+
+      expect(shapes(result)).toEqual([
+        {
+          role: 'user',
+          content: [{ type: 'image', url: 'https://files.novu.co/photo.png', mimeType: 'image/png' }],
+        },
+      ]);
+    });
+
+    it('normalizes media types with charset parameters and casing', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('look', [
+          { type: 'image', url: 'https://files.novu.co/x.jpg', mimeType: 'IMAGE/JPEG; charset=binary' },
+        ]),
+      ]);
+
+      expect(shapes(result)).toEqual([
+        {
+          role: 'user',
+          content: [
+            { type: 'image', url: 'https://files.novu.co/x.jpg', mimeType: 'image/jpeg' },
+            { type: 'text', text: 'look' },
+          ],
+        },
+      ]);
+    });
+
+    it('falls back to text-only for unsupported attachment types', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('here is a file', [
+          { type: 'file', url: 'https://files.novu.co/notes.txt', mimeType: 'text/plain' },
+        ]),
+      ]);
+
+      expect(shapes(result)).toEqual([{ role: 'user', content: 'here is a file' }]);
+    });
+
+    it('skips attachments that are missing a url', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('no url', [{ type: 'image', mimeType: 'image/png' }]),
+      ]);
+
+      expect(shapes(result)).toEqual([{ role: 'user', content: 'no url' }]);
+    });
+
+    it('skips attachments with a malformed url', () => {
+      const result = toLangChainMessages([
+        userMessageWithAttachments('bad url', [{ type: 'image', url: 'not-a-url', mimeType: 'image/png' }]),
+      ]);
+
+      expect(shapes(result)).toEqual([{ role: 'user', content: 'bad url' }]);
+    });
+
+    it('ignores attachments on assistant entries', () => {
+      const result = toLangChainMessages([
+        entry({
+          role: 'agent',
+          type: 'message',
+          content: 'here you go',
+          richContent: { attachments: [{ type: 'image', url: 'https://files.novu.co/a.png', mimeType: 'image/png' }] },
+        }),
+      ]);
+
+      expect(shapes(result)).toEqual([{ role: 'assistant', content: 'here you go' }]);
+    });
+
+    it('leaves messages without attachments unchanged', () => {
+      const result = toLangChainMessages([userMessage('plain question')]);
+
+      expect(shapes(result)).toEqual([{ role: 'user', content: 'plain question' }]);
     });
   });
 

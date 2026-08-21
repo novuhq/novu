@@ -108,11 +108,14 @@ const supportAgent = agent('support-bot', async (message, ctx) =>
 Convert `ctx.history` into AI SDK `ModelMessage[]`:
 
 ```typescript
-messages: toModelMessages(ctx.history);
+import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';
+
+messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx.history));
 ```
 
 - `ctx.history` already includes the current inbound message - do not append the `message` argument on top of it.
 - Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
+- Wrap `toModelMessages()` in `hydrateUnreachableAttachmentUrls` before `generateText` / `streamText`. Public HTTPS signed URLs stay as URLs; local or HTTP URLs (for example LocalStack) are fetched and inlined as bytes so hosted providers can read the file.
 
 ## Automatic tool approval
 
