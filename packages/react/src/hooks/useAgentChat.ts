@@ -1,4 +1,5 @@
 import type {
+  AgentChatPagination,
   AgentChatPlanLimitError,
   AgentConversationStatus,
   AgentConversationTyping,
@@ -57,17 +58,16 @@ export type UseAgentChatResult = {
   error?: NovuError | AgentChatPlanLimitError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
-  isFetching: boolean;
   isRunning: boolean;
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
-  /** True when older history pages are available via `fetchMore`. */
-  hasMore: boolean;
+  pagination: AgentChatPagination & {
+    fetchMore: () => Promise<{
+      data?: { messages: AgentMessage[]; hasMore: boolean };
+      error?: NovuError;
+    }>;
+  };
   refetch: () => Promise<void>;
-  fetchMore: () => Promise<{
-    data?: { messages: AgentMessage[]; hasMore: boolean };
-    error?: NovuError;
-  }>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
     error?: NovuError | AgentChatPlanLimitError;
@@ -102,7 +102,8 @@ type ConversationSnapshot = {
   isRunning: boolean;
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
-  hasMore: boolean;
+  pagination: AgentChatPagination;
+  error?: NovuError | AgentChatPlanLimitError;
 };
 
 const EMPTY_CONVERSATION: ConversationSnapshot = {
@@ -110,7 +111,7 @@ const EMPTY_CONVERSATION: ConversationSnapshot = {
   isRunning: false,
   typing: undefined,
   status: 'active',
-  hasMore: false,
+  pagination: { status: 'idle', hasMore: false },
 };
 
 function applyConversationSnapshot(
@@ -120,14 +121,16 @@ function applyConversationSnapshot(
     setIsRunning: (isRunning: boolean) => void;
     setTyping: (typing?: AgentConversationTyping) => void;
     setStatus: (status: AgentConversationStatus) => void;
-    setHasMore: (hasMore: boolean) => void;
+    setPagination: (pagination: AgentChatPagination) => void;
+    setError: (error?: NovuError | AgentChatPlanLimitError) => void;
   }
 ): void {
   setters.setMessages(snapshot.messages);
   setters.setIsRunning(snapshot.isRunning);
   setters.setTyping(snapshot.typing);
   setters.setStatus(snapshot.status);
-  setters.setHasMore(snapshot.hasMore);
+  setters.setPagination(snapshot.pagination);
+  setters.setError(snapshot.error);
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
@@ -151,10 +154,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [isRunning, setIsRunning] = useState(false);
   const [typing, setTyping] = useState<AgentConversationTyping>();
   const [status, setStatus] = useState<AgentConversationStatus>('active');
-  const [hasMore, setHasMore] = useState(false);
+  const [pagination, setPagination] = useState<AgentChatPagination>({ status: 'idle', hasMore: false });
   const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
-  const [isFetching, setIsFetching] = useState(false);
   const fetchGenerationRef = useRef(0);
 
   const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
@@ -165,7 +167,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setIsRunning,
       setTyping,
       setStatus,
-      setHasMore,
+      setPagination,
+      setError,
     }),
     []
   );
@@ -205,7 +208,6 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       const generation = ++fetchGenerationRef.current;
       setError(undefined);
       setIsLoading(true);
-      setIsFetching(true);
 
       const response = await novu.agentChat.loadConversation({
         agentId,
@@ -221,12 +223,19 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         propsRef.current.onError?.(response.error);
       } else if (response.data) {
         setMessages(response.data.messages);
-        setHasMore(response.data.hasMore);
+        const snapshot = novu.agentChat.getConversation({
+          agentId,
+          conversationId: targetConversationId,
+        });
+        if (snapshot) {
+          setPagination(snapshot.pagination);
+        } else {
+          setPagination({ status: 'idle', hasMore: response.data.hasMore });
+        }
         propsRef.current.onSuccess?.(response.data);
       }
 
       setIsLoading(false);
-      setIsFetching(false);
     },
     [novu, agentId, propsRef]
   );
@@ -246,7 +255,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
           isRunning: snapshot.isRunning,
           typing: snapshot.typing,
           status: snapshot.status,
-          hasMore: snapshot.hasMore,
+          pagination: snapshot.pagination,
+          error: snapshot.error,
         },
         snapshotSetters
       );
@@ -274,7 +284,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
           isRunning: data.isRunning,
           typing: data.typing,
           status: data.status,
-          hasMore: data.hasMore,
+          pagination: data.pagination,
+          error: data.error,
         },
         snapshotSetters
       );
@@ -329,11 +340,22 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       propsRef.current.onError?.(response.error);
     } else if (response.data) {
       setMessages(response.data.messages);
-      setHasMore(response.data.hasMore);
+      setPagination((current: AgentChatPagination) => ({
+        ...current,
+        hasMore: response.data!.hasMore,
+      }));
     }
 
     return response;
   }, [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]);
+
+  const paginationWithFetch = useMemo(
+    () => ({
+      ...pagination,
+      fetchMore,
+    }),
+    [pagination, fetchMore]
+  );
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -415,12 +437,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     conversationId,
     error,
     isLoading,
-    isFetching,
     isRunning,
     typing,
     status,
-    hasMore,
+    pagination: paginationWithFetch,
     refetch,
-    fetchMore,
   };
 };

@@ -1,0 +1,80 @@
+import type { AgentChatPlanLimitError } from '../api';
+import type { NovuError } from '../utils/errors';
+import type {
+  AgentConversationError,
+  AgentConversationStatus,
+  AgentConversationTyping,
+  AgentMessage,
+  AgentPendingAction,
+  AgentToolApprovalDecision,
+} from './agent-message.types';
+import type {
+  FetchMoreResult,
+  LoadConversationResult,
+  RespondToActionResult,
+  SendActionResult,
+  SendMessageResult,
+} from './types';
+
+/** Session lifecycle for history loads on this runtime. */
+export type AgentConversationSessionStatus = 'ready' | 'loading' | 'fetching';
+
+export type AgentConversationRunSnapshot = {
+  isRunning: boolean;
+  typing?: AgentConversationTyping;
+};
+
+export type AgentConversationPaginationSnapshot = {
+  hasMore: boolean;
+};
+
+/**
+ * Immutable published view of one agent conversation thread.
+ * `getSnapshot()` returns the same object reference until the next publication.
+ */
+export type AgentConversationSnapshot = {
+  /** Holder key for this runtime session. Stable for the life of the runtime. */
+  key: string;
+  conversationId?: string;
+  /** History load / pagination state for this runtime. */
+  status: AgentConversationSessionStatus;
+  run: AgentConversationRunSnapshot;
+  conversationStatus: AgentConversationStatus;
+  pagination: AgentConversationPaginationSnapshot;
+  messages: readonly AgentMessage[];
+  pendingActions: readonly AgentPendingAction[];
+  error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
+};
+
+export type ConversationOk<T> = { ok: true; data: T };
+export type ConversationErr = { ok: false; error: NovuError };
+export type ConversationResult<T> = ConversationOk<T> | ConversationErr;
+
+export type ConversationArgs = {
+  agentId: string;
+  conversationId?: string;
+  agentHash?: string;
+};
+
+export type SendMessageInput = string | { text: string; metadata?: Record<string, unknown> };
+
+export type AgentConversationRuntimeActions = {
+  getSnapshot(): AgentConversationSnapshot;
+  subscribe(listener: (snapshot: AgentConversationSnapshot) => void): () => void;
+  dispose(): void;
+  load(): Promise<{ data?: LoadConversationResult; error?: NovuError }>;
+  fetchMore(): Promise<{ data?: FetchMoreResult; error?: NovuError }>;
+  sendMessage(
+    input: SendMessageInput
+  ): Promise<{ data?: SendMessageResult; error?: NovuError | AgentChatPlanLimitError }>;
+  respondToAction(args: {
+    actionId: string;
+    decision: AgentToolApprovalDecision;
+  }): Promise<{ data?: RespondToActionResult; error?: NovuError | AgentChatPlanLimitError }>;
+  sendAction(args: {
+    actionId: string;
+    sourceMessageId: string;
+    value?: string;
+  }): Promise<{ data?: SendActionResult; error?: NovuError | AgentChatPlanLimitError }>;
+  cancelRun(): ConversationResult<void>;
+};

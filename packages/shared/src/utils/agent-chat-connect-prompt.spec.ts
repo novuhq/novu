@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAgentChatPrompt,
   buildAgentChatTuiCommand,
+  buildAgentChatTuiCommandForDisplay,
   buildOnboardingAgentPrompt,
 } from './agent-chat-connect-prompt';
 import { NOVU_STAGING_API_URL } from './novu-connect-cli';
@@ -22,7 +23,31 @@ describe('agent-chat-connect-prompt', () => {
       'npx novu@latest connect --channel agent-chat --api-url https://eu.api.novu.co'
     );
     expect(buildAgentChatTuiCommand('http://localhost:3000')).toBe(
-      'npx novu@latest connect --channel agent-chat --api-url http://localhost:3000'
+      'npx novu@rc connect --channel agent-chat --api-url http://localhost:3000'
+    );
+  });
+
+  it('includes agent identifier and local dashboard URLs when provided', () => {
+    expect(
+      buildAgentChatTuiCommand({
+        apiUrl: 'http://localhost:3000',
+        agentIdentifier: 'support-agent',
+        connectDashboardUrl: 'http://localhost:4201',
+      })
+    ).toBe(
+      'npx novu@rc connect --channel agent-chat --api-url http://localhost:3000 --connect-dashboard-url http://localhost:4201 --dashboard-url http://localhost:4201 --agent-identifier support-agent'
+    );
+  });
+
+  it('formats the TUI command for terminal display with line continuations', () => {
+    expect(
+      buildAgentChatTuiCommandForDisplay({
+        apiUrl: 'http://localhost:3000',
+        agentIdentifier: 'support-agent',
+        connectDashboardUrl: 'http://localhost:4201',
+      })
+    ).toBe(
+      'npx novu@rc connect --channel agent-chat \\\n  --api-url http://localhost:3000 \\\n  --connect-dashboard-url http://localhost:4201 \\\n  --dashboard-url http://localhost:4201 \\\n  --agent-identifier support-agent'
     );
   });
 
@@ -38,6 +63,8 @@ describe('agent-chat-connect-prompt', () => {
     const prompt = buildOnboardingAgentPrompt('https://api.novu.co');
 
     expect(prompt).not.toContain('novu@rc');
+    expect(prompt).toContain('Connect a Novu agent to Agent Chat for this project');
+    expect(prompt).not.toContain('to my app');
     expect(prompt).toContain('https://novu.co/agents.md');
   });
 });

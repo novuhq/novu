@@ -6,8 +6,13 @@ import type { Result } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
-import { type AgentMessage, derivePendingActions } from './agent-message.types';
+import { AgentConversationRuntime } from './agent-conversation-runtime';
+import { type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
+import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
+import { runtimeCacheKey } from './runtime-cache-key';
 import type {
+  AgentChatMessagesUpdated,
+  AgentChatPagination,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -20,11 +25,23 @@ import type {
   SendMessageResult,
 } from './types';
 
+function conversationErrorToNovuError(error: AgentConversationError): NovuError {
+  return new NovuError(error.message, new Error(error.code ?? error.message));
+}
+
+function entryPagination(entry: ConversationEntry): AgentChatPagination {
+  return {
+    status: entry.paginationStatus,
+    hasMore: entry.olderCursor != null,
+  };
+}
+
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
   #store: AgentChatStore;
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
+  #runtimes = new Map<string, AgentConversationRuntime>();
   /**
    * Non-null while a reconnect catch-up is in flight: live envelopes are buffered here
    * and applied after the HTTP page is absorbed. Serialized via `#catchUpChain`.
@@ -57,6 +74,8 @@ export class AgentChat extends BaseModule {
           typing: entry.typing,
           status: entry.status,
           hasMore: entry.olderCursor != null,
+          pagination: entryPagination(entry),
+          error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
           change,
         },
       });
@@ -93,8 +112,60 @@ export class AgentChat extends BaseModule {
   }
 
   clearCache(): void {
+    for (const runtime of [...this.#runtimes.values()]) {
+      runtime.dispose();
+    }
+
     this.#store.clear();
     this.#catchUpBuffer = null;
+    this.#runtimes.clear();
+  }
+
+  /**
+   * Return a stable conversation runtime for one agent thread.
+   * Resume sessions (`conversationId` set) are reused across calls with the same identity.
+   */
+  conversation(args: ConversationArgs): ConversationResult<AgentConversationRuntime> {
+    const cacheKey = args.conversationId ? runtimeCacheKey(args.agentId, args.conversationId) : undefined;
+    if (cacheKey) {
+      const existing = this.#runtimes.get(cacheKey);
+      if (existing) {
+        return { ok: true, data: existing };
+      }
+    }
+
+    const runtime = new AgentConversationRuntime(this, args);
+    if (cacheKey) {
+      this.#runtimes.set(cacheKey, runtime);
+    }
+
+    return { ok: true, data: runtime };
+  }
+
+  /** @internal */
+  onMessagesUpdated(listener: (data: AgentChatMessagesUpdated) => void): () => void {
+    return this._emitter.on('agent_chat.messages.updated', ({ data }) => {
+      listener(data);
+    });
+  }
+
+  /** @internal */
+  registerRuntime(cacheKey: string, runtime: AgentConversationRuntime): void {
+    const existing = this.#runtimes.get(cacheKey);
+    if (existing && existing !== runtime) {
+      existing.dispose();
+    }
+
+    this.#runtimes.set(cacheKey, runtime);
+  }
+
+  /** @internal */
+  unregisterRuntime(runtime: AgentConversationRuntime): void {
+    for (const [key, value] of this.#runtimes.entries()) {
+      if (value === runtime) {
+        this.#runtimes.delete(key);
+      }
+    }
   }
 
   getConversation({ agentId, conversationId, key }: { agentId: string; conversationId?: string; key?: string }):
@@ -106,6 +177,8 @@ export class AgentChat extends BaseModule {
         typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
         hasMore: boolean;
+        pagination: AgentChatPagination;
+        error?: NovuError;
       }
     | undefined {
     const entry = key
@@ -126,6 +199,8 @@ export class AgentChat extends BaseModule {
       typing: entry.typing,
       status: entry.status,
       hasMore: entry.olderCursor != null,
+      pagination: entryPagination(entry),
+      error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
     };
   }
 
@@ -244,22 +319,36 @@ export class AgentChat extends BaseModule {
         };
       }
 
-      try {
-        const page = await this.#agentChatService.getEvents({
-          conversationId: entry.conversationId,
-          before: entry.olderCursor,
-        });
-        const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
+      return this.#store.withFetchMoreClaim(entry, async () => {
+        const epochAtStart = entry.paginationEpoch;
 
-        return {
-          data: {
-            messages: next.messages,
-            hasMore: next.olderCursor != null,
-          },
-        };
-      } catch (error) {
-        return { error: new NovuError('Failed to load older agent chat messages', error) };
-      }
+        try {
+          const page = await this.#agentChatService.getEvents({
+            conversationId: entry.conversationId!,
+            before: entry.olderCursor!,
+          });
+
+          if (epochAtStart !== entry.paginationEpoch) {
+            return {
+              data: {
+                messages: entry.messages,
+                hasMore: entry.olderCursor != null,
+              },
+            };
+          }
+
+          const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
+
+          return {
+            data: {
+              messages: next.messages,
+              hasMore: next.olderCursor != null,
+            },
+          };
+        } catch (error) {
+          return { error: new NovuError('Failed to load older agent chat messages', error) };
+        }
+      });
     });
   }
 
@@ -276,6 +365,7 @@ export class AgentChat extends BaseModule {
             text: args.text,
             conversationId,
             agentHash: args.agentHash,
+            metadata: args.metadata,
           });
 
           this.#store.markSent(entry, {

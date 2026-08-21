@@ -1,4 +1,5 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { NovuError } from '../utils/errors';
 import type {
   AgentConversationStatus,
   AgentConversationTyping,
@@ -33,6 +34,7 @@ export type AgentHashFields = {
 export type SendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
+  metadata?: Record<string, unknown>;
   /**
    * Existing conversation to append to.
    * Omit this field to create a new conversation. The client does not reuse a prior chat.
@@ -70,6 +72,13 @@ export type FetchMoreArgs = {
 
 export type FetchMoreResult = {
   messages: AgentMessage[];
+  hasMore: boolean;
+};
+
+export type AgentChatPaginationStatus = 'idle' | 'loading' | 'error';
+
+export type AgentChatPagination = {
+  status: AgentChatPaginationStatus;
   hasMore: boolean;
 };
 
@@ -128,5 +137,7 @@ export type AgentChatMessagesUpdated = {
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;
+  pagination: AgentChatPagination;
+  error?: NovuError;
   change: AgentChatChange;
 };

@@ -1,4 +1,5 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { NovuError } from '../utils/errors';
 import {
   type AgentConversationState,
   type AgentMessage,
@@ -6,7 +7,7 @@ import {
   derivePendingActions,
 } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
-import type { AgentChatChange, AgentChatChangeSource } from './types';
+import type { AgentChatChange, AgentChatChangeSource, AgentChatPaginationStatus, FetchMoreResult } from './types';
 
 type McpConnectionResult = {
   status: 'connected' | 'failed';
@@ -41,6 +42,12 @@ export type ConversationEntry = AgentConversationState & {
   mcpConnectionResults: Map<string, McpConnectionResult>;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
+  /** History pagination state for `fetchMore`. */
+  paginationStatus: AgentChatPaginationStatus;
+  /** Invalidates in-flight `fetchMore` status updates after history reload. */
+  paginationEpoch: number;
+  /** Coalesces overlapping `fetchMore` calls on this holder. */
+  pendingFetchMore?: Promise<{ data?: FetchMoreResult; error?: NovuError }>;
 };
 
 function mintClientId(prefix: string): string {
@@ -214,6 +221,8 @@ export class AgentChatStore {
       olderCursor: null,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
+      paginationStatus: 'idle',
+      paginationEpoch: 0,
     };
     this.#byKey.set(args.key, entry);
 
@@ -227,15 +236,15 @@ export class AgentChatStore {
    */
   appendSending(entry: ConversationEntry, text: string): string {
     const messageId = createOptimisticMessageId();
-    applyState(
-      entry,
-      appendUserMessage(entry, {
+    applyState(entry, {
+      ...appendUserMessage(entry, {
         id: messageId,
         createdAt: new Date().toISOString(),
         status: 'sending',
         parts: [{ type: 'text', text, state: 'done' }],
-      })
-    );
+      }),
+      error: undefined,
+    });
     this.#publish(entry, { kind: 'local' }, []);
 
     return messageId;
@@ -294,10 +303,57 @@ export class AgentChatStore {
       messages: this.#applyMcpConnectionResults(entry, [...folded.messages, ...localOnly]),
     });
     entry.olderCursor = olderCursor;
+    entry.paginationEpoch += 1;
+    entry.paginationStatus = 'idle';
+    entry.pendingFetchMore = undefined;
 
     this.#publish(entry, { kind: 'history' }, messagesAddedSince(previous, entry.messages));
 
     return entry;
+  }
+
+  /**
+   * Run one history page fetch for this holder.
+   * Overlapping calls reuse the same in-flight promise.
+   * Message-id filtering in `prependOlderPage` prevents duplicate-message corruption when
+   * overlapping pagination wastes network or cursor work.
+   */
+  withFetchMoreClaim(
+    entry: ConversationEntry,
+    fetch: () => Promise<{ data?: FetchMoreResult; error?: NovuError }>
+  ): Promise<{ data?: FetchMoreResult; error?: NovuError }> {
+    if (entry.pendingFetchMore) {
+      return entry.pendingFetchMore;
+    }
+
+    entry.paginationStatus = 'loading';
+    this.#publish(entry, { kind: 'local' }, []);
+
+    const epoch = entry.paginationEpoch;
+    const current = fetch().then((result) => {
+      if (epoch !== entry.paginationEpoch) {
+        return {
+          data: {
+            messages: entry.messages,
+            hasMore: entry.olderCursor != null,
+          },
+        };
+      }
+
+      entry.paginationStatus = result.error ? 'error' : 'idle';
+      this.#publish(entry, { kind: 'local' }, []);
+
+      return result;
+    });
+
+    const claim = current.finally(() => {
+      if (entry.pendingFetchMore === claim) {
+        entry.pendingFetchMore = undefined;
+      }
+    });
+    entry.pendingFetchMore = claim;
+
+    return current;
   }
 
   /**
