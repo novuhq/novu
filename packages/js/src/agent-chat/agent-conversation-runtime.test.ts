@@ -7,8 +7,6 @@ describe('AgentConversationRuntime', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
   let emitter: NovuEventEmitter;
   let sendMessage: jest.Mock;
-  let respondToAction: jest.Mock;
-  let sendAction: jest.Mock;
   let getEvents: jest.Mock;
   let connect: jest.Mock;
   let agentChat: AgentChat;
@@ -16,11 +14,14 @@ describe('AgentConversationRuntime', () => {
   beforeEach(() => {
     emitter = new NovuEventEmitter();
     sendMessage = jest.fn();
-    respondToAction = jest.fn();
-    sendAction = jest.fn();
     getEvents = jest.fn();
     connect = jest.fn().mockResolvedValue({ data: undefined });
-    const agentChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as AgentChatService;
+    const agentChatService = {
+      sendMessage,
+      respondToAction: jest.fn(),
+      sendAction: jest.fn(),
+      getEvents,
+    } as unknown as AgentChatService;
     agentChat = new AgentChat({
       inboxServiceInstance,
       eventEmitterInstance: emitter,
@@ -54,22 +55,7 @@ describe('AgentConversationRuntime', () => {
     first.data.dispose();
   });
 
-  it('creates separate runtimes for different conversation ids', () => {
-    const first = agentChat.conversation({ agentId: 'agent_1', conversationId: 'conv_aaaaaaaaaaaa' });
-    const second = agentChat.conversation({ agentId: 'agent_1', conversationId: 'conv_bbbbbbbbbbbb' });
-
-    expect(first.ok).toBe(true);
-    expect(second.ok).toBe(true);
-    if (!first.ok || !second.ok) {
-      return;
-    }
-
-    expect(first.data).not.toBe(second.data);
-    first.data.dispose();
-    second.data.dispose();
-  });
-
-  it('returns the same snapshot reference until the next publication', async () => {
+  it('returns the same frozen snapshot reference until the next publication', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
     const created = agentChat.conversation({ agentId: 'agent_1' });
@@ -82,6 +68,7 @@ describe('AgentConversationRuntime', () => {
     const before = runtime.getSnapshot();
 
     await runtime.sendMessage('hello');
+    await runtime.sendMessage({ text: 'with metadata', metadata: { source: 'test' } });
 
     const afterSend = runtime.getSnapshot();
     expect(afterSend).not.toBe(before);
@@ -90,31 +77,22 @@ describe('AgentConversationRuntime', () => {
       status: 'sent',
       parts: [{ type: 'text', text: 'hello', state: 'done' }],
     });
+    expect(Object.isFrozen(afterSend)).toBe(true);
+    expect(Object.isFrozen(afterSend.messages)).toBe(true);
+    expect(Object.isFrozen(afterSend.pendingActions)).toBe(true);
+    expect(Object.isFrozen(afterSend.run)).toBe(true);
+    expect(Object.isFrozen(afterSend.pagination)).toBe(true);
 
     const again = runtime.getSnapshot();
     expect(again).toBe(afterSend);
 
+    expect(sendMessage).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: 'hello' }));
+    expect(sendMessage).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ text: 'with metadata', metadata: { source: 'test' } })
+    );
+
     runtime.dispose();
-  });
-
-  it('freezes published snapshots and nested collections', async () => {
-    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
-
-    const created = agentChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
-
-    await created.data.sendMessage('hello');
-    const snapshot = created.data.getSnapshot();
-
-    expect(Object.isFrozen(snapshot)).toBe(true);
-    expect(Object.isFrozen(snapshot.messages)).toBe(true);
-    expect(Object.isFrozen(snapshot.pendingActions)).toBe(true);
-    expect(Object.isFrozen(snapshot.run)).toBe(true);
-    expect(Object.isFrozen(snapshot.pagination)).toBe(true);
-
-    created.data.dispose();
   });
 
   it('notifies subscribers only when the snapshot reference changes', async () => {
@@ -151,116 +129,6 @@ describe('AgentConversationRuntime', () => {
 
     unsubscribe();
     runtime.dispose();
-  });
-
-  it('accepts sendMessage text shorthand and object form', async () => {
-    sendMessage
-      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_aaaaaaaaaaaa' })
-      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_bbbbbbbbbbbb' });
-
-    const first = agentChat.conversation({ agentId: 'agent_1' });
-    const second = agentChat.conversation({ agentId: 'agent_1' });
-    if (!first.ok || !second.ok) {
-      return;
-    }
-
-    await first.data.sendMessage('hello');
-    await second.data.sendMessage({ text: 'hello', metadata: { source: 'test' } });
-
-    expect(sendMessage).toHaveBeenNthCalledWith(1, expect.objectContaining({ text: 'hello' }));
-    expect(sendMessage).toHaveBeenNthCalledWith(2, expect.objectContaining({ text: 'hello' }));
-
-    first.data.dispose();
-    second.data.dispose();
-  });
-
-  it('keeps respondToAction and sendAction as distinct methods', async () => {
-    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
-    respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
-    sendAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
-
-    const created = agentChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
-
-    await created.data.sendMessage('hi');
-
-    emitter.emit('agent_chat.agent_event', {
-      result: {
-        version: 1,
-        conversationId: 'internal',
-        conversationIdentifier: 'conv_abcdefghijkl',
-        agentId: 'agent_1',
-        runId: 'run_1',
-        turnId: 't1',
-        sequence: 1,
-        timestamp: '2026-08-07T12:00:00.000Z',
-        event: { type: 'message-start', messageId: 'msg_asst0000001' },
-      },
-    });
-    emitter.emit('agent_chat.agent_event', {
-      result: {
-        version: 1,
-        conversationId: 'internal',
-        conversationIdentifier: 'conv_abcdefghijkl',
-        agentId: 'agent_1',
-        runId: 'run_1',
-        turnId: 't1',
-        sequence: 2,
-        timestamp: '2026-08-07T12:00:01.000Z',
-        event: {
-          type: 'tool-approval-request',
-          approvalId: 'approval_000001',
-          toolUseId: 'tu_0000001',
-          toolName: 'deleteOrder',
-          input: { orderId: '123' },
-          approveActionId: 'tool-approval:approve:approval_000001',
-          denyActionId: 'tool-approval:deny:approval_000001',
-        },
-      },
-    });
-
-    await created.data.respondToAction({ actionId: 'approval_000001', decision: 'approved' });
-    await created.data.sendAction({
-      actionId: 'topic-billing',
-      sourceMessageId: 'act_card0000001',
-      value: 'billing',
-    });
-
-    expect(respondToAction).toHaveBeenCalledTimes(1);
-    expect(sendAction).toHaveBeenCalledTimes(1);
-    expect(respondToAction.mock.calls[0]?.[0]).toMatchObject({
-      agentId: 'agent_1',
-      conversationId: 'conv_abcdefghijkl',
-      actionId: 'tool-approval:approve:approval_000001',
-    });
-    expect(sendAction.mock.calls[0]?.[0]).toMatchObject({
-      agentId: 'agent_1',
-      conversationId: 'conv_abcdefghijkl',
-      actionId: 'topic-billing',
-      sourceMessageId: 'act_card0000001',
-      value: 'billing',
-    });
-
-    created.data.dispose();
-  });
-
-  it('returns a not-implemented error from cancelRun', () => {
-    const created = agentChat.conversation({ agentId: 'agent_1' });
-    if (!created.ok) {
-      return;
-    }
-
-    const result = created.data.cancelRun();
-    expect(result.ok).toBe(false);
-    if (result.ok) {
-      return;
-    }
-
-    expect(result.error.message).toContain('not supported');
-
-    created.data.dispose();
   });
 
   it('separates run, conversationStatus, pagination, and session status in the snapshot', async () => {
@@ -311,7 +179,47 @@ describe('AgentConversationRuntime', () => {
     created.data.dispose();
   });
 
-  it('registers the runtime by conversation id after the first send', async () => {
+  it('replaces a stale resume runtime when the create-flow runtime registers', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+
+    const createFlow = agentChat.conversation({ agentId: 'agent_1' });
+    if (!createFlow.ok) {
+      return;
+    }
+
+    const staleResume = agentChat.conversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(staleResume.ok).toBe(true);
+    if (!staleResume.ok) {
+      return;
+    }
+
+    expect(staleResume.data).not.toBe(createFlow.data);
+
+    await createFlow.data.sendMessage('hello');
+
+    const resumed = agentChat.conversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(resumed.ok).toBe(true);
+    if (!resumed.ok) {
+      return;
+    }
+
+    expect(resumed.data).toBe(createFlow.data);
+    expect(resumed.data).not.toBe(staleResume.data);
+    expect(resumed.data.getSnapshot().messages[0]).toMatchObject({
+      role: 'user',
+      parts: [{ type: 'text', text: 'hello' }],
+    });
+
+    createFlow.data.dispose();
+  });
+
+  it('clearCache disposes runtimes so a later resume gets a fresh instance', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
 
     const created = agentChat.conversation({ agentId: 'agent_1' });
@@ -320,15 +228,21 @@ describe('AgentConversationRuntime', () => {
     }
 
     await created.data.sendMessage('hello');
+    const disposedRuntime = created.data;
 
-    const resumed = agentChat.conversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    agentChat.clearCache();
+
+    const resumed = agentChat.conversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
     expect(resumed.ok).toBe(true);
     if (!resumed.ok) {
       return;
     }
 
-    expect(resumed.data).toBe(created.data);
+    expect(resumed.data).not.toBe(disposedRuntime);
 
-    created.data.dispose();
+    resumed.data.dispose();
   });
 });

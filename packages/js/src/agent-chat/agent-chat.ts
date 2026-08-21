@@ -9,6 +9,7 @@ import { AgentChatStore, type ConversationEntry, createLocalConversationKey } fr
 import { AgentConversationRuntime } from './agent-conversation-runtime';
 import { type AgentMessage, derivePendingActions } from './agent-message.types';
 import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
+import { runtimeCacheKey } from './runtime-cache-key';
 import type {
   AgentChatMessagesUpdated,
   FetchMoreArgs,
@@ -97,6 +98,10 @@ export class AgentChat extends BaseModule {
   }
 
   clearCache(): void {
+    for (const runtime of [...this.#runtimes.values()]) {
+      runtime.dispose();
+    }
+
     this.#store.clear();
     this.#catchUpBuffer = null;
     this.#runtimes.clear();
@@ -107,7 +112,7 @@ export class AgentChat extends BaseModule {
    * Resume sessions (`conversationId` set) are reused across calls with the same identity.
    */
   conversation(args: ConversationArgs): ConversationResult<AgentConversationRuntime> {
-    const cacheKey = args.conversationId ? `${args.agentId}::${args.conversationId}` : undefined;
+    const cacheKey = args.conversationId ? runtimeCacheKey(args.agentId, args.conversationId) : undefined;
     if (cacheKey) {
       const existing = this.#runtimes.get(cacheKey);
       if (existing) {
@@ -134,7 +139,7 @@ export class AgentChat extends BaseModule {
   registerRuntime(cacheKey: string, runtime: AgentConversationRuntime): void {
     const existing = this.#runtimes.get(cacheKey);
     if (existing && existing !== runtime) {
-      return;
+      existing.dispose();
     }
 
     this.#runtimes.set(cacheKey, runtime);
@@ -328,6 +333,7 @@ export class AgentChat extends BaseModule {
             text: args.text,
             conversationId,
             agentHash: args.agentHash,
+            metadata: args.metadata,
           });
 
           this.#store.markSent(entry, {

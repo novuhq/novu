@@ -12,6 +12,7 @@ import type {
   ConversationResult,
   SendMessageInput,
 } from './conversation-runtime.types';
+import { runtimeCacheKey } from './runtime-cache-key';
 
 const EMPTY_RUN: AgentConversationRunSnapshot = Object.freeze({ isRunning: false });
 
@@ -38,12 +39,12 @@ function createEmptySnapshot(key: string, conversationId?: string): AgentConvers
   });
 }
 
-function normalizeSendMessageInput(input: SendMessageInput): { text: string } {
+function normalizeSendMessageInput(input: SendMessageInput): { text: string; metadata?: Record<string, unknown> } {
   if (typeof input === 'string') {
     return { text: input };
   }
 
-  return { text: input.text };
+  return { text: input.text, metadata: input.metadata };
 }
 
 /**
@@ -211,12 +212,13 @@ export class AgentConversationRuntime {
   async sendMessage(
     input: SendMessageInput
   ): Promise<{ data?: { conversationId: string; messageId: string }; error?: NovuError | AgentChatPlanLimitError }> {
-    const { text } = normalizeSendMessageInput(input);
+    const { text, metadata } = normalizeSendMessageInput(input);
 
     const response = await this.#agentChat.sendMessage({
       agentId: this.agentId,
       agentHash: this.#agentHash,
       text,
+      metadata,
       key: this.key,
       conversationId: this.#conversationId,
     });
@@ -291,21 +293,11 @@ export class AgentConversationRuntime {
 
   /** @internal */
   getRuntimeCacheKey(): string | undefined {
-    return this.#conversationId ? `${this.agentId}::${this.#conversationId}` : undefined;
-  }
-
-  /** @internal */
-  adoptConversationId(conversationId: string): void {
-    if (this.#conversationId === conversationId) {
-      return;
-    }
-
-    this.#conversationId = conversationId;
-    this.#registerByConversationId(conversationId);
+    return this.#conversationId ? runtimeCacheKey(this.agentId, this.#conversationId) : undefined;
   }
 
   #registerByConversationId(conversationId: string): void {
-    const cacheKey = `${this.agentId}::${conversationId}`;
+    const cacheKey = runtimeCacheKey(this.agentId, conversationId);
     if (this.#registeredConversationKey === cacheKey) {
       return;
     }

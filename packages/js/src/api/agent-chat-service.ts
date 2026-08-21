@@ -19,6 +19,7 @@ export class AgentChatPlanLimitError extends Error {
 export type AgentChatSendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
+  metadata?: Record<string, unknown>;
   /** Existing conversation id. Omit this field to create a new conversation. */
   conversationId?: string;
 };
@@ -76,6 +77,7 @@ export class AgentChatService {
       text: args.text,
       ...(args.conversationId ? { conversationIdentifier: args.conversationId } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
+      ...(args.metadata ? { metadata: args.metadata } : {}),
     });
   }
 
@@ -100,7 +102,7 @@ export class AgentChatService {
   }
 
   async #postAccept<T extends AgentChatSendMessageResponse | AgentChatRespondToActionResponse>(
-    body: Record<string, string>
+    body: Record<string, unknown>
   ): Promise<T> {
     try {
       return await this.#httpClient.post<T>(AGENT_CHAT_CONVERSATIONS_ROUTE, body);
