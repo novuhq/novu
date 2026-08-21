@@ -1,5 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type { AgentHashFields } from '../agent-chat/types';
+import { validateHistoryPageResponse } from '../agent-chat/validate-envelope';
 import { HttpClient } from './http-client';
 
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/agent-chat/conversations';
@@ -143,8 +144,18 @@ export class AgentChatService {
     const query = params.toString();
     const suffix = query ? `?${query}` : '';
 
-    return this.#httpClient.get(
+    const raw = await this.#httpClient.get<unknown>(
       `${AGENT_CHAT_CONVERSATIONS_ROUTE}/${encodeURIComponent(args.conversationId)}/events${suffix}`
     );
+
+    const validated = validateHistoryPageResponse(raw);
+    if (!validated.ok) {
+      throw new Error(validated.error.message);
+    }
+
+    return {
+      events: validated.events,
+      olderCursor: validated.olderCursor,
+    };
   }
 }

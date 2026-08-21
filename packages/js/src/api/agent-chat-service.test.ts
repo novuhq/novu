@@ -1,3 +1,4 @@
+import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
 import { AgentChatService } from './agent-chat-service';
 import { HttpClient } from './http-client';
 
@@ -229,5 +230,28 @@ describe('AgentChatService', () => {
       'https://test.novu.co/v1/agent-chat/conversations/conv_abcdefghijkl/events?before=act_page0001&limit=50',
       expect.objectContaining({ method: 'GET' })
     );
+  });
+
+  it('rejects invalid history payloads', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          events: [{ version: AGENT_EVENT_PROTOCOL_VERSION, event: { type: 'run-start' } }],
+          olderCursor: null,
+        },
+      }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    await expect(
+      service.getEvents({
+        conversationId: 'conv_abcdefghijkl',
+      })
+    ).rejects.toThrow('Agent event envelope failed schema validation');
   });
 });

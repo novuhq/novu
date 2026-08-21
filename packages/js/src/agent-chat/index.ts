@@ -1,6 +1,38 @@
 export { AgentChat } from './agent-chat';
 export { AgentConversationRuntime } from './agent-conversation-runtime';
+export type {
+  AgentChatDefinition,
+  AgentChatToolsDefinition,
+  AgentToolDefinition,
+  AgentToolPartFor,
+} from './agent-chat-definition.types';
 export { derivePendingActions } from './agent-message.types';
+export type {
+  AgentApprovalPart,
+  AgentApprovalPartState,
+  AgentCardPart,
+  AgentConversationError,
+  AgentConversationState,
+  AgentConversationStatus,
+  AgentConversationTyping,
+  AgentFilePart,
+  AgentMcpConnectionAction,
+  AgentMcpConnectionPart,
+  AgentMcpConnectionPartState,
+  AgentMessage,
+  AgentMessagePart,
+  AgentMessageRole,
+  AgentMessageStatus,
+  AgentPendingAction,
+  AgentSourcePart,
+  AgentTextPart,
+  AgentTextPartState,
+  AgentThinkingPart,
+  AgentToolApprovalAction,
+  AgentToolApprovalDecision,
+  AgentToolPart,
+  AgentToolPartState,
+} from './agent-message.types';
 export type {
   AgentConversationPaginationSnapshot,
   AgentConversationRunSnapshot,
@@ -18,16 +50,8 @@ export type {
   AgentChatMessagesUpdated,
   AgentChatPagination,
   AgentChatPaginationStatus,
-  AgentConversationStatus,
-  AgentConversationTyping,
   AgentEventEnvelope,
   AgentHashFields,
-  AgentMcpConnectionAction,
-  AgentMcpConnectionPart,
-  AgentMessage,
-  AgentPendingAction,
-  AgentToolApprovalAction,
-  AgentToolApprovalDecision,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -39,3 +63,20 @@ export type {
   SendMessageArgs,
   SendMessageResult,
 } from './types';
+export type {
+  AgentProtocolErrorCode,
+  ApplyValidatedEnvelopeResult,
+  FoldValidationContext,
+  OrderingValidationResult,
+  ParseEnvelopeResult,
+  ValidateHistoryPageResult,
+} from './validate-envelope';
+export {
+  applyValidatedEnvelope,
+  applyValidatedEnvelopes,
+  createFoldValidationContext,
+  createProtocolError,
+  parseAgentEventEnvelope,
+  validateEnvelopeOrdering,
+  validateHistoryPageResponse,
+} from './validate-envelope';

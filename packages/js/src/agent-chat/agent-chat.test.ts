@@ -701,6 +701,32 @@ describe('AgentChat', () => {
     expect(updates.at(-1)).toEqual(['msg_user0000001', 'msg_asst0000001']);
   });
 
+  it('records a protocol error and skips malformed live ordering', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 1,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: { type: 'message-delta', messageId: 'msg_asst0000001', delta: 'orphan' },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.messages).toHaveLength(1);
+    expect(snapshot?.error).toMatchObject({
+      code: 'protocol.ordering',
+      message: expect.stringContaining('message-delta'),
+    });
+  });
+
   it('ignores live envelopes for conversations that are not open', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
