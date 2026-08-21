@@ -1,5 +1,5 @@
 import 'event-target-polyfill';
-import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { isAgentEventEnvelope } from '@novu/agent-event-protocol';
 import { WebSocket } from 'partysocket';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
@@ -192,8 +192,14 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     try {
       const data = JSON.parse(event.data);
       if (data.event === WebSocketEvent.AGENT_EVENT) {
+        if (!isAgentEventEnvelope(data.data)) {
+          console.warn('[Novu] Dropped malformed agent event envelope');
+
+          return;
+        }
+
         this.#emitter.emit(AGENT_CHAT_AGENT_EVENT, {
-          result: data.data as AgentEventEnvelope,
+          result: data.data,
         });
       }
     } catch (error) {

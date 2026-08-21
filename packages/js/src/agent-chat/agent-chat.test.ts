@@ -776,13 +776,14 @@ describe('AgentChat', () => {
       role: 'user' | 'assistant';
       markdown: string;
     }>,
-    olderCursor: string | null = null
+    olderCursor: string | null = null,
+    conversationId = 'conv_abcdefghijkl'
   ) {
     return {
       events: events.map((event) => ({
         version: AGENT_EVENT_PROTOCOL_VERSION,
         conversationId: 'internal',
-        conversationIdentifier: 'conv_abcdefghijkl',
+        conversationIdentifier: conversationId,
         agentId: 'agent_1',
         runId: 'history',
         turnId: 't1',
@@ -799,12 +800,18 @@ describe('AgentChat', () => {
     };
   }
 
-  function liveAssistantEnvelope(args: { sequence: number; messageId: string; markdown: string }) {
+  function liveAssistantEnvelope(args: {
+    sequence: number;
+    messageId: string;
+    markdown: string;
+    conversationId?: string;
+    role?: 'user' | 'assistant';
+  }) {
     return {
       result: {
         version: AGENT_EVENT_PROTOCOL_VERSION,
         conversationId: 'internal',
-        conversationIdentifier: 'conv_abcdefghijkl',
+        conversationIdentifier: args.conversationId ?? 'conv_abcdefghijkl',
         agentId: 'agent_1',
         runId: 'run_1',
         turnId: 't1',
@@ -812,7 +819,7 @@ describe('AgentChat', () => {
         timestamp: '2026-08-07T12:00:03.000Z',
         event: {
           type: 'message' as const,
-          role: 'assistant' as const,
+          role: args.role ?? ('assistant' as const),
           messageId: args.messageId,
           content: { markdown: args.markdown },
         },
@@ -843,8 +850,8 @@ describe('AgentChat', () => {
     });
   }
 
-  async function waitForMessageIds(expected: string[]): Promise<void> {
-    const current = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+  async function waitForMessageIds(expected: string[], key = 'local_session1'): Promise<void> {
+    const current = agentChat.getConversation({ agentId: 'agent_1', key });
     if (current && current.messages.map((message) => message.id).join() === expected.join()) {
       return;
     }
@@ -852,7 +859,7 @@ describe('AgentChat', () => {
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`timed out waiting for ${expected.join(',')}`)), 1000);
       const unsubscribe = emitter.on('agent_chat.messages.updated', ({ data }) => {
-        if (data.key !== 'local_session1') {
+        if (data.key !== key) {
           return;
         }
 
@@ -1028,7 +1035,7 @@ describe('AgentChat', () => {
     expect(assistant?.parts).toEqual([{ type: 'text', text: 'same as http page', state: 'done' }]);
   });
 
-  it('flushes buffered live envelopes when catch-up HTTP fails', async () => {
+  it('flushes buffered live envelopes and sets error when catch-up HTTP fails', async () => {
     await openClaimedConversation();
 
     let rejectEvents!: (error: Error) => void;
@@ -1038,6 +1045,13 @@ describe('AgentChat', () => {
           rejectEvents = reject;
         })
     );
+
+    const catchUpFailureUpdates: Array<{ isRecovering: boolean; catchUpError?: unknown }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.catchUpError) {
+        catchUpFailureUpdates.push({ isRecovering: data.isRecovering, catchUpError: data.catchUpError });
+      }
+    });
 
     emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
     await waitForGetEventsCalls(1);
@@ -1053,6 +1067,218 @@ describe('AgentChat', () => {
 
     rejectEvents(new Error('getEvents failed'));
     await waitForMessageIds(['msg_user0000001', 'msg_asst_flush001']);
+    expect(catchUpFailureUpdates.length).toBeGreaterThanOrEqual(1);
+    expect(catchUpFailureUpdates[0]).toEqual({
+      isRecovering: false,
+      catchUpError: expect.objectContaining({
+        message: 'Failed to recover agent chat conversation after reconnect',
+      }),
+    });
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.catchUpError).toMatchObject({
+      message: 'Failed to recover agent chat conversation after reconnect',
+    });
+  });
+
+  it('drops malformed agent_chat.agent_event envelopes without folding them', async () => {
+    await openClaimedConversation();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    emitter.emit('agent_chat.agent_event', { result: { invalid: true } as any });
+
+    expect(warn).toHaveBeenCalledWith('[Novu] Dropped malformed agent event envelope');
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    warn.mockRestore();
+  });
+
+  it('does not buffer live envelopes for conversations that are not catching up', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_user_a00001' })
+      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_user_b00001' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello A', key: 'local_a' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello B', key: 'local_b' });
+    agentChat.subscribe();
+
+    let resolveSlowCatchUp!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation((args: { conversationId: string }) => {
+      if (args.conversationId === 'conv_aaaaaaaaaaaa') {
+        return new Promise((resolve) => {
+          resolveSlowCatchUp = resolve;
+        });
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [{ sequence: 1, messageId: 'msg_user_b00001', role: 'user', markdown: 'hello B' }],
+          null,
+          args.conversationId
+        )
+      );
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        conversationId: 'conv_bbbbbbbbbbbb',
+        sequence: 2,
+        messageId: 'msg_asst_b_live01',
+        markdown: 'live on B during A catch-up',
+      })
+    );
+
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', key: 'local_b' })?.messages.map((message) => message.id)
+    ).toEqual(['msg_user_b00001', 'msg_asst_b_live01']);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.messages).toHaveLength(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        conversationId: 'conv_aaaaaaaaaaaa',
+        sequence: 2,
+        messageId: 'msg_asst_a_buf01',
+        markdown: 'buffered on A during catch-up',
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.messages).toHaveLength(1);
+
+    resolveSlowCatchUp(
+      historyPage(
+        [{ sequence: 1, messageId: 'msg_user_a00001', role: 'user', markdown: 'hello A' }],
+        null,
+        'conv_aaaaaaaaaaaa'
+      )
+    );
+
+    await waitForMessageIds(['msg_user_a00001', 'msg_asst_a_buf01'], 'local_a');
+  });
+
+  it('sets catchUpError when reconnect catch-up exceeds the safety page limit', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    agentChat.subscribe();
+    getEvents.mockReset();
+
+    let page = 0;
+    getEvents.mockImplementation(() => {
+      page += 1;
+
+      return Promise.resolve(
+        historyPage(
+          [
+            {
+              sequence: 100 + page,
+              messageId: `msg_asst_page${page.toString().padStart(2, '0')}`,
+              role: 'assistant',
+              markdown: `page ${page}`,
+            },
+          ],
+          `act_page${page.toString().padStart(2, '0')}`
+        )
+      );
+    });
+
+    const catchUpErrors: unknown[] = [];
+    const catchUpErrorPromise = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for catchUpError')), 2000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.catchUpError) {
+          clearTimeout(timeout);
+          catchUpErrors.push(data.catchUpError);
+          resolve();
+        }
+      });
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await catchUpErrorPromise;
+    expect(getEvents).toHaveBeenCalledTimes(20);
+
+    expect(catchUpErrors).toHaveLength(1);
+    expect(catchUpErrors[0]).toMatchObject({
+      message: expect.stringContaining('safety page limit'),
+    });
+  });
+
+  it('exposes isRecovering while catch-up is in flight and clears it after success', async () => {
+    await openClaimedConversation();
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    const recoveringStarted = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for isRecovering start event')), 1000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.key === 'local_session1' && data.isRecovering) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+    const recoveringUpdates: boolean[] = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        recoveringUpdates.push(data.isRecovering);
+      }
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    await recoveringStarted;
+
+    resolveEvents(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_done001', role: 'assistant', markdown: 'caught up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_done001']);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.isRecovering).toBe(false);
+    expect(recoveringUpdates.at(-1)).toBe(false);
+  });
+
+  it('emits isRecovering false after successful catch-up with an empty live buffer', async () => {
+    await openClaimedConversation();
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+
+    const recoveringUpdates: boolean[] = [];
+    const recovered = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for isRecovering false')), 2000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.key !== 'local_session1') {
+          return;
+        }
+
+        recoveringUpdates.push(data.isRecovering);
+        if (recoveringUpdates.includes(true) && data.isRecovering === false) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await recovered;
+    expect(recoveringUpdates.at(-1)).toBe(false);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.isRecovering).toBe(false);
   });
 
   it('runs a second catch-up when reconnect arrives during an in-flight catch-up', async () => {

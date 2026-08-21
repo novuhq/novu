@@ -40,6 +40,10 @@ export type ConversationEntry = AgentConversationState & {
   reportedActionIds: Set<string>;
   /** Terminal MCP results retained while history pages load independently. */
   mcpConnectionResults: Map<string, McpConnectionResult>;
+  /** True while reconnect catch-up is in flight for this holder. */
+  isRecovering: boolean;
+  /** Set when catch-up hits the safety page limit or HTTP fails. Cleared on success. */
+  recoveryError?: NovuError;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
   /** History pagination state for `fetchMore`. */
@@ -221,6 +225,7 @@ export class AgentChatStore {
       olderCursor: null,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
+      isRecovering: false,
       paginationStatus: 'idle',
       paginationEpoch: 0,
     };
@@ -236,6 +241,7 @@ export class AgentChatStore {
    */
   appendSending(entry: ConversationEntry, text: string): string {
     const messageId = createOptimisticMessageId();
+    entry.recoveryError = undefined;
     applyState(entry, {
       ...appendUserMessage(entry, {
         id: messageId,
@@ -386,6 +392,19 @@ export class AgentChatStore {
    * Apply one live envelope onto this holder and notify listeners.
    * Drops envelopes at or behind `lastSequence` so catch-up HTTP + buffered WS overlap is safe.
    */
+  setRecovering(entry: ConversationEntry, isRecovering: boolean): ConversationEntry {
+    entry.isRecovering = isRecovering;
+    this.#publish(entry, { kind: 'local' }, []);
+
+    return entry;
+  }
+
+  setRecoveryError(entry: ConversationEntry, error: NovuError | undefined): ConversationEntry {
+    entry.recoveryError = error;
+
+    return entry;
+  }
+
   applyLiveEnvelope(entry: ConversationEntry, envelope: AgentEventEnvelope): ConversationEntry {
     if (envelope.sequence <= entry.lastSequence) {
       return entry;

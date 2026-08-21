@@ -67,6 +67,8 @@ export type UseAgentChatResult = {
       error?: NovuError;
     }>;
   };
+  /** True while reconnect catch-up is in flight for this conversation. */
+  isRecovering: boolean;
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
@@ -157,7 +159,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [pagination, setPagination] = useState<AgentChatPagination>({ status: 'idle', hasMore: false });
   const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
+  const [isRecovering, setIsRecovering] = useState(false);
   const fetchGenerationRef = useRef(0);
+  const catchUpErrorActiveRef = useRef(false);
 
   const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
 
@@ -241,6 +245,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   );
 
   useEffect(() => {
+    // Agent chat always subscribes for live WS events while mounted, regardless of
+    // `<NovuProvider realtime={false}>`. That flag only disables notification/count
+    // auto-sync (`useNotifications`, `useCounts`). To stop agent-chat live updates,
+    // unmount the hook or call `novu.agentChat.unsubscribe()` yourself.
     novu.agentChat.subscribe();
 
     const snapshot = novu.agentChat.getConversation({
@@ -260,6 +268,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         },
         snapshotSetters
       );
+      setIsRecovering(snapshot.isRecovering);
+      if (snapshot.catchUpError) {
+        catchUpErrorActiveRef.current = true;
+      }
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
@@ -291,6 +303,18 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       );
       if (data.conversationId && !propsRef.current.conversationId) {
         setAssignedConversationId(data.conversationId);
+      }
+
+      setIsRecovering(data.isRecovering);
+      if (data.catchUpError) {
+        if (!catchUpErrorActiveRef.current) {
+          catchUpErrorActiveRef.current = true;
+          propsRef.current.onError?.(data.catchUpError);
+        }
+        setError(data.catchUpError);
+      } else if (!data.isRecovering && catchUpErrorActiveRef.current) {
+        catchUpErrorActiveRef.current = false;
+        setError(undefined);
       }
 
       const { change } = data;
@@ -441,6 +465,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     typing,
     status,
     pagination: paginationWithFetch,
+    isRecovering,
     refetch,
   };
 };

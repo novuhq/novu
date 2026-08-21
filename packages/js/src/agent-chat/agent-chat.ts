@@ -1,4 +1,5 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import { isAgentEventEnvelope } from '@novu/agent-event-protocol';
 import { AgentChatPlanLimitError, AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
@@ -11,6 +12,7 @@ import { type AgentConversationError, type AgentMessage, derivePendingActions } 
 import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
 import { runtimeCacheKey } from './runtime-cache-key';
 import type {
+  AgentChatChange,
   AgentChatMessagesUpdated,
   AgentChatPagination,
   FetchMoreArgs,
@@ -36,6 +38,9 @@ function entryPagination(entry: ConversationEntry): AgentChatPagination {
   };
 }
 
+/** Safety cap on reconnect catch-up HTTP pages. Exceeding this sets a public error. */
+const CATCH_UP_PAGE_LIMIT = 20;
+
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
   #store: AgentChatStore;
@@ -43,10 +48,10 @@ export class AgentChat extends BaseModule {
   #liveSubscriberCount = 0;
   #runtimes = new Map<string, AgentConversationRuntime>();
   /**
-   * Non-null while a reconnect catch-up is in flight: live envelopes are buffered here
-   * and applied after the HTTP page is absorbed. Serialized via `#catchUpChain`.
+   * Per-conversation live envelope buffers while reconnect catch-up is in flight.
+   * Map key means catch-up is in flight; only those conversations buffer live envelopes.
    */
-  #catchUpBuffer: AgentEventEnvelope[] | null = null;
+  #catchUpBuffers = new Map<string, AgentEventEnvelope[]>();
   #catchUpChain: Promise<void> = Promise.resolve();
 
   constructor({
@@ -64,21 +69,7 @@ export class AgentChat extends BaseModule {
     this.#agentChatService = agentChatService;
     this.#socket = socket;
     this.#store = new AgentChatStore((entry, change) => {
-      this._emitter.emit('agent_chat.messages.updated', {
-        data: {
-          agentId: entry.agentId,
-          conversationId: entry.conversationId,
-          key: entry.key,
-          messages: entry.messages,
-          isRunning: entry.isRunning,
-          typing: entry.typing,
-          status: entry.status,
-          hasMore: entry.olderCursor != null,
-          pagination: entryPagination(entry),
-          error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
-          change,
-        },
-      });
+      this.#emitMessagesUpdated(entry, change);
     });
     this._emitter.on('agent_chat.agent_event', ({ result }) => {
       this.#handleAgentEvent(result);
@@ -117,7 +108,7 @@ export class AgentChat extends BaseModule {
     }
 
     this.#store.clear();
-    this.#catchUpBuffer = null;
+    this.#catchUpBuffers.clear();
     this.#runtimes.clear();
   }
 
@@ -178,7 +169,9 @@ export class AgentChat extends BaseModule {
         status: ConversationEntry['status'];
         hasMore: boolean;
         pagination: AgentChatPagination;
+        isRecovering: boolean;
         error?: NovuError;
+        catchUpError?: NovuError;
       }
     | undefined {
     const entry = key
@@ -200,8 +193,15 @@ export class AgentChat extends BaseModule {
       status: entry.status,
       hasMore: entry.olderCursor != null,
       pagination: entryPagination(entry),
+      isRecovering: entry.isRecovering,
       error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
+      catchUpError: entry.recoveryError,
     };
+  }
+
+  /** True while reconnect catch-up is in flight for the given conversation. */
+  isRecovering(conversationId: string): boolean {
+    return this.#catchUpBuffers.has(conversationId);
   }
 
   async respondToAction(args: RespondToActionArgs): Result<RespondToActionResult, NovuError | AgentChatPlanLimitError> {
@@ -501,15 +501,24 @@ export class AgentChat extends BaseModule {
   /**
    * Live WS path: apply envelopes into open conversations only.
    * Unknown conversations are dropped — mount/resume creates the entry.
-   * During reconnect catch-up, all live envelopes are buffered until HTTP finishes.
+   * During reconnect catch-up for a conversation, only that conversation's envelopes buffer.
    */
-  #handleAgentEvent(envelope: AgentEventEnvelope): void {
-    if (!envelope.conversationIdentifier) {
+  #handleAgentEvent(payload: unknown): void {
+    if (!isAgentEventEnvelope(payload)) {
+      console.warn('[Novu] Dropped malformed agent event envelope');
+
       return;
     }
 
-    if (this.#catchUpBuffer) {
-      this.#catchUpBuffer.push(envelope);
+    const envelope = payload;
+    const conversationId = envelope.conversationIdentifier;
+    if (!conversationId) {
+      return;
+    }
+
+    if (this.#catchUpBuffers.has(conversationId)) {
+      const buffer = this.#catchUpBuffers.get(conversationId);
+      buffer?.push(envelope);
 
       return;
     }
@@ -555,41 +564,56 @@ export class AgentChat extends BaseModule {
       byConversationId.set(entry.conversationId, holders);
     }
 
-    this.#catchUpBuffer = [];
+    await Promise.all(
+      [...byConversationId.entries()].map(([conversationId, holders]) =>
+        this.#catchUpConversation(conversationId, holders)
+      )
+    );
+  }
 
-    try {
-      await Promise.all(
-        [...byConversationId.entries()].map(([conversationId, holders]) =>
-          this.#catchUpConversation(conversationId, holders)
-        )
-      );
-    } finally {
-      const buffered = this.#catchUpBuffer ?? [];
-      this.#catchUpBuffer = null;
-
-      for (const envelope of buffered) {
-        this.#applyLiveEnvelope(envelope);
-      }
-    }
+  #emitMessagesUpdated(entry: ConversationEntry, change: AgentChatChange): void {
+    this._emitter.emit('agent_chat.messages.updated', {
+      data: {
+        agentId: entry.agentId,
+        conversationId: entry.conversationId,
+        key: entry.key,
+        messages: entry.messages,
+        isRunning: entry.isRunning,
+        typing: entry.typing,
+        status: entry.status,
+        hasMore: entry.olderCursor != null,
+        pagination: entryPagination(entry),
+        error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
+        isRecovering: entry.isRecovering,
+        ...(entry.recoveryError ? { catchUpError: entry.recoveryError } : {}),
+        change,
+      },
+    });
   }
 
   async #catchUpConversation(conversationId: string, holders: ConversationEntry[]): Promise<void> {
+    const activeHolders = holders
+      .map((holder) => this.#store.get(holder.key))
+      .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
+
+    if (activeHolders.length === 0) {
+      return;
+    }
+
+    this.#catchUpBuffers.set(conversationId, []);
+    for (const entry of activeHolders) {
+      this.#store.setRecovering(entry, true);
+    }
+
     try {
-      const activeHolders = holders
-        .map((holder) => this.#store.get(holder.key))
-        .filter((entry): entry is ConversationEntry => entry != null && entry.conversationId === conversationId);
-
-      if (activeHolders.length === 0) {
-        return;
-      }
-
       // Page toward older events until we reach already-known sequence territory.
       // One newest page is not enough when the offline gap exceeds the server page size.
       const knownThrough = Math.min(...activeHolders.map((entry) => entry.lastSequence));
       const missed: AgentEventEnvelope[] = [];
       let before: string | undefined;
+      let limitExceeded = false;
 
-      for (let pageIndex = 0; pageIndex < 20; pageIndex += 1) {
+      for (let pageIndex = 0; pageIndex < CATCH_UP_PAGE_LIMIT; pageIndex += 1) {
         const page = await this.#agentChatService.getEvents({
           conversationId,
           ...(before ? { before } : {}),
@@ -602,7 +626,24 @@ export class AgentChat extends BaseModule {
           break;
         }
 
+        if (pageIndex === CATCH_UP_PAGE_LIMIT - 1) {
+          limitExceeded = true;
+          break;
+        }
+
         before = page.olderCursor;
+      }
+
+      if (limitExceeded) {
+        const catchUpError = new NovuError(
+          'Agent chat reconnect catch-up exceeded the safety page limit; conversation history may be incomplete',
+          new Error('catch_up_limit_exceeded')
+        );
+        for (const entry of activeHolders) {
+          this.#store.setRecoveryError(entry, catchUpError);
+        }
+
+        return;
       }
 
       // Apply oldest→newest so message order stays chronological across pages.
@@ -614,12 +655,37 @@ export class AgentChat extends BaseModule {
           continue;
         }
 
+        this.#store.setRecoveryError(entry, undefined);
         for (const envelope of missed) {
           this.#store.applyLiveEnvelope(entry, envelope);
         }
       }
-    } catch {
-      // Best-effort catch-up; buffered live envelopes still flush in the outer finally.
+    } catch (error) {
+      const catchUpError = new NovuError('Failed to recover agent chat conversation after reconnect', error);
+      for (const holder of activeHolders) {
+        const entry = this.#store.get(holder.key);
+        if (!entry || entry.conversationId !== conversationId) {
+          continue;
+        }
+
+        this.#store.setRecoveryError(entry, catchUpError);
+      }
+    } finally {
+      const buffered = this.#catchUpBuffers.get(conversationId) ?? [];
+      this.#catchUpBuffers.delete(conversationId);
+
+      for (const holder of activeHolders) {
+        const entry = this.#store.get(holder.key);
+        if (!entry || entry.conversationId !== conversationId) {
+          continue;
+        }
+
+        this.#store.setRecovering(entry, false);
+      }
+
+      for (const envelope of buffered) {
+        this.#applyLiveEnvelope(envelope);
+      }
     }
   }
 }
