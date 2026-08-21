@@ -24,11 +24,11 @@ function normalizeApiUrl(apiUrl: string | null | undefined): string {
   return normalizeUrl(apiUrl);
 }
 
-function normalizeConnectTargetOptions(
-  apiUrlOrOptions?: string | null | NovuConnectTargetOptions
-): NovuConnectTargetOptions {
+export function normalizeConnectTargetOptions<T extends NovuConnectTargetOptions = NovuConnectTargetOptions>(
+  apiUrlOrOptions?: string | null | T
+): T {
   if (typeof apiUrlOrOptions === 'string' || apiUrlOrOptions == null) {
-    return { apiUrl: apiUrlOrOptions };
+    return { apiUrl: apiUrlOrOptions } as T;
   }
 
   return apiUrlOrOptions;

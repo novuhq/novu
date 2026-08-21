@@ -5,6 +5,7 @@ import {
   getNovuConnectTargetFlags,
   isNovuStagingApiUrl,
   type NovuConnectTargetOptions,
+  normalizeConnectTargetOptions,
 } from './novu-connect-cli';
 
 export const AGENT_CHAT_DOCS_URL = 'https://docs.novu.co/agents/channels/agent-chat';
@@ -14,20 +15,10 @@ export type BuildAgentChatTuiCommandOptions = NovuConnectTargetOptions & {
   agentIdentifier?: string | null;
 };
 
-function normalizeBuildAgentChatTuiCommandOptions(
-  apiUrlOrOptions?: string | null | BuildAgentChatTuiCommandOptions
-): BuildAgentChatTuiCommandOptions {
-  if (typeof apiUrlOrOptions === 'string' || apiUrlOrOptions == null) {
-    return { apiUrl: apiUrlOrOptions };
-  }
-
-  return apiUrlOrOptions;
-}
-
 export function buildAgentChatTuiCommandParts(
   apiUrlOrOptions?: string | null | BuildAgentChatTuiCommandOptions
 ): string[] {
-  const options = normalizeBuildAgentChatTuiCommandOptions(apiUrlOrOptions);
+  const options = normalizeConnectTargetOptions<BuildAgentChatTuiCommandOptions>(apiUrlOrOptions);
   const parts = [
     `${getNovuConnectInvocation(options.apiUrl)} --channel agent-chat`,
     ...getNovuConnectTargetFlags(options),
