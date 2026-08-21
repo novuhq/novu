@@ -1,4 +1,4 @@
-import { getDateRangeInMs, type IActivity, type IEnvironment, SeverityLevelEnum } from '@novu/shared';
+import { ChannelTypeEnum, getDateRangeInMs, type IActivity, type IEnvironment, SeverityLevelEnum } from '@novu/shared';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -34,7 +34,7 @@ export interface StepRunDto {
   digest?: any;
   scheduleExtensionsCount?: number;
   messageId?: string;
-  channel?: string;
+  channel?: ChannelTypeEnum;
   content?: string | null;
   subject?: string | null;
   title?: string | null;

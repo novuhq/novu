@@ -245,7 +245,7 @@ export class GetWorkflowRun {
 
       // Load the delivered message content for each step run so the activity feed
       // can render a channel-aware preview (email HTML, SMS text, push/chat body).
-      const messagesByStepId = await this.getMessagesByTransactionId(workflowRun.transaction_id, command);
+      const messagesById = await this.getMessagesByTransactionId(workflowRun.transaction_id, command);
 
       return stepRunsResult.data.map(
         (stepRun) =>
@@ -253,7 +253,7 @@ export class GetWorkflowRun {
             ...stepRun,
             executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
             digest: stepRun.digest ? stepRun.digest : digestDataByStepId.get(stepRun.step_run_id) || null,
-            message: messagesByStepId.get(stepRun.step_id),
+            message: stepRun.message_id ? messagesById.get(stepRun.message_id) : undefined,
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
@@ -381,10 +381,7 @@ export class GetWorkflowRun {
     transactionId: string,
     command: GetWorkflowRunCommand
   ): Promise<Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>> {
-    const messagesByStepId = new Map<
-      string,
-      Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>
-    >();
+    const messagesById = new Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>();
 
     try {
       const messages = await this.messageRepository.find(
@@ -397,12 +394,12 @@ export class GetWorkflowRun {
       );
 
       for (const message of messages) {
-        if (message.stepId) {
-          messagesByStepId.set(message.stepId, message);
+        if (message._id) {
+          messagesById.set(message._id, message);
         }
       }
 
-      return messagesByStepId;
+      return messagesById;
     } catch (error) {
       this.logger.warn(
         {
@@ -412,7 +409,7 @@ export class GetWorkflowRun {
         'Failed to get message content for step runs'
       );
 
-      return messagesByStepId;
+      return messagesById;
     }
   }
 
