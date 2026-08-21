@@ -341,9 +341,12 @@ export class AgentChatStore {
       return result;
     });
 
-    entry.pendingFetchMore = current.finally(() => {
-      entry.pendingFetchMore = undefined;
+    const claim = current.finally(() => {
+      if (entry.pendingFetchMore === claim) {
+        entry.pendingFetchMore = undefined;
+      }
     });
+    entry.pendingFetchMore = claim;
 
     return current;
   }

@@ -1997,4 +1997,59 @@ describe('AgentChat', () => {
         ?.messages.map((message) => message.id)
     ).toEqual(['msg_new0000001']);
   });
+
+  it('does not let a stale fetchMore finalizer clear a fresh pagination claim after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveStalePage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStalePage = resolve;
+        })
+    );
+
+    const stale = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveFreshPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFreshPage = resolve;
+        })
+    );
+
+    const fresh = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveStalePage(
+      historyPage([{ sequence: 1, messageId: 'msg_stale000001', role: 'user', markdown: 'stale' }], null)
+    );
+    await stale;
+
+    const deduped = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveFreshPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await Promise.all([fresh, deduped]);
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+  });
 });
