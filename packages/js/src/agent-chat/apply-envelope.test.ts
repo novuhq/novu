@@ -144,6 +144,21 @@ describe('applyEnvelope', () => {
     expect(finished.activeAssistantMessageId).toBeUndefined();
   });
 
+  it('clears a prior run-error on run-start and run-finish', () => {
+    const failed = applyEnvelope(createInitialAgentConversationState(), {
+      ...envelope(1, { type: 'run-error', message: 'handler failed', code: 'handler_failed' }),
+    });
+    expect(failed.error).toMatchObject({ message: 'handler failed' });
+
+    const restarted = applyEnvelope(failed, envelope(2, { type: 'run-start' }));
+    expect(restarted.error).toBeUndefined();
+    expect(restarted.isRunning).toBe(true);
+
+    const finished = applyEnvelope(restarted, envelope(3, { type: 'run-finish', outcome: 'completed' }));
+    expect(finished.error).toBeUndefined();
+    expect(finished.isRunning).toBe(false);
+  });
+
   it('accumulates fragmented tool input deltas without corrupting partial JSON', () => {
     const state = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, { type: 'run-start' }),

@@ -1949,4 +1949,61 @@ describe('AgentChat', () => {
     expect(snapshot?.error).toMatchObject({ message: 'agent handler failed' });
     expect(errors.at(-1)).toEqual({ message: 'agent handler failed' });
   });
+
+  it('clears a prior run-error on the next run-start', async () => {
+    await openClaimedConversation();
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'run-error', message: 'agent handler failed', code: 'handler_failed' },
+      })
+    );
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.error).toBeDefined();
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 3,
+        event: { type: 'run-start' },
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.error).toBeUndefined();
+  });
+
+  it('does not let a stale fetchMore failure overwrite pagination status after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let rejectOlderPage!: (error: Error) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectOlderPage = reject;
+        })
+    );
+
+    const older = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+
+    rejectOlderPage(new Error('network'));
+    await expect(older).resolves.toMatchObject({ error: expect.anything() });
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+  });
 });

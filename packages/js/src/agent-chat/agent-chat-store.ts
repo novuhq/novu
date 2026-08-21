@@ -44,6 +44,8 @@ export type ConversationEntry = AgentConversationState & {
   pendingCreate?: Promise<void>;
   /** History pagination state for `fetchMore`. */
   paginationStatus: AgentChatPaginationStatus;
+  /** Invalidates in-flight `fetchMore` status updates after history reload. */
+  paginationEpoch: number;
   /** Coalesces overlapping `fetchMore` calls on this holder. */
   pendingFetchMore?: Promise<{ data?: FetchMoreResult; error?: NovuError }>;
 };
@@ -220,6 +222,7 @@ export class AgentChatStore {
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
       paginationStatus: 'idle',
+      paginationEpoch: 0,
     };
     this.#byKey.set(args.key, entry);
 
@@ -300,6 +303,7 @@ export class AgentChatStore {
       messages: this.#applyMcpConnectionResults(entry, [...folded.messages, ...localOnly]),
     });
     entry.olderCursor = olderCursor;
+    entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
 
     this.#publish(entry, { kind: 'history' }, messagesAddedSince(previous, entry.messages));
@@ -324,7 +328,12 @@ export class AgentChatStore {
     entry.paginationStatus = 'loading';
     this.#publish(entry, { kind: 'local' }, []);
 
+    const epoch = entry.paginationEpoch;
     const current = fetch().then((result) => {
+      if (epoch !== entry.paginationEpoch) {
+        return result;
+      }
+
       entry.paginationStatus = result.error ? 'error' : 'idle';
       this.#publish(entry, { kind: 'local' }, []);
 
