@@ -7,6 +7,10 @@ import type { AgentChatChange } from './types';
 
 describe('AgentChat', () => {
   const inboxServiceInstance = { isSessionInitialized: true } as any;
+
+  async function flushLivePublishQueue(): Promise<void> {
+    await Promise.resolve();
+  }
   let emitter: NovuEventEmitter;
   let sendMessage: jest.Mock;
   let respondToAction: jest.Mock;
@@ -581,6 +585,8 @@ describe('AgentChat', () => {
       },
     });
 
+    await flushLivePublishQueue();
+
     emitter.emit('agent_chat.agent_event', {
       result: {
         version: AGENT_EVENT_PROTOCOL_VERSION,
@@ -641,6 +647,8 @@ describe('AgentChat', () => {
       },
     });
 
+    await flushLivePublishQueue();
+
     emitter.emit('agent_chat.agent_event', {
       result: {
         version: AGENT_EVENT_PROTOCOL_VERSION,
@@ -654,6 +662,8 @@ describe('AgentChat', () => {
         event: { type: 'channel.typing', state: 'off' },
       },
     });
+
+    await flushLivePublishQueue();
 
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.typing).toBeUndefined();
@@ -690,6 +700,8 @@ describe('AgentChat', () => {
         },
       },
     });
+
+    await flushLivePublishQueue();
 
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.messages).toHaveLength(2);
@@ -1669,6 +1681,8 @@ describe('AgentChat', () => {
       liveAssistantEnvelope({ sequence: 4, messageId: 'msg_live0000001', markdown: 'live during fetchMore' })
     );
 
+    await flushLivePublishQueue();
+
     expect(changes).toHaveLength(1);
     expect(changes[0]?.kind).toBe('live');
     expect(changes[0]?.addedMessages.map((message) => message.id)).toEqual(['msg_live0000001']);
@@ -1690,6 +1704,8 @@ describe('AgentChat', () => {
       'agent_chat.agent_event',
       liveAssistantEnvelope({ sequence: 2, messageId: 'msg_asst0000001', markdown: 'live reply' })
     );
+
+    await flushLivePublishQueue();
 
     const change = changes[0];
     expect(change?.kind === 'live' && change.envelope.sequence).toBe(2);
@@ -1792,10 +1808,12 @@ describe('AgentChat', () => {
       })
     );
 
-    expect(changes[0]?.newActions).toEqual([]);
-    expect(changes[1]?.kind).toBe('live');
-    expect(changes[1]?.addedMessages).toEqual([]);
-    expect(changes[1]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
+    await flushLivePublishQueue();
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0]?.kind).toBe('live');
+    expect(changes[0]?.addedMessages.map((message) => message.id)).toEqual(['msg_asst0000001']);
+    expect(changes[0]?.newActions.map((action) => action.id)).toEqual(['approval_000001']);
   });
 
   it('stays silent for an approval discovered by paging backwards', async () => {

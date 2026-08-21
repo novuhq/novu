@@ -13,7 +13,7 @@ import type {
   SendActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { derivePendingActions } from '@novu/js';
+import { createConversationSnapshotPublisher, derivePendingActions, getLiveEnvelopes } from '@novu/js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
@@ -48,6 +48,11 @@ export type UseAgentChatProps = AgentHashFields & {
    * The store folds the envelope before this callback runs, so `messages` here is one render old.
    */
   onEvent?: (envelope: AgentEventEnvelope) => void;
+  /**
+   * Minimum milliseconds between React snapshot updates during streaming folds.
+   * Terminal folds (run finish, error, sent/failed) publish immediately.
+   */
+  throttle?: number;
 };
 
 export type UseAgentChatResult = {
@@ -131,7 +136,7 @@ function applyConversationSnapshot(
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
-  const { agentId, agentHash, conversationId: conversationIdProp } = props;
+  const { agentId, agentHash, conversationId: conversationIdProp, throttle } = props;
   const propsRef = useDataRef(props);
   const novu = useNovu();
 
@@ -234,6 +239,13 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   useEffect(() => {
     novu.agentChat.subscribe();
 
+    const snapshotPublisher = createConversationSnapshotPublisher({
+      throttleMs: throttle,
+      onPublish: (snapshot) => {
+        applyConversationSnapshot(snapshot, snapshotSetters);
+      },
+    });
+
     const snapshot = novu.agentChat.getConversation({
       agentId,
       key: sessionKey,
@@ -268,23 +280,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         return;
       }
 
-      applyConversationSnapshot(
-        {
-          messages: data.messages,
-          isRunning: data.isRunning,
-          typing: data.typing,
-          status: data.status,
-          hasMore: data.hasMore,
-        },
-        snapshotSetters
-      );
-      if (data.conversationId && !propsRef.current.conversationId) {
-        setAssignedConversationId(data.conversationId);
-      }
-
       const { change } = data;
-      if (change.kind === 'live') {
-        propsRef.current.onEvent?.(change.envelope);
+      for (const envelope of getLiveEnvelopes(change)) {
+        propsRef.current.onEvent?.(envelope);
       }
 
       if (change.kind !== 'history') {
@@ -296,6 +294,22 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       for (const action of change.newActions) {
         propsRef.current.onActionRequested?.(action);
       }
+
+      snapshotPublisher.schedule(
+        {
+          messages: data.messages,
+          isRunning: data.isRunning,
+          typing: data.typing,
+          status: data.status,
+          hasMore: data.hasMore,
+          error: data.error,
+        },
+        change
+      );
+
+      if (data.conversationId && !propsRef.current.conversationId) {
+        setAssignedConversationId(data.conversationId);
+      }
     });
 
     if (conversationIdProp) {
@@ -304,9 +318,20 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
     return () => {
       cleanup();
+      snapshotPublisher.dispose();
       novu.agentChat.unsubscribe();
     };
-  }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, propsRef, fetchConversation, snapshotSetters]);
+  }, [
+    novu,
+    agentId,
+    conversationIdProp,
+    sessionKey,
+    sessionKeyRef,
+    propsRef,
+    fetchConversation,
+    snapshotSetters,
+    throttle,
+  ]);
 
   const refetch = useCallback(async () => {
     const id = conversationIdRef.current;

@@ -6,6 +6,8 @@ import {
   derivePendingActions,
 } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
+import { isStreamingEnvelope } from './is-streaming-change';
+import { preserveMessageReferences } from './preserve-message-references';
 import type { AgentChatChange, AgentChatChangeSource } from './types';
 
 type McpConnectionResult = {
@@ -41,6 +43,8 @@ export type ConversationEntry = AgentConversationState & {
   mcpConnectionResults: Map<string, McpConnectionResult>;
   /** One create at a time on this holder until a conversation id exists. */
   pendingCreate?: Promise<void>;
+  /** Last published message references for stable snapshots across streaming folds. */
+  lastPublishedMessages: AgentMessage[];
 };
 
 function mintClientId(prefix: string): string {
@@ -89,9 +93,17 @@ function applyState(entry: ConversationEntry, next: AgentConversationState): voi
  * `AgentChat` updates this store around HTTP calls. The hook listens on `onUpdate`.
  * The map key is the immutable holder `key`.
  */
+type LivePublishBatch = {
+  entry: ConversationEntry;
+  envelopes: AgentEventEnvelope[];
+  addedMessages: AgentMessage[];
+};
+
 export class AgentChatStore {
   #byKey = new Map<string, ConversationEntry>();
   #onUpdate: (entry: ConversationEntry, change: AgentChatChange) => void;
+  #liveBatchByKey = new Map<string, LivePublishBatch>();
+  #liveBatchScheduled = false;
 
   constructor(onUpdate: (entry: ConversationEntry, change: AgentChatChange) => void) {
     this.#onUpdate = onUpdate;
@@ -103,7 +115,79 @@ export class AgentChatStore {
    * leaving each consumer to guess from the snapshot alone.
    */
   #publish(entry: ConversationEntry, source: AgentChatChangeSource, addedMessages: AgentMessage[]): void {
-    const newActions = derivePendingActions(entry.messages).filter((action) => !entry.reportedActionIds.has(action.id));
+    if (source.kind === 'live') {
+      this.#queueLivePublish(entry, source.envelope, addedMessages);
+
+      return;
+    }
+
+    this.#publishNow(entry, source, addedMessages);
+  }
+
+  #queueLivePublish(entry: ConversationEntry, envelope: AgentEventEnvelope, addedMessages: AgentMessage[]): void {
+    let batch = this.#liveBatchByKey.get(entry.key);
+    if (!batch) {
+      batch = { entry, envelopes: [], addedMessages: [] };
+      this.#liveBatchByKey.set(entry.key, batch);
+    }
+
+    batch.envelopes.push(envelope);
+    for (const message of addedMessages) {
+      if (!batch.addedMessages.some((existing) => existing.id === message.id)) {
+        batch.addedMessages.push(message);
+      }
+    }
+
+    if (!isStreamingEnvelope(envelope)) {
+      this.#flushLiveBatch(entry.key);
+
+      return;
+    }
+
+    if (!this.#liveBatchScheduled) {
+      this.#liveBatchScheduled = true;
+      queueMicrotask(() => this.#flushLiveBatches());
+    }
+  }
+
+  #flushLiveBatch(key: string): void {
+    const batch = this.#liveBatchByKey.get(key);
+    if (!batch) {
+      return;
+    }
+
+    this.#liveBatchByKey.delete(key);
+    const lastEnvelope = batch.envelopes[batch.envelopes.length - 1];
+    if (!lastEnvelope) {
+      return;
+    }
+
+    this.#publishNow(
+      batch.entry,
+      {
+        kind: 'live',
+        envelope: lastEnvelope,
+        batchedEnvelopes: batch.envelopes.length > 1 ? batch.envelopes : undefined,
+      },
+      batch.addedMessages
+    );
+  }
+
+  #flushLiveBatches(): void {
+    this.#liveBatchScheduled = false;
+
+    for (const key of [...this.#liveBatchByKey.keys()]) {
+      this.#flushLiveBatch(key);
+    }
+  }
+
+  #publishNow(entry: ConversationEntry, source: AgentChatChangeSource, addedMessages: AgentMessage[]): void {
+    const publishedMessages = preserveMessageReferences(entry.lastPublishedMessages, entry.messages);
+    entry.lastPublishedMessages = publishedMessages;
+
+    const newActions = derivePendingActions(publishedMessages).filter(
+      (action) => !entry.reportedActionIds.has(action.id)
+    );
     for (const action of newActions) {
       entry.reportedActionIds.add(action.id);
     }
@@ -214,6 +298,7 @@ export class AgentChatStore {
       olderCursor: null,
       reportedActionIds: new Set(),
       mcpConnectionResults: new Map(),
+      lastPublishedMessages: [],
     };
     this.#byKey.set(args.key, entry);
 
