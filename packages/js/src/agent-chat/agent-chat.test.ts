@@ -1964,4 +1964,37 @@ describe('AgentChat', () => {
       agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
     ).toBe('idle');
   });
+
+  it('does not prepend a stale fetchMore page after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const older = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_stale000001', role: 'user', markdown: 'stale' }], null)
+    );
+    await older;
+
+    expect(
+      agentChat
+        .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
+        ?.messages.map((message) => message.id)
+    ).toEqual(['msg_new0000001']);
+  });
 });

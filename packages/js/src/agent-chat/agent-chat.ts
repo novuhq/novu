@@ -264,11 +264,23 @@ export class AgentChat extends BaseModule {
       }
 
       return this.#store.withFetchMoreClaim(entry, async () => {
+        const epochAtStart = entry.paginationEpoch;
+
         try {
           const page = await this.#agentChatService.getEvents({
             conversationId: entry.conversationId!,
             before: entry.olderCursor!,
           });
+
+          if (epochAtStart !== entry.paginationEpoch) {
+            return {
+              data: {
+                messages: entry.messages,
+                hasMore: entry.olderCursor != null,
+              },
+            };
+          }
+
           const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
 
           return {
