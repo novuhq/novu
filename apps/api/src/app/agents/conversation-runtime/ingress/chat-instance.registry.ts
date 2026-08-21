@@ -47,10 +47,26 @@ export type PlatformAdapters = {
   agent_chat: NovuAgentChatAdapter;
   email: Adapter;
   sendblue: Adapter;
-  photon_imessage: Adapter;
+  /**
+   * Keyed `imessage`, NOT `photon_imessage`: the Chat SDK resolves adapters by
+   * thread-id prefix, and the Photon vendor adapter encodes threads as
+   * `imessage:{chatGuid}` — a mismatched key breaks every thread-addressed
+   * send (e.g. the agent reply endpoint) while inbound-context replies still
+   * work, which is exactly the silent way it fails.
+   */
+  imessage: Adapter;
 };
 
 export type ChatWithAdapters = Chat<PlatformAdapters>;
+
+/**
+ * Adapter map key for a platform. Usually the enum value itself — except
+ * Photon, whose vendor adapter encodes thread ids with the `imessage:` prefix
+ * the Chat SDK resolves adapters by, so its map key is `imessage`.
+ */
+export function platformAdapterKey(platform: AgentPlatformEnum): keyof PlatformAdapters {
+  return platform === AgentPlatformEnum.PHOTON_IMESSAGE ? 'imessage' : (platform as keyof PlatformAdapters);
+}
 
 interface ChatStateLogger {
   debug: (msg: string, ctx?: Record<string, unknown>) => void;
@@ -470,7 +486,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         const { createPhotonImessageAdapter } = await esmImport('@novu/chat-adapter-photon-imessage');
 
         return {
-          photon_imessage: createPhotonImessageAdapter({
+          // Key must match the vendor thread-id prefix (`imessage:`) — see PlatformAdapters.
+          imessage: createPhotonImessageAdapter({
             projectId: credentials.apiKey,
             projectSecret: credentials.secretKey,
             webhookSecret: credentials.token,
