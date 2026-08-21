@@ -58,6 +58,8 @@ export type {
   LoadConversationResult,
   RespondToActionArgs,
   RespondToActionResult,
+  RetryMessageArgs,
+  RetryMessageResult,
   SendActionArgs,
   SendActionResult,
   SendMessageArgs,

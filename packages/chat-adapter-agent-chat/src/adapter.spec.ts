@@ -186,13 +186,52 @@ describe('NovuAgentChatAdapterImpl', () => {
     expect(processMessage.mock.calls[0]?.[2].id).toBe(body.data.messageId);
   });
 
-  it('ignores client messageId and always mints server message id', async () => {
+  it('uses a valid client messageId as the platform message id', async () => {
     const { adapter, processMessage } = await createAdapter();
 
-    await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }));
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' })
+    );
+    const body = await response.json();
 
-    expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
-    expect(processMessage.mock.calls[0]?.[2].id).not.toBe('msg_abcdefghijkl');
+    expect(response.status).toBe(201);
+    expect(body.data.messageId).toBe('msg_abcdefghijkl');
+    expect(processMessage.mock.calls[0]?.[2].id).toBe('msg_abcdefghijkl');
+  });
+
+  it('rejects an invalid client messageId', async () => {
+    const { adapter, processMessage } = await createAdapter();
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'not-a-message-id' })
+    );
+
+    expect(response.status).toBe(400);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('acks a retry without re-dispatching when findAcceptedMessage matches', async () => {
+    const findAcceptedMessage = vi.fn(async () => true);
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        findAcceptedMessage,
+        authorizeResume: async () => true,
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        text: 'retry me',
+        messageId: 'msg_abcdefghijkl',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.messageId).toBe('msg_abcdefghijkl');
+    expect(processMessage).not.toHaveBeenCalled();
   });
 
   it('resumes with conversationIdentifier when authorizeResume allows', async () => {

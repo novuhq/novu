@@ -22,6 +22,7 @@ import {
   conversationIdFromThreadId,
   isApprovalActionId,
   isValidConversationId,
+  isValidMessageId,
   mintActivityId,
   mintConversationId,
   mintMessageId,
@@ -228,10 +229,25 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       conversationId = mintConversationId();
     }
 
-    // Always mint message ids. Client `messageId` idempotency would ack a ghost
-    // turn if checked before durable create; keep server-minted ids for now.
+    // Client `messageId` is the idempotency key when it matches `msg_*`.
     const threadId = this.encodeThreadId({ conversationId });
-    const messageId = mintMessageId();
+    const clientMessageId = typeof body.messageId === 'string' ? body.messageId.trim() : '';
+    if (clientMessageId && !isValidMessageId(clientMessageId)) {
+      return jsonResponse({ message: 'Invalid message id' }, 400);
+    }
+
+    if (clientMessageId && this.config.findAcceptedMessage) {
+      const alreadyAccepted = await this.config.findAcceptedMessage({
+        session,
+        conversationId,
+        messageId: clientMessageId,
+      });
+      if (alreadyAccepted) {
+        return jsonResponse({ data: { identifier: conversationId, messageId: clientMessageId } }, 201);
+      }
+    }
+
+    const messageId = clientMessageId || mintMessageId();
     const message = this.parseMessage({
       id: messageId,
       text: kind.text,
@@ -265,6 +281,18 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       return blocked;
     }
 
+    const idempotencyKey = typeof body.idempotencyKey === 'string' ? body.idempotencyKey.trim() : '';
+    if (idempotencyKey && this.config.findAcceptedAction) {
+      const alreadyAccepted = await this.config.findAcceptedAction({
+        session,
+        conversationId,
+        idempotencyKey,
+      });
+      if (alreadyAccepted) {
+        return jsonResponse({ data: { identifier: conversationId } }, 200);
+      }
+    }
+
     const threadId = this.encodeThreadId({ conversationId });
     const user = {
       userId: session.subscriberId,
@@ -287,6 +315,14 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       },
       options
     );
+
+    if (idempotencyKey && this.config.rememberAcceptedAction) {
+      await this.config.rememberAcceptedAction({
+        session,
+        conversationId,
+        idempotencyKey,
+      });
+    }
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
   }

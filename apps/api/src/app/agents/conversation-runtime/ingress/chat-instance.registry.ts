@@ -9,6 +9,7 @@ import { stripAgentReplyToken } from '@novu/shared';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import { AgentChatAcceptIdempotencyService } from '../../agent-chat/agent-chat-accept-idempotency.service';
 import {
   type AgentChatPlatformDeliveryContext,
   AgentChatPlatformDeliveryService,
@@ -124,6 +125,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentChatSessionVerifier: AgentChatSessionVerifier,
     private readonly agentChatPlatformDelivery: AgentChatPlatformDeliveryService,
     private readonly agentChatResumeAuthorization: AgentChatResumeAuthorizationService,
+    private readonly agentChatAcceptIdempotency: AgentChatAcceptIdempotencyService,
     @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: PlanLimitGateService
   ) {
@@ -507,6 +509,12 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
               this.agentChatResumeAuthorization.canResume({ conversationId, session, agentId }),
             checkAcceptLimits: ({ isNewThread, conversationId }) =>
               this.planLimitGate.checkAgentChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
+            findAcceptedMessage: ({ session, messageId }) =>
+              this.agentChatAcceptIdempotency.hasAcceptedMessage(session.environmentId, messageId),
+            findAcceptedAction: ({ session, idempotencyKey }) =>
+              this.agentChatAcceptIdempotency.hasAcceptedAction(session.environmentId, idempotencyKey),
+            rememberAcceptedAction: ({ session, idempotencyKey }) =>
+              this.agentChatAcceptIdempotency.rememberAcceptedAction(session.environmentId, idempotencyKey),
             deliverMessage: this.agentChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.agentChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.agentChatPlatformDelivery.createDeleteMessage(deliveryContext),

@@ -112,6 +112,11 @@ export type AgentMessage = {
   parts: AgentMessagePart[];
   createdAt: string;
   status: AgentMessageStatus;
+  /**
+   * Stable client-minted idempotency key for outbound user messages.
+   * Persisted from optimistic append through server reconciliation (`msg_*`).
+   */
+  idempotencyKey?: string;
 };
 
 export type AgentConversationStatus = 'active' | 'resolved';

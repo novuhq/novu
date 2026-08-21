@@ -50,6 +50,35 @@ describe('AgentChatService', () => {
     );
   });
 
+  it('includes client messageId for idempotent sends', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ data: { identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' } }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    await service.sendMessage({
+      agentId: 'agent_1',
+      text: 'hello',
+      messageId: 'msg_abcdefghijkl',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/agent-chat/conversations',
+      expect.objectContaining({
+        body: JSON.stringify({
+          agentId: 'agent_1',
+          text: 'hello',
+          messageId: 'msg_abcdefghijkl',
+        }),
+      })
+    );
+  });
+
   it('includes conversationIdentifier when resuming', async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
@@ -151,6 +180,7 @@ describe('AgentChatService', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'tool-approval:approve:approval_000001',
+      idempotencyKey: 'idem_abcdefghijkl',
     });
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
@@ -162,6 +192,7 @@ describe('AgentChatService', () => {
           agentId: 'agent_1',
           conversationIdentifier: 'conv_abcdefghijkl',
           actionId: 'tool-approval:approve:approval_000001',
+          idempotencyKey: 'idem_abcdefghijkl',
         }),
       })
     );
@@ -185,6 +216,7 @@ describe('AgentChatService', () => {
       actionId: 'topic-billing',
       sourceMessageId: 'act_card0000001',
       value: 'billing',
+      idempotencyKey: 'idem_billing0001',
     });
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
@@ -198,6 +230,7 @@ describe('AgentChatService', () => {
           actionId: 'topic-billing',
           sourceMessageId: 'act_card0000001',
           value: 'billing',
+          idempotencyKey: 'idem_billing0001',
         }),
       })
     );

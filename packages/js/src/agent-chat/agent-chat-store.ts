@@ -7,6 +7,7 @@ import {
   derivePendingActions,
 } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
+import { createActionIdempotencyKey, mintClientId } from './idempotency';
 import type { AgentChatChange, AgentChatChangeSource, AgentChatPaginationStatus, FetchMoreResult } from './types';
 
 type McpConnectionResult = {
@@ -52,22 +53,9 @@ export type ConversationEntry = AgentConversationState & {
   paginationEpoch: number;
   /** Coalesces overlapping `fetchMore` calls on this holder. */
   pendingFetchMore?: Promise<{ data?: FetchMoreResult; error?: NovuError }>;
+  /** Action idempotency keys already submitted on this holder (scope → key). */
+  actionIdempotencyByScope: Map<string, string>;
 };
-
-function mintClientId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
-  }
-
-  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-    const bytes = new Uint8Array(6);
-    crypto.getRandomValues(bytes);
-
-    return `${prefix}_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
-  }
-
-  return `${prefix}_${Date.now().toString(36)}`;
-}
 
 export function createLocalConversationKey(): string {
   return mintClientId('local');
@@ -228,6 +216,7 @@ export class AgentChatStore {
       isRecovering: false,
       paginationStatus: 'idle',
       paginationEpoch: 0,
+      actionIdempotencyByScope: new Map(),
     };
     this.#byKey.set(args.key, entry);
 
@@ -239,7 +228,7 @@ export class AgentChatStore {
    * The optimistic message is not reported as added: `markSent` reports it once under
    * the server id, and `markFailed` never reports it.
    */
-  appendSending(entry: ConversationEntry, text: string): string {
+  appendSending(entry: ConversationEntry, text: string, idempotencyKey: string): string {
     const messageId = createOptimisticMessageId();
     this.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError: undefined });
     applyState(entry, {
@@ -247,6 +236,7 @@ export class AgentChatStore {
         id: messageId,
         createdAt: new Date().toISOString(),
         status: 'sending',
+        idempotencyKey,
         parts: [{ type: 'text', text, state: 'done' }],
       }),
       error: undefined,
@@ -256,18 +246,57 @@ export class AgentChatStore {
     return messageId;
   }
 
+  findMessage(entry: ConversationEntry, messageId: string): AgentMessage | undefined {
+    return entry.messages.find((message) => message.id === messageId);
+  }
+
+  markRetrying(entry: ConversationEntry, messageId: string): boolean {
+    const target = entry.messages.find((message) => message.id === messageId);
+    if (!target || target.status !== 'failed' || !target.idempotencyKey) {
+      return false;
+    }
+
+    entry.messages = entry.messages.map((message) =>
+      message.id === messageId ? { ...message, status: 'sending' as const } : message
+    );
+    this.#publish(entry, { kind: 'local' }, []);
+
+    return true;
+  }
+
+  resolveActionIdempotency(entry: ConversationEntry, scope: string): { key: string; duplicate: boolean } {
+    const existing = entry.actionIdempotencyByScope.get(scope);
+    if (existing) {
+      return { key: existing, duplicate: true };
+    }
+
+    const key = createActionIdempotencyKey();
+    entry.actionIdempotencyByScope.set(scope, key);
+
+    return { key, duplicate: false };
+  }
+
+  forgetActionIdempotency(entry: ConversationEntry, scope: string): void {
+    entry.actionIdempotencyByScope.delete(scope);
+  }
+
   /**
    * Mark an optimistic message as `sent` and set the server message id.
    * Also records the public conversation id. Does not change `entry.key`.
    */
   markSent(
     entry: ConversationEntry,
-    args: { optimisticMessageId: string; serverMessageId: string; conversationId: string }
+    args: { optimisticMessageId: string; serverMessageId: string; conversationId: string; idempotencyKey?: string }
   ): ConversationEntry {
     const previous = entry.messages;
     entry.messages = entry.messages.map((message) =>
       message.id === args.optimisticMessageId
-        ? { ...message, id: args.serverMessageId, status: 'sent' as const }
+        ? {
+            ...message,
+            id: args.serverMessageId,
+            status: 'sent' as const,
+            idempotencyKey: args.idempotencyKey ?? message.idempotencyKey,
+          }
         : message
     );
 

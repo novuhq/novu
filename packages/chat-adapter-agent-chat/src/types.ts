@@ -59,6 +59,18 @@ export type AgentChatCheckAcceptLimitsParams = {
   conversationId?: string;
 };
 
+export type AgentChatFindAcceptedMessageParams = {
+  session: AgentChatSession;
+  conversationId: string;
+  messageId: string;
+};
+
+export type AgentChatFindAcceptedActionParams = {
+  session: AgentChatSession;
+  conversationId: string;
+  idempotencyKey: string;
+};
+
 export type AgentChatAdapterConfig = {
   userName?: string;
   verifySession: (request: Request) => Promise<AgentChatSession | null>;
@@ -72,6 +84,12 @@ export type AgentChatAdapterConfig = {
    * When blocked, the adapter returns HTTP 402 with `{ reason, message }`.
    */
   checkAcceptLimits?: (params: AgentChatCheckAcceptLimitsParams) => Promise<AgentChatAcceptLimitBlock | null>;
+  /** Return true when an inbound user message was already accepted (retry ack). */
+  findAcceptedMessage?: (params: AgentChatFindAcceptedMessageParams) => Promise<boolean>;
+  /** Return true when an action was already accepted (duplicate click / retry ack). */
+  findAcceptedAction?: (params: AgentChatFindAcceptedActionParams) => Promise<boolean>;
+  /** Record an accepted action idempotency key after dispatch. */
+  rememberAcceptedAction?: (params: AgentChatFindAcceptedActionParams) => Promise<void>;
   deliverMessage: (params: AgentChatDeliverMessageParams) => Promise<AgentChatDeliverMessageResult>;
   editMessage: (params: AgentChatEditMessageParams) => Promise<AgentChatDeliverMessageResult>;
   deleteMessage: (params: AgentChatDeleteMessageParams) => Promise<void>;
@@ -113,7 +131,9 @@ export type AgentChatRequestBody = {
   conversationIdentifier?: string;
   /**
    * Reserved: client idempotency key (`msg_<shortId>`).
-   * Still ignored — minting a server message id avoids ghost acks on retries.
+   * When valid, used as the platform message id for idempotent accepts/retries.
    */
   messageId?: string;
+  /** Client idempotency key for action accepts (`idem_<shortId>`). */
+  idempotencyKey?: string;
 };

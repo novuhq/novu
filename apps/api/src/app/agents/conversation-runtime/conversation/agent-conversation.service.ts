@@ -450,6 +450,13 @@ export class AgentConversationService {
     return this.ledger.findAgentMessageByIdentifier(environmentId, conversationId, identifier);
   }
 
+  async findActivityByIdentifier(
+    environmentId: string,
+    identifier: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.ledger.findActivityByIdentifier(environmentId, identifier);
+  }
+
   async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,

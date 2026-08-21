@@ -9,17 +9,21 @@ import { AgentChatStore, type ConversationEntry, createLocalConversationKey } fr
 import { AgentConversationRuntime } from './agent-conversation-runtime';
 import { type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
 import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
+import { createMessageIdempotencyKey } from './idempotency';
 import { runtimeCacheKey } from './runtime-cache-key';
 import type {
   AgentChatChange,
   AgentChatMessagesUpdated,
   AgentChatPagination,
+  AgentSendConcurrencyPolicy,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
   LoadConversationResult,
   RespondToActionArgs,
   RespondToActionResult,
+  RetryMessageArgs,
+  RetryMessageResult,
   SendActionArgs,
   SendActionResult,
   SendMessageArgs,
@@ -47,6 +51,8 @@ export class AgentChat extends BaseModule {
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
   #runtimes = new Map<string, AgentConversationRuntime>();
+  /** Only `'reject'` is implemented. Queue and cancel-previous wait for NV-8643. */
+  #sendConcurrencyPolicy: AgentSendConcurrencyPolicy;
   /**
    * Per-conversation live envelope buffers while reconnect catch-up is in flight.
    * Map key means catch-up is in flight; only those conversations buffer live envelopes.
@@ -59,13 +65,16 @@ export class AgentChat extends BaseModule {
     eventEmitterInstance,
     agentChatService,
     socket,
+    sendConcurrencyPolicy = 'reject',
   }: {
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
     agentChatService: AgentChatService;
     socket: Pick<BaseSocketInterface, 'connect'>;
+    sendConcurrencyPolicy?: AgentSendConcurrencyPolicy;
   }) {
     super({ inboxServiceInstance, eventEmitterInstance });
+    this.#sendConcurrencyPolicy = sendConcurrencyPolicy;
     this.#agentChatService = agentChatService;
     this.#socket = socket;
     this.#store = new AgentChatStore((entry, change) => {
@@ -225,12 +234,24 @@ export class AgentChat extends BaseModule {
           };
         }
 
-        return this.#agentChatService.respondToAction({
-          agentId: args.agentId,
-          conversationId,
-          actionId,
-          agentHash: args.agentHash,
-        });
+        const scope = `respond:${args.actionId}:${args.decision}`;
+        const { key: idempotencyKey, duplicate } = this.#store.resolveActionIdempotency(entry, scope);
+        if (duplicate) {
+          return { identifier: conversationId };
+        }
+
+        try {
+          return await this.#agentChatService.respondToAction({
+            agentId: args.agentId,
+            conversationId,
+            actionId,
+            idempotencyKey,
+            agentHash: args.agentHash,
+          });
+        } catch (error) {
+          this.#store.forgetActionIdempotency(entry, scope);
+          throw error;
+        }
       }
     );
   }
@@ -250,14 +271,26 @@ export class AgentChat extends BaseModule {
           return { error: new NovuError('sourceMessageId is required', new Error('missing source message id')) };
         }
 
-        return this.#agentChatService.sendAction({
-          agentId: args.agentId,
-          conversationId,
-          actionId,
-          sourceMessageId,
-          value: args.value,
-          agentHash: args.agentHash,
-        });
+        const scope = `send:${actionId}:${sourceMessageId}:${args.value ?? ''}`;
+        const { key: idempotencyKey, duplicate } = this.#store.resolveActionIdempotency(_entry, scope);
+        if (duplicate) {
+          return { identifier: conversationId };
+        }
+
+        try {
+          return await this.#agentChatService.sendAction({
+            agentId: args.agentId,
+            conversationId,
+            actionId,
+            sourceMessageId,
+            value: args.value,
+            idempotencyKey,
+            agentHash: args.agentHash,
+          });
+        } catch (error) {
+          this.#store.forgetActionIdempotency(_entry, scope);
+          throw error;
+        }
       }
     );
   }
@@ -351,45 +384,156 @@ export class AgentChat extends BaseModule {
     return this.callWithSession<SendMessageResult, NovuError | AgentChatPlanLimitError>(async () => {
       const key = args.key ?? args.conversationId ?? createLocalConversationKey();
       const entry = this.#resolveSendEntry(args, key);
-      const optimisticId = this.#store.appendSending(entry, args.text);
 
-      return this.#store.withCreateClaim(entry, args.conversationId, async (conversationId) => {
-        try {
-          const data = await this.#agentChatService.sendMessage({
-            agentId: args.agentId,
-            text: args.text,
-            conversationId,
-            agentHash: args.agentHash,
-            metadata: args.metadata,
-          });
+      const blocked = this.#maybeBlockSendDuringRun(entry);
+      if (blocked) {
+        return blocked;
+      }
 
-          this.#store.markSent(entry, {
-            optimisticMessageId: optimisticId,
-            serverMessageId: data.messageId,
-            conversationId: data.identifier,
-          });
+      const idempotencyKey = createMessageIdempotencyKey();
+      const optimisticId = this.#store.appendSending(entry, args.text, idempotencyKey);
 
-          // Live WS can arrive before the HTTP ack claims conversationId; those
-          // envelopes are dropped by #applyLiveEnvelope. Catch up immediately.
-          this.#requestCatchUp();
-
-          return {
-            data: {
-              conversationId: data.identifier,
-              messageId: data.messageId,
-            },
-          };
-        } catch (error) {
-          this.#store.markFailed(entry, optimisticId);
-
-          if (error instanceof AgentChatPlanLimitError) {
-            return { error };
-          }
-
-          return { error: new NovuError('Failed to send agent chat message', error) };
-        }
+      return this.#deliverOutboundMessage(entry, {
+        agentId: args.agentId,
+        text: args.text,
+        conversationId: args.conversationId,
+        agentHash: args.agentHash,
+        metadata: args.metadata,
+        optimisticId,
+        idempotencyKey,
       });
     });
+  }
+
+  /**
+   * Resubmit a failed outbound message using its original idempotency identity.
+   * Does not append a new optimistic bubble or mint a new key.
+   */
+  async retryMessage(args: RetryMessageArgs): Result<RetryMessageResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<RetryMessageResult, NovuError | AgentChatPlanLimitError>(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      if (!entry) {
+        return {
+          error: new NovuError('Cannot retry message without a conversation holder', new Error('missing entry')),
+        };
+      }
+
+      const message = this.#store.findMessage(entry, args.messageId);
+      if (!message?.idempotencyKey) {
+        return {
+          error: new NovuError('Message is not retryable', new Error('missing idempotency key')),
+        };
+      }
+
+      if (message.status === 'sent') {
+        const conversationId = entry.conversationId ?? args.conversationId;
+        if (!conversationId) {
+          return {
+            error: new NovuError('Message is not retryable', new Error('missing conversation id')),
+          };
+        }
+
+        return {
+          data: {
+            conversationId,
+            messageId: message.id,
+          },
+        };
+      }
+
+      if (message.status !== 'failed') {
+        return {
+          error: new NovuError('Message is not retryable', new Error(`status ${message.status}`)),
+        };
+      }
+
+      const blocked = this.#maybeBlockSendDuringRun(entry);
+      if (blocked) {
+        return blocked;
+      }
+
+      const text = message.parts.find((part) => part.type === 'text')?.text;
+      if (!text) {
+        return {
+          error: new NovuError('Message is not retryable', new Error('missing text part')),
+        };
+      }
+
+      if (!this.#store.markRetrying(entry, args.messageId)) {
+        return {
+          error: new NovuError('Message is not retryable', new Error('mark retry failed')),
+        };
+      }
+
+      return this.#deliverOutboundMessage(entry, {
+        agentId: args.agentId,
+        text,
+        conversationId: entry.conversationId ?? args.conversationId,
+        agentHash: args.agentHash,
+        optimisticId: args.messageId,
+        idempotencyKey: message.idempotencyKey,
+      });
+    });
+  }
+
+  async #deliverOutboundMessage(
+    entry: ConversationEntry,
+    args: {
+      agentId: string;
+      text: string;
+      conversationId?: string;
+      agentHash?: string;
+      metadata?: SendMessageArgs['metadata'];
+      optimisticId: string;
+      idempotencyKey: string;
+    }
+  ): Result<SendMessageResult, NovuError | AgentChatPlanLimitError> {
+    return this.#store.withCreateClaim(entry, args.conversationId, async (conversationId) => {
+      try {
+        const data = await this.#agentChatService.sendMessage({
+          agentId: args.agentId,
+          text: args.text,
+          conversationId,
+          messageId: args.idempotencyKey,
+          agentHash: args.agentHash,
+          metadata: args.metadata,
+        });
+
+        this.#store.markSent(entry, {
+          optimisticMessageId: args.optimisticId,
+          serverMessageId: data.messageId,
+          conversationId: data.identifier,
+          idempotencyKey: args.idempotencyKey,
+        });
+
+        this.#requestCatchUp();
+
+        return {
+          data: {
+            conversationId: data.identifier,
+            messageId: data.messageId,
+          },
+        };
+      } catch (error) {
+        this.#store.markFailed(entry, args.optimisticId);
+
+        if (error instanceof AgentChatPlanLimitError) {
+          return { error };
+        }
+
+        return { error: new NovuError('Failed to send agent chat message', error) };
+      }
+    });
+  }
+
+  #maybeBlockSendDuringRun(entry: ConversationEntry): { error: NovuError } | undefined {
+    if (!entry.isRunning) {
+      return undefined;
+    }
+
+    return {
+      error: new NovuError('Cannot send while the agent is running', new Error('send rejected during active run')),
+    };
   }
 
   /**

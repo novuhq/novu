@@ -33,6 +33,7 @@ import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { AgentChatController } from './agent-chat/agent-chat.controller';
+import { AgentChatAcceptIdempotencyService } from './agent-chat/agent-chat-accept-idempotency.service';
 import { AgentChatEventFactory } from './agent-chat/agent-chat-event.factory';
 import { AgentChatLiveActivityPublisher } from './agent-chat/agent-chat-live-activity.publisher';
 import { AgentChatPlatformDeliveryService } from './agent-chat/agent-chat-platform-delivery.service';
@@ -178,6 +179,7 @@ import { USE_CASES } from './usecases';
     NovuAgentChatProvisioningService,
     AgentChatPublicationService,
     AgentChatSessionVerifier,
+    AgentChatAcceptIdempotencyService,
     AgentChatResumeAuthorizationService,
     AgentChatEventFactory,
     AgentChatPlatformDeliveryService,

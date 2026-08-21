@@ -536,6 +536,19 @@ export class ConversationActivityLedger {
     );
   }
 
+  async findActivityByIdentifier(
+    environmentId: string,
+    identifier: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.activityRepository.findOne(
+      {
+        _environmentId: environmentId,
+        identifier,
+      },
+      '_id'
+    );
+  }
+
   async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
