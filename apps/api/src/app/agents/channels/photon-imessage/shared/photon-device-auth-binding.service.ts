@@ -14,11 +14,11 @@ const TTL_BUFFER_SECONDS = 60;
  */
 const TTL_JITTER_CUSHION = 0.1;
 /**
- * Sized to the worst-case redeem-and-provision path: up to five sequential
- * Photon calls at a 10s timeout each, plus margin under the cache layer's
- * ±5% TTL jitter. Auto-expires if a poll dies mid-flight.
+ * Generously above the worst-case redeem-and-provision path (token exchange,
+ * project provisioning, and a sequential stale-webhook delete loop, each call
+ * on a 10s timeout). Auto-expires if a poll dies mid-flight.
  */
-const POLL_LOCK_TTL_SECONDS = 90;
+const POLL_LOCK_TTL_SECONDS = 300;
 
 /**
  * Who a pending device authorization belongs to. Stored when the flow starts,
