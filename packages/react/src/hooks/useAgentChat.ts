@@ -165,6 +165,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [catchUpError, setCatchUpError] = useState<NovuError | undefined>();
   const fetchGenerationRef = useRef(0);
   const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
+  const lastReportedErrorKeyRef = useRef<string>();
 
   const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
 
@@ -192,6 +193,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
       setError(undefined);
       setIsLoading(Boolean(conversationIdProp));
+      lastReportedErrorKeyRef.current = undefined;
 
       return;
     }
@@ -214,6 +216,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     async (targetConversationId: string) => {
       const generation = ++fetchGenerationRef.current;
       setError(undefined);
+      lastReportedErrorKeyRef.current = undefined;
       setIsLoading(true);
 
       const response = await novu.agentChat.loadConversation({
@@ -317,6 +320,16 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         propsRef.current.onError?.(data.catchUpError);
       } else if (data.catchUpError === undefined) {
         notifiedCatchUpErrorRef.current = undefined;
+      }
+
+      if (data.error) {
+        const errorKey = `${data.error.message}:${data.error.originalError?.message ?? ''}`;
+        if (lastReportedErrorKeyRef.current !== errorKey) {
+          lastReportedErrorKeyRef.current = errorKey;
+          propsRef.current.onError?.(data.error);
+        }
+      } else {
+        lastReportedErrorKeyRef.current = undefined;
       }
 
       const { change } = data;

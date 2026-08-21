@@ -1,5 +1,4 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { isAgentEventEnvelope } from '@novu/agent-event-protocol';
 import { AgentChatPlanLimitError, AgentChatService, InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
@@ -26,6 +25,7 @@ import type {
   SendMessageArgs,
   SendMessageResult,
 } from './types';
+import { parseAgentEventEnvelope } from './validate-envelope';
 
 function conversationErrorToNovuError(error: AgentConversationError): NovuError {
   return new NovuError(error.message, new Error(error.code ?? error.message));
@@ -498,14 +498,15 @@ export class AgentChat extends BaseModule {
    * Unknown conversations are dropped — mount/resume creates the entry.
    * During reconnect catch-up for a conversation, only that conversation's envelopes buffer.
    */
-  #handleAgentEvent(payload: unknown): void {
-    if (!isAgentEventEnvelope(payload)) {
-      console.warn('[Novu] Dropped malformed agent event envelope');
+  #handleAgentEvent(raw: unknown): void {
+    const parsed = parseAgentEventEnvelope(raw);
+    if (!parsed.ok) {
+      console.warn('[novu agent-chat] skipping live envelope:', parsed.reason);
 
       return;
     }
 
-    const envelope = payload;
+    const envelope = parsed.envelope;
     const conversationId = envelope.conversationIdentifier;
     if (!conversationId) {
       return;
