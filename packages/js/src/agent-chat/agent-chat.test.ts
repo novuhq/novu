@@ -1,6 +1,7 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
 import { AgentChatPlanLimitError, AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
+import { NovuError } from '../utils/errors';
 import { AgentChat } from './agent-chat';
 import { derivePendingActions } from './agent-message.types';
 import type { AgentChatChange } from './types';
@@ -701,6 +702,62 @@ describe('AgentChat', () => {
     expect(updates.at(-1)).toEqual(['msg_user0000001', 'msg_asst0000001']);
   });
 
+  it('accepts live deltas after history that ends mid-stream', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 2,
+          timestamp: '2026-08-07T12:00:01.000Z',
+          event: { type: 'message-start', messageId: 'msg_asst0000001' },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 3,
+        timestamp: '2026-08-07T12:00:02.000Z',
+        event: { type: 'message-delta', messageId: 'msg_asst0000001', delta: 'Hello' },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.error).toBeUndefined();
+    expect(snapshot?.messages.some((message) => message.id === 'msg_asst0000001')).toBe(true);
+  });
+
   it('ignores live envelopes for conversations that are not open', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
@@ -1088,7 +1145,7 @@ describe('AgentChat', () => {
 
     emitter.emit('agent_chat.agent_event', { result: { invalid: true } as any });
 
-    expect(warn).toHaveBeenCalledWith('[Novu] Dropped malformed agent event envelope');
+    expect(warn).toHaveBeenCalledWith('[novu agent-chat] skipping live envelope:', 'invalid-schema');
     expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
 
     warn.mockRestore();
