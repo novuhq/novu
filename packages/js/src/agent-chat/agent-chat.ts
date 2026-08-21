@@ -9,13 +9,12 @@ import { AgentChatStore, type ConversationEntry, createLocalConversationKey } fr
 import { AgentConversationRuntime } from './agent-conversation-runtime';
 import { type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
 import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
-import { createMessageIdempotencyKey } from './idempotency';
+import { createActionIdempotencyKeyForScope, createMessageIdempotencyKey } from './idempotency';
 import { runtimeCacheKey } from './runtime-cache-key';
 import type {
   AgentChatChange,
   AgentChatMessagesUpdated,
   AgentChatPagination,
-  AgentSendConcurrencyPolicy,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -63,14 +62,11 @@ export class AgentChat extends BaseModule {
     eventEmitterInstance,
     agentChatService,
     socket,
-    sendConcurrencyPolicy: _sendConcurrencyPolicy = 'reject',
   }: {
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
     agentChatService: AgentChatService;
     socket: Pick<BaseSocketInterface, 'connect'>;
-    /** Only `'reject'` is implemented. Queue and cancel-previous wait for NV-8643. */
-    sendConcurrencyPolicy?: AgentSendConcurrencyPolicy;
   }) {
     super({ inboxServiceInstance, eventEmitterInstance });
     this.#agentChatService = agentChatService;
@@ -233,23 +229,15 @@ export class AgentChat extends BaseModule {
         }
 
         const scope = `respond:${args.actionId}:${args.decision}`;
-        const { key: idempotencyKey, duplicate } = this.#store.resolveActionIdempotency(entry, scope);
-        if (duplicate) {
-          return { identifier: conversationId };
-        }
+        const idempotencyKey = createActionIdempotencyKeyForScope(scope);
 
-        try {
-          return await this.#agentChatService.respondToAction({
-            agentId: args.agentId,
-            conversationId,
-            actionId,
-            idempotencyKey,
-            agentHash: args.agentHash,
-          });
-        } catch (error) {
-          this.#store.forgetActionIdempotency(entry, scope);
-          throw error;
-        }
+        return this.#agentChatService.respondToAction({
+          agentId: args.agentId,
+          conversationId,
+          actionId,
+          idempotencyKey,
+          agentHash: args.agentHash,
+        });
       }
     );
   }
@@ -270,25 +258,17 @@ export class AgentChat extends BaseModule {
         }
 
         const scope = `send:${actionId}:${sourceMessageId}:${args.value ?? ''}`;
-        const { key: idempotencyKey, duplicate } = this.#store.resolveActionIdempotency(_entry, scope);
-        if (duplicate) {
-          return { identifier: conversationId };
-        }
+        const idempotencyKey = createActionIdempotencyKeyForScope(scope);
 
-        try {
-          return await this.#agentChatService.sendAction({
-            agentId: args.agentId,
-            conversationId,
-            actionId,
-            sourceMessageId,
-            value: args.value,
-            idempotencyKey,
-            agentHash: args.agentHash,
-          });
-        } catch (error) {
-          this.#store.forgetActionIdempotency(_entry, scope);
-          throw error;
-        }
+        return this.#agentChatService.sendAction({
+          agentId: args.agentId,
+          conversationId,
+          actionId,
+          sourceMessageId,
+          value: args.value,
+          idempotencyKey,
+          agentHash: args.agentHash,
+        });
       }
     );
   }

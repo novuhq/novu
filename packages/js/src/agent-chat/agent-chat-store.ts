@@ -7,7 +7,7 @@ import {
   derivePendingActions,
 } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
-import { createActionIdempotencyKey, mintClientId } from './idempotency';
+import { mintClientId } from './idempotency';
 import type { AgentChatChange, AgentChatChangeSource, AgentChatPaginationStatus, FetchMoreResult } from './types';
 
 type McpConnectionResult = {
@@ -53,8 +53,6 @@ export type ConversationEntry = AgentConversationState & {
   paginationEpoch: number;
   /** Coalesces overlapping `fetchMore` calls on this holder. */
   pendingFetchMore?: Promise<{ data?: FetchMoreResult; error?: NovuError }>;
-  /** Action idempotency keys already submitted on this holder (scope → key). */
-  actionIdempotencyByScope: Map<string, string>;
 };
 
 export function createLocalConversationKey(): string {
@@ -216,7 +214,6 @@ export class AgentChatStore {
       isRecovering: false,
       paginationStatus: 'idle',
       paginationEpoch: 0,
-      actionIdempotencyByScope: new Map(),
     };
     this.#byKey.set(args.key, entry);
 
@@ -262,22 +259,6 @@ export class AgentChatStore {
     this.#publish(entry, { kind: 'local' }, []);
 
     return true;
-  }
-
-  resolveActionIdempotency(entry: ConversationEntry, scope: string): { key: string; duplicate: boolean } {
-    const existing = entry.actionIdempotencyByScope.get(scope);
-    if (existing) {
-      return { key: existing, duplicate: true };
-    }
-
-    const key = createActionIdempotencyKey();
-    entry.actionIdempotencyByScope.set(scope, key);
-
-    return { key, duplicate: false };
-  }
-
-  forgetActionIdempotency(entry: ConversationEntry, scope: string): void {
-    entry.actionIdempotencyByScope.delete(scope);
   }
 
   /**

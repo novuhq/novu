@@ -2524,7 +2524,7 @@ describe('AgentChat', () => {
       expect(sendMessage).not.toHaveBeenCalled();
     });
 
-    it('suppresses duplicate respondToAction submissions', async () => {
+    it('sends a stable idempotency key for the same action scope', async () => {
       getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
       respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
 
@@ -2543,7 +2543,9 @@ describe('AgentChat', () => {
         decision: 'approved',
       });
 
-      expect(respondToAction).toHaveBeenCalledTimes(1);
+      expect(respondToAction).toHaveBeenCalledTimes(2);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toMatch(/^idem_/);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toBe(respondToAction.mock.calls[1]?.[0].idempotencyKey);
     });
 
     it('retries respondToAction after the first request fails', async () => {
@@ -2570,6 +2572,7 @@ describe('AgentChat', () => {
       expect(failed.error).toBeDefined();
       expect(retried.error).toBeUndefined();
       expect(respondToAction).toHaveBeenCalledTimes(2);
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toBe(respondToAction.mock.calls[1]?.[0].idempotencyKey);
     });
   });
 });

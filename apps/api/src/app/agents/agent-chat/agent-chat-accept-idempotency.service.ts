@@ -1,25 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { CacheService, PinoLogger } from '@novu/application-generic';
+import { CacheService } from '@novu/application-generic';
+import type { AgentChatInboundClaimResult } from '@novu/chat-adapter-agent-chat';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 
 /** In-flight lock only. Durable activity rows are the success ledger. */
 const ACCEPT_LOCK_TTL_SECONDS = 60 * 5;
 
-export type AgentChatInboundClaimResult = {
-  /** When false, return the ack without dispatching again. */
-  claimed: boolean;
-  conversationId: string;
-};
-
 @Injectable()
 export class AgentChatAcceptIdempotencyService {
   constructor(
     private readonly conversationService: AgentConversationService,
-    private readonly cacheService: CacheService,
-    private readonly logger: PinoLogger
-  ) {
-    this.logger.setContext(this.constructor.name);
-  }
+    private readonly cacheService: CacheService
+  ) {}
 
   async claimInboundMessage(
     environmentId: string,

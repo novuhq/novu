@@ -53,13 +53,6 @@ export type SendMessageResult = {
   messageId: string;
 };
 
-/**
- * Policy when `sendMessage` starts while the conversation holder reports `isRunning`.
- * Default and only implemented policy: `'reject'`.
- * `'queue'` and `'cancel-previous'` wait for NV-8643.
- */
-export type AgentSendConcurrencyPolicy = 'reject';
-
 export type RetryMessageArgs = AgentHashFields & {
   agentId: string;
   messageId: string;
