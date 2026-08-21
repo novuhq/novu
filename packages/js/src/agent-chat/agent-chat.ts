@@ -195,13 +195,8 @@ export class AgentChat extends BaseModule {
       pagination: entryPagination(entry),
       isRecovering: entry.isRecovering,
       error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
-      catchUpError: entry.recoveryError,
+      catchUpError: entry.catchUpError,
     };
-  }
-
-  /** True while reconnect catch-up is in flight for the given conversation. */
-  isRecovering(conversationId: string): boolean {
-    return this.#catchUpBuffers.has(conversationId);
   }
 
   async respondToAction(args: RespondToActionArgs): Result<RespondToActionResult, NovuError | AgentChatPlanLimitError> {
@@ -585,7 +580,7 @@ export class AgentChat extends BaseModule {
         pagination: entryPagination(entry),
         error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
         isRecovering: entry.isRecovering,
-        ...(entry.recoveryError ? { catchUpError: entry.recoveryError } : {}),
+        ...(entry.catchUpError ? { catchUpError: entry.catchUpError } : {}),
         change,
       },
     });
@@ -602,8 +597,10 @@ export class AgentChat extends BaseModule {
 
     this.#catchUpBuffers.set(conversationId, []);
     for (const entry of activeHolders) {
-      this.#store.setRecovering(entry, true);
+      this.#store.setRecoveryState(entry, { isRecovering: true });
     }
+
+    let discardBufferedEnvelopes = false;
 
     try {
       // Page toward older events until we reach already-known sequence territory.
@@ -611,7 +608,7 @@ export class AgentChat extends BaseModule {
       const knownThrough = Math.min(...activeHolders.map((entry) => entry.lastSequence));
       const missed: AgentEventEnvelope[] = [];
       let before: string | undefined;
-      let limitExceeded = false;
+      let completed = false;
 
       for (let pageIndex = 0; pageIndex < CATCH_UP_PAGE_LIMIT; pageIndex += 1) {
         const page = await this.#agentChatService.getEvents({
@@ -623,24 +620,22 @@ export class AgentChat extends BaseModule {
 
         const oldestInPage = envelopes[0]?.sequence;
         if (page.olderCursor == null || oldestInPage == null || oldestInPage <= knownThrough) {
-          break;
-        }
-
-        if (pageIndex === CATCH_UP_PAGE_LIMIT - 1) {
-          limitExceeded = true;
+          completed = true;
           break;
         }
 
         before = page.olderCursor;
       }
 
-      if (limitExceeded) {
+      if (!completed) {
+        // On catch-up failure the conversation stays stale and errored rather than showing messages across a known gap.
+        discardBufferedEnvelopes = true;
         const catchUpError = new NovuError(
           'Agent chat reconnect catch-up exceeded the safety page limit; conversation history may be incomplete',
           new Error('catch_up_limit_exceeded')
         );
         for (const entry of activeHolders) {
-          this.#store.setRecoveryError(entry, catchUpError);
+          this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
         }
 
         return;
@@ -655,7 +650,7 @@ export class AgentChat extends BaseModule {
           continue;
         }
 
-        this.#store.setRecoveryError(entry, undefined);
+        this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError: undefined });
         for (const envelope of missed) {
           this.#store.applyLiveEnvelope(entry, envelope);
         }
@@ -668,7 +663,7 @@ export class AgentChat extends BaseModule {
           continue;
         }
 
-        this.#store.setRecoveryError(entry, catchUpError);
+        this.#store.setRecoveryState(entry, { isRecovering: entry.isRecovering, catchUpError });
       }
     } finally {
       const buffered = this.#catchUpBuffers.get(conversationId) ?? [];
@@ -680,11 +675,13 @@ export class AgentChat extends BaseModule {
           continue;
         }
 
-        this.#store.setRecovering(entry, false);
+        this.#store.setRecoveryState(entry, { isRecovering: false, catchUpError: entry.catchUpError });
       }
 
-      for (const envelope of buffered) {
-        this.#applyLiveEnvelope(envelope);
+      if (!discardBufferedEnvelopes) {
+        for (const envelope of buffered) {
+          this.#applyLiveEnvelope(envelope);
+        }
       }
     }
   }

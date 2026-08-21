@@ -102,6 +102,7 @@ describe('AgentConversationRuntime', () => {
 
   it('notifies subscribers only when the snapshot reference changes', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    getEvents.mockResolvedValue({ events: [], olderCursor: null });
 
     const created = agentChat.conversation({ agentId: 'agent_1' });
     if (!created.ok) {
@@ -120,17 +121,18 @@ describe('AgentConversationRuntime', () => {
 
     await runtime.sendMessage('hello');
 
-    // Optimistic send publishes twice: sending, then sent.
-    expect(seen).toHaveLength(3);
+    // Optimistic send publishes recovery clear, sending, sent, then catch-up recovery states.
+    expect(seen).toHaveLength(7);
     expect(seen[0]).toBe(initial);
-    expect(seen[1]).not.toBe(initial);
-    expect(seen[2]).not.toBe(seen[1]);
+    for (let index = 1; index < seen.length; index += 1) {
+      expect(seen[index]).not.toBe(seen[index - 1]);
+    }
 
     const current = runtime.getSnapshot();
     runtime.getSnapshot();
-    expect(seen).toHaveLength(3);
+    expect(seen).toHaveLength(7);
     expect(seen.every((snapshot, index) => snapshot === seen[index])).toBe(true);
-    expect(current).toBe(seen[2]);
+    expect(current).toBe(seen[6]);
 
     unsubscribe();
     runtime.dispose();

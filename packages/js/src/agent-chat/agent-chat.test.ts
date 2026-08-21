@@ -51,13 +51,13 @@ describe('AgentChat', () => {
     expect(result).toEqual({
       data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' },
     });
-    expect(updates[0]?.key).toBe('local_session1');
-    expect(updates[0]?.conversationId).toBeUndefined();
-    expect(updates[0]?.messages[0]?.status).toBe('sending');
-    expect(updates[0]?.messages[0]?.id).toMatch(/^opt_/);
     expect(updates[1]?.key).toBe('local_session1');
-    expect(updates[1]?.conversationId).toBe('conv_abcdefghijkl');
-    expect(updates[1]?.messages).toEqual([{ id: 'msg_abcdefghijkl', status: 'sent', role: 'user' }]);
+    expect(updates[1]?.conversationId).toBeUndefined();
+    expect(updates[1]?.messages[0]?.status).toBe('sending');
+    expect(updates[1]?.messages[0]?.id).toMatch(/^opt_/);
+    expect(updates[2]?.key).toBe('local_session1');
+    expect(updates[2]?.conversationId).toBe('conv_abcdefghijkl');
+    expect(updates[2]?.messages).toEqual([{ id: 'msg_abcdefghijkl', status: 'sent', role: 'user' }]);
 
     const snapshot = agentChat.getConversation({
       agentId: 'agent_1',
@@ -86,7 +86,7 @@ describe('AgentChat', () => {
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    expect(statuses).toEqual(['sending', 'sent']);
+    expect(statuses).toEqual(['', 'sending', 'sent']);
   });
 
   it('marks the optimistic message failed when the request errors', async () => {
@@ -1068,12 +1068,15 @@ describe('AgentChat', () => {
     rejectEvents(new Error('getEvents failed'));
     await waitForMessageIds(['msg_user0000001', 'msg_asst_flush001']);
     expect(catchUpFailureUpdates.length).toBeGreaterThanOrEqual(1);
-    expect(catchUpFailureUpdates[0]).toEqual({
+    const failedUpdate = catchUpFailureUpdates.find((update) => update.isRecovering === false);
+    expect(failedUpdate).toEqual({
       isRecovering: false,
       catchUpError: expect.objectContaining({
         message: 'Failed to recover agent chat conversation after reconnect',
       }),
     });
+    expect(failedUpdate?.catchUpError).toBeDefined();
+    expect((failedUpdate as { error?: unknown }).error).toBeUndefined();
     expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.catchUpError).toMatchObject({
       message: 'Failed to recover agent chat conversation after reconnect',
     });
@@ -1170,8 +1173,14 @@ describe('AgentChat', () => {
     getEvents.mockReset();
 
     let page = 0;
+    let resolveFirstPage!: (value: ReturnType<typeof historyPage>) => void;
     getEvents.mockImplementation(() => {
       page += 1;
+      if (page === 1) {
+        return new Promise((resolve) => {
+          resolveFirstPage = resolve;
+        });
+      }
 
       return Promise.resolve(
         historyPage(
@@ -1192,7 +1201,7 @@ describe('AgentChat', () => {
     const catchUpErrorPromise = new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('timed out waiting for catchUpError')), 2000);
       emitter.on('agent_chat.messages.updated', ({ data }) => {
-        if (data.catchUpError) {
+        if (data.catchUpError && data.isRecovering === false) {
           clearTimeout(timeout);
           catchUpErrors.push(data.catchUpError);
           resolve();
@@ -1201,6 +1210,31 @@ describe('AgentChat', () => {
     });
 
     emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 200,
+        messageId: 'msg_asst_buffered',
+        markdown: 'discarded on limit exceeded',
+      })
+    );
+
+    resolveFirstPage(
+      historyPage(
+        [
+          {
+            sequence: 101,
+            messageId: 'msg_asst_page01',
+            role: 'assistant',
+            markdown: 'page 1',
+          },
+        ],
+        'act_page01'
+      )
+    );
+
     await catchUpErrorPromise;
     expect(getEvents).toHaveBeenCalledTimes(20);
 
@@ -1208,6 +1242,56 @@ describe('AgentChat', () => {
     expect(catchUpErrors[0]).toMatchObject({
       message: expect.stringContaining('safety page limit'),
     });
+
+    const conversation = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(conversation?.messages).toHaveLength(1);
+    expect(conversation?.messages[0]?.id).toBe('msg_user0000001');
+    expect(conversation?.messages.some((message) => message.id === 'msg_asst_buffered')).toBe(false);
+    expect(conversation?.messages.some((message) => message.id.startsWith('msg_asst_page'))).toBe(false);
+    expect(conversation?.catchUpError).toMatchObject({
+      message: expect.stringContaining('safety page limit'),
+    });
+  });
+
+  it('emits catchUpError separately from conversation error on catch-up failure', async () => {
+    await openClaimedConversation();
+
+    let rejectEvents!: (error: Error) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectEvents = reject;
+        })
+    );
+
+    const updates: Array<{ error?: unknown; catchUpError?: unknown }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.catchUpError) {
+        updates.push({ error: data.error, catchUpError: data.catchUpError });
+      }
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    rejectEvents(new Error('getEvents failed'));
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for catchUpError event')), 2000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.catchUpError) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    expect(updates.length).toBeGreaterThanOrEqual(1);
+    expect(updates[0]?.catchUpError).toMatchObject({
+      message: 'Failed to recover agent chat conversation after reconnect',
+    });
+    expect(updates[0]?.error).toBeUndefined();
   });
 
   it('exposes isRecovering while catch-up is in flight and clears it after success', async () => {
@@ -1945,8 +2029,9 @@ describe('AgentChat', () => {
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    expect(changes.map((change) => change.kind)).toEqual(['local', 'local']);
+    expect(changes.map((change) => change.kind)).toEqual(['local', 'local', 'local']);
     expect(changes.map((change) => change.addedMessages.map((message) => message.id))).toEqual([
+      [],
       [],
       ['msg_abcdefghijkl'],
     ]);
@@ -1980,8 +2065,8 @@ describe('AgentChat', () => {
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    expect(changes.map((change) => change.kind)).toEqual(['local', 'local']);
-    expect(changes.map((change) => change.addedMessages)).toEqual([[], []]);
+    expect(changes.map((change) => change.kind)).toEqual(['local', 'local', 'local']);
+    expect(changes.map((change) => change.addedMessages)).toEqual([[], [], []]);
   });
 
   it('reports a pending approval from history once across reloads', async () => {

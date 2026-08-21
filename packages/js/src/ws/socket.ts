@@ -1,4 +1,4 @@
-import { isAgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import io, { Socket as SocketIO } from 'socket.io-client';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
@@ -160,15 +160,9 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     });
   };
 
-  #agentEvent = (payload: unknown) => {
-    if (!isAgentEventEnvelope(payload)) {
-      console.warn('[Novu] Dropped malformed agent event envelope');
-
-      return;
-    }
-
+  #agentEvent = (envelope: AgentEventEnvelope) => {
     this.#emitter.emit(AGENT_CHAT_AGENT_EVENT, {
-      result: payload,
+      result: envelope,
     });
   };
 

@@ -69,6 +69,8 @@ export type UseAgentChatResult = {
   };
   /** True while reconnect catch-up is in flight for this conversation. */
   isRecovering: boolean;
+  /** Set when reconnect catch-up fails. Separate from send/fetch `error`. */
+  catchUpError?: NovuError;
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
@@ -160,8 +162,9 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
   const [isRecovering, setIsRecovering] = useState(false);
+  const [catchUpError, setCatchUpError] = useState<NovuError | undefined>();
   const fetchGenerationRef = useRef(0);
-  const catchUpErrorActiveRef = useRef(false);
+  const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
 
   const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
 
@@ -269,8 +272,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         snapshotSetters
       );
       setIsRecovering(snapshot.isRecovering);
-      if (snapshot.catchUpError) {
-        catchUpErrorActiveRef.current = true;
+      setCatchUpError(snapshot.catchUpError);
+      if (snapshot.catchUpError && snapshot.catchUpError !== notifiedCatchUpErrorRef.current) {
+        notifiedCatchUpErrorRef.current = snapshot.catchUpError;
+        propsRef.current.onError?.(snapshot.catchUpError);
       }
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
@@ -306,15 +311,12 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       }
 
       setIsRecovering(data.isRecovering);
-      if (data.catchUpError) {
-        if (!catchUpErrorActiveRef.current) {
-          catchUpErrorActiveRef.current = true;
-          propsRef.current.onError?.(data.catchUpError);
-        }
-        setError(data.catchUpError);
-      } else if (!data.isRecovering && catchUpErrorActiveRef.current) {
-        catchUpErrorActiveRef.current = false;
-        setError(undefined);
+      setCatchUpError(data.catchUpError);
+      if (data.catchUpError && data.catchUpError !== notifiedCatchUpErrorRef.current) {
+        notifiedCatchUpErrorRef.current = data.catchUpError;
+        propsRef.current.onError?.(data.catchUpError);
+      } else if (data.catchUpError === undefined) {
+        notifiedCatchUpErrorRef.current = undefined;
       }
 
       const { change } = data;
@@ -466,6 +468,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     status,
     pagination: paginationWithFetch,
     isRecovering,
+    catchUpError,
     refetch,
   };
 };
