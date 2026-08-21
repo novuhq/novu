@@ -1940,7 +1940,9 @@ describe('AgentChat', () => {
     expect(getEvents).toHaveBeenCalledTimes(3);
 
     rejectOlderPage(new Error('network'));
-    await expect(older).resolves.toMatchObject({ error: expect.anything() });
+    const staleResult = await older;
+    expect(staleResult.error).toBeUndefined();
+    expect(staleResult.data?.messages.map((message) => message.id)).toEqual(['msg_new0000001']);
     expect(
       agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
     ).toBe('idle');

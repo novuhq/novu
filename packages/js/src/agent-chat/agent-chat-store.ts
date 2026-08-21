@@ -332,7 +332,12 @@ export class AgentChatStore {
     const epoch = entry.paginationEpoch;
     const current = fetch().then((result) => {
       if (epoch !== entry.paginationEpoch) {
-        return result;
+        return {
+          data: {
+            messages: entry.messages,
+            hasMore: entry.olderCursor != null,
+          },
+        };
       }
 
       entry.paginationStatus = result.error ? 'error' : 'idle';
