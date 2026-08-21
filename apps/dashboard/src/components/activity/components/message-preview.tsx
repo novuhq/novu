@@ -1,7 +1,6 @@
 import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { RiInformationLine, RiMailLine, RiMessage3Line, RiNotification3Line, RiPhoneLine } from 'react-icons/ri';
 import { EmailPreviewBody } from '@/components/workflow-editor/steps/email/email-preview';
-import { SmsPhone } from '@/components/workflow-editor/steps/sms/sms-phone';
 import { cn } from '@/utils/ui';
 
 interface MessagePreviewProps {
@@ -117,8 +116,10 @@ function SmsChannelPreview({ content, className }: { content?: string | null; cl
 
   return (
     <PreviewShell icon={<RiPhoneLine className="h-3.5 w-3.5" />} label="SMS preview" className={className}>
-      <div className="flex justify-center">
-        <SmsPhone smsBody={body} />
+      <div className="flex max-w-sm flex-col">
+        <div className="rounded-2xl rounded-bl-xs bg-neutral-100 px-4 py-2.5 text-foreground-950">
+          <p className="max-h-96 overflow-auto whitespace-pre-wrap break-words text-xs">{body}</p>
+        </div>
       </div>
     </PreviewShell>
   );
