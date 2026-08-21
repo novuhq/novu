@@ -16,6 +16,8 @@ export type {
 export type {
   AgentChatChange,
   AgentChatMessagesUpdated,
+  AgentChatPagination,
+  AgentChatPaginationStatus,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,

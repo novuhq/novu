@@ -7,11 +7,12 @@ import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
 import { AgentConversationRuntime } from './agent-conversation-runtime';
-import { type AgentMessage, derivePendingActions } from './agent-message.types';
+import { type AgentConversationError, type AgentMessage, derivePendingActions } from './agent-message.types';
 import type { ConversationArgs, ConversationResult } from './conversation-runtime.types';
 import { runtimeCacheKey } from './runtime-cache-key';
 import type {
   AgentChatMessagesUpdated,
+  AgentChatPagination,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -23,6 +24,17 @@ import type {
   SendMessageArgs,
   SendMessageResult,
 } from './types';
+
+function conversationErrorToNovuError(error: AgentConversationError): NovuError {
+  return new NovuError(error.message, new Error(error.code ?? error.message));
+}
+
+function entryPagination(entry: ConversationEntry): AgentChatPagination {
+  return {
+    status: entry.paginationStatus,
+    hasMore: entry.olderCursor != null,
+  };
+}
 
 export class AgentChat extends BaseModule {
   #agentChatService: AgentChatService;
@@ -62,6 +74,8 @@ export class AgentChat extends BaseModule {
           typing: entry.typing,
           status: entry.status,
           hasMore: entry.olderCursor != null,
+          pagination: entryPagination(entry),
+          error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
           change,
         },
       });
@@ -163,6 +177,8 @@ export class AgentChat extends BaseModule {
         typing?: ConversationEntry['typing'];
         status: ConversationEntry['status'];
         hasMore: boolean;
+        pagination: AgentChatPagination;
+        error?: NovuError;
       }
     | undefined {
     const entry = key
@@ -183,6 +199,8 @@ export class AgentChat extends BaseModule {
       typing: entry.typing,
       status: entry.status,
       hasMore: entry.olderCursor != null,
+      pagination: entryPagination(entry),
+      error: entry.error ? conversationErrorToNovuError(entry.error) : undefined,
     };
   }
 
@@ -301,22 +319,36 @@ export class AgentChat extends BaseModule {
         };
       }
 
-      try {
-        const page = await this.#agentChatService.getEvents({
-          conversationId: entry.conversationId,
-          before: entry.olderCursor,
-        });
-        const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
+      return this.#store.withFetchMoreClaim(entry, async () => {
+        const epochAtStart = entry.paginationEpoch;
 
-        return {
-          data: {
-            messages: next.messages,
-            hasMore: next.olderCursor != null,
-          },
-        };
-      } catch (error) {
-        return { error: new NovuError('Failed to load older agent chat messages', error) };
-      }
+        try {
+          const page = await this.#agentChatService.getEvents({
+            conversationId: entry.conversationId!,
+            before: entry.olderCursor!,
+          });
+
+          if (epochAtStart !== entry.paginationEpoch) {
+            return {
+              data: {
+                messages: entry.messages,
+                hasMore: entry.olderCursor != null,
+              },
+            };
+          }
+
+          const next = this.#store.prependOlderPage(entry, page.events, page.olderCursor);
+
+          return {
+            data: {
+              messages: next.messages,
+              hasMore: next.olderCursor != null,
+            },
+          };
+        } catch (error) {
+          return { error: new NovuError('Failed to load older agent chat messages', error) };
+        }
+      });
     });
   }
 

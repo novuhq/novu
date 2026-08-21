@@ -1,4 +1,5 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { NovuError } from '../utils/errors';
 import type {
   AgentConversationStatus,
   AgentConversationTyping,
@@ -74,6 +75,13 @@ export type FetchMoreResult = {
   hasMore: boolean;
 };
 
+export type AgentChatPaginationStatus = 'idle' | 'loading' | 'error';
+
+export type AgentChatPagination = {
+  status: AgentChatPaginationStatus;
+  hasMore: boolean;
+};
+
 export type RespondToActionArgs = AgentHashFields & {
   agentId: string;
   actionId: string;
@@ -129,5 +137,7 @@ export type AgentChatMessagesUpdated = {
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;
+  pagination: AgentChatPagination;
+  error?: NovuError;
   change: AgentChatChange;
 };
