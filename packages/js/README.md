@@ -122,3 +122,57 @@ const novu = new Novu({
   },
 });
 ```
+
+## Agent chat conversation runtime
+
+For vanilla JavaScript (no React), use `novu.agentChat.conversation()` to get a stable runtime object for one agent thread. The runtime owns identity, exposes immutable snapshots, and binds actions like `sendMessage`.
+
+```ts
+import { Novu } from '@novu/js';
+
+const novu = new Novu({
+  applicationIdentifier: 'YOUR_APP_ID',
+  subscriber: 'subscriber_123',
+});
+
+// Create a new conversation
+const created = novu.agentChat.conversation({ agentId: 'agent_abc' });
+if (!created.ok) {
+  console.error(created.error);
+} else {
+  const chat = created.data;
+
+  const unsubscribe = chat.subscribe((snapshot) => {
+    // snapshot is frozen — render from it directly
+    console.log(snapshot.messages, snapshot.run.isRunning, snapshot.pendingActions);
+  });
+
+  await chat.sendMessage('hello');
+  await chat.sendMessage({ text: 'follow up', metadata: { source: 'widget' } });
+
+  unsubscribe();
+  chat.dispose();
+}
+
+// Resume an existing conversation (same runtime is reused)
+const resumed = novu.agentChat.conversation({
+  agentId: 'agent_abc',
+  conversationId: 'conv_abcdefghijkl',
+});
+if (resumed.ok) {
+  const chat = resumed.data;
+  chat.subscribe((snapshot) => renderTimeline(snapshot));
+  await chat.load();
+  await chat.fetchMore();
+}
+```
+
+Snapshot fields:
+
+- `status` — session lifecycle (`ready`, `loading`, `fetching`)
+- `run` — `{ isRunning, typing? }`
+- `conversationStatus` — `active` or `resolved`
+- `pagination` — `{ hasMore }`
+- `messages`, `pendingActions`, `error`
+
+`getSnapshot()` returns the same object reference until the next store publication. Subscribers fire when that reference changes.
