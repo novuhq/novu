@@ -297,9 +297,9 @@ export function applyValidatedEnvelope(
 
 export function applyValidatedEnvelopes(
   initialState: AgentConversationState,
-  envelopes: AgentEventEnvelope[]
-): { state: AgentConversationState; error?: AgentConversationError } {
-  const ctx = createFoldValidationContext();
+  envelopes: AgentEventEnvelope[],
+  ctx: FoldValidationContext = createFoldValidationContext()
+): { state: AgentConversationState; error?: AgentConversationError; ctx: FoldValidationContext } {
   let state = initialState;
   let error: AgentConversationError | undefined;
 
@@ -327,5 +327,5 @@ export function applyValidatedEnvelopes(
     };
   }
 
-  return { state, error };
+  return { state, error, ctx };
 }

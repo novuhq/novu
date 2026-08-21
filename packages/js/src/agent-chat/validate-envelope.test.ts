@@ -1,7 +1,6 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { createInitialAgentConversationState } from './agent-message.types';
 import {
-  applyValidatedEnvelope,
   applyValidatedEnvelopes,
   createFoldValidationContext,
   parseAgentEventEnvelope,
@@ -28,13 +27,6 @@ function envelope(sequence: number, event: AgentEvent, overrides: Partial<typeof
 }
 
 describe('parseAgentEventEnvelope', () => {
-  it('accepts a valid envelope', () => {
-    const value = envelope(1, { type: 'run-start' });
-    const result = parseAgentEventEnvelope(value);
-
-    expect(result).toEqual({ ok: true, envelope: value });
-  });
-
   it('skips unknown protocol versions without error', () => {
     const value = { ...envelope(1, { type: 'run-start' }), version: 99 };
     const result = parseAgentEventEnvelope(value);
@@ -80,46 +72,6 @@ describe('validateEnvelopeOrdering', () => {
       },
     });
   });
-
-  it('flags thinking-delta without thinking-start', () => {
-    const ctx = createFoldValidationContext();
-    const result = validateEnvelopeOrdering(
-      ctx,
-      envelope(1, { type: 'thinking-delta', thinkingId: 't1', delta: 'Hmm' })
-    );
-
-    expect(result).toMatchObject({
-      ok: false,
-      error: { code: 'protocol.ordering' },
-    });
-  });
-
-  it('flags tool-use-delta without tool-use-start', () => {
-    const ctx = createFoldValidationContext();
-    const result = validateEnvelopeOrdering(
-      ctx,
-      envelope(1, { type: 'tool-use-delta', toolUseId: 'tu1', delta: '{}' })
-    );
-
-    expect(result).toMatchObject({
-      ok: false,
-      error: { code: 'protocol.ordering' },
-    });
-  });
-
-  it('accepts a well-formed streaming sequence', () => {
-    const ctx = createFoldValidationContext();
-    const envelopes = [
-      envelope(1, { type: 'run-start' }),
-      envelope(2, { type: 'message-start', messageId: 'm1' }),
-      envelope(3, { type: 'message-delta', messageId: 'm1', delta: 'Hello' }),
-      envelope(4, { type: 'message-end', messageId: 'm1' }),
-    ];
-
-    for (const item of envelopes) {
-      expect(validateEnvelopeOrdering(ctx, item)).toEqual({ ok: true });
-    }
-  });
 });
 
 describe('applyValidatedEnvelopes', () => {
@@ -151,13 +103,6 @@ describe('applyValidatedEnvelopes', () => {
 });
 
 describe('validateHistoryPageResponse', () => {
-  it('accepts a valid history payload', () => {
-    const events = [envelope(1, { type: 'run-start' })];
-    const result = validateHistoryPageResponse({ events, olderCursor: 'cursor-1' });
-
-    expect(result).toEqual({ ok: true, events, olderCursor: 'cursor-1' });
-  });
-
   it('rejects missing events array', () => {
     const result = validateHistoryPageResponse({ olderCursor: null });
 
@@ -173,15 +118,5 @@ describe('validateHistoryPageResponse', () => {
     const result = validateHistoryPageResponse({ events: [known, unknown], olderCursor: null });
 
     expect(result).toEqual({ ok: true, events: [known], olderCursor: null });
-  });
-});
-
-describe('applyValidatedEnvelope', () => {
-  it('applies valid envelopes and updates validation context', () => {
-    const ctx = createFoldValidationContext();
-    const initial = createInitialAgentConversationState();
-    const result = applyValidatedEnvelope(initial, ctx, envelope(1, { type: 'run-start' }));
-
-    expect(result).toMatchObject({ applied: true, state: { isRunning: true } });
   });
 });

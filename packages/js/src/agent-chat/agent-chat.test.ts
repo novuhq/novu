@@ -705,6 +705,11 @@ describe('AgentChat', () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
+    const updates: Array<{ error?: { code?: string; message: string } }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      updates.push({ error: data.error });
+    });
+
     emitter.emit('agent_chat.agent_event', {
       result: {
         version: AGENT_EVENT_PROTOCOL_VERSION,
@@ -725,6 +730,66 @@ describe('AgentChat', () => {
       code: 'protocol.ordering',
       message: expect.stringContaining('message-delta'),
     });
+    expect(updates.at(-1)?.error).toMatchObject({
+      code: 'protocol.ordering',
+      message: expect.stringContaining('message-delta'),
+    });
+  });
+
+  it('accepts live deltas after history that ends mid-stream', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 2,
+          timestamp: '2026-08-07T12:00:01.000Z',
+          event: { type: 'message-start', messageId: 'msg_asst0000001' },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 3,
+        timestamp: '2026-08-07T12:00:02.000Z',
+        event: { type: 'message-delta', messageId: 'msg_asst0000001', delta: 'Hello' },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.error).toBeUndefined();
+    expect(snapshot?.messages.some((message) => message.id === 'msg_asst0000001')).toBe(true);
   });
 
   it('ignores live envelopes for conversations that are not open', async () => {

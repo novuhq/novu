@@ -1,6 +1,7 @@
 import type {
   AgentChatPagination,
   AgentChatPlanLimitError,
+  AgentConversationError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
@@ -28,7 +29,7 @@ export type UseAgentChatProps = AgentHashFields & {
    */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
-  onError?: (error: NovuError | AgentChatPlanLimitError) => void;
+  onError?: (error: NovuError | AgentChatPlanLimitError | AgentConversationError) => void;
   /**
    * Fires once per message, when the message id first appears on the conversation.
    * History pages are silent: only new activity fires.
@@ -55,7 +56,7 @@ export type UseAgentChatResult = {
   messages: AgentMessage[];
   pendingActions: AgentPendingAction[];
   conversationId?: string;
-  error?: NovuError | AgentChatPlanLimitError;
+  error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isRunning: boolean;
@@ -74,15 +75,15 @@ export type UseAgentChatResult = {
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
-    error?: NovuError | AgentChatPlanLimitError;
+    error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
   }>;
   respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
-    error?: NovuError | AgentChatPlanLimitError;
+    error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
   }>;
   sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
     data?: SendActionResult;
-    error?: NovuError | AgentChatPlanLimitError;
+    error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
   }>;
 };
 
@@ -317,6 +318,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         propsRef.current.onError?.(data.catchUpError);
       } else if (data.catchUpError === undefined) {
         notifiedCatchUpErrorRef.current = undefined;
+      }
+
+      if (data.error) {
+        propsRef.current.onError?.(data.error);
       }
 
       const { change } = data;
