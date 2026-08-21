@@ -16,6 +16,19 @@ import { runtimeCacheKey } from './runtime-cache-key';
 
 const EMPTY_RUN: AgentConversationRunSnapshot = Object.freeze({ isRunning: false });
 
+function cloneSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSnapshot {
+  return {
+    ...snapshot,
+    run: {
+      ...snapshot.run,
+      typing: snapshot.run.typing ? { ...snapshot.run.typing } : undefined,
+    },
+    pagination: { ...snapshot.pagination },
+    messages: structuredClone(snapshot.messages),
+    pendingActions: structuredClone(snapshot.pendingActions),
+  };
+}
+
 function freezeSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSnapshot {
   return Object.freeze({
     ...snapshot,
@@ -74,7 +87,7 @@ export class AgentConversationRuntime {
 
     this.#agentChat.subscribe();
     this.#stopListening = this.#agentChat.onMessagesUpdated((data) => {
-      if (data.key !== this.key) {
+      if (this.#disposed || data.key !== this.key) {
         return;
       }
 
@@ -229,7 +242,7 @@ export class AgentConversationRuntime {
       return response;
     }
 
-    if (response.data?.conversationId) {
+    if (response.data?.conversationId && !this.#disposed) {
       this.#conversationId = response.data.conversationId;
       this.#registerByConversationId(response.data.conversationId);
     }
@@ -297,6 +310,10 @@ export class AgentConversationRuntime {
   }
 
   #registerByConversationId(conversationId: string): void {
+    if (this.#disposed) {
+      return;
+    }
+
     const cacheKey = runtimeCacheKey(this.agentId, conversationId);
     if (this.#registeredConversationKey === cacheKey) {
       return;
@@ -352,7 +369,11 @@ export class AgentConversationRuntime {
   }
 
   #publish(next: AgentConversationSnapshot): void {
-    const frozen = freezeSnapshot(next);
+    if (this.#disposed) {
+      return;
+    }
+
+    const frozen = freezeSnapshot(cloneSnapshot(next));
     this.#snapshot = frozen;
 
     for (const listener of this.#listeners) {

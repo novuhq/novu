@@ -83,6 +83,9 @@ describe('AgentConversationRuntime', () => {
     expect(Object.isFrozen(afterSend.run)).toBe(true);
     expect(Object.isFrozen(afterSend.pagination)).toBe(true);
 
+    const store = agentChat.getConversation({ agentId: 'agent_1', key: runtime.key });
+    expect(afterSend.messages[0]).not.toBe(store?.messages[0]);
+
     const again = runtime.getSnapshot();
     expect(again).toBe(afterSend);
 
@@ -244,5 +247,67 @@ describe('AgentConversationRuntime', () => {
     expect(resumed.data).not.toBe(disposedRuntime);
 
     resumed.data.dispose();
+  });
+
+  it('does not register a disposed runtime after an in-flight send completes', async () => {
+    let resolveSend!: (value: { identifier: string; messageId: string }) => void;
+    sendMessage.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+
+    const created = agentChat.conversation({ agentId: 'agent_1' });
+    if (!created.ok) {
+      return;
+    }
+
+    const sendPromise = created.data.sendMessage('hello');
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+
+    created.data.dispose();
+
+    resolveSend({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    await sendPromise;
+
+    const resumed = agentChat.conversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(resumed.ok).toBe(true);
+    if (!resumed.ok) {
+      return;
+    }
+
+    expect(resumed.data).not.toBe(created.data);
+
+    resumed.data.dispose();
+  });
+
+  it('isolates snapshot messages from store mutations', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+
+    const created = agentChat.conversation({ agentId: 'agent_1' });
+    if (!created.ok) {
+      return;
+    }
+
+    await created.data.sendMessage('hello');
+
+    const snapshot = created.data.getSnapshot();
+    const storeBefore = agentChat.getConversation({ agentId: 'agent_1', key: created.data.key });
+
+    expect(snapshot.messages[0]?.parts[0]).toMatchObject({ type: 'text', text: 'hello' });
+    if (snapshot.messages[0]?.parts[0]?.type !== 'text') {
+      return;
+    }
+
+    snapshot.messages[0].parts[0].text = 'mutated';
+
+    expect(storeBefore?.messages[0]?.parts[0]).toMatchObject({ type: 'text', text: 'hello' });
+
+    created.data.dispose();
   });
 });
