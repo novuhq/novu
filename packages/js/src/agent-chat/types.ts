@@ -139,5 +139,9 @@ export type AgentChatMessagesUpdated = {
   hasMore: boolean;
   pagination: AgentChatPagination;
   error?: NovuError;
+  /** True while reconnect catch-up is in flight for this conversation. */
+  isRecovering: boolean;
+  /** Set when catch-up hits the safety page limit or HTTP ultimately fails. */
+  catchUpError?: NovuError;
   change: AgentChatChange;
 };
