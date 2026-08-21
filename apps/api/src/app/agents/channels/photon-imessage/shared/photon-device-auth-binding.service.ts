@@ -88,17 +88,14 @@ export class PhotonDeviceAuthBindingService {
     return result === 'OK' ? token : null;
   }
 
-  /**
-   * Best-effort check-then-delete (CacheService exposes no atomic
-   * compare-and-delete): the read-to-delete window is microseconds against a
-   * 90s TTL, and a wrongly surviving lock merely self-expires.
-   */
+  /** Atomic compare-and-delete: only the token's owner can release, never a successor's lock. */
   async releasePollLock(deviceCode: string, token: string): Promise<void> {
     try {
-      const current = await this.cacheService.get(this.lockKey(deviceCode));
-      if (current === token) {
-        await this.cacheService.del(this.lockKey(deviceCode));
-      }
+      await this.cacheService.eval(
+        'if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) end return 0',
+        [this.lockKey(deviceCode)],
+        [token]
+      );
     } catch (err) {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err) },
