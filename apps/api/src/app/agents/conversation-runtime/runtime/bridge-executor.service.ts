@@ -36,6 +36,7 @@ import { captureAgentException, captureAgentWarning } from '../../shared/errors/
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { AgentRunRegistryService } from './agent-run-registry.service';
 
 const MAX_RETRIES = 2;
 
@@ -172,13 +173,15 @@ export class BridgeExecutorService {
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly conversationService: AgentConversationService,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly agentRunRegistry: AgentRunRegistryService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   async execute(params: AgentExecutionParams): Promise<void> {
     const agentIdentifier = params.config.agentIdentifier;
+    this.agentRunRegistry.register(String(params.conversation._id), 'bridge');
 
     try {
       const { config, event } = params;

@@ -43,6 +43,7 @@ Use it inside [`NovuProvider`](/platform/sdks/react/hooks/novu-provider). Produc
 | `sendMessage` | `(text: string) => Promise<{ data?: SendMessageResult; error?: NovuError \| AgentChatPlanLimitError }>` | Send a user message. Creates a conversation when `conversationId` is omitted. |
 | `respondToAction` | `(args: { actionId: string; decision: 'approved' \| 'denied' }) => Promise<{ data?: RespondToActionResult; error?: NovuError \| AgentChatPlanLimitError }>` | Approve or deny a pending `tool-approval`. Pass `action.id` from `pendingActions`. |
 | `sendAction` | `(args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{ data?: SendActionResult; error?: NovuError \| AgentChatPlanLimitError }>` | Click a Card button. Pass `id` / `value` from the button and `message.id` as `sourceMessageId`. Do not use this for tool approval. Render walk: [Cards](/agents/channels/agent-chat/quickstart#cards). |
+| `cancelRun` | `(args?: { idempotencyKey?: string }) => Promise<{ data?: CancelRunResult; error?: NovuError \| AgentChatPlanLimitError }>` | Terminate the active server-side agent run. Sends a cancel command with an idempotency key over REST. Does not disconnect the browser socket — unmount cleanup is automatic and local-only. |
 
 ## Message type
 

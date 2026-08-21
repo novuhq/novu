@@ -120,6 +120,33 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
   }
 
   /** Resolves the activity for a specific platform-native message id (e.g. the message a reaction targets). */
+  async findRecentRunLifecycle(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    limit?: number;
+  }): Promise<ConversationActivityEntity[]> {
+    return this.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        type: {
+          $in: [
+            ConversationActivityTypeEnum.RUN_START,
+            ConversationActivityTypeEnum.RUN_FINISH,
+            ConversationActivityTypeEnum.RUN_ERROR,
+          ],
+        },
+      },
+      '*',
+      {
+        sort: { sequence: -1, _id: -1 },
+        limit: params.limit ?? 100,
+      }
+    );
+  }
+
   async findByPlatformMessageId(
     environmentId: string,
     conversationId: string,

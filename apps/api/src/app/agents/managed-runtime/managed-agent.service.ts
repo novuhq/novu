@@ -16,9 +16,9 @@ import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import { AgentRunRegistryService } from '../conversation-runtime/runtime/agent-run-registry.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
-import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
 import { buildLiveSessionMessages } from './build-live-session-messages';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
@@ -74,6 +74,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
     private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
+    private readonly agentRunRegistry: AgentRunRegistryService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -117,10 +118,14 @@ export class ManagedAgentService implements OnModuleInit {
 
     const messages = sessionId ? buildLiveSessionMessages(context) : await this.buildMessagesWithHistory(context);
 
+    const conversationId = String(context.conversation._id);
+    const abortSignal = this.agentRunRegistry.register(conversationId, 'managed');
+
     const sendResult = await provider.send({
       messages,
       sessionId,
       vaultIds,
+      abortSignal,
       ...(connectedMcpServers ? { agent: { mcpServers: connectedMcpServers } } : {}),
       webhookMetadata: this.buildWebhookMetadata({
         conversationId: String(context.conversation._id),
@@ -147,6 +152,19 @@ export class ManagedAgentService implements OnModuleInit {
     );
 
     return { status: sendResult.status };
+  }
+
+  /** Best-effort managed run cancel — the registry AbortSignal is aborted upstream. */
+  async cancelRun(params: {
+    conversationId: string;
+    environmentId: string;
+    organizationId: string;
+    runId: string;
+  }): Promise<void> {
+    this.logger.debug(
+      { conversationId: params.conversationId, runId: params.runId },
+      'Managed run cancel acknowledged (AbortSignal already propagated)'
+    );
   }
 
   /**

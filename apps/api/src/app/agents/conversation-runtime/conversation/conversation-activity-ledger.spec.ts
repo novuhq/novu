@@ -354,4 +354,32 @@ describe('ConversationActivityLedger', () => {
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
     });
   });
+
+  describe('findOpenRun', () => {
+    it('returns the newest run without a terminal lifecycle row', async () => {
+      const activityRepository = makeActivityRepository({
+        findRecentRunLifecycle: sinon.stub().resolves([
+          {
+            identifier: 'run_run_a_finish',
+            type: ConversationActivityTypeEnum.RUN_FINISH,
+            sequence: 3,
+          },
+          {
+            identifier: 'run_run_b_start',
+            type: ConversationActivityTypeEnum.RUN_START,
+            sequence: 2,
+          },
+        ]),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      const openRun = await ledger.findOpenRun({
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        conversationId: 'conv-1',
+      });
+
+      expect(openRun).to.deep.equal({ runId: 'run_b' });
+    });
+  });
 });

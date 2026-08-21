@@ -1,3 +1,4 @@
+import { CancelAgentRun } from '../agent-chat/usecases/cancel-agent-run/cancel-agent-run.usecase';
 import { GetAgentChatConversation } from '../agent-chat/usecases/get-agent-chat-conversation/get-agent-chat-conversation.usecase';
 import { ListAgentChatConversationEvents } from '../agent-chat/usecases/list-agent-chat-conversation-events/list-agent-chat-conversation-events.usecase';
 import { ListAgentChatConversations } from '../agent-chat/usecases/list-agent-chat-conversations/list-agent-chat-conversations.usecase';
@@ -100,6 +101,7 @@ export const USE_CASES = [
   HandleNovuResolve,
   IngestAgentEvents,
   GetAgentChatConversation,
+  CancelAgentRun,
   ListAgentChatConversations,
   ListAgentChatConversationEvents,
 ];

@@ -11,6 +11,8 @@ export type {
   AgentPendingAction,
   AgentToolApprovalAction,
   AgentToolApprovalDecision,
+  CancelRunArgs,
+  CancelRunResult,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -23,7 +25,11 @@ export type {
   SendMessageResult,
 } from './agent-chat';
 export { derivePendingActions } from './agent-chat';
-export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
+export type {
+  AgentChatCancelRunArgs,
+  AgentChatCancelRunResponse,
+  AgentChatPlanLimitReason,
+} from './api/agent-chat-service';
 export { AgentChatPlanLimitError } from './api/agent-chat-service';
 export type {
   ChannelConnectionResponse,

@@ -420,6 +420,25 @@ export class AgentConversationService {
     return this.ledger.persistRunLifecycle(params);
   }
 
+  findOpenRun(params: { environmentId: string; organizationId: string; conversationId: string }) {
+    return this.ledger.findOpenRun(params);
+  }
+
+  recordCancelIdempotency(params: {
+    identifier: string;
+    conversationId: string;
+    platform: string;
+    integrationId: string;
+    platformThreadId: string;
+    agentId: string;
+    environmentId: string;
+    organizationId: string;
+    runId: string;
+    idempotencyKey: string;
+  }) {
+    return this.ledger.recordCancelIdempotency(params);
+  }
+
   // --- Lookups ---
 
   async findByPlatformMessageId(

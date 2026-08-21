@@ -7,6 +7,7 @@ import type {
   AgentMessage,
   AgentPendingAction,
   AgentToolApprovalDecision,
+  CancelRunResult,
   LoadConversationResult,
   NovuError,
   RespondToActionResult,
@@ -78,6 +79,15 @@ export type UseAgentChatResult = {
   }>;
   sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
     data?: SendActionResult;
+    error?: NovuError | AgentChatPlanLimitError;
+  }>;
+  /**
+   * Terminate the active server-side agent run. Sends a cancel command with an
+   * idempotency key — does not disconnect the browser socket. Local socket
+   * cleanup on unmount is automatic via the hook's internal unsubscribe.
+   */
+  cancelRun: (args?: { idempotencyKey?: string }) => Promise<{
+    data?: CancelRunResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
 };
@@ -406,12 +416,35 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
   );
 
+  const cancelRun = useCallback(
+    async (args?: { idempotencyKey?: string }) => {
+      setError(undefined);
+
+      const response = await novu.agentChat.cancelRun({
+        agentId,
+        agentHash,
+        key: sessionKeyRef.current,
+        conversationId: conversationIdRef.current,
+        idempotencyKey: args?.idempotencyKey,
+      });
+
+      if (response.error) {
+        setError(response.error);
+        propsRef.current.onError?.(response.error);
+      }
+
+      return response;
+    },
+    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
+  );
+
   return {
     messages,
     pendingActions,
     sendMessage,
     respondToAction,
     sendAction,
+    cancelRun,
     conversationId,
     error,
     isLoading,

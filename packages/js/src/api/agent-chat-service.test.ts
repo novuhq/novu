@@ -230,4 +230,37 @@ describe('AgentChatService', () => {
       expect.objectContaining({ method: 'GET' })
     );
   });
+
+  it('POSTs a cancel command with idempotency headers', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { status: 'canceled', runId: 'run_abc123' } }),
+    } as Response);
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
+    const service = new AgentChatService({ httpClient });
+
+    const result = await service.cancelRun({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      idempotencyKey: 'cancel_test_key',
+    });
+
+    expect(result).toEqual({ status: 'canceled', runId: 'run_abc123' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/agent-chat/conversations/conv_abcdefghijkl/cancel',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          agentId: 'agent_1',
+          idempotencyKey: 'cancel_test_key',
+        }),
+        headers: expect.objectContaining({
+          'Idempotency-Key': 'cancel_test_key',
+        }),
+      })
+    );
+  });
 });

@@ -5,7 +5,7 @@ import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
-import type { AgentRuntime } from './agent-runtime.port';
+import type { AgentRuntime, CancelRunParams } from './agent-runtime.port';
 import { type AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './bridge-expire-superseded-approvals.service';
 import { buildAgentDashboardOverviewUrl, buildNoBridgeReply } from './bridge-no-bridge-reply';
@@ -56,6 +56,17 @@ export class BridgeRuntime implements AgentRuntime {
 
       throw err;
     }
+  }
+
+  /**
+   * Bridge runs are fire-and-forget HTTP posts. Cancellation is enforced server-side
+   * via run-finish(aborted); the in-flight bridge request is not guaranteed to stop.
+   */
+  async cancelRun(params: CancelRunParams): Promise<void> {
+    this.logger.debug(
+      { runId: params.runId, conversationId: params.conversation._id },
+      `[agent:${params.config.agentIdentifier}] Bridge run cancel acknowledged (best-effort)`
+    );
   }
 
   private toExecutionParams(turn: ConversationTurn): AgentExecutionParams {

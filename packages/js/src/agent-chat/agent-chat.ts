@@ -8,6 +8,8 @@ import type { BaseSocketInterface } from '../ws/base-socket';
 import { AgentChatStore, type ConversationEntry, createLocalConversationKey } from './agent-chat-store';
 import { type AgentMessage, derivePendingActions } from './agent-message.types';
 import type {
+  CancelRunArgs,
+  CancelRunResult,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -190,6 +192,42 @@ export class AgentChat extends BaseModule {
         });
       }
     );
+  }
+
+  /**
+   * Terminate the active server-side agent run for this conversation.
+   * This sends a cancel command over REST — it does not disconnect the live socket.
+   * Socket subscription cleanup is handled separately by `unsubscribe()` on unmount.
+   */
+  async cancelRun(args: CancelRunArgs): Result<CancelRunResult, NovuError | AgentChatPlanLimitError> {
+    return this.callWithSession<CancelRunResult, NovuError | AgentChatPlanLimitError>(async () => {
+      const entry = this.#resolveFetchEntry(args);
+      const conversationId = entry?.conversationId;
+      if (!entry || !conversationId) {
+        return {
+          error: new NovuError('Cannot cancel run without a conversation id', new Error('missing conversation id')),
+        };
+      }
+
+      try {
+        const data = await this.#agentChatService.cancelRun({
+          agentId: args.agentId,
+          conversationId,
+          idempotencyKey: args.idempotencyKey,
+          agentHash: args.agentHash,
+        });
+
+        this.#requestCatchUp();
+
+        return { data };
+      } catch (error) {
+        if (error instanceof AgentChatPlanLimitError) {
+          return { error };
+        }
+
+        return { error: new NovuError('Failed to cancel agent run', error) };
+      }
+    });
   }
 
   /**

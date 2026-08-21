@@ -101,6 +101,18 @@ export type SendActionResult = {
   conversationId: string;
 };
 
+export type CancelRunArgs = AgentHashFields & {
+  agentId: string;
+  conversationId?: string;
+  key?: string;
+  idempotencyKey?: string;
+};
+
+export type CancelRunResult = {
+  status: 'canceled' | 'no-op' | 'duplicate';
+  runId?: string;
+};
+
 /** What caused a fold. A live fold carries the envelope that caused it. Internal to the store seam. */
 export type AgentChatChangeSource =
   | { kind: 'live'; envelope: AgentEventEnvelope }

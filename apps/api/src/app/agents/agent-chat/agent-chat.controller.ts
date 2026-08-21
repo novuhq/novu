@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpException,
@@ -30,10 +31,13 @@ import {
   ListAgentChatConversationsQueryDto,
   ListAgentChatConversationsResponseDto,
 } from './dtos/agent-chat-conversation.dto';
+import { CancelAgentRunBodyDto, CancelAgentRunResponseDto } from './dtos/cancel-agent-run.dto';
 import {
   ListAgentChatConversationEventsQueryDto,
   ListAgentChatConversationEventsResponseDto,
 } from './dtos/list-agent-chat-conversation-events.dto';
+import { CancelAgentRunCommand } from './usecases/cancel-agent-run/cancel-agent-run.command';
+import { CancelAgentRun } from './usecases/cancel-agent-run/cancel-agent-run.usecase';
 import { GetAgentChatConversationCommand } from './usecases/get-agent-chat-conversation/get-agent-chat-conversation.command';
 import { GetAgentChatConversation } from './usecases/get-agent-chat-conversation/get-agent-chat-conversation.usecase';
 import { ListAgentChatConversationEventsCommand } from './usecases/list-agent-chat-conversation-events/list-agent-chat-conversation-events.command';
@@ -51,7 +55,8 @@ export class AgentChatController {
     private readonly inboundDispatcher: InboundDispatcher,
     private readonly listAgentChatConversations: ListAgentChatConversations,
     private readonly getAgentChatConversation: GetAgentChatConversation,
-    private readonly listAgentChatConversationEvents: ListAgentChatConversationEvents
+    private readonly listAgentChatConversationEvents: ListAgentChatConversationEvents,
+    private readonly cancelAgentRun: CancelAgentRun
   ) {}
 
   /**
@@ -134,6 +139,36 @@ export class AgentChatController {
         subscriberId: subscriberSession.subscriberId,
         contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
+      })
+    );
+  }
+
+  /**
+   * Server-side run cancellation. Does not disconnect the browser socket — that
+   * happens automatically on React unmount via `useAgentChat` unsubscribe.
+   */
+  @Post('/conversations/:identifier/cancel')
+  @UseGuards(AuthGuard('subscriberJwt'), AgentChatEnabledGuard)
+  async cancelConversationRun(
+    @SubscriberSession() subscriberSession: SubscriberSessionData,
+    @Param('identifier') identifier: string,
+    @Req() req: ExpressRequest,
+    @Body() body: CancelAgentRunBodyDto
+  ): Promise<CancelAgentRunResponseDto> {
+    const headerKey = typeof req.headers['idempotency-key'] === 'string' ? req.headers['idempotency-key'].trim() : '';
+    const bodyKey = typeof body.idempotencyKey === 'string' ? body.idempotencyKey.trim() : '';
+    const idempotencyKey = headerKey || bodyKey;
+
+    return this.cancelAgentRun.execute(
+      CancelAgentRunCommand.create({
+        environmentId: subscriberSession.environmentId,
+        organizationId: subscriberSession.organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        contextKeys: subscriberSession.contextKeys ?? [],
+        conversationIdentifier: identifier,
+        agentIdentifier: body.agentId.trim(),
+        idempotencyKey,
+        agentHash: body.agentHash?.trim(),
       })
     );
   }

@@ -13,6 +13,7 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { formatToolInputSummary } from '../conversation-runtime/reply/handle-plan-progress/format-tool-input';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
+import { AgentRunRegistryService } from '../conversation-runtime/runtime/agent-run-registry.service';
 import { DemoClaudeQuotaPolicy } from '../managed-runtime/demo-claude-quota-policy.service';
 import { buildErrorMessage } from '../managed-runtime/managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.command';
@@ -73,6 +74,7 @@ export class AgentEventSink {
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
+    private readonly agentRunRegistry: AgentRunRegistryService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -156,6 +158,7 @@ export class AgentEventSink {
 
       case 'run-start':
         await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
+        this.agentRunRegistry.setRunId(context.conversationId, envelope.runId);
 
         return 'accepted';
 
@@ -169,12 +172,14 @@ export class AgentEventSink {
         }
 
         await this.handleRunFinish(event, baseFields, context, metadata, envelope.runId);
+        this.agentRunRegistry.unregister(context.conversationId);
 
         return 'accepted';
 
       case 'run-error':
         await this.persistRunLifecycleFromEvent(context, envelope.runId, event);
         await this.handleRunError(event, baseFields, context, metadata, envelope.runId);
+        this.agentRunRegistry.unregister(context.conversationId);
 
         return 'accepted';
 

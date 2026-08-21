@@ -92,6 +92,7 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
     sendMessage: () => Promise.resolve({ data: undefined, error: undefined }),
     respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
     sendAction: () => Promise.resolve({ data: undefined, error: undefined }),
+    cancelRun: () => Promise.resolve({ data: undefined, error: undefined }),
   };
 }
 

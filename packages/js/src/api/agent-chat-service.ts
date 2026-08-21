@@ -4,6 +4,14 @@ import { HttpClient } from './http-client';
 
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/agent-chat/conversations';
 
+function mintCancelIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `cancel_${crypto.randomUUID().replace(/-/g, '')}`;
+  }
+
+  return `cancel_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export type AgentChatPlanLimitReason = 'agents' | 'channels' | 'conversations';
 
 export class AgentChatPlanLimitError extends Error {
@@ -63,6 +71,18 @@ export type AgentChatRespondToActionResponse = {
   identifier: string;
 };
 
+export type AgentChatCancelRunArgs = AgentHashFields & {
+  agentId: string;
+  conversationId: string;
+  /** Client-minted idempotency key. A new key is minted when omitted. */
+  idempotencyKey?: string;
+};
+
+export type AgentChatCancelRunResponse = {
+  status: 'canceled' | 'no-op' | 'duplicate';
+  runId?: string;
+};
+
 export class AgentChatService {
   #httpClient: HttpClient;
 
@@ -97,6 +117,28 @@ export class AgentChatService {
       ...(args.value !== undefined ? { value: args.value } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
     });
+  }
+
+  /**
+   * Request server-side cancellation of the active agent run for a conversation.
+   * This is not the same as closing the socket — see `AgentChat.unsubscribe`.
+   */
+  async cancelRun(args: AgentChatCancelRunArgs): Promise<AgentChatCancelRunResponse> {
+    const idempotencyKey = args.idempotencyKey ?? mintCancelIdempotencyKey();
+
+    return this.#httpClient.post<AgentChatCancelRunResponse>(
+      `${AGENT_CHAT_CONVERSATIONS_ROUTE}/${encodeURIComponent(args.conversationId)}/cancel`,
+      {
+        agentId: args.agentId,
+        idempotencyKey,
+        ...(args.agentHash ? { agentHash: args.agentHash } : {}),
+      },
+      {
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+        },
+      }
+    );
   }
 
   async #postAccept<T extends AgentChatSendMessageResponse | AgentChatRespondToActionResponse>(

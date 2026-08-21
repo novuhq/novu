@@ -11,6 +11,7 @@ describe('AgentChat', () => {
   let sendMessage: jest.Mock;
   let respondToAction: jest.Mock;
   let sendAction: jest.Mock;
+  let cancelRun: jest.Mock;
   let getEvents: jest.Mock;
   let connect: jest.Mock;
   let agentChat: AgentChat;
@@ -20,9 +21,16 @@ describe('AgentChat', () => {
     sendMessage = jest.fn();
     respondToAction = jest.fn();
     sendAction = jest.fn();
+    cancelRun = jest.fn();
     getEvents = jest.fn();
     connect = jest.fn().mockResolvedValue({ data: undefined });
-    const agentChatService = { sendMessage, respondToAction, sendAction, getEvents } as unknown as AgentChatService;
+    const agentChatService = {
+      sendMessage,
+      respondToAction,
+      sendAction,
+      cancelRun,
+      getEvents,
+    } as unknown as AgentChatService;
     agentChat = new AgentChat({
       inboxServiceInstance,
       eventEmitterInstance: emitter,
@@ -1812,5 +1820,60 @@ describe('AgentChat', () => {
     expect(derivePendingActions(snapshot?.messages ?? []).map((action) => action.id)).toEqual(['approval_000001']);
     expect(changes[0]?.kind).toBe('history');
     expect(changes[0]?.newActions).toEqual([]);
+  });
+
+  it('cancelRun posts to the server and does not call unsubscribe', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    cancelRun.mockResolvedValue({ status: 'canceled', runId: 'run_abc123' });
+
+    const result = await agentChat.cancelRun({
+      agentId: 'agent_1',
+      key: 'local_session1',
+      idempotencyKey: 'cancel_key_1',
+    });
+
+    expect(result).toEqual({ data: { status: 'canceled', runId: 'run_abc123' } });
+    expect(cancelRun).toHaveBeenCalledWith({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+      idempotencyKey: 'cancel_key_1',
+      agentHash: undefined,
+    });
+  });
+
+  it('sets isRunning false when a live run-finish aborted envelope arrives', () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    void agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+    agentChat.subscribe();
+
+    emitter.emit('agent_chat.agent_event', {
+      result: liveEnvelope({
+        sequence: 2,
+        event: { type: 'run-start' },
+      }),
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: liveEnvelope({
+        sequence: 3,
+        event: { type: 'run-finish', outcome: 'aborted' },
+      }),
+    });
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.isRunning).toBe(false);
+  });
+
+  it('cancelRun after complete is a safe client-side no-op response', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    cancelRun.mockResolvedValue({ status: 'no-op' });
+
+    const result = await agentChat.cancelRun({ agentId: 'agent_1', key: 'local_session1' });
+
+    expect(result).toEqual({ data: { status: 'no-op' } });
   });
 });

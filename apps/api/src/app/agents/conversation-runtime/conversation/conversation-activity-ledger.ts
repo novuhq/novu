@@ -31,8 +31,13 @@ import { ConversationEventSequenceService } from './conversation-event-sequence.
 import {
   describeRunLifecycleFromEvent,
   type PersistRunLifecycleParams,
+  runIdFromLifecycleIdentifier,
   runLifecycleIdentifier,
 } from './run-lifecycle-activity';
+
+export type OpenRun = {
+  runId: string;
+};
 
 export interface ListActivityViewParams {
   view: ActivityView;
@@ -110,6 +115,119 @@ export class ConversationActivityLedger {
     } catch (err) {
       if (isDuplicateKeyError(err)) {
         return null;
+      }
+
+      throw err;
+    }
+  }
+
+  /**
+   * Returns the newest run that has a persisted run-start without a matching
+   * run-finish or run-error row for the same run id.
+   */
+  async findOpenRun(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+  }): Promise<OpenRun | null> {
+    const activities = await this.activityRepository.findRecentRunLifecycle({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      conversationId: params.conversationId,
+    });
+
+    const lifecycleByRunId = new Map<
+      string,
+      { startedAt?: number; finishedAt?: number; erroredAt?: number; latestStartSequence: number }
+    >();
+
+    for (const activity of activities) {
+      const runId = runIdFromLifecycleIdentifier(activity.identifier);
+      if (!runId) {
+        continue;
+      }
+
+      const entry = lifecycleByRunId.get(runId) ?? { latestStartSequence: -1 };
+      const sequence = typeof activity.sequence === 'number' ? activity.sequence : 0;
+
+      switch (activity.type) {
+        case ConversationActivityTypeEnum.RUN_START:
+          entry.startedAt = sequence;
+          entry.latestStartSequence = Math.max(entry.latestStartSequence, sequence);
+          break;
+        case ConversationActivityTypeEnum.RUN_FINISH:
+          entry.finishedAt = sequence;
+          break;
+        case ConversationActivityTypeEnum.RUN_ERROR:
+          entry.erroredAt = sequence;
+          break;
+      }
+
+      lifecycleByRunId.set(runId, entry);
+    }
+
+    let best: OpenRun | null = null;
+    let bestStartSequence = -1;
+
+    for (const [runId, entry] of lifecycleByRunId) {
+      if (entry.startedAt === undefined) {
+        continue;
+      }
+
+      const terminalAt = Math.max(entry.finishedAt ?? -1, entry.erroredAt ?? -1);
+      if (terminalAt >= entry.startedAt) {
+        continue;
+      }
+
+      if (entry.latestStartSequence > bestStartSequence) {
+        bestStartSequence = entry.latestStartSequence;
+        best = { runId };
+      }
+    }
+
+    return best;
+  }
+
+  /**
+   * Records a cancel command idempotency key. Returns `false` when the same
+   * key was already accepted for this conversation.
+   */
+  async recordCancelIdempotency(params: {
+    identifier: string;
+    conversationId: string;
+    platform: string;
+    integrationId: string;
+    platformThreadId: string;
+    agentId: string;
+    environmentId: string;
+    organizationId: string;
+    runId: string;
+    idempotencyKey: string;
+  }): Promise<boolean> {
+    try {
+      await this.activityRepository.createSignalActivity({
+        identifier: params.identifier,
+        conversationId: params.conversationId,
+        platform: params.platform,
+        integrationId: params.integrationId,
+        platformThreadId: params.platformThreadId,
+        agentId: params.agentId,
+        content: 'Run cancel requested',
+        signalData: {
+          type: 'run-cancel',
+          payload: {
+            runId: params.runId,
+            idempotencyKey: params.idempotencyKey,
+          },
+        },
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+
+      return true;
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        return false;
       }
 
       throw err;

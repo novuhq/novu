@@ -13,6 +13,8 @@ export type {
   AgentPendingAction,
   AgentToolApprovalAction,
   AgentToolApprovalDecision,
+  CancelRunArgs,
+  CancelRunResult,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
