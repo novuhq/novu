@@ -245,7 +245,11 @@ export class GetWorkflowRun {
 
       // Load the delivered message content for each step run so the activity feed
       // can render a channel-aware preview (email HTML, SMS text, push/chat body).
-      const messagesById = await this.getMessagesByTransactionId(workflowRun.transaction_id, command);
+      const { messagesById, messagesByJobId } = await this.getMessagesForStepRuns(
+        stepRunsResult.data,
+        workflowRun.transaction_id,
+        command
+      );
 
       return stepRunsResult.data.map(
         (stepRun) =>
@@ -253,7 +257,9 @@ export class GetWorkflowRun {
             ...stepRun,
             executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
             digest: stepRun.digest ? stepRun.digest : digestDataByStepId.get(stepRun.step_run_id) || null,
-            message: stepRun.message_id ? messagesById.get(stepRun.message_id) : undefined,
+            message:
+              (stepRun.message_id ? messagesById.get(stepRun.message_id) : undefined) ??
+              messagesByJobId.get(stepRun.step_run_id),
           }) satisfies IStepRunWithDetails
       );
     } catch (error) {
@@ -377,29 +383,57 @@ export class GetWorkflowRun {
     return null;
   }
 
-  private async getMessagesByTransactionId(
+  private async getMessagesForStepRuns(
+    stepRuns: StepRunFetchResult[],
     transactionId: string,
     command: GetWorkflowRunCommand
-  ): Promise<Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>> {
+  ): Promise<{
+    messagesById: Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>;
+    messagesByJobId: Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>;
+  }> {
     const messagesById = new Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>();
+    const messagesByJobId = new Map<string, Pick<MessageEntity, '_id' | 'content' | 'subject' | 'title' | 'channel'>>();
+
+    if (stepRuns.length === 0) {
+      return { messagesById, messagesByJobId };
+    }
 
     try {
+      const stepRunIds = stepRuns.map((stepRun) => stepRun.step_run_id).filter(Boolean);
+      const messageIds = stepRuns.map((stepRun) => stepRun.message_id).filter((id): id is string => Boolean(id));
+
+      const orConditions: Array<{ _jobId?: { $in: string[] }; _id?: { $in: string[] } }> = [];
+      if (stepRunIds.length > 0) {
+        orConditions.push({ _jobId: { $in: stepRunIds } });
+      }
+      if (messageIds.length > 0) {
+        orConditions.push({ _id: { $in: messageIds } });
+      }
+
+      if (orConditions.length === 0) {
+        return { messagesById, messagesByJobId };
+      }
+
       const messages = await this.messageRepository.find(
         {
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
           transactionId,
+          ...(orConditions.length === 1 ? orConditions[0] : { $or: orConditions }),
         },
-        '_id content subject title channel stepId'
+        '_id _jobId content subject title channel stepId'
       );
 
       for (const message of messages) {
         if (message._id) {
           messagesById.set(message._id, message);
         }
+        if (message._jobId) {
+          messagesByJobId.set(message._jobId, message);
+        }
       }
 
-      return messagesById;
+      return { messagesById, messagesByJobId };
     } catch (error) {
       this.logger.warn(
         {
@@ -409,7 +443,7 @@ export class GetWorkflowRun {
         'Failed to get message content for step runs'
       );
 
-      return messagesById;
+      return { messagesById, messagesByJobId };
     }
   }
 
