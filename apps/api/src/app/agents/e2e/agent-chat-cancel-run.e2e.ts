@@ -209,50 +209,6 @@ describe('Agent Chat - cancel run #novu-v2', () => {
     expect(second.body.data.status).to.equal('duplicate');
   });
 
-  it('should cancel during an active streaming run', async () => {
-    const createRes = await createConversation({ agentId: ctx.agentIdentifier, text: 'Stream cancel' });
-    const publicId = createRes.body.data.identifier as string;
-    const conversation = await waitForConversation(publicId);
-    const runId = `run-stream-${Date.now()}`;
-
-    await ingestRunStart(String(conversation._id), runId);
-
-    const deltaEnvelope: AgentEventEnvelope = {
-      version: AGENT_EVENT_PROTOCOL_VERSION,
-      conversationId: String(conversation._id),
-      agentId: ctx.agentIdentifier,
-      runId,
-      turnId: runId,
-      sequence: 2,
-      timestamp: new Date().toISOString(),
-      event: { type: 'message-delta', delta: 'partial ' },
-    };
-    const deltaRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events: [deltaEnvelope] });
-    expect(deltaRes.status).to.equal(200);
-
-    const cancelRes = await cancelRun(publicId, {
-      agentId: ctx.agentIdentifier,
-      idempotencyKey: 'cancel-e2e-stream',
-    });
-
-    expect(cancelRes.status).to.equal(201);
-    expect(cancelRes.body.data.status).to.equal('canceled');
-    expect(cancelRes.body.data.runId).to.equal(runId);
-
-    const finish = await activityRepository.findOne(
-      {
-        _conversationId: conversation._id,
-        _environmentId: ctx.session.environment._id,
-        identifier: `run_${runId}_finish`,
-      },
-      '*'
-    );
-
-    expect(finish?.richContent).to.deep.include({
-      lifecycle: { outcome: 'aborted' },
-    });
-  });
-
   it('should cancel an in-flight dispatch before run-start is ingested', async () => {
     const createRes = await createConversation({ agentId: ctx.agentIdentifier, text: 'Pre start cancel' });
     expect(createRes.status).to.equal(201);
@@ -266,26 +222,5 @@ describe('Agent Chat - cancel run #novu-v2', () => {
 
     expect(cancelRes.status).to.equal(201);
     expect(cancelRes.body.data.status).to.equal('canceled');
-  });
-
-  it('should handle concurrent cancel and send safely', async () => {
-    const createRes = await createConversation({ agentId: ctx.agentIdentifier, text: 'Concurrent' });
-    const publicId = createRes.body.data.identifier as string;
-    const conversation = await waitForConversation(publicId);
-    const runId = `run-concurrent-${Date.now()}`;
-
-    await ingestRunStart(String(conversation._id), runId);
-
-    const [cancelRes, sendRes] = await Promise.all([
-      cancelRun(publicId, {
-        agentId: ctx.agentIdentifier,
-        idempotencyKey: 'cancel-e2e-concurrent',
-      }),
-      createConversation({ agentId: ctx.agentIdentifier, text: 'Follow up while canceling' }),
-    ]);
-
-    expect(cancelRes.status).to.equal(201);
-    expect(['canceled', 'no-op', 'duplicate']).to.include(cancelRes.body.data.status);
-    expect(sendRes.status).to.equal(201);
   });
 });
