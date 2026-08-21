@@ -7,6 +7,7 @@ import { ENDPOINT_TYPES, IChatOptions, ISendMessageSuccessResponse } from '@novu
 
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { getWelcomeText } from '../../../shared/util/agent-welcome-text';
+import { resolveAgentIntegrationForWebhook } from '../../shared/resolve-agent-integration-webhook.util';
 import { SendPhotonTestMessageCommand } from './send-photon-test-message.command';
 
 export type SendPhotonTestMessageError = {
@@ -34,52 +35,17 @@ export class SendAgentPhotonTestMessage {
 
   @InstrumentUsecase()
   async execute(command: SendPhotonTestMessageCommand): Promise<SendPhotonTestMessageResult> {
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id', 'identifier']
-    );
-
-    if (!agent) {
-      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
-    }
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      identifier: command.integrationIdentifier,
+    const { integration } = await resolveAgentIntegrationForWebhook({
+      agentRepository: this.agentRepository,
+      integrationRepository: this.integrationRepository,
+      agentIntegrationRepository: this.agentIntegrationRepository,
+      agentIdentifier: command.agentIdentifier,
+      integrationIdentifier: command.integrationIdentifier,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      providerId: ChatProviderIdEnum.PhotonImessage,
+      providerLabel: 'Photon',
     });
-
-    if (!integration) {
-      throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
-    }
-
-    if (integration.providerId !== ChatProviderIdEnum.PhotonImessage) {
-      throw new NotFoundException(`Integration "${command.integrationIdentifier}" is not a Photon integration.`);
-    }
-
-    // Authorization: ensure the integration is actually linked to this agent
-    // before sending outbound messages through it. Without this check an
-    // `AGENT_WRITE` caller could trigger sends through unrelated Photon
-    // integrations in the same tenant.
-    const agentIntegrationLink = await this.agentIntegrationRepository.findOne(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _agentId: agent._id,
-        _integrationId: integration._id,
-      },
-      ['_id']
-    );
-
-    if (!agentIntegrationLink) {
-      throw new NotFoundException(
-        `Integration "${command.integrationIdentifier}" is not linked to agent "${command.agentIdentifier}".`
-      );
-    }
 
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 

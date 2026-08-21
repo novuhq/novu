@@ -24,6 +24,8 @@ function buildCommand() {
 }
 
 describe('SendAgentPhotonTestMessage usecase', () => {
+  const env = process.env as Record<string, string | undefined>;
+  const originalApiRootUrl = env.API_ROOT_URL;
   let agentRepository: { findOne: sinon.SinonStub };
   let integrationRepository: { findOne: sinon.SinonStub };
   let agentIntegrationRepository: { findOne: sinon.SinonStub };
@@ -42,6 +44,7 @@ describe('SendAgentPhotonTestMessage usecase', () => {
   }
 
   beforeEach(() => {
+    env.API_ROOT_URL = 'https://api.example.test';
     agentRepository = {
       findOne: stub().resolves({ _id: AGENT_ID, identifier: 'my-agent' }),
     };
@@ -71,6 +74,8 @@ describe('SendAgentPhotonTestMessage usecase', () => {
 
   afterEach(() => {
     restore();
+    if (originalApiRootUrl === undefined) delete env.API_ROOT_URL;
+    else env.API_ROOT_URL = originalApiRootUrl;
   });
 
   it('sends the welcome message to the subscriber phone', async () => {

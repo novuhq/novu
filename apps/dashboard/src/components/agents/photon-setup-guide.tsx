@@ -1,5 +1,4 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   RiChat3Line,
@@ -7,25 +6,24 @@ import {
   RiErrorWarningLine,
   RiExternalLinkLine,
   RiKey2Line,
-  RiSendPlaneFill,
   RiSmartphoneLine,
 } from 'react-icons/ri';
-import type { AgentResponse, SendPhotonTestMessageError } from '@/api/agents';
-import { patchSubscriber } from '@/api/subscribers';
+import type { AgentResponse } from '@/api/agents';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { Button } from '@/components/primitives/button';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigurePhotonWebhook } from '@/hooks/use-configure-photon-webhook';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { usePhotonDeviceAuth } from '@/hooks/use-photon-device-auth';
 import { useRegisterPhotonRecipient } from '@/hooks/use-register-photon-recipient';
 import { useRemovePhotonWebhooks } from '@/hooks/use-remove-photon-webhooks';
 import { useSendPhotonTestMessage } from '@/hooks/use-send-photon-test-message';
-import { QueryKeys } from '@/utils/query-keys';
+import {
+  ConnectWebhookPanel,
+  SendTestMessagePanel,
+  StaleNovuWebhooksWarning,
+} from './imessage-guide-panels';
+import { ImessageProviderSelect } from './imessage-provider-select';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
@@ -35,10 +33,7 @@ import {
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
-import { ImessageProviderSelect } from './imessage-provider-select';
 import { buildImessageFallbackHref, deriveStepStatus, hasPhotonProjectCredentials } from './setup-guide-step-utils';
-
-import { PHONE_PATTERN } from './whatsapp-setup-guide-utils';
 
 const PHOTON_DASHBOARD_URL = 'https://app.photon.codes';
 
@@ -163,57 +158,15 @@ function ConnectPhotonPanel({
   );
 }
 
-type ConnectStatus =
-  | { state: 'idle' }
-  | { state: 'connecting' }
-  | { state: 'connected' }
-  | { state: 'manual_fallback'; message: string }
-  | { state: 'error'; message: string };
+const PHOTON_MANUAL_INSTRUCTIONS = (
+  <>
+    In the Photon dashboard open your project's <strong className="text-text-sub">Webhooks</strong> settings, add a
+    webhook using the Callback URL from <strong className="text-text-sub">Edit credentials</strong> below, then paste
+    the signing secret Photon shows you into the credentials form.
+  </>
+);
 
-function ManualWebhookFallback({
-  message,
-  onMarkConnected,
-  onOpenCredentials,
-}: {
-  message: string;
-  onMarkConnected: () => void;
-  onOpenCredentials: () => void;
-}) {
-  return (
-    <div className="border-warning-base/40 bg-warning-base/4 flex w-full flex-col gap-2 rounded-md border p-3">
-      <div className="text-warning-base flex items-center gap-1.5">
-        <RiErrorWarningLine className="size-4" />
-        <span className="text-label-xs font-medium">{message}</span>
-      </div>
-      <p className="text-text-soft text-label-xs leading-4">
-        In the Photon dashboard open your project's <strong className="text-text-sub">Webhooks</strong> settings, add a
-        webhook using the Callback URL from <strong className="text-text-sub">Edit credentials</strong> below, then
-        paste the signing secret Photon shows you into the credentials form.
-      </p>
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          mode="outline"
-          size="xs"
-          className="w-fit gap-1.5"
-          onClick={onOpenCredentials}
-        >
-          Edit credentials
-        </Button>
-        <button
-          type="button"
-          onClick={onMarkConnected}
-          className="text-text-sub hover:text-text-strong text-label-xs font-medium underline"
-        >
-          Mark as configured
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function StaleNovuWebhooksWarning({
+function PhotonStaleWarning({
   agentIdentifier,
   integrationIdentifier,
   staleWebhookUrls,
@@ -226,38 +179,20 @@ function StaleNovuWebhooksWarning({
 }) {
   const { mutateAsync: removeWebhooks, isPending } = useRemovePhotonWebhooks();
 
-  const handleRemove = useCallback(async () => {
-    try {
-      const result = await removeWebhooks({ agentIdentifier, integrationIdentifier, webhookUrls: staleWebhookUrls });
-
-      if (result.success) {
-        showSuccessToast('Removed the old Novu webhook(s) from your Photon project.');
-        onRemoved();
-
-        return;
-      }
-
-      showErrorToast(result.message ?? "Photon didn't accept the webhook removal.");
-    } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : 'Something went wrong removing the old webhook(s).');
-    }
-  }, [agentIdentifier, integrationIdentifier, onRemoved, removeWebhooks, staleWebhookUrls]);
-
-  const webhookCountLabel = `${staleWebhookUrls.length} old webhook${staleWebhookUrls.length > 1 ? 's' : ''}`;
-
   return (
-    <InlineToast
-      variant="warning"
-      title="Another Novu webhook is already registered on this Photon project."
-      description={`Every inbound message is delivered to all of the project's webhooks — expect duplicate agent replies until ${webhookCountLabel} is removed.`}
-      ctaLabel="Remove old webhook(s)"
-      onCtaClick={handleRemove}
-      isCtaLoading={isPending}
+    <StaleNovuWebhooksWarning
+      providerLabel="Photon"
+      scopeNoun="project"
+      descriptionPrefix="Every inbound message is delivered to all of the project's webhooks"
+      staleWebhookUrls={staleWebhookUrls}
+      removeWebhooks={(webhookUrls) => removeWebhooks({ agentIdentifier, integrationIdentifier, webhookUrls })}
+      isRemoving={isPending}
+      onRemoved={onRemoved}
     />
   );
 }
 
-function ConnectWebhookPanel({
+function PhotonWebhookPanel({
   agent,
   integrationIdentifier,
   isCredentialsSaved,
@@ -272,135 +207,32 @@ function ConnectWebhookPanel({
   onConfigured: () => void;
   onOpenCredentials: () => void;
 }) {
-  const [connectStatus, setConnectStatus] = useState<ConnectStatus>({ state: 'idle' });
-  const [manualMarkedConfigured, setManualMarkedConfigured] = useState(false);
-  const [staleNovuWebhookUrls, setStaleNovuWebhookUrls] = useState<string[]>([]);
-
   const { mutateAsync: configureWebhook } = useConfigurePhotonWebhook();
 
-  useEffect(() => {
-    setConnectStatus({ state: 'idle' });
-    setManualMarkedConfigured(false);
-    setStaleNovuWebhookUrls([]);
-  }, [integrationIdentifier]);
-
-  const handleConnect = useCallback(async () => {
-    setConnectStatus({ state: 'connecting' });
-
-    try {
-      // "Reconfigure webhook" (a secret is already stored) forces re-registration:
-      // the stored secret may be stale and Photon only issues secrets at registration.
-      const result = await configureWebhook({
-        agentIdentifier: agent.identifier,
-        integrationIdentifier,
-        force: hasWebhookSecret,
-      });
-
-      setStaleNovuWebhookUrls(result.existingNovuWebhookUrls ?? []);
-
-      if (result.success) {
-        setConnectStatus({ state: 'connected' });
-        onConfigured();
-
-        return;
-      }
-
-      if (result.fallbackToManual) {
-        setConnectStatus({
-          state: 'manual_fallback',
-          message:
-            result.reason?.message ??
-            "We couldn't register the webhook automatically. Add it manually in the Photon dashboard below.",
-        });
-
-        return;
-      }
-
-      setConnectStatus({
-        state: 'error',
-        message: result.reason?.message ?? "Photon didn't accept the webhook registration.",
-      });
-    } catch (err) {
-      setConnectStatus({
-        state: 'error',
-        message: err instanceof Error ? err.message : 'Something went wrong contacting Photon.',
-      });
-    }
-  }, [agent.identifier, configureWebhook, hasWebhookSecret, integrationIdentifier, onConfigured]);
-
-  const connectAttemptFinished = connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
-  const showManualFallback = connectStatus.state === 'manual_fallback' && !manualMarkedConfigured;
-  // Detects a webhook registered in a previous session (via connect or this step).
-  const showExistingSecret = connectStatus.state === 'idle' && hasWebhookSecret;
-
   return (
-    <div className="flex w-full max-w-[400px] flex-col gap-3">
-      {showExistingSecret ? (
-        <div className="text-success-base flex items-center gap-1.5">
-          <RiCheckLine className="size-4" />
-          <span className="text-label-xs font-medium">Webhook already configured</span>
-        </div>
-      ) : null}
-
-      {!connectAttemptFinished ? (
-        <Button
-          type="button"
-          variant="primary"
-          size="xs"
-          className="w-fit gap-1.5 px-2 py-1.5"
-          onClick={handleConnect}
-          disabled={!isCredentialsSaved || connectStatus.state === 'connecting'}
-          isLoading={connectStatus.state === 'connecting'}
-        >
-          {connectStatus.state === 'connecting'
-            ? 'Configuring…'
-            : showExistingSecret
-              ? 'Reconfigure webhook'
-              : 'Configure webhook'}
-        </Button>
-      ) : (
-        <div className="text-success-base flex items-center gap-1.5">
-          <RiCheckLine className="size-4" />
-          <span className="text-label-xs font-medium">
-            {manualMarkedConfigured || connectStatus.state === 'connected'
-              ? 'Webhook configured: send a test message'
-              : 'Webhook URL ready: finish in Photon'}
-          </span>
-        </div>
-      )}
-
-      {connectStatus.state === 'error' ? (
-        <p className="text-error-base text-label-xs leading-4">{connectStatus.message}</p>
-      ) : null}
-
-      {showManualFallback && connectStatus.state === 'manual_fallback' ? (
-        <ManualWebhookFallback
-          message={connectStatus.message}
-          onOpenCredentials={onOpenCredentials}
-          onMarkConnected={() => {
-            setManualMarkedConfigured(true);
-            onConfigured();
-          }}
-        />
-      ) : null}
-
-      {staleNovuWebhookUrls.length > 0 ? (
-        <StaleNovuWebhooksWarning
+    <ConnectWebhookPanel
+      providerLabel="Photon"
+      connectLabel="Configure webhook"
+      busyLabel="Configuring…"
+      integrationIdentifier={integrationIdentifier}
+      isCredentialsSaved={isCredentialsSaved}
+      hasWebhookSecret={hasWebhookSecret}
+      // force on reconfigure: the stored secret may be stale and Photon only issues secrets at registration.
+      configureWebhook={(force) => configureWebhook({ agentIdentifier: agent.identifier, integrationIdentifier, force })}
+      manualInstructions={PHOTON_MANUAL_INSTRUCTIONS}
+      staleWarning={(staleWebhookUrls, onRemoved) => (
+        <PhotonStaleWarning
           agentIdentifier={agent.identifier}
           integrationIdentifier={integrationIdentifier}
-          staleWebhookUrls={staleNovuWebhookUrls}
-          onRemoved={() => setStaleNovuWebhookUrls([])}
+          staleWebhookUrls={staleWebhookUrls}
+          onRemoved={onRemoved}
         />
-      ) : null}
-    </div>
+      )}
+      onConfigured={onConfigured}
+      onOpenCredentials={onOpenCredentials}
+    />
   );
 }
-
-type TestStatus =
-  | { state: 'idle' }
-  | { state: 'sending' }
-  | { state: 'sent' }
-  | { state: 'error'; message: string; code?: SendPhotonTestMessageError['code'] };
 
 function RecipientNotOptedInPanel({
   agent,
@@ -489,7 +321,7 @@ function RecipientNotOptedInPanel({
   );
 }
 
-function SendTestMessagePanel({
+function PhotonTestPanel({
   agent,
   integrationIdentifier,
   connectSubscriberId,
@@ -498,146 +330,26 @@ function SendTestMessagePanel({
   integrationIdentifier: string;
   connectSubscriberId: string;
 }) {
-  const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' });
-  const [phone, setPhone] = useState('');
-
-  const { currentEnvironment } = useEnvironment();
-  const queryClient = useQueryClient();
   const { mutateAsync: sendTestMessage } = useSendPhotonTestMessage();
 
-  const { data: subscriber } = useFetchSubscriber({
-    subscriberId: connectSubscriberId,
-    options: { enabled: Boolean(connectSubscriberId) },
-  });
-
-  useEffect(() => {
-    setTestStatus({ state: 'idle' });
-  }, [integrationIdentifier]);
-
-  useEffect(() => {
-    const savedPhone = subscriber?.phone?.trim();
-
-    if (savedPhone) {
-      setPhone((current) => current || savedPhone);
-    }
-  }, [subscriber?.phone]);
-
-  const handleSendTest = useCallback(async () => {
-    if (!PHONE_PATTERN.test(phone.trim())) {
-      setTestStatus({
-        state: 'error',
-        message: 'Enter a phone number in international format, including the country code.',
-      });
-
-      return;
-    }
-
-    setTestStatus({ state: 'sending' });
-
-    try {
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const normalizedPhone = phone.trim();
-
-      await patchSubscriber({
-        environment,
-        subscriberId: connectSubscriberId,
-        subscriber: { phone: normalizedPhone },
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchSubscriber, environment._id, connectSubscriberId],
-      });
-
-      const result = await sendTestMessage({
-        agentIdentifier: agent.identifier,
-        integrationIdentifier,
-        subscriberId: connectSubscriberId,
-      });
-
-      if (result.success) {
-        setTestStatus({ state: 'sent' });
-
-        return;
-      }
-
-      setTestStatus({
-        state: 'error',
-        message: result.error?.message ?? "Photon didn't accept the test message.",
-        code: result.error?.code,
-      });
-    } catch (err) {
-      setTestStatus({
-        state: 'error',
-        message: err instanceof Error ? err.message : 'Something went wrong sending the test message.',
-      });
-    }
-  }, [
-    agent.identifier,
-    connectSubscriberId,
-    currentEnvironment,
-    integrationIdentifier,
-    phone,
-    queryClient,
-    sendTestMessage,
-  ]);
-
-  const isRecipientNotOptedIn = testStatus.state === 'error' && testStatus.code === 'recipient_not_opted_in';
-
   return (
-    <div className="flex w-full max-w-[400px] flex-col gap-3">
-      {isRecipientNotOptedIn ? (
+    <SendTestMessagePanel
+      providerLabel="Photon"
+      integrationIdentifier={integrationIdentifier}
+      connectSubscriberId={connectSubscriberId}
+      sendTestMessage={(subscriberId) =>
+        sendTestMessage({ agentIdentifier: agent.identifier, integrationIdentifier, subscriberId })
+      }
+      specialErrorCode="recipient_not_opted_in"
+      renderSpecialError={(phone, reset) => (
         <RecipientNotOptedInPanel
           agent={agent}
           integrationIdentifier={integrationIdentifier}
-          phoneNumber={phone.trim()}
-          onTryAgain={() => setTestStatus({ state: 'idle' })}
+          phoneNumber={phone}
+          onTryAgain={reset}
         />
-      ) : (
-        <>
-          <div className="flex items-stretch gap-2">
-            <InputRoot size="xs" hasError={testStatus.state === 'error'} className="flex-1">
-              <InputWrapper>
-                <InputPure
-                  value={phone}
-                  onChange={(event) => {
-                    setPhone(event.target.value);
-
-                    if (testStatus.state === 'error') {
-                      setTestStatus({ state: 'idle' });
-                    }
-                  }}
-                  type="tel"
-                  inputMode="tel"
-                  placeholder="+14155551234"
-                  autoComplete="tel"
-                  disabled={testStatus.state === 'sending'}
-                />
-              </InputWrapper>
-            </InputRoot>
-            <Button
-              type="button"
-              variant="secondary"
-              size="xs"
-              className="gap-1.5 px-2"
-              onClick={handleSendTest}
-              disabled={!phone || testStatus.state === 'sending'}
-              isLoading={testStatus.state === 'sending'}
-              leadingIcon={RiSendPlaneFill}
-            >
-              Send test
-            </Button>
-          </div>
-          {testStatus.state === 'sent' ? (
-            <p className="text-success-base text-label-xs leading-4">
-              Sent: check your Messages app for the reply from your Photon number.
-            </p>
-          ) : null}
-          {testStatus.state === 'error' ? (
-            <p className="text-error-base text-label-xs leading-4">{testStatus.message}</p>
-          ) : null}
-        </>
       )}
-    </div>
+    />
   );
 }
 
@@ -758,7 +470,7 @@ export function PhotonSetupGuide({
             : 'Connect your Photon account above first. Then come back here to register the webhook in one click.'
         }
         rightContent={
-          <ConnectWebhookPanel
+          <PhotonWebhookPanel
             agent={agent}
             integrationIdentifier={selectedIntegrationIdentifier}
             isCredentialsSaved={isCredentialsSaved && Boolean(selectedIntegrationIdentifier)}
@@ -777,7 +489,7 @@ export function PhotonSetupGuide({
         description="Send yourself a message from your Photon iMessage line, or text it yourself from your phone. On the shared line, the recipient must have opted in (texted the assigned number or accepted an invite) before Photon accepts outbound sends."
         rightContent={
           isConnectSubscriberReady ? (
-            <SendTestMessagePanel
+            <PhotonTestPanel
               agent={agent}
               integrationIdentifier={selectedIntegrationIdentifier}
               connectSubscriberId={connectSubscriberId}
