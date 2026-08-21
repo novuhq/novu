@@ -82,6 +82,8 @@ describe('AgentConversationRuntime', () => {
     expect(Object.isFrozen(afterSend.pendingActions)).toBe(true);
     expect(Object.isFrozen(afterSend.run)).toBe(true);
     expect(Object.isFrozen(afterSend.pagination)).toBe(true);
+    expect(Object.isFrozen(afterSend.messages[0])).toBe(true);
+    expect(Object.isFrozen(afterSend.messages[0]?.parts[0])).toBe(true);
 
     const store = agentChat.getConversation({ agentId: 'agent_1', key: runtime.key });
     expect(afterSend.messages[0]).not.toBe(store?.messages[0]);
@@ -300,11 +302,15 @@ describe('AgentConversationRuntime', () => {
     const storeBefore = agentChat.getConversation({ agentId: 'agent_1', key: created.data.key });
 
     expect(snapshot.messages[0]?.parts[0]).toMatchObject({ type: 'text', text: 'hello' });
+    expect(Object.isFrozen(snapshot.messages[0])).toBe(true);
+    expect(Object.isFrozen(snapshot.messages[0]?.parts[0])).toBe(true);
     if (snapshot.messages[0]?.parts[0]?.type !== 'text') {
       return;
     }
 
-    snapshot.messages[0].parts[0].text = 'mutated';
+    expect(() => {
+      (snapshot.messages[0].parts[0] as { text: string }).text = 'mutated';
+    }).toThrow(TypeError);
 
     expect(storeBefore?.messages[0]?.parts[0]).toMatchObject({ type: 'text', text: 'hello' });
 

@@ -29,14 +29,31 @@ function cloneSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSn
   };
 }
 
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  Object.freeze(value);
+
+  for (const nested of Object.values(value)) {
+    deepFreeze(nested);
+  }
+
+  return value;
+}
+
 function freezeSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSnapshot {
-  return Object.freeze({
+  return deepFreeze({
     ...snapshot,
-    run: Object.freeze({ ...snapshot.run }),
-    pagination: Object.freeze({ ...snapshot.pagination }),
-    messages: Object.freeze(snapshot.messages),
-    pendingActions: Object.freeze(snapshot.pendingActions),
-  });
+    run: {
+      ...snapshot.run,
+      typing: snapshot.run.typing ? { ...snapshot.run.typing } : undefined,
+    },
+    pagination: { ...snapshot.pagination },
+    messages: snapshot.messages,
+    pendingActions: snapshot.pendingActions,
+  }) as AgentConversationSnapshot;
 }
 
 function createEmptySnapshot(key: string, conversationId?: string): AgentConversationSnapshot {
