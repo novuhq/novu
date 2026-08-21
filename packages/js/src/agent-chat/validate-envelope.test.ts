@@ -1,5 +1,5 @@
 import { AGENT_EVENT_PROTOCOL_VERSION, type AgentEvent, type AgentEventEnvelope } from '@novu/agent-event-protocol';
-import { validateHistoryPageResponse } from './validate-envelope';
+import { parseAgentEventEnvelope, validateHistoryPageResponse } from './validate-envelope';
 
 const BASE_IDS = {
   conversationId: 'conv-1',
@@ -19,6 +19,46 @@ function envelope(sequence: number, event: AgentEvent, overrides: Partial<typeof
   };
 }
 
+describe('parseAgentEventEnvelope', () => {
+  it('skips unknown protocol versions without error', () => {
+    const value = { ...envelope(1, { type: 'run-start' }), version: 99 };
+    const result = parseAgentEventEnvelope(value);
+
+    expect(result).toEqual({ ok: false, skip: true, reason: 'unknown-version' });
+  });
+
+  it('skips non-numeric protocol versions', () => {
+    const value = { ...envelope(1, { type: 'run-start' }), version: '1' };
+    const result = parseAgentEventEnvelope(value);
+
+    expect(result).toEqual({ ok: false, skip: true, reason: 'unknown-version' });
+  });
+
+  it('rejects invalid envelope shape', () => {
+    const result = parseAgentEventEnvelope({ version: AGENT_EVENT_PROTOCOL_VERSION, event: { type: 1 } });
+
+    expect(result).toMatchObject({
+      ok: false,
+      skip: true,
+      reason: 'invalid-schema',
+      error: { code: 'protocol.schema' },
+    });
+  });
+
+  it('rejects durable message without role', () => {
+    const result = parseAgentEventEnvelope(
+      envelope(1, {
+        type: 'message',
+        messageId: 'm1',
+        role: 'system' as 'assistant',
+        content: { markdown: 'Hi' },
+      })
+    );
+
+    expect(result).toMatchObject({ ok: false, reason: 'invalid-schema' });
+  });
+});
+
 describe('validateHistoryPageResponse', () => {
   it('rejects missing events array', () => {
     const result = validateHistoryPageResponse({ olderCursor: null });
@@ -37,11 +77,14 @@ describe('validateHistoryPageResponse', () => {
     expect(result).toEqual({ ok: true, events: [known], olderCursor: null });
   });
 
-  it('skips invalid envelopes in history pages', () => {
+  it('skips invalid envelopes and returns the valid ones', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const known = envelope(1, { type: 'run-start' });
     const invalid = { version: AGENT_EVENT_PROTOCOL_VERSION, event: { type: 'run-start' } };
     const result = validateHistoryPageResponse({ events: [known, invalid], olderCursor: null });
 
     expect(result).toEqual({ ok: true, events: [known], olderCursor: null });
+    expect(warnSpy).toHaveBeenCalledWith('[novu agent-chat] skipping history envelope:', 'invalid-schema');
+    warnSpy.mockRestore();
   });
 });
