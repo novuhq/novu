@@ -7,13 +7,13 @@ import type {
   AgentMessage,
   AgentPendingAction,
   AgentToolApprovalDecision,
+  ConversationSnapshot,
   LoadConversationResult,
-  NovuError,
   RespondToActionResult,
   SendActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { createConversationSnapshotPublisher, derivePendingActions, getLiveEnvelopes } from '@novu/js';
+import { createConversationSnapshotPublisher, derivePendingActions, getLiveEnvelopes, NovuError } from '@novu/js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
@@ -102,14 +102,6 @@ function createLocalSessionKey(): string {
   return `local_${Date.now().toString(36)}`;
 }
 
-type ConversationSnapshot = {
-  messages: AgentMessage[];
-  isRunning: boolean;
-  typing?: AgentConversationTyping;
-  status: AgentConversationStatus;
-  hasMore: boolean;
-};
-
 const EMPTY_CONVERSATION: ConversationSnapshot = {
   messages: [],
   isRunning: false,
@@ -117,6 +109,14 @@ const EMPTY_CONVERSATION: ConversationSnapshot = {
   status: 'active',
   hasMore: false,
 };
+
+function conversationErrorFromSnapshot(error: ConversationSnapshot['error']): NovuError | undefined {
+  if (!error) {
+    return undefined;
+  }
+
+  return new NovuError(error.message, new Error(error.code ?? error.message));
+}
 
 function applyConversationSnapshot(
   snapshot: ConversationSnapshot,
@@ -126,6 +126,7 @@ function applyConversationSnapshot(
     setTyping: (typing?: AgentConversationTyping) => void;
     setStatus: (status: AgentConversationStatus) => void;
     setHasMore: (hasMore: boolean) => void;
+    setError: (error: NovuError | AgentChatPlanLimitError | undefined) => void;
   }
 ): void {
   setters.setMessages(snapshot.messages);
@@ -133,6 +134,9 @@ function applyConversationSnapshot(
   setters.setTyping(snapshot.typing);
   setters.setStatus(snapshot.status);
   setters.setHasMore(snapshot.hasMore);
+  if (snapshot.error) {
+    setters.setError(conversationErrorFromSnapshot(snapshot.error));
+  }
 }
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
@@ -171,6 +175,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       setTyping,
       setStatus,
       setHasMore,
+      setError,
     }),
     []
   );
@@ -259,6 +264,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
           typing: snapshot.typing,
           status: snapshot.status,
           hasMore: snapshot.hasMore,
+          error: snapshot.error,
         },
         snapshotSetters
       );
@@ -302,6 +308,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
           typing: data.typing,
           status: data.status,
           hasMore: data.hasMore,
+          error: data.error,
         },
         change
       );

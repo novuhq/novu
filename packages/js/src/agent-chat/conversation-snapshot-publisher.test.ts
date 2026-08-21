@@ -103,4 +103,35 @@ describe('createConversationSnapshotPublisher', () => {
 
     expect(publishes).toEqual(['running', 'ready']);
   });
+
+  it('publishes terminal run-error changes immediately', () => {
+    const publishes: Array<string | undefined> = [];
+    const publisher = createConversationSnapshotPublisher({
+      throttleMs: 50,
+      onPublish: (snapshot) => {
+        publishes.push(snapshot.error?.message);
+      },
+    });
+
+    publisher.schedule(
+      {
+        ...createInitialAgentConversationState(),
+        hasMore: false,
+        isRunning: true,
+      },
+      streamingChange()
+    );
+
+    publisher.schedule(
+      {
+        ...createInitialAgentConversationState(),
+        hasMore: false,
+        isRunning: false,
+        error: { message: 'run failed', code: 'run_error' },
+      },
+      terminalChange({ type: 'run-error', message: 'run failed', code: 'run_error' })
+    );
+
+    expect(publishes).toEqual([undefined, 'run failed']);
+  });
 });
