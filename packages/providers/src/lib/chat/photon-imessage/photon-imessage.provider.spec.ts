@@ -1,11 +1,11 @@
+import { createHmac } from 'node:crypto';
 import { ENDPOINT_TYPES, IChatOptions } from '@novu/stateless';
 import axios from 'axios';
-import { createHmac } from 'crypto';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import {
-  __setPhotonSpectrumImportForTests,
   clearPhotonImessageCaches,
   PhotonImessageChatProvider,
+  setPhotonSpectrumImportForTests,
 } from './photon-imessage.provider';
 
 const mockProviderConfig = {
@@ -68,7 +68,7 @@ const spectrumSpy = ({
   );
   const effectBuilder = vi.fn((content: unknown, effectValue: string) => ({ kind: 'effect', content, effectValue }));
 
-  __setPhotonSpectrumImportForTests(async (specifier: string) => {
+  setPhotonSpectrumImportForTests(async (specifier: string) => {
     if (specifier === '@spectrum-ts/core') {
       return {
         Spectrum: spectrumFactory,
@@ -94,7 +94,7 @@ beforeEach(() => {
 
 afterEach(() => {
   clearPhotonImessageCaches();
-  __setPhotonSpectrumImportForTests(undefined);
+  setPhotonSpectrumImportForTests(undefined);
 });
 
 test('should register the recipient and send through spectrum-ts', async () => {
@@ -379,7 +379,12 @@ test('autoConfigureInboundWebhook registers the URL and returns the Photon-issue
   const mockDelete = vi.fn(async () => ({ data: { succeed: true, data: {} } }));
   const mockPost = vi.fn(async (url: string) => {
     if (url === webhooksUrl) {
-      return { data: { succeed: true, data: { id: 'wh-1', signingSecret: 'v0-secret-new', standardSigningSecret: 'whsec_new' } } };
+      return {
+        data: {
+          succeed: true,
+          data: { id: 'wh-1', signingSecret: 'v0-secret-new', standardSigningSecret: 'whsec_new' },
+        },
+      };
     }
     throw new Error(`Unexpected POST to ${url}`);
   });

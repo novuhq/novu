@@ -25,7 +25,7 @@ import type {
   ResolveConversationParams,
   UpdateMetadataParams,
 } from './agent-conversation.types';
-import { ConversationActivityLedger } from './conversation-activity-ledger';
+import { ConversationActivityLedger } from './conversation-activity-ledger.service';
 import type { PersistRunLifecycleParams } from './run-lifecycle-activity';
 
 export {

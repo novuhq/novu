@@ -12,7 +12,10 @@ export const AGENT_IMESSAGE_LABEL = 'iMessage';
  * setup guide, and switching re-links the agent to the other vendor's
  * integration (same replace-existing semantics as picking a different card).
  */
-export const IMESSAGE_PROVIDER_IDS: readonly string[] = [ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.PhotonImessage];
+export const IMESSAGE_PROVIDER_IDS: readonly string[] = [
+  ChatProviderIdEnum.Sendblue,
+  ChatProviderIdEnum.PhotonImessage,
+];
 
 const AGENT_IMESSAGE_ICON_FILE = 'imessages';
 

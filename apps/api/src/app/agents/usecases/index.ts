@@ -9,8 +9,8 @@ import { ConfigurePhotonWebhook } from '../channels/photon-imessage/configure-ph
 import { PollPhotonDeviceAuth } from '../channels/photon-imessage/poll-photon-device-auth/poll-photon-device-auth.usecase';
 import { RegisterPhotonRecipient } from '../channels/photon-imessage/register-photon-recipient/register-photon-recipient.usecase';
 import { RemovePhotonWebhooks } from '../channels/photon-imessage/remove-photon-webhooks/remove-photon-webhooks.usecase';
-import { StartPhotonDeviceAuth } from '../channels/photon-imessage/start-photon-device-auth/start-photon-device-auth.usecase';
 import { SendAgentPhotonTestMessage } from '../channels/photon-imessage/send-photon-test-message/send-photon-test-message.usecase';
+import { StartPhotonDeviceAuth } from '../channels/photon-imessage/start-photon-device-auth/start-photon-device-auth.usecase';
 import { ConfigureSendblueWebhook } from '../channels/sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
 import { RemoveSendblueWebhooks } from '../channels/sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.usecase';
 import { SendAgentSendblueTestMessage } from '../channels/sendblue/send-sendblue-test-message/send-sendblue-test-message.usecase';

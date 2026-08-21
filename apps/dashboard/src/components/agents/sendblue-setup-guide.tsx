@@ -7,11 +7,7 @@ import { useConfigureSendblueWebhook } from '@/hooks/use-configure-sendblue-webh
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useRemoveSendblueWebhooks } from '@/hooks/use-remove-sendblue-webhooks';
 import { useSendSendblueTestMessage } from '@/hooks/use-send-sendblue-test-message';
-import {
-  ConnectWebhookPanel,
-  SendTestMessagePanel,
-  StaleNovuWebhooksWarning,
-} from './imessage-guide-panels';
+import { ConnectWebhookPanel, SendTestMessagePanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
 import { ImessageProviderSelect } from './imessage-provider-select';
 import {
   IntegrationCredentialsSidebar,

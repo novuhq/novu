@@ -8,7 +8,7 @@
  */
 import { encryptCredentials } from '@novu/application-generic';
 import { AgentIntegrationRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { __setPhotonSpectrumImportForTests, clearPhotonImessageCaches } from '@novu/providers';
+import { clearPhotonImessageCaches, setPhotonSpectrumImportForTests } from '@novu/providers';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -33,7 +33,7 @@ function installSpectrumStub() {
     }
   );
 
-  __setPhotonSpectrumImportForTests(async (specifier: string) => {
+  setPhotonSpectrumImportForTests(async (specifier: string) => {
     if (specifier === '@spectrum-ts/core') {
       return {
         Spectrum: async () => ({ stop: async () => {} }),
@@ -69,7 +69,7 @@ describe('Photon connect endpoints - API key access #novu-v2', () => {
   });
 
   after(() => {
-    __setPhotonSpectrumImportForTests(undefined);
+    setPhotonSpectrumImportForTests(undefined);
     clearPhotonImessageCaches();
   });
 

@@ -18,11 +18,7 @@ import { usePhotonDeviceAuth } from '@/hooks/use-photon-device-auth';
 import { useRegisterPhotonRecipient } from '@/hooks/use-register-photon-recipient';
 import { useRemovePhotonWebhooks } from '@/hooks/use-remove-photon-webhooks';
 import { useSendPhotonTestMessage } from '@/hooks/use-send-photon-test-message';
-import {
-  ConnectWebhookPanel,
-  SendTestMessagePanel,
-  StaleNovuWebhooksWarning,
-} from './imessage-guide-panels';
+import { ConnectWebhookPanel, SendTestMessagePanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
 import { ImessageProviderSelect } from './imessage-provider-select';
 import {
   IntegrationCredentialsSidebar,
@@ -218,7 +214,9 @@ function PhotonWebhookPanel({
       isCredentialsSaved={isCredentialsSaved}
       hasWebhookSecret={hasWebhookSecret}
       // force on reconfigure: the stored secret may be stale and Photon only issues secrets at registration.
-      configureWebhook={(force) => configureWebhook({ agentIdentifier: agent.identifier, integrationIdentifier, force })}
+      configureWebhook={(force) =>
+        configureWebhook({ agentIdentifier: agent.identifier, integrationIdentifier, force })
+      }
       manualInstructions={PHOTON_MANUAL_INSTRUCTIONS}
       staleWarning={(staleWebhookUrls, onRemoved) => (
         <PhotonStaleWarning
@@ -434,7 +432,9 @@ export function PhotonSetupGuide({
         title="Connect your Photon account"
         description={
           <span>
-            {'Click Connect Photon and approve the request: Novu creates a Photon project for this agent and saves the '}
+            {
+              'Click Connect Photon and approve the request: Novu creates a Photon project for this agent and saves the '
+            }
             <strong className="text-text-sub">Project ID</strong>
             {' and '}
             <strong className="text-text-sub">Project Secret</strong>

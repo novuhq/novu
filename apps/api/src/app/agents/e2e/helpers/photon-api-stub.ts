@@ -154,7 +154,7 @@ async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknow
  * Spectrum Cloud REST control plane (platform enable, webhooks CRUD, shared
  * users — enveloped `{succeed, data}` responses). The spectrum-ts gRPC send
  * path reads no env vars — tests exercising an outbound send must fake the
- * module graph via `__setPhotonSpectrumImportForTests` instead.
+ * module graph via `setPhotonSpectrumImportForTests` instead.
  */
 export async function startPhotonApiStub(): Promise<PhotonApiStub> {
   if (stub) return stub;

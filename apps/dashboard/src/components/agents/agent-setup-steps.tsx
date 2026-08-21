@@ -29,8 +29,8 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { AGENT_IMESSAGE_LABEL, IMESSAGE_PROVIDER_IDS } from '@/utils/agent-channel-branding';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENT_IMESSAGE_LABEL, IMESSAGE_PROVIDER_IDS } from '@/utils/agent-channel-branding';
 import { withOnboardingSource } from '@/utils/onboarding-redirect';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -470,7 +470,11 @@ export function AgentSetupSteps({
   // user embeds useAgentChat and sends a first message (Connected = first inbound, like Slack).
   const genericContinueGateProviders = useMemo(
     () =>
-      new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.PhotonImessage, ChatProviderIdEnum.NovuAgentChat]),
+      new Set<string>([
+        ChatProviderIdEnum.Sendblue,
+        ChatProviderIdEnum.PhotonImessage,
+        ChatProviderIdEnum.NovuAgentChat,
+      ]),
     []
   );
   const useGenericContinueGate =
@@ -896,49 +900,49 @@ export function AgentSetupSteps({
             style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
           >
             <ImessageProviderSwitchProvider onSwitch={handleSwitchImessageProvider}>
-            {useRolloutGate && guideIntegrationId && guideProviderId ? (
-              <AgentIntegrationGuideTransition
-                isConnected={guideLayer1Complete}
-                providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
-                hasUserRolloutPhase={useOnboardingRolloutGate || useEmailWhatsNextRolloutGate}
-                onContinued={handleRolloutContinue}
-                renderSetupView={(footer) => (
-                  <>
-                    <ProviderGuide
-                      agent={agent}
-                      integrationId={guideIntegrationId}
-                      stepOffset={providerGuideStepOffset}
-                      embedded={false}
-                      isOnboarding={isOnboarding}
-                      onStepsCompleted={handleProviderStepsCompleted}
-                      onWelcomeSent={
-                        guideProviderId !== EmailProviderIdEnum.NovuAgent
-                          ? () => trackWelcomeSent(guideProviderId)
-                          : undefined
-                      }
-                      integrationLink={guideIntegrationLink}
-                    />
-                    {footer}
-                  </>
-                )}
-                renderConnectedView={() => null}
-              />
-            ) : (
-              <ProviderGuide
-                agent={agent}
-                integrationId={guideIntegrationId}
-                stepOffset={providerGuideStepOffset}
-                embedded={false}
-                isOnboarding={isOnboarding}
-                onStepsCompleted={handleProviderStepsCompleted}
-                onWelcomeSent={
-                  isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
-                    ? () => trackWelcomeSent(guideProviderId)
-                    : undefined
-                }
-                integrationLink={guideIntegrationLink}
-              />
-            )}
+              {useRolloutGate && guideIntegrationId && guideProviderId ? (
+                <AgentIntegrationGuideTransition
+                  isConnected={guideLayer1Complete}
+                  providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
+                  hasUserRolloutPhase={useOnboardingRolloutGate || useEmailWhatsNextRolloutGate}
+                  onContinued={handleRolloutContinue}
+                  renderSetupView={(footer) => (
+                    <>
+                      <ProviderGuide
+                        agent={agent}
+                        integrationId={guideIntegrationId}
+                        stepOffset={providerGuideStepOffset}
+                        embedded={false}
+                        isOnboarding={isOnboarding}
+                        onStepsCompleted={handleProviderStepsCompleted}
+                        onWelcomeSent={
+                          guideProviderId !== EmailProviderIdEnum.NovuAgent
+                            ? () => trackWelcomeSent(guideProviderId)
+                            : undefined
+                        }
+                        integrationLink={guideIntegrationLink}
+                      />
+                      {footer}
+                    </>
+                  )}
+                  renderConnectedView={() => null}
+                />
+              ) : (
+                <ProviderGuide
+                  agent={agent}
+                  integrationId={guideIntegrationId}
+                  stepOffset={providerGuideStepOffset}
+                  embedded={false}
+                  isOnboarding={isOnboarding}
+                  onStepsCompleted={handleProviderStepsCompleted}
+                  onWelcomeSent={
+                    isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
+                      ? () => trackWelcomeSent(guideProviderId)
+                      : undefined
+                  }
+                  integrationLink={guideIntegrationLink}
+                />
+              )}
             </ImessageProviderSwitchProvider>
           </motion.div>
         ) : null}

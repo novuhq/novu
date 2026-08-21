@@ -23,7 +23,11 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName, IMESSAGE_PROVIDER_IDS } from '@/utils/agent-channel-branding';
+import {
+  AGENT_IMESSAGE_LABEL,
+  getAgentChannelIconFileName,
+  IMESSAGE_PROVIDER_IDS,
+} from '@/utils/agent-channel-branding';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';

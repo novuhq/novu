@@ -51,7 +51,7 @@ import { AgentConversationService } from './conversation-runtime/conversation/ag
 import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
-import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger';
+import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger.service';
 import { ConversationEventSequenceService } from './conversation-runtime/conversation/conversation-event-sequence.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';

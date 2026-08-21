@@ -50,15 +50,15 @@ import {
 import {
   ConfigurePhotonWebhookRequestDto,
   ConfigurePhotonWebhookResponseDto,
-} from '../../shared/dtos/configure-photon-webhook-response.dto';
+} from '../../shared/dtos/configure-photon-webhook.dto';
+import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
+import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
+import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
 import {
   PollPhotonDeviceAuthRequestDto,
   PollPhotonDeviceAuthResponseDto,
   StartPhotonDeviceAuthResponseDto,
 } from '../../shared/dtos/photon-device-auth.dto';
-import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
-import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
-import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
 import {
   RegisterPhotonRecipientRequestDto,
   RegisterPhotonRecipientResponseDto,
@@ -91,12 +91,12 @@ import { PollPhotonDeviceAuthCommand } from '../photon-imessage/poll-photon-devi
 import { PollPhotonDeviceAuth } from '../photon-imessage/poll-photon-device-auth/poll-photon-device-auth.usecase';
 import { RegisterPhotonRecipientCommand } from '../photon-imessage/register-photon-recipient/register-photon-recipient.command';
 import { RegisterPhotonRecipient } from '../photon-imessage/register-photon-recipient/register-photon-recipient.usecase';
-import { StartPhotonDeviceAuthCommand } from '../photon-imessage/start-photon-device-auth/start-photon-device-auth.command';
-import { StartPhotonDeviceAuth } from '../photon-imessage/start-photon-device-auth/start-photon-device-auth.usecase';
 import { RemovePhotonWebhooksCommand } from '../photon-imessage/remove-photon-webhooks/remove-photon-webhooks.command';
 import { RemovePhotonWebhooks } from '../photon-imessage/remove-photon-webhooks/remove-photon-webhooks.usecase';
 import { SendPhotonTestMessageCommand } from '../photon-imessage/send-photon-test-message/send-photon-test-message.command';
 import { SendAgentPhotonTestMessage } from '../photon-imessage/send-photon-test-message/send-photon-test-message.usecase';
+import { StartPhotonDeviceAuthCommand } from '../photon-imessage/start-photon-device-auth/start-photon-device-auth.command';
+import { StartPhotonDeviceAuth } from '../photon-imessage/start-photon-device-auth/start-photon-device-auth.usecase';
 import { ConfigureSendblueWebhookCommand } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.command';
 import { ConfigureSendblueWebhook } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
 import { RemoveSendblueWebhooksCommand } from '../sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.command';

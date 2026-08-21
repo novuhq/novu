@@ -1,7 +1,7 @@
 import { ConversationActivityTypeEnum, ConversationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { ConversationActivityLedger } from './conversation-activity-ledger';
+import { ConversationActivityLedger } from './conversation-activity-ledger.service';
 import { ConversationEventSequenceService } from './conversation-event-sequence.service';
 
 describe('ConversationActivityLedger', () => {

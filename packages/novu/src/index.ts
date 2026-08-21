@@ -11,6 +11,7 @@ import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
 import type { LlmAuthCliChoice } from './commands/connect/pipeline/llm-auth/types';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
+import type { AgentChatSetupMode } from './commands/connect/types';
 import {
   AGENT_CONNECT_MODES,
   type AgentConnectMode,
@@ -344,7 +345,7 @@ program
         channel: options.channel as ChannelChoice | undefined,
         runtime: options.runtime as AgentConnectMode | undefined,
         chatSdk: options.chatSdk,
-        agentChatSetup: options.agentChatSetup as import('./commands/connect/types').AgentChatSetupMode | undefined,
+        agentChatSetup: options.agentChatSetup as AgentChatSetupMode | undefined,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {

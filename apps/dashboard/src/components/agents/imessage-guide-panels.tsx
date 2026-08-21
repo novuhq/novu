@@ -1,5 +1,5 @@
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { RiCheckLine, RiErrorWarningLine, RiSendPlaneFill } from 'react-icons/ri';
 import { patchSubscriber } from '@/api/subscribers';
 import { Button } from '@/components/primitives/button';

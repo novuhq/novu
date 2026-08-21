@@ -8,7 +8,6 @@ import {
 const ONBOARDING_PROVISIONING_KEY = 'novu.onboarding.provisioning';
 /** Legacy Connect-only flag — still read for in-flight sessions. */
 const CONNECT_PROVISIONING_KEY = 'novu.connect.provisioning';
-const CONNECT_PROVISION_QUERY = 'provision';
 
 const PROVISIONING_CHANGE_EVENT = 'novu.onboarding.provisioning-change';
 
@@ -32,12 +31,6 @@ export function subscribeOnboardingProvisioningChange(listener: () => void): () 
 
   return () => window.removeEventListener(PROVISIONING_CHANGE_EVENT, listener);
 }
-
-/** @deprecated Use `subscribeOnboardingProvisioningChange`. */
-const subscribeConnectProvisioningChange = subscribeOnboardingProvisioningChange;
-
-/** @deprecated Use `notifyOnboardingProvisioningChange`. */
-const notifyConnectProvisioningChange = notifyOnboardingProvisioningChange;
 
 // `connect` is the legacy name for the agents-flavored loader; map it forward to `agents`.
 function normalizeVariant(variant: string | undefined): OnboardingLoaderVariant | null {
@@ -93,14 +86,6 @@ export function beginOnboardingProvisioning(variant: OnboardingLoaderVariant): v
   }
 }
 
-function beginAgentsProvisioning(): void {
-  beginOnboardingProvisioning('agents');
-}
-
-function beginPlatformProvisioning(): void {
-  beginOnboardingProvisioning('platform');
-}
-
 export function getOnboardingProvisioningVariant(): OnboardingLoaderVariant | null {
   return readProvisioningPayload()?.variant ?? null;
 }
@@ -111,10 +96,6 @@ export function getOnboardingProvisioningStartedAt(): number | null {
 
 export function isOnboardingProvisioningActive(): boolean {
   return getOnboardingProvisioningVariant() !== null;
-}
-
-function isAgentsProvisioningActive(): boolean {
-  return getOnboardingProvisioningVariant() === 'agents';
 }
 
 export function clearOnboardingProvisioning(): void {
@@ -137,68 +118,4 @@ export function getMinLoaderDurationMs(variant: OnboardingLoaderVariant): number
   const stepCount = variant === 'agents' ? AGENTS_STEP_COUNT : PLATFORM_STEP_COUNT;
 
   return stepCount * ONBOARDING_STEP_DELAY_MS;
-}
-
-function buildConnectProvisionOrgListPath(orgListPath: string): string {
-  const url = new URL(orgListPath, 'http://local');
-  url.searchParams.set(CONNECT_PROVISION_QUERY, '1');
-
-  return `${url.pathname}${url.search}`;
-}
-
-function withConnectProvisioningIntent(href: string): string {
-  if (!href) return href;
-
-  try {
-    const isAbsolute = /^https?:\/\//i.test(href);
-    const fallbackBase = typeof window !== 'undefined' ? window.location.origin : 'http://local';
-    const url = new URL(href, fallbackBase);
-    url.searchParams.set(CONNECT_PROVISION_QUERY, '1');
-
-    if (isAbsolute) {
-      return url.toString();
-    }
-
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return href;
-  }
-}
-
-function consumeConnectProvisionIntentFromLocation(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const params = new URLSearchParams(window.location.search);
-
-  if (params.get(CONNECT_PROVISION_QUERY) !== '1') {
-    return false;
-  }
-
-  beginAgentsProvisioning();
-  params.delete(CONNECT_PROVISION_QUERY);
-  const nextSearch = params.toString();
-  const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`;
-  window.history.replaceState(window.history.state, '', nextUrl);
-
-  return true;
-}
-
-function hasConnectProvisionIntent(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  if (isAgentsProvisioningActive()) {
-    return true;
-  }
-
-  try {
-    const params = new URLSearchParams(window.location.search);
-
-    return params.get(CONNECT_PROVISION_QUERY) === '1';
-  } catch {
-    return false;
-  }
 }

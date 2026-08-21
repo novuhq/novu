@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import {
   CardElement,
@@ -9,7 +10,6 @@ import {
   isChannelDataOfType,
 } from '@novu/stateless';
 import Axios, { AxiosError, AxiosInstance } from 'axios';
-import { createHmac, timingSafeEqual } from 'crypto';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { cardToFallbackMarkdown } from '../card-render.utils';
@@ -102,7 +102,7 @@ const nativeEsmImport = new Function(
 let spectrumImport = nativeEsmImport;
 
 /** Test seam: swap the ESM importer for a fake spectrum-ts module graph. */
-export const __setPhotonSpectrumImportForTests = (importer?: typeof nativeEsmImport) => {
+export const setPhotonSpectrumImportForTests = (importer?: typeof nativeEsmImport) => {
   spectrumImport = importer ?? nativeEsmImport;
 };
 

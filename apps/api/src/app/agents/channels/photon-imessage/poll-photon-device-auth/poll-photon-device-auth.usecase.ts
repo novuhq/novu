@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { encryptSecret, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import type { AxiosError } from 'axios';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -9,6 +8,7 @@ import {
   OrganizationRepository,
 } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
+import type { AxiosError } from 'axios';
 
 import { resolveAgentIntegrationForWebhook } from '../../shared/resolve-agent-integration-webhook.util';
 import { ConfigurePhotonWebhookCommand } from '../configure-photon-webhook/configure-photon-webhook.command';

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { registerPhotonRecipient, type RegisterPhotonRecipientResponse } from '@/api/agents';
+import { type RegisterPhotonRecipientResponse, registerPhotonRecipient } from '@/api/agents';
 import { useEnvironment } from '@/context/environment/hooks';
 
 type RegisterPhotonRecipientVariables = {
