@@ -1,6 +1,7 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
 import { AgentChatPlanLimitError, AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
+import { NovuError } from '../utils/errors';
 import { AgentChat } from './agent-chat';
 import { derivePendingActions } from './agent-message.types';
 import type { AgentChatChange } from './types';
@@ -705,7 +706,7 @@ describe('AgentChat', () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    const updates: Array<{ error?: { code?: string; message: string } }> = [];
+    const updates: Array<{ error?: NovuError }> = [];
     emitter.on('agent_chat.messages.updated', ({ data }) => {
       updates.push({ error: data.error });
     });
@@ -726,14 +727,10 @@ describe('AgentChat', () => {
 
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.messages).toHaveLength(1);
-    expect(snapshot?.error).toMatchObject({
-      code: 'protocol.ordering',
-      message: expect.stringContaining('message-delta'),
-    });
-    expect(updates.at(-1)?.error).toMatchObject({
-      code: 'protocol.ordering',
-      message: expect.stringContaining('message-delta'),
-    });
+    expect(snapshot?.error?.message).toContain('message-delta');
+    expect(snapshot?.error?.originalError.message).toBe('protocol.ordering');
+    expect(updates.at(-1)?.error?.message).toContain('message-delta');
+    expect(updates.at(-1)?.error?.originalError.message).toBe('protocol.ordering');
   });
 
   it('accepts live deltas after history that ends mid-stream', async () => {
