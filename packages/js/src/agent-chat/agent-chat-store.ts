@@ -300,6 +300,7 @@ export class AgentChatStore {
       messages: this.#applyMcpConnectionResults(entry, [...folded.messages, ...localOnly]),
     });
     entry.olderCursor = olderCursor;
+    entry.paginationStatus = 'idle';
 
     this.#publish(entry, { kind: 'history' }, messagesAddedSince(previous, entry.messages));
 

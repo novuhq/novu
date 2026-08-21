@@ -223,7 +223,15 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         propsRef.current.onError?.(response.error);
       } else if (response.data) {
         setMessages(response.data.messages);
-        setPagination((current: AgentChatPagination) => ({ ...current, hasMore: response.data!.hasMore }));
+        const snapshot = novu.agentChat.getConversation({
+          agentId,
+          conversationId: targetConversationId,
+        });
+        if (snapshot) {
+          setPagination(snapshot.pagination);
+        } else {
+          setPagination({ status: 'idle', hasMore: response.data.hasMore });
+        }
         propsRef.current.onSuccess?.(response.data);
       }
 
