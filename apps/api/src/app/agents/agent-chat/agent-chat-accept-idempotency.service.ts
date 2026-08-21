@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '@novu/application-generic';
 import { type AgentChatInboundClaimResult, conversationIdFromThreadId } from '@novu/chat-adapter-agent-chat';
@@ -5,6 +6,13 @@ import { AgentConversationService } from '../conversation-runtime/conversation/a
 
 /** In-flight lock only. Durable activity rows are the success ledger. */
 const ACCEPT_LOCK_TTL_SECONDS = 60 * 5;
+const LOCK_VALUE_SEPARATOR = '\t';
+const COMPARE_AND_DELETE_SCRIPT = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+  return redis.call("DEL", KEYS[1])
+end
+return 0
+`;
 
 @Injectable()
 export class AgentChatAcceptIdempotencyService {
@@ -16,32 +24,39 @@ export class AgentChatAcceptIdempotencyService {
   async claimInbound(environmentId: string, key: string, conversationId: string): Promise<AgentChatInboundClaimResult> {
     const durableConversationId = await this.findDurableConversationId(environmentId, key);
     if (durableConversationId) {
-      return { claimed: false, conversationId: durableConversationId };
+      return { outcome: 'duplicate', conversationId: durableConversationId };
     }
 
     const cacheKey = this.cacheKey(environmentId, key);
-    const reserved = await this.cacheService.setIfNotExist(cacheKey, conversationId, {
+    const claimToken = randomUUID();
+    const lockValue = this.encodeLockValue(conversationId, claimToken);
+    const reserved = await this.cacheService.setIfNotExist(cacheKey, lockValue, {
       ttl: ACCEPT_LOCK_TTL_SECONDS,
     });
     if (reserved === 'OK') {
-      return { claimed: true, conversationId };
+      return { outcome: 'acquired', conversationId, claimToken };
     }
 
     const durableRetry = await this.findDurableConversationId(environmentId, key);
     if (durableRetry) {
-      return { claimed: false, conversationId: durableRetry };
+      return { outcome: 'duplicate', conversationId: durableRetry };
     }
 
-    const cachedConversationId = await this.cacheService.get(cacheKey);
+    const cachedLock = await this.cacheService.get(cacheKey);
+    const cachedConversationId = this.conversationIdFromLockValue(cachedLock);
     if (cachedConversationId) {
-      return { claimed: false, conversationId: cachedConversationId };
+      return { outcome: 'in_progress', conversationId: cachedConversationId };
     }
 
-    return { claimed: false, conversationId };
+    return { outcome: 'unavailable' };
   }
 
-  async releaseInbound(environmentId: string, key: string): Promise<void> {
-    await this.cacheService.del(this.cacheKey(environmentId, key));
+  async releaseInbound(environmentId: string, key: string, conversationId: string, claimToken: string): Promise<void> {
+    await this.cacheService.eval(
+      COMPARE_AND_DELETE_SCRIPT,
+      [this.cacheKey(environmentId, key)],
+      [this.encodeLockValue(conversationId, claimToken)]
+    );
   }
 
   private async findDurableConversationId(environmentId: string, identifier: string): Promise<string | null> {
@@ -55,5 +70,22 @@ export class AgentChatAcceptIdempotencyService {
 
   private cacheKey(environmentId: string, key: string): string {
     return `agent-chat:accept:${environmentId}:${key}`;
+  }
+
+  private encodeLockValue(conversationId: string, claimToken: string): string {
+    return `${conversationId}${LOCK_VALUE_SEPARATOR}${claimToken}`;
+  }
+
+  private conversationIdFromLockValue(lockValue: string | null | undefined): string | null {
+    if (!lockValue) {
+      return null;
+    }
+
+    const separatorIndex = lockValue.indexOf(LOCK_VALUE_SEPARATOR);
+    if (separatorIndex <= 0) {
+      return lockValue;
+    }
+
+    return lockValue.slice(0, separatorIndex);
   }
 }

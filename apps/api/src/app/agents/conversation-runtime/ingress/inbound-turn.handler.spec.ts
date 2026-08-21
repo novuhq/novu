@@ -99,6 +99,7 @@ describe('AgentInboundHandler', () => {
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
       persistToolApprovalDecision: sinon.stub().resolves({ _id: 'decision-1' }),
+      persistInboundActionAccept: sinon.stub().resolves(undefined),
       findSourceActivity: sinon
         .stub()
         .callsFake(
@@ -1557,6 +1558,26 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistToolApprovalDecision.firstCall.args[0].identifier).to.equal(
         'idem_abcdefghijkl'
       );
+    });
+
+    it('should persist non-approval actions with the client idempotency key', async () => {
+      const { handler, conversationService } = makeHandler();
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'topic-billing', value: 'yes' } as any,
+        'user1',
+        { idempotencyKey: 'idem_abcdefghijkl' }
+      );
+
+      expect(conversationService.persistInboundActionAccept.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundActionAccept.firstCall.args[0]).to.include({
+        identifier: 'idem_abcdefghijkl',
+        actionId: 'topic-billing',
+      });
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
     });
 
     it('should skip bridge dispatch for link-button actions', async () => {

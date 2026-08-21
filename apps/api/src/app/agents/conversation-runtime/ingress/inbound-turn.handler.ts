@@ -1220,14 +1220,9 @@ export class AgentInboundHandler implements OnModuleInit {
       participantType === ConversationParticipantTypeEnum.SUBSCRIBER
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER
         : ConversationActivitySenderTypeEnum.PLATFORM_USER;
-    await this.recordApprovalVerdict(
-      conversation,
-      config,
-      action,
-      actorType,
-      participantId,
-      this.readActionIdempotencyKey(rawEvent)
-    );
+    const identifier = this.readActionIdempotencyKey(rawEvent);
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId, identifier);
+    await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
@@ -1295,6 +1290,36 @@ export class AgentInboundHandler implements OnModuleInit {
     const trimmed = key.trim();
 
     return isValidActionIdempotencyKey(trimmed) ? trimmed : undefined;
+  }
+
+  private async recordNonApprovalActionAccept(
+    conversation: ConversationEntity,
+    config: ResolvedAgentConfig,
+    action: AgentAction,
+    identifier?: string
+  ): Promise<void> {
+    if (!identifier || this.parseApprovalVerdict(action.id)) {
+      return;
+    }
+
+    try {
+      await this.conversationService.persistInboundActionAccept({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        identifier,
+        actionId: action.id,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to persist inbound action accept`);
+      captureAgentWarning(err, {
+        component: 'inbound-turn-handler',
+        operation: 'persist-inbound-action-accept',
+        agentIdentifier: config.agentIdentifier,
+      });
+    }
   }
 
   private async recordApprovalVerdict(

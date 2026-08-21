@@ -212,7 +212,7 @@ describe('NovuAgentChatAdapterImpl', () => {
 
   it('acks a retry without re-dispatching when claimInbound is duplicate', async () => {
     const claimInbound = vi.fn(async () => ({
-      claimed: false,
+      outcome: 'duplicate' as const,
       conversationId: 'conv_original0001',
     }));
     const { adapter, processMessage } = await createAdapter(
@@ -236,11 +236,48 @@ describe('NovuAgentChatAdapterImpl', () => {
     expect(processMessage).not.toHaveBeenCalled();
   });
 
+  it('returns 409 when claimInbound is in progress', async () => {
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        claimInbound: async () => ({
+          outcome: 'in_progress',
+          conversationId: 'conv_original0001',
+        }),
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(409);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when claimInbound is unavailable', async () => {
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        claimInbound: async () => ({ outcome: 'unavailable' }),
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(503);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
   it('releases the inbound claim when processMessage throws', async () => {
     const releaseInbound = vi.fn(async () => undefined);
     const { adapter, processMessage } = await createAdapter(
       createConfig({
-        claimInbound: async () => ({ claimed: true, conversationId: 'conv_new000000001' }),
+        claimInbound: async () => ({
+          outcome: 'acquired' as const,
+          conversationId: 'conv_new000000001',
+          claimToken: 'claim-token-1',
+        }),
         releaseInbound,
       })
     );
@@ -253,6 +290,7 @@ describe('NovuAgentChatAdapterImpl', () => {
       session: SESSION,
       key: 'msg_abcdefghijkl',
       conversationId: expect.any(String),
+      claimToken: 'claim-token-1',
     });
   });
 
@@ -279,7 +317,7 @@ describe('NovuAgentChatAdapterImpl', () => {
 
   it('acks a duplicate action without re-dispatching when claimInbound is duplicate', async () => {
     const claimInbound = vi.fn(async () => ({
-      claimed: false,
+      outcome: 'duplicate' as const,
       conversationId: 'conv_abcdefghijkl',
     }));
     const { adapter, processAction } = await createAdapter(

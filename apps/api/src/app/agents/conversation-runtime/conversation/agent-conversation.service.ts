@@ -471,6 +471,12 @@ export class AgentConversationService {
     return this.ledger.persistToolUseSignal(params);
   }
 
+  async persistInboundActionAccept(
+    params: ConversationActivityContext & { identifier: string; actionId: string }
+  ): Promise<void> {
+    return this.ledger.persistInboundActionAccept(params);
+  }
+
   async enrichToolUseSignal(params: {
     environmentId: string;
     organizationId: string;

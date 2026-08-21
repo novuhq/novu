@@ -566,6 +566,17 @@ export class ConversationActivityLedger {
     });
   }
 
+  async persistInboundActionAccept(
+    params: ConversationActivityContext & { identifier: string; actionId: string }
+  ): Promise<void> {
+    await this.persistSignal({
+      ...params,
+      identifier: params.identifier,
+      content: `Action: ${params.actionId}`,
+      signalData: { type: 'inbound-action', payload: { actionId: params.actionId } },
+    });
+  }
+
   async enrichToolUseSignal(params: {
     environmentId: string;
     organizationId: string;

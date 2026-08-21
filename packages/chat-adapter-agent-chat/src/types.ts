@@ -66,10 +66,11 @@ export type AgentChatClaimInboundParams = {
   conversationId: string;
 };
 
-export type AgentChatInboundClaimResult = {
-  claimed: boolean;
-  conversationId: string;
-};
+export type AgentChatInboundClaimResult =
+  | { outcome: 'acquired'; conversationId: string; claimToken: string }
+  | { outcome: 'duplicate'; conversationId: string }
+  | { outcome: 'in_progress'; conversationId: string }
+  | { outcome: 'unavailable' };
 
 export type AgentChatAdapterConfig = {
   userName?: string;
@@ -85,12 +86,12 @@ export type AgentChatAdapterConfig = {
    */
   checkAcceptLimits?: (params: AgentChatCheckAcceptLimitsParams) => Promise<AgentChatAcceptLimitBlock | null>;
   /**
-   * Atomic accept gate. `key` is `msg_*` or `idem_*`. When `claimed` is false,
-   * ack with `conversationId` without dispatching again.
+   * Atomic accept gate. `key` is `msg_*` or `idem_*`.
+   * `duplicate` acks without dispatch. `in_progress` / `unavailable` do not dispatch.
    */
   claimInbound?: (params: AgentChatClaimInboundParams) => Promise<AgentChatInboundClaimResult>;
-  /** Drop the in-flight lock after dispatch fails so the same key can retry. */
-  releaseInbound?: (params: AgentChatClaimInboundParams) => Promise<void>;
+  /** Drop this request's in-flight lock after dispatch fails. Compare-and-delete. */
+  releaseInbound?: (params: AgentChatClaimInboundParams & { claimToken: string }) => Promise<void>;
   deliverMessage: (params: AgentChatDeliverMessageParams) => Promise<AgentChatDeliverMessageResult>;
   editMessage: (params: AgentChatEditMessageParams) => Promise<AgentChatDeliverMessageResult>;
   deleteMessage: (params: AgentChatDeleteMessageParams) => Promise<void>;
