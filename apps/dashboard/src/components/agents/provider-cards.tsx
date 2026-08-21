@@ -23,7 +23,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName } from '@/utils/agent-channel-branding';
+import { AGENT_IMESSAGE_LABEL, getAgentChannelIconFileName, IMESSAGE_PROVIDER_IDS } from '@/utils/agent-channel-branding';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
@@ -91,6 +91,41 @@ type ProviderCardItem = {
   requiresBusinessTier: boolean;
   integrations: IIntegration[];
 };
+
+/**
+ * Collapse the iMessage vendors into ONE channel card: iMessage is a single
+ * channel to the user, and the vendor is picked on the "Setup iMessage via"
+ * select inside the guide (which re-links through the same replace-existing
+ * flow as the cards). The card carries the ACTIVE vendor's providerId — a
+ * connected link first, then any link, then an existing integration, then the
+ * first vendor as the default for fresh agents. Because the replace-existing
+ * flow keeps at most one iMessage vendor linked, every downstream status check
+ * (selected/connected/in-setup) is correct against the active vendor alone.
+ */
+function mergeImessageCards(
+  items: ProviderCardItem[],
+  existingLinks: AgentIntegrationLink[] | undefined
+): ProviderCardItem[] {
+  const group = items.filter((item) => IMESSAGE_PROVIDER_IDS.includes(item.providerId));
+
+  if (group.length <= 1) {
+    return items;
+  }
+
+  const imessageLink = (predicate: (link: AgentIntegrationLink) => boolean) =>
+    existingLinks?.find((link) => IMESSAGE_PROVIDER_IDS.includes(link.integration.providerId) && predicate(link));
+
+  const activeProviderId =
+    imessageLink((link) => hasAgentInboundConnection(link.connectedAt))?.integration.providerId ??
+    imessageLink(() => true)?.integration.providerId ??
+    group.find((item) => item.integrations.length > 0)?.providerId ??
+    group[0].providerId;
+
+  const active = group.find((item) => item.providerId === activeProviderId) ?? group[0];
+  const merged: ProviderCardItem = { ...active, displayName: AGENT_IMESSAGE_LABEL };
+
+  return [merged, ...items.filter((item) => !IMESSAGE_PROVIDER_IDS.includes(item.providerId))];
+}
 
 function buildCardItems(
   conversationalProviders: readonly ConversationalProvider[],
@@ -488,9 +523,12 @@ export function ProviderCards({
   // Email (NovuAgent) renders like every other connectable channel card; its integration + link
   // are only provisioned when the user clicks Connect.
   const items = useMemo(() => {
-    const built = buildCardItems(conversationalProviders, integrations).filter(
-      // Agent email is Enterprise/Cloud-only — never surface the card on Community.
-      (item) => !(IS_SELF_HOSTED_CE && item.providerId === EmailProviderIdEnum.NovuAgent)
+    const built = mergeImessageCards(
+      buildCardItems(conversationalProviders, integrations).filter(
+        // Agent email is Enterprise/Cloud-only — never surface the card on Community.
+        (item) => !(IS_SELF_HOSTED_CE && item.providerId === EmailProviderIdEnum.NovuAgent)
+      ),
+      existingLinks
     );
 
     return [...built].sort((left, right) => {
@@ -507,7 +545,7 @@ export function ProviderCards({
 
       return rank(left.providerId) - rank(right.providerId);
     });
-  }, [conversationalProviders, integrations]);
+  }, [conversationalProviders, integrations, existingLinks]);
 
   const linkedIntegrationIds = useMemo(
     () => new Set(existingLinks?.map((link) => link.integration._id) ?? []),

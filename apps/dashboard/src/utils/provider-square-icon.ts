@@ -17,6 +17,8 @@ const PROVIDER_SQUARE_ICON_FILE_ALIASES: Record<string, string> = {
   'tool-webhook': 'webhook',
   'generic-sms': 'webhook',
   'photon-imessage': 'photon',
+  // AgentPlatformEnum value stored on conversation activity, like 'agent_chat' above.
+  photon_imessage: 'photon',
 };
 
 export function getProviderSquareIconFileName(platform: string): string {

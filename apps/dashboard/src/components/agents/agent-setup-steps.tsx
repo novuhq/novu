@@ -14,6 +14,7 @@ import {
   type AgentResponse,
   getAgentIntegrationsQueryKey,
   listAgentIntegrations,
+  removeAgentIntegration,
   sendAgentWelcomeMessage,
 } from '@/api/agents';
 import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
@@ -27,6 +28,8 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
+import { AGENT_IMESSAGE_LABEL, IMESSAGE_PROVIDER_IDS } from '@/utils/agent-channel-branding';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { withOnboardingSource } from '@/utils/onboarding-redirect';
 import { buildRoute } from '@/utils/routes';
@@ -36,6 +39,7 @@ import { AgentIntegrationGuideTransition } from './agent-integration-guides/agen
 import { resolveAgentProviderDisplayName } from './agent-integration-guides/agent-provider-display-name';
 import { providerHasWhatsNextPhase } from './agent-integration-guides/whats-next/whats-next-config';
 import { AgentListenStep } from './agent-listen-step';
+import { ImessageProviderSwitchProvider } from './imessage-provider-select';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
@@ -578,6 +582,65 @@ export function AgentSetupSteps({
     [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
   );
 
+  // "Setup iMessage via" vendor switch: the iMessage guides share one channel
+  // card, and picking the other vendor in the guide's select re-links the agent
+  // through the same replace-existing flow the channel cards use.
+  const linkedIntegrationIdsForSwitch = useMemo(
+    () => new Set(agentIntegrationLinks.map((link) => link.integration._id)),
+    [agentIntegrationLinks]
+  );
+  const { linkProvider: linkImessageProvider } = useLinkAgentIntegration({
+    agentIdentifier: agent.identifier,
+    linkedIntegrationIds: linkedIntegrationIdsForSwitch,
+    existingLinks: agentIntegrationLinks,
+    replaceExisting: true,
+    onLinked: handleProviderSelect,
+  });
+
+  const handleSwitchImessageProvider = useCallback(
+    (providerId: string) => {
+      // replaceExisting only dedupes within one provider, so the other iMessage
+      // vendor's link must be removed here or both vendors deliver to the phone.
+      const unlinkOtherVendor = async () => {
+        const other = agentIntegrationLinks.find(
+          (link) =>
+            IMESSAGE_PROVIDER_IDS.includes(link.integration.providerId) && link.integration.providerId !== providerId
+        );
+        if (!other || !currentEnvironment) return;
+
+        await removeAgentIntegration(currentEnvironment, agent.identifier, other._id);
+        await agentIntegrationsQuery.refetch();
+      };
+
+      const existingLink = agentIntegrationLinks.find((link) => link.integration.providerId === providerId);
+
+      if (existingLink) {
+        const integration =
+          integrations?.find((i) => i._id === existingLink.integration._id) ??
+          (existingLink.integration as unknown as IIntegration);
+        handleProviderSelect(providerId, integration);
+        void unlinkOtherVendor();
+
+        return;
+      }
+
+      void linkImessageProvider(
+        { providerId, displayName: AGENT_IMESSAGE_LABEL, newIntegrationName: agent.name ?? agent.identifier },
+        `${providerId}-imessage-switch`
+      ).then(unlinkOtherVendor);
+    },
+    [
+      agent.identifier,
+      agent.name,
+      agentIntegrationLinks,
+      agentIntegrationsQuery,
+      currentEnvironment,
+      handleProviderSelect,
+      integrations,
+      linkImessageProvider,
+    ]
+  );
+
   useEffect(() => {
     if (!isOnboarding || channelConnectedTrackedRef.current) return;
 
@@ -832,6 +895,7 @@ export function AgentSetupSteps({
             className="flex flex-col gap-10"
             style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
           >
+            <ImessageProviderSwitchProvider onSwitch={handleSwitchImessageProvider}>
             {useRolloutGate && guideIntegrationId && guideProviderId ? (
               <AgentIntegrationGuideTransition
                 isConnected={guideLayer1Complete}
@@ -875,6 +939,7 @@ export function AgentSetupSteps({
                 integrationLink={guideIntegrationLink}
               />
             )}
+            </ImessageProviderSwitchProvider>
           </motion.div>
         ) : null}
       </AnimatePresence>

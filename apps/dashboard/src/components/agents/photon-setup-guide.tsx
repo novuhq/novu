@@ -13,11 +13,9 @@ import {
 import type { AgentResponse, SendPhotonTestMessageError } from '@/api/agents';
 import { patchSubscriber } from '@/api/subscribers';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
-import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigurePhotonWebhook } from '@/hooks/use-configure-photon-webhook';
@@ -37,6 +35,7 @@ import {
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
+import { ImessageProviderSelect } from './imessage-provider-select';
 import { buildImessageFallbackHref, deriveStepStatus, hasPhotonProjectCredentials } from './setup-guide-step-utils';
 
 import { PHONE_PATTERN } from './whatsapp-setup-guide-utils';
@@ -519,7 +518,7 @@ function SendTestMessagePanel({
     const savedPhone = subscriber?.phone?.trim();
 
     if (savedPhone) {
-      setPhone(savedPhone);
+      setPhone((current) => current || savedPhone);
     }
   }, [subscriber?.phone]);
 
@@ -642,36 +641,6 @@ function SendTestMessagePanel({
   );
 }
 
-const IMESSAGE_OTHER_PROVIDER_HINT = '__imessage_other_provider__';
-
-function ImessageProviderSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  return (
-    <div className="flex w-full max-w-[400px] flex-col gap-1.5">
-      <span className="text-text-sub text-label-xs font-medium leading-4">iMessage provider</span>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger size="2xs" className="max-w-[280px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ChatProviderIdEnum.PhotonImessage}>
-            <span className="flex items-center gap-2">
-              <ProviderIcon
-                providerId={ChatProviderIdEnum.PhotonImessage}
-                providerDisplayName="Photon"
-                className="size-4 shrink-0"
-              />
-              Photon
-            </span>
-          </SelectItem>
-          <SelectItem value={IMESSAGE_OTHER_PROVIDER_HINT} disabled>
-            Sendblue — pick it from the channel cards
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
 export function PhotonSetupGuide({
   agent,
   integrationId,
@@ -680,7 +649,6 @@ export function PhotonSetupGuide({
   embedded = false,
 }: PhotonSetupGuideProps) {
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
-  const [selectedProvider, setSelectedProvider] = useState<string>(ChatProviderIdEnum.PhotonImessage);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isWebhookConfiguredLocally, setIsWebhookConfiguredLocally] = useState(false);
@@ -745,7 +713,7 @@ export function PhotonSetupGuide({
         status="completed"
         title="Setup iMessage via"
         description="Choose a provider to connect iMessage to your agent."
-        rightContent={<ImessageProviderSelect value={selectedProvider} onChange={setSelectedProvider} />}
+        rightContent={<ImessageProviderSelect value={ChatProviderIdEnum.PhotonImessage} />}
       />
 
       <SetupStep

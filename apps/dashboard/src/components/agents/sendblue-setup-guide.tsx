@@ -12,11 +12,9 @@ import {
 import type { AgentResponse, SendSendblueTestMessageError } from '@/api/agents';
 import { patchSubscriber } from '@/api/subscribers';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
-import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureSendblueWebhook } from '@/hooks/use-configure-sendblue-webhook';
@@ -34,6 +32,7 @@ import {
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
+import { ImessageProviderSelect } from './imessage-provider-select';
 import { buildImessageFallbackHref, deriveStepStatus, hasSendblueUserCredentials } from './setup-guide-step-utils';
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
@@ -498,37 +497,6 @@ function SendTestMessagePanel({
   );
 }
 
-// Only Sendblue is available today; the disabled row signals more providers are on the way.
-const IMESSAGE_COMING_SOON_VALUE = '__imessage_coming_soon__';
-
-function ImessageProviderSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  return (
-    <div className="flex w-full max-w-[400px] flex-col gap-1.5">
-      <span className="text-text-sub text-label-xs font-medium leading-4">iMessage provider</span>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger size="2xs" className="max-w-[280px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ChatProviderIdEnum.Sendblue}>
-            <span className="flex items-center gap-2">
-              <ProviderIcon
-                providerId={ChatProviderIdEnum.Sendblue}
-                providerDisplayName="Sendblue"
-                className="size-4 shrink-0"
-              />
-              Sendblue
-            </span>
-          </SelectItem>
-          <SelectItem value={IMESSAGE_COMING_SOON_VALUE} disabled>
-            More coming soon
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
 export function SendblueSetupGuide({
   agent,
   integrationId,
@@ -537,8 +505,6 @@ export function SendblueSetupGuide({
   embedded = false,
 }: SendblueSetupGuideProps) {
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
-  // Presentational for now: Sendblue is the only iMessage provider, preselected on mount.
-  const [selectedProvider, setSelectedProvider] = useState<string>(ChatProviderIdEnum.Sendblue);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isWebhookConfiguredLocally, setIsWebhookConfiguredLocally] = useState(false);
@@ -604,7 +570,7 @@ export function SendblueSetupGuide({
         status="completed"
         title="Setup iMessage via"
         description="Choose a provider to connect iMessage to your agent."
-        rightContent={<ImessageProviderSelect value={selectedProvider} onChange={setSelectedProvider} />}
+        rightContent={<ImessageProviderSelect value={ChatProviderIdEnum.Sendblue} />}
       />
 
       <SetupStep
