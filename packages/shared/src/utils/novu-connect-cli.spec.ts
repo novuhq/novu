@@ -28,4 +28,32 @@ describe('novu-connect-cli', () => {
     expect(getNovuConnectTargetFlags('https://eu.api.novu.co')).toEqual(['--api-url https://eu.api.novu.co']);
     expect(getNovuConnectTargetFlags('http://localhost:3000')).toEqual(['--api-url http://localhost:3000']);
   });
+
+  it('uses rc on local API hosts', () => {
+    expect(getNovuConnectPackageTag('http://localhost:3000')).toBe('rc');
+    expect(getNovuConnectPackageTag('http://127.0.0.1:3000')).toBe('rc');
+    expect(getNovuConnectInvocation('http://localhost:3000')).toBe('npx novu@rc connect');
+  });
+
+  it('adds dashboard URLs for local connect commands', () => {
+    expect(
+      getNovuConnectTargetFlags({
+        apiUrl: 'http://localhost:3000',
+        connectDashboardUrl: 'http://localhost:4201',
+      })
+    ).toEqual([
+      '--api-url http://localhost:3000',
+      '--connect-dashboard-url http://localhost:4201',
+      '--dashboard-url http://localhost:4201',
+    ]);
+  });
+
+  it('does not add dashboard URLs for cloud dashboards', () => {
+    expect(
+      getNovuConnectTargetFlags({
+        apiUrl: 'http://localhost:3000',
+        connectDashboardUrl: 'https://dashboard.novu.co',
+      })
+    ).toEqual(['--api-url http://localhost:3000']);
+  });
 });
