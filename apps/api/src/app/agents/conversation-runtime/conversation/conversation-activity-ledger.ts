@@ -539,13 +539,13 @@ export class ConversationActivityLedger {
   async findActivityByIdentifier(
     environmentId: string,
     identifier: string
-  ): Promise<ConversationActivityEntity | null> {
+  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformThreadId'> | null> {
     return this.activityRepository.findOne(
       {
         _environmentId: environmentId,
         identifier,
       },
-      '_id platformThreadId'
+      ['_id', 'platformThreadId']
     );
   }
 

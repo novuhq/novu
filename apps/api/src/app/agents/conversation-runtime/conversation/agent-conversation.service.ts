@@ -453,7 +453,7 @@ export class AgentConversationService {
   async findActivityByIdentifier(
     environmentId: string,
     identifier: string
-  ): Promise<ConversationActivityEntity | null> {
+  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformThreadId'> | null> {
     return this.ledger.findActivityByIdentifier(environmentId, identifier);
   }
 
