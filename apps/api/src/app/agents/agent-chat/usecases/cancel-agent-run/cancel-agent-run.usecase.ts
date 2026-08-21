@@ -12,7 +12,6 @@ import { AgentConfigResolver, type ResolvedAgentConfig } from '../../../channels
 import { AgentConversationService } from '../../../conversation-runtime/conversation/agent-conversation.service';
 import { resolveLifecycleChannel } from '../../../conversation-runtime/conversation/run-lifecycle-activity';
 import { AgentRunRegistryService } from '../../../conversation-runtime/runtime/agent-run-registry.service';
-import { RuntimeResolver } from '../../../conversation-runtime/runtime/runtime-resolver.service';
 import { AgentEventContext, AgentEventSink } from '../../../shared/agent-event-sink.service';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { withAgentChatContextFilter } from '../../agent-chat-context-query.util';
@@ -24,6 +23,11 @@ function cancelCommandIdentifier(idempotencyKey: string): string {
   return `cancel_cmd_${idempotencyKey}`;
 }
 
+type ResolvedActiveRun = {
+  runId?: string;
+  inFlight: boolean;
+};
+
 @Injectable()
 export class CancelAgentRun {
   constructor(
@@ -33,7 +37,6 @@ export class CancelAgentRun {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
     private readonly agentRunRegistry: AgentRunRegistryService,
-    private readonly runtimeResolver: RuntimeResolver,
     private readonly agentEventSink: AgentEventSink,
     private readonly logger: PinoLogger
   ) {
@@ -110,6 +113,28 @@ export class CancelAgentRun {
     };
   }
 
+  private async resolveActiveRun(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+  }): Promise<ResolvedActiveRun | null> {
+    const ledgerRun = await this.conversationService.findOpenRun(params);
+    if (ledgerRun) {
+      return { runId: ledgerRun.runId, inFlight: true };
+    }
+
+    const registryRunId = this.agentRunRegistry.getRunId(params.conversationId);
+    if (registryRunId) {
+      return { runId: registryRunId, inFlight: true };
+    }
+
+    if (this.agentRunRegistry.hasActiveRun(params.conversationId)) {
+      return { inFlight: true };
+    }
+
+    return null;
+  }
+
   private async cancelActiveRun(params: {
     conversation: ConversationEntity;
     config: ResolvedAgentConfig;
@@ -117,25 +142,20 @@ export class CancelAgentRun {
     idempotencyKey: string;
   }): Promise<CancelAgentRunResponseDto> {
     const conversationId = String(params.conversation._id);
-    const openRun =
-      (await this.conversationService.findOpenRun({
-        environmentId: params.config.environmentId,
-        organizationId: params.config.organizationId,
-        conversationId,
-      })) ??
-      (() => {
-        const runId = this.agentRunRegistry.getRunId(conversationId);
+    const activeRun = await this.resolveActiveRun({
+      environmentId: params.config.environmentId,
+      organizationId: params.config.organizationId,
+      conversationId,
+    });
 
-        return runId ? { runId } : null;
-      })();
-
-    if (!openRun) {
+    if (!activeRun) {
       return { status: 'no-op' };
     }
 
     const channel = this.conversationService.getPrimaryChannel(params.conversation);
+    const idempotencyIdentifier = cancelCommandIdentifier(params.idempotencyKey);
     const recorded = await this.conversationService.recordCancelIdempotency({
-      identifier: cancelCommandIdentifier(params.idempotencyKey),
+      identifier: idempotencyIdentifier,
       conversationId,
       platform: channel.platform,
       integrationId: channel._integrationId,
@@ -143,22 +163,40 @@ export class CancelAgentRun {
       agentId: params.config.agentIdentifier,
       environmentId: params.config.environmentId,
       organizationId: params.config.organizationId,
-      runId: openRun.runId,
+      runId: activeRun.runId ?? 'pending',
       idempotencyKey: params.idempotencyKey,
     });
 
     if (!recorded) {
-      return { status: 'duplicate', runId: openRun.runId };
+      return { status: 'duplicate', ...(activeRun.runId ? { runId: activeRun.runId } : {}) };
     }
 
+    const rollbackIdempotency = async () => {
+      await this.conversationService.deleteCancelIdempotency({
+        identifier: idempotencyIdentifier,
+        environmentId: params.config.environmentId,
+        organizationId: params.config.organizationId,
+      });
+    };
+
+    const stillActive = await this.resolveActiveRun({
+      environmentId: params.config.environmentId,
+      organizationId: params.config.organizationId,
+      conversationId,
+    });
+
+    if (!stillActive) {
+      await rollbackIdempotency();
+
+      return { status: 'no-op' };
+    }
+
+    const runId = stillActive.runId ?? activeRun.runId;
     this.agentRunRegistry.abort(conversationId);
 
-    const runtime = this.runtimeResolver.resolve(params.agent);
-    await runtime.cancelRun({
-      conversation: params.conversation,
-      config: params.config,
-      runId: openRun.runId,
-    });
+    if (!runId) {
+      return { status: 'canceled' };
+    }
 
     const lifecycleChannel = resolveLifecycleChannel(params.conversation, channel.platformThreadId);
     const context: AgentEventContext = {
@@ -180,8 +218,8 @@ export class CancelAgentRun {
       version: AGENT_EVENT_PROTOCOL_VERSION,
       conversationId,
       agentId: params.config.agentIdentifier,
-      runId: openRun.runId,
-      turnId: openRun.runId,
+      runId,
+      turnId: runId,
       sequence: Number.MAX_SAFE_INTEGER,
       timestamp: new Date().toISOString(),
       event: { type: 'run-finish', outcome: 'aborted' },
@@ -190,10 +228,11 @@ export class CancelAgentRun {
     try {
       await this.agentEventSink.ingest(envelope, context);
     } catch (err) {
-      this.logger.error(err, `Failed to ingest aborted run-finish: run=${openRun.runId}`);
+      await rollbackIdempotency();
+      this.logger.error(err, `Failed to ingest aborted run-finish: run=${runId}`);
       throw err;
     }
 
-    return { status: 'canceled', runId: openRun.runId };
+    return { status: 'canceled', runId };
   }
 }

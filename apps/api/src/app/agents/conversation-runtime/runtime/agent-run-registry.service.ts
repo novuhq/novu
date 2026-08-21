@@ -38,6 +38,10 @@ export class AgentRunRegistryService {
     return this.runs.get(conversationId)?.runId;
   }
 
+  hasActiveRun(conversationId: string): boolean {
+    return this.runs.has(conversationId);
+  }
+
   getSource(conversationId: string): 'bridge' | 'managed' | undefined {
     return this.runs.get(conversationId)?.source;
   }

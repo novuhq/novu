@@ -1876,4 +1876,22 @@ describe('AgentChat', () => {
 
     expect(result).toEqual({ data: { status: 'no-op' } });
   });
+
+  it('allows concurrent cancelRun and sendMessage without calling unsubscribe', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    cancelRun.mockResolvedValue({ status: 'canceled', runId: 'run_abc123' });
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl2' });
+
+    const [cancelResult, sendResult] = await Promise.all([
+      agentChat.cancelRun({ agentId: 'agent_1', key: 'local_session1', idempotencyKey: 'cancel_concurrent' }),
+      agentChat.sendMessage({ agentId: 'agent_1', text: 'follow up', key: 'local_session1' }),
+    ]);
+
+    expect(cancelResult).toEqual({ data: { status: 'canceled', runId: 'run_abc123' } });
+    expect(sendResult.data?.conversationId).toBe('conv_abcdefghijkl');
+    expect(cancelRun).toHaveBeenCalledTimes(1);
+    expect(sendMessage).toHaveBeenCalledTimes(2);
+  });
 });

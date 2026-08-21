@@ -439,6 +439,10 @@ export class AgentConversationService {
     return this.ledger.recordCancelIdempotency(params);
   }
 
+  deleteCancelIdempotency(params: { identifier: string; environmentId: string; organizationId: string }) {
+    return this.ledger.deleteCancelIdempotency(params);
+  }
+
   // --- Lookups ---
 
   async findByPlatformMessageId(

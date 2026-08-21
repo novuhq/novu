@@ -234,6 +234,18 @@ export class ConversationActivityLedger {
     }
   }
 
+  async deleteCancelIdempotency(params: {
+    identifier: string;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<void> {
+    await this.activityRepository.delete({
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+      identifier: params.identifier,
+    });
+  }
+
   async persistInboundMessage(params: PersistInboundMessageParams): Promise<ConversationActivityEntity> {
     const content = params.content ?? '';
     const preview = getInboundActivityPreview(content, {

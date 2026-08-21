@@ -3,7 +3,7 @@ import { DEMO_QUOTA_EXHAUSTED_REPLY, DemoQuotaExhaustedError, PinoLogger } from 
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
-import type { AgentRuntime, CancelRunParams } from '../conversation-runtime/runtime/agent-runtime.port';
+import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime.port';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
@@ -113,16 +113,6 @@ export class ManagedRuntime implements AgentRuntime {
 
       throw err;
     }
-  }
-
-  /** Propagates cancel to the managed provider via the shared run registry AbortSignal. */
-  async cancelRun(params: CancelRunParams): Promise<void> {
-    await this.managedAgentService.cancelRun({
-      conversationId: String(params.conversation._id),
-      environmentId: params.config.environmentId,
-      organizationId: params.config.organizationId,
-      runId: params.runId,
-    });
   }
 
   /**

@@ -19,6 +19,7 @@ import { AgentConversationService } from '../conversation-runtime/conversation/a
 import { AgentRunRegistryService } from '../conversation-runtime/runtime/agent-run-registry.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
 import { buildLiveSessionMessages } from './build-live-session-messages';
 import { collapseHistoryForNewSession } from './collapse-history-for-new-session';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
@@ -152,19 +153,6 @@ export class ManagedAgentService implements OnModuleInit {
     );
 
     return { status: sendResult.status };
-  }
-
-  /** Best-effort managed run cancel — the registry AbortSignal is aborted upstream. */
-  async cancelRun(params: {
-    conversationId: string;
-    environmentId: string;
-    organizationId: string;
-    runId: string;
-  }): Promise<void> {
-    this.logger.debug(
-      { conversationId: params.conversationId, runId: params.runId },
-      'Managed run cancel acknowledged (AbortSignal already propagated)'
-    );
   }
 
   /**
