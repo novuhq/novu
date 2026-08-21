@@ -105,15 +105,15 @@ export class PollPhotonDeviceAuth {
      * endpoint tolerated a second exchange. Losers report pending — their next
      * tick lands after the winner released (or the lock self-expired).
      */
-    const lockAcquired = await this.deviceAuthBindingService.acquirePollLock(command.deviceCode);
-    if (!lockAcquired) {
+    const lockToken = await this.deviceAuthBindingService.acquirePollLock(command.deviceCode);
+    if (!lockToken) {
       return { status: 'pending' };
     }
 
     try {
       return await this.redeemAndProvision(command, integration);
     } finally {
-      await this.deviceAuthBindingService.releasePollLock(command.deviceCode);
+      await this.deviceAuthBindingService.releasePollLock(command.deviceCode, lockToken);
     }
   }
 

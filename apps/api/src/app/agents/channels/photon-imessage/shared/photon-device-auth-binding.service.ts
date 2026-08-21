@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
@@ -13,8 +13,12 @@ const TTL_BUFFER_SECONDS = 60;
  * worst case 0.95 × (1.1e + 60) = 1.045e + 57 > e for every e.
  */
 const TTL_JITTER_CUSHION = 0.1;
-/** Long enough to cover token exchange + project provisioning; auto-expires if a poll dies mid-flight. */
-const POLL_LOCK_TTL_SECONDS = 30;
+/**
+ * Sized to the worst-case redeem-and-provision path: up to five sequential
+ * Photon calls at a 10s timeout each, plus margin under the cache layer's
+ * ±5% TTL jitter. Auto-expires if a poll dies mid-flight.
+ */
+const POLL_LOCK_TTL_SECONDS = 90;
 
 /**
  * Who a pending device authorization belongs to. Stored when the flow starts,
@@ -70,18 +74,31 @@ export class PhotonDeviceAuthBindingService {
    * request outliving the poll interval) cannot double-provision. Losers report
    * pending and retry after the winner finished. The lock self-expires, so a
    * poll that dies mid-flight never wedges the flow.
+   *
+   * Returns an ownership token (or null when the lock is held): release is
+   * token-checked, so a holder whose lock expired mid-provisioning can never
+   * delete a successor's lock.
    */
-  async acquirePollLock(deviceCode: string): Promise<boolean> {
-    const result = await this.cacheService.setIfNotExist(this.lockKey(deviceCode), '1', {
+  async acquirePollLock(deviceCode: string): Promise<string | null> {
+    const token = randomBytes(16).toString('hex');
+    const result = await this.cacheService.setIfNotExist(this.lockKey(deviceCode), token, {
       ttl: POLL_LOCK_TTL_SECONDS,
     });
 
-    return result === 'OK';
+    return result === 'OK' ? token : null;
   }
 
-  async releasePollLock(deviceCode: string): Promise<void> {
+  /**
+   * Best-effort check-then-delete (CacheService exposes no atomic
+   * compare-and-delete): the read-to-delete window is microseconds against a
+   * 90s TTL, and a wrongly surviving lock merely self-expires.
+   */
+  async releasePollLock(deviceCode: string, token: string): Promise<void> {
     try {
-      await this.cacheService.del(this.lockKey(deviceCode));
+      const current = await this.cacheService.get(this.lockKey(deviceCode));
+      if (current === token) {
+        await this.cacheService.del(this.lockKey(deviceCode));
+      }
     } catch (err) {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err) },
