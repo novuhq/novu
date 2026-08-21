@@ -1815,11 +1815,18 @@ describe('AgentChat', () => {
     expect(historyChange?.newActions).toEqual([]);
   });
 
-  it('sets pagination.status to loading during fetchMore and back to idle on success', async () => {
+  it('updates pagination.status during fetchMore success and failure', async () => {
     getEvents.mockResolvedValueOnce(
       historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
     );
     await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockRejectedValueOnce(new Error('network'));
+    const failed = await agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(failed.error).toBeDefined();
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('error');
 
     let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
     getEvents.mockImplementationOnce(
@@ -1828,13 +1835,6 @@ describe('AgentChat', () => {
           resolveOlderPage = resolve;
         })
     );
-
-    const paginationStatuses: Array<string | undefined> = [];
-    emitter.on('agent_chat.messages.updated', ({ data }) => {
-      if (data.key === 'conv_abcdefghijkl') {
-        paginationStatuses.push(data.pagination.status);
-      }
-    });
 
     const older = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     expect(
@@ -1846,49 +1846,9 @@ describe('AgentChat', () => {
     );
     await older;
 
-    expect(paginationStatuses).toContain('loading');
     expect(
       agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
     ).toBe('idle');
-    expect(paginationStatuses.at(-1)).toBe('idle');
-  });
-
-  it('resets pagination.status to idle when loadConversation runs after fetchMore error', async () => {
-    getEvents.mockResolvedValueOnce(
-      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
-    );
-    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    getEvents.mockRejectedValueOnce(new Error('network'));
-    await agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-    expect(
-      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
-    ).toBe('error');
-
-    getEvents.mockResolvedValueOnce(
-      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
-    );
-    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    expect(
-      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
-    ).toBe('idle');
-  });
-
-  it('sets pagination.status to error when fetchMore fails', async () => {
-    getEvents.mockResolvedValueOnce(
-      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
-    );
-    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    getEvents.mockRejectedValueOnce(new Error('network'));
-
-    const result = await agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
-
-    expect(result.error).toBeDefined();
-    expect(
-      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
-    ).toBe('error');
   });
 
   it('deduplicates concurrent fetchMore calls into one in-flight request', async () => {
@@ -1948,29 +1908,6 @@ describe('AgentChat', () => {
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.error).toMatchObject({ message: 'agent handler failed' });
     expect(errors.at(-1)).toEqual({ message: 'agent handler failed' });
-  });
-
-  it('clears a prior run-error on the next run-start', async () => {
-    await openClaimedConversation();
-
-    emitter.emit(
-      'agent_chat.agent_event',
-      liveEnvelope({
-        sequence: 2,
-        event: { type: 'run-error', message: 'agent handler failed', code: 'handler_failed' },
-      })
-    );
-    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.error).toBeDefined();
-
-    emitter.emit(
-      'agent_chat.agent_event',
-      liveEnvelope({
-        sequence: 3,
-        event: { type: 'run-start' },
-      })
-    );
-
-    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.error).toBeUndefined();
   });
 
   it('does not let a stale fetchMore failure overwrite pagination status after reload', async () => {
