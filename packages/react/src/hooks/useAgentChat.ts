@@ -67,6 +67,10 @@ export type UseAgentChatResult = {
       error?: NovuError;
     }>;
   };
+  /** True while reconnect catch-up is in flight for this conversation. */
+  isRecovering: boolean;
+  /** Set when reconnect catch-up fails. Separate from send/fetch `error`. */
+  catchUpError?: NovuError;
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
@@ -157,7 +161,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [pagination, setPagination] = useState<AgentChatPagination>({ status: 'idle', hasMore: false });
   const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
   const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [catchUpError, setCatchUpError] = useState<NovuError | undefined>();
   const fetchGenerationRef = useRef(0);
+  const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
 
   const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
 
@@ -241,6 +248,10 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   );
 
   useEffect(() => {
+    // Agent chat always subscribes for live WS events while mounted, regardless of
+    // `<NovuProvider realtime={false}>`. That flag only disables notification/count
+    // auto-sync (`useNotifications`, `useCounts`). To stop agent-chat live updates,
+    // unmount the hook or call `novu.agentChat.unsubscribe()` yourself.
     novu.agentChat.subscribe();
 
     const snapshot = novu.agentChat.getConversation({
@@ -260,6 +271,12 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         },
         snapshotSetters
       );
+      setIsRecovering(snapshot.isRecovering);
+      setCatchUpError(snapshot.catchUpError);
+      if (snapshot.catchUpError && snapshot.catchUpError !== notifiedCatchUpErrorRef.current) {
+        notifiedCatchUpErrorRef.current = snapshot.catchUpError;
+        propsRef.current.onError?.(snapshot.catchUpError);
+      }
       if (snapshot.conversationId && !conversationIdProp) {
         setAssignedConversationId(snapshot.conversationId);
       }
@@ -291,6 +308,15 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       );
       if (data.conversationId && !propsRef.current.conversationId) {
         setAssignedConversationId(data.conversationId);
+      }
+
+      setIsRecovering(data.isRecovering);
+      setCatchUpError(data.catchUpError);
+      if (data.catchUpError && data.catchUpError !== notifiedCatchUpErrorRef.current) {
+        notifiedCatchUpErrorRef.current = data.catchUpError;
+        propsRef.current.onError?.(data.catchUpError);
+      } else if (data.catchUpError === undefined) {
+        notifiedCatchUpErrorRef.current = undefined;
       }
 
       const { change } = data;
@@ -441,6 +467,8 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     typing,
     status,
     pagination: paginationWithFetch,
+    isRecovering,
+    catchUpError,
     refetch,
   };
 };
