@@ -98,6 +98,29 @@ export class PollPhotonDeviceAuth {
       };
     }
 
+    /*
+     * Serialize concurrent polls for one code (second browser tab, a slow
+     * request outliving the poll interval): only the lock holder redeems and
+     * provisions, so the flow cannot double-provision even if the token
+     * endpoint tolerated a second exchange. Losers report pending — their next
+     * tick lands after the winner released (or the lock self-expired).
+     */
+    const lockAcquired = await this.deviceAuthBindingService.acquirePollLock(command.deviceCode);
+    if (!lockAcquired) {
+      return { status: 'pending' };
+    }
+
+    try {
+      return await this.redeemAndProvision(command, integration);
+    } finally {
+      await this.deviceAuthBindingService.releasePollLock(command.deviceCode);
+    }
+  }
+
+  private async redeemAndProvision(
+    command: PollPhotonDeviceAuthCommand,
+    integration: { _id: string }
+  ): Promise<PollPhotonDeviceAuthResult> {
     let poll: Awaited<ReturnType<typeof pollPhotonDeviceToken>>;
     try {
       poll = await pollPhotonDeviceToken(command.deviceCode);
