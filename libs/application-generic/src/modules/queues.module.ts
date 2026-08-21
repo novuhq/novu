@@ -10,7 +10,13 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { ReadinessService, SocketWorkerService, SqsService, WorkflowInMemoryProviderService } from '../services';
+import {
+  EventBridgeSchedulerService,
+  ReadinessService,
+  SocketWorkerService,
+  SqsService,
+  WorkflowInMemoryProviderService,
+} from '../services';
 import {
   ActiveJobsMetricQueueService,
   InboundParseQueueService,
@@ -33,7 +39,12 @@ const memoryQueueService = {
 };
 
 const INTERNAL_MODULE_PROVIDERS = [memoryQueueService, featureFlagsService];
-const BASE_PROVIDERS: Provider[] = [ReadinessService, CommunityOrganizationRepository, SqsService];
+const BASE_PROVIDERS: Provider[] = [
+  ReadinessService,
+  CommunityOrganizationRepository,
+  SqsService,
+  EventBridgeSchedulerService,
+];
 
 @Module({
   providers: [],

@@ -13,6 +13,8 @@ const PARTY_SOCKET_URLS = [
   'wss://socket-worker-local.cli-shortener.workers.dev',
   'ws://127.0.0.1:8787',
   'http://127.0.0.1:8787',
+  'ws://localhost:8787',
+  'http://localhost:8787',
 ];
 
 const URL_TRANSFORMATIONS: Record<string, string> = {

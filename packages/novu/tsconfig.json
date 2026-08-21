@@ -23,6 +23,7 @@
   "exclude": [
     "node_modules",
     "src/commands/init/templates",
+    "src/commands/connect/templates",
     "src/**/__fixtures__",
     "src/commands/wizard/ui/**",
     "src/commands/connect/ui/**"

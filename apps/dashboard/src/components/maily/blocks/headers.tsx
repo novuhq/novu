@@ -146,9 +146,7 @@ const createHeaderLogoWithText: (props: { track: ReturnType<typeof useTelemetry>
   };
 };
 
-const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
-  props
-) => {
+const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (props) => {
   const { track } = props;
 
   return {

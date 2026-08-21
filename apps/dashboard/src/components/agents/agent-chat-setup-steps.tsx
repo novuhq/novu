@@ -1,6 +1,12 @@
 import { RiArrowRightSLine } from 'react-icons/ri';
-import { AgentChatEmbedResources } from '@/components/agents/agent-chat-setup-content';
-import { Button } from '@/components/primitives/button';
+import {
+  AGENT_CHAT_DOCS_URL,
+  AgentChatEmbedResources,
+  buildAgentChatTuiCommand,
+} from '@/components/agents/agent-chat-setup-content';
+import { CopyableTerminalBlock } from '@/components/primitives/copyable-terminal-block';
+import { ExternalLink } from '@/components/shared/external-link';
+import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 
@@ -19,42 +25,49 @@ export function AgentChatSetupSteps({
   onOpenChat,
 }: AgentChatSetupStepsProps) {
   const base = stepOffset;
-  const recap = firstIncompleteStep === undefined;
+  const tuiCommand = buildAgentChatTuiCommand(apiHostnameManager.getHostname());
 
   return (
     <>
       <SetupStep
         index={base}
-        status={recap ? 'completed' : deriveStepStatus(base, firstIncompleteStep)}
-        title="Your agent can already chat"
-        description="Open Chat and send a message. Try it here before you add it to your app."
-        extraContent={
+        status={firstIncompleteStep === undefined ? 'completed' : deriveStepStatus(base, firstIncompleteStep)}
+        title="Try the agent on web chat"
+        description="Chat with your agent to see how it responds before adding it to your app."
+        rightContent={
           !onOpenChat ? undefined : (
-            <Button
+            <button
               type="button"
-              variant="primary"
-              size="xs"
               onClick={onOpenChat}
-              trailingIcon={RiArrowRightSLine}
-              className="self-start"
+              className="text-text-sub hover:text-text-strong inline-flex items-center gap-1 self-start text-label-xs font-medium"
             >
-              Open Chat
-            </Button>
+              <img
+                src="/images/providers/light/square/novu-agent-chat.svg"
+                alt=""
+                className="size-4 shrink-0"
+                aria-hidden
+              />
+              Preview chat
+              <RiArrowRightSLine className="size-4 shrink-0" aria-hidden />
+            </button>
           )
         }
       />
       <SetupStep
         index={base + 1}
-        status={recap ? 'completed' : deriveStepStatus(base + 1, firstIncompleteStep)}
-        title="Add Agent Chat to your application"
-        description="Open the prompt in Cursor to wire up useAgentChat, or follow the docs."
-        fullWidthContent={<AgentChatEmbedResources prompt={prompt} />}
-      />
-      <SetupStep
-        index={base + 2}
-        status={recap ? 'completed' : deriveStepStatus(base + 2, firstIncompleteStep)}
-        title="Go live from your app"
-        description="Send a message in your app. We mark the channel Connected when it arrives."
+        status={firstIncompleteStep === undefined ? 'completed' : deriveStepStatus(base + 1, firstIncompleteStep)}
+        title="Add Web Chat to your app"
+        description={
+          <>
+            Paste the prompt into your coding agent. It runs <span className="font-code">npx novu connect --ci</span>{' '}
+            and asks you questions. Or copy the command and run the TUI yourself.{' '}
+            <ExternalLink href={AGENT_CHAT_DOCS_URL} className="inline-flex">
+              Read docs
+            </ExternalLink>
+          </>
+        }
+        extraContent={<CopyableTerminalBlock displayCommand={tuiCommand} copyCommand={tuiCommand} />}
+        rightContent={<AgentChatEmbedResources prompt={prompt} />}
       />
     </>
   );
