@@ -1,7 +1,7 @@
 const MESSAGE_ID_PATTERN = /^msg_[0-9a-z]{12}$/;
 const ACTION_IDEMPOTENCY_PATTERN = /^idem_[0-9a-z]{12}$/;
 
-function mintClientId(prefix: string): string {
+export function mintClientId(prefix: string): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `${prefix}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
   }

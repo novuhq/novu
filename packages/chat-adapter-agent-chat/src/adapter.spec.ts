@@ -210,12 +210,14 @@ describe('NovuAgentChatAdapterImpl', () => {
     expect(processMessage).not.toHaveBeenCalled();
   });
 
-  it('acks a retry without re-dispatching when findAcceptedMessage matches', async () => {
-    const findAcceptedMessage = vi.fn(async () => true);
+  it('acks a retry without re-dispatching when claimInboundMessage is duplicate', async () => {
+    const claimInboundMessage = vi.fn(async () => ({
+      claimed: false,
+      conversationId: 'conv_original0001',
+    }));
     const { adapter, processMessage } = await createAdapter(
       createConfig({
-        findAcceptedMessage,
-        authorizeResume: async () => true,
+        claimInboundMessage,
       })
     );
 
@@ -224,14 +226,35 @@ describe('NovuAgentChatAdapterImpl', () => {
         agentId: 'a',
         text: 'retry me',
         messageId: 'msg_abcdefghijkl',
-        conversationIdentifier: 'conv_abcdefghijkl',
       })
     );
     const body = await response.json();
 
     expect(response.status).toBe(201);
+    expect(body.data.identifier).toBe('conv_original0001');
     expect(body.data.messageId).toBe('msg_abcdefghijkl');
     expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid action idempotency key', async () => {
+    const { adapter, processAction } = await createAdapter(
+      createConfig({
+        authorizeResume: async () => true,
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'topic-billing',
+        sourceMessageId: 'act_card0000001',
+        idempotencyKey: 'not-an-idem-key',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(processAction).not.toHaveBeenCalled();
   });
 
   it('resumes with conversationIdentifier when authorizeResume allows', async () => {

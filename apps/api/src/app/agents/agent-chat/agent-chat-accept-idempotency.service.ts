@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 
-const ACTION_ACCEPT_TTL_SECONDS = 60 * 60 * 24;
+const ACCEPT_TTL_SECONDS = 60 * 60 * 24;
+
+export type AgentChatInboundClaimResult = {
+  /** When false, return the ack without dispatching again. */
+  claimed: boolean;
+  conversationId: string;
+};
 
 @Injectable()
 export class AgentChatAcceptIdempotencyService {
@@ -14,22 +20,73 @@ export class AgentChatAcceptIdempotencyService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async hasAcceptedMessage(environmentId: string, messageId: string): Promise<boolean> {
-    const existing = await this.conversationService.findActivityByIdentifier(environmentId, messageId);
-
-    return existing != null;
+  async claimInboundMessage(
+    environmentId: string,
+    messageId: string,
+    conversationId: string
+  ): Promise<AgentChatInboundClaimResult> {
+    return this.claimAccept(this.messageCacheKey(environmentId, messageId), conversationId, () =>
+      this.findMessageConversationId(environmentId, messageId)
+    );
   }
 
-  async hasAcceptedAction(environmentId: string, idempotencyKey: string): Promise<boolean> {
-    const cacheKey = this.actionCacheKey(environmentId, idempotencyKey);
-    const cached = await this.cacheService.get(cacheKey);
-
-    return cached != null;
+  async claimInboundAction(
+    environmentId: string,
+    idempotencyKey: string,
+    conversationId: string
+  ): Promise<AgentChatInboundClaimResult> {
+    return this.claimAccept(this.actionCacheKey(environmentId, idempotencyKey), conversationId);
   }
 
-  async rememberAcceptedAction(environmentId: string, idempotencyKey: string): Promise<void> {
-    const cacheKey = this.actionCacheKey(environmentId, idempotencyKey);
-    await this.cacheService.set(cacheKey, '1', ACTION_ACCEPT_TTL_SECONDS);
+  private async claimAccept(
+    cacheKey: string,
+    conversationId: string,
+    resolveDurable?: () => Promise<string | null>
+  ): Promise<AgentChatInboundClaimResult> {
+    if (resolveDurable) {
+      const durableConversationId = await resolveDurable();
+      if (durableConversationId) {
+        return { claimed: false, conversationId: durableConversationId };
+      }
+    }
+
+    const reserved = await this.cacheService.setIfNotExist(cacheKey, conversationId, { ttl: ACCEPT_TTL_SECONDS });
+    if (reserved === 'OK') {
+      return { claimed: true, conversationId };
+    }
+
+    const cachedConversationId = await this.cacheService.get(cacheKey);
+    if (cachedConversationId) {
+      return { claimed: false, conversationId: cachedConversationId };
+    }
+
+    if (resolveDurable) {
+      const durableRetry = await resolveDurable();
+      if (durableRetry) {
+        return { claimed: false, conversationId: durableRetry };
+      }
+    }
+
+    return { claimed: false, conversationId };
+  }
+
+  private async findMessageConversationId(environmentId: string, messageId: string): Promise<string | null> {
+    const activity = await this.conversationService.findActivityByIdentifier(environmentId, messageId);
+    if (!activity?.platformThreadId) {
+      return null;
+    }
+
+    return this.conversationIdFromPlatformThreadId(activity.platformThreadId);
+  }
+
+  private conversationIdFromPlatformThreadId(platformThreadId: string): string {
+    const prefix = 'agent_chat:';
+
+    return platformThreadId.startsWith(prefix) ? platformThreadId.slice(prefix.length) : platformThreadId;
+  }
+
+  private messageCacheKey(environmentId: string, messageId: string): string {
+    return `agent-chat:message-accept:${environmentId}:${messageId}`;
   }
 
   private actionCacheKey(environmentId: string, idempotencyKey: string): string {

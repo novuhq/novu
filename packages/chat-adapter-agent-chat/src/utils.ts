@@ -7,6 +7,7 @@ const nanoid = customAlphabet(ALPHABET);
 export const ADAPTER_NAME = 'agent_chat';
 export const CONVERSATION_ID_PATTERN = /^conv_[0-9a-z]{12}$/;
 export const MESSAGE_ID_PATTERN = /^msg_[0-9a-z]{12}$/;
+export const ACTION_IDEMPOTENCY_PATTERN = /^idem_[0-9a-z]{12}$/;
 export const THREAD_ID_PREFIX = `${ADAPTER_NAME}:`;
 
 export function shortId(length = 12): string {
@@ -31,6 +32,10 @@ export function isValidConversationId(value: string): boolean {
 
 export function isValidMessageId(value: string): boolean {
   return MESSAGE_ID_PATTERN.test(value);
+}
+
+export function isValidActionIdempotencyKey(value: string): boolean {
+  return ACTION_IDEMPOTENCY_PATTERN.test(value);
 }
 
 export function toThreadId(conversationId: string): string {

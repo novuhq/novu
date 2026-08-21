@@ -21,6 +21,7 @@ import {
   ADAPTER_NAME,
   conversationIdFromThreadId,
   isApprovalActionId,
+  isValidActionIdempotencyKey,
   isValidConversationId,
   isValidMessageId,
   mintActivityId,
@@ -236,14 +237,14 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       return jsonResponse({ message: 'Invalid message id' }, 400);
     }
 
-    if (clientMessageId && this.config.findAcceptedMessage) {
-      const alreadyAccepted = await this.config.findAcceptedMessage({
+    if (clientMessageId && this.config.claimInboundMessage) {
+      const claim = await this.config.claimInboundMessage({
         session,
-        conversationId,
         messageId: clientMessageId,
+        conversationId,
       });
-      if (alreadyAccepted) {
-        return jsonResponse({ data: { identifier: conversationId, messageId: clientMessageId } }, 201);
+      if (!claim.claimed) {
+        return jsonResponse({ data: { identifier: claim.conversationId, messageId: clientMessageId } }, 201);
       }
     }
 
@@ -282,14 +283,18 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
     }
 
     const idempotencyKey = typeof body.idempotencyKey === 'string' ? body.idempotencyKey.trim() : '';
-    if (idempotencyKey && this.config.findAcceptedAction) {
-      const alreadyAccepted = await this.config.findAcceptedAction({
+    if (idempotencyKey && !isValidActionIdempotencyKey(idempotencyKey)) {
+      return jsonResponse({ message: 'Invalid idempotency key' }, 400);
+    }
+
+    if (idempotencyKey && this.config.claimInboundAction) {
+      const claim = await this.config.claimInboundAction({
         session,
-        conversationId,
         idempotencyKey,
+        conversationId,
       });
-      if (alreadyAccepted) {
-        return jsonResponse({ data: { identifier: conversationId } }, 200);
+      if (!claim.claimed) {
+        return jsonResponse({ data: { identifier: claim.conversationId } }, 200);
       }
     }
 
@@ -315,14 +320,6 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       },
       options
     );
-
-    if (idempotencyKey && this.config.rememberAcceptedAction) {
-      await this.config.rememberAcceptedAction({
-        session,
-        conversationId,
-        idempotencyKey,
-      });
-    }
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
   }

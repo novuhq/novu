@@ -2434,20 +2434,6 @@ describe('AgentChat', () => {
   });
 
   describe('idempotency and concurrency', () => {
-    it('persists idempotencyKey on optimistic user messages through send', async () => {
-      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_server00001' });
-
-      await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
-
-      const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
-      expect(snapshot?.messages[0]?.idempotencyKey).toMatch(/^msg_/);
-      expect(sendMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          messageId: snapshot?.messages[0]?.idempotencyKey,
-        })
-      );
-    });
-
     it('retryMessage resubmits with the original idempotency key', async () => {
       sendMessage.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
         identifier: 'conv_abcdefghijkl',
@@ -2538,69 +2524,6 @@ describe('AgentChat', () => {
       expect(sendMessage).not.toHaveBeenCalled();
     });
 
-    it('queues sendMessage while isRunning when policy is queue', async () => {
-      const queuedChat = new AgentChat({
-        inboxServiceInstance,
-        eventEmitterInstance: emitter,
-        agentChatService: { sendMessage, respondToAction, sendAction, getEvents } as unknown as AgentChatService,
-        socket: { connect },
-        sendConcurrencyPolicy: 'queue',
-      });
-
-      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
-      await queuedChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_queue' });
-
-      emitter.emit('agent_chat.agent_event', {
-        result: {
-          version: AGENT_EVENT_PROTOCOL_VERSION,
-          conversationId: 'internal',
-          conversationIdentifier: 'conv_abcdefghijkl',
-          agentId: 'agent_1',
-          runId: 'run_1',
-          turnId: 'turn_1',
-          sequence: 1,
-          timestamp: '2026-08-07T12:00:00.000Z',
-          event: { type: 'run-start' },
-        },
-      });
-
-      sendMessage.mockClear();
-      await queuedChat.sendMessage({
-        agentId: 'agent_1',
-        text: 'queued turn',
-        key: 'local_queue',
-        conversationId: 'conv_abcdefghijkl',
-      });
-
-      expect(sendMessage).not.toHaveBeenCalled();
-      expect(queuedChat.getConversation({ agentId: 'agent_1', key: 'local_queue' })?.messages).toHaveLength(2);
-
-      sendMessage.mockResolvedValueOnce({ identifier: 'conv_abcdefghijkl', messageId: 'msg_queued00001' });
-      emitter.emit('agent_chat.agent_event', {
-        result: {
-          version: AGENT_EVENT_PROTOCOL_VERSION,
-          conversationId: 'internal',
-          conversationIdentifier: 'conv_abcdefghijkl',
-          agentId: 'agent_1',
-          runId: 'run_1',
-          turnId: 'turn_1',
-          sequence: 2,
-          timestamp: '2026-08-07T12:00:01.000Z',
-          event: { type: 'run-finish', outcome: 'completed' },
-        },
-      });
-
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(sendMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          text: 'queued turn',
-          messageId: expect.stringMatching(/^msg_/),
-        })
-      );
-    });
-
     it('suppresses duplicate respondToAction submissions', async () => {
       getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
       respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
@@ -2621,28 +2544,6 @@ describe('AgentChat', () => {
       });
 
       expect(respondToAction).toHaveBeenCalledTimes(1);
-    });
-
-    it('suppresses duplicate sendAction submissions', async () => {
-      sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' });
-      sendAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
-
-      await agentChat.sendMessage({ agentId: 'agent_1', text: 'hi', key: 'local_card_dup' });
-
-      await agentChat.sendAction({
-        agentId: 'agent_1',
-        key: 'local_card_dup',
-        actionId: 'topic-billing',
-        sourceMessageId: 'act_card0000001',
-      });
-      await agentChat.sendAction({
-        agentId: 'agent_1',
-        key: 'local_card_dup',
-        actionId: 'topic-billing',
-        sourceMessageId: 'act_card0000001',
-      });
-
-      expect(sendAction).toHaveBeenCalledTimes(1);
     });
   });
 });

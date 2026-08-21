@@ -545,7 +545,7 @@ export class ConversationActivityLedger {
         _environmentId: environmentId,
         identifier,
       },
-      '_id'
+      '_id platformThreadId'
     );
   }
 
