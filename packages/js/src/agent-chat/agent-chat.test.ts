@@ -1145,7 +1145,7 @@ describe('AgentChat', () => {
 
     emitter.emit('agent_chat.agent_event', { result: { invalid: true } as any });
 
-    expect(warn).toHaveBeenCalledWith('[novu agent-chat] skipping live envelope:', 'invalid-schema');
+    expect(warn).toHaveBeenCalledWith('[Novu] Dropped malformed agent event envelope');
     expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
 
     warn.mockRestore();

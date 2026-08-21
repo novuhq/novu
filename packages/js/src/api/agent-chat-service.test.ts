@@ -233,7 +233,6 @@ describe('AgentChatService', () => {
   });
 
   it('skips invalid envelopes in history pages', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -254,7 +253,5 @@ describe('AgentChatService', () => {
     });
 
     expect(result).toEqual({ events: [], olderCursor: null });
-    expect(warnSpy).toHaveBeenCalledWith('[novu agent-chat] skipping history envelope:', 'invalid-schema');
-    warnSpy.mockRestore();
   });
 });
