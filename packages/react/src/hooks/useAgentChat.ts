@@ -302,7 +302,6 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
           typing: data.typing,
           status: data.status,
           hasMore: data.hasMore,
-          error: data.error,
         },
         change
       );
@@ -318,6 +317,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
     return () => {
       cleanup();
+      snapshotPublisher.flush();
       snapshotPublisher.dispose();
       novu.agentChat.unsubscribe();
     };

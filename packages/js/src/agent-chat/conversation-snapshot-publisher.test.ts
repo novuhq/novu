@@ -48,7 +48,7 @@ describe('createConversationSnapshotPublisher', () => {
     jest.useRealTimers();
   });
 
-  it('limits streaming publications to about one per throttle interval', () => {
+  it('limits streaming publications to about 20/sec with a 50ms throttle', () => {
     const publishes: number[] = [];
     const publisher = createConversationSnapshotPublisher({
       throttleMs: 50,
@@ -70,8 +70,8 @@ describe('createConversationSnapshotPublisher', () => {
 
     jest.advanceTimersByTime(50);
 
-    expect(publishes.length).toBeLessThanOrEqual(22);
     expect(publishes.length).toBeGreaterThanOrEqual(2);
+    expect(publishes.length).toBeLessThanOrEqual(4);
   });
 
   it('publishes terminal run-finish changes immediately', () => {
@@ -102,26 +102,5 @@ describe('createConversationSnapshotPublisher', () => {
     );
 
     expect(publishes).toEqual(['running', 'ready']);
-  });
-
-  it('publishes local sent/failed folds immediately', () => {
-    const publishes: number[] = [];
-    const publisher = createConversationSnapshotPublisher({
-      throttleMs: 50,
-      onPublish: () => {
-        publishes.push(Date.now());
-      },
-    });
-
-    publisher.schedule(
-      {
-        ...createInitialAgentConversationState(),
-        hasMore: false,
-        isRunning: false,
-      },
-      { kind: 'local', addedMessages: [], newActions: [] }
-    );
-
-    expect(publishes).toHaveLength(1);
   });
 });

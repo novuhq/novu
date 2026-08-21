@@ -17,6 +17,7 @@ export type ConversationSnapshotPublisher = {
   dispose: () => void;
 };
 
+/** Cap React snapshot updates during streaming; store microtask batching handles emitter subscribers. */
 export function createConversationSnapshotPublisher(args: {
   throttleMs?: number;
   onPublish: (snapshot: ConversationSnapshot) => void;

@@ -1696,6 +1696,43 @@ describe('AgentChat', () => {
     expect(changes[1]?.addedMessages.map((message) => message.id)).toEqual(['msg_old0000001']);
   });
 
+  it('batches multiple live envelopes in the same microtask into one publication', async () => {
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
+
+    const updates: AgentChatChange[] = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1' && data.change.kind === 'live') {
+        updates.push(data.change);
+      }
+    });
+
+    for (let sequence = 2; sequence <= 51; sequence += 1) {
+      emitter.emit('agent_chat.agent_event', {
+        result: {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 't1',
+          sequence,
+          timestamp: '2026-08-07T12:00:03.000Z',
+          event:
+            sequence === 2
+              ? { type: 'run-start' }
+              : sequence === 3
+                ? { type: 'message-start', messageId: 'msg_asst0000001' }
+                : { type: 'message-delta', messageId: 'msg_asst0000001', delta: 'x' },
+        },
+      });
+    }
+
+    await flushLivePublishQueue();
+
+    expect(updates).toHaveLength(1);
+  });
+
   it('carries the envelope that caused a live fold', async () => {
     await openClaimedConversation();
     const changes = recordChanges('local_session1');

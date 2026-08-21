@@ -124,6 +124,7 @@ export class AgentChatStore {
     this.#publishNow(entry, source, addedMessages);
   }
 
+  /** Collapse sync streaming envelopes into one emit per microtask for all subscribers. */
   #queueLivePublish(entry: ConversationEntry, envelope: AgentEventEnvelope, addedMessages: AgentMessage[]): void {
     let batch = this.#liveBatchByKey.get(entry.key);
     if (!batch) {
