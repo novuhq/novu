@@ -702,37 +702,6 @@ describe('AgentChat', () => {
     expect(updates.at(-1)).toEqual(['msg_user0000001', 'msg_asst0000001']);
   });
 
-  it('records a protocol error and skips malformed live ordering', async () => {
-    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
-    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
-
-    const updates: Array<{ error?: NovuError }> = [];
-    emitter.on('agent_chat.messages.updated', ({ data }) => {
-      updates.push({ error: data.error });
-    });
-
-    emitter.emit('agent_chat.agent_event', {
-      result: {
-        version: AGENT_EVENT_PROTOCOL_VERSION,
-        conversationId: 'internal',
-        conversationIdentifier: 'conv_abcdefghijkl',
-        agentId: 'agent_1',
-        runId: 'run_1',
-        turnId: 'turn_1',
-        sequence: 1,
-        timestamp: '2026-08-07T12:00:00.000Z',
-        event: { type: 'message-delta', messageId: 'msg_asst0000001', delta: 'orphan' },
-      },
-    });
-
-    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
-    expect(snapshot?.messages).toHaveLength(1);
-    expect(snapshot?.error?.message).toContain('message-delta');
-    expect(snapshot?.error?.originalError.message).toBe('protocol.ordering');
-    expect(updates.at(-1)?.error?.message).toContain('message-delta');
-    expect(updates.at(-1)?.error?.originalError.message).toBe('protocol.ordering');
-  });
-
   it('accepts live deltas after history that ends mid-stream', async () => {
     getEvents.mockResolvedValue({
       events: [
@@ -1176,7 +1145,7 @@ describe('AgentChat', () => {
 
     emitter.emit('agent_chat.agent_event', { result: { invalid: true } as any });
 
-    expect(warn).toHaveBeenCalledWith('[Novu] Dropped malformed agent event envelope');
+    expect(warn).toHaveBeenCalledWith('[novu agent-chat] skipping live envelope:', 'invalid-schema');
     expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
 
     warn.mockRestore();

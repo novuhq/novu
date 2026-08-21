@@ -6,15 +6,8 @@ import {
   createInitialAgentConversationState,
   derivePendingActions,
 } from './agent-message.types';
-import { appendUserMessage } from './apply-envelope';
+import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 import type { AgentChatChange, AgentChatChangeSource, AgentChatPaginationStatus, FetchMoreResult } from './types';
-import {
-  applyValidatedEnvelope,
-  applyValidatedEnvelopes,
-  createFoldValidationContext,
-  type FoldValidationContext,
-  resetFoldValidationContext,
-} from './validate-envelope';
 
 type McpConnectionResult = {
   status: 'connected' | 'failed';
@@ -59,8 +52,6 @@ export type ConversationEntry = AgentConversationState & {
   paginationEpoch: number;
   /** Coalesces overlapping `fetchMore` calls on this holder. */
   pendingFetchMore?: Promise<{ data?: FetchMoreResult; error?: NovuError }>;
-  /** Tracks open streaming sequences for protocol ordering validation. */
-  foldValidation: FoldValidationContext;
 };
 
 function mintClientId(prefix: string): string {
@@ -237,7 +228,6 @@ export class AgentChatStore {
       isRecovering: false,
       paginationStatus: 'idle',
       paginationEpoch: 0,
-      foldValidation: createFoldValidationContext(),
     };
     this.#byKey.set(args.key, entry);
 
@@ -310,12 +300,7 @@ export class AgentChatStore {
   ): ConversationEntry {
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, envelopes);
-    resetFoldValidationContext(entry.foldValidation);
-    const { state: folded } = applyValidatedEnvelopes(
-      createInitialAgentConversationState(),
-      envelopes,
-      entry.foldValidation
-    );
+    const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
     const localOnly = previous.filter((message) => !serverIds.has(message.id));
 
@@ -387,10 +372,7 @@ export class AgentChatStore {
     olderCursor: string | null
   ): ConversationEntry {
     this.#recordMcpConnectionResults(entry, envelopes);
-    const { state: folded, error: pageError } = applyValidatedEnvelopes(
-      createInitialAgentConversationState(),
-      envelopes
-    );
+    const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const existingIds = new Set(entry.messages.map((message) => message.id));
     const olderMessages = this.#applyMcpConnectionResults(
       entry,
@@ -399,9 +381,6 @@ export class AgentChatStore {
 
     entry.messages = [...olderMessages, ...entry.messages];
     entry.olderCursor = olderCursor;
-    if (pageError) {
-      entry.error = pageError;
-    }
     this.#suppressActions(entry, olderMessages);
 
     this.#publish(entry, { kind: 'history' }, olderMessages);
@@ -433,20 +412,7 @@ export class AgentChatStore {
 
     const previous = entry.messages;
     this.#recordMcpConnectionResults(entry, [envelope]);
-    const result = applyValidatedEnvelope(entry, entry.foldValidation, envelope);
-
-    if (!result.applied) {
-      entry.lastSequence = Math.max(entry.lastSequence, envelope.sequence);
-      if (result.reason !== 'unknown-version') {
-        entry.error = result.error;
-      }
-
-      this.#publish(entry, { kind: 'live', envelope }, []);
-
-      return entry;
-    }
-
-    const next = result.state;
+    const next = applyEnvelope(entry, envelope);
     applyState(entry, {
       ...next,
       messages: this.#applyMcpConnectionResults(entry, next.messages),

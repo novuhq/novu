@@ -1,7 +1,6 @@
 import type {
   AgentChatPagination,
   AgentChatPlanLimitError,
-  AgentConversationError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
@@ -29,7 +28,7 @@ export type UseAgentChatProps = AgentHashFields & {
    */
   conversationId?: string;
   onSuccess?: (data: LoadConversationResult) => void;
-  onError?: (error: NovuError | AgentChatPlanLimitError | AgentConversationError) => void;
+  onError?: (error: NovuError | AgentChatPlanLimitError) => void;
   /**
    * Fires once per message, when the message id first appears on the conversation.
    * History pages are silent: only new activity fires.
@@ -56,7 +55,7 @@ export type UseAgentChatResult = {
   messages: AgentMessage[];
   pendingActions: AgentPendingAction[];
   conversationId?: string;
-  error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
+  error?: NovuError | AgentChatPlanLimitError;
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isRunning: boolean;
@@ -75,15 +74,15 @@ export type UseAgentChatResult = {
   refetch: () => Promise<void>;
   sendMessage: (text: string) => Promise<{
     data?: SendMessageResult;
-    error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
   respondToAction: (args: { actionId: string; decision: AgentToolApprovalDecision }) => Promise<{
     data?: RespondToActionResult;
-    error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
   sendAction: (args: { actionId: string; sourceMessageId: string; value?: string }) => Promise<{
     data?: SendActionResult;
-    error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
+    error?: NovuError | AgentChatPlanLimitError;
   }>;
 };
 
@@ -166,6 +165,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const [catchUpError, setCatchUpError] = useState<NovuError | undefined>();
   const fetchGenerationRef = useRef(0);
   const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
+  const lastReportedErrorKeyRef = useRef<string>();
 
   const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
 
@@ -193,6 +193,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
       setError(undefined);
       setIsLoading(Boolean(conversationIdProp));
+      lastReportedErrorKeyRef.current = undefined;
 
       return;
     }
@@ -215,6 +216,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     async (targetConversationId: string) => {
       const generation = ++fetchGenerationRef.current;
       setError(undefined);
+      lastReportedErrorKeyRef.current = undefined;
       setIsLoading(true);
 
       const response = await novu.agentChat.loadConversation({
@@ -321,7 +323,13 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
       }
 
       if (data.error) {
-        propsRef.current.onError?.(data.error);
+        const errorKey = `${data.error.message}:${data.error.originalError?.message ?? ''}`;
+        if (lastReportedErrorKeyRef.current !== errorKey) {
+          lastReportedErrorKeyRef.current = errorKey;
+          propsRef.current.onError?.(data.error);
+        }
+      } else {
+        lastReportedErrorKeyRef.current = undefined;
       }
 
       const { change } = data;

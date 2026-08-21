@@ -5,9 +5,9 @@ export type {
   AgentCardPart,
   AgentChatChange,
   AgentChatDefinition,
-  AgentChatToolsDefinition,
   AgentChatPagination,
   AgentChatPaginationStatus,
+  AgentChatToolsDefinition,
   AgentConversationError,
   AgentConversationPaginationSnapshot,
   AgentConversationRunSnapshot,
@@ -28,7 +28,6 @@ export type {
   AgentMessageRole,
   AgentMessageStatus,
   AgentPendingAction,
-  AgentProtocolErrorCode,
   AgentSourcePart,
   AgentTextPart,
   AgentTextPartState,
@@ -39,18 +38,14 @@ export type {
   AgentToolPart,
   AgentToolPartFor,
   AgentToolPartState,
-  ApplyValidatedEnvelopeResult,
   ConversationArgs,
   ConversationErr,
   ConversationOk,
   ConversationResult,
   FetchMoreArgs,
   FetchMoreResult,
-  FoldValidationContext,
   LoadConversationArgs,
   LoadConversationResult,
-  OrderingValidationResult,
-  ParseEnvelopeResult,
   RespondToActionArgs,
   RespondToActionResult,
   SendActionArgs,
@@ -58,19 +53,8 @@ export type {
   SendMessageArgs,
   SendMessageInput,
   SendMessageResult,
-  ValidateHistoryPageResult,
 } from './agent-chat';
-export {
-  AgentConversationRuntime,
-  applyValidatedEnvelope,
-  applyValidatedEnvelopes,
-  createFoldValidationContext,
-  createProtocolError,
-  derivePendingActions,
-  parseAgentEventEnvelope,
-  validateEnvelopeOrdering,
-  validateHistoryPageResponse,
-} from './agent-chat';
+export { AgentConversationRuntime, derivePendingActions } from './agent-chat';
 export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
 export { AgentChatPlanLimitError } from './api/agent-chat-service';
 export type {

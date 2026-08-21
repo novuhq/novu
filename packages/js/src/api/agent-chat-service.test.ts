@@ -232,7 +232,8 @@ describe('AgentChatService', () => {
     );
   });
 
-  it('rejects invalid history payloads', async () => {
+  it('skips invalid envelopes in history pages', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -248,10 +249,12 @@ describe('AgentChatService', () => {
     const httpClient = new HttpClient({ apiUrl: 'https://test.novu.co' });
     const service = new AgentChatService({ httpClient });
 
-    await expect(
-      service.getEvents({
-        conversationId: 'conv_abcdefghijkl',
-      })
-    ).rejects.toThrow('Agent event envelope failed schema validation');
+    const result = await service.getEvents({
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result).toEqual({ events: [], olderCursor: null });
+    expect(warnSpy).toHaveBeenCalledWith('[novu agent-chat] skipping history envelope:', 'invalid-schema');
+    warnSpy.mockRestore();
   });
 });

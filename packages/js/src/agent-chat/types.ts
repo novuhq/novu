@@ -1,7 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type { NovuError } from '../utils/errors';
 import type {
-  AgentConversationError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentMcpConnectionAction,

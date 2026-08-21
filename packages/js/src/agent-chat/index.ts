@@ -1,12 +1,11 @@
 export { AgentChat } from './agent-chat';
-export { AgentConversationRuntime } from './agent-conversation-runtime';
 export type {
   AgentChatDefinition,
   AgentChatToolsDefinition,
   AgentToolDefinition,
   AgentToolPartFor,
 } from './agent-chat-definition.types';
-export { derivePendingActions } from './agent-message.types';
+export { AgentConversationRuntime } from './agent-conversation-runtime';
 export type {
   AgentApprovalPart,
   AgentApprovalPartState,
@@ -33,6 +32,7 @@ export type {
   AgentToolPart,
   AgentToolPartState,
 } from './agent-message.types';
+export { derivePendingActions } from './agent-message.types';
 export type {
   AgentConversationPaginationSnapshot,
   AgentConversationRunSnapshot,
@@ -63,20 +63,3 @@ export type {
   SendMessageArgs,
   SendMessageResult,
 } from './types';
-export type {
-  AgentProtocolErrorCode,
-  ApplyValidatedEnvelopeResult,
-  FoldValidationContext,
-  OrderingValidationResult,
-  ParseEnvelopeResult,
-  ValidateHistoryPageResult,
-} from './validate-envelope';
-export {
-  applyValidatedEnvelope,
-  applyValidatedEnvelopes,
-  createFoldValidationContext,
-  createProtocolError,
-  parseAgentEventEnvelope,
-  validateEnvelopeOrdering,
-  validateHistoryPageResponse,
-} from './validate-envelope';
