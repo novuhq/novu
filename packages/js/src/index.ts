@@ -1,6 +1,11 @@
 export type * from 'json-logic-js';
 export type {
   AgentChatChange,
+  AgentConversationPaginationSnapshot,
+  AgentConversationRunSnapshot,
+  AgentConversationRuntimeActions,
+  AgentConversationSessionStatus,
+  AgentConversationSnapshot,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
@@ -11,6 +16,10 @@ export type {
   AgentPendingAction,
   AgentToolApprovalAction,
   AgentToolApprovalDecision,
+  ConversationArgs,
+  ConversationErr,
+  ConversationOk,
+  ConversationResult,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -20,9 +29,10 @@ export type {
   SendActionArgs,
   SendActionResult,
   SendMessageArgs,
+  SendMessageInput,
   SendMessageResult,
 } from './agent-chat';
-export { derivePendingActions } from './agent-chat';
+export { AgentConversationRuntime, derivePendingActions } from './agent-chat';
 export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
 export { AgentChatPlanLimitError } from './api/agent-chat-service';
 export type {

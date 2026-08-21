@@ -33,6 +33,7 @@ export type AgentHashFields = {
 export type SendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
+  metadata?: Record<string, unknown>;
   /**
    * Existing conversation to append to.
    * Omit this field to create a new conversation. The client does not reuse a prior chat.
