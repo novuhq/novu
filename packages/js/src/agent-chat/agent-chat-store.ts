@@ -236,15 +236,15 @@ export class AgentChatStore {
    */
   appendSending(entry: ConversationEntry, text: string): string {
     const messageId = createOptimisticMessageId();
-    applyState(
-      entry,
-      appendUserMessage(entry, {
+    applyState(entry, {
+      ...appendUserMessage(entry, {
         id: messageId,
         createdAt: new Date().toISOString(),
         status: 'sending',
         parts: [{ type: 'text', text, state: 'done' }],
-      })
-    );
+      }),
+      error: undefined,
+    });
     this.#publish(entry, { kind: 'local' }, []);
 
     return messageId;
@@ -305,6 +305,7 @@ export class AgentChatStore {
     entry.olderCursor = olderCursor;
     entry.paginationEpoch += 1;
     entry.paginationStatus = 'idle';
+    entry.pendingFetchMore = undefined;
 
     this.#publish(entry, { kind: 'history' }, messagesAddedSince(previous, entry.messages));
 

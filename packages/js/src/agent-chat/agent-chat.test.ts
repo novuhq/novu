@@ -1908,6 +1908,10 @@ describe('AgentChat', () => {
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
     expect(snapshot?.error).toMatchObject({ message: 'agent handler failed' });
     expect(errors.at(-1)).toEqual({ message: 'agent handler failed' });
+
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_retry000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'retry', key: 'local_session1' });
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.error).toBeUndefined();
   });
 
   it('does not let a stale fetchMore failure overwrite pagination status after reload', async () => {
@@ -1933,12 +1937,29 @@ describe('AgentChat', () => {
       historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
     );
     await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(3);
+
+    rejectOlderPage(new Error('network'));
+    await expect(older).resolves.toMatchObject({ error: expect.anything() });
     expect(
       agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
     ).toBe('idle');
 
-    rejectOlderPage(new Error('network'));
-    await expect(older).resolves.toMatchObject({ error: expect.anything() });
+    let resolveFreshPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFreshPage = resolve;
+        })
+    );
+
+    const fresh = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+
+    resolveFreshPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await fresh;
     expect(
       agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
     ).toBe('idle');
