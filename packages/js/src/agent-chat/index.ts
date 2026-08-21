@@ -3,6 +3,8 @@ export { derivePendingActions } from './agent-message.types';
 export type {
   AgentChatChange,
   AgentChatMessagesUpdated,
+  AgentChatPagination,
+  AgentChatPaginationStatus,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentEventEnvelope,
