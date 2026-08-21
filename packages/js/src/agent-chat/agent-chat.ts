@@ -52,11 +52,12 @@ export class AgentChat extends BaseModule {
           agentId: entry.agentId,
           conversationId: entry.conversationId,
           key: entry.key,
-          messages: entry.messages,
+          messages: entry.lastPublishedMessages,
           isRunning: entry.isRunning,
           typing: entry.typing,
           status: entry.status,
           hasMore: entry.olderCursor != null,
+          error: entry.error,
           change,
         },
       });

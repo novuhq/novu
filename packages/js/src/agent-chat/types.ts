@@ -1,5 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type {
+  AgentConversationError,
   AgentConversationStatus,
   AgentConversationTyping,
   AgentMcpConnectionAction,
@@ -103,7 +104,7 @@ export type SendActionResult = {
 
 /** What caused a fold. A live fold carries the envelope that caused it. Internal to the store seam. */
 export type AgentChatChangeSource =
-  | { kind: 'live'; envelope: AgentEventEnvelope }
+  | { kind: 'live'; envelope: AgentEventEnvelope; batchedEnvelopes?: AgentEventEnvelope[] }
   | { kind: 'history' }
   | { kind: 'local' };
 
@@ -128,5 +129,6 @@ export type AgentChatMessagesUpdated = {
   typing?: AgentConversationTyping;
   status: AgentConversationStatus;
   hasMore: boolean;
+  error?: AgentConversationError;
   change: AgentChatChange;
 };

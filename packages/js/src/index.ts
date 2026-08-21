@@ -11,6 +11,8 @@ export type {
   AgentPendingAction,
   AgentToolApprovalAction,
   AgentToolApprovalDecision,
+  ConversationSnapshot,
+  ConversationSnapshotPublisher,
   FetchMoreArgs,
   FetchMoreResult,
   LoadConversationArgs,
@@ -22,7 +24,13 @@ export type {
   SendMessageArgs,
   SendMessageResult,
 } from './agent-chat';
-export { derivePendingActions } from './agent-chat';
+export {
+  createConversationSnapshotPublisher,
+  derivePendingActions,
+  getLiveEnvelopes,
+  isStreamingChange,
+  preserveMessageReferences,
+} from './agent-chat';
 export type { AgentChatPlanLimitReason } from './api/agent-chat-service';
 export { AgentChatPlanLimitError } from './api/agent-chat-service';
 export type {
