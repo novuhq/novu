@@ -1,6 +1,6 @@
 'use client';
 
-import type { AgentConversationTyping, AgentMessage, AgentPendingAction } from '@novu/react';
+import type { AgentConversationTyping, AgentMessage, AgentPendingAction, UseAgentChatResult } from '@novu/react';
 import type { RespondToAction } from './approval-card';
 import { ApprovalDock } from './approval-dock';
 import { ChatThread } from './chat-thread';
@@ -17,9 +17,7 @@ export type ChatPanelProps = {
   pendingActions: AgentPendingAction[];
   isRunning: boolean;
   typing?: AgentConversationTyping;
-  hasMore: boolean;
-  isFetching: boolean;
-  onFetchMore: () => Promise<unknown>;
+  pagination: UseAgentChatResult['pagination'];
   onRespond: RespondToAction;
   composerDisabled: boolean;
   onSend: (text: string) => void;
@@ -32,9 +30,7 @@ export function ChatPanel({
   pendingActions,
   isRunning,
   typing,
-  hasMore,
-  isFetching,
-  onFetchMore,
+  pagination,
   onRespond,
   composerDisabled,
   onSend,
@@ -56,9 +52,7 @@ export function ChatPanel({
         messages={messages}
         isRunning={isRunning}
         typing={typing}
-        hasMore={hasMore}
-        isFetching={isFetching}
-        onFetchMore={onFetchMore}
+        pagination={pagination}
         onRespond={onRespond}
       />
 
