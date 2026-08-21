@@ -79,6 +79,7 @@ export class ConfigurePhotonWebhook {
     const existingSecret = typeof credentials.token === 'string' ? credentials.token.trim() : '';
     const photonCredentials = { projectId, projectSecret };
     let existingNovuWebhookUrls: string[] = [];
+    let deletedOwnRegistration = false;
 
     try {
       // Token issuance — and therefore every outbound send — 403s until the
@@ -116,6 +117,7 @@ export class ConfigurePhotonWebhook {
           photonCredentials,
           ownRegistrations.map((entry) => entry.id)
         );
+        deletedOwnRegistration = true;
       }
 
       const createdWebhook = await createPhotonWebhook(photonCredentials, callbackUrl);
@@ -154,6 +156,17 @@ export class ConfigurePhotonWebhook {
         { err, agentId: agent._id, integrationId: integration._id },
         'Photon auto-configure: webhook registration failed'
       );
+
+      if (deletedOwnRegistration) {
+        // The old registration (and its secret) is gone; clearing the stored token
+        // keeps the UI showing unconfigured instead of a green state with no webhook.
+        await this.integrationRepository
+          .update(
+            { _id: integration._id, _environmentId: command.environmentId, _organizationId: command.organizationId },
+            { $unset: { 'credentials.token': '' } }
+          )
+          .catch(() => {});
+      }
 
       return {
         success: false,

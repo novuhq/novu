@@ -177,7 +177,10 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
     }
   ) {
     super();
-    this.spectrumUrl = config.spectrumUrl ?? process.env.PHOTON_SPECTRUM_URL ?? DEFAULT_SPECTRUM_URL;
+    this.spectrumUrl = (config.spectrumUrl ?? process.env.PHOTON_SPECTRUM_URL ?? DEFAULT_SPECTRUM_URL).replace(
+      /\/$/,
+      ''
+    );
     this.axiosClient = Axios.create({
       auth: {
         username: this.config.projectId,
@@ -354,7 +357,9 @@ export class PhotonImessageChatProvider extends BaseProvider implements IChatPro
       combined.includes('invalid token') ||
       combined.includes('invalid credentials')
     ) {
+      const stale = spectrumApps.get(this.spectrumCacheKey());
       spectrumApps.delete(this.spectrumCacheKey());
+      stale?.then((handle) => handle.app.stop()).catch(() => {});
       throw new Error(`Photon rejected the project credentials for this send. (${raw})`);
     }
 

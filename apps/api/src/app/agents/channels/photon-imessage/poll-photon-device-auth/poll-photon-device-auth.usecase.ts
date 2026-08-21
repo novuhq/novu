@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { encryptSecret, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import type { AxiosError } from 'axios';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -126,6 +127,17 @@ export class PollPhotonDeviceAuth {
       poll = await pollPhotonDeviceToken(command.deviceCode);
     } catch (err) {
       this.logger.warn({ err }, 'Photon device token poll failed');
+
+      // An unrecognized OAuth error (invalid_grant, invalid_client, …) is terminal.
+      if ((err as AxiosError<{ error?: string }>)?.response?.data?.error) {
+        return {
+          status: 'error',
+          error: {
+            code: 'unknown_device_code',
+            message: 'This connect session is no longer valid — click Connect to start over.',
+          },
+        };
+      }
 
       /*
        * Transport failures (network blip, one 5xx, timeout) are not terminal:

@@ -48,6 +48,16 @@ export class PhotonImessageAdapterImpl extends iMessageAdapter {
   }
 
   /**
+   * Chat SDK cleanup hook — the vendor adapter has none, which strands the
+   * spectrum app (gRPC channels, token renewal) on every registry eviction.
+   */
+  async disconnect(): Promise<void> {
+    const self = this as unknown as { app?: { stop(): Promise<void> } | null };
+    await self.app?.stop();
+    self.app = null;
+  }
+
+  /**
    * Drops receipt-type deliveries (see `RECEIPT_CONTENT_TYPES`) before the
    * vendor router turns them into inbound messages. Signature is still
    * verified before acking so unsigned junk never earns a 200.
@@ -99,7 +109,8 @@ export class PhotonImessageAdapterImpl extends iMessageAdapter {
     }
 
     const fallbackText = typeof record.fallbackText === 'string' ? record.fallbackText : undefined;
+    const files = Array.isArray(record.files) && record.files.length > 0 ? record.files : undefined;
 
-    return { markdown: fallbackText ?? renderCardAsMarkdown(card) };
+    return { markdown: fallbackText ?? renderCardAsMarkdown(card), ...(files ? { files } : {}) } as AdapterPostableMessage;
   }
 }
