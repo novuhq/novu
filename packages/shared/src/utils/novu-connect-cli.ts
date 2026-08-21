@@ -3,16 +3,58 @@ export const NOVU_STAGING_API_URL = 'https://api.novu-staging.co';
 
 export type NovuConnectPackageTag = 'latest' | 'rc';
 
+export type NovuConnectTargetOptions = {
+  apiUrl?: string | null;
+  connectDashboardUrl?: string | null;
+  dashboardUrl?: string | null;
+};
+
+const NOVU_CLOUD_DASHBOARD_URLS = new Set([
+  'https://dashboard.novu.co',
+  'https://eu.dashboard.novu.co',
+  'https://dashboard.novu-staging.co',
+  'https://dashboard.novu.localhost',
+]);
+
+function normalizeUrl(url: string | null | undefined): string {
+  return (url ?? '').replace(/\/$/, '');
+}
+
 function normalizeApiUrl(apiUrl: string | null | undefined): string {
-  return (apiUrl ?? '').replace(/\/$/, '');
+  return normalizeUrl(apiUrl);
+}
+
+function normalizeConnectTargetOptions(
+  apiUrlOrOptions?: string | null | NovuConnectTargetOptions
+): NovuConnectTargetOptions {
+  if (typeof apiUrlOrOptions === 'string' || apiUrlOrOptions == null) {
+    return { apiUrl: apiUrlOrOptions };
+  }
+
+  return apiUrlOrOptions;
 }
 
 export function isNovuStagingApiUrl(apiUrl: string | null | undefined): boolean {
   return normalizeApiUrl(apiUrl) === NOVU_STAGING_API_URL;
 }
 
+export function isNovuLocalApiUrl(apiUrl: string | null | undefined): boolean {
+  const normalized = normalizeApiUrl(apiUrl);
+  if (!normalized) {
+    return false;
+  }
+
+  try {
+    const hostname = new URL(normalized).hostname;
+
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
+
 export function getNovuConnectPackageTag(apiUrl?: string | null): NovuConnectPackageTag {
-  return isNovuStagingApiUrl(apiUrl) ? 'rc' : 'latest';
+  return isNovuStagingApiUrl(apiUrl) || isNovuLocalApiUrl(apiUrl) ? 'rc' : 'latest';
 }
 
 export function getNovuConnectRegionFlag(apiUrl?: string | null): '--region staging' | undefined {
@@ -27,22 +69,48 @@ export function getNovuConnectInvocation(apiUrl?: string | null): string {
   return `npx novu@${getNovuConnectPackageTag(apiUrl)} connect`;
 }
 
+function shouldEmitConnectDashboardFlags(connectDashboardUrl?: string | null): boolean {
+  const normalized = normalizeUrl(connectDashboardUrl);
+
+  if (!normalized) {
+    return false;
+  }
+
+  return !NOVU_CLOUD_DASHBOARD_URLS.has(normalized);
+}
+
+export function formatNovuConnectCommandForDisplay(parts: readonly string[]): string {
+  return parts.join(' \\\n  ');
+}
+
 /**
  * Staging uses `--region staging` so OAuth hits dashboard.novu-staging.co.
- * Other non-US Cloud APIs keep `--api-url`.
+ * Other non-US Cloud APIs keep `--api-url`. Local dev also needs dashboard URLs
+ * so browser OAuth opens the same dashboard the user copied the command from.
  */
-export function getNovuConnectTargetFlags(apiUrl?: string | null): string[] {
-  const regionFlag = getNovuConnectRegionFlag(apiUrl);
+export function getNovuConnectTargetFlags(apiUrlOrOptions?: string | null | NovuConnectTargetOptions): string[] {
+  const options = normalizeConnectTargetOptions(apiUrlOrOptions);
+  const regionFlag = getNovuConnectRegionFlag(options.apiUrl);
   if (regionFlag) {
     return [regionFlag];
   }
 
-  const normalized = normalizeApiUrl(apiUrl);
-  if (normalized && normalized !== NOVU_CLOUD_API_URL) {
-    return [`--api-url ${normalized}`];
+  const flags: string[] = [];
+  const normalizedApiUrl = normalizeApiUrl(options.apiUrl);
+
+  if (normalizedApiUrl && normalizedApiUrl !== NOVU_CLOUD_API_URL) {
+    flags.push(`--api-url ${normalizedApiUrl}`);
   }
 
-  return [];
+  if (shouldEmitConnectDashboardFlags(options.connectDashboardUrl)) {
+    const connectDashboardUrl = normalizeUrl(options.connectDashboardUrl);
+    const dashboardUrl = normalizeUrl(options.dashboardUrl) || connectDashboardUrl;
+
+    flags.push(`--connect-dashboard-url ${connectDashboardUrl}`);
+    flags.push(`--dashboard-url ${dashboardUrl}`);
+  }
+
+  return flags;
 }
 
 export function buildNovuConnectStagingHint(apiUrl?: string | null): string | undefined {

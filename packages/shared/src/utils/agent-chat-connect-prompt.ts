@@ -1,17 +1,54 @@
 import {
   buildNovuConnectStagingHint,
+  formatNovuConnectCommandForDisplay,
   getNovuConnectInvocation,
   getNovuConnectTargetFlags,
   isNovuStagingApiUrl,
+  type NovuConnectTargetOptions,
 } from './novu-connect-cli';
 
 export const AGENT_CHAT_DOCS_URL = 'https://docs.novu.co/agents/channels/agent-chat';
 export const AGENT_ONBOARDING_PLAYBOOK_URL = 'https://novu.co/agents.md';
 
-export function buildAgentChatTuiCommand(apiUrl?: string | null): string {
-  const parts = [`${getNovuConnectInvocation(apiUrl)} --channel agent-chat`, ...getNovuConnectTargetFlags(apiUrl)];
+export type BuildAgentChatTuiCommandOptions = NovuConnectTargetOptions & {
+  agentIdentifier?: string | null;
+};
 
-  return parts.join(' ');
+function normalizeBuildAgentChatTuiCommandOptions(
+  apiUrlOrOptions?: string | null | BuildAgentChatTuiCommandOptions
+): BuildAgentChatTuiCommandOptions {
+  if (typeof apiUrlOrOptions === 'string' || apiUrlOrOptions == null) {
+    return { apiUrl: apiUrlOrOptions };
+  }
+
+  return apiUrlOrOptions;
+}
+
+export function buildAgentChatTuiCommandParts(
+  apiUrlOrOptions?: string | null | BuildAgentChatTuiCommandOptions
+): string[] {
+  const options = normalizeBuildAgentChatTuiCommandOptions(apiUrlOrOptions);
+  const parts = [
+    `${getNovuConnectInvocation(options.apiUrl)} --channel agent-chat`,
+    ...getNovuConnectTargetFlags(options),
+  ];
+  const agentIdentifier = options.agentIdentifier?.trim();
+
+  if (agentIdentifier) {
+    parts.push(`--agent-identifier ${agentIdentifier}`);
+  }
+
+  return parts;
+}
+
+export function buildAgentChatTuiCommand(apiUrlOrOptions?: string | null | BuildAgentChatTuiCommandOptions): string {
+  return buildAgentChatTuiCommandParts(apiUrlOrOptions).join(' ');
+}
+
+export function buildAgentChatTuiCommandForDisplay(
+  apiUrlOrOptions?: string | null | BuildAgentChatTuiCommandOptions
+): string {
+  return formatNovuConnectCommandForDisplay(buildAgentChatTuiCommandParts(apiUrlOrOptions));
 }
 
 /** Production TUI command. Prefer `buildAgentChatTuiCommand(apiUrl)` in the dashboard. */
@@ -33,7 +70,7 @@ function signedInDashboardLine(apiUrl?: string | null): string {
 /**
  * Dashboard Copy prompt / Open in Cursor text. Same shape as the onboarding
  * prompt: signed-in line + intent + agents.md. The playbook owns `--ci`,
- * questions, and flags. Staging adds `novu@rc` + `--region staging`.
+ * questions, and flags. Staging and local dev use `novu@rc` (staging also passes `--region staging`).
  */
 export function buildAgentChatPrompt(agentName: string, agentIdentifier: string, apiUrl?: string | null): string {
   const lines = [
