@@ -257,7 +257,19 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       contextKeys: session.contextKeys ?? [],
     });
 
-    await this.chat!.processMessage(this, threadId, message, options);
+    try {
+      await this.chat!.processMessage(this, threadId, message, options);
+    } catch (error) {
+      if (clientMessageId && this.config.releaseInboundMessage) {
+        await this.config.releaseInboundMessage({
+          session,
+          messageId: clientMessageId,
+          conversationId,
+        });
+      }
+
+      throw error;
+    }
 
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
     // `agent_chat:conv_*` so `chat.thread()` can resolve this adapter by prefix.
@@ -307,19 +319,31 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       isMe: false,
     };
 
-    await this.chat!.processAction(
-      {
-        adapter: this,
-        actionId: kind.actionId,
-        value: kind.value,
-        // Chat ActionEvent requires messageId; headless approvals have no card carrier.
-        messageId: kind.sourceMessageId ?? '',
-        threadId,
-        user,
-        raw: { ...body, contextKeys: session.contextKeys ?? [] },
-      },
-      options
-    );
+    try {
+      await this.chat!.processAction(
+        {
+          adapter: this,
+          actionId: kind.actionId,
+          value: kind.value,
+          // Chat ActionEvent requires messageId; headless approvals have no card carrier.
+          messageId: kind.sourceMessageId ?? '',
+          threadId,
+          user,
+          raw: { ...body, contextKeys: session.contextKeys ?? [] },
+        },
+        options
+      );
+    } catch (error) {
+      if (idempotencyKey && this.config.releaseInboundAction) {
+        await this.config.releaseInboundAction({
+          session,
+          idempotencyKey,
+          conversationId,
+        });
+      }
+
+      throw error;
+    }
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
   }

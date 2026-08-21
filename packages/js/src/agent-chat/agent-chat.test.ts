@@ -2545,5 +2545,31 @@ describe('AgentChat', () => {
 
       expect(respondToAction).toHaveBeenCalledTimes(1);
     });
+
+    it('retries respondToAction after the first request fails', async () => {
+      getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
+      respondToAction.mockRejectedValueOnce(new Error('network down')).mockResolvedValueOnce({
+        identifier: 'conv_abcdefghijkl',
+      });
+
+      await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+      const failed = await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      const retried = await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_abcdefghijkl',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(failed.error).toBeDefined();
+      expect(retried.error).toBeUndefined();
+      expect(respondToAction).toHaveBeenCalledTimes(2);
+    });
   });
 });

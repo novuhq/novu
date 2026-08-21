@@ -94,11 +94,15 @@ export type AgentChatAdapterConfig = {
    * `conversationId` without dispatching again.
    */
   claimInboundMessage?: (params: AgentChatClaimInboundMessageParams) => Promise<AgentChatInboundClaimResult>;
+  /** Drop the in-flight message lock after dispatch fails so the same key can retry. */
+  releaseInboundMessage?: (params: AgentChatClaimInboundMessageParams) => Promise<void>;
   /**
    * Atomic accept gate for action ingress. When `claimed` is false, ack with
    * `conversationId` without dispatching again.
    */
   claimInboundAction?: (params: AgentChatClaimInboundActionParams) => Promise<AgentChatInboundClaimResult>;
+  /** Drop the in-flight action lock after dispatch fails so the same key can retry. */
+  releaseInboundAction?: (params: AgentChatClaimInboundActionParams) => Promise<void>;
   deliverMessage: (params: AgentChatDeliverMessageParams) => Promise<AgentChatDeliverMessageResult>;
   editMessage: (params: AgentChatEditMessageParams) => Promise<AgentChatDeliverMessageResult>;
   deleteMessage: (params: AgentChatDeleteMessageParams) => Promise<void>;

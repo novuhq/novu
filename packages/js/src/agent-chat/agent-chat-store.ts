@@ -8,11 +8,7 @@ import {
 } from './agent-message.types';
 import { appendUserMessage, applyEnvelope, applyEnvelopes } from './apply-envelope';
 import { createActionIdempotencyKey, mintClientId } from './idempotency';
-<<<<<<< HEAD
 import type { AgentChatChange, AgentChatChangeSource, AgentChatPaginationStatus, FetchMoreResult } from './types';
-=======
-import type { AgentChatChange, AgentChatChangeSource } from './types';
->>>>>>> 06594bb396 (fix(js,api): harden agent chat accept idempotency with atomic claims fixes NV-8642)
 
 type McpConnectionResult = {
   status: 'connected' | 'failed';

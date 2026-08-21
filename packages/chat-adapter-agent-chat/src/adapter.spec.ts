@@ -236,6 +236,26 @@ describe('NovuAgentChatAdapterImpl', () => {
     expect(processMessage).not.toHaveBeenCalled();
   });
 
+  it('releases the inbound message claim when processMessage throws', async () => {
+    const releaseInboundMessage = vi.fn(async () => undefined);
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        claimInboundMessage: async () => ({ claimed: true, conversationId: 'conv_new000000001' }),
+        releaseInboundMessage,
+      })
+    );
+    processMessage.mockRejectedValueOnce(new Error('dispatch failed'));
+
+    await expect(
+      adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }))
+    ).rejects.toThrow('dispatch failed');
+    expect(releaseInboundMessage).toHaveBeenCalledWith({
+      session: SESSION,
+      messageId: 'msg_abcdefghijkl',
+      conversationId: expect.any(String),
+    });
+  });
+
   it('rejects an invalid action idempotency key', async () => {
     const { adapter, processAction } = await createAdapter(
       createConfig({

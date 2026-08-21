@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 
-const ACCEPT_TTL_SECONDS = 60 * 60 * 24;
+/** In-flight lock only. Durable activity rows are the success ledger. */
+const ACCEPT_LOCK_TTL_SECONDS = 60 * 5;
 
 export type AgentChatInboundClaimResult = {
   /** When false, return the ack without dispatching again. */
@@ -38,6 +39,14 @@ export class AgentChatAcceptIdempotencyService {
     return this.claimAccept(this.actionCacheKey(environmentId, idempotencyKey), conversationId);
   }
 
+  async releaseInboundMessage(environmentId: string, messageId: string): Promise<void> {
+    await this.cacheService.del(this.messageCacheKey(environmentId, messageId));
+  }
+
+  async releaseInboundAction(environmentId: string, idempotencyKey: string): Promise<void> {
+    await this.cacheService.del(this.actionCacheKey(environmentId, idempotencyKey));
+  }
+
   private async claimAccept(
     cacheKey: string,
     conversationId: string,
@@ -50,14 +59,11 @@ export class AgentChatAcceptIdempotencyService {
       }
     }
 
-    const reserved = await this.cacheService.setIfNotExist(cacheKey, conversationId, { ttl: ACCEPT_TTL_SECONDS });
+    const reserved = await this.cacheService.setIfNotExist(cacheKey, conversationId, {
+      ttl: ACCEPT_LOCK_TTL_SECONDS,
+    });
     if (reserved === 'OK') {
       return { claimed: true, conversationId };
-    }
-
-    const cachedConversationId = await this.cacheService.get(cacheKey);
-    if (cachedConversationId) {
-      return { claimed: false, conversationId: cachedConversationId };
     }
 
     if (resolveDurable) {
@@ -67,7 +73,12 @@ export class AgentChatAcceptIdempotencyService {
       }
     }
 
-    return { claimed: false, conversationId };
+    const cachedConversationId = await this.cacheService.get(cacheKey);
+    if (cachedConversationId) {
+      return { claimed: false, conversationId: cachedConversationId };
+    }
+
+    return { claimed: true, conversationId };
   }
 
   private async findMessageConversationId(environmentId: string, messageId: string): Promise<string | null> {

@@ -51,8 +51,6 @@ export class AgentChat extends BaseModule {
   #socket: Pick<BaseSocketInterface, 'connect'>;
   #liveSubscriberCount = 0;
   #runtimes = new Map<string, AgentConversationRuntime>();
-  /** Only `'reject'` is implemented. Queue and cancel-previous wait for NV-8643. */
-  #sendConcurrencyPolicy: AgentSendConcurrencyPolicy;
   /**
    * Per-conversation live envelope buffers while reconnect catch-up is in flight.
    * Map key means catch-up is in flight; only those conversations buffer live envelopes.
@@ -65,16 +63,16 @@ export class AgentChat extends BaseModule {
     eventEmitterInstance,
     agentChatService,
     socket,
-    sendConcurrencyPolicy = 'reject',
+    sendConcurrencyPolicy: _sendConcurrencyPolicy = 'reject',
   }: {
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
     agentChatService: AgentChatService;
     socket: Pick<BaseSocketInterface, 'connect'>;
+    /** Only `'reject'` is implemented. Queue and cancel-previous wait for NV-8643. */
     sendConcurrencyPolicy?: AgentSendConcurrencyPolicy;
   }) {
     super({ inboxServiceInstance, eventEmitterInstance });
-    this.#sendConcurrencyPolicy = sendConcurrencyPolicy;
     this.#agentChatService = agentChatService;
     this.#socket = socket;
     this.#store = new AgentChatStore((entry, change) => {
