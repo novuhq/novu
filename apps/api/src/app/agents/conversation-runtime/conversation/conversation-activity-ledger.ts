@@ -316,7 +316,7 @@ export class ConversationActivityLedger {
     );
 
     const activity = await this.activityRepository.createToolActivity({
-      identifier: `act_${shortId(12)}`,
+      identifier: params.identifier ?? `act_${shortId(12)}`,
       conversationId: params.conversationId,
       platform: params.channel.platform,
       integrationId: params.channel._integrationId,

@@ -509,14 +509,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
               this.agentChatResumeAuthorization.canResume({ conversationId, session, agentId }),
             checkAcceptLimits: ({ isNewThread, conversationId }) =>
               this.planLimitGate.checkAgentChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
-            claimInboundMessage: ({ session, messageId, conversationId }) =>
-              this.agentChatAcceptIdempotency.claimInboundMessage(session.environmentId, messageId, conversationId),
-            releaseInboundMessage: ({ session, messageId }) =>
-              this.agentChatAcceptIdempotency.releaseInboundMessage(session.environmentId, messageId),
-            claimInboundAction: ({ session, idempotencyKey, conversationId }) =>
-              this.agentChatAcceptIdempotency.claimInboundAction(session.environmentId, idempotencyKey, conversationId),
-            releaseInboundAction: ({ session, idempotencyKey }) =>
-              this.agentChatAcceptIdempotency.releaseInboundAction(session.environmentId, idempotencyKey),
+            claimInbound: ({ session, key, conversationId }) =>
+              this.agentChatAcceptIdempotency.claimInbound(session.environmentId, key, conversationId),
+            releaseInbound: ({ session, key }) =>
+              this.agentChatAcceptIdempotency.releaseInbound(session.environmentId, key),
             deliverMessage: this.agentChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.agentChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.agentChatPlatformDelivery.createDeleteMessage(deliveryContext),

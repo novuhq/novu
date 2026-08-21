@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '@novu/application-generic';
-import type { AgentChatInboundClaimResult } from '@novu/chat-adapter-agent-chat';
+import { type AgentChatInboundClaimResult, conversationIdFromThreadId } from '@novu/chat-adapter-agent-chat';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 
 /** In-flight lock only. Durable activity rows are the success ledger. */
@@ -13,44 +13,13 @@ export class AgentChatAcceptIdempotencyService {
     private readonly cacheService: CacheService
   ) {}
 
-  async claimInboundMessage(
-    environmentId: string,
-    messageId: string,
-    conversationId: string
-  ): Promise<AgentChatInboundClaimResult> {
-    return this.claimAccept(this.messageCacheKey(environmentId, messageId), conversationId, () =>
-      this.findMessageConversationId(environmentId, messageId)
-    );
-  }
-
-  async claimInboundAction(
-    environmentId: string,
-    idempotencyKey: string,
-    conversationId: string
-  ): Promise<AgentChatInboundClaimResult> {
-    return this.claimAccept(this.actionCacheKey(environmentId, idempotencyKey), conversationId);
-  }
-
-  async releaseInboundMessage(environmentId: string, messageId: string): Promise<void> {
-    await this.cacheService.del(this.messageCacheKey(environmentId, messageId));
-  }
-
-  async releaseInboundAction(environmentId: string, idempotencyKey: string): Promise<void> {
-    await this.cacheService.del(this.actionCacheKey(environmentId, idempotencyKey));
-  }
-
-  private async claimAccept(
-    cacheKey: string,
-    conversationId: string,
-    resolveDurable?: () => Promise<string | null>
-  ): Promise<AgentChatInboundClaimResult> {
-    if (resolveDurable) {
-      const durableConversationId = await resolveDurable();
-      if (durableConversationId) {
-        return { claimed: false, conversationId: durableConversationId };
-      }
+  async claimInbound(environmentId: string, key: string, conversationId: string): Promise<AgentChatInboundClaimResult> {
+    const durableConversationId = await this.findDurableConversationId(environmentId, key);
+    if (durableConversationId) {
+      return { claimed: false, conversationId: durableConversationId };
     }
 
+    const cacheKey = this.cacheKey(environmentId, key);
     const reserved = await this.cacheService.setIfNotExist(cacheKey, conversationId, {
       ttl: ACCEPT_LOCK_TTL_SECONDS,
     });
@@ -58,11 +27,9 @@ export class AgentChatAcceptIdempotencyService {
       return { claimed: true, conversationId };
     }
 
-    if (resolveDurable) {
-      const durableRetry = await resolveDurable();
-      if (durableRetry) {
-        return { claimed: false, conversationId: durableRetry };
-      }
+    const durableRetry = await this.findDurableConversationId(environmentId, key);
+    if (durableRetry) {
+      return { claimed: false, conversationId: durableRetry };
     }
 
     const cachedConversationId = await this.cacheService.get(cacheKey);
@@ -70,29 +37,23 @@ export class AgentChatAcceptIdempotencyService {
       return { claimed: false, conversationId: cachedConversationId };
     }
 
-    return { claimed: true, conversationId };
+    return { claimed: false, conversationId };
   }
 
-  private async findMessageConversationId(environmentId: string, messageId: string): Promise<string | null> {
-    const activity = await this.conversationService.findActivityByIdentifier(environmentId, messageId);
+  async releaseInbound(environmentId: string, key: string): Promise<void> {
+    await this.cacheService.del(this.cacheKey(environmentId, key));
+  }
+
+  private async findDurableConversationId(environmentId: string, identifier: string): Promise<string | null> {
+    const activity = await this.conversationService.findActivityByIdentifier(environmentId, identifier);
     if (!activity?.platformThreadId) {
       return null;
     }
 
-    return this.conversationIdFromPlatformThreadId(activity.platformThreadId);
+    return conversationIdFromThreadId(activity.platformThreadId);
   }
 
-  private conversationIdFromPlatformThreadId(platformThreadId: string): string {
-    const prefix = 'agent_chat:';
-
-    return platformThreadId.startsWith(prefix) ? platformThreadId.slice(prefix.length) : platformThreadId;
-  }
-
-  private messageCacheKey(environmentId: string, messageId: string): string {
-    return `agent-chat:message-accept:${environmentId}:${messageId}`;
-  }
-
-  private actionCacheKey(environmentId: string, idempotencyKey: string): string {
-    return `agent-chat:action-accept:${environmentId}:${idempotencyKey}`;
+  private cacheKey(environmentId: string, key: string): string {
+    return `agent-chat:accept:${environmentId}:${key}`;
   }
 }

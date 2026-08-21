@@ -1541,6 +1541,24 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handleAction', () => {
+    it('should persist approval decisions with the client action idempotency key', async () => {
+      const { handler, conversationService } = makeHandler();
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'tool-approval:approve:tc1', value: 'Approve once' } as any,
+        'user1',
+        { idempotencyKey: 'idem_abcdefghijkl' }
+      );
+
+      expect(conversationService.persistToolApprovalDecision.calledOnce).to.equal(true);
+      expect(conversationService.persistToolApprovalDecision.firstCall.args[0].identifier).to.equal(
+        'idem_abcdefghijkl'
+      );
+    });
+
     it('should skip bridge dispatch for link-button actions', async () => {
       const { handler, bridgeExecutor } = makeHandler();
       const thread = makeActionThread();

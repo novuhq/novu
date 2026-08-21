@@ -210,14 +210,14 @@ describe('NovuAgentChatAdapterImpl', () => {
     expect(processMessage).not.toHaveBeenCalled();
   });
 
-  it('acks a retry without re-dispatching when claimInboundMessage is duplicate', async () => {
-    const claimInboundMessage = vi.fn(async () => ({
+  it('acks a retry without re-dispatching when claimInbound is duplicate', async () => {
+    const claimInbound = vi.fn(async () => ({
       claimed: false,
       conversationId: 'conv_original0001',
     }));
     const { adapter, processMessage } = await createAdapter(
       createConfig({
-        claimInboundMessage,
+        claimInbound,
       })
     );
 
@@ -236,12 +236,12 @@ describe('NovuAgentChatAdapterImpl', () => {
     expect(processMessage).not.toHaveBeenCalled();
   });
 
-  it('releases the inbound message claim when processMessage throws', async () => {
-    const releaseInboundMessage = vi.fn(async () => undefined);
+  it('releases the inbound claim when processMessage throws', async () => {
+    const releaseInbound = vi.fn(async () => undefined);
     const { adapter, processMessage } = await createAdapter(
       createConfig({
-        claimInboundMessage: async () => ({ claimed: true, conversationId: 'conv_new000000001' }),
-        releaseInboundMessage,
+        claimInbound: async () => ({ claimed: true, conversationId: 'conv_new000000001' }),
+        releaseInbound,
       })
     );
     processMessage.mockRejectedValueOnce(new Error('dispatch failed'));
@@ -249,9 +249,9 @@ describe('NovuAgentChatAdapterImpl', () => {
     await expect(
       adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }))
     ).rejects.toThrow('dispatch failed');
-    expect(releaseInboundMessage).toHaveBeenCalledWith({
+    expect(releaseInbound).toHaveBeenCalledWith({
       session: SESSION,
-      messageId: 'msg_abcdefghijkl',
+      key: 'msg_abcdefghijkl',
       conversationId: expect.any(String),
     });
   });
@@ -275,6 +275,39 @@ describe('NovuAgentChatAdapterImpl', () => {
 
     expect(response.status).toBe(400);
     expect(processAction).not.toHaveBeenCalled();
+  });
+
+  it('acks a duplicate action without re-dispatching when claimInbound is duplicate', async () => {
+    const claimInbound = vi.fn(async () => ({
+      claimed: false,
+      conversationId: 'conv_abcdefghijkl',
+    }));
+    const { adapter, processAction } = await createAdapter(
+      createConfig({
+        authorizeResume: async () => true,
+        claimInbound,
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        idempotencyKey: 'idem_abcdefghijkl',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(processAction).not.toHaveBeenCalled();
+    expect(claimInbound).toHaveBeenCalledWith({
+      session: SESSION,
+      key: 'idem_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
   });
 
   it('resumes with conversationIdentifier when authorizeResume allows', async () => {

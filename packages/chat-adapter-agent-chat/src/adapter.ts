@@ -237,15 +237,11 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       return jsonResponse({ message: 'Invalid message id' }, 400);
     }
 
-    if (clientMessageId && this.config.claimInboundMessage) {
-      const claim = await this.config.claimInboundMessage({
-        session,
-        messageId: clientMessageId,
-        conversationId,
-      });
-      if (!claim.claimed) {
-        return jsonResponse({ data: { identifier: claim.conversationId, messageId: clientMessageId } }, 201);
-      }
+    const duplicate = await this.ackIfAlreadyClaimed(session, clientMessageId, conversationId, 201, {
+      messageId: clientMessageId,
+    });
+    if (duplicate) {
+      return duplicate;
     }
 
     const messageId = clientMessageId || mintMessageId();
@@ -260,13 +256,7 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
     try {
       await this.chat!.processMessage(this, threadId, message, options);
     } catch (error) {
-      if (clientMessageId && this.config.releaseInboundMessage) {
-        await this.config.releaseInboundMessage({
-          session,
-          messageId: clientMessageId,
-          conversationId,
-        });
-      }
+      await this.releaseInboundClaim(session, clientMessageId, conversationId);
 
       throw error;
     }
@@ -299,15 +289,9 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       return jsonResponse({ message: 'Invalid idempotency key' }, 400);
     }
 
-    if (idempotencyKey && this.config.claimInboundAction) {
-      const claim = await this.config.claimInboundAction({
-        session,
-        idempotencyKey,
-        conversationId,
-      });
-      if (!claim.claimed) {
-        return jsonResponse({ data: { identifier: claim.conversationId } }, 200);
-      }
+    const duplicate = await this.ackIfAlreadyClaimed(session, idempotencyKey, conversationId, 200);
+    if (duplicate) {
+      return duplicate;
     }
 
     const threadId = this.encodeThreadId({ conversationId });
@@ -334,18 +318,39 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
         options
       );
     } catch (error) {
-      if (idempotencyKey && this.config.releaseInboundAction) {
-        await this.config.releaseInboundAction({
-          session,
-          idempotencyKey,
-          conversationId,
-        });
-      }
+      await this.releaseInboundClaim(session, idempotencyKey, conversationId);
 
       throw error;
     }
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
+  }
+
+  private async ackIfAlreadyClaimed(
+    session: AgentChatSession,
+    key: string,
+    conversationId: string,
+    status: number,
+    extra?: Record<string, string>
+  ): Promise<Response | null> {
+    if (!key || !this.config.claimInbound) {
+      return null;
+    }
+
+    const claim = await this.config.claimInbound({ session, key, conversationId });
+    if (claim.claimed) {
+      return null;
+    }
+
+    return jsonResponse({ data: { identifier: claim.conversationId, ...extra } }, status);
+  }
+
+  private async releaseInboundClaim(session: AgentChatSession, key: string, conversationId: string): Promise<void> {
+    if (!key || !this.config.releaseInbound) {
+      return;
+    }
+
+    await this.config.releaseInbound({ session, key, conversationId });
   }
 
   /** Sync plan-limit gate before minting or dispatching. */

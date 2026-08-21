@@ -358,6 +358,10 @@ export class AgentChat extends BaseModule {
     });
   }
 
+  /**
+   * Send a user message. Overlapping send while a run is active is rejected.
+   * Cancel-previous is NV-8643.
+   */
   async sendMessage(args: SendMessageArgs): Result<SendMessageResult, NovuError | AgentChatPlanLimitError> {
     return this.callWithSession<SendMessageResult, NovuError | AgentChatPlanLimitError>(async () => {
       const key = args.key ?? args.conversationId ?? createLocalConversationKey();

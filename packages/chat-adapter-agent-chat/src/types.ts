@@ -59,15 +59,10 @@ export type AgentChatCheckAcceptLimitsParams = {
   conversationId?: string;
 };
 
-export type AgentChatClaimInboundMessageParams = {
+export type AgentChatClaimInboundParams = {
   session: AgentChatSession;
-  messageId: string;
-  conversationId: string;
-};
-
-export type AgentChatClaimInboundActionParams = {
-  session: AgentChatSession;
-  idempotencyKey: string;
+  /** Client `msg_*` or `idem_*`. */
+  key: string;
   conversationId: string;
 };
 
@@ -90,19 +85,12 @@ export type AgentChatAdapterConfig = {
    */
   checkAcceptLimits?: (params: AgentChatCheckAcceptLimitsParams) => Promise<AgentChatAcceptLimitBlock | null>;
   /**
-   * Atomic accept gate for inbound user messages. When `claimed` is false, ack with
-   * `conversationId` without dispatching again.
+   * Atomic accept gate. `key` is `msg_*` or `idem_*`. When `claimed` is false,
+   * ack with `conversationId` without dispatching again.
    */
-  claimInboundMessage?: (params: AgentChatClaimInboundMessageParams) => Promise<AgentChatInboundClaimResult>;
-  /** Drop the in-flight message lock after dispatch fails so the same key can retry. */
-  releaseInboundMessage?: (params: AgentChatClaimInboundMessageParams) => Promise<void>;
-  /**
-   * Atomic accept gate for action ingress. When `claimed` is false, ack with
-   * `conversationId` without dispatching again.
-   */
-  claimInboundAction?: (params: AgentChatClaimInboundActionParams) => Promise<AgentChatInboundClaimResult>;
-  /** Drop the in-flight action lock after dispatch fails so the same key can retry. */
-  releaseInboundAction?: (params: AgentChatClaimInboundActionParams) => Promise<void>;
+  claimInbound?: (params: AgentChatClaimInboundParams) => Promise<AgentChatInboundClaimResult>;
+  /** Drop the in-flight lock after dispatch fails so the same key can retry. */
+  releaseInbound?: (params: AgentChatClaimInboundParams) => Promise<void>;
   deliverMessage: (params: AgentChatDeliverMessageParams) => Promise<AgentChatDeliverMessageResult>;
   editMessage: (params: AgentChatEditMessageParams) => Promise<AgentChatDeliverMessageResult>;
   deleteMessage: (params: AgentChatDeleteMessageParams) => Promise<void>;
