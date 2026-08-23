@@ -72,9 +72,7 @@ export function AgentChat({ conversationId, onAssistantMessage, sidebar }: Agent
     isRunning,
     status,
     isLoading,
-    isFetching,
-    hasMore,
-    fetchMore,
+    pagination,
     typing,
   } = useAgentChat({
     agentId: config.agentId,
@@ -118,9 +116,7 @@ export function AgentChat({ conversationId, onAssistantMessage, sidebar }: Agent
         pendingActions={pendingActions}
         isRunning={isRunning}
         typing={typing}
-        hasMore={hasMore}
-        isFetching={isFetching}
-        onFetchMore={fetchMore}
+        pagination={pagination}
         onRespond={respondToAction}
         composerDisabled={sending || isRunning || isLoading}
         onSend={onSend}

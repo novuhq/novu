@@ -1,6 +1,7 @@
 import { AGENT_EVENT_PROTOCOL_VERSION } from '@novu/agent-event-protocol';
 import { AgentChatPlanLimitError, AgentChatService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
+import { NovuError } from '../utils/errors';
 import { AgentChat } from './agent-chat';
 import { derivePendingActions } from './agent-message.types';
 import type { AgentChatChange } from './types';
@@ -51,13 +52,13 @@ describe('AgentChat', () => {
     expect(result).toEqual({
       data: { conversationId: 'conv_abcdefghijkl', messageId: 'msg_abcdefghijkl' },
     });
-    expect(updates[0]?.key).toBe('local_session1');
-    expect(updates[0]?.conversationId).toBeUndefined();
-    expect(updates[0]?.messages[0]?.status).toBe('sending');
-    expect(updates[0]?.messages[0]?.id).toMatch(/^opt_/);
     expect(updates[1]?.key).toBe('local_session1');
-    expect(updates[1]?.conversationId).toBe('conv_abcdefghijkl');
-    expect(updates[1]?.messages).toEqual([{ id: 'msg_abcdefghijkl', status: 'sent', role: 'user' }]);
+    expect(updates[1]?.conversationId).toBeUndefined();
+    expect(updates[1]?.messages[0]?.status).toBe('sending');
+    expect(updates[1]?.messages[0]?.id).toMatch(/^opt_/);
+    expect(updates[2]?.key).toBe('local_session1');
+    expect(updates[2]?.conversationId).toBe('conv_abcdefghijkl');
+    expect(updates[2]?.messages).toEqual([{ id: 'msg_abcdefghijkl', status: 'sent', role: 'user' }]);
 
     const snapshot = agentChat.getConversation({
       agentId: 'agent_1',
@@ -86,7 +87,7 @@ describe('AgentChat', () => {
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    expect(statuses).toEqual(['sending', 'sent']);
+    expect(statuses).toEqual(['', 'sending', 'sent']);
   });
 
   it('marks the optimistic message failed when the request errors', async () => {
@@ -701,6 +702,62 @@ describe('AgentChat', () => {
     expect(updates.at(-1)).toEqual(['msg_user0000001', 'msg_asst0000001']);
   });
 
+  it('accepts live deltas after history that ends mid-stream', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 1,
+          timestamp: '2026-08-07T12:00:00.000Z',
+          event: { type: 'run-start' },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'run_1',
+          turnId: 'turn_1',
+          sequence: 2,
+          timestamp: '2026-08-07T12:00:01.000Z',
+          event: { type: 'message-start', messageId: 'msg_asst0000001' },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit('agent_chat.agent_event', {
+      result: {
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        agentId: 'agent_1',
+        runId: 'run_1',
+        turnId: 'turn_1',
+        sequence: 3,
+        timestamp: '2026-08-07T12:00:02.000Z',
+        event: { type: 'message-delta', messageId: 'msg_asst0000001', delta: 'Hello' },
+      },
+    });
+
+    const snapshot = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(snapshot?.error).toBeUndefined();
+    expect(snapshot?.messages.some((message) => message.id === 'msg_asst0000001')).toBe(true);
+  });
+
   it('ignores live envelopes for conversations that are not open', async () => {
     sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_user0000001' });
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
@@ -776,13 +833,14 @@ describe('AgentChat', () => {
       role: 'user' | 'assistant';
       markdown: string;
     }>,
-    olderCursor: string | null = null
+    olderCursor: string | null = null,
+    conversationId = 'conv_abcdefghijkl'
   ) {
     return {
       events: events.map((event) => ({
         version: AGENT_EVENT_PROTOCOL_VERSION,
         conversationId: 'internal',
-        conversationIdentifier: 'conv_abcdefghijkl',
+        conversationIdentifier: conversationId,
         agentId: 'agent_1',
         runId: 'history',
         turnId: 't1',
@@ -799,12 +857,18 @@ describe('AgentChat', () => {
     };
   }
 
-  function liveAssistantEnvelope(args: { sequence: number; messageId: string; markdown: string }) {
+  function liveAssistantEnvelope(args: {
+    sequence: number;
+    messageId: string;
+    markdown: string;
+    conversationId?: string;
+    role?: 'user' | 'assistant';
+  }) {
     return {
       result: {
         version: AGENT_EVENT_PROTOCOL_VERSION,
         conversationId: 'internal',
-        conversationIdentifier: 'conv_abcdefghijkl',
+        conversationIdentifier: args.conversationId ?? 'conv_abcdefghijkl',
         agentId: 'agent_1',
         runId: 'run_1',
         turnId: 't1',
@@ -812,7 +876,7 @@ describe('AgentChat', () => {
         timestamp: '2026-08-07T12:00:03.000Z',
         event: {
           type: 'message' as const,
-          role: 'assistant' as const,
+          role: args.role ?? ('assistant' as const),
           messageId: args.messageId,
           content: { markdown: args.markdown },
         },
@@ -843,8 +907,8 @@ describe('AgentChat', () => {
     });
   }
 
-  async function waitForMessageIds(expected: string[]): Promise<void> {
-    const current = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+  async function waitForMessageIds(expected: string[], key = 'local_session1'): Promise<void> {
+    const current = agentChat.getConversation({ agentId: 'agent_1', key });
     if (current && current.messages.map((message) => message.id).join() === expected.join()) {
       return;
     }
@@ -852,7 +916,7 @@ describe('AgentChat', () => {
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`timed out waiting for ${expected.join(',')}`)), 1000);
       const unsubscribe = emitter.on('agent_chat.messages.updated', ({ data }) => {
-        if (data.key !== 'local_session1') {
+        if (data.key !== key) {
           return;
         }
 
@@ -1028,7 +1092,7 @@ describe('AgentChat', () => {
     expect(assistant?.parts).toEqual([{ type: 'text', text: 'same as http page', state: 'done' }]);
   });
 
-  it('flushes buffered live envelopes when catch-up HTTP fails', async () => {
+  it('flushes buffered live envelopes and sets error when catch-up HTTP fails', async () => {
     await openClaimedConversation();
 
     let rejectEvents!: (error: Error) => void;
@@ -1038,6 +1102,13 @@ describe('AgentChat', () => {
           rejectEvents = reject;
         })
     );
+
+    const catchUpFailureUpdates: Array<{ isRecovering: boolean; catchUpError?: unknown }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.catchUpError) {
+        catchUpFailureUpdates.push({ isRecovering: data.isRecovering, catchUpError: data.catchUpError });
+      }
+    });
 
     emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
     await waitForGetEventsCalls(1);
@@ -1053,6 +1124,302 @@ describe('AgentChat', () => {
 
     rejectEvents(new Error('getEvents failed'));
     await waitForMessageIds(['msg_user0000001', 'msg_asst_flush001']);
+    expect(catchUpFailureUpdates.length).toBeGreaterThanOrEqual(1);
+    const failedUpdate = catchUpFailureUpdates.find((update) => update.isRecovering === false);
+    expect(failedUpdate).toEqual({
+      isRecovering: false,
+      catchUpError: expect.objectContaining({
+        message: 'Failed to recover agent chat conversation after reconnect',
+      }),
+    });
+    expect(failedUpdate?.catchUpError).toBeDefined();
+    expect((failedUpdate as { error?: unknown }).error).toBeUndefined();
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.catchUpError).toMatchObject({
+      message: 'Failed to recover agent chat conversation after reconnect',
+    });
+  });
+
+  it('drops malformed agent_chat.agent_event envelopes without folding them', async () => {
+    await openClaimedConversation();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    emitter.emit('agent_chat.agent_event', { result: { invalid: true } as any });
+
+    expect(warn).toHaveBeenCalledWith('[novu agent-chat] skipping live envelope:', 'invalid-schema');
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.messages).toHaveLength(1);
+
+    warn.mockRestore();
+  });
+
+  it('does not buffer live envelopes for conversations that are not catching up', async () => {
+    sendMessage
+      .mockResolvedValueOnce({ identifier: 'conv_aaaaaaaaaaaa', messageId: 'msg_user_a00001' })
+      .mockResolvedValueOnce({ identifier: 'conv_bbbbbbbbbbbb', messageId: 'msg_user_b00001' });
+
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello A', key: 'local_a' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello B', key: 'local_b' });
+    agentChat.subscribe();
+
+    let resolveSlowCatchUp!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation((args: { conversationId: string }) => {
+      if (args.conversationId === 'conv_aaaaaaaaaaaa') {
+        return new Promise((resolve) => {
+          resolveSlowCatchUp = resolve;
+        });
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [{ sequence: 1, messageId: 'msg_user_b00001', role: 'user', markdown: 'hello B' }],
+          null,
+          args.conversationId
+        )
+      );
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        conversationId: 'conv_bbbbbbbbbbbb',
+        sequence: 2,
+        messageId: 'msg_asst_b_live01',
+        markdown: 'live on B during A catch-up',
+      })
+    );
+
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', key: 'local_b' })?.messages.map((message) => message.id)
+    ).toEqual(['msg_user_b00001', 'msg_asst_b_live01']);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.messages).toHaveLength(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        conversationId: 'conv_aaaaaaaaaaaa',
+        sequence: 2,
+        messageId: 'msg_asst_a_buf01',
+        markdown: 'buffered on A during catch-up',
+      })
+    );
+
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_a' })?.messages).toHaveLength(1);
+
+    resolveSlowCatchUp(
+      historyPage(
+        [{ sequence: 1, messageId: 'msg_user_a00001', role: 'user', markdown: 'hello A' }],
+        null,
+        'conv_aaaaaaaaaaaa'
+      )
+    );
+
+    await waitForMessageIds(['msg_user_a00001', 'msg_asst_a_buf01'], 'local_a');
+  });
+
+  it('sets catchUpError when reconnect catch-up exceeds the safety page limit', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    agentChat.subscribe();
+    getEvents.mockReset();
+
+    let page = 0;
+    let resolveFirstPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(() => {
+      page += 1;
+      if (page === 1) {
+        return new Promise((resolve) => {
+          resolveFirstPage = resolve;
+        });
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [
+            {
+              sequence: 100 + page,
+              messageId: `msg_asst_page${page.toString().padStart(2, '0')}`,
+              role: 'assistant',
+              markdown: `page ${page}`,
+            },
+          ],
+          `act_page${page.toString().padStart(2, '0')}`
+        )
+      );
+    });
+
+    const catchUpErrors: unknown[] = [];
+    const catchUpErrorPromise = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for catchUpError')), 2000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.catchUpError && data.isRecovering === false) {
+          clearTimeout(timeout);
+          catchUpErrors.push(data.catchUpError);
+          resolve();
+        }
+      });
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveAssistantEnvelope({
+        sequence: 200,
+        messageId: 'msg_asst_buffered',
+        markdown: 'discarded on limit exceeded',
+      })
+    );
+
+    resolveFirstPage(
+      historyPage(
+        [
+          {
+            sequence: 101,
+            messageId: 'msg_asst_page01',
+            role: 'assistant',
+            markdown: 'page 1',
+          },
+        ],
+        'act_page01'
+      )
+    );
+
+    await catchUpErrorPromise;
+    expect(getEvents).toHaveBeenCalledTimes(20);
+
+    expect(catchUpErrors).toHaveLength(1);
+    expect(catchUpErrors[0]).toMatchObject({
+      message: expect.stringContaining('safety page limit'),
+    });
+
+    const conversation = agentChat.getConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    expect(conversation?.messages).toHaveLength(1);
+    expect(conversation?.messages[0]?.id).toBe('msg_user0000001');
+    expect(conversation?.messages.some((message) => message.id === 'msg_asst_buffered')).toBe(false);
+    expect(conversation?.messages.some((message) => message.id.startsWith('msg_asst_page'))).toBe(false);
+    expect(conversation?.catchUpError).toMatchObject({
+      message: expect.stringContaining('safety page limit'),
+    });
+  });
+
+  it('emits catchUpError separately from conversation error on catch-up failure', async () => {
+    await openClaimedConversation();
+
+    let rejectEvents!: (error: Error) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectEvents = reject;
+        })
+    );
+
+    const updates: Array<{ error?: unknown; catchUpError?: unknown }> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.catchUpError) {
+        updates.push({ error: data.error, catchUpError: data.catchUpError });
+      }
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    rejectEvents(new Error('getEvents failed'));
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for catchUpError event')), 2000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.catchUpError) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    expect(updates.length).toBeGreaterThanOrEqual(1);
+    expect(updates[0]?.catchUpError).toMatchObject({
+      message: 'Failed to recover agent chat conversation after reconnect',
+    });
+    expect(updates[0]?.error).toBeUndefined();
+  });
+
+  it('exposes isRecovering while catch-up is in flight and clears it after success', async () => {
+    await openClaimedConversation();
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    const recoveringStarted = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for isRecovering start event')), 1000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.key === 'local_session1' && data.isRecovering) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+    const recoveringUpdates: boolean[] = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        recoveringUpdates.push(data.isRecovering);
+      }
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(1);
+    await recoveringStarted;
+
+    resolveEvents(
+      historyPage([
+        { sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' },
+        { sequence: 2, messageId: 'msg_asst_done001', role: 'assistant', markdown: 'caught up' },
+      ])
+    );
+
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_done001']);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.isRecovering).toBe(false);
+    expect(recoveringUpdates.at(-1)).toBe(false);
+  });
+
+  it('emits isRecovering false after successful catch-up with an empty live buffer', async () => {
+    await openClaimedConversation();
+    getEvents.mockResolvedValue(
+      historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+    );
+
+    const recoveringUpdates: boolean[] = [];
+    const recovered = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timed out waiting for isRecovering false')), 2000);
+      emitter.on('agent_chat.messages.updated', ({ data }) => {
+        if (data.key !== 'local_session1') {
+          return;
+        }
+
+        recoveringUpdates.push(data.isRecovering);
+        if (recoveringUpdates.includes(true) && data.isRecovering === false) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await recovered;
+    expect(recoveringUpdates.at(-1)).toBe(false);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.isRecovering).toBe(false);
   });
 
   it('runs a second catch-up when reconnect arrives during an in-flight catch-up', async () => {
@@ -1669,17 +2036,18 @@ describe('AgentChat', () => {
       liveAssistantEnvelope({ sequence: 4, messageId: 'msg_live0000001', markdown: 'live during fetchMore' })
     );
 
-    expect(changes).toHaveLength(1);
-    expect(changes[0]?.kind).toBe('live');
-    expect(changes[0]?.addedMessages.map((message) => message.id)).toEqual(['msg_live0000001']);
+    expect(changes).toHaveLength(2);
+    expect(changes[0]?.kind).toBe('local');
+    expect(changes[1]?.kind).toBe('live');
+    expect(changes[1]?.addedMessages.map((message) => message.id)).toEqual(['msg_live0000001']);
 
     resolveOlderPage(
       historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
     );
     await older;
 
-    expect(changes[1]?.kind).toBe('history');
-    expect(changes[1]?.addedMessages.map((message) => message.id)).toEqual(['msg_old0000001']);
+    const historyChange = changes.find((change) => change.kind === 'history');
+    expect(historyChange?.addedMessages.map((message) => message.id)).toEqual(['msg_old0000001']);
   });
 
   it('carries the envelope that caused a live fold', async () => {
@@ -1718,8 +2086,9 @@ describe('AgentChat', () => {
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    expect(changes.map((change) => change.kind)).toEqual(['local', 'local']);
+    expect(changes.map((change) => change.kind)).toEqual(['local', 'local', 'local']);
     expect(changes.map((change) => change.addedMessages.map((message) => message.id))).toEqual([
+      [],
       [],
       ['msg_abcdefghijkl'],
     ]);
@@ -1753,8 +2122,8 @@ describe('AgentChat', () => {
 
     await agentChat.sendMessage({ agentId: 'agent_1', text: 'hello', key: 'local_session1' });
 
-    expect(changes.map((change) => change.kind)).toEqual(['local', 'local']);
-    expect(changes.map((change) => change.addedMessages)).toEqual([[], []]);
+    expect(changes.map((change) => change.kind)).toEqual(['local', 'local', 'local']);
+    expect(changes.map((change) => change.addedMessages)).toEqual([[], [], []]);
   });
 
   it('reports a pending approval from history once across reloads', async () => {
@@ -1810,7 +2179,247 @@ describe('AgentChat', () => {
 
     const snapshot = agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
     expect(derivePendingActions(snapshot?.messages ?? []).map((action) => action.id)).toEqual(['approval_000001']);
-    expect(changes[0]?.kind).toBe('history');
-    expect(changes[0]?.newActions).toEqual([]);
+    const historyChange = changes.find((change) => change.kind === 'history');
+    expect(historyChange?.newActions).toEqual([]);
+  });
+
+  it('updates pagination.status during fetchMore success and failure', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockRejectedValueOnce(new Error('network'));
+    const failed = await agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(failed.error).toBeDefined();
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('error');
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const older = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await older;
+
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+  });
+
+  it('deduplicates concurrent fetchMore calls into one in-flight request', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const first = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    const second = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    expect(getEvents).toHaveBeenCalledTimes(2);
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    expect(firstResult.data?.messages.map((message) => message.id)).toEqual(['msg_old0000001', 'msg_new0000001']);
+    expect(secondResult).toEqual(firstResult);
+    expect(getEvents).toHaveBeenCalledTimes(2);
+  });
+
+  it('exposes a terminal run-error on getConversation and messages.updated', async () => {
+    await openClaimedConversation();
+
+    const errors: Array<{ message: string } | undefined> = [];
+    emitter.on('agent_chat.messages.updated', ({ data }) => {
+      if (data.key === 'local_session1') {
+        errors.push(data.error ? { message: data.error.message } : undefined);
+      }
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'run-start' },
+      })
+    );
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 3,
+        event: { type: 'run-error', message: 'agent handler failed', code: 'handler_failed' },
+      })
+    );
+
+    const snapshot = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(snapshot?.error).toMatchObject({ message: 'agent handler failed' });
+    expect(errors.at(-1)).toEqual({ message: 'agent handler failed' });
+
+    sendMessage.mockResolvedValue({ identifier: 'conv_abcdefghijkl', messageId: 'msg_retry000001' });
+    await agentChat.sendMessage({ agentId: 'agent_1', text: 'retry', key: 'local_session1' });
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.error).toBeUndefined();
+  });
+
+  it('does not let a stale fetchMore failure overwrite pagination status after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let rejectOlderPage!: (error: Error) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectOlderPage = reject;
+        })
+    );
+
+    const older = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(3);
+
+    rejectOlderPage(new Error('network'));
+    const staleResult = await older;
+    expect(staleResult.error).toBeUndefined();
+    expect(staleResult.data?.messages.map((message) => message.id)).toEqual(['msg_new0000001']);
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+
+    let resolveFreshPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFreshPage = resolve;
+        })
+    );
+
+    const fresh = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+
+    resolveFreshPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await fresh;
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
+  });
+
+  it('does not prepend a stale fetchMore page after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveOlderPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOlderPage = resolve;
+        })
+    );
+
+    const older = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    resolveOlderPage(
+      historyPage([{ sequence: 1, messageId: 'msg_stale000001', role: 'user', markdown: 'stale' }], null)
+    );
+    await older;
+
+    expect(
+      agentChat
+        .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
+        ?.messages.map((message) => message.id)
+    ).toEqual(['msg_new0000001']);
+  });
+
+  it('does not let a stale fetchMore finalizer clear a fresh pagination claim after reload', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveStalePage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStalePage = resolve;
+        })
+    );
+
+    const stale = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 3, messageId: 'msg_new0000001', role: 'user', markdown: 'recent' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+
+    let resolveFreshPage!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveFreshPage = resolve;
+        })
+    );
+
+    const fresh = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveStalePage(
+      historyPage([{ sequence: 1, messageId: 'msg_stale000001', role: 'user', markdown: 'stale' }], null)
+    );
+    await stale;
+
+    const deduped = agentChat.fetchMore({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' });
+    expect(getEvents).toHaveBeenCalledTimes(4);
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('loading');
+
+    resolveFreshPage(
+      historyPage([{ sequence: 1, messageId: 'msg_old0000001', role: 'user', markdown: 'older' }], null)
+    );
+    await Promise.all([fresh, deduped]);
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.pagination.status
+    ).toBe('idle');
   });
 });

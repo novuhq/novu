@@ -168,7 +168,7 @@ function AgentChatConnectedRecap({
 
       <SetupGuideCard label="Setup steps" persistKey={persistKey} defaultExpanded={false}>
         <SetupStepperRail className="gap-8 py-6 pb-3 pr-3 md:pr-6">
-          <AgentChatSetupSteps prompt={prompt} onOpenChat={handleOpenChat} />
+          <AgentChatSetupSteps prompt={prompt} agentIdentifier={agent.identifier} onOpenChat={handleOpenChat} />
         </SetupStepperRail>
       </SetupGuideCard>
     </div>

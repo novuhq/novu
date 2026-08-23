@@ -3,6 +3,7 @@ import {
   AGENT_CHAT_DOCS_URL,
   AgentChatEmbedResources,
   buildAgentChatTuiCommand,
+  buildAgentChatTuiCommandForDisplay,
 } from '@/components/agents/agent-chat-setup-content';
 import { CopyableTerminalBlock } from '@/components/primitives/copyable-terminal-block';
 import { ExternalLink } from '@/components/shared/external-link';
@@ -12,6 +13,7 @@ import { deriveStepStatus } from './setup-guide-step-utils';
 
 type AgentChatSetupStepsProps = {
   prompt: string;
+  agentIdentifier: string;
   stepOffset?: number;
   /** Omit to show all steps as completed (connected recap). */
   firstIncompleteStep?: number;
@@ -20,12 +22,19 @@ type AgentChatSetupStepsProps = {
 
 export function AgentChatSetupSteps({
   prompt,
+  agentIdentifier,
   stepOffset = 1,
   firstIncompleteStep,
   onOpenChat,
 }: AgentChatSetupStepsProps) {
   const base = stepOffset;
-  const tuiCommand = buildAgentChatTuiCommand(apiHostnameManager.getHostname());
+  const tuiCommandOptions = {
+    apiUrl: apiHostnameManager.getHostname(),
+    agentIdentifier,
+    connectDashboardUrl: window.location.origin,
+  };
+  const tuiDisplayCommand = buildAgentChatTuiCommandForDisplay(tuiCommandOptions);
+  const tuiCopyCommand = buildAgentChatTuiCommand(tuiCommandOptions);
 
   return (
     <>
@@ -66,7 +75,7 @@ export function AgentChatSetupSteps({
             </ExternalLink>
           </>
         }
-        extraContent={<CopyableTerminalBlock displayCommand={tuiCommand} copyCommand={tuiCommand} />}
+        extraContent={<CopyableTerminalBlock displayCommand={tuiDisplayCommand} copyCommand={tuiCopyCommand} />}
         rightContent={<AgentChatEmbedResources prompt={prompt} />}
       />
     </>

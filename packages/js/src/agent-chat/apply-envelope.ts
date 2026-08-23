@@ -35,13 +35,14 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
 
   switch (event.type) {
     case 'run-start':
-      return { ...state, isRunning: true };
+      return { ...state, isRunning: true, error: undefined };
 
     case 'run-finish':
       return finalizeOpenStreamingParts({
         ...state,
         isRunning: false,
         activeAssistantMessageId: undefined,
+        error: undefined,
       });
 
     case 'run-error':

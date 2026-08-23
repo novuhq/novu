@@ -54,6 +54,11 @@ import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
 import { maybeRunLangChainTunnel, runLangChainProjectSetup } from './langchain';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
+import {
+  type ExistingAgentContext,
+  resolveExistingAgentContext,
+  shouldSkipAgentConnectModePicker,
+} from './resolve-existing-agent';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
@@ -151,7 +156,11 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       ...sessionProps,
     });
 
-    const connectMode = await resolveAgentConnectMode(ctx);
+    const preselectedAgent = options.agentIdentifier?.trim()
+      ? resolveExistingAgentContext(existingAgents, options.agentIdentifier)
+      : undefined;
+
+    const connectMode = await resolveAgentConnectMode(ctx, preselectedAgent);
 
     // Bridge modes need the user's real environment up front, so a keyless
     // session is upgraded before the agent is created.
@@ -178,6 +187,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         identifier: agent.identifier,
         connectMode,
         flow,
+        ...sessionProps,
+      });
+    } else if (preselectedAgent) {
+      agent = preselectedAgent.summary;
+      flow = 'reused';
+      track(CONNECT_EVENTS.AGENT_REUSED, {
+        identifier: agent.identifier,
         ...sessionProps,
       });
     } else if (existingAgents.length > 0 && !options.prompt) {
@@ -550,7 +566,10 @@ function resolveBridgeProject(outcomes: {
   return outcomes.chatSdkOutcome ?? outcomes.aiSdkOutcome ?? outcomes.langChainOutcome ?? outcomes.customCodeOutcome;
 }
 
-async function resolveAgentConnectMode(ctx: PipelineContext): Promise<AgentConnectMode> {
+async function resolveAgentConnectMode(
+  ctx: PipelineContext,
+  preselectedAgent?: ExistingAgentContext
+): Promise<AgentConnectMode> {
   const { options, ui, track, sessionProps } = ctx;
 
   if (options.runtime) {
@@ -560,6 +579,17 @@ async function resolveAgentConnectMode(ctx: PipelineContext): Promise<AgentConne
     });
 
     return options.runtime;
+  }
+
+  if (shouldSkipAgentConnectModePicker(options)) {
+    const connectMode = preselectedAgent!.connectMode;
+    track(CONNECT_EVENTS.RUNTIME_SELECTED, {
+      connectMode,
+      skipped: true,
+      ...sessionProps,
+    });
+
+    return connectMode;
   }
 
   const picked = await ui.pickAgentConnectMode({
