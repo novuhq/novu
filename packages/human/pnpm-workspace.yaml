@@ -1,4 +1,0 @@
-allowBuilds:
-  esbuild: set this to true or false
-overrides:
-  '@novu/human': 'link:'
