@@ -54,6 +54,35 @@ describe('resolveLlmAuthChoice', () => {
     expect(result).toEqual({ kind: 'openai-api-key', apiKey: 'sk-test' });
   });
 
+  it('resolves OrcaRouter API key from CI flags', async () => {
+    const result = await resolveLlmAuthChoice({
+      connectMode: 'ai-sdk',
+      options: {
+        ci: true,
+        llmAuth: 'orcarouter',
+        orcarouterApiKey: 'or-test',
+        ...baseOptions(),
+      },
+      ui: createUi(),
+    });
+
+    expect(result).toEqual({ kind: 'orcarouter-api-key', apiKey: 'or-test' });
+  });
+
+  it('throws when OrcaRouter key is missing in CI', async () => {
+    await expect(
+      resolveLlmAuthChoice({
+        connectMode: 'ai-sdk',
+        options: {
+          ci: true,
+          llmAuth: 'orcarouter',
+          ...baseOptions(),
+        },
+        ui: createUi(),
+      })
+    ).rejects.toThrow(/--orcarouter-api-key/);
+  });
+
   it('rejects Claude subscription for langchain runtime', async () => {
     await expect(
       resolveLlmAuthChoice({

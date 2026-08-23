@@ -143,6 +143,7 @@ Non-interactive (agent / CI) contract:
   LLM wiring (fresh empty-dir scaffold for --runtime ai-sdk or --runtime langchain only):
     - --llm-auth openai --openai-api-key "$OPENAI_API_KEY"  → wire OpenAI; skips the Ink picker (no --ci required)
     - --llm-auth anthropic --anthropic-api-key "$ANTHROPIC_API_KEY"  → wire Anthropic; skips the Ink picker
+    - --llm-auth orcarouter --orcarouter-api-key "$ORCAROUTER_API_KEY"  → wire OrcaRouter (OpenAI-compatible gateway); skips the Ink picker
     - --llm-auth codex-subscription  → OAuth via codex login (ai-sdk) or langchainjs-codex-oauth (langchain)
     - --llm-auth claude-subscription  → ai-sdk only; requires prior claude auth login
     - --llm-auth skip  → demo echo agent (default when omitted)

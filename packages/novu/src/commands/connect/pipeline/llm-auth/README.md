@@ -30,9 +30,11 @@ Entry point: `bridge-adapter/engine.ts` calls `resolveLlmAuthChoice` before scaf
 
 ## CLI flags
 
-`--llm-auth` skips the Ink picker even without `--ci`. Pair API-key kinds with `--openai-api-key` or `--anthropic-api-key` in non-interactive mode.
+`--llm-auth` skips the Ink picker even without `--ci`. Pair API-key kinds with `--openai-api-key`, `--anthropic-api-key`, or `--orcarouter-api-key` in non-interactive mode.
 
 Subscription kinds run OAuth on the local machine; tokens are not stored in Novu cloud. Warn when `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` are set in the shell (may override subscription billing).
+
+OrcaRouter is OpenAI-compatible: the `orcarouter` scaffold reuses the `@ai-sdk/openai` / `@langchain/openai` packages and points them at `https://api.orcarouter.ai/v1` with the `ORCAROUTER_API_KEY`.
 
 ## Subscription OAuth trust boundary
 

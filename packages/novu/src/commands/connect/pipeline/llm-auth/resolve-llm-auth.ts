@@ -20,6 +20,8 @@ function mapCliChoiceToKind(choice: LlmAuthCliChoice, connectMode: BridgeAdapter
       return 'openai-api-key';
     case 'anthropic':
       return 'anthropic-api-key';
+    case 'orcarouter':
+      return 'orcarouter-api-key';
     case 'codex-subscription':
       return 'codex-subscription';
     case 'claude-subscription':
@@ -42,16 +44,26 @@ function resolveApiKeyFromOptions(kind: LlmAuthKind, options: ConnectCommandOpti
     return options.anthropicApiKey?.trim();
   }
 
+  if (kind === 'orcarouter-api-key') {
+    return options.orcarouterApiKey?.trim();
+  }
+
   return undefined;
 }
 
-async function promptForApiKey(ui: ConnectUI, kind: 'openai-api-key' | 'anthropic-api-key'): Promise<string> {
+async function promptForApiKey(
+  ui: ConnectUI,
+  kind: 'openai-api-key' | 'anthropic-api-key' | 'orcarouter-api-key'
+): Promise<string> {
   const isOpenAi = kind === 'openai-api-key';
+  const isOrcaRouter = kind === 'orcarouter-api-key';
+  const title = isOrcaRouter ? 'OrcaRouter API key' : isOpenAi ? 'OpenAI API key' : 'Anthropic API key';
+  const placeholder = isOrcaRouter ? 'or_...' : isOpenAi ? 'sk-...' : 'sk-ant-...';
 
   while (true) {
     const value = await ui.promptForSecretInput({
-      title: isOpenAi ? 'OpenAI API key' : 'Anthropic API key',
-      placeholder: isOpenAi ? 'sk-...' : 'sk-ant-...',
+      title,
+      placeholder,
       hint: 'Saved to .env.local in your scaffolded project.',
       secret: true,
     });
@@ -83,13 +95,14 @@ async function resolveFromCliFlags(input: ResolveLlmAuthInput): Promise<LlmAuthC
 
   const apiKey = resolveApiKeyFromOptions(kind, input.options);
   if (!apiKey) {
-    const flag = kind === 'openai-api-key' ? '--openai-api-key' : '--anthropic-api-key';
+    const flag =
+      kind === 'openai-api-key'
+        ? '--openai-api-key'
+        : kind === 'anthropic-api-key'
+          ? '--anthropic-api-key'
+          : '--orcarouter-api-key';
 
     throw new Error(`Non-interactive mode requires ${flag} when --llm-auth is "${cliChoice}".`);
-  }
-
-  if (kind === 'openai-api-key') {
-    return { kind, apiKey };
   }
 
   return { kind, apiKey };

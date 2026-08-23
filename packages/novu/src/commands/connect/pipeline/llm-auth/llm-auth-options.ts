@@ -11,6 +11,12 @@ const ANTHROPIC_API_KEY_OPTION: LlmAuthPickerOption = {
   title: 'Anthropic API key',
 };
 
+const ORCAROUTER_API_KEY_OPTION: LlmAuthPickerOption = {
+  kind: 'orcarouter-api-key',
+  title: 'OrcaRouter API key',
+  detail: 'OpenAI-compatible gateway (routing, failover, guardrails)',
+};
+
 const CODEX_SUBSCRIPTION_OPTION: LlmAuthPickerOption = {
   kind: 'codex-subscription',
   title: 'ChatGPT subscription (Codex)',
@@ -33,13 +39,20 @@ export function getLlmAuthPickerOptions(connectMode: BridgeAdapterVariant): read
     return [
       OPENAI_API_KEY_OPTION,
       ANTHROPIC_API_KEY_OPTION,
+      ORCAROUTER_API_KEY_OPTION,
       CODEX_SUBSCRIPTION_OPTION,
       CLAUDE_SUBSCRIPTION_OPTION,
       SKIP_OPTION,
     ];
   }
 
-  return [OPENAI_API_KEY_OPTION, ANTHROPIC_API_KEY_OPTION, CODEX_SUBSCRIPTION_OPTION, SKIP_OPTION];
+  return [
+    OPENAI_API_KEY_OPTION,
+    ANTHROPIC_API_KEY_OPTION,
+    ORCAROUTER_API_KEY_OPTION,
+    CODEX_SUBSCRIPTION_OPTION,
+    SKIP_OPTION,
+  ];
 }
 
 export const LLM_AUTH_PICKER_TITLE = 'How do you want to power your agent?';
@@ -53,6 +66,8 @@ export function describeLlmAuthChoice(llmAuth: LlmAuthChoice): string {
       return 'OpenAI API key';
     case 'anthropic-api-key':
       return 'Anthropic API key';
+    case 'orcarouter-api-key':
+      return 'OrcaRouter API key';
     case 'codex-subscription':
       return 'ChatGPT subscription (Codex CLI)';
     case 'claude-subscription':

@@ -5,6 +5,7 @@ describe('tool-support', () => {
   it('enables tools for AI SDK API-key providers only', () => {
     expect(aiSdkCodegenSupportsTools('openai-api-key')).toBe(true);
     expect(aiSdkCodegenSupportsTools('anthropic-api-key')).toBe(true);
+    expect(aiSdkCodegenSupportsTools('orcarouter-api-key')).toBe(true);
     expect(aiSdkCodegenSupportsTools('codex-subscription')).toBe(false);
     expect(aiSdkCodegenSupportsTools('claude-subscription')).toBe(false);
     expect(aiSdkCodegenSupportsTools('skip')).toBe(false);
