@@ -33,7 +33,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),
@@ -143,7 +143,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),

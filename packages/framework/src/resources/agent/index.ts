@@ -14,6 +14,7 @@ export type {
 export { Actions, Button, Card, CardLink, CardText, Divider, Image, Select, SelectOption, TextInput } from 'chat';
 export { AgentDeliveryError, AgentError, toAgentError } from './agent.errors';
 export { agent } from './agent.resource';
+export { isFromWorkflow } from './guards';
 export type {
   Agent,
   AgentAction,
@@ -29,6 +30,7 @@ export type {
   AgentMessage,
   AgentMessageAuthor,
   AgentMessageContext,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentReactionContext,

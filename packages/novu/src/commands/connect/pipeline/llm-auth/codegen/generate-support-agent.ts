@@ -82,7 +82,7 @@ function buildAiSdkGenerateTextReturn(modelLine: string, withTools: boolean): st
   return `    return generateText({
       model: ${modelLine},
       instructions: '${instructions}',
-      messages: toModelMessages(ctx.history),${toolsLine}
+      messages: toModelMessages(ctx),${toolsLine}
     });`;
 }
 

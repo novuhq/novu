@@ -18,24 +18,21 @@ import type {
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentSubscriber,
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
-import {
-  AGENT_PLATFORM_PROVISION_SOURCE,
-  AGENT_PROVISION_DATA_KEYS,
-  AgentSubscriberAccessEnum,
-  FeatureFlagsKeysEnum,
-} from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
+import type { WorkflowOriginData, WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
 
@@ -145,6 +142,7 @@ export interface AgentExecutionParams {
   platformContext: AgentPlatformContext;
   /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
   context?: AgentContextPayload | null;
+  workflowOrigin?: WorkflowOriginSnapshot | null;
   /**
    * Per-context bridge URL override resolved from the connect-time context. Takes precedence over the
    * agent's default `bridgeUrl` (but not the active dev bridge). Re-validated by the SSRF guard on
@@ -399,6 +397,7 @@ export class BridgeExecutorService {
       subscriber: this.mapSubscriber(subscriber),
       subscriberAccess: config.subscriberAccess,
       context: params.context ?? null,
+      notification: params.workflowOrigin ? mapWorkflowOriginToNotification(params.workflowOrigin.data) : null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
@@ -692,4 +691,16 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
+}
+
+function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotification {
+  return {
+    id: origin.notificationId,
+    workflowId: origin.workflowIdentifier,
+    messageId: origin.messageId,
+    platformMessageId: origin.platformMessageId,
+    sentAt: origin.sentAt,
+    body: origin.body,
+    payload: origin.payload,
+  };
 }

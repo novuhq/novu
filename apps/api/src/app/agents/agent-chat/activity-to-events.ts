@@ -209,8 +209,15 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
     case ConversationActivityTypeEnum.RUN_ERROR:
       return mapRunLifecycleActivityToEvent(activity);
 
-    default:
+    case ConversationActivityTypeEnum.SIGNAL:
       return null;
+
+    default: {
+      const _exhaustive: never = activity.type;
+      void _exhaustive;
+
+      return null;
+    }
   }
 }
 

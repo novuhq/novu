@@ -277,6 +277,18 @@ export class ConversationRepository extends BaseRepositoryV2<
     return result.matched > 0;
   }
 
+  async setNotificationId(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    notificationId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { _notificationId: notificationId } }
+    );
+  }
+
   async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
     await this.update(
       { _id: conversationId, _environmentId: environmentId },

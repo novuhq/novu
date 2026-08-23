@@ -84,8 +84,8 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
 export interface PersistWorkflowOriginHydrationParams extends ConversationActivityContext {
   platformMessageId: string;
   platformThreadId: string;
-  messageContent: string;
   signalData: Record<string, unknown>;
+  messageBody?: string;
 }
 
 export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
