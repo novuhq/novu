@@ -14,7 +14,6 @@ import {
   type AgentResponse,
   getAgentIntegrationsQueryKey,
   listAgentIntegrations,
-  removeAgentIntegration,
   sendAgentWelcomeMessage,
 } from '@/api/agents';
 import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
@@ -30,7 +29,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { AGENT_IMESSAGE_LABEL, IMESSAGE_PROVIDER_IDS } from '@/utils/agent-channel-branding';
+import { AGENT_IMESSAGE_LABEL } from '@/utils/agent-channel-branding';
 import { withOnboardingSource } from '@/utils/onboarding-redirect';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -39,7 +38,7 @@ import { AgentIntegrationGuideTransition } from './agent-integration-guides/agen
 import { resolveAgentProviderDisplayName } from './agent-integration-guides/agent-provider-display-name';
 import { providerHasWhatsNextPhase } from './agent-integration-guides/whats-next/whats-next-config';
 import { AgentListenStep } from './agent-listen-step';
-import { ImessageProviderSwitchProvider } from './imessage-provider-select';
+import { ImessageIntegrationSelectProvider } from './imessage-integration-select';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
@@ -586,63 +585,32 @@ export function AgentSetupSteps({
     [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
   );
 
-  // "Setup iMessage via" vendor switch: the iMessage guides share one channel
-  // card, and picking the other vendor in the guide's select re-links the agent
-  // through the same replace-existing flow the channel cards use.
-  const linkedIntegrationIdsForSwitch = useMemo(
+  // "Setup iMessage via" picker: the iMessage guides share one channel card, and
+  // picking a vendor's integration inside the guide links it (or creates a new
+  // one) and points the guide at it. Linking is additive — previously linked
+  // iMessage integrations stay linked.
+  const linkedIntegrationIdsForImessage = useMemo(
     () => new Set(agentIntegrationLinks.map((link) => link.integration._id)),
     [agentIntegrationLinks]
   );
   const { linkProvider: linkImessageProvider } = useLinkAgentIntegration({
     agentIdentifier: agent.identifier,
-    linkedIntegrationIds: linkedIntegrationIdsForSwitch,
-    existingLinks: agentIntegrationLinks,
-    replaceExisting: true,
+    linkedIntegrationIds: linkedIntegrationIdsForImessage,
     onLinked: handleProviderSelect,
   });
 
-  const handleSwitchImessageProvider = useCallback(
-    (providerId: string) => {
-      // replaceExisting only dedupes within one provider, so the other iMessage
-      // vendor's link must be removed here or both vendors deliver to the phone.
-      const unlinkOtherVendor = async () => {
-        const other = agentIntegrationLinks.find(
-          (link) =>
-            IMESSAGE_PROVIDER_IDS.includes(link.integration.providerId) && link.integration.providerId !== providerId
-        );
-        if (!other || !currentEnvironment) return;
-
-        await removeAgentIntegration(currentEnvironment, agent.identifier, other._id);
-        await agentIntegrationsQuery.refetch();
-      };
-
-      const existingLink = agentIntegrationLinks.find((link) => link.integration.providerId === providerId);
-
-      if (existingLink) {
-        const integration =
-          integrations?.find((i) => i._id === existingLink.integration._id) ??
-          (existingLink.integration as unknown as IIntegration);
-        handleProviderSelect(providerId, integration);
-        void unlinkOtherVendor();
-
-        return;
-      }
-
-      void linkImessageProvider(
-        { providerId, displayName: AGENT_IMESSAGE_LABEL, newIntegrationName: agent.name ?? agent.identifier },
-        `${providerId}-imessage-switch`
-      ).then(unlinkOtherVendor);
-    },
-    [
-      agent.identifier,
-      agent.name,
-      agentIntegrationLinks,
-      agentIntegrationsQuery,
-      currentEnvironment,
-      handleProviderSelect,
-      integrations,
-      linkImessageProvider,
-    ]
+  const handleSelectImessageIntegration = useCallback(
+    (providerId: string, integration?: IIntegration) =>
+      linkImessageProvider(
+        {
+          providerId,
+          displayName: AGENT_IMESSAGE_LABEL,
+          integration,
+          newIntegrationName: agent.name ?? agent.identifier,
+        },
+        integration?._id ?? `${providerId}-imessage-new`
+      ),
+    [agent.identifier, agent.name, linkImessageProvider]
   );
 
   useEffect(() => {
@@ -899,7 +867,7 @@ export function AgentSetupSteps({
             className="flex flex-col gap-10"
             style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
           >
-            <ImessageProviderSwitchProvider onSwitch={handleSwitchImessageProvider}>
+            <ImessageIntegrationSelectProvider onSelect={handleSelectImessageIntegration}>
               {useRolloutGate && guideIntegrationId && guideProviderId ? (
                 <AgentIntegrationGuideTransition
                   isConnected={guideLayer1Complete}
@@ -943,7 +911,7 @@ export function AgentSetupSteps({
                   integrationLink={guideIntegrationLink}
                 />
               )}
-            </ImessageProviderSwitchProvider>
+            </ImessageIntegrationSelectProvider>
           </motion.div>
         ) : null}
       </AnimatePresence>

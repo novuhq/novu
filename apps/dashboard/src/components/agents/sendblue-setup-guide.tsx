@@ -8,7 +8,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useRemoveSendblueWebhooks } from '@/hooks/use-remove-sendblue-webhooks';
 import { useSendSendblueTestMessage } from '@/hooks/use-send-sendblue-test-message';
 import { ConnectWebhookPanel, SendTestMessagePanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
-import { ImessageProviderSelect } from './imessage-provider-select';
+import { ImessageIntegrationSelect } from './imessage-integration-select';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
@@ -269,8 +269,10 @@ export function SendblueSetupGuide({
         index={base}
         status="completed"
         title="Setup iMessage via"
-        description="Choose a provider to connect iMessage to your agent."
-        rightContent={<ImessageProviderSelect value={ChatProviderIdEnum.Sendblue} />}
+        description="Choose the provider and integration that connect iMessage to your agent."
+        rightContent={
+          <ImessageIntegrationSelect providerId={ChatProviderIdEnum.Sendblue} selectedIntegrationId={integrationId} />
+        }
       />
 
       <SetupStep

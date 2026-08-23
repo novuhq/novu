@@ -19,7 +19,7 @@ import { useRegisterPhotonRecipient } from '@/hooks/use-register-photon-recipien
 import { useRemovePhotonWebhooks } from '@/hooks/use-remove-photon-webhooks';
 import { useSendPhotonTestMessage } from '@/hooks/use-send-photon-test-message';
 import { ConnectWebhookPanel, SendTestMessagePanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
-import { ImessageProviderSelect } from './imessage-provider-select';
+import { ImessageIntegrationSelect } from './imessage-integration-select';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
@@ -422,8 +422,13 @@ export function PhotonSetupGuide({
         index={base}
         status="completed"
         title="Setup iMessage via"
-        description="Choose a provider to connect iMessage to your agent."
-        rightContent={<ImessageProviderSelect value={ChatProviderIdEnum.PhotonImessage} />}
+        description="Choose the provider and integration that connect iMessage to your agent."
+        rightContent={
+          <ImessageIntegrationSelect
+            providerId={ChatProviderIdEnum.PhotonImessage}
+            selectedIntegrationId={integrationId}
+          />
+        }
       />
 
       <SetupStep
