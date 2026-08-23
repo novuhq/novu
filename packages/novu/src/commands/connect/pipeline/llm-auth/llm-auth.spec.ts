@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateAgentNextConfigSource } from './codegen/generate-agent-next-config';
 import { generateSupportAgentSource } from './codegen/generate-support-agent';
-import { getLlmAuthPickerOptions } from './llm-auth-options';
+import { describeLlmAuthChoice, getLlmAuthPickerOptions } from './llm-auth-options';
 import { resolveLlmAuthEnvVars, resolveLlmAuthPackageDependencies, resolveLlmAuthPackages } from './registry';
 
 describe('llm-auth registry', () => {
@@ -86,6 +86,11 @@ describe('llm-auth picker options', () => {
 
     expect(aiSdkKinds).toContain('claude-subscription');
     expect(langChainKinds).not.toContain('claude-subscription');
+  });
+
+  it('describes scaffold wiring choices for confirm screens', () => {
+    expect(describeLlmAuthChoice({ kind: 'claude-subscription' })).toContain('Claude Code');
+    expect(describeLlmAuthChoice({ kind: 'skip' })).toContain('echo');
   });
 });
 

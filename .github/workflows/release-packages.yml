@@ -56,6 +56,21 @@ jobs:
           fetch-tags: true
           ref: ${{ github.ref_name }}
 
+      - name: Normalize and validate version
+        env:
+          RAW_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          SEMVER=$(echo "$RAW_VERSION" | sed 's/^[vV]\.*//')
+          # Numeric identifiers must not have leading zeros; prerelease ids must be
+          # non-empty and dot-separated (rejects 3.1.0-rc., 3.1.0-rc..1, 3.1.0-01).
+          semver_re='^[0-9]+\.[0-9]+\.[0-9]+(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
+          if ! [[ "$SEMVER" =~ $semver_re ]]; then
+            echo "❌ ERROR: Invalid version '$RAW_VERSION'. Must be semver (e.g. v3.1.0 or 3.1.0), got cleaned: '$SEMVER'"
+            exit 1
+          fi
+          echo "RELEASE_SEMVER=$SEMVER" >> "$GITHUB_ENV"
+          echo "✅ Normalized version: v$SEMVER (from input: $RAW_VERSION)"
+
       - name: Install pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
@@ -84,16 +99,15 @@ jobs:
         if: github.event.inputs.release_type != 'stable'
         env:
           INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
-          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           COMMIT_SHA=$(git rev-parse --short HEAD)
           if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
             DATE=$(date +'%Y%m%d')
-            echo "RELEASE_VERSION=${INPUT_VERSION}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
-            echo "Using nightly version: $RELEASE_VERSION"
+            echo "RELEASE_VERSION=v${RELEASE_SEMVER}-nightly.${DATE}.${COMMIT_SHA}" >> $GITHUB_ENV
+            echo "Using nightly version: v${RELEASE_SEMVER}-nightly.${DATE}.${COMMIT_SHA}"
           elif [ "$INPUT_RELEASE_TYPE" = "rc" ]; then
-            echo "RELEASE_VERSION=${INPUT_VERSION}-rc.${COMMIT_SHA}" >> $GITHUB_ENV
-            echo "Using rc version: $RELEASE_VERSION"
+            echo "RELEASE_VERSION=v${RELEASE_SEMVER}-rc.${COMMIT_SHA}" >> $GITHUB_ENV
+            echo "Using rc version: v${RELEASE_SEMVER}-rc.${COMMIT_SHA}"
           fi
 
       - name: Configure Git
@@ -104,7 +118,6 @@ jobs:
       - name: Release version (without commit)
         env:
           INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
-          INPUT_VERSION: ${{ github.event.inputs.version }}
           INPUT_PACKAGES: ${{ github.event.inputs.packages }}
         run: |
           if [ "$INPUT_RELEASE_TYPE" = "nightly" ]; then
@@ -114,19 +127,18 @@ jobs:
             echo "Running rc release with version: $RELEASE_VERSION"
             pnpm nx release version "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --preid rc --git-commit=false --verbose
           else
-            echo "Running stable release with version: $INPUT_VERSION"
-            pnpm nx release version "$INPUT_VERSION" --projects="$INPUT_PACKAGES" --git-commit=false --verbose
+            echo "Running stable release with version: v$RELEASE_SEMVER"
+            pnpm nx release version "v$RELEASE_SEMVER" --projects="$INPUT_PACKAGES" --git-commit=false --verbose
           fi
 
       - name: Generate changelog (without commit)
         env:
           INPUT_RELEASE_TYPE: ${{ github.event.inputs.release_type }}
-          INPUT_VERSION: ${{ github.event.inputs.version }}
           INPUT_PACKAGES: ${{ github.event.inputs.packages }}
           INPUT_PREVIOUS_TAG: ${{ github.event.inputs.previous_tag }}
         run: |
           if [ "$INPUT_RELEASE_TYPE" = "stable" ]; then
-            pnpm nx release changelog "$INPUT_VERSION" --projects="$INPUT_PACKAGES" --from="$INPUT_PREVIOUS_TAG" --git-commit=false
+            pnpm nx release changelog "v$RELEASE_SEMVER" --projects="$INPUT_PACKAGES" --from="$INPUT_PREVIOUS_TAG" --git-commit=false
           else
             pnpm nx release changelog "$RELEASE_VERSION" --projects="$INPUT_PACKAGES" --from="$INPUT_PREVIOUS_TAG" --git-commit=false
           fi
@@ -161,12 +173,12 @@ jobs:
         uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5 # v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: release ${{ github.event.inputs.version }} (${{ github.event.inputs.packages }})"
-          title: "🚀 Release ${{ github.event.inputs.version }} - ${{ github.event.inputs.packages }}"
+          commit-message: "chore: release v${{ env.RELEASE_SEMVER }} (${{ github.event.inputs.packages }})"
+          title: "🚀 Release v${{ env.RELEASE_SEMVER }} - ${{ github.event.inputs.packages }}"
           body: |
-            ## 🚀 Release ${{ github.event.inputs.version }}
+            ## 🚀 Release v${{ env.RELEASE_SEMVER }}
 
-            This PR contains the release changes for version **${{ github.event.inputs.version }}**
+            This PR contains the release changes for version **v${{ env.RELEASE_SEMVER }}**
 
             ### 📦 Packages Released:
             ```
@@ -174,7 +186,7 @@ jobs:
             ```
 
             ### 🔄 Changes:
-            - Updated package versions to ${{ github.event.inputs.version }}
+            - Updated package versions to v${{ env.RELEASE_SEMVER }}
             - Generated changelogs from ${{ github.event.inputs.previous_tag }}
 
             **After merging this PR:**
@@ -183,7 +195,7 @@ jobs:
             - GitHub releases will be created
 
             **Please review the changes and merge when ready.**
-          branch: release-${{ github.event.inputs.version }}
+          branch: release-v${{ env.RELEASE_SEMVER }}
           base: ${{ github.ref_name }}
           delete-branch: false
           labels: automated-npm-release
@@ -211,10 +223,10 @@ jobs:
           echo ""
           echo "=== Extraction ==="
 
-          VERSION=$(echo "$PR_TITLE" | sed -n 's/.*Release \([v0-9\.]*\).*/\1/p')
+          RAW_VERSION=$(echo "$PR_TITLE" | sed -n 's/.*Release \([v0-9\.]*\).*/\1/p')
           PACKAGES=$(echo "$PR_TITLE" | sed -n 's/.*- \(@novu.*\)/\1/p')
 
-          if [ -z "$VERSION" ]; then
+          if [ -z "$RAW_VERSION" ]; then
             echo "❌ ERROR: Failed to extract version from PR title"
             echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
             exit 1
@@ -224,6 +236,11 @@ jobs:
             echo "❌ ERROR: Failed to extract packages from PR title"
             echo "Expected format: '🚀 Release vX.Y.Z - @novu/package1,@novu/package2'"
             exit 1
+          fi
+
+          VERSION=$(echo "$RAW_VERSION" | sed 's/^[vV]\.*/v/')
+          if [ "$VERSION" = "v" ]; then
+            VERSION="$RAW_VERSION"
           fi
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT

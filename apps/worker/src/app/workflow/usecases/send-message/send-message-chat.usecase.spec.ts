@@ -9,7 +9,7 @@ import {
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageChat } from './send-message-chat.usecase';
+import { hasChatContentOverride, SendMessageChat } from './send-message-chat.usecase';
 import { SendMessageStatus } from './send-message-type.usecase';
 
 describe('SendMessageChat - phone-based channel de-duplication', () => {
@@ -226,8 +226,14 @@ describe('SendMessageChat - Slack provider content overrides', () => {
     return usecase;
   }
 
-  function buildCommand(options: { providerOverrides?: Record<string, unknown>; overrides?: TriggerOverrides } = {}) {
-    const { providerOverrides, overrides = {} } = options;
+  function buildCommand(
+    options: {
+      providerOverrides?: Record<string, unknown>;
+      overrides?: TriggerOverrides;
+      card?: Record<string, unknown>;
+    } = {}
+  ) {
+    const { providerOverrides, overrides = {}, card } = options;
 
     return SendMessageChannelCommand.create({
       environmentId: 'env_1',
@@ -248,7 +254,10 @@ describe('SendMessageChat - Slack provider content overrides', () => {
         subscriber: { subscriberId: 'sub_1', locale: 'en', channels: [] },
       } as never,
       bridgeData: {
-        outputs: { body: 'compiled step body' },
+        outputs: {
+          body: 'compiled step body',
+          ...(card ? { card } : {}),
+        },
         ...(providerOverrides && { providers: { [ChatProviderIdEnum.Slack]: providerOverrides } }),
       } as never,
       step: {
@@ -313,6 +322,97 @@ describe('SendMessageChat - Slack provider content overrides', () => {
 
     expect(result.status).to.equal(SendMessageStatus.SUCCESS);
     expect(post.firstCall.args[1].text).to.equal('compiled step body');
+  });
+
+  function stubSlackHandlerWithCardResolve(nativePayload: Record<string, unknown>) {
+    const handler = new ChatFactory().getHandler(slackIntegration as never);
+    const provider = (handler as unknown as { getProvider: () => { axiosInstance?: unknown } }).getProvider();
+    expect(provider, 'SlackProvider no longer exposes axiosInstance').to.have.property('axiosInstance');
+
+    const post = sinon.stub().resolves({ data: { ok: true }, headers: { 'x-slack-req-id': 'req_1' } });
+    provider.axiosInstance = { post };
+
+    const resolveCardContent = sinon.stub(handler as never, 'resolveCardContent').resolves({
+      content: 'card fallback text',
+      nativePayload,
+      validation: [],
+    });
+    sinon.stub(ChatFactory.prototype, 'getHandler').returns(handler);
+
+    return { post, resolveCardContent };
+  }
+
+  const demoCard = {
+    type: 'card',
+    children: [{ type: 'text', content: 'default card body', style: 'plain' }],
+  };
+
+  it('does not send default card Block Kit when a Slack text content override is set (NV-8548)', async () => {
+    const cardBlocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'default card block' } }];
+    const { post, resolveCardContent } = stubSlackHandlerWithCardResolve({ blocks: cardBlocks });
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        providerOverrides: { text: 'override text from providerOverrides' },
+        card: demoCard,
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.notCalled(resolveCardContent);
+    sinon.assert.calledOnce(post);
+
+    const body = post.firstCall.args[1];
+    expect(body.text).to.equal('override text from providerOverrides');
+    expect(body.blocks).to.equal(undefined);
+  });
+
+  it('still resolves the compiled card into Block Kit when there is no content override', async () => {
+    const cardBlocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'default card block' } }];
+    const { post, resolveCardContent } = stubSlackHandlerWithCardResolve({ blocks: cardBlocks });
+
+    const result = await buildUsecase().execute(buildCommand({ card: demoCard }));
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(resolveCardContent);
+    expect(post.firstCall.args[1].text).to.equal('card fallback text');
+    expect(post.firstCall.args[1].blocks).to.deep.equal(cardBlocks);
+  });
+
+  it('still resolves the compiled card when overrides are routing/metadata-only', async () => {
+    const cardBlocks = [{ type: 'section', text: { type: 'mrkdwn', text: 'default card block' } }];
+    const { post, resolveCardContent } = stubSlackHandlerWithCardResolve({ blocks: cardBlocks });
+
+    const result = await buildUsecase().execute(
+      buildCommand({
+        providerOverrides: {
+          webhookUrl: 'https://hooks.example/override',
+          'slack-endpoint': { endpoint: { channelId: 'C_OVERRIDE' } },
+        },
+        card: demoCard,
+      })
+    );
+
+    expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+    sinon.assert.calledOnce(resolveCardContent);
+    expect(post.firstCall.args[1].blocks).to.deep.equal(cardBlocks);
+  });
+});
+
+describe('hasChatContentOverride', () => {
+  it('treats primary content and native rich payloads as content overrides', () => {
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { text: 'hi' })).to.equal(true);
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { blocks: [] })).to.equal(true);
+    expect(hasChatContentOverride(ChatProviderIdEnum.MsTeams, { attachments: [] })).to.equal(true);
+  });
+
+  it('ignores routing and metadata-only keys', () => {
+    expect(hasChatContentOverride(ChatProviderIdEnum.Slack, { webhookUrl: 'https://example.com' })).to.equal(false);
+    expect(
+      hasChatContentOverride(ChatProviderIdEnum.Slack, {
+        'slack-endpoint': { endpoint: { channelId: 'C123' } },
+      })
+    ).to.equal(false);
   });
 });
 

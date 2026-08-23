@@ -215,6 +215,7 @@ program
     '--agent-integration-id <id>',
     'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
   )
+  .option('--agent-identifier <identifier>', 'Use an existing agent by identifier (skips the agent picker)')
   .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
   .option(
     '--llm-auth <choice>',
@@ -251,6 +252,10 @@ program
     'Recipient phone (E.164) for the Sendblue test message. CI-only escape hatch — omit to enter interactively'
   )
   .option(
+    '--agent-chat-setup <mode>',
+    'Agent Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted)'
+  )
+  .option(
     '--ci',
     'Non-interactive mode (no Ink TUI). Requires a prompt (positional <prompt> or --prompt) and --channel; see examples below',
     false
@@ -272,16 +277,16 @@ program
       const channel = options.skipSlack ? 'skip' : options.channel;
       const connectMode = options.chatSdk ? 'chat-sdk' : options.brain === 'chat-sdk' ? 'chat-sdk' : options.runtime;
 
-      if (!prompt && (!connectMode || !isBridgeConnectMode(connectMode))) {
+      if (!prompt && !options.agentIdentifier?.trim() && (!connectMode || !isBridgeConnectMode(connectMode))) {
         console.error(
-          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime is a bridge mode (ai-sdk, langchain, custom-code, chat-sdk).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), --agent-identifier, or --runtime as a bridge mode (ai-sdk, langchain, custom-code, chat-sdk).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|whatsapp|sendblue|skip> (or teams without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|whatsapp|sendblue|agent-chat|skip> (or teams without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
@@ -321,6 +326,16 @@ program
       console.error(`Invalid --llm-auth value: "${options.llmAuth}". Expected one of: ${LLM_AUTH_CHOICES.join(', ')}.`);
       process.exit(1);
     }
+    const AGENT_CHAT_SETUP_CHOICES = ['scaffold', 'embed', 'skip'] as const;
+    if (
+      options.agentChatSetup &&
+      !AGENT_CHAT_SETUP_CHOICES.includes(options.agentChatSetup as 'scaffold' | 'embed' | 'skip')
+    ) {
+      console.error(
+        `Invalid --agent-chat-setup value: "${options.agentChatSetup}". Expected one of: ${AGENT_CHAT_SETUP_CHOICES.join(', ')}.`
+      );
+      process.exit(1);
+    }
     let resolved: ReturnType<typeof resolveConnectCommandOptions>;
     try {
       resolved = resolveConnectCommandOptions({
@@ -330,6 +345,7 @@ program
         channel: options.channel as ChannelChoice | undefined,
         runtime: options.runtime as AgentConnectMode | undefined,
         chatSdk: options.chatSdk,
+        agentChatSetup: options.agentChatSetup as import('./commands/connect/types').AgentChatSetupMode | undefined,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {

@@ -194,6 +194,7 @@
                 "group": "Chat",
                 "root": "platform/integrations/chat",
                 "pages": [
+                  "platform/integrations/chat/writing-chat-template",
                   "platform/integrations/chat/discord",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
@@ -917,27 +918,17 @@
                   {
                     "group": "Webhooks",
                     "expanded": false,
-                    "pages": [
-                      "guides/webhooks/clerk",
-                      "guides/webhooks/auth0",
-                      "guides/webhooks/stripe"
-                    ]
+                    "pages": ["guides/webhooks/clerk", "guides/webhooks/auth0", "guides/webhooks/stripe"]
                   },
                   {
                     "group": "Analytics & data",
                     "expanded": false,
-                    "pages": [
-                      "guides/analytics/segment",
-                      "guides/analytics/hightouch"
-                    ]
+                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch"]
                   },
                   {
                     "group": "Recipes",
                     "expanded": false,
-                    "pages": [
-                      "guides/recipes/managing-workflows",
-                      "guides/recipes/supabase-auth-notifications"
-                    ]
+                    "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"]
                   },
                   {
                     "group": "Framework",
@@ -1034,16 +1025,16 @@
                   {
                     "group": "Steps",
                     "pages": [
+                      "framework/typescript/steps",
                       "framework/typescript/steps/chat",
-                      "framework/typescript/steps/custom",
-                      "framework/typescript/steps/delay",
-                      "framework/typescript/steps/digest",
                       "framework/typescript/steps/email",
                       "framework/typescript/steps/inApp",
-                      "framework/typescript/steps",
                       "framework/typescript/steps/push",
                       "framework/typescript/steps/sms",
-                      "framework/typescript/steps/tool"
+                      "framework/typescript/steps/tool",
+                      "framework/typescript/steps/custom",
+                      "framework/typescript/steps/delay",
+                      "framework/typescript/steps/digest"
                     ]
                   },
                   "framework/schema/zod",

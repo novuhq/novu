@@ -168,3 +168,48 @@ export function resolvePlatformMessageId(
 
   return originMessage.identifier.slice(colon + 1);
 }
+
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+function decodeEntities(text: string): string {
+  return text.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (match, dec, hex, name) => {
+    if (dec) {
+      return String.fromCodePoint(Number(dec));
+    }
+    if (hex) {
+      return String.fromCodePoint(parseInt(hex, 16));
+    }
+
+    return NAMED_ENTITIES[name.toLowerCase()] ?? match;
+  });
+}
+
+/** Same algorithm as `@novu/chat-adapter-email` `stripHtml` (ESM-only; cannot import from apps/api). */
+export function stripHtml(html: string): string {
+  const chars: string[] = [];
+  let depth = 0;
+  for (const ch of html) {
+    if (ch === '<') {
+      depth++;
+      continue;
+    }
+    if (ch === '>') {
+      if (depth > 0) {
+        depth--;
+      }
+      continue;
+    }
+    if (depth === 0) {
+      chars.push(ch);
+    }
+  }
+
+  return decodeEntities(chars.join('').replace(/\s+/g, ' ')).trim();
+}

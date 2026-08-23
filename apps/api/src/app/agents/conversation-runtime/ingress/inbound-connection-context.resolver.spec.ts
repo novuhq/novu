@@ -43,9 +43,11 @@ function makeContextRepository(contexts: FakeContext[]) {
   const byKey = new Map(contexts.map((context) => [context.key, context]));
 
   return {
-    findByKeys: sinon.stub().callsFake(async (_env: string, _org: string, keys: string[]) =>
-      keys.map((key) => byKey.get(key)).filter((context): context is FakeContext => !!context)
-    ),
+    findByKeys: sinon
+      .stub()
+      .callsFake(async (_env: string, _org: string, keys: string[]) =>
+        keys.map((key) => byKey.get(key)).filter((context): context is FakeContext => !!context)
+      ),
   };
 }
 

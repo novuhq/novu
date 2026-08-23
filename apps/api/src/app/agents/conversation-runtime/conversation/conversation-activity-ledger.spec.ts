@@ -295,7 +295,6 @@ describe('ConversationActivityLedger', () => {
         'Ada replied to the message from unknown'
       );
     });
-
   });
 
   describe('isWorkflowOriginHydrated', () => {

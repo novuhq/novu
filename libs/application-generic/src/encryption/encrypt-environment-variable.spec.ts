@@ -1,10 +1,7 @@
 import { SECRET_MASK } from '@novu/shared';
 import { expect } from 'chai';
 
-import {
-  decryptEnvironmentVariableValue,
-  resolveEnvironmentVariables,
-} from './encrypt-environment-variable';
+import { decryptEnvironmentVariableValue, resolveEnvironmentVariables } from './encrypt-environment-variable';
 
 describe('encrypt-environment-variable', () => {
   describe('resolveEnvironmentVariables', () => {

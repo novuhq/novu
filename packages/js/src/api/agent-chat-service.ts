@@ -1,5 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import type { AgentHashFields } from '../agent-chat/types';
+import { validateHistoryPageResponse } from '../agent-chat/validate-envelope';
 import { HttpClient } from './http-client';
 
 const AGENT_CHAT_CONVERSATIONS_ROUTE = '/agent-chat/conversations';
@@ -19,6 +20,7 @@ export class AgentChatPlanLimitError extends Error {
 export type AgentChatSendMessageArgs = AgentHashFields & {
   agentId: string;
   text: string;
+  metadata?: Record<string, unknown>;
   /** Existing conversation id. Omit this field to create a new conversation. */
   conversationId?: string;
 };
@@ -76,6 +78,7 @@ export class AgentChatService {
       text: args.text,
       ...(args.conversationId ? { conversationIdentifier: args.conversationId } : {}),
       ...(args.agentHash ? { agentHash: args.agentHash } : {}),
+      ...(args.metadata ? { metadata: args.metadata } : {}),
     });
   }
 
@@ -100,7 +103,7 @@ export class AgentChatService {
   }
 
   async #postAccept<T extends AgentChatSendMessageResponse | AgentChatRespondToActionResponse>(
-    body: Record<string, string>
+    body: Record<string, unknown>
   ): Promise<T> {
     try {
       return await this.#httpClient.post<T>(AGENT_CHAT_CONVERSATIONS_ROUTE, body);
@@ -141,8 +144,18 @@ export class AgentChatService {
     const query = params.toString();
     const suffix = query ? `?${query}` : '';
 
-    return this.#httpClient.get(
+    const raw = await this.#httpClient.get<unknown>(
       `${AGENT_CHAT_CONVERSATIONS_ROUTE}/${encodeURIComponent(args.conversationId)}/events${suffix}`
     );
+
+    const validated = validateHistoryPageResponse(raw);
+    if (!validated.ok) {
+      throw new Error(validated.error.message);
+    }
+
+    return {
+      events: validated.events,
+      olderCursor: validated.olderCursor,
+    };
   }
 }

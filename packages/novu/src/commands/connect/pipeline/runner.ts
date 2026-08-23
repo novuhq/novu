@@ -18,11 +18,13 @@ import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName }
 import { ConnectChannelBackError } from '../errors';
 import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
 import type {
+  AgentChatConnectOutcome,
   AgentConnectMode,
   AgentSummary,
   AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
+  ConnectAgentChatHandoff,
   ConnectCommandOptions,
   CustomCodeConnectOutcome,
   LangChainConnectOutcome,
@@ -34,8 +36,15 @@ import {
   isVanillaCustomCodeConnectMode,
 } from '../types';
 import type { ConnectUI } from '../ui/ui';
+import { offerPostConnectBridgeTunnel } from './agent-chat/offer-post-connect-bridge-tunnel';
+import { runAgentChatProjectSetup } from './agent-chat/run-agent-chat-setup';
+import {
+  resolveAgentChatHandoffUiPolicy,
+  wrapUiForAgentChatHandoff,
+} from './agent-chat/wrap-ui-for-agent-chat-handoff';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
+import { connectAgentChatForAgent } from './channels/agent-chat';
 import { connectEmailForAgent } from './channels/email';
 import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
@@ -45,6 +54,11 @@ import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
 import { maybeRunLangChainTunnel, runLangChainProjectSetup } from './langchain';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
+import {
+  type ExistingAgentContext,
+  resolveExistingAgentContext,
+  shouldSkipAgentConnectModePicker,
+} from './resolve-existing-agent';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
@@ -142,7 +156,11 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       ...sessionProps,
     });
 
-    const connectMode = await resolveAgentConnectMode(ctx);
+    const preselectedAgent = options.agentIdentifier?.trim()
+      ? resolveExistingAgentContext(existingAgents, options.agentIdentifier)
+      : undefined;
+
+    const connectMode = await resolveAgentConnectMode(ctx, preselectedAgent);
 
     // Bridge modes need the user's real environment up front, so a keyless
     // session is upgraded before the agent is created.
@@ -158,6 +176,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let aiSdkOutcome: AiSdkConnectOutcome | undefined;
     let langChainOutcome: LangChainConnectOutcome | undefined;
     let customCodeOutcome: CustomCodeConnectOutcome | undefined;
+    let agentChatOutcome: AgentChatConnectOutcome | undefined;
+    let agentChatHandoff: ConnectAgentChatHandoff | undefined;
 
     if (isBridgeConnectMode(connectMode)) {
       const bridgeResult = await createBridgeAgentFlow(session.client, ui, options);
@@ -167,6 +187,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         identifier: agent.identifier,
         connectMode,
         flow,
+        ...sessionProps,
+      });
+    } else if (preselectedAgent) {
+      agent = preselectedAgent.summary;
+      flow = 'reused';
+      track(CONNECT_EVENTS.AGENT_REUSED, {
+        identifier: agent.identifier,
         ...sessionProps,
       });
     } else if (existingAgents.length > 0 && !options.prompt) {
@@ -358,6 +385,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             await openDashboardChannelHandoff('teams');
             break;
           }
+          case 'agent-chat': {
+            const result = await connectAgentChatForAgent(session.client, agent, ui, options, session.auth, track);
+            connectedIntegration = result.integration;
+            agentChatHandoff = result.handoff;
+            connectedChannel = 'agent-chat';
+            break;
+          }
           default:
             throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
         }
@@ -402,33 +436,60 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           })
         : null;
 
+    const agentChatHandoffPolicy = resolveAgentChatHandoffUiPolicy({
+      channel,
+      agentChatHandoff: Boolean(agentChatHandoff),
+      agentChatSetup: options.agentChatSetup,
+    });
+    const setupUi = agentChatHandoffPolicy ? wrapUiForAgentChatHandoff(ui, agentChatHandoffPolicy) : ui;
+
     if (connectMode === 'chat-sdk') {
       chatSdkOutcome = await runChatSdkProjectSetup({
         options,
-        ui,
+        ui: setupUi,
         auth: session.auth,
         agent,
       });
     } else if (isAiSdkConnectMode(connectMode)) {
       aiSdkOutcome = await runAiSdkProjectSetup({
         options,
-        ui,
+        ui: setupUi,
         auth: session.auth,
         agent,
       });
     } else if (isLangChainConnectMode(connectMode)) {
       langChainOutcome = await runLangChainProjectSetup({
         options,
-        ui,
+        ui: setupUi,
         auth: session.auth,
         agent,
       });
     } else if (isVanillaCustomCodeConnectMode(connectMode)) {
       customCodeOutcome = await runCustomCodeProjectSetup({
         options,
+        ui: setupUi,
+        auth: session.auth,
+        agent,
+      });
+    }
+
+    if (channel === 'agent-chat' && agentChatHandoff) {
+      const bridgeProject = resolveBridgeProject({
+        chatSdkOutcome,
+        aiSdkOutcome,
+        langChainOutcome,
+        customCodeOutcome,
+      });
+      agentChatOutcome = await runAgentChatProjectSetup({
+        options,
         ui,
         auth: session.auth,
         agent,
+        handoff: agentChatHandoff,
+        connectMode,
+        bridgeOutcome: bridgeProject,
+        bridgeProjectDir: bridgeProject?.projectDir,
+        autoMergeIntoBridge: bridgeProject?.scaffolded === true,
       });
     }
 
@@ -446,6 +507,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       aiSdkOutcome,
       langChainOutcome,
       customCodeOutcome,
+      agentChatOutcome,
+      agentChatHandoff,
     });
 
     track(CONNECT_EVENTS.COMPLETED, {
@@ -461,6 +524,16 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     // Tear down Ink before starting the bridge server so its stdout/console
     // output does not trigger a second orb render while the TUI is still mounted.
     const exitCode = await ui.shutdown();
+
+    await offerPostConnectBridgeTunnel({
+      connectMode,
+      chatSdkOutcome,
+      aiSdkOutcome,
+      langChainOutcome,
+      agentChatHandoff,
+      agentChatProjectDir: agentChatOutcome?.projectDir,
+      ci: options.ci,
+    });
 
     if (await maybeRunChatSdkTunnel({ outcome: chatSdkOutcome, ci: options.ci })) {
       return { exitCode: 0 };
@@ -484,7 +557,19 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
   }
 }
 
-async function resolveAgentConnectMode(ctx: PipelineContext): Promise<AgentConnectMode> {
+function resolveBridgeProject(outcomes: {
+  chatSdkOutcome?: ChatSdkConnectOutcome;
+  aiSdkOutcome?: AiSdkConnectOutcome;
+  langChainOutcome?: LangChainConnectOutcome;
+  customCodeOutcome?: CustomCodeConnectOutcome;
+}): { projectDir: string; scaffolded: boolean } | undefined {
+  return outcomes.chatSdkOutcome ?? outcomes.aiSdkOutcome ?? outcomes.langChainOutcome ?? outcomes.customCodeOutcome;
+}
+
+async function resolveAgentConnectMode(
+  ctx: PipelineContext,
+  preselectedAgent?: ExistingAgentContext
+): Promise<AgentConnectMode> {
   const { options, ui, track, sessionProps } = ctx;
 
   if (options.runtime) {
@@ -494,6 +579,17 @@ async function resolveAgentConnectMode(ctx: PipelineContext): Promise<AgentConne
     });
 
     return options.runtime;
+  }
+
+  if (shouldSkipAgentConnectModePicker(options)) {
+    const connectMode = preselectedAgent!.connectMode;
+    track(CONNECT_EVENTS.RUNTIME_SELECTED, {
+      connectMode,
+      skipped: true,
+      ...sessionProps,
+    });
+
+    return connectMode;
   }
 
   const picked = await ui.pickAgentConnectMode({

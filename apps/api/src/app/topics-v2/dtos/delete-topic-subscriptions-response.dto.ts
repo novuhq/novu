@@ -20,6 +20,15 @@ export class TopicDto {
     required: false,
   })
   name?: string;
+
+  @ApiProperty({
+    description: 'Additional custom data associated with the topic',
+    example: { category: 'product', priority: 1 },
+    required: false,
+    type: Object,
+    additionalProperties: true,
+  })
+  data?: Record<string, unknown>;
 }
 
 export class SubscriberDto {

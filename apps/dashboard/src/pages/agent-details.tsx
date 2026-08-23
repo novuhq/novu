@@ -12,14 +12,17 @@ import {
   listAgentIntegrations,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { AgentChatPanel } from '@/components/agents/agent-chat-panel';
+import { AgentChatDrawer } from '@/components/agents/agent-chat-panel';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
-import { getAgentChatIntegrationIdentifier } from '@/components/agents/is-agent-integration-connected';
+import {
+  getAgentChatIntegrationLink,
+  hasAgentInboundConnection,
+} from '@/components/agents/is-agent-integration-connected';
 import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -38,11 +41,13 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentChatPreview } from '@/hooks/use-agent-chat-preview';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QueryKeys } from '@/utils/query-keys';
 import {
+  AGENT_CHAT_PREVIEW_PARAM,
   AGENT_DETAILS_CHAT_TAB,
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
@@ -101,6 +106,7 @@ export function AgentDetailsPage() {
   const [setupModalDismissed, setSetupModalDismissed] = useState(false);
   const track = useTelemetry();
   const lastAgentDetailsTelemetryKey = useRef<string | null>(null);
+  const { isOpen: isChatPreviewOpen, setPreviewOpen } = useAgentChatPreview();
 
   const agentsListPath = buildRoute(agentRoutes.list, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -158,11 +164,13 @@ export function AgentDetailsPage() {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
-  const agentChatIntegrationIdentifier = useMemo(
-    () => getAgentChatIntegrationIdentifier(agentIntegrationsQuery.data?.data),
+  const agentChatLink = useMemo(
+    () => getAgentChatIntegrationLink(agentIntegrationsQuery.data?.data),
     [agentIntegrationsQuery.data?.data]
   );
+  const agentChatIntegrationIdentifier = agentChatLink?.integration.identifier;
   const hasAgentChat = Boolean(agentChatIntegrationIdentifier);
+  const showAddToAppCallouts = agentChatLink != null && !hasAgentInboundConnection(agentChatLink.connectedAt);
 
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
@@ -211,7 +219,11 @@ export function AgentDetailsPage() {
     return <Navigate to={agentsListPath} replace />;
   }
 
-  if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
+  if (agentTabParam === AGENT_DETAILS_CHAT_TAB && currentEnvironment?.slug) {
+    const params = new URLSearchParams(location.search);
+    params.set(AGENT_CHAT_PREVIEW_PARAM, '1');
+    const query = params.toString();
+
     return (
       <Navigate
         replace
@@ -219,17 +231,12 @@ export function AgentDetailsPage() {
           environmentSlug: currentEnvironment.slug,
           agentIdentifier: encodeURIComponent(agentIdentifier),
           agentTab: AGENT_DETAILS_DEFAULT_TAB,
-        })}${location.search}`}
+        })}${query ? `?${query}` : ''}`}
       />
     );
   }
 
-  if (
-    currentTab === AGENT_DETAILS_CHAT_TAB &&
-    agentIntegrationsQuery.isSuccess &&
-    !hasAgentChat &&
-    currentEnvironment?.slug
-  ) {
+  if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
     return (
       <Navigate
         replace
@@ -358,11 +365,6 @@ export function AgentDetailsPage() {
                 <TabsTrigger variant="regular" value="integrations" size="xl">
                   Channels
                 </TabsTrigger>
-                {hasAgentChat ? (
-                  <TabsTrigger variant="regular" value={AGENT_DETAILS_CHAT_TAB} size="xl">
-                    Chat
-                  </TabsTrigger>
-                ) : null}
               </TabsList>
 
               <TabsContent value="overview" className="outline-none">
@@ -377,14 +379,25 @@ export function AgentDetailsPage() {
                   </ConnectSubscriberProvider>
                 ) : null}
               </TabsContent>
-              {hasAgentChat ? (
-                <TabsContent value={AGENT_DETAILS_CHAT_TAB} className="outline-none">
-                  {currentTab === AGENT_DETAILS_CHAT_TAB ? (
-                    <AgentChatPanel agent={agent} agentChatIntegrationIdentifier={agentChatIntegrationIdentifier} />
-                  ) : null}
-                </TabsContent>
-              ) : null}
             </Tabs>
+
+            {hasAgentChat ? (
+              <AgentChatDrawer
+                open={isChatPreviewOpen}
+                onOpenChange={setPreviewOpen}
+                agent={agent}
+                showAddToAppCallouts={showAddToAppCallouts}
+                addToAppHref={
+                  currentEnvironment?.slug && agentChatIntegrationIdentifier
+                    ? buildRoute(agentRoutes.integrationDetail, {
+                        environmentSlug: currentEnvironment.slug,
+                        agentIdentifier: encodeURIComponent(agent.identifier),
+                        integrationIdentifier: encodeURIComponent(agentChatIntegrationIdentifier),
+                      })
+                    : undefined
+                }
+              />
+            ) : null}
 
             <DeleteAgentDialog
               open={Boolean(agentToDelete)}

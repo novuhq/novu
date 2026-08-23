@@ -1,6 +1,6 @@
 'use client';
 
-import type { AgentMessage } from '@novu/react';
+import type { AgentMessage, UseAgentChatResult } from '@novu/react';
 import { useCallback, useEffect, useRef } from 'react';
 import type { RespondToAction } from './approval-card';
 import { ChatIcon, SparkIcon } from './icons';
@@ -15,9 +15,7 @@ type ChatThreadProps = {
   isRunning: boolean;
   /** Live `channel.typing` from `useAgentChat`. Absent when the agent is idle. */
   typing?: TypingState;
-  hasMore: boolean;
-  isFetching: boolean;
-  onFetchMore: () => Promise<unknown>;
+  pagination: UseAgentChatResult['pagination'];
   onRespond?: RespondToAction;
 };
 
@@ -35,15 +33,9 @@ function AgentStatusRow({ status }: { status?: string }) {
   );
 }
 
-export function ChatThread({
-  messages,
-  isRunning,
-  typing,
-  hasMore,
-  isFetching,
-  onFetchMore,
-  onRespond,
-}: ChatThreadProps) {
+export function ChatThread({ messages, isRunning, typing, pagination, onRespond }: ChatThreadProps) {
+  const isFetching = pagination.status === 'loading';
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastMessage = messages[messages.length - 1];
@@ -57,19 +49,19 @@ export function ChatThread({
     const container = scrollRef.current;
     const heightBefore = container?.scrollHeight ?? 0;
 
-    await onFetchMore();
+    await pagination.fetchMore();
 
     // Hold the reading position: the prepended page grows the thread upwards.
     requestAnimationFrame(() => {
       if (!container) return;
       container.scrollTop += container.scrollHeight - heightBefore;
     });
-  }, [onFetchMore]);
+  }, [pagination]);
 
   return (
     <div className="thread" role="log" aria-live="polite" data-running={isRunning} ref={scrollRef}>
       <div className="thread-inner">
-        {hasMore ? (
+        {pagination.hasMore ? (
           <div className="thread-older">
             <button type="button" className="thread-older-btn" onClick={() => void loadOlder()} disabled={isFetching}>
               {isFetching ? <span className="spinner" aria-hidden /> : null}

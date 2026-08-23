@@ -470,6 +470,7 @@ export class ConversationActivityLedger {
     return count > 0;
   }
 
+  /** Persist a logging-only SIGNAL for the workflow origin. */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
     try {
       await this.persistSignal({

@@ -236,7 +236,9 @@ export class WorkflowOriginService {
         notificationId
       );
 
-      // Stamp the notification id before the hydration marker so a failed persist can still re-derive.
+      // The notification id has to land first: it is what later turns re-derive from, while the
+      // hydration marker suppresses re-hydration. Marking first and failing here would strand the
+      // conversation without any way back to its origin.
       await this.conversationService.setNotificationId(
         config.environmentId,
         config.organizationId,
