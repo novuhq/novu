@@ -132,6 +132,9 @@ export class ChannelEndpointsController {
   })
   @ApiResponse(ListChannelEndpointsResponseDto, 200)
   @ExternalApiAccessible()
+  // Keyless: the `human` CLI setup polls this list to detect the Telegram
+  // /start link landing; the keyless strategy already scopes results to the
+  // caller's own keyless environment.
   @KeylessAccessible()
   @SdkMethodName('list')
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)

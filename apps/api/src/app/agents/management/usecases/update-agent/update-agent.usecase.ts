@@ -78,6 +78,10 @@ export class UpdateAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
+    if (existing.runtime === 'human_relay') {
+      throw new ForbiddenException('System human-relay agents cannot be modified.');
+    }
+
     const $set: Record<string, string | boolean | null> = {};
 
     if (command.name !== undefined) {
