@@ -3710,9 +3710,6 @@ importers:
 
   packages/human:
     dependencies:
-      '@novu/human':
-        specifier: 'link:'
-        version: 'link:'
       axios:
         specifier: ^1.18.1
         version: 1.18.1
