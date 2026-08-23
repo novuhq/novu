@@ -903,31 +903,6 @@ export async function removeAgentSendblueWebhooks(
   return response.data;
 }
 
-export type SendPhotonTestMessageError = {
-  code: 'missing_credentials' | 'invalid_recipient' | 'recipient_not_opted_in' | 'photon_rejected' | 'unknown';
-  message: string;
-};
-
-export type SendPhotonTestMessageResponse = {
-  success: boolean;
-  messageId?: string;
-  error?: SendPhotonTestMessageError;
-};
-
-export async function sendPhotonTestMessage(
-  environment: IEnvironment,
-  agentIdentifier: string,
-  integrationIdentifier: string,
-  subscriberId: string
-): Promise<SendPhotonTestMessageResponse> {
-  const response = await post<{ data: SendPhotonTestMessageResponse }>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/photon/test-message`,
-    { environment, body: { subscriberId } }
-  );
-
-  return response.data;
-}
-
 export type ConfigurePhotonWebhookFailure = {
   code: 'missing_credentials' | 'photon_rejected' | 'unknown';
   message: string;

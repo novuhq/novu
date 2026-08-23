@@ -1,14 +1,17 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
-import { RiCheckLine, RiErrorWarningLine, RiSendPlaneFill } from 'react-icons/ri';
+import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
+import { RiCheckLine, RiErrorWarningLine, RiSendPlaneFill, RiSmartphoneLine } from 'react-icons/ri';
+import QRCode from 'react-qr-code';
 import { patchSubscriber } from '@/api/subscribers';
 import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { Label } from '@/components/primitives/label';
+import { PhoneInput } from '@/components/primitives/phone-input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { QueryKeys } from '@/utils/query-keys';
+import { SetupButton } from './setup-guide-primitives';
 import { PHONE_PATTERN } from './whatsapp-setup-guide-utils';
 
 type ConnectStatus =
@@ -268,7 +271,7 @@ export function SendTestMessagePanel({
   sendTestMessage,
   specialErrorCode,
   renderSpecialError,
-  footer,
+  deepLink,
 }: {
   providerLabel: string;
   integrationIdentifier: string;
@@ -276,8 +279,9 @@ export function SendTestMessagePanel({
   sendTestMessage: (subscriberId: string) => Promise<{ success: boolean; error?: { message: string; code?: string } }>;
   specialErrorCode?: string;
   renderSpecialError?: (phone: string, reset: () => void) => ReactNode;
-  footer?: ReactNode;
+  deepLink?: { url: string; phoneNumber: string };
 }) {
+  const phoneFieldId = useId();
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' });
   const [phone, setPhone] = useState('');
 
@@ -351,56 +355,95 @@ export function SendTestMessagePanel({
   const isSpecialError =
     testStatus.state === 'error' && Boolean(specialErrorCode) && testStatus.code === specialErrorCode;
 
-  return (
-    <div className="flex w-full max-w-[400px] flex-col gap-3">
-      {isSpecialError && renderSpecialError ? (
-        renderSpecialError(phone.trim(), () => setTestStatus({ state: 'idle' }))
-      ) : (
-        <>
-          <div className="flex items-stretch gap-2">
-            <InputRoot size="xs" hasError={testStatus.state === 'error'} className="flex-1">
-              <InputWrapper>
-                <InputPure
-                  value={phone}
-                  onChange={(event) => {
-                    setPhone(event.target.value);
+  if (isSpecialError && renderSpecialError) {
+    return (
+      <div className="flex w-full max-w-[400px] flex-col gap-3">
+        {renderSpecialError(phone.trim(), () => setTestStatus({ state: 'idle' }))}
+      </div>
+    );
+  }
 
-                    if (testStatus.state === 'error') {
-                      setTestStatus({ state: 'idle' });
-                    }
-                  }}
-                  type="tel"
-                  inputMode="tel"
-                  placeholder="+14155551234"
-                  autoComplete="tel"
-                  disabled={testStatus.state === 'sending'}
-                />
-              </InputWrapper>
-            </InputRoot>
-            <Button
-              type="button"
-              variant="secondary"
-              size="xs"
-              className="gap-1.5 px-2"
-              onClick={handleSendTest}
-              disabled={!phone || testStatus.state === 'sending'}
-              isLoading={testStatus.state === 'sending'}
-              leadingIcon={RiSendPlaneFill}
-            >
-              Send test
-            </Button>
+  return (
+    <div className="border-stroke-weak bg-bg-weak flex w-full max-w-[400px] flex-col gap-4 rounded-lg border p-3">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={phoneFieldId} className="text-text-sub">
+          Your phone number
+        </Label>
+        <div className="flex items-stretch gap-2">
+          <PhoneInput
+            id={phoneFieldId}
+            value={phone}
+            onChange={(value) => {
+              setPhone(value ?? '');
+
+              if (testStatus.state === 'error') {
+                setTestStatus({ state: 'idle' });
+              }
+            }}
+            placeholder="Enter phone number"
+            className="min-w-0 flex-1"
+            disabled={testStatus.state === 'sending'}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="xs"
+            className="shrink-0 gap-1.5 px-2"
+            onClick={handleSendTest}
+            disabled={!phone || testStatus.state === 'sending'}
+            isLoading={testStatus.state === 'sending'}
+            leadingIcon={RiSendPlaneFill}
+          >
+            Send test
+          </Button>
+        </div>
+      </div>
+
+      {testStatus.state === 'sent' ? (
+        <InlineToast
+          className="w-full"
+          variant="success"
+          title="Sent:"
+          description={`check your Messages app for the reply from your ${providerLabel} number.`}
+        />
+      ) : null}
+      {testStatus.state === 'error' ? (
+        <InlineToast className="w-full" variant="error" description={testStatus.message} />
+      ) : null}
+
+      {deepLink ? (
+        <>
+          <div className="flex w-full items-center gap-2.5">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-stroke-soft" />
+            <span className="text-subheading-2xs text-text-soft shrink-0">OR</span>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-stroke-soft" />
           </div>
-          {testStatus.state === 'sent' ? (
-            <p className="text-success-base text-label-xs leading-4">
-              Sent: check your Messages app for the reply from your {providerLabel} number.
-            </p>
-          ) : null}
-          {testStatus.state === 'error' ? (
-            <p className="text-error-base text-label-xs leading-4">{testStatus.message}</p>
-          ) : null}
-          {footer}
+
+          <div className="flex items-start gap-4">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5 pb-0.5">
+              <div className="text-text-strong text-label-xs flex items-center gap-1 font-medium">
+                <RiSmartphoneLine className="size-4 shrink-0" />
+                Text it from your phone
+              </div>
+              <div className="text-text-soft text-label-2xs flex flex-col gap-2 leading-[14px]">
+                <p>
+                  Message <span className="text-text-sub font-medium">{deepLink.phoneNumber}</span> (or) scan to open
+                  the chat in Messages.
+                </p>
+                <p>Novu confirms as soon as it arrives.</p>
+              </div>
+              <SetupButton href={deepLink.url} leadingIcon={<RiSmartphoneLine className="size-3.5" />}>
+                Open Messages
+              </SetupButton>
+            </div>
+            <div className="bg-bg-weak flex shrink-0 items-center self-stretch rounded-lg p-1">
+              <div className="bg-bg-white flex items-center justify-center rounded-md p-1.5">
+                <QRCode value={deepLink.url} size={96} />
+              </div>
+            </div>
+          </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

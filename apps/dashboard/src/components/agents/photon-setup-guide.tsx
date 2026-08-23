@@ -1,25 +1,18 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  RiChat3Line,
-  RiCheckLine,
-  RiErrorWarningLine,
-  RiExternalLinkLine,
-  RiKey2Line,
-  RiSmartphoneLine,
-} from 'react-icons/ri';
+import { RiCheckLine, RiLoader4Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
+import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { useConfigurePhotonWebhook } from '@/hooks/use-configure-photon-webhook';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { usePhotonDeviceAuth } from '@/hooks/use-photon-device-auth';
-import { useRegisterPhotonRecipient } from '@/hooks/use-register-photon-recipient';
 import { useRemovePhotonWebhooks } from '@/hooks/use-remove-photon-webhooks';
-import { useSendPhotonTestMessage } from '@/hooks/use-send-photon-test-message';
-import { ConnectWebhookPanel, SendTestMessagePanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
+import { ConnectWebhookPanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
 import { ImessageIntegrationSelect } from './imessage-integration-select';
+import { PhotonInboundTestPanel, type PhotonRecipientRegistration, PhotonRegisterPanel } from './photon-optin-panels';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
@@ -29,9 +22,47 @@ import {
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
-import { buildImessageFallbackHref, deriveStepStatus, hasPhotonProjectCredentials } from './setup-guide-step-utils';
+import { deriveStepStatus, hasPhotonProjectCredentials } from './setup-guide-step-utils';
 
 const PHOTON_DASHBOARD_URL = 'https://app.photon.codes';
+
+const REGISTRATION_STORAGE_PREFIX = 'novu:photon-recipient:';
+
+function readStoredRegistration(integrationId: string): PhotonRecipientRegistration | null {
+  try {
+    const raw = sessionStorage.getItem(`${REGISTRATION_STORAGE_PREFIX}${integrationId}`);
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<PhotonRecipientRegistration>;
+
+    if (!parsed?.phoneNumber || !parsed?.assignedPhoneNumber) {
+      return null;
+    }
+
+    return { phoneNumber: parsed.phoneNumber, assignedPhoneNumber: parsed.assignedPhoneNumber };
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredRegistration(integrationId: string, registration: PhotonRecipientRegistration | null) {
+  const key = `${REGISTRATION_STORAGE_PREFIX}${integrationId}`;
+
+  try {
+    if (registration) {
+      sessionStorage.setItem(key, JSON.stringify(registration));
+
+      return;
+    }
+
+    sessionStorage.removeItem(key);
+  } catch {
+    // sessionStorage unavailable
+  }
+}
 
 export type PhotonSetupGuideProps = {
   agent: AgentResponse;
@@ -65,14 +96,14 @@ function ConnectPhotonPanel({
           <span className="text-label-xs font-medium">Photon project connected</span>
         </div>
         {state.phase === 'complete' && state.warning ? (
-          <p className="text-warning-base text-label-xs leading-4">{state.warning}</p>
+          <InlineToast className="w-full" variant="warning" description={state.warning} />
         ) : null}
         <button
           type="button"
           onClick={onOpenCredentials}
           className="text-text-sub hover:text-text-strong w-fit text-label-xs font-medium underline"
         >
-          View project credentials in Edit credentials
+          Edit credentials
         </button>
       </div>
     );
@@ -81,21 +112,27 @@ function ConnectPhotonPanel({
   return (
     <div className="flex w-full max-w-[400px] flex-col gap-3">
       {state.phase === 'waiting' ? (
-        <div className="border-information-base/40 bg-information-base/4 flex w-full flex-col gap-2 rounded-md border p-3">
+        <div className="border-stroke-weak bg-bg-weak flex w-full flex-col gap-3 rounded-lg border p-3">
           <p className="text-text-soft text-label-xs leading-4">
-            Enter this code on the Photon verification page to approve the connection:
+            Enter this code on the Photon verification page to approve the connection.
           </p>
-          <span className="text-text-strong text-label-md font-semibold tracking-widest">{state.userCode}</span>
-          <a
+          <ReadOnlyValueRow label="Verification code" value={state.userCode} />
+          <SetupButton
             href={state.verificationUriComplete ?? state.verificationUri}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-text-sub hover:text-text-strong inline-flex w-fit items-center gap-1.5 text-label-xs font-medium underline"
+            leadingIcon={
+              <ProviderIcon
+                providerId={ChatProviderIdEnum.PhotonImessage}
+                providerDisplayName="Photon"
+                className="size-4 shrink-0"
+              />
+            }
           >
-            <RiExternalLinkLine className="size-3.5" />
             Open Photon to approve
-          </a>
-          <p className="text-text-soft text-label-xs leading-4">Waiting for approval…</p>
+          </SetupButton>
+          <p className="text-text-soft text-label-xs flex items-center gap-1.5">
+            <RiLoader4Line className="size-3 shrink-0 animate-spin" aria-hidden />
+            Waiting for approval…
+          </p>
         </div>
       ) : (
         <Button
@@ -114,42 +151,53 @@ function ConnectPhotonPanel({
       )}
 
       {state.phase === 'denied' ? (
-        <p className="text-error-base text-label-xs leading-4">The connection request was denied — try again.</p>
+        <InlineToast
+          className="w-full"
+          variant="error"
+          title="Connection denied."
+          description="The request was rejected in Photon — click Connect Photon to try again."
+        />
       ) : null}
       {state.phase === 'expired' ? (
-        <p className="text-error-base text-label-xs leading-4">The connect code expired — click Connect to restart.</p>
+        <InlineToast
+          className="w-full"
+          variant="error"
+          title="Code expired."
+          description="Click Connect Photon to start a new connection."
+        />
       ) : null}
-      {state.phase === 'error' ? <p className="text-error-base text-label-xs leading-4">{state.message}</p> : null}
+      {state.phase === 'error' ? (
+        <InlineToast className="w-full" variant="error" title="Photon connect failed." description={state.message} />
+      ) : null}
       {state.phase === 'unavailable' ? (
-        <div className="border-warning-base/40 bg-warning-base/4 flex w-full flex-col gap-2 rounded-md border p-3">
-          <div className="text-warning-base flex items-center gap-1.5">
-            <RiErrorWarningLine className="size-4" />
-            <span className="text-label-xs font-medium">
-              {state.reason ?? 'Photon connect is unavailable right now.'}
+        <InlineToast
+          className="w-full"
+          variant="warning"
+          title={state.reason ?? 'Photon connect is unavailable right now.'}
+          description={
+            <span>
+              {'Create a project at '}
+              <a
+                href={PHOTON_DASHBOARD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2"
+              >
+                app.photon.codes
+              </a>
+              {', copy the Project ID and Project Secret, then save them in the credentials form.'}
             </span>
-          </div>
-          <p className="text-text-soft text-label-xs leading-4">
-            {'Create a project at '}
-            <a
-              href={PHOTON_DASHBOARD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              app.photon.codes
-            </a>
-            {', copy the '}
-            <strong className="text-text-sub">Project ID</strong>
-            {' and '}
-            <strong className="text-text-sub">Project Secret</strong>
-            {', then save them in the credentials form.'}
-          </p>
-        </div>
+          }
+        />
       ) : null}
 
-      <SetupButton leadingIcon={<RiKey2Line className="size-3.5" />} onClick={onOpenCredentials}>
-        {isCredentialsSaved ? 'Edit credentials' : 'Enter credentials manually'}
-      </SetupButton>
+      <button
+        type="button"
+        onClick={onOpenCredentials}
+        className="text-text-sub hover:text-text-strong w-fit text-label-xs font-medium underline"
+      >
+        {isCredentialsSaved ? 'Edit credentials' : 'Enter credentials manually instead'}
+      </button>
     </div>
   );
 }
@@ -232,125 +280,6 @@ function PhotonWebhookPanel({
   );
 }
 
-function RecipientNotOptedInPanel({
-  agent,
-  integrationIdentifier,
-  phoneNumber,
-  onTryAgain,
-}: {
-  agent: AgentResponse;
-  integrationIdentifier: string;
-  phoneNumber: string;
-  onTryAgain: () => void;
-}) {
-  const [assignedPhoneNumber, setAssignedPhoneNumber] = useState('');
-  const { mutateAsync: registerRecipient, isPending } = useRegisterPhotonRecipient();
-
-  const handleRegister = useCallback(async () => {
-    try {
-      const result = await registerRecipient({
-        agentIdentifier: agent.identifier,
-        integrationIdentifier,
-        phoneNumber,
-      });
-
-      if (result.success) {
-        setAssignedPhoneNumber(result.assignedPhoneNumber ?? '');
-        showSuccessToast('Recipient registered on your Photon line.');
-
-        return;
-      }
-
-      showErrorToast(result.message ?? "Photon didn't accept the recipient registration.");
-    } catch (err) {
-      showErrorToast(err instanceof Error ? err.message : 'Something went wrong registering the recipient.');
-    }
-  }, [agent.identifier, integrationIdentifier, phoneNumber, registerRecipient]);
-
-  const imessageHref = assignedPhoneNumber ? buildImessageFallbackHref(assignedPhoneNumber, agent.name) : undefined;
-
-  return (
-    <div className="border-information-base/40 bg-information-base/4 flex w-full flex-col gap-3 rounded-md border p-3">
-      <div className="flex flex-col gap-2">
-        <div className="text-information-base flex items-center gap-1.5">
-          <RiChat3Line className="size-4" />
-          <span className="text-label-xs font-medium">This recipient needs to opt in first</span>
-        </div>
-        <p className="text-text-soft text-label-xs leading-4">
-          On Photon's shared iMessage line, a recipient must text their assigned Photon number once (or accept an
-          invite) before your project can message them. Register the number to get its assigned Photon line, have the
-          recipient text it, then try again. You can also send invites from{' '}
-          <a href={PHOTON_DASHBOARD_URL} target="_blank" rel="noopener noreferrer" className="text-text-sub underline">
-            app.photon.codes
-          </a>
-          .
-        </p>
-      </div>
-      {assignedPhoneNumber ? <ReadOnlyValueRow label="Photon number" value={assignedPhoneNumber} /> : null}
-      <div className="flex items-center gap-3">
-        {!assignedPhoneNumber ? (
-          <Button
-            type="button"
-            variant="secondary"
-            mode="outline"
-            size="xs"
-            className="w-fit gap-1.5"
-            onClick={handleRegister}
-            disabled={isPending}
-            isLoading={isPending}
-          >
-            Register {phoneNumber || 'this number'}
-          </Button>
-        ) : null}
-        {imessageHref ? (
-          <SetupButton href={imessageHref} leadingIcon={<RiSmartphoneLine className="size-3.5" />}>
-            Message {assignedPhoneNumber}
-          </SetupButton>
-        ) : null}
-        <button
-          type="button"
-          onClick={onTryAgain}
-          className="text-text-sub hover:text-text-strong text-label-xs font-medium underline"
-        >
-          The recipient has opted in, try again
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function PhotonTestPanel({
-  agent,
-  integrationIdentifier,
-  connectSubscriberId,
-}: {
-  agent: AgentResponse;
-  integrationIdentifier: string;
-  connectSubscriberId: string;
-}) {
-  const { mutateAsync: sendTestMessage } = useSendPhotonTestMessage();
-
-  return (
-    <SendTestMessagePanel
-      providerLabel="Photon"
-      integrationIdentifier={integrationIdentifier}
-      connectSubscriberId={connectSubscriberId}
-      sendTestMessage={(subscriberId) =>
-        sendTestMessage({ agentIdentifier: agent.identifier, integrationIdentifier, subscriberId })
-      }
-      specialErrorCode="recipient_not_opted_in"
-      renderSpecialError={(phone, reset) => (
-        <RecipientNotOptedInPanel
-          agent={agent}
-          integrationIdentifier={integrationIdentifier}
-          phoneNumber={phone}
-          onTryAgain={reset}
-        />
-      )}
-    />
-  );
-}
-
 export function PhotonSetupGuide({
   agent,
   integrationId,
@@ -363,12 +292,26 @@ export function PhotonSetupGuide({
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isWebhookConfiguredLocally, setIsWebhookConfiguredLocally] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [registration, setRegistration] = useState<PhotonRecipientRegistration | null>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
   useEffect(() => {
     setIsConnected(false);
     setCredentialsSavedLocally(false);
     setIsWebhookConfiguredLocally(false);
+    setRegistration(readStoredRegistration(integrationId));
+  }, [integrationId]);
+
+  const handleRegistered = useCallback(
+    (next: PhotonRecipientRegistration) => {
+      setRegistration(next);
+      writeStoredRegistration(integrationId, next);
+    },
+    [integrationId]
+  );
+
+  const handleResetRegistration = useCallback(() => {
+    setRegistration(null);
+    writeStoredRegistration(integrationId, null);
   }, [integrationId]);
 
   const handleConnected = useCallback(() => {
@@ -397,9 +340,13 @@ export function PhotonSetupGuide({
   const base = stepOffset;
 
   // The provider-select step (base) is completed on mount since Photon is preselected, so the
-  // three real setup steps follow at base+1..base+3.
+  // four real setup steps follow at base+1..base+4.
   const firstIncompleteStep = useMemo(() => {
     if (isConnected) {
+      return base + 5;
+    }
+
+    if (registration) {
       return base + 4;
     }
 
@@ -412,9 +359,7 @@ export function PhotonSetupGuide({
     }
 
     return base + 1;
-  }, [base, isCredentialsSaved, isWebhookConfigured, isConnected]);
-
-  const step3Status = deriveStepStatus(base + 3, firstIncompleteStep);
+  }, [base, isCredentialsSaved, isWebhookConfigured, registration, isConnected]);
 
   const stepsColumn = (
     <>
@@ -438,7 +383,7 @@ export function PhotonSetupGuide({
         description={
           <span>
             {
-              'Click Connect Photon and approve the request: Novu creates a Photon project for this agent and saves the '
+              'Click Connect Photon and approve the request: Novu creates a Photon project for this agent and saves its '
             }
             <strong className="text-text-sub">Project ID</strong>
             {' and '}
@@ -488,18 +433,33 @@ export function PhotonSetupGuide({
 
       <SetupStep
         index={base + 3}
-        status={step3Status}
+        status={deriveStepStatus(base + 3, firstIncompleteStep)}
         dimmed={!isWebhookConfigured}
-        title="Send a test message"
-        description="Send yourself a message from your Photon iMessage line, or text it yourself from your phone. On the shared line, the recipient must have opted in (texted the assigned number or accepted an invite) before Photon accepts outbound sends."
+        title="Register your phone number"
+        description="Photon's shared iMessage line only reaches registered numbers. Register yours to get the Photon number your agent will talk to."
         rightContent={
           isConnectSubscriberReady ? (
-            <PhotonTestPanel
-              agent={agent}
+            <PhotonRegisterPanel
+              key={selectedIntegrationIdentifier}
+              agentIdentifier={agent.identifier}
               integrationIdentifier={selectedIntegrationIdentifier}
               connectSubscriberId={connectSubscriberId}
+              registration={registration}
+              onRegistered={handleRegistered}
+              onReset={handleResetRegistration}
             />
           ) : null
+        }
+      />
+
+      <SetupStep
+        index={base + 4}
+        status={deriveStepStatus(base + 4, firstIncompleteStep)}
+        dimmed={!registration}
+        title="Text your agent to finish"
+        description="Send any message to the Photon number from the phone you registered. That first message is the opt-in Photon requires, and it confirms your agent can reply."
+        rightContent={
+          registration ? <PhotonInboundTestPanel registration={registration} agentName={agent.name} /> : null
         }
       />
     </>

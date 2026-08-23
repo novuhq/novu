@@ -1,6 +1,6 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiChat3Line, RiKey2Line, RiSmartphoneLine } from 'react-icons/ri';
+import { RiKey2Line, RiSmartphoneLine } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { useConfigureSendblueWebhook } from '@/hooks/use-configure-sendblue-webhook';
@@ -124,17 +124,12 @@ function RecipientNotVerifiedPanel({
   onTryAgain: () => void;
 }) {
   return (
-    <div className="border-information-base/40 bg-information-base/4 flex w-full flex-col gap-3 rounded-md border p-3">
-      <div className="flex flex-col gap-2">
-        <div className="text-information-base flex items-center gap-1.5">
-          <RiChat3Line className="size-4" />
-          <span className="text-label-xs font-medium">You need to message this number first</span>
-        </div>
-        <p className="text-text-soft text-label-xs leading-4">
-          Sendblue only allows replies to numbers that have already texted it. Send a quick message to the number below
-          to start the conversation, then your agent will be able to reply here.
-        </p>
-      </div>
+    <div className="border-stroke-weak bg-bg-weak flex w-full flex-col gap-3 rounded-lg border p-3">
+      <p className="text-text-strong text-label-xs font-medium leading-4">You need to message this number first</p>
+      <p className="text-text-soft text-label-xs leading-4">
+        Sendblue only allows replies to numbers that have already texted it. Send a quick message to start the
+        conversation, then try again.
+      </p>
       {fromNumber ? <ReadOnlyValueRow label="Sendblue number" value={fromNumber} /> : null}
       <div className="flex items-center gap-3">
         {imessageHref ? (
@@ -180,19 +175,7 @@ function SendblueTestPanel({
       renderSpecialError={(_phone, reset) => (
         <RecipientNotVerifiedPanel fromNumber={fromNumber} imessageHref={imessageHref} onTryAgain={reset} />
       )}
-      footer={
-        imessageHref ? (
-          <a
-            href={imessageHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-text-sub hover:text-text-strong inline-flex w-fit items-center gap-1.5 text-label-xs font-medium underline"
-          >
-            <RiSmartphoneLine className="size-3.5" />
-            Text via iMessage instead
-          </a>
-        ) : undefined
-      }
+      deepLink={imessageHref && fromNumber ? { url: imessageHref, phoneNumber: fromNumber } : undefined}
     />
   );
 }
