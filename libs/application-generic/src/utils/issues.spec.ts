@@ -2,6 +2,7 @@ import { JsonSchemaTypeEnum } from '@novu/dal';
 import { ContentIssueEnum, StepTypeEnum } from '@novu/shared';
 import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it } from 'vitest';
+import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { chatControlSchema } from '../schemas/control';
 import { processControlValuesBySchema } from './issues';
 import { dashboardSanitizeControlValues } from './sanitize-control-values';
@@ -60,6 +61,24 @@ describe('processControlValuesBySchema', () => {
 
     expect(sanitized).toEqual({ body: mailyBody, editorType: 'block' });
     expect(issues.controls?.editorType).toBeUndefined();
+  });
+
+  it('validates schemas using JSON Schema draft 2020-12', () => {
+    const issues = processControlValuesBySchema({
+      controlSchema: {
+        $schema: 'https://json-schema.org/draft/2020-12/schema',
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {
+          subject: { type: JsonSchemaTypeEnum.STRING, minLength: 1 },
+        },
+        required: ['subject'],
+        additionalProperties: false,
+      } as JSONSchemaDto,
+      controlValues: {},
+    });
+
+    expect(issues.controls?.subject).toHaveLength(1);
+    expect(issues.controls?.subject?.[0].message).toBe('Subject is required');
   });
 
   it('does not flag editorType for an empty chat step after sanitize', () => {
