@@ -1,7 +1,7 @@
 import type { CloudRegionEnum } from '../dev/enums';
 import type { LlmAuthCliChoice } from './pipeline/llm-auth/types';
 
-export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'skip';
+export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'agent-chat' | 'skip';
 
 export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
   'slack',
@@ -10,8 +10,11 @@ export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
   'telegram',
   'teams',
   'sendblue',
+  'agent-chat',
   'skip',
 ];
+
+export type AgentChatSetupMode = 'scaffold' | 'embed' | 'skip';
 
 export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
@@ -60,6 +63,27 @@ export type BridgeRequirement = {
   id: BridgeRequirementId;
   status: BridgeReqStatus;
   detail: string;
+};
+
+export type AgentChatConnectOutcome = {
+  mode: AgentChatSetupMode;
+  projectDir?: string;
+  scaffolded?: boolean;
+  mergedIntoBridge?: boolean;
+  /** Browser path where Agent Chat is served (for example `/` or `/agent-chat`). */
+  chatPath?: string;
+  /** Project-local embed prompt file (embed path). */
+  embedPromptFile?: string;
+  /** Env files updated during the embed path. */
+  envPaths?: string[];
+  /** Project already has handler + chat UI wired — skip setup prompt by default. */
+  alreadyWired?: boolean;
+};
+
+export type ConnectAgentChatHandoff = {
+  dashboardUrl: string;
+  embedPrompt: string;
+  embedPromptFile?: string;
 };
 
 export type ChatSdkConnectOutcome = {
@@ -120,6 +144,8 @@ export interface ConnectCommandOptions {
   runtime?: AgentConnectMode;
   /** Use an existing agent-runtime integration instead of creating one. */
   agentIntegrationId?: string;
+  /** Use an existing agent by identifier, skipping the agent picker. */
+  agentIdentifier?: string;
   /** Anthropic API key for `--runtime claude` non-interactive runs. */
   anthropicApiKey?: string;
   /** AWS Claude API key for `--runtime claude-aws` non-interactive runs. */
@@ -176,6 +202,8 @@ export interface ConnectCommandOptions {
   llmAuth?: LlmAuthCliChoice;
   /** OpenAI API key for --llm-auth openai non-interactive scaffold runs. */
   openaiApiKey?: string;
+  /** Agent Chat post-connect setup for --ci: scaffold | embed | skip (auto-detect when omitted). */
+  agentChatSetup?: AgentChatSetupMode;
 }
 
 export interface AgentSummary {

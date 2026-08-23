@@ -1,11 +1,11 @@
-import type { AgentMessage, AgentPendingAction } from '@novu/react';
+import type { AgentMessage } from '@novu/react';
 import {
+  RiArrowRightSLine,
   RiChat3Fill,
   RiErrorWarningLine,
   RiExternalLinkLine,
   RiLoader4Line,
-  RiShieldCheckLine,
-  RiToolsLine,
+  RiTerminalBoxLine,
 } from 'react-icons/ri';
 import { McpIcon } from '@/components/agents/mcp-icon';
 import { Button } from '@/components/primitives/button';
@@ -13,15 +13,53 @@ import { MarkdownText } from '@/components/primitives/markdown-text';
 import { cn } from '@/utils/ui';
 import { toSafeExternalUrl } from '@/utils/url';
 
-const STARTER_PROMPTS = ['Hello', 'What can you do?', 'List my MCP tools'] as const;
+const STARTER_PROMPTS = ['Hello', 'What can you do?', 'What tools do you have available?'] as const;
+
+function isPoweredByWatermark(content: string): boolean {
+  const trimmed = content.trim();
+
+  return /^powered by/i.test(trimmed) && /novu/i.test(trimmed);
+}
 
 function stripPoweredByWatermark(text: string): string {
   return text
     .replace(
-      /(?:\n+)?(?:Powered by \[Novu\]\([^)]+\)|Powered by <https?:\/\/[^|>]+\|Novu>|\[Powered by Novu\]\([^)]+\)|Powered by Novu\u200B?)\s*$/i,
+      /(?:\n+)?(?:Powered by\s*\[[^\]]+\]\([^)]+\)|Powered by\s*<https?:\/\/[^|>]+\|[^>]+>|\[Powered by Novu\]\([^)]+\)|Powered by\s*<a\b[^>]*>[\s\S]*?<\/a>|Powered by Novu\u200B?)\s*$/i,
       ''
     )
     .trimEnd();
+}
+
+function brandedReplyMarkdown(card: Record<string, unknown>): string | null {
+  if (readString(card.title) || readString(card.subtitle) || toSafeExternalUrl(readString(card.imageUrl))) {
+    return null;
+  }
+
+  const children = Array.isArray(card.children) ? card.children : [];
+  const texts: string[] = [];
+  let sawWatermark = false;
+
+  for (const child of children) {
+    if (!isRecord(child) || child.type !== 'text') {
+      return null;
+    }
+
+    const content = readString(child.content);
+    if (!content) continue;
+
+    if (isPoweredByWatermark(content)) {
+      sawWatermark = true;
+      continue;
+    }
+
+    texts.push(content);
+  }
+
+  if (!sawWatermark || texts.length === 0) {
+    return null;
+  }
+
+  return texts.join('\n\n');
 }
 
 type AgentMessagePart = AgentMessage['parts'][number];
@@ -59,17 +97,10 @@ export function AgentAvatar({ className }: { className?: string }) {
 
 export function ChatEmptyState({ onPickStarter }: { onPickStarter: (text: string) => void }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-5 py-10 text-center">
-      <div
-        className="from-primary-base to-error-base flex size-12 items-center justify-center rounded-2xl bg-linear-to-br shadow-[0_12px_24px_-8px_hsl(var(--primary-alpha-24)),inset_0_1px_0_hsl(var(--white-alpha-24))]"
-        aria-hidden
-      >
-        <RiChat3Fill className="text-static-white size-6" />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <p className="text-label-md text-text-strong font-medium">Your agent is ready</p>
-        <p className="text-paragraph-xs text-text-soft max-w-xs leading-5">Send a message to see how it replies.</p>
-      </div>
+    <div className="flex h-full flex-col items-center justify-center gap-4 py-10 text-center">
+      <p className="text-paragraph-sm text-text-strong max-w-[280px] leading-5">
+        Hello, I&apos;m your agent. How can I help you today?
+      </p>
       <div className="flex flex-wrap justify-center gap-2">
         {STARTER_PROMPTS.map((prompt) => (
           <Button
@@ -94,18 +125,31 @@ export function ChatMessageRow({
   showAvatar,
   onCardAction,
   cardActionsDisabled,
+  onRespondToAction,
 }: {
   message: AgentMessage;
   showAvatar: boolean;
   onCardAction?: CardActionHandler;
   cardActionsDisabled?: boolean;
+  onRespondToAction?: (args: { actionId: string; decision: ToolApprovalDecision }) => void;
 }) {
   const isUser = message.role === 'user';
   const textParts = message.parts.filter((part): part is TextPart => part.type === 'text');
-  const text = stripPoweredByWatermark(textParts.map((part) => part.text).join(''));
+  const cards = message.parts.filter((part): part is CardPart => part.type === 'card');
+  const unwrappedCardText = cards
+    .map((part) => brandedReplyMarkdown(part.card))
+    .filter((value): value is string => Boolean(value))
+    .join('\n\n');
+  const visibleCards = cards.filter((part) => brandedReplyMarkdown(part.card) === null);
+  const text = stripPoweredByWatermark(
+    [textParts.map((part) => part.text).join(''), unwrappedCardText].filter(Boolean).join('\n\n')
+  );
   const isStreaming = textParts.some((part) => part.state === 'streaming');
   const tools = message.parts.filter((part): part is ToolPart => part.type === 'tool');
-  const cards = message.parts.filter((part): part is CardPart => part.type === 'card');
+  const approvals = message.parts.filter((part): part is ApprovalPart => part.type === 'approval');
+  const mcpConnections = message.parts.filter((part): part is McpConnectionPart => part.type === 'mcp-connection');
+  const gatedToolUseIds = new Set(approvals.map((part) => part.toolUseId));
+  const visibleTools = tools.filter((tool) => !gatedToolUseIds.has(tool.toolUseId));
   const time = formatMessageTime(message.createdAt);
   const failed = message.status === 'failed';
 
@@ -120,7 +164,7 @@ export function ChatMessageRow({
           ) : null}
           <div
             className={cn(
-              'bg-bg-weak text-text-strong text-paragraph-sm max-w-[min(30rem,85%)] whitespace-pre-wrap break-words rounded-2xl rounded-br-md px-3.5 py-2 leading-5',
+              'bg-bg-weak text-text-strong text-paragraph-sm max-w-[min(30rem,85%)] whitespace-pre-wrap break-words rounded-xl px-3 py-2 leading-5',
               failed && 'ring-error-light ring-1'
             )}
           >
@@ -137,22 +181,27 @@ export function ChatMessageRow({
     );
   }
 
-  const hasContent = Boolean(text) || tools.length > 0 || cards.length > 0;
+  const hasContent =
+    Boolean(text) ||
+    visibleTools.length > 0 ||
+    visibleCards.length > 0 ||
+    approvals.length > 0 ||
+    mcpConnections.length > 0;
   if (!hasContent) return null;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-1 group flex items-start gap-2.5 duration-200">
-      {showAvatar ? <AgentAvatar className="mt-0.5" /> : <div className="w-7 shrink-0" aria-hidden />}
-      <div className="flex min-w-0 max-w-[min(34rem,calc(100%-3rem))] flex-col items-start gap-1.5">
+      {showAvatar ? <AgentAvatar className="mt-0.5" /> : null}
+      <div className="flex min-w-0 max-w-full flex-1 flex-col items-start gap-1.5">
         {text ? (
-          <div className="border-stroke-soft bg-bg-white shadow-regular-xs text-paragraph-sm text-text-strong rounded-2xl rounded-tl-md border px-3.5 py-2.5 leading-5">
+          <div className="text-paragraph-sm text-text-strong w-full leading-5">
             <MarkdownText className="text-paragraph-sm leading-5">{text}</MarkdownText>
             {isStreaming ? (
               <span className="bg-text-strong ml-0.5 inline-block h-3.5 w-0.5 animate-pulse align-middle" aria-hidden />
             ) : null}
           </div>
         ) : null}
-        {cards.map((part, index) => (
+        {visibleCards.map((part, index) => (
           <ChatCardPart
             key={`${message.id}-card-${index}`}
             card={part.card}
@@ -160,13 +209,40 @@ export function ChatMessageRow({
             onAction={onCardAction ? (action) => onCardAction({ ...action, sourceMessageId: message.id }) : undefined}
           />
         ))}
-        {tools.length > 0 ? (
+        {visibleTools.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
-            {tools.map((tool) => (
+            {visibleTools.map((tool) => (
               <ToolChip key={tool.toolUseId} tool={tool} />
             ))}
           </div>
         ) : null}
+        {approvals.map((part) => (
+          <ChatToolApprovalCard
+            key={part.approvalId}
+            id={part.approvalId}
+            toolName={part.toolName}
+            source={part.source}
+            state={part.state}
+            trustToolActionId={part.trustToolActionId}
+            trustServerActionId={part.trustServerActionId}
+            disabled={cardActionsDisabled}
+            onRespond={
+              onRespondToAction ? (decision) => onRespondToAction({ actionId: part.approvalId, decision }) : undefined
+            }
+          />
+        ))}
+        {mcpConnections.map((part) => (
+          <ChatMcpConnectionCard
+            key={part.actionId}
+            id={part.actionId}
+            mcpId={part.mcpId}
+            displayName={part.displayName}
+            authorizeUrl={part.authorizeUrl}
+            authorizeUrlWithAutoApprove={part.authorizeUrlWithAutoApprove}
+            state={part.state}
+            message={part.message}
+          />
+        ))}
       </div>
       {time ? (
         <span className="text-text-soft mt-2 shrink-0 self-start text-[11px] tabular-nums opacity-0 transition-opacity duration-150 group-hover:opacity-100">
@@ -307,6 +383,10 @@ function ChatCardPart({
       {view.children.map((child, index) => {
         switch (child.type) {
           case 'text':
+            if (isPoweredByWatermark(child.content)) {
+              return null;
+            }
+
             return (
               <MarkdownText key={index} className="text-paragraph-sm leading-5">
                 {child.content}
@@ -362,25 +442,39 @@ function ChatCardPart({
 function ToolChip({ tool }: { tool: ToolPart }) {
   const isRunning = tool.state === 'input-streaming' || tool.state === 'input-available';
   const isFailed = tool.state === 'output-error';
+  let statusLabel = 'Used';
+
+  if (isRunning) {
+    statusLabel = 'Running';
+  } else if (isFailed) {
+    statusLabel = 'Failed';
+  }
 
   return (
     <span
-      className={cn(
-        'text-label-xs inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium',
-        isFailed ? 'border-error-light bg-red-alpha-10 text-error-base' : 'border-stroke-soft bg-bg-weak text-text-sub'
-      )}
+      className={cn('text-label-xs inline-flex items-center gap-1', isFailed ? 'text-error-base' : 'text-text-soft')}
     >
       {isRunning ? (
-        <RiLoader4Line className="size-3 shrink-0 animate-spin" aria-hidden />
-      ) : isFailed ? (
-        <RiErrorWarningLine className="size-3 shrink-0" aria-hidden />
+        <RiLoader4Line className="size-3.5 shrink-0 animate-spin" aria-hidden />
       ) : (
-        <RiToolsLine className="size-3 shrink-0" aria-hidden />
+        <RiArrowRightSLine className="size-3.5 shrink-0" aria-hidden />
       )}
-      {isRunning ? 'Running' : isFailed ? 'Failed' : 'Used'}: <span className="font-mono">{tool.toolName}</span>
+      {statusLabel} <span className="font-mono">{tool.toolName}</span>
     </span>
   );
 }
+
+const CHAT_DECISION_CARD_CLASS =
+  'animate-in fade-in slide-in-from-bottom-2 bg-bg-weak border-stroke-weak flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-[11px] duration-200';
+
+const FEATURE_PRIMARY_BUTTON_CLASS =
+  'text-label-sm text-static-white rounded-md border border-white/12 bg-feature-base hover:brightness-95';
+
+const FEATURE_PRIMARY_BUTTON_STYLE = {
+  backgroundImage:
+    'linear-gradient(180deg, rgba(255,255,255,0.16) 20%, rgba(255,255,255,0) 100%), linear-gradient(90deg, hsl(var(--feature-base)), hsl(var(--feature-base)))',
+  boxShadow: '0 0 0 0.5px hsl(var(--feature-base))',
+} as const;
 
 type ToolApprovalCardProps = {
   id?: string;
@@ -407,51 +501,67 @@ function ToolApprovalActions({
   trustServerActionId?: string;
   source?: ApprovalPart['source'];
 }) {
+  const trustServerLabel = trustServerActionId && source?.type === 'mcp' ? source.serverName : undefined;
+  const hasTrustActions = Boolean(trustToolActionId) || Boolean(trustServerLabel);
+
   return (
-    <div className="flex shrink-0 flex-wrap gap-1.5">
-      <Button
-        type="button"
-        size="2xs"
-        variant="secondary"
-        mode="outline"
-        disabled={disabled || !onRespond}
-        onClick={() => onRespond?.('denied')}
-      >
-        Deny
-      </Button>
-      <Button
-        type="button"
-        size="2xs"
-        variant="primary"
-        disabled={disabled || !onRespond}
-        onClick={() => onRespond?.('approved')}
-      >
-        Approve once
-      </Button>
-      {trustToolActionId ? (
+    <div
+      className={cn('flex w-full flex-wrap items-center gap-2', hasTrustActions ? 'justify-between' : 'justify-end')}
+    >
+      {hasTrustActions ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {trustToolActionId ? (
+            <Button
+              type="button"
+              size="2xs"
+              variant="secondary"
+              mode="outline"
+              className="text-label-sm text-text-strong rounded-md"
+              disabled={disabled || !onRespond}
+              onClick={() => onRespond?.('trust-tool')}
+            >
+              Always allow for this tool
+            </Button>
+          ) : null}
+          {trustServerLabel ? (
+            <Button
+              type="button"
+              size="2xs"
+              variant="secondary"
+              mode="outline"
+              className="text-label-sm text-text-strong rounded-md"
+              disabled={disabled || !onRespond}
+              onClick={() => onRespond?.('trust-server')}
+            >
+              Always allow {trustServerLabel}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="flex items-center gap-2">
         <Button
           type="button"
           size="2xs"
           variant="secondary"
           mode="outline"
+          className="text-label-sm text-text-strong rounded-md"
           disabled={disabled || !onRespond}
-          onClick={() => onRespond?.('trust-tool')}
+          onClick={() => onRespond?.('denied')}
         >
-          Always allow this tool
+          Deny
         </Button>
-      ) : null}
-      {trustServerActionId && source?.type === 'mcp' ? (
         <Button
           type="button"
           size="2xs"
-          variant="secondary"
-          mode="outline"
+          variant="primary"
+          className={FEATURE_PRIMARY_BUTTON_CLASS}
+          style={FEATURE_PRIMARY_BUTTON_STYLE}
           disabled={disabled || !onRespond}
-          onClick={() => onRespond?.('trust-server')}
+          onClick={() => onRespond?.('approved')}
         >
-          Always allow {source.serverName}
+          Approve once
         </Button>
-      ) : null}
+      </div>
     </div>
   );
 }
@@ -467,51 +577,41 @@ export function ChatToolApprovalCard({
   onRespond,
   className,
 }: ToolApprovalCardProps) {
-  const isPending = state === 'pending';
+  if (state !== 'pending') {
+    const isApproved = state === 'approved';
+
+    return (
+      <span id={id} className={cn('text-label-xs inline-flex items-center gap-1', className)}>
+        <RiArrowRightSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+        <span className="text-text-soft font-mono">{toolName}</span>
+        <span className="text-text-soft" aria-hidden>
+          ·
+        </span>
+        <span className={isApproved ? 'text-text-sub' : 'text-error-base'}>{isApproved ? 'Approved' : 'Denied'}</span>
+      </span>
+    );
+  }
 
   return (
-    <div
-      id={id}
-      className={cn(
-        'animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex flex-col gap-3 rounded-xl border p-3 duration-200 sm:flex-row sm:items-center',
-        className
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="bg-warning/10 flex size-8 shrink-0 items-center justify-center rounded-full">
-          <RiShieldCheckLine className="text-warning size-4" aria-hidden />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-label-xs text-text-strong truncate font-medium">
-            Run <span className="font-mono">{toolName}</span>?
-          </p>
-          <p className="text-label-xs text-text-soft">
-            {isPending
-              ? 'The agent is waiting for your approval.'
-              : state === 'approved'
-                ? 'You approved this tool call.'
-                : 'You denied this tool call.'}
+    <div id={id} className={cn(CHAT_DECISION_CARD_CLASS, className)}>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex items-center gap-1">
+          <RiTerminalBoxLine className="text-text-strong size-5 shrink-0" aria-hidden />
+          <p className="text-label-sm text-text-strong min-w-0 flex-1 break-words font-medium tracking-[-0.084px]">
+            Run {toolName}?
           </p>
         </div>
+        <p className="text-paragraph-xs text-text-strong overflow-hidden leading-[1.7] text-ellipsis">
+          The agent is waiting for your approval.
+        </p>
       </div>
-      {isPending ? (
-        <ToolApprovalActions
-          disabled={disabled}
-          onRespond={onRespond}
-          trustToolActionId={trustToolActionId}
-          trustServerActionId={trustServerActionId}
-          source={source}
-        />
-      ) : (
-        <span
-          className={cn(
-            'text-label-xs shrink-0 font-medium',
-            state === 'approved' ? 'text-success-base' : 'text-error-base'
-          )}
-        >
-          {state === 'approved' ? 'Approved' : 'Denied'}
-        </span>
-      )}
+      <ToolApprovalActions
+        disabled={disabled}
+        onRespond={onRespond}
+        trustToolActionId={trustToolActionId}
+        trustServerActionId={trustServerActionId}
+        source={source}
+      />
     </div>
   );
 }
@@ -534,51 +634,53 @@ function ChatMcpConnectionCard({
   message?: string;
 }) {
   const safeAuthorizeUrl = toSafeExternalUrl(authorizeUrlWithAutoApprove || authorizeUrl);
-  const isPending = state === 'pending';
+
+  if (state !== 'pending') {
+    const isConnected = state === 'connected';
+
+    return (
+      <span id={id} className="text-label-xs inline-flex items-center gap-1">
+        <RiArrowRightSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+        <span className="text-text-soft">{displayName}</span>
+        <span className="text-text-soft" aria-hidden>
+          ·
+        </span>
+        <span className={isConnected ? 'text-text-sub' : 'text-error-base'}>
+          {isConnected ? 'Connected' : message || 'Failed'}
+        </span>
+      </span>
+    );
+  }
 
   return (
     <div
       id={id}
-      className="animate-in fade-in slide-in-from-bottom-2 border-stroke-soft bg-bg-white shadow-regular-xs flex flex-wrap items-center gap-3 rounded-xl border p-3 duration-200"
+      className="animate-in fade-in slide-in-from-bottom-2 bg-bg-weak border-stroke-weak flex w-full items-center gap-3 overflow-hidden rounded-lg border p-3 duration-200"
     >
-      <div className="bg-bg-weak ring-stroke-soft flex size-8 shrink-0 items-center justify-center rounded-full ring-1">
-        <McpIcon mcpId={mcpId} className="size-4" />
+      <div className="bg-bg-white ring-stroke-soft flex size-10 shrink-0 items-center justify-center rounded-full ring-1">
+        <McpIcon mcpId={mcpId} className="size-6" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-label-xs text-text-strong truncate font-medium">Connect {displayName}</p>
-        <p className="text-label-xs text-text-soft">
-          {isPending
-            ? 'The agent needs authorization to continue.'
-            : state === 'connected'
-              ? 'Connected successfully.'
-              : message || 'Connection failed.'}
+        <p className="text-label-sm text-text-strong truncate font-medium tracking-[-0.084px]">
+          Connect {displayName}?
         </p>
+        <p className="text-paragraph-xs text-text-sub leading-4">The agent needs authorization to continue.</p>
       </div>
-      {isPending ? (
-        <Button
-          type="button"
-          size="2xs"
-          variant="primary"
-          className="shrink-0"
-          trailingIcon={RiExternalLinkLine}
-          disabled={!safeAuthorizeUrl}
-          onClick={() => {
-            if (!safeAuthorizeUrl) return;
-            window.open(safeAuthorizeUrl, '_blank', 'noopener,noreferrer');
-          }}
-        >
-          Authorize
-        </Button>
-      ) : (
-        <span
-          className={cn(
-            'text-label-xs shrink-0 font-medium',
-            state === 'connected' ? 'text-success-base' : 'text-error-base'
-          )}
-        >
-          {state === 'connected' ? 'Connected' : 'Failed'}
-        </span>
-      )}
+      <Button
+        type="button"
+        size="2xs"
+        variant="primary"
+        className={cn(FEATURE_PRIMARY_BUTTON_CLASS, 'shrink-0')}
+        style={FEATURE_PRIMARY_BUTTON_STYLE}
+        trailingIcon={RiExternalLinkLine}
+        disabled={!safeAuthorizeUrl}
+        onClick={() => {
+          if (!safeAuthorizeUrl) return;
+          window.open(safeAuthorizeUrl, '_blank', 'noopener,noreferrer');
+        }}
+      >
+        Authorize
+      </Button>
     </div>
   );
 }
@@ -587,61 +689,19 @@ export function ChatTypingRow({ status }: { status?: string }) {
   // Server statuses often arrive with their own trailing ellipsis or dots.
   const label = status?.trim().replace(/[.\u2026]+$/, '');
 
-  return (
-    <output
-      className="animate-in fade-in slide-in-from-bottom-1 flex items-start gap-2.5 duration-200"
-      aria-label={label || 'Agent is typing'}
-    >
-      <AgentAvatar className="mt-0.5" />
-      <span className="border-stroke-soft bg-bg-white shadow-regular-xs flex h-9 items-center rounded-2xl rounded-tl-md border px-3.5">
-        {label ? (
-          <span className="text-label-xs text-text-soft animate-pulse">{label}…</span>
-        ) : (
-          <span className="flex items-center gap-1" aria-hidden>
-            {[0, 150, 300].map((delay) => (
-              <span
-                key={delay}
-                className="bg-text-soft size-1.5 animate-bounce rounded-full"
-                style={{ animationDelay: `${delay}ms` }}
-              />
-            ))}
-          </span>
-        )}
-      </span>
-    </output>
-  );
-}
-
-export function ChatPendingActionCard({
-  action,
-  disabled,
-  onRespond,
-}: {
-  action: AgentPendingAction;
-  disabled: boolean;
-  onRespond: ToolApprovalRespondHandler;
-}) {
-  if (action.type === 'mcp-connection') {
+  if (label) {
     return (
-      <ChatMcpConnectionCard
-        mcpId={action.mcpId}
-        displayName={action.displayName}
-        authorizeUrl={action.authorizeUrl}
-        authorizeUrlWithAutoApprove={action.authorizeUrlWithAutoApprove}
-        state="pending"
-      />
+      <output className="animate-in fade-in flex items-center gap-1 duration-200" aria-label={label}>
+        <RiArrowRightSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+        <span className="text-label-xs text-text-soft">{label}…</span>
+      </output>
     );
   }
 
   return (
-    <ChatToolApprovalCard
-      toolName={action.toolName}
-      source={action.source}
-      state="pending"
-      trustToolActionId={action.trustToolActionId}
-      trustServerActionId={action.trustServerActionId}
-      disabled={disabled}
-      onRespond={onRespond}
-    />
+    <output className="animate-in fade-in flex items-center gap-1 duration-200" aria-label="Thinking">
+      <RiArrowRightSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+      <span className="text-label-xs text-text-soft">Thinking…</span>
+    </output>
   );
 }

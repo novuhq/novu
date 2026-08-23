@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { type ReactNode, useMemo } from 'react';
 import { RiArrowRightSLine, RiCheckLine } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { AgentChatSetupGuide } from '@/components/agents/agent-chat-setup-guide';
 import { AgentChatSetupSteps } from '@/components/agents/agent-chat-setup-steps';
@@ -13,9 +13,9 @@ import {
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SetupStepperRail } from '@/components/agents/setup-guide-primitives';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentChatPreview } from '@/hooks/use-agent-chat-preview';
 import { useAgentChatPrompt } from '@/hooks/use-agent-chat-prompt';
-import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { AGENT_DETAILS_CHAT_TAB, buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { SectionLinkButton } from './agent-connected-details-shell';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
@@ -104,10 +104,9 @@ function AgentChatConnectedRecap({
   justConnected = false,
 }: AgentChatConnectedRecapProps) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const agentRoutes = useAgentRoutes();
   const { currentEnvironment } = useEnvironment();
   const prompt = useAgentChatPrompt(agent);
+  const { openPreview } = useAgentChatPreview();
 
   const isConnected = isAgentIntegrationConnected(integrationLink);
   const persistKey = `agent-chat-setup-recap:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
@@ -129,17 +128,7 @@ function AgentChatConnectedRecap({
   };
 
   const handleOpenChat = () => {
-    if (!currentEnvironment?.slug) {
-      return;
-    }
-
-    void navigate(
-      `${buildRoute(agentRoutes.detailsTab, {
-        environmentSlug: currentEnvironment.slug,
-        agentIdentifier: encodeURIComponent(agent.identifier),
-        agentTab: AGENT_DETAILS_CHAT_TAB,
-      })}${location.search}`
-    );
+    openPreview(agent.identifier);
   };
 
   return (
@@ -167,7 +156,7 @@ function AgentChatConnectedRecap({
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <SectionLinkButton icon={RiArrowRightSLine} onClick={handleOpenChat}>
-            Open Chat
+            Preview chat
           </SectionLinkButton>
           {viewActivityHref ? (
             <SectionLinkButton icon={RiArrowRightSLine} onClick={handleViewActivity}>
@@ -179,7 +168,7 @@ function AgentChatConnectedRecap({
 
       <SetupGuideCard label="Setup steps" persistKey={persistKey} defaultExpanded={false}>
         <SetupStepperRail className="gap-8 py-6 pb-3 pr-3 md:pr-6">
-          <AgentChatSetupSteps prompt={prompt} onOpenChat={handleOpenChat} />
+          <AgentChatSetupSteps prompt={prompt} agentIdentifier={agent.identifier} onOpenChat={handleOpenChat} />
         </SetupStepperRail>
       </SetupGuideCard>
     </div>

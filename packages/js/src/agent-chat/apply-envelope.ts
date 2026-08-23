@@ -35,13 +35,14 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
 
   switch (event.type) {
     case 'run-start':
-      return { ...state, isRunning: true };
+      return { ...state, isRunning: true, error: undefined };
 
     case 'run-finish':
       return finalizeOpenStreamingParts({
         ...state,
         isRunning: false,
         activeAssistantMessageId: undefined,
+        error: undefined,
       });
 
     case 'run-error':
@@ -348,8 +349,9 @@ function applyDurableMessageParts(
   const streamingIndex = findStreamingTextPartIndex(next);
 
   if ('markdown' in content) {
-    if (streamingIndex >= 0) {
-      next[streamingIndex] = { type: 'text', text: content.markdown, state: 'done' };
+    const textIndex = streamingIndex >= 0 ? streamingIndex : next.findIndex((part) => part.type === 'text');
+    if (textIndex >= 0) {
+      next[textIndex] = { type: 'text', text: content.markdown, state: 'done' };
     } else {
       next = [...next, { type: 'text', text: content.markdown, state: 'done' }];
     }

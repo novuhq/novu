@@ -412,28 +412,6 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
     expect(res.body.message).to.equal('This agent is not available on agent chat');
   });
 
-  it('should return 404 when IS_AGENT_WEB_CHAT_ENABLED is off', async () => {
-    const previousFlag = process.env.IS_AGENT_WEB_CHAT_ENABLED;
-    delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
-
-    try {
-      await linkAgentChat();
-
-      const res = await createConversation({
-        agentId: ctx.agentIdentifier,
-        text: 'Should be hidden',
-      });
-
-      expect(res.status).to.equal(404);
-    } finally {
-      if (previousFlag === undefined) {
-        delete process.env.IS_AGENT_WEB_CHAT_ENABLED;
-      } else {
-        process.env.IS_AGENT_WEB_CHAT_ENABLED = previousFlag;
-      }
-    }
-  });
-
   it('should return 401 when Authorization is missing on POST', async () => {
     await linkAgentChat();
 

@@ -62,9 +62,9 @@ function resolveProviderGuideReservedSteps(providerId: string | undefined): numb
     return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
   }
 
-  // Agent Chat: try in dashboard + embed + go live from the customer app.
+  // Agent Chat: preview in dashboard + embed from the customer app.
   if (providerId === ChatProviderIdEnum.NovuAgentChat) {
-    return 3;
+    return 2;
   }
 
   return PROVIDER_GUIDE_RESERVED_STEPS;
@@ -803,8 +803,8 @@ export function AgentSetupSteps({
             <SetupStep
               index={channelStepIndex}
               status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
-              title="Choose where your agent can talk"
-              description="Connect a channel so users can message the agent and receive replies."
+              title="Setup where your agent can talk"
+              description="Choose where users can message your agent and receive replies."
               fullWidthContent={
                 <ProviderCards
                   agentIdentifier={agent.identifier}

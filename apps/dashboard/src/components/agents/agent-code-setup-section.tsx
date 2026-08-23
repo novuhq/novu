@@ -1,4 +1,9 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  getNovuConnectInvocation,
+  getNovuConnectTargetFlags,
+} from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -18,10 +23,7 @@ import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SharedInboundAddressField } from './shared-inbound-address-field';
 
-const CLI_DEFAULT_API_URL = 'https://api.novu.co';
 const BRIDGE_POLL_INTERVAL_MS = 2000;
-
-const CLI_PACKAGE_TAG = 'latest';
 
 function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
@@ -39,47 +41,58 @@ function resolveConnectRuntime(connectorId: ConnectorId | undefined): ConnectRun
   return DEFAULT_CONNECT_RUNTIME;
 }
 
+function buildConnectScaffoldParts({
+  secretKey,
+  apiUrl,
+  connectDashboardUrl,
+  runtime,
+}: {
+  secretKey: string;
+  apiUrl: string;
+  connectDashboardUrl: string;
+  runtime: ConnectRuntimeFlag;
+}): string[] {
+  return [
+    `${getNovuConnectInvocation(apiUrl)} --runtime ${runtime}`,
+    `--secret-key ${secretKey}`,
+    ...getNovuConnectTargetFlags({
+      apiUrl,
+      connectDashboardUrl,
+    }),
+    '--channel skip',
+  ];
+}
+
 function buildConnectScaffoldCommand({
   secretKey,
   apiUrl,
+  connectDashboardUrl,
   runtime,
   masked,
 }: {
   secretKey: string;
-  apiUrl: string | null;
+  apiUrl: string;
+  connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
   masked: boolean;
 }): string {
   const key = masked ? maskSecretKey(secretKey) : secretKey;
-  const parts = [`npx novu@${CLI_PACKAGE_TAG} connect --runtime ${runtime}`, `--secret-key ${key}`];
 
-  if (apiUrl) {
-    parts.push(`--api-url ${apiUrl}`);
-  }
-
-  parts.push('--channel skip');
-
-  return parts.join(' \\\n  ');
+  return buildConnectScaffoldParts({ secretKey: key, apiUrl, connectDashboardUrl, runtime }).join(' \\\n  ');
 }
 
 function buildConnectScaffoldCopyCommand({
   secretKey,
   apiUrl,
+  connectDashboardUrl,
   runtime,
 }: {
   secretKey: string;
-  apiUrl: string | null;
+  apiUrl: string;
+  connectDashboardUrl: string;
   runtime: ConnectRuntimeFlag;
 }): string {
-  const parts = [`npx novu@${CLI_PACKAGE_TAG} connect --runtime ${runtime}`, `--secret-key ${secretKey}`];
-
-  if (apiUrl) {
-    parts.push(`--api-url ${apiUrl}`);
-  }
-
-  parts.push('--channel skip');
-
-  return parts.join(' ');
+  return buildConnectScaffoldParts({ secretKey, apiUrl, connectDashboardUrl, runtime }).join(' ');
 }
 
 function getProviderSlackMessage(agentName: string): string {
@@ -357,7 +370,7 @@ export function AgentCodeSetupSection({
   const connectRuntime = resolveConnectRuntime(connectorId);
 
   const currentApiUrl = apiHostnameManager.getHostname();
-  const apiUrl = currentApiUrl !== CLI_DEFAULT_API_URL ? currentApiUrl : null;
+  const connectDashboardUrl = window.location.origin;
 
   const bridgeConnected = useBridgeConnectionPolling(agent, onBridgeConnected);
 
@@ -398,13 +411,15 @@ export function AgentCodeSetupSection({
             <CopyableTerminalBlock
               displayCommand={buildConnectScaffoldCommand({
                 secretKey,
-                apiUrl,
+                apiUrl: currentApiUrl,
+                connectDashboardUrl,
                 runtime: connectRuntime,
                 masked: true,
               })}
               copyCommand={buildConnectScaffoldCopyCommand({
                 secretKey,
-                apiUrl,
+                apiUrl: currentApiUrl,
+                connectDashboardUrl,
                 runtime: connectRuntime,
               })}
             />

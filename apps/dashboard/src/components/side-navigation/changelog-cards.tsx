@@ -141,10 +141,16 @@ export function ChangelogStack() {
       }
     `;
 
-    const sanityPosts = await fetchSanity<SanityChangelogPost[]>(query);
+    try {
+      const sanityPosts = await fetchSanity<SanityChangelogPost[]>(query);
+      const transformedData = transformSanityData(sanityPosts ?? []);
 
-    const transformedData = transformSanityData(sanityPosts ?? []);
-    return filterChangelogs(transformedData, getDismissedChangelogs());
+      return filterChangelogs(transformedData, getDismissedChangelogs());
+    } catch (error) {
+      console.error('Failed to fetch changelogs from Sanity', error);
+
+      return [];
+    }
   };
 
   const { data: changelogs = [] } = useQuery({
@@ -152,6 +158,8 @@ export function ChangelogStack() {
     queryFn: fetchChangelogs,
     // Refetch every hour to ensure users see new changelogs
     staleTime: 60 * 60 * 1000,
+    // Non-critical marketing content — never surface Sanity outages to users
+    meta: { showError: false },
   });
 
   const handleChangelogClick = async (changelog: Changelog) => {

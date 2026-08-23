@@ -9,6 +9,8 @@ import { graders as bridgeScaffoldAiSdkGraders } from './scenarios/bridge-scaffo
 import { scenario as bridgeScaffoldAiSdkScenario } from './scenarios/bridge-scaffold-ai-sdk/scenario.js';
 import { graders as bridgeScaffoldLangchainGraders } from './scenarios/bridge-scaffold-langchain/graders.js';
 import { scenario as bridgeScaffoldLangchainScenario } from './scenarios/bridge-scaffold-langchain/scenario.js';
+import { graders as dashboardAgentChatGraders } from './scenarios/dashboard-agent-chat/graders.js';
+import { scenario as dashboardAgentChatScenario } from './scenarios/dashboard-agent-chat/scenario.js';
 import { graders as dashboardPromptLoginGraders } from './scenarios/dashboard-prompt-login/graders.js';
 import { scenario as dashboardPromptLoginScenario } from './scenarios/dashboard-prompt-login/scenario.js';
 import { graders as disciplineNoTimersGraders } from './scenarios/discipline-no-timers/graders.js';
@@ -62,6 +64,7 @@ export const agentOnboardingSuite: Suite<ConnectFlags> = {
   scenarios: [
     { scenario: keylessSlackSecureScenario, graders: keylessSlackSecureGraders },
     { scenario: keylessSendblueScenario, graders: keylessSendblueGraders },
+    { scenario: dashboardAgentChatScenario, graders: dashboardAgentChatGraders },
     { scenario: dashboardPromptLoginScenario, graders: dashboardPromptLoginGraders },
     { scenario: bridgeExistingAiSdkScenario, graders: bridgeExistingAiSdkGraders },
     { scenario: bridgeExistingLangchainScenario, graders: bridgeExistingLangchainGraders },
