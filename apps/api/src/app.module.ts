@@ -11,6 +11,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { ActivityModule } from './app/activity/activity.module';
 import { AgentsModule } from './app/agents/agents.module';
+import { HumanModule } from './app/human/human.module';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
@@ -136,6 +137,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   OrganizationModule,
   ActivityModule,
   AgentsModule,
+  HumanModule,
   ConnectModule,
   NovuContextModule,
   DomainsModule.forRoot(),
