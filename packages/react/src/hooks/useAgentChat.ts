@@ -17,7 +17,7 @@ import type {
   SendActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
@@ -194,6 +194,40 @@ function handlePublicationCallbacks(args: {
   }
 }
 
+type OwnedRuntimeEntry = {
+  key: string;
+  runtime: AgentConversationRuntime;
+};
+
+function getCreateFlowKey(agentId: string, agentHash?: string): string {
+  return `${agentId}\0${agentHash ?? ''}`;
+}
+
+function resolveOwnedRuntime(args: {
+  novu: ReturnType<typeof useNovu>;
+  agentId: string;
+  agentHash?: string;
+  ownedRuntimeRef: MutableRefObject<OwnedRuntimeEntry | null>;
+}): AgentConversationRuntime | null {
+  const key = getCreateFlowKey(args.agentId, args.agentHash);
+  const current = args.ownedRuntimeRef.current;
+
+  if (current?.key === key) {
+    return current.runtime;
+  }
+
+  current?.runtime.dispose();
+
+  const result = args.novu.agentChat.conversation({ agentId: args.agentId, agentHash: args.agentHash });
+  if (!result.ok) {
+    args.ownedRuntimeRef.current = null;
+    return null;
+  }
+
+  args.ownedRuntimeRef.current = { key, runtime: result.data };
+  return result.data;
+}
+
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const novu = useNovu();
   const propsRef = useDataRef(props);
@@ -203,7 +237,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const conversationIdProp = sharedRuntime ? undefined : props.conversationId;
   const agentHash = sharedRuntime ? undefined : props.agentHash;
 
-  const [ownedRuntime, setOwnedRuntime] = useState<AgentConversationRuntime | null>(null);
+  const ownedRuntimeRef = useRef<OwnedRuntimeEntry | null>(null);
 
   const cachedRuntime = useMemo(() => {
     if (sharedRuntime) {
@@ -223,28 +257,22 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     return result.ok ? result.data : null;
   }, [sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
 
-  useEffect(() => {
-    if (sharedRuntime || conversationIdProp) {
-      setOwnedRuntime(null);
-      return;
-    }
+  if (sharedRuntime || conversationIdProp) {
+    ownedRuntimeRef.current?.runtime.dispose();
+    ownedRuntimeRef.current = null;
+  }
 
-    const result = novu.agentChat.conversation({ agentId, agentHash });
-    if (!result.ok) {
-      setOwnedRuntime(null);
-      return;
-    }
-
-    const runtime = result.data;
-    setOwnedRuntime(runtime);
-
-    return () => {
-      runtime.dispose();
-      setOwnedRuntime(null);
-    };
-  }, [sharedRuntime, conversationIdProp, agentId, agentHash, novu]);
+  const ownedRuntime =
+    sharedRuntime || conversationIdProp ? null : resolveOwnedRuntime({ novu, agentId, agentHash, ownedRuntimeRef });
 
   const runtime = sharedRuntime ?? cachedRuntime ?? ownedRuntime;
+
+  useEffect(() => {
+    return () => {
+      ownedRuntimeRef.current?.runtime.dispose();
+      ownedRuntimeRef.current = null;
+    };
+  }, []);
 
   const loadNotifiedRef = useRef(false);
   const replayedActionsRef = useRef(false);
