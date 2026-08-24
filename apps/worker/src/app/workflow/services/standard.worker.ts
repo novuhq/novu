@@ -3,6 +3,7 @@ import {
   BullMqService,
   FeatureFlagsService,
   getStandardWorkerOptions,
+  ISqsFailureOutcome,
   IStandardDataDto,
   isWebhookFilterSsrfBlockedError,
   Job,
@@ -87,21 +88,27 @@ export class StandardWorker extends StandardWorkerService {
      *     `createSqsJobAdapter`, so `jobHasFailed` evaluates
      *     `hasReachedMaxAttempts` against the same `DEFAULT_ATTEMPTS`
      *     ceiling used for webhook-filter jobs.
-     *   - Returning `true` re-throws and SQS keeps the message, which
-     *     becomes visible again after the consumer-wide visibility
-     *     timeout (`SQS_DEFAULT_VISIBILITY_TIMEOUT`, env-tunable).
-     *   - Returning `false` acks and SQS deletes the message.
+     *   - Returning `retry: true` re-throws and SQS keeps the message.
+     *   - Returning `retry: false` acks and SQS deletes the message.
      *   - `RedrivePolicy.maxReceiveCount=3` on the standard SQS queue
      *     caps total deliveries to match the `attempts: 3` ceiling for
      *     webhook-filter jobs. Non-webhook-filter failures hit
      *     `hasToBackoff=false` and ack on the first attempt.
      *
-     * Cadence between retries is uniform (the SQS visibility timeout);
-     * tune via env if a longer baseline is needed.
+     * `retryDelayMs` restores the per-attempt cadence BullMQ gets from
+     * `settings.backoffStrategy`, which never applied on the SQS path.
      */
-    this.setSqsFailedHandler(async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> => {
-      return await this.jobHasFailed(job, error);
-    });
+    this.setSqsFailedHandler(
+      async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<ISqsFailureOutcome> => {
+        const retry = await this.jobHasFailed(job, error);
+
+        if (!retry) {
+          return { retry: false };
+        }
+
+        return { retry: true, retryDelayMs: await this.resolveSqsRetryDelay(job, error) };
+      }
+    );
 
     this.startSqsConsumer();
   }
@@ -307,18 +314,49 @@ export class StandardWorker extends StandardWorkerService {
     }
   }
 
+  /**
+   * Resolves the delay before the next attempt, and as a side effect writes the
+   * `WEBHOOK_FILTER_FAILED_RETRY` execution detail into the activity feed.
+   */
+  private async executeBackoffStrategy(attemptsMade: number, eventError: Error, eventJob: Job): Promise<number> {
+    return await this.webhookFilterBackoffStrategy.execute({
+      attemptsMade,
+      environmentId: eventJob?.data?._environmentId,
+      eventError,
+      eventJob,
+      organizationId: eventJob?.data?._organizationId,
+      userId: eventJob?.data?._userId,
+    });
+  }
+
   private getBackoffStrategies = () => {
     return async (attemptsMade: number, type: string, eventError: Error, eventJob: Job): Promise<number> => {
-      return await this.webhookFilterBackoffStrategy.execute({
-        attemptsMade,
-        environmentId: eventJob?.data?._environmentId,
-        eventError,
-        eventJob,
-        organizationId: eventJob?.data?._organizationId,
-        userId: eventJob?.data?._userId,
-      });
+      return await this.executeBackoffStrategy(attemptsMade, eventError, eventJob);
     };
   };
+
+  /**
+   * The SQS counterpart to `settings.backoffStrategy`, which BullMQ invokes
+   * between retries but which never ran on the SQS path.
+   *
+   * Only reached when `jobHasFailed` returned true, and that requires
+   * `shouldBackoff` - i.e. a retryable webhook filter error - so this matches
+   * BullMQ, where `options.backoff` is set only for webhook-filter steps.
+   */
+  private async resolveSqsRetryDelay(job: Job, error: Error): Promise<number | undefined> {
+    try {
+      return await this.executeBackoffStrategy(job.attemptsMade, error, job);
+    } catch (backoffError) {
+      Logger.error(
+        backoffError,
+        `Failed to resolve the SQS retry delay for job ${job.data?._id}, falling back to the visibility timeout`,
+        LOG_CONTEXT
+      );
+
+      // Undefined, not 0: 0 would mean "retry immediately".
+      return undefined;
+    }
+  }
 
   private async organizationExist(data: IStandardDataDto): Promise<boolean> {
     const { _organizationId } = data;
