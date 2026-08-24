@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "2.9.0",
+  "version": "2.10.0",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -13,11 +13,15 @@
     "postbuild": "npm run check:circulars",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
-    "check": "biome check .",
+    "check": "biome check . && npm run check:scripts",
+    "check:scripts": "tsc -p tsconfig.scripts.json",
     "check:fix": "biome check --write .",
     "test": "vitest",
     "watch:test": "pnpm test --watch",
-    "check:circulars": "madge --circular --extensions ts ./src"
+    "check:circulars": "madge --circular --extensions ts ./src",
+    "generate:slack-schema": "node scripts/generate-slack-override-schema.ts",
+    "generate:telegram-schema": "node scripts/generate-telegram-override-schema.ts",
+    "generate:whatsapp-schema": "node scripts/generate-whatsapp-override-schema.ts"
   },
   "author": "",
   "license": "ISC",
@@ -69,14 +73,32 @@
       "import": "./dist/esm/utils/validate-smtp-outbound-target.js",
       "types": "./dist/esm/utils/validate-smtp-outbound-target.d.ts"
     },
+    "./provider-overrides/slack": {
+      "types": "./dist/esm/consts/providers/provider-overrides/slack/index.d.ts",
+      "require": "./dist/cjs/consts/providers/provider-overrides/slack/index.js",
+      "import": "./dist/esm/consts/providers/provider-overrides/slack/index.js"
+    },
+    "./provider-overrides/telegram": {
+      "types": "./dist/esm/consts/providers/provider-overrides/telegram/index.d.ts",
+      "require": "./dist/cjs/consts/providers/provider-overrides/telegram/index.js",
+      "import": "./dist/esm/consts/providers/provider-overrides/telegram/index.js"
+    },
+    "./provider-overrides/whatsapp": {
+      "types": "./dist/esm/consts/providers/provider-overrides/whatsapp/index.d.ts",
+      "require": "./dist/cjs/consts/providers/provider-overrides/whatsapp/index.js",
+      "import": "./dist/esm/consts/providers/provider-overrides/whatsapp/index.js"
+    },
     "./docs/agent-onboarding.md": "./docs/agent-onboarding.md"
   },
   "dependencies": {
     "lru-cache": "^11.5.1"
   },
   "devDependencies": {
+    "@grammyjs/types": "4.0.0",
+    "@slack/web-api": "7.17.0",
     "madge": "^8.0.0",
     "rimraf": "^3.0.2",
+    "ts-json-schema-generator": "2.9.0",
     "typescript": "5.6.2",
     "vitest": "^4.1.0"
   },

@@ -23,10 +23,6 @@ import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { DirectionEnum } from '../shared/dtos/base-responses';
 import { SubscriptionDetailsResponseDto } from '../shared/dtos/subscription-details-response.dto';
 import {
-  GroupPreferenceFilterDto,
-  WorkflowPreferenceRequestDto,
-} from '../shared/dtos/subscriptions/create-subscriptions.dto';
-import {
   CreateSubscriptionsResponseDto,
   SubscriptionResponseDto,
 } from '../shared/dtos/subscriptions/create-subscriptions-response.dto';
@@ -37,6 +33,7 @@ import { CreateSubscriptionsCommand, CreateSubscriptionsUsecase } from '../subsc
 import { GetSubscriptionCommand } from '../subscriptions/usecases/get-subscription/get-subscription.command';
 import { GetSubscription } from '../subscriptions/usecases/get-subscription/get-subscription.usecase';
 import { UpdateSubscriptionCommand, UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subscription';
+import { convertPreferencesToGroupFilters } from '../subscriptions/utils/subscriptions';
 import { CreateTopicSubscriptionsRequestDto } from './dtos/create-topic-subscriptions.dto';
 import { CreateUpdateTopicRequestDto } from './dtos/create-update-topic.dto';
 import { DeleteTopicResponseDto } from './dtos/delete-topic-response.dto';
@@ -151,6 +148,7 @@ export class TopicsController {
         organizationId: user.organizationId,
         key: body.key,
         name: body.name,
+        data: body.data,
         failIfExists,
       })
     );
@@ -187,7 +185,7 @@ export class TopicsController {
   @SdkMethodName('update')
   @ApiOperation({
     summary: 'Update a topic',
-    description: `Update a topic name by its unique key identifier **topicKey**`,
+    description: `Update a topic name or data by its unique key identifier **topicKey**`,
   })
   @ApiParam({ name: 'topicKey', description: 'The key identifier of the topic', type: String })
   @ApiResponse(TopicResponseDto, 200)
@@ -204,6 +202,7 @@ export class TopicsController {
         userId: user._id,
         topicKey,
         name: body.name,
+        data: body.data,
       })
     );
   }
@@ -300,7 +299,7 @@ export class TopicsController {
         topicKey,
         subscriptions: this.mapSubscriptions(body.subscriptions || body.subscriberIds || []),
         name: body.name,
-        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
         context: body.context,
       })
     );
@@ -442,7 +441,7 @@ export class TopicsController {
         topicKey,
         identifier,
         name: body.name,
-        preferences: body.preferences ? this.convertPreferencesToGroupFilters(body.preferences) : undefined,
+        preferences: body.preferences ? convertPreferencesToGroupFilters(body.preferences) : undefined,
       })
     );
   }
@@ -473,36 +472,5 @@ export class TopicsController {
 
       return subscription;
     });
-  }
-
-  private convertPreferencesToGroupFilters(
-    preferences: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>
-  ): Array<GroupPreferenceFilterDto> {
-    return preferences.map((preference) => {
-      if (typeof preference === 'string') {
-        return {
-          filter: {
-            workflowIds: [preference],
-          },
-        };
-      }
-
-      if (this.isGroupPreferenceFilter(preference)) {
-        return preference;
-      }
-
-      return {
-        filter: {
-          workflowIds: [preference.workflowId],
-        },
-        condition: preference.condition,
-      };
-    });
-  }
-
-  private isGroupPreferenceFilter(
-    preference: WorkflowPreferenceRequestDto | GroupPreferenceFilterDto
-  ): preference is GroupPreferenceFilterDto {
-    return 'filter' in preference;
   }
 }

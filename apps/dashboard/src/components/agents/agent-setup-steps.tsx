@@ -58,9 +58,16 @@ const PROVIDER_GUIDE_RESERVED_STEPS = 3;
 const IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS = 4;
 
 function resolveProviderGuideReservedSteps(providerId: string | undefined): number {
-  return providerId === ChatProviderIdEnum.Sendblue
-    ? IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS
-    : PROVIDER_GUIDE_RESERVED_STEPS;
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS;
+  }
+
+  // Agent Chat: preview in dashboard + embed from the customer app.
+  if (providerId === ChatProviderIdEnum.NovuAgentChat) {
+    return 2;
+  }
+
+  return PROVIDER_GUIDE_RESERVED_STEPS;
 }
 // Self-hosted agents add three handler steps (scaffold + run + send) below the provider guide.
 const HANDLER_STEPS = 3;
@@ -455,7 +462,12 @@ export function AgentSetupSteps({
   // behind the same generic Continue step the details page uses for non-whats-next providers
   // (`ConnectionSuccessFooter` with `hasUserRolloutPhase={false}`) instead of auto-advancing the
   // moment they connect, so the guide stays visible with every step checked off.
-  const genericContinueGateProviders = useMemo(() => new Set<string>([ChatProviderIdEnum.Sendblue]), []);
+  // Agent Chat has no user-rollout phase; hold managed onboarding behind Continue until the
+  // user embeds useAgentChat and sends a first message (Connected = first inbound, like Slack).
+  const genericContinueGateProviders = useMemo(
+    () => new Set<string>([ChatProviderIdEnum.Sendblue, ChatProviderIdEnum.NovuAgentChat]),
+    []
+  );
   const useGenericContinueGate =
     isManagedRuntime && Boolean(guideProviderId && genericContinueGateProviders.has(guideProviderId));
 
@@ -791,8 +803,8 @@ export function AgentSetupSteps({
             <SetupStep
               index={channelStepIndex}
               status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
-              title="Choose where your agent can talk"
-              description="Connect a channel so users can message the agent and receive replies."
+              title="Setup where your agent can talk"
+              description="Choose where users can message your agent and receive replies."
               fullWidthContent={
                 <ProviderCards
                   agentIdentifier={agent.identifier}

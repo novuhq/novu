@@ -20,7 +20,13 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum, MessageActionStatusEnum, PreferenceLevelEnum, UserSessionData } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  ConnectionMode,
+  MessageActionStatusEnum,
+  PreferenceLevelEnum,
+  UserSessionData,
+} from '@novu/shared';
 import type { Request } from 'express';
 import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
@@ -59,6 +65,7 @@ import { IssueTelegramSubscriberLinkCommand } from '../telegram-linking/issue-te
 import { IssueTelegramSubscriberLink } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
 import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
+import { GetChannelConnectionQueryDto } from './dtos/get-channel-connection-query.dto';
 import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
 import { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
 import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
@@ -111,6 +118,10 @@ import { UpdateNotificationActionCommand } from './usecases/update-notification-
 import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
 import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import {
+  stripHiddenChannelsFromInboxPreference,
+  stripHiddenPreferenceChannels,
+} from './utils/strip-hidden-preference-channels';
 import type { InboxPreference } from './utils/types';
 
 @ApiCommonResponses()
@@ -246,6 +257,7 @@ export class InboxController {
     return {
       level: PreferenceLevelEnum.GLOBAL,
       ...globalPreference.preference,
+      channels: stripHiddenPreferenceChannels(globalPreference.preference.channels),
     };
   }
 
@@ -421,7 +433,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
-    return await this.updatePreferencesUsecase.execute(
+    const preference = await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -437,6 +449,8 @@ export class InboxController {
         includeInactiveChannels: false,
       })
     );
+
+    return stripHiddenChannelsFromInboxPreference(preference);
   }
 
   /**
@@ -449,7 +463,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: BulkUpdatePreferencesRequestDto
   ): Promise<InboxPreference[]> {
-    return await this.bulkUpdatePreferencesUsecase.execute(
+    const preferences = await this.bulkUpdatePreferencesUsecase.execute(
       BulkUpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -458,6 +472,8 @@ export class InboxController {
         preferences: body.preferences,
       })
     );
+
+    return preferences.map(stripHiddenChannelsFromInboxPreference);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -467,7 +483,7 @@ export class InboxController {
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
-    return await this.updatePreferencesUsecase.execute(
+    const preference = await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -488,6 +504,8 @@ export class InboxController {
         includeInactiveChannels: false,
       })
     );
+
+    return stripHiddenChannelsFromInboxPreference(preference);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -499,7 +517,7 @@ export class InboxController {
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string,
     @Body() body: UpdatePreferencesRequestDto
   ): Promise<InboxPreference> {
-    return await this.updatePreferencesUsecase.execute(
+    const preference = await this.updatePreferencesUsecase.execute(
       UpdatePreferencesCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -521,6 +539,8 @@ export class InboxController {
         includeInactiveChannels: false,
       })
     );
+
+    return stripHiddenChannelsFromInboxPreference(preference);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -689,6 +709,7 @@ export class InboxController {
           organizationId: subscriberSession._organizationId,
         } as UserSessionData,
         subscriberId: subscriberSession.subscriberId,
+        connectionMode: query.connectionMode,
         limit: query.limit || 10,
         after: query.after,
         before: query.before,
@@ -713,9 +734,14 @@ export class InboxController {
   @Get('/channel-connections/:identifier')
   async getChannelConnection(
     @SubscriberSession() subscriberSession: SubscriberSession,
-    @Param('identifier') identifier: string
+    @Param('identifier') identifier: string,
+    @Query() query: GetChannelConnectionQueryDto
   ): Promise<InboxChannelConnectionResponseDto> {
-    const channelConnection = await this.loadChannelConnectionForSubscriber(subscriberSession, identifier);
+    const channelConnection = await this.loadChannelConnectionForSubscriber(
+      subscriberSession,
+      identifier,
+      query.connectionMode
+    );
 
     return mapChannelConnectionToInboxDto(channelConnection);
   }
@@ -738,7 +764,11 @@ export class InboxController {
     );
   }
 
-  private async loadChannelConnectionForSubscriber(subscriberSession: SubscriberSession, identifier: string) {
+  private async loadChannelConnectionForSubscriber(
+    subscriberSession: SubscriberSession,
+    identifier: string,
+    connectionMode?: ConnectionMode
+  ) {
     try {
       return await this.getChannelConnectionUsecase.execute(
         GetChannelConnectionCommand.create({
@@ -747,6 +777,7 @@ export class InboxController {
           identifier,
           subscriberId: subscriberSession.subscriberId,
           contextKeys: subscriberSession.contextKeys,
+          connectionMode,
         })
       );
     } catch (error) {
@@ -837,7 +868,13 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
+        // A session that already carries resolved `contextKeys` is the trusted
+        // context source; the raw `body.context` is only used (and re-verified via
+        // `contextHash`) when the session has none.
         context: body.context,
+        contextKeys: subscriberSession.contextKeys,
+        contextHash: body.contextHash,
+        isContextValidated: !!subscriberSession.contextKeys?.length,
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
@@ -860,7 +897,13 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
+        // A session that already carries resolved `contextKeys` is the trusted
+        // context source; the raw `body.context` is only used (and re-verified via
+        // `contextHash`) when the session has none.
         context: body.context,
+        contextKeys: subscriberSession.contextKeys,
+        contextHash: body.contextHash,
+        isContextValidated: !!subscriberSession.contextKeys?.length,
         userScope: body.userScope,
       })
     );
@@ -871,8 +914,9 @@ export class InboxController {
   /**
    * Subscriber-JWT twin of `POST /v1/integrations/channel-endpoints/link`.
    * Returns a provider-specific URL the subscriber opens to link their chat
-   * identity. The subscriber is resolved from the session token, so the body
-   * only carries `integrationIdentifier`. Telegram returns a `t.me` deep link.
+   * identity. The subscriber is resolved from the session token. Context follows
+   * the same trust model as inbox OAuth connect/link-user. Telegram returns a
+   * `t.me` deep link.
    */
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/channel-endpoints/link')
@@ -904,6 +948,13 @@ export class InboxController {
             organizationId: subscriberSession._organizationId,
             integrationIdentifier: body.integrationIdentifier,
             subscriberId: subscriberSession.subscriberId,
+            // A session that already carries resolved `contextKeys` is the trusted
+            // context source; the raw `body.context` is only used (and re-verified via
+            // `contextHash`) when the session has none.
+            context: body.context,
+            contextKeys: subscriberSession.contextKeys,
+            contextHash: body.contextHash,
+            isContextValidated: !!subscriberSession.contextKeys?.length,
           })
         );
 

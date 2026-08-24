@@ -63,7 +63,7 @@ const inactiveContext: LocalModeContextValue = {
 
 const LocalModeContext = createContext<LocalModeContextValue>(inactiveContext);
 
-export function isLocalModePathname(pathname: string): boolean {
+function isLocalModePathname(pathname: string): boolean {
   return /^\/env\/[^/]+\/local(\/|$)/.test(pathname);
 }
 

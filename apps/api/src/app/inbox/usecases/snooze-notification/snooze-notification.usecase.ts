@@ -10,7 +10,9 @@ import {
   AnalyticsService,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeferReasonEnum,
   DetailEnum,
+  getEffectiveJobPayload,
   PinoLogger,
   StandardQueueService,
 } from '@novu/application-generic';
@@ -20,6 +22,7 @@ import {
   JobRepository,
   MessageEntity,
   MessageRepository,
+  NotificationRepository,
   OrganizationEntity,
 } from '@novu/dal';
 import {
@@ -47,6 +50,7 @@ export class SnoozeNotification {
     private readonly logger: PinoLogger,
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository,
+    private notificationRepository: NotificationRepository,
     private standardQueueService: StandardQueueService,
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
@@ -69,8 +73,17 @@ export class SnoozeNotification {
       await this.messageRepository.withTransaction(async () => {
         scheduledJob = await this.createScheduledUnsnoozeJob(notification, snoozeDurationMs);
         snoozedNotification = await this.markNotificationAsSnoozed(command);
-        await this.enqueueJob(scheduledJob, snoozeDurationMs);
       });
+
+      /*
+       * Enqueueing has to stay outside the transaction: it is an external call,
+       * and once the snooze outlives the 900s SQS delay cap - which any snooze
+       * measured in hours does - it becomes a CreateSchedule round trip to
+       * EventBridge. Inside the transaction that held the Mongo session, and its
+       * locks, open for the length of an AWS call, and an abort after the call
+       * had succeeded would leave a schedule behind with no job left to wake.
+       */
+      await this.enqueueJob(scheduledJob, snoozeDurationMs);
 
       // fire and forget
       this.createExecutionDetails
@@ -113,6 +126,7 @@ export class SnoozeNotification {
       },
       groupId: job._organizationId,
       options: { delay, attempts: this.RETRY_ATTEMPTS, backoff: { type: 'exponential', delay: 5000 } },
+      deferReason: DeferReasonEnum.SNOOZE,
     });
   }
 
@@ -189,16 +203,35 @@ export class SnoozeNotification {
       throw new InternalServerErrorException(`Job id: '${notification._jobId}' not found`);
     }
 
+    // The unsnooze job diverges from its notification (it carries the
+    // `unsnooze` flag), so under the all-or-nothing payload model it must store
+    // a complete payload copy. When the original job doesn't carry one
+    // (payload-dedup), resolve it from the parent notification first.
+    const parentNotification =
+      originalJob.payload == null
+        ? await this.notificationRepository.findOne(
+            { _id: originalJob._notificationId, _environmentId: originalJob._environmentId },
+            'payload'
+          )
+        : null;
+    const basePayload = getEffectiveJobPayload(originalJob, parentNotification) ?? {};
+
     const newJobData = {
       ...originalJob,
       transactionId: uuidv4(),
-      status: JobStatusEnum.PENDING,
+      /*
+       * DELAYED (not PENDING): this job is enqueued directly below with a
+       * delay, bypassing AddJob. RunJob's atomic claim only accepts
+       * QUEUED/DELAYED, so a PENDING unsnooze job would be unclaimable and
+       * the unsnooze delivery silently dropped.
+       */
+      status: JobStatusEnum.DELAYED,
       delay,
       createdAt: Date.now().toString(),
       _id: JobRepository.createObjectId(),
       _parentId: null,
       payload: {
-        ...originalJob.payload,
+        ...basePayload,
         unsnooze: true,
       },
     };

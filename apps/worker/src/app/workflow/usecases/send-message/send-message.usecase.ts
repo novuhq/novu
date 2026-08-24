@@ -5,6 +5,7 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  CreateStepConditionsPassedDetail,
   DetailEnum,
   GetPreferences,
   GetSubscriberTemplatePreference,
@@ -85,7 +86,8 @@ export class SendMessage {
     private environmentVariableRepository: EnvironmentVariableRepository,
     private environmentRepository: EnvironmentRepository,
     private executeBridgeJob: ExecuteBridgeJob,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail
   ) {}
 
   @InstrumentUsecase()
@@ -143,6 +145,16 @@ export class SendMessage {
             : DeliveryLifecycleDetail.USER_STEP_CONDITION,
         },
       };
+    }
+
+    // Emitted only after every skip gate (conditions, preferences, bridge skip)
+    // has passed. Channel-level skips further down (e.g. missing email or push
+    // token) are reported by their own execution details.
+    if (command.job.step.filters?.length) {
+      await this.createStepConditionsPassedDetail.execute({
+        job: command.job,
+        conditions: stepCondition.conditions,
+      });
     }
 
     let severity = command.severity;
@@ -478,7 +490,8 @@ export class SendMessage {
 
   @Instrument()
   private async getEnvironmentVariables(command: SendMessageCommand): Promise<Record<string, string>> {
-    const cacheKey = `${command.organizationId}:${command.environmentId}`;
+    const includeSecrets = shouldIncludeEnvironmentSecrets(command.job?.type);
+    const cacheKey = `${command.organizationId}:${command.environmentId}:${includeSecrets ? 'full' : 'masked'}`;
 
     return this.inMemoryLRUCacheService.get(
       InMemoryLRUCacheStore.ENVIRONMENT_VARIABLES,
@@ -490,7 +503,7 @@ export class SendMessage {
             command.environmentId
           );
 
-          return resolveEnvironmentVariables(rawEnvVars);
+          return resolveEnvironmentVariables(rawEnvVars, { includeSecrets });
         } catch (error) {
           Logger.warn(
             { err: error, organizationId: command.organizationId, environmentId: command.environmentId },
@@ -626,4 +639,13 @@ function requiresBridgeExecution(stepType: StepTypeEnum | undefined): boolean {
   if (!stepType) return false;
 
   return ![StepTypeEnum.TRIGGER, StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.HTTP_REQUEST].includes(stepType);
+}
+
+/**
+ * Secret env vars stay masked for channel message rendering (email, SMS, etc.)
+ * so plaintext never reaches subscribers or the activity UI. Only outbound
+ * server-side steps that authenticate with those secrets may resolve them.
+ */
+function shouldIncludeEnvironmentSecrets(stepType: StepTypeEnum | string | undefined): boolean {
+  return stepType === StepTypeEnum.HTTP_REQUEST || stepType === StepTypeEnum.CUSTOM;
 }

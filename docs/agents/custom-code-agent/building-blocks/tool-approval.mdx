@@ -4,9 +4,19 @@ description: "Pause an agent turn and ask the user to approve or deny a tool cal
 ---
 
 
-Some tool calls should not run without a human in the loop - issuing a refund, deleting data, sending money. Tool approval posts an **Approve / Deny** card in the conversation and pauses the turn until the user decides.
+Some tool calls should not run without user approval (refunds, deletes, payments). Tool approval posts an **Approve / Deny** card in the conversation and pauses the turn until the user decides.
 
 This page covers `ctx.toolApproval.request()`, the `onToolApproval` handler, and card customization. How you gate a tool depends on your runtime:
+
+## Channel support
+
+| Capability | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| Action / tool approval | Yes (native block) | Yes (Adaptive Card) | Yes (quick replies) | Yes | Yes (action links) |
+| MCP tool approval | Yes | Yes | Yes | Yes | Yes |
+| MCP connect card | Yes | Yes | Yes | Yes | Yes |
+
+See [Channels overview](/agents/channels/overview) for the full matrix.
 
 <Tabs>
   <Tab title="AI SDK">
@@ -23,7 +33,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),
@@ -133,7 +143,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),

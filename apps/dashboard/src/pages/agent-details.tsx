@@ -12,12 +12,18 @@ import {
   listAgentIntegrations,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentChatDrawer } from '@/components/agents/agent-chat-panel';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import {
+  getAgentChatIntegrationLink,
+  hasAgentInboundConnection,
+} from '@/components/agents/is-agent-integration-connected';
+import { ConnectSubscriberProvider } from '@/components/connect/connect-subscriber-provider';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Badge } from '@/components/primitives/badge';
@@ -35,10 +41,14 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentChatPreview } from '@/hooks/use-agent-chat-preview';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { QueryKeys } from '@/utils/query-keys';
 import {
+  AGENT_CHAT_PREVIEW_PARAM,
+  AGENT_DETAILS_CHAT_TAB,
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
   type AgentDetailsTab,
@@ -96,6 +106,7 @@ export function AgentDetailsPage() {
   const [setupModalDismissed, setSetupModalDismissed] = useState(false);
   const track = useTelemetry();
   const lastAgentDetailsTelemetryKey = useRef<string | null>(null);
+  const { isOpen: isChatPreviewOpen, setPreviewOpen } = useAgentChatPreview();
 
   const agentsListPath = buildRoute(agentRoutes.list, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -124,6 +135,8 @@ export function AgentDetailsPage() {
       showSuccessToast(`Deleted agent: ${name.length > 40 ? `${name.slice(0, 40)}…` : name}`);
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows] });
+      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] });
       navigate(agentsListPath);
     },
     onError: (err: Error) => {
@@ -150,6 +163,14 @@ export function AgentDetailsPage() {
 
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
+
+  const agentChatLink = useMemo(
+    () => getAgentChatIntegrationLink(agentIntegrationsQuery.data?.data),
+    [agentIntegrationsQuery.data?.data]
+  );
+  const agentChatIntegrationIdentifier = agentChatLink?.integration.identifier;
+  const hasAgentChat = Boolean(agentChatIntegrationIdentifier);
+  const showAddToAppCallouts = agentChatLink != null && !hasAgentInboundConnection(agentChatLink.connectedAt);
 
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
@@ -196,6 +217,23 @@ export function AgentDetailsPage() {
 
   if (!agentIdentifier) {
     return <Navigate to={agentsListPath} replace />;
+  }
+
+  if (agentTabParam === AGENT_DETAILS_CHAT_TAB && currentEnvironment?.slug) {
+    const params = new URLSearchParams(location.search);
+    params.set(AGENT_CHAT_PREVIEW_PARAM, '1');
+    const query = params.toString();
+
+    return (
+      <Navigate
+        replace
+        to={`${buildRoute(agentRoutes.detailsTab, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })}${query ? `?${query}` : ''}`}
+      />
+    );
   }
 
   if (agentTabParam && currentEnvironment?.slug && !isValidAgentDetailsTab(agentTabParam)) {
@@ -330,14 +368,36 @@ export function AgentDetailsPage() {
               </TabsList>
 
               <TabsContent value="overview" className="outline-none">
-                <AgentOverviewTab agent={agent} />
+                <ConnectSubscriberProvider>
+                  <AgentOverviewTab agent={agent} />
+                </ConnectSubscriberProvider>
               </TabsContent>
               <TabsContent value="integrations" className="outline-none">
                 {currentTab === 'integrations' ? (
-                  <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
+                  <ConnectSubscriberProvider>
+                    <AgentIntegrationsTab agent={agent} integrationIdentifier={integrationIdentifier} />
+                  </ConnectSubscriberProvider>
                 ) : null}
               </TabsContent>
             </Tabs>
+
+            {hasAgentChat ? (
+              <AgentChatDrawer
+                open={isChatPreviewOpen}
+                onOpenChange={setPreviewOpen}
+                agent={agent}
+                showAddToAppCallouts={showAddToAppCallouts}
+                addToAppHref={
+                  currentEnvironment?.slug && agentChatIntegrationIdentifier
+                    ? buildRoute(agentRoutes.integrationDetail, {
+                        environmentSlug: currentEnvironment.slug,
+                        agentIdentifier: encodeURIComponent(agent.identifier),
+                        integrationIdentifier: encodeURIComponent(agentChatIntegrationIdentifier),
+                      })
+                    : undefined
+                }
+              />
+            ) : null}
 
             <DeleteAgentDialog
               open={Boolean(agentToDelete)}

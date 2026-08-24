@@ -6,6 +6,7 @@ import {
   IProviderConfig,
   PermissionsEnum,
   slackConfig,
+  ToolProviderIdEnum,
 } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -22,8 +23,10 @@ import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
+import { ProviderDeprecationNotice } from './provider-deprecation';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
 import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
+import { ToolWebhookSettings } from './tool-webhook-settings';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
@@ -134,6 +137,7 @@ export function IntegrationSettings({
   const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
   const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
   const isTelegramProvider = provider.id === ChatProviderIdEnum.Telegram;
+  const isToolWebhookProvider = provider.id === ToolProviderIdEnum.Webhook;
   // The BotFather paste helper is an onboarding affordance — once the integration
   // already has a saved bot token, the textarea and mobile QR card are noise
   // (and the "Auto-filled from the BotFather message above…" hint becomes
@@ -199,6 +203,7 @@ export function IntegrationSettings({
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col"
       >
+        <ProviderDeprecationNotice provider={provider} replaceOnNavigate={mode === 'create'} />
         <div className="flex items-center justify-between gap-2 p-3">
           <Label className="text-sm" htmlFor="environmentId">
             Environment
@@ -297,7 +302,7 @@ export function IntegrationSettings({
             </div>
           )}
 
-        {!isDemo && providerCredentials.length > 0 && (
+        {!isDemo && (isToolWebhookProvider || providerCredentials.length > 0) && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
               <Accordion type="single" collapsible defaultValue="credentials">
@@ -334,24 +339,29 @@ export function IntegrationSettings({
                           mobileSetup={telegramMobileVariant}
                         />
                       )}
-                      <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
-                        {providerCredentials.map((credential) => (
-                          <CredentialSection
-                            key={`${credential.key}-${integration?._id || 'no-id'}`}
-                            credential={
-                              showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
-                                ? {
-                                    ...credential,
-                                    description: 'Auto-filled from the BotFather message above, or enter it manually.',
-                                  }
-                                : credential
-                            }
-                            control={control}
-                            isReadOnly={isReadOnly}
-                            integrationId={integration?._id}
-                          />
-                        ))}
-                      </div>
+                      {isToolWebhookProvider ? (
+                        <ToolWebhookSettings control={control} setValue={setValue} isReadOnly={isReadOnly} />
+                      ) : (
+                        <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
+                          {providerCredentials.map((credential) => (
+                            <CredentialSection
+                              key={`${credential.key}-${integration?._id || 'no-id'}`}
+                              credential={
+                                showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
+                                  ? {
+                                      ...credential,
+                                      description:
+                                        'Auto-filled from the BotFather message above, or enter it manually.',
+                                    }
+                                  : credential
+                              }
+                              control={control}
+                              isReadOnly={isReadOnly}
+                              integrationId={integration?._id}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </AccordionContent>
                 </AccordionItem>

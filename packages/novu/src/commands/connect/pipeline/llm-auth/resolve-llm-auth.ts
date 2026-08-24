@@ -98,6 +98,10 @@ async function resolveFromCliFlags(input: ResolveLlmAuthInput): Promise<LlmAuthC
 async function resolveInteractive(input: ResolveLlmAuthInput): Promise<LlmAuthChoice> {
   const kind = await input.ui.pickLlmAuthKind({ connectMode: input.connectMode });
 
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
+
   if (kind === 'skip') {
     return { kind: 'skip' };
   }

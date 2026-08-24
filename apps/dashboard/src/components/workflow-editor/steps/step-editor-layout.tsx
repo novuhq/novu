@@ -43,6 +43,7 @@ import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-hea
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { ContentSourceProvider } from '@/components/workflow-editor/steps/shared/provider-overrides/content-source-context';
 import { StepEditorModeToggle } from '@/components/workflow-editor/steps/shared/step-editor-mode-toggle';
 import { useStepResolverHint } from '@/components/workflow-editor/steps/shared/use-step-resolver-hint';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
@@ -61,6 +62,9 @@ import { LocalizationResourceEnum } from '@/types/translations';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
 import { cn } from '@/utils/ui';
 import { Protect } from '../../../utils/protect';
+
+/** Step types whose editor and preview share a provider-override content source. */
+const CONTENT_OVERRIDE_STEP_TYPES: StepTypeEnum[] = [StepTypeEnum.CHAT, StepTypeEnum.TOOL];
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -375,12 +379,20 @@ function StepEditorContent() {
 }
 
 export function StepEditorLayout({ workflow, step, className }: StepEditorLayoutProps) {
+  const content = (
+    <HttpRequestTestProvider>
+      <StepEditorContent />
+    </HttpRequestTestProvider>
+  );
+
   return (
     <div className={cn('h-full w-full', className)}>
       <StepEditorProvider workflow={workflow} step={step}>
-        <HttpRequestTestProvider>
-          <StepEditorContent />
-        </HttpRequestTestProvider>
+        {CONTENT_OVERRIDE_STEP_TYPES.includes(step.type) ? (
+          <ContentSourceProvider>{content}</ContentSourceProvider>
+        ) : (
+          content
+        )}
       </StepEditorProvider>
     </div>
   );

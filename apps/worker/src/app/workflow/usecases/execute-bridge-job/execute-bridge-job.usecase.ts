@@ -8,11 +8,15 @@ import {
   EnvironmentCacheData,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
+  enhanceStepsMap,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  NotificationPayloadService,
   PinoLogger,
+  stitchProviderOverridesFromDocs,
+  withStitchedProviderOverrides,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -37,8 +41,8 @@ import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IAttachmentOptions,
   ITriggerPayload,
-  isOutboundSsrfProtectionEnabled,
   JobStatusEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -50,6 +54,7 @@ export class ExecuteBridgeJob {
   constructor(
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private notificationPayloadService: NotificationPayloadService,
     private messageRepository: MessageRepository,
     private environmentRepository: EnvironmentRepository,
     private controlValuesRepository: ControlValuesRepository,
@@ -164,12 +169,21 @@ export class ExecuteBridgeJob {
     controls: Record<string, unknown>;
     stepResolverHash?: string;
   }> {
-    const controlsEntity = await this.controlValuesRepository.findOne({
-      _organizationId: command.organizationId,
-      _workflowId: workflow._id,
-      _stepId: command.job.step._id,
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-    });
+    const [controlsEntity, providerDocs] = await Promise.all([
+      this.controlValuesRepository.findOne({
+        _organizationId: command.organizationId,
+        _workflowId: workflow._id,
+        _stepId: command.job.step._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      }),
+      this.controlValuesRepository.find({
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        _workflowId: workflow._id,
+        _stepId: command.job.step._id,
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      }),
+    ]);
 
     const rawControls = controlsEntity?.controls;
     const stepResolverHash = command.job.step.template?.stepResolverHash ?? undefined;
@@ -182,8 +196,10 @@ export class ExecuteBridgeJob {
       sanitizedControls = rawControls ?? {};
     }
 
+    const providerOverrides = stitchProviderOverridesFromDocs(providerDocs);
+
     return {
-      controls: sanitizedControls,
+      controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides),
       stepResolverHash,
     };
   }
@@ -192,14 +208,69 @@ export class ExecuteBridgeJob {
     // Remove internal params
     const { __source, ...payload } = originalPayload;
 
-    return payload;
+    if (!Array.isArray(payload.attachments) || payload.attachments.length === 0) {
+      return payload;
+    }
+
+    /*
+     * Rehydrated attachment files are Node Buffers. JSON.stringify turns those into
+     * `{"type":"Buffer","data":[...]}` (~3.4x the raw size), which overflows the API
+     * bridge body limit for files larger than ~5–7 MB. Encode as base64 for the bridge
+     * wire format (same shape clients send on trigger) without mutating the original
+     * payload used later for channel delivery.
+     *
+     * Cast: IAttachmentOptions.file is typed as Buffer, but the bridge JSON body must
+     * carry a base64 string. Runtime consumers of this normalized payload expect that.
+     */
+    const attachments = payload.attachments.map((attachment) => {
+      const file: unknown = attachment?.file;
+
+      if (Buffer.isBuffer(file)) {
+        return {
+          ...attachment,
+          file: file.toString('base64'),
+        };
+      }
+
+      if (file instanceof Uint8Array) {
+        return {
+          ...attachment,
+          file: Buffer.from(file).toString('base64'),
+        };
+      }
+
+      return attachment;
+    }) as IAttachmentOptions[];
+
+    return {
+      ...payload,
+      attachments,
+    };
+  }
+
+  public async buildStepsMap(job: JobEntity, environmentId: string): Promise<Record<string, Record<string, unknown>>> {
+    const state = await this.generateStateForJob(job, environmentId);
+
+    const stepsMap = state.reduce<Record<string, Record<string, unknown>>>((acc, stepState) => {
+      if (!(stepState.stepId in acc)) {
+        acc[stepState.stepId] = stepState.outputs;
+      }
+
+      return acc;
+    }, {});
+
+    return enhanceStepsMap(stepsMap);
   }
 
   private async generateState(command: ExecuteBridgeJobCommand): Promise<State[]> {
+    return this.generateStateForJob(command.job, command.environmentId);
+  }
+
+  private async generateStateForJob(job: JobEntity, environmentId: string): Promise<State[]> {
     const previousJobs: State[] = [];
     let theJob = (await this.jobRepository.findOne({
-      _id: command.job._parentId,
-      _environmentId: command.environmentId,
+      _id: job._parentId,
+      _environmentId: environmentId,
     })) as JobEntity;
 
     if (theJob) {
@@ -210,7 +281,7 @@ export class ExecuteBridgeJob {
     while (theJob) {
       theJob = (await this.jobRepository.findOne({
         _id: theJob._parentId,
-        _environmentId: command.environmentId,
+        _environmentId: environmentId,
       })) as JobEntity;
 
       if (theJob) {
@@ -248,8 +319,7 @@ export class ExecuteBridgeJob {
       // (stateless bridgeUrl on the job, or the environment's stored bridge
       // URL). This blocks internal hosts even if a malicious URL was persisted
       // before validation landed or queued by an older API release.
-      enforceSsrfProtection:
-        isOutboundSsrfProtectionEnabled() && (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
+      enforceSsrfProtection: !!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL,
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -283,10 +353,16 @@ export class ExecuteBridgeJob {
             payload: 1,
             createdAt: 1,
             _id: 1,
+            _notificationId: 1,
+            _environmentId: 1,
             transactionId: 1,
           }
         );
-        const events = [...digestJobs, job]
+        const digestEventJobs = [...digestJobs, job];
+        // Payload-dedup: resolve payloads from the parent notifications for
+        // jobs that no longer carry one before building the bridge events.
+        await this.notificationPayloadService.hydrateEntitiesPayload(digestEventJobs);
+        const events = digestEventJobs
           .map((digestJob) => ({
             id: digestJob._id,
             time: digestJob.createdAt,

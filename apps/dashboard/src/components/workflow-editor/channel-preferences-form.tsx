@@ -1,7 +1,6 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   ChannelTypeEnum,
-  FeatureFlagsKeysEnum,
   PermissionsEnum,
   SeverityLevelEnum,
   WorkflowPreferences,
@@ -26,10 +25,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { UserPreferencesFormSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { isChannelVisibleInUi } from '@/utils/channels';
+import { isChannelVisibleInPreferencesUi } from '@/utils/channels';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { ResourceOriginEnum, StepTypeEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
@@ -69,7 +67,6 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update, isReadOnly: readOnlyProp } = props;
   const track = useTelemetry();
   const has = useHasPermission();
-  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const permissionReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const isReadOnly = readOnlyProp ?? permissionReadOnly;
 
@@ -81,9 +78,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     const allChannels = defaultPreferences?.channels;
     if (!allChannels) return null;
 
-    const allChannelsArr = Object.keys(allChannels).filter((channel) =>
-      isChannelVisibleInUi(channel, isToolChannelEnabled)
-    );
+    const allChannelsArr = Object.keys(allChannels).filter((channel) => isChannelVisibleInPreferencesUi(channel));
     const channelsInUse = allChannelsArr.filter((channel) => steps.has(channel as StepTypeEnum));
     const channelsNotInUse = allChannelsArr.filter((channel) => !steps.has(channel as StepTypeEnum));
 
@@ -91,13 +86,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
       channelsInUse,
       channelsNotInUse,
     };
-  }, [
-    isDefaultPreferences,
-    isToolChannelEnabled,
-    workflow.preferences.default,
-    workflow.preferences.user,
-    workflow.steps,
-  ]);
+  }, [isDefaultPreferences, workflow.preferences.default, workflow.preferences.user, workflow.steps]);
 
   const defaultValues = useMemo(() => {
     return {
@@ -121,13 +110,13 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { override } = useWatch(overrideForm);
 
   const updateUserPreference = (userPreferences: WorkflowPreferences | null) => {
-    update({
-      ...workflow,
+    update((current) => ({
+      ...current,
       preferences: {
-        ...workflow.preferences,
+        ...current.preferences,
         user: userPreferences,
       },
-    });
+    }));
 
     const value = userPreferences === null ? workflow.preferences.default : userPreferences;
     form.reset({
@@ -153,8 +142,10 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
 
     // If all channels are same value(all true or all false), update the "all" channel value to true/false
     // Also, update the "all" channel value to true if a single channel is enabled and it's not already enabled
-    const areAllChannelsSameValue = checkHasEveryChannelSameValue(updatedUserPreferences.channels, value, (channel) =>
-      isChannelVisibleInUi(channel, isToolChannelEnabled)
+    const areAllChannelsSameValue = checkHasEveryChannelSameValue(
+      updatedUserPreferences.channels,
+      value,
+      isChannelVisibleInPreferencesUi
     );
 
     if (areAllChannelsSameValue || (value && !updatedUserPreferences.all.enabled)) {
@@ -169,7 +160,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     const currentPreference = form.getValues('user') as WorkflowPreferences;
 
     const channelPreferences = Object.keys(currentPreference.channels)
-      .filter((channel) => isChannelVisibleInUi(channel, isToolChannelEnabled))
+      .filter((channel) => isChannelVisibleInPreferencesUi(channel))
       .reduce(
         (acc, curr) => {
           acc[curr as ChannelTypeEnum] = { enabled: value };
@@ -345,10 +336,10 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                       <Select
                         onValueChange={(value) => {
                           field.onChange(value as SeverityLevelEnum);
-                          update({
-                            ...workflow,
+                          update((current) => ({
+                            ...current,
                             severity: value as SeverityLevelEnum,
-                          });
+                          }));
                         }}
                         defaultValue={SeverityLevelEnum.NONE}
                         disabled={isReadOnly}

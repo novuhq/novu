@@ -357,10 +357,7 @@ export class EnsureProviderManagedVault {
     }
 
     const subscriberId = command.userId;
-    const existingSubscriber = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      subscriberId
-    );
+    const existingSubscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberId);
 
     if (existingSubscriber) {
       return existingSubscriber;

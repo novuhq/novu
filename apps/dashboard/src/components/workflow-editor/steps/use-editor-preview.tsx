@@ -18,6 +18,19 @@ type UseEditorPreviewProps = {
 
 const LOCAL_PREVIEW_REFRESH_INTERVAL_MS = 5 * 1000;
 
+/**
+ * The form keeps `providerOverrides` as `null` after a reset (the save API's delete-all contract),
+ * but the preview endpoint rejects a null value and falls back to an empty preview. Drop the key
+ * when there are no overrides so the request mirrors a freshly loaded step (which omits it entirely).
+ */
+function sanitizeControlValuesForPreview(controlValues: Record<string, unknown>): Record<string, unknown> {
+  const { providerOverrides, ...rest } = controlValues;
+  const hasOverrides =
+    !!providerOverrides && typeof providerOverrides === 'object' && Object.keys(providerOverrides).length > 0;
+
+  return hasOverrides ? controlValues : rest;
+}
+
 function useDebounced<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const oldValueRef = useDataRef(debouncedValue);
@@ -36,12 +49,28 @@ function useDebounced<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const extractPayloadKeys = (data: PreviewPayload | null): string[] => {
-  if (!data?.payload || typeof data.payload !== 'object') {
-    return [];
+const collectDeepKeys = (value: unknown, prefix: string, keys: string[]): void => {
+  keys.push(prefix);
+
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    for (const [key, child] of Object.entries(value)) {
+      collectDeepKeys(child, `${prefix}.${key}`, keys);
+    }
+  }
+};
+
+const extractSyncKeys = (data: PreviewPayload | null): string[] => {
+  const keys: string[] = [];
+
+  if (data?.payload && typeof data.payload === 'object') {
+    keys.push(...Object.keys(data.payload).map((key) => `payload.${key}`));
   }
 
-  return Object.keys(data.payload).sort();
+  if (data?.context && typeof data.context === 'object') {
+    collectDeepKeys(data.context, 'context', keys);
+  }
+
+  return keys.sort();
 };
 
 function areKeysEqual(keys1: string[], keys2: string[]): boolean {
@@ -50,7 +79,7 @@ function areKeysEqual(keys1: string[], keys2: string[]): boolean {
 
 export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloadSchema }: UseEditorPreviewProps) => {
   const [editorValue, setEditorValue] = useState('{}');
-  const debouncedControlValues = useDebounced(controlValues, 500);
+  const debouncedControlValues = useDebounced(sanitizeControlValuesForPreview(controlValues), 500);
   const { currentEnvironment } = useEnvironment();
   const hasInitializedRef = useRef(false);
   const lastServerKeysRef = useRef<string[]>([]);
@@ -140,7 +169,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     const serverPayloadExample = previewData?.previewPayloadExample;
     if (!serverPayloadExample) return;
 
-    const serverKeys = extractPayloadKeys(serverPayloadExample);
+    const serverKeys = extractSyncKeys(serverPayloadExample);
 
     const shouldUpdateEditor = !hasInitializedRef.current || !areKeysEqual(serverKeys, lastServerKeysRef.current);
 

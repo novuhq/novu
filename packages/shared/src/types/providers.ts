@@ -28,6 +28,7 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  ConfigurationSetName = 'configurationSetName',
   ApiKeyRequestHeader = 'apiKeyRequestHeader',
   SecretKeyRequestHeader = 'secretKeyRequestHeader',
   IdPath = 'idPath',
@@ -65,6 +66,8 @@ export enum CredentialsKeyEnum {
   Headers = 'headers',
   /** Custom webhook request body template. */
   Body = 'body',
+  /** Tool-webhook routing mode: static (integration URL) or dynamic (per-subscriber endpoints). */
+  RoutingMode = 'routingMode',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -136,6 +139,7 @@ export enum SmsProviderIdEnum {
   Sinch = 'sinch',
   ISendProSms = 'isendpro-sms',
   CmTelecom = 'cm-telecom',
+  RuachSms = 'ruach-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -155,6 +159,7 @@ export enum ChatProviderIdEnum {
   Novu = 'novu-slack',
   Telegram = 'telegram',
   Sendblue = 'sendblue',
+  NovuAgentChat = 'novu-agent-chat',
 }
 
 export enum PushProviderIdEnum {
@@ -181,6 +186,7 @@ export enum AgentRuntimeProviderIdEnum {
 export enum ToolProviderIdEnum {
   PagerDuty = 'pagerduty',
   Opsgenie = 'opsgenie',
+  Grafana = 'grafana',
   Webhook = 'tool-webhook',
 }
 

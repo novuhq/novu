@@ -11,7 +11,6 @@ Novu provides a unified integration layer that connects your workflows to these 
 ## Key features
 
 - **Multi-provider support**: Integrate any major provider like SendGrid, SES, or Mailgun.
-- **Failover mechanisms**: Automatically retry with a backup provider to ensure reliability.
 - **Activity tracking**: Track delivery status, open rates, and more in the Novu dashboard. See [Activity Tracking](/platform/integrations/email/activity-tracking).
 
 <Note>
@@ -91,7 +90,37 @@ You can control advanced email features at runtime by passing data in your trigg
 
 You can send attachments by passing an `attachments` array in the `payload` of your trigger. The attachment file can be provided as a `buffer` or a `base64` encoded string.
 
-There is a total limit of 20MB for all attachments included in an email.
+Each attachment object requires three fields:
+
+| Field  | Type                | Description                                                                                   |
+| ------ | ------------------- | --------------------------------------------------------------------------------------------- |
+| `file` | `Buffer` \| `string`| The file contents. Provide a `Buffer` or a **pure base64 string** — do not include a `data:<mime>;base64,` prefix. |
+| `name` | `string`            | The file name, including its extension (for example `report.pdf`).                            |
+| `mime` | `string`            | The MIME type of the file (for example `application/pdf`).                                    |
+
+There is a total limit of 20MB for all attachments included in an email. Attachments are excluded from the 512KB trigger payload limit — see [Payload Limits](/api-reference/payload-limits).
+
+Common MIME types you may need:
+
+| File type              | MIME type                                                                 |
+| ---------------------- | ------------------------------------------------------------------------- |
+| PDF (`.pdf`)           | `application/pdf`                                                         |
+| Word (`.docx`)         | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` |
+| Word (`.doc`)          | `application/msword`                                                      |
+| Excel (`.xlsx`)        | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`       |
+| CSV (`.csv`)           | `text/csv`                                                                |
+| Plain text (`.txt`)    | `text/plain`                                                              |
+| PNG (`.png`)           | `image/png`                                                               |
+| JPEG (`.jpg`, `.jpeg`) | `image/jpeg`                                                              |
+| ZIP (`.zip`)           | `application/zip`                                                         |
+
+<Note>
+  Attachments belong in `payload`, not `overrides`. The `overrides.email` object is only for the fields listed in [Sending email overrides](#sending-email-overrides) (`bcc`, `cc`, `from`, `replyTo`, `replaceToRecipient`, `senderName`, `text`, `to`) — passing an `attachments` array there has no effect.
+</Note>
+
+<Note>
+  If your `file` value is a base64 data URL that starts with `data:...;base64,`, strip that prefix before triggering. Novu expects the raw base64 payload only; passing the complete data URL produces invalid attachment content.
+</Note>
 
 <Tabs>
   <Tab title="Node.js">
@@ -1278,23 +1307,23 @@ Novu supports **inbound email replies** - not only sending mail through your ema
 Here are the email providers that are currently supported by Novu. Select any provider to see its detailed setup guide.
 
 <Columns cols={2}>
-  <Card title="SendGrid" href="/platform/integrations/email/sendgrid"> Learn how to use the SendGrid provider to send emails using Novu.</Card> 
-  <Card title="Amazon SES" href="/platform/integrations/email/amazon-ses"> Learn how to use the Amazon SES provider to send emails using Novu.</Card> 
+  <Card title="SendGrid" href="/platform/integrations/email/sendgrid"> Learn how to use the SendGrid provider to send emails using Novu.</Card>
+  <Card title="Amazon SES" href="/platform/integrations/email/amazon-ses"> Learn how to use the Amazon SES provider to send emails using Novu.</Card>
+  <Card title="Resend" href="/platform/integrations/email/resend"> Learn how to use the Resend provider to send emails using Novu.</Card>
   <Card title="Postmark" href="/platform/integrations/email/postmark"> Learn how to use the Postmark provider to send emails using Novu.</Card>
-  <Card title="Resend" href="/platform/integrations/email/resend"> Learn how to use the Resend provider to send emails using Novu.</Card> 
   <Card title="Brevo" href="/platform/integrations/email/brevo"> Learn how to use the Brevo provider to send emails using Novu.</Card>
-  <Card title="Mailgun" href="/platform/integrations/email/mailgun"> Learn how to use the Mailgun provider to send emails using Novu.</Card>
+  <Card title="Sinch Mailgun" href="/platform/integrations/email/mailgun"> Learn how to use Sinch Mailgun to send emails using Novu.</Card>
   <Card title="Mailjet" href="/platform/integrations/email/mailjet"> Learn how to use the Mailjet provider to send emails using Novu.</Card>
-  <Card title="Braze" href="/platform/integrations/email/braze"> Learn how to use the Braze provider to send emails using Novu.</Card> 
-  <Card title="Infobip" href="/platform/integrations/email/infobip"> Learn how to use the Infobip provider to send emails using Novu.</Card> 
+  <Card title="SparkPost" href="/platform/integrations/email/sparkpost"> Learn how to use the SparkPost provider to send emails using Novu.</Card>
+  <Card title="Mandrill" href="/platform/integrations/email/mandrill"> Learn how to use the Mandrill provider to send emails using Novu.</Card>
+  <Card title="Outlook 365" href="/platform/integrations/email/outlook365"> Learn how to use the Outlook 365 provider to send emails using Novu.</Card>
+  <Card title="Infobip" href="/platform/integrations/email/infobip"> Learn how to use the Infobip provider to send emails using Novu.</Card>
+  <Card title="Braze" href="/platform/integrations/email/braze"> Learn how to use the Braze provider to send emails using Novu.</Card>
   <Card title="MailerSend" href="/platform/integrations/email/mailersend"> Learn how to use the MailerSend provider to send emails using Novu.</Card>
   <Card title="Mailtrap" href="/platform/integrations/email/mailtrap"> Learn how to use the Mailtrap provider to send emails using Novu.</Card>
-  <Card title="Mandrill" href="/platform/integrations/email/mandrill"> Learn how to use the Mandrill provider to send emails using Novu.</Card> 
-  <Card title="Maqsam" href="/platform/integrations/email/maqsam"> Learn how to use the Maqsam provider to send emails using Novu.</Card> 
   <Card title="Netcore" href="/platform/integrations/email/netcore"> Learn how to use the Netcore provider to send emails using Novu.</Card>
-  <Card title="Outlook 365" href="/platform/integrations/email/outlook365"> Learn how to use the Outlook 365 provider to send emails using Novu.</Card>
   <Card title="Plunk" href="/platform/integrations/email/plunk"> Learn how to use the Plunk provider to send emails using Novu.</Card>
-  <Card title="Sparkpost" href="/platform/integrations/email/sparkpost"> Learn how to use the Sparkpost provider to send emails using Novu.</Card>
+  <Card title="Anypost" href="/platform/integrations/email/anypost"> Learn how to use the Anypost provider to send emails using Novu.</Card>
   <Card title="Email Webhook" href="/platform/integrations/email/webhook"> Learn how to use the Email Webhook provider to send emails using Novu.</Card>
   <Card title="Custom SMTP" href="/platform/integrations/email/custom-smtp"> Learn how to use a Custom SMTP provider to send emails using Novu.</Card>
 </Columns>

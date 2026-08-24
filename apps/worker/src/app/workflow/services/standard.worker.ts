@@ -4,12 +4,14 @@ import {
   FeatureFlagsService,
   getStandardWorkerOptions,
   IStandardDataDto,
+  isWebhookFilterSsrfBlockedError,
   Job,
   PinoLogger,
   SqsService,
   StandardWorkerService,
   Store,
   storage,
+  UnrecoverableError,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
@@ -49,11 +51,27 @@ export class StandardWorker extends StandardWorkerService {
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions(), true);
 
+    /*
+     * Shadow copies created during the SQS migration (shadow/live modes) carry
+     * `skipProcessing` and must not touch the job status in the DB: the BullMQ
+     * `completed` event fires even when the processor skipped the job, and
+     * without this guard the shadow would flip a job to COMPLETED while the
+     * real execution on the other backend is still running (or has failed and
+     * is awaiting a retry).
+     */
     this.bullMqWorker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
+      if (job?.data?.skipProcessing) {
+        return;
+      }
+
       await this.jobHasFailed(job, error);
     });
 
     this.bullMqWorker.on('completed', async (job: Job<IStandardDataDto, void, string>): Promise<void> => {
+      if (job?.data?.skipProcessing) {
+        return;
+      }
+
       await this.jobHasCompleted(job);
     });
 
@@ -186,6 +204,10 @@ export class StandardWorker extends StandardWorkerService {
                     `Failed to run the job ${minimalJobData.jobId} during worker processing`,
                     LOG_CONTEXT
                   );
+
+                  if (isWebhookFilterSsrfBlockedError(error)) {
+                    return reject(new UnrecoverableError((error as Error).message));
+                  }
 
                   return reject(error);
                 })

@@ -73,7 +73,9 @@ export class UpdateSubscriptionUsecase {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found`);
     }
 
-    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId);
+    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId, {
+      skipContextFilterWhenUndefined: !command._subscriberId,
+    });
 
     const subscription = await this.topicSubscribersRepository.findOne({
       identifier: command.identifier,
@@ -132,7 +134,7 @@ export class UpdateSubscriptionUsecase {
       command.environmentId,
       command.organizationId,
       workflows,
-      command.contextKeys
+      subscription.contextKeys
     );
 
     return this.mapSubscriptionToDto(updatedSubscription, subscriber, topic, preferences);
@@ -143,7 +145,7 @@ export class UpdateSubscriptionUsecase {
     subscription: TopicSubscribersEntity,
     workflows: NotificationTemplateEntity[]
   ): Promise<void> {
-    const contextQuery = await this.buildContextQuery(command.contextKeys, command.organizationId);
+    const contextQuery = await this.buildContextQuery(subscription.contextKeys, command.organizationId);
 
     await this.preferencesRepository.delete({
       _environmentId: command.environmentId,
@@ -384,6 +386,7 @@ export class UpdateSubscriptionUsecase {
         _id: topic._id,
         key: topic.key,
         name: topic.name,
+        data: topic.data,
       },
       subscriber: subscriber
         ? {
@@ -404,8 +407,17 @@ export class UpdateSubscriptionUsecase {
     };
   }
 
-  private async buildContextQuery(contextKeys?: string[], organizationId?: string): Promise<Record<string, unknown>> {
+  private async buildContextQuery(
+    contextKeys?: string[],
+    organizationId?: string,
+    options?: { skipContextFilterWhenUndefined?: boolean }
+  ): Promise<Record<string, unknown>> {
     if (!organizationId) {
+      return {};
+    }
+
+    // Admin API: contextKeys undefined → no context filtering (identifier is sufficient)
+    if (contextKeys === undefined && options?.skipContextFilterWhenUndefined) {
       return {};
     }
 

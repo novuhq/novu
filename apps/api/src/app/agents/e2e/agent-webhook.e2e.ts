@@ -1,15 +1,20 @@
 import {
   AgentRepository,
+  ChannelConnectionRepository,
   ChannelEndpointRepository,
+  ContextRepository,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
+  MessageRepository,
+  NotificationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
+import { Types } from 'mongoose';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
@@ -384,6 +389,82 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(call.platformContext.threadId).to.equal(threadId);
       expect(call.platformContext.channelId).to.equal('C_TEST');
       expect(call.platformContext.isDM).to.equal(false);
+      expect(call.workflowOrigin, 'no origin seeded on first touch').to.equal(null);
+    });
+
+    it('forwards a re-derived workflow origin on later turns via workflowOrigin', async () => {
+      const subscriberRepository = new SubscriberRepository();
+      const messageRepository = new MessageRepository();
+      const notificationRepository = new NotificationRepository();
+      const subscriber = await subscriberRepository.create({
+        subscriberId: `sub-origin-${Date.now()}`,
+        firstName: 'Origin',
+        lastName: 'Test',
+        email: 'origin@test.com',
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      await seedChannelEndpoint(ctx, 'U_ORIGIN', subscriber.subscriberId);
+
+      const threadId = `T_ORIGIN_${Date.now()}`;
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'first' }));
+      await waitForBridgeCallCount(1);
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
+        threadId
+      );
+      expect(conversation).to.exist;
+
+      const notification = await notificationRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        _subscriberId: subscriber._id,
+        _templateId: new Types.ObjectId().toString(),
+        transactionId: `txn-origin-${Date.now()}`,
+        channels: [ChannelTypeEnum.CHAT],
+        payload: { orderId: 'ORD-42' },
+        to: { subscriberId: subscriber.subscriberId },
+      });
+
+      await messageRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        _subscriberId: subscriber._id,
+        _agentId: ctx.agentId,
+        _notificationId: notification._id,
+        _templateId: notification._templateId,
+        content: 'Your order ORD-42 shipped',
+        templateIdentifier: 'order-shipped',
+        identifier: `C_TEST:1777837477.371619`,
+        channel: ChannelTypeEnum.CHAT,
+        transactionId: notification.transactionId,
+      });
+
+      await conversationRepository.update(
+        {
+          _id: conversation!._id,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
+        { $set: { _notificationId: notification._id } }
+      );
+
+      bridgeCalls = [];
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'where is my order?' }));
+      await waitForBridgeCallCount(1);
+
+      expect(bridgeCalls[0].workflowOrigin?.data).to.deep.include({
+        workflowIdentifier: 'order-shipped',
+        notificationId: notification._id,
+        payload: { orderId: 'ORD-42' },
+        body: 'Your order ORD-42 shipped',
+      });
+      expect(bridgeCalls[0].workflowOrigin?.source).to.equal('existing');
     });
 
     it('Passes null subscriber in the bridge payload for first-time Slack senders on open custom-code', async () => {
@@ -392,6 +473,63 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(bridgeCalls.length).to.equal(1);
       expect(bridgeCalls[0].subscriber, 'custom-code open must Pass null, not auto-provision').to.equal(null);
+    });
+  });
+
+  describe('Context bridge URL override', () => {
+    const channelConnectionRepository = new ChannelConnectionRepository();
+    const contextRepository = new ContextRepository();
+
+    async function setWorkspaceContextKeys(contextKeys: string[]) {
+      await channelConnectionRepository.update(
+        {
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+          integrationIdentifier: ctx.integrationIdentifier,
+          'workspace.id': 'W_TEAM',
+        },
+        { $set: { contextKeys } }
+      );
+    }
+
+    async function createContext(type: string, id: string, bridgeUrl?: string) {
+      await contextRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        type,
+        id,
+        key: `${type}:${id}`,
+        data: {},
+        ...(bridgeUrl ? { bridgeUrl } : {}),
+      });
+    }
+
+    it('routes the bridge call to a resolved context bridgeUrl override', async () => {
+      const overrideUrl = 'https://tenant-acme.example.com/api/novu';
+      await createContext('tenant', 'wh-override-acme', overrideUrl);
+      await setWorkspaceContextKeys(['tenant:wh-override-acme']);
+
+      const threadId = `T_CTX_OVERRIDE_${Date.now()}`;
+      const msg = { ...mockMessage({ userId: 'U_CTX', text: 'route me' }), raw: { team_id: 'W_TEAM' } };
+
+      await invokeInbound(threadId, msg as any);
+
+      expect(bridgeCalls.length).to.equal(1);
+      expect(bridgeCalls[0].bridgeUrlOverride).to.equal(overrideUrl);
+      expect(bridgeCalls[0].context).to.have.property('tenant');
+    });
+
+    it('leaves bridgeUrlOverride undefined when the resolved context has no bridgeUrl', async () => {
+      await createContext('tenant', 'wh-plain-acme');
+      await setWorkspaceContextKeys(['tenant:wh-plain-acme']);
+
+      const threadId = `T_CTX_PLAIN_${Date.now()}`;
+      const msg = { ...mockMessage({ userId: 'U_CTX2', text: 'no override' }), raw: { team_id: 'W_TEAM' } };
+
+      await invokeInbound(threadId, msg as any);
+
+      expect(bridgeCalls.length).to.equal(1);
+      expect(bridgeCalls[0].bridgeUrlOverride).to.equal(undefined);
     });
   });
 

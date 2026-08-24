@@ -1,0 +1,1403 @@
+{
+  "meta": {
+    "upstreamFile": "business-messaging-api_v23.0.yaml",
+    "upstreamCommit": "5f30dc1c6b482e67149ae6de0b27f19285d12839",
+    "apiVersion": "v23.0",
+    "generatedAt": "2026-07-27T20:08:17.404Z"
+  },
+  "schemas": {
+    "ActionObject": {
+      "type": "object",
+      "description": "Action you want the user to perform after reading the message. Its structure varies by interactive message type.",
+      "oneOf": [
+        {
+          "required": ["button", "sections"],
+          "properties": {
+            "button": {
+              "type": "string",
+              "description": "Button content for List Messages. Cannot be empty, must be unique. Emojis supported, no markdown.",
+              "maxLength": 20
+            },
+            "sections": {
+              "type": "array",
+              "description": "Array of section objects.",
+              "minItems": 1,
+              "maxItems": 10,
+              "items": {
+                "$ref": "#/components/schemas/SectionObject"
+              }
+            }
+          }
+        },
+        {
+          "required": ["buttons"],
+          "properties": {
+            "buttons": {
+              "type": "array",
+              "description": "Array of button objects.",
+              "minItems": 1,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "required": ["type", "reply"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Only supported type is \"reply\" for Reply Button.",
+                    "enum": ["reply"]
+                  },
+                  "reply": {
+                    "type": "object",
+                    "required": ["id", "title"],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique identifier for your button. No leading/trailing spaces.",
+                        "maxLength": 256
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "Button title. Cannot be empty, must be unique. Emojis supported, no markdown.",
+                        "maxLength": 20
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "required": ["catalog_id"],
+          "properties": {
+            "catalog_id": {
+              "type": "string",
+              "description": "Unique identifier of the Facebook catalog linked to your WhatsApp Business Account."
+            },
+            "product_retailer_id": {
+              "type": "string",
+              "description": "Unique identifier of the product in a catalog. Required for Single Product Messages."
+            },
+            "sections": {
+              "type": "array",
+              "description": "Array of section objects.",
+              "minItems": 1,
+              "maxItems": 10,
+              "items": {
+                "$ref": "#/components/schemas/SectionObject"
+              }
+            }
+          }
+        },
+        {
+          "required": ["name", "parameters"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": ["catalog_message"]
+            },
+            "parameters": {
+              "type": "object",
+              "required": ["thumbnail_product_retailer_id"],
+              "properties": {
+                "thumbnail_product_retailer_id": {
+                  "type": "string",
+                  "description": "Product retailer ID for the thumbnail."
+                }
+              }
+            }
+          }
+        },
+        {
+          "required": ["name", "parameters"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": ["flow"]
+            },
+            "parameters": {
+              "type": "object",
+              "required": ["flow_message_version", "flow_cta"],
+              "oneOf": [
+                {
+                  "required": ["flow_id"]
+                },
+                {
+                  "required": ["flow_name"]
+                }
+              ],
+              "properties": {
+                "flow_message_version": {
+                  "type": "string",
+                  "description": "Must be \"3\".",
+                  "enum": ["3"]
+                },
+                "flow_id": {
+                  "type": "string",
+                  "description": "Unique identifier of the Flow provided by WhatsApp. Required unless flow_name is set. Cannot be used with flow_name."
+                },
+                "flow_name": {
+                  "type": "string",
+                  "description": "The name of the Flow that you created. Required unless flow_id is set. Cannot be used with flow_id."
+                },
+                "flow_cta": {
+                  "type": "string",
+                  "description": "Text on the CTA button (e.g., \"Signup\"). Advised 30 characters or less, no emoji.",
+                  "maxLength": 30
+                },
+                "mode": {
+                  "type": "string",
+                  "description": "The current mode of the Flow, either \"draft\" or \"published\".",
+                  "enum": ["draft", "published"],
+                  "default": "published"
+                },
+                "flow_token": {
+                  "type": "string",
+                  "description": "A token generated by the business to serve as an identifier. Defaults to \"unused\"."
+                },
+                "flow_action": {
+                  "type": "string",
+                  "description": "Either \"navigate\" to predefine the first screen, or \"data_exchange\" for advanced use cases.",
+                  "enum": ["navigate", "data_exchange"],
+                  "default": "navigate"
+                },
+                "flow_action_payload": {
+                  "type": "object",
+                  "description": "Optional only if 'flow_action' is 'navigate'.",
+                  "properties": {
+                    "screen": {
+                      "type": "string",
+                      "description": "The 'id' of the first screen of the Flow.",
+                      "default": "FIRST_ENTRY_SCREEN"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "The input data for the first screen of the Flow. Must be a non-empty object."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "required": ["name"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": ["call_permission_request"]
+            }
+          }
+        }
+      ]
+    },
+    "AddressObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "city": {
+          "type": "string",
+          "description": "City name",
+          "example": "Menlo Park"
+        },
+        "country": {
+          "type": "string",
+          "description": "Full country name",
+          "example": "United States"
+        },
+        "country_code": {
+          "type": "string",
+          "description": "Two-letter ISO country code",
+          "example": "us"
+        },
+        "state": {
+          "type": "string",
+          "description": "State abbreviation",
+          "example": "CA"
+        },
+        "street": {
+          "type": "string",
+          "description": "Street address",
+          "example": "1 Hacker Way"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["HOME", "WORK"],
+          "description": "Address type"
+        },
+        "zip": {
+          "type": "string",
+          "description": "ZIP code",
+          "example": "94025"
+        }
+      }
+    },
+    "AudioMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["audio"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["audio"]
+            },
+            "audio": {
+              "$ref": "#/components/schemas/MediaObject"
+            }
+          }
+        }
+      ]
+    },
+    "BaseMessageProperties": {
+      "type": "object",
+      "description": "Common properties shared by all message types",
+      "required": ["messaging_product", "recipient_type", "to", "type"],
+      "properties": {
+        "messaging_product": {
+          "type": "string",
+          "example": "whatsapp"
+        },
+        "recipient_type": {
+          "type": "string",
+          "enum": ["individual", "group"],
+          "description": "The type of recipient.",
+          "example": "individual"
+        },
+        "to": {
+          "type": "string",
+          "description": "The recipient's phone number for individual messages, and group-id for group message.",
+          "example": "19505550005"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of message"
+        },
+        "context": {
+          "$ref": "#/components/schemas/MessageContext"
+        }
+      }
+    },
+    "BodyComponent": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/TemplateComponent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": ["body"]
+            },
+            "parameters": {
+              "type": "array",
+              "description": "Parameters for the body component, which can be `text`, `currency`, or `date_time`. [17]",
+              "items": {
+                "$ref": "#/components/schemas/ParameterObject"
+              },
+              "example": [
+                {
+                  "type": "text",
+                  "text": "Hi John, your total is"
+                },
+                {
+                  "type": "currency",
+                  "currency": {
+                    "fallback_value": "$100.00 USD",
+                    "code": "USD",
+                    "amount_1000": 100000
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "BodyObject": {
+      "type": "object",
+      "description": "An object with the body of the message. Optional for 'product' type, required for other interactive message types.",
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The content of the message body. Emojis and markdown are supported.",
+          "maxLength": 1024
+        }
+      }
+    },
+    "ButtonComponent": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/TemplateComponent"
+        },
+        {
+          "type": "object",
+          "required": ["sub_type", "index", "parameters"],
+          "properties": {
+            "type": {
+              "enum": ["button"]
+            },
+            "sub_type": {
+              "type": "string",
+              "enum": ["quick_reply", "url", "catalog"]
+            },
+            "index": {
+              "type": "string",
+              "pattern": "^[2-6, 11-14]$"
+            },
+            "parameters": {
+              "type": "array",
+              "description": "Parameters for the button component, which are `payload` for quick reply or `text` for URL buttons.",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/components/schemas/ButtonParameterObject"
+              },
+              "example": [
+                {
+                  "type": "payload",
+                  "payload": "VIEW_DETAILS_BUTTON_CLICK"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "ButtonParameterObject": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Indicates the type of parameter for the button.",
+          "enum": ["payload", "text"]
+        }
+      },
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "payload": "#/components/schemas/ButtonPayloadParameter",
+          "text": "#/components/schemas/ButtonTextParameter"
+        }
+      }
+    },
+    "ButtonPayloadParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ButtonParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["payload"],
+          "properties": {
+            "type": {
+              "enum": ["payload"]
+            },
+            "payload": {
+              "type": "string",
+              "description": "Developer-defined payload that is returned when the quick reply button is clicked.",
+              "example": "USER_CLICKED_OPTION_A"
+            }
+          }
+        }
+      ]
+    },
+    "ButtonTextParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ButtonParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["text"],
+          "properties": {
+            "type": {
+              "enum": ["text"]
+            },
+            "text": {
+              "type": "string",
+              "description": "Developer-provided suffix that is appended to the predefined prefix URL in the template.",
+              "example": "product-details-123"
+            }
+          }
+        }
+      ]
+    },
+    "ContactObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AddressObject"
+          },
+          "description": "Full contact address(es)"
+        },
+        "birthday": {
+          "type": "string",
+          "format": "date",
+          "description": "Date of birth (YYYY-MM-DD format)",
+          "example": "2012-08-18"
+        },
+        "emails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/EmailObject"
+          },
+          "description": "Contact email address(es)"
+        },
+        "name": {
+          "$ref": "#/components/schemas/NameObject",
+          "description": "Contact name object"
+        },
+        "org": {
+          "$ref": "#/components/schemas/OrganizationObject",
+          "description": "Contact organization information"
+        },
+        "phones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/PhoneObject"
+          },
+          "description": "Contact phone number(s)"
+        },
+        "urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/UrlObject"
+          },
+          "description": "Contact URL(s)"
+        }
+      }
+    },
+    "ContactsMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["contacts"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["contacts"]
+            },
+            "contacts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ContactObject"
+              },
+              "minItems": 1,
+              "maxItems": 5
+            }
+          }
+        }
+      ]
+    },
+    "CurrencyObject": {
+      "type": "object",
+      "required": ["fallback_value", "code", "amount_1000"],
+      "properties": {
+        "fallback_value": {
+          "type": "string",
+          "description": "Default text if localization fails.",
+          "example": "USD $100.00"
+        },
+        "code": {
+          "type": "string",
+          "description": "Currency code as defined in ISO 4217.",
+          "example": "USD"
+        },
+        "amount_1000": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Amount multiplied by 1000 (e.g., 100000 for $100.00).",
+          "example": 100000
+        }
+      }
+    },
+    "CurrencyParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["currency"],
+          "properties": {
+            "type": {
+              "enum": ["currency"]
+            },
+            "currency": {
+              "$ref": "#/components/schemas/CurrencyObject"
+            }
+          }
+        }
+      ]
+    },
+    "DateTimeObject": {
+      "type": "object",
+      "required": ["fallback_value"],
+      "properties": {
+        "fallback_value": {
+          "type": "string",
+          "description": "Default text. For Cloud API, this fallback value is always used.",
+          "example": "December 25, 2024"
+        }
+      }
+    },
+    "DateTimeParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["date_time"],
+          "properties": {
+            "type": {
+              "enum": ["date_time"]
+            },
+            "date_time": {
+              "$ref": "#/components/schemas/DateTimeObject"
+            }
+          }
+        }
+      ]
+    },
+    "DocumentMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["document"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["document"]
+            },
+            "document": {
+              "$ref": "#/components/schemas/MediaObject"
+            }
+          }
+        }
+      ]
+    },
+    "DocumentParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["document"],
+          "properties": {
+            "type": {
+              "enum": ["document"]
+            },
+            "document": {
+              "$ref": "#/components/schemas/MediaObject",
+              "description": "Only PDF documents are supported for media-based message templates. Captions not supported."
+            }
+          }
+        }
+      ]
+    },
+    "EmailObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["email"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address",
+          "example": "test@fb.com"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["HOME", "WORK"],
+          "description": "Email type"
+        }
+      }
+    },
+    "FooterObject": {
+      "type": "object",
+      "description": "An object with the footer of the message. Optional.",
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "The footer content. Emojis, markdown, and links are supported.",
+          "maxLength": 60
+        }
+      }
+    },
+    "HeaderComponent": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/TemplateComponent"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": ["header"]
+            },
+            "parameters": {
+              "type": "array",
+              "description": "Parameters for the header component, which can be `image`, `video`, `document`, or `text`. [15, 16]",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/components/schemas/ParameterObject"
+              },
+              "example": [
+                {
+                  "type": "image",
+                  "image": {
+                    "link": "http(s)://example.com/header_image.jpg"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "HeaderObject": {
+      "type": "object",
+      "description": "Header content displayed on top of a message. Required for 'product_list' type. Cannot be set for 'product' type.",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The header type.",
+          "enum": ["text", "video", "image", "document"]
+        },
+        "text": {
+          "type": "string",
+          "description": "Text for the header. Required if 'type' is 'text'. Emojis supported, no markdown.",
+          "maxLength": 60
+        },
+        "sub_text": {
+          "type": "string",
+          "description": "Optional sub-text for the header. Emojis supported, no markdown.",
+          "maxLength": 60
+        },
+        "document": {
+          "$ref": "#/components/schemas/MediaObject",
+          "description": "Contains the media object for this document. Required if 'type' is 'document'."
+        },
+        "image": {
+          "$ref": "#/components/schemas/MediaObject",
+          "description": "Contains the media object for this image. Required if 'type' is 'image'."
+        },
+        "video": {
+          "$ref": "#/components/schemas/MediaObject",
+          "description": "Contains the media object for this video. Required if 'type' is 'video'."
+        }
+      }
+    },
+    "ImageMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["image"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["image"]
+            },
+            "image": {
+              "$ref": "#/components/schemas/MediaObject"
+            }
+          }
+        }
+      ]
+    },
+    "ImageParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["image"],
+          "properties": {
+            "type": {
+              "enum": ["image"]
+            },
+            "image": {
+              "$ref": "#/components/schemas/MediaObject",
+              "description": "A media object of type image. Captions not supported. [15]"
+            }
+          }
+        }
+      ]
+    },
+    "InteractiveMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["interactive"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["interactive"]
+            },
+            "interactive": {
+              "$ref": "#/components/schemas/InteractiveObject"
+            }
+          }
+        }
+      ]
+    },
+    "InteractiveObject": {
+      "type": "object",
+      "description": "An object containing the content for an interactive message.",
+      "required": ["type", "action"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of interactive message to send.",
+          "enum": ["button", "call_permission_request", "catalog_message", "list", "product", "product_list", "flow"]
+        },
+        "header": {
+          "$ref": "#/components/schemas/HeaderObject"
+        },
+        "body": {
+          "$ref": "#/components/schemas/BodyObject"
+        },
+        "footer": {
+          "$ref": "#/components/schemas/FooterObject"
+        },
+        "action": {
+          "$ref": "#/components/schemas/ActionObject"
+        }
+      }
+    },
+    "LanguageObject": {
+      "type": "object",
+      "required": ["policy", "code"],
+      "properties": {
+        "policy": {
+          "type": "string",
+          "description": "The language policy the message should follow.",
+          "enum": ["deterministic"],
+          "example": "deterministic"
+        },
+        "code": {
+          "type": "string",
+          "description": "The code of the language or locale to use (e.g., `\"en\"`, `\"en_US\"`).",
+          "example": "en_US"
+        }
+      }
+    },
+    "LocationMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["location"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["location"]
+            },
+            "location": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "address": {
+                  "type": "string",
+                  "description": "The address of the location.",
+                  "example": "1 Hacker Way, Menlo Park, CA 94025"
+                },
+                "latitude": {
+                  "type": "string",
+                  "description": "The latitude of the location.",
+                  "example": 37.4847
+                },
+                "longitude": {
+                  "type": "string",
+                  "description": "The longitude of the location.",
+                  "example": -122.1486
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The name of the location.",
+                  "example": "Meta HQ"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "MediaObject": {
+      "type": "object",
+      "description": "A media object. Either `id` or `link` is required.",
+      "oneOf": [
+        {
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The media object ID. **Required when `link` is not used.**",
+              "example": "MEDIA_OBJECT_ID"
+            }
+          }
+        },
+        {
+          "required": ["link"],
+          "properties": {
+            "link": {
+              "type": "string",
+              "format": "url",
+              "description": "The protocol and URL of the media to be sent (HTTP/HTTPS only).",
+              "example": "http(s)://example.com/media.mp4"
+            }
+          }
+        }
+      ]
+    },
+    "Message": {
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "text": "#/components/schemas/TextMessage",
+          "audio": "#/components/schemas/AudioMessage",
+          "document": "#/components/schemas/DocumentMessage",
+          "image": "#/components/schemas/ImageMessage",
+          "location": "#/components/schemas/LocationMessage",
+          "video": "#/components/schemas/VideoMessage",
+          "sticker": "#/components/schemas/StickerMessage",
+          "reaction": "#/components/schemas/ReactionMessage",
+          "interactive": "#/components/schemas/InteractiveMessage",
+          "template": "#/components/schemas/TemplateMessage",
+          "contacts": "#/components/schemas/ContactsMessage"
+        }
+      },
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/TextMessage"
+        },
+        {
+          "$ref": "#/components/schemas/AudioMessage"
+        },
+        {
+          "$ref": "#/components/schemas/DocumentMessage"
+        },
+        {
+          "$ref": "#/components/schemas/ImageMessage"
+        },
+        {
+          "$ref": "#/components/schemas/LocationMessage"
+        },
+        {
+          "$ref": "#/components/schemas/VideoMessage"
+        },
+        {
+          "$ref": "#/components/schemas/StickerMessage"
+        },
+        {
+          "$ref": "#/components/schemas/ReactionMessage"
+        },
+        {
+          "$ref": "#/components/schemas/InteractiveMessage"
+        },
+        {
+          "$ref": "#/components/schemas/TemplateMessage"
+        },
+        {
+          "$ref": "#/components/schemas/ContactsMessage"
+        }
+      ]
+    },
+    "MessageContext": {
+      "type": "object",
+      "description": "Context information for replying to a message",
+      "properties": {
+        "message_id": {
+          "type": "string",
+          "description": "The ID of the message to which this message is a reply.",
+          "example": "wamid.gBGGSFcCNEOPAgkO_KJ55r4w_ww"
+        }
+      }
+    },
+    "NameObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "first_name": {
+          "type": "string",
+          "description": "First name",
+          "example": "John"
+        },
+        "formatted_name": {
+          "type": "string",
+          "description": "Formatted full name",
+          "example": "John Smith"
+        },
+        "last_name": {
+          "type": "string",
+          "description": "Last name",
+          "example": "Smith"
+        },
+        "middle_name": {
+          "type": "string",
+          "description": "Middle name",
+          "example": "D."
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Name prefix",
+          "example": "Dr"
+        },
+        "suffix": {
+          "type": "string",
+          "description": "Name suffix",
+          "example": "Jr"
+        }
+      }
+    },
+    "OrganizationObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "company": {
+          "type": "string",
+          "description": "Company name",
+          "example": "WhatsApp"
+        },
+        "department": {
+          "type": "string",
+          "description": "Department name",
+          "example": "Design"
+        },
+        "title": {
+          "type": "string",
+          "description": "Job title",
+          "example": "Manager"
+        }
+      }
+    },
+    "ParameterObject": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Describes the parameter type. For text-based templates, only `\"currency\"`, `\"date_time\"`, and `\"text\"` are supported.",
+          "enum": ["currency", "date_time", "document", "image", "text", "video"]
+        }
+      },
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "currency": "#/components/schemas/CurrencyParameter",
+          "date_time": "#/components/schemas/DateTimeParameter",
+          "document": "#/components/schemas/DocumentParameter",
+          "image": "#/components/schemas/ImageParameter",
+          "text": "#/components/schemas/TextParameter",
+          "video": "#/components/schemas/VideoParameter"
+        }
+      }
+    },
+    "PhoneObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phone"],
+      "properties": {
+        "phone": {
+          "type": "string",
+          "description": "Phone number",
+          "example": "+1 (650) 555-1234"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["HOME", "WORK"],
+          "description": "Phone type"
+        },
+        "wa_id": {
+          "type": "string",
+          "description": "WhatsApp ID",
+          "example": "16505551234"
+        }
+      }
+    },
+    "ReactionMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reaction"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["reaction"]
+            },
+            "reaction": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "emoji": {
+                  "type": "string",
+                  "description": "emoji"
+                },
+                "message_id": {
+                  "type": "string",
+                  "description": "reacted message-id"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SectionObject": {
+      "type": "object",
+      "description": "A section object, used in List Messages and Multi-Product Messages.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title of the section. Required if the message has more than one section. Max 24 characters.",
+          "maxLength": 24
+        },
+        "product_items": {
+          "type": "array",
+          "description": "Array of product objects.",
+          "minItems": 1,
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "required": ["product_retailer_id"],
+            "properties": {
+              "product_retailer_id": {
+                "type": "string",
+                "description": "Unique identifier of the product in a catalog."
+              }
+            }
+          }
+        },
+        "rows": {
+          "type": "array",
+          "description": "Contains a list of rows.",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["id", "title"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique row identifier.",
+                "maxLength": 200
+              },
+              "title": {
+                "type": "string",
+                "description": "Row title.",
+                "maxLength": 24
+              },
+              "description": {
+                "type": "string",
+                "description": "Optional row description.",
+                "maxLength": 72
+              }
+            }
+          }
+        }
+      }
+    },
+    "StickerMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sticker"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["sticker"]
+            },
+            "sticker": {
+              "type": "object",
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The ID of the sticker."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": ["id"]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "link": {
+                      "type": "string",
+                      "description": "The URL of the sticker."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": ["link"]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "TemplateComponent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Describes the component type.",
+          "enum": ["header", "body", "button"]
+        },
+        "sub_type": {
+          "type": "string",
+          "description": "Required when `type=button`. Not used for other types. Type of button to create.",
+          "enum": ["quick_reply", "url", "catalog"]
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Array of parameter objects with the content of the message."
+        },
+        "index": {
+          "type": "string",
+          "description": "Required when `type=button`. Not used for other types. Position index of the button (0-9).",
+          "pattern": "^[2-6, 11-14]$",
+          "example": "0"
+        }
+      },
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "header": "#/components/schemas/HeaderComponent",
+          "body": "#/components/schemas/BodyComponent",
+          "button": "#/components/schemas/ButtonComponent"
+        }
+      }
+    },
+    "TemplateMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "required": ["template"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["template"]
+            },
+            "template": {
+              "$ref": "#/components/schemas/TemplateObject"
+            }
+          }
+        }
+      ]
+    },
+    "TemplateObject": {
+      "type": "object",
+      "required": ["name", "language"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the template.",
+          "example": "TEMPLATE_NAME"
+        },
+        "language": {
+          "$ref": "#/components/schemas/LanguageObject",
+          "description": "Contains a `language` object. Specifies the language the template may be rendered in"
+        },
+        "components": {
+          "type": "array",
+          "description": "Array of `components` objects containing the parameters of the message.",
+          "items": {
+            "$ref": "#/components/schemas/TemplateComponent"
+          },
+          "example": [
+            {
+              "type": "header",
+              "parameters": [
+                {
+                  "type": "image",
+                  "image": {
+                    "link": "http(s)://example.com/image.jpg"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "body",
+              "parameters": [
+                {
+                  "type": "text",
+                  "text": "Hello {{1}}! Your order of {{2}} is confirmed for {{3}}."
+                }
+              ]
+            },
+            {
+              "type": "button",
+              "sub_type": "quick_reply",
+              "index": "0",
+              "parameters": [
+                {
+                  "type": "payload",
+                  "payload": "ORDER_DETAILS_CLICKED"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "TextMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["text"]
+            },
+            "text": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "body": {
+                  "type": "string",
+                  "description": "The text of the message.",
+                  "example": "Hello World!"
+                },
+                "preview_url": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TextParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["text"],
+          "properties": {
+            "type": {
+              "enum": ["text"]
+            },
+            "text": {
+              "type": "string",
+              "description": "The message's text.",
+              "maxLength": 32768
+            }
+          }
+        }
+      ]
+    },
+    "UrlObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["HOME", "WORK"],
+          "description": "URL type"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL",
+          "example": "https://www.facebook.com"
+        }
+      }
+    },
+    "VideoMessage": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/BaseMessageProperties"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["video"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["video"]
+            },
+            "video": {
+              "$ref": "#/components/schemas/MediaObject"
+            }
+          }
+        }
+      ]
+    },
+    "VideoParameter": {
+      "allOf": [
+        {
+          "$ref": "#/components/schemas/ParameterObject"
+        },
+        {
+          "type": "object",
+          "required": ["video"],
+          "properties": {
+            "type": {
+              "enum": ["video"]
+            },
+            "video": {
+              "$ref": "#/components/schemas/MediaObject",
+              "description": "A media object of type video. Captions not supported. [16]"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

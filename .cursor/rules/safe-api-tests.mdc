@@ -1,0 +1,47 @@
+---
+description: NEVER run apps/api mocha tests without NODE_ENV=test — drops dev MongoDB
+alwaysApply: true
+---
+
+# Safe API test execution (CRITICAL)
+
+Running mocha from `apps/api` without `NODE_ENV=test` **drops the developer MongoDB database** (`novu-db`).
+
+## Why
+
+`apps/api/.mocharc.json` loads `e2e/setup.ts` for **every** mocha run. That file calls `dropDatabase()` in `before()` and `after()`:
+
+- `NODE_ENV=test` → loads `.env.test` → `MONGO_URL=.../novu-test` (safe)
+- `NODE_ENV` unset / `local` → loads `.env` → `MONGO_URL=.../novu-db` (**wipes all dev data**)
+
+This is not hypothetical — it has happened in this repo.
+
+## Agent MUST
+
+1. **Never** run `mocha`, `pnpm test`, or any test command under `apps/api` without `NODE_ENV=test`.
+2. For **isolated unit specs** (e.g. `*.spec.ts` renderers), prefer `--no-config` so `.mocharc.json` does not load `e2e/setup.ts` at all.
+3. **Never** run worker/ws e2e setups against dev DB either — they use `dalService.destroy()` under `NODE_ENV=test` only; still require `NODE_ENV=test`.
+
+## Safe commands
+
+```bash
+# Official test script (already sets NODE_ENV=test)
+cd apps/api && pnpm test
+
+# Single unit spec — NO e2e harness, NO dropDatabase
+cd apps/api && cross-env NODE_ENV=test NOVU_ENTERPRISE=true CLERK_ENABLED=true \
+  npx mocha --no-config --timeout 30000 --require ts-node/register --exit \
+  'src/path/to/file.spec.ts'
+```
+
+## Forbidden
+
+```bash
+# ❌ NEVER — loads e2e/setup.ts and drops novu-db
+npx mocha 'src/**/*.spec.ts'
+
+# ❌ NEVER — same problem without NODE_ENV=test
+npx mocha --require ts-node/register 'src/foo.spec.ts'
+```
+
+If you need to verify test logic without mocha, use a targeted script with `--no-config` or run via `pnpm test` with the official env vars — never raw mocha from `apps/api` without both safeguards.

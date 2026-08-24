@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { AnalyticsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
+  ChannelConnectionRepository,
   ChannelEndpointRepository,
   ConversationParticipantTypeEnum,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS, SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE } from '@novu/shared';
-import type { CardElement } from 'chat';
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
 import { isKeylessOrganization } from '../../../../keyless/keyless-organization.helpers';
 import { buildConnectClaimUrl, buildKeylessWelcomeCard } from '../../../../keyless/keyless-signup.helpers';
@@ -20,12 +20,19 @@ import { AgentConversationService, getConversationTitle } from '../../conversati
 import { OutboundGateway } from '../../egress/outbound.gateway';
 import { SendAgentWelcomeMessageCommand } from './send-agent-welcome-message.command';
 
+type WelcomeRecipient = {
+  platformUserId: string;
+  /** Slack team_id (or equivalent) when the endpoint is tied to a workspace connection. */
+  workspaceId?: string;
+};
+
 @Injectable()
 export class SendAgentWelcomeMessage {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly conversationService: AgentConversationService,
     private readonly analyticsService: AnalyticsService,
@@ -78,12 +85,14 @@ export class SendAgentWelcomeMessage {
       return { sent: false };
     }
 
-    const platformUserId = await this.resolvePlatformUserId(command, platform, integration.identifier);
-    if (!platformUserId) {
+    const recipient = await this.resolveWelcomeRecipient(command, platform, integration.identifier);
+    if (!recipient) {
       return { sent: false };
     }
 
+    const { platformUserId, workspaceId } = recipient;
     const welcomeText = getWelcomeText(platform);
+    const claimToken = await this.resolveKeylessClaimToken(command);
     const existingWelcomeConversation = await this.findExistingWelcomeConversation({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -92,21 +101,24 @@ export class SendAgentWelcomeMessage {
       platform,
       platformUserId,
       welcomeText,
+      workspaceId,
     });
 
     if (existingWelcomeConversation) {
-      return { sent: true, conversationId: existingWelcomeConversation._id };
+      return { sent: true, conversationId: existingWelcomeConversation._id, ...withClaimToken(claimToken) };
     }
 
     try {
-      const keylessWelcome = await this.resolveKeylessWelcomeCard(command, welcomeText);
-      const welcomeReplyCard = keylessWelcome?.card;
+      const welcomeReplyCard = claimToken
+        ? buildKeylessWelcomeCard(welcomeText, buildConnectClaimUrl(claimToken))
+        : undefined;
       const welcomeContent = welcomeReplyCard ? { card: welcomeReplyCard } : { markdown: welcomeText };
       const sent = await this.outboundGateway.sendDirectMessage(
         agent._id,
         command.integrationIdentifier,
         platformUserId,
-        welcomeContent
+        welcomeContent,
+        workspaceId
       );
 
       const { platformThreadId } = sent;
@@ -122,6 +134,7 @@ export class SendAgentWelcomeMessage {
         participantType: ConversationParticipantTypeEnum.PLATFORM_USER,
         platformUserId,
         firstMessageText: welcomeText,
+        workspaceId,
       });
 
       const channel = this.conversationService.getPrimaryChannel(conversation);
@@ -143,7 +156,8 @@ export class SendAgentWelcomeMessage {
           command.integrationIdentifier,
           platformThreadId,
           SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS,
-          SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE
+          SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE,
+          workspaceId
         );
       }
 
@@ -155,19 +169,19 @@ export class SendAgentWelcomeMessage {
         platform,
       });
 
-      return { sent: true, conversationId: conversation._id, claimToken: keylessWelcome?.claimToken };
+      return { sent: true, conversationId: conversation._id, ...withClaimToken(claimToken) };
     } catch (err) {
       this.logger.warn(err, `Failed to send welcome message for agent "${command.agentIdentifier}"`);
 
-      return { sent: false };
+      return { sent: false, ...withClaimToken(claimToken) };
     }
   }
 
-  private async resolvePlatformUserId(
+  private async resolveWelcomeRecipient(
     command: SendAgentWelcomeMessageCommand,
     platform: AgentPlatformEnum,
     integrationIdentifier: string
-  ): Promise<string | undefined> {
+  ): Promise<WelcomeRecipient | undefined> {
     if (platform === AgentPlatformEnum.EMAIL) {
       return this.resolveEmailWelcomeRecipient(command);
     }
@@ -177,12 +191,18 @@ export class SendAgentWelcomeMessage {
       return undefined;
     }
 
-    const endpoint = await this.channelEndpointRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      integrationIdentifier,
-      type: endpointConfig.endpointType,
-    });
+    // Prefer the most recently created endpoint so a just-completed OAuth install wins over older
+    // workspaces on the same integration (multi-workspace shared Slack app).
+    const endpoint = await this.channelEndpointRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        integrationIdentifier,
+        type: endpointConfig.endpointType,
+      },
+      undefined,
+      { query: { sort: { createdAt: -1 } } }
+    );
 
     if (!endpoint) {
       return undefined;
@@ -193,14 +213,48 @@ export class SendAgentWelcomeMessage {
       return undefined;
     }
 
-    return platformUserId;
+    const workspaceId = await this.resolveWorkspaceIdForEndpoint(
+      command.environmentId,
+      command.organizationId,
+      endpoint.connectionIdentifier
+    );
+
+    return { platformUserId, workspaceId };
+  }
+
+  /**
+   * Resolve the Slack (etc.) workspace id from the channel connection linked to the endpoint.
+   * Required so proactive welcome DMs bind the bot token for the workspace that was just connected,
+   * not the integration's first installed workspace.
+   */
+  private async resolveWorkspaceIdForEndpoint(
+    environmentId: string,
+    organizationId: string,
+    connectionIdentifier?: string
+  ): Promise<string | undefined> {
+    if (!connectionIdentifier) {
+      return undefined;
+    }
+
+    const connection = await this.channelConnectionRepository.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        identifier: connectionIdentifier,
+      },
+      'workspace'
+    );
+
+    return connection?.workspace?.id;
   }
 
   /**
    * Email welcome messages are sent to the dashboard user's subscriber
    * (the same identity used by Telegram/WhatsApp test flows and workflow testing).
    */
-  private async resolveEmailWelcomeRecipient(command: SendAgentWelcomeMessageCommand): Promise<string | undefined> {
+  private async resolveEmailWelcomeRecipient(
+    command: SendAgentWelcomeMessageCommand
+  ): Promise<WelcomeRecipient | undefined> {
     const subscriberId = command.userId;
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberId);
 
@@ -218,7 +272,7 @@ export class SendAgentWelcomeMessage {
       return undefined;
     }
 
-    return email;
+    return { platformUserId: email };
   }
 
   private async findExistingWelcomeConversation(params: {
@@ -229,6 +283,7 @@ export class SendAgentWelcomeMessage {
     platform: AgentPlatformEnum;
     platformUserId: string;
     welcomeText: string;
+    workspaceId?: string;
   }) {
     const participantId = `${params.platform}:${params.platformUserId}`;
     const welcomeTitle = getConversationTitle(params.welcomeText);
@@ -241,15 +296,13 @@ export class SendAgentWelcomeMessage {
       participantId,
       participantType: ConversationParticipantTypeEnum.PLATFORM_USER,
       title: welcomeTitle,
+      workspaceId: params.workspaceId,
     });
   }
 
-  private async resolveKeylessWelcomeCard(
-    command: SendAgentWelcomeMessageCommand,
-    welcomeText: string
-  ): Promise<{ card: CardElement; claimToken: string } | null> {
+  private async resolveKeylessClaimToken(command: SendAgentWelcomeMessageCommand): Promise<string | undefined> {
     if (!isKeylessOrganization(command.organizationId)) {
-      return null;
+      return undefined;
     }
 
     try {
@@ -257,16 +310,15 @@ export class SendAgentWelcomeMessage {
         env: command.environmentId,
         org: command.organizationId,
       });
-      const claimUrl = buildConnectClaimUrl(token);
 
-      return { card: buildKeylessWelcomeCard(welcomeText, claimUrl), claimToken: token };
+      return token;
     } catch (err) {
       this.logger.warn(
         err,
-        `Failed to build keyless welcome signup link for agent "${command.agentIdentifier}" — sending plain welcome`
+        `Failed to issue keyless claim token for agent "${command.agentIdentifier}" — sending welcome without a signup link`
       );
 
-      return null;
+      return undefined;
     }
   }
 
@@ -332,4 +384,12 @@ export class SendAgentWelcomeMessage {
       return { sent: false };
     }
   }
+}
+
+function withClaimToken(claimToken: string | undefined): { claimToken?: string } {
+  if (!claimToken) {
+    return {};
+  }
+
+  return { claimToken };
 }

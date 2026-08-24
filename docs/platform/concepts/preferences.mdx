@@ -56,7 +56,9 @@ In those cases, you can mark a workflow as `critical` in the workflow channel pr
 
 ## Subscriber global preferences
 
-Subscribers can set global channel preferences, which override individual settings. For instance, if there are 10 workflows, and a subscriber wants to disable SMS notifications for all of them, they can do so with via global preferences.
+Subscribers can set global channel preferences, which apply across every workflow. For instance, if there are 10 workflows and a subscriber wants to disable SMS notifications for all of them, they can do so with global preferences instead of changing each workflow.
+
+Global preferences act as the subscriber's baseline. If the same subscriber later sets a preference for one specific workflow, that more specific choice wins for that workflow. See [Priority of preferences](#priority-of-preferences).
 
 ![Preferences](/images/inbox/preferences@2x.png)
 
@@ -72,28 +74,42 @@ For each workflow, each subscriber has their own channel preferences. Subscriber
 
 ## Priority of preferences
 
-Since there are three types of preferences, the priority order is as follows:
+Novu resolves preferences per channel. It layers each type of preference on top of the previous one, from the most general to the most specific, and **the most specific layer that defines a channel wins**:
 
-Workflow channel preferences > Subscriber global preferences > Subscriber channel preferences per workflow
+1. Workflow channel preferences defined in code with the [Framework](/framework/overview)
+2. Workflow channel preferences set in the dashboard
+3. Subscriber global preferences
+4. Subscriber channel preferences per workflow
+
+So a subscriber's per-workflow choice takes precedence over their global choice, and both take precedence over the workflow defaults.
+
+The one exception is [critical workflows](#critical-workflows). When a workflow is marked as critical, both subscriber layers are discarded and the workflow channel preferences decide on their own.
 
 ```mermaid
 flowchart TD
-    startNode([Should notification send?]) --> workflowDisabled{Channel disabled in workflow preferences?}
-    workflowDisabled -->|Yes| blockWorkflow[Do not send]
-    workflowDisabled -->|No| isCritical{Workflow marked as critical?}
-    isCritical -->|Yes| sendCritical[Send notification]
-    isCritical -->|No| globalDisabled{Channel disabled in subscriber global preferences?}
-    globalDisabled -->|Yes| blockGlobal[Do not send]
-    globalDisabled -->|No| subscriberDisabled{Subscriber disabled channel for this workflow?}
-    subscriberDisabled -->|Yes| blockSubscriber[Do not send]
-    subscriberDisabled -->|No| sendAllowed[Send notification]
+    startNode([Should this channel send?]) --> isCritical{Workflow marked as critical?}
+    isCritical -->|Yes| useWorkflow[Use the workflow channel preference]
+    isCritical -->|No| hasWorkflowPref{Subscriber set a preference for this workflow?}
+    hasWorkflowPref -->|Yes| useSubscriberWorkflow[Use the subscriber preference for this workflow]
+    hasWorkflowPref -->|No| hasGlobalPref{Subscriber set a global preference for this channel?}
+    hasGlobalPref -->|Yes| useSubscriberGlobal[Use the subscriber global preference]
+    hasGlobalPref -->|No| useWorkflow
+    useWorkflow --> resolved{Resolved value enabled?}
+    useSubscriberWorkflow --> resolved
+    useSubscriberGlobal --> resolved
+    resolved -->|Yes| sendAllowed[Send notification]
+    resolved -->|No| blocked[Do not send]
 ```
 
 Examples:
 
-1. If the `email` channel is disabled in workflow channel preferences, global and subscriber preferences are ignored, and subscribers will not receive email notifications for this workflow.
-2. If the `in-app` channel is enabled in workflow channel preferences but the workflow is marked as critical, subscribers cannot change their preferences and will always receive in-app notifications.
-3. If both `chat` and `email` channels are enabled in the workflow but `email` is disabled in subscriber global preferences, the subscriber will receive only chat notifications for this workflow.
+1. If the `email` channel is enabled in workflow channel preferences but the subscriber disabled `email` globally, they will not receive email notifications for this workflow.
+2. If the subscriber disabled `email` globally but enabled `email` for this specific workflow, they will receive email notifications for this workflow. The per-workflow preference is more specific than the global one.
+3. If the `in-app` channel is enabled in workflow channel preferences and the workflow is marked as critical, subscribers cannot change their preferences and will always receive in-app notifications.
+
+<Note>
+  Only channels that exist as active steps in the workflow are considered. A channel that the workflow does not use is never resolved, whatever the subscriber set for it globally.
+</Note>
 
 ## Subscriber preferences APIs
 

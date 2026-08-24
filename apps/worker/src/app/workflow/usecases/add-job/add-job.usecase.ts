@@ -5,9 +5,11 @@ import {
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeferReasonEnum,
   DetailEnum,
   DurationUtils,
   getDigestType,
+  getEffectiveJobPayload,
   getNestedValue,
   IFilterVariables,
   InstrumentUsecase,
@@ -68,6 +70,17 @@ import { validateDigest } from './validation';
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
 }
+
+/**
+ * Groups the job's EventBridge schedule when the delay outlives the SQS cap.
+ * Only the deferring step types appear here; anything else that reaches
+ * queueJob is either immediate or a schedule extension, both handled below.
+ */
+const DEFER_REASON_BY_STEP_TYPE: Partial<Record<StepTypeEnum, DeferReasonEnum>> = {
+  [StepTypeEnum.DELAY]: DeferReasonEnum.DELAY,
+  [StepTypeEnum.DIGEST]: DeferReasonEnum.DIGEST,
+  [StepTypeEnum.THROTTLE]: DeferReasonEnum.THROTTLE,
+};
 
 /*
  * @description: This is the result of the add job usecase
@@ -133,6 +146,11 @@ export class AddJob {
         _id: job._notificationId,
         _environmentId: job._environmentId,
       }));
+
+    // Payload-dedup: hydrate the trigger payload from the parent notification
+    // when the job doesn't carry one, so delay/throttle/digest key resolution
+    // below keeps working. A present job.payload is authoritative.
+    job.payload = getEffectiveJobPayload(job, notification);
 
     const topicsContext =
       notification?.topics && notification.topics.length > 0
@@ -418,6 +436,16 @@ export class AddJob {
     });
 
     await this.queueJob({ job, delay: 0, untilDate: null });
+
+    /*
+     * The message now exists, so the claim-to-enqueue crash window is over: without
+     * this, a redelivered parent would treat a backlogged-but-live child as stranded
+     * and enqueue a duplicate message. Only claimed children carry the flag — chain
+     * roots enter as PENDING and skip the write.
+     */
+    if (job.awaitingEnqueue) {
+      await this.jobRepository.markEnqueued(command.environmentId, job._id);
+    }
 
     return {
       workflowStatus: null,
@@ -1079,6 +1107,15 @@ export class AddJob {
       options.attempts = this.standardQueueService.DEFAULT_ATTEMPTS;
     }
 
+    /*
+     * The standard queue dedups on the job id, so a re-enqueue of a job that is still queued or
+     * running collapses onto the live entry. A schedule extension re-queues a job whose entry is
+     * the one currently being processed, so it needs an id of its own or the step would never be
+     * delivered. The counter advances on every extension, so an extended job carries no dedup
+     * protection - the atomic claim in JobRepository is what keeps that case correct.
+     */
+    options.jobId = job.scheduleExtensionsCount ? `${job._id}-ext${job.scheduleExtensionsCount}` : job._id;
+
     await this.standardQueueService.add({
       name: job._id,
       data: {
@@ -1089,11 +1126,24 @@ export class AddJob {
       },
       groupId: job._organizationId,
       options,
+      deferReason: this.resolveDeferReason(job),
     });
 
     if (delay) {
       await this.createDelayExecutionDetails(job, delay, untilDate, timezone);
     }
+  }
+
+  /**
+   * A quiet-hours extension re-queues a channel-typed job, so the step type
+   * alone cannot tell the two apart - the extension counter can.
+   */
+  private resolveDeferReason(job: JobEntity): DeferReasonEnum {
+    if (job.scheduleExtensionsCount) {
+      return DeferReasonEnum.SCHEDULE_EXTENSION;
+    }
+
+    return (job.type && DEFER_REASON_BY_STEP_TYPE[job.type]) || DeferReasonEnum.DELAY;
   }
 
   private async createDelayExecutionDetails(job: JobEntity, delay: number, untilDate: Date | null, timezone?: string) {

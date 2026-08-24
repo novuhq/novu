@@ -102,3 +102,19 @@ export function logSendblueImessageHandoffEvents(opts: { imessageUrl: string; fr
   console.log(`${HANDOFF_PREFIX}SENDBLUE_IMESSAGE_URL=${opts.imessageUrl}`);
   console.log(`${HANDOFF_PREFIX}SENDBLUE_FROM_NUMBER=${opts.fromNumber}`);
 }
+
+export async function writeAgentChatEmbedPromptHandoffFile(prompt: string): Promise<string> {
+  const filePath = join(tmpdir(), `novu-connect-agent-chat-embed-prompt-${randomBytes(6).toString('hex')}.txt`);
+  await writeFile(filePath, prompt, { encoding: 'utf8' });
+  await chmod(filePath, 0o600);
+
+  return filePath;
+}
+
+export function logAgentChatDashboardUrlHandoffEvent(opts: { dashboardUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}AGENT_CHAT_DASHBOARD_URL=${opts.dashboardUrl}`);
+}
+
+export function logAgentChatEmbedPromptFileHandoffEvent(opts: { embedPromptFile: string }): void {
+  console.log(`${HANDOFF_PREFIX}AGENT_CHAT_EMBED_PROMPT_FILE=${opts.embedPromptFile}`);
+}

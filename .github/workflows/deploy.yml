@@ -10,15 +10,39 @@ run-name: >
   }}${{
     github.event.inputs.deploy_webhook == 'true' && 'webhook, ' || ''
   }}${{
-    github.event.inputs.deploy_inbound_mail == 'true' && 'inbound-mail ' || ''
+    github.event.inputs.deploy_inbound_mail == 'true' && 'inbound-mail, ' || ''
+  }}${{
+    github.event.inputs.deploy_thalamus_observer == 'true' && 'thalamus-observer ' || ''
   }}on ${{ github.event.inputs.environment }}
 description: |
   This workflow deploys the Novu Cloud application to different environments and services based on the selected options.
   It builds Docker images, pushes them to Amazon ECR, and deploys them to Amazon ECS.
+  Optionally deploys the thalamus-observer Cloudflare Worker via Wrangler.
   Additionally, it creates Sentry releases and New Relic deployment markers.
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+# One deploy per environment + service combination at a time, so deploys of
+# unrelated services don't block each other. Staging cancels the in-flight
+# run so only the latest commit deploys; production queues instead of
+# cancelling to never interrupt an in-progress production deploy.
+concurrency:
+  group: >-
+    deploy-${{ github.event.inputs.environment }}${{
+      github.event.inputs.deploy_api == 'true' && '-api' || ''
+    }}${{
+      github.event.inputs.deploy_worker == 'true' && '-worker' || ''
+    }}${{
+      github.event.inputs.deploy_ws == 'true' && '-ws' || ''
+    }}${{
+      github.event.inputs.deploy_webhook == 'true' && '-webhook' || ''
+    }}${{
+      github.event.inputs.deploy_inbound_mail == 'true' && '-inbound-mail' || ''
+    }}${{
+      github.event.inputs.deploy_thalamus_observer == 'true' && '-thalamus-observer' || ''
+    }}
+  cancel-in-progress: ${{ startsWith(github.event.inputs.environment, 'staging') }}
 
 on:
   workflow_dispatch:
@@ -74,6 +98,11 @@ on:
         required: true
         type: boolean
         default: false
+      deploy_thalamus_observer:
+        description: "Deploy thalamus-observer Cloudflare Worker (staging / production-us / production-us-and-eu only)"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   prepare-matrix:
@@ -83,6 +112,10 @@ jobs:
       service_matrix: ${{ steps.set-matrix.outputs.service_matrix }}
       deploy_matrix: ${{ steps.set-matrix.outputs.deploy_matrix }}
       nr_matrix: ${{ steps.set-matrix.outputs.nr_matrix }}
+      has_ecs_services: ${{ steps.set-matrix.outputs.has_ecs_services }}
+      deploy_thalamus_observer: ${{ steps.set-matrix.outputs.deploy_thalamus_observer }}
+      thalamus_wrangler_env: ${{ steps.set-matrix.outputs.thalamus_wrangler_env }}
+      thalamus_gh_environment: ${{ steps.set-matrix.outputs.thalamus_gh_environment }}
     steps:
       - name: Validate Selected Services
         env:
@@ -92,12 +125,14 @@ jobs:
           INPUT_DEPLOY_WS: ${{ github.event.inputs.deploy_ws }}
           INPUT_DEPLOY_WEBHOOK: ${{ github.event.inputs.deploy_webhook }}
           INPUT_DEPLOY_INBOUND_MAIL: ${{ github.event.inputs.deploy_inbound_mail }}
+          INPUT_DEPLOY_THALAMUS_OBSERVER: ${{ github.event.inputs.deploy_thalamus_observer }}
         run: |
           if [ "$INPUT_DEPLOY_API" != "true" ] && \
              [ "$INPUT_DEPLOY_WORKER" != "true" ] && \
              [ "$INPUT_DEPLOY_WS" != "true" ] && \
              [ "$INPUT_DEPLOY_WEBHOOK" != "true" ] && \
-             [ "$INPUT_DEPLOY_INBOUND_MAIL" != "true" ]; then
+             [ "$INPUT_DEPLOY_INBOUND_MAIL" != "true" ] && \
+             [ "$INPUT_DEPLOY_THALAMUS_OBSERVER" != "true" ]; then
             echo "Error: At least one service must be selected for deployment."
             exit 1
           fi
@@ -116,6 +151,18 @@ jobs:
             esac
           fi
 
+          # thalamus-observer is a single CF Worker (staging + one production).
+          if [ "$INPUT_DEPLOY_THALAMUS_OBSERVER" = "true" ]; then
+            case "$INPUT_ENVIRONMENT" in
+              staging|production-us|production-us-and-eu) ;;
+              *)
+                echo "Error: thalamus-observer can only deploy to staging, production-us, or production-us-and-eu."
+                echo "Selected environment: $INPUT_ENVIRONMENT"
+                exit 1
+                ;;
+            esac
+          fi
+
       - name: Generate Environment, Service, and Deploy Matrices
         id: set-matrix
         env:
@@ -127,11 +174,16 @@ jobs:
           INPUT_DEPLOY_WS: ${{ github.event.inputs.deploy_ws }}
           INPUT_DEPLOY_WEBHOOK: ${{ github.event.inputs.deploy_webhook }}
           INPUT_DEPLOY_INBOUND_MAIL: ${{ github.event.inputs.deploy_inbound_mail }}
+          INPUT_DEPLOY_THALAMUS_OBSERVER: ${{ github.event.inputs.deploy_thalamus_observer }}
         run: |
           envs=()
           services=()
           deploy_matrix=()
           nr=()
+          has_ecs_services=false
+          deploy_thalamus_observer=false
+          thalamus_wrangler_env=""
+          thalamus_gh_environment=""
 
           # Collect selected environments
           if [ "$INPUT_ENVIRONMENT" == "staging" ]; then
@@ -190,6 +242,22 @@ jobs:
           fi
           if [ "$INPUT_DEPLOY_INBOUND_MAIL" == "true" ]; then
             services+=("\"inbound-mail\"")
+          fi
+
+          if [ ${#services[@]} -gt 0 ]; then
+            has_ecs_services=true
+          fi
+
+          if [ "$INPUT_DEPLOY_THALAMUS_OBSERVER" == "true" ]; then
+            deploy_thalamus_observer=true
+            if [ "$INPUT_ENVIRONMENT" == "staging" ]; then
+              thalamus_wrangler_env="staging"
+              thalamus_gh_environment="staging-eu"
+            else
+              # production-us and production-us-and-eu share one CF production Worker
+              thalamus_wrangler_env="production"
+              thalamus_gh_environment="prod-us"
+            fi
           fi
 
           # Parse service secrets and generate deploy_matrix
@@ -295,9 +363,14 @@ jobs:
           echo "service_matrix=$service_matrix" >> $GITHUB_OUTPUT
           echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
           echo "nr_matrix=$nr_matrix" >> $GITHUB_OUTPUT
+          echo "has_ecs_services=$has_ecs_services" >> $GITHUB_OUTPUT
+          echo "deploy_thalamus_observer=$deploy_thalamus_observer" >> $GITHUB_OUTPUT
+          echo "thalamus_wrangler_env=$thalamus_wrangler_env" >> $GITHUB_OUTPUT
+          echo "thalamus_gh_environment=$thalamus_gh_environment" >> $GITHUB_OUTPUT
 
   run-clickhouse-migrations:
     needs: prepare-matrix
+    if: needs.prepare-matrix.outputs.has_ecs_services == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -330,7 +403,7 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "22.22.1"
+          node-version: "22.23.0"
           cache: "pnpm"
 
       - name: Install Dependencies
@@ -347,6 +420,7 @@ jobs:
 
   build:
     needs: [prepare-matrix, run-clickhouse-migrations]
+    if: needs.prepare-matrix.outputs.has_ecs_services == 'true'
     timeout-minutes: 60
     runs-on: ${{ github.event.inputs.runner == 'github' && 'ubuntu-latest' || 'blacksmith-8vcpu-ubuntu-2404' }}
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
@@ -374,7 +448,7 @@ jobs:
       - name: Setup Node Version
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "22.22.1"
+          node-version: "22.23.0"
           cache: "pnpm"
 
       - name: Install Dependencies
@@ -422,6 +496,7 @@ jobs:
 
   deploy:
     needs: [build, prepare-matrix, run-clickhouse-migrations]
+    if: needs.prepare-matrix.outputs.has_ecs_services == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -464,6 +539,42 @@ jobs:
           service: ${{ vars.ECS_PREFIX }}-${{ matrix.service.service_name }}
           cluster: ${{ vars.ECS_PREFIX }}-${{ matrix.service.cluster_name }}
           wait-for-service-stability: true
+
+  deploy_thalamus_observer:
+    needs: prepare-matrix
+    if: needs.prepare-matrix.outputs.deploy_thalamus_observer == 'true'
+    name: Deploy thalamus-observer (${{ needs.prepare-matrix.outputs.thalamus_wrangler_env }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ needs.prepare-matrix.outputs.thalamus_gh_environment }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.0.9
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @novu/thalamus-observer-worker...
+
+      - name: Deploy with Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm --filter @novu/thalamus-observer-worker exec wrangler deploy \
+            --env "${{ needs.prepare-matrix.outputs.thalamus_wrangler_env }}" \
+            --message "GitHub Actions"
 
   sentry_release:
     needs: [deploy, prepare-matrix]

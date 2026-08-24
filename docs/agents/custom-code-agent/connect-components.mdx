@@ -81,9 +81,73 @@ Optional reference: https://docs.novu.co/agents/custom-code-agent/connect-compon
 
 ## Microsoft Teams connect button
 
-<Note>
-  Novu is working on adding a Microsoft Teams connect button to the `@novu/react` SDK. Reach out to support at support@novu.co to get access to a pre-release version.
-</Note>
+`MsTeamsConnectButton` is a pre-built UI component in the `@novu/react` SDK that connects an agent to a user's Microsoft Teams. In subscriber mode, `autoLinkUser` defaults to `true` so the per-user Teams identity is linked after admin consent.
+
+```tsx
+import { NovuProvider, MsTeamsConnectButton } from '@novu/react';
+
+const MsTeamsConnectButtonComponent = () => {
+  const subscriberId = 'subscriber-id';
+  const integrationIdentifier = 'msteams-integration-identifier';
+
+  return (
+    <NovuProvider subscriberId={subscriberId} applicationIdentifier="application-identifier">
+      <MsTeamsConnectButton
+        integrationIdentifier={integrationIdentifier}
+        connectionMode="subscriber"
+        connectLabel="Install agent ↗"
+        connectedLabel="Connected to MS Teams"
+        onConnectSuccess={(connectionIdentifier) => {
+          // Workspace linked
+          console.log('Connected', connectionIdentifier);
+        }}
+        onConnectError={(error: unknown) => {
+          console.error(error);
+        }}
+      />
+    </NovuProvider>
+  );
+};
+
+export default MsTeamsConnectButtonComponent;
+```
+
+<Prompt description="Add MsTeamsConnectButton to my app" icon="plug" actions={["copy", "cursor"]}>
+Add the Novu MsTeamsConnectButton from @novu/react to my app so each of my end users can connect "YOUR_AGENT_NAME" to their own Microsoft Teams.
+
+Context: The Microsoft Teams integration already exists in Novu. This is purely a frontend code integration - do NOT run the Novu CLI or the agent-onboarding flow.
+
+Requirements:
+- Install @novu/react with my project's package manager.
+- Render `<MsTeamsConnectButton />` inside a `<NovuProvider>` configured for the currently signed-in end user.
+- Use applicationIdentifier="YOUR_APPLICATION_IDENTIFIER" and integrationIdentifier="YOUR_INTEGRATION_IDENTIFIER" with connectionMode="subscriber". Store applicationIdentifier in an environment variable rather than hardcoding it.
+- In subscriber mode each user gets their own connection, so pass the authenticated user's id as subscriberId - source it from my app's existing auth, don't hardcode it. autoLinkUser defaults to true in subscriber mode.
+- Follow my app's existing framework, routing, styling, and TypeScript conventions, place the button in a sensible spot in the UI, and add no unnecessary wrappers.
+
+Optional reference: https://docs.novu.co/agents/custom-code-agent/connect-components
+</Prompt>
+
+### API reference
+
+`MsTeamsConnectButton` accepts the following props:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `integrationIdentifier` | `string` | Required. Identifier of the Teams integration. |
+| `connectionIdentifier` | `string` | Optional. Stable id for the connection. |
+| `subscriberId` | `string` | Optional. Defaults to the `NovuProvider` subscriber. |
+| `connectionMode` | `ConnectionMode` | e.g. `subscriber`. |
+| `autoLinkUser` | `boolean` | Defaults to `true` in subscriber mode. |
+| `onConnectSuccess` | `(connectionIdentifier: string) => void` | Called with the connection identifier after consent succeeds. |
+| `onConnectError` | `(error: unknown) => void` | Called when consent or link fails. |
+| `onDisconnectSuccess` | `() => void` | Called after disconnect. |
+| `onDisconnectError` | `(error: unknown) => void` | Called when disconnect fails. |
+| `connectLabel` | `string` | Label when disconnected. |
+| `connectedLabel` | `string` | Label when connected. |
+| `appearance` | `Appearance` | Style overrides. |
+| `container` | `HTMLElement` | Optional mount element. |
+
+If auto-link fails after admin consent, use `MsTeamsLinkUser` as a follow-up. Channel page: [Microsoft Teams](/agents/channels/microsoft-teams).
 
 ## Telegram connect button
 
@@ -156,8 +220,8 @@ Optional reference: https://docs.novu.co/agents/custom-code-agent/connect-compon
 ## Related
 
 <Columns cols={2}>
-  <Card icon="plus" href="/agents/custom-code-agent/quickstart" title="Quickstart">
-    Create an agent, connect Slack, and get a reply in-thread.
+  <Card icon="plug" href="/agents/get-started/ai-sdk" title="Connect AI SDK">
+    Connect an existing agent to Slack and get a reply in-thread.
   </Card>
   <Card icon="link" href="/agents/custom-code-agent/connecting-your-app" title="Connecting your app">
     Wire the bridge endpoint and register agent handlers in your app.

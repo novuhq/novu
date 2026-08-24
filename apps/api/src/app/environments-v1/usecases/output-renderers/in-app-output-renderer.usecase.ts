@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import { InstrumentUsecase, PinoLogger, sanitizeHtmlInObject } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
 import { InAppRenderOutput } from '@novu/shared';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { ControlsTranslationService } from './controls-translation.service';
 import { RenderCommand } from './render-command';
 
 export class InAppOutputRendererCommand extends RenderCommand {
@@ -13,11 +13,9 @@ export class InAppOutputRendererCommand extends RenderCommand {
 
 @Injectable()
 export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
-  constructor(
-    protected moduleRef: ModuleRef,
-    protected logger: PinoLogger
-  ) {
-    super(moduleRef, logger);
+  constructor(logger: PinoLogger, controlsTranslationService: ControlsTranslationService) {
+    super(logger, controlsTranslationService);
+    this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()

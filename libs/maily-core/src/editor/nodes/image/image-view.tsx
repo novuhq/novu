@@ -2,23 +2,72 @@ import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
 import { Ban, BracesIcon, GrabIcon, ImageOffIcon, Loader2 } from 'lucide-react';
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useImageUploadOptions } from '@/editor/extensions/image-upload/image-upload';
-import { getAspectRatio, getNewHeight } from '@/editor/utils/aspect-ratio';
+import { getAspectRatio, getNewHeight, getNewWidth } from '@/editor/utils/aspect-ratio';
 import { cn } from '@/editor/utils/classname';
+import { getNodeOptions } from '@/editor/utils/node-options';
 import { useEvent } from '@/editor/utils/use-event';
+import type { ImageExtensionOptions } from './image';
 
 const MIN_WIDTH = 20;
 export const IMAGE_MAX_WIDTH = 600;
 export const IMAGE_MAX_HEIGHT = 400;
 
+function fitImageWithinBounds({
+  naturalWidth,
+  naturalHeight,
+  containerWidth,
+  maxWidth,
+  maxHeight,
+  fitToMaxBounds,
+}: {
+  naturalWidth: number;
+  naturalHeight: number;
+  containerWidth: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  /** Chat-only: preview-matching scale; email leaves this false. */
+  fitToMaxBounds?: boolean;
+}) {
+  const aspectRatio = getAspectRatio(naturalWidth, naturalHeight);
+
+  // Rich chat: same scale math as the preview — ignore editor container width so stored
+  // size matches preview. CSS `maxWidth: 100%` handles narrow panels.
+  if (fitToMaxBounds) {
+    const scale = Math.min(
+      1,
+      (maxWidth ?? Number.POSITIVE_INFINITY) / naturalWidth,
+      (maxHeight ?? Number.POSITIVE_INFINITY) / naturalHeight
+    );
+
+    return {
+      width: Math.round(naturalWidth * scale),
+      height: Math.round(naturalHeight * scale),
+      aspectRatio,
+    };
+  }
+
+  // Email / default: fit within the editor container (and optional max caps), never upscale.
+  let width = Math.min(containerWidth, naturalWidth, maxWidth ?? Number.POSITIVE_INFINITY);
+  let height = Math.min(getNewHeight(width, aspectRatio), naturalHeight);
+
+  if (maxHeight != null && height > maxHeight) {
+    height = Math.min(maxHeight, naturalHeight);
+    width = Math.min(getNewWidth(height, aspectRatio), containerWidth, naturalWidth);
+  }
+
+  return { width, height, aspectRatio };
+}
+
 export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 export function ImageView(props: NodeViewProps) {
-  const { node, selected, editor } = props;
+  const { node, selected, editor, updateAttributes } = props;
 
   const [status, setStatus] = useState<ImageStatus>('idle');
   const [isPlaceholderImage, setIsPlaceholderImage] = useState(false);
 
   const { onImageUpload, allowedMimeTypes = [] } = useImageUploadOptions(editor);
+  const isResizable = getNodeOptions<ImageExtensionOptions>(editor, 'image')?.resizable !== false;
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -30,7 +79,7 @@ export function ImageView(props: NodeViewProps) {
   const handleMouseDown = useEvent((event: React.MouseEvent<HTMLDivElement>) => {
     const imageParent = document.querySelector('.ProseMirror-selectednode') as HTMLDivElement;
 
-    if (!imgRef.current || !imageParent || !selected) {
+    if (!isResizable || !imgRef.current || !imageParent || !selected) {
       return;
     }
 
@@ -92,7 +141,7 @@ export function ImageView(props: NodeViewProps) {
 
   const dragCornerButton = useCallback(
     (direction: string) => {
-      if (isPlaceholderImage) {
+      if (!isResizable || isPlaceholderImage) {
         return null;
       }
 
@@ -114,10 +163,16 @@ export function ImageView(props: NodeViewProps) {
         />
       );
     },
-    [handleMouseDown, isPlaceholderImage]
+    [handleMouseDown, isPlaceholderImage, isResizable]
   );
 
-  const { alignment = 'center', width, height, src, borderRadius } = node.attrs || {};
+  const imageOptions = getNodeOptions<ImageExtensionOptions>(editor, 'image');
+  const { alignment = imageOptions?.defaultAlignment ?? 'center', width, height, src, borderRadius } = node.attrs || {};
+  const fitToMaxBounds = imageOptions?.fitToMaxBounds === true;
+  const fittedWidth = width && width !== 'auto' ? Number(width) : null;
+  const fittedHeight = height && height !== 'auto' ? Number(height) : null;
+  const hasFittedSize =
+    fittedWidth != null && !Number.isNaN(fittedWidth) && fittedHeight != null && !Number.isNaN(fittedHeight);
 
   const {
     externalLink,
@@ -180,23 +235,51 @@ export function ImageView(props: NodeViewProps) {
       // update the dimensions to ensure that the image is not stretched
       const { naturalWidth, naturalHeight } = img;
       const wrapper = wrapperRef?.current;
+      const imageOptions = getNodeOptions<ImageExtensionOptions>(editor, 'image');
+      const fitToMaxBounds = imageOptions?.fitToMaxBounds === true;
+      const numericWidth = width === 'auto' ? null : Number(width);
+      const numericHeight = height === 'auto' ? null : Number(height);
+      const exceedsMaxWidth =
+        imageOptions?.maxWidth != null && numericWidth != null && numericWidth > imageOptions.maxWidth;
+      const exceedsMaxHeight =
+        imageOptions?.maxHeight != null && numericHeight != null && numericHeight > imageOptions.maxHeight;
 
-      if (!wrapper || width !== 'auto' || !naturalWidth) {
+      if (!wrapper || !naturalWidth) {
         return;
       }
 
-      const wrapperWidth = wrapper.offsetWidth;
-      const aspectRatio = getAspectRatio(naturalWidth, naturalHeight);
-      const calculatedHeight = Math.min(getNewHeight(wrapperWidth, aspectRatio), naturalHeight);
+      const {
+        width: nextWidth,
+        height: nextHeight,
+        aspectRatio,
+      } = fitImageWithinBounds({
+        naturalWidth,
+        naturalHeight,
+        containerWidth: wrapper.offsetWidth,
+        maxWidth: imageOptions?.maxWidth,
+        maxHeight: imageOptions?.maxHeight,
+        fitToMaxBounds,
+      });
 
-      editor
-        .chain()
-        .updateImageAttributes({
-          width: Math.min(wrapperWidth, naturalWidth),
-          height: Math.min(calculatedHeight, naturalHeight),
-          aspectRatio,
-        })
-        .run();
+      // Chat (`fitToMaxBounds`): re-sync when attrs drift from preview math. Email: auto / overflow only.
+      const sizeMismatch =
+        fitToMaxBounds &&
+        numericWidth != null &&
+        numericHeight != null &&
+        (Math.round(numericWidth) !== nextWidth || Math.round(numericHeight) !== nextHeight);
+      const shouldFitSize = width === 'auto' || exceedsMaxWidth || exceedsMaxHeight || sizeMismatch;
+
+      if (!shouldFitSize) {
+        return;
+      }
+
+      // Use NodeView `updateAttributes` — `editor.chain().updateImageAttributes` only
+      // touches the current selection, so unloaded/saved images would keep stale sizes.
+      updateAttributes({
+        width: nextWidth,
+        height: nextHeight,
+        aspectRatio,
+      });
     };
     img.onerror = () => {
       setStatus('error');
@@ -267,11 +350,20 @@ export function ImageView(props: NodeViewProps) {
       className={cn('mly-image-drop-zone', isDraggingOver && 'mly-drag-over')}
       style={{
         ...(hasImageSrc && status === 'loaded'
-          ? {
-              width: width ? `${width}px` : undefined,
-              height: height ? `${height}px` : undefined,
-              ...resizingStyle,
-            }
+          ? fitToMaxBounds
+            ? {
+                // Keep aspect ratio when `maxWidth: 100%` shrinks below the fitted width
+                // (fixed height + object-fit:fill would otherwise stretch the image).
+                width: hasFittedSize ? `${fittedWidth}px` : undefined,
+                maxWidth: '100%',
+                height: 'auto',
+                aspectRatio: hasFittedSize ? `${fittedWidth} / ${fittedHeight}` : undefined,
+              }
+            : {
+                width: width ? `${width}px` : undefined,
+                height: height ? `${height}px` : undefined,
+                ...resizingStyle,
+              }
           : {}),
         overflow: 'hidden',
         position: 'relative',
@@ -324,15 +416,28 @@ export function ImageView(props: NodeViewProps) {
           <img
             {...attrs}
             ref={imgRef}
-            style={{
-              ...resizingStyle,
-              cursor: 'default',
-              objectFit: 'fill',
-              marginBottom: 0,
-              borderRadius,
-              width: resizingStyle?.width ? `${resizingStyle.width}px` : width ? `${width}px` : 'auto',
-              height: resizingStyle?.height ? `${resizingStyle.height}px` : height ? `${height}px` : 'auto',
-            }}
+            style={
+              fitToMaxBounds
+                ? {
+                    cursor: 'default',
+                    objectFit: 'contain',
+                    marginBottom: 0,
+                    borderRadius,
+                    width: '100%',
+                    height: 'auto',
+                    maxWidth: '100%',
+                  }
+                : {
+                    ...resizingStyle,
+                    cursor: 'default',
+                    objectFit: 'fill',
+                    marginBottom: 0,
+                    borderRadius,
+                    width: resizingStyle?.width ? `${resizingStyle.width}px` : width ? `${width}px` : 'auto',
+                    height: resizingStyle?.height ? `${resizingStyle.height}px` : height ? `${height}px` : 'auto',
+                    maxWidth: '100%',
+                  }
+            }
             draggable={editor.isEditable}
             className={cn(isPlaceholderImage && 'mly-animate-pulse mly-opacity-40')}
           />
@@ -355,10 +460,14 @@ export function ImageView(props: NodeViewProps) {
                   }}
                 />
               ))}
-              {dragCornerButton('nw')}
-              {dragCornerButton('ne')}
-              {dragCornerButton('sw')}
-              {dragCornerButton('se')}
+              {isResizable && (
+                <>
+                  {dragCornerButton('nw')}
+                  {dragCornerButton('ne')}
+                  {dragCornerButton('sw')}
+                  {dragCornerButton('se')}
+                </>
+              )}
             </>
           )}
         </>

@@ -28,6 +28,13 @@ export interface ConversationChannel {
   platformThreadId: string;
   /** Platform message ID of the thread-starting message */
   firstPlatformMessageId?: string;
+  /**
+   * Platform workspace/team id this thread belongs to (e.g. Slack `team_id`). Captured at inbound
+   * creation so outbound delivery can resolve the correct per-workspace bot token when a single
+   * platform app is installed across many workspaces. Absent on single-workspace platforms and
+   * on conversations created before multi-workspace support.
+   */
+  workspace?: { id: string };
 }
 
 export interface ConversationTokenUsage {
@@ -75,6 +82,12 @@ export class ConversationEntity {
 
   /** References AgentEntity._id — populated once agent CRUD is implemented */
   _agentId: string;
+
+  /**
+   * Originating Notification id when opened from an agent-assigned workflow chat
+   * send. Stamped at creation (hydration runs once on that turn).
+   */
+  _notificationId?: string;
 
   /** All parties in the conversation; extensible to agents/bots in future */
   participants: ConversationParticipant[];
@@ -132,6 +145,14 @@ export class ConversationEntity {
    */
   isDirectMessage?: boolean;
 
+  /**
+   * Monotonic high-watermark for live delivery + durable conversation event sequences.
+   * Ephemeral typing envelopes consume values that may be absent from history.
+   */
+  eventSequence?: number;
+
+  contextKeys?: string[];
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;
@@ -143,5 +164,5 @@ export class ConversationEntity {
 
 export type ConversationDBModel = ChangePropsValueType<
   ConversationEntity,
-  '_agentId' | '_environmentId' | '_organizationId'
+  '_agentId' | '_environmentId' | '_organizationId' | '_notificationId'
 >;

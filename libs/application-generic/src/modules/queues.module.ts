@@ -11,7 +11,7 @@ import {
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
 import {
-  CloudflareSchedulerService,
+  EventBridgeSchedulerService,
   ReadinessService,
   SocketWorkerService,
   SqsService,
@@ -41,9 +41,9 @@ const memoryQueueService = {
 const INTERNAL_MODULE_PROVIDERS = [memoryQueueService, featureFlagsService];
 const BASE_PROVIDERS: Provider[] = [
   ReadinessService,
-  CloudflareSchedulerService,
   CommunityOrganizationRepository,
   SqsService,
+  EventBridgeSchedulerService,
 ];
 
 @Module({

@@ -88,6 +88,14 @@ export function mapFeedItemToDto(entity: NotificationFeedItemEntity): ActivityNo
   };
 }
 
+function isNestedStepFilter(child: FilterParts | StepFilter): child is StepFilter {
+  if ('on' in child && typeof child.on === 'string') {
+    return false;
+  }
+
+  return Array.isArray(child.children);
+}
+
 function mapChildFilterToDto(filterPart: FilterParts): FilterPartsDto {
   switch (filterPart.on) {
     case FilterPartTypeEnum.SUBSCRIBER:
@@ -127,18 +135,50 @@ function mapChildFilterToDto(filterPart: FilterParts): FilterPartsDto {
         on: FilterPartTypeEnum.TENANT,
       } as TenantFilterPartDto;
 
-    default:
-      throw new Error(`Unknown filter part type: ${filterPart}`);
+    default: {
+      const unknownFilterPart = filterPart as FilterParts;
+
+      throw new Error(`Unknown filter part type: ${String(unknownFilterPart.on)}`);
+    }
   }
 }
 
-function mapToFilterDto(stepFilter: StepFilter): StepFilterDto {
-  return {
-    children: stepFilter.children.map((child) => mapChildFilterToDto(child)),
+function mapStepFilterToDto(stepFilter: StepFilter): StepFilterDto[] {
+  const directChildren: FilterPartsDto[] = [];
+  const nestedFilters: StepFilterDto[] = [];
+
+  for (const child of stepFilter.children ?? []) {
+    if (isNestedStepFilter(child)) {
+      nestedFilters.push(...mapStepFilterToDto(child));
+      continue;
+    }
+
+    directChildren.push(mapChildFilterToDto(child));
+  }
+
+  if (directChildren.length === 0 && nestedFilters.length > 0) {
+    if (stepFilter.isNegated) {
+      return nestedFilters.map((nestedFilter) => ({
+        ...nestedFilter,
+        isNegated: Boolean(stepFilter.isNegated) !== Boolean(nestedFilter.isNegated),
+      }));
+    }
+
+    return nestedFilters;
+  }
+
+  const currentFilter: StepFilterDto = {
+    children: directChildren,
     isNegated: stepFilter.isNegated,
     type: stepFilter.type,
     value: stepFilter.value,
   };
+
+  return [currentFilter, ...nestedFilters];
+}
+
+function mapStepFiltersToDto(filters: StepFilter[]): StepFilterDto[] {
+  return filters.flatMap((filter) => mapStepFilterToDto(filter));
 }
 
 function convertStepToResponse(step: NotificationStepEntity): ActivityNotificationStepResponseDto {
@@ -155,8 +195,7 @@ function convertStepToResponse(step: NotificationStepEntity): ActivityNotificati
   responseDto._parentId = step._parentId || null;
 
   // Map filters
-  responseDto.filters = (step.filters || []).map(mapToFilterDto);
-
+  responseDto.filters = mapStepFiltersToDto(step.filters || []);
   // Map template if exists
   if (step.template) {
     const messageTemplateDto = new MessageTemplateDto();

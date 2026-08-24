@@ -71,7 +71,7 @@ return generateText({
   model: openai('gpt-4o-mini'),
   instructions:
     'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
-  messages: toModelMessages(ctx.history),
+  messages: toModelMessages(ctx),
   tools: { searchNovuDocs },
 });
 ```

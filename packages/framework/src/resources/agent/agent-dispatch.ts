@@ -72,8 +72,10 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
   const { agent, event, logger } = options;
 
   try {
+    ctx.queueRunStart();
     await runAgentHandler(agent, event, ctx);
     await ctx.flush();
+    await ctx.emitRunFinish({ outcome: 'completed' });
   } catch (err) {
     const error = toAgentError(err);
 
@@ -97,13 +99,19 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
     }
 
     if (!reported) {
-      await ctx.reportTurnError();
+      await ctx.reportTurnError(error.message);
+    } else {
+      await ctx.emitRunFinish({ outcome: 'completed' });
     }
   } finally {
+    // A handler that throws (e.g. a LangGraph GraphRecursionError) never produces a
+    // reply, which would otherwise leave the platform's "thinking" indicator running
+    // forever. Best-effort clear it and flush any queued signals so the turn visibly ends.
     try {
       await ctx.typing.stop();
+      await ctx.flush();
     } catch {
-      // cosmetic — never mask the original failure
+      // cosmetic — never mask the original failure; also swallows secondary delivery errors.
     }
   }
 }

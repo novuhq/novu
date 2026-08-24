@@ -94,6 +94,7 @@ Read `.cursor/rules/pullrequest.mdc` before creating.
 - Body: template sections, what/why, test plan, Mermaid for non-trivial architecture
 - Link Linear ticket; create ticket first if missing
 - Use `gh pr create` / update existing PR — do not push unless user asked
+- Enterprise submodule changed → open both PRs and cross-link the bodies (see [enterprise-submodule](../enterprise-submodule/SKILL.md))
 
 If branch diverged from `next`: fetch origin, merge/rebase, resolve simple conflicts preserving both intents; report complicated intent conflicts.
 
@@ -124,7 +125,7 @@ Before calling done:
 - Unresolved review threads addressed or replied
 - No unrelated files in the branch
 - Linear ticket linked in PR title
-- Enterprise submodule: if `enterprise/` changed, note matching enterprise PR may be required (do not "fix" submodule sync test in main repo)
+- Enterprise submodule: if `enterprise/` changed, matching enterprise PR exists and both PR bodies link each other (do not "fix" submodule sync test in main repo)
 
 Optional: load **babysit** skill when user asks to keep iterating until merge-ready.
 

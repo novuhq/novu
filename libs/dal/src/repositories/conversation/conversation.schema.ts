@@ -12,6 +12,10 @@ const conversationSchema = new Schema<ConversationDBModel>(
       type: Schema.Types.ObjectId,
       required: true,
     },
+    _notificationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Notification',
+    },
     participants: {
       type: [
         new Schema(
@@ -50,6 +54,14 @@ const conversationSchema = new Schema<ConversationDBModel>(
             },
             firstPlatformMessageId: {
               type: Schema.Types.String,
+            },
+            workspace: {
+              type: new Schema(
+                {
+                  id: { type: Schema.Types.String, required: true },
+                },
+                { _id: false }
+              ),
             },
           },
           { _id: false }
@@ -122,6 +134,14 @@ const conversationSchema = new Schema<ConversationDBModel>(
     isDirectMessage: {
       type: Schema.Types.Boolean,
     },
+    eventSequence: {
+      type: Schema.Types.Number,
+      default: 0,
+    },
+    contextKeys: {
+      type: [Schema.Types.String],
+      default: undefined,
+    },
     lastActivityAt: {
       type: Schema.Types.String,
     },
@@ -142,6 +162,8 @@ const conversationSchema = new Schema<ConversationDBModel>(
 conversationSchema.index({ _environmentId: 1, identifier: 1 }, { unique: true });
 conversationSchema.index({ _environmentId: 1, 'channels.platformThreadId': 1 });
 conversationSchema.index({ _environmentId: 1, 'participants.id': 1, status: 1 });
+// Multikey alone — do not compound with participants (Mongo forbids parallel arrays).
+conversationSchema.index({ _environmentId: 1, contextKeys: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, _id: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, createdAt: 1 });
 conversationSchema.index({ _environmentId: 1, _agentId: 1, lastActivityAt: 1 });

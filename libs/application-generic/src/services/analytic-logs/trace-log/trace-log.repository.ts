@@ -522,6 +522,16 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Chat phone missing';
     case 'chat_some_channels_skipped':
       return 'Chat some channels skipped';
+    case 'chat_agent_integration_not_linked':
+      return 'Chat integration not linked to the assigned agent';
+    case 'chat_agent_unsupported_endpoint':
+      return 'Chat agent unsupported endpoint';
+    case 'chat_agent_no_eligible_channels':
+      return 'Chat agent has no eligible channels';
+    case 'chat_agent_channels_fallback':
+      return 'Fell back to subscriber chat channels';
+    case 'chat_agent_platform_thread_persist_failed':
+      return 'Chat agent platform thread persist failed';
 
     // MS Teams events
     case 'msteams_bot_not_installed':
@@ -616,6 +626,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Step skipped events
     case 'step_skipped':
       return 'Step skipped';
+    case 'step_conditions_passed':
+      return 'Step conditions matched';
     case 'step_skipped_outside_of_the_schedule':
       return "The step was skipped as it fell outside the subscriber's schedule";
     case 'step_extended_to_schedule':

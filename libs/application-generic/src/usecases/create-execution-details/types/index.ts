@@ -7,6 +7,11 @@ export enum DetailEnum {
   CHAT_ALL_CHANNELS_FAILED = 'All chat channels failed to send the message',
   CHAT_SOME_CHANNELS_SKIPPED = 'Some chat channels skipped to send the message',
   CHAT_MISSING_PHONE_NUMBER = 'Subscriber is missing a phone number',
+  CHAT_AGENT_INTEGRATION_NOT_LINKED = 'Chat integration is not linked to the assigned agent',
+  CHAT_AGENT_UNSUPPORTED_ENDPOINT = 'Agent-assigned chat only supports Slack user and channel endpoints',
+  CHAT_AGENT_NO_ELIGIBLE_CHANNELS = 'No agent-linked Slack channels available for delivery',
+  CHAT_AGENT_CHANNELS_FALLBACK = 'Fell back to subscriber chat channels',
+  CHAT_AGENT_PLATFORM_THREAD_PERSIST_FAILED = 'Failed to persist platform thread on message for conversation hydration',
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',
@@ -55,6 +60,12 @@ export enum DetailEnum {
   PROCESSING_STEP_FILTER = 'Processing step filter',
   PROCESSING_STEP_FILTER_ERROR = 'Processing step filter failed',
   SKIPPED_STEP_BY_CONDITIONS = 'Step was skipped based on steps conditions',
+  /**
+   * Records only the condition evaluation result — the step can still be
+   * skipped downstream (e.g. missing email/phone/push token), which is
+   * reported by its own execution detail.
+   */
+  STEP_CONDITIONS_PASSED = 'Step conditions matched',
   SKIPPED_STEP_OUTSIDE_OF_THE_SCHEDULE = "The step was skipped as it fell outside the subscriber's schedule",
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_SUBSCRIBER_WORKFLOW_PREFERENCES = 'Step filtered by subscriber workflow preferences',

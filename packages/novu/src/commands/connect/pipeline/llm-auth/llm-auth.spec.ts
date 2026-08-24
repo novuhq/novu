@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateAgentNextConfigSource } from './codegen/generate-agent-next-config';
 import { generateSupportAgentSource } from './codegen/generate-support-agent';
-import { getLlmAuthPickerOptions } from './llm-auth-options';
+import { describeLlmAuthChoice, getLlmAuthPickerOptions } from './llm-auth-options';
 import { resolveLlmAuthEnvVars, resolveLlmAuthPackageDependencies, resolveLlmAuthPackages } from './registry';
 
 describe('llm-auth registry', () => {
@@ -10,6 +10,9 @@ describe('llm-auth registry', () => {
     expect(resolveLlmAuthPackages('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' })).toEqual([
       '@langchain/openai',
     ]);
+    expect(resolveLlmAuthPackageDependencies('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' })).toEqual({
+      '@langchain/openai': '^1.0.0',
+    });
   });
 
   it('writes API keys to env vars', () => {
@@ -42,11 +45,37 @@ describe('generateAgentNextConfigSource', () => {
     expect(source).toContain("'@openai/codex'");
   });
 
-  it('omits serverExternalPackages for API key scaffolds', () => {
+  it('omits serverExternalPackages for AI SDK API key scaffolds', () => {
     const source = generateAgentNextConfigSource('ai-sdk', { kind: 'openai-api-key', apiKey: 'sk-test' });
 
     expect(source).toContain('turbopack');
     expect(source).not.toContain('serverExternalPackages');
+  });
+
+  it('externalizes LangChain base packages plus the selected OpenAI provider', () => {
+    const source = generateAgentNextConfigSource('langchain', { kind: 'openai-api-key', apiKey: 'sk-test' });
+
+    expect(source).toContain('serverExternalPackages');
+    expect(source).toContain("'langchain'");
+    expect(source).toContain("'@langchain/core'");
+    expect(source).toContain("'@langchain/openai'");
+  });
+
+  it('externalizes common LangChain providers even when LLM auth is skipped', () => {
+    const source = generateAgentNextConfigSource('langchain', { kind: 'skip' });
+
+    expect(source).toContain("'langchain'");
+    expect(source).toContain("'@langchain/openai'");
+    expect(source).toContain("'@langchain/anthropic'");
+    expect(source).toContain("'@langchain/google-genai'");
+  });
+
+  it('includes Codex OAuth alongside LangChain packages for subscription scaffolds', () => {
+    const source = generateAgentNextConfigSource('langchain', { kind: 'codex-subscription' });
+
+    expect(source).toContain("'langchain'");
+    expect(source).toContain("'langchainjs-codex-oauth'");
+    expect(source).toContain("'@langchain/openai'");
   });
 });
 
@@ -57,6 +86,11 @@ describe('llm-auth picker options', () => {
 
     expect(aiSdkKinds).toContain('claude-subscription');
     expect(langChainKinds).not.toContain('claude-subscription');
+  });
+
+  it('describes scaffold wiring choices for confirm screens', () => {
+    expect(describeLlmAuthChoice({ kind: 'claude-subscription' })).toContain('Claude Code');
+    expect(describeLlmAuthChoice({ kind: 'skip' })).toContain('echo');
   });
 });
 
@@ -76,6 +110,18 @@ describe('generateSupportAgentSource', () => {
     expect(source).not.toContain('demo agent');
   });
 
+  it('generates wired LangChain OpenAI handler with a model string', () => {
+    const source = generateSupportAgentSource({
+      runtime: 'langchain',
+      agentIdentifier: 'support-agent',
+      llmAuth: { kind: 'openai-api-key', apiKey: 'sk-test' },
+    });
+
+    expect(source).toContain("model: 'openai:gpt-4o-mini'");
+    expect(source).toContain('tools: [searchNovuDocs]');
+    expect(source).not.toContain('ChatOpenAI');
+  });
+
   it('generates wired LangChain Anthropic handler', () => {
     const source = generateSupportAgentSource({
       runtime: 'langchain',
@@ -88,6 +134,7 @@ describe('generateSupportAgentSource', () => {
     expect(source).toContain('tools: [searchNovuDocs]');
     expect(source).toContain("toolCall.name === 'searchNovuDocs'");
     expect(source).toContain('export const myAgent');
+    expect(source).not.toContain('ChatAnthropic');
   });
 
   it('generates wired LangChain Codex subscription handler with tools', () => {

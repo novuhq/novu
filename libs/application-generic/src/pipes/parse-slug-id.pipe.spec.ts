@@ -1,6 +1,8 @@
 import { ArgumentMetadata } from '@nestjs/common';
+import { ShortIsPrefixEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { encodeBase62 } from '../utils/base62';
+import { buildSlug } from '../utils/build-slug';
 import { ParseSlugIdPipe } from './parse-slug-id.pipe';
 
 describe('ParseSlugIdPipe', () => {
@@ -22,7 +24,7 @@ describe('ParseSlugIdPipe', () => {
     });
   });
 
-  describe('Short resource identifiers', () => {
+  describe('Resource identifiers', () => {
     it('should return short workflow identifiers unchanged', () => {
       const identifier = 'welcome-email';
       expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
@@ -42,48 +44,95 @@ describe('ParseSlugIdPipe', () => {
       const identifier = 'sendgrid-prod';
       expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
     });
+
+    it('should return long workflow identifiers unchanged', () => {
+      const identifier = 'dailyDigestPatient';
+      expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
+    });
+
+    /*
+     * Any 16-character base62 string decodes into a syntactically valid ObjectId,
+     * so identifiers of exactly that length used to be swallowed by the decoder.
+     */
+    it('should return identifiers of exactly the encoded ID length unchanged', () => {
+      const identifier = 'exerciseReminder';
+      expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
+    });
+
+    it('should return identifiers containing underscores unchanged', () => {
+      const identifier = 'welcome_emailToNewUsers1';
+      expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
+    });
+
+    it('should return identifiers that look like an unnamed slug unchanged', () => {
+      const identifier = `${ShortIsPrefixEnum.WORKFLOW}${encodeBase62('6615943e7ace93b0540ae377')}`;
+      expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
+    });
   });
 
   describe('Slug IDs with various prefixes', () => {
     it('should decode workflow slug IDs', () => {
       const internalId = '6615943e7ace93b0540ae377';
       const encodedId = encodeBase62(internalId);
-      const slugId = `welcome-email_wf_${encodedId}`;
+      const slugId = `welcome-email_${ShortIsPrefixEnum.WORKFLOW}${encodedId}`;
 
       expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
     });
 
-    it('should decode template slug IDs', () => {
+    it('should decode step slug IDs', () => {
       const internalId = '507f1f77bcf86cd799439011';
       const encodedId = encodeBase62(internalId);
-      const slugId = `email-template_et_${encodedId}`;
+      const slugId = `email-step_${ShortIsPrefixEnum.STEP}${encodedId}`;
 
       expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
     });
 
-    it('should decode topic slug IDs', () => {
+    it('should decode environment slug IDs', () => {
       const internalId = '507f191e810c19729de860ea';
       const encodedId = encodeBase62(internalId);
-      const slugId = `newsletter-subscribers_tp_${encodedId}`;
+      const slugId = `prod_${ShortIsPrefixEnum.ENVIRONMENT}${encodedId}`;
 
       expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
     });
 
-    it('should decode integration slug IDs', () => {
+    it('should decode layout slug IDs', () => {
       const internalId = '65f1234567890abcdef12345';
       const encodedId = encodeBase62(internalId);
-      const slugId = `sendgrid-production_ig_${encodedId}`;
+      const slugId = `default-layout_${ShortIsPrefixEnum.LAYOUT}${encodedId}`;
 
       expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
     });
 
-    it('should decode slug IDs with any prefix format', () => {
+    it('should decode step slug IDs built with the legacy step prefix', () => {
       const internalId = '6615943e7ace93b0540ae377';
       const encodedId = encodeBase62(internalId);
-      const slugId = `my-custom-resource_cr_${encodedId}`;
+      const slugId = `email-step_stp_${encodedId}`;
 
       expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
     });
+
+    it('should not decode slug IDs with an unknown prefix', () => {
+      const encodedId = encodeBase62('6615943e7ace93b0540ae377');
+      const slugId = `my-custom-resource_cr_${encodedId}`;
+
+      expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(slugId);
+    });
+  });
+
+  describe('Slugs produced by buildSlug', () => {
+    const internalIds = ['6615943e7ace93b0540ae377', '0615943e7ace93b0540ae377', '0015943e7ace93b0540ae377'];
+    const names = ['Welcome Email', 'daily-digest', '日本語', 'a'];
+
+    for (const prefix of Object.values(ShortIsPrefixEnum)) {
+      it(`should decode every slug built with the '${prefix}' prefix`, () => {
+        for (const name of names) {
+          for (const internalId of internalIds) {
+            const slugId = buildSlug(name, prefix, internalId);
+            expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
+          }
+        }
+      });
+    }
   });
 
   describe('Internal IDs with leading zeros in slug format', () => {
@@ -92,7 +141,7 @@ describe('ParseSlugIdPipe', () => {
 
       internalIds.forEach((internalId) => {
         const encodedId = encodeBase62(internalId);
-        const slugId = `resource_prefix_${encodedId}`;
+        const slugId = `resource_${ShortIsPrefixEnum.WORKFLOW}${encodedId}`;
         expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
       });
     });
@@ -107,6 +156,11 @@ describe('ParseSlugIdPipe', () => {
     it('should return malformed slug IDs unchanged', () => {
       const malformedSlugId = 'resource_bad_encoding123';
       expect(pipe.transform(malformedSlugId, {} as ArgumentMetadata)).to.equal(malformedSlugId);
+    });
+
+    it('should return slug IDs whose encoded part is not an ObjectId unchanged', () => {
+      const slugId = `resource_${ShortIsPrefixEnum.WORKFLOW}0000000000000000`;
+      expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(slugId);
     });
 
     it('should handle empty strings', () => {
@@ -127,7 +181,7 @@ describe('ParseSlugIdPipe', () => {
       const internalId = '6615943e7ace93b0540ae377';
       const encodedId = encodeBase62(internalId);
       const longResourceName = 'very-long-resource-name-that-exceeds-normal-length';
-      const slugId = `${longResourceName}_prefix_${encodedId}`;
+      const slugId = `${longResourceName}_${ShortIsPrefixEnum.WORKFLOW}${encodedId}`;
 
       expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
     });
@@ -136,15 +190,15 @@ describe('ParseSlugIdPipe', () => {
       const internalId = '6615943e7ace93b0540ae377';
       const encodedId = encodeBase62(internalId);
       const specialResourceName = 'resource-with-dashes_and_underscores';
-      const slugId = `${specialResourceName}_prefix_${encodedId}`;
+      const slugId = `${specialResourceName}_${ShortIsPrefixEnum.WORKFLOW}${encodedId}`;
 
       expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
     });
 
     it('should prioritize exact matches over decoding attempts', () => {
-      // If a value looks like it could be decoded but is actually a valid short identifier
-      const shortIdentifier = 'exactly-15-chars'; // 15 characters, less than ENCODED_ID_LENGTH
-      expect(pipe.transform(shortIdentifier, {} as ArgumentMetadata)).to.equal(shortIdentifier);
+      // If a value looks like it could be decoded but is actually a valid identifier
+      const identifier = 'exactly-16-chars';
+      expect(pipe.transform(identifier, {} as ArgumentMetadata)).to.equal(identifier);
     });
   });
 });

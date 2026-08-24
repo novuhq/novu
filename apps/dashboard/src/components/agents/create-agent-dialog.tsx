@@ -27,6 +27,7 @@ import { useAgentSuggestions } from '@/hooks/use-agent-suggestions';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
 import { AGENTS_DOCS_OVERVIEW_URL } from '@/utils/agent-docs';
@@ -44,7 +45,6 @@ import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
 } from './connectors/connector-integration-dropdown';
-import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import {
   type ConnectorId,
   type ConnectorOption,
@@ -743,6 +743,7 @@ export function CreateAgentDialog({
                 integrations={integrations}
                 status={dropdownStatus}
                 showStatusBadge={showSavedBadge}
+                disabled={isSubmitBusy}
                 onSelectConnector={handleSelectConnector}
                 onSelectIntegration={handleSelectIntegration}
                 onRequestSetupCredentials={handleRequestSetupCredentials}

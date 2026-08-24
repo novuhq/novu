@@ -15,12 +15,14 @@ const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    limitInBytes: 216_000,
+    // Raised for agent conversation runtime (NV-8640) and protocol validation (NV-8644).
+    limitInBytes: 235_000,
   },
   {
     name: 'UMD gzip',
     filePath: umdGzipPath,
-    limitInBytes: 60_000,
+    // NV-8644 runtime envelope validation adds ~150 B gzip over the NV-8640 baseline.
+    limitInBytes: 65_000,
   },
 ];
 

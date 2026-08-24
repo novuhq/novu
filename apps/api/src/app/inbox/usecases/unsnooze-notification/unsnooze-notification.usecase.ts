@@ -2,7 +2,9 @@ import { BadRequestException, Injectable, InternalServerErrorException, NotFound
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeferReasonEnum,
   DetailEnum,
+  EventBridgeSchedulerService,
   PinoLogger,
 } from '@novu/application-generic';
 import { ChannelTypeEnum, JobEntity, JobRepository, JobStatusEnum, MessageRepository } from '@novu/dal';
@@ -21,7 +23,8 @@ export class UnsnoozeNotification {
     private jobRepository: JobRepository,
     private markNotificationAs: MarkNotificationAs,
     private createExecutionDetails: CreateExecutionDetails,
-    private getSubscriber: GetSubscriber
+    private getSubscriber: GetSubscriber,
+    private schedulerService: EventBridgeSchedulerService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -72,7 +75,8 @@ export class UnsnoozeNotification {
         _notificationId: notificationId,
         _environmentId: command.environmentId,
         delay: { $exists: true },
-        status: JobStatusEnum.PENDING,
+        // PENDING kept for unsnooze jobs created before the switch to DELAYED
+        status: { $in: [JobStatusEnum.DELAYED, JobStatusEnum.PENDING] },
         'payload.unsnooze': true,
       });
 
@@ -89,6 +93,8 @@ export class UnsnoozeNotification {
     });
 
     if (scheduledJob) {
+      this.deleteSnoozeSchedule(scheduledJob);
+
       // fire and forget
       this.createExecutionDetails
         .execute(
@@ -112,5 +118,25 @@ export class UnsnoozeNotification {
     }
 
     return unsnoozedNotification;
+  }
+
+  /**
+   * Snooze is the one defer reason whose schedule is worth removing: the job
+   * document has just been deleted, so a later fire would find nothing and
+   * churn through SQS redeliveries until the redrive policy gives up. Every
+   * other reason relies on the fire happening and `RunJob` deciding it is a
+   * no-op. Best effort by design - the unsnooze has already been committed and
+   * a leftover schedule is only noise, never a correctness problem.
+   */
+  private deleteSnoozeSchedule(job: JobEntity): void {
+    this.schedulerService
+      .deleteSchedule({
+        deferReason: DeferReasonEnum.SNOOZE,
+        organizationId: job._organizationId,
+        scheduleId: job._id,
+      })
+      .catch((error) => {
+        this.logger.warn({ err: error, jobId: job._id }, 'Failed to delete the snooze schedule');
+      });
   }
 }

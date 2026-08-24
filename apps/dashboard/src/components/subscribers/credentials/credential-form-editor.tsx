@@ -8,19 +8,22 @@ type CredentialFormEditorProps = {
   fields: CredentialField[];
   onSave: (values: Record<string, string>) => Promise<boolean>;
   onCancel: () => void;
+  /** Called after a successful save. Defaults to `onCancel` when omitted. */
+  onSaved?: () => void;
 };
 
 /**
  * Inline form for adding a new credential. Uses the same labeled inputs and
  * check · close actions as the edit flow in {@link CredentialFormRow}.
  */
-export function CredentialFormEditor({ fields, onSave, onCancel }: CredentialFormEditorProps) {
+export function CredentialFormEditor({ fields, onSave, onCancel, onSaved }: CredentialFormEditorProps) {
   const baseId = useId();
 
   const { draft, setField, showErrors, isSaving, hasUnsavedCredential, save, cancel } = useCredentialFormDraft({
     fields,
     onSave,
     onCancel,
+    onSaved,
   });
 
   return (

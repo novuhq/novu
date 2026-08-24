@@ -8,6 +8,7 @@ import {
   getInboundActivityPreview,
   INBOUND_ATTACHMENT_ONLY_PREVIEW,
 } from './agent-conversation.service';
+import { ConversationActivityLedger } from './conversation-activity-ledger';
 
 describe('AgentConversationService', () => {
   function makeLogger() {
@@ -34,6 +35,60 @@ describe('AgentConversationService', () => {
       firstMessageText: 'hello',
     };
   }
+
+  function makeLedger(overrides: Partial<Record<keyof ConversationActivityLedger, sinon.SinonStub>> = {}) {
+    return {
+      persistAgentMessage: sinon.stub().resolves({ activity: {}, created: true }),
+      persistWorkflowOriginHydration: sinon.stub().resolves(undefined),
+      isWorkflowOriginHydrated: sinon.stub().resolves(false),
+      persistMcpConnectionRequest: sinon.stub().resolves({}),
+      persistMcpConnectionResult: sinon.stub().resolves({}),
+      persistToolResult: sinon.stub().resolves(undefined),
+      persistInboundMessage: sinon.stub().resolves({}),
+      persistResolveSignal: sinon.stub().resolves(undefined),
+      persistTriggerSignal: sinon.stub().resolves(undefined),
+      persistRunLifecycle: sinon.stub().resolves(null),
+      listForView: sinon.stub().resolves({ data: [], hasMore: false }),
+      mint: sinon.stub().resolves(1),
+      ...overrides,
+    } as unknown as ConversationActivityLedger;
+  }
+
+  function makeService(
+    conversationRepository: ConversationRepository,
+    ledger: ConversationActivityLedger = makeLedger()
+  ) {
+    return new AgentConversationService(conversationRepository, ledger, makeLogger() as any);
+  }
+
+  describe('delegation', () => {
+    it('delegates persistAgentMessage to the ledger', async () => {
+      const ledger = makeLedger();
+      const service = makeService({} as unknown as ConversationRepository, ledger);
+      const params = {
+        conversationId: 'conv-1',
+        channel: { platform: 'slack', _integrationId: 'int-1', platformThreadId: 'thread-1' },
+        agentIdentifier: 'agent-a',
+        content: 'hello',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      };
+
+      await service.persistAgentMessage(params);
+
+      expect(ledger.persistAgentMessage.calledOnceWithExactly(params)).to.equal(true);
+    });
+
+    it('delegates mintEventSequence to the ledger', async () => {
+      const ledger = makeLedger();
+      const service = makeService({} as unknown as ConversationRepository, ledger);
+      const params = { environmentId: 'env-1', organizationId: 'org-1', conversationId: 'conv-1' };
+
+      await service.mintEventSequence(params);
+
+      expect(ledger.mint.calledOnceWithExactly(params)).to.equal(true);
+    });
+  });
 
   describe('getConversationTitle', () => {
     it('returns trimmed text truncated to 200 characters', () => {
@@ -75,7 +130,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = makeService(conversationRepository);
 
     await service.createOrGetConversation({
       ...baseCreateParams(),
@@ -84,6 +139,121 @@ describe('AgentConversationService', () => {
 
     expect(create.calledOnce).to.equal(true);
     expect(create.firstCall.args[0].title).to.equal(DEFAULT_CONVERSATION_TITLE);
+  });
+
+  it('stamps sorted contextKeys on create when provided', async () => {
+    const create = sinon.stub().resolves({
+      _id: 'new-conv',
+      participants: [],
+      channels: [],
+      status: ConversationStatusEnum.ACTIVE,
+    });
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(null),
+      create,
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = makeService(conversationRepository);
+
+    await service.createOrGetConversation({
+      ...baseCreateParams(),
+      platform: 'agent_chat',
+      contextKeys: ['tenant:acme', 'app:billing'],
+    });
+
+    expect(create.calledOnce).to.equal(true);
+    expect(create.firstCall.args[0].contextKeys).to.deep.equal(['app:billing', 'tenant:acme']);
+  });
+
+  it('rejects reuse when stored conversation has contextKeys but caller omits them', async () => {
+    const existing = {
+      _id: 'existing-conv',
+      status: ConversationStatusEnum.ACTIVE,
+      participants: [{ type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub-1' }],
+      channels: [],
+      contextKeys: ['tenant:acme'],
+    };
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(existing),
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = makeService(conversationRepository);
+
+    let threw = false;
+    try {
+      await service.createOrGetConversation({
+        ...baseCreateParams(),
+        platform: 'agent_chat',
+      });
+    } catch (err) {
+      threw = true;
+      expect((err as Error).message).to.equal('Conversation context mismatch');
+    }
+    expect(threw).to.equal(true);
+  });
+
+  it('rejects reuse when session contextKeys do not match stored conversation', async () => {
+    const existing = {
+      _id: 'existing-conv',
+      status: ConversationStatusEnum.ACTIVE,
+      participants: [{ type: ConversationParticipantTypeEnum.SUBSCRIBER, id: 'sub-1' }],
+      channels: [],
+      contextKeys: ['tenant:acme'],
+    };
+
+    const findOne = sinon.stub().resolves(null);
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(existing),
+      findOne,
+      buildContextExactMatchQuery: sinon.stub().returns({ contextKeys: { $all: ['tenant:globex'], $size: 1 } }),
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = makeService(conversationRepository);
+
+    let threw = false;
+    try {
+      await service.createOrGetConversation({
+        ...baseCreateParams(),
+        platform: 'agent_chat',
+        contextKeys: ['tenant:globex'],
+      });
+    } catch (err) {
+      threw = true;
+      expect((err as Error).message).to.equal('Conversation context mismatch');
+    }
+    expect(threw).to.equal(true);
+    expect(findOne.calledOnce).to.equal(true);
+  });
+
+  it('omits contextKeys on create when not provided', async () => {
+    const create = sinon.stub().resolves({
+      _id: 'new-conv',
+      participants: [],
+      channels: [],
+      status: ConversationStatusEnum.ACTIVE,
+    });
+
+    const conversationRepository = {
+      findByPlatformThread: sinon.stub().resolves(null),
+      create,
+      updateStatus: sinon.stub(),
+      updateParticipants: sinon.stub(),
+    } as unknown as ConversationRepository;
+
+    const service = makeService(conversationRepository);
+
+    await service.createOrGetConversation(baseCreateParams());
+
+    expect(create.calledOnce).to.equal(true);
+    expect(create.firstCall.args[0]).to.not.have.property('contextKeys');
   });
 
   it('scopes createOrGetConversation lookup by agent id and integration id', async () => {
@@ -102,7 +272,7 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = makeService(conversationRepository);
 
     await service.createOrGetConversation(baseCreateParams());
 
@@ -125,10 +295,43 @@ describe('AgentConversationService', () => {
       updateParticipants: sinon.stub(),
     } as unknown as ConversationRepository;
 
-    const service = new AgentConversationService(conversationRepository, {} as any, makeLogger() as any);
+    const service = makeService(conversationRepository);
 
     await service.findByPlatformThread('e', 'o', 'agent-x', 'int-x', 'thread-z');
 
     expect(findByPlatformThread.calledOnceWithExactly('e', 'o', 'agent-x', 'int-x', 'thread-z')).to.equal(true);
+  });
+
+  it('orchestrates resolveConversation across repository and ledger', async () => {
+    const updateStatus = sinon.stub().resolves(undefined);
+    const markBillingResolved = sinon.stub().resolves(undefined);
+    const clearExternalSessionId = sinon.stub().resolves(undefined);
+    const persistResolveSignal = sinon.stub().resolves(undefined);
+    const conversationRepository = {
+      updateStatus,
+      markBillingResolved,
+      clearExternalSessionId,
+    } as unknown as ConversationRepository;
+    const ledger = makeLedger({ persistResolveSignal });
+    const service = makeService(conversationRepository, ledger);
+    const params = {
+      conversationId: 'conv-1',
+      channel: { platform: 'slack', _integrationId: 'int-1', platformThreadId: 'thread-1' },
+      agentIdentifier: 'agent-a',
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      summary: 'done',
+    };
+
+    await service.resolveConversation(params);
+
+    expect(updateStatus.calledOnce).to.equal(true);
+    expect(markBillingResolved.calledOnce).to.equal(true);
+    expect(clearExternalSessionId.calledOnce).to.equal(true);
+    expect(persistResolveSignal.calledOnce).to.equal(true);
+    expect(persistResolveSignal.firstCall.args[0]).to.include({
+      content: 'done',
+      summary: 'done',
+    });
   });
 });

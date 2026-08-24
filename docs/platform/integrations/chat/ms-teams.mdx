@@ -4,10 +4,6 @@ sidebarTitle: "MS Teams"
 description: "Connect Microsoft Teams to Novu to send chat notifications through workflows. Create an incoming webhook in Teams and store the URL as a Novu credential."
 ---
 
-<Note>
-  This feature is currently in public beta, please contact us at support@novu.co to enable it for your organization.
-</Note>
-
 The Novu Microsoft Teams integration enables you to send notifications to Teams channels and direct messages (DMs) across different customer workspaces using a single multi-tenant bot.
 
 You create and host a Microsoft Teams bot in your Azure environment, and your customers then approve the app (via Admin Consent) and install it in their Teams tenants.
@@ -16,6 +12,10 @@ Once a customer connects their workspace, Novu establishes a secure channel conn
 
 <Note>
   Check out the [agents](/agents) documentation for more information on how to build agents using Microsoft Teams.
+</Note>
+
+<Note>
+  Compose rich Chat step content with the [block editor](/platform/integrations/chat/writing-chat-template), or keep a plain-text / Liquid body. Novu renders shared cards as Microsoft Teams Adaptive Cards. Use provider overrides when you need Teams-native payloads beyond the shared card model.
 </Note>
 
 ## Prerequisites

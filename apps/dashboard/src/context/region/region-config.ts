@@ -97,13 +97,13 @@ export const REGIONS: RegionConfig[] = parseRegionsFromEnv();
 /**
  * Map of region code to region config
  */
-export const REGION_MAP = new Map<string, RegionConfig>(REGIONS.map((region) => [region.code, region]));
+const REGION_MAP = new Map<string, RegionConfig>(REGIONS.map((region) => [region.code, region]));
 
 /**
  * Map of AWS region to region code
  * Used for detecting region from organization metadata
  */
-export const AWS_REGION_TO_CODE_MAP = new Map<string, string>(REGIONS.map((region) => [region.awsRegion, region.code]));
+const AWS_REGION_TO_CODE_MAP = new Map<string, string>(REGIONS.map((region) => [region.awsRegion, region.code]));
 
 /**
  * Default region (first region in the list)

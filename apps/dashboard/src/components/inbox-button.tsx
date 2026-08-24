@@ -1,10 +1,14 @@
 import { useUser } from '@clerk/react';
 import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { getNovuInboxContext } from '@/api/novu-context';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { APP_ID, IS_SELF_HOSTED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { HeaderButton } from './header-navigation/header-button';
@@ -102,6 +106,7 @@ export const InboxButton = ({
   const { currentEnvironment } = useEnvironment();
   const { isWorkflowEditorPage: isTestPage } = useWorkflowEditorPage();
   const { currentOrganization } = useAuth();
+  const isNovuCopilotSlackEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NOVU_COPILOT_SLACK_ENABLED, false);
 
   const appId = isTestPage ? currentEnvironment?.identifier : APP_ID;
   const localizationTestSuffix = isTestPage ? ' (Test)' : '';
@@ -111,21 +116,37 @@ export const InboxButton = ({
 
   const subscriber = useMemo(
     () => ({
-      subscriberId: isTestPage ? (user?.externalId ?? '') : `org_${currentOrganization?._id}:user_${user?.externalId}`,
+      subscriberId: user?.externalId ?? '',
       email: user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
     }),
-    [
-      isTestPage,
-      user?.externalId,
-      user?.primaryEmailAddress?.emailAddress,
-      user?.emailAddresses,
-      user?.firstName,
-      user?.lastName,
-      currentOrganization?._id,
-    ]
+    [user?.externalId, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses, user?.firstName, user?.lastName]
   );
+
+  // On the (non-test) dashboard Inbox we authenticate against Novu's own production account with the
+  // shared APP_ID and the `<userId>` subscriber. If that production integration has HMAC enabled,
+  // the session must carry a server-minted subscriberHash (+ tenant context/contextHash), so we mint
+  // it the same way the NovuCopilot connect flow does. The test page talks to the customer's own
+  // environment where none of this applies, hence it stays disabled there.
+  const { data: connectContext } = useQuery({
+    queryKey: ['novu-context', currentEnvironment?._id, subscriber.subscriberId],
+    queryFn: ({ signal }) => {
+      if (!currentEnvironment) {
+        throw new Error('No environment selected');
+      }
+
+      return getNovuInboxContext(currentEnvironment, signal);
+    },
+    enabled:
+      isNovuCopilotSlackEnabled &&
+      !isTestPage &&
+      !IS_SELF_HOSTED &&
+      !!currentEnvironment?._id &&
+      !!currentOrganization?._id &&
+      !!user?.externalId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const localization = useMemo(
     () => ({
@@ -152,6 +173,9 @@ export const InboxButton = ({
       applicationIdentifier={appId}
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
+      subscriberHash={isTestPage ? undefined : connectContext?.subscriberHash}
+      context={isTestPage ? undefined : connectContext?.context}
+      contextHash={isTestPage ? undefined : connectContext?.contextHash}
       localization={localization}
     >
       <InboxInner align={align} side={side} />

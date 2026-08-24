@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import type { AgentChatRawMessage } from '@novu/chat-adapter-agent-chat';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -12,7 +13,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES, isDashboardAgentChatSubscriberId } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -20,6 +21,7 @@ import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.s
 import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import {
@@ -36,6 +38,8 @@ import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
+import { asRecord } from '../../shared/util/raw-record';
+import { extractWorkspaceId } from '../../shared/util/workspace-id';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
@@ -50,8 +54,10 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
+import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
+import { WorkflowOriginService } from './workflow-origin.service';
 
 /**
  * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
@@ -126,14 +132,6 @@ function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement 
   };
 }
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  if (!value || typeof value !== 'object') {
-    return undefined;
-  }
-
-  return value as Record<string, unknown>;
-}
-
 function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
   const raw = asRecord(message.raw);
 
@@ -184,6 +182,14 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   }
 
   return `${thread.id}${threadRoot}`;
+}
+
+function getActionPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, action: AgentAction): string {
+  if (platform !== AgentPlatformEnum.SLACK || !action.sourceMessageId || !thread.id.endsWith(':')) {
+    return thread.id;
+  }
+
+  return `${thread.id}${action.sourceMessageId}`;
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -239,6 +245,8 @@ export interface InboundReactionEvent {
   message?: Message;
   thread?: Thread;
   user?: { userId: string; fullName?: string; userName?: string };
+  /** Raw platform payload, used to resolve the connect-time context (e.g. Slack `team_id`). */
+  raw?: unknown;
 }
 
 @Injectable()
@@ -262,7 +270,9 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
     private readonly inboundAck: InboundAckService,
-    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor
+    private readonly connectionContextResolver: InboundConnectionContextResolver,
+    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
+    private readonly workflowOriginService: WorkflowOriginService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -271,7 +281,8 @@ export class AgentInboundHandler implements OnModuleInit {
     this.inboundDispatcher.registerInboundCallbacks({
       onMessage: (agentId, config, thread, message) =>
         this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE),
-      onAction: (agentId, config, thread, action, userId) => this.handleAction(agentId, config, thread, action, userId),
+      onAction: (agentId, config, thread, action, userId, rawEvent) =>
+        this.handleAction(agentId, config, thread, action, userId, rawEvent),
       onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
     });
   }
@@ -343,7 +354,13 @@ export class AgentInboundHandler implements OnModuleInit {
             config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
         });
       } else {
-        resolution = await this.resolveSubscriber(agentId, config, message.author.userId, 'resolve-subscriber');
+        resolution = await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId: message.author.userId,
+          operation: 'resolve-subscriber',
+          authorIsBot: message.author.isBot === true,
+        });
       }
     } catch (err) {
       if (err instanceof BotAuthorSkippedError) {
@@ -379,11 +396,16 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const subscriberId = getResolvedSubscriberId(resolution);
+    const isDashboardTester = isDashboardAgentChatSubscriberId(subscriberId);
 
     // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
     // `BotAuthorSkippedError` above). This — not the raw webhook POST — is what
     // marks the agent–integration link connected and completes onboarding.
-    await this.markIntegrationConnectedOnFirstMessage(agentId, config);
+    // The dashboard Agent Chat tester uses a reserved subscriber the install
+    // prompt never copies, so those turns must not stamp Connected.
+    if (!isDashboardTester) {
+      await this.markIntegrationConnectedOnFirstMessage(agentId, config);
+    }
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
 
@@ -407,23 +429,53 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    // Persist only after the gate. For an existing thread this reconciles
-    // participants and reopens a RESOLVED conversation; for a brand-new one it
-    // creates the Conversation that the gate just cleared.
-    const conversation = await this.openConversation(
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
       config,
-      message,
-      subscriberId,
       platformThreadId,
-      thread.isDM
-    );
+      subscriberId,
+      message,
+      existingConversation,
+      isDirectMessage: thread.isDM,
+    });
+
+    const conversation = await this.conversationService.createOrGetConversation({
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      agentId,
+      platform: config.platform,
+      integrationId: config.integrationId,
+      platformThreadId,
+      participantId: subscriberId ?? `${config.platform}:${message.author.userId}`,
+      participantType: subscriberId
+        ? ConversationParticipantTypeEnum.SUBSCRIBER
+        : ConversationParticipantTypeEnum.PLATFORM_USER,
+      platformUserId: message.author.userId,
+      firstMessageText: resolveInboundFirstMessageText(config.platform, message),
+      isDirectMessage: thread.isDM,
+      workspaceId: extractWorkspaceId(config.platform, message.raw) ?? undefined,
+      identifier: this.agentChatConversationIdentifier(config.platform, platformThreadId),
+      notificationId: workflowOriginResolution?.notificationId,
+      contextKeys:
+        config.platform === AgentPlatformEnum.AGENT_CHAT
+          ? ((message.raw as AgentChatRawMessage | undefined)?.contextKeys ?? [])
+          : undefined,
+    });
+
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      resolution: workflowOriginResolution,
+    });
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
 
       if (!aiEnabled) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -433,7 +485,7 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       if (await this.isKeylessDemoCapReached(config, conversation._id)) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+        await this.postKeylessSignupCta(agentId, config, thread, conversation);
 
         return;
       }
@@ -471,6 +523,12 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      message.raw,
+      message.author?.userId
+    );
+
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -478,12 +536,15 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
+      bridgeUrlOverride,
       subscriberResolution: resolution,
       message,
       event,
       thread,
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
@@ -587,32 +648,16 @@ export class AgentInboundHandler implements OnModuleInit {
     return this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
   }
 
-  private async openConversation(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    message: Message,
-    subscriberId: string | null,
-    platformThreadId: string,
-    isDirectMessage: boolean
-  ): Promise<ConversationEntity> {
-    const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
-    const participantType = subscriberId
-      ? ConversationParticipantTypeEnum.SUBSCRIBER
-      : ConversationParticipantTypeEnum.PLATFORM_USER;
+  /**
+   * Public conversation identifier is bare `conv_*`; chat-sdk thread ids are
+   * `agent_chat:conv_*` so the registry can resolve the adapter by prefix.
+   */
+  private agentChatConversationIdentifier(platform: AgentPlatformEnum, platformThreadId: string): string | undefined {
+    if (platform !== AgentPlatformEnum.AGENT_CHAT) {
+      return undefined;
+    }
 
-    return this.conversationService.createOrGetConversation({
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      agentId,
-      platform: config.platform,
-      integrationId: config.integrationId,
-      platformThreadId,
-      participantId,
-      participantType,
-      platformUserId: message.author.userId,
-      firstMessageText: resolveInboundFirstMessageText(config.platform, message),
-      isDirectMessage,
-    });
+    return platformThreadId.startsWith('agent_chat:') ? platformThreadId.slice('agent_chat:'.length) : platformThreadId;
   }
 
   private async storeInboundAttachments(
@@ -675,6 +720,7 @@ export class AgentInboundHandler implements OnModuleInit {
       richContent,
       hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
+      identifier: config.platform === AgentPlatformEnum.AGENT_CHAT ? message.id : undefined,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
@@ -724,12 +770,30 @@ export class AgentInboundHandler implements OnModuleInit {
    * `error` outcome instead of being flattened to `null`, so downstream gates
    * (and their logs) can tell "no such subscriber" apart from "resolution broke".
    */
-  private async resolveSubscriber(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    platformUserId: string,
-    operation: string
-  ): Promise<SubscriberResolution> {
+  private async resolveSubscriber({
+    agentId,
+    config,
+    platformUserId,
+    operation,
+    authorIsBot,
+  }: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    platformUserId: string;
+    operation: string;
+    authorIsBot: boolean;
+  }): Promise<SubscriberResolution> {
+    if (authorIsBot) {
+      this.analyticsService.track('[Agent Platform] - Bot author inbound skipped', config.organizationId, {
+        _organization: config.organizationId,
+        environmentId: config.environmentId,
+        platform: config.platform,
+        agentIdentifier: config.agentIdentifier,
+      });
+
+      throw new BotAuthorSkippedError(config.platform, platformUserId);
+    }
+
     try {
       return await this.subscriberResolver.resolveSubscriber({
         environmentId: config.environmentId,
@@ -773,7 +837,7 @@ export class AgentInboundHandler implements OnModuleInit {
       environmentId: config.environmentId,
       organizationId: config.organizationId,
       integrationId: config.integrationId,
-      agentIdentifier: config.agentIdentifier,
+      linkScope: agentTelegramLinkScope(config.agentIdentifier),
     });
 
     if (result.status === 'mismatch') {
@@ -789,10 +853,12 @@ export class AgentInboundHandler implements OnModuleInit {
           LinkTelegramChatToSubscriberCommand.create({
             environmentId: payload._environmentId,
             organizationId: payload._organizationId,
-            agentIdentifier: payload.agentIdentifier,
+            linkScope: payload.linkScope,
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
+            context: payload.context,
+            contextKeys: payload.contextKeys,
           })
         );
 
@@ -897,10 +963,10 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    conversationId: string
+    conversation: ConversationEntity
   ): Promise<void> {
     try {
-      if (await this.connectClaimTokenService.isSignupCtaPosted(conversationId)) {
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
         return;
       }
 
@@ -909,10 +975,22 @@ export class AgentInboundHandler implements OnModuleInit {
         org: config.organizationId,
       });
       const claimUrl = buildConnectClaimUrl(token);
+      const channel = this.conversationService.getPrimaryChannel(conversation);
+      const card = buildKeylessSignupCard(claimUrl);
 
-      await this.outboundGateway.replyOnThreadWithCard(thread, buildKeylessSignupCard(claimUrl));
+      await this.outboundGateway.replyOnThreadWithCard(thread, card, {
+        persist: {
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: config.agentIdentifier,
+          content: card.title ?? '[Card]',
+          richContent: { card },
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        },
+      });
 
-      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversation._id);
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post keyless signup CTA`);
       captureAgentWarning(err, {
@@ -956,7 +1034,13 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformUserId = event.user?.userId;
 
     const reactionResolution = platformUserId
-      ? await this.resolveSubscriber(agentId, config, platformUserId, 'resolve-subscriber-reaction')
+      ? await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId,
+          operation: 'resolve-subscriber-reaction',
+          authorIsBot: false,
+        })
       : undefined;
     const subscriberId = getResolvedSubscriberId(reactionResolution);
 
@@ -994,19 +1078,46 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      event.raw,
+      platformUserId
+    );
     const runtime = this.runtimeResolver.resolve(agent);
+
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
+      agentId,
+      config,
+      platformThreadId: threadId,
+      subscriberId,
+      message: event.message ?? null,
+      existingConversation: conversation,
+      isDirectMessage: event.thread?.isDM,
+    });
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId: threadId,
+      subscriberId,
+      resolution: workflowOriginResolution,
+    });
+
     const turn: ConversationTurn = {
       agentId,
       agent: agent ?? { _id: agentId },
       config,
       conversation,
       subscriber,
+      context,
+      bridgeUrlOverride,
       subscriberResolution: reactionResolution,
       message: null,
       event: AgentEventEnum.ON_REACTION,
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
       platformThreadId: threadId,
       reaction: reactionPayload,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval can be
@@ -1024,7 +1135,8 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     action: AgentAction,
-    userId: string
+    userId: string,
+    rawEvent?: unknown
   ): Promise<void> {
     // The gate suppresses its reply for link-button actions (e.g. the upgrade
     // card's own CTA) so a blocked click can never spawn another card.
@@ -1032,13 +1144,38 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const actionResolution = await this.resolveSubscriber(agentId, config, userId, 'resolve-subscriber-action');
+    const actionResolution = await this.resolveSubscriber({
+      agentId,
+      config,
+      platformUserId: userId,
+      operation: 'resolve-subscriber-action',
+      authorIsBot: false,
+    });
     const subscriberId = getResolvedSubscriberId(actionResolution);
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;
     const participantType = subscriberId
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
+    const platformThreadId = getActionPlatformThreadId(config.platform, thread, action);
+
+    const existingConversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      config.integrationId,
+      platformThreadId
+    );
+
+    const workflowOriginResolution = await this.workflowOriginService.resolve({
+      agentId,
+      config,
+      platformThreadId,
+      subscriberId,
+      message: null,
+      existingConversation,
+      isDirectMessage: thread.isDM,
+    });
 
     const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
@@ -1046,12 +1183,27 @@ export class AgentInboundHandler implements OnModuleInit {
       agentId,
       platform: config.platform,
       integrationId: config.integrationId,
-      platformThreadId: thread.id,
+      platformThreadId,
       participantId,
       participantType,
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
       isDirectMessage: thread.isDM,
+      workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
+      notificationId: workflowOriginResolution?.notificationId,
+      contextKeys:
+        config.platform === AgentPlatformEnum.AGENT_CHAT
+          ? ((rawEvent as AgentChatRawMessage | undefined)?.contextKeys ?? [])
+          : undefined,
+    });
+
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId,
+      config,
+      conversation,
+      platformThreadId,
+      subscriberId,
+      resolution: workflowOriginResolution,
     });
 
     trackAgentInboundAction(this.analyticsService, {
@@ -1071,14 +1223,6 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const actorType =
-      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
-        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
-        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
-    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
-
-    // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
-    // which owns its own action semantics.
     const [subscriber, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -1090,6 +1234,20 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
+    const actorType =
+      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
+        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
+
+    // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
+    // which owns its own action semantics.
+    const { context, bridgeUrl: bridgeUrlOverride } = await this.connectionContextResolver.resolve(
+      config,
+      rawEvent,
+      userId
+    );
+
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -1097,12 +1255,15 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
+      bridgeUrlOverride,
       subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,
       thread,
-      platformThreadId: thread.id,
+      platformThreadId,
       action,
+      workflowOrigin: workflowOrigin ?? undefined,
     };
 
     await runtime.dispatch(turn);

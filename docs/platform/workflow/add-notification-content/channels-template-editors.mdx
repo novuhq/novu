@@ -1,6 +1,6 @@
 ---
 title: 'Channels Template Editors'
-description: "Design and configure notification content for email, in-app, push, and SMS channels using the Novu template editors in the dashboard."
+description: "Design and configure notification content for email, in-app, push, SMS, and chat channels using the Novu template editors in the dashboard."
 ---
 
 
@@ -8,7 +8,8 @@ The channel template editors are where you define the content of the notificatio
 
 Each channel exposes an editor aligned with how messages are delivered on that channel:
 
-- **SMS and chat**: Body field only
+- **SMS**: Body field only
+- **Chat**: Block editor for rich cards, or a text editor for plain text / Liquid
 - **Push, email, and in-app**: Subject and body fields
 
 All editors (including the Subject field editors) support variables and dynamic data that can be used to [personalize notification content](/platform/workflow/add-notification-content/personalize-content). Notification preview is also supported on all editors.
@@ -36,7 +37,17 @@ The template editor lets you control what users see, how they act on it, and how
 By default, Novu sanitizes both the subject and body fields to prevent unsafe HTML from being rendered. This includes sanitizing:
 
 - Suspicious HTML tags.
-- HTML entities such as `<`, `>`, and `&`.
+- HTML entities. The five HTML-reserved characters are escaped to their entity form when rendered:
+
+  | Character | Escaped as |
+  | --------- | ---------- |
+  | `&`       | `&amp;`    |
+  | `<`       | `&lt;`     |
+  | `>`       | `&gt;`     |
+  | `"`       | `&quot;`   |
+  | `'`       | `&#39;`    |
+
+  If your payload contains any of these characters in a value that must render literally (for example a filename like `Report & Summary.pdf`), the sanitized output will show the entity form in email and SMS content. To avoid this without disabling sanitization, pass a display-safe value from your application code before triggering the workflow (for example, replace `&` with `and`, or use a separate display field such as `Report and Summary.pdf`).
 
 You should only disable content sanitization when:
 
@@ -46,6 +57,8 @@ You should only disable content sanitization when:
 <Warning>
   Disabling sanitization can expose your application to security risks such as XSS attacks. Only disable this option when using trusted data sources.
 </Warning>
+
+Sanitization is configured per step. Open the step in the workflow editor and toggle **Disable content sanitization** to opt a specific step out of sanitization.
 
 ### Avatar customization
 
@@ -86,6 +99,12 @@ The data object is a customizable key-value store available in the in-app step. 
 <Note>
   To learn more about how to use the data object to customize how messages appear in the [`<Inbox />`](/platform/inbox), refer to the [Data Object](/platform/inbox/configuration/data-object) documentation.
 </Note>
+
+## Chat template editor
+
+The Chat template editor supports a **block editor** (structured cards) and a **text editor** (plain text / Liquid). Existing text steps stay on the text editor, and new empty steps default to the block editor.
+
+For supported blocks, preview, backward compatibility, and how this relates to provider overrides, see [Writing chat templates](/platform/integrations/chat/writing-chat-template).
 
 ## Email template editor
 

@@ -16,7 +16,7 @@ import { ColumnExtension } from '../nodes/columns/column';
 import { ColumnsExtension } from '../nodes/columns/columns';
 import { Footer } from '../nodes/footer';
 import { HeadingExtension } from '../nodes/heading/heading';
-import { ImageExtension } from '../nodes/image/image';
+import { ImageExtension, type ImageExtensionOptions } from '../nodes/image/image';
 import { LinkExtension } from '../nodes/link';
 import { LogoExtension } from '../nodes/logo/logo';
 import { ParagraphExtension } from '../nodes/paragraph/paragraph';
@@ -36,7 +36,7 @@ export type MailyKitOptions = {
   button?: Partial<{}> | false;
   spacer?: Partial<{}> | false;
   logo?: Partial<{}> | false;
-  image?: Partial<{}> | false;
+  image?: Partial<ImageExtensionOptions> | false;
   link?: Partial<LinkOptions> | false;
 };
 
@@ -149,7 +149,9 @@ export const MailyKit = Extension.create<MailyKitOptions>({
     }
 
     if (this.options.image !== false) {
-      extensions.push(ImageExtension);
+      extensions.push(
+        ImageExtension.configure(typeof this.options.image === 'object' ? this.options.image : undefined)
+      );
     }
 
     if (this.options.link !== false) {

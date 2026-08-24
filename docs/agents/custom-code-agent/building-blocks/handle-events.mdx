@@ -6,6 +6,18 @@ description: "Write event handlers for your custom code agent and understand the
 
 Novu gives your handler the same building blocks whether the message came from Slack, email, or another provider, and whether you call an LLM or plain TypeScript.
 
+## Channel support
+
+Handlers are provider-agnostic. The same `onMessage`, `onAction`, `onReaction`, `onResolve`, `onToolApproval`, and `onError` APIs run on Slack, Microsoft Teams, WhatsApp, Telegram, and email. What the user sees (buttons vs action links, typing vs eyes reaction) depends on the channel. See [Channels overview](/agents/channels/overview).
+
+| Event surface | Slack | Teams | WhatsApp | Telegram | Email |
+| --- | --- | --- | --- | --- | --- |
+| `onMessage` | Yes | Yes | Yes | Yes | Yes |
+| `onAction` (buttons / links) | Yes | Yes | Yes | Yes | Yes |
+| `onReaction` | Yes | Yes | Yes | Yes | Gmail only |
+| `onResolve` | Yes | Yes | Yes | Yes | Yes |
+| `onToolApproval` | Yes | Yes | Yes | Yes | Yes |
+
 ## Event handlers
 
 Event handlers are functions that respond to events in a conversation. Your agent can respond to these event types:
@@ -114,13 +126,12 @@ import { generateText } from 'ai';
 export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     const userMessage = message.text ?? '';
-    const conversationHistory = ctx.history;
     const subscriber = ctx.subscriber;
 
     return generateText({
       model: openai('gpt-4o-mini'),
       instructions: 'You are a helpful support agent.',
-      messages: toModelMessages(conversationHistory),
+      messages: toModelMessages(ctx),
     });
   },
 });
@@ -285,7 +296,7 @@ export const myAgent = agent('my-agent', {
   onMessage: async (message, ctx) => {
     return generateText({
       model: openai('gpt-4o'),
-      messages: toModelMessages(ctx.history),
+      messages: toModelMessages(ctx),
       tools: {
         issueRefund: tool({
           inputSchema: z.object({ orderId: z.string() }),

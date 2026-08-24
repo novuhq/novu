@@ -4,6 +4,7 @@ import {
   assertSafeOutboundUrl,
   CompileTemplate,
   createHash,
+  getEffectiveJobPayload,
   normalizeOutboundHttpUrl,
   SsrfBlockedError,
   safeOutboundJsonRequest,
@@ -41,8 +42,11 @@ export class ReplyToStrategy {
     private attachmentRehydrator: AttachmentRehydrator
   ) {}
 
-  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome> {
-    const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
+  async execute(
+    command: InboundEmailParseCommand,
+    recipientAddress = command.to[0].address
+  ): Promise<InboundParseOutcome> {
+    const { domain, transactionId, environmentId } = this.splitTo(recipientAddress);
 
     Logger.log({ domain, transactionId, environmentId }, 'Processing reply-to email', LOG_CONTEXT);
 
@@ -74,9 +78,13 @@ export class ReplyToStrategy {
       );
     }
 
+    // Payload-dedup: the email job may not carry its own payload; fall back to
+    // the parent notification's payload for template compilation and webhook.
+    const effectivePayload = getEffectiveJobPayload(job, notification) ?? {};
+
     const compiledDomain = await this.compileTemplate.execute({
       template: currentParseWebhook as string,
-      data: job.payload,
+      data: effectivePayload,
     });
 
     const requestUrl = normalizeOutboundHttpUrl(compiledDomain);
@@ -103,7 +111,7 @@ export class ReplyToStrategy {
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
       transactionId,
-      payload: job.payload,
+      payload: effectivePayload,
       templateIdentifier: job.identifier,
       template,
       notification,

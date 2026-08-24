@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22.22.1'
+          node-version: '22.23.0'
 
       - name: Generate scopes
         id: generate_scopes
@@ -38,6 +38,27 @@ jobs:
           echo 'SCOPES<<EOF' >> $GITHUB_ENV
           echo "$scopes" >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
+
+      - name: Detect docs-only PR
+        id: detect_docs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Documentation-only PRs (only touching the Mintlify docs/ site) are
+          # exempt from the "fixes NV-XXX" Linear ticket requirement below.
+          # `--paginate` walks every page so large PRs (>100 files) aren't
+          # misclassified as docs-only.
+          files=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/files" --jq '.[].path')
+          echo "Changed files:"
+          echo "$files"
+          non_docs=$(echo "$files" | grep -v '^docs/' || true)
+          if [ -n "$files" ] && [ -z "$non_docs" ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "docs-only PR — skipping Linear ticket enforcement."
+          else
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Check if PR author is team member
         id: check_team_member
@@ -73,7 +94,7 @@ jobs:
 
       - name: Extract Linear ticket from branch and auto-fix PR title
         id: auto_fix_linear_ticket
-        if: steps.check_team_member.outputs.is_team_member == 'true'
+        if: steps.check_team_member.outputs.is_team_member == 'true' && steps.detect_docs.outputs.docs_only != 'true'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
@@ -124,7 +145,7 @@ jobs:
 
       - name: Validate Linear ticket ID for team members (fallback)
         id: validate_linear_ticket
-        if: steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true'
+        if: steps.check_team_member.outputs.is_team_member == 'true' && steps.detect_docs.outputs.docs_only != 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
@@ -164,7 +185,7 @@ jobs:
 
       - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         # Show error if either conventional commit validation fails OR Linear ticket validation fails (for team members)
-        if: always() && (steps.lint_pr_title.outputs.error_message != null || (steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true' && steps.validate_linear_ticket.outputs.linear_ticket_valid != 'true'))
+        if: always() && (steps.lint_pr_title.outputs.error_message != null || (steps.detect_docs.outputs.docs_only != 'true' && steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true' && steps.validate_linear_ticket.outputs.linear_ticket_valid != 'true'))
         with:
           header: pr-title-lint-error
           message: |
@@ -176,16 +197,16 @@ jobs:
 
             **Requirements:**
             1. Follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
-            2. ${{ steps.check_team_member.outputs.is_team_member == 'true' && 'As a team member, include Linear ticket ID at the end: `fixes TICKET-ID` or include it in your branch name' || '' }}
+            2. ${{ steps.check_team_member.outputs.is_team_member == 'true' && steps.detect_docs.outputs.docs_only != 'true' && 'As a team member, include Linear ticket ID at the end: `fixes TICKET-ID` or include it in your branch name' || '' }}
 
-            **Expected format:** `feat(scope): Add fancy new feature${{ steps.check_team_member.outputs.is_team_member == 'true' && ' fixes NOV-123' || '' }}`
+            **Expected format:** `feat(scope): Add fancy new feature${{ steps.check_team_member.outputs.is_team_member == 'true' && steps.detect_docs.outputs.docs_only != 'true' && ' fixes NOV-123' || '' }}`
 
             **Details:**
             ${{ steps.lint_pr_title.outputs.error_message != null && steps.lint_pr_title.outputs.error_message || '' }}
             ${{ steps.validate_linear_ticket.outputs.linear_error_message != null && steps.validate_linear_ticket.outputs.linear_error_message || '' }}
 
       # Delete previous comments when all issues have been resolved
-      - if: ${{ steps.lint_pr_title.outputs.error_message == null && (steps.check_team_member.outputs.is_team_member != 'true' || steps.auto_fix_linear_ticket.outputs.linear_ticket_valid == 'true' || steps.validate_linear_ticket.outputs.linear_ticket_valid == 'true') }}
+      - if: ${{ steps.lint_pr_title.outputs.error_message == null && (steps.detect_docs.outputs.docs_only == 'true' || steps.check_team_member.outputs.is_team_member != 'true' || steps.auto_fix_linear_ticket.outputs.linear_ticket_valid == 'true' || steps.validate_linear_ticket.outputs.linear_ticket_valid == 'true') }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: pr-title-lint-error

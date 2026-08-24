@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, resolveAgentRuntime } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  AgentIntegrationRepository,
+  AgentRepository,
+  IntegrationRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { NovuEmailCleanupService } from '../../../email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { trackAgentDeleted } from '../../../shared/analytics/agent-analytics';
@@ -12,6 +17,7 @@ export class DeleteAgent {
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly workflowRepository: NotificationTemplateRepository,
     private readonly cleanupNovuEmail: NovuEmailCleanupService,
     private readonly analyticsService: AnalyticsService
   ) {}
@@ -30,6 +36,10 @@ export class DeleteAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
+    if (agent.runtime === 'human_relay') {
+      throw new ForbiddenException('System human-relay agents cannot be deleted.');
+    }
+
     const shouldDeleteFromProvider = command.deleteFromProvider === true;
 
     if (agent.runtime === 'managed' && agent.managedRuntime && shouldDeleteFromProvider) {
@@ -37,6 +47,16 @@ export class DeleteAgent {
     }
 
     await this.agentRepository.withTransaction(async (session) => {
+      await this.workflowRepository.update(
+        {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          'agent.identifier': command.identifier,
+        },
+        { $set: { agent: null } },
+        { session }
+      );
+
       await this.cleanupNovuEmail.cleanupForAgent(agent._id, command.environmentId, command.organizationId, session);
 
       await this.agentIntegrationRepository.delete(

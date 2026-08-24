@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
   buildNovuSignatureHeader,
+  FeatureFlagsService,
   GetDecryptedSecretKey,
   GetDecryptedSecretKeyCommand,
   PinoLogger,
@@ -13,21 +14,25 @@ import {
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
+  AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentSubscriber,
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
+import type { WorkflowOriginData, WorkflowOriginSnapshot } from '../ingress/workflow-origin.helpers';
 
 const MAX_RETRIES = 2;
 
@@ -135,6 +140,15 @@ export interface AgentExecutionParams {
   subscriber: SubscriberEntity | null;
   message: Message | null;
   platformContext: AgentPlatformContext;
+  /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
+  context?: AgentContextPayload | null;
+  workflowOrigin?: WorkflowOriginSnapshot | null;
+  /**
+   * Per-context bridge URL override resolved from the connect-time context. Takes precedence over the
+   * agent's default `bridgeUrl` (but not the active dev bridge). Re-validated by the SSRF guard on
+   * every send attempt.
+   */
+  bridgeUrlOverride?: string;
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
@@ -155,7 +169,8 @@ export class BridgeExecutorService {
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly attachmentStorage: AgentAttachmentStorage,
-    private readonly conversationService: AgentConversationService
+    private readonly conversationService: AgentConversationService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -166,7 +181,7 @@ export class BridgeExecutorService {
     try {
       const { config, event } = params;
 
-      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event);
+      const bridgeUrl = this.resolveBridgeUrl(config, agentIdentifier, event, params.bridgeUrlOverride);
       if (!bridgeUrl) {
         throw new NoBridgeUrlError(agentIdentifier);
       }
@@ -284,11 +299,32 @@ export class BridgeExecutorService {
     });
   }
 
-  private resolveBridgeUrl(config: ResolvedAgentConfig, agentIdentifier: string, event: AgentEventEnum): string | null {
+  /** Host only (no path/query) so override routing can be diagnosed without logging a full URL. */
+  private safeHost(rawUrl: string): string {
+    try {
+      return new URL(rawUrl).host;
+    } catch {
+      return 'invalid-url';
+    }
+  }
+
+  private resolveBridgeUrl(
+    config: ResolvedAgentConfig,
+    agentIdentifier: string,
+    event: AgentEventEnum,
+    bridgeUrlOverride?: string
+  ): string | null {
     let baseUrl: string | undefined;
 
+    // Precedence: active dev bridge (local development) > per-context override > agent default.
     if (config.devBridgeActive && config.devBridgeUrl) {
       baseUrl = config.devBridgeUrl;
+    } else if (bridgeUrlOverride) {
+      baseUrl = bridgeUrlOverride;
+      this.logger.info(
+        { agentIdentifier, bridgeHost: this.safeHost(bridgeUrlOverride) },
+        `[agent:${agentIdentifier}] Routing bridge call to per-context bridge URL override`
+      );
     } else if (config.bridgeUrl) {
       baseUrl = config.bridgeUrl;
     }
@@ -311,9 +347,22 @@ export class BridgeExecutorService {
     const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const history = await this.loadHistory(config.environmentId, conversation._id, agentIdentifier);
+    const history = await this.loadHistory(
+      config.environmentId,
+      conversation._id,
+      agentIdentifier,
+      config.organizationId
+    );
 
-    const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
+    const apiOrigin = resolveAgentReplyApiOrigin();
+    const replyUrl = `${apiOrigin}/v1/agents/${agentIdentifier}/reply`;
+
+    const isEventProtocolEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_EVENT_PROTOCOL_ENABLED,
+      defaultValue: false,
+      organization: { _id: config.organizationId },
+      environment: { _id: config.environmentId },
+    });
 
     const timestamp = new Date().toISOString();
 
@@ -328,7 +377,7 @@ export class BridgeExecutorService {
       deliveryId = `${conversation._id}:${event}`;
     }
 
-    return {
+    const payload: AgentBridgeRequest = {
       version: 1,
       timestamp,
       deliveryId,
@@ -346,22 +395,39 @@ export class BridgeExecutorService {
         : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
+      subscriberAccess: config.subscriberAccess,
+      context: params.context ?? null,
+      notification: params.workflowOrigin ? mapWorkflowOriginToNotification(params.workflowOrigin.data) : null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
       action: action ?? null,
       reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
     };
+
+    if (isEventProtocolEnabled) {
+      payload.eventsUrl = `${apiOrigin}/v1/agents/events/ingest`;
+    }
+
+    return payload;
   }
 
   /** Fail-soft: a history read error must not drop the bridge delivery — send the event with empty history. */
   private async loadHistory(
     environmentId: string,
     conversationId: string,
-    agentIdentifier: string
+    agentIdentifier: string,
+    organizationId: string
   ): Promise<ConversationActivityEntity[]> {
     try {
-      return await this.conversationService.getHistory(environmentId, conversationId);
+      const page = await this.conversationService.listForView({
+        view: 'agent_handoff',
+        environmentId,
+        organizationId,
+        conversationId,
+      });
+
+      return page.data;
     } catch (err) {
       this.logger.warn(err, `[agent:${agentIdentifier}] Failed to load conversation history; continuing without it`);
       captureAgentWarning(err, {
@@ -625,4 +691,16 @@ export class BridgeExecutorService {
   private getAttachmentStoragePrefix(context: AttachmentSigningContext): string {
     return `${context.organizationId}/${context.environmentId}/${AGENTS_STORAGE_FOLDER}/${context.conversationId}/`;
   }
+}
+
+function mapWorkflowOriginToNotification(origin: WorkflowOriginData): AgentNotification {
+  return {
+    id: origin.notificationId,
+    workflowId: origin.workflowIdentifier,
+    messageId: origin.messageId,
+    platformMessageId: origin.platformMessageId,
+    sentAt: origin.sentAt,
+    body: origin.body,
+    payload: origin.payload,
+  };
 }

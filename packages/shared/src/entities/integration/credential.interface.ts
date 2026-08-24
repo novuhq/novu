@@ -26,6 +26,8 @@ export interface ICredentials {
   redirectUrl?: string;
   hmac?: boolean;
   ipPoolName?: string;
+  /** Amazon SES: name of the Configuration Set applied to sent emails. */
+  configurationSetName?: string;
   apiKeyRequestHeader?: string;
   secretKeyRequestHeader?: string;
   idPath?: string;
@@ -130,4 +132,9 @@ export interface ICredentials {
   headers?: string;
   /** Custom webhook request body template. */
   body?: string;
+  /**
+   * Tool-webhook routing mode. `'static'` sends to the integration `webhookUrl`;
+   * `'dynamic'` fans out to per-subscriber `tool_webhook` endpoints. Missing = static.
+   */
+  routingMode?: 'static' | 'dynamic';
 }

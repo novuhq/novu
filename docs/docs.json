@@ -16,7 +16,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://novu.co"
+    "href": "https://docs.novu.co"
   },
   "seo": {
     "indexing": "all",
@@ -27,7 +27,10 @@
   },
   "thumbnails": {
     "appearance": "dark",
-    "background": "/images/og/og-background.png"
+    "background": "/images/og/og-image-docs-v2.jpg",
+    "fonts": {
+      "family": "Inter"
+    }
   },
   "interaction": {
     "drilldown": true
@@ -191,6 +194,7 @@
                 "group": "Chat",
                 "root": "platform/integrations/chat",
                 "pages": [
+                  "platform/integrations/chat/writing-chat-template",
                   "platform/integrations/chat/discord",
                   "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
@@ -208,22 +212,21 @@
                 "pages": [
                   "platform/integrations/email/sendgrid",
                   "platform/integrations/email/amazon-ses",
-                  "platform/integrations/email/postmark",
                   "platform/integrations/email/resend",
-                  "platform/integrations/email/anypost",
+                  "platform/integrations/email/postmark",
                   "platform/integrations/email/brevo",
                   "platform/integrations/email/mailgun",
                   "platform/integrations/email/mailjet",
-                  "platform/integrations/email/braze",
+                  "platform/integrations/email/sparkpost",
+                  "platform/integrations/email/mandrill",
+                  "platform/integrations/email/outlook365",
                   "platform/integrations/email/infobip",
+                  "platform/integrations/email/braze",
                   "platform/integrations/email/mailersend",
                   "platform/integrations/email/mailtrap",
-                  "platform/integrations/email/mandrill",
-                  "platform/integrations/email/maqsam",
                   "platform/integrations/email/netcore",
-                  "platform/integrations/email/outlook365",
                   "platform/integrations/email/plunk",
-                  "platform/integrations/email/sparkpost",
+                  "platform/integrations/email/anypost",
                   "platform/integrations/email/webhook",
                   "platform/integrations/email/custom-smtp",
                   "platform/integrations/email/writing-email-template",
@@ -263,34 +266,53 @@
                 "root": "platform/integrations/sms",
                 "pages": [
                   "platform/integrations/sms/twilio",
-                  "platform/integrations/sms/infobip",
-                  "platform/integrations/sms/46elks",
-                  "platform/integrations/sms/africas-talking",
                   "platform/integrations/sms/aws-sns",
-                  "platform/integrations/sms/azure",
-                  "platform/integrations/sms/bulk-sms",
-                  "platform/integrations/sms/clickatell",
-                  "platform/integrations/sms/clicksend",
-                  "platform/integrations/sms/firetext",
-                  "platform/integrations/sms/gupshup",
-                  "platform/integrations/sms/kannel",
-                  "platform/integrations/sms/kudosity",
-                  "platform/integrations/sms/messagebird",
+                  "platform/integrations/sms/infobip",
+                  "platform/integrations/sms/sinch",
                   "platform/integrations/sms/nexmo",
+                  "platform/integrations/sms/messagebird",
+                  "platform/integrations/sms/telnyx",
+                  "platform/integrations/sms/cm-com",
                   "platform/integrations/sms/plivo",
+                  "platform/integrations/sms/bandwidth",
+                  "platform/integrations/sms/ring-central",
+                  "platform/integrations/sms/azure",
+                  "platform/integrations/sms/clicksend",
+                  "platform/integrations/sms/brevo",
+                  "platform/integrations/sms/clickatell",
+                  "platform/integrations/sms/bulk-sms",
+                  "platform/integrations/sms/sms77",
+                  "platform/integrations/sms/africas-talking",
+                  "platform/integrations/sms/unifonic",
+                  "platform/integrations/sms/gupshup",
+                  "platform/integrations/sms/termii",
+                  "platform/integrations/sms/kudosity",
                   "platform/integrations/sms/sendchamp",
                   "platform/integrations/sms/simpletexting",
+                  "platform/integrations/sms/46elks",
+                  "platform/integrations/sms/firetext",
                   "platform/integrations/sms/sms-central",
-                  "platform/integrations/sms/sms-webhook",
-                  "platform/integrations/sms/sms77",
-                  "platform/integrations/sms/sns",
-                  "platform/integrations/sms/telnyx",
-                  "platform/integrations/sms/termii"
+                  "platform/integrations/sms/kannel",
+                  "platform/integrations/sms/maqsam",
+                  "platform/integrations/sms/mobishastra",
+                  "platform/integrations/sms/afro-message",
+                  "platform/integrations/sms/smsmode",
+                  "platform/integrations/sms/isend-sms",
+                  "platform/integrations/sms/isendpro",
+                  "platform/integrations/sms/imedia",
+                  "platform/integrations/sms/eazy",
+                  "platform/integrations/sms/ruach-sms",
+                  "platform/integrations/sms/sms-webhook"
                 ]
               },
               {
                 "group": "Tool",
-                "pages": ["platform/integrations/tool/pagerduty", "platform/integrations/tool/opsgenie"]
+                "pages": [
+                  "platform/integrations/tool/pagerduty",
+                  "platform/integrations/tool/opsgenie",
+                  "platform/integrations/tool/grafana",
+                  "platform/integrations/tool/webhook"
+                ]
               },
               "platform/integrations/trigger-overrides"
             ],
@@ -309,6 +331,7 @@
                     "pages": [
                       "platform/sdks/react/hooks/novu-provider",
                       "platform/sdks/react/hooks/subscription",
+                      "platform/sdks/react/hooks/use-agent-chat",
                       "platform/sdks/react/hooks/use-counts",
                       "platform/sdks/react/hooks/use-notifications",
                       "platform/sdks/react/hooks/use-novu",
@@ -363,6 +386,7 @@
               "platform/developer/environments",
               "platform/developer/environment-variables",
               "platform/developer/limits",
+              "platform/developer/delivery-retries",
               {
                 "group": "Inbound email",
                 "pages": ["platform/inbound-email/overview"]
@@ -421,13 +445,39 @@
               "agents",
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
-              "agents/get-started/agents-and-providers"
+              "agents/get-started/agents-and-providers",
+              {
+                "group": "Quickstart",
+                "pages": [
+                  "agents/get-started/ai-sdk",
+                  "agents/get-started/langchain",
+                  "agents/get-started/mastra",
+                  "agents/get-started/claude-managed",
+                  "agents/get-started/aws-claude"
+                ]
+              }
             ]
+          },
+          {
+            "group": "Channels",
+            "pages": [
+              "agents/channels/overview",
+              "agents/channels/slack",
+              "agents/channels/microsoft-teams",
+              "agents/channels/whatsapp",
+              "agents/channels/telegram",
+              "agents/channels/email",
+              {
+                "group": "Agent Chat",
+                "root": "agents/channels/agent-chat",
+                "pages": ["agents/channels/agent-chat/quickstart"]
+              }
+            ],
+            "icon": "messages-square"
           },
           {
             "group": "Custom Code Agent",
             "pages": [
-              "agents/custom-code-agent/quickstart",
               "agents/custom-code-agent/concepts",
               "agents/custom-code-agent/connecting-your-app",
               {
@@ -458,7 +508,6 @@
             "group": "Managed Agent",
             "pages": [
               "agents/managed-agent/overview",
-              "agents/managed-agent/quickstart",
               "agents/managed-agent/concepts",
               "agents/managed-agent/configure-mcp-servers",
               "agents/managed-agent/add-skills"
@@ -846,50 +895,56 @@
             "item": "Guides",
             "groups": [
               {
-                "group": "Use Cases",
-                "pages": [
-                  "guides/use-cases/transactional-notifications",
-                  "guides/use-cases/password-reset-notifications",
-                  "guides/use-cases/digest-notifications",
-                  "guides/use-cases/multi-channel-fallback",
-                  "guides/use-cases/notification-preferences"
-                ],
-                "icon": "lightbulb"
-              },
-              {
                 "group": "Guides",
-                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"],
-                "icon": "book-open"
-              },
-              {
-                "group": "Inbound Webhooks",
+                "icon": "book-open",
                 "pages": [
-                  "guides/webhooks/clerk",
-                  "guides/webhooks/auth0",
-                  "guides/webhooks/stripe",
-                  "guides/webhooks/segment"
-                ],
-                "icon": "webhook"
-              },
-              {
-                "group": "Recipes",
-                "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"],
-                "icon": "chef-hat"
-              },
-              {
-                "group": "Framework",
-                "pages": ["guides/framework/using-translations"],
-                "icon": "blocks"
-              },
-              {
-                "group": "Migrate to Novu",
-                "pages": [
-                  "guides/migrate-from-courier-to-novu",
-                  "guides/migrate-from-knock-to-novu",
-                  "guides/migrate-from-magicbell-to-novu",
-                  "guides/migrate-from-in-house-to-novu"
-                ],
-                "icon": "arrow-right-left"
+                  "guides",
+                  {
+                    "group": "Use Cases",
+                    "expanded": false,
+                    "pages": [
+                      "guides/use-cases/transactional-notifications",
+                      "guides/use-cases/password-reset-notifications",
+                      "guides/use-cases/digest-notifications",
+                      "guides/use-cases/multi-channel-fallback",
+                      "guides/use-cases/notification-preferences"
+                    ]
+                  },
+                  {
+                    "group": "Workflow automation",
+                    "expanded": false,
+                    "pages": ["guides/inngest", "guides/triggerdotdev"]
+                  },
+                  {
+                    "group": "Webhooks",
+                    "expanded": false,
+                    "pages": ["guides/webhooks/clerk", "guides/webhooks/auth0", "guides/webhooks/stripe"]
+                  },
+                  {
+                    "group": "Analytics & data",
+                    "expanded": false,
+                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch"]
+                  },
+                  {
+                    "group": "Recipes",
+                    "expanded": false,
+                    "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"]
+                  },
+                  {
+                    "group": "Framework",
+                    "expanded": false,
+                    "pages": ["guides/framework/using-translations"]
+                  },
+                  {
+                    "group": "Migrate to Novu",
+                    "pages": [
+                      "guides/migrate-from-courier-to-novu",
+                      "guides/migrate-from-knock-to-novu",
+                      "guides/migrate-from-magicbell-to-novu",
+                      "guides/migrate-from-in-house-to-novu"
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -938,7 +993,8 @@
                   "framework/in-app-channel",
                   "framework/push-channel",
                   "framework/sms-channel",
-                  "framework/chat-channel"
+                  "framework/chat-channel",
+                  "framework/tool-channel"
                 ],
                 "icon": "radio"
               },
@@ -969,15 +1025,16 @@
                   {
                     "group": "Steps",
                     "pages": [
+                      "framework/typescript/steps",
                       "framework/typescript/steps/chat",
-                      "framework/typescript/steps/custom",
-                      "framework/typescript/steps/delay",
-                      "framework/typescript/steps/digest",
                       "framework/typescript/steps/email",
                       "framework/typescript/steps/inApp",
-                      "framework/typescript/steps",
                       "framework/typescript/steps/push",
-                      "framework/typescript/steps/sms"
+                      "framework/typescript/steps/sms",
+                      "framework/typescript/steps/tool",
+                      "framework/typescript/steps/custom",
+                      "framework/typescript/steps/delay",
+                      "framework/typescript/steps/digest"
                     ]
                   },
                   "framework/schema/zod",
@@ -1145,7 +1202,22 @@
     },
     {
       "source": "/guides/integrations/segment",
-      "destination": "/platform/integrations/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/guides/webhooks/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/segment",
+      "destination": "/guides/analytics/segment",
+      "permanent": true
+    },
+    {
+      "source": "/guides/webhooks/hightouch",
+      "destination": "/guides/analytics/hightouch",
       "permanent": true
     },
     {
@@ -1489,6 +1561,21 @@
       "permanent": true
     },
     {
+      "source": "/platform/integrations/email/sendinblue",
+      "destination": "/platform/integrations/email/brevo",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/email/maqsam",
+      "destination": "/platform/integrations/sms/maqsam",
+      "permanent": true
+    },
+    {
+      "source": "/channels/email/email-webhook",
+      "destination": "/platform/integrations/email/webhook",
+      "permanent": true
+    },
+    {
       "source": "/platform/integrations/sms/azure-sms",
       "destination": "/platform/integrations/sms/azure",
       "permanent": true
@@ -1501,6 +1588,21 @@
     {
       "source": "/channels/sms/generic-sms",
       "destination": "/platform/integrations/sms/sms-webhook",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/sms/sns",
+      "destination": "/platform/integrations/sms/aws-sns",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/azure",
+      "destination": "/platform/integrations/sms/azure",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/simpletexting",
+      "destination": "/platform/integrations/sms/simpletexting",
       "permanent": true
     },
     {
@@ -1559,6 +1661,81 @@
       "permanent": true
     },
     {
+      "source": "/agents/get-started/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/ai-sdk",
+      "destination": "/agents/get-started/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/langchain",
+      "destination": "/agents/get-started/langchain",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/mastra",
+      "destination": "/agents/get-started/mastra",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/claude-managed",
+      "destination": "/agents/get-started/claude-managed",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/aws-claude",
+      "destination": "/agents/get-started/aws-claude",
+      "permanent": true
+    },
+    {
+      "source": "/agents/managed-agent/quickstart",
+      "destination": "/agents/get-started/claude-managed",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/managed",
+      "destination": "/agents/get-started/claude-managed",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/quickstart/shared-onboarding",
+      "destination": "/agents/get-started/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels",
+      "destination": "/agents/channels/overview",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/capabilities",
+      "destination": "/agents/channels/overview",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/chat/agent-chat",
+      "destination": "/agents/channels/agent-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat",
+      "destination": "/agents/channels/agent-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/agent-chat/quickstart",
+      "destination": "/agents/channels/agent-chat/quickstart",
+      "permanent": true
+    },
+    {
       "source": "/agents/custom-code-agent/build-your-first-agent",
       "destination": "/agents/custom-code-agent/frameworks/ai-sdk",
       "permanent": true
@@ -1590,17 +1767,17 @@
     },
     {
       "source": "/agents/custom-code-agent/setup-your-agent/overview",
-      "destination": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {
       "source": "/agents/custom-code-agent/setup-your-agent/create-an-agent",
-      "destination": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {
       "source": "/agents/custom-code-agent/setup-your-agent/scaffold-your-project",
-      "destination": "/agents/custom-code-agent/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {

@@ -1,8 +1,20 @@
-import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
+import type { SlackAdapter } from '@chat-adapter/slack';
+import type { TeamsAdapter } from '@chat-adapter/teams';
+import type { TelegramAdapter } from '@chat-adapter/telegram';
+import type { WhatsAppAdapter } from '@chat-adapter/whatsapp';
+import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
+import type { NovuAgentChatAdapter } from '@novu/chat-adapter-agent-chat';
+import { stripAgentReplyToken } from '@novu/shared';
+import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import {
+  type AgentChatPlatformDeliveryContext,
+  AgentChatPlatformDeliveryService,
+} from '../../agent-chat/agent-chat-platform-delivery.service';
+import { AgentChatResumeAuthorizationService } from '../../agent-chat/agent-chat-resume-authorization.service';
+import { AgentChatSessionVerifier } from '../../agent-chat/agent-chat-session.verifier';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
@@ -11,6 +23,41 @@ import { captureAgentException, captureAgentWarning } from '../../shared/errors/
 import { esmImport } from '../../shared/util/esm-import';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
+import { PlanLimitGateService } from './plan-limit-gate.service';
+
+/**
+ * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
+ * value. Declaring the full map is what lets `chat.getAdapter('slack')` resolve
+ * to the concrete adapter type rather than the base `Adapter` interface, so
+ * platform-specific members are visible without casting.
+ *
+ * A given instance only ever holds one adapter (see `buildAdapters`), so callers
+ * must still guard on `config.platform` before reaching for a platform's adapter
+ * — exactly as they do today. Email and Sendblue expose no members beyond the
+ * base interface, so they stay as `Adapter`.
+ *
+ * Written as a type alias rather than an interface because `Chat`'s parameter is
+ * constrained to `Record<string, Adapter>`, which interfaces do not satisfy.
+ */
+export type PlatformAdapters = {
+  slack: SlackAdapter;
+  teams: TeamsAdapter;
+  telegram: TelegramAdapter;
+  whatsapp: WhatsAppAdapter;
+  agent_chat: NovuAgentChatAdapter;
+  email: Adapter;
+  sendblue: Adapter;
+};
+
+export type ChatWithAdapters = Chat<PlatformAdapters>;
+
+interface ChatStateLogger {
+  debug: (msg: string, ctx?: Record<string, unknown>) => void;
+  info: (msg: string, ctx?: Record<string, unknown>) => void;
+  warn: (msg: string, ctx?: Record<string, unknown>) => void;
+  error: (msg: string, ctx?: Record<string, unknown>) => void;
+  child: (prefix?: unknown) => ChatStateLogger;
+}
 
 export interface InboundCallbacks {
   onMessage: (agentId: string, config: ResolvedAgentConfig, thread: Thread, message: Message) => Promise<void>;
@@ -19,7 +66,8 @@ export interface InboundCallbacks {
     config: ResolvedAgentConfig,
     thread: Thread,
     action: import('@novu/framework').AgentAction,
-    userId: string
+    userId: string,
+    rawEvent: unknown
   ) => Promise<void>;
   onReaction: (agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent) => Promise<void>;
 }
@@ -37,7 +85,7 @@ export interface InboundCallbacks {
  * the cached instance is dropped and rebuilt — see getOrCreate().
  */
 export interface CachedChat {
-  chat: Chat;
+  chat: ChatWithAdapters;
   config: ResolvedAgentConfig;
   adapterFingerprint: string;
 }
@@ -63,7 +111,7 @@ const INSTANCE_TTL_MS = 1000 * 60 * 30;
 @Injectable()
 export class ChatInstanceRegistry implements OnModuleDestroy {
   readonly instances: LRUCache<string, CachedChat>;
-  private readonly pendingCreations = new Map<string, Promise<Chat>>();
+  private readonly pendingCreations = new Map<string, Promise<ChatWithAdapters>>();
   private inboundCallbacks: InboundCallbacks | null = null;
 
   constructor(
@@ -72,7 +120,12 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly emailActionTokenService: AgentEmailActionTokenService,
     private readonly agentActionTokenService: AgentActionTokenService,
-    private readonly agentEmailSender: AgentEmailSender
+    private readonly agentEmailSender: AgentEmailSender,
+    private readonly agentChatSessionVerifier: AgentChatSessionVerifier,
+    private readonly agentChatPlatformDelivery: AgentChatPlatformDeliveryService,
+    private readonly agentChatResumeAuthorization: AgentChatResumeAuthorizationService,
+    @Inject(forwardRef(() => PlanLimitGateService))
+    private readonly planLimitGate: PlanLimitGateService
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -100,7 +153,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
-  ): Promise<Chat> {
+  ): Promise<ChatWithAdapters> {
     const freshFingerprint = this.adapterFingerprint(config);
     const existing = this.instances.get(instanceKey);
 
@@ -152,10 +205,15 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig,
     adapterFingerprint: string
-  ): Promise<Chat> {
-    const chat = await this.createChatInstance(instanceKey, agentId, platform, config);
+  ): Promise<ChatWithAdapters> {
+    const cached: CachedChat = {
+      chat: null as unknown as ChatWithAdapters,
+      config,
+      adapterFingerprint,
+    };
+    const chat = await this.createChatInstance(instanceKey, agentId, platform, cached);
     await chat.initialize();
-    const cached: CachedChat = { chat, config, adapterFingerprint };
+    cached.chat = chat;
     this.registerEventHandlers(agentId, cached);
     this.instances.set(instanceKey, cached);
 
@@ -192,14 +250,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     instanceKey: string,
     agentId: string,
     platform: AgentPlatformEnum,
-    config: ResolvedAgentConfig
-  ): Promise<Chat> {
+    cached: CachedChat
+  ): Promise<ChatWithAdapters> {
     const [{ Chat: ChatCtor }, { createIoRedisState }] = await Promise.all([
       esmImport('chat'),
       esmImport('@chat-adapter/state-ioredis'),
     ]);
 
-    const adapters = await this.buildAdapters(agentId, platform, config);
+    const adapters = await this.buildAdapters(agentId, platform, cached);
     const client = this.cacheService.client;
     if (!client) {
       throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
@@ -213,16 +271,23 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         keyPrefix: `novu:agent:${instanceKey}`,
         logger: this.chatStateLogger(),
       }),
-      logger: 'silent',
+      logger: this.chatStateLogger(),
     });
   }
 
-  private chatStateLogger() {
+  // The Chat SDK's getLogger(prefix) returns this.logger.child(prefix) when a
+  // prefix is supplied (see chat's getLogger). Platform adapters (e.g. Sendblue)
+  // request a prefixed logger during initialize, so the object we hand to the
+  // SDK must expose a pino-style child() that yields the same shape - otherwise
+  // adapter init throws "this.logger.child is not a function".
+  private chatStateLogger(bindings?: Record<string, unknown>): ChatStateLogger {
+    const mergeCtx = (ctx?: Record<string, unknown>) => (bindings ? { ...bindings, ...(ctx ?? {}) } : (ctx ?? {}));
+
     return {
-      debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(ctx ?? {}, msg),
-      info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(ctx ?? {}, msg),
+      debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(mergeCtx(ctx), msg),
+      info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(mergeCtx(ctx), msg),
       warn: (msg: string, ctx?: Record<string, unknown>) => {
-        this.logger.warn(ctx ?? {}, msg);
+        this.logger.warn(mergeCtx(ctx), msg);
         if (ctx?.err) {
           captureAgentWarning(ctx.err, {
             component: 'chat-instance-registry',
@@ -232,7 +297,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         }
       },
       error: (msg: string, ctx?: Record<string, unknown>) => {
-        this.logger.error(ctx ?? {}, msg);
+        this.logger.error(mergeCtx(ctx), msg);
         if (ctx?.err) {
           captureAgentException(ctx.err, {
             component: 'chat-instance-registry',
@@ -241,14 +306,20 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           });
         }
       },
+      child: (prefix?: unknown) => {
+        const extra = prefix && typeof prefix === 'object' ? (prefix as Record<string, unknown>) : {};
+
+        return this.chatStateLogger({ ...(bindings ?? {}), ...extra });
+      },
     };
   }
 
   private async buildAdapters(
     agentId: string,
     platform: AgentPlatformEnum,
-    config: ResolvedAgentConfig
+    cached: CachedChat
   ): Promise<Record<string, unknown>> {
+    const config = cached.config;
     const { credentials, connectionAccessToken } = config;
 
     switch (platform) {
@@ -267,10 +338,34 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
         const { createSlackAdapter } = await esmImport('@chat-adapter/slack');
 
+        /**
+         * Multi-workspace mode: a single Novu-hosted Slack app can be installed across many
+         * customer workspaces (the NovuCopilot distribution model), so the bot token must be
+         * resolved per workspace at event time rather than baked into the adapter. The adapter
+         * calls `getInstallation(team_id)` while processing each inbound webhook and binds the
+         * resolved token for the duration of that request (so `users.info` and any in-request
+         * reply use the right workspace token). Outbound calls made in a separate request bind
+         * their token explicitly via `OutboundGateway`.
+         *
+         * `connectionAccessToken` (the first installed workspace's token) is still required above
+         * as a fast-fail guard that at least one workspace is installed, and it keys the adapter
+         * fingerprint so a rebuild happens when installations change.
+         */
         return {
           slack: createSlackAdapter({
-            botToken: connectionAccessToken,
             signingSecret: credentials.signingSecret,
+            installationProvider: {
+              getInstallation: async (installationId: string) => {
+                const installation = await this.agentConfigResolver.resolveSlackInstallation(
+                  config.environmentId,
+                  config.organizationId,
+                  config.integrationIdentifier,
+                  installationId
+                );
+
+                return installation ? { botToken: installation.token, botUserId: installation.botUserId } : null;
+              },
+            },
           }),
         };
       }
@@ -371,6 +466,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
+            stripAgentReplyToken,
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
               const { url } = await this.emailActionTokenService.signActionToken({
@@ -391,6 +487,30 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
               return url;
             },
+          }),
+        };
+      }
+      case AgentPlatformEnum.AGENT_CHAT: {
+        const { createAgentChatAdapter } = await esmImport('@novu/chat-adapter-agent-chat');
+        const deliveryContext: AgentChatPlatformDeliveryContext = {
+          agentId,
+          get config() {
+            return cached.config;
+          },
+        };
+
+        return {
+          agent_chat: createAgentChatAdapter({
+            userName: config.agentName,
+            verifySession: (request) => this.agentChatSessionVerifier.verifySession(request),
+            authorizeResume: ({ conversationId, session }) =>
+              this.agentChatResumeAuthorization.canResume({ conversationId, session, agentId }),
+            checkAcceptLimits: ({ isNewThread, conversationId }) =>
+              this.planLimitGate.checkAgentChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
+            deliverMessage: this.agentChatPlatformDelivery.createDeliverMessage(deliveryContext),
+            editMessage: this.agentChatPlatformDelivery.createEditMessage(deliveryContext),
+            deleteMessage: this.agentChatPlatformDelivery.createDeleteMessage(deliveryContext),
+            startTyping: this.agentChatPlatformDelivery.createStartTyping(deliveryContext),
           }),
         };
       }
@@ -473,7 +593,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             value: resolvedAction.value,
             sourceMessageId: event.messageId,
           },
-          event.user.userId
+          event.user.userId,
+          event.raw
         );
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
@@ -495,6 +616,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           message: event.message,
           thread: event.thread as Thread | undefined,
           user: event.user,
+          raw: event.raw,
         });
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling reaction`);

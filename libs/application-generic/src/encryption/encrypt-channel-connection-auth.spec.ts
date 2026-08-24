@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { decryptChannelConnectionAuth, encryptChannelConnectionAuth } from './encrypt-channel-connection-auth';
 
 describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
@@ -73,29 +75,24 @@ describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
     expect(encrypted!.accessToken).toEqual('');
   });
 
-  it('encrypts PagerDuty routingKey and preserves region as plaintext', () => {
-    const routingKey = 'R0UTINGK3YEXAMPLE000000000000000';
-    const encrypted = encryptChannelConnectionAuth({ routingKey, region: 'eu' });
+  it('does not encrypt tool-channel fields that belong on the endpoint document', () => {
+    const auth = {
+      accessToken: 'xoxb-secret',
+      routingKey: 'R0UTINGK3YEXAMPLE000000000000000',
+      apiKey: 'eb243592-faa2-4ba2-a551-1afdf565c889',
+      url: 'https://hooks.example.com/inbound',
+      headers: { Authorization: 'Bearer secret' },
+      method: 'POST',
+      region: 'eu',
+    };
+    const encrypted = encryptChannelConnectionAuth(auth);
 
-    expect((encrypted!.routingKey as string).startsWith(novuSubMask)).toBe(true);
-    expect(encrypted!.routingKey).not.toEqual(routingKey);
-    expect(encrypted!.region).toEqual('eu');
-
-    const decrypted = decryptChannelConnectionAuth(encrypted);
-    expect(decrypted!.routingKey).toEqual(routingKey);
-    expect(decrypted!.region).toEqual('eu');
-  });
-
-  it('encrypts Opsgenie apiKey and preserves region as plaintext', () => {
-    const apiKey = 'eb243592-faa2-4ba2-a551-1afdf565c889';
-    const encrypted = encryptChannelConnectionAuth({ apiKey, region: 'eu' });
-
-    expect((encrypted!.apiKey as string).startsWith(novuSubMask)).toBe(true);
-    expect(encrypted!.apiKey).not.toEqual(apiKey);
-    expect(encrypted!.region).toEqual('eu');
-
-    const decrypted = decryptChannelConnectionAuth(encrypted);
-    expect(decrypted!.apiKey).toEqual(apiKey);
-    expect(decrypted!.region).toEqual('eu');
+    expect((encrypted!.accessToken as string).startsWith(novuSubMask)).toBe(true);
+    expect(encrypted!.routingKey).toEqual(auth.routingKey);
+    expect(encrypted!.apiKey).toEqual(auth.apiKey);
+    expect(encrypted!.url).toEqual(auth.url);
+    expect(encrypted!.headers).toEqual(auth.headers);
+    expect(encrypted!.method).toEqual(auth.method);
+    expect(encrypted!.region).toEqual(auth.region);
   });
 });

@@ -6,10 +6,10 @@ import {
 } from '../../health';
 import { PinoLogger } from '../../logging';
 import { BullMqService } from '../bull-mq';
-import { CloudflareSchedulerService } from '../cloudflare-scheduler';
 import { FeatureFlagsService } from '../feature-flags';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { StandardQueueService, SubscriberProcessQueueService, WorkflowQueueService } from '../queues';
+import { EventBridgeSchedulerService } from '../scheduler';
 import { SqsService } from '../sqs';
 import { StandardWorkerService, WorkerBaseService } from '../workers';
 import { ReadinessService } from './readiness.service';
@@ -19,10 +19,6 @@ let standardQueueService: StandardQueueService;
 let workflowQueueService: WorkflowQueueService;
 let subscriberProcessQueueService: SubscriberProcessQueueService;
 let testWorker: WorkerBaseService;
-
-const mockCloudflareSchedulerService = {
-  scheduleJob: jest.fn(),
-} as unknown as CloudflareSchedulerService;
 
 const mockFeatureFlagsService = {
   getFlag: jest.fn(),
@@ -46,6 +42,12 @@ const mockLogger = {
   error: jest.fn(),
 } as unknown as PinoLogger;
 
+const mockSchedulerService = {
+  isConfigured: jest.fn(() => false),
+  createDelayedFire: jest.fn(),
+  deleteSchedule: jest.fn(),
+} as unknown as EventBridgeSchedulerService;
+
 describe('Readiness Service', () => {
   beforeAll(async () => {
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
@@ -53,11 +55,11 @@ describe('Readiness Service', () => {
 
     standardQueueService = new StandardQueueService(
       new WorkflowInMemoryProviderService(),
-      mockCloudflareSchedulerService,
+      mockSqsService,
       mockFeatureFlagsService,
       mockOrganizationRepository,
-      mockSqsService,
-      mockLogger
+      mockLogger,
+      mockSchedulerService
     );
     workflowQueueService = new WorkflowQueueService(
       new WorkflowInMemoryProviderService(),

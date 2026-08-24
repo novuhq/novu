@@ -1,19 +1,19 @@
 ---
-title: "Other frameworks"
-description: "Build custom code agents with @novu/framework and any LLM stack - OpenAI SDK, Anthropic SDK, or your own integration."
+title: "Other frameworks reference"
+description: "API patterns for @novu/framework with any LLM stack: OpenAI SDK, Anthropic SDK, Mastra, or custom code."
 sidebarTitle: Other
 ---
 
 
-Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk` or `@novu/framework/langchain`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for.
+Already connecting an agent? For Mastra, start with [Connect Mastra to Slack](/agents/get-started/mastra). This page is the generic Framework API for stacks without a dedicated Novu adapter.
+
+Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk` or `@novu/framework/langchain`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for Mastra, the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for.
 
 ## Before you start
 
-Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up - [jump to Minimal agent](#minimal-agent).
+Completed a [connect guide](/agents/get-started/mastra)? Your agent, bridge, and project are already set up - [jump to Minimal agent](#minimal-agent).
 
-Otherwise start with the [Quickstart](/agents/custom-code-agent/quickstart) first. All three onboarding paths (dashboard, CLI, AI assistant) walk you through creating the agent and wiring the bridge.
-
-This page covers only what's specific to wiring your own LLM stack.
+Otherwise connect first, then come back here for Framework patterns.
 
 ## Prerequisites
 
@@ -107,10 +107,13 @@ See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for
 ## Related
 
 <Columns cols={2}>
-  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+  <Card icon="boxes" href="/agents/get-started/mastra" title="Connect Mastra">
+    Call Mastra generate() from a Novu handler.
+  </Card>
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK reference">
     Return AI SDK results from handlers with automatic tool approval resume.
   </Card>
-  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain reference">
     Return LangChain agent configs with automatic tool approval resume.
   </Card>
   <Card icon="loader" href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator">

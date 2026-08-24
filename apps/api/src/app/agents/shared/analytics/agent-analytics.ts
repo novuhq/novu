@@ -66,7 +66,7 @@ export function trackAgentIntegrationConnected(
     integrationIdentifier: string;
     providerId: string;
     channel?: string;
-    connectionSource: 'existing_integration' | 'novu_email_provisioned';
+    connectionSource: 'existing_integration' | 'novu_email_provisioned' | 'novu_agent_chat_provisioned';
   }
 ): void {
   analytics.track(`Agent Integration Connected - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {

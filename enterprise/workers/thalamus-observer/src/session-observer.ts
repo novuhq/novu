@@ -77,9 +77,11 @@ export class SessionObserver extends Agent<Env, State> {
     const controller = new AbortController();
     this.abortController = controller;
 
-    void this.runFiber('observe', async (ctx) => {
-      ctx.stash(params);
-      await this.observeSSE(params, ctx, controller.signal);
+    await new Promise<void>((resolve, reject) => {
+      void this.runFiber('observe', async (ctx) => {
+        ctx.stash(params);
+        await this.observeSSE(params, ctx, controller.signal, resolve);
+      }).catch(reject);
     });
   }
 
@@ -153,7 +155,7 @@ export class SessionObserver extends Agent<Env, State> {
     if (ctx.name !== 'observe') return;
     const snapshot = ctx.snapshot as ObservationParams | null;
     if (!snapshot || !this.state.observation) return;
-    void this.startObserving(snapshot);
+    await this.startObserving(snapshot);
   }
 
   /* ---------- Internal: SSE observation + event processing ---------- */
@@ -161,7 +163,8 @@ export class SessionObserver extends Agent<Env, State> {
   private async observeSSE(
     params: ObservationParams,
     fiberCtx: { stash(data: unknown): void },
-    signal: AbortSignal
+    signal: AbortSignal,
+    onConnected: () => void
   ): Promise<void> {
     const parser = providers[params.provider];
     if (!parser) {
@@ -189,6 +192,8 @@ export class SessionObserver extends Agent<Env, State> {
       });
       throw new Error(`SSE connection failed: ${response.status}`);
     }
+
+    onConnected();
 
     const eventStream = response.body.pipeThrough(new TextDecoderStream()).pipeThrough(new EventSourceParserStream());
 
@@ -331,10 +336,6 @@ export class SessionObserver extends Agent<Env, State> {
     try {
       parsed = JSON.parse(sseEvent.data);
     } catch {
-      return [];
-    }
-
-    if (isMcpInitFailure(parsed)) {
       return [];
     }
 
@@ -594,15 +595,4 @@ export class SessionObserver extends Agent<Env, State> {
   private updateObservation(obs: (ObservationParams & { status: ObservationStatus }) | null): void {
     this.setState({ ...this.state, observation: obs });
   }
-}
-
-function isMcpInitFailure(parsed: unknown): boolean {
-  if (typeof parsed !== 'object' || parsed === null) return false;
-  const obj = parsed as { type?: string; error?: { type?: string; message?: string } };
-
-  return (
-    obj.type === 'session.error' &&
-    (obj.error?.type === 'mcp_authentication_failed_error' ||
-      /MCP server .+ initialize failed/i.test(obj.error?.message ?? ''))
-  );
 }

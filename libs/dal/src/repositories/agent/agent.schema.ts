@@ -1,4 +1,4 @@
-import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { AGENT_ANALYTICS_SOURCES, AgentSubscriberAccessEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -25,6 +25,7 @@ const agentSchema = new Schema<AgentDBModel>(
       subscriberAccess: {
         type: Schema.Types.String,
         enum: Object.values(AgentSubscriberAccessEnum),
+        required: true,
       },
     },
     bridgeUrl: Schema.Types.String,
@@ -35,7 +36,7 @@ const agentSchema = new Schema<AgentDBModel>(
     },
     runtime: {
       type: Schema.Types.String,
-      enum: ['self-hosted', 'managed'],
+      enum: ['self-hosted', 'managed', 'human_relay'],
       default: 'self-hosted',
     },
     visibility: {
@@ -51,6 +52,10 @@ const agentSchema = new Schema<AgentDBModel>(
       },
       externalAgentId: Schema.Types.String,
       managedDefinitionVersion: Schema.Types.Number,
+    },
+    creationSource: {
+      type: Schema.Types.String,
+      enum: AGENT_ANALYTICS_SOURCES,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,

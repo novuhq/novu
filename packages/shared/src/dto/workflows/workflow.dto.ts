@@ -1,4 +1,5 @@
 import {
+  ProvidersIdEnum,
   ResourceOriginEnum,
   RuntimeIssue,
   SeverityLevelEnum,
@@ -48,6 +49,28 @@ export type WorkflowListResponseDto = Pick<
   steps: StepListResponseDto[];
 };
 
+/**
+ * Per-provider overrides for a workflow-assigned agent.
+ * Today only Novu Email (`novu-email-agent`) uses `replyTo`.
+ */
+export type WorkflowAgentProviderConfig = {
+  /**
+   * Novu-digestible inbound address for this agent (shared inbox or custom-domain
+   * agent route). Used as the outbound email Reply-To so replies route to the agent.
+   */
+  replyTo?: string;
+};
+
+/**
+ * Workflow-level agent assignment and optional per-provider config.
+ * `null` on the parent field clears a previously saved assignment.
+ */
+export type WorkflowAgentConfig = {
+  /** Public agent identifier (slug), not the Mongo `_id`. */
+  identifier: string;
+  providers?: Partial<Record<ProvidersIdEnum, WorkflowAgentProviderConfig>>;
+};
+
 export type WorkflowCommonsFields = {
   name: string;
   description?: string;
@@ -56,6 +79,11 @@ export type WorkflowCommonsFields = {
   validatePayload?: boolean;
   isTranslationEnabled?: boolean;
   severity?: SeverityLevelEnum;
+  /**
+   * Optional agent assignment used to route this workflow through an agent's
+   * connected channels. `null` clears a previously saved assignment.
+   */
+  agent?: WorkflowAgentConfig | null;
 };
 
 export type PreferencesResponseDto = {
@@ -116,7 +144,7 @@ export type UpdateWorkflowDto = WorkflowCommonsFields & {
 
   preferences: PreferencesRequestDto;
 
-  origin: ResourceOriginEnum;
+  origin?: ResourceOriginEnum;
 
   payloadSchema?: object;
 };

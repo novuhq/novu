@@ -2,11 +2,13 @@ import type { RulesLogic } from 'json-logic-js';
 import type {
   ChannelConnectionResponse,
   ChannelEndpointResponse,
+  ConnectionMode,
   CreateChannelConnectionArgs,
   CreateChannelEndpointArgs,
   GenerateChatOAuthUrlArgs,
   GenerateConnectOAuthUrlArgs,
   GenerateLinkUserOAuthUrlArgs,
+  GetChannelConnectionArgs,
   LinkChannelEndpointArgs,
   LinkChannelEndpointResponse,
   ListChannelConnectionsArgs,
@@ -32,7 +34,9 @@ import type {
 import { SeverityLevelEnum } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
 
-export type InboxServiceOptions = HttpClientOptions;
+export type InboxServiceOptions = HttpClientOptions & {
+  httpClient?: HttpClient;
+};
 
 const INBOX_ROUTE = '/inbox';
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
@@ -49,6 +53,7 @@ type ChannelListBaseArgs = {
   channel?: string;
   providerId?: string;
   contextKeys?: string[];
+  connectionMode?: ConnectionMode;
   limit?: number;
   after?: string;
   before?: string;
@@ -61,6 +66,7 @@ function buildChannelListSearchParams(args: ChannelListBaseArgs): string {
   if (args.connectionIdentifier) searchParams.append('connectionIdentifier', args.connectionIdentifier);
   if (args.channel) searchParams.append('channel', args.channel);
   if (args.providerId) searchParams.append('providerId', args.providerId);
+  if (args.connectionMode) searchParams.append('connectionMode', args.connectionMode);
   if (args.contextKeys !== undefined) {
     if (args.contextKeys.length === 0) {
       searchParams.append('contextKeys', '');
@@ -124,7 +130,8 @@ export class InboxService {
   #httpClient: HttpClient;
 
   constructor(options: InboxServiceOptions = {}) {
-    this.#httpClient = new HttpClient(options);
+    const { httpClient, ...httpClientOptions } = options;
+    this.#httpClient = httpClient ?? new HttpClient(httpClientOptions);
   }
 
   async initializeSession({
@@ -580,6 +587,7 @@ export class InboxService {
     connectionIdentifier,
     subscriberId,
     context,
+    contextHash,
     scope,
     connectionMode,
     autoLinkUser,
@@ -589,6 +597,7 @@ export class InboxService {
       connectionIdentifier,
       subscriberId,
       context,
+      contextHash,
       scope,
       connectionMode,
       autoLinkUser,
@@ -600,6 +609,7 @@ export class InboxService {
     connectionIdentifier,
     subscriberId,
     context,
+    contextHash,
     userScope,
   }: GenerateLinkUserOAuthUrlArgs): Promise<{ url: string }> {
     return this.#httpClient.post(CHANNEL_ENDPOINTS_OAUTH_ROUTE, {
@@ -607,6 +617,7 @@ export class InboxService {
       connectionIdentifier,
       subscriberId,
       context,
+      contextHash,
       userScope,
     });
   }
@@ -621,8 +632,13 @@ export class InboxService {
     return this.#httpClient.get(`${CHANNEL_CONNECTIONS_ROUTE}${query}`, undefined, false);
   }
 
-  getChannelConnection(identifier: string): Promise<ChannelConnectionResponse> {
-    return this.#httpClient.get(`${CHANNEL_CONNECTIONS_ROUTE}/${identifier}`);
+  getChannelConnection({ identifier, connectionMode }: GetChannelConnectionArgs): Promise<ChannelConnectionResponse> {
+    const searchParams = new URLSearchParams();
+    if (connectionMode) {
+      searchParams.append('connectionMode', connectionMode);
+    }
+
+    return this.#httpClient.get(`${CHANNEL_CONNECTIONS_ROUTE}/${identifier}`, searchParams, false);
   }
 
   createChannelConnection({
@@ -685,9 +701,15 @@ export class InboxService {
     return this.#httpClient.delete(`${CHANNEL_ENDPOINTS_ROUTE}/${identifier}`);
   }
 
-  linkChannelEndpoint({ integrationIdentifier }: LinkChannelEndpointArgs): Promise<LinkChannelEndpointResponse> {
+  linkChannelEndpoint({
+    integrationIdentifier,
+    context,
+    contextHash,
+  }: LinkChannelEndpointArgs): Promise<LinkChannelEndpointResponse> {
     return this.#httpClient.post(`${CHANNEL_ENDPOINTS_ROUTE}/link`, {
       integrationIdentifier,
+      context,
+      contextHash,
     });
   }
 }

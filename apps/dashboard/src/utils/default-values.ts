@@ -36,9 +36,17 @@ function deepMergeDefaults(
 // When uiSchema is non-empty, merges both schemas with dataSchema taking precedence over uiSchema for
 // overlapping keys; controlValues take precedence over both. When uiSchema is empty, only dataSchema
 // and controlValues are used.
-export const getControlsDefaultValues = (resource: { controls: Controls }): Record<string, unknown> => {
+// Provider overrides are stored as a step sibling field but remain nested in the editor form.
+export const getControlsDefaultValues = (resource: {
+  controls: Controls;
+  providerOverrides?: Record<string, unknown> | null;
+}): Record<string, unknown> => {
   const controlValues = resource.controls.values;
   const strippedControlValues = stripEmptyValues(controlValues as Record<string, unknown>);
+  const withProviderOverrides =
+    resource.providerOverrides && Object.keys(resource.providerOverrides).length > 0
+      ? { ...strippedControlValues, providerOverrides: resource.providerOverrides }
+      : strippedControlValues;
 
   const uiSchemaDefaultValues = buildDefaultValues(resource.controls.uiSchema ?? {});
   const dataSchemaDefaultValues = buildDefaultValuesOfDataSchema(resource.controls.dataSchema ?? {});
@@ -46,10 +54,10 @@ export const getControlsDefaultValues = (resource: { controls: Controls }): Reco
   if (Object.keys(resource.controls.uiSchema ?? {}).length !== 0) {
     const defaults = deepMergeDefaults(uiSchemaDefaultValues, dataSchemaDefaultValues);
 
-    return deepMergeDefaults(defaults, strippedControlValues);
+    return deepMergeDefaults(defaults, withProviderOverrides);
   }
 
-  return deepMergeDefaults(dataSchemaDefaultValues, strippedControlValues);
+  return deepMergeDefaults(dataSchemaDefaultValues, withProviderOverrides);
 };
 
 // When uiSchema is non-empty, merges both schemas with uiSchema taking precedence over dataSchema for

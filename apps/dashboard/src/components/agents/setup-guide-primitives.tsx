@@ -252,12 +252,14 @@ export function SetupButton({
   leadingIcon,
   onClick,
   disabled,
+  className,
 }: {
   children: ReactNode;
   href?: string;
   leadingIcon?: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  className?: string;
 }) {
   if (href) {
     const isDisabled = Boolean(disabled);
@@ -271,7 +273,8 @@ export function SetupButton({
           class: cn(
             'relative flex items-center justify-center text-text-sub gap-1.5 px-2 py-1.5',
             'inline-flex w-fit max-w-full',
-            isDisabled && 'pointer-events-none cursor-default opacity-50'
+            isDisabled && 'pointer-events-none cursor-default opacity-50',
+            className
           ),
         })}
         aria-disabled={isDisabled ? true : undefined}
@@ -289,7 +292,7 @@ export function SetupButton({
       variant="secondary"
       mode="outline"
       size="xs"
-      className="text-text-sub gap-1.5 px-2 py-1.5"
+      className={cn('text-text-sub gap-1.5 px-2 py-1.5', className)}
       type="button"
       onClick={onClick}
       disabled={disabled}
@@ -373,6 +376,7 @@ export function ListeningStatus({
   onConnected,
   connectedMessage,
   listeningMessage,
+  listeningTitle,
   inline = false,
 }: {
   agentIdentifier: string;
@@ -380,6 +384,7 @@ export function ListeningStatus({
   onConnected?: () => void;
   connectedMessage: string;
   listeningMessage: string;
+  listeningTitle?: string;
   inline?: boolean;
 }) {
   const { currentEnvironment } = useEnvironment();
@@ -493,6 +498,7 @@ export function ListeningStatus({
         connected={Boolean(connectedAt)}
         connectedMessage={connectedMessage}
         listeningMessage={listeningMessage}
+        listeningTitle={listeningTitle}
         inline={inline}
       />
     </>

@@ -12,6 +12,7 @@ import {
   JobRepository,
   MessageEntity,
   MessageRepository,
+  NotificationRepository,
   OrganizationEntity,
 } from '@novu/dal';
 import { ApiServiceLevelEnum, ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
@@ -44,6 +45,7 @@ describe('SnoozeNotification', () => {
   let loggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
+  let notificationRepositoryMock: sinon.SinonStubbedInstance<NotificationRepository>;
   let standardQueueServiceMock: sinon.SinonStubbedInstance<StandardQueueService>;
   let organizationRepositoryMock: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
@@ -93,6 +95,7 @@ describe('SnoozeNotification', () => {
     loggerMock = sinon.createStubInstance(PinoLogger);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
+    notificationRepositoryMock = sinon.createStubInstance(NotificationRepository);
     standardQueueServiceMock = sinon.createStubInstance(StandardQueueService);
     organizationRepositoryMock = sinon.createStubInstance(CommunityOrganizationRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
@@ -119,6 +122,7 @@ describe('SnoozeNotification', () => {
       loggerMock as any,
       messageRepositoryMock as any,
       jobRepositoryMock as any,
+      notificationRepositoryMock as any,
       standardQueueServiceMock as any,
       organizationRepositoryMock as any,
       createExecutionDetailsMock as any,
@@ -209,13 +213,69 @@ describe('SnoozeNotification', () => {
     expect(result).to.deep.equal(mockNotification);
     expect(jobRepositoryMock.create.calledOnce).to.be.true;
     const createCallArg = jobRepositoryMock.create.firstCall.args[0];
-    expect(createCallArg).to.have.property('status', JobStatusEnum.PENDING);
+    // DELAYED so RunJob's atomic claim (QUEUED|DELAYED only) can claim the unsnooze delivery
+    expect(createCallArg).to.have.property('status', JobStatusEnum.DELAYED);
     expect(createCallArg).to.have.property('delay').that.is.a('number');
     expect(createCallArg.payload).to.have.property('unsnooze', true);
 
     expect(markNotificationAsMock.execute.calledOnce).to.be.true;
     expect(standardQueueServiceMock.add.calledOnce).to.be.true;
     expect(createExecutionDetailsMock.execute.called).to.be.true;
+  });
+
+  it('should enqueue the unsnooze job only after the transaction has closed', async () => {
+    const command = createCommand(SNOOZE_DURATION.ONE_DAY);
+    const sequence: string[] = [];
+    let transactionDepth = 0;
+    let transactionDepthAtEnqueue = -1;
+
+    // Mirrors session.withTransaction: the session stays open for the whole callback.
+    // @ts-expect-error Mocking the withTransaction method
+    messageRepositoryMock.withTransaction = sinon.stub().callsFake(async (callback) => {
+      transactionDepth += 1;
+      sequence.push('transaction:begin');
+      try {
+        return await callback();
+      } finally {
+        sequence.push('transaction:end');
+        transactionDepth -= 1;
+      }
+    });
+
+    jobRepositoryMock.create.callsFake(async () => {
+      sequence.push('job:create');
+
+      return mockJob;
+    });
+
+    markNotificationAsMock.execute.callsFake(async () => {
+      sequence.push('notification:snoozed');
+
+      return mockNotification;
+    });
+
+    standardQueueServiceMock.add.callsFake(async () => {
+      transactionDepthAtEnqueue = transactionDepth;
+      sequence.push('queue:add');
+    });
+
+    await snoozeNotification.execute(command);
+
+    /*
+     * Enqueueing is an external call - SQS, or a CreateSchedule round trip to
+     * EventBridge Scheduler for any snooze past the 900s delay cap. Doing it
+     * inside the transaction pins a Mongo connection and its locks for the
+     * length of that call, and an abort afterwards strands the schedule.
+     */
+    expect(standardQueueServiceMock.add.calledOnce).to.be.true;
+    expect(transactionDepthAtEnqueue).to.equal(0);
+    expect(sequence).to.deep.equal([
+      'transaction:begin',
+      'job:create',
+      'notification:snoozed',
+      'transaction:end',
+      'queue:add',
+    ]);
   });
 
   it('should enqueue job with correct parameters', async () => {

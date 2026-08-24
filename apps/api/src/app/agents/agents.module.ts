@@ -4,6 +4,7 @@ import {
   CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
+  RotatingConnectionTokenService,
   UpdateSubscriber,
   UpdateSubscriberChannel,
 } from '@novu/application-generic';
@@ -13,9 +14,11 @@ import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
+  ContextRepository,
   ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
   MessageRepository,
@@ -30,6 +33,14 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
+import { AgentChatController } from './agent-chat/agent-chat.controller';
+import { AgentChatEventFactory } from './agent-chat/agent-chat-event.factory';
+import { AgentChatLiveActivityPublisher } from './agent-chat/agent-chat-live-activity.publisher';
+import { AgentChatPlatformDeliveryService } from './agent-chat/agent-chat-platform-delivery.service';
+import { AgentChatPublicationService } from './agent-chat/agent-chat-publication.service';
+import { AgentChatResumeAuthorizationService } from './agent-chat/agent-chat-resume-authorization.service';
+import { AgentChatSessionVerifier } from './agent-chat/agent-chat-session.verifier';
+import { NovuAgentChatProvisioningService } from './channels/agent-chat/find-or-create-novu-agent-chat/find-or-create-novu-agent-chat.service';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
@@ -40,24 +51,33 @@ import { AgentConversationService } from './conversation-runtime/conversation/ag
 import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
+import { ConversationActivityLedger } from './conversation-runtime/conversation/conversation-activity-ledger';
+import { ConversationEventSequenceService } from './conversation-runtime/conversation/conversation-event-sequence.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
+import { OutboundDeliveryInfo } from './conversation-runtime/egress/outbound-delivery-info.service';
 import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
+import { InboundConnectionContextResolver } from './conversation-runtime/ingress/inbound-connection-context.resolver';
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
 import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
+import { WorkflowOriginService } from './conversation-runtime/ingress/workflow-origin.service';
+import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
+import { NovuCopilotBridgeModule } from './copilot-bridge/novu-copilot-bridge.module';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
+import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
@@ -75,7 +95,12 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
+import { AgentChatEnabledGuard } from './shared/agent-chat-enabled.guard';
+import { AgentConversationEnabledGuard } from './shared/agent-conversation-enabled.guard';
+import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
+import { AgentEventsIngestController } from './shared/ingest-agent-events/agent-events-ingest.controller';
+import { McpConnectionErrorHandler } from './shared/mcp-connection-error.handler';
 import { USE_CASES } from './usecases';
 
 @Module({
@@ -87,6 +112,7 @@ import { USE_CASES } from './usecases';
     ConnectModule,
     KeylessModule,
     TelegramLinkingModule,
+    NovuCopilotBridgeModule,
     forwardRef(() => IntegrationModule),
   ],
   controllers: [
@@ -97,8 +123,10 @@ import { USE_CASES } from './usecases';
     AgentInboundController,
     AgentReplyController,
     ManagedRuntimeController,
+    AgentEventsIngestController,
     AgentEmailActionsController,
     AgentsMcpOAuthController,
+    AgentChatController,
   ],
   providers: [
     ...USE_CASES,
@@ -108,6 +136,7 @@ import { USE_CASES } from './usecases';
     ChannelConnectionRepository,
     ChannelEndpointRepository,
     CommunityOrganizationRepository,
+    ContextRepository,
     ConversationRepository,
     ConversationActivationRepository,
     ConversationActivityRepository,
@@ -117,22 +146,32 @@ import { USE_CASES } from './usecases';
     SubscriberRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
+    RotatingConnectionTokenService,
     AgentSubscriberResolver,
     AgentSubscriberAdoptionService,
     AgentConversationService,
+    ConversationActivityLedger,
+    ConversationEventSequenceService,
+    ConfirmLinkedAuthCards,
     ConversationActivationService,
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
     AgentInboundHandler,
+    WorkflowOriginService,
     ReplyApprovalInterceptor,
     BridgeExecutorService,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     ManagedRuntime,
+    HumanRelayRuntime,
+    HumanInteractionSettlementService,
+    HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
+    AgentEventSink,
+    McpConnectionErrorHandler,
     ManagedAgentService,
     ToolTrustService,
     McpConnectionVaultService,
@@ -142,10 +181,19 @@ import { USE_CASES } from './usecases';
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
+    NovuAgentChatProvisioningService,
+    AgentChatPublicationService,
+    AgentChatSessionVerifier,
+    AgentChatResumeAuthorizationService,
+    AgentChatEventFactory,
+    AgentChatPlatformDeliveryService,
+    AgentChatLiveActivityPublisher,
+    OutboundDeliveryInfo,
     McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
     InboundDispatcher,
+    InboundConnectionContextResolver,
     FileMaterializer,
     AgentEmailSender,
     OutboundGateway,
@@ -157,7 +205,17 @@ import { USE_CASES } from './usecases';
     UpdateSubscriberChannel,
     AgentEntitlementsService,
     PlanLimitGateService,
+    AgentConversationEnabledGuard,
+    AgentChatEnabledGuard,
   ],
-  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway],
+  exports: [
+    ...USE_CASES,
+    ChatInstanceRegistry,
+    InboundDispatcher,
+    OutboundGateway,
+    ConfirmLinkedAuthCards,
+    ConversationActivityLedger,
+    HumanInteractionSettlementService,
+  ],
 })
 export class AgentsModule {}

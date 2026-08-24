@@ -1,3 +1,6 @@
+import { GetAgentChatConversation } from '../agent-chat/usecases/get-agent-chat-conversation/get-agent-chat-conversation.usecase';
+import { ListAgentChatConversationEvents } from '../agent-chat/usecases/list-agent-chat-conversation-events/list-agent-chat-conversation-events.usecase';
+import { ListAgentChatConversations } from '../agent-chat/usecases/list-agent-chat-conversations/list-agent-chat-conversations.usecase';
 import { AddAgentIntegration } from '../channels/integrations/add-agent-integration/add-agent-integration.usecase';
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
@@ -14,6 +17,7 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
+import { HandleNovuResolve } from '../managed-runtime/novu-resolve/handle-novu-resolve.usecase';
 import { ConfirmToolApproval } from '../managed-runtime/tool-approval/confirm-tool-approval.usecase';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
 import { HandleNovuTools } from '../managed-runtime/tool-connect/handle-novu-tools.usecase';
@@ -23,6 +27,7 @@ import { GenerateManagedAgent } from '../management/usecases/generate-managed-ag
 import { GetAgent } from '../management/usecases/get-agent/get-agent.usecase';
 import { GetAgentDemoQuota } from '../management/usecases/get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { GetAgentRuntimeConfig } from '../management/usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
+import { GetAgentUsage } from '../management/usecases/get-agent-usage/get-agent-usage.usecase';
 import { ListAgents } from '../management/usecases/list-agents/list-agents.usecase';
 import { MigrateAgentRuntime } from '../management/usecases/migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { ProvisionManagedAgent } from '../management/usecases/provision-managed-agent/provision-managed-agent.usecase';
@@ -42,6 +47,7 @@ import { SetAgentMcpServers } from '../mcp/enablement/set-agent-mcp-servers/set-
 import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
+import { IngestAgentEvents } from '../shared/ingest-agent-events/ingest-agent-events.usecase';
 
 export { ConsumeSlackSetupLink, GetSlackSetupLinkStatus, IssueSlackSetupLink };
 
@@ -50,6 +56,7 @@ export const USE_CASES = [
   ConsumeSlackSetupLink,
   GetAgent,
   GetAgentRuntimeConfig,
+  GetAgentUsage,
   GetSlackSetupLinkStatus,
   ListAgents,
   UpdateAgent,
@@ -90,4 +97,9 @@ export const USE_CASES = [
   HandlePendingToolApprovals,
   ConfirmToolApproval,
   HandleNovuTools,
+  HandleNovuResolve,
+  IngestAgentEvents,
+  GetAgentChatConversation,
+  ListAgentChatConversations,
+  ListAgentChatConversationEvents,
 ];

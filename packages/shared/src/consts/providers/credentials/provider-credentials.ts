@@ -324,6 +324,13 @@ export const sesConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ConfigurationSetName,
+    displayName: 'Configuration Set Name',
+    description: 'The name of the SES Configuration Set to apply to sent emails',
+    type: 'string',
+    required: false,
+  },
   ...mailConfigBase,
 ];
 
@@ -490,6 +497,18 @@ export const twilioConfig: IConfigCredential[] = [
     displayName: 'Auth token',
     type: 'string',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Data residency region',
+    description: 'Select EU if your Twilio account uses EU data residency (IE1). Use region-specific credentials.',
+    type: 'dropdown',
+    required: false,
+    value: 'us',
+    dropdown: [
+      { name: 'US (default)', value: 'us' },
+      { name: 'EU (Ireland)', value: 'eu' },
+    ],
   },
   ...smsConfigBase,
 ];
@@ -896,7 +915,7 @@ export const brazeEmailConfig: IConfigCredential[] = [
   },
   {
     key: CredentialsKeyEnum.AppID,
-    displayName: 'Base URL',
+    displayName: 'App ID',
     type: 'string',
     required: true,
   },
@@ -1031,6 +1050,9 @@ export const novuInAppConfig: IConfigCredential[] = [
     },
   },
 ];
+
+/** Mirrors Inbox HMAC toggle — optional per-session agent authorization for agent chat. */
+export const novuAgentChatConfig: IConfigCredential[] = novuInAppConfig;
 
 export const sendchampConfig: IConfigCredential[] = [
   {
@@ -1508,6 +1530,24 @@ export const cmTelecomConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
+export const ruachSmsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'Your Ruach SMS API key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Your Ruach SMS client identifier',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const telegramConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
@@ -1623,7 +1663,29 @@ export const pagerdutyConfig: IConfigCredential[] = [];
  */
 export const opsgenieConfig: IConfigCredential[] = [];
 
+/**
+ * Grafana is routed per subscriber: the IRM/OnCall incoming-webhook URL and
+ * optional bearer token live encrypted on the per-subscriber
+ * `ChannelEndpoint.endpoint`, provisioned via `POST /v1/channel-endpoints`
+ * with `type: grafana_oncall_integration`. The env-level integration record
+ * is an anchor only (identifier + name); no fields are configured on the
+ * integration itself.
+ */
+export const grafanaConfig: IConfigCredential[] = [];
+
 export const toolWebhookConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.RoutingMode,
+    displayName: 'Routing Mode',
+    type: 'dropdown',
+    description: 'Static delivers to one integration URL; dynamic routes per subscriber endpoint',
+    required: false,
+    value: 'static',
+    dropdown: [
+      { name: 'Static', value: 'static' },
+      { name: 'Dynamic', value: 'dynamic' },
+    ],
+  },
   {
     key: CredentialsKeyEnum.Method,
     displayName: 'HTTP Method',
@@ -1640,28 +1702,28 @@ export const toolWebhookConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.WebhookUrl,
     displayName: 'Endpoint URL',
     type: 'string',
-    description: 'The webhook URL to call when delivering a tool payload',
-    required: true,
+    description: 'Webhook URL used in static routing mode',
+    required: false,
   },
   {
     key: CredentialsKeyEnum.Headers,
     displayName: 'Headers',
     type: 'textarea',
-    description: 'Request headers as JSON object',
+    description: 'Default request headers as a JSON key/value object string',
     required: false,
   },
   {
     key: CredentialsKeyEnum.Body,
-    displayName: 'Body Template',
+    displayName: 'Body',
     type: 'textarea',
-    description: 'Request body template for the webhook call',
+    description: 'Default request body as a JSON key/value object string',
     required: false,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
-    displayName: 'Secret Hmac Key',
+    displayName: 'Signing Secret',
     type: 'string',
-    description: 'Optional secret used to sign webhook calls',
+    description: 'Optional HMAC secret used to sign webhook calls (X-Novu-Signature)',
     required: false,
   },
 ];

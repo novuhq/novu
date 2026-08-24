@@ -2,11 +2,13 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionStatusEnum } from '@novu/shared';
+import { AgentConversationService } from '../../conversation-runtime/conversation/agent-conversation.service';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { McpConnectRedirectService } from '../../mcp/connections/mcp-connect-redirect.service';
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
 import { buildConnectCardDelivery } from './connect-card.builder';
 import { HandleNovuToolsCommand, NovuToolsActionEnum } from './handle-novu-tools.command';
@@ -20,6 +22,7 @@ export class HandleNovuTools {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
     private readonly mcpConnectRedirect: McpConnectRedirectService,
+    private readonly agentConversationService: AgentConversationService,
     private readonly handleAgentReply: HandleAgentReply,
     @Inject(forwardRef(() => ManagedAgentService))
     private readonly managedAgentService: ManagedAgentService,
@@ -80,7 +83,7 @@ export class HandleNovuTools {
 
     await this.sendToolResult(command, {
       available,
-      instruction: 'Immediately call novu_tools with request_connect for the relevant service. Do not narrate.',
+      instruction: 'Immediately call novu_tool_catalog with request_connect for the relevant service. Do not narrate.',
     });
   }
 
@@ -112,6 +115,32 @@ export class HandleNovuTools {
 
     const mcp = MCP_SERVERS.find((s) => s.id === command.mcpId);
     const mcpName = mcp?.name ?? command.mcpId;
+
+    if (command.platform === AgentPlatformEnum.AGENT_CHAT) {
+      const conversation = await this.agentConversationService.getConversation(
+        command.conversationId,
+        command.environmentId,
+        command.organizationId
+      );
+      if (!conversation) {
+        throw new Error(`Conversation ${command.conversationId} not found`);
+      }
+
+      await this.agentConversationService.persistMcpConnectionRequest({
+        conversationId: command.conversationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentIdentifier: command.agentIdentifier,
+        channel: this.agentConversationService.getPrimaryChannel(conversation),
+        actionId: command.toolUseId,
+        mcpId: command.mcpId,
+        displayName: mcpName,
+        authorizeUrl: oauthUrls.authorizeUrl,
+        authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
+      });
+
+      return;
+    }
 
     const delivery = await buildConnectCardDelivery(
       {

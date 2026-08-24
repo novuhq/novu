@@ -1,29 +1,53 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import {
+  CreateStepConditionsPassedDetail,
   emailControlSchema,
   evaluateRules,
+  extractRuleVariables,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   isMatchingJsonSchema,
   PinoLogger,
+  resolveStepControlSchemas,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentRepository,
+  JobRepository,
+  LocalizationResourceEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { EnvironmentTypeEnum, LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
+import {
+  ActionStep,
+  ChannelStep,
+  ChatOutputUnvalidated,
+  CustomStep,
+  PostActionEnum,
+  Schema,
+  Step,
+  StepOutput,
+  Workflow,
+} from '@novu/framework/internal';
+import {
+  type ContentOverrideProviderId,
+  EnvironmentTypeEnum,
+  getContentOverrideProviderIds,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+  withProviderOverridesRuntimeSchema,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import {
   ChatOutputRendererUsecase,
+  ControlsTranslationService,
   EmailOutputRendererUsecase,
   FullPayloadForRender,
   InAppOutputRendererUsecase,
@@ -38,10 +62,21 @@ import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflo
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
+type ProviderOverrideStepType = StepTypeEnum.CHAT | StepTypeEnum.TOOL;
+
+interface ISkipEvaluationContext {
+  jobId?: string;
+  organizationId: string;
+  environmentId: string;
+}
+
+type SkipFunction = (controlValues: Record<string, unknown>) => Promise<boolean>;
+
 @Injectable()
 export class ConstructFrameworkWorkflow {
   constructor(
     private logger: PinoLogger,
+    private controlsTranslationService: ControlsTranslationService,
     private workflowsRepository: NotificationTemplateRepository,
     private environmentRepository: EnvironmentRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
@@ -54,7 +89,9 @@ export class ConstructFrameworkWorkflow {
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
     private digestOutputRendererUseCase: DigestOutputRendererUsecase,
     private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private jobRepository: JobRepository,
+    private createStepConditionsPassedDetail: CreateStepConditionsPassedDetail
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -218,6 +255,12 @@ export class ConstructFrameworkWorkflow {
       throw new InternalServerErrorException(`Step id not found for step ${staticStep._id}`);
     }
     const stepControls = stepTemplate.controls;
+    const skip: SkipFunction = (controlValues) =>
+      this.processSkipOption(controlValues, fullPayloadForRender, {
+        jobId,
+        organizationId: dbWorkflow._organizationId,
+        environmentId: dbWorkflow._environmentId,
+      });
 
     if (!stepControls) {
       this.logger.warn(`Step controls not found for step ${stepId}, skipping step`, LOG_CONTEXT);
@@ -244,7 +287,7 @@ export class ConstructFrameworkWorkflow {
             });
           },
           // Step options
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructChannelStepOptions(staticStep, skip)
         );
       case StepTypeEnum.EMAIL:
         return step.email(
@@ -261,7 +304,7 @@ export class ConstructFrameworkWorkflow {
               stepId,
             });
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructChannelStepOptions(staticStep, skip)
         );
       case StepTypeEnum.SMS:
         return step.sms(
@@ -275,21 +318,31 @@ export class ConstructFrameworkWorkflow {
               locale,
             });
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructChannelStepOptions(staticStep, skip)
         );
       case StepTypeEnum.CHAT:
         return step.chat(
           stepId,
           async (controlValues) => {
+            // The renderer yields either `{ body }` or `{ card }`; cast to the schema's
+            // body-or-card union (`ChatOutputUnvalidated`) that the resolver signature expects.
             return this.chatOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
               dbWorkflow,
               organization,
               locale,
-            });
+            }) as Promise<ChatOutputUnvalidated>;
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructProviderOverrideStepOptions(
+            staticStep,
+            skip,
+            fullPayloadForRender,
+            dbWorkflow,
+            StepTypeEnum.CHAT,
+            organization,
+            locale
+          )
         );
       case StepTypeEnum.PUSH:
         return step.push(
@@ -303,21 +356,30 @@ export class ConstructFrameworkWorkflow {
               locale,
             });
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructChannelStepOptions(staticStep, skip)
         );
       case StepTypeEnum.TOOL:
         return step.tool(
           stepId,
           async (controlValues) => {
-            return this.toolOutputRendererUseCase.execute({
-              controlValues,
-              fullPayloadForRender,
-              dbWorkflow,
-              organization,
-              locale,
-            });
+            return this.toolOutputRendererUseCase.execute(
+              await this.translateContentOverrideControls(controlValues, {
+                fullPayloadForRender,
+                dbWorkflow,
+                organization,
+                locale,
+              })
+            );
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructProviderOverrideStepOptions(
+            staticStep,
+            skip,
+            fullPayloadForRender,
+            dbWorkflow,
+            StepTypeEnum.TOOL,
+            organization,
+            locale
+          )
         );
       case StepTypeEnum.DIGEST:
         return step.digest(
@@ -325,7 +387,7 @@ export class ConstructFrameworkWorkflow {
           async (controlValues) => {
             return this.digestOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
           },
-          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+          this.constructActionStepOptions(staticStep, skip)
         );
       case StepTypeEnum.DELAY:
         return step.delay(
@@ -333,7 +395,7 @@ export class ConstructFrameworkWorkflow {
           async (controlValues) => {
             return this.delayOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
           },
-          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+          this.constructActionStepOptions(staticStep, skip)
         );
       case StepTypeEnum.THROTTLE:
         return step.throttle(
@@ -341,7 +403,7 @@ export class ConstructFrameworkWorkflow {
           async (controlValues) => {
             return this.throttleOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
           },
-          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+          this.constructActionStepOptions(staticStep, skip)
         );
       /*
        * Custom steps are executed by the worker, bypassing the bridge entirely. However, when a subsequent
@@ -350,20 +412,13 @@ export class ConstructFrameworkWorkflow {
        * the workflow graph correctly. The resolve function is a passthrough because execution already happened.
        */
       case StepTypeEnum.HTTP_REQUEST:
-        return step.custom(
-          stepId,
-          async (controlValues) => {
-            return controlValues;
-          },
-          this.constructActionStepOptions(staticStep, fullPayloadForRender)
-        );
       case StepTypeEnum.CUSTOM:
         return step.custom(
           stepId,
           async (controlValues) => {
             return controlValues;
           },
-          this.constructActionStepOptions(staticStep, fullPayloadForRender)
+          this.constructCustomStepOptions(staticStep, skip)
         );
       default:
         throw new InternalServerErrorException(`Step type ${stepType} is not supported`);
@@ -373,30 +428,141 @@ export class ConstructFrameworkWorkflow {
   @Instrument()
   private constructChannelStepOptions(
     staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender
+    skip: SkipFunction
   ): Required<Parameters<ChannelStep>[2]> {
-    const skipFunction = (controlValues: Record<string, unknown>) =>
-      this.processSkipOption(controlValues, fullPayloadForRender);
-
     return {
-      skip: skipFunction,
+      skip,
       controlSchema: staticStep.template!.controls!.schema as unknown as Schema,
       disableOutputSanitization: true,
       providers: {},
     };
   }
 
+  /** One translation per controls object for chat/tool resolve + provider resolvers. */
+  private contentOverrideTranslationCache?: WeakMap<object, Promise<Record<string, unknown>>>;
+
+  private translateContentOverrideControls(
+    controls: Record<string, unknown>,
+    {
+      fullPayloadForRender,
+      dbWorkflow,
+      organization,
+      locale,
+    }: {
+      fullPayloadForRender: FullPayloadForRender;
+      dbWorkflow: NotificationTemplateEntity;
+      organization?: OrganizationEntity;
+      locale?: string;
+    }
+  ): Promise<Record<string, unknown>> {
+    this.contentOverrideTranslationCache ??= new WeakMap();
+
+    const cached = this.contentOverrideTranslationCache.get(controls);
+    if (cached) {
+      return cached;
+    }
+
+    const { skip: _skip, ...rest } = controls;
+    const translatedControlsPromise = this.controlsTranslationService.processTranslations({
+      controls: rest,
+      variables: fullPayloadForRender,
+      environmentId: dbWorkflow._environmentId,
+      organizationId: dbWorkflow._organizationId,
+      resourceId: dbWorkflow._id,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      locale,
+      resourceEntity: dbWorkflow,
+      organization,
+    });
+
+    this.contentOverrideTranslationCache.set(controls, translatedControlsPromise);
+
+    return translatedControlsPromise;
+  }
+
+  /**
+   * Chat/tool step options: canonical control schema plus runtime `providerOverrides`,
+   * and resolvers that project a provider slice from the shared translated controls.
+   */
+  @Instrument()
+  private constructProviderOverrideStepOptions(
+    staticStep: NotificationStepEntity,
+    skip: SkipFunction,
+    fullPayloadForRender: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity,
+    stepType: ProviderOverrideStepType,
+    organization?: OrganizationEntity,
+    locale?: string
+  ): Required<Parameters<ChannelStep>[2]> {
+    const controlSchema = dbWorkflow.origin
+      ? resolveStepControlSchemas({
+          stepType,
+          workflowOrigin: dbWorkflow.origin,
+          existingControls: staticStep.template?.controls,
+          stepResolverHash: staticStep.template?.stepResolverHash,
+        }).schema
+      : staticStep.template!.controls!.schema;
+
+    const resolveProviderOverride =
+      (providerId: ContentOverrideProviderId) =>
+      async ({ controls }: { controls: Record<string, unknown> }) => {
+        const translated = await this.translateContentOverrideControls(controls, {
+          fullPayloadForRender,
+          dbWorkflow,
+          organization,
+          locale,
+        });
+        const blob = (translated.providerOverrides as Record<string, unknown> | undefined)?.[providerId];
+        if (!blob || typeof blob !== 'object' || Array.isArray(blob)) {
+          return {};
+        }
+
+        return blob as Record<string, unknown>;
+      };
+
+    const providers = Object.fromEntries(
+      getContentOverrideProviderIds(stepType).map((providerId) => [providerId, resolveProviderOverride(providerId)])
+    );
+
+    return {
+      skip,
+      controlSchema: withProviderOverridesRuntimeSchema(
+        controlSchema as { properties?: Record<string, unknown> }
+      ) as unknown as Schema,
+      disableOutputSanitization: true,
+      providers,
+    } as Required<Parameters<ChannelStep>[2]>;
+  }
+
+  /**
+   * Worker-executed steps (HTTP request, custom) are hydrated from the job state when a later step
+   * calls the bridge, and the framework validates that state against the step's output schema with
+   * AJV configured to remove additional properties. Without an explicit schema the framework falls
+   * back to a closed empty schema, which strips the whole response body and leaves conditions such
+   * as `steps.http-request-step.enrolmentCount equals 1` evaluating against nothing (NV-8604).
+   */
+  @Instrument()
+  private constructCustomStepOptions(
+    staticStep: NotificationStepEntity,
+    skip: SkipFunction
+  ): NonNullable<Parameters<CustomStep>[2]> {
+    return {
+      ...this.constructActionStepOptions(staticStep, skip),
+      outputSchema: PERMISSIVE_EMPTY_SCHEMA as unknown as Schema,
+    };
+  }
+
   @Instrument()
   private constructActionStepOptions(
     staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender
+    skip: SkipFunction
   ): Required<Parameters<ActionStep>[2]> {
     const stepType = staticStep.template!.type;
     const controlSchema = this.optionalAugmentControlSchemaDueToAjvBug(staticStep, stepType);
 
     return {
       controlSchema: controlSchema as unknown as Schema,
-      skip: (controlValues: Record<string, unknown>) => this.processSkipOption(controlValues, fullPayloadForRender),
+      skip,
     };
   }
 
@@ -473,7 +639,8 @@ export class ConstructFrameworkWorkflow {
 
   private async processSkipOption(
     controlValues: { [x: string]: unknown },
-    variables: FullPayloadForRender
+    variables: FullPayloadForRender,
+    skipContext: ISkipEvaluationContext
   ): Promise<boolean> {
     const skipRules = controlValues.skip as RulesLogic<AdditionalOperation>;
 
@@ -481,20 +648,59 @@ export class ConstructFrameworkWorkflow {
       return false;
     }
 
-    const { result, error } = evaluateRules(skipRules, {
+    const evaluationData = {
       ...variables,
       subscriber: {
         ...variables.subscriber,
         isOnline: variables.subscriber.isOnline ?? false,
       },
-    });
+    };
+
+    const { result, error } = evaluateRules(skipRules, evaluationData);
 
     if (error) {
       this.logger.error({ err: error }, 'Failed to evaluate skip rule', LOG_CONTEXT);
     }
 
     // The Step Conditions in the Dashboard control the step execution, that's why we need to invert the result.
-    return !result;
+    const shouldSkip = !result;
+
+    if (!shouldSkip) {
+      await this.traceConditionsPassed(skipRules, evaluationData, skipContext);
+    }
+
+    return shouldSkip;
+  }
+
+  /**
+   * The framework only invokes the skip function for the currently executing step
+   * (never in preview), so this runs at most once per job execution. jobId is
+   * absent for preview/test constructions, where no trace should be written.
+   * Failures are swallowed: tracing must never break a send.
+   */
+  private async traceConditionsPassed(
+    skipRules: RulesLogic<AdditionalOperation>,
+    evaluationData: FullPayloadForRender,
+    { jobId, organizationId, environmentId }: ISkipEvaluationContext
+  ): Promise<void> {
+    if (!jobId || !(await this.createStepConditionsPassedDetail.isEnabled({ organizationId, environmentId }))) {
+      return;
+    }
+
+    try {
+      const job = await this.jobRepository.findOne({ _id: jobId, _environmentId: environmentId });
+      if (!job) {
+        return;
+      }
+
+      await this.createStepConditionsPassedDetail.execute({
+        job,
+        conditions: skipRules,
+        evaluatedValues: extractRuleVariables(skipRules, evaluationData),
+      });
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to create step conditions passed execution detail', LOG_CONTEXT);
+    }
   }
 }
 

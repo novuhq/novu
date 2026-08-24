@@ -33,6 +33,7 @@ const extendedBodySizeRoutes = [
   '/v1/layouts',
   '/v1/bridge/sync',
   '/v1/bridge/diff',
+  '/v1/novu/bridge',
   '/v1/environments/:environmentId/bridge',
   '/v2/workflows',
 ];
@@ -115,8 +116,12 @@ export async function bootstrap(
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalInterceptors(getErrorInterceptor());
 
-  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
-  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
+  /*
+   * ~20 MB raw attachments become ~26.7 MB base64 JSON. Keep headroom above that so
+   * trigger + internal bridge requests with large attachments are not rejected at 26 MB.
+   */
+  app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '30mb' }));
+  app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '30mb', extended: true }));
 
   app.use('/v1/agents', bodyParser.json({ limit: '8mb', verify: agentRawBodyBuffer }));
 

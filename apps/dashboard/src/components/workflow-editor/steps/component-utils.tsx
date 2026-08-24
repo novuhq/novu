@@ -1,4 +1,5 @@
 import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
+import { ChatEditorSelect } from '@/components/chat-editor-select';
 import { EmailEditorSelect } from '@/components/email-editor-select';
 import { DelayWindow } from '@/components/workflow-editor/steps/delay/delay-window';
 import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-delay-tabs';
@@ -22,6 +23,7 @@ import { useWorkflow } from '../workflow-provider';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
 import { DataObject } from './base/data-object';
+import { ChatBody } from './chat/chat-body';
 import { LayoutSelect } from './email/layout-select';
 import { useSaveForm } from './save-form-context';
 import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
@@ -34,6 +36,20 @@ const EmailEditorSelectInternal = () => {
 
   return (
     <EmailEditorSelect
+      isLoading={isUpdatePatchPending}
+      saveForm={saveForm}
+      disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+    />
+  );
+};
+
+const ChatEditorSelectInternal = () => {
+  const { isUpdatePatchPending } = useWorkflow();
+  const { saveForm } = useSaveForm();
+  const { currentEnvironment } = useEnvironment();
+
+  return (
+    <ChatEditorSelect
       isLoading={isUpdatePatchPending}
       saveForm={saveForm}
       disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
@@ -72,6 +88,10 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.EMAIL_EDITOR_SELECT: {
       return <EmailEditorSelectInternal />;
+    }
+
+    case UiComponentEnum.CHAT_EDITOR_SELECT: {
+      return <ChatEditorSelectInternal />;
     }
 
     case UiComponentEnum.EMAIL_BODY:
@@ -124,7 +144,7 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
     }
 
     case UiComponentEnum.CHAT_BODY: {
-      return <BaseBody />;
+      return <ChatBody />;
     }
 
     case UiComponentEnum.TOOL_BODY: {

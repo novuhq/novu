@@ -1,10 +1,20 @@
 import * as dns from 'node:dns';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isPrivateIp, validateUrlSsrf } from './ssrf-url-validation';
+import { resetOutboundSsrfAllowListCacheForTests } from './outbound-ssrf-allow-list';
+import {
+  assertSafeOutboundUrl,
+  isLinkLocalIp,
+  isPrivateIp,
+  SsrfBlockedError,
+  validateUrlSsrf,
+} from './ssrf-url-validation';
 
 describe('ssrf-url-validation', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env.NOVU_SAFE_OUTBOUND_ALLOW;
+    delete process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
+    resetOutboundSsrfAllowListCacheForTests();
   });
 
   describe('isPrivateIp', () => {
@@ -83,13 +93,67 @@ describe('ssrf-url-validation', () => {
     });
   });
 
+  describe('isLinkLocalIp', () => {
+    it('should detect IPv4 link-local and IMDS addresses', () => {
+      expect(isLinkLocalIp('169.254.169.254')).toBe(true);
+      expect(isLinkLocalIp('169.254.1.1')).toBe(true);
+      expect(isLinkLocalIp('127.0.0.1')).toBe(false);
+      expect(isLinkLocalIp('10.0.0.1')).toBe(false);
+      expect(isLinkLocalIp('8.8.8.8')).toBe(false);
+    });
+
+    it('should detect IPv6 link-local and mapped link-local addresses', () => {
+      expect(isLinkLocalIp('fe80::1')).toBe(true);
+      expect(isLinkLocalIp('::ffff:169.254.169.254')).toBe(true);
+      expect(isLinkLocalIp('::ffff:a9fe:a9fe')).toBe(true);
+      expect(isLinkLocalIp('::1')).toBe(false);
+      expect(isLinkLocalIp('fc00::1')).toBe(false);
+    });
+  });
+
+  describe('assertSafeOutboundUrl', () => {
+    it('should reject private and link-local IP literals', () => {
+      for (const url of [
+        'http://127.0.0.1/',
+        'http://10.0.0.1/api',
+        'http://192.168.1.1/',
+        'http://169.254.169.254/latest/meta-data/',
+        'http://[::1]/',
+      ]) {
+        expect(() => assertSafeOutboundUrl(url)).toThrow(SsrfBlockedError);
+        try {
+          assertSafeOutboundUrl(url);
+        } catch (err) {
+          expect(err).toMatchObject({ reason: 'PRIVATE_IP' });
+        }
+      }
+    });
+
+    it('should allow public IP literals and hostnames', () => {
+      expect(assertSafeOutboundUrl('https://8.8.8.8/').hostname).toBe('8.8.8.8');
+      expect(assertSafeOutboundUrl('https://example.com/bridge').hostname).toBe('example.com');
+    });
+
+    it('should allow private IP literals that are explicitly allow-listed', () => {
+      process.env.NOVU_SAFE_OUTBOUND_ALLOW = '10.0.0.1';
+      resetOutboundSsrfAllowListCacheForTests();
+
+      expect(assertSafeOutboundUrl('http://10.0.0.1/api/novu').hostname).toBe('10.0.0.1');
+    });
+
+    it('should never allow-list link-local or IMDS IP literals', () => {
+      process.env.NOVU_SAFE_OUTBOUND_ALLOW = '169.254.169.254';
+      resetOutboundSsrfAllowListCacheForTests();
+
+      expect(() => assertSafeOutboundUrl('http://169.254.169.254/')).toThrow(SsrfBlockedError);
+    });
+  });
+
   describe('validateUrlSsrf', () => {
     it('should block bracketed IPv6 literals that normalize to private addresses', async () => {
       const result = await validateUrlSsrf('http://[::ffff:169.254.169.254]/');
 
-      expect(result).toBe(
-        'Requests to private or reserved IP addresses are not allowed (resolved: ::ffff:a9fe:a9fe).'
-      );
+      expect(result).toMatch(/private or reserved IP addresses are not allowed/);
     });
 
     it('should block hostnames that resolve to IPv6 link-local addresses', async () => {

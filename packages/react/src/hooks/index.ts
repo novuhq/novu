@@ -1,12 +1,15 @@
 export type * from '@novu/js';
 export { PreferenceLevel, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 export { NovuProvider, useNovu } from './NovuProvider';
+export * from './useAgentChat';
 export * from './useChannelConnection';
 export * from './useChannelConnections';
 export * from './useChannelEndpoint';
+export * from './useChannelEndpoints';
 export * from './useCounts';
 export * from './useCreateChannelEndpoint';
 export * from './useCreateSubscription';
+export * from './useDeleteChannelConnection';
 export * from './useDeleteChannelEndpoint';
 export * from './useNotifications';
 export * from './usePreferences';

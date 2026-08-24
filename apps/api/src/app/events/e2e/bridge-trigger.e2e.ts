@@ -157,6 +157,76 @@ contexts.forEach((context: Context) => {
       expect(smsMessage?.content).to.include('sms result test_name');
     });
 
+    /**
+     * Regression for NV-8382: a synced code-first workflow triggered with an
+     * override `bridgeUrl` still carries a Mongo `_templateId`, but step content
+     * comes from the bridge discover stub (`template: { type }`). Hydration must
+     * not fail those jobs as unresolved Mongo message templates.
+     */
+    it(`should trigger a synced workflow with an override bridgeUrl [${context.name}]`, async () => {
+      const workflowId = `bridge-url-override-${context.name}`;
+      const bridgeWorkflow = workflow(
+        workflowId,
+        async ({ step, payload }) => {
+          await step.inApp('send-in-app', async () => ({
+            body: `override in-app ${payload.name}`,
+          }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: 'default_name' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await bridgeServer.start({ workflows: [bridgeWorkflow] });
+      await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+      expect(foundWorkflow?._id).to.be.ok;
+
+      await triggerEvent(
+        session,
+        workflowId,
+        subscriber.subscriberId,
+        { name: 'tunnel_user' },
+        {
+          url: `${bridgeServer.serverPath}/novu`,
+        }
+      );
+      await session.waitForJobCompletion();
+
+      const failedHydrationDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: ExecutionDetailsStatusEnum.FAILED,
+      });
+      expect(failedHydrationDetails, 'bridgeUrl jobs must not fail step-template hydration').to.have.length(0);
+
+      const inAppJobs = await jobRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        type: StepTypeEnum.IN_APP,
+      });
+      expect(inAppJobs.length).to.equal(1);
+      expect(inAppJobs[0].status).to.equal(JobStatusEnum.COMPLETED);
+      expect(inAppJobs[0].step?.bridgeUrl).to.equal(`${bridgeServer.serverPath}/novu`);
+
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.IN_APP,
+      });
+      expect(messages.length).to.be.eq(1);
+      expect(messages[0].content).to.include('override in-app tunnel_user');
+    });
+
     it(`should update message template type when replacing a step with the same stepId after re-sync [${context.name}]`, async () => {
       const workflowId = `step-type-replace-${context.name}`;
       const middleStepId = 'shared-middle-step';

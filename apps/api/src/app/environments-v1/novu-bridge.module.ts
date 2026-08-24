@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import {
   AnalyticsService,
   CreateExecutionDetails,
+  CreateStepConditionsPassedDetail,
   CreateVariablesObject,
   FeatureFlagsService,
   GetDecryptedSecretKey,
@@ -29,6 +30,7 @@ import { NovuBridgeClient } from './novu-bridge-client';
 import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workflow';
 import {
   ChatOutputRendererUsecase,
+  ControlsTranslationService,
   EmailOutputRendererUsecase,
   InAppOutputRendererUsecase,
   PushOutputRendererUsecase,
@@ -68,6 +70,7 @@ export const featureFlagsService = {
     GetOrganizationSettings,
     ConstructFrameworkWorkflow,
     GetDecryptedSecretKey,
+    ControlsTranslationService,
     InAppOutputRendererUsecase,
     EmailOutputRendererUsecase,
     SmsOutputRendererUsecase,
@@ -85,6 +88,7 @@ export const featureFlagsService = {
     JobRepository,
     ExecutionDetailsRepository,
     CreateExecutionDetails,
+    CreateStepConditionsPassedDetail,
     featureFlagsService,
     InMemoryLRUCacheService,
   ],
