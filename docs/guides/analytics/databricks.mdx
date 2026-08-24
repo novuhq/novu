@@ -471,7 +471,7 @@ def event_payload(row):
 
 
 def trigger_idempotency_key(batch):
-    joined = ",".join(sorted(item["transactionId"] for item in batch))
+    joined = ",".join(item["transactionId"] for item in batch)
 
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()
 
@@ -480,6 +480,7 @@ def sync_events(dataframe):
     rows = (
         dataframe.select("event_id", "subscriber_id", "workflow_id", "plan", "account_type")
         .filter(F.col("event_id").isNotNull() & F.col("subscriber_id").isNotNull())
+        .orderBy("event_id")
         .toLocalIterator()
     )
 
@@ -496,6 +497,8 @@ def sync_events(dataframe):
 ```
 
 `name` is the workflow identifier in Novu. `payload` fields are available in templates as `{{payload.plan}}`.
+
+`orderBy("event_id")` keeps bulk groups stable. If a micro-batch fails after some POSTs succeed, Databricks retries the same rows. An unordered `toLocalIterator()` can split those rows into different groups of 100, which would mint new `Idempotency-Key` values and send already-accepted events again. `event_id` must be unique so the sort order does not depend on Spark's partition layout.
 
 Enable Change Data Feed on the events table, then process **inserts only**. Set `EVENT_START_TIMESTAMP` before the first run so the snapshot of historical rows is not sent.
 
