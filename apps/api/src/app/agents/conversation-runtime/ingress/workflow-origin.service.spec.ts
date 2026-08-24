@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { AGENTS_ORG_FUNNEL_EVENTS, ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -53,16 +53,28 @@ describe('WorkflowOriginService', () => {
       findOne: overrides.findOne ?? sinon.stub().resolves(null),
       find: overrides.find ?? sinon.stub().resolves([]),
     };
+    const analyticsService = {
+      track: sinon.stub(),
+    };
 
     const service = new WorkflowOriginService(
       logger as any,
       conversationService as any,
       subscriberRepository as any,
       notificationRepository as any,
-      messageRepository as any
+      messageRepository as any,
+      analyticsService as any
     );
 
-    return { service, logger, conversationService, subscriberRepository, notificationRepository, messageRepository };
+    return {
+      service,
+      logger,
+      conversationService,
+      subscriberRepository,
+      notificationRepository,
+      messageRepository,
+      analyticsService,
+    };
   }
 
   describe('Slack', () => {
@@ -158,7 +170,7 @@ describe('WorkflowOriginService', () => {
     });
 
     it('hydrates platform message id from the Slack identifier suffix', async () => {
-      const { service, conversationService, notificationRepository } = makeService({
+      const { service, conversationService, notificationRepository, analyticsService } = makeService({
         notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-1' } }),
       });
 
@@ -192,10 +204,22 @@ describe('WorkflowOriginService', () => {
       expect(
         conversationService.setNotificationId.calledBefore(conversationService.persistWorkflowOriginHydration)
       ).to.equal(true);
+      expect(analyticsService.track.calledOnce).to.equal(true);
+      expect(analyticsService.track.firstCall.args[0]).to.equal(AGENTS_ORG_FUNNEL_EVENTS.WORKFLOW_ORIGIN_HYDRATED);
+      expect(analyticsService.track.firstCall.args[1]).to.equal('org1');
+      expect(analyticsService.track.firstCall.args[2]).to.include({
+        _organization: 'org1',
+        environmentId: 'env1',
+        agentId: 'agent1',
+        agentIdentifier: 'support-agent',
+        conversationId: 'conversation1',
+        workflowIdentifier: 'order-alerts',
+        platform: AgentPlatformEnum.SLACK,
+      });
     });
 
     it('keeps the origin re-derivable when the hydration marker write fails', async () => {
-      const { service, conversationService } = makeService({
+      const { service, conversationService, analyticsService } = makeService({
         notificationFindOne: sinon.stub().resolves({ payload: { orderId: 'ORD-1' } }),
         persistWorkflowOriginHydration: sinon.stub().rejects(new Error('mongo timeout')),
       });
@@ -218,6 +242,7 @@ describe('WorkflowOriginService', () => {
       expect(snapshot).to.equal(null);
       expect(conversationService.setNotificationId.calledOnce).to.equal(true);
       expect(target._notificationId).to.equal('notif1');
+      expect(analyticsService.track.called).to.equal(false);
     });
   });
 
