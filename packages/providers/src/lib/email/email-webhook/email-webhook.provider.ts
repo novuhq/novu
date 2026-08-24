@@ -179,6 +179,10 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
       return this.config.hmacSecretKey as string;
     }
 
+    if (!['base64', 'hex'].includes(encoding)) {
+      throw new Error(`Unsupported hmacSecretKeyEncoding: '${encoding}'. Supported encodings: text, base64, hex`);
+    }
+
     if (!this.config.hmacSecretKey) {
       throw new Error(`hmacSecretKeyEncoding '${encoding}' requires a non-empty hmacSecretKey`);
     }

@@ -259,4 +259,15 @@ describe('computeHmac secret key encodings', () => {
     expect(() => base64Provider.computeHmac(PAYLOAD)).toThrow(/not valid base64/);
     expect(() => missingKeyProvider.computeHmac(PAYLOAD)).toThrow(/requires a non-empty hmacSecretKey/);
   });
+
+  test('should reject unsupported encodings instead of signing with unintended key bytes', () => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: 'super-secret-key',
+      // Runtime values are not constrained by the TypeScript union — the API persists raw strings.
+      hmacSecretKeyEncoding: 'latin1' as 'base64' | 'hex',
+    });
+
+    expect(() => provider.computeHmac(PAYLOAD)).toThrow(/Unsupported hmacSecretKeyEncoding: 'latin1'/);
+  });
 });
