@@ -1,6 +1,6 @@
 ---
 title: 'Novu Integration Guides and Recipes'
-description: "Step-by-step Novu integration guides for Clerk, Stripe, Segment, Hightouch, Auth0, Supabase, and other services to add notifications to your product stack."
+description: "Step-by-step Novu integration guides for Clerk, Stripe, Segment, Hightouch, Databricks, Auth0, Supabase, and other services to add notifications to your product stack."
 sidebarTitle: Overview
 ---
 
@@ -54,9 +54,9 @@ This allows for real-time notifications - whether it's a welcome email, payment 
   </Card>
 </Columns>
 
-### Analytics & Data Platform Integrations
+### Data & warehouse integrations
 
-Some integrations use different mechanisms than webhooks to send data to Novu. For example, analytics and data platforms often use custom destinations or functions to forward events.
+These guides sync warehouse or CDP data into Novu subscribers and topics. They do not replace event-stream triggers for real-time notifications.
 
 <Columns cols={2}>
   <Card title="Segment" icon="activity" href="/guides/analytics/segment">
@@ -67,6 +67,11 @@ Some integrations use different mechanisms than webhooks to send data to Novu. F
   <Card title="Hightouch" icon="database" href="/guides/analytics/hightouch">
   <p>
     Sync warehouse models to Novu with Hightouch's HTTP Request destination to create subscribers and trigger workflows.
+  </p>
+  </Card>
+  <Card title="Databricks" icon="warehouse" href="/guides/analytics/databricks">
+  <p>
+    Sync subscriber profiles and cohort membership from Databricks with the Novu REST API, including retries and rate-limit handling.
   </p>
   </Card>
 </Columns>

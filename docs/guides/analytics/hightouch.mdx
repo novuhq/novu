@@ -20,7 +20,7 @@ By the end, you'll have a working integration that creates subscribers and trigg
 </Info>
 
 <Note>
-  Hightouch is a reverse ETL platform. Instead of running code on each event like [Segment Destination Functions](/guides/analytics/segment), Hightouch queries a model on a schedule and sends an HTTP request for each row that is added, changed, or removed. You map those row changes to Novu API calls.
+  Hightouch is a reverse ETL platform. Instead of running code on each event like [Segment Destination Functions](/guides/analytics/segment), Hightouch queries a model on a schedule and sends an HTTP request for each row that is added, changed, or removed. You map those row changes to Novu API calls. To run the same subscriber and cohort sync from a Databricks notebook, see [Databricks](/guides/analytics/databricks).
 </Note>
 
 <Steps>
@@ -215,5 +215,6 @@ With this setup, changes in your warehouse flow into Novu on every sync, keeping
 
 ## Related guides
 
+- [Databricks](/guides/analytics/databricks)
 - [Segment Destination Functions](/guides/analytics/segment)
 - [Rate limiting](/api-reference/rate-limiting)
