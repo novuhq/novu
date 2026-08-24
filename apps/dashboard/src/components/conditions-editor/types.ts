@@ -1,5 +1,7 @@
 import { BaseOption, Path, RuleGroupTypeAny, RuleType } from 'react-querybuilder';
 
+export const DEFAULT_MAX_CONDITIONS_PER_GROUP = 10;
+
 export interface ConditionsEditorContextType {
   removeRuleOrGroup: (path: Path) => void;
   cloneRuleOrGroup: (ruleOrGroup: RuleGroupTypeAny | RuleType, path?: Path) => void;

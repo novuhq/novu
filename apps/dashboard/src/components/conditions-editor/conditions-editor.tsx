@@ -1,3 +1,4 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { type Field, QueryBuilder, RuleGroupType, Translations } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
@@ -16,6 +17,8 @@ import { getOperatorsForFieldType } from '@/components/conditions-editor/field-t
 import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
 import { ValueEditor } from '@/components/conditions-editor/value-editor';
+import { DEFAULT_MAX_CONDITIONS_PER_GROUP } from '@/components/conditions-editor/types';
+import { useNumericFeatureFlag } from '@/hooks/use-feature-flag';
 import {
   EnhancedLiquidVariable,
   type FieldDataType,
@@ -87,6 +90,14 @@ function InternalConditionsEditor({
   enhancedVariables?: EnhancedLiquidVariable[];
   disabled?: boolean;
 }) {
+  const configuredMaxConditionsPerGroup = useNumericFeatureFlag(
+    FeatureFlagsKeysEnum.MAX_STEP_CONDITIONS_PER_GROUP_NUMBER,
+    DEFAULT_MAX_CONDITIONS_PER_GROUP
+  );
+  const maxConditionsPerGroup =
+    Number.isFinite(configuredMaxConditionsPerGroup) && configuredMaxConditionsPerGroup >= 1
+      ? Math.floor(configuredMaxConditionsPerGroup)
+      : DEFAULT_MAX_CONDITIONS_PER_GROUP;
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
 
@@ -202,8 +213,9 @@ function InternalConditionsEditor({
       saveForm,
       getPlaceholder,
       getHelpText,
+      maxConditionsPerGroup,
     }),
-    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText]
+    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText, maxConditionsPerGroup]
   );
 
   return (
@@ -229,6 +241,7 @@ export type ConditionsEditorContext = {
   isAllowedVariable: IsAllowedVariable;
   saveForm: () => void;
   getPlaceholder?: (fieldName: string, operator: string) => string;
+  maxConditionsPerGroup: number;
   getHelpText?: (
     fieldName: string,
     operator: string

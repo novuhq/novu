@@ -1,6 +1,7 @@
 import { RiAddFill } from 'react-icons/ri';
 import { ActionWithRulesAndAddersProps } from 'react-querybuilder';
 
+import { DEFAULT_MAX_CONDITIONS_PER_GROUP } from '@/components/conditions-editor/types';
 import { Button } from '@/components/primitives/button';
 
 export const AddConditionAction = ({
@@ -11,7 +12,9 @@ export const AddConditionAction = ({
   context,
   disabled,
 }: ActionWithRulesAndAddersProps) => {
-  if (rules && rules.length >= 10) {
+  const maxConditionsPerGroup = context?.maxConditionsPerGroup ?? DEFAULT_MAX_CONDITIONS_PER_GROUP;
+
+  if (rules && rules.length >= maxConditionsPerGroup) {
     return null;
   }
 

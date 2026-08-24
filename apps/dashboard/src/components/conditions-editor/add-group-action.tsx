@@ -1,5 +1,6 @@
 import { ActionWithRulesAndAddersProps } from 'react-querybuilder';
 
+import { DEFAULT_MAX_CONDITIONS_PER_GROUP } from '@/components/conditions-editor/types';
 import { StackedPlusLine } from '@/components/icons/stacked-plus-line';
 import { Button } from '@/components/primitives/button';
 
@@ -12,7 +13,9 @@ export const AddGroupAction = ({
   context,
   disabled,
 }: ActionWithRulesAndAddersProps) => {
-  if (level === 1 || (rules && rules.length >= 10)) {
+  const maxConditionsPerGroup = context?.maxConditionsPerGroup ?? DEFAULT_MAX_CONDITIONS_PER_GROUP;
+
+  if (level === 1 || (rules && rules.length >= maxConditionsPerGroup)) {
     return null;
   }
 

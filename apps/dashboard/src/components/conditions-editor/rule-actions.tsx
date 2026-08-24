@@ -14,13 +14,15 @@ import {
 } from '@/components/primitives/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useConditionsEditorContext } from './conditions-editor-context';
+import { DEFAULT_MAX_CONDITIONS_PER_GROUP } from './types';
 
 export const RuleActions = React.memo(
   ({ path, ruleOrGroup, context, disabled }: ActionWithRulesProps) => {
     const { removeRuleOrGroup, cloneRuleOrGroup, getParentGroup } = useConditionsEditorContext();
     const parentGroup = useMemo(() => getParentGroup(ruleOrGroup.id), [ruleOrGroup, getParentGroup]);
     const isGroup = isRuleGroup(ruleOrGroup);
-    const isDuplicateDisabled = !!(parentGroup && parentGroup.rules && parentGroup.rules.length >= 10);
+    const maxConditionsPerGroup = context?.maxConditionsPerGroup ?? DEFAULT_MAX_CONDITIONS_PER_GROUP;
+    const isDuplicateDisabled = !!(parentGroup?.rules && parentGroup.rules.length >= maxConditionsPerGroup);
 
     if (disabled) {
       return null;
@@ -55,7 +57,7 @@ export const RuleActions = React.memo(
               <TooltipPortal>
                 {isDuplicateDisabled && (
                   <TooltipContent className="max-w-52">
-                    You cannot duplicate more than 10 groups or conditions
+                    You cannot duplicate more than {maxConditionsPerGroup} groups or conditions
                   </TooltipContent>
                 )}
               </TooltipPortal>
@@ -80,7 +82,9 @@ export const RuleActions = React.memo(
     return (
       prevProps.path === nextProps.path &&
       prevProps.ruleOrGroup === nextProps.ruleOrGroup &&
-      prevProps.disabled === nextProps.disabled
+      prevProps.disabled === nextProps.disabled &&
+      (prevProps.context?.maxConditionsPerGroup ?? DEFAULT_MAX_CONDITIONS_PER_GROUP) ===
+        (nextProps.context?.maxConditionsPerGroup ?? DEFAULT_MAX_CONDITIONS_PER_GROUP)
     );
   }
 );
