@@ -43,9 +43,20 @@ export interface ListActivityViewParams {
   before?: string;
 }
 
-/** Stable per-origin identifier for the workflow-origin signal — see `persistWorkflowOriginHydration`. */
 function workflowOriginSignalIdentifier(platformMessageId: string): string {
   return `workflow-dispatch-origin:${platformMessageId}`;
+}
+
+function asNonEmptyString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function workflowOriginContent(params: PersistWorkflowOriginHydrationParams): string {
+  const firstName = params.subscriberFirstName?.trim();
+  const replier = firstName || asNonEmptyString(params.signalData.subscriberId) || 'Subscriber';
+  const workflowIdentifier = asNonEmptyString(params.signalData.workflowIdentifier) ?? 'unknown';
+
+  return `${replier} replied to the message from ${workflowIdentifier}`;
 }
 
 @Injectable()
@@ -459,19 +470,8 @@ export class ConversationActivityLedger {
     return count > 0;
   }
 
+  /** Persist a logging-only SIGNAL for the workflow origin. */
   async persistWorkflowOriginHydration(params: PersistWorkflowOriginHydrationParams): Promise<void> {
-    await this.persistAgentMessage({
-      conversationId: params.conversationId,
-      channel: params.channel,
-      agentIdentifier: params.agentIdentifier,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-      platformMessageId: params.platformMessageId,
-      platformThreadId: params.platformThreadId,
-      identifier: `workflow-dispatch-msg:${params.platformMessageId}`,
-      content: params.messageContent,
-    });
-
     try {
       await this.persistSignal({
         conversationId: params.conversationId,
@@ -482,7 +482,7 @@ export class ConversationActivityLedger {
         identifier: workflowOriginSignalIdentifier(params.platformMessageId),
         platformThreadId: params.platformThreadId,
         platformMessageId: params.platformMessageId,
-        content: `Workflow origin: ${String(params.signalData.workflowIdentifier ?? 'unknown')}`,
+        content: workflowOriginContent(params),
         signalData: {
           type: 'workflow_origin',
           payload: params.signalData,

@@ -116,18 +116,20 @@ export default nextConfig;
 
 ## `toLangChainMessages()`
 
-Convert `ctx.history` into LangChain `BaseMessage[]` when you invoke an agent or graph yourself:
+Convert conversation context into LangChain `BaseMessage[]` when you invoke an agent or graph yourself. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an `AIMessage` with capped notification text and the full JSON payload:
 
 ```typescript
 import { hydrateUnreachableAttachmentUrls, toLangChainMessages } from '@novu/framework/langchain';
 
-const messages = await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx.history));
+const messages = await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx));
 ```
 
 - `ctx.history` already includes the current inbound message - do not append the `message` argument on top of it.
+- When `ctx.notification` is set, it includes `body` (capped outbound notification text) plus `payload`, `workflowId`, and ids.
 - Pass `system` only when you are **not** setting `system` on `LangChainAgentConfig` - Novu forwards that field to `createAgent({ prompt })` for you.
 - Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
 - Returning a `LangChainAgentConfig` already hydrates unreachable attachment URLs (http/localhost) before invoke. If you call `invoke()` yourself, wrap `toLangChainMessages()` in `hydrateUnreachableAttachmentUrls`. Public HTTPS signed URLs stay as URLs; local or HTTP URLs are fetched and inlined as base64 so hosted providers can read the file.
+- Pass `ctx.history` instead of `ctx` to skip automatic origin injection when handling typed fields with `isFromWorkflow`; prepend your own `AIMessage` instead.
 
 ## Invoke your own agent
 
@@ -142,7 +144,7 @@ const billingAgent = createAgent({ model: 'openai:gpt-4o', tools: [lookupOrder] 
 export const supportAgent = agent('support-bot', {
   onMessage: async (message, ctx) => {
     const result = await billingAgent.invoke({
-      messages: await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx.history)),
+      messages: await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx)),
     });
 
     return { messages: result.messages };
@@ -154,7 +156,7 @@ To stream live updates in the thread, post a reply and update it with [`ReplyHan
 
 ## Automatic tool approval
 
-Set `needsApproval` on `LangChainAgentConfig`. When the model calls a gated tool, Novu posts the Approve / Deny card and pauses the turn. After the user decides, Novu re-runs `onMessage` - `toLangChainMessages(ctx.history)` replays the approval cycle so the agent continues with no extra code from you.
+Set `needsApproval` on `LangChainAgentConfig`. When the model calls a gated tool, Novu posts the Approve / Deny card and pauses the turn. After the user decides, Novu re-runs `onMessage` - `toLangChainMessages(ctx)` replays the approval cycle so the agent continues with no extra code from you.
 
 ```typescript
 import { tool } from '@langchain/core/tools';

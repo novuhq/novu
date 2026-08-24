@@ -68,7 +68,7 @@ export const supportAgent = agent('support-agent', {
     // return generateText({
     //   model: openai('gpt-4o-mini'),
     //   instructions: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
-    //   messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx.history)),
+    //   messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx)),
     //   tools: { searchNovuDocs },
     // });
   },

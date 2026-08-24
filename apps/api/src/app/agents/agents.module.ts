@@ -18,6 +18,7 @@ import {
   ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  HumanInteractionRepository,
   IntegrationRepository,
   McpConnectionRepository,
   MessageRepository,
@@ -75,6 +76,8 @@ import { AgentEmailActionsController } from './email/agent-email-actions.control
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
+import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
@@ -161,6 +164,9 @@ import { USE_CASES } from './usecases';
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     ManagedRuntime,
+    HumanRelayRuntime,
+    HumanInteractionSettlementService,
+    HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
@@ -202,6 +208,14 @@ import { USE_CASES } from './usecases';
     AgentConversationEnabledGuard,
     AgentChatEnabledGuard,
   ],
-  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway, ConfirmLinkedAuthCards],
+  exports: [
+    ...USE_CASES,
+    ChatInstanceRegistry,
+    InboundDispatcher,
+    OutboundGateway,
+    ConfirmLinkedAuthCards,
+    ConversationActivityLedger,
+    HumanInteractionSettlementService,
+  ],
 })
 export class AgentsModule {}

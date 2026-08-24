@@ -29,6 +29,7 @@ export type {
   AgentMessage,
   AgentMessageAuthor,
   AgentMessageContext,
+  AgentNotification,
   AgentPlatformContext,
   AgentReaction,
   AgentReactionContext,
@@ -43,3 +44,4 @@ export type {
   ToolApprovalConfig,
   ToolApprovalDecision,
 } from './agent.types';
+export { isFromWorkflow } from './guards';

@@ -1,5 +1,7 @@
 import type { ModelMessage, TextPart } from 'ai';
-import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import type { AgentHandlerContext, AgentHistoryEntry } from '../../resources/agent/agent.types';
+import { type AgentTranscriptSource, resolveTranscriptSource } from '../../resources/agent/history-source';
+import { buildWorkflowOriginInjection } from '../../resources/agent/workflow-origin-injection';
 import {
   type ApprovalIndex,
   buildApprovalIndex,
@@ -86,10 +88,10 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
 }
 
 /**
- * Convert `ctx.history` into AI SDK `ModelMessage[]` for `streamText` / `generateText`.
+ * Convert conversation context into AI SDK `ModelMessage[]` for `streamText` / `generateText`.
  *
- * History already includes the current incoming message — do not append the handler's
- * `message` argument on top of it.
+ * Pass `ctx` to prepend `ctx.notification` as an assistant row. Pass `ctx.history` to skip that
+ * injection (e.g. after `isFromWorkflow`). History already includes the current inbound message.
  *
  * For http/localhost attachment URLs (e.g. LocalStack), wrap the result in
  * `hydrateUnreachableAttachmentUrls` before passing it to `generateText`.
@@ -98,9 +100,23 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
  * `generateText`. AI SDK 7 rejects `system` messages inside the `messages` array by default,
  * so this helper never injects one.
  */
-export function toModelMessages(history: AgentHistoryEntry[]): ModelMessage[] {
+export function toModelMessages(history: AgentHistoryEntry[]): ModelMessage[];
+export function toModelMessages(ctx: Pick<AgentHandlerContext, 'history' | 'notification'>): ModelMessage[];
+export function toModelMessages(source: AgentTranscriptSource): ModelMessage[] {
+  const { history, notification } = resolveTranscriptSource(source);
   const multiSender = distinctHumanSenders(history) > 1;
   const index = buildApprovalIndex(history);
+  const mapped = history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
 
-  return history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
+  if (!notification) {
+    return mapped;
+  }
+
+  return [
+    {
+      role: 'assistant',
+      content: buildWorkflowOriginInjection(notification.workflowId, notification.body, notification.payload),
+    },
+    ...mapped,
+  ];
 }

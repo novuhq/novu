@@ -3,7 +3,25 @@ import type { Message } from 'chat';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { asRecord } from '../../shared/util/raw-record';
 
-export const WORKFLOW_ORIGIN_CONTENT_MAX_CHARS = 2_000;
+export interface WorkflowOriginData {
+  notificationId: string;
+  workflowIdentifier: string;
+  messageId: string;
+  platformMessageId: string;
+  sentAt: string;
+  body: string;
+  payload: Record<string, unknown>;
+  jobId?: string;
+  stepId?: string;
+  transactionId?: string;
+  subscriberId?: string;
+}
+
+export interface WorkflowOriginSnapshot {
+  data: WorkflowOriginData;
+  source: 'hydrated' | 'existing';
+}
+
 export const WORKFLOW_ORIGIN_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Platforms that reuse one conversation indefinitely — origin is re-checked on later turns, not just at open. */
@@ -13,19 +31,6 @@ export const RECHECK_WORKFLOW_ORIGIN_PLATFORMS: ReadonlySet<AgentPlatformEnum> =
   AgentPlatformEnum.SENDBLUE,
   AgentPlatformEnum.TEAMS,
 ]);
-
-export function buildWorkflowOriginSummary(
-  workflowIdentifier: string,
-  messageContent: string,
-  payload: Record<string, unknown>
-): string {
-  const message =
-    messageContent.length > 0 ? messageContent : `A notification was sent by the ${workflowIdentifier} workflow.`;
-  const additionalData =
-    Object.keys(payload).length > 0 ? `\n\nAdditional data for this message:\n${JSON.stringify(payload, null, 2)}` : '';
-
-  return `${message}${additionalData}`.slice(0, WORKFLOW_ORIGIN_CONTENT_MAX_CHARS);
-}
 
 /** Conversation uses `slack:{channel}:{ts}`; Message.identifier stores bare `{channel}:{ts}`. */
 export function toProviderMessageLookupKey(platformThreadId: string): string {
@@ -54,11 +59,7 @@ export function extractWhatsAppQuotedWamid(message: Message | null): string | nu
   return typeof quotedId === 'string' && quotedId.length > 0 ? quotedId : null;
 }
 
-/**
- * Telegram quote-reply message_id from `message.raw.reply_to_message.message_id`
- * (flat adapter shape) or `message.raw.message.reply_to_message.message_id` (nested fixtures).
- * Coerces number|string to string so it matches the stored Message.identifier.
- */
+/** Telegram quote-reply `message_id` from flat or nested `reply_to_message`. */
 export function extractTelegramQuotedMessageId(message: Message | null): string | null {
   if (!message) {
     return null;
@@ -102,10 +103,7 @@ export function extractTeamsQuotedActivityId(message: Message | null): string | 
   return typeof replyToId === 'string' && replyToId.length > 0 ? replyToId : null;
 }
 
-/**
- * Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}` (forum topics).
- * Returns null when the prefix is absent or the segment is empty.
- */
+/** Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}`. */
 export function extractTelegramChatIdFromThreadId(platformThreadId: string): string | null {
   if (!platformThreadId.startsWith('telegram:')) {
     return null;
@@ -169,4 +167,49 @@ export function resolvePlatformMessageId(
   }
 
   return originMessage.identifier.slice(colon + 1);
+}
+
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+function decodeEntities(text: string): string {
+  return text.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (match, dec, hex, name) => {
+    if (dec) {
+      return String.fromCodePoint(Number(dec));
+    }
+    if (hex) {
+      return String.fromCodePoint(parseInt(hex, 16));
+    }
+
+    return NAMED_ENTITIES[name.toLowerCase()] ?? match;
+  });
+}
+
+/** Same algorithm as `@novu/chat-adapter-email` `stripHtml` (ESM-only; cannot import from apps/api). */
+export function stripHtml(html: string): string {
+  const chars: string[] = [];
+  let depth = 0;
+  for (const ch of html) {
+    if (ch === '<') {
+      depth++;
+      continue;
+    }
+    if (ch === '>') {
+      if (depth > 0) {
+        depth--;
+      }
+      continue;
+    }
+    if (depth === 0) {
+      chars.push(ch);
+    }
+  }
+
+  return decodeEntities(chars.join('').replace(/\s+/g, ' ')).trim();
 }

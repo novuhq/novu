@@ -20,10 +20,12 @@ import {
   type StoredAttachment,
 } from '../conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import type { WorkflowOriginSnapshot } from '../conversation-runtime/ingress/workflow-origin.helpers';
+import { WorkflowOriginService } from '../conversation-runtime/ingress/workflow-origin.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
-import { buildLiveSessionMessages } from './build-live-session-messages';
+import { buildLiveSessionMessages, buildOriginAssistantMessage } from './build-live-session-messages';
 import {
   applyUserContentToLatestUserTurn,
   buildUserMessageContent,
@@ -39,8 +41,8 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
-  workflowOriginContent?: string;
   storedAttachments?: StoredAttachment[];
+  workflowOrigin?: WorkflowOriginSnapshot | null;
   platformThreadId?: string;
   platformMessageId?: string;
 }
@@ -85,6 +87,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly inboundAck: InboundAckService,
     private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
     private readonly attachmentStorage: AgentAttachmentStorage,
+    private readonly workflowOriginService: WorkflowOriginService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -135,7 +138,13 @@ export class ManagedAgentService implements OnModuleInit {
 
     const messages = preserveMediaThroughThalamusPacking(
       sessionId
-        ? buildLiveSessionMessages(context, userContent)
+        ? buildLiveSessionMessages(
+            {
+              userMessageText: context.userMessageText,
+              workflowOrigin: context.workflowOrigin?.source === 'hydrated' ? context.workflowOrigin : null,
+            },
+            userContent
+          )
         : await this.buildMessagesWithHistory(context, userContent)
     );
 
@@ -197,13 +206,24 @@ export class ManagedAgentService implements OnModuleInit {
       return null;
     }
 
+    const platformThreadId = params.conversation.channels?.[0]?.platformThreadId ?? '';
+    const workflowOrigin = await this.workflowOriginService.resolveForTurn({
+      agentId: params.agent._id,
+      config: params.config,
+      conversation: params.conversation,
+      platformThreadId,
+      subscriberId: params.subscriber.subscriberId,
+      resolution: null,
+    });
+
     return this.dispatch(
       {
         config: params.config,
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
-        platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
+        workflowOrigin,
+        platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
       },
       params.agent
@@ -447,10 +467,16 @@ export class ManagedAgentService implements OnModuleInit {
 
     // New Anthropic session (no externalSessionId) — collapse so Thalamus does not
     // re-run every historical USER turn as a live event on reopen after resolve.
-    const collapsed = collapseHistoryForNewSession(messages, context.userMessageText);
+    const collapsed = applyUserContentToLatestUserTurn(
+      collapseHistoryForNewSession(messages, context.userMessageText),
+      userContent
+    );
 
-    // Only the current turn's files are attached; historical rows stay text.
-    return applyUserContentToLatestUserTurn(collapsed, userContent);
+    if (!context.workflowOrigin) {
+      return collapsed;
+    }
+
+    return [buildOriginAssistantMessage(context.workflowOrigin), ...collapsed];
   }
 
   private async resolveVaultIdsForTurn(

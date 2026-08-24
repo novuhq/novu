@@ -92,7 +92,7 @@ async function runAgentConfig(
   approvalConfig: ToolApprovalConfig | undefined
 ): Promise<void> {
   const freshResults = await executeApprovedTools(config.tools, ctx);
-  const messages = await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx.history, undefined, freshResults));
+  const messages = await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx, undefined, freshResults));
 
   const middleware: AgentMiddleware[] = [];
   if (config.needsApproval) {
