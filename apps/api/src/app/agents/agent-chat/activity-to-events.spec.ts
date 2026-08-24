@@ -79,13 +79,14 @@ describe('activity-to-events run lifecycle', () => {
           type: ConversationActivityTypeEnum.CUSTOM,
           identifier: 'act_progress',
           sequence: 1,
-          richContent: { custom: { name: 'order-progress', data: { pct: 70 } } },
+          richContent: { custom: { name: 'order-progress', data: { pct: 70 }, runId: 'run-custom' } },
         }),
       ],
       context
     );
 
     expect(envelopes).to.have.lengthOf(1);
+    expect(envelopes[0].runId).to.equal('run-custom');
     expect(envelopes[0].event).to.deep.equal({
       type: 'custom',
       name: 'order-progress',

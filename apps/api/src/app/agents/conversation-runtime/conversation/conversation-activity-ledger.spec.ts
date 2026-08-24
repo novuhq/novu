@@ -389,7 +389,13 @@ describe('ConversationActivityLedger', () => {
       const activityRepository = makeActivityRepository();
       const mint = sinon.stub().resolves(12);
       const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
-      const ledger = makeLedger(activityRepository, { mint } as unknown as ConversationEventSequenceService, publisher);
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(
+        activityRepository,
+        { mint } as unknown as ConversationEventSequenceService,
+        publisher,
+        conversationRepository
+      );
       const context = {
         conversationId: 'conv-1',
         channel: {
@@ -404,6 +410,7 @@ describe('ConversationActivityLedger', () => {
 
       await ledger.persistCustom({
         ...context,
+        runId: 'run-custom',
         name: 'order-progress',
         data: { pct: 70 },
       });
@@ -416,11 +423,14 @@ describe('ConversationActivityLedger', () => {
           custom: {
             name: 'order-progress',
             data: { pct: 70 },
+            runId: 'run-custom',
           },
         },
       });
       expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.match(/^act_/);
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+      expect(conversationRepository.touchPreview.called).to.equal(false);
     });
   });
 

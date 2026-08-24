@@ -525,6 +525,7 @@ export class AgentEventSink {
       agentIdentifier: context.agentIdentifier,
       environmentId: context.environmentId,
       organizationId: context.organizationId,
+      runId,
       name: event.name,
       data: event.data,
     });

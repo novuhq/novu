@@ -156,10 +156,6 @@ export type ConversationActivityDto = {
       size?: number;
       storageKey?: string;
     }>;
-    custom?: {
-      name?: string;
-      data?: unknown;
-    };
   };
   toolData?: ConversationActivityToolData;
   signalData?:

@@ -433,11 +433,12 @@ export class ConversationActivityLedger {
           custom: {
             name: params.name,
             data: params.data,
+            ...(typeof params.runId === 'string' && params.runId.length > 0 ? { runId: params.runId } : {}),
           },
         },
       },
       ConversationActivityTypeEnum.CUSTOM,
-      'activity'
+      'none'
     );
 
     await this.emitPersistedClientEvent(params, activity);
@@ -633,7 +634,7 @@ export class ConversationActivityLedger {
       toolData?: ConversationActivityToolData;
     },
     type: ConversationActivityTypeEnum,
-    touch: 'activity' | 'preview'
+    touch: 'activity' | 'preview' | 'none'
   ): Promise<ConversationActivityEntity> {
     const threadId = params.platformThreadId ?? params.channel.platformThreadId;
     const sequence = await this.resolveEventSequence(
@@ -646,7 +647,9 @@ export class ConversationActivityLedger {
     const touchFn =
       touch === 'activity'
         ? this.conversationRepository.touchActivity.bind(this.conversationRepository)
-        : this.conversationRepository.touchPreview.bind(this.conversationRepository);
+        : touch === 'preview'
+          ? this.conversationRepository.touchPreview.bind(this.conversationRepository)
+          : null;
 
     const [activity] = await Promise.all([
       this.activityRepository.createAgentActivity({
@@ -666,7 +669,9 @@ export class ConversationActivityLedger {
         environmentId: params.environmentId,
         organizationId: params.organizationId,
       }),
-      touchFn(params.environmentId, params.organizationId, params.conversationId, params.content),
+      touchFn
+        ? touchFn(params.environmentId, params.organizationId, params.conversationId, params.content)
+        : Promise.resolve(),
     ]);
 
     return activity;

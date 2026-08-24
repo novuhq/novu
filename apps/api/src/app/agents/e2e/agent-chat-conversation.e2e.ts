@@ -1345,6 +1345,7 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
     expect(customJobs).to.have.length(1);
 
     const liveEnvelope = customJobs[0].data.payload as AgentEventEnvelope;
+    expect(liveEnvelope.runId).to.equal('run-custom');
     expect(liveEnvelope.event).to.deep.equal({
       type: 'custom',
       name: 'order-progress',
@@ -1364,7 +1365,7 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
     expect(customActivity.identifier).to.match(/^act_/);
     expect(customActivity.sequence).to.equal(liveEnvelope.sequence);
     expect(customActivity.richContent).to.deep.include({
-      custom: { name: 'order-progress', data: { pct: 70 } },
+      custom: { name: 'order-progress', data: { pct: 70 }, runId: 'run-custom' },
     });
 
     const historyRes = await getEvents(createRes.body.data.identifier);
@@ -1373,6 +1374,7 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
       (envelope: AgentEventEnvelope) => envelope.event.type === 'custom'
     );
     expect(historyCustom).to.have.length(1);
+    expect(historyCustom[0].runId).to.equal('run-custom');
     expect(historyCustom[0].event).to.deep.equal(liveEnvelope.event);
     expect(historyCustom[0].sequence).to.equal(liveEnvelope.sequence);
 
