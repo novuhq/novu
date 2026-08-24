@@ -19,6 +19,7 @@ import {
   SQS_DEFAULT_VISIBILITY_TIMEOUT,
   SQS_DEFAULT_WAIT_TIME_SECONDS,
   SqsConsumerService,
+  SqsRetryError,
   SqsService,
 } from '../sqs';
 
@@ -54,7 +55,21 @@ export function isPermanentClientError(error: unknown): boolean {
 export type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
 export type SqsCompletedHandler = (job: Job<any, unknown, string>) => Promise<void>;
-export type SqsFailedHandler = (job: Job<any, unknown, string>, error: Error) => Promise<boolean>;
+
+/**
+ * How long to wait before the message becomes visible again. Lets a worker
+ * reproduce BullMQ's per-attempt backoff, which SQS has no equivalent of.
+ */
+export interface ISqsFailureOutcome {
+  retry: boolean;
+  retryDelayMs?: number;
+}
+
+/**
+ * Returning a bare boolean keeps the original contract - only workers that
+ * want a custom retry cadence need the object form.
+ */
+export type SqsFailedHandler = (job: Job<any, unknown, string>, error: Error) => Promise<boolean | ISqsFailureOutcome>;
 
 export { WorkerOptions };
 
@@ -106,9 +121,13 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
    * Register a handler called when an SQS message processing fails.
    * Mirrors BullMQ's `worker.on('failed', ...)` event.
    *
-   * The handler must return a boolean indicating whether SQS should retry the message:
+   * The handler decides whether SQS should retry the message:
    * - `true`: re-throw the error so SQS retries (message stays in queue)
    * - `false`: absorb the error so SQS deletes the message (failure handled in DB)
+   *
+   * Returning `{ retry, retryDelayMs }` instead also sets how long to wait
+   * before the retry, which SQS has no native equivalent of - without it every
+   * attempt waits the flat consumer-wide visibility timeout.
    */
   public setSqsFailedHandler(handler: SqsFailedHandler): void {
     this.sqsFailedHandler = handler;
@@ -208,10 +227,18 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
         }
       } catch (error) {
         let shouldRetry = true;
+        let retryDelayMs: number | undefined;
 
         if (this.sqsFailedHandler) {
           try {
-            shouldRetry = await this.sqsFailedHandler(jobMock, error as Error);
+            const outcome = await this.sqsFailedHandler(jobMock, error as Error);
+
+            if (typeof outcome === 'boolean') {
+              shouldRetry = outcome;
+            } else {
+              shouldRetry = outcome.retry;
+              retryDelayMs = outcome.retryDelayMs;
+            }
           } catch (handlerError) {
             Logger.error(
               {
@@ -249,6 +276,17 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
         }
 
         if (shouldRetry) {
+          /*
+           * Wrapping preserves the original error for logging while telling
+           * the consumer to shorten this message's visibility instead of
+           * leaving it on the flat consumer-wide timeout. A delay of 0 is a
+           * real request to retry immediately - randomised backoffs round down
+           * to it - so only an absent delay falls through to the flat timeout.
+           */
+          if (retryDelayMs !== undefined) {
+            throw new SqsRetryError(error as Error, retryDelayMs);
+          }
+
           throw error;
         }
       }
