@@ -228,7 +228,7 @@ export class AgentChat extends BaseModule {
           };
         }
 
-        const scope = `respond:${args.actionId}:${args.decision}`;
+        const scope = `respond:${conversationId}:${args.actionId}:${args.decision}`;
         const idempotencyKey = createActionIdempotencyKeyForScope(scope);
 
         return this.#agentChatService.respondToAction({
@@ -257,7 +257,7 @@ export class AgentChat extends BaseModule {
           return { error: new NovuError('sourceMessageId is required', new Error('missing source message id')) };
         }
 
-        const scope = `send:${actionId}:${sourceMessageId}:${args.value ?? ''}`;
+        const scope = `send:${conversationId}:${actionId}:${sourceMessageId}:${args.value ?? ''}`;
         const idempotencyKey = createActionIdempotencyKeyForScope(scope);
 
         return this.#agentChatService.sendAction({

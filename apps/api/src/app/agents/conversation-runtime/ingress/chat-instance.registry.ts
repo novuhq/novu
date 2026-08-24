@@ -547,8 +547,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         await thread.subscribe();
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
-        captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-new-mention', agentId });
+        this.rethrowAgentChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-new-mention',
+          logMessage: `[agent:${agentId}] Error handling new mention`,
+        });
       }
     });
 
@@ -556,11 +559,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       try {
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
-        captureAgentException(err, {
-          component: 'chat-instance-registry',
-          operation: 'on-subscribed-message',
+        this.rethrowAgentChatInboundError(cached, err, {
           agentId,
+          operation: 'on-subscribed-message',
+          logMessage: `[agent:${agentId}] Error handling subscribed message`,
         });
       }
     });
@@ -611,11 +613,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           event.raw
         );
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
-        captureAgentException(err, {
-          component: 'chat-instance-registry',
-          operation: 'on-action',
+        this.rethrowAgentChatInboundError(cached, err, {
           agentId,
+          operation: 'on-action',
+          logMessage: `[agent:${agentId}] Error handling action ${event.actionId}`,
           extra: { actionId: event.actionId },
         });
       }
@@ -637,6 +638,29 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-reaction', agentId });
       }
     });
+  }
+
+  /**
+   * Slack/Telegram keep swallowing inbound errors so their webhooks stay 200.
+   * Agent chat must rethrow so the adapter releases the accept lock instead of
+   * writing a 24h success cache for a failed turn.
+   */
+  private rethrowAgentChatInboundError(
+    cached: CachedChat,
+    err: unknown,
+    args: { agentId: string; operation: string; logMessage: string; extra?: Record<string, unknown> }
+  ): void {
+    this.logger.error(err, args.logMessage);
+    captureAgentException(err, {
+      component: 'chat-instance-registry',
+      operation: args.operation,
+      agentId: args.agentId,
+      extra: args.extra,
+    });
+
+    if (cached.config.platform === AgentPlatformEnum.AGENT_CHAT) {
+      throw err;
+    }
   }
 
   /**

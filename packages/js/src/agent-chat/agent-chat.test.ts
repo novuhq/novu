@@ -4,6 +4,7 @@ import { NovuEventEmitter } from '../event-emitter';
 import { NovuError } from '../utils/errors';
 import { AgentChat } from './agent-chat';
 import { derivePendingActions } from './agent-message.types';
+import { createActionIdempotencyKeyForScope } from './idempotency';
 import type { AgentChatChange } from './types';
 
 describe('AgentChat', () => {
@@ -2524,6 +2525,14 @@ describe('AgentChat', () => {
       expect(sendMessage).not.toHaveBeenCalled();
     });
 
+    it('scopes action idempotency keys by conversation', () => {
+      const first = createActionIdempotencyKeyForScope('respond:conv_aaaaaaaaaaaa:approval_000001:approved');
+      const second = createActionIdempotencyKeyForScope('respond:conv_bbbbbbbbbbbb:approval_000001:approved');
+
+      expect(first).toMatch(/^idem_/);
+      expect(first).not.toBe(second);
+    });
+
     it('sends a stable idempotency key for the same action scope', async () => {
       getEvents.mockResolvedValue(approvalHistoryPage('approval_000001'));
       respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
@@ -2546,6 +2555,33 @@ describe('AgentChat', () => {
       expect(respondToAction).toHaveBeenCalledTimes(2);
       expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toMatch(/^idem_/);
       expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).toBe(respondToAction.mock.calls[1]?.[0].idempotencyKey);
+    });
+
+    it('uses different action keys for the same approval in two conversations', async () => {
+      getEvents
+        .mockResolvedValueOnce(approvalHistoryPage('approval_000001'))
+        .mockResolvedValueOnce(approvalHistoryPage('approval_000001'));
+      respondToAction.mockResolvedValue({ identifier: 'conv_abcdefghijkl' });
+
+      await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_aaaaaaaaaaaa' });
+      await agentChat.loadConversation({ agentId: 'agent_1', conversationId: 'conv_bbbbbbbbbbbb' });
+
+      await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_aaaaaaaaaaaa',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+      await agentChat.respondToAction({
+        agentId: 'agent_1',
+        conversationId: 'conv_bbbbbbbbbbbb',
+        actionId: 'approval_000001',
+        decision: 'approved',
+      });
+
+      expect(respondToAction.mock.calls[0]?.[0].idempotencyKey).not.toBe(
+        respondToAction.mock.calls[1]?.[0].idempotencyKey
+      );
     });
 
     it('retries respondToAction after the first request fails', async () => {
