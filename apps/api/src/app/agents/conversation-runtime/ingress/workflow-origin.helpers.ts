@@ -59,11 +59,7 @@ export function extractWhatsAppQuotedWamid(message: Message | null): string | nu
   return typeof quotedId === 'string' && quotedId.length > 0 ? quotedId : null;
 }
 
-/**
- * Telegram quote-reply message_id from `message.raw.reply_to_message.message_id`
- * (flat adapter shape) or `message.raw.message.reply_to_message.message_id` (nested fixtures).
- * Coerces number|string to string so it matches the stored Message.identifier.
- */
+/** Telegram quote-reply `message_id` from flat or nested `reply_to_message`. */
 export function extractTelegramQuotedMessageId(message: Message | null): string | null {
   if (!message) {
     return null;
@@ -107,10 +103,7 @@ export function extractTeamsQuotedActivityId(message: Message | null): string | 
   return typeof replyToId === 'string' && replyToId.length > 0 ? replyToId : null;
 }
 
-/**
- * Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}` (forum topics).
- * Returns null when the prefix is absent or the segment is empty.
- */
+/** Bare chat id from `telegram:{chatId}` or `telegram:{chatId}:{messageThreadId}`. */
 export function extractTelegramChatIdFromThreadId(platformThreadId: string): string | null {
   if (!platformThreadId.startsWith('telegram:')) {
     return null;

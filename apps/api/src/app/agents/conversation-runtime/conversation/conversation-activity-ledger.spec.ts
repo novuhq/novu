@@ -200,10 +200,12 @@ describe('ConversationActivityLedger', () => {
         organizationId: 'org-1',
         platformMessageId: 'wamid.abc',
         platformThreadId: 'whatsapp:15551234567',
+        subscriberFirstName: 'Ada',
         signalData: {
           notificationId: 'notif-1',
           workflowIdentifier: 'order-alerts',
           messageId: 'msg-1',
+          subscriberId: 'sub-1',
           payload: { orderId: 'ORD-1' },
         },
       };
@@ -238,7 +240,7 @@ describe('ConversationActivityLedger', () => {
       }
     });
 
-    it('writes a single SIGNAL activity and no MESSAGE row when messageBody is omitted', async () => {
+    it('writes a SIGNAL activity without an agent MESSAGE row', async () => {
       const activityRepository = makeActivityRepository({
         createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
         createAgentActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
@@ -251,71 +253,47 @@ describe('ConversationActivityLedger', () => {
       expect(activityRepository.createAgentActivity.called).to.equal(false);
       const args = activityRepository.createSignalActivity.firstCall.args[0];
       expect(args.identifier).to.equal('workflow-dispatch-origin:wamid.abc');
-      expect(args.content).to.equal('Workflow origin: order-alerts');
+      expect(args.content).to.equal('Ada replied to the message from order-alerts');
       expect(args.signalData).to.deep.equal({
         type: 'workflow_origin',
         payload: {
           notificationId: 'notif-1',
           workflowIdentifier: 'order-alerts',
           messageId: 'msg-1',
+          subscriberId: 'sub-1',
           payload: { orderId: 'ORD-1' },
         },
       });
     });
 
-    it('skips the MESSAGE row when messageBody is empty', async () => {
+    it('falls back to the subscriber id when no first name is known', async () => {
       const activityRepository = makeActivityRepository({
         createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
-        createAgentActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
       });
       const ledger = makeLedger(activityRepository);
 
-      await ledger.persistWorkflowOriginHydration({ ...makeHydrationParams(), messageBody: '   ' });
+      await ledger.persistWorkflowOriginHydration({ ...makeHydrationParams(), subscriberFirstName: undefined });
 
-      expect(activityRepository.createAgentActivity.called).to.equal(false);
-      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
-    });
-
-    it('writes the MESSAGE before the SIGNAL when messageBody is present', async () => {
-      const activityRepository = makeActivityRepository({
-        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
-        createAgentActivity: sinon.stub().resolves({ _id: 'message-1' }),
-      });
-      const ledger = makeLedger(activityRepository);
-
-      await ledger.persistWorkflowOriginHydration({
-        ...makeHydrationParams(),
-        messageBody: 'Your order shipped',
-      });
-
-      expect(activityRepository.createAgentActivity.calledOnce).to.equal(true);
-      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
-      expect(activityRepository.createAgentActivity.calledBefore(activityRepository.createSignalActivity)).to.equal(
-        true
+      expect(activityRepository.createSignalActivity.firstCall.args[0].content).to.equal(
+        'sub-1 replied to the message from order-alerts'
       );
-      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
-        identifier: 'workflow-origin-message:wamid.abc',
-        content: 'Your order shipped',
-        type: ConversationActivityTypeEnum.MESSAGE,
-      });
-      expect(activityRepository.createAgentActivity.firstCall.args[0].platformMessageId).to.equal(undefined);
     });
 
-    it('still writes the SIGNAL when the MESSAGE identifier already exists', async () => {
-      const duplicateError = Object.assign(new Error('duplicate key'), { code: 11000 });
+    it('labels an unknown workflow identifier as unknown', async () => {
       const activityRepository = makeActivityRepository({
-        createAgentActivity: sinon.stub().rejects(duplicateError),
-        findOne: sinon.stub().resolves({ _id: 'existing-message', identifier: 'workflow-origin-message:wamid.abc' }),
         createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
       });
       const ledger = makeLedger(activityRepository);
+      const params = makeHydrationParams();
 
       await ledger.persistWorkflowOriginHydration({
-        ...makeHydrationParams(),
-        messageBody: 'Your order shipped',
+        ...params,
+        signalData: { ...params.signalData, workflowIdentifier: undefined },
       });
 
-      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createSignalActivity.firstCall.args[0].content).to.equal(
+        'Ada replied to the message from unknown'
+      );
     });
   });
 

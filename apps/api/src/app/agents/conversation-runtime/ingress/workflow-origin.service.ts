@@ -24,7 +24,6 @@ import {
   isSendblueDirectThreadId,
   RECHECK_WORKFLOW_ORIGIN_PLATFORMS,
   resolvePlatformMessageId,
-  stripHtml,
   toProviderMessageLookupKey,
   WORKFLOW_ORIGIN_LOOKBACK_MS,
   type WorkflowOriginData,
@@ -35,6 +34,7 @@ export interface WorkflowOriginResolution {
   origin: MessageEntity;
   /** Present only on conversation create — stamped onto createOrGetConversation. */
   notificationId?: string;
+  subscriberFirstName?: string;
 }
 
 @Injectable()
@@ -153,6 +153,7 @@ export class WorkflowOriginService {
       return {
         origin,
         notificationId: existingConversation ? undefined : origin._notificationId,
+        ...(subscriber.firstName ? { subscriberFirstName: subscriber.firstName } : {}),
       };
     } catch (err) {
       captureAgentWarning(err, {
@@ -186,6 +187,7 @@ export class WorkflowOriginService {
         conversation,
         platformThreadId,
         origin: resolution.origin,
+        subscriberFirstName: resolution.subscriberFirstName,
       });
     }
 
@@ -210,8 +212,9 @@ export class WorkflowOriginService {
     conversation: ConversationEntity;
     platformThreadId: string;
     origin: MessageEntity;
+    subscriberFirstName?: string;
   }): Promise<WorkflowOriginSnapshot | null> {
-    const { agentId, config, conversation, platformThreadId, origin } = params;
+    const { agentId, config, conversation, platformThreadId, origin, subscriberFirstName } = params;
 
     const notificationId = origin._notificationId;
     if (!notificationId) {
@@ -244,8 +247,6 @@ export class WorkflowOriginService {
       );
       conversation._notificationId = notificationId;
 
-      const messageBody = this.extractHydrationMessageBody(config.platform, origin);
-
       await this.conversationService.persistWorkflowOriginHydration({
         conversationId: conversation._id,
         channel: this.conversationService.getPrimaryChannel(conversation),
@@ -264,7 +265,7 @@ export class WorkflowOriginService {
           subscriberId: data.subscriberId,
           payload: data.payload,
         },
-        ...(messageBody ? { messageBody } : {}),
+        ...(subscriberFirstName ? { subscriberFirstName } : {}),
       });
 
       return { data, source: 'hydrated' };
@@ -424,19 +425,6 @@ export class WorkflowOriginService {
     }
 
     return this.conversationService.isWorkflowOriginHydrated(config.environmentId, conversationId, platformMessageId);
-  }
-
-  private extractHydrationMessageBody(platform: AgentPlatformEnum, origin: MessageEntity): string {
-    const storedContent = typeof origin.content === 'string' ? origin.content.trim() : '';
-    if (!storedContent) {
-      return '';
-    }
-
-    if (platform === AgentPlatformEnum.EMAIL) {
-      return stripHtml(storedContent);
-    }
-
-    return storedContent;
   }
 
   private async buildWorkflowOriginData(

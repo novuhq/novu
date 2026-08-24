@@ -190,7 +190,7 @@ describe('activity-to-events run lifecycle', () => {
           type: ConversationActivityTypeEnum.SIGNAL,
           identifier: 'workflow-dispatch-origin:wamid.1',
           sequence: 2,
-          content: 'Workflow origin: order-shipped',
+          content: 'Ada replied to the message from order-shipped',
           signalData: { type: 'workflow_origin', payload: { workflowIdentifier: 'order-shipped' } },
         }),
         activity({
