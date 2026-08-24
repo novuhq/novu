@@ -921,9 +921,9 @@
                     "pages": ["guides/webhooks/clerk", "guides/webhooks/auth0", "guides/webhooks/stripe"]
                   },
                   {
-                    "group": "Analytics & data",
+                    "group": "Data & warehouses",
                     "expanded": false,
-                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch"]
+                    "pages": ["guides/analytics/segment", "guides/analytics/hightouch", "guides/analytics/databricks"]
                   },
                   {
                     "group": "Recipes",

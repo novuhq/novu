@@ -379,7 +379,7 @@ This is recommended when:
 
 ### Bulk Import
 
-For scenarios like data migration, syncing large lists, or preloading subscribers, Novu supports bulk creation. This is especially useful when integrating with existing systems or importing subscriber data from external sources. Bulk create method supports creating up to 500 subscribers at once.
+For scenarios like data migration, syncing large lists, or preloading subscribers, Novu supports bulk creation. This is especially useful when integrating with existing systems or importing subscriber data from external sources. Bulk create method supports creating up to 500 subscribers at once. To run this sync from Databricks, see the [Databricks](/guides/analytics/databricks) guide.
 
 <Tabs>
   <Tab title="Node.js">
@@ -696,7 +696,7 @@ These are some of the most frequently asked questions about subscribers in Novu.
   </Accordion>
 
   <Accordion title="How do I migrate millions of users to Novu?">
-    To migrate millions of users to Novu, use the [Bulk Create Subscribers](/api-reference/subscribers/bulk-create-subscribers) API endpoint. This endpoint allows you to create multiple subscribers in bulk.
+    To migrate millions of users to Novu, use the [Bulk Create Subscribers](/api-reference/subscribers/bulk-create-subscribers) API endpoint. This endpoint allows you to create multiple subscribers in bulk. For a paced warehouse job that also syncs cohorts as topics, see [Databricks](/guides/analytics/databricks).
   </Accordion>
 
   <Accordion title="Can subscriber credentials for chat and push channels be added when creating a new subscriber?">
