@@ -6,6 +6,7 @@ settings:
 
 overrides:
   body-parser@<1.20.6: ^1.20.6
+  deepmerge-ts@<8.0.0: ^8.0.0
   body-parser@>=2.0.0 <2.3.0: ^2.3.0
   handlebars@<4.7.9: 4.7.9
   braces@<3.0.3: ^3.0.3
@@ -188,10 +189,10 @@ importers:
     devDependencies:
       '@auto-it/npm':
         specifier: ^10.36.5
-        version: 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
+        version: 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       '@auto-it/released':
         specifier: ^10.36.5
-        version: 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
+        version: 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       '@biomejs/biome':
         specifier: ^2.2.0
         version: 2.2.0
@@ -236,7 +237,7 @@ importers:
         version: 22.15.13
       auto:
         specifier: ^10.36.5
-        version: 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
+        version: 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       chalk:
         specifier: 4.1.2
         version: 4.1.2
@@ -389,7 +390,7 @@ importers:
         version: 4.12.1
       '@google-cloud/storage':
         specifier: ^6.2.3
-        version: 6.12.0(encoding@0.1.13)
+        version: 6.12.0
       '@nestjs/axios':
         specifier: 4.0.1
         version: 4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2)
@@ -413,7 +414,7 @@ importers:
         version: 7.4.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/throttler':
         specifier: 6.5.0
         version: 6.5.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(reflect-metadata@0.2.2)
@@ -506,7 +507,7 @@ importers:
         version: 1.18.1
       bcrypt:
         specifier: ^5.0.0
-        version: 5.0.1(encoding@0.1.13)
+        version: 5.0.1
       body-parser:
         specifier: ^2.3.0
         version: 2.3.0
@@ -678,7 +679,7 @@ importers:
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)
       '@stoplight/spectral-cli':
         specifier: ^6.15.0
-        version: 6.15.0(encoding@0.1.13)
+        version: 6.15.0
       '@swc-node/register':
         specifier: 1.10.10
         version: 1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2)
@@ -784,7 +785,7 @@ importers:
         version: 3.0.51(react@19.2.3)(zod@4.3.5)
       '@better-auth/sso':
         specifier: ^1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(673a37e042976b407a6d506163fd3e0f))(better-call@1.3.7(zod@4.3.5))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(0db8222eef274de62e29e0525a8f6356))(better-call@1.3.7(zod@4.3.5))
       '@calcom/embed-react':
         specifier: 1.5.2
         version: 1.5.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -805,13 +806,13 @@ importers:
         version: 6.11.1
       '@customerio/cdp-analytics-browser':
         specifier: ^0.3.18
-        version: 0.3.18(encoding@0.1.13)
+        version: 0.3.18
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.71.1(react@19.2.3))
       '@inkeep/cxkit-react':
         specifier: ^0.5.107
-        version: 0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(encoding@0.1.13)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)
+        version: 0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)
       '@langchain/langgraph-sdk':
         specifier: ^1.5.5
         version: 1.5.5(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.3.5))(ws@8.21.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -928,7 +929,7 @@ importers:
         version: 7.22.1
       '@segment/analytics-next':
         specifier: ^1.81.0
-        version: 1.81.0(encoding@0.1.13)
+        version: 1.81.0
       '@sentry/react':
         specifier: ^10.63.0
         version: 10.63.0(react@19.2.3)
@@ -994,7 +995,7 @@ importers:
         version: 6.2.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       better-auth:
         specifier: ^1.6.23
-        version: 1.6.23(673a37e042976b407a6d506163fd3e0f)
+        version: 1.6.23(0db8222eef274de62e29e0525a8f6356)
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
@@ -1190,7 +1191,7 @@ importers:
         version: 1.58.2
       '@sentry/vite-plugin':
         specifier: ^5.3.0
-        version: 5.3.0(encoding@0.1.13)(rollup@4.59.0)
+        version: 5.3.0(rollup@4.59.0)
       '@tiptap/core':
         specifier: ^2.11.5
         version: 2.11.5(@tiptap/pm@2.11.5)
@@ -1229,7 +1230,7 @@ importers:
         version: 4.7.0(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
       cross-fetch:
         specifier: ^4.0.0
-        version: 4.0.0(encoding@0.1.13)
+        version: 4.0.0
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
@@ -1318,8 +1319,8 @@ importers:
         specifier: ^4.18.0
         version: 4.18.1
       mailparser:
-        specifier: ^0.6.0
-        version: 0.6.2
+        specifier: ^3.9.3
+        version: 3.9.15
       newrelic:
         specifier: 13.19.2
         version: 13.19.2
@@ -1354,6 +1355,9 @@ importers:
       '@types/html-to-text':
         specifier: ^9.0.1
         version: 9.0.1
+      '@types/mailparser':
+        specifier: ^3.4.6
+        version: 3.4.6
       '@types/mocha':
         specifier: ^10.0.8
         version: 10.0.8
@@ -1401,7 +1405,7 @@ importers:
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -1552,7 +1556,7 @@ importers:
         version: 7.4.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -1776,7 +1780,7 @@ importers:
         version: 7.4.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/websockets':
         specifier: 11.1.27
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-socket.io@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -1933,7 +1937,7 @@ importers:
         version: 1.0.0(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))
       '@langchain/langgraph-checkpoint-mongodb':
         specifier: ^1.3.1
-        version: 1.3.4(@aws-sdk/credential-providers@3.1052.0)(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(@langchain/langgraph-checkpoint@1.0.0(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+        version: 1.3.4(@aws-sdk/credential-providers@3.1052.0)(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(@langchain/langgraph-checkpoint@1.0.0(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)))(gcp-metadata@5.3.0)(socks@2.8.7)
       '@langchain/openai':
         specifier: ^1.2.4
         version: 1.2.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(ws@8.21.0)
@@ -2112,7 +2116,7 @@ importers:
     dependencies:
       '@better-auth/sso':
         specifier: ^1.6.23
-        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(673a37e042976b407a6d506163fd3e0f))(better-call@1.3.7(zod@4.3.6))
+        version: 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(0db8222eef274de62e29e0525a8f6356))(better-call@1.3.7(zod@4.3.6))
       '@clerk/backend':
         specifier: ^3.4.11
         version: 3.4.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2151,7 +2155,7 @@ importers:
         version: link:../../../packages/stateless
       better-auth:
         specifier: ^1.6.23
-        version: 1.6.23(673a37e042976b407a6d506163fd3e0f)
+        version: 1.6.23(0db8222eef274de62e29e0525a8f6356)
       better-call:
         specifier: ^1.3.7
         version: 1.3.7(zod@4.3.6)
@@ -2166,7 +2170,7 @@ importers:
         version: 3.1.0
       mongoose:
         specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
       passport:
         specifier: 0.7.0
         version: 0.7.0
@@ -2269,7 +2273,7 @@ importers:
         version: 3.2.0(date-fns@4.1.0)
       mongoose:
         specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -2554,13 +2558,13 @@ importers:
         version: 3.996.0
       '@azure/storage-blob':
         specifier: ^12.11.0
-        version: 12.13.0(encoding@0.1.13)
+        version: 12.13.0
       '@clickhouse/client':
         specifier: ^1.20.0
         version: 1.20.0
       '@google-cloud/storage':
         specifier: ^6.2.3
-        version: 6.12.0(encoding@0.1.13)
+        version: 6.12.0
       '@launchdarkly/node-server-sdk':
         specifier: ^9.7.3
         version: 9.7.3
@@ -2581,7 +2585,7 @@ importers:
         version: 7.4.0(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@nestjs/terminus':
         specifier: 11.1.1
-        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/testing':
         specifier: 11.1.27
         version: 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)
@@ -2662,10 +2666,10 @@ importers:
         version: 1.39.0
       '@pulsecron/pulse':
         specifier: 1.6.8
-        version: 1.6.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+        version: 1.6.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
       '@segment/analytics-node':
         specifier: ^1.1.4
-        version: 1.1.4(encoding@0.1.13)
+        version: 1.1.4
       '@sentry/node':
         specifier: ^10.63.0
         version: 10.63.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
@@ -2837,7 +2841,7 @@ importers:
         version: 4.4.1
       codecov:
         specifier: ^3.5.0
-        version: 3.8.3(encoding@0.1.13)
+        version: 3.8.3
       cpx:
         specifier: ^1.5.0
         version: 1.5.0
@@ -2890,7 +2894,7 @@ importers:
     devDependencies:
       '@nx/js':
         specifier: 20.1.2
-        version: 20.1.2(@babel/traverse@7.29.7)(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(nx@20.1.2(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15)))(typescript@5.6.2)(verdaccio@5.31.0(encoding@0.1.13)(typanion@3.14.0))
+        version: 20.1.2(@babel/traverse@7.29.7)(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(nx@20.1.2(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15)))(typescript@5.6.2)(verdaccio@5.31.0(typanion@3.14.0))
       '@swc-node/register':
         specifier: 1.10.10
         version: 1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2)
@@ -2920,7 +2924,7 @@ importers:
         version: 5.6.2
       verdaccio:
         specifier: ^5.0.4
-        version: 5.31.0(encoding@0.1.13)(typanion@3.14.0)
+        version: 5.31.0(typanion@3.14.0)
 
   libs/dal:
     dependencies:
@@ -2944,7 +2948,7 @@ importers:
         version: 0.5.1
       cross-fetch:
         specifier: ^3.0.4
-        version: 3.1.5(encoding@0.1.13)
+        version: 3.1.5
       date-fns:
         specifier: ^2.29.2
         version: 2.29.3
@@ -2956,16 +2960,16 @@ importers:
         version: 9.1.0
       googleapis:
         specifier: ^60.0.1
-        version: 60.0.1(encoding@0.1.13)
+        version: 60.0.1
       jsonfile:
         specifier: ^6.0.1
         version: 6.1.0
       mongoose:
         specifier: ^8.24.1
-        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+        version: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
       mongoose-delete:
         specifier: ^1.0.7
-        version: 1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))
+        version: 1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -3338,7 +3342,7 @@ importers:
         version: 1.18.1
       bcrypt:
         specifier: ~5.0.0
-        version: 5.0.1(encoding@0.1.13)
+        version: 5.0.1
       bullmq:
         specifier: ^3.10.2
         version: 3.10.4
@@ -3347,7 +3351,7 @@ importers:
         version: 0.5.1
       cross-fetch:
         specifier: ^3.0.4
-        version: 3.1.5(encoding@0.1.13)
+        version: 3.1.5
       event-stream:
         specifier: ^4.0.1
         version: 4.0.1
@@ -3405,7 +3409,7 @@ importers:
     dependencies:
       '@segment/analytics-node':
         specifier: ^2.2.1
-        version: 2.2.1(encoding@0.1.13)
+        version: 2.2.1
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
@@ -3464,7 +3468,7 @@ importers:
     devDependencies:
       '@langchain/core':
         specifier: ^0.3.0
-        version: 0.3.80(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.21.0)
+        version: 0.3.80(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(zod@4.3.5))(ws@8.21.0)
       '@types/node':
         specifier: ^20.15.0
         version: 20.19.10
@@ -3473,7 +3477,7 @@ importers:
         version: 6.0.50(zod@4.3.5)
       openai:
         specifier: ^4.0.0
-        version: 4.78.1(encoding@0.1.13)(zod@4.3.5)
+        version: 4.78.1(zod@4.3.5)
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(@swc/core@1.7.26(@swc/helpers@0.5.15))(jiti@2.6.1)(postcss@8.5.25)(tsx@4.21.0)(typescript@5.6.2)(yaml@2.9.0)
@@ -3609,7 +3613,7 @@ importers:
         version: 4.33.0(ai@7.0.31(zod@3.25.20))(zod@3.25.20)
       cross-fetch:
         specifier: ^4.0.0
-        version: 4.0.0(encoding@0.1.13)
+        version: 4.0.0
       json-schema-to-ts:
         specifier: ^3.0.0
         version: 3.1.0
@@ -3661,7 +3665,7 @@ importers:
         version: 2.11.0
       '@vercel/node':
         specifier: ^2.15.9
-        version: 2.15.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(encoding@0.1.13)
+        version: 2.15.10(@swc/core@1.7.26(@swc/helpers@0.5.15))
       ai:
         specifier: ^7.0.0
         version: 7.0.31(zod@3.25.20)
@@ -3937,7 +3941,7 @@ importers:
         version: link:../shared
       '@segment/analytics-node':
         specifier: ^1.1.4
-        version: 1.1.4(encoding@0.1.13)
+        version: 1.1.4
       async-sema:
         specifier: 3.0.1
         version: 3.0.1
@@ -4106,7 +4110,7 @@ importers:
         version: 3.1022.0
       '@azure/communication-sms':
         specifier: ^1.0.0
-        version: 1.0.0(encoding@0.1.13)
+        version: 1.0.0
       '@bandwidth/messaging':
         specifier: ^4.1.3
         version: 4.1.3
@@ -4136,7 +4140,7 @@ importers:
         version: 2.0.0
       '@ringcentral/sdk':
         specifier: ^5.0.1
-        version: 5.0.1(encoding@0.1.13)
+        version: 5.0.1
       '@sendgrid/client':
         specifier: ^8.1.0
         version: 8.1.0
@@ -4151,7 +4155,7 @@ importers:
         version: 1.7.0
       '@vonage/server-sdk':
         specifier: ^3.10.0
-        version: 3.11.0(encoding@0.1.13)
+        version: 3.11.0
       africastalking:
         specifier: ^0.7.9
         version: 0.7.9
@@ -4163,10 +4167,10 @@ importers:
         version: 1.18.1
       braze-api:
         specifier: ^2.5.6
-        version: 2.5.6(encoding@0.1.13)
+        version: 2.5.6
       cross-fetch:
         specifier: ^4.0.0
-        version: 4.0.0(encoding@0.1.13)
+        version: 4.0.0
       date-fns:
         specifier: 2.29.3
         version: 2.29.3
@@ -4175,16 +4179,16 @@ importers:
         version: 4.0.3(typescript@5.6.2)
       expo-server-sdk:
         specifier: ^3.6.0
-        version: 3.7.0(encoding@0.1.13)
+        version: 3.7.0
       firebase-admin:
         specifier: ^13.3.0
-        version: 13.3.0(encoding@0.1.13)
+        version: 13.3.0
       form-data:
         specifier: ^4.0.6
         version: 4.0.6
       mailersend:
         specifier: ^2.6.0
-        version: 2.6.0(encoding@0.1.13)
+        version: 2.6.0
       mailgun.js:
         specifier: ^8.0.1
         version: 8.2.1
@@ -4266,7 +4270,7 @@ importers:
         version: 8.3.4
       codecov:
         specifier: ^3.5.0
-        version: 3.8.3(encoding@0.1.13)
+        version: 3.8.3
       nock:
         specifier: ^13.1.3
         version: 13.3.0
@@ -4408,7 +4412,7 @@ importers:
         version: 22.15.13
       codecov:
         specifier: ^3.5.0
-        version: 3.8.3(encoding@0.1.13)
+        version: 3.8.3
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))
@@ -12740,6 +12744,11 @@ packages:
   '@selderee/plugin-htmlparser2@0.11.0':
     resolution: {integrity: sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ==}
 
+  '@selderee/plugin-htmlparser2@0.12.0':
+    resolution: {integrity: sha512-oELmoyA6ML9jDRMV3kgcMQFKxUfBU0yFVn6yTctVaLT5ygXnxH52I3TZEgV9EhXJC68/uFvE5Daj1/25c0Xa/A==}
+    peerDependencies:
+      selderee: ~0.12.0
+
   '@sendgrid/client@8.1.0':
     resolution: {integrity: sha512-Kp2kKLr307v/HnR3uGuySt0AbCkeG7naDVOzfPOtWvKHVZIEHmKidQjJjzytVZNYWtoRdYgNfBw6GyUznGqa6w==}
     engines: {node: '>=12.*'}
@@ -15121,6 +15130,9 @@ packages:
   '@types/luxon@3.7.1':
     resolution: {integrity: sha512-H3iskjFIAn5SlJU7OuxUmTEpebK6TKB8rxZShDslBMZJ5u9S//KM1sbdAisiSrqwLQncVjnpi2OK2J51h+4lsg==}
 
+  '@types/mailparser@3.4.6':
+    resolution: {integrity: sha512-wVV3cnIKzxTffaPH8iRnddX1zahbYB1ZEoAxyhoBo3TBCBuK6nZ8M8JYO/RhsCuuBVOw/DEN/t/ENbruwlxn6Q==}
+
   '@types/markdown-escape@1.1.3':
     resolution: {integrity: sha512-JIc1+s3y5ujKnt/+N+wq6s/QdL2qZ11fP79MijrVXsAAnzSxCbT2j/3prHRouJdZ2yFLN3vkP0HytfnoCczjOw==}
 
@@ -16061,6 +16073,9 @@ packages:
     engines: {node: '>= 8'}
     hasBin: true
 
+  '@zone-eu/mailsplit@5.4.15':
+    resolution: {integrity: sha512-c7ZpxauvF4AEkDJlKDYO7iMUtMuqJMBnDWNff1cyx+d7zaBVR3iFEmXhNHOVoMmVyVF3pTZLsLIJsEFKDldOAA==}
+
   JSONStream@1.3.5:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
     hasBin: true
@@ -16137,9 +16152,6 @@ packages:
   address@1.2.2:
     resolution: {integrity: sha512-4B/qKCfeE/ODUaAUpSwfzazo5x29WD4r3vXiWsB7I2mSDAihwEqKO+g8GELZUQSSAo5e1XTYh3ZVfLyxBc12nA==}
     engines: {node: '>= 10.0.0'}
-
-  addressparser@1.0.1:
-    resolution: {integrity: sha512-aQX7AISOMM7HFE0iZ3+YnD07oIeJqWGVnJ+ZIKaBZAk03ftmVYVqsGas/rbXKR21n4D/hKCSHypvcyOkds/xzg==}
 
   africastalking@0.7.9:
     resolution: {integrity: sha512-wb0NhvShFoTXVjzpmxjgXGuQkD1DhNqnC6DyEW7SeY/Q7fNN3X2qQjIb0XM8UPgRlx6rZYnvuCf0NW9Vmk33nA==}
@@ -18427,6 +18439,10 @@ packages:
   deep-object-diff@1.1.9:
     resolution: {integrity: sha512-Rn+RuwkmkDwCi2/oXOFS9Gsr5lJZu/yTGpK7wAaAIE75CC+LCGEZHpY6VQJa/RoJcrmaA/docWJZvYohlNkWPA==}
 
+  deepmerge-ts@8.0.2:
+    resolution: {integrity: sha512-uqbvqLUMrc6p0MO+WBRtTxY55hmyh94WRwI5a++PZe54X+bfVh59FSN7uWCBCW1CCVjzjnrwzfI8zidE2obMMw==}
+    engines: {node: '>=16.9.0'}
+
   deepmerge@4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
     engines: {node: '>=0.10.0'}
@@ -18837,11 +18853,12 @@ packages:
     resolution: {integrity: sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==}
     engines: {node: '>= 0.8'}
 
+  encoding-japanese@2.2.0:
+    resolution: {integrity: sha512-EuJWwlHPZ1LbADuKTClvHtwbaFn4rOD+dRAbWysqEOXRc2Uui0hJInNJrsdH0c+OhJA4nrCBdSkW4DD5YxAo6A==}
+    engines: {node: '>=8.10.0'}
+
   encoding-sniffer@0.2.0:
     resolution: {integrity: sha512-ju7Wq1kg04I3HtiYIOrUrdfdDvkyO9s5XM8QAj/bN61Yo/Vb4vgJxy5vi4Yxk01gWHbrofpPtpxM8bKger9jhg==}
-
-  encoding@0.1.13:
-    resolution: {integrity: sha512-ETBauow1T35Y/WZMkio9jiM0Z5xjHHmJ4XmjZOq1l/dXz3lr2sRn87nJy20RupqSh1F2m3HHPSp8ShIPQJrJ3A==}
 
   end-of-stream@1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
@@ -20229,6 +20246,10 @@ packages:
   html-styles@1.0.0:
     resolution: {integrity: sha512-cDl5dcj73oI4Hy0DSUNh54CAwslNLJRCCoO+RNkVo+sBrjA/0+7E/xzvj3zH/GxbbBLGJhE0hBe1eg+0FINC6w==}
 
+  html-to-text@10.0.0:
+    resolution: {integrity: sha512-2OH59Gtprdczel+7Rxgpz9hGVJREaf8Lt1H4kZwWHpEn70VQKRuMNGsb2eDbwaTzrYzb0hheiOG1P7Dim0B4dQ==}
+    engines: {node: '>=20.19.0'}
+
   html-to-text@9.0.5:
     resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
     engines: {node: '>=14'}
@@ -20366,6 +20387,10 @@ packages:
 
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
+    engines: {node: '>=0.10.0'}
+
+  iconv-lite@0.7.3:
+    resolution: {integrity: sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ==}
     engines: {node: '>=0.10.0'}
 
   identity-function@1.0.0:
@@ -21724,6 +21749,9 @@ packages:
   leac@0.6.0:
     resolution: {integrity: sha512-y+SqErxb8h7nE/fiEX07jsbuhrpO9lL8eca7/Y1nuWV2moNlXhyd59iDGcRf6moVyDMbmTNzL40SUyrFU/yDpg==}
 
+  leac@0.7.0:
+    resolution: {integrity: sha512-qMrZeyEekgdRQ9o6a4NAB2EQZrv827GJdn1vnapwSJ90hWRB4TzUSunvacPkxQ2TnNqHNI1/zSt0hlo0crG8Jw==}
+
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
@@ -21737,8 +21765,17 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
+  libbase64@1.3.0:
+    resolution: {integrity: sha512-GgOXd0Eo6phYgh0DJtjQ2tO8dc0IVINtZJeARPeiIJqge+HdsWSuaDTe8ztQ7j/cONByDZ3zeB325AHiv5O0dg==}
+
+  libmime@5.4.2:
+    resolution: {integrity: sha512-+IQnCOdPiufGBkOii+Ze8F7iniyBzOwvWDbn1DyExBpc9pT2B3IEMQi7GUc/PpqhNUh/sr1SG9UXDITQoR0VIA==}
+
   libphonenumber-js@1.11.19:
     resolution: {integrity: sha512-bW/Yp/9dod6fmyR+XqSUL1N5JE7QRxQ3KrBIbYS1FTv32e5i3SEtQVX+71CYNv8maWNSOgnlCoNp9X78f/cKiA==}
+
+  libqp@2.1.1:
+    resolution: {integrity: sha512-0Wd+GPz1O134cP62YU2GTOPNA7Qgl09XwCqM5zpBv87ERCXdfDtyKXvV7c9U22yWJh44QZqBocFnXN11K96qow==}
 
   lightningcss-android-arm64@1.30.2:
     resolution: {integrity: sha512-BH9sEdOCahSgmkVhBLeU7Hc9DWeZ1Eb6wNS6Da8igvUwAe0sqROHddIlvU06q3WyXVEOYDZ6ykBZQnjTbmo4+A==}
@@ -22306,9 +22343,8 @@ packages:
   mailgun.js@8.2.1:
     resolution: {integrity: sha512-iKHCMehdUcWzBAp8KU2idLP7AbsTxQ8DjJev4Gvm430Dujul+ZkzKPgn40uYpb9BXGL5l8/w5jpf2pvw51df/w==}
 
-  mailparser@0.6.2:
-    resolution: {integrity: sha512-5Z5nv7TYojrdrKHjhCOKKFaYs0Lo7PCja4RnLZ2kFE1Fskqg+rRVwFpG9Oqx3YjosGM2QEItjHo7+Jc9qvxGqw==}
-    deprecated: Mailparser versions older than v2.3.0 are deprecated
+  mailparser@3.9.15:
+    resolution: {integrity: sha512-/5hgybKDMKFS05jAh8OPeEE7N53lj8nF6ywlo89VPjF2TtwqIQbjaxumQWnJIkmaagnJ6u1eansMOViHFxIXwQ==}
 
   mailtrap@3.2.0:
     resolution: {integrity: sha512-G5CwjtVqakHVvTZtPsHp9YTr0PdvmcKTT8leQRIP/ZqhG9nL+F2VifKZggdUSu25uMtCrnEKc3HwWXdzZcjGvQ==}
@@ -22726,10 +22762,6 @@ packages:
     resolution: {integrity: sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A==}
     engines: {node: '>=10.0.0'}
     hasBin: true
-
-  mimelib@0.3.1:
-    resolution: {integrity: sha512-ipzNp6TBsNfD3hButGlPVlGmuCgybIM9SBf8YwIG+SYmBgtU0u8wjf+BSrJX0mvqtv59SLmwphw/XiCbkLWv7w==}
-    deprecated: This project is unmaintained
 
   mimetext@3.0.28:
     resolution: {integrity: sha512-eQXpbNrtxLCjUtiVbR/qR09dbPgZ2o+KR1uA7QKqGhbn8QV7HIL16mXXsobBL4/8TqoYh1us31kfz+dNfCev9g==}
@@ -23329,6 +23361,10 @@ packages:
     resolution: {integrity: sha512-Gwv8SQewT616ZM/URn0H54b8PWo/Wum7md3EW2aWy1lO27+WZCX+Xyak3J+NlmHUjDh5ME+uesJUDRbR3Ye8Bw==}
     engines: {node: '>=6.0.0'}
 
+  nodemailer@9.0.5:
+    resolution: {integrity: sha512-wvjiKvjczmsN7U/8006JOdXubgBk2XFAbioDMbT+sM7cPs0QrhJTa6KBRX7P5REGGkDcLUz/EarWidb8G8C1jQ==}
+    engines: {node: '>=6.0.0'}
+
   nodemon@3.0.1:
     resolution: {integrity: sha512-g9AZ7HmkhQkqXkRc20w+ZfQ73cHLbE8hnPbtaFbFtCumZsjyMhKk9LajQ07U5Ux28lvFjZ5X7HvWR1xzU8jHVw==}
     engines: {node: '>=10'}
@@ -23867,6 +23903,9 @@ packages:
   parseley@0.12.1:
     resolution: {integrity: sha512-e6qHKe3a9HWr0oMRVDTRhKce+bRO8VGQR3NyVwcjwrbhMmFCX9KszEV35+rn4AdilFAq9VPxP/Fe1wC9Qjd2lw==}
 
+  parseley@0.13.1:
+    resolution: {integrity: sha512-uNBJZzmb60l6p6VWLTmevizNAGnE0xoSf1n0B4q3ntegDNzcS68NRCcBDZTcyXHxt2XhBChsCuqj4M+nChvE/A==}
+
   parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
     engines: {node: '>= 0.8'}
@@ -24027,6 +24066,9 @@ packages:
 
   pause@0.0.1:
     resolution: {integrity: sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==}
+
+  peberminta@0.10.0:
+    resolution: {integrity: sha512-80B2AsU+I4Qdb0ZAPSfe9UwvGzwkM37IKIFEvdS3D/3Ndgv2bsuJ0bfG1+iEYO+l7Gfd4EUJmuRyq7efLgRMzQ==}
 
   peberminta@0.9.0:
     resolution: {integrity: sha512-XIxfHpEuSJbITd1H3EeQwpcZbTLHc+VVr8ANI9t5sit565tsI4/xK3KWTUFE2e6QiangUkh3B0jihzmGnNrRsQ==}
@@ -25722,6 +25764,9 @@ packages:
   selderee@0.11.0:
     resolution: {integrity: sha512-5TF+l7p4+OsnP8BCCvSyZiSPc4x4//p5uPwK8TCnVPJYRmU2aYKMpOXvw8zM5a5JvuuCGN1jmsMwuU2W02ukfA==}
 
+  selderee@0.12.0:
+    resolution: {integrity: sha512-b1YMh3+DHZp59DLna3qVwQ5iOla/nrI6mLBNW02XxU77M3046Df6VLkoaJyFz20VsGIG5kkp+FK0kg4K4HnUFw==}
+
   semifies@1.0.0:
     resolution: {integrity: sha512-xXR3KGeoxTNWPD4aBvL5NUpMTT7WMANr3EWnaS190QVkY52lqqcVRD7Q05UVbBhiWDGWMlJEUam9m7uFFGVScw==}
 
@@ -26906,6 +26951,10 @@ packages:
   title-case@2.1.1:
     resolution: {integrity: sha512-EkJoZ2O3zdCz3zJsYCsxyq2OC5hrxR9mfdd5I+w8h/tmFfeOxJ+vvkxsKxdmN0WtS9zLdHEgfgVOiMVgv+Po4Q==}
 
+  tlds@1.261.0:
+    resolution: {integrity: sha512-QXqwfEl9ddlGBaRFXIvNKK6OhipSiLXuRuLJX5DErz0o0Q0rYxulWLdFryTkV5PkdZct5iMInwYEGe/eR++1AA==}
+    hasBin: true
+
   tldts-core@6.1.86:
     resolution: {integrity: sha512-Je6p7pkk+KMzMv2XXKmAE3McmolOQFdxkKw0R8EYNr7sELW46JqnNeTX8ybPiQgvg1ymCoF8LXs5fzFaZvJPTA==}
 
@@ -27655,9 +27704,6 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
-
-  uue@3.1.2:
-    resolution: {integrity: sha512-axKLXVqwtdI/czrjG0X8hyV1KLgeWx8F4KvSbvVCnS+RUvsQMGRjx0kfuZDXXqj0LYvVJmx3B9kWlKtEdRrJLg==}
 
   uuid@11.1.1:
     resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
@@ -28975,7 +29021,7 @@ snapshots:
 
   '@auto-it/bot-list@10.44.0': {}
 
-  '@auto-it/core@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)':
+  '@auto-it/core@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)':
     dependencies:
       '@auto-it/bot-list': 10.44.0
       '@endemolshinegroup/cosmiconfig-typescript-loader': 3.0.2(cosmiconfig@7.0.0)(typescript@5.6.2)
@@ -29002,7 +29048,7 @@ snapshots:
       io-ts: 2.2.20(fp-ts@2.13.1)
       lodash.chunk: 4.2.0
       log-symbols: 4.1.0
-      node-fetch: 2.6.7(encoding@0.1.13)
+      node-fetch: 2.6.7
       parse-author: 2.0.0
       parse-github-url: 1.0.2
       pretty-ms: 7.0.1
@@ -29026,9 +29072,9 @@ snapshots:
       - encoding
       - supports-color
 
-  '@auto-it/npm@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)':
+  '@auto-it/npm@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)':
     dependencies:
-      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
+      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       '@auto-it/package-json-utils': 10.44.0
       await-to-js: 3.0.0
       endent: 2.1.0
@@ -29055,10 +29101,10 @@ snapshots:
       parse-author: 2.0.0
       parse-github-url: 1.0.2
 
-  '@auto-it/released@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)':
+  '@auto-it/released@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)':
     dependencies:
       '@auto-it/bot-list': 10.44.0
-      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
+      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       deepmerge: 4.3.1
       fp-ts: 2.13.1
       io-ts: 2.2.20(fp-ts@2.13.1)
@@ -29071,9 +29117,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@auto-it/version-file@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)':
+  '@auto-it/version-file@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)':
     dependencies:
-      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
+      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       fp-ts: 2.13.1
       io-ts: 2.2.20(fp-ts@2.13.1)
       semver: 7.7.4
@@ -31177,11 +31223,11 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@azure/communication-common@1.1.0(encoding@0.1.13)':
+  '@azure/communication-common@1.1.0':
     dependencies:
       '@azure/abort-controller': 1.1.0
       '@azure/core-auth': 1.4.0
-      '@azure/core-http': 2.3.2(encoding@0.1.13)
+      '@azure/core-http': 2.3.2
       '@azure/core-tracing': 1.0.0-preview.13
       events: 3.3.0
       jwt-decode: 2.2.0
@@ -31189,12 +31235,12 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@azure/communication-sms@1.0.0(encoding@0.1.13)':
+  '@azure/communication-sms@1.0.0':
     dependencies:
       '@azure/abort-controller': 1.1.0
-      '@azure/communication-common': 1.1.0(encoding@0.1.13)
+      '@azure/communication-common': 1.1.0
       '@azure/core-auth': 1.4.0
-      '@azure/core-http': 1.2.6(encoding@0.1.13)
+      '@azure/core-http': 1.2.6
       '@azure/core-tracing': 1.0.0-preview.10
       '@azure/logger': 1.0.4
       '@opentelemetry/api': 0.10.2
@@ -31210,7 +31256,7 @@ snapshots:
       '@azure/abort-controller': 1.1.0
       tslib: 2.8.1
 
-  '@azure/core-http@1.2.6(encoding@0.1.13)':
+  '@azure/core-http@1.2.6':
     dependencies:
       '@azure/abort-controller': 1.1.0
       '@azure/core-asynciterator-polyfill': 1.0.2
@@ -31220,7 +31266,7 @@ snapshots:
       '@types/node-fetch': 2.6.6
       '@types/tunnel': 0.0.1
       form-data: 3.0.5
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       process: 0.11.10
       tough-cookie: 4.1.4
       tslib: 2.8.1
@@ -31230,7 +31276,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@azure/core-http@2.3.2(encoding@0.1.13)':
+  '@azure/core-http@2.3.2':
     dependencies:
       '@azure/abort-controller': 1.1.0
       '@azure/core-auth': 1.4.0
@@ -31240,7 +31286,7 @@ snapshots:
       '@types/node-fetch': 2.6.6
       '@types/tunnel': 0.0.3
       form-data: 4.0.6
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       process: 0.11.10
       tough-cookie: 4.1.4
       tslib: 2.8.1
@@ -31250,7 +31296,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@azure/core-http@3.0.0(encoding@0.1.13)':
+  '@azure/core-http@3.0.0':
     dependencies:
       '@azure/abort-controller': 1.1.0
       '@azure/core-auth': 1.4.0
@@ -31260,7 +31306,7 @@ snapshots:
       '@types/node-fetch': 2.6.6
       '@types/tunnel': 0.0.3
       form-data: 4.0.6
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       process: 0.11.10
       tslib: 2.8.1
       tunnel: 0.0.6
@@ -31314,10 +31360,10 @@ snapshots:
       jsonwebtoken: 9.0.3
       uuid: 11.1.1
 
-  '@azure/storage-blob@12.13.0(encoding@0.1.13)':
+  '@azure/storage-blob@12.13.0':
     dependencies:
       '@azure/abort-controller': 1.1.0
-      '@azure/core-http': 3.0.0(encoding@0.1.13)
+      '@azure/core-http': 3.0.0
       '@azure/core-lro': 2.5.2
       '@azure/core-paging': 1.5.0
       '@azure/core-tracing': 1.0.0-preview.13
@@ -32631,24 +32677,24 @@ snapshots:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/mongo-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))':
+  '@better-auth/mongo-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
     optionalDependencies:
-      mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+      mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
 
   '@better-auth/prisma-adapter@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(673a37e042976b407a6d506163fd3e0f))(better-call@1.3.7(zod@4.3.5))':
+  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(0db8222eef274de62e29e0525a8f6356))(better-call@1.3.7(zod@4.3.5))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-      better-auth: 1.6.23(673a37e042976b407a6d506163fd3e0f)
+      better-auth: 1.6.23(0db8222eef274de62e29e0525a8f6356)
       better-call: 1.3.7(zod@4.3.5)
       fast-xml-parser: 5.10.1
       jose: 6.1.3
@@ -32656,12 +32702,12 @@ snapshots:
       tldts: 6.1.86
       zod: 4.3.6
 
-  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(673a37e042976b407a6d506163fd3e0f))(better-call@1.3.7(zod@4.3.6))':
+  '@better-auth/sso@1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.23(0db8222eef274de62e29e0525a8f6356))(better-call@1.3.7(zod@4.3.6))':
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-      better-auth: 1.6.23(673a37e042976b407a6d506163fd3e0f)
+      better-auth: 1.6.23(0db8222eef274de62e29e0525a8f6356)
       better-call: 1.3.7(zod@4.3.6)
       fast-xml-parser: 5.10.1
       jose: 6.1.3
@@ -33613,7 +33659,7 @@ snapshots:
     dependencies:
       postcss: 8.5.25
 
-  '@customerio/cdp-analytics-browser@0.3.18(encoding@0.1.13)':
+  '@customerio/cdp-analytics-browser@0.3.18':
     dependencies:
       '@customerio/cdp-analytics-core': 0.3.18
       '@lukeed/uuid': 2.0.1
@@ -33622,7 +33668,7 @@ snapshots:
       customerio-gist-web: 3.20.3
       dset: 3.1.4
       js-cookie: 3.0.7
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       spark-md5: 3.0.2
       tslib: 2.8.1
       unfetch: 4.2.0
@@ -34111,12 +34157,12 @@ snapshots:
     dependencies:
       stoppable: 1.1.0
 
-  '@google-cloud/firestore@7.11.0(encoding@0.1.13)':
+  '@google-cloud/firestore@7.11.0':
     dependencies:
       '@opentelemetry/api': 1.9.0
       fast-deep-equal: 3.1.3
       functional-red-black-tree: 1.0.1
-      google-gax: 4.6.0(encoding@0.1.13)
+      google-gax: 4.6.0
       protobufjs: 7.6.5
     transitivePeerDependencies:
       - encoding
@@ -34141,7 +34187,7 @@ snapshots:
 
   '@google-cloud/promisify@3.0.1': {}
 
-  '@google-cloud/storage@6.12.0(encoding@0.1.13)':
+  '@google-cloud/storage@6.12.0':
     dependencies:
       '@google-cloud/paginator': 3.0.7
       '@google-cloud/projectify': 3.0.0
@@ -34153,19 +34199,19 @@ snapshots:
       ent: 2.2.0
       extend: 3.0.2
       fast-xml-parser: 5.7.3
-      gaxios: 5.1.3(encoding@0.1.13)
-      google-auth-library: 8.9.0(encoding@0.1.13)
+      gaxios: 5.1.3
+      google-auth-library: 8.9.0
       mime: 3.0.0
       mime-types: 2.1.35
       p-limit: 3.1.0
       retry-request: 5.0.2
-      teeny-request: 8.0.3(encoding@0.1.13)
+      teeny-request: 8.0.3
       uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@google-cloud/storage@7.16.0(encoding@0.1.13)':
+  '@google-cloud/storage@7.16.0':
     dependencies:
       '@google-cloud/paginator': 5.0.2
       '@google-cloud/projectify': 4.0.0
@@ -34174,13 +34220,13 @@ snapshots:
       async-retry: 1.3.3
       duplexify: 4.1.3
       fast-xml-parser: 5.7.3
-      gaxios: 6.1.1(encoding@0.1.13)
-      google-auth-library: 9.15.1(encoding@0.1.13)
+      gaxios: 6.1.1
+      google-auth-library: 9.15.1
       html-entities: 2.5.2
       mime: 3.0.0
       p-limit: 3.1.0
-      retry-request: 7.0.2(encoding@0.1.13)
-      teeny-request: 9.0.0(encoding@0.1.13)
+      retry-request: 7.0.2
+      teeny-request: 9.0.0
       uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
@@ -34420,7 +34466,7 @@ snapshots:
 
   '@inkeep/cxkit-color-mode@0.5.107': {}
 
-  '@inkeep/cxkit-primitives@0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(encoding@0.1.13)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)':
+  '@inkeep/cxkit-primitives@0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)':
     dependencies:
       '@inkeep/cxkit-color-mode': 0.5.107
       '@inkeep/cxkit-theme': 0.5.107
@@ -34460,7 +34506,7 @@ snapshots:
       lucide-react: 0.503.0(react@19.2.3)
       marked: 15.0.12
       merge-anything: 5.1.7
-      openai: 4.78.1(encoding@0.1.13)(zod@4.3.5)
+      openai: 4.78.1(zod@4.3.5)
       prism-react-renderer: 2.4.1(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -34481,9 +34527,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-react@0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(encoding@0.1.13)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)':
+  '@inkeep/cxkit-react@0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)':
     dependencies:
-      '@inkeep/cxkit-styled': 0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(encoding@0.1.13)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)
+      '@inkeep/cxkit-styled': 0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)
       '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@19.2.8)(react@19.2.3)
       lucide-react: 0.503.0(react@19.2.3)
     transitivePeerDependencies:
@@ -34495,9 +34541,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@inkeep/cxkit-styled@0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(encoding@0.1.13)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)':
+  '@inkeep/cxkit-styled@0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)':
     dependencies:
-      '@inkeep/cxkit-primitives': 0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(encoding@0.1.13)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)
+      '@inkeep/cxkit-primitives': 0.5.107(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(zod@4.3.5)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       merge-anything: 5.1.7
@@ -35291,14 +35337,14 @@ snapshots:
       '@langchain/core': 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@4.3.5))(ws@8.21.0)
       zod: 3.25.76
 
-  '@langchain/core@0.3.80(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.21.0)':
+  '@langchain/core@0.3.80(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(zod@4.3.5))(ws@8.21.0)':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.6.3(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.21.0)
+      langsmith: 0.6.3(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(zod@4.3.5))(ws@8.21.0)
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -35344,11 +35390,11 @@ snapshots:
       - openai
       - ws
 
-  '@langchain/langgraph-checkpoint-mongodb@1.3.4(@aws-sdk/credential-providers@3.1052.0)(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(@langchain/langgraph-checkpoint@1.0.0(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)))(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)':
+  '@langchain/langgraph-checkpoint-mongodb@1.3.4(@aws-sdk/credential-providers@3.1052.0)(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))(@langchain/langgraph-checkpoint@1.0.0(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)))(gcp-metadata@5.3.0)(socks@2.8.7)':
     dependencies:
       '@langchain/core': 1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0)
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0))
-      mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+      mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
     transitivePeerDependencies:
       - '@aws-sdk/credential-providers'
       - '@mongodb-js/zstd'
@@ -35615,12 +35661,12 @@ snapshots:
       - debug
       - supports-color
 
-  '@mapbox/node-pre-gyp@1.0.10(encoding@0.1.13)':
+  '@mapbox/node-pre-gyp@1.0.10':
     dependencies:
       detect-libc: 2.1.2
       https-proxy-agent: 5.0.1
       make-dir: 3.1.0
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
@@ -36228,7 +36274,7 @@ snapshots:
       class-transformer: 0.5.1
       class-validator: 0.15.1
 
-  '@nestjs/terminus@11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@nestjs/terminus@11.1.1(@grpc/grpc-js@1.14.4)(@grpc/proto-loader@0.8.0)(@nestjs/axios@4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2))(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.27)(@nestjs/websockets@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -36240,7 +36286,7 @@ snapshots:
       '@grpc/grpc-js': 1.14.4
       '@grpc/proto-loader': 0.8.0
       '@nestjs/axios': 4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2)
-      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
 
   '@nestjs/testing@11.1.27(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@11.1.27)(@nestjs/platform-express@11.1.27)':
     dependencies:
@@ -36551,7 +36597,7 @@ snapshots:
       - typescript
       - verdaccio
 
-  '@nx/js@20.1.2(@babel/traverse@7.29.7)(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(nx@20.1.2(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15)))(typescript@5.6.2)(verdaccio@5.31.0(encoding@0.1.13)(typanion@3.14.0))':
+  '@nx/js@20.1.2(@babel/traverse@7.29.7)(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(nx@20.1.2(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15)))(typescript@5.6.2)(verdaccio@5.31.0(typanion@3.14.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/plugin-proposal-decorators': 7.24.7(@babel/core@7.29.7)
@@ -36584,7 +36630,7 @@ snapshots:
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
     optionalDependencies:
-      verdaccio: 5.31.0(encoding@0.1.13)(typanion@3.14.0)
+      verdaccio: 5.31.0(typanion@3.14.0)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -38160,14 +38206,14 @@ snapshots:
 
   '@protobufjs/utf8@1.1.1': {}
 
-  '@pulsecron/pulse@1.6.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)':
+  '@pulsecron/pulse@1.6.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)':
     dependencies:
       cron-parser: 4.9.0
       date.js: 0.3.3
       debug: 4.3.6
       human-interval: 2.0.1
       moment-timezone: 0.5.48
-      mongodb: 6.8.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+      mongodb: 6.8.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
     transitivePeerDependencies:
       - '@aws-sdk/credential-providers'
       - '@mongodb-js/zstd'
@@ -40587,11 +40633,11 @@ snapshots:
       '@lezer/javascript': 1.4.19
       '@lezer/lr': 1.4.2
 
-  '@ringcentral/sdk@5.0.1(encoding@0.1.13)':
+  '@ringcentral/sdk@5.0.1':
     dependencies:
       dom-storage: 2.1.0
       is-plain-object: 2.0.4
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
@@ -40837,7 +40883,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@segment/analytics-next@1.81.0(encoding@0.1.13)':
+  '@segment/analytics-next@1.81.0':
     dependencies:
       '@lukeed/uuid': 2.0.1
       '@segment/analytics-core': 1.8.1
@@ -40847,31 +40893,31 @@ snapshots:
       '@segment/facade': 3.4.10
       dset: 3.1.4
       js-cookie: 3.0.7
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       tslib: 2.8.1
       unfetch: 4.2.0
     transitivePeerDependencies:
       - encoding
 
-  '@segment/analytics-node@1.1.4(encoding@0.1.13)':
+  '@segment/analytics-node@1.1.4':
     dependencies:
       '@lukeed/uuid': 2.0.1
       '@segment/analytics-core': 1.4.0
       '@segment/analytics-generic-utils': 1.1.0
       buffer: 6.0.3
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
 
-  '@segment/analytics-node@2.2.1(encoding@0.1.13)':
+  '@segment/analytics-node@2.2.1':
     dependencies:
       '@lukeed/uuid': 2.0.1
       '@segment/analytics-core': 1.8.1
       '@segment/analytics-generic-utils': 1.2.0
       buffer: 6.0.3
       jose: 5.10.0
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
@@ -40901,6 +40947,12 @@ snapshots:
     dependencies:
       domhandler: 5.0.3
       selderee: 0.11.0
+
+  '@selderee/plugin-htmlparser2@0.12.0(selderee@0.12.0)':
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 5.0.3
+      selderee: 0.12.0
 
   '@sendgrid/client@8.1.0':
     dependencies:
@@ -40948,11 +41000,11 @@ snapshots:
       '@sentry/replay': 10.63.0
       '@sentry/replay-canvas': 10.63.0
 
-  '@sentry/bundler-plugin-core@5.3.0(encoding@0.1.13)':
+  '@sentry/bundler-plugin-core@5.3.0':
     dependencies:
       '@babel/core': 7.29.7
       '@sentry/babel-plugin-component-annotate': 5.3.0
-      '@sentry/cli': 2.58.6(encoding@0.1.13)
+      '@sentry/cli': 2.58.6
       dotenv: 16.6.1
       find-up: 5.0.0
       glob: 13.0.6
@@ -40985,10 +41037,10 @@ snapshots:
   '@sentry/cli-win32-x64@2.58.6':
     optional: true
 
-  '@sentry/cli@2.58.6(encoding@0.1.13)':
+  '@sentry/cli@2.58.6':
     dependencies:
       https-proxy-agent: 5.0.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       progress: 2.0.3
       proxy-from-env: 1.1.0
       which: 2.0.2
@@ -41196,9 +41248,9 @@ snapshots:
       '@sentry/browser-utils': 10.63.0
       '@sentry/core': 10.63.0
 
-  '@sentry/rollup-plugin@5.3.0(encoding@0.1.13)(rollup@4.59.0)':
+  '@sentry/rollup-plugin@5.3.0(rollup@4.59.0)':
     dependencies:
-      '@sentry/bundler-plugin-core': 5.3.0(encoding@0.1.13)
+      '@sentry/bundler-plugin-core': 5.3.0
       magic-string: 0.30.21
     optionalDependencies:
       rollup: 4.59.0
@@ -41217,10 +41269,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/vite-plugin@5.3.0(encoding@0.1.13)(rollup@4.59.0)':
+  '@sentry/vite-plugin@5.3.0(rollup@4.59.0)':
     dependencies:
-      '@sentry/bundler-plugin-core': 5.3.0(encoding@0.1.13)
-      '@sentry/rollup-plugin': 5.3.0(encoding@0.1.13)(rollup@4.59.0)
+      '@sentry/bundler-plugin-core': 5.3.0
+      '@sentry/rollup-plugin': 5.3.0(rollup@4.59.0)
     transitivePeerDependencies:
       - encoding
       - rollup
@@ -42760,9 +42812,9 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  '@stoplight/json-ref-readers@1.2.2(encoding@0.1.13)':
+  '@stoplight/json-ref-readers@1.2.2':
     dependencies:
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       tslib: 1.14.1
     transitivePeerDependencies:
       - encoding
@@ -42793,18 +42845,18 @@ snapshots:
 
   '@stoplight/path@1.3.2': {}
 
-  '@stoplight/spectral-cli@6.15.0(encoding@0.1.13)':
+  '@stoplight/spectral-cli@6.15.0':
     dependencies:
       '@stoplight/json': 3.21.0
       '@stoplight/path': 1.3.2
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
-      '@stoplight/spectral-formatters': 1.5.0(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-formatters': 1.5.0
       '@stoplight/spectral-parsers': 1.0.5
-      '@stoplight/spectral-ref-resolver': 1.0.4(encoding@0.1.13)
-      '@stoplight/spectral-ruleset-bundler': 1.6.3(encoding@0.1.13)
-      '@stoplight/spectral-ruleset-migrator': 1.11.2(encoding@0.1.13)
-      '@stoplight/spectral-rulesets': 1.18.1(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-ref-resolver': 1.0.4
+      '@stoplight/spectral-ruleset-bundler': 1.6.3
+      '@stoplight/spectral-ruleset-migrator': 1.11.2
+      '@stoplight/spectral-rulesets': 1.18.1
+      '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.20.0
       chalk: 4.1.2
       fast-glob: 3.2.12
@@ -42817,14 +42869,14 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-core@1.20.0(encoding@0.1.13)':
+  '@stoplight/spectral-core@1.20.0':
     dependencies:
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.18.0)
       '@stoplight/json': 3.21.0
       '@stoplight/path': 1.3.2
       '@stoplight/spectral-parsers': 1.0.5
-      '@stoplight/spectral-ref-resolver': 1.0.4(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-ref-resolver': 1.0.4
+      '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.6.0
       '@types/es-aggregate-error': 1.0.6
       '@types/json-schema': 7.0.15
@@ -42843,29 +42895,29 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-formats@1.6.0(encoding@0.1.13)':
+  '@stoplight/spectral-formats@1.6.0':
     dependencies:
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
       '@types/json-schema': 7.0.15
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-formats@1.8.2(encoding@0.1.13)':
+  '@stoplight/spectral-formats@1.8.2':
     dependencies:
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
       '@types/json-schema': 7.0.15
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-formatters@1.5.0(encoding@0.1.13)':
+  '@stoplight/spectral-formatters@1.5.0':
     dependencies:
       '@stoplight/path': 1.3.2
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.20.0
       '@types/markdown-escape': 1.1.3
       chalk: 4.1.2
@@ -42879,13 +42931,13 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-functions@1.10.1(encoding@0.1.13)':
+  '@stoplight/spectral-functions@1.10.1':
     dependencies:
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.18.0)
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
-      '@stoplight/spectral-formats': 1.8.2(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-formats': 1.8.2
+      '@stoplight/spectral-runtime': 1.1.2
       ajv: 8.18.0
       ajv-draft-04: 1.0.0(ajv@8.18.0)
       ajv-errors: 3.0.0(ajv@8.18.0)
@@ -42895,13 +42947,13 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-functions@1.7.2(encoding@0.1.13)':
+  '@stoplight/spectral-functions@1.7.2':
     dependencies:
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.18.0)
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
-      '@stoplight/spectral-formats': 1.8.2(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-formats': 1.8.2
+      '@stoplight/spectral-runtime': 1.1.2
       ajv: 8.18.0
       ajv-draft-04: 1.0.0(ajv@8.18.0)
       ajv-errors: 3.0.0(ajv@8.18.0)
@@ -42918,28 +42970,28 @@ snapshots:
       '@stoplight/yaml': 4.3.0
       tslib: 2.8.1
 
-  '@stoplight/spectral-ref-resolver@1.0.4(encoding@0.1.13)':
+  '@stoplight/spectral-ref-resolver@1.0.4':
     dependencies:
-      '@stoplight/json-ref-readers': 1.2.2(encoding@0.1.13)
+      '@stoplight/json-ref-readers': 1.2.2
       '@stoplight/json-ref-resolver': 3.1.6
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-runtime': 1.1.2
       dependency-graph: 0.11.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-ruleset-bundler@1.6.3(encoding@0.1.13)':
+  '@stoplight/spectral-ruleset-bundler@1.6.3':
     dependencies:
       '@rollup/plugin-commonjs': 22.0.2(rollup@2.80.0)
       '@stoplight/path': 1.3.2
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
-      '@stoplight/spectral-formats': 1.8.2(encoding@0.1.13)
-      '@stoplight/spectral-functions': 1.7.2(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-formats': 1.8.2
+      '@stoplight/spectral-functions': 1.7.2
       '@stoplight/spectral-parsers': 1.0.5
-      '@stoplight/spectral-ref-resolver': 1.0.4(encoding@0.1.13)
-      '@stoplight/spectral-ruleset-migrator': 1.11.2(encoding@0.1.13)
-      '@stoplight/spectral-rulesets': 1.18.1(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-ref-resolver': 1.0.4
+      '@stoplight/spectral-ruleset-migrator': 1.11.2
+      '@stoplight/spectral-rulesets': 1.18.1
+      '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.20.0
       '@types/node': 22.15.13
       pony-cause: 1.1.1
@@ -42949,13 +43001,13 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-ruleset-migrator@1.11.2(encoding@0.1.13)':
+  '@stoplight/spectral-ruleset-migrator@1.11.2':
     dependencies:
       '@stoplight/json': 3.21.0
       '@stoplight/ordered-object-literal': 1.0.5
       '@stoplight/path': 1.3.2
-      '@stoplight/spectral-functions': 1.10.1(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-functions': 1.10.1
+      '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.20.0
       '@stoplight/yaml': 4.2.3
       '@types/node': 22.15.13
@@ -42968,15 +43020,15 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-rulesets@1.18.1(encoding@0.1.13)':
+  '@stoplight/spectral-rulesets@1.18.1':
     dependencies:
       '@asyncapi/specs': 4.3.1
       '@stoplight/better-ajv-errors': 1.0.3(ajv@8.18.0)
       '@stoplight/json': 3.21.0
-      '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
-      '@stoplight/spectral-formats': 1.6.0(encoding@0.1.13)
-      '@stoplight/spectral-functions': 1.7.2(encoding@0.1.13)
-      '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
+      '@stoplight/spectral-core': 1.20.0
+      '@stoplight/spectral-formats': 1.6.0
+      '@stoplight/spectral-functions': 1.7.2
+      '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.20.0
       '@types/json-schema': 7.0.15
       ajv: 8.18.0
@@ -42987,14 +43039,14 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@stoplight/spectral-runtime@1.1.2(encoding@0.1.13)':
+  '@stoplight/spectral-runtime@1.1.2':
     dependencies:
       '@stoplight/json': 3.21.0
       '@stoplight/path': 1.3.2
       '@stoplight/types': 12.5.0
       abort-controller: 3.0.0
       lodash: 4.18.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
@@ -44279,6 +44331,11 @@ snapshots:
 
   '@types/luxon@3.7.1': {}
 
+  '@types/mailparser@3.4.6':
+    dependencies:
+      '@types/node': 22.15.13
+      iconv-lite: 0.6.3
+
   '@types/markdown-escape@1.1.3': {}
 
   '@types/markdown-it@14.1.2':
@@ -44908,7 +44965,7 @@ snapshots:
 
   '@vercel/error-utils@1.0.10': {}
 
-  '@vercel/node@2.15.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(encoding@0.1.13)':
+  '@vercel/node@2.15.10(@swc/core@1.7.26(@swc/helpers@0.5.15))':
     dependencies:
       '@edge-runtime/node-utils': 2.0.3
       '@edge-runtime/primitives': 2.1.2
@@ -44923,7 +44980,7 @@ snapshots:
       edge-runtime: 2.4.4
       esbuild: 0.28.1
       exit-hook: 2.2.1
-      node-fetch: 2.6.9(encoding@0.1.13)
+      node-fetch: 2.6.9
       path-to-regexp: 6.3.0
       ts-morph: 12.0.0
       ts-node: 10.9.1(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@14.18.33)(typescript@4.9.5)
@@ -45215,18 +45272,18 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@vonage/accounts@1.9.0(encoding@0.1.13)':
+  '@vonage/accounts@1.9.0':
     dependencies:
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/applications@1.9.0(encoding@0.1.13)':
+  '@vonage/applications@1.9.0':
     dependencies:
       '@vonage/auth': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -45246,55 +45303,55 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vonage/messages@1.10.0(encoding@0.1.13)':
+  '@vonage/messages@1.10.0':
     dependencies:
       '@vonage/auth': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
       debug: 4.4.3
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/number-insights@1.9.0(encoding@0.1.13)':
+  '@vonage/number-insights@1.9.0':
     dependencies:
       '@vonage/auth': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/numbers@1.9.0(encoding@0.1.13)':
+  '@vonage/numbers@1.9.0':
     dependencies:
       '@vonage/auth': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
       lodash.omit: 4.5.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/pricing@1.9.0(encoding@0.1.13)':
+  '@vonage/pricing@1.9.0':
     dependencies:
       '@vonage/auth': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/redact@1.8.0(encoding@0.1.13)':
+  '@vonage/redact@1.8.0':
     dependencies:
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/server-client@1.9.0(encoding@0.1.13)':
+  '@vonage/server-client@1.9.0':
     dependencies:
       '@vonage/auth': 1.7.0
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/vetch': 1.6.0
       debug: 4.4.3
       lodash.camelcase: 4.3.0
       lodash.isobject: 3.0.2
@@ -45305,84 +45362,84 @@ snapshots:
       - encoding
       - supports-color
 
-  '@vonage/server-sdk@3.11.0(encoding@0.1.13)':
+  '@vonage/server-sdk@3.11.0':
     dependencies:
-      '@vonage/accounts': 1.9.0(encoding@0.1.13)
-      '@vonage/applications': 1.9.0(encoding@0.1.13)
+      '@vonage/accounts': 1.9.0
+      '@vonage/applications': 1.9.0
       '@vonage/auth': 1.7.0
-      '@vonage/messages': 1.10.0(encoding@0.1.13)
-      '@vonage/number-insights': 1.9.0(encoding@0.1.13)
-      '@vonage/numbers': 1.9.0(encoding@0.1.13)
-      '@vonage/pricing': 1.9.0(encoding@0.1.13)
-      '@vonage/redact': 1.8.0(encoding@0.1.13)
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/sms': 1.10.0(encoding@0.1.13)
-      '@vonage/users': 1.3.0(encoding@0.1.13)
-      '@vonage/verify': 1.9.0(encoding@0.1.13)
-      '@vonage/verify2': 1.8.0(encoding@0.1.13)
-      '@vonage/video': 1.13.0(encoding@0.1.13)
-      '@vonage/voice': 1.9.0(encoding@0.1.13)
+      '@vonage/messages': 1.10.0
+      '@vonage/number-insights': 1.9.0
+      '@vonage/numbers': 1.9.0
+      '@vonage/pricing': 1.9.0
+      '@vonage/redact': 1.8.0
+      '@vonage/server-client': 1.9.0
+      '@vonage/sms': 1.10.0
+      '@vonage/users': 1.3.0
+      '@vonage/verify': 1.9.0
+      '@vonage/verify2': 1.8.0
+      '@vonage/video': 1.13.0
+      '@vonage/voice': 1.9.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/sms@1.10.0(encoding@0.1.13)':
+  '@vonage/sms@1.10.0':
     dependencies:
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
       debug: 4.4.3
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/users@1.3.0(encoding@0.1.13)':
+  '@vonage/users@1.3.0':
     dependencies:
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/verify2@1.8.0(encoding@0.1.13)':
+  '@vonage/verify2@1.8.0':
     dependencies:
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/verify@1.9.0(encoding@0.1.13)':
+  '@vonage/verify@1.9.0':
     dependencies:
       '@vonage/auth': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
       lodash.omit: 4.5.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/vetch@1.6.0(encoding@0.1.13)':
+  '@vonage/vetch@1.6.0':
     dependencies:
       debug: 4.4.3
       lodash.merge: 4.6.2
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/video@1.13.0(encoding@0.1.13)':
+  '@vonage/video@1.13.0':
     dependencies:
       '@vonage/auth': 1.7.0
       '@vonage/jwt': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vonage/voice@1.9.0(encoding@0.1.13)':
+  '@vonage/voice@1.9.0':
     dependencies:
       '@types/debug': 4.1.12
       '@vonage/auth': 1.7.0
-      '@vonage/server-client': 1.9.0(encoding@0.1.13)
-      '@vonage/vetch': 1.6.0(encoding@0.1.13)
+      '@vonage/server-client': 1.9.0
+      '@vonage/vetch': 1.6.0
       debug: 4.4.3
       ts-xor: 1.3.0
     transitivePeerDependencies:
@@ -45620,6 +45677,12 @@ snapshots:
     dependencies:
       isexe: 2.0.0
 
+  '@zone-eu/mailsplit@5.4.15':
+    dependencies:
+      libbase64: 1.3.0
+      libmime: 5.4.2
+      libqp: 2.1.1
+
   JSONStream@1.3.5:
     dependencies:
       jsonparse: 1.3.1
@@ -45682,8 +45745,6 @@ snapshots:
   acorn@8.16.0: {}
 
   address@1.2.2: {}
-
-  addressparser@1.0.1: {}
 
   africastalking@0.7.9:
     dependencies:
@@ -46204,12 +46265,12 @@ snapshots:
 
   auto-bind@5.0.1: {}
 
-  auto@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2):
+  auto@10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2):
     dependencies:
-      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
-      '@auto-it/npm': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
-      '@auto-it/released': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
-      '@auto-it/version-file': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(encoding@0.1.13)(typescript@5.6.2)
+      '@auto-it/core': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
+      '@auto-it/npm': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
+      '@auto-it/released': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
+      '@auto-it/version-file': 10.44.0(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
       await-to-js: 3.0.0
       chalk: 4.1.2
       command-line-application: 0.10.1
@@ -46553,9 +46614,9 @@ snapshots:
     dependencies:
       tweetnacl: 0.14.5
 
-  bcrypt@5.0.1(encoding@0.1.13):
+  bcrypt@5.0.1:
     dependencies:
-      '@mapbox/node-pre-gyp': 1.0.10(encoding@0.1.13)
+      '@mapbox/node-pre-gyp': 1.0.10
       node-addon-api: 3.2.1
     transitivePeerDependencies:
       - encoding
@@ -46574,13 +46635,13 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  better-auth@1.6.23(673a37e042976b407a6d506163fd3e0f):
+  better-auth@1.6.23(0db8222eef274de62e29e0525a8f6356):
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/drizzle-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
       '@better-auth/kysely-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(kysely@0.28.17)
       '@better-auth/memory-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
-      '@better-auth/mongo-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))
+      '@better-auth/mongo-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7))
       '@better-auth/prisma-adapter': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)
       '@better-auth/telemetry': 1.6.23(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.3.5))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)
       '@better-auth/utils': 0.4.2
@@ -46595,7 +46656,7 @@ snapshots:
       zod: 4.3.6
     optionalDependencies:
       '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.9.0))
-      mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+      mongodb: 6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
       next: 16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
@@ -46732,10 +46793,10 @@ snapshots:
     dependencies:
       fill-range: 7.1.1
 
-  braze-api@2.5.6(encoding@0.1.13):
+  braze-api@2.5.6:
     dependencies:
       '@types/node-fetch': 2.6.6
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
@@ -47370,12 +47431,12 @@ snapshots:
 
   code-point-at@1.1.0: {}
 
-  codecov@3.8.3(encoding@0.1.13):
+  codecov@3.8.3:
     dependencies:
       argv: 0.0.2
       ignore-walk: 3.0.4
       js-yaml: 3.15.1
-      teeny-request: 7.1.1(encoding@0.1.13)
+      teeny-request: 7.1.1
       urlgrey: 1.0.0
     transitivePeerDependencies:
       - encoding
@@ -47744,15 +47805,15 @@ snapshots:
     dependencies:
       cross-spawn: 7.0.5
 
-  cross-fetch@3.1.5(encoding@0.1.13):
+  cross-fetch@3.1.5:
     dependencies:
-      node-fetch: 2.6.7(encoding@0.1.13)
+      node-fetch: 2.6.7
     transitivePeerDependencies:
       - encoding
 
-  cross-fetch@4.0.0(encoding@0.1.13):
+  cross-fetch@4.0.0:
     dependencies:
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
@@ -48263,6 +48324,8 @@ snapshots:
 
   deep-object-diff@1.1.9: {}
 
+  deepmerge-ts@8.0.2: {}
+
   deepmerge@4.3.1: {}
 
   default-browser-id@5.0.1: {}
@@ -48670,14 +48733,12 @@ snapshots:
 
   encodeurl@2.0.0: {}
 
+  encoding-japanese@2.2.0: {}
+
   encoding-sniffer@0.2.0:
     dependencies:
       iconv-lite: 0.6.3
       whatwg-encoding: 3.1.1
-
-  encoding@0.1.13:
-    dependencies:
-      iconv-lite: 0.6.3
 
   end-of-stream@1.4.4:
     dependencies:
@@ -49194,9 +49255,9 @@ snapshots:
       jest-mock: 30.0.5
       jest-util: 30.0.5
 
-  expo-server-sdk@3.7.0(encoding@0.1.13):
+  expo-server-sdk@3.7.0:
     dependencies:
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       promise-limit: 2.7.0
       promise-retry: 2.0.1
     transitivePeerDependencies:
@@ -49619,21 +49680,21 @@ snapshots:
     dependencies:
       semver-regex: 4.0.5
 
-  firebase-admin@13.3.0(encoding@0.1.13):
+  firebase-admin@13.3.0:
     dependencies:
       '@fastify/busboy': 3.1.1
       '@firebase/database-compat': 2.0.5
       '@firebase/database-types': 1.0.10
       '@types/node': 22.15.13
       farmhash-modern: 1.1.0
-      google-auth-library: 9.15.1(encoding@0.1.13)
+      google-auth-library: 9.15.1
       jsonwebtoken: 9.0.3
       jwks-rsa: 3.1.0
       node-forge: 1.4.0
       uuid: 11.1.1
     optionalDependencies:
-      '@google-cloud/firestore': 7.11.0(encoding@0.1.13)
-      '@google-cloud/storage': 7.16.0(encoding@0.1.13)
+      '@google-cloud/firestore': 7.11.0
+      '@google-cloud/storage': 7.16.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -49866,33 +49927,33 @@ snapshots:
       strip-ansi: 6.0.1
       wide-align: 1.1.5
 
-  gaxios@4.3.3(encoding@0.1.13):
+  gaxios@4.3.3:
     dependencies:
       abort-controller: 3.0.0
       extend: 3.0.2
       https-proxy-agent: 5.0.1
       is-stream: 2.0.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  gaxios@5.1.3(encoding@0.1.13):
+  gaxios@5.1.3:
     dependencies:
       extend: 3.0.2
       https-proxy-agent: 5.0.1
       is-stream: 2.0.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  gaxios@6.1.1(encoding@0.1.13):
+  gaxios@6.1.1:
     dependencies:
       extend: 3.0.2
       https-proxy-agent: 7.0.6
       is-stream: 2.0.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -49906,25 +49967,25 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  gcp-metadata@4.3.1(encoding@0.1.13):
+  gcp-metadata@4.3.1:
     dependencies:
-      gaxios: 4.3.3(encoding@0.1.13)
+      gaxios: 4.3.3
       json-bigint: 1.0.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  gcp-metadata@5.3.0(encoding@0.1.13):
+  gcp-metadata@5.3.0:
     dependencies:
-      gaxios: 5.1.3(encoding@0.1.13)
+      gaxios: 5.1.3
       json-bigint: 1.0.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  gcp-metadata@6.1.0(encoding@0.1.13):
+  gcp-metadata@6.1.0:
     dependencies:
-      gaxios: 6.1.1(encoding@0.1.13)
+      gaxios: 6.1.1
       json-bigint: 1.0.0
     transitivePeerDependencies:
       - encoding
@@ -50185,61 +50246,61 @@ snapshots:
     dependencies:
       minimist: 1.2.6
 
-  google-auth-library@6.1.6(encoding@0.1.13):
+  google-auth-library@6.1.6:
     dependencies:
       arrify: 2.0.1
       base64-js: 1.5.1
       ecdsa-sig-formatter: 1.0.11
       fast-text-encoding: 1.0.6
-      gaxios: 4.3.3(encoding@0.1.13)
-      gcp-metadata: 4.3.1(encoding@0.1.13)
-      gtoken: 5.3.2(encoding@0.1.13)
+      gaxios: 4.3.3
+      gcp-metadata: 4.3.1
+      gtoken: 5.3.2
       jws: 4.0.1
       lru-cache: 6.0.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  google-auth-library@8.9.0(encoding@0.1.13):
+  google-auth-library@8.9.0:
     dependencies:
       arrify: 2.0.1
       base64-js: 1.5.1
       ecdsa-sig-formatter: 1.0.11
       fast-text-encoding: 1.0.6
-      gaxios: 5.1.3(encoding@0.1.13)
-      gcp-metadata: 5.3.0(encoding@0.1.13)
-      gtoken: 6.1.2(encoding@0.1.13)
+      gaxios: 5.1.3
+      gcp-metadata: 5.3.0
+      gtoken: 6.1.2
       jws: 4.0.1
       lru-cache: 6.0.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  google-auth-library@9.15.1(encoding@0.1.13):
+  google-auth-library@9.15.1:
     dependencies:
       base64-js: 1.5.1
       ecdsa-sig-formatter: 1.0.11
-      gaxios: 6.1.1(encoding@0.1.13)
-      gcp-metadata: 6.1.0(encoding@0.1.13)
-      gtoken: 7.1.0(encoding@0.1.13)
+      gaxios: 6.1.1
+      gcp-metadata: 6.1.0
+      gtoken: 7.1.0
       jws: 4.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  google-gax@4.6.0(encoding@0.1.13):
+  google-gax@4.6.0:
     dependencies:
       '@grpc/grpc-js': 1.14.4
       '@grpc/proto-loader': 0.7.13
       '@types/long': 4.0.2
       abort-controller: 3.0.0
       duplexify: 4.1.2
-      google-auth-library: 9.15.1(encoding@0.1.13)
-      node-fetch: 2.7.0(encoding@0.1.13)
+      google-auth-library: 9.15.1
+      node-fetch: 2.7.0
       object-hash: 3.0.0
       proto3-json-serializer: 2.0.2
       protobufjs: 7.6.5
-      retry-request: 7.0.2(encoding@0.1.13)
+      retry-request: 7.0.2
       uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
@@ -50258,11 +50319,11 @@ snapshots:
     dependencies:
       node-forge: 1.4.0
 
-  googleapis-common@4.4.3(encoding@0.1.13):
+  googleapis-common@4.4.3:
     dependencies:
       extend: 3.0.2
-      gaxios: 4.3.3(encoding@0.1.13)
-      google-auth-library: 6.1.6(encoding@0.1.13)
+      gaxios: 4.3.3
+      google-auth-library: 6.1.6
       qs: 6.15.2
       url-template: 2.0.8
       uuid: 11.1.1
@@ -50270,10 +50331,10 @@ snapshots:
       - encoding
       - supports-color
 
-  googleapis@60.0.1(encoding@0.1.13):
+  googleapis@60.0.1:
     dependencies:
-      google-auth-library: 6.1.6(encoding@0.1.13)
-      googleapis-common: 4.4.3(encoding@0.1.13)
+      google-auth-library: 6.1.6
+      googleapis-common: 4.4.3
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -50324,27 +50385,27 @@ snapshots:
 
   growl@1.10.5: {}
 
-  gtoken@5.3.2(encoding@0.1.13):
+  gtoken@5.3.2:
     dependencies:
-      gaxios: 4.3.3(encoding@0.1.13)
+      gaxios: 4.3.3
       google-p12-pem: 3.1.4
       jws: 4.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  gtoken@6.1.2(encoding@0.1.13):
+  gtoken@6.1.2:
     dependencies:
-      gaxios: 5.1.3(encoding@0.1.13)
+      gaxios: 5.1.3
       google-p12-pem: 4.0.1
       jws: 4.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  gtoken@7.1.0(encoding@0.1.13):
+  gtoken@7.1.0:
     dependencies:
-      gaxios: 6.1.1(encoding@0.1.13)
+      gaxios: 6.1.1
       jws: 4.0.1
     transitivePeerDependencies:
       - encoding
@@ -50632,6 +50693,14 @@ snapshots:
 
   html-styles@1.0.0: {}
 
+  html-to-text@10.0.0:
+    dependencies:
+      '@selderee/plugin-htmlparser2': 0.12.0(selderee@0.12.0)
+      deepmerge-ts: 8.0.2
+      dom-serializer: 2.0.0
+      htmlparser2: 10.1.0
+      selderee: 0.12.0
+
   html-to-text@9.0.5:
     dependencies:
       '@selderee/plugin-htmlparser2': 0.11.0
@@ -50842,6 +50911,10 @@ snapshots:
       safer-buffer: 2.1.2
 
   iconv-lite@0.7.2:
+    dependencies:
+      safer-buffer: 2.1.2
+
+  iconv-lite@0.7.3:
     dependencies:
       safer-buffer: 2.1.2
 
@@ -52847,14 +52920,14 @@ snapshots:
       - ws
       - zod-to-json-schema
 
-  langsmith@0.6.3(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(encoding@0.1.13)(zod@4.3.5))(ws@8.21.0):
+  langsmith@0.6.3(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@4.78.1(zod@4.3.5))(ws@8.21.0):
     dependencies:
       p-queue: 6.6.2
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/exporter-trace-otlp-proto': 0.217.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.8.0(@opentelemetry/api@1.9.1)
-      openai: 4.78.1(encoding@0.1.13)(zod@4.3.5)
+      openai: 4.78.1(zod@4.3.5)
       ws: 8.21.0
 
   langsmith@0.6.3(@opentelemetry/api@1.9.1)(@opentelemetry/exporter-trace-otlp-proto@0.217.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(openai@6.17.0(ws@8.21.0)(zod@3.25.20))(ws@8.21.0):
@@ -52910,6 +52983,8 @@ snapshots:
 
   leac@0.6.0: {}
 
+  leac@0.7.0: {}
+
   leven@3.1.0: {}
 
   levn@0.4.1:
@@ -52921,7 +52996,18 @@ snapshots:
     dependencies:
       isomorphic.js: 0.2.5
 
+  libbase64@1.3.0: {}
+
+  libmime@5.4.2:
+    dependencies:
+      encoding-japanese: 2.2.0
+      iconv-lite: 0.7.3
+      libbase64: 1.3.0
+      libqp: 2.1.1
+
   libphonenumber-js@1.11.19: {}
+
+  libqp@2.1.1: {}
 
   lightningcss-android-arm64@1.30.2:
     optional: true
@@ -53440,9 +53526,9 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  mailersend@2.6.0(encoding@0.1.13):
+  mailersend@2.6.0:
     dependencies:
-      gaxios: 6.1.1(encoding@0.1.13)
+      gaxios: 6.1.1
       isomorphic-unfetch: 4.0.2
       qs: 6.15.2
     transitivePeerDependencies:
@@ -53458,12 +53544,18 @@ snapshots:
       - debug
       - supports-color
 
-  mailparser@0.6.2:
+  mailparser@3.9.15:
     dependencies:
-      encoding: 0.1.13
-      mime: 1.6.0
-      mimelib: 0.3.1
-      uue: 3.1.2
+      '@zone-eu/mailsplit': 5.4.15
+      encoding-japanese: 2.2.0
+      he: 1.2.0
+      html-to-text: 10.0.0
+      iconv-lite: 0.7.3
+      libmime: 5.4.2
+      linkify-it: 5.0.2
+      nodemailer: 9.0.5
+      punycode.js: 2.3.1
+      tlds: 1.261.0
 
   mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@9.0.1):
     dependencies:
@@ -54109,11 +54201,6 @@ snapshots:
 
   mime@3.0.0: {}
 
-  mimelib@0.3.1:
-    dependencies:
-      addressparser: 1.0.1
-      encoding: 0.1.13
-
   mimetext@3.0.28:
     dependencies:
       '@babel/runtime': 7.28.3
@@ -54325,45 +54412,45 @@ snapshots:
       '@types/whatwg-url': 11.0.5
       whatwg-url: 13.0.0
 
-  mongodb@6.20.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7):
+  mongodb@6.20.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7):
     dependencies:
       '@mongodb-js/saslprep': 1.4.4
       bson: 6.10.4
       mongodb-connection-string-url: 3.0.2
     optionalDependencies:
       '@aws-sdk/credential-providers': 3.1052.0
-      gcp-metadata: 5.3.0(encoding@0.1.13)
+      gcp-metadata: 5.3.0
       socks: 2.8.7
 
-  mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7):
+  mongodb@6.21.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7):
     dependencies:
       '@mongodb-js/saslprep': 1.4.4
       bson: 6.10.4
       mongodb-connection-string-url: 3.0.2
     optionalDependencies:
       '@aws-sdk/credential-providers': 3.1052.0
-      gcp-metadata: 5.3.0(encoding@0.1.13)
+      gcp-metadata: 5.3.0
       socks: 2.8.7
 
-  mongodb@6.8.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7):
+  mongodb@6.8.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7):
     dependencies:
       '@mongodb-js/saslprep': 1.1.8
       bson: 6.10.4
       mongodb-connection-string-url: 3.0.1
     optionalDependencies:
       '@aws-sdk/credential-providers': 3.1052.0
-      gcp-metadata: 5.3.0(encoding@0.1.13)
+      gcp-metadata: 5.3.0
       socks: 2.8.7
 
-  mongoose-delete@1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)):
+  mongoose-delete@1.0.7(mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)):
     dependencies:
-      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+      mongoose: 8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
 
-  mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7):
+  mongoose@8.24.1(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7):
     dependencies:
       bson: 6.10.4
       kareem: 2.6.3
-      mongodb: 6.20.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
+      mongodb: 6.20.0(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.7)
       mpath: 0.9.0
       mquery: 5.0.0
       ms: 2.1.3
@@ -54748,23 +54835,17 @@ snapshots:
       emojilib: 2.4.0
       skin-tone: 2.0.0
 
-  node-fetch@2.6.7(encoding@0.1.13):
+  node-fetch@2.6.7:
     dependencies:
       whatwg-url: 5.0.0
-    optionalDependencies:
-      encoding: 0.1.13
 
-  node-fetch@2.6.9(encoding@0.1.13):
+  node-fetch@2.6.9:
     dependencies:
       whatwg-url: 5.0.0
-    optionalDependencies:
-      encoding: 0.1.13
 
-  node-fetch@2.7.0(encoding@0.1.13):
+  node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
-    optionalDependencies:
-      encoding: 0.1.13
 
   node-fetch@3.3.2:
     dependencies:
@@ -54823,6 +54904,8 @@ snapshots:
       '@babel/parser': 7.29.0
 
   nodemailer@9.0.1: {}
+
+  nodemailer@9.0.5: {}
 
   nodemon@3.0.1:
     dependencies:
@@ -55183,7 +55266,7 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@4.78.1(encoding@0.1.13)(zod@4.3.5):
+  openai@4.78.1(zod@4.3.5):
     dependencies:
       '@types/node': 18.16.9
       '@types/node-fetch': 2.6.6
@@ -55191,7 +55274,7 @@ snapshots:
       agentkeepalive: 4.6.0
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
     optionalDependencies:
       zod: 4.3.5
     transitivePeerDependencies:
@@ -55474,6 +55557,11 @@ snapshots:
       leac: 0.6.0
       peberminta: 0.9.0
 
+  parseley@0.13.1:
+    dependencies:
+      leac: 0.7.0
+      peberminta: 0.10.0
+
   parseurl@1.3.3: {}
 
   partyserver@0.5.10(@cloudflare/workers-types@4.20260702.1):
@@ -55612,6 +55700,8 @@ snapshots:
       through: 2.3.8
 
   pause@0.0.1: {}
+
+  peberminta@0.10.0: {}
 
   peberminta@0.9.0: {}
 
@@ -57409,11 +57499,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  retry-request@7.0.2(encoding@0.1.13):
+  retry-request@7.0.2:
     dependencies:
       '@types/request': 2.48.8
       extend: 3.0.2
-      teeny-request: 9.0.0(encoding@0.1.13)
+      teeny-request: 9.0.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -57683,6 +57773,10 @@ snapshots:
   selderee@0.11.0:
     dependencies:
       parseley: 0.12.1
+
+  selderee@0.12.0:
+    dependencies:
+      parseley: 0.13.1
 
   semifies@1.0.0: {}
 
@@ -58974,33 +59068,33 @@ snapshots:
       minizlib: 3.1.0
       yallist: 5.0.0
 
-  teeny-request@7.1.1(encoding@0.1.13):
+  teeny-request@7.1.1:
     dependencies:
       http-proxy-agent: 4.0.1
       https-proxy-agent: 5.0.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       stream-events: 1.0.5
       uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  teeny-request@8.0.3(encoding@0.1.13):
+  teeny-request@8.0.3:
     dependencies:
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       stream-events: 1.0.5
       uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  teeny-request@9.0.0(encoding@0.1.13):
+  teeny-request@9.0.0:
     dependencies:
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.7.0
       stream-events: 1.0.5
       uuid: 11.1.1
     transitivePeerDependencies:
@@ -59176,6 +59270,8 @@ snapshots:
     dependencies:
       no-case: 2.3.2
       upper-case: 1.1.3
+
+  tlds@1.261.0: {}
 
   tldts-core@6.1.86: {}
 
@@ -60091,11 +60187,6 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
-  uue@3.1.2:
-    dependencies:
-      escape-string-regexp: 1.0.5
-      extend: 3.0.2
-
   uuid@11.1.1: {}
 
   uuid@13.0.2: {}
@@ -60155,13 +60246,13 @@ snapshots:
 
   vary@1.1.2: {}
 
-  verdaccio-audit@12.0.0-next-7.15(encoding@0.1.13):
+  verdaccio-audit@12.0.0-next-7.15:
     dependencies:
       '@verdaccio/config': 7.0.0-next-7.15
       '@verdaccio/core': 7.0.0-next-7.15
       express: 4.21.2
       https-proxy-agent: 5.0.1
-      node-fetch: 2.6.7(encoding@0.1.13)
+      node-fetch: 2.6.7
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -60179,7 +60270,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  verdaccio@5.31.0(encoding@0.1.13)(typanion@3.14.0):
+  verdaccio@5.31.0(typanion@3.14.0):
     dependencies:
       '@cypress/request': 3.0.1
       '@verdaccio/auth': 7.0.0-next-7.15
@@ -60217,7 +60308,7 @@ snapshots:
       pkginfo: 0.4.1
       semver: 7.6.2
       validator: 13.15.26
-      verdaccio-audit: 12.0.0-next-7.15(encoding@0.1.13)
+      verdaccio-audit: 12.0.0-next-7.15
       verdaccio-htpasswd: 12.0.0-next-7.15
     transitivePeerDependencies:
       - encoding
