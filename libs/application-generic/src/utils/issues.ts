@@ -107,7 +107,10 @@ function usesDraft2020Schema(schema: AnySchema): boolean {
 export const createSchemaValidationAjv = ({
   verbose = false,
   schema,
-}: { verbose?: boolean; schema?: AnySchema } = {}): Ajv => {
+}: {
+  verbose?: boolean;
+  schema?: AnySchema;
+} = {}): Ajv => {
   const ajv =
     schema && usesDraft2020Schema(schema)
       ? new Ajv2020({ allErrors: true, strict: false, verbose })

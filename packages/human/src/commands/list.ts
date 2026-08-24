@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { listInteractions, type InteractionStatus } from '../api/human';
+import { type InteractionStatus, listInteractions } from '../api/human';
 import { clientFromConfig, handleError } from './interact';
 
 export async function listCommand(options: {

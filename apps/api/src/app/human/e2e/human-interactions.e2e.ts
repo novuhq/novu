@@ -9,8 +9,8 @@ import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, HumanInteractionSt
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
 import type { ResolvedAgentConfig } from '../../agents/channels/agent-config-resolver.service';
+import { AgentConfigResolver } from '../../agents/channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../../agents/conversation-runtime/ingress/chat-instance.registry';
 import { AgentInboundHandler } from '../../agents/conversation-runtime/ingress/inbound-turn.handler';
 import { startTelegramApiStub, type TelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
@@ -169,7 +169,11 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
 
   describe('approve', () => {
     it('delivers a card, resolves on approve click, and edits the delivered message', async () => {
-      const createRes = await createInteraction({ kind: 'approve', prompt: 'Deploy to production?', from: 'deploy-bot' });
+      const createRes = await createInteraction({
+        kind: 'approve',
+        prompt: 'Deploy to production?',
+        from: 'deploy-bot',
+      });
       expect(createRes.status).to.equal(201, JSON.stringify(createRes.body));
 
       const interaction = createRes.body.data;
@@ -280,7 +284,9 @@ describe('Human interactions (create → deliver → resolve) #novu-v2', () => {
       // so check the words rather than the literal "Blue-green" substring.
       expect(sentPayload).to.include('Blue');
       expect(sentPayload).to.include('green');
-      const markup = sends[sends.length - 1].payload.reply_markup as { inline_keyboard: Array<Array<{ text: string }>> };
+      const markup = sends[sends.length - 1].payload.reply_markup as {
+        inline_keyboard: Array<Array<{ text: string }>>;
+      };
       expect(markup.inline_keyboard[0].map((btn) => btn.text)).to.deep.equal(['A', 'B']);
 
       await clickAction(`human:${interaction.id}:opt:${interaction.options[1].id}`);

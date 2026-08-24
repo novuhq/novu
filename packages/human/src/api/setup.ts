@@ -123,7 +123,8 @@ export async function getTelegramMobileLinkStatus(
   token: string
 ): Promise<{ valid: boolean; reason?: 'expired' | 'used' | 'invalid' }> {
   const res = await client.axios.get<
-    { data?: { valid: boolean; reason?: 'expired' | 'used' | 'invalid' } } | { valid: boolean; reason?: 'expired' | 'used' | 'invalid' }
+    | { data?: { valid: boolean; reason?: 'expired' | 'used' | 'invalid' } }
+    | { valid: boolean; reason?: 'expired' | 'used' | 'invalid' }
   >('/v1/integrations/mobile-configure/status', { params: { token } });
 
   return unwrap(res.data);
@@ -134,11 +135,12 @@ export async function consumeTelegramMobileLink(
   input: { token: string; botToken: string }
 ): Promise<{ success: true; botUsername: string; deepLinkUrl?: string }> {
   const res = await client.axios.post<
-    { data?: { success: true; botUsername: string; deepLinkUrl?: string } } | {
-      success: true;
-      botUsername: string;
-      deepLinkUrl?: string;
-    }
+    | { data?: { success: true; botUsername: string; deepLinkUrl?: string } }
+    | {
+        success: true;
+        botUsername: string;
+        deepLinkUrl?: string;
+      }
   >('/v1/integrations/mobile-configure', input);
 
   return unwrap(res.data);
@@ -150,10 +152,11 @@ export async function issueTelegramSubscriberLink(
   subscriberId: string
 ): Promise<{ deepLinkUrl: string; botUsername: string }> {
   const res = await client.axios.post<
-    { data?: { url: string; providerMetadata?: { botUsername?: string } } } | {
-      url: string;
-      providerMetadata?: { botUsername?: string };
-    }
+    | { data?: { url: string; providerMetadata?: { botUsername?: string } } }
+    | {
+        url: string;
+        providerMetadata?: { botUsername?: string };
+      }
   >('/v1/integrations/channel-endpoints/link', { integrationIdentifier, subscriberId });
   const payload = unwrap(res.data);
 
@@ -232,10 +235,11 @@ export async function getSlackSetupLinkStatus(
   token: string
 ): Promise<{ valid: boolean; reason?: 'expired' | 'used' | 'invalid' }> {
   const res = await client.axios.get<
-    { data?: { valid: boolean; reason?: 'expired' | 'used' | 'invalid' } } | {
-      valid: boolean;
-      reason?: 'expired' | 'used' | 'invalid';
-    }
+    | { data?: { valid: boolean; reason?: 'expired' | 'used' | 'invalid' } }
+    | {
+        valid: boolean;
+        reason?: 'expired' | 'used' | 'invalid';
+      }
   >('/v1/agents/public/slack/setup/status', { params: { token } });
 
   return unwrap(res.data);
