@@ -327,7 +327,7 @@ export class ConversationActivityLedger {
     );
 
     const activity = await this.activityRepository.createToolActivity({
-      identifier: `act_${shortId(12)}`,
+      identifier: params.identifier ?? `act_${shortId(12)}`,
       conversationId: params.conversationId,
       platform: params.channel.platform,
       integrationId: params.channel._integrationId,
@@ -536,6 +536,19 @@ export class ConversationActivityLedger {
     );
   }
 
+  async findActivityByIdentifier(
+    environmentId: string,
+    identifier: string
+  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformThreadId'> | null> {
+    return this.activityRepository.findOne(
+      {
+        _environmentId: environmentId,
+        identifier,
+      },
+      ['_id', 'platformThreadId']
+    );
+  }
+
   async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
@@ -550,6 +563,17 @@ export class ConversationActivityLedger {
     await this.persistSignal({
       ...params,
       signalData: { type: 'tool-use', payload: params.payload },
+    });
+  }
+
+  async persistInboundActionAccept(
+    params: ConversationActivityContext & { identifier: string; actionId: string }
+  ): Promise<void> {
+    await this.persistSignal({
+      ...params,
+      identifier: params.identifier,
+      content: `Action: ${params.actionId}`,
+      signalData: { type: 'inbound-action', payload: { actionId: params.actionId } },
     });
   }
 

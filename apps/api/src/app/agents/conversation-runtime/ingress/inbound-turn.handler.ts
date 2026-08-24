@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import type { AgentChatRawMessage } from '@novu/chat-adapter-agent-chat';
+import { type AgentChatRawMessage, isValidActionIdempotencyKey } from '@novu/chat-adapter-agent-chat';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -1247,7 +1247,9 @@ export class AgentInboundHandler implements OnModuleInit {
       participantType === ConversationParticipantTypeEnum.SUBSCRIBER
         ? ConversationActivitySenderTypeEnum.SUBSCRIBER
         : ConversationActivitySenderTypeEnum.PLATFORM_USER;
-    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
+    const identifier = this.readActionIdempotencyKey(rawEvent);
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId, identifier);
+    await this.recordNonApprovalActionAccept(conversation, config, action, identifier);
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
@@ -1302,12 +1304,58 @@ export class AgentInboundHandler implements OnModuleInit {
     return null;
   }
 
+  private readActionIdempotencyKey(rawEvent: unknown): string | undefined {
+    if (!rawEvent || typeof rawEvent !== 'object' || Array.isArray(rawEvent)) {
+      return undefined;
+    }
+
+    const key = (rawEvent as { idempotencyKey?: unknown }).idempotencyKey;
+    if (typeof key !== 'string') {
+      return undefined;
+    }
+
+    const trimmed = key.trim();
+
+    return isValidActionIdempotencyKey(trimmed) ? trimmed : undefined;
+  }
+
+  private async recordNonApprovalActionAccept(
+    conversation: ConversationEntity,
+    config: ResolvedAgentConfig,
+    action: AgentAction,
+    identifier?: string
+  ): Promise<void> {
+    if (!identifier || this.parseApprovalVerdict(action.id)) {
+      return;
+    }
+
+    try {
+      await this.conversationService.persistInboundActionAccept({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        identifier,
+        actionId: action.id,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to persist inbound action accept`);
+      captureAgentWarning(err, {
+        component: 'inbound-turn-handler',
+        operation: 'persist-inbound-action-accept',
+        agentIdentifier: config.agentIdentifier,
+      });
+    }
+  }
+
   private async recordApprovalVerdict(
     conversation: ConversationEntity,
     config: ResolvedAgentConfig,
     action: AgentAction,
     actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER | ConversationActivitySenderTypeEnum.PLATFORM_USER,
-    actorId: string
+    actorId: string,
+    identifier?: string
   ): Promise<void> {
     const verdict = this.parseApprovalVerdict(action.id);
     if (!verdict) {
@@ -1326,6 +1374,7 @@ export class AgentInboundHandler implements OnModuleInit {
         actorId,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
+        ...(identifier ? { identifier } : {}),
       });
     } catch (err) {
       // A failed transcript write must never drop the click — the runtime still

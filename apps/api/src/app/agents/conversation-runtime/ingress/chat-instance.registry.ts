@@ -9,6 +9,7 @@ import { stripAgentReplyToken } from '@novu/shared';
 import type { Adapter, Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { resolveWhatsAppAppSecret } from '../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import { AgentChatAcceptIdempotencyService } from '../../agent-chat/agent-chat-accept-idempotency.service';
 import {
   type AgentChatPlatformDeliveryContext,
   AgentChatPlatformDeliveryService,
@@ -125,6 +126,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly agentChatSessionVerifier: AgentChatSessionVerifier,
     private readonly agentChatPlatformDelivery: AgentChatPlatformDeliveryService,
     private readonly agentChatResumeAuthorization: AgentChatResumeAuthorizationService,
+    private readonly agentChatAcceptIdempotency: AgentChatAcceptIdempotencyService,
     @Inject(forwardRef(() => PlanLimitGateService))
     private readonly planLimitGate: PlanLimitGateService
   ) {
@@ -508,6 +510,18 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
               this.agentChatResumeAuthorization.canResume({ conversationId, session, agentId }),
             checkAcceptLimits: ({ isNewThread, conversationId }) =>
               this.planLimitGate.checkAgentChatAcceptLimits(agentId, cached.config, { isNewThread, conversationId }),
+            claimInbound: ({ session, key, conversationId }) =>
+              this.agentChatAcceptIdempotency.claimInbound(session.environmentId, key, conversationId),
+            releaseInbound: ({ session, key, conversationId, claimToken }) =>
+              this.agentChatAcceptIdempotency.releaseInbound(session.environmentId, key, conversationId, claimToken),
+            completeInbound: ({ session, key, conversationId, claimToken, messageId }) =>
+              this.agentChatAcceptIdempotency.completeInbound(
+                session.environmentId,
+                key,
+                conversationId,
+                claimToken,
+                messageId
+              ),
             deliverMessage: this.agentChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.agentChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.agentChatPlatformDelivery.createDeleteMessage(deliveryContext),
@@ -535,8 +549,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
-        captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-new-mention', agentId });
+        this.rethrowAgentChatInboundError(cached, err, {
+          agentId,
+          operation: 'on-new-mention',
+          logMessage: `[agent:${agentId}] Error handling new mention`,
+        });
       }
     });
 
@@ -545,11 +562,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
-        captureAgentException(err, {
-          component: 'chat-instance-registry',
-          operation: 'on-subscribed-message',
+        this.rethrowAgentChatInboundError(cached, err, {
           agentId,
+          operation: 'on-subscribed-message',
+          logMessage: `[agent:${agentId}] Error handling subscribed message`,
         });
       }
     });
@@ -600,11 +616,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           event.raw
         );
       } catch (err) {
-        this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
-        captureAgentException(err, {
-          component: 'chat-instance-registry',
-          operation: 'on-action',
+        this.rethrowAgentChatInboundError(cached, err, {
           agentId,
+          operation: 'on-action',
+          logMessage: `[agent:${agentId}] Error handling action ${event.actionId}`,
           extra: { actionId: event.actionId },
         });
       }
@@ -630,6 +645,29 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-reaction', agentId });
       }
     });
+  }
+
+  /**
+   * Slack/Telegram keep swallowing inbound errors so their webhooks stay 200.
+   * Agent chat must rethrow so the adapter releases the accept lock instead of
+   * writing a 24h success cache for a failed turn.
+   */
+  private rethrowAgentChatInboundError(
+    cached: CachedChat,
+    err: unknown,
+    args: { agentId: string; operation: string; logMessage: string; extra?: Record<string, unknown> }
+  ): void {
+    this.logger.error(err, args.logMessage);
+    captureAgentException(err, {
+      component: 'chat-instance-registry',
+      operation: args.operation,
+      agentId: args.agentId,
+      extra: args.extra,
+    });
+
+    if (cached.config.platform === AgentPlatformEnum.AGENT_CHAT) {
+      throw err;
+    }
   }
 
   /**

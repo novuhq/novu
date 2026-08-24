@@ -186,13 +186,225 @@ describe('NovuAgentChatAdapterImpl', () => {
     expect(processMessage.mock.calls[0]?.[2].id).toBe(body.data.messageId);
   });
 
-  it('ignores client messageId and always mints server message id', async () => {
+  it('uses a valid client messageId as the platform message id', async () => {
     const { adapter, processMessage } = await createAdapter();
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.messageId).toBe('msg_abcdefghijkl');
+    expect(processMessage.mock.calls[0]?.[2].id).toBe('msg_abcdefghijkl');
+  });
+
+  it('rejects an invalid client messageId', async () => {
+    const { adapter, processMessage } = await createAdapter();
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'not-a-message-id' })
+    );
+
+    expect(response.status).toBe(400);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('acks a retry without re-dispatching when claimInbound is duplicate', async () => {
+    const claimInbound = vi.fn(async () => ({
+      outcome: 'duplicate' as const,
+      conversationId: 'conv_original0001',
+    }));
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        claimInbound,
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        text: 'retry me',
+        messageId: 'msg_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.identifier).toBe('conv_original0001');
+    expect(body.data.messageId).toBe('msg_abcdefghijkl');
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 when claimInbound is in progress', async () => {
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        claimInbound: async () => ({
+          outcome: 'in_progress',
+          conversationId: 'conv_original0001',
+        }),
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(409);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 when claimInbound is unavailable', async () => {
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        claimInbound: async () => ({ outcome: 'unavailable' }),
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' })
+    );
+
+    expect(response.status).toBe(503);
+    expect(processMessage).not.toHaveBeenCalled();
+  });
+
+  it('releases the inbound claim when processMessage throws', async () => {
+    const releaseInbound = vi.fn(async () => undefined);
+    const completeInbound = vi.fn(async () => undefined);
+    const { adapter, processMessage } = await createAdapter(
+      createConfig({
+        claimInbound: async () => ({
+          outcome: 'acquired' as const,
+          conversationId: 'conv_new000000001',
+          claimToken: 'claim-token-1',
+        }),
+        releaseInbound,
+        completeInbound,
+      })
+    );
+    processMessage.mockRejectedValueOnce(new Error('dispatch failed'));
+
+    await expect(
+      adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }))
+    ).rejects.toThrow('dispatch failed');
+    expect(releaseInbound).toHaveBeenCalledWith({
+      session: SESSION,
+      key: 'msg_abcdefghijkl',
+      conversationId: expect.any(String),
+      claimToken: 'claim-token-1',
+    });
+    expect(completeInbound).not.toHaveBeenCalled();
+  });
+
+  it('completes the inbound claim after a successful message dispatch', async () => {
+    const completeInbound = vi.fn(async () => undefined);
+    const { adapter } = await createAdapter(
+      createConfig({
+        claimInbound: async () => ({
+          outcome: 'acquired' as const,
+          conversationId: 'conv_new000000001',
+          claimToken: 'claim-token-1',
+        }),
+        completeInbound,
+      })
+    );
 
     await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }));
 
-    expect(processMessage.mock.calls[0]?.[2].id).toMatch(/^msg_[0-9a-z]{12}$/);
-    expect(processMessage.mock.calls[0]?.[2].id).not.toBe('msg_abcdefghijkl');
+    expect(completeInbound).toHaveBeenCalledWith({
+      session: SESSION,
+      key: 'msg_abcdefghijkl',
+      conversationId: expect.any(String),
+      claimToken: 'claim-token-1',
+      messageId: 'msg_abcdefghijkl',
+    });
+  });
+
+  it('completes the inbound claim after a successful action dispatch', async () => {
+    const completeInbound = vi.fn(async () => undefined);
+    const { adapter } = await createAdapter(
+      createConfig({
+        authorizeResume: async () => true,
+        claimInbound: async () => ({
+          outcome: 'acquired' as const,
+          conversationId: 'conv_abcdefghijkl',
+          claimToken: 'claim-token-2',
+        }),
+        completeInbound,
+      })
+    );
+
+    await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        idempotencyKey: 'idem_abcdefghijkl',
+      })
+    );
+
+    expect(completeInbound).toHaveBeenCalledWith({
+      session: SESSION,
+      key: 'idem_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+      claimToken: 'claim-token-2',
+    });
+  });
+
+  it('rejects an invalid action idempotency key', async () => {
+    const { adapter, processAction } = await createAdapter(
+      createConfig({
+        authorizeResume: async () => true,
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'topic-billing',
+        sourceMessageId: 'act_card0000001',
+        idempotencyKey: 'not-an-idem-key',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(processAction).not.toHaveBeenCalled();
+  });
+
+  it('acks a duplicate action without re-dispatching when claimInbound is duplicate', async () => {
+    const claimInbound = vi.fn(async () => ({
+      outcome: 'duplicate' as const,
+      conversationId: 'conv_abcdefghijkl',
+    }));
+    const { adapter, processAction } = await createAdapter(
+      createConfig({
+        authorizeResume: async () => true,
+        claimInbound,
+      })
+    );
+
+    const response = await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        idempotencyKey: 'idem_abcdefghijkl',
+        conversationIdentifier: 'conv_abcdefghijkl',
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.identifier).toBe('conv_abcdefghijkl');
+    expect(processAction).not.toHaveBeenCalled();
+    expect(claimInbound).toHaveBeenCalledWith({
+      session: SESSION,
+      key: 'idem_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+    });
   });
 
   it('resumes with conversationIdentifier when authorizeResume allows', async () => {

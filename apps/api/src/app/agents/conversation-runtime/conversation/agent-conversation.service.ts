@@ -459,6 +459,13 @@ export class AgentConversationService {
     return this.ledger.findAgentMessageByIdentifier(environmentId, conversationId, identifier);
   }
 
+  async findActivityByIdentifier(
+    environmentId: string,
+    identifier: string
+  ): Promise<Pick<ConversationActivityEntity, '_id' | 'platformThreadId'> | null> {
+    return this.ledger.findActivityByIdentifier(environmentId, identifier);
+  }
+
   async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
@@ -471,6 +478,12 @@ export class AgentConversationService {
     params: ConversationActivityContext & { content: string; payload: Record<string, unknown> }
   ): Promise<void> {
     return this.ledger.persistToolUseSignal(params);
+  }
+
+  async persistInboundActionAccept(
+    params: ConversationActivityContext & { identifier: string; actionId: string }
+  ): Promise<void> {
+    return this.ledger.persistInboundActionAccept(params);
   }
 
   async enrichToolUseSignal(params: {

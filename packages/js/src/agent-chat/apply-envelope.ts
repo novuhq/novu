@@ -629,7 +629,8 @@ function finalizeOpenStreamingParts(state: AgentConversationState): AgentConvers
 
 export function appendUserMessage(
   state: AgentConversationState,
-  message: Pick<AgentMessage, 'id' | 'parts' | 'createdAt' | 'status'> & Partial<Pick<AgentMessage, 'role'>>
+  message: Pick<AgentMessage, 'id' | 'parts' | 'createdAt' | 'status'> &
+    Partial<Pick<AgentMessage, 'role' | 'idempotencyKey'>>
 ): AgentConversationState {
   const role: AgentMessageRole = message.role ?? 'user';
 
@@ -643,6 +644,7 @@ export function appendUserMessage(
         parts: message.parts,
         createdAt: message.createdAt,
         status: message.status,
+        ...(message.idempotencyKey ? { idempotencyKey: message.idempotencyKey } : {}),
       },
     ],
   };
