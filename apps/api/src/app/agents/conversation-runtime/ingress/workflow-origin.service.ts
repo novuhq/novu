@@ -9,10 +9,9 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { buildWorkflowOriginLine } from '@novu/framework/internal';
-import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { AGENTS_ORG_FUNNEL_EVENTS, ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
-import { trackWorkflowOriginHydrated } from '../../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -270,8 +269,8 @@ export class WorkflowOriginService {
         ...(subscriberFirstName ? { subscriberFirstName } : {}),
       });
 
-      trackWorkflowOriginHydrated(this.analyticsService, {
-        organizationId: config.organizationId,
+      this.analyticsService.track(AGENTS_ORG_FUNNEL_EVENTS.WORKFLOW_ORIGIN_HYDRATED, config.organizationId, {
+        _organization: config.organizationId,
         environmentId: config.environmentId,
         agentId,
         agentIdentifier: config.agentIdentifier,

@@ -714,6 +714,5 @@ export class UpsertWorkflowUseCase {
     };
 
     this.analyticsService.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_ASSIGNED_TO_WORKFLOW, userId, properties);
-    this.analyticsService.mixpanelTrack(AGENTS_ORG_FUNNEL_EVENTS.AGENT_ASSIGNED_TO_WORKFLOW, userId, properties);
   }
 }

@@ -55,7 +55,6 @@ describe('WorkflowOriginService', () => {
     };
     const analyticsService = {
       track: sinon.stub(),
-      mixpanelTrack: sinon.stub(),
     };
 
     const service = new WorkflowOriginService(
@@ -217,10 +216,6 @@ describe('WorkflowOriginService', () => {
         workflowIdentifier: 'order-alerts',
         platform: AgentPlatformEnum.SLACK,
       });
-      expect(analyticsService.mixpanelTrack.calledOnce).to.equal(true);
-      expect(analyticsService.mixpanelTrack.firstCall.args[0]).to.equal(
-        AGENTS_ORG_FUNNEL_EVENTS.WORKFLOW_ORIGIN_HYDRATED
-      );
     });
 
     it('keeps the origin re-derivable when the hydration marker write fails', async () => {
@@ -248,7 +243,6 @@ describe('WorkflowOriginService', () => {
       expect(conversationService.setNotificationId.calledOnce).to.equal(true);
       expect(target._notificationId).to.equal('notif1');
       expect(analyticsService.track.called).to.equal(false);
-      expect(analyticsService.mixpanelTrack.called).to.equal(false);
     });
   });
 
