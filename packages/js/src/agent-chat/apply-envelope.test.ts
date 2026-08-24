@@ -37,6 +37,21 @@ describe('applyEnvelope', () => {
     expect(next).toEqual({ ...initial, lastSequence: 1 });
   });
 
+  it('no-ops provider-event in transcript', () => {
+    const initial = createInitialAgentConversationState();
+    const next = applyEnvelope(
+      initial,
+      envelope(1, {
+        type: 'provider-event',
+        provider: 'anthropic',
+        event: 'content_block_delta',
+        data: { index: 0 },
+      })
+    );
+
+    expect(next).toEqual({ ...initial, lastSequence: 1 });
+  });
+
   it('replaces in-flight message deltas when a durable message arrives', () => {
     const live = applyEnvelopes(createInitialAgentConversationState(), [
       envelope(1, { type: 'run-start' }),

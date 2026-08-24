@@ -895,6 +895,54 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
     expect(historyDelete.sequence).to.equal(liveDelete.sequence);
   });
 
+  it('should emit provider-event live on WS without persisting to history', async () => {
+    await linkAgentChat();
+    const wsQueue = testServer.getService(WebSocketsQueueService);
+    const addStub = sinon.stub(wsQueue, 'add');
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Provider event thread',
+    });
+    expect(createRes.status).to.equal(201);
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+
+    addStub.resetHistory();
+
+    const providerEnvelope: AgentEventEnvelope = {
+      ...messageEnvelope(conversation._id, 'msg-unused'),
+      runId: 'run-provider',
+      sequence: 42,
+      event: {
+        type: 'provider-event',
+        provider: 'anthropic',
+        event: 'content_block_delta',
+        data: { index: 0, delta: 'x' },
+      },
+    };
+
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events: [providerEnvelope] });
+    expect(ingestRes.status).to.equal(200);
+
+    const providerJobs = addStub
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter(
+        (job) =>
+          job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+          (job.data.payload as AgentEventEnvelope)?.event?.type === 'provider-event'
+      );
+    expect(providerJobs).to.have.length(1);
+    expect((providerJobs[0].data.payload as AgentEventEnvelope).event).to.deep.equal(providerEnvelope.event);
+
+    const historyRes = await getEvents(createRes.body.data.identifier);
+    expect(historyRes.status).to.equal(200);
+    const historyProvider = historyRes.body.data.events.find(
+      (envelope: AgentEventEnvelope) => envelope.event.type === 'provider-event'
+    );
+    expect(historyProvider).to.be.undefined;
+  });
+
   it('should suppress duplicate live delivery for concurrent runtime retries', async () => {
     await linkAgentChat();
     const wsQueue = testServer.getService(WebSocketsQueueService);

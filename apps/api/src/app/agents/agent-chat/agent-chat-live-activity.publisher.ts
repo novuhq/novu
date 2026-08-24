@@ -30,6 +30,13 @@ export type PersistedClientEventEmitParams = {
   activity: ConversationActivityEntity;
 };
 
+export type AgentChatWsEmitContext = {
+  agentId: string;
+  environmentId: string;
+  organizationId: string;
+  conversation: ConversationEntity;
+};
+
 /**
  * Emits durable agent-chat activities on live WS from the persist seam only.
  * Keeps tool + run-lifecycle ordering aligned with GET history.
@@ -55,7 +62,25 @@ export class AgentChatLiveActivityPublisher {
       return;
     }
 
-    await this.emitBestEffort(params, envelope);
+    await this.emitBestEffort(
+      {
+        agentId: params.agentId,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        conversation: params.conversation,
+      },
+      envelope
+    );
+  }
+
+  /** Live WS fanout for a pre-built envelope (e.g. provider-event from ingest). */
+  async emitPrebuiltEnvelope(context: AgentChatWsEmitContext, envelope: AgentEventEnvelope): Promise<void> {
+    const stamped =
+      envelope.conversationIdentifier !== undefined
+        ? envelope
+        : { ...envelope, conversationIdentifier: context.conversation.identifier };
+
+    await this.emitBestEffort(context, stamped);
   }
 
   /** Gate + conversation lookup for rows persisted outside the agent-chat module. */
@@ -87,26 +112,29 @@ export class AgentChatLiveActivityPublisher {
     });
   }
 
-  private async emitBestEffort(params: AgentChatLiveActivityEmitParams, envelope: AgentEventEnvelope): Promise<void> {
+  private async emitBestEffort(context: AgentChatWsEmitContext, envelope: AgentEventEnvelope): Promise<void> {
     try {
-      const subscriberExternalId = params.conversation.participants.find(
+      const subscriberExternalId = context.conversation.participants.find(
         (participant) => participant.type === ConversationParticipantTypeEnum.SUBSCRIBER
       )?.id;
 
       if (!subscriberExternalId) {
         this.logger.warn(
-          { conversationId: params.conversation._id, agentId: params.agentId },
+          { conversationId: context.conversation._id, agentId: context.agentId },
           'agent chat live emit skipped: no subscriber participant'
         );
 
         return;
       }
 
-      const subscriber = await this.subscriberRepository.findBySubscriberId(params.environmentId, subscriberExternalId);
+      const subscriber = await this.subscriberRepository.findBySubscriberId(
+        context.environmentId,
+        subscriberExternalId
+      );
 
       if (!subscriber) {
         this.logger.warn(
-          { subscriberExternalId, environmentId: params.environmentId },
+          { subscriberExternalId, environmentId: context.environmentId },
           'agent chat live emit skipped: subscriber entity not found'
         );
 
@@ -118,17 +146,17 @@ export class AgentChatLiveActivityPublisher {
         data: {
           event: WebSocketEventEnum.AGENT_EVENT,
           userId: subscriber._id,
-          _environmentId: params.environmentId,
-          _organizationId: params.organizationId,
+          _environmentId: context.environmentId,
+          _organizationId: context.organizationId,
           subscriberId: subscriber.subscriberId,
           payload: envelope as unknown as Record<string, unknown>,
-          contextKeys: params.conversation.contextKeys ?? [],
+          contextKeys: context.conversation.contextKeys ?? [],
         },
-        groupId: params.organizationId,
+        groupId: context.organizationId,
       });
     } catch (err) {
       this.logger.warn(
-        { err, conversationId: params.conversation._id, sequence: envelope.sequence },
+        { err, conversationId: context.conversation._id, sequence: envelope.sequence },
         'agent chat live WS enqueue failed'
       );
     }

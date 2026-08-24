@@ -4,6 +4,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationActivityEntity, type ConversationChannel, ConversationRepository } from '@novu/dal';
 import { isNovuInternalToolName } from '@novu/shared';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
+import { AgentChatLiveActivityPublisher } from '../agent-chat/agent-chat-live-activity.publisher';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { type RunLifecycleEvent } from '../conversation-runtime/conversation/run-lifecycle-activity';
@@ -73,6 +74,7 @@ export class AgentEventSink {
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly mcpConnectionErrorHandler: McpConnectionErrorHandler,
+    private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -125,6 +127,11 @@ export class AgentEventSink {
 
       case 'channel.typing':
         return this.handleChannelTyping(event, baseFields, context, envelope.runId);
+
+      case 'provider-event':
+        await this.handleProviderEvent(envelope, context);
+
+        return 'accepted';
 
       case 'signal':
         return this.handleSignal(event, baseFields, context, envelope.runId);
@@ -452,6 +459,34 @@ export class AgentEventSink {
       context,
       'channel.typing',
       runId
+    );
+  }
+
+  private async handleProviderEvent(envelope: AgentEventEnvelope, context: AgentEventContext): Promise<void> {
+    if (!context.platform || !usesProtocolEventApprovals(context.platform)) {
+      return;
+    }
+
+    const conversation = await this.conversationService.getConversation(
+      context.conversationId,
+      context.environmentId,
+      context.organizationId
+    );
+
+    if (!conversation) {
+      return;
+    }
+
+    const agentId = context.agentId ?? conversation._agentId;
+
+    await this.agentChatLiveActivityPublisher.emitPrebuiltEnvelope(
+      {
+        agentId,
+        environmentId: context.environmentId,
+        organizationId: context.organizationId,
+        conversation,
+      },
+      envelope
     );
   }
 
