@@ -22,8 +22,6 @@ const modules = [
   {
     name: 'UMD gzip',
     filePath: umdGzipPath,
-    // NV-8644 runtime envelope validation adds ~150 B gzip over the NV-8640 baseline.
-    // NV-8667 provider-event type adds ~10 B gzip over the NV-8644 baseline.
     limitInBytes: 66_000,
   },
 ];
