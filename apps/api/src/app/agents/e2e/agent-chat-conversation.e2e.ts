@@ -895,24 +895,31 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
     expect(historyDelete.sequence).to.equal(liveDelete.sequence);
   });
 
-  it('should emit provider-event live on WS without persisting to history', async () => {
+  it('should mint sequence and stamp public agent id when bridge ingests provider-event', async () => {
     await linkAgentChat();
     const wsQueue = testServer.getService(WebSocketsQueueService);
     const addStub = sinon.stub(wsQueue, 'add');
 
     const createRes = await createConversation({
       agentId: ctx.agentIdentifier,
-      text: 'Provider event thread',
+      text: 'Provider event bridge thread',
     });
     expect(createRes.status).to.equal(201);
     const conversation = await waitForConversation(createRes.body.data.identifier);
+
+    const historyBefore = await getEvents(createRes.body.data.identifier);
+    expect(historyBefore.status).to.equal(200);
+    const maxHistorySequence = Math.max(
+      0,
+      ...historyBefore.body.data.events.map((envelope: AgentEventEnvelope) => envelope.sequence)
+    );
 
     addStub.resetHistory();
 
     const providerEnvelope: AgentEventEnvelope = {
       ...messageEnvelope(conversation._id, 'msg-unused'),
       runId: 'run-provider',
-      sequence: 42,
+      sequence: 1,
       event: {
         type: 'provider-event',
         provider: 'anthropic',
@@ -933,7 +940,11 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
           (job.data.payload as AgentEventEnvelope)?.event?.type === 'provider-event'
       );
     expect(providerJobs).to.have.length(1);
-    expect((providerJobs[0].data.payload as AgentEventEnvelope).event).to.deep.equal(providerEnvelope.event);
+
+    const liveEnvelope = providerJobs[0].data.payload as AgentEventEnvelope;
+    expect(liveEnvelope.agentId).to.equal(ctx.agentIdentifier);
+    expect(liveEnvelope.sequence).to.be.greaterThan(maxHistorySequence);
+    expect(liveEnvelope.event).to.deep.equal(providerEnvelope.event);
 
     const historyRes = await getEvents(createRes.body.data.identifier);
     expect(historyRes.status).to.equal(200);
@@ -941,6 +952,61 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
       (envelope: AgentEventEnvelope) => envelope.event.type === 'provider-event'
     );
     expect(historyProvider).to.be.undefined;
+  });
+
+  it('should deliver provider-event live after history has advanced lastSequence', async () => {
+    await linkAgentChat();
+    const wsQueue = testServer.getService(WebSocketsQueueService);
+    const addStub = sinon.stub(wsQueue, 'add');
+
+    const createRes = await createConversation({
+      agentId: ctx.agentIdentifier,
+      text: 'Provider event after history thread',
+    });
+    expect(createRes.status).to.equal(201);
+    const conversation = await waitForConversation(createRes.body.data.identifier);
+    const messageId = `msg-history-${Date.now()}`;
+
+    const messageIngest = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({
+      events: [messageEnvelope(conversation._id, messageId)],
+    });
+    expect(messageIngest.status).to.equal(200);
+
+    const historyRes = await getEvents(createRes.body.data.identifier);
+    expect(historyRes.status).to.equal(200);
+    const maxHistorySequence = Math.max(
+      ...historyRes.body.data.events.map((envelope: AgentEventEnvelope) => envelope.sequence)
+    );
+
+    addStub.resetHistory();
+
+    const providerEnvelope: AgentEventEnvelope = {
+      ...messageEnvelope(conversation._id, 'msg-unused'),
+      runId: 'run-provider-stale-seq',
+      sequence: 1,
+      event: {
+        type: 'provider-event',
+        provider: 'anthropic',
+        event: 'message_stop',
+        data: { reason: 'end_turn' },
+      },
+    };
+
+    const ingestRes = await ctx.session.testAgent.post('/v1/agents/events/ingest').send({ events: [providerEnvelope] });
+    expect(ingestRes.status).to.equal(200);
+
+    const providerJobs = addStub
+      .getCalls()
+      .map((call) => call.args[0])
+      .filter(
+        (job) =>
+          job?.data?.event === WebSocketEventEnum.AGENT_EVENT &&
+          (job.data.payload as AgentEventEnvelope)?.event?.type === 'provider-event'
+      );
+    expect(providerJobs).to.have.length(1);
+
+    const liveEnvelope = providerJobs[0].data.payload as AgentEventEnvelope;
+    expect(liveEnvelope.sequence).to.be.greaterThan(maxHistorySequence);
   });
 
   it('should suppress duplicate live delivery for concurrent runtime retries', async () => {

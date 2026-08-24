@@ -467,6 +467,10 @@ export class AgentEventSink {
       return;
     }
 
+    if (envelope.event.type !== 'provider-event') {
+      return;
+    }
+
     const conversation = await this.conversationService.getConversation(
       context.conversationId,
       context.environmentId,
@@ -477,17 +481,15 @@ export class AgentEventSink {
       return;
     }
 
-    const agentId = context.agentId ?? conversation._agentId;
-
-    await this.agentChatLiveActivityPublisher.emitPrebuiltEnvelope(
-      {
-        agentId,
-        environmentId: context.environmentId,
-        organizationId: context.organizationId,
-        conversation,
-      },
-      envelope
-    );
+    await this.agentChatLiveActivityPublisher.emitEphemeralEvent({
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      conversation,
+      event: envelope.event,
+      runId: envelope.runId,
+      turnId: envelope.turnId,
+    });
   }
 
   private async handleSignal(

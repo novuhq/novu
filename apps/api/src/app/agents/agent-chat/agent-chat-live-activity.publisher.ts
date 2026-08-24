@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
+import type { AgentEvent, AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger, WebSocketsQueueService } from '@novu/application-generic';
 import {
   ConversationActivityEntity,
@@ -9,8 +9,10 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
+import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { usesProtocolEventApprovals } from '../shared/enums/agent-platform.enum';
 import { buildLiveEnvelopeFromActivity } from './activity-to-events';
+import { AgentChatEventFactory } from './agent-chat-event.factory';
 
 export type AgentChatLiveActivityEmitParams = {
   agentId: string;
@@ -37,6 +39,16 @@ export type AgentChatWsEmitContext = {
   conversation: ConversationEntity;
 };
 
+export type AgentChatEphemeralEmitParams = {
+  agentIdentifier: string;
+  environmentId: string;
+  organizationId: string;
+  conversation: ConversationEntity;
+  event: AgentEvent;
+  runId?: string;
+  turnId?: string;
+};
+
 /**
  * Emits durable agent-chat activities on live WS from the persist seam only.
  * Keeps tool + run-lifecycle ordering aligned with GET history.
@@ -46,6 +58,8 @@ export class AgentChatLiveActivityPublisher {
   constructor(
     private readonly subscriberRepository: SubscriberRepository,
     private readonly conversationRepository: ConversationRepository,
+    private readonly conversationService: AgentConversationService,
+    private readonly eventFactory: AgentChatEventFactory,
     private readonly webSocketsQueueService: WebSocketsQueueService,
     private readonly logger: PinoLogger
   ) {
@@ -73,14 +87,36 @@ export class AgentChatLiveActivityPublisher {
     );
   }
 
-  /** Live WS fanout for a pre-built envelope (e.g. provider-event from ingest). */
-  async emitPrebuiltEnvelope(context: AgentChatWsEmitContext, envelope: AgentEventEnvelope): Promise<void> {
-    const stamped =
-      envelope.conversationIdentifier !== undefined
-        ? envelope
-        : { ...envelope, conversationIdentifier: context.conversation.identifier };
+  /**
+   * Live WS fanout for ephemeral protocol events (e.g. provider-event).
+   * Mints a conversation-global sequence and stamps the public agent identifier.
+   */
+  async emitEphemeralEvent(params: AgentChatEphemeralEmitParams): Promise<void> {
+    const sequence = await this.conversationService.mintEventSequence({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      conversationId: params.conversation._id,
+    });
 
-    await this.emitBestEffort(context, stamped);
+    const envelope = this.eventFactory.createEphemeralEnvelope({
+      conversationId: params.conversation._id,
+      conversationIdentifier: params.conversation.identifier,
+      agentId: params.agentIdentifier,
+      sequence,
+      event: params.event,
+      runId: params.runId,
+      turnId: params.turnId,
+    });
+
+    await this.emitBestEffort(
+      {
+        agentId: params.conversation._agentId,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        conversation: params.conversation,
+      },
+      envelope
+    );
   }
 
   /** Gate + conversation lookup for rows persisted outside the agent-chat module. */
