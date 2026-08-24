@@ -164,6 +164,8 @@ const CHAT_PROVIDER_OVERRIDE_CONFIGS = {
   [ChatProviderIdEnum.Sendblue]: escapeHatch('content'),
   // Agent chat has no stable override schema yet — free-form passthrough keyed like Discord.
   [ChatProviderIdEnum.NovuAgentChat]: escapeHatch('content'),
+  // Google Chat incoming webhooks take the message text in `text`.
+  [ChatProviderIdEnum.GoogleChat]: escapeHatch('text'),
 } satisfies Record<ChatProviderIdEnum, ProviderOverrideConfig>;
 
 export const PROVIDER_OVERRIDE_CONFIGS = {

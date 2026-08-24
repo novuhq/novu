@@ -2,6 +2,7 @@ import { IntegrationEntity } from '@novu/dal';
 import { ChatWebhookHandler } from './handlers/chat-webhook.handler';
 import { DiscordHandler } from './handlers/discord.handler';
 import { GetstreamChatHandler } from './handlers/getstream.handler';
+import { GoogleChatHandler } from './handlers/google-chat.handler';
 import { GrafanaOnCallHandler } from './handlers/grafana-on-call.handler';
 import { LineHandler } from './handlers/line.handler';
 import { MattermostHandler } from './handlers/mattermost.handler';
@@ -29,6 +30,7 @@ export class ChatFactory implements IChatFactory {
     new ZulipHandler(),
     new GrafanaOnCallHandler(),
     new GetstreamChatHandler(),
+    new GoogleChatHandler(),
     new RocketChatHandler(),
     new WhatsAppBusinessHandler(),
     new LineHandler(),

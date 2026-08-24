@@ -159,4 +159,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/agents/channels/agent-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'novu-agent-chat.svg', dark: 'novu-agent-chat.svg' },
   },
+  {
+    id: ChatProviderIdEnum.GoogleChat,
+    displayName: 'Google Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredential[],
+    docReference: `https://docs.novu.co/platform/integrations/chat/google-chat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'google-chat.svg', dark: 'google-chat.svg' },
+  },
 ];

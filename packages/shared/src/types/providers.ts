@@ -160,6 +160,7 @@ export enum ChatProviderIdEnum {
   Telegram = 'telegram',
   Sendblue = 'sendblue',
   NovuAgentChat = 'novu-agent-chat',
+  GoogleChat = 'google-chat',
 }
 
 export enum PushProviderIdEnum {
