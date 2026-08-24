@@ -6,10 +6,29 @@ import {
 } from './attachment-url';
 
 describe('isHydratableAttachmentUrl', () => {
-  it('allows loopback LocalStack URLs', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('allows loopback LocalStack URLs outside production', () => {
     expect(isHydratableAttachmentUrl('http://localhost:4566/novu-local/photo.png')).toBe(true);
     expect(isHydratableAttachmentUrl('http://127.0.0.1:4566/report.pdf')).toBe(true);
     expect(isHydratableAttachmentUrl('http://[::1]:4566/report.pdf')).toBe(true);
+  });
+
+  it('rejects loopback URLs that are not LocalStack', () => {
+    expect(isHydratableAttachmentUrl('http://127.0.0.1:8080/some-private-endpoint')).toBe(false);
+    expect(isHydratableAttachmentUrl('http://localhost:8080/admin')).toBe(false);
+    expect(isHydratableAttachmentUrl('http://[::1]:8080/admin')).toBe(false);
+    expect(isHydratableAttachmentUrl('http://127.0.0.1/some-private-endpoint')).toBe(false);
+    expect(isHydratableAttachmentUrl('https://localhost/admin')).toBe(false);
+  });
+
+  it('rejects all loopback hydration in production, including LocalStack', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+
+    expect(isHydratableAttachmentUrl('http://localhost:4566/novu-local/photo.png')).toBe(false);
+    expect(isHydratableAttachmentUrl('http://127.0.0.1:8080/some-private-endpoint')).toBe(false);
   });
 
   it('rejects metadata, private-network, and non-http URLs', () => {
@@ -70,6 +89,15 @@ describe('fetchUnreachableAttachmentBytes', () => {
     ).resolves.toBeNull();
     await expect(fetchUnreachableAttachmentBytes('http://10.0.0.5/secret.pdf')).resolves.toBeNull();
     await expect(fetchUnreachableAttachmentBytes('file:///etc/passwd')).resolves.toBeNull();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch a production-style loopback admin URL', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchUnreachableAttachmentBytes('http://127.0.0.1:8080/some-private-endpoint')).resolves.toBeNull();
 
     expect(fetchMock).not.toHaveBeenCalled();
   });

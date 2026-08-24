@@ -1,6 +1,8 @@
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0']);
-/** Only these hosts are safe to fetch from the agent process (LocalStack / loopback). */
+/** LocalStack loopback hosts. Any other loopback target is SSRF. */
 const HYDRATABLE_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+/** Default LocalStack edge port from `docker/local/docker-compose.yml`. */
+const LOCALSTACK_PORT = '4566';
 /** Matches API ingress (`AgentAttachmentStorage` 25 MiB per file). */
 export const MAX_HYDRATED_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
@@ -19,12 +21,16 @@ export function isProviderFetchableUrl(url: string): boolean {
 }
 
 /**
- * Server-side hydration is only for loopback storage the hosted model cannot
- * reach (LocalStack). Any other "unreachable" URL is treated as unsafe to
- * fetch — http + private/link-local hosts would otherwise be SSRF.
+ * Server-side hydration is a LocalStack-only escape hatch for hosted models
+ * that cannot fetch `http://localhost:4566/...`. It is disabled in production
+ * and never follows arbitrary loopback ports (e.g. `:8080` admin panels).
  */
 export function isHydratableAttachmentUrl(url: string): boolean {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return false;
+    }
+
     const parsed = new URL(url);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return false;
@@ -35,17 +41,21 @@ export function isHydratableAttachmentUrl(url: string): boolean {
     }
 
     const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (!HYDRATABLE_HOSTS.has(host)) {
+      return false;
+    }
 
-    return HYDRATABLE_HOSTS.has(host);
+    return parsed.port === LOCALSTACK_PORT;
   } catch {
     return false;
   }
 }
 
 /**
- * Download bytes for a URL the hosted model cannot fetch. Returns `null` when
- * the object is missing, not a loopback URL, or larger than ingress allows so
- * hydration can drop that part instead of aborting the agent turn.
+ * Download bytes for a LocalStack URL the hosted model cannot fetch. Returns
+ * `null` when the object is missing, not a hydratable LocalStack URL, or
+ * larger than ingress allows so hydration can drop that part instead of
+ * aborting the agent turn.
  */
 export async function fetchUnreachableAttachmentBytes(url: string): Promise<Uint8Array | null> {
   if (!isHydratableAttachmentUrl(url)) {
