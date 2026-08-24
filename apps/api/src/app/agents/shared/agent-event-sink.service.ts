@@ -26,7 +26,6 @@ import {
   toReplyContent,
   toThalamusUsage,
 } from './agent-event-mappers';
-import { isPersistableCustomEvent } from './custom-agent-event';
 import { AgentPlatformEnum, usesProtocolEventApprovals } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
 import { McpConnectionErrorHandler } from './mcp-connection-error.handler';
@@ -135,7 +134,7 @@ export class AgentEventSink {
         return 'accepted';
 
       case 'custom':
-        return this.handleCustom(event, context, envelope.runId);
+        return this.handleCustom(event, context, envelope);
 
       case 'signal':
         return this.handleSignal(event, baseFields, context, envelope.runId);
@@ -498,11 +497,11 @@ export class AgentEventSink {
   private async handleCustom(
     event: Extract<AgentEvent, { type: 'custom' }>,
     context: AgentEventContext,
-    runId: string
+    envelope: AgentEventEnvelope
   ): Promise<IngestOutcome> {
     if (!isPersistableCustomEvent(event)) {
       this.logger.warn(
-        { name: event.name, runId, conversationId: context.conversationId },
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
         'Skipping custom agent event: empty name or data over 64KiB'
       );
 
@@ -512,7 +511,7 @@ export class AgentEventSink {
     const channel = context.channel;
     if (!channel) {
       this.logger.warn(
-        { name: event.name, runId, conversationId: context.conversationId },
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
         'Skipping custom agent event persist: missing channel on AgentEventContext'
       );
 
@@ -525,7 +524,7 @@ export class AgentEventSink {
       agentIdentifier: context.agentIdentifier,
       environmentId: context.environmentId,
       organizationId: context.organizationId,
-      runId,
+      identifier: `custom:${envelope.runId}:${envelope.sequence}`,
       name: event.name,
       data: event.data,
     });
@@ -1001,4 +1000,20 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+const CUSTOM_AGENT_EVENT_DATA_MAX_BYTES = 65536;
+
+function isPersistableCustomEvent(event: { name: unknown; data: unknown }): boolean {
+  if (typeof event.name !== 'string' || event.name.length === 0) {
+    return false;
+  }
+
+  try {
+    const serialized = JSON.stringify(event.data ?? null);
+
+    return typeof serialized === 'string' && Buffer.byteLength(serialized, 'utf8') <= CUSTOM_AGENT_EVENT_DATA_MAX_BYTES;
+  } catch {
+    return false;
+  }
 }

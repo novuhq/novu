@@ -1362,10 +1362,10 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
         '*'
       )
     );
-    expect(customActivity.identifier).to.match(/^act_/);
+    expect(customActivity.identifier).to.equal('custom:run-custom:1');
     expect(customActivity.sequence).to.equal(liveEnvelope.sequence);
     expect(customActivity.richContent).to.deep.include({
-      custom: { name: 'order-progress', data: { pct: 70 }, runId: 'run-custom' },
+      custom: { name: 'order-progress', data: { pct: 70 } },
     });
 
     const historyRes = await getEvents(createRes.body.data.identifier);
@@ -1485,10 +1485,12 @@ describe('Agent Chat - /agent-chat/conversations #novu-v2', () => {
       events: [
         {
           ...messageEnvelope(conversation._id, 'msg-unused'),
+          sequence: 1,
           event: { type: 'custom', name: 'order-progress', data: { pct: 40 } },
         },
         {
           ...messageEnvelope(conversation._id, 'msg-unused'),
+          sequence: 2,
           event: { type: 'custom', name: 'order-progress', data: { pct: 70 } },
         },
       ],

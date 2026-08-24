@@ -126,7 +126,7 @@ export interface PersistMcpConnectionResultParams extends ConversationActivityCo
 }
 
 export interface PersistCustomParams extends ConversationActivityContext {
+  identifier: string;
   name: string;
   data: unknown;
-  runId?: string;
 }

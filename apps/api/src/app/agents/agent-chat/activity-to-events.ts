@@ -240,17 +240,10 @@ export interface EventMapContext {
   agentIdentifier: string;
 }
 
-function runIdFromCustomActivity(activity: ConversationActivityEntity): string | undefined {
-  if (activity.type !== ConversationActivityTypeEnum.CUSTOM) {
-    return undefined;
-  }
+function runIdFromCustomIdentifier(identifier: string): string | undefined {
+  const match = /^custom:(.+):(\d+)$/.exec(identifier);
 
-  const custom = activity.richContent?.custom as { runId?: unknown } | undefined;
-  if (typeof custom?.runId !== 'string' || custom.runId.length === 0) {
-    return undefined;
-  }
-
-  return custom.runId;
+  return match?.[1];
 }
 
 function buildEnvelope(
@@ -260,7 +253,7 @@ function buildEnvelope(
   context: EventMapContext
 ): AgentEventEnvelope {
   const lifecycleRunId = runIdFromLifecycleIdentifier(activity.identifier);
-  const customRunId = runIdFromCustomActivity(activity);
+  const customRunId = runIdFromCustomIdentifier(activity.identifier);
 
   return {
     version: AGENT_EVENT_PROTOCOL_VERSION,

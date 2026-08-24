@@ -410,7 +410,7 @@ describe('ConversationActivityLedger', () => {
 
       await ledger.persistCustom({
         ...context,
-        runId: 'run-custom',
+        identifier: 'custom:run-custom:1',
         name: 'order-progress',
         data: { pct: 70 },
       });
@@ -423,11 +423,10 @@ describe('ConversationActivityLedger', () => {
           custom: {
             name: 'order-progress',
             data: { pct: 70 },
-            runId: 'run-custom',
           },
         },
       });
-      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.match(/^act_/);
+      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('custom:run-custom:1');
       expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
       expect(conversationRepository.touchActivity.called).to.equal(false);
       expect(conversationRepository.touchPreview.called).to.equal(false);

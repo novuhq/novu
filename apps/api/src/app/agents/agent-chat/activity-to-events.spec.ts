@@ -77,9 +77,9 @@ describe('activity-to-events run lifecycle', () => {
         }),
         activity({
           type: ConversationActivityTypeEnum.CUSTOM,
-          identifier: 'act_progress',
+          identifier: 'custom:run-custom:1',
           sequence: 1,
-          richContent: { custom: { name: 'order-progress', data: { pct: 70 }, runId: 'run-custom' } },
+          richContent: { custom: { name: 'order-progress', data: { pct: 70 } } },
         }),
       ],
       context
