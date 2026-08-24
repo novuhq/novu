@@ -19,7 +19,7 @@ const searchNovuDocs = tool({
 //
 // import { generateText } from 'ai';
 // import { openai } from '@ai-sdk/openai';
-// import { toModelMessages } from '@novu/framework/ai-sdk';
+// import { hydrateUnreachableAttachmentUrls, toModelMessages } from '@novu/framework/ai-sdk';
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action
@@ -68,7 +68,7 @@ export const supportAgent = agent('support-agent', {
     // return generateText({
     //   model: openai('gpt-4o-mini'),
     //   instructions: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
-    //   messages: toModelMessages(ctx),
+    //   messages: await hydrateUnreachableAttachmentUrls(toModelMessages(ctx)),
     //   tools: { searchNovuDocs },
     // });
   },

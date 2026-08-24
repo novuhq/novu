@@ -165,11 +165,9 @@ export class HumanRelayRuntime implements AgentRuntime {
     }
 
     // 3. Several pending: cache the reply text and ask which question it answers.
-    await this.cacheService.set(
-      this.disambiguationCacheKey(turn.conversation._id),
-      JSON.stringify({ text }),
-      { ttl: DISAMBIGUATION_CACHE_TTL_SECONDS }
-    );
+    await this.cacheService.set(this.disambiguationCacheKey(turn.conversation._id), JSON.stringify({ text }), {
+      ttl: DISAMBIGUATION_CACHE_TTL_SECONDS,
+    });
 
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
     await this.outboundGateway.replyOnThreadWithCard(turn.thread, buildDisambiguationCard(pendingAsks), {

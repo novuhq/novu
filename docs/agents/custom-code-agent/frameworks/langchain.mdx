@@ -73,7 +73,7 @@ On the LangChain path, `onMessage` (and `onToolApproval`) can return a LangChain
 | Return | Behavior |
 | --- | --- |
 | `LangChainAgentConfig` | Novu runs `createAgent()` and delivers the final assistant text |
-| `{ messages: BaseMessage[] }` | Novu delivers the final assistant text from your pre-invoked agent or graph |
+| `{ messages: BaseMessage[] }` | Novu delivers the final assistant text from your pre-invoked agent or graph. Wrap history with `hydrateUnreachableAttachmentUrls` before invoke - see [Invoke your own agent](#invoke-your-own-agent) |
 | `BaseMessage` | Delivered as a normal reply (assistant text extracted from the message) |
 | `string` / JSX `Card` | Delivered as a normal reply - see [Reply](/agents/custom-code-agent/building-blocks/reply) |
 | nothing | After you call `ctx.reply()` yourself |
@@ -119,15 +119,16 @@ export default nextConfig;
 Convert conversation context into LangChain `BaseMessage[]` when you invoke an agent or graph yourself. Pass `ctx` so a workflow-origin notification (`ctx.notification`) is prepended as an `AIMessage` with capped notification text and the full JSON payload:
 
 ```typescript
-import { toLangChainMessages } from '@novu/framework/langchain';
+import { hydrateUnreachableAttachmentUrls, toLangChainMessages } from '@novu/framework/langchain';
 
-const messages = toLangChainMessages(ctx);
+const messages = await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx));
 ```
 
 - `ctx.history` already includes the current inbound message - do not append the `message` argument on top of it.
 - When `ctx.notification` is set, it includes `body` (capped outbound notification text) plus `payload`, `workflowId`, and ids.
 - Pass `system` only when you are **not** setting `system` on `LangChainAgentConfig` - Novu forwards that field to `createAgent({ prompt })` for you.
 - Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
+- Returning a `LangChainAgentConfig` already hydrates unreachable attachment URLs (http/localhost) before invoke. If you call `invoke()` yourself, wrap `toLangChainMessages()` in `hydrateUnreachableAttachmentUrls`. Public HTTPS signed URLs stay as URLs; local or HTTP URLs are fetched and inlined as base64 so hosted providers can read the file.
 - Pass `ctx.history` instead of `ctx` to skip automatic origin injection when handling typed fields with `isFromWorkflow`; prepend your own `AIMessage` instead.
 
 ## Invoke your own agent
@@ -136,14 +137,14 @@ If you already run a LangChain agent or graph in your handler, return its messag
 
 ```typescript
 import { createAgent } from 'langchain';
-import { agent, toLangChainMessages } from '@novu/framework/langchain';
+import { agent, hydrateUnreachableAttachmentUrls, toLangChainMessages } from '@novu/framework/langchain';
 
 const billingAgent = createAgent({ model: 'openai:gpt-4o', tools: [lookupOrder] });
 
 export const supportAgent = agent('support-bot', {
   onMessage: async (message, ctx) => {
     const result = await billingAgent.invoke({
-      messages: toLangChainMessages(ctx),
+      messages: await hydrateUnreachableAttachmentUrls(toLangChainMessages(ctx)),
     });
 
     return { messages: result.messages };

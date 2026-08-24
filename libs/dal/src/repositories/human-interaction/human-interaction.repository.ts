@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  HumanInteractionKindEnum,
-  HumanInteractionResponse,
-  HumanInteractionStatusEnum,
-} from '@novu/shared';
+import { HumanInteractionKindEnum, HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { HumanInteractionDBModel, HumanInteractionEntity } from './human-interaction.entity';

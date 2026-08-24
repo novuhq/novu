@@ -3,6 +3,7 @@ import type { AgentHandlerContext, AgentHistoryEntry } from '../../resources/age
 import { type AgentTranscriptSource, resolveTranscriptSource } from '../../resources/agent/history-source';
 import { buildWorkflowOriginInjection } from '../../resources/agent/workflow-origin-injection';
 import { type ApprovalIndex, buildApprovalIndex, mapApprovalRequest, type ToolResultPayload } from './approval-cycles';
+import { mapUserAttachmentParts } from './attachment-parts';
 
 /**
  * Maps Novu conversation ledger entries to LangChain `BaseMessage[]`.
@@ -30,18 +31,27 @@ function distinctHumanSenders(history: AgentHistoryEntry[]): number {
 }
 
 function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): BaseMessage | undefined {
-  if (!entry.content.trim()) {
+  const isAssistant = isAssistantRole(entry.role);
+  const hasText = !!entry.content.trim();
+  const attachmentParts = isAssistant ? [] : mapUserAttachmentParts(entry);
+
+  if (!hasText && attachmentParts.length === 0) {
     return undefined;
   }
 
-  const isAssistant = isAssistantRole(entry.role);
   if (isAssistant) {
     return new AIMessage(entry.content);
   }
 
   const text = multiSender && entry.senderName ? `${entry.senderName}: ${entry.content}` : entry.content;
 
-  return new HumanMessage(text);
+  if (attachmentParts.length === 0) {
+    return new HumanMessage(text);
+  }
+
+  const content = hasText ? [...attachmentParts, { type: 'text' as const, text }] : attachmentParts;
+
+  return new HumanMessage({ content });
 }
 
 function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): BaseMessage[] {
@@ -65,6 +75,9 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
  *
  * Pass `ctx` to prepend `ctx.notification` as an `AIMessage`. Pass `ctx.history` to skip that
  * injection (e.g. after `isFromWorkflow`). History already includes the current inbound message.
+ *
+ * Returning a `LangChainAgentConfig` hydrates unreachable attachment URLs for you.
+ * If you invoke the agent yourself, wrap this result in `hydrateUnreachableAttachmentUrls`.
  *
  * @param system - Optional system prompt prepended as a `SystemMessage`. Omit it when the
  *   agent already receives a prompt (e.g. via `createAgent({ prompt })`) to avoid duplication.

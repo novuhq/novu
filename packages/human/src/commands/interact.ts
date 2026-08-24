@@ -1,13 +1,13 @@
+import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
 import {
+  type CreateInteractionInput,
   createInteraction,
   getInteraction,
-  type CreateInteractionInput,
   type Interaction,
   type InteractionKind,
 } from '../api/human';
-import { createHumanApiClient, HumanApiError, type HumanApiClient } from '../api/client';
 import { NOT_SET_UP_MESSAGE, resolveConfig, resolveVia } from '../config';
-import { emitResult, EXIT_TIMEOUT, fail } from '../output';
+import { EXIT_TIMEOUT, emitResult, fail } from '../output';
 import { sleep } from '../poll';
 import { startWaitIndicator } from '../spinner';
 
@@ -25,7 +25,10 @@ export interface InteractOptions {
 
 const POLL_INTERVAL_MS = 2000;
 
-export function clientFromConfig(apiUrl?: string): { client: HumanApiClient; config: ReturnType<typeof resolveConfig> } {
+export function clientFromConfig(apiUrl?: string): {
+  client: HumanApiClient;
+  config: ReturnType<typeof resolveConfig>;
+} {
   const config = resolveConfig({ apiUrl });
   const client = createHumanApiClient({
     apiUrl: config.apiUrl,

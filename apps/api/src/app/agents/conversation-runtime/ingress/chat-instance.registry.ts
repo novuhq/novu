@@ -24,6 +24,7 @@ import { esmImport } from '../../shared/util/esm-import';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 import { PlanLimitGateService } from './plan-limit-gate.service';
+import { rehydrateInboundAttachments } from './rehydrate-inbound-attachments';
 
 /**
  * The adapters this registry knows how to build, keyed by `AgentPlatformEnum`
@@ -531,6 +532,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
+        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
@@ -540,6 +542,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
+        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
@@ -609,6 +612,10 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
+        if (event.message) {
+          rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), event.message);
+        }
+
         await callbacks.onReaction(agentId, cached.config, {
           emoji: event.emoji,
           added: event.added,

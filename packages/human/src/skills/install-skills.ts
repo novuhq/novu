@@ -69,7 +69,10 @@ export function resolveSkillHosts(targetCwd: string): SkillHost[] {
   return Array.from(new Set<SkillHost>([...hosts, 'claude']));
 }
 
-export function installHumanSkill(targetCwd: string, hosts: SkillHost[] = resolveSkillHosts(targetCwd)): InstalledSkill[] {
+export function installHumanSkill(
+  targetCwd: string,
+  hosts: SkillHost[] = resolveSkillHosts(targetCwd)
+): InstalledSkill[] {
   const sourceDir = resolveBundledSkillDir();
   if (!fs.existsSync(sourceDir)) {
     throw new Error(`Bundled skill content is missing (expected at ${sourceDir}). Reinstall @novu/human.`);
