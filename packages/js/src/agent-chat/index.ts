@@ -14,6 +14,7 @@ export type {
   AgentConversationState,
   AgentConversationStatus,
   AgentConversationTyping,
+  AgentDataPart,
   AgentFilePart,
   AgentMcpConnectionAction,
   AgentMcpConnectionPart,

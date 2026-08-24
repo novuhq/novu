@@ -30,11 +30,66 @@ function assistantMessages(messages: AgentMessage[]): AgentMessage[] {
 }
 
 describe('applyEnvelope', () => {
-  it('no-ops on unknown future event kinds', () => {
-    const initial = createInitialAgentConversationState();
-    const next = applyEnvelope(initial, envelope(1, { type: 'custom', name: 'future.kind', data: { ok: true } }));
+  it('appends custom data parts onto the active assistant message', () => {
+    const afterRun = applyEnvelope(createInitialAgentConversationState(), envelope(1, { type: 'run-start' }));
+    const afterFirst = applyEnvelope(
+      afterRun,
+      envelope(2, { type: 'custom', name: 'order-progress', data: { pct: 40 } })
+    );
+    const afterSecond = applyEnvelope(
+      afterFirst,
+      envelope(3, { type: 'custom', name: 'order-progress', data: { pct: 70 } })
+    );
 
-    expect(next).toEqual({ ...initial, lastSequence: 1 });
+    expect(afterSecond.lastSequence).toBe(3);
+    const assistant = assistantMessages(afterSecond.messages)[0];
+    expect(assistant?.id).toBe('run-1');
+    expect(assistant?.parts).toEqual([
+      { type: 'data', name: 'order-progress', data: { pct: 40 } },
+      { type: 'data', name: 'order-progress', data: { pct: 70 } },
+    ]);
+    expect(assistant?.parts.filter((part) => part.type === 'data' && part.name === 'order-progress').at(-1)).toEqual({
+      type: 'data',
+      name: 'order-progress',
+      data: { pct: 70 },
+    });
+  });
+
+  it('hangs custom data on the in-flight assistant message, not a new one', () => {
+    const next = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, { type: 'run-start' }),
+      envelope(2, { type: 'message-start', messageId: 'm1' }),
+      envelope(3, { type: 'custom', name: 'order-progress', data: { pct: 70 } }),
+    ]);
+
+    expect(assistantMessages(next.messages)).toHaveLength(1);
+    expect(next.messages[0]?.id).toBe('m1');
+    expect(next.messages[0]?.parts).toEqual([
+      { type: 'text', text: '', state: 'streaming' },
+      { type: 'data', name: 'order-progress', data: { pct: 70 } },
+    ]);
+  });
+
+  it('yields the same data parts for live custom envelopes and history catch-up', () => {
+    const live = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, { type: 'run-start' }),
+      envelope(2, { type: 'message-start', messageId: 'm1' }),
+      envelope(3, { type: 'message', role: 'assistant', messageId: 'm1', content: { markdown: 'Working' } }),
+      envelope(4, { type: 'custom', name: 'order-progress', data: { pct: 70 } }),
+      envelope(5, { type: 'run-finish', outcome: 'completed' }),
+    ]);
+    const history = applyEnvelopes(createInitialAgentConversationState(), [
+      envelope(1, { type: 'run-start' }),
+      envelope(2, { type: 'message', role: 'assistant', messageId: 'm1', content: { markdown: 'Working' } }),
+      envelope(3, { type: 'custom', name: 'order-progress', data: { pct: 70 } }),
+      envelope(4, { type: 'run-finish', outcome: 'completed' }),
+    ]);
+
+    expect(assistantMessages(live.messages)[0]?.parts).toEqual(assistantMessages(history.messages)[0]?.parts);
+    expect(assistantMessages(history.messages)[0]?.parts).toEqual([
+      { type: 'text', text: 'Working', state: 'done' },
+      { type: 'data', name: 'order-progress', data: { pct: 70 } },
+    ]);
   });
 
   it('no-ops provider-event in transcript', () => {

@@ -37,6 +37,12 @@ export function getTimelineLabel(activity: ConversationActivityDto): string {
     return `Card updated: ${activity.content}`;
   }
 
+  if (activity.type === 'custom') {
+    const name = activity.richContent?.custom?.name?.trim() || activity.content.trim();
+
+    return name || 'custom';
+  }
+
   return activity.content;
 }
 

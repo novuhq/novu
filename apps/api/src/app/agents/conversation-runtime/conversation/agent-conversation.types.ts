@@ -124,3 +124,8 @@ export interface PersistMcpConnectionResultParams extends ConversationActivityCo
   status: 'connected' | 'failed';
   message?: string;
 }
+
+export interface PersistCustomParams extends ConversationActivityContext {
+  name: string;
+  data: unknown;
+}

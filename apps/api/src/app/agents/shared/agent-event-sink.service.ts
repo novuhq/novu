@@ -26,6 +26,7 @@ import {
   toReplyContent,
   toThalamusUsage,
 } from './agent-event-mappers';
+import { isPersistableCustomEvent } from './custom-agent-event';
 import { AgentPlatformEnum, usesProtocolEventApprovals } from './enums/agent-platform.enum';
 import { captureAgentException } from './errors/capture-agent-sentry';
 import { McpConnectionErrorHandler } from './mcp-connection-error.handler';
@@ -133,6 +134,9 @@ export class AgentEventSink {
 
         return 'accepted';
 
+      case 'custom':
+        return this.handleCustom(event, context, envelope.runId);
+
       case 'signal':
         return this.handleSignal(event, baseFields, context, envelope.runId);
 
@@ -198,7 +202,6 @@ export class AgentEventSink {
       case 'message-delta':
       case 'tool-use-delta':
       case 'source':
-      case 'custom':
       case 'tool-approval-response':
       case 'mcp-connection-request':
       case 'mcp-connection-result':
@@ -490,6 +493,43 @@ export class AgentEventSink {
       runId: envelope.runId,
       turnId: envelope.turnId,
     });
+  }
+
+  private async handleCustom(
+    event: Extract<AgentEvent, { type: 'custom' }>,
+    context: AgentEventContext,
+    runId: string
+  ): Promise<IngestOutcome> {
+    if (!isPersistableCustomEvent(event)) {
+      this.logger.warn(
+        { name: event.name, runId, conversationId: context.conversationId },
+        'Skipping custom agent event: empty name or data over 64KiB'
+      );
+
+      return 'accepted';
+    }
+
+    const channel = context.channel;
+    if (!channel) {
+      this.logger.warn(
+        { name: event.name, runId, conversationId: context.conversationId },
+        'Skipping custom agent event persist: missing channel on AgentEventContext'
+      );
+
+      return 'accepted';
+    }
+
+    await this.conversationService.persistCustom({
+      conversationId: context.conversationId,
+      channel,
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      name: event.name,
+      data: event.data,
+    });
+
+    return 'accepted';
   }
 
   private async handleSignal(

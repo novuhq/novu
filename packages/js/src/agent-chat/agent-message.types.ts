@@ -96,6 +96,12 @@ export type AgentCardPart = {
   card: Record<string, unknown>;
 };
 
+export type AgentDataPart = {
+  type: 'data';
+  name: string;
+  data: unknown;
+};
+
 export type AgentMessagePart =
   | AgentTextPart
   | AgentThinkingPart
@@ -104,7 +110,8 @@ export type AgentMessagePart =
   | AgentMcpConnectionPart
   | AgentSourcePart
   | AgentFilePart
-  | AgentCardPart;
+  | AgentCardPart
+  | AgentDataPart;
 
 export type AgentMessage = {
   id: string;

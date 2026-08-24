@@ -18,6 +18,7 @@ export type {
   AgentConversationState,
   AgentConversationStatus,
   AgentConversationTyping,
+  AgentDataPart,
   AgentEventEnvelope,
   AgentFilePart,
   AgentHashFields,

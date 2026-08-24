@@ -18,6 +18,7 @@ import type {
   ConversationActivityContext,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
+  PersistCustomParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -415,6 +416,27 @@ export class ConversationActivityLedger {
         },
       },
       ConversationActivityTypeEnum.MCP_CONNECTION_RESULT,
+      'activity'
+    );
+
+    await this.emitPersistedClientEvent(params, activity);
+
+    return activity;
+  }
+
+  async persistCustom(params: PersistCustomParams): Promise<ConversationActivityEntity> {
+    const activity = await this.persistAgentActivity(
+      {
+        ...params,
+        content: params.name,
+        richContent: {
+          custom: {
+            name: params.name,
+            data: params.data,
+          },
+        },
+      },
+      ConversationActivityTypeEnum.CUSTOM,
       'activity'
     );
 

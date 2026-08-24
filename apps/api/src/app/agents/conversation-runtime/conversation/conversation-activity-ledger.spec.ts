@@ -384,6 +384,46 @@ describe('ConversationActivityLedger', () => {
     });
   });
 
+  describe('custom activities', () => {
+    it('persists an append-only custom row and publishes it on the durable path', async () => {
+      const activityRepository = makeActivityRepository();
+      const mint = sinon.stub().resolves(12);
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const ledger = makeLedger(activityRepository, { mint } as unknown as ConversationEventSequenceService, publisher);
+      const context = {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'agent_chat',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      };
+
+      await ledger.persistCustom({
+        ...context,
+        name: 'order-progress',
+        data: { pct: 70 },
+      });
+
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        type: ConversationActivityTypeEnum.CUSTOM,
+        sequence: 12,
+        content: 'order-progress',
+        richContent: {
+          custom: {
+            name: 'order-progress',
+            data: { pct: 70 },
+          },
+        },
+      });
+      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.match(/^act_/);
+      expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+    });
+  });
+
   describe('event sequencing', () => {
     it('allocates a sequence for durable tool activities on any channel', async () => {
       const activityRepository = makeActivityRepository();
