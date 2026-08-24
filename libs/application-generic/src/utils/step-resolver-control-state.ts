@@ -1,6 +1,6 @@
-import Ajv, { ErrorObject } from 'ajv';
-import addFormats from 'ajv-formats';
+import { ErrorObject } from 'ajv';
 import { cloneDeep } from 'es-toolkit/compat';
+import { createSchemaValidationAjv } from './issues';
 
 export const FRAMEWORK_EMPTY_STEP_RESOLVER_SCHEMA = {
   type: 'object',
@@ -45,15 +45,7 @@ export function reconcileStepResolverControlValues(
   controlValues: Record<string, unknown> | null | undefined,
   controlSchema: Record<string, unknown>
 ): Record<string, unknown> {
-  const ajv = new Ajv({
-    allErrors: true,
-    useDefaults: false,
-    strict: false,
-  });
-
-  addFormats(ajv);
-
-  const validate = ajv.compile(controlSchema);
+  const validate = createSchemaValidationAjv({ schema: controlSchema }).compile(controlSchema);
   let reconciledControlValues = cloneDeep(isPlainObject(controlValues) ? controlValues : {});
 
   while (true) {
