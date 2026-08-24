@@ -1,8 +1,10 @@
 import type {
   AgentChatPagination,
   AgentChatPlanLimitError,
+  AgentConversationRunSnapshot,
+  AgentConversationRuntime,
+  AgentConversationSnapshot,
   AgentConversationStatus,
-  AgentConversationTyping,
   AgentEventEnvelope,
   AgentHashFields,
   AgentMessage,
@@ -14,19 +16,11 @@ import type {
   SendActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { derivePendingActions } from '@novu/js';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
-export type UseAgentChatProps = AgentHashFields & {
-  agentId: string;
-  /**
-   * Resume this conversation. The hook loads history on mount.
-   * Omit this prop to start a new chat. The first send creates a conversation.
-   * Later sends pass the returned id. Remount or clear this prop to start another chat.
-   */
-  conversationId?: string;
+type UseAgentChatCallbacks = {
   onSuccess?: (data: LoadConversationResult) => void;
   onError?: (error: NovuError | AgentChatPlanLimitError) => void;
   /**
@@ -51,6 +45,28 @@ export type UseAgentChatProps = AgentHashFields & {
   onEvent?: (envelope: AgentEventEnvelope) => void;
 };
 
+export type UseAgentChatProps = UseAgentChatCallbacks &
+  AgentHashFields &
+  (
+    | {
+        agentId: string;
+        /**
+         * Resume this conversation. The hook loads history on mount.
+         * Omit this prop to start a new chat. The first send creates a conversation.
+         * Later sends pass the returned id. Remount or clear this prop to start another chat.
+         */
+        conversationId?: string;
+        conversation?: never;
+      }
+    | {
+        /** Share an existing conversation runtime across multiple hook instances. */
+        conversation: AgentConversationRuntime;
+        agentId?: never;
+        conversationId?: never;
+        agentHash?: never;
+      }
+  );
+
 export type UseAgentChatResult = {
   messages: AgentMessage[];
   pendingActions: AgentPendingAction[];
@@ -59,8 +75,13 @@ export type UseAgentChatResult = {
   /** True until the first history fetch completes. False when there is no `conversationId` prop. */
   isLoading: boolean;
   isRunning: boolean;
-  typing?: AgentConversationTyping;
+  typing?: AgentConversationRunSnapshot['typing'];
+  /** Conversation lifecycle status (`active`, etc.). */
   status: AgentConversationStatus;
+  /** Explicit alias for `status`. */
+  conversationStatus: AgentConversationStatus;
+  /** Current agent run snapshot. */
+  run: AgentConversationRunSnapshot;
   pagination: AgentChatPagination & {
     fetchMore: () => Promise<{
       data?: { messages: AgentMessage[]; hasMore: boolean };
@@ -84,102 +105,43 @@ export type UseAgentChatResult = {
     data?: SendActionResult;
     error?: NovuError | AgentChatPlanLimitError;
   }>;
+  retryMessage: (messageId: string) => Promise<{
+    data?: SendMessageResult;
+    error?: NovuError | AgentChatPlanLimitError;
+  }>;
 };
 
-function createLocalSessionKey(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `local_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
-  }
-
-  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-    const bytes = new Uint8Array(6);
-    crypto.getRandomValues(bytes);
-
-    return `local_${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
-  }
-
-  return `local_${Date.now().toString(36)}`;
+function subscribeToRuntime(runtime: AgentConversationRuntime, onStoreChange: () => void): () => void {
+  return runtime.subscribe(() => {
+    onStoreChange();
+  });
 }
 
-type ConversationSnapshot = {
-  messages: AgentMessage[];
-  isRunning: boolean;
-  typing?: AgentConversationTyping;
-  status: AgentConversationStatus;
-  pagination: AgentChatPagination;
-  error?: NovuError | AgentChatPlanLimitError;
-};
-
-const EMPTY_CONVERSATION: ConversationSnapshot = {
+const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
+  key: 'ssr',
+  status: 'ready',
+  run: { isRunning: false },
+  conversationStatus: 'active',
+  pagination: { hasMore: false, status: 'idle' },
   messages: [],
-  isRunning: false,
-  typing: undefined,
-  status: 'active',
-  pagination: { status: 'idle', hasMore: false },
+  pendingActions: [],
+  isRecovering: false,
 };
-
-function applyConversationSnapshot(
-  snapshot: ConversationSnapshot,
-  setters: {
-    setMessages: (messages: AgentMessage[]) => void;
-    setIsRunning: (isRunning: boolean) => void;
-    setTyping: (typing?: AgentConversationTyping) => void;
-    setStatus: (status: AgentConversationStatus) => void;
-    setPagination: (pagination: AgentChatPagination) => void;
-    setError: (error?: NovuError | AgentChatPlanLimitError) => void;
-  }
-): void {
-  setters.setMessages(snapshot.messages);
-  setters.setIsRunning(snapshot.isRunning);
-  setters.setTyping(snapshot.typing);
-  setters.setStatus(snapshot.status);
-  setters.setPagination(snapshot.pagination);
-  setters.setError(snapshot.error);
-}
 
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
-  const { agentId, agentHash, conversationId: conversationIdProp } = props;
-  const propsRef = useDataRef(props);
   const novu = useNovu();
+  const propsRef = useDataRef(props);
 
-  // Resume: the prop is the key on the same render (no effect lag).
-  // Create: keep a `local_*` key until remount, prop clear, or agent change.
-  const [localSessionKey, setLocalSessionKey] = useState(createLocalSessionKey);
-  const sessionKey = conversationIdProp ?? localSessionKey;
-  const sessionKeyRef = useDataRef(sessionKey);
+  const sharedRuntime = 'conversation' in props ? props.conversation : undefined;
+  const agentId = sharedRuntime?.agentId ?? props.agentId!;
+  const conversationIdProp = sharedRuntime ? undefined : props.conversationId;
+  const agentHash = sharedRuntime ? undefined : props.agentHash;
+
+  const ownedRuntimeRef = useRef<AgentConversationRuntime | null>(null);
+  const ownsRuntimeRef = useRef(false);
   const prevAgentIdRef = useRef(agentId);
   const prevConversationIdPropRef = useRef(conversationIdProp);
-
-  const [assignedConversationId, setAssignedConversationId] = useState<string>();
-  const conversationId = conversationIdProp ?? assignedConversationId;
-  const conversationIdRef = useDataRef(conversationId);
-
-  const [messages, setMessages] = useState<AgentMessage[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-  const [typing, setTyping] = useState<AgentConversationTyping>();
-  const [status, setStatus] = useState<AgentConversationStatus>('active');
-  const [pagination, setPagination] = useState<AgentChatPagination>({ status: 'idle', hasMore: false });
-  const [error, setError] = useState<NovuError | AgentChatPlanLimitError>();
-  const [isLoading, setIsLoading] = useState(Boolean(conversationIdProp));
-  const [isRecovering, setIsRecovering] = useState(false);
-  const [catchUpError, setCatchUpError] = useState<NovuError | undefined>();
-  const fetchGenerationRef = useRef(0);
-  const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
-  const lastReportedErrorKeyRef = useRef<string>();
-
-  const pendingActions = useMemo(() => derivePendingActions(messages), [messages]);
-
-  const snapshotSetters = useMemo(
-    () => ({
-      setMessages,
-      setIsRunning,
-      setTyping,
-      setStatus,
-      setPagination,
-      setError,
-    }),
-    []
-  );
+  const [createSessionGeneration, setCreateSessionGeneration] = useState(0);
 
   useEffect(() => {
     const agentChanged = prevAgentIdRef.current !== agentId;
@@ -187,134 +149,121 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     prevAgentIdRef.current = agentId;
     prevConversationIdPropRef.current = conversationIdProp;
 
-    if (agentChanged) {
-      setAssignedConversationId(undefined);
-      setLocalSessionKey(createLocalSessionKey());
-      applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
-      setError(undefined);
-      setIsLoading(Boolean(conversationIdProp));
-      lastReportedErrorKeyRef.current = undefined;
-
+    if (sharedRuntime) {
       return;
+    }
+
+    if (agentChanged || (prevConversationIdProp !== undefined && conversationIdProp === undefined)) {
+      if (ownsRuntimeRef.current && ownedRuntimeRef.current) {
+        ownedRuntimeRef.current.dispose();
+      }
+      ownedRuntimeRef.current = null;
+      ownsRuntimeRef.current = false;
+      setCreateSessionGeneration((generation) => generation + 1);
+    }
+
+    if (conversationIdProp && ownsRuntimeRef.current && ownedRuntimeRef.current) {
+      ownedRuntimeRef.current.dispose();
+      ownedRuntimeRef.current = null;
+      ownsRuntimeRef.current = false;
+    }
+  }, [agentId, conversationIdProp, sharedRuntime]);
+
+  const runtime = useMemo(() => {
+    if (sharedRuntime) {
+      return sharedRuntime;
     }
 
     if (conversationIdProp) {
-      setAssignedConversationId(undefined);
+      const result = novu.agentChat.conversation({
+        agentId,
+        conversationId: conversationIdProp,
+        agentHash,
+      });
 
+      return result.ok ? result.data : null;
+    }
+
+    if (!ownedRuntimeRef.current) {
+      const result = novu.agentChat.conversation({ agentId, agentHash });
+      if (result.ok) {
+        ownedRuntimeRef.current = result.data;
+        ownsRuntimeRef.current = true;
+      }
+    }
+
+    return ownedRuntimeRef.current;
+  }, [sharedRuntime, novu, agentId, conversationIdProp, agentHash, createSessionGeneration]);
+
+  useEffect(() => {
+    return () => {
+      if (ownsRuntimeRef.current && ownedRuntimeRef.current) {
+        ownedRuntimeRef.current.dispose();
+        ownedRuntimeRef.current = null;
+        ownsRuntimeRef.current = false;
+      }
+    };
+  }, []);
+
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (!runtime) {
+        return () => {};
+      }
+
+      return subscribeToRuntime(runtime, onStoreChange);
+    },
+    [runtime]
+  );
+
+  const getSnapshot = useCallback(() => {
+    return runtime?.getSnapshot() ?? EMPTY_SERVER_SNAPSHOT;
+  }, [runtime]);
+
+  const getServerSnapshot = useCallback(() => {
+    return runtime?.getServerSnapshot() ?? EMPTY_SERVER_SNAPSHOT;
+  }, [runtime]);
+
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
+  const lastReportedErrorKeyRef = useRef<string>();
+  const loadNotifiedRef = useRef(false);
+  const replayedActionsRef = useRef(false);
+
+  useEffect(() => {
+    loadNotifiedRef.current = false;
+    replayedActionsRef.current = false;
+    notifiedCatchUpErrorRef.current = undefined;
+    lastReportedErrorKeyRef.current = undefined;
+  }, [runtime]);
+
+  useEffect(() => {
+    if (!runtime) {
       return;
     }
 
-    setIsLoading(false);
-    if (prevConversationIdProp !== undefined) {
-      setAssignedConversationId(undefined);
-      setLocalSessionKey(createLocalSessionKey());
-      applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
-    }
-  }, [agentId, conversationIdProp, snapshotSetters]);
-
-  const fetchConversation = useCallback(
-    async (targetConversationId: string) => {
-      const generation = ++fetchGenerationRef.current;
-      setError(undefined);
-      lastReportedErrorKeyRef.current = undefined;
-      setIsLoading(true);
-
-      const response = await novu.agentChat.loadConversation({
-        agentId,
-        conversationId: targetConversationId,
-      });
-
-      if (generation !== fetchGenerationRef.current) {
-        return;
-      }
-
-      if (response.error) {
-        setError(response.error);
-        propsRef.current.onError?.(response.error);
-      } else if (response.data) {
-        setMessages(response.data.messages);
-        const snapshot = novu.agentChat.getConversation({
-          agentId,
-          conversationId: targetConversationId,
-        });
-        if (snapshot) {
-          setPagination(snapshot.pagination);
-        } else {
-          setPagination({ status: 'idle', hasMore: response.data.hasMore });
-        }
-        propsRef.current.onSuccess?.(response.data);
-      }
-
-      setIsLoading(false);
-    },
-    [novu, agentId, propsRef]
-  );
-
-  useEffect(() => {
-    // Agent chat always subscribes for live WS events while mounted, regardless of
-    // `<NovuProvider realtime={false}>`. That flag only disables notification/count
-    // auto-sync (`useNotifications`, `useCounts`). To stop agent-chat live updates,
-    // unmount the hook or call `novu.agentChat.unsubscribe()` yourself.
-    novu.agentChat.subscribe();
-
-    const snapshot = novu.agentChat.getConversation({
-      agentId,
-      key: sessionKey,
-      conversationId: conversationIdProp,
-    });
-    if (snapshot) {
-      applyConversationSnapshot(
-        {
-          messages: snapshot.messages,
-          isRunning: snapshot.isRunning,
-          typing: snapshot.typing,
-          status: snapshot.status,
-          pagination: snapshot.pagination,
-          error: snapshot.error,
-        },
-        snapshotSetters
-      );
-      setIsRecovering(snapshot.isRecovering);
-      setCatchUpError(snapshot.catchUpError);
-      if (snapshot.catchUpError && snapshot.catchUpError !== notifiedCatchUpErrorRef.current) {
-        notifiedCatchUpErrorRef.current = snapshot.catchUpError;
-        propsRef.current.onError?.(snapshot.catchUpError);
-      }
-      if (snapshot.conversationId && !conversationIdProp) {
-        setAssignedConversationId(snapshot.conversationId);
-      }
-
-      // The store reports each action once per holder, and a holder outlives a mount.
-      // Replay from the snapshot so a remount still learns what the run is blocked on.
-      for (const action of derivePendingActions(snapshot.messages)) {
+    if (!replayedActionsRef.current) {
+      replayedActionsRef.current = true;
+      for (const action of runtime.getSnapshot().pendingActions) {
         propsRef.current.onActionRequested?.(action);
       }
-    } else if (!conversationIdProp) {
-      applyConversationSnapshot(EMPTY_CONVERSATION, snapshotSetters);
     }
 
-    const cleanup = novu.on('agent_chat.messages.updated', ({ data }) => {
-      if (data.key !== sessionKeyRef.current) {
+    return novu.agentChat.onMessagesUpdated((data) => {
+      if (data.key !== runtime.key) {
         return;
       }
 
-      applyConversationSnapshot(
-        {
+      if (data.change.kind === 'history' && !loadNotifiedRef.current && conversationIdProp) {
+        loadNotifiedRef.current = true;
+        propsRef.current.onSuccess?.({
+          conversationId: data.conversationId!,
           messages: data.messages,
-          isRunning: data.isRunning,
-          typing: data.typing,
-          status: data.status,
-          pagination: data.pagination,
-          error: data.error,
-        },
-        snapshotSetters
-      );
-      if (data.conversationId && !propsRef.current.conversationId) {
-        setAssignedConversationId(data.conversationId);
+          hasMore: data.hasMore,
+        });
       }
 
-      setIsRecovering(data.isRecovering);
-      setCatchUpError(data.catchUpError);
       if (data.catchUpError && data.catchUpError !== notifiedCatchUpErrorRef.current) {
         notifiedCatchUpErrorRef.current = data.catchUpError;
         propsRef.current.onError?.(data.catchUpError);
@@ -332,156 +281,149 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         lastReportedErrorKeyRef.current = undefined;
       }
 
-      const { change } = data;
-      if (change.kind === 'live') {
-        propsRef.current.onEvent?.(change.envelope);
+      if (data.change.kind === 'live') {
+        propsRef.current.onEvent?.(data.change.envelope);
       }
 
-      if (change.kind !== 'history') {
-        for (const message of change.addedMessages) {
+      if (data.change.kind !== 'history') {
+        for (const message of data.change.addedMessages) {
           propsRef.current.onMessage?.(message);
         }
       }
 
-      for (const action of change.newActions) {
+      for (const action of data.change.newActions) {
         propsRef.current.onActionRequested?.(action);
       }
     });
-
-    if (conversationIdProp) {
-      void fetchConversation(conversationIdProp);
-    }
-
-    return () => {
-      cleanup();
-      novu.agentChat.unsubscribe();
-    };
-  }, [novu, agentId, conversationIdProp, sessionKey, sessionKeyRef, propsRef, fetchConversation, snapshotSetters]);
+  }, [novu, runtime, conversationIdProp, propsRef]);
 
   const refetch = useCallback(async () => {
-    const id = conversationIdRef.current;
-    if (!id) {
+    if (!runtime) {
       return;
     }
 
-    await fetchConversation(id);
-  }, [conversationIdRef, fetchConversation]);
+    const response = await runtime.load();
+    if (response.data) {
+      propsRef.current.onSuccess?.({
+        conversationId: response.data.conversationId,
+        messages: [...response.data.messages],
+        hasMore: response.data.hasMore,
+      });
+    }
+  }, [runtime, propsRef]);
 
   const fetchMore = useCallback(async () => {
-    const response = await novu.agentChat.fetchMore({
-      agentId,
-      key: sessionKeyRef.current,
-      conversationId: conversationIdRef.current,
-    });
-
-    if (response.error) {
-      setError(response.error);
-      propsRef.current.onError?.(response.error);
-    } else if (response.data) {
-      setMessages(response.data.messages);
-      setPagination((current: AgentChatPagination) => ({
-        ...current,
-        hasMore: response.data!.hasMore,
-      }));
+    if (!runtime) {
+      return { error: undefined };
     }
 
-    return response;
-  }, [novu, agentId, sessionKeyRef, conversationIdRef, propsRef]);
+    const response = await runtime.fetchMore();
+    if (response.error) {
+      propsRef.current.onError?.(response.error);
+    }
+
+    return {
+      ...response,
+      data: response.data
+        ? {
+            messages: [...response.data.messages],
+            hasMore: response.data.hasMore,
+          }
+        : undefined,
+    };
+  }, [runtime, propsRef]);
 
   const paginationWithFetch = useMemo(
     () => ({
-      ...pagination,
+      status: snapshot.pagination.status,
+      hasMore: snapshot.pagination.hasMore,
       fetchMore,
     }),
-    [pagination, fetchMore]
+    [snapshot.pagination.status, snapshot.pagination.hasMore, fetchMore]
   );
 
   const sendMessage = useCallback(
     async (text: string) => {
-      setError(undefined);
+      if (!runtime) {
+        return { error: undefined };
+      }
 
-      const response = await novu.agentChat.sendMessage({
-        agentId,
-        agentHash,
-        text,
-        key: sessionKeyRef.current,
-        conversationId: conversationIdRef.current,
-      });
-
+      const response = await runtime.sendMessage(text);
       if (response.error) {
-        setError(response.error);
         propsRef.current.onError?.(response.error);
-      } else if (response.data && !propsRef.current.conversationId) {
-        setAssignedConversationId(response.data.conversationId);
       }
 
       return response;
     },
-    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
+    [runtime, propsRef]
   );
 
   const respondToAction = useCallback(
     async (args: { actionId: string; decision: AgentToolApprovalDecision }) => {
-      setError(undefined);
+      if (!runtime) {
+        return { error: undefined };
+      }
 
-      const response = await novu.agentChat.respondToAction({
-        agentId,
-        agentHash,
-        key: sessionKeyRef.current,
-        conversationId: conversationIdRef.current,
-        actionId: args.actionId,
-        decision: args.decision,
-      });
-
+      const response = await runtime.respondToAction(args);
       if (response.error) {
-        setError(response.error);
         propsRef.current.onError?.(response.error);
       }
 
       return response;
     },
-    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
+    [runtime, propsRef]
   );
 
   const sendAction = useCallback(
     async (args: { actionId: string; sourceMessageId: string; value?: string }) => {
-      setError(undefined);
+      if (!runtime) {
+        return { error: undefined };
+      }
 
-      const response = await novu.agentChat.sendAction({
-        agentId,
-        agentHash,
-        key: sessionKeyRef.current,
-        conversationId: conversationIdRef.current,
-        actionId: args.actionId,
-        sourceMessageId: args.sourceMessageId,
-        value: args.value,
-      });
-
+      const response = await runtime.sendAction(args);
       if (response.error) {
-        setError(response.error);
         propsRef.current.onError?.(response.error);
       }
 
       return response;
     },
-    [novu, agentId, agentHash, sessionKeyRef, conversationIdRef, propsRef]
+    [runtime, propsRef]
+  );
+
+  const retryMessage = useCallback(
+    async (messageId: string) => {
+      if (!runtime) {
+        return { error: undefined };
+      }
+
+      const response = await runtime.retryMessage(messageId);
+      if (response.error) {
+        propsRef.current.onError?.(response.error);
+      }
+
+      return response;
+    },
+    [runtime, propsRef]
   );
 
   return {
-    messages,
-    pendingActions,
+    messages: [...snapshot.messages],
+    pendingActions: [...snapshot.pendingActions],
+    conversationId: snapshot.conversationId,
+    error: snapshot.error as UseAgentChatResult['error'],
+    isLoading: snapshot.status === 'loading',
+    isRunning: snapshot.run.isRunning,
+    typing: snapshot.run.typing,
+    status: snapshot.conversationStatus,
+    conversationStatus: snapshot.conversationStatus,
+    run: snapshot.run,
+    pagination: paginationWithFetch,
+    isRecovering: snapshot.isRecovering,
+    catchUpError: snapshot.catchUpError,
+    refetch,
     sendMessage,
     respondToAction,
     sendAction,
-    conversationId,
-    error,
-    isLoading,
-    isRunning,
-    typing,
-    status,
-    pagination: paginationWithFetch,
-    isRecovering,
-    catchUpError,
-    refetch,
+    retryMessage,
   };
 };

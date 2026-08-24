@@ -5,6 +5,7 @@ import { createLocalConversationKey } from './agent-chat-store';
 import type { AgentToolApprovalDecision } from './agent-message.types';
 import { derivePendingActions } from './agent-message.types';
 import type {
+  AgentConversationPaginationSnapshot,
   AgentConversationRunSnapshot,
   AgentConversationSessionStatus,
   AgentConversationSnapshot,
@@ -15,19 +16,6 @@ import type {
 import { runtimeCacheKey } from './runtime-cache-key';
 
 const EMPTY_RUN: AgentConversationRunSnapshot = Object.freeze({ isRunning: false });
-
-function cloneSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSnapshot {
-  return {
-    ...snapshot,
-    run: {
-      ...snapshot.run,
-      typing: snapshot.run.typing ? { ...snapshot.run.typing } : undefined,
-    },
-    pagination: { ...snapshot.pagination },
-    messages: structuredClone(snapshot.messages),
-    pendingActions: structuredClone(snapshot.pendingActions),
-  };
-}
 
 function deepFreeze<T>(value: T): T {
   if (value === null || typeof value !== 'object') {
@@ -63,10 +51,26 @@ function createEmptySnapshot(key: string, conversationId?: string): AgentConvers
     status: conversationId ? 'loading' : 'ready',
     run: EMPTY_RUN,
     conversationStatus: 'active',
-    pagination: { hasMore: false },
+    pagination: { hasMore: false, status: 'idle' },
     messages: [],
     pendingActions: [],
+    isRecovering: false,
   });
+}
+
+const SERVER_SNAPSHOT = createEmptySnapshot('ssr');
+
+function cloneSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSnapshot {
+  return {
+    ...snapshot,
+    run: {
+      ...snapshot.run,
+      typing: snapshot.run.typing ? { ...snapshot.run.typing } : undefined,
+    },
+    pagination: { ...snapshot.pagination },
+    messages: structuredClone(snapshot.messages),
+    pendingActions: structuredClone(snapshot.pendingActions),
+  };
 }
 
 function normalizeSendMessageInput(input: SendMessageInput): { text: string; metadata?: Record<string, unknown> } {
@@ -75,6 +79,10 @@ function normalizeSendMessageInput(input: SendMessageInput): { text: string; met
   }
 
   return { text: input.text, metadata: input.metadata };
+}
+
+function storePagination(hasMore: boolean, status: AgentConversationPaginationSnapshot['status'] = 'idle') {
+  return { hasMore, status };
 }
 
 /**
@@ -118,7 +126,9 @@ export class AgentConversationRuntime {
         isRunning: data.isRunning,
         typing: data.typing,
         status: data.status,
-        hasMore: data.hasMore,
+        pagination: data.pagination,
+        isRecovering: data.isRecovering,
+        catchUpError: data.catchUpError,
         conversationId: data.conversationId,
         sessionStatus:
           this.#snapshot.status === 'loading' || this.#snapshot.status === 'fetching' ? this.#snapshot.status : 'ready',
@@ -132,6 +142,10 @@ export class AgentConversationRuntime {
 
   getSnapshot(): AgentConversationSnapshot {
     return this.#snapshot;
+  }
+
+  getServerSnapshot(): AgentConversationSnapshot {
+    return SERVER_SNAPSHOT;
   }
 
   subscribe(listener: (snapshot: AgentConversationSnapshot) => void): () => void {
@@ -185,12 +199,20 @@ export class AgentConversationRuntime {
     }
 
     if (response.data) {
+      const store = this.#agentChat.getConversation({
+        agentId: this.agentId,
+        key: this.key,
+        conversationId: response.data.conversationId,
+      });
+
       this.#publishFromStore({
         messages: response.data.messages,
-        isRunning: this.#snapshot.run.isRunning,
-        typing: this.#snapshot.run.typing,
-        status: this.#snapshot.conversationStatus,
-        hasMore: response.data.hasMore,
+        isRunning: store?.isRunning ?? this.#snapshot.run.isRunning,
+        typing: store?.typing ?? this.#snapshot.run.typing,
+        status: store?.status ?? this.#snapshot.conversationStatus,
+        pagination: store?.pagination ?? storePagination(response.data.hasMore),
+        isRecovering: store?.isRecovering ?? false,
+        catchUpError: store?.catchUpError,
         conversationId: response.data.conversationId,
         sessionStatus: 'ready',
       });
@@ -230,7 +252,9 @@ export class AgentConversationRuntime {
         isRunning: store?.isRunning ?? this.#snapshot.run.isRunning,
         typing: store?.typing ?? this.#snapshot.run.typing,
         status: store?.status ?? this.#snapshot.conversationStatus,
-        hasMore: response.data.hasMore,
+        pagination: store?.pagination ?? storePagination(response.data.hasMore),
+        isRecovering: store?.isRecovering ?? this.#snapshot.isRecovering,
+        catchUpError: store?.catchUpError,
         conversationId: store?.conversationId ?? this.#conversationId,
         sessionStatus: 'ready',
       });
@@ -309,6 +333,24 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  async retryMessage(
+    messageId: string
+  ): Promise<{ data?: { conversationId: string; messageId: string }; error?: NovuError | AgentChatPlanLimitError }> {
+    const response = await this.#agentChat.retryMessage({
+      agentId: this.agentId,
+      agentHash: this.#agentHash,
+      key: this.key,
+      conversationId: this.#conversationId,
+      messageId,
+    });
+
+    if (response.error) {
+      this.#publishError(response.error);
+    }
+
+    return response;
+  }
+
   cancelRun(): ConversationResult<void> {
     return {
       ok: false,
@@ -363,7 +405,9 @@ export class AgentConversationRuntime {
     isRunning: boolean;
     typing?: AgentConversationRunSnapshot['typing'];
     status: AgentConversationSnapshot['conversationStatus'];
-    hasMore: boolean;
+    pagination: AgentConversationPaginationSnapshot;
+    isRecovering: boolean;
+    catchUpError?: NovuError;
     conversationId?: string;
     sessionStatus: AgentConversationSessionStatus;
   }): void {
@@ -376,11 +420,11 @@ export class AgentConversationRuntime {
         typing: args.typing,
       },
       conversationStatus: args.status,
-      pagination: {
-        hasMore: args.hasMore,
-      },
+      pagination: args.pagination,
       messages: args.messages,
       pendingActions: derivePendingActions([...args.messages]),
+      isRecovering: args.isRecovering,
+      catchUpError: args.catchUpError,
       error: undefined,
     });
   }

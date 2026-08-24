@@ -85,6 +85,8 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
     isRunning: false,
     typing: undefined,
     status: 'active',
+    conversationStatus: 'active',
+    run: { isRunning: false },
     pagination: {
       status: 'idle',
       hasMore: false,
@@ -96,6 +98,7 @@ export function useAgentChat(_: UseAgentChatProps): UseAgentChatResult {
     sendMessage: () => Promise.resolve({ data: undefined, error: undefined }),
     respondToAction: () => Promise.resolve({ data: undefined, error: undefined }),
     sendAction: () => Promise.resolve({ data: undefined, error: undefined }),
+    retryMessage: () => Promise.resolve({ data: undefined, error: undefined }),
   };
 }
 
