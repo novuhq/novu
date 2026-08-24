@@ -1,24 +1,20 @@
 import { RiAddFill } from 'react-icons/ri';
 import { ActionWithRulesAndAddersProps } from 'react-querybuilder';
 
-import { DEFAULT_MAX_CONDITIONS_PER_GROUP } from '@/components/conditions-editor/types';
 import { Button } from '@/components/primitives/button';
+import { useConditionsEditorContext } from './conditions-editor-context';
 
 export const AddConditionAction = ({
   label,
   title,
-  rules,
+  path,
   handleOnClick,
   context,
   disabled,
 }: ActionWithRulesAndAddersProps) => {
-  const maxConditionsPerGroup = context?.maxConditionsPerGroup ?? DEFAULT_MAX_CONDITIONS_PER_GROUP;
+  const { canAddToGroup } = useConditionsEditorContext();
 
-  if (rules && rules.length >= maxConditionsPerGroup) {
-    return null;
-  }
-
-  if (disabled) {
+  if (disabled || !canAddToGroup(path)) {
     return null;
   }
 
@@ -29,6 +25,10 @@ export const AddConditionAction = ({
       size="2xs"
       className="bg-transparent"
       onClick={(e) => {
+        if (!canAddToGroup(path)) {
+          return;
+        }
+
         handleOnClick(e);
         context?.saveForm();
       }}
