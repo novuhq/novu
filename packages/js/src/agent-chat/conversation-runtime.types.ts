@@ -9,6 +9,7 @@ import type {
   AgentToolApprovalDecision,
 } from './agent-message.types';
 import type {
+  AgentChatChange,
   AgentChatPaginationStatus,
   FetchMoreResult,
   LoadConversationResult,
@@ -29,6 +30,13 @@ export type AgentConversationRunSnapshot = {
 export type AgentConversationPaginationSnapshot = {
   hasMore: boolean;
   status: AgentChatPaginationStatus;
+};
+
+/** Extra context for one snapshot publication. Omitted on the initial subscribe replay. */
+export type AgentConversationPublicationMeta = {
+  change?: AgentChatChange;
+  /** Resume history finished loading for this runtime. */
+  historyLoaded?: boolean;
 };
 
 /**
@@ -68,7 +76,9 @@ export type SendMessageInput = string | { text: string; metadata?: Record<string
 export type AgentConversationRuntimeActions = {
   getSnapshot(): AgentConversationSnapshot;
   getServerSnapshot(): AgentConversationSnapshot;
-  subscribe(listener: (snapshot: AgentConversationSnapshot) => void): () => void;
+  subscribe(
+    listener: (snapshot: AgentConversationSnapshot, meta?: AgentConversationPublicationMeta) => void
+  ): () => void;
   dispose(): void;
   load(): Promise<{ data?: LoadConversationResult; error?: NovuError }>;
   fetchMore(): Promise<{ data?: FetchMoreResult; error?: NovuError }>;

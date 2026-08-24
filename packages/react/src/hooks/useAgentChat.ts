@@ -1,6 +1,7 @@
 import type {
   AgentChatPagination,
   AgentChatPlanLimitError,
+  AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationRuntime,
   AgentConversationSnapshot,
@@ -16,7 +17,7 @@ import type {
   SendActionResult,
   SendMessageResult,
 } from '@novu/js';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
 
@@ -111,12 +112,6 @@ export type UseAgentChatResult = {
   }>;
 };
 
-function subscribeToRuntime(runtime: AgentConversationRuntime, onStoreChange: () => void): () => void {
-  return runtime.subscribe(() => {
-    onStoreChange();
-  });
-}
-
 const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
   key: 'ssr',
   status: 'ready',
@@ -128,6 +123,77 @@ const EMPTY_SERVER_SNAPSHOT: AgentConversationSnapshot = {
   isRecovering: false,
 };
 
+type RuntimeActionResult<T> = {
+  data?: T;
+  error?: NovuError | AgentChatPlanLimitError;
+};
+
+function handlePublicationCallbacks(args: {
+  snapshot: AgentConversationSnapshot;
+  meta: AgentConversationPublicationMeta | undefined;
+  conversationIdProp: string | undefined;
+  propsRef: ReturnType<typeof useDataRef<UseAgentChatProps>>;
+  loadNotifiedRef: MutableRefObject<boolean>;
+  notifiedCatchUpErrorRef: MutableRefObject<NovuError | undefined>;
+  lastReportedErrorKeyRef: MutableRefObject<string | undefined>;
+}): void {
+  const {
+    snapshot,
+    meta,
+    conversationIdProp,
+    propsRef,
+    loadNotifiedRef,
+    notifiedCatchUpErrorRef,
+    lastReportedErrorKeyRef,
+  } = args;
+
+  if ((meta?.historyLoaded || meta?.change?.kind === 'history') && !loadNotifiedRef.current && conversationIdProp) {
+    if (snapshot.conversationId) {
+      loadNotifiedRef.current = true;
+      propsRef.current.onSuccess?.({
+        conversationId: snapshot.conversationId,
+        messages: [...snapshot.messages],
+        hasMore: snapshot.pagination.hasMore,
+      });
+    }
+  }
+
+  if (snapshot.catchUpError && snapshot.catchUpError !== notifiedCatchUpErrorRef.current) {
+    notifiedCatchUpErrorRef.current = snapshot.catchUpError;
+    propsRef.current.onError?.(snapshot.catchUpError);
+  } else if (!snapshot.catchUpError) {
+    notifiedCatchUpErrorRef.current = undefined;
+  }
+
+  if (snapshot.error) {
+    const originalMessage = 'originalError' in snapshot.error ? (snapshot.error.originalError?.message ?? '') : '';
+    const errorKey = `${snapshot.error.message}:${originalMessage}`;
+    if (lastReportedErrorKeyRef.current !== errorKey) {
+      lastReportedErrorKeyRef.current = errorKey;
+      propsRef.current.onError?.(snapshot.error as NovuError | AgentChatPlanLimitError);
+    }
+  } else {
+    lastReportedErrorKeyRef.current = undefined;
+  }
+
+  const change = meta?.change;
+  if (change?.kind === 'live') {
+    propsRef.current.onEvent?.(change.envelope);
+  }
+
+  if (change && change.kind !== 'history') {
+    for (const message of change.addedMessages) {
+      propsRef.current.onMessage?.(message);
+    }
+  }
+
+  if (change) {
+    for (const action of change.newActions) {
+      propsRef.current.onActionRequested?.(action);
+    }
+  }
+}
+
 export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const novu = useNovu();
   const propsRef = useDataRef(props);
@@ -137,73 +203,60 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const conversationIdProp = sharedRuntime ? undefined : props.conversationId;
   const agentHash = sharedRuntime ? undefined : props.agentHash;
 
-  const ownedRuntimeRef = useRef<AgentConversationRuntime | null>(null);
-  const ownsRuntimeRef = useRef(false);
-  const prevAgentIdRef = useRef(agentId);
-  const prevConversationIdPropRef = useRef(conversationIdProp);
-  const [createSessionGeneration, setCreateSessionGeneration] = useState(0);
+  const [ownedRuntime, setOwnedRuntime] = useState<AgentConversationRuntime | null>(null);
 
-  useEffect(() => {
-    const agentChanged = prevAgentIdRef.current !== agentId;
-    const prevConversationIdProp = prevConversationIdPropRef.current;
-    prevAgentIdRef.current = agentId;
-    prevConversationIdPropRef.current = conversationIdProp;
-
-    if (sharedRuntime) {
-      return;
-    }
-
-    if (agentChanged || (prevConversationIdProp !== undefined && conversationIdProp === undefined)) {
-      if (ownsRuntimeRef.current && ownedRuntimeRef.current) {
-        ownedRuntimeRef.current.dispose();
-      }
-      ownedRuntimeRef.current = null;
-      ownsRuntimeRef.current = false;
-      setCreateSessionGeneration((generation) => generation + 1);
-    }
-
-    if (conversationIdProp && ownsRuntimeRef.current && ownedRuntimeRef.current) {
-      ownedRuntimeRef.current.dispose();
-      ownedRuntimeRef.current = null;
-      ownsRuntimeRef.current = false;
-    }
-  }, [agentId, conversationIdProp, sharedRuntime]);
-
-  const runtime = useMemo(() => {
+  const cachedRuntime = useMemo(() => {
     if (sharedRuntime) {
       return sharedRuntime;
     }
 
-    if (conversationIdProp) {
-      const result = novu.agentChat.conversation({
-        agentId,
-        conversationId: conversationIdProp,
-        agentHash,
-      });
-
-      return result.ok ? result.data : null;
+    if (!conversationIdProp) {
+      return null;
     }
 
-    if (!ownedRuntimeRef.current) {
-      const result = novu.agentChat.conversation({ agentId, agentHash });
-      if (result.ok) {
-        ownedRuntimeRef.current = result.data;
-        ownsRuntimeRef.current = true;
-      }
-    }
+    const result = novu.agentChat.conversation({
+      agentId,
+      conversationId: conversationIdProp,
+      agentHash,
+    });
 
-    return ownedRuntimeRef.current;
-  }, [sharedRuntime, novu, agentId, conversationIdProp, agentHash, createSessionGeneration]);
+    return result.ok ? result.data : null;
+  }, [sharedRuntime, novu, agentId, conversationIdProp, agentHash]);
 
   useEffect(() => {
+    if (sharedRuntime || conversationIdProp) {
+      setOwnedRuntime(null);
+      return;
+    }
+
+    const result = novu.agentChat.conversation({ agentId, agentHash });
+    if (!result.ok) {
+      setOwnedRuntime(null);
+      return;
+    }
+
+    const runtime = result.data;
+    setOwnedRuntime(runtime);
+
     return () => {
-      if (ownsRuntimeRef.current && ownedRuntimeRef.current) {
-        ownedRuntimeRef.current.dispose();
-        ownedRuntimeRef.current = null;
-        ownsRuntimeRef.current = false;
-      }
+      runtime.dispose();
+      setOwnedRuntime(null);
     };
-  }, []);
+  }, [sharedRuntime, conversationIdProp, agentId, agentHash, novu]);
+
+  const runtime = sharedRuntime ?? cachedRuntime ?? ownedRuntime;
+
+  const loadNotifiedRef = useRef(false);
+  const replayedActionsRef = useRef(false);
+  const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
+  const lastReportedErrorKeyRef = useRef<string>();
+
+  useEffect(() => {
+    loadNotifiedRef.current = false;
+    replayedActionsRef.current = false;
+    notifiedCatchUpErrorRef.current = undefined;
+    lastReportedErrorKeyRef.current = undefined;
+  }, [runtime]);
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
@@ -211,9 +264,27 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
         return () => {};
       }
 
-      return subscribeToRuntime(runtime, onStoreChange);
+      if (!replayedActionsRef.current) {
+        replayedActionsRef.current = true;
+        for (const action of runtime.getSnapshot().pendingActions) {
+          propsRef.current.onActionRequested?.(action);
+        }
+      }
+
+      return runtime.subscribe((snapshot, meta) => {
+        onStoreChange();
+        handlePublicationCallbacks({
+          snapshot,
+          meta,
+          conversationIdProp,
+          propsRef,
+          loadNotifiedRef,
+          notifiedCatchUpErrorRef,
+          lastReportedErrorKeyRef,
+        });
+      });
     },
-    [runtime]
+    [runtime, conversationIdProp, propsRef]
   );
 
   const getSnapshot = useCallback(() => {
@@ -226,76 +297,21 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
 
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  const notifiedCatchUpErrorRef = useRef<NovuError | undefined>();
-  const lastReportedErrorKeyRef = useRef<string>();
-  const loadNotifiedRef = useRef(false);
-  const replayedActionsRef = useRef(false);
-
-  useEffect(() => {
-    loadNotifiedRef.current = false;
-    replayedActionsRef.current = false;
-    notifiedCatchUpErrorRef.current = undefined;
-    lastReportedErrorKeyRef.current = undefined;
-  }, [runtime]);
-
-  useEffect(() => {
-    if (!runtime) {
-      return;
-    }
-
-    if (!replayedActionsRef.current) {
-      replayedActionsRef.current = true;
-      for (const action of runtime.getSnapshot().pendingActions) {
-        propsRef.current.onActionRequested?.(action);
-      }
-    }
-
-    return novu.agentChat.onMessagesUpdated((data) => {
-      if (data.key !== runtime.key) {
-        return;
+  const callRuntime = useCallback(
+    async <T>(action: (target: AgentConversationRuntime) => Promise<RuntimeActionResult<T>>) => {
+      if (!runtime) {
+        return { error: undefined };
       }
 
-      if (data.change.kind === 'history' && !loadNotifiedRef.current && conversationIdProp) {
-        loadNotifiedRef.current = true;
-        propsRef.current.onSuccess?.({
-          conversationId: data.conversationId!,
-          messages: data.messages,
-          hasMore: data.hasMore,
-        });
+      const response = await action(runtime);
+      if (response.error) {
+        propsRef.current.onError?.(response.error);
       }
 
-      if (data.catchUpError && data.catchUpError !== notifiedCatchUpErrorRef.current) {
-        notifiedCatchUpErrorRef.current = data.catchUpError;
-        propsRef.current.onError?.(data.catchUpError);
-      } else if (data.catchUpError === undefined) {
-        notifiedCatchUpErrorRef.current = undefined;
-      }
-
-      if (data.error) {
-        const errorKey = `${data.error.message}:${data.error.originalError?.message ?? ''}`;
-        if (lastReportedErrorKeyRef.current !== errorKey) {
-          lastReportedErrorKeyRef.current = errorKey;
-          propsRef.current.onError?.(data.error);
-        }
-      } else {
-        lastReportedErrorKeyRef.current = undefined;
-      }
-
-      if (data.change.kind === 'live') {
-        propsRef.current.onEvent?.(data.change.envelope);
-      }
-
-      if (data.change.kind !== 'history') {
-        for (const message of data.change.addedMessages) {
-          propsRef.current.onMessage?.(message);
-        }
-      }
-
-      for (const action of data.change.newActions) {
-        propsRef.current.onActionRequested?.(action);
-      }
-    });
-  }, [novu, runtime, conversationIdProp, propsRef]);
+      return response;
+    },
+    [runtime, propsRef]
+  );
 
   const refetch = useCallback(async () => {
     if (!runtime) {
@@ -313,17 +329,11 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   }, [runtime, propsRef]);
 
   const fetchMore = useCallback(async () => {
-    if (!runtime) {
-      return { error: undefined };
-    }
-
-    const response = await runtime.fetchMore();
-    if (response.error) {
-      propsRef.current.onError?.(response.error);
-    }
+    const response = await callRuntime((target) => target.fetchMore());
 
     return {
       ...response,
+      error: response.error as NovuError | undefined,
       data: response.data
         ? {
             messages: [...response.data.messages],
@@ -331,7 +341,7 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
           }
         : undefined,
     };
-  }, [runtime, propsRef]);
+  }, [callRuntime]);
 
   const paginationWithFetch = useMemo(
     () => ({
@@ -342,68 +352,20 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
     [snapshot.pagination.status, snapshot.pagination.hasMore, fetchMore]
   );
 
-  const sendMessage = useCallback(
-    async (text: string) => {
-      if (!runtime) {
-        return { error: undefined };
-      }
-
-      const response = await runtime.sendMessage(text);
-      if (response.error) {
-        propsRef.current.onError?.(response.error);
-      }
-
-      return response;
-    },
-    [runtime, propsRef]
-  );
-
+  const sendMessage = useCallback((text: string) => callRuntime((target) => target.sendMessage(text)), [callRuntime]);
   const respondToAction = useCallback(
-    async (args: { actionId: string; decision: AgentToolApprovalDecision }) => {
-      if (!runtime) {
-        return { error: undefined };
-      }
-
-      const response = await runtime.respondToAction(args);
-      if (response.error) {
-        propsRef.current.onError?.(response.error);
-      }
-
-      return response;
-    },
-    [runtime, propsRef]
+    (args: { actionId: string; decision: AgentToolApprovalDecision }) =>
+      callRuntime((target) => target.respondToAction(args)),
+    [callRuntime]
   );
-
   const sendAction = useCallback(
-    async (args: { actionId: string; sourceMessageId: string; value?: string }) => {
-      if (!runtime) {
-        return { error: undefined };
-      }
-
-      const response = await runtime.sendAction(args);
-      if (response.error) {
-        propsRef.current.onError?.(response.error);
-      }
-
-      return response;
-    },
-    [runtime, propsRef]
+    (args: { actionId: string; sourceMessageId: string; value?: string }) =>
+      callRuntime((target) => target.sendAction(args)),
+    [callRuntime]
   );
-
   const retryMessage = useCallback(
-    async (messageId: string) => {
-      if (!runtime) {
-        return { error: undefined };
-      }
-
-      const response = await runtime.retryMessage(messageId);
-      if (response.error) {
-        propsRef.current.onError?.(response.error);
-      }
-
-      return response;
-    },
-    [runtime, propsRef]
+    (messageId: string) => callRuntime((target) => target.retryMessage(messageId)),
+    [callRuntime]
   );
 
   return {

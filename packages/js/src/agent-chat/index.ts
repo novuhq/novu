@@ -35,6 +35,7 @@ export type {
 export { derivePendingActions } from './agent-message.types';
 export type {
   AgentConversationPaginationSnapshot,
+  AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationRuntimeActions,
   AgentConversationSessionStatus,
