@@ -44,6 +44,8 @@ This structure allows you to model both simple checks and complex branching logi
     | --------------------- | --------------------------------------- | ----------------------------------------------- |
     | `=`                   | Equal to                                | `subscriber.locale = "en-US"`                   |
     | `!=`                  | Not equal to                            | `subscriber.isOnline != true`                   |
+    | `is empty`            | Is an empty string                      | `payload.marketingName is empty`                |
+    | `is not empty`        | Is a non-empty string                   | `payload.marketingName is not empty`            |
     | `<`                   | Less than                               | `payload.totalAmount < 100`                     |
     | `>`                   | Greater than                            | `payload.totalAmount > 100`                     |
     | `<=`                  | Less than or equal to                   | `payload.totalAmount <= 200`                    |
@@ -60,6 +62,13 @@ This structure allows you to model both simple checks and complex branching logi
     | `not in`              | Does not match any of the listed values | `subscriber.locale not in ["fr-FR", "de-DE"]`   |
     | `between`             | Within a range                          | `payload.totalAmount between [50, 200]`         |
     | `not between`         | Outside of a range                      | `payload.totalAmount not between [0, 50]`       |
+
+  **is empty** and **is not empty** are available only for string fields. They check the exact string value, so
+  whitespace-only strings are considered non-empty. Missing fields, `null`, arrays, objects, numbers, and booleans do
+  not match either operator.
+
+  Existing step conditions are unchanged. Saved `equals`, `is null`, and other operators keep the same result until
+  you add an **is empty** or **is not empty** rule.
 
 ## Data used for step conditions
 
