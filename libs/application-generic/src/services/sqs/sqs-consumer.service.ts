@@ -13,13 +13,9 @@ import {
   SQS_DEFAULT_MAX_CONCURRENCY,
   SQS_DEFAULT_VISIBILITY_TIMEOUT,
   SQS_DEFAULT_WAIT_TIME_SECONDS,
-  SQS_MAX_VISIBILITY_RENEWAL_MS,
 } from './types';
 
 const LOG_CONTEXT = 'SqsConsumerService';
-
-/** AWS's hard ceiling for a single message's visibility timeout (12 hours). */
-const SQS_MAX_VISIBILITY_TIMEOUT_SECONDS = 43_200;
 
 /**
  * Bounded retry config for SQS DeleteMessage calls.
@@ -377,7 +373,7 @@ export class SqsConsumerService {
    * visibility lapses, so the retry happens either way - just later.
    */
   private async applyRetryBackoff(message: Message, messageId: string, retryDelayMs: number): Promise<void> {
-    const visibilityTimeout = Math.min(Math.max(Math.ceil(retryDelayMs / 1000), 0), SQS_MAX_VISIBILITY_TIMEOUT_SECONDS);
+    const visibilityTimeout = Math.max(Math.ceil(retryDelayMs / 1000), 0);
 
     try {
       await this.sqsService.getClient().send(
@@ -426,31 +422,6 @@ export class SqsConsumerService {
 
     const timer = setInterval(() => {
       const elapsedMs = Date.now() - startedAt;
-
-      /*
-       * Stop renewing a processor that has overrun its budget, so the message
-       * is released rather than held until AWS's hard 12h ceiling. The run
-       * itself continues - see SQS_MAX_VISIBILITY_RENEWAL_MS for what
-       * redelivery does per topic. This log is the actionable signal.
-       */
-      if (elapsedMs >= SQS_MAX_VISIBILITY_RENEWAL_MS) {
-        clearInterval(timer);
-        Logger.error(
-          {
-            messageId,
-            topic: this.topic,
-            groupId,
-            elapsedMs,
-            extensionCount,
-            receiveCount,
-            maxRenewalMs: SQS_MAX_VISIBILITY_RENEWAL_MS,
-          },
-          'SQS message exceeded the maximum visibility renewal window, releasing it for redelivery',
-          LOG_CONTEXT
-        );
-
-        return;
-      }
 
       this.sqsService
         .getClient()

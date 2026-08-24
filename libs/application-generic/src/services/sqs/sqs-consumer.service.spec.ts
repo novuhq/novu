@@ -4,7 +4,6 @@ import { SqsService } from './sqs.service';
 import { SqsConsumerService, SqsMessageProcessor } from './sqs-consumer.service';
 import { SQS_LARGE_PAYLOAD_MARKER } from './sqs-payload-offload.service';
 import { SqsRetryError } from './sqs-retry.error';
-import { SQS_MAX_VISIBILITY_RENEWAL_MS } from './types';
 
 type ConsumerConfig = {
   handleMessage: (message: Message) => Promise<Message>;
@@ -131,27 +130,6 @@ describe('SqsConsumerService', () => {
 
       expect(commandCalls(ChangeMessageVisibilityCommand)).toHaveLength(2);
     });
-
-    it('should stop extending once the maximum renewal window is exceeded', async () => {
-      jest.useFakeTimers();
-
-      createConsumer(async () => new Promise<void>(() => {}));
-      await capturedConfig.handleMessage(buildMessage());
-      await flushMicrotasks();
-
-      jest.advanceTimersByTime(SQS_MAX_VISIBILITY_RENEWAL_MS);
-      await flushMicrotasks();
-
-      const extensionsAtCap = commandCalls(ChangeMessageVisibilityCommand).length;
-      expect(extensionsAtCap).toBeGreaterThan(0);
-
-      // The behaviour that matters: past the cap the interval is cleared and
-      // nothing further is sent, however many ticks fit before it.
-      jest.advanceTimersByTime(HEARTBEAT_INTERVAL_MS * 20);
-      await flushMicrotasks();
-
-      expect(commandCalls(ChangeMessageVisibilityCommand)).toHaveLength(extensionsAtCap);
-    });
   });
 
   describe('retry backoff', () => {
@@ -166,18 +144,6 @@ describe('SqsConsumerService', () => {
       const [command] = commandCalls(ChangeMessageVisibilityCommand) as ChangeMessageVisibilityCommand[];
       expect(command.input.VisibilityTimeout).toBe(4);
       expect(commandCalls(DeleteMessageCommand)).toHaveLength(0);
-    });
-
-    it('should clamp a delay beyond the AWS maximum', async () => {
-      createConsumer(async () => {
-        throw new SqsRetryError(new Error('boom'), 99_999_000);
-      });
-
-      await capturedConfig.handleMessage(buildMessage());
-      await flushMicrotasks();
-
-      const [command] = commandCalls(ChangeMessageVisibilityCommand) as ChangeMessageVisibilityCommand[];
-      expect(command.input.VisibilityTimeout).toBe(43_200);
     });
 
     it('should leave visibility untouched for a plain failure', async () => {
