@@ -16,6 +16,13 @@ export function getGroupAtPath(query: RuleGroupTypeAny, path: Path): RuleGroupTy
   return current;
 }
 
+export function isGroupWithinLimit(group: RuleGroupTypeAny, maxConditionsPerGroup: number): boolean {
+  return (
+    group.rules.length <= maxConditionsPerGroup &&
+    group.rules.every((rule) => !isRuleGroup(rule) || isGroupWithinLimit(rule, maxConditionsPerGroup))
+  );
+}
+
 export function increasesGroupBeyondLimit(
   currentQuery: RuleGroupTypeAny,
   nextQuery: RuleGroupTypeAny,

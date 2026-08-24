@@ -15,10 +15,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { useConditionsEditorContext } from './conditions-editor-context';
 
 export const RuleActions = ({ path, ruleOrGroup, context, disabled }: ActionWithRulesProps) => {
-  const { removeRuleOrGroup, cloneRuleOrGroup, canAddToGroup, maxConditionsPerGroup } = useConditionsEditorContext();
+  const { removeRuleOrGroup, cloneRuleOrGroup, canCloneRuleOrGroup, maxConditionsPerGroup } =
+    useConditionsEditorContext();
   const parentPath = getParentPath(path);
   const isGroup = isRuleGroup(ruleOrGroup);
-  const isDuplicateDisabled = !canAddToGroup(parentPath);
+  const isDuplicateDisabled = !canCloneRuleOrGroup(ruleOrGroup, parentPath);
 
   if (disabled) {
     return null;
@@ -53,7 +54,7 @@ export const RuleActions = ({ path, ruleOrGroup, context, disabled }: ActionWith
             </TooltipTrigger>
             {isDuplicateDisabled && (
               <TooltipContent className="max-w-52">
-                This group has reached the maximum of {maxConditionsPerGroup} conditions or groups
+                Duplicating would exceed the maximum of {maxConditionsPerGroup} conditions or groups per group
               </TooltipContent>
             )}
           </Tooltip>

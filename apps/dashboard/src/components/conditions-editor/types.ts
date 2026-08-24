@@ -15,6 +15,7 @@ export interface ConditionsEditorContextType {
   cloneRuleOrGroup: (ruleOrGroup: RuleGroupTypeAny | RuleType, path?: Path) => boolean;
   maxConditionsPerGroup: number;
   canAddToGroup: (path?: Path) => boolean;
+  canCloneRuleOrGroup: (ruleOrGroup: RuleGroupTypeAny | RuleType, path?: Path) => boolean;
 }
 
 export interface VariablesListProps {

@@ -1,9 +1,17 @@
 import { useCallback, useMemo } from 'react';
-import { add, type Path, type RuleGroupType, type RuleGroupTypeAny, type RuleType, remove } from 'react-querybuilder';
+import {
+  add,
+  isRuleGroup,
+  type Path,
+  type RuleGroupType,
+  type RuleGroupTypeAny,
+  type RuleType,
+  remove,
+} from 'react-querybuilder';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { generateUUID } from '@/utils/uuid';
 import { ConditionsEditorContext } from './conditions-editor-context';
-import { getGroupAtPath } from './conditions-editor-policy';
+import { getGroupAtPath, isGroupWithinLimit } from './conditions-editor-policy';
 
 export function ConditionsEditorProvider({
   children,
@@ -33,6 +41,13 @@ export function ConditionsEditorProvider({
     [maxConditionsPerGroupRef, queryRef]
   );
 
+  const canCloneRuleOrGroup = useCallback(
+    (ruleOrGroup: RuleGroupTypeAny | RuleType, path: Path = []) =>
+      canAddToGroup(path) &&
+      (!isRuleGroup(ruleOrGroup) || isGroupWithinLimit(ruleOrGroup, maxConditionsPerGroupRef.current)),
+    [canAddToGroup, maxConditionsPerGroupRef]
+  );
+
   const removeRuleOrGroup = useCallback(
     (path: Path) => {
       commitQueryChange(remove(queryRef.current, path));
@@ -42,13 +57,13 @@ export function ConditionsEditorProvider({
 
   const cloneRuleOrGroup = useCallback(
     (ruleOrGroup: RuleGroupTypeAny | RuleType, path: Path = []) => {
-      if (!canAddToGroup(path)) {
+      if (!canCloneRuleOrGroup(ruleOrGroup, path)) {
         return false;
       }
 
       return commitQueryChange(add(queryRef.current, { ...ruleOrGroup, id: generateUUID() } as RuleType, path));
     },
-    [canAddToGroup, commitQueryChange, queryRef]
+    [canCloneRuleOrGroup, commitQueryChange, queryRef]
   );
 
   const contextValue = useMemo(
@@ -57,8 +72,9 @@ export function ConditionsEditorProvider({
       cloneRuleOrGroup,
       maxConditionsPerGroup,
       canAddToGroup,
+      canCloneRuleOrGroup,
     }),
-    [removeRuleOrGroup, cloneRuleOrGroup, maxConditionsPerGroup, canAddToGroup]
+    [removeRuleOrGroup, cloneRuleOrGroup, maxConditionsPerGroup, canAddToGroup, canCloneRuleOrGroup]
   );
 
   return <ConditionsEditorContext.Provider value={contextValue}>{children}</ConditionsEditorContext.Provider>;
