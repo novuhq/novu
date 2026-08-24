@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   ConversationEntity,
   ConversationParticipantTypeEnum,
@@ -12,6 +12,7 @@ import { buildWorkflowOriginLine } from '@novu/framework/internal';
 import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { trackWorkflowOriginHydrated } from '../../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -44,7 +45,8 @@ export class WorkflowOriginService {
     private readonly conversationService: AgentConversationService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly notificationRepository: NotificationRepository,
-    private readonly messageRepository: MessageRepository
+    private readonly messageRepository: MessageRepository,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async resolve(params: {
@@ -266,6 +268,17 @@ export class WorkflowOriginService {
           payload: data.payload,
         },
         ...(subscriberFirstName ? { subscriberFirstName } : {}),
+      });
+
+      trackWorkflowOriginHydrated(this.analyticsService, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        agentId,
+        agentIdentifier: config.agentIdentifier,
+        conversationId: conversation._id,
+        workflowIdentifier: data.workflowIdentifier,
+        platform: config.platform,
+        integrationIdentifier: config.integrationIdentifier,
       });
 
       return { data, source: 'hydrated' };

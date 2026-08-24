@@ -54,6 +54,34 @@ export function trackAgentCreated(
   });
 }
 
+export function trackWorkflowOriginHydrated(
+  analytics: AnalyticsService,
+  params: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    agentIdentifier: string;
+    conversationId: string;
+    workflowIdentifier: string;
+    platform: string;
+    integrationIdentifier?: string;
+  }
+): void {
+  const properties = {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    agentIdentifier: params.agentIdentifier,
+    conversationId: params.conversationId,
+    workflowIdentifier: params.workflowIdentifier,
+    platform: params.platform,
+    ...(params.integrationIdentifier ? { integrationIdentifier: params.integrationIdentifier } : {}),
+  };
+
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.WORKFLOW_ORIGIN_HYDRATED, params.organizationId, properties);
+  analytics.mixpanelTrack(AGENTS_ORG_FUNNEL_EVENTS.WORKFLOW_ORIGIN_HYDRATED, params.organizationId, properties);
+}
+
 export function trackAgentIntegrationConnected(
   analytics: AnalyticsService,
   params: {

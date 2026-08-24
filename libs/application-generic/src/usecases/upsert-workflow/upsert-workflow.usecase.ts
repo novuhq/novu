@@ -9,6 +9,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import {
+  AGENTS_ORG_FUNNEL_EVENTS,
   buildWorkflowPreferences,
   ControlValuesLevelEnum,
   ResourceOriginEnum,
@@ -116,6 +117,8 @@ export class UpsertWorkflowUseCase {
         skipPreferencesCache: true,
       })
     );
+
+    this.trackAgentAssignedToWorkflow(existingWorkflow, updatedWorkflow, resolvedCommand);
 
     if (existingWorkflow) {
       await this.sendWebhookMessage.execute({
@@ -678,5 +681,39 @@ export class UpsertWorkflowUseCase {
       origin: command.workflowDto.origin,
       source: command.workflowDto.__source,
     });
+  }
+
+  private trackAgentAssignedToWorkflow(
+    existingWorkflow: NotificationTemplateEntity | null,
+    updatedWorkflow: WorkflowResponseDto,
+    command: UpsertWorkflowCommand
+  ): void {
+    const nextAgentIdentifier = updatedWorkflow.agent?.identifier ?? null;
+    if (!nextAgentIdentifier) {
+      return;
+    }
+
+    const previousAgentIdentifier = existingWorkflow?.agent?.identifier ?? null;
+    if (nextAgentIdentifier === previousAgentIdentifier) {
+      return;
+    }
+
+    const userId = command.user?._id;
+    if (!userId) {
+      return;
+    }
+
+    const properties = {
+      _organization: command.user.organizationId,
+      environmentId: command.user.environmentId,
+      workflowId: updatedWorkflow.workflowId,
+      workflowName: updatedWorkflow.name,
+      agentIdentifier: nextAgentIdentifier,
+      previousAgentIdentifier,
+      source: command.workflowDto.__source,
+    };
+
+    this.analyticsService.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_ASSIGNED_TO_WORKFLOW, userId, properties);
+    this.analyticsService.mixpanelTrack(AGENTS_ORG_FUNNEL_EVENTS.AGENT_ASSIGNED_TO_WORKFLOW, userId, properties);
   }
 }
