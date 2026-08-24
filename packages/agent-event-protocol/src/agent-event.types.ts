@@ -133,7 +133,9 @@ export type AgentEvent =
       reason: 'authentication' | 'connection';
       message: string;
     }
-  // Escape hatch
+  // LLM provider passthrough (live only — not history/transcript)
+  | { type: 'provider-event'; provider: string; event: string; data: unknown }
+  // App custom data escape hatch
   | { type: 'custom'; name: string; data: unknown };
 
 export interface AgentEventEnvelope {

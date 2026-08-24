@@ -225,6 +225,7 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'channel.reaction':
     case 'connection.error':
     case 'signal':
+    case 'provider-event':
     case 'custom':
       return state;
 

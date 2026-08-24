@@ -976,6 +976,75 @@ describe('AgentChat', () => {
     expect(getEvents).toHaveBeenCalledWith({ conversationId: 'conv_abcdefghijkl' });
   });
 
+  it('catch-up completes with zero lastSequence when history spans multiple pages', async () => {
+    await openClaimedConversation();
+
+    getEvents
+      .mockResolvedValueOnce(
+        historyPage(
+          [
+            { sequence: 11, messageId: 'msg_asst_page2', role: 'assistant', markdown: 'newer page' },
+            { sequence: 12, messageId: 'msg_asst_page2b', role: 'assistant', markdown: 'newer page b' },
+          ],
+          'cursor_older'
+        )
+      )
+      .mockResolvedValueOnce(
+        historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+      );
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForMessageIds(['msg_user0000001', 'msg_asst_page2', 'msg_asst_page2b']);
+
+    expect(getEvents).toHaveBeenCalledTimes(2);
+    expect(agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' })?.catchUpError).toBeUndefined();
+  });
+
+  it('catch-up completes with zero lastSequence when history exceeds the checkpoint page cap', async () => {
+    await openClaimedConversation();
+
+    getEvents.mockImplementation(({ before }: { before?: string }) => {
+      if (before == null) {
+        return Promise.resolve(
+          historyPage(
+            [{ sequence: 21, messageId: 'msg_asst_page21', role: 'assistant', markdown: 'newest page' }],
+            'cursor_page20'
+          )
+        );
+      }
+
+      const pageNumber = Number.parseInt(before.replace('cursor_page', ''), 10);
+      if (pageNumber <= 1) {
+        return Promise.resolve(
+          historyPage([{ sequence: 1, messageId: 'msg_user0000001', role: 'user', markdown: 'hello' }], null)
+        );
+      }
+
+      return Promise.resolve(
+        historyPage(
+          [
+            {
+              sequence: pageNumber,
+              messageId: `msg_asst_page${pageNumber.toString().padStart(2, '0')}`,
+              role: 'assistant',
+              markdown: `page ${pageNumber}`,
+            },
+          ],
+          `cursor_page${pageNumber - 1}`
+        )
+      );
+    });
+
+    emitter.emit('socket.connect.resolved', { args: { socketUrl: 'http://127.0.0.1:8787' } });
+    await waitForGetEventsCalls(21);
+
+    const conversation = agentChat.getConversation({ agentId: 'agent_1', key: 'local_session1' });
+    expect(conversation?.catchUpError).toBeUndefined();
+    expect(conversation?.messages.map((message) => message.id)).toEqual(
+      expect.arrayContaining(['msg_user0000001', 'msg_asst_page21'])
+    );
+  });
+
   it('catch-up after send claims a conversation that received live events early', async () => {
     agentChat.subscribe();
 

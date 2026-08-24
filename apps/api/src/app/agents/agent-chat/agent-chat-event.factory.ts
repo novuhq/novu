@@ -75,6 +75,13 @@ export class AgentChatEventFactory {
     });
   }
 
+  /** Live-only envelopes (typing, provider-event) with a minted conversation sequence. */
+  createEphemeralEnvelope(
+    input: AgentChatFactoryBaseInput & { event: AgentEvent; runId?: string; turnId?: string }
+  ): AgentEventEnvelope {
+    return this.build(input, input.event);
+  }
+
   private build(input: AgentChatFactoryBaseInput, event: AgentEvent): AgentEventEnvelope {
     return {
       version: AGENT_EVENT_PROTOCOL_VERSION,
