@@ -641,28 +641,27 @@ export class ConversationActivityLedger {
           : null;
 
     try {
-      const [activity] = await Promise.all([
-        this.activityRepository.createAgentActivity({
-          identifier: params.identifier ?? `act_${shortId(12)}`,
-          conversationId: params.conversationId,
-          platform: params.channel.platform,
-          integrationId: params.channel._integrationId,
-          platformThreadId: threadId,
-          platformMessageId: params.platformMessageId,
-          agentId: params.agentIdentifier,
-          senderName: params.agentName,
-          content: params.content,
-          richContent: params.richContent,
-          toolData: params.toolData,
-          type,
-          sequence,
-          environmentId: params.environmentId,
-          organizationId: params.organizationId,
-        }),
-        touchFn
-          ? touchFn(params.environmentId, params.organizationId, params.conversationId, params.content)
-          : Promise.resolve(),
-      ]);
+      const activity = await this.activityRepository.createAgentActivity({
+        identifier: params.identifier ?? `act_${shortId(12)}`,
+        conversationId: params.conversationId,
+        platform: params.channel.platform,
+        integrationId: params.channel._integrationId,
+        platformThreadId: threadId,
+        platformMessageId: params.platformMessageId,
+        agentId: params.agentIdentifier,
+        senderName: params.agentName,
+        content: params.content,
+        richContent: params.richContent,
+        toolData: params.toolData,
+        type,
+        sequence,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+      });
+
+      if (touchFn) {
+        await touchFn(params.environmentId, params.organizationId, params.conversationId, params.content);
+      }
 
       return { activity, created: true };
     } catch (err) {

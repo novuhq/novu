@@ -162,8 +162,15 @@ describe('ConversationActivityLedger', () => {
         createAgentActivity: sinon.stub().rejects(duplicateError),
         findOne: sinon.stub().resolves(existingActivity),
       });
+      const conversationRepository = makeConversationRepository();
       const logger = makeLogger();
-      const ledger = makeLedger(activityRepository, undefined, undefined, undefined, logger);
+      const ledger = makeLedger(
+        activityRepository,
+        { mint: sinon.stub().resolves(7) } as unknown as ConversationEventSequenceService,
+        undefined,
+        conversationRepository,
+        logger
+      );
 
       const result = await ledger.persistAgentMessage({
         ...basePersistParams(),
@@ -173,6 +180,7 @@ describe('ConversationActivityLedger', () => {
       expect(result.activity).to.equal(existingActivity);
       expect(result.created).to.equal(false);
       expect(logger.warn.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
     });
 
     it('pairs touchActivity with agent message persist', async () => {
