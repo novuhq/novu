@@ -21,6 +21,14 @@ import { WithPassthrough } from '../../../utils/types';
 
 const PROTECTED_HEADER_NAMES = new Set(['content-type', 'x-novu-signature']);
 
+/**
+ * How the `hmacSecretKey` value is turned into signing bytes:
+ * - `text`: the raw UTF-8 bytes of the stored string (legacy/default behavior)
+ * - `base64` / `hex`: decode the stored string into its binary key material,
+ *   matching services (e.g. AWS KMS) that hold the HMAC key as binary
+ */
+export type EmailWebhookHmacSecretKeyEncoding = 'text' | 'base64' | 'hex';
+
 export class EmailWebhookUrlBlockedError extends Error {
   constructor(message: string) {
     super(message);
@@ -36,6 +44,7 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
   constructor(
     private config: {
       hmacSecretKey?: string;
+      hmacSecretKeyEncoding?: EmailWebhookHmacSecretKeyEncoding;
       webhookUrl: string;
       retryCount?: number;
       retryDelay?: number;
@@ -160,6 +169,26 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
   }
 
   computeHmac(payload: string): string {
-    return crypto.createHmac('sha256', this.config.hmacSecretKey).update(payload, 'utf-8').digest('hex');
+    return crypto.createHmac('sha256', this.resolveHmacSecret()).update(payload, 'utf-8').digest('hex');
+  }
+
+  private resolveHmacSecret(): Buffer | string {
+    const encoding = this.config.hmacSecretKeyEncoding ?? 'text';
+
+    if (encoding === 'text') {
+      return this.config.hmacSecretKey as string;
+    }
+
+    if (!this.config.hmacSecretKey) {
+      throw new Error(`hmacSecretKeyEncoding '${encoding}' requires a non-empty hmacSecretKey`);
+    }
+
+    const keyBuffer = Buffer.from(this.config.hmacSecretKey, encoding);
+
+    if (keyBuffer.length === 0) {
+      throw new Error(`hmacSecretKey is not valid ${encoding}: decoding produced no bytes`);
+    }
+
+    return keyBuffer;
   }
 }
