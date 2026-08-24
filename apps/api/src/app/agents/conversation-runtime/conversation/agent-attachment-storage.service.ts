@@ -21,6 +21,11 @@ export interface StoreInboundAttachmentContext {
   platform?: AgentPlatformEnum;
 }
 
+export type AgentAttachmentStorageScope = Pick<
+  StoreInboundAttachmentContext,
+  'organizationId' | 'environmentId' | 'conversationId'
+>;
+
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_MESSAGE = 15;
 const MAX_AGGREGATE_ATTACHMENT_BYTES = 50 * 1024 * 1024;
@@ -44,6 +49,40 @@ function buildStorageKey(params: {
   const safeMessageId = String(params.platformMessageId).replace(/\//g, '_');
 
   return `${params.organizationId}/${params.environmentId}/${AGENTS_FOLDER}/${params.conversationId}/${safeMessageId}/${params.index}-${params.filename}`;
+}
+
+function isSafeStorageKeySegment(segment: string): boolean {
+  return (
+    segment.length > 0 &&
+    segment !== '.' &&
+    segment !== '..' &&
+    !segment.includes('/') &&
+    !segment.includes('\\') &&
+    !segment.includes('\0')
+  );
+}
+
+function buildAgentsStoragePrefix(scope: AgentAttachmentStorageScope): string | null {
+  const parts = [scope.organizationId, scope.environmentId, AGENTS_FOLDER, scope.conversationId];
+  if (!parts.every((part) => typeof part === 'string' && isSafeStorageKeySegment(part))) {
+    return null;
+  }
+
+  return `${parts.join('/')}/`;
+}
+
+function isStorageKeyInScope(storageKey: string, scope: AgentAttachmentStorageScope): boolean {
+  const expectedPrefix = buildAgentsStoragePrefix(scope);
+  if (!expectedPrefix || storageKey.includes('\\') || storageKey.includes('\0') || storageKey.startsWith('/')) {
+    return false;
+  }
+
+  const segments = storageKey.split('/');
+  if (!segments.every((segment) => isSafeStorageKeySegment(segment))) {
+    return false;
+  }
+
+  return storageKey.startsWith(expectedPrefix);
 }
 
 async function bufferFromAttachment(attachment: Attachment, allowUnknownSizeDownload = false): Promise<Buffer | null> {
@@ -172,12 +211,22 @@ export class AgentAttachmentStorage {
   /**
    * Read the raw bytes of a stored attachment. Used by the managed runtime to
    * inline files as base64 content parts for the model. Returns `null` when the
-   * object is missing so callers can degrade to a text-only turn.
+   * object is missing or the key is outside `scope` so callers can degrade to a
+   * text-only turn.
    *
    * Goes straight to `getFile` rather than `fileExists` first — HeadObject on
    * local S3 stand-ins can 404 immediately after a successful PutObject.
    */
-  async getBytes(storageKey: string): Promise<Buffer | null> {
+  async getBytes(storageKey: string, scope: AgentAttachmentStorageScope): Promise<Buffer | null> {
+    if (!isStorageKeyInScope(storageKey, scope)) {
+      this.logger.warn(
+        { storageKey, organizationId: scope.organizationId, environmentId: scope.environmentId },
+        'Refusing to read attachment bytes outside the conversation storage namespace'
+      );
+
+      return null;
+    }
+
     try {
       return await this.storageService.getFile(storageKey);
     } catch (err) {

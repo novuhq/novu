@@ -132,7 +132,12 @@ export class ManagedAgentService implements OnModuleInit {
     const userContent = await buildUserMessageContent({
       userMessageText: context.userMessageText,
       attachments: context.storedAttachments,
-      getBytes: (storageKey) => this.attachmentStorage.getBytes(storageKey),
+      getBytes: (storageKey) =>
+        this.attachmentStorage.getBytes(storageKey, {
+          organizationId: context.config.organizationId,
+          environmentId: context.config.environmentId,
+          conversationId: String(context.conversation._id),
+        }),
       logger: this.logger,
     });
 

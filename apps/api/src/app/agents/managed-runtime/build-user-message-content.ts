@@ -4,21 +4,26 @@ import type { StoredAttachment } from '../conversation-runtime/conversation/agen
 
 /**
  * Media types Claude can consume natively as vision / document content.
- * Anything outside these sets is dropped from the model turn (the file is still
- * stored and referenced elsewhere) so the request never trips an Anthropic 400.
+ * `text/plain` is inlined as a text part (Thalamus maps `file` parts to a
+ * base64 document source, which Anthropic only accepts for PDFs). Anything
+ * else is dropped from the model turn (the file is still stored) so the
+ * request never trips an Anthropic 400.
  */
 const IMAGE_MEDIA_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 const PDF_MEDIA_TYPE = 'application/pdf';
+const PLAIN_TEXT_MEDIA_TYPE = 'text/plain';
 
 /**
  * Anthropic-safe budgets applied before base64-encoding. Base64 inflates raw
  * bytes by ~33%, and the whole request must stay under the API's ~32 MB limit,
  * so the aggregate budget is deliberately conservative. Over-budget files are
- * skipped (warned), never fatal.
+ * skipped (warned), never fatal. Plain text is not base64-encoded, so it uses
+ * a tighter per-file cap and does not count against the media budget.
  */
 const MAX_MEDIA_FILES = 15;
 const MAX_MEDIA_BYTES_PER_FILE = 10 * 1024 * 1024;
 const MAX_AGGREGATE_MEDIA_BYTES = 20 * 1024 * 1024;
+const MAX_PLAIN_TEXT_BYTES = 256 * 1024;
 
 export interface BuildUserMessageContentParams {
   userMessageText: string;
@@ -40,11 +45,11 @@ function normalizeMediaType(mimeType?: string): string | undefined {
 }
 
 /**
- * Build the content for the current user turn. When the turn carries inbound
- * image/PDF attachments, they are inlined as base64 Thalamus content parts
- * (files first, then the text — Anthropic recommends image-then-text). Returns
- * the plain text string when there are no usable attachments, preserving the
- * previous text-only behavior.
+ * Build the content for the current user turn. Inbound image/PDF attachments
+ * are inlined as base64 Thalamus content parts (files first, then the text —
+ * Anthropic recommends image-then-text). `text/plain` attachments are decoded
+ * and prepended to the user text. Returns the plain text string when there are
+ * no image/PDF parts, preserving the previous text-only behavior.
  */
 export async function buildUserMessageContent(params: BuildUserMessageContentParams): Promise<string | ContentPart[]> {
   const { userMessageText, attachments, getBytes, logger } = params;
@@ -54,22 +59,16 @@ export async function buildUserMessageContent(params: BuildUserMessageContentPar
   }
 
   const mediaParts: ContentPart[] = [];
+  const textSnippets: string[] = [];
   let aggregateBytes = 0;
 
   for (const attachment of attachments) {
-    if (mediaParts.length >= MAX_MEDIA_FILES) {
-      logger?.warn(
-        { cap: MAX_MEDIA_FILES, name: attachment.name },
-        'Skipping inbound attachment over media count cap for model turn'
-      );
-      break;
-    }
-
     const mediaType = normalizeMediaType(attachment.mimeType);
     const isImage = mediaType !== undefined && IMAGE_MEDIA_TYPES.has(mediaType);
     const isPdf = mediaType === PDF_MEDIA_TYPE;
+    const isPlainText = mediaType === PLAIN_TEXT_MEDIA_TYPE;
 
-    if (!isImage && !isPdf) {
+    if (!isImage && !isPdf && !isPlainText) {
       logger?.warn(
         { mimeType: attachment.mimeType, name: attachment.name },
         'Skipping inbound attachment with unsupported media type for model turn'
@@ -77,9 +76,18 @@ export async function buildUserMessageContent(params: BuildUserMessageContentPar
       continue;
     }
 
-    if (attachment.size != null && attachment.size > MAX_MEDIA_BYTES_PER_FILE) {
+    if (!isPlainText && mediaParts.length >= MAX_MEDIA_FILES) {
       logger?.warn(
-        { size: attachment.size, cap: MAX_MEDIA_BYTES_PER_FILE, name: attachment.name },
+        { cap: MAX_MEDIA_FILES, name: attachment.name },
+        'Skipping inbound attachment over media count cap for model turn'
+      );
+      continue;
+    }
+
+    const perFileCap = isPlainText ? MAX_PLAIN_TEXT_BYTES : MAX_MEDIA_BYTES_PER_FILE;
+    if (attachment.size != null && attachment.size > perFileCap) {
+      logger?.warn(
+        { size: attachment.size, cap: perFileCap, name: attachment.name },
         'Skipping inbound attachment over per-file size cap for model turn'
       );
       continue;
@@ -98,11 +106,25 @@ export async function buildUserMessageContent(params: BuildUserMessageContentPar
       continue;
     }
 
-    if (bytes.length > MAX_MEDIA_BYTES_PER_FILE) {
+    if (bytes.length > perFileCap) {
       logger?.warn(
-        { byteLength: bytes.length, cap: MAX_MEDIA_BYTES_PER_FILE, name: attachment.name },
+        { byteLength: bytes.length, cap: perFileCap, name: attachment.name },
         'Skipping inbound attachment over per-file size cap after read for model turn'
       );
+      continue;
+    }
+
+    if (isPlainText) {
+      const snippet = toPlainTextSnippet(bytes, attachment.name);
+      if (!snippet) {
+        logger?.warn(
+          { name: attachment.name },
+          'Skipping inbound text attachment that is empty or not valid UTF-8 text'
+        );
+        continue;
+      }
+
+      textSnippets.push(snippet);
       continue;
     }
 
@@ -129,30 +151,58 @@ export async function buildUserMessageContent(params: BuildUserMessageContentPar
     }
   }
 
+  const turnText = joinUserTurnText(textSnippets, userMessageText);
+
   if (!mediaParts.length) {
-    return userMessageText;
+    return turnText;
   }
 
   const parts: ContentPart[] = [...mediaParts];
 
-  if (userMessageText.trim()) {
-    parts.push({ type: 'text', text: userMessageText });
+  if (turnText.trim()) {
+    parts.push({ type: 'text', text: turnText });
   }
 
   return parts;
 }
 
+function toPlainTextSnippet(bytes: Buffer, name?: string): string | null {
+  if (bytes.includes(0)) {
+    return null;
+  }
+
+  const body = bytes.toString('utf8').replace(/^\uFEFF/, '');
+  if (!body.trim()) {
+    return null;
+  }
+
+  if (name?.trim()) {
+    return `Attached file "${name.trim()}":\n${body}`;
+  }
+
+  return `Attached file:\n${body}`;
+}
+
+function joinUserTurnText(textSnippets: string[], userMessageText: string): string {
+  if (textSnippets.length === 0) {
+    return userMessageText;
+  }
+
+  const parts = [...textSnippets];
+  if (userMessageText.trim()) {
+    parts.push(userMessageText);
+  }
+
+  return parts.join('\n\n');
+}
+
 /**
  * Replace the content of the most recent USER row with the resolved turn body.
  * Used for the new-session path, where history is collapsed to text first and
- * only the current turn's files are attached. A plain-string body (no usable
- * attachments) leaves the collapsed messages untouched.
+ * only the current turn's files are attached. A string body still applies so
+ * inlined `text/plain` contents reach the model.
  */
 export function applyUserContentToLatestUserTurn(messages: Message[], userContent: string | ContentPart[]): Message[] {
-  if (typeof userContent === 'string') {
-    return messages;
-  }
-
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     if (messages[i].role === MessageRole.USER) {
       messages[i] = { ...messages[i], content: userContent };

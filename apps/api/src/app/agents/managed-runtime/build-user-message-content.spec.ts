@@ -90,10 +90,40 @@ describe('buildUserMessageContent', () => {
     expect(content.map((part) => part.type)).to.deep.equal(['image', 'file', 'text']);
   });
 
+  it('inlines text/plain attachment contents into the user turn', async () => {
+    const content = await buildUserMessageContent({
+      userMessageText: 'summarize this',
+      attachments: [attachment({ type: 'file', name: 'notes.txt', mimeType: 'text/plain' })],
+      getBytes,
+    });
+
+    expect(content).to.equal('Attached file "notes.txt":\nhello\n\nsummarize this');
+  });
+
+  it('normalizes text/plain charset parameters', async () => {
+    const content = await buildUserMessageContent({
+      userMessageText: 'read this',
+      attachments: [attachment({ type: 'file', name: 'notes.txt', mimeType: 'TEXT/PLAIN; charset=utf-8' })],
+      getBytes,
+    });
+
+    expect(content).to.equal('Attached file "notes.txt":\nhello\n\nread this');
+  });
+
+  it('returns only the inlined text when the user sent a txt file with no message', async () => {
+    const content = await buildUserMessageContent({
+      userMessageText: '   ',
+      attachments: [attachment({ type: 'file', name: 'notes.txt', mimeType: 'text/plain' })],
+      getBytes,
+    });
+
+    expect(content).to.equal('Attached file "notes.txt":\nhello');
+  });
+
   it('falls back to text-only when the only attachment is an unsupported type', async () => {
     const content = await buildUserMessageContent({
       userMessageText: 'here is a file',
-      attachments: [attachment({ type: 'file', name: 'notes.txt', mimeType: 'text/plain' })],
+      attachments: [attachment({ type: 'file', name: 'archive.zip', mimeType: 'application/zip' })],
       getBytes,
     });
 
@@ -104,13 +134,55 @@ describe('buildUserMessageContent', () => {
     const content = (await buildUserMessageContent({
       userMessageText: 'mixed',
       attachments: [
-        attachment({ type: 'file', name: 'notes.txt', mimeType: 'text/plain' }),
+        attachment({ type: 'file', name: 'archive.zip', mimeType: 'application/zip' }),
         attachment({ name: 'photo.png', mimeType: 'image/png' }),
       ],
       getBytes,
     })) as ContentPart[];
 
     expect(content.map((part) => part.type)).to.deep.equal(['image', 'text']);
+  });
+
+  it('prepends inlined text/plain contents to the text part when mixed with an image', async () => {
+    const content = (await buildUserMessageContent({
+      userMessageText: 'compare',
+      attachments: [
+        attachment({ type: 'file', name: 'notes.txt', mimeType: 'text/plain' }),
+        attachment({ name: 'photo.png', mimeType: 'image/png' }),
+      ],
+      getBytes,
+    })) as ContentPart[];
+
+    expect(content).to.deep.equal([
+      { type: 'image', data: Buffer.from('hello').toString('base64'), mediaType: 'image/png' },
+      { type: 'text', text: 'Attached file "notes.txt":\nhello\n\ncompare' },
+    ]);
+  });
+
+  it('skips an empty text/plain attachment', async () => {
+    const content = await buildUserMessageContent({
+      userMessageText: 'hi',
+      attachments: [attachment({ type: 'file', name: 'empty.txt', mimeType: 'text/plain' })],
+      getBytes: async () => Buffer.from('   '),
+    });
+
+    expect(content).to.equal('hi');
+  });
+
+  it('skips a text/plain file whose known size exceeds the text cap without reading bytes', async () => {
+    let called = false;
+    const content = await buildUserMessageContent({
+      userMessageText: 'big',
+      attachments: [attachment({ type: 'file', name: 'notes.txt', mimeType: 'text/plain', size: 257 * 1024 })],
+      getBytes: async () => {
+        called = true;
+
+        return Buffer.from('hello');
+      },
+    });
+
+    expect(called).to.equal(false);
+    expect(content).to.equal('big');
   });
 
   it('skips a file whose known size exceeds the per-file cap without reading bytes', async () => {
@@ -153,16 +225,17 @@ describe('buildUserMessageContent', () => {
 });
 
 describe('applyUserContentToLatestUserTurn', () => {
-  it('leaves messages untouched for a plain-string body', () => {
+  it('replaces the latest user row for a plain-string body', () => {
     const messages = [
       { role: MessageRole.ASSISTANT, content: 'prior' },
       { role: MessageRole.USER, content: 'hi' },
     ];
 
-    const result = applyUserContentToLatestUserTurn(messages, 'hi');
+    const result = applyUserContentToLatestUserTurn(messages, 'Attached file "notes.txt":\nhello\n\nhi');
 
     expect(result).to.equal(messages);
-    expect(result[1].content).to.equal('hi');
+    expect(result[0].content).to.equal('prior');
+    expect(result[1].content).to.equal('Attached file "notes.txt":\nhello\n\nhi');
   });
 
   it('replaces only the latest user row content with parts', () => {

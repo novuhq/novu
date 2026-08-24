@@ -13,7 +13,7 @@ type MediaPart = {
   [key: string]: unknown;
 };
 
-async function hydratePart(part: HumanContentPart): Promise<HumanContentPart> {
+async function hydratePart(part: HumanContentPart): Promise<HumanContentPart | null> {
   if (!part || typeof part !== 'object') {
     return part;
   }
@@ -28,6 +28,10 @@ async function hydratePart(part: HumanContentPart): Promise<HumanContentPart> {
   }
 
   const data = await fetchUnreachableAttachmentBase64(media.url);
+  if (!data) {
+    return null;
+  }
+
   const { url: _url, ...rest } = media;
 
   return { ...rest, data } as HumanContentPart;
@@ -36,6 +40,7 @@ async function hydratePart(part: HumanContentPart): Promise<HumanContentPart> {
 /**
  * Replace attachment URLs a hosted model cannot fetch with inline base64.
  * HTTPS public URLs are left as-is so production signed S3 links stay URL-based.
+ * Over-budget downloads are omitted so one large file cannot abort the turn.
  *
  * Novu calls this automatically when you return a `LangChainAgentConfig`.
  * Call it yourself before `createAgent().invoke(...)` when you map history.
@@ -47,7 +52,9 @@ export async function hydrateUnreachableAttachmentUrls(messages: BaseMessage[]):
         return message;
       }
 
-      const content: HumanContentBlocks = await Promise.all(message.content.map((part) => hydratePart(part)));
+      const content = (await Promise.all(message.content.map((part) => hydratePart(part)))).filter(
+        (part): part is HumanContentPart => part != null
+      );
 
       return new HumanMessage({ content });
     })

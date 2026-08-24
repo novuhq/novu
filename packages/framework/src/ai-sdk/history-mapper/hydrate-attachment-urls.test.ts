@@ -48,11 +48,39 @@ describe('hydrateUnreachableAttachmentUrls', () => {
     ]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:4566/novu-local/photo.png');
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:4566/novu-local/photo.png', {
+      redirect: 'error',
+      credentials: 'omit',
+    });
     expect(normalizeFileData(result[0].content)).toEqual([
       { type: 'file', data: Buffer.from(pngBytes).toString('base64'), mediaType: 'image/png' },
       { type: 'file', data: 'https://files.novu.co/remote.png', mediaType: 'image/png' },
       { type: 'text', text: 'what is this?' },
     ]);
+  });
+
+  it('omits an over-budget local file and keeps the rest of the turn', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: { get: (name: string) => (name.toLowerCase() === 'content-length' ? String(26 * 1024 * 1024) : null) },
+        arrayBuffer: async () => {
+          throw new Error('should not download an over-budget attachment');
+        },
+      })
+    );
+
+    const result = await hydrateUnreachableAttachmentUrls([
+      {
+        role: 'user',
+        content: [
+          { type: 'file', data: new URL('http://localhost:4566/novu-local/huge.pdf'), mediaType: 'application/pdf' },
+          { type: 'text', text: 'summarize this' },
+        ],
+      },
+    ]);
+
+    expect(result[0].content).toEqual([{ type: 'text', text: 'summarize this' }]);
   });
 });

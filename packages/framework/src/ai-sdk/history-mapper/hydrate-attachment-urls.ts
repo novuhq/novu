@@ -9,13 +9,16 @@ function filePartUrl(part: FilePart): string | undefined {
   return undefined;
 }
 
-async function hydrateFilePart(part: FilePart): Promise<FilePart> {
+async function hydrateFilePart(part: FilePart): Promise<FilePart | null> {
   const url = filePartUrl(part);
   if (!url || isProviderFetchableUrl(url)) {
     return part;
   }
 
   const data = await fetchUnreachableAttachmentBytes(url);
+  if (!data) {
+    return null;
+  }
 
   return { ...part, data };
 }
@@ -23,6 +26,7 @@ async function hydrateFilePart(part: FilePart): Promise<FilePart> {
 /**
  * Replace attachment URLs a hosted model cannot fetch with inline bytes.
  * HTTPS public URLs are left as-is so production signed S3 links stay URL-based.
+ * Over-budget downloads are omitted so one large file cannot abort the turn.
  */
 export async function hydrateUnreachableAttachmentUrls(messages: ModelMessage[]): Promise<ModelMessage[]> {
   return Promise.all(
@@ -31,9 +35,9 @@ export async function hydrateUnreachableAttachmentUrls(messages: ModelMessage[])
         return message;
       }
 
-      const content = await Promise.all(
-        message.content.map((part) => (part.type === 'file' ? hydrateFilePart(part) : part))
-      );
+      const content = (
+        await Promise.all(message.content.map((part) => (part.type === 'file' ? hydrateFilePart(part) : part)))
+      ).filter((part) => part != null);
 
       return { ...message, content };
     })

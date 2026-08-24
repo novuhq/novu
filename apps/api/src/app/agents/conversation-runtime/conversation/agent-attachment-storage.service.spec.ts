@@ -349,6 +349,12 @@ describe('AgentAttachmentStorage', () => {
     expect(storageService.getReadSignedUrl.called).to.equal(false);
   });
 
+  const getBytesScope = {
+    organizationId: 'org',
+    environmentId: 'env',
+    conversationId: 'conv',
+  };
+
   it('should return file bytes from getFile without a fileExists probe', async () => {
     const getFile = sinon.stub().resolves(Buffer.from('png-bytes'));
     const fileExists = sinon.stub();
@@ -358,7 +364,7 @@ describe('AgentAttachmentStorage', () => {
     } as unknown as StorageService;
 
     const service = new AgentAttachmentStorage(storageService, makeLogger() as any);
-    const bytes = await service.getBytes('org/env/agents/conv/msg/0-f.png');
+    const bytes = await service.getBytes('org/env/agents/conv/msg/0-f.png', getBytesScope);
 
     expect(bytes?.equals(Buffer.from('png-bytes'))).to.equal(true);
     expect(getFile.calledOnce).to.equal(true);
@@ -373,9 +379,39 @@ describe('AgentAttachmentStorage', () => {
     } as unknown as StorageService;
     const logger = makeLogger();
     const service = new AgentAttachmentStorage(storageService, logger as any);
-    const bytes = await service.getBytes('missing-key');
+    const bytes = await service.getBytes('org/env/agents/conv/msg/missing.png', getBytesScope);
 
     expect(bytes).to.equal(null);
+    expect(getFile.calledOnce).to.equal(true);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('should not read bytes when storageKey belongs to another tenant', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('secret'));
+    const storageService = { getFile } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const bytes = await service.getBytes('victim-org/victim-env/agents/victim-conv/msg/0-secret.pdf', getBytesScope);
+
+    expect(bytes).to.equal(null);
+    expect(getFile.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
+  it('should not read bytes when storageKey escapes the conversation prefix', async () => {
+    const getFile = sinon.stub().resolves(Buffer.from('secret'));
+    const storageService = { getFile } as unknown as StorageService;
+    const logger = makeLogger();
+    const service = new AgentAttachmentStorage(storageService, logger as any);
+
+    const bytes = await service.getBytes(
+      'org/env/agents/conv/../../victim-org/victim-env/agents/victim-conv/msg/0-secret.pdf',
+      getBytesScope
+    );
+
+    expect(bytes).to.equal(null);
+    expect(getFile.called).to.equal(false);
     expect(logger.warn.calledOnce).to.equal(true);
   });
 });
