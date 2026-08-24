@@ -41,7 +41,7 @@ function entryPagination(entry: ConversationEntry): AgentChatPagination {
   };
 }
 
-/** Safety cap on reconnect catch-up HTTP pages. Exceeding this sets a public error. */
+/** Safety cap on reconnect catch-up HTTP pages when a sequence checkpoint exists. Exceeding this sets a public error. */
 const CATCH_UP_PAGE_LIMIT = 20;
 
 export class AgentChat extends BaseModule {
@@ -737,7 +737,11 @@ export class AgentChat extends BaseModule {
       let before: string | undefined;
       let completed = false;
 
-      for (let pageIndex = 0; pageIndex < CATCH_UP_PAGE_LIMIT; pageIndex += 1) {
+      for (let pageIndex = 0; ; pageIndex += 1) {
+        if (knownThrough > 0 && pageIndex >= CATCH_UP_PAGE_LIMIT) {
+          break;
+        }
+
         const page = await this.#agentChatService.getEvents({
           conversationId,
           ...(before ? { before } : {}),
