@@ -9,9 +9,12 @@ import type {
   AgentToolApprovalDecision,
 } from './agent-message.types';
 import type {
+  AgentChatChange,
+  AgentChatPaginationStatus,
   FetchMoreResult,
   LoadConversationResult,
   RespondToActionResult,
+  RetryMessageResult,
   SendActionResult,
   SendMessageResult,
 } from './types';
@@ -26,6 +29,14 @@ export type AgentConversationRunSnapshot = {
 
 export type AgentConversationPaginationSnapshot = {
   hasMore: boolean;
+  status: AgentChatPaginationStatus;
+};
+
+/** Extra context for one snapshot publication. Omitted on the initial subscribe replay. */
+export type AgentConversationPublicationMeta = {
+  change?: AgentChatChange;
+  /** Resume history finished loading for this runtime. */
+  historyLoaded?: boolean;
 };
 
 /**
@@ -44,6 +55,10 @@ export type AgentConversationSnapshot = {
   messages: readonly AgentMessage[];
   pendingActions: readonly AgentPendingAction[];
   error?: NovuError | AgentChatPlanLimitError | AgentConversationError;
+  /** True while reconnect catch-up is in flight for this conversation. */
+  isRecovering: boolean;
+  /** Set when reconnect catch-up fails. Separate from send/fetch `error`. */
+  catchUpError?: NovuError;
 };
 
 export type ConversationOk<T> = { ok: true; data: T };
@@ -60,7 +75,10 @@ export type SendMessageInput = string | { text: string; metadata?: Record<string
 
 export type AgentConversationRuntimeActions = {
   getSnapshot(): AgentConversationSnapshot;
-  subscribe(listener: (snapshot: AgentConversationSnapshot) => void): () => void;
+  getServerSnapshot(): AgentConversationSnapshot;
+  subscribe(
+    listener: (snapshot: AgentConversationSnapshot, meta?: AgentConversationPublicationMeta) => void
+  ): () => void;
   dispose(): void;
   load(): Promise<{ data?: LoadConversationResult; error?: NovuError }>;
   fetchMore(): Promise<{ data?: FetchMoreResult; error?: NovuError }>;
@@ -76,5 +94,6 @@ export type AgentConversationRuntimeActions = {
     sourceMessageId: string;
     value?: string;
   }): Promise<{ data?: SendActionResult; error?: NovuError | AgentChatPlanLimitError }>;
+  retryMessage(messageId: string): Promise<{ data?: RetryMessageResult; error?: NovuError | AgentChatPlanLimitError }>;
   cancelRun(): ConversationResult<void>;
 };

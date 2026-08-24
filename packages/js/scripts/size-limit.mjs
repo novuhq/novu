@@ -16,8 +16,8 @@ const modules = [
     name: 'UMD minified',
     filePath: umdPath,
     // Raised for agent conversation runtime (NV-8640), protocol validation (NV-8644),
-    // and agent-chat idempotency/retry (NV-8642).
-    limitInBytes: 238_000,
+    // agent-chat idempotency/retry (NV-8642), and publication meta (NV-8641).
+    limitInBytes: 240_000,
   },
   {
     name: 'UMD gzip',

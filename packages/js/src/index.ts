@@ -10,6 +10,7 @@ export type {
   AgentChatToolsDefinition,
   AgentConversationError,
   AgentConversationPaginationSnapshot,
+  AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationRuntimeActions,
   AgentConversationSessionStatus,
