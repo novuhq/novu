@@ -746,7 +746,12 @@ export class AgentChat extends BaseModule {
         missed.push(...envelopes);
 
         const oldestInPage = envelopes[0]?.sequence;
-        if (page.olderCursor == null || oldestInPage == null || oldestInPage <= knownThrough) {
+        if (page.olderCursor == null || oldestInPage == null) {
+          completed = true;
+          break;
+        }
+
+        if (knownThrough > 0 && oldestInPage <= knownThrough) {
           completed = true;
           break;
         }

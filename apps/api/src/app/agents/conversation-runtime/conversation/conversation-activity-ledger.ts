@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
   ActivityView,
@@ -64,6 +64,7 @@ export class ConversationActivityLedger {
   constructor(
     private readonly activityRepository: ConversationActivityRepository,
     private readonly eventSequenceService: ConversationEventSequenceService,
+    @Inject(forwardRef(() => AgentChatLiveActivityPublisher))
     private readonly agentChatLiveActivityPublisher: AgentChatLiveActivityPublisher,
     private readonly conversationRepository: ConversationRepository,
     private readonly logger: PinoLogger

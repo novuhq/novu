@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import type { AgentEvent, AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { PinoLogger, WebSocketsQueueService } from '@novu/application-generic';
 import {
@@ -58,6 +58,7 @@ export class AgentChatLiveActivityPublisher {
   constructor(
     private readonly subscriberRepository: SubscriberRepository,
     private readonly conversationRepository: ConversationRepository,
+    @Inject(forwardRef(() => AgentConversationService))
     private readonly conversationService: AgentConversationService,
     private readonly eventFactory: AgentChatEventFactory,
     private readonly webSocketsQueueService: WebSocketsQueueService,
