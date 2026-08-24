@@ -68,7 +68,7 @@ export type AgentChatClaimInboundParams = {
 
 export type AgentChatInboundClaimResult =
   | { outcome: 'acquired'; conversationId: string; claimToken: string }
-  | { outcome: 'duplicate'; conversationId: string }
+  | { outcome: 'duplicate'; conversationId: string; messageId?: string }
   | { outcome: 'in_progress'; conversationId: string }
   | { outcome: 'unavailable' };
 
@@ -92,6 +92,8 @@ export type AgentChatAdapterConfig = {
   claimInbound?: (params: AgentChatClaimInboundParams) => Promise<AgentChatInboundClaimResult>;
   /** Drop this request's in-flight lock after dispatch fails. Compare-and-delete. */
   releaseInbound?: (params: AgentChatClaimInboundParams & { claimToken: string }) => Promise<void>;
+  /** Cache successful accept and release the in-flight lock (24h replay window). */
+  completeInbound?: (params: AgentChatClaimInboundParams & { claimToken: string; messageId?: string }) => Promise<void>;
   deliverMessage: (params: AgentChatDeliverMessageParams) => Promise<AgentChatDeliverMessageResult>;
   editMessage: (params: AgentChatEditMessageParams) => Promise<AgentChatDeliverMessageResult>;
   deleteMessage: (params: AgentChatDeleteMessageParams) => Promise<void>;

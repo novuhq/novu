@@ -513,6 +513,14 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
               this.agentChatAcceptIdempotency.claimInbound(session.environmentId, key, conversationId),
             releaseInbound: ({ session, key, conversationId, claimToken }) =>
               this.agentChatAcceptIdempotency.releaseInbound(session.environmentId, key, conversationId, claimToken),
+            completeInbound: ({ session, key, conversationId, claimToken, messageId }) =>
+              this.agentChatAcceptIdempotency.completeInbound(
+                session.environmentId,
+                key,
+                conversationId,
+                claimToken,
+                messageId
+              ),
             deliverMessage: this.agentChatPlatformDelivery.createDeliverMessage(deliveryContext),
             editMessage: this.agentChatPlatformDelivery.createEditMessage(deliveryContext),
             deleteMessage: this.agentChatPlatformDelivery.createDeleteMessage(deliveryContext),

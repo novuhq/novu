@@ -271,6 +271,7 @@ describe('NovuAgentChatAdapterImpl', () => {
 
   it('releases the inbound claim when processMessage throws', async () => {
     const releaseInbound = vi.fn(async () => undefined);
+    const completeInbound = vi.fn(async () => undefined);
     const { adapter, processMessage } = await createAdapter(
       createConfig({
         claimInbound: async () => ({
@@ -279,6 +280,7 @@ describe('NovuAgentChatAdapterImpl', () => {
           claimToken: 'claim-token-1',
         }),
         releaseInbound,
+        completeInbound,
       })
     );
     processMessage.mockRejectedValueOnce(new Error('dispatch failed'));
@@ -291,6 +293,63 @@ describe('NovuAgentChatAdapterImpl', () => {
       key: 'msg_abcdefghijkl',
       conversationId: expect.any(String),
       claimToken: 'claim-token-1',
+    });
+    expect(completeInbound).not.toHaveBeenCalled();
+  });
+
+  it('completes the inbound claim after a successful message dispatch', async () => {
+    const completeInbound = vi.fn(async () => undefined);
+    const { adapter } = await createAdapter(
+      createConfig({
+        claimInbound: async () => ({
+          outcome: 'acquired' as const,
+          conversationId: 'conv_new000000001',
+          claimToken: 'claim-token-1',
+        }),
+        completeInbound,
+      })
+    );
+
+    await adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'retry me', messageId: 'msg_abcdefghijkl' }));
+
+    expect(completeInbound).toHaveBeenCalledWith({
+      session: SESSION,
+      key: 'msg_abcdefghijkl',
+      conversationId: expect.any(String),
+      claimToken: 'claim-token-1',
+      messageId: 'msg_abcdefghijkl',
+    });
+  });
+
+  it('completes the inbound claim after a successful action dispatch', async () => {
+    const completeInbound = vi.fn(async () => undefined);
+    const { adapter } = await createAdapter(
+      createConfig({
+        authorizeResume: async () => true,
+        claimInbound: async () => ({
+          outcome: 'acquired' as const,
+          conversationId: 'conv_abcdefghijkl',
+          claimToken: 'claim-token-2',
+        }),
+        completeInbound,
+      })
+    );
+
+    await adapter.handleWebhook(
+      jsonRequest({
+        agentId: 'a',
+        actionId: 'tool-approval:approve:tc1',
+        sourceMessageId: 'act_card0000001',
+        conversationIdentifier: 'conv_abcdefghijkl',
+        idempotencyKey: 'idem_abcdefghijkl',
+      })
+    );
+
+    expect(completeInbound).toHaveBeenCalledWith({
+      session: SESSION,
+      key: 'idem_abcdefghijkl',
+      conversationId: 'conv_abcdefghijkl',
+      claimToken: 'claim-token-2',
     });
   });
 

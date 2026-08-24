@@ -261,6 +261,8 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       throw error;
     }
 
+    await this.completeInboundClaim(session, clientMessageId, conversationId, claim?.claimToken, messageId);
+
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
     // `agent_chat:conv_*` so `chat.thread()` can resolve this adapter by prefix.
     // `messageId` lets the client reconcile optimistic bubbles with history/live.
@@ -323,6 +325,8 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       throw error;
     }
 
+    await this.completeInboundClaim(session, idempotencyKey, conversationId, claim?.claimToken);
+
     return jsonResponse({ data: { identifier: conversationId } }, 200);
   }
 
@@ -343,7 +347,16 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
     }
 
     if (claim.outcome === 'duplicate') {
-      return jsonResponse({ data: { identifier: claim.conversationId, ...extra } }, duplicateStatus);
+      const messageId = claim.messageId ?? extra?.messageId;
+      return jsonResponse(
+        {
+          data: {
+            identifier: claim.conversationId,
+            ...(messageId ? { messageId } : {}),
+          },
+        },
+        duplicateStatus
+      );
     }
 
     if (claim.outcome === 'in_progress') {
@@ -364,6 +377,20 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
     }
 
     await this.config.releaseInbound({ session, key, conversationId, claimToken });
+  }
+
+  private async completeInboundClaim(
+    session: AgentChatSession,
+    key: string,
+    conversationId: string,
+    claimToken?: string,
+    messageId?: string
+  ): Promise<void> {
+    if (!key || !claimToken || !this.config.completeInbound) {
+      return;
+    }
+
+    await this.config.completeInbound({ session, key, conversationId, claimToken, messageId });
   }
 
   /** Sync plan-limit gate before minting or dispatching. */
