@@ -36,6 +36,23 @@ function parseRelativeDateArgs(val: any, operator: string) {
   };
 }
 
+function parseUnaryOperatorArgs(val: unknown, operator: string) {
+  if (!val || !Array.isArray(val) || val.length !== 1) {
+    return false;
+  }
+
+  const [operand] = val;
+  if (!operand || typeof operand !== 'object' || !('var' in operand) || typeof operand.var !== 'string') {
+    return false;
+  }
+
+  return {
+    field: operand.var,
+    operator,
+    value: '',
+  };
+}
+
 const customJsonLogicOperations = {
   moreThanXAgo: (val: any) => parseRelativeDateArgs(val, 'moreThanXAgo'),
   lessThanXAgo: (val: any) => parseRelativeDateArgs(val, 'lessThanXAgo'),
@@ -44,6 +61,8 @@ const customJsonLogicOperations = {
   notWithinLast: (val: any) => parseRelativeDateArgs(val, 'notWithinLast'),
   containsAny: (val: any) => parseArrayOperatorArgs(val, 'containsAny'),
   doesNotContainAny: (val: any) => parseArrayOperatorArgs(val, 'doesNotContainAny'),
+  isEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isEmpty'),
+  isNonEmpty: (val: unknown) => parseUnaryOperatorArgs(val, 'isNonEmpty'),
 };
 
 // Shared parse options for consistency
