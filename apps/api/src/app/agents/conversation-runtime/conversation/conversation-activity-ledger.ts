@@ -633,37 +633,49 @@ export class ConversationActivityLedger {
       params.sequence
     );
 
-    const touchFn =
-      touch === 'activity'
-        ? this.conversationRepository.touchActivity.bind(this.conversationRepository)
-        : touch === 'preview'
-          ? this.conversationRepository.touchPreview.bind(this.conversationRepository)
-          : null;
-
     try {
-      const activity = await this.activityRepository.createAgentActivity({
-        identifier: params.identifier ?? `act_${shortId(12)}`,
-        conversationId: params.conversationId,
-        platform: params.channel.platform,
-        integrationId: params.channel._integrationId,
-        platformThreadId: threadId,
-        platformMessageId: params.platformMessageId,
-        agentId: params.agentIdentifier,
-        senderName: params.agentName,
-        content: params.content,
-        richContent: params.richContent,
-        toolData: params.toolData,
-        type,
-        sequence,
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
+      // Replica-set txn: create+touch commit together. Standalone Mongo
+      // degrades to sequential writes (same as other withTransaction call sites).
+      return await this.activityRepository.withTransaction(async (session) => {
+        const activity = await this.activityRepository.createAgentActivity({
+          identifier: params.identifier ?? `act_${shortId(12)}`,
+          conversationId: params.conversationId,
+          platform: params.channel.platform,
+          integrationId: params.channel._integrationId,
+          platformThreadId: threadId,
+          platformMessageId: params.platformMessageId,
+          agentId: params.agentIdentifier,
+          senderName: params.agentName,
+          content: params.content,
+          richContent: params.richContent,
+          toolData: params.toolData,
+          type,
+          sequence,
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+          session,
+        });
+
+        if (touch === 'activity') {
+          await this.conversationRepository.touchActivity(
+            params.environmentId,
+            params.organizationId,
+            params.conversationId,
+            params.content,
+            session
+          );
+        } else if (touch === 'preview') {
+          await this.conversationRepository.touchPreview(
+            params.environmentId,
+            params.organizationId,
+            params.conversationId,
+            params.content,
+            session
+          );
+        }
+
+        return { activity, created: true };
       });
-
-      if (touchFn) {
-        await touchFn(params.environmentId, params.organizationId, params.conversationId, params.content);
-      }
-
-      return { activity, created: true };
     } catch (err) {
       if (params.identifier && isDuplicateKeyError(err)) {
         const existing = await this.activityRepository.findOne(

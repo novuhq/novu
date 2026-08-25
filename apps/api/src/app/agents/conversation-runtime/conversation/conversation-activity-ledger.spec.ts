@@ -38,6 +38,9 @@ describe('ConversationActivityLedger', () => {
       createSignalActivity: overrides.createSignalActivity ?? sinon.stub().resolves({}),
       findOne: overrides.findOne ?? sinon.stub().resolves(null),
       count: overrides.count ?? sinon.stub().resolves(0),
+      withTransaction:
+        overrides.withTransaction ??
+        sinon.stub().callsFake(async (fn: (session: null) => Promise<unknown>) => fn(null)),
       ...overrides,
     };
   }
