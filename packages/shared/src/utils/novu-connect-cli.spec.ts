@@ -52,7 +52,9 @@ describe('novu-connect-cli', () => {
   it('pins scaffold SDK packages to next on staging, local, or staging region', () => {
     expect(getNovuScaffoldSdkTag(NOVU_STAGING_API_URL)).toBe('next');
     expect(getNovuScaffoldSdkTag('http://localhost:3000')).toBe('next');
+    expect(getNovuScaffoldSdkTag('https://api.novu.localhost')).toBe('next');
     expect(getNovuScaffoldSdkTag('https://api.novu.co', 'staging')).toBe('next');
+    expect(getNovuScaffoldSdkTag('https://api.novu.co', 'local')).toBe('next');
     expect(getNovuScaffoldSdkTag('https://api.novu.co')).toBe('latest');
   });
 

@@ -50,7 +50,9 @@ export function isNovuLocalApiUrl(apiUrl: string | null | undefined): boolean {
   try {
     const hostname = new URL(normalized).hostname;
 
-    return hostname === 'localhost' || hostname === '127.0.0.1';
+    // `.localhost` is reserved for loopback (RFC 6761) — covers the
+    // `api.novu.localhost` local-dev host alongside plain localhost.
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost');
   } catch {
     return false;
   }
@@ -61,7 +63,7 @@ export function getNovuConnectPackageTag(apiUrl?: string | null): NovuConnectPac
 }
 
 export function isNovuPreReleaseConnectMode(apiUrl?: string | null, region?: string | null): boolean {
-  return isNovuStagingApiUrl(apiUrl) || isNovuLocalApiUrl(apiUrl) || region === 'staging';
+  return isNovuStagingApiUrl(apiUrl) || isNovuLocalApiUrl(apiUrl) || region === 'staging' || region === 'local';
 }
 
 export function getNovuScaffoldSdkTag(apiUrl?: string | null, region?: string | null): NovuScaffoldSdkTag {
