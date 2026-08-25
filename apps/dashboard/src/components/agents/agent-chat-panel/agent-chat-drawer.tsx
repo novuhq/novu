@@ -73,7 +73,7 @@ export function AgentChatDrawer({
           </SheetClose>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col px-4 pt-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pt-4">
           {showAddToAppCallouts ? (
             <div className="bg-bg-weak flex min-h-9 shrink-0 flex-wrap items-center gap-2 rounded-lg py-1.5 pr-1.5 pl-2">
               <span className="bg-text-sub h-[22px] w-1 shrink-0 rounded-full" aria-hidden />

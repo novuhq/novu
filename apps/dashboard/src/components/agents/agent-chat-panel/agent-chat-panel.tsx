@@ -5,6 +5,8 @@ import { RiArrowUpLine, RiCloseFill, RiErrorWarningLine, RiLoader4Line } from 'r
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { ChatEmptyState, ChatMessageRow, ChatTypingRow } from '@/components/agents/agent-chat-panel/agent-chat-parts';
+import { AgentChatSessionBar } from '@/components/agents/agent-chat-panel/agent-chat-session-bar';
+import { useAgentChatConversationList } from '@/components/agents/agent-chat-panel/use-agent-chat-conversation-list';
 import { Button } from '@/components/primitives/button';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -35,7 +37,13 @@ type AgentChatPanelProps = {
   addToAppHref?: string;
 };
 
-export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHref }: AgentChatPanelProps) {
+export function AgentChatPanel(props: AgentChatPanelProps) {
+  const { currentEnvironment } = useEnvironment();
+
+  return <AgentChatPanelInner key={`${props.agent.identifier}:${currentEnvironment?._id ?? ''}`} {...props} />;
+}
+
+function AgentChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }: AgentChatPanelProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardAgentChatSubscriberId(currentUser._id) : '';
@@ -50,6 +58,9 @@ export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHr
     }),
     [testerSubscriberId, currentUser?.firstName, currentUser?.lastName, currentUser?.email, currentUser?.profilePicture]
   );
+  const [resumeId, setResumeId] = useState<string | undefined>();
+  const [sessionNonce, setSessionNonce] = useState(0);
+  const { items, reload } = useAgentChatConversationList(agent.identifier, testerSubscriberId);
 
   if (!isReady || !currentEnvironment) {
     return (
@@ -68,12 +79,24 @@ export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHr
       apiUrl={apiHostnameManager.getHostname()}
       socketUrl={apiHostnameManager.getWebSocketHostname()}
     >
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <AgentChatSurface
+          key={sessionNonce}
           agentId={agent.identifier}
           agentName={agent.name}
+          conversationId={resumeId}
+          conversations={items}
           showAddToAppCallouts={showAddToAppCallouts}
           addToAppHref={addToAppHref}
+          onSelectConversation={(identifier) => {
+            setResumeId(identifier);
+            setSessionNonce((nonce) => nonce + 1);
+          }}
+          onNewChat={() => {
+            setResumeId(undefined);
+            setSessionNonce((nonce) => nonce + 1);
+          }}
+          onConversationActivity={reload}
         />
       </div>
     </NovuProvider>
@@ -83,22 +106,44 @@ export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHr
 function AgentChatSurface({
   agentId,
   agentName,
+  conversationId,
+  conversations,
   showAddToAppCallouts,
   addToAppHref,
+  onSelectConversation,
+  onNewChat,
+  onConversationActivity,
 }: {
   agentId: string;
   agentName: string;
+  conversationId?: string;
+  conversations: ReturnType<typeof useAgentChatConversationList>['items'];
   showAddToAppCallouts: boolean;
   addToAppHref?: string;
+  onSelectConversation: (identifier: string) => void;
+  onNewChat: () => void;
+  onConversationActivity: () => void;
 }) {
   const [draft, setDraft] = useState('');
   const [showChannelPromo, setShowChannelPromo] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { messages, pendingActions, sendMessage, sendAction, respondToAction, error, isRunning, isLoading, typing } =
-    useAgentChat({
-      agentId,
-    });
+  const {
+    messages,
+    pendingActions,
+    sendMessage,
+    sendAction,
+    respondToAction,
+    retryMessage,
+    conversationId: activeConversationId,
+    error,
+    isRunning,
+    isLoading,
+    typing,
+  } = useAgentChat({
+    agentId,
+    conversationId,
+  });
 
   const composerDisabled = isRunning || isLoading;
   const canSend = !composerDisabled && Boolean(draft.trim());
@@ -108,6 +153,7 @@ function AgentChatSurface({
   const lastMessageSignature = lastMessage
     ? `${lastMessage.id}:${lastMessage.parts.map((part) => (part.type === 'text' ? part.text : part.type)).join('\0')}`
     : '';
+  const canStartNew = Boolean(activeConversationId || conversationId || messages.length > 0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-measure whenever the draft changes
   useLayoutEffect(() => {
@@ -131,12 +177,23 @@ function AgentChatSurface({
     if (!trimmed || composerDisabled) return;
 
     setDraft('');
-    void sendMessage(trimmed);
+    void sendMessage(trimmed).then((result) => {
+      if (result.data) {
+        onConversationActivity();
+      }
+    });
     textareaRef.current?.focus();
   };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      <AgentChatSessionBar
+        conversations={conversations}
+        activeConversationId={activeConversationId ?? conversationId}
+        onSelect={onSelectConversation}
+        onNewChat={onNewChat}
+        canStartNew={canStartNew}
+      />
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto" role="log" aria-live="polite">
         {isEmpty ? (
           <div className="flex h-full w-full flex-col">
@@ -152,6 +209,13 @@ function AgentChatSurface({
                 cardActionsDisabled={composerDisabled}
                 onCardAction={(action) => void sendAction(action)}
                 onRespondToAction={(action) => void respondToAction(action)}
+                onRetry={(messageId) => {
+                  void retryMessage(messageId).then((result) => {
+                    if (result.data) {
+                      onConversationActivity();
+                    }
+                  });
+                }}
               />
             ))}
             {showTypingRow ? <ChatTypingRow status={typing?.status} /> : null}
