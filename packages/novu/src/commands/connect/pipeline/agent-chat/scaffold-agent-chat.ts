@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { isNovuLocalApiUrl, isNovuStagingApiUrl } from '@novu/shared';
+import { CloudRegionEnum } from '../../../dev/enums';
 import { tryGitInit } from '../../../init/helpers/git';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
@@ -14,6 +16,7 @@ export type ScaffoldAgentChatProjectInput = {
   applicationIdentifier: string;
   subscriberId: string;
   apiUrl: string;
+  region?: CloudRegionEnum;
   /** When set, merge chat UI into an existing bridge scaffold instead of creating a sibling app. */
   mergeIntoProjectDir?: string;
   /** Replace the root page when merging into a project scaffolded during this connect run. */
@@ -86,7 +89,7 @@ async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgen
     throw new Error(`Cannot merge Agent Chat into "${resolved}" — no package.json found.`);
   }
 
-  const dependenciesChanged = ensureAgentChatDependencies(resolved, findLocalNovuDeps());
+  const dependenciesChanged = ensureAgentChatDependencies(resolved, findLocalNovuDeps(), input.apiUrl, input.region);
   const componentsDir = path.join(resolved, 'components', 'agent-chat');
   fs.mkdirSync(componentsDir, { recursive: true });
   copyTemplateComponents(componentsDir);
@@ -106,16 +109,22 @@ async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgen
   }
 }
 
-function ensureAgentChatDependencies(projectDir: string, localNovuDeps: LocalNovuDeps | undefined): boolean {
+function ensureAgentChatDependencies(
+  projectDir: string,
+  localNovuDeps: LocalNovuDeps | undefined,
+  apiUrl: string,
+  region?: CloudRegionEnum
+): boolean {
   const packageJsonPath = path.join(projectDir, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
     dependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };
   const dependencies = packageJson.dependencies ?? {};
+  const sdk = resolveAgentChatNovuDependencies(apiUrl, localNovuDeps, region);
   const required = {
-    '@novu/react': resolveNovuReactDependency(localNovuDeps),
-    ...(localNovuDeps ? { '@novu/js': `file:${localNovuDeps.jsDir}` } : {}),
+    '@novu/react': sdk.react,
+    ...(sdk.js ? { '@novu/js': sdk.js } : {}),
     'react-markdown': '^10.1.0',
     'remark-gfm': '^4.0.1',
   };
@@ -128,7 +137,7 @@ function ensureAgentChatDependencies(projectDir: string, localNovuDeps: LocalNov
     }
   }
 
-  if (localNovuDeps && packageJson.scripts) {
+  if (sdk.useLocalAliases && packageJson.scripts) {
     for (const [name, script] of Object.entries(packageJson.scripts)) {
       const usesNextDev = script.includes('next dev') && !script.includes('next dev --webpack');
       const usesNextBuild = script.includes('next build') && !script.includes('next build --webpack');
@@ -183,13 +192,10 @@ async function writeStandaloneAgentChatApp(root: string, input: ScaffoldAgentCha
     }),
     'utf8'
   );
-  fs.writeFileSync(
-    path.join(root, 'package.json'),
-    renderPackageJson(path.basename(root), root, localNovuDeps),
-    'utf8'
-  );
+  const sdk = resolveAgentChatNovuDependencies(input.apiUrl, localNovuDeps, input.region);
+  fs.writeFileSync(path.join(root, 'package.json'), renderPackageJson(path.basename(root), sdk), 'utf8');
   fs.writeFileSync(path.join(root, 'tsconfig.json'), STANDALONE_TSCONFIG, 'utf8');
-  fs.writeFileSync(path.join(root, 'next.config.mjs'), renderNextConfig(root, localNovuDeps), 'utf8');
+  fs.writeFileSync(path.join(root, 'next.config.mjs'), renderNextConfig(root, localNovuDeps, sdk), 'utf8');
   fs.writeFileSync(path.join(root, '.env.local'), renderEnvLocal(input), 'utf8');
   fs.writeFileSync(path.join(root, '.env.example'), renderEnvExample(input), 'utf8');
   fs.writeFileSync(path.join(root, '.gitignore'), STANDALONE_GITIGNORE, 'utf8');
@@ -346,28 +352,46 @@ function toPosixRelative(from: string, to: string): string {
   return rel.startsWith('.') ? rel : `./${rel}`;
 }
 
-function resolveNovuReactDependency(localNovuDeps: LocalNovuDeps | undefined): string {
-  if (localNovuDeps) {
-    return `file:${localNovuDeps.reactDir}`;
+export type AgentChatNovuDependencies = {
+  react: string;
+  js?: string;
+  useLocalAliases: boolean;
+};
+
+export function resolveAgentChatNovuDependencies(
+  apiUrl: string,
+  localNovuDeps: LocalNovuDeps | undefined,
+  region?: CloudRegionEnum
+): AgentChatNovuDependencies {
+  if (isNovuStagingApiUrl(apiUrl) || region === CloudRegionEnum.STAGING) {
+    return { react: 'rc', js: 'rc', useLocalAliases: false };
   }
 
-  return 'latest';
+  if (localNovuDeps && isNovuLocalApiUrl(apiUrl)) {
+    return {
+      react: `file:${localNovuDeps.reactDir}`,
+      js: `file:${localNovuDeps.jsDir}`,
+      useLocalAliases: true,
+    };
+  }
+
+  // The scaffold template tracks dashboard APIs that may not be on npm `latest` yet.
+  return { react: 'rc', js: 'rc', useLocalAliases: false };
 }
 
-function renderPackageJson(name: string, scaffoldRoot: string, localNovuDeps: LocalNovuDeps | undefined): string {
-  const usesLocalNovu = Boolean(localNovuDeps);
-
+function renderPackageJson(name: string, sdk: AgentChatNovuDependencies): string {
   return JSON.stringify(
     {
       name,
       private: true,
       scripts: {
-        dev: usesLocalNovu ? 'next dev -p 4012 --webpack' : 'next dev -p 4012',
-        build: usesLocalNovu ? 'next build --webpack' : 'next build',
+        dev: sdk.useLocalAliases ? 'next dev -p 4012 --webpack' : 'next dev -p 4012',
+        build: sdk.useLocalAliases ? 'next build --webpack' : 'next build',
         start: 'next start -p 4012',
       },
       dependencies: {
-        '@novu/react': resolveNovuReactDependency(localNovuDeps),
+        '@novu/react': sdk.react,
+        ...(sdk.js ? { '@novu/js': sdk.js } : {}),
         next: '^16.2.11',
         react: '^18.3.1',
         'react-dom': '^18.3.1',
@@ -386,8 +410,12 @@ function renderPackageJson(name: string, scaffoldRoot: string, localNovuDeps: Lo
   );
 }
 
-function renderNextConfig(scaffoldRoot: string, localNovuDeps: LocalNovuDeps | undefined): string {
-  if (!localNovuDeps) {
+function renderNextConfig(
+  scaffoldRoot: string,
+  localNovuDeps: LocalNovuDeps | undefined,
+  sdk: AgentChatNovuDependencies
+): string {
+  if (!sdk.useLocalAliases || !localNovuDeps) {
     return STANDALONE_NEXT_CONFIG;
   }
 

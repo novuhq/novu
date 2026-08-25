@@ -85,6 +85,7 @@ export async function runAgentChatProjectSetup(input: {
     applicationIdentifier,
     subscriberId,
     apiUrl: input.auth.apiUrl,
+    region: input.options.region,
     mergeIntoProjectDir: input.bridgeProjectDir,
     mergeAtRoot: input.autoMergeIntoBridge,
   });
