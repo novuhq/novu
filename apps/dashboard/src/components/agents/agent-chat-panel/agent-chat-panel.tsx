@@ -71,10 +71,9 @@ export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHr
       subscriber={subscriber}
       applicationIdentifier={currentEnvironment.identifier}
       apiUrl={apiHostnameManager.getHostname()}
-      socketUrl={import.meta.env.VITE_SOCKET_WORKER_URL || apiHostnameManager.getWebSocketHostname()}
-      socketOptions={{ socketType: 'cloud' }}
+      socketUrl={apiHostnameManager.getWebSocketHostname()}
     >
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <AgentChatSurface
           key={sessionNonce}
           agentId={agent.identifier}
@@ -83,7 +82,10 @@ export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHr
           conversations={items}
           showAddToAppCallouts={showAddToAppCallouts}
           addToAppHref={addToAppHref}
-          onSelectConversation={setResumeId}
+          onSelectConversation={(identifier) => {
+            setResumeId(identifier);
+            setSessionNonce((nonce) => nonce + 1);
+          }}
           onNewChat={() => {
             setResumeId(undefined);
             setSessionNonce((nonce) => nonce + 1);

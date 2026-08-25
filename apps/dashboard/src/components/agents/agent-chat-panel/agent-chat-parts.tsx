@@ -1,4 +1,5 @@
 import type { AgentMessage } from '@novu/react';
+import { type ReactNode } from 'react';
 import {
   RiArrowRightSLine,
   RiChat3Fill,
@@ -493,6 +494,37 @@ function PayloadPeek({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ExpandableRow({
+  id,
+  className,
+  summary,
+  children,
+}: {
+  id?: string;
+  className?: string;
+  summary: ReactNode;
+  children?: ReactNode;
+}) {
+  if (!children) {
+    return (
+      <span id={id} className={className}>
+        {summary}
+      </span>
+    );
+  }
+
+  return (
+    <details id={id} className={cn('group w-full min-w-0', className)}>
+      <summary className="flex cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden">
+        {summary}
+      </summary>
+      <div className="border-stroke-soft mt-1 flex w-full min-w-0 flex-col gap-2 rounded-md border px-2.5 py-2">
+        {children}
+      </div>
+    </details>
+  );
+}
+
 function ToolChip({ tool }: { tool: ToolPart }) {
   const isRunning = tool.state === 'input-streaming' || tool.state === 'input-available';
   const isFailed = tool.state === 'output-error';
@@ -506,39 +538,33 @@ function ToolChip({ tool }: { tool: ToolPart }) {
 
   const inputPreview = tool.input && Object.keys(tool.input).length > 0 ? prettyJson(tool.input) : undefined;
   const outputPreview = formatToolOutput(tool.output);
-  const canExpand = Boolean(inputPreview || outputPreview);
-  const row = (
-    <span
-      className={cn(
-        'text-label-xs inline-flex min-w-0 items-center gap-1',
-        isFailed ? 'text-error-base' : 'text-text-soft',
-        canExpand && 'cursor-pointer'
-      )}
-    >
-      {isRunning ? (
-        <RiLoader4Line className="size-3.5 shrink-0 animate-spin" aria-hidden />
-      ) : (
-        <RiArrowRightSLine
-          className={cn('size-3.5 shrink-0', canExpand && 'transition-transform group-open:rotate-90')}
-          aria-hidden
-        />
-      )}
-      {statusLabel} <span className="font-mono">{tool.toolName}</span>
-    </span>
-  );
-
-  if (!canExpand) {
-    return row;
-  }
 
   return (
-    <details className="group w-full min-w-0">
-      <summary className="flex list-none items-center [&::-webkit-details-marker]:hidden">{row}</summary>
-      <div className="border-stroke-soft mt-1 flex w-full min-w-0 flex-col gap-2 rounded-md border px-2.5 py-2">
-        {inputPreview ? <PayloadPeek label="Input" value={inputPreview} /> : null}
-        {outputPreview ? <PayloadPeek label="Result" value={outputPreview} /> : null}
-      </div>
-    </details>
+    <ExpandableRow
+      summary={
+        <span
+          className={cn(
+            'text-label-xs inline-flex min-w-0 items-center gap-1',
+            isFailed ? 'text-error-base' : 'text-text-soft',
+            (inputPreview || outputPreview) && 'cursor-pointer'
+          )}
+        >
+          {isRunning ? (
+            <RiLoader4Line className="size-3.5 shrink-0 animate-spin" aria-hidden />
+          ) : (
+            <RiArrowRightSLine className="size-3.5 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
+          )}
+          {statusLabel} <span className="font-mono">{tool.toolName}</span>
+        </span>
+      }
+    >
+      {inputPreview || outputPreview ? (
+        <>
+          {inputPreview ? <PayloadPeek label="Input" value={inputPreview} /> : null}
+          {outputPreview ? <PayloadPeek label="Result" value={outputPreview} /> : null}
+        </>
+      ) : null}
+    </ExpandableRow>
   );
 }
 
@@ -661,40 +687,29 @@ export function ChatToolApprovalCard({
 
   if (state !== 'pending') {
     const isApproved = state === 'approved';
-    const statusRow = (
-      <span className="text-label-xs inline-flex items-center gap-1">
-        <RiArrowRightSLine
-          className={cn(
-            'text-text-soft size-3.5 shrink-0',
-            inputPreview && 'transition-transform group-open:rotate-90'
-          )}
-          aria-hidden
-        />
-        <span className="text-text-soft font-mono">{toolName}</span>
-        <span className="text-text-soft" aria-hidden>
-          ·
-        </span>
-        <span className={isApproved ? 'text-text-sub' : 'text-error-base'}>{isApproved ? 'Approved' : 'Denied'}</span>
-      </span>
-    );
-
-    if (!inputPreview) {
-      return (
-        <span id={id} className={cn('text-label-xs inline-flex items-center gap-1', className)}>
-          {statusRow}
-        </span>
-      );
-    }
 
     return (
-      <details id={id} className={cn('group w-full min-w-0', className)}>
-        <summary className="flex list-none cursor-pointer items-center [&::-webkit-details-marker]:hidden">
-          {statusRow}
-        </summary>
-        <div className="border-stroke-soft mt-1 flex w-full min-w-0 flex-col gap-2 rounded-md border px-2.5 py-2">
-          <PayloadPeek label="Input" value={inputPreview} />
-        </div>
-      </details>
+      <ExpandableRow
+        id={id}
+        className={className}
+        summary={
+          <span className="text-label-xs inline-flex items-center gap-1">
+            <RiArrowRightSLine
+              className="text-text-soft size-3.5 shrink-0 transition-transform group-open:rotate-90"
+              aria-hidden
+            />
+            <span className="text-text-soft font-mono">{toolName}</span>
+            <span className="text-text-soft" aria-hidden>
+              ·
+            </span>
+            <span className={isApproved ? 'text-text-sub' : 'text-error-base'}>
+              {isApproved ? 'Approved' : 'Denied'}
+            </span>
+          </span>
+        }
+      >
+        {inputPreview ? <PayloadPeek label="Input" value={inputPreview} /> : null}
+      </ExpandableRow>
     );
   }
 

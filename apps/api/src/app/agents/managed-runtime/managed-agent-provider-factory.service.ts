@@ -185,12 +185,7 @@ export class ManagedAgentProviderFactory {
       throw new Error('THALAMUS_WEBHOOK_SECRET is required for managed agents');
     }
 
-    // Local wrangler cannot POST to the portless HTTPS hostname (untrusted CA).
-    // AGENT_API_HOSTNAME copied from main is :3000, which is a different process.
-    const localListenPort = process.env.NODE_ENV === 'local' ? process.env.PORT : undefined;
-    const webhookBaseUrl = localListenPort
-      ? `http://127.0.0.1:${localListenPort}`
-      : (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL);
+    const webhookBaseUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
     if (!webhookBaseUrl) {
       throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL is required for managed agents');
     }
