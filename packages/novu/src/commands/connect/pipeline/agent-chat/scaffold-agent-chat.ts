@@ -32,7 +32,21 @@ export type ScaffoldAgentChatProjectResult = {
   chatPath: string;
 };
 
-const TEMPLATE_ROOT = path.join(__dirname, '../../templates/agent-chat/ts');
+/**
+ * Templates live at <build root>/commands/connect/templates/agent-chat/ts.
+ * Under the module layout (tsc output or ts-node dev) `__dirname` is this
+ * file's directory; from the bundled CLI entry it is `dist/src` — try both.
+ */
+function resolveTemplateRoot(): string {
+  const candidates = [
+    path.join(__dirname, '../../templates/agent-chat/ts'),
+    path.join(__dirname, 'commands/connect/templates/agent-chat/ts'),
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[0];
+}
+
+const TEMPLATE_ROOT = resolveTemplateRoot();
 
 export function defaultAgentChatScaffoldDirName(agentIdentifier: string): string {
   return `${agentIdentifier}-agent-chat`;
