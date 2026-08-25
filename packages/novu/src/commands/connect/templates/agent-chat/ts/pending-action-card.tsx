@@ -1,37 +1,37 @@
 'use client';
 
-import type { AgentPendingAction, UseAgentChatResult } from '@novu/react';
+import type { AgentMessage, UseAgentChatResult } from '@novu/react';
 import { useState } from 'react';
 import { ArrowUpRightIcon, PlugIcon, ShieldIcon } from './icons';
 import { safeExternalUrl } from './message-utils';
 
 type RespondToAction = UseAgentChatResult['respondToAction'];
 type Decision = Parameters<RespondToAction>[0]['decision'];
+type ApprovalPart = Extract<AgentMessage['parts'][number], { type: 'approval' }>;
+type McpConnectionPart = Extract<AgentMessage['parts'][number], { type: 'mcp-connection' }>;
 
-type PendingActionCardProps = {
-  action: AgentPendingAction;
-  disabled: boolean;
-  onRespond: RespondToAction;
-};
+export function McpConnectionCard({ part }: { part: McpConnectionPart }) {
+  const authorizeUrl = safeExternalUrl(part.authorizeUrlWithAutoApprove || part.authorizeUrl);
 
-export function PendingActionCard({ action, disabled, onRespond }: PendingActionCardProps) {
-  if (action.type === 'mcp-connection') {
-    return <McpConnectionCard action={action} />;
+  if (part.state !== 'pending') {
+    const connected = part.state === 'connected';
+
+    return (
+      <span className="part-status">
+        <span>{part.displayName}</span>
+        <span aria-hidden>·</span>
+        <span data-tone={connected ? 'ok' : 'danger'}>{connected ? 'Connected' : part.message || 'Failed'}</span>
+      </span>
+    );
   }
 
-  return <ToolApprovalCard action={action} disabled={disabled} onRespond={onRespond} />;
-}
-
-function McpConnectionCard({ action }: { action: Extract<AgentPendingAction, { type: 'mcp-connection' }> }) {
-  const authorizeUrl = safeExternalUrl(action.authorizeUrlWithAutoApprove || action.authorizeUrl);
-
   return (
-    <section className="pending-action">
-      <span className="pending-action-icon" aria-hidden>
+    <section className="decision-card">
+      <span className="decision-card-icon" aria-hidden>
         <PlugIcon />
       </span>
-      <div className="pending-action-copy">
-        <h2>Connect {action.displayName}</h2>
+      <div className="decision-card-copy">
+        <h2>Connect {part.displayName}?</h2>
         <p>The agent needs authorization to continue.</p>
       </div>
       <a
@@ -51,17 +51,29 @@ function McpConnectionCard({ action }: { action: Extract<AgentPendingAction, { t
   );
 }
 
-function ToolApprovalCard({
-  action,
+export function ToolApprovalCard({
+  part,
   disabled,
   onRespond,
 }: {
-  action: Extract<AgentPendingAction, { type: 'tool-approval' }>;
+  part: ApprovalPart;
   disabled: boolean;
   onRespond: RespondToAction;
 }) {
   const [busy, setBusy] = useState<Decision>();
   const [failure, setFailure] = useState<string>();
+
+  if (part.state !== 'pending') {
+    const approved = part.state === 'approved';
+
+    return (
+      <span className="part-status">
+        <code>{part.toolName}</code>
+        <span aria-hidden>·</span>
+        <span data-tone={approved ? 'ok' : 'danger'}>{approved ? 'Approved' : 'Denied'}</span>
+      </span>
+    );
+  }
 
   async function respond(decision: Decision) {
     if (disabled || busy) return;
@@ -70,7 +82,7 @@ function ToolApprovalCard({
     setFailure(undefined);
 
     try {
-      const result = await onRespond({ actionId: action.id, decision });
+      const result = await onRespond({ actionId: part.approvalId, decision });
       if (result.error) setFailure(result.error.message);
     } finally {
       setBusy(undefined);
@@ -78,30 +90,30 @@ function ToolApprovalCard({
   }
 
   return (
-    <section className="pending-action pending-action-approval">
-      <span className="pending-action-icon pending-action-icon-warning" aria-hidden>
+    <section className="decision-card">
+      <span className="decision-card-icon decision-card-icon-warning" aria-hidden>
         <ShieldIcon />
       </span>
 
-      <div className="pending-action-copy">
+      <div className="decision-card-copy">
         <h2>
-          Run <code>{action.toolName}</code>?
+          Run <code>{part.toolName}</code>?
         </h2>
         <p>The agent is waiting for your approval.</p>
-        {Object.keys(action.input ?? {}).length > 0 ? (
+        {Object.keys(part.input ?? {}).length > 0 ? (
           <details>
             <summary>Review arguments</summary>
-            <pre>{JSON.stringify(action.input, null, 2)}</pre>
+            <pre>{JSON.stringify(part.input, null, 2)}</pre>
           </details>
         ) : null}
         {failure ? (
-          <p className="pending-action-error" role="alert">
+          <p className="decision-card-error" role="alert">
             {failure}
           </p>
         ) : null}
       </div>
 
-      <div className="pending-action-buttons">
+      <div className="decision-card-buttons">
         <button
           type="button"
           className="button button-secondary"
@@ -120,7 +132,7 @@ function ToolApprovalCard({
           {busy === 'approved' ? <span className="spinner" aria-hidden /> : null}
           Approve once
         </button>
-        {action.trustToolActionId ? (
+        {part.trustToolActionId ? (
           <button
             type="button"
             className="button button-secondary"
@@ -130,14 +142,14 @@ function ToolApprovalCard({
             Always allow this tool
           </button>
         ) : null}
-        {action.trustServerActionId && action.source?.type === 'mcp' ? (
+        {part.trustServerActionId && part.source?.type === 'mcp' ? (
           <button
             type="button"
             className="button button-secondary"
             disabled={disabled || Boolean(busy)}
             onClick={() => void respond('trust-server')}
           >
-            Always allow {action.source.serverName}
+            Always allow {part.source.serverName}
           </button>
         ) : null}
       </div>

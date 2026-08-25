@@ -199,6 +199,7 @@ program
     'Override the Connect browser-auth URL (default follows --region, e.g. dashboard.novu.co)'
   )
   .option('--region <region>', `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`, CloudRegionEnum.US)
+  .option('--staging', 'Shorthand for --region staging', false)
   .option(
     '--prompt <text>',
     'Pre-fill the agent description (alternative to positional <prompt>; positional wins when both are set)'

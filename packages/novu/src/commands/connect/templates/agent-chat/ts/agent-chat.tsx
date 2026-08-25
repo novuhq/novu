@@ -5,7 +5,6 @@ import { ChatPanel } from './chat-panel';
 
 export function AgentChat() {
   const agentId = process.env.NEXT_PUBLIC_NOVU_AGENT_ID ?? '';
-  const subscriberId = process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '';
 
   const {
     messages,
@@ -17,23 +16,20 @@ export function AgentChat() {
     isRunning,
     isLoading,
     typing,
-    hasMore,
-    isFetching,
-    fetchMore,
+    pagination,
   } = useAgentChat({ agentId });
 
   return (
     <ChatPanel
-      subscriberId={subscriberId}
       error={error}
       messages={messages}
       pendingActions={pendingActions}
       isRunning={isRunning}
       isLoading={isLoading}
       typing={typing}
-      hasMore={hasMore}
-      isFetching={isFetching}
-      onFetchMore={fetchMore}
+      hasMore={pagination.hasMore}
+      isFetching={pagination.status === 'loading'}
+      onFetchMore={pagination.fetchMore}
       onRespond={respondToAction}
       onCardAction={sendAction}
       onSend={sendMessage}

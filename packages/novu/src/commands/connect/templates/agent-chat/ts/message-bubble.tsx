@@ -1,30 +1,37 @@
 'use client';
 
 import type { AgentMessage, UseAgentChatResult } from '@novu/react';
-import { ArrowUpRightIcon, ChatIcon, ToolIcon, WarningIcon } from './icons';
+import { ArrowUpRightIcon, WarningIcon } from './icons';
 import { Markdown } from './markdown';
 import { formatTime, safeExternalUrl } from './message-utils';
+import { McpConnectionCard, ToolApprovalCard } from './pending-action-card';
 
 type AgentMessagePart = AgentMessage['parts'][number];
 type TextPart = Extract<AgentMessagePart, { type: 'text' }>;
 type ToolPart = Extract<AgentMessagePart, { type: 'tool' }>;
 type CardPart = Extract<AgentMessagePart, { type: 'card' }>;
+type ApprovalPart = Extract<AgentMessagePart, { type: 'approval' }>;
+type McpConnectionPart = Extract<AgentMessagePart, { type: 'mcp-connection' }>;
 type CardAction = Parameters<UseAgentChatResult['sendAction']>[0];
 
 type MessageRowProps = {
   message: AgentMessage;
-  showAvatar: boolean;
   onCardAction: UseAgentChatResult['sendAction'];
+  onRespond: UseAgentChatResult['respondToAction'];
   cardActionsDisabled: boolean;
 };
 
-export function MessageRow({ message, showAvatar, onCardAction, cardActionsDisabled }: MessageRowProps) {
+export function MessageRow({ message, onCardAction, onRespond, cardActionsDisabled }: MessageRowProps) {
   const isUser = message.role === 'user';
   const textParts = message.parts.filter((part): part is TextPart => part.type === 'text');
   const text = textParts.map((part) => part.text).join('');
   const isStreaming = textParts.some((part) => part.state === 'streaming');
   const tools = message.parts.filter((part): part is ToolPart => part.type === 'tool');
   const cards = message.parts.filter((part): part is CardPart => part.type === 'card');
+  const approvals = message.parts.filter((part): part is ApprovalPart => part.type === 'approval');
+  const mcpConnections = message.parts.filter((part): part is McpConnectionPart => part.type === 'mcp-connection');
+  const gatedToolUseIds = new Set(approvals.map((part) => part.toolUseId));
+  const visibleTools = tools.filter((tool) => !gatedToolUseIds.has(tool.toolUseId));
   const time = formatTime(message.createdAt);
   const failed = message.status === 'failed';
 
@@ -45,23 +52,15 @@ export function MessageRow({ message, showAvatar, onCardAction, cardActionsDisab
     );
   }
 
-  if (!text && tools.length === 0 && cards.length === 0) {
-    return null;
-  }
+  const hasContent =
+    Boolean(text) || visibleTools.length > 0 || cards.length > 0 || approvals.length > 0 || mcpConnections.length > 0;
+  if (!hasContent) return null;
 
   return (
     <article className="message-row message-row-agent">
-      {showAvatar ? (
-        <span className="agent-avatar" aria-hidden>
-          <ChatIcon size={14} />
-        </span>
-      ) : (
-        <span className="agent-avatar-spacer" aria-hidden />
-      )}
-
       <div className="message-agent-content">
         {text ? (
-          <div className="message-bubble message-bubble-agent">
+          <div className="message-text">
             <Markdown text={text} />
             {isStreaming ? <span className="stream-cursor" aria-hidden /> : null}
           </div>
@@ -76,13 +75,21 @@ export function MessageRow({ message, showAvatar, onCardAction, cardActionsDisab
           />
         ))}
 
-        {tools.length > 0 ? (
+        {visibleTools.length > 0 ? (
           <div className="tool-list">
-            {tools.map((tool) => (
+            {visibleTools.map((tool) => (
               <ToolChip key={tool.toolUseId} tool={tool} />
             ))}
           </div>
         ) : null}
+
+        {approvals.map((part) => (
+          <ToolApprovalCard key={part.approvalId} part={part} disabled={cardActionsDisabled} onRespond={onRespond} />
+        ))}
+
+        {mcpConnections.map((part) => (
+          <McpConnectionCard key={part.actionId} part={part} />
+        ))}
       </div>
 
       {time ? <time>{time}</time> : null}
@@ -216,6 +223,8 @@ function MessageCard({
                 ))}
               </div>
             );
+          default:
+            return null;
         }
       })}
     </section>
@@ -228,8 +237,8 @@ function ToolChip({ tool }: { tool: ToolPart }) {
 
   return (
     <span className="tool-chip" data-state={failed ? 'failed' : running ? 'running' : 'complete'}>
-      {running ? <span className="spinner" aria-hidden /> : failed ? <WarningIcon size={12} /> : <ToolIcon size={12} />}
-      <span>{running ? 'Running' : failed ? 'Failed' : 'Used'}:</span>
+      {running ? <span className="spinner" aria-hidden /> : null}
+      <span>{running ? 'Running' : failed ? 'Failed' : 'Used'}</span>
       <code>{tool.toolName}</code>
     </span>
   );
