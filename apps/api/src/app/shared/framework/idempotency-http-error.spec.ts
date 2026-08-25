@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, InternalServerErrorException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  InternalServerErrorException,
+  ServiceUnavailableException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { expect } from 'chai';
 import { restoreCachedHttpException, serializeCachedHttpError } from './idempotency-http-error';
 
@@ -19,6 +25,16 @@ describe('idempotency-http-error', () => {
     expect(restored).to.be.instanceOf(HttpException);
     expect(restored.getStatus()).to.equal(HttpStatus.UNPROCESSABLE_ENTITY);
     expect(restored.message).to.equal('workflow_not_found');
+  });
+
+  it('round-trips a kill-switch 503 without collapsing it to 500', () => {
+    const original = new ServiceUnavailableException('Service temporarily unavailable for this organization');
+    const restored = restoreCachedHttpException(JSON.parse(JSON.stringify(serializeCachedHttpError(original))));
+
+    expect(restored).to.be.instanceOf(HttpException);
+    expect(restored).to.not.be.instanceOf(InternalServerErrorException);
+    expect(restored.getStatus()).to.equal(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(restored.message).to.equal('Service temporarily unavailable for this organization');
   });
 
   it('restores non-HTTP errors as a sanitized InternalServerErrorException', () => {

@@ -6,7 +6,7 @@ export type CachedHttpError = {
 };
 
 export function serializeCachedHttpError(err: unknown): CachedHttpError {
-  if (err instanceof HttpException && err.getStatus() < HttpStatus.INTERNAL_SERVER_ERROR) {
+  if (err instanceof HttpException && !(err instanceof InternalServerErrorException)) {
     return {
       statusCode: err.getStatus(),
       response: err.getResponse(),
@@ -32,10 +32,14 @@ export function restoreCachedHttpException(data: unknown): HttpException {
     statusCode = data.status;
   }
 
+  if (statusCode === HttpStatus.INTERNAL_SERVER_ERROR) {
+    return new InternalServerErrorException();
+  }
+
   if (
     statusCode != null &&
     statusCode >= 400 &&
-    statusCode < HttpStatus.INTERNAL_SERVER_ERROR &&
+    statusCode <= 599 &&
     (typeof response === 'string' || isRecord(response) || Array.isArray(response))
   ) {
     return new HttpException(response, statusCode);
