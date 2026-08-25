@@ -3,6 +3,9 @@ export const NOVU_STAGING_API_URL = 'https://api.novu-staging.co';
 
 export type NovuConnectPackageTag = 'latest' | 'rc';
 
+/** npm dist-tag for @novu/react, @novu/js, and @novu/framework in connect scaffolds. */
+export type NovuScaffoldSdkTag = 'next' | 'latest';
+
 export type NovuConnectTargetOptions = {
   apiUrl?: string | null;
   connectDashboardUrl?: string | null;
@@ -55,6 +58,14 @@ export function isNovuLocalApiUrl(apiUrl: string | null | undefined): boolean {
 
 export function getNovuConnectPackageTag(apiUrl?: string | null): NovuConnectPackageTag {
   return isNovuStagingApiUrl(apiUrl) || isNovuLocalApiUrl(apiUrl) ? 'rc' : 'latest';
+}
+
+export function isNovuPreReleaseConnectMode(apiUrl?: string | null, region?: string | null): boolean {
+  return isNovuStagingApiUrl(apiUrl) || isNovuLocalApiUrl(apiUrl) || region === 'staging';
+}
+
+export function getNovuScaffoldSdkTag(apiUrl?: string | null, region?: string | null): NovuScaffoldSdkTag {
+  return isNovuPreReleaseConnectMode(apiUrl, region) ? 'next' : 'latest';
 }
 
 export function getNovuConnectRegionFlag(apiUrl?: string | null): '--region staging' | undefined {

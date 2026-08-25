@@ -1,3 +1,4 @@
+import { getNovuScaffoldSdkTag } from '@novu/shared';
 import { Sema } from 'async-sema';
 import { async as glob } from 'fast-glob';
 import { readFileSync } from 'fs';
@@ -28,14 +29,8 @@ function resolveCliPackageJson(): Record<string, any> | null {
   }
 }
 
-function resolveFrameworkVersion(): string {
-  const pkg = resolveCliPackageJson();
-  if (!pkg) return 'latest';
-
-  const ver = pkg.dependencies?.['@novu/framework'];
-  if (!ver || ver.startsWith('workspace:')) return 'latest';
-
-  return ver;
+function resolveFrameworkVersion(apiUrl: string, region?: string): string {
+  return getNovuScaffoldSdkTag(apiUrl, region);
 }
 
 function resolveCliTag(): string {
@@ -78,6 +73,7 @@ export const installTemplate = async ({
   silent,
   skipInstall,
   llmAuth,
+  region,
 }: InstallTemplateArgs) => {
   if (!silent) console.log(bold(`Using ${packageManager}.`));
 
@@ -302,7 +298,7 @@ export const installTemplate = async ({
   };
 
   if (isAgentTemplate) {
-    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion(apiUrl, region);
   }
 
   if (isAiSdkTemplate || isLangChainTemplate) {
@@ -317,7 +313,7 @@ export const installTemplate = async ({
   }
 
   if (!isAgentTemplate && !isChatSdkTemplate) {
-    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion(apiUrl, region);
     baseDependencies['@novu/nextjs'] = '^2.5.0';
   }
 

@@ -4,6 +4,7 @@ import {
   getNovuConnectInvocation,
   getNovuConnectPackageTag,
   getNovuConnectTargetFlags,
+  getNovuScaffoldSdkTag,
   NOVU_STAGING_API_URL,
 } from './novu-connect-cli';
 
@@ -46,6 +47,13 @@ describe('novu-connect-cli', () => {
       '--connect-dashboard-url http://localhost:4201',
       '--dashboard-url http://localhost:4201',
     ]);
+  });
+
+  it('pins scaffold SDK packages to next on staging, local, or staging region', () => {
+    expect(getNovuScaffoldSdkTag(NOVU_STAGING_API_URL)).toBe('next');
+    expect(getNovuScaffoldSdkTag('http://localhost:3000')).toBe('next');
+    expect(getNovuScaffoldSdkTag('https://api.novu.co', 'staging')).toBe('next');
+    expect(getNovuScaffoldSdkTag('https://api.novu.co')).toBe('latest');
   });
 
   it('does not add dashboard URLs for cloud dashboards', () => {

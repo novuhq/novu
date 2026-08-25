@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { isNovuLocalApiUrl, isNovuStagingApiUrl } from '@novu/shared';
+import { getNovuScaffoldSdkTag } from '@novu/shared';
 import { CloudRegionEnum } from '../../../dev/enums';
 import { tryGitInit } from '../../../init/helpers/git';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
@@ -89,7 +89,7 @@ async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgen
     throw new Error(`Cannot merge Agent Chat into "${resolved}" — no package.json found.`);
   }
 
-  const dependenciesChanged = ensureAgentChatDependencies(resolved, findLocalNovuDeps(), input.apiUrl, input.region);
+  const dependenciesChanged = ensureAgentChatDependencies(resolved, input.apiUrl, input.region);
   const componentsDir = path.join(resolved, 'components', 'agent-chat');
   fs.mkdirSync(componentsDir, { recursive: true });
   copyTemplateComponents(componentsDir);
@@ -109,19 +109,14 @@ async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgen
   }
 }
 
-function ensureAgentChatDependencies(
-  projectDir: string,
-  localNovuDeps: LocalNovuDeps | undefined,
-  apiUrl: string,
-  region?: CloudRegionEnum
-): boolean {
+function ensureAgentChatDependencies(projectDir: string, apiUrl: string, region?: CloudRegionEnum): boolean {
   const packageJsonPath = path.join(projectDir, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
     dependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };
   const dependencies = packageJson.dependencies ?? {};
-  const sdk = resolveAgentChatNovuDependencies(apiUrl, localNovuDeps, region);
+  const sdk = resolveAgentChatNovuDependencies(apiUrl, region);
   const required = {
     '@novu/react': sdk.react,
     ...(sdk.js ? { '@novu/js': sdk.js } : {}),
@@ -133,19 +128,6 @@ function ensureAgentChatDependencies(
   for (const [name, version] of Object.entries(required)) {
     if (dependencies[name] !== version) {
       dependencies[name] = version;
-      changed = true;
-    }
-  }
-
-  if (sdk.useLocalAliases && packageJson.scripts) {
-    for (const [name, script] of Object.entries(packageJson.scripts)) {
-      const usesNextDev = script.includes('next dev') && !script.includes('next dev --webpack');
-      const usesNextBuild = script.includes('next build') && !script.includes('next build --webpack');
-      if (!usesNextDev && !usesNextBuild) continue;
-
-      packageJson.scripts[name] = script
-        .replace(/next dev(?=\s|$)/g, 'next dev --webpack')
-        .replace(/next build(?=\s|$)/g, 'next build --webpack');
       changed = true;
     }
   }
@@ -172,8 +154,6 @@ async function writeStandaloneAgentChatApp(root: string, input: ScaffoldAgentCha
   fs.mkdirSync(path.join(root, 'app'), { recursive: true });
   fs.mkdirSync(path.join(root, 'components', 'agent-chat'), { recursive: true });
 
-  const localNovuDeps = findLocalNovuDeps();
-
   copyTemplateComponents(path.join(root, 'components', 'agent-chat'));
 
   fs.writeFileSync(path.join(root, 'app', 'layout.tsx'), STANDALONE_LAYOUT, 'utf8');
@@ -192,10 +172,10 @@ async function writeStandaloneAgentChatApp(root: string, input: ScaffoldAgentCha
     }),
     'utf8'
   );
-  const sdk = resolveAgentChatNovuDependencies(input.apiUrl, localNovuDeps, input.region);
+  const sdk = resolveAgentChatNovuDependencies(input.apiUrl, input.region);
   fs.writeFileSync(path.join(root, 'package.json'), renderPackageJson(path.basename(root), sdk), 'utf8');
   fs.writeFileSync(path.join(root, 'tsconfig.json'), STANDALONE_TSCONFIG, 'utf8');
-  fs.writeFileSync(path.join(root, 'next.config.mjs'), renderNextConfig(root, localNovuDeps, sdk), 'utf8');
+  fs.writeFileSync(path.join(root, 'next.config.mjs'), STANDALONE_NEXT_CONFIG, 'utf8');
   fs.writeFileSync(path.join(root, '.env.local'), renderEnvLocal(input), 'utf8');
   fs.writeFileSync(path.join(root, '.env.example'), renderEnvExample(input), 'utf8');
   fs.writeFileSync(path.join(root, '.gitignore'), STANDALONE_GITIGNORE, 'utf8');
@@ -312,71 +292,15 @@ function appendEnvExample(projectDir: string, input: ScaffoldAgentChatProjectInp
   });
 }
 
-function findMonorepoReactPackageDir(): string | undefined {
-  let dir = __dirname;
-  for (let depth = 0; depth < 12; depth++) {
-    const candidate = path.join(dir, 'packages', 'react', 'package.json');
-    if (fs.existsSync(candidate)) {
-      return path.dirname(candidate);
-    }
-
-    const parent = path.dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-
-  return undefined;
-}
-
-type LocalNovuDeps = {
-  reactDir: string;
-  jsDir: string;
-};
-
-function findLocalNovuDeps(): LocalNovuDeps | undefined {
-  const reactDir = findMonorepoReactPackageDir();
-  if (!reactDir) {
-    return undefined;
-  }
-
-  const jsDir = path.join(path.dirname(reactDir), 'js');
-  if (!fs.existsSync(path.join(jsDir, 'package.json'))) {
-    return undefined;
-  }
-
-  return { reactDir, jsDir };
-}
-
-function toPosixRelative(from: string, to: string): string {
-  const rel = path.relative(from, to).split(path.sep).join('/');
-  return rel.startsWith('.') ? rel : `./${rel}`;
-}
-
 export type AgentChatNovuDependencies = {
   react: string;
   js?: string;
-  useLocalAliases: boolean;
 };
 
-export function resolveAgentChatNovuDependencies(
-  apiUrl: string,
-  localNovuDeps: LocalNovuDeps | undefined,
-  region?: CloudRegionEnum
-): AgentChatNovuDependencies {
-  if (isNovuStagingApiUrl(apiUrl) || region === CloudRegionEnum.STAGING) {
-    return { react: 'rc', js: 'rc', useLocalAliases: false };
-  }
+export function resolveAgentChatNovuDependencies(apiUrl: string, region?: CloudRegionEnum): AgentChatNovuDependencies {
+  const tag = getNovuScaffoldSdkTag(apiUrl, region);
 
-  if (localNovuDeps && isNovuLocalApiUrl(apiUrl)) {
-    return {
-      react: `file:${localNovuDeps.reactDir}`,
-      js: `file:${localNovuDeps.jsDir}`,
-      useLocalAliases: true,
-    };
-  }
-
-  // The scaffold template tracks dashboard APIs that may not be on npm `latest` yet.
-  return { react: 'rc', js: 'rc', useLocalAliases: false };
+  return { react: tag, js: tag };
 }
 
 function renderPackageJson(name: string, sdk: AgentChatNovuDependencies): string {
@@ -385,8 +309,8 @@ function renderPackageJson(name: string, sdk: AgentChatNovuDependencies): string
       name,
       private: true,
       scripts: {
-        dev: sdk.useLocalAliases ? 'next dev -p 4012 --webpack' : 'next dev -p 4012',
-        build: sdk.useLocalAliases ? 'next build --webpack' : 'next build',
+        dev: 'next dev -p 4012',
+        build: 'next build',
         start: 'next start -p 4012',
       },
       dependencies: {
@@ -408,45 +332,6 @@ function renderPackageJson(name: string, sdk: AgentChatNovuDependencies): string
     null,
     2
   );
-}
-
-function renderNextConfig(
-  scaffoldRoot: string,
-  localNovuDeps: LocalNovuDeps | undefined,
-  sdk: AgentChatNovuDependencies
-): string {
-  if (!sdk.useLocalAliases || !localNovuDeps) {
-    return STANDALONE_NEXT_CONFIG;
-  }
-
-  const reactRel = toPosixRelative(scaffoldRoot, localNovuDeps.reactDir);
-  const jsRel = toPosixRelative(scaffoldRoot, localNovuDeps.jsDir);
-
-  return `import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const novuReact = path.resolve(__dirname, '${reactRel}');
-const novuJs = path.resolve(__dirname, '${jsRel}');
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  transpilePackages: ['@novu/react', '@novu/js'],
-  // Turbopack cannot resolve file: symlinks outside the app root — webpack aliases
-  // point at the local monorepo packages when connect scaffolds from a dev checkout.
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@novu/react': novuReact,
-      '@novu/js': novuJs,
-    };
-
-    return config;
-  },
-};
-
-export default nextConfig;
-`;
 }
 
 function escapeJs(value: string): string {
