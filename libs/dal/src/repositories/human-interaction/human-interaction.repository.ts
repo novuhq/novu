@@ -45,6 +45,27 @@ export class HumanInteractionRepository extends BaseRepositoryV2<
   }
 
   /**
+   * Pending `ask` interactions in a conversation, newest first — conversation-
+   * scoped bare-message correlation for framework `ctx.ask`.
+   */
+  async findPendingAsksByConversation(
+    environmentId: string,
+    conversationId: string,
+    limit = 10
+  ): Promise<HumanInteractionEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        kind: HumanInteractionKindEnum.ASK,
+        status: HumanInteractionStatusEnum.PENDING,
+      },
+      '*',
+      { sort: { createdAt: -1 }, limit }
+    );
+  }
+
+  /**
    * Exact reply-to correlation: the replied-to platform message is the
    * delivered card. Adapters store message ids in platform-specific shapes
    * (Telegram uses a `chatId:messageId` composite while the webhook's

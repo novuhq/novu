@@ -1,5 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import type { TriggerRecipientsPayload } from '@novu/shared';
+import { HUMAN_INTERACTION_MAX_TTL_SECONDS, type TriggerRecipientsPayload } from '@novu/shared';
 import type { CardElement } from 'chat';
 import { Type } from 'class-transformer';
 import {
@@ -18,7 +18,8 @@ import {
 
 export type { FileRef } from '@novu/framework';
 
-const SIGNAL_TYPES = ['metadata', 'trigger'] as const;
+const SIGNAL_TYPES = ['metadata', 'trigger', 'human'] as const;
+const HUMAN_SIGNAL_KINDS = ['ask', 'approve', 'choose', 'tell'] as const;
 const METADATA_ACTIONS = ['set', 'delete', 'clear'] as const;
 const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
 const MAX_FILES_PER_MESSAGE = 15;
@@ -123,6 +124,40 @@ export class IsValidSignal implements ValidatorConstraintInterface {
       return typeof signal.workflowId === 'string' && signal.workflowId.length > 0;
     }
 
+    if (signal.type === 'human') {
+      if (!HUMAN_SIGNAL_KINDS.includes(signal.kind as (typeof HUMAN_SIGNAL_KINDS)[number])) {
+        return false;
+      }
+
+      if (typeof signal.prompt !== 'string' || signal.prompt.trim().length === 0) {
+        return false;
+      }
+
+      if (typeof signal.requestId !== 'string' || signal.requestId.trim().length === 0) {
+        return false;
+      }
+
+      if (signal.kind === 'choose') {
+        if (!Array.isArray(signal.options) || signal.options.length < 2 || signal.options.length > 10) {
+          return false;
+        }
+
+        if (signal.options.some((option) => typeof option !== 'string' || option.trim().length === 0)) {
+          return false;
+        }
+      }
+
+      if (signal.ttlSeconds !== undefined) {
+        return (
+          Number.isInteger(signal.ttlSeconds) &&
+          signal.ttlSeconds >= 60 &&
+          signal.ttlSeconds <= HUMAN_INTERACTION_MAX_TTL_SECONDS
+        );
+      }
+
+      return true;
+    }
+
     return false;
   }
 
@@ -132,7 +167,8 @@ export class IsValidSignal implements ValidatorConstraintInterface {
       'set requires a key 1-128 chars of letters, digits and "-", "_", ":" separators (or a framework-reserved ' +
       '"__novu:" namespaced key) plus a defined value; ' +
       'delete requires a valid key; clear requires no additional fields; ' +
-      'trigger signals require workflowId.'
+      'trigger signals require workflowId; ' +
+      'human signals require kind (ask|approve|choose|tell), prompt, and requestId (choose also requires 2-10 options).'
     );
   }
 }
@@ -562,11 +598,56 @@ export class TriggerSignalDto {
   payload?: Record<string, unknown>;
 }
 
-@ApiExtraModels(MetadataSetSignalDto, MetadataDeleteSignalDto, MetadataClearSignalDto, TriggerSignalDto)
+/** OpenAPI: create a human interaction in the current conversation thread. */
+export class HumanSignalDto {
+  @ApiProperty({ enum: ['human'] })
+  type: 'human';
+
+  @ApiProperty({
+    enum: HUMAN_SIGNAL_KINDS,
+    description: 'Interaction verb queued by `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell`.',
+    example: 'approve',
+  })
+  kind: (typeof HUMAN_SIGNAL_KINDS)[number];
+
+  @ApiProperty({
+    description: 'Question, action description, or one-way message shown to the human.',
+    example: 'Deploy v2.4.1 to production?',
+  })
+  prompt: string;
+
+  @ApiProperty({
+    description: 'Client-minted id returned by the framework helper; echoed on `ctx.humanResponse.requestId`.',
+    example: 'hr_7c2e1a3b-4d5f-6789-abcd-ef0123456789',
+  })
+  requestId: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Choice labels — required for `choose`, ignored otherwise.',
+    example: ['us-east', 'eu-west'],
+  })
+  options?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Attribution label rendered in the card.',
+    example: 'deploy-bot',
+  })
+  from?: string;
+
+  @ApiPropertyOptional({
+    description: `Seconds until the interaction expires. Default 86400 (24h), max ${HUMAN_INTERACTION_MAX_TTL_SECONDS}.`,
+    example: 3600,
+  })
+  ttlSeconds?: number;
+}
+
+@ApiExtraModels(MetadataSetSignalDto, MetadataDeleteSignalDto, MetadataClearSignalDto, TriggerSignalDto, HumanSignalDto)
 export class SignalDto {
   @ApiProperty({
     enum: SIGNAL_TYPES,
-    description: '`metadata` updates conversation state; `trigger` fires a Novu workflow.',
+    description:
+      '`metadata` updates conversation state; `trigger` fires a Novu workflow; `human` creates an ask/approve/choose/tell interaction in the current thread.',
   })
   @IsString()
   @IsIn(SIGNAL_TYPES)
@@ -629,6 +710,51 @@ export class SignalDto {
   @IsOptional()
   @IsObject()
   payload?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    enum: HUMAN_SIGNAL_KINDS,
+    description: 'Human-interaction verb for `human` signals.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(HUMAN_SIGNAL_KINDS)
+  kind?: (typeof HUMAN_SIGNAL_KINDS)[number];
+
+  @ApiPropertyOptional({
+    description: 'Question / action / message for `human` signals.',
+  })
+  @IsOptional()
+  @IsString()
+  prompt?: string;
+
+  @ApiPropertyOptional({
+    description: 'Client-minted request id for `human` signals.',
+  })
+  @IsOptional()
+  @IsString()
+  requestId?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Choice labels for `human` `choose` signals.',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  options?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Attribution label for `human` signals.',
+  })
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  @ApiPropertyOptional({
+    description: 'TTL in seconds for `human` signals.',
+  })
+  @IsOptional()
+  ttlSeconds?: number;
 }
 
 /**
@@ -690,6 +816,7 @@ export class TypingStatusDto {
   MetadataDeleteSignalDto,
   MetadataClearSignalDto,
   TriggerSignalDto,
+  HumanSignalDto,
   ToolResultDto,
   AddReactionPayloadDto,
   DeleteMessagePayloadDto,
@@ -761,7 +888,7 @@ export class AgentReplyPayloadDto {
 
   @ApiPropertyOptional({
     description:
-      'Side-effect signals executed during this turn: conversation metadata mutations or Novu workflow triggers.',
+      'Side-effect signals executed during this turn: conversation metadata mutations, Novu workflow triggers, or human-in-the-loop interactions.',
     type: 'array',
     items: {
       oneOf: [
@@ -769,6 +896,7 @@ export class AgentReplyPayloadDto {
         { $ref: getSchemaPath(MetadataDeleteSignalDto) },
         { $ref: getSchemaPath(MetadataClearSignalDto) },
         { $ref: getSchemaPath(TriggerSignalDto) },
+        { $ref: getSchemaPath(HumanSignalDto) },
       ],
     },
   })
@@ -777,7 +905,9 @@ export class AgentReplyPayloadDto {
   @ValidateNested({ each: true })
   @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
-  signals?: Array<MetadataSetSignalDto | MetadataDeleteSignalDto | MetadataClearSignalDto | TriggerSignalDto>;
+  signals?: Array<
+    MetadataSetSignalDto | MetadataDeleteSignalDto | MetadataClearSignalDto | TriggerSignalDto | HumanSignalDto
+  >;
 
   @ApiPropertyOptional({
     type: [ToolResultDto],

@@ -24,6 +24,7 @@ import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-tel
 import { agentTelegramLinkScope } from '../../../telegram-linking/telegram-link-scope';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { HumanConversationInboundInterceptor } from '../../human-relay/human-conversation-inbound.interceptor';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -272,7 +273,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly inboundAck: InboundAckService,
     private readonly connectionContextResolver: InboundConnectionContextResolver,
     private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
-    private readonly workflowOriginService: WorkflowOriginService
+    private readonly workflowOriginService: WorkflowOriginService,
+    private readonly humanConversationInbound: HumanConversationInboundInterceptor
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -554,6 +556,10 @@ export class AgentInboundHandler implements OnModuleInit {
       event === AgentEventEnum.ON_MESSAGE &&
       (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
     ) {
+      return;
+    }
+
+    if (event === AgentEventEnum.ON_MESSAGE && (await this.humanConversationInbound.tryHandleMessage(turn))) {
       return;
     }
 
@@ -1274,6 +1280,10 @@ export class AgentInboundHandler implements OnModuleInit {
       action,
       workflowOrigin: workflowOrigin ?? undefined,
     };
+
+    if (await this.humanConversationInbound.tryHandleAction(turn)) {
+      return;
+    }
 
     await runtime.dispatch(turn);
   }

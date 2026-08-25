@@ -108,6 +108,12 @@ export enum FeatureFlagsKeysEnum {
   /** Route managed-agent StreamParts through AgentEvent mapper + sink. Create boolean in LaunchDarkly for cloud, or set env for self-hosted. */
   IS_AGENT_EVENT_PROTOCOL_ENABLED = 'IS_AGENT_EVENT_PROTOCOL_ENABLED',
   /**
+   * Enable framework `ctx.ask` / `ctx.approve` / `ctx.choose` / `ctx.tell` human
+   * interactions delivered into the agent conversation. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_AGENT_HUMAN_HITL_ENABLED` when self-hosted.
+   */
+  IS_AGENT_HUMAN_HITL_ENABLED = 'IS_AGENT_HUMAN_HITL_ENABLED',
+  /**
    * Enable the agent-chat channel (subscriber `/v1/agent-chat/*`, useAgentChat wayfinder).
    * Requires conversational agents. Create the boolean in LaunchDarkly for cloud, or set
    * `IS_AGENT_WEB_CHAT_ENABLED` when self-hosted (`VITE_IS_AGENT_WEB_CHAT_ENABLED` for dashboard).
