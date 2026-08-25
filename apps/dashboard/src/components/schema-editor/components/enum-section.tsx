@@ -15,9 +15,16 @@ interface EnumChoiceProps {
   enumIndex: number;
   control: Control<any>;
   onRemove: () => void;
+  readOnly?: boolean;
 }
 
-const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, enumIndex, control, onRemove }) {
+const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({
+  enumChoicePath,
+  enumIndex,
+  control,
+  onRemove,
+  readOnly = false,
+}) {
   return (
     <div className="flex items-center space-x-2">
       <Controller
@@ -25,7 +32,12 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
         control={control}
         render={({ field: choiceField, fieldState: choiceFieldState }) => (
           <InputRoot hasError={!!choiceFieldState.error} size="2xs" className="flex-1">
-            <InputPure {...choiceField} placeholder={`Choice ${enumIndex + 1}`} className="pl-2 text-xs" />
+            <InputPure
+              {...choiceField}
+              placeholder={`Choice ${enumIndex + 1}`}
+              className="pl-2 text-xs"
+              disabled={readOnly}
+            />
             {choiceFieldState.error && (
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
@@ -52,6 +64,7 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
         onClick={onRemove}
         aria-label="Delete property"
         className={cn('border ml-1.5! h-7 w-7 border-neutral-200')}
+        disabled={readOnly}
       />
     </div>
   );
@@ -61,9 +74,15 @@ interface EnumSectionProps {
   enumArrayPath: Path<SchemaEditorFormValues>;
   control: Control<any>;
   indentationLevel: number;
+  readOnly?: boolean;
 }
 
-export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArrayPath, control, indentationLevel }) {
+export const EnumSection = memo<EnumSectionProps>(function EnumSection({
+  enumArrayPath,
+  control,
+  indentationLevel,
+  readOnly = false,
+}) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: enumArrayPath,
@@ -83,6 +102,7 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArr
           enumIndex={enumIndex}
           control={control}
           onRemove={() => remove(enumIndex)}
+          readOnly={readOnly}
         />
       ))}
       <Button
@@ -92,6 +112,7 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArr
         onClick={handleAddChoice}
         leadingIcon={RiAddLine}
         className="mt-1"
+        disabled={readOnly}
       >
         Add Choice
       </Button>
