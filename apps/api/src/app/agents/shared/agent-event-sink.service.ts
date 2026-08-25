@@ -133,6 +133,9 @@ export class AgentEventSink {
 
         return 'accepted';
 
+      case 'custom':
+        return this.handleCustom(event, context, envelope);
+
       case 'signal':
         return this.handleSignal(event, baseFields, context, envelope.runId);
 
@@ -198,7 +201,6 @@ export class AgentEventSink {
       case 'message-delta':
       case 'tool-use-delta':
       case 'source':
-      case 'custom':
       case 'tool-approval-response':
       case 'mcp-connection-request':
       case 'mcp-connection-result':
@@ -490,6 +492,44 @@ export class AgentEventSink {
       runId: envelope.runId,
       turnId: envelope.turnId,
     });
+  }
+
+  private async handleCustom(
+    event: Extract<AgentEvent, { type: 'custom' }>,
+    context: AgentEventContext,
+    envelope: AgentEventEnvelope
+  ): Promise<IngestOutcome> {
+    if (!isPersistableCustomEvent(event)) {
+      this.logger.warn(
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
+        'Skipping custom agent event: empty name or data over 64KiB'
+      );
+
+      return 'accepted';
+    }
+
+    const channel = context.channel;
+    if (!channel) {
+      this.logger.warn(
+        { name: event.name, runId: envelope.runId, conversationId: context.conversationId },
+        'Skipping custom agent event persist: missing channel on AgentEventContext'
+      );
+
+      return 'accepted';
+    }
+
+    await this.conversationService.persistCustom({
+      conversationId: context.conversationId,
+      channel,
+      agentIdentifier: context.agentIdentifier,
+      environmentId: context.environmentId,
+      organizationId: context.organizationId,
+      identifier: `custom:${envelope.runId}:${envelope.sequence}`,
+      name: event.name,
+      data: event.data,
+    });
+
+    return 'accepted';
   }
 
   private async handleSignal(
@@ -960,4 +1000,20 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+const CUSTOM_AGENT_EVENT_DATA_MAX_BYTES = 65536;
+
+function isPersistableCustomEvent(event: { name: unknown; data: unknown }): boolean {
+  if (typeof event.name !== 'string' || event.name.length === 0) {
+    return false;
+  }
+
+  try {
+    const serialized = JSON.stringify(event.data ?? null);
+
+    return typeof serialized === 'string' && Buffer.byteLength(serialized, 'utf8') <= CUSTOM_AGENT_EVENT_DATA_MAX_BYTES;
+  } catch {
+    return false;
+  }
 }

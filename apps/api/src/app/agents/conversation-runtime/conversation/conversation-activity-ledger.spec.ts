@@ -38,6 +38,9 @@ describe('ConversationActivityLedger', () => {
       createSignalActivity: overrides.createSignalActivity ?? sinon.stub().resolves({}),
       findOne: overrides.findOne ?? sinon.stub().resolves(null),
       count: overrides.count ?? sinon.stub().resolves(0),
+      withTransaction:
+        overrides.withTransaction ??
+        sinon.stub().callsFake(async (fn: (session: null) => Promise<unknown>) => fn(null)),
       ...overrides,
     };
   }
@@ -162,8 +165,15 @@ describe('ConversationActivityLedger', () => {
         createAgentActivity: sinon.stub().rejects(duplicateError),
         findOne: sinon.stub().resolves(existingActivity),
       });
+      const conversationRepository = makeConversationRepository();
       const logger = makeLogger();
-      const ledger = makeLedger(activityRepository, undefined, undefined, undefined, logger);
+      const ledger = makeLedger(
+        activityRepository,
+        { mint: sinon.stub().resolves(7) } as unknown as ConversationEventSequenceService,
+        undefined,
+        conversationRepository,
+        logger
+      );
 
       const result = await ledger.persistAgentMessage({
         ...basePersistParams(),
@@ -173,6 +183,7 @@ describe('ConversationActivityLedger', () => {
       expect(result.activity).to.equal(existingActivity);
       expect(result.created).to.equal(false);
       expect(logger.warn.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
     });
 
     it('pairs touchActivity with agent message persist', async () => {
@@ -381,6 +392,55 @@ describe('ConversationActivityLedger', () => {
         },
       });
       expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
+    });
+  });
+
+  describe('custom activities', () => {
+    it('persists an append-only custom row and publishes it on the durable path', async () => {
+      const activityRepository = makeActivityRepository();
+      const mint = sinon.stub().resolves(12);
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(
+        activityRepository,
+        { mint } as unknown as ConversationEventSequenceService,
+        publisher,
+        conversationRepository
+      );
+      const context = {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'agent_chat',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      };
+
+      await ledger.persistCustom({
+        ...context,
+        identifier: 'custom:run-custom:1',
+        name: 'order-progress',
+        data: { pct: 70 },
+      });
+
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        type: ConversationActivityTypeEnum.CUSTOM,
+        sequence: 12,
+        content: 'order-progress',
+        richContent: {
+          custom: {
+            name: 'order-progress',
+            data: { pct: 70 },
+          },
+        },
+      });
+      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('custom:run-custom:1');
+      expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+      expect(conversationRepository.touchPreview.called).to.equal(false);
     });
   });
 

@@ -14,6 +14,7 @@ import type {
   ConversationActivityContext,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
+  PersistCustomParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -41,6 +42,7 @@ export type {
   MetadataOp,
   PersistAgentActivityParams,
   PersistAgentMessageResult,
+  PersistCustomParams,
   PersistInboundMessageParams,
   PersistMcpConnectionRequestParams,
   PersistMcpConnectionResultParams,
@@ -419,6 +421,10 @@ export class AgentConversationService {
 
   async persistMcpConnectionResult(params: PersistMcpConnectionResultParams): Promise<ConversationActivityEntity> {
     return this.ledger.persistMcpConnectionResult(params);
+  }
+
+  async persistCustom(params: PersistCustomParams): Promise<ConversationActivityEntity> {
+    return this.ledger.persistCustom(params);
   }
 
   async persistTriggerSignal(params: PersistTriggerSignalParams): Promise<void> {

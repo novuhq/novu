@@ -212,6 +212,19 @@ function mapActivityToEvent(activity: ConversationActivityEntity): AgentEvent | 
     case ConversationActivityTypeEnum.SIGNAL:
       return null;
 
+    case ConversationActivityTypeEnum.CUSTOM: {
+      const custom = activity.richContent?.custom as { name?: unknown; data?: unknown } | undefined;
+      if (typeof custom?.name !== 'string' || custom.name.length === 0) {
+        return null;
+      }
+
+      return {
+        type: 'custom',
+        name: custom.name,
+        data: custom.data,
+      };
+    }
+
     default: {
       const _exhaustive: never = activity.type;
       void _exhaustive;
@@ -227,6 +240,12 @@ export interface EventMapContext {
   agentIdentifier: string;
 }
 
+function runIdFromCustomIdentifier(identifier: string): string | undefined {
+  const match = /^custom:(.+):(\d+)$/.exec(identifier);
+
+  return match?.[1];
+}
+
 function buildEnvelope(
   activity: ConversationActivityEntity,
   event: AgentEvent,
@@ -234,13 +253,14 @@ function buildEnvelope(
   context: EventMapContext
 ): AgentEventEnvelope {
   const lifecycleRunId = runIdFromLifecycleIdentifier(activity.identifier);
+  const customRunId = runIdFromCustomIdentifier(activity.identifier);
 
   return {
     version: AGENT_EVENT_PROTOCOL_VERSION,
     conversationId: context.conversationId,
     conversationIdentifier: context.conversationIdentifier,
     agentId: context.agentIdentifier,
-    runId: lifecycleRunId ?? 'history',
+    runId: lifecycleRunId ?? customRunId ?? 'history',
     turnId: activity.identifier,
     sequence,
     timestamp: activity.createdAt,

@@ -2143,6 +2143,78 @@ describe('AgentChat', () => {
     expect(change?.kind === 'live' && change.envelope.sequence).toBe(2);
   });
 
+  it('rebuilds custom data parts from history without reporting a live envelope', async () => {
+    getEvents.mockResolvedValue({
+      events: [
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't1',
+          sequence: 1,
+          timestamp: '2026-08-06T12:00:00.000Z',
+          event: {
+            type: 'message',
+            role: 'assistant',
+            messageId: 'msg_asst0000001',
+            content: { markdown: 'Working' },
+          },
+        },
+        {
+          version: AGENT_EVENT_PROTOCOL_VERSION,
+          conversationId: 'internal',
+          conversationIdentifier: 'conv_abcdefghijkl',
+          agentId: 'agent_1',
+          runId: 'history',
+          turnId: 't2',
+          sequence: 2,
+          timestamp: '2026-08-06T12:00:01.000Z',
+          event: {
+            type: 'custom',
+            name: 'order-progress',
+            data: { pct: 70 },
+          },
+        },
+      ],
+      olderCursor: null,
+    });
+
+    const changes = recordChanges('conv_abcdefghijkl');
+    const result = await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(changes.some((change) => change.kind === 'live')).toBe(false);
+    expect(result.data?.messages[0]?.parts).toEqual([
+      { type: 'text', text: 'Working', state: 'done' },
+      { type: 'data', name: 'order-progress', data: { pct: 70 } },
+    ]);
+  });
+
+  it('reports a live custom envelope so onEvent can fire', async () => {
+    await openClaimedConversation();
+    const changes = recordChanges('local_session1');
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'custom', name: 'order-progress', data: { pct: 70 } },
+      })
+    );
+
+    const change = changes[0];
+    expect(change?.kind).toBe('live');
+    expect(change?.kind === 'live' && change.envelope.event).toEqual({
+      type: 'custom',
+      name: 'order-progress',
+      data: { pct: 70 },
+    });
+  });
+
   it('does not report an envelope the sequence gate drops', async () => {
     await openClaimedConversation();
 

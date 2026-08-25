@@ -66,6 +66,34 @@ describe('activity-to-events run lifecycle', () => {
     expect(envelopes.every((envelope) => envelope.runId === 'run-1')).to.equal(true);
   });
 
+  it('maps CUSTOM activities to custom envelopes and skips rows without a name', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.CUSTOM,
+          identifier: 'act_nameless',
+          sequence: 2,
+          richContent: { custom: { data: { pct: 70 } } },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.CUSTOM,
+          identifier: 'custom:run-custom:1',
+          sequence: 1,
+          richContent: { custom: { name: 'order-progress', data: { pct: 70 } } },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes).to.have.lengthOf(1);
+    expect(envelopes[0].runId).to.equal('run-custom');
+    expect(envelopes[0].event).to.deep.equal({
+      type: 'custom',
+      name: 'order-progress',
+      data: { pct: 70 },
+    });
+  });
+
   it('maps MCP connection activities to protocol events', () => {
     const envelopes = mapNewestFirstEventActivities(
       [

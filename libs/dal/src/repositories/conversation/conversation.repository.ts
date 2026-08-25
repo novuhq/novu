@@ -188,7 +188,8 @@ export class ConversationRepository extends BaseRepositoryV2<
     environmentId: string,
     organizationId: string,
     id: string,
-    messagePreview: string
+    messagePreview: string,
+    session?: ClientSession | null
   ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
@@ -198,7 +199,8 @@ export class ConversationRepository extends BaseRepositoryV2<
           lastMessagePreview: messagePreview.slice(0, 200),
         },
         $inc: { messageCount: 1 },
-      }
+      },
+      session ? { session } : {}
     );
   }
 
@@ -207,7 +209,13 @@ export class ConversationRepository extends BaseRepositoryV2<
    * Used for in-place message edits (replyHandle.edit) — the message count stays the same,
    * but the conversation's timeline and preview should reflect the latest content.
    */
-  async touchPreview(environmentId: string, organizationId: string, id: string, messagePreview: string): Promise<void> {
+  async touchPreview(
+    environmentId: string,
+    organizationId: string,
+    id: string,
+    messagePreview: string,
+    session?: ClientSession | null
+  ): Promise<void> {
     await this.update(
       { _id: id, _environmentId: environmentId, _organizationId: organizationId },
       {
@@ -215,7 +223,8 @@ export class ConversationRepository extends BaseRepositoryV2<
           lastActivityAt: new Date().toISOString(),
           lastMessagePreview: messagePreview.slice(0, 200),
         },
-      }
+      },
+      session ? { session } : {}
     );
   }
 

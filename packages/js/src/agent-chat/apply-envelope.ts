@@ -226,8 +226,13 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'connection.error':
     case 'signal':
     case 'provider-event':
-    case 'custom':
       return state;
+
+    case 'custom':
+      return withActiveAssistantMessage(state, envelope, (message) => ({
+        ...message,
+        parts: [...message.parts, { type: 'data', name: event.name, data: event.data }],
+      }));
 
     default:
       return state;
