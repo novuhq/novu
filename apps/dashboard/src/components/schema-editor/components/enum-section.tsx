@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { type Control, Controller, Path, useFieldArray } from 'react-hook-form';
 import { RiAddLine, RiDeleteBin2Line, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
 
@@ -16,6 +16,7 @@ interface EnumChoiceProps {
   control: Control<any>;
   onRemove: () => void;
   readOnly?: boolean;
+  isRemoveDisabled?: boolean;
 }
 
 const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({
@@ -24,6 +25,7 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({
   control,
   onRemove,
   readOnly = false,
+  isRemoveDisabled = false,
 }) {
   return (
     <div className="flex items-center space-x-2">
@@ -62,9 +64,9 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({
         size="2xs"
         leadingIcon={RiDeleteBin2Line}
         onClick={onRemove}
-        aria-label="Delete property"
+        aria-label="Delete choice"
         className={cn('border ml-1.5! h-7 w-7 border-neutral-200')}
-        disabled={readOnly}
+        disabled={readOnly || isRemoveDisabled}
       />
     </div>
   );
@@ -93,6 +95,20 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({
     append('', { shouldFocus: true });
   }, [append]);
 
+  // An enum with no choices matches nothing, so the editor always offers at
+  // least one row. The latch keeps StrictMode's double-invoked effect from
+  // seeding two rows.
+  const hasSeededFirstChoice = useRef(false);
+
+  useEffect(() => {
+    if (readOnly || hasSeededFirstChoice.current || fields.length > 0) {
+      return;
+    }
+
+    hasSeededFirstChoice.current = true;
+    append('', { shouldFocus: false });
+  }, [readOnly, fields.length, append]);
+
   return (
     <div className={cn('mt-1 space-y-1', getMarginClassPx(indentationLevel + 1))}>
       {fields.map((enumField, enumIndex) => (
@@ -103,6 +119,7 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({
           control={control}
           onRemove={() => remove(enumIndex)}
           readOnly={readOnly}
+          isRemoveDisabled={fields.length <= 1}
         />
       ))}
       <Button
