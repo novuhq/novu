@@ -29,6 +29,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       apiKey: Schema.Types.String,
       user: Schema.Types.String,
       secretKey: Schema.Types.String,
+      hmacSecretKeyEncoding: Schema.Types.String,
       domain: Schema.Types.String,
       password: Schema.Types.String,
       host: Schema.Types.String,

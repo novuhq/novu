@@ -137,4 +137,11 @@ export interface ICredentials {
    * `'dynamic'` fans out to per-subscriber `tool_webhook` endpoints. Missing = static.
    */
   routingMode?: 'static' | 'dynamic';
+  /**
+   * Email webhook: how the `secretKey` value is interpreted when computing the
+   * `X-Novu-Signature` header. `'text'` (default) signs with the raw UTF-8 bytes of
+   * the stored secret; `'base64'` and `'hex'` decode it to binary first — required
+   * when the verification side (e.g. AWS KMS) holds the key as binary material.
+   */
+  hmacSecretKeyEncoding?: 'text' | 'base64' | 'hex';
 }

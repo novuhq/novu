@@ -208,3 +208,66 @@ describe('without SSRF protection (self-hosted)', () => {
     expect(lastRequest?.method).toBe('POST');
   });
 });
+
+describe('computeHmac secret key encodings', () => {
+  const PAYLOAD =
+    '{"to":["johndoe@example.com"],"from":"janedoe@example.com","subject":"test","html":"<h1>test</h1>","text":"test"}';
+
+  // Signature produced by the legacy behavior: the raw UTF-8 bytes of 'super-secret-key'.
+  const TEXT_SIGNATURE = 'd1e94cd19eeceec2e0717e36f7edacaa93612b311bde8756ee35b89d4a994767';
+
+  test.each([
+    ['base64', Buffer.from('super-secret-key').toString('base64')],
+    ['hex', Buffer.from('super-secret-key').toString('hex')],
+  ])('should sign identically when a %s-encoded key decodes to the same binary material', (encoding, encodedKey) => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: encodedKey,
+      hmacSecretKeyEncoding: encoding as 'base64' | 'hex',
+    });
+
+    expect(provider.computeHmac(PAYLOAD)).toBe(TEXT_SIGNATURE);
+  });
+
+  test('should keep signing as plain text when no encoding is configured', () => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: 'super-secret-key',
+    });
+    const explicitTextProvider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: 'super-secret-key',
+      hmacSecretKeyEncoding: 'text',
+    });
+
+    expect(provider.computeHmac(PAYLOAD)).toBe(TEXT_SIGNATURE);
+    expect(explicitTextProvider.computeHmac(PAYLOAD)).toBe(provider.computeHmac(PAYLOAD));
+  });
+
+  test('should reject an empty decoded key for non-text encodings', () => {
+    // Node's decoders are lenient: only a value with zero valid digits yields an empty buffer.
+    const base64Provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: '!!!!',
+      hmacSecretKeyEncoding: 'base64',
+    });
+    const missingKeyProvider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKeyEncoding: 'hex',
+    });
+
+    expect(() => base64Provider.computeHmac(PAYLOAD)).toThrow(/not valid base64/);
+    expect(() => missingKeyProvider.computeHmac(PAYLOAD)).toThrow(/requires a non-empty hmacSecretKey/);
+  });
+
+  test('should reject unsupported encodings instead of signing with unintended key bytes', () => {
+    const provider = new EmailWebhookProvider({
+      webhookUrl: 'https://example.com/webhook',
+      hmacSecretKey: 'super-secret-key',
+      // Runtime values are not constrained by the TypeScript union — the API persists raw strings.
+      hmacSecretKeyEncoding: 'latin1' as 'base64' | 'hex',
+    });
+
+    expect(() => provider.computeHmac(PAYLOAD)).toThrow(/Unsupported hmacSecretKeyEncoding: 'latin1'/);
+  });
+});
