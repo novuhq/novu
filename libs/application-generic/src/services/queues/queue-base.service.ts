@@ -6,10 +6,78 @@ import { PinoLogger } from '../../logging';
 import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
 import { FeatureFlagsService } from '../feature-flags';
 import { DeferReasonEnum, EventBridgeSchedulerService } from '../scheduler';
-import { SqsService } from '../sqs';
+import { isSqsPartialSendError, SqsService } from '../sqs';
 import { SQS_MAX_DELAY_SECONDS } from '../sqs/types';
 
 const LOG_CONTEXT = 'QueueService';
+
+/**
+ * Carries the jobs that never reached SQS (or the scheduler) so a fallback can
+ * re-queue exactly those. Without it a mid-batch failure forces the caller to
+ * re-send everything, double-delivering whatever SQS already accepted.
+ */
+class PartialDispatchError extends Error {
+  constructor(
+    public readonly unsentJobs: (IJobParams | IBulkJobParams)[],
+    public readonly cause: unknown
+  ) {
+    super(cause instanceof Error ? cause.message : String(cause));
+    this.name = 'PartialDispatchError';
+  }
+}
+
+/**
+ * Names to alert on, outermost first. The chain is two deep for the common case
+ * (`PartialDispatchError` -> `SqsPartialSendError` -> `BatchRequestTooLong`),
+ * so a single unwrap would surface only our own wrapper and never the AWS error
+ * that actually explains the failure.
+ */
+function resolveErrorNames(error: unknown): string | undefined {
+  const names: string[] = [];
+
+  for (let current = error; current instanceof Error; current = (current as { cause?: unknown }).cause) {
+    names.push(current.name);
+  }
+
+  return names.length > 0 ? names.join(' <- ') : undefined;
+}
+
+/**
+ * The jobs to hand back to the fallback after a failed SQS send.
+ *
+ * A partial send names the messages it did not deliver; anything else tells us
+ * nothing, so we assume the whole SQS leg failed. Either way the result is
+ * scoped to `sqsEligible` - never the caller's full job list, which may include
+ * schedules that were already accepted.
+ */
+function resolveUnsentJobs(
+  error: unknown,
+  sqsEligible: (IJobParams | IBulkJobParams)[],
+  jobsByMessageId: Map<string, IJobParams | IBulkJobParams>
+): (IJobParams | IBulkJobParams)[] {
+  if (!isSqsPartialSendError(error)) {
+    return sqsEligible;
+  }
+
+  const unsentJobs = error.unsentMessages.map((message) => jobsByMessageId.get(message.id));
+
+  /*
+   * Ids are assigned and mapped in the same pass, so a miss is impossible
+   * today. Fail open rather than filtering: re-queuing a job that SQS already
+   * accepted is recoverable, silently dropping one is not.
+   */
+  if (unsentJobs.some((job) => job === undefined)) {
+    Logger.error(
+      { unsentCount: error.unsentMessages.length, eligibleCount: sqsEligible.length },
+      'Could not map every unsent SQS message back to its job, re-queuing the full batch',
+      LOG_CONTEXT
+    );
+
+    return sqsEligible;
+  }
+
+  return unsentJobs as (IJobParams | IBulkJobParams)[];
+}
 
 type OrganizationRouting = { _id: string; apiServiceLevel?: ApiServiceLevelEnum };
 
@@ -303,17 +371,7 @@ export class QueueBaseService implements OnModuleDestroy {
             );
           }
         } catch (error) {
-          Logger.error(
-            {
-              topic: this.topic,
-              count: jobs.length,
-              error: error instanceof Error ? error.message : String(error),
-              stack: error instanceof Error ? error.stack : undefined,
-            },
-            'SQS failed in LIVE mode, falling back to BullMQ as primary',
-            LOG_CONTEXT
-          );
-          await this.addJobsToBullMQ(jobs);
+          await this.fallbackToBullMQ(error, jobs, 'SQS failed in LIVE mode, falling back to BullMQ as primary');
         }
         break;
       }
@@ -322,18 +380,7 @@ export class QueueBaseService implements OnModuleDestroy {
         try {
           return await this.addJobsToSQS(jobs, organizationId);
         } catch (error) {
-          // SQS failed in COMPLETE mode - fall back to BullMQ for resilience
-          Logger.error(
-            {
-              topic: this.topic,
-              count: jobs.length,
-              error: error instanceof Error ? error.message : String(error),
-              stack: error instanceof Error ? error.stack : undefined,
-            },
-            'SQS failed in COMPLETE mode, falling back to BullMQ',
-            LOG_CONTEXT
-          );
-          return await this.addJobsToBullMQ(jobs);
+          return await this.fallbackToBullMQ(error, jobs, 'SQS failed in COMPLETE mode, falling back to BullMQ');
         }
       }
 
@@ -341,6 +388,36 @@ export class QueueBaseService implements OnModuleDestroy {
         Logger.warn({ mode: queueBackendMode }, 'Unknown queue backend mode, falling back to BullMQ', LOG_CONTEXT);
         return await this.addJobsToBullMQ(jobs);
     }
+  }
+
+  /**
+   * Hand the jobs SQS did not take over to BullMQ.
+   *
+   * Only the undelivered jobs are re-queued when the failure identified them,
+   * which is what stops a mid-batch failure from double-delivering everything
+   * SQS already accepted.
+   */
+  private async fallbackToBullMQ(error: unknown, jobs: (IJobParams | IBulkJobParams)[], reason: string): Promise<void> {
+    const fallbackJobs = error instanceof PartialDispatchError ? error.unsentJobs : jobs;
+
+    Logger.error(
+      {
+        topic: this.topic,
+        count: jobs.length,
+        fallbackCount: fallbackJobs.length,
+        error: error instanceof Error ? error.message : String(error),
+        errorName: resolveErrorNames(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      reason,
+      LOG_CONTEXT
+    );
+
+    if (fallbackJobs.length === 0) {
+      return;
+    }
+
+    await this.addJobsToBullMQ(fallbackJobs);
   }
 
   private toBulkJobParams(jobs: (IJobParams | IBulkJobParams)[]): IBulkJobParams[] {
@@ -370,34 +447,63 @@ export class QueueBaseService implements OnModuleDestroy {
     const { longDelayed, sqsEligible } = this.separateByDelay(jobs);
 
     if (longDelayed.length > 0) {
-      await this.addJobsToScheduler(longDelayed, organizationId);
+      try {
+        await this.addJobsToScheduler(longDelayed, organizationId);
+      } catch (error) {
+        /*
+         * Nothing has been sent to SQS yet, so the eligible jobs are unsent too
+         * - they are never attempted once this throws.
+         */
+        const unsentScheduled = error instanceof PartialDispatchError ? error.unsentJobs : longDelayed;
+        throw new PartialDispatchError([...unsentScheduled, ...sqsEligible], error);
+      }
     }
 
     if (sqsEligible.length === 0) {
       return;
     }
 
-    const messages = sqsEligible.map((job, index) => ({
-      id: `${job.groupId || job.name}-${index}`,
-      body: JSON.stringify(job.data || {}),
-      groupId: organizationId,
-      delaySeconds: Math.ceil((job.options?.delay || 0) / 1000),
-    }));
+    /*
+     * Keep the id -> job mapping rather than parsing the id back apart: it is
+     * how a partial send is translated into the exact jobs to re-queue.
+     */
+    const jobsByMessageId = new Map<string, IJobParams | IBulkJobParams>();
+    const messages = sqsEligible.map((job, index) => {
+      const id = `${job.groupId || job.name}-${index}`;
+      jobsByMessageId.set(id, job);
 
-    if (messages.length === 1) {
-      await this.sqsService.send(this.topic, messages[0]);
-      Logger.debug(
-        {
-          topic: this.topic,
-          jobName: sqsEligible[0].name,
-          payloadSizeBytes: this.calculatePayloadSize(sqsEligible[0].data),
-        },
-        'Added job to SQS',
-        LOG_CONTEXT
-      );
-    } else {
-      await this.sqsService.sendBulk(this.topic, messages);
-      Logger.debug({ topic: this.topic, count: messages.length }, 'Added bulk jobs to SQS', LOG_CONTEXT);
+      return {
+        id,
+        body: JSON.stringify(job.data || {}),
+        groupId: organizationId,
+        delaySeconds: Math.ceil((job.options?.delay || 0) / 1000),
+      };
+    });
+
+    try {
+      if (messages.length === 1) {
+        await this.sqsService.send(this.topic, messages[0]);
+        Logger.debug(
+          {
+            topic: this.topic,
+            jobName: sqsEligible[0].name,
+            payloadSizeBytes: this.calculatePayloadSize(sqsEligible[0].data),
+          },
+          'Added job to SQS',
+          LOG_CONTEXT
+        );
+      } else {
+        await this.sqsService.sendBulk(this.topic, messages);
+        Logger.debug({ topic: this.topic, count: messages.length }, 'Added bulk jobs to SQS', LOG_CONTEXT);
+      }
+    } catch (error) {
+      /*
+       * Scope the fallback to the SQS leg even when the error does not name the
+       * undelivered messages. Anything already handed to the scheduler above
+       * has been accepted, so replaying the whole `jobs` array here would fire
+       * those a second time - once via EventBridge and once via BullMQ.
+       */
+      throw new PartialDispatchError(resolveUnsentJobs(error, sqsEligible, jobsByMessageId), error);
     }
   }
 
@@ -413,7 +519,7 @@ export class QueueBaseService implements OnModuleDestroy {
 
     const now = Date.now();
 
-    await Promise.all(
+    const results = await Promise.allSettled(
       jobs.map((job) =>
         this.schedulerService.createDelayedFire(this.topic, {
           deferReason: job.deferReason || DeferReasonEnum.DELAY,
@@ -424,6 +530,28 @@ export class QueueBaseService implements OnModuleDestroy {
         })
       )
     );
+
+    const rejected = results.flatMap((result, index) => (result.status === 'rejected' ? [{ result, index }] : []));
+
+    if (rejected.length > 0) {
+      Logger.error(
+        {
+          topic: this.topic,
+          organizationId,
+          totalCount: jobs.length,
+          scheduledCount: jobs.length - rejected.length,
+          unscheduledCount: rejected.length,
+          error: rejected.map(({ result }) => String(result.reason)).join('; '),
+        },
+        'Some long-delayed jobs could not be scheduled',
+        LOG_CONTEXT
+      );
+
+      throw new PartialDispatchError(
+        rejected.map(({ index }) => jobs[index]),
+        rejected[0].result.reason
+      );
+    }
 
     Logger.log(
       { topic: this.topic, count: jobs.length, organizationId },
