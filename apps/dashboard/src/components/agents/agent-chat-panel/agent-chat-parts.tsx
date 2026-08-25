@@ -126,12 +126,14 @@ export function ChatMessageRow({
   onCardAction,
   cardActionsDisabled,
   onRespondToAction,
+  onRetry,
 }: {
   message: AgentMessage;
   showAvatar: boolean;
   onCardAction?: CardActionHandler;
   cardActionsDisabled?: boolean;
   onRespondToAction?: (args: { actionId: string; decision: ToolApprovalDecision }) => void;
+  onRetry?: (messageId: string) => void;
 }) {
   const isUser = message.role === 'user';
   const textParts = message.parts.filter((part): part is TextPart => part.type === 'text');
@@ -175,6 +177,15 @@ export function ChatMessageRow({
           <span className="text-error-base text-label-xs inline-flex items-center gap-1">
             <RiErrorWarningLine className="size-3" aria-hidden />
             Not sent
+            {onRetry ? (
+              <button
+                type="button"
+                className="text-error-base hover:opacity-80 underline decoration-from-font underline-offset-2"
+                onClick={() => onRetry(message.id)}
+              >
+                Retry
+              </button>
+            ) : null}
           </span>
         ) : null}
       </div>
@@ -210,7 +221,7 @@ export function ChatMessageRow({
           />
         ))}
         {visibleTools.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex w-full flex-col items-start gap-1">
             {visibleTools.map((tool) => (
               <ToolChip key={tool.toolUseId} tool={tool} />
             ))}
@@ -222,6 +233,7 @@ export function ChatMessageRow({
             id={part.approvalId}
             toolName={part.toolName}
             source={part.source}
+            input={part.input}
             state={part.state}
             trustToolActionId={part.trustToolActionId}
             trustServerActionId={part.trustServerActionId}
@@ -439,6 +451,48 @@ function ChatCardPart({
   );
 }
 
+function prettyJson(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function formatToolOutput(output: ToolPart['output']): string | undefined {
+  if (!output?.length) {
+    return undefined;
+  }
+
+  const chunks = output.map((part) => {
+    switch (part.type) {
+      case 'text':
+        return part.text;
+      case 'json':
+        return prettyJson(part.value);
+      case 'citation':
+        return part.title ? `${part.title}\n${part.url}` : part.url;
+      case 'media':
+        return part.name ?? part.mediaType;
+      default:
+        return prettyJson(part.data);
+    }
+  });
+
+  return chunks.filter(Boolean).join('\n\n') || undefined;
+}
+
+function PayloadPeek({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-label-xs text-text-soft">{label}</span>
+      <pre className="text-paragraph-xs text-text-sub max-h-28 overflow-auto whitespace-pre-wrap break-all font-mono leading-4">
+        {value}
+      </pre>
+    </div>
+  );
+}
+
 function ToolChip({ tool }: { tool: ToolPart }) {
   const isRunning = tool.state === 'input-streaming' || tool.state === 'input-available';
   const isFailed = tool.state === 'output-error';
@@ -450,17 +504,41 @@ function ToolChip({ tool }: { tool: ToolPart }) {
     statusLabel = 'Failed';
   }
 
-  return (
+  const inputPreview = tool.input && Object.keys(tool.input).length > 0 ? prettyJson(tool.input) : undefined;
+  const outputPreview = formatToolOutput(tool.output);
+  const canExpand = Boolean(inputPreview || outputPreview);
+  const row = (
     <span
-      className={cn('text-label-xs inline-flex items-center gap-1', isFailed ? 'text-error-base' : 'text-text-soft')}
+      className={cn(
+        'text-label-xs inline-flex min-w-0 items-center gap-1',
+        isFailed ? 'text-error-base' : 'text-text-soft',
+        canExpand && 'cursor-pointer'
+      )}
     >
       {isRunning ? (
         <RiLoader4Line className="size-3.5 shrink-0 animate-spin" aria-hidden />
       ) : (
-        <RiArrowRightSLine className="size-3.5 shrink-0" aria-hidden />
+        <RiArrowRightSLine
+          className={cn('size-3.5 shrink-0', canExpand && 'transition-transform group-open:rotate-90')}
+          aria-hidden
+        />
       )}
       {statusLabel} <span className="font-mono">{tool.toolName}</span>
     </span>
+  );
+
+  if (!canExpand) {
+    return row;
+  }
+
+  return (
+    <details className="group w-full min-w-0">
+      <summary className="flex list-none items-center [&::-webkit-details-marker]:hidden">{row}</summary>
+      <div className="border-stroke-soft mt-1 flex w-full min-w-0 flex-col gap-2 rounded-md border px-2.5 py-2">
+        {inputPreview ? <PayloadPeek label="Input" value={inputPreview} /> : null}
+        {outputPreview ? <PayloadPeek label="Result" value={outputPreview} /> : null}
+      </div>
+    </details>
   );
 }
 
@@ -480,6 +558,7 @@ type ToolApprovalCardProps = {
   id?: string;
   toolName: string;
   source?: ApprovalPart['source'];
+  input?: ApprovalPart['input'];
   state: ApprovalPart['state'];
   trustToolActionId?: string;
   trustServerActionId?: string;
@@ -570,6 +649,7 @@ export function ChatToolApprovalCard({
   id,
   toolName,
   source,
+  input,
   state,
   trustToolActionId,
   trustServerActionId,
@@ -577,18 +657,44 @@ export function ChatToolApprovalCard({
   onRespond,
   className,
 }: ToolApprovalCardProps) {
+  const inputPreview = input && Object.keys(input).length > 0 ? prettyJson(input) : undefined;
+
   if (state !== 'pending') {
     const isApproved = state === 'approved';
-
-    return (
-      <span id={id} className={cn('text-label-xs inline-flex items-center gap-1', className)}>
-        <RiArrowRightSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+    const statusRow = (
+      <span className="text-label-xs inline-flex items-center gap-1">
+        <RiArrowRightSLine
+          className={cn(
+            'text-text-soft size-3.5 shrink-0',
+            inputPreview && 'transition-transform group-open:rotate-90'
+          )}
+          aria-hidden
+        />
         <span className="text-text-soft font-mono">{toolName}</span>
         <span className="text-text-soft" aria-hidden>
           ·
         </span>
         <span className={isApproved ? 'text-text-sub' : 'text-error-base'}>{isApproved ? 'Approved' : 'Denied'}</span>
       </span>
+    );
+
+    if (!inputPreview) {
+      return (
+        <span id={id} className={cn('text-label-xs inline-flex items-center gap-1', className)}>
+          {statusRow}
+        </span>
+      );
+    }
+
+    return (
+      <details id={id} className={cn('group w-full min-w-0', className)}>
+        <summary className="flex list-none cursor-pointer items-center [&::-webkit-details-marker]:hidden">
+          {statusRow}
+        </summary>
+        <div className="border-stroke-soft mt-1 flex w-full min-w-0 flex-col gap-2 rounded-md border px-2.5 py-2">
+          <PayloadPeek label="Input" value={inputPreview} />
+        </div>
+      </details>
     );
   }
 
@@ -605,6 +711,17 @@ export function ChatToolApprovalCard({
           The agent is waiting for your approval.
         </p>
       </div>
+      {inputPreview ? (
+        <details className="group min-w-0">
+          <summary className="text-label-xs text-text-sub hover:text-text-strong flex cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden">
+            <RiArrowRightSLine className="size-3.5 shrink-0 transition-transform group-open:rotate-90" aria-hidden />
+            Arguments
+          </summary>
+          <div className="mt-1.5">
+            <PayloadPeek label="Input" value={inputPreview} />
+          </div>
+        </details>
+      ) : null}
       <ToolApprovalActions
         disabled={disabled}
         onRespond={onRespond}
