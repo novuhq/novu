@@ -470,7 +470,7 @@
               {
                 "group": "Agent Chat",
                 "root": "agents/channels/agent-chat",
-                "pages": ["agents/channels/agent-chat/quickstart"]
+                "pages": ["agents/channels/agent-chat/quickstart", "agents/channels/agent-chat/chat-ui"]
               }
             ],
             "icon": "messages-square"
@@ -1733,6 +1733,21 @@
     {
       "source": "/agents/agent-chat/quickstart",
       "destination": "/agents/channels/agent-chat/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/rendering",
+      "destination": "/agents/channels/agent-chat/chat-ui",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/production",
+      "destination": "/agents/channels/agent-chat",
+      "permanent": true
+    },
+    {
+      "source": "/agents/channels/agent-chat/messages",
+      "destination": "/agents/channels/agent-chat/chat-ui",
       "permanent": true
     },
     {

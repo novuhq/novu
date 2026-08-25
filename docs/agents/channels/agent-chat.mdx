@@ -1,6 +1,6 @@
 ---
 title: "Agent Chat"
-description: "Connect your agent to in-app Agent Chat: live typing, tool approval, thinking parts, and a headless React hook in your product UI."
+description: "Connect your agent to in-app Agent Chat: a headless React hook, live typing, tool approval, cards, and HMAC."
 sidebarTitle: Overview
 ---
 
@@ -10,52 +10,88 @@ sidebarTitle: Overview
 
 Agent Chat is an ACI channel. The messaging surface is your product UI.
 
-The agent brain, conversation history, tool approval, and dashboard observability match other ACI channels. The client is [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat) from `@novu/react`. You render the messages and the composer.
+The agent brain, conversation history, tool approval, and dashboard observability match other ACI channels. The React client is [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat) from `@novu/react`. You render the message list and the composer. There is no prebuilt `<AgentChat />` component.
 
-## Capabilities
+Agent Chat supports live typing, thinking parts, tool approval, MCP connect, cards, custom data parts, and file parts. HMAC is available on the integration.
 
-| Capability | Support |
-| --- | --- |
-| Full context history | Yes |
-| Threaded replies (one conversation per thread) | Yes |
-| Live typing indicator | Yes |
-| React with eyes on inbound messages | No |
-| Plan card (thinking parts) | Yes |
-| Rich text | Yes (your UI renders message parts) |
-| Tap-to-respond | Yes (tool approval and cards) |
-| Emoji reactions | No |
-| Message edits in place | Yes |
-| Action / MCP tool approval | Yes |
-| MCP connect card | Yes |
-| Resolve conversation | Yes |
-| File parts | Yes |
-| Streaming text parts | Yes (live socket) |
-
-Full matrix: [Channels overview](/agents/channels/overview).
-
-## Examples
-
-### In-app turn
-
-A subscriber sends a message in your UI. Novu loads conversation history, runs the agent brain, and streams the reply over the socket. Typing and thinking parts update while the turn runs.
-
-### Tool approval
-
-A gated tool pauses the turn. `pendingActions` includes a `tool-approval` item. Call `respondToAction` with `approved` or `denied`. The turn resumes after the decision.
+Full capability matrix: [Channels overview](/agents/channels/overview).
 
 ## Setup
 
 1. Create an agent and keep it **active**.
 2. In the Novu dashboard, open the agent and add **Agent Chat** as a channel. Novu creates the `novu-agent-chat` integration if it does not exist.
-3. Embed the chat in your app. Follow [Build the UI](/agents/channels/agent-chat/quickstart).
+
+You need:
+
+- Your **application identifier** from [API Keys](https://dashboard.novu.co/api-keys)
+- A [subscriber](/platform/additional-resources/glossary) id for the signed-in person
+- The public **agent identifier** from the agent page in the dashboard
+
+Then embed the chat in your app. For React, follow [Build the UI](/agents/channels/agent-chat/quickstart). For JavaScript, use [`conversation()`](/platform/sdks/javascript#agent-chat).
+
+## Security
+
+HMAC is off by default. Turn HMAC on before you ship. Agent Chat can require two hashes. Each hash has its own dashboard toggle.
+
+| Hash | Toggle | Input | Where the client passes it |
+| --- | --- | --- | --- |
+| `subscriberHash` | **Novu In-App** integration | `subscriberId` | `NovuProvider` |
+| `agentHash` | **Agent Chat** integration | agent identifier | `useAgentChat` |
+
+Both hashes use the same secret: the environment API secret from [API Keys](https://dashboard.novu.co/api-keys). Compute them on your server. Do not compute them in the browser.
+
+If only one toggle is on, pass only that hash. If both toggles are on, pass both hashes.
+
+### subscriberHash
+
+`subscriberHash` authenticates the signed-in subscriber. Without it, another person can guess a `subscriberId` and open that subscriber's session, including Agent Chat.
+
+If **Security HMAC encryption** is on for **Novu In-App**, pass `subscriberHash` to `NovuProvider`. The hash is `HMAC-SHA256(secretKey, subscriberId)` as a lowercase hex string.
+
+```tsx
+<NovuProvider
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriber="YOUR_SUBSCRIBER_ID"
+  subscriberHash="YOUR_SUBSCRIBER_HASH"
+>
+  <Chat />
+</NovuProvider>
+```
+
+Generation recipes (Node.js, Python, and more): [Secure your Inbox with HMAC](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption).
+
+### agentHash
+
+`agentHash` authenticates which agent the subscriber can talk to. Without it, a client can send any public agent identifier that is linked to Agent Chat.
+
+If **Security HMAC encryption** is on for **Agent Chat**:
+
+1. Open [Integrations](https://dashboard.novu.co/integrations).
+2. Select the **Agent Chat** integration.
+3. Enable **Security HMAC encryption**.
+4. On your server, compute `HMAC-SHA256(secretKey, agentIdentifier)` as a lowercase hex string.
+5. Pass that value as `agentHash` to `useAgentChat`.
+
+```tsx
+useAgentChat({
+  agentId: 'YOUR_AGENT_IDENTIFIER',
+  agentHash: 'YOUR_AGENT_HASH',
+});
+```
 
 ## Related
 
 <Columns cols={2}>
   <Card href="/agents/channels/agent-chat/quickstart" title="Build the UI" icon="rocket">
-    Install `@novu/react`, wrap `NovuProvider`, and send a message.
+    Install `@novu/react` and send the first message.
+  </Card>
+  <Card href="/agents/channels/agent-chat/chat-ui" title="Chat UI" icon="list">
+    Parts, retry, resume, cards, approvals, and reconnect.
   </Card>
   <Card href="/platform/sdks/react/hooks/use-agent-chat" title="useAgentChat" icon="code">
     Hook props, return value, and callbacks.
+  </Card>
+  <Card href="/platform/sdks/javascript#agent-chat" title="JavaScript SDK" icon="js">
+    `novu.agentChat.conversation()` in `@novu/js`.
   </Card>
 </Columns>
