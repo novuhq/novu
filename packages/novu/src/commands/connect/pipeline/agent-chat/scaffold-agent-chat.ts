@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { isNovuStagingApiUrl } from '@novu/shared';
+import { isNovuLocalApiUrl, isNovuStagingApiUrl } from '@novu/shared';
+import { CloudRegionEnum } from '../../../dev/enums';
 import { tryGitInit } from '../../../init/helpers/git';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
@@ -15,6 +16,7 @@ export type ScaffoldAgentChatProjectInput = {
   applicationIdentifier: string;
   subscriberId: string;
   apiUrl: string;
+  region?: CloudRegionEnum;
   /** When set, merge chat UI into an existing bridge scaffold instead of creating a sibling app. */
   mergeIntoProjectDir?: string;
   /** Replace the root page when merging into a project scaffolded during this connect run. */
@@ -87,7 +89,7 @@ async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgen
     throw new Error(`Cannot merge Agent Chat into "${resolved}" — no package.json found.`);
   }
 
-  const dependenciesChanged = ensureAgentChatDependencies(resolved, findLocalNovuDeps(), input.apiUrl);
+  const dependenciesChanged = ensureAgentChatDependencies(resolved, findLocalNovuDeps(), input.apiUrl, input.region);
   const componentsDir = path.join(resolved, 'components', 'agent-chat');
   fs.mkdirSync(componentsDir, { recursive: true });
   copyTemplateComponents(componentsDir);
@@ -110,7 +112,8 @@ async function mergeAgentChatIntoProject(projectDir: string, input: ScaffoldAgen
 function ensureAgentChatDependencies(
   projectDir: string,
   localNovuDeps: LocalNovuDeps | undefined,
-  apiUrl: string
+  apiUrl: string,
+  region?: CloudRegionEnum
 ): boolean {
   const packageJsonPath = path.join(projectDir, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
@@ -118,7 +121,7 @@ function ensureAgentChatDependencies(
     scripts?: Record<string, string>;
   };
   const dependencies = packageJson.dependencies ?? {};
-  const sdk = resolveAgentChatNovuDependencies(apiUrl, localNovuDeps);
+  const sdk = resolveAgentChatNovuDependencies(apiUrl, localNovuDeps, region);
   const required = {
     '@novu/react': sdk.react,
     ...(sdk.js ? { '@novu/js': sdk.js } : {}),
@@ -189,13 +192,10 @@ async function writeStandaloneAgentChatApp(root: string, input: ScaffoldAgentCha
     }),
     'utf8'
   );
-  fs.writeFileSync(
-    path.join(root, 'package.json'),
-    renderPackageJson(path.basename(root), localNovuDeps, input.apiUrl),
-    'utf8'
-  );
+  const sdk = resolveAgentChatNovuDependencies(input.apiUrl, localNovuDeps, input.region);
+  fs.writeFileSync(path.join(root, 'package.json'), renderPackageJson(path.basename(root), sdk), 'utf8');
   fs.writeFileSync(path.join(root, 'tsconfig.json'), STANDALONE_TSCONFIG, 'utf8');
-  fs.writeFileSync(path.join(root, 'next.config.mjs'), renderNextConfig(root, localNovuDeps, input.apiUrl), 'utf8');
+  fs.writeFileSync(path.join(root, 'next.config.mjs'), renderNextConfig(root, localNovuDeps, sdk), 'utf8');
   fs.writeFileSync(path.join(root, '.env.local'), renderEnvLocal(input), 'utf8');
   fs.writeFileSync(path.join(root, '.env.example'), renderEnvExample(input), 'utf8');
   fs.writeFileSync(path.join(root, '.gitignore'), STANDALONE_GITIGNORE, 'utf8');
@@ -360,13 +360,14 @@ export type AgentChatNovuDependencies = {
 
 export function resolveAgentChatNovuDependencies(
   apiUrl: string,
-  localNovuDeps: LocalNovuDeps | undefined
+  localNovuDeps: LocalNovuDeps | undefined,
+  region?: CloudRegionEnum
 ): AgentChatNovuDependencies {
-  if (isNovuStagingApiUrl(apiUrl)) {
+  if (isNovuStagingApiUrl(apiUrl) || region === CloudRegionEnum.STAGING) {
     return { react: 'rc', js: 'rc', useLocalAliases: false };
   }
 
-  if (localNovuDeps) {
+  if (localNovuDeps && isNovuLocalApiUrl(apiUrl)) {
     return {
       react: `file:${localNovuDeps.reactDir}`,
       js: `file:${localNovuDeps.jsDir}`,
@@ -374,12 +375,11 @@ export function resolveAgentChatNovuDependencies(
     };
   }
 
-  return { react: 'latest', useLocalAliases: false };
+  // The scaffold template tracks dashboard APIs that may not be on npm `latest` yet.
+  return { react: 'rc', js: 'rc', useLocalAliases: false };
 }
 
-function renderPackageJson(name: string, localNovuDeps: LocalNovuDeps | undefined, apiUrl: string): string {
-  const sdk = resolveAgentChatNovuDependencies(apiUrl, localNovuDeps);
-
+function renderPackageJson(name: string, sdk: AgentChatNovuDependencies): string {
   return JSON.stringify(
     {
       name,
@@ -410,8 +410,12 @@ function renderPackageJson(name: string, localNovuDeps: LocalNovuDeps | undefine
   );
 }
 
-function renderNextConfig(scaffoldRoot: string, localNovuDeps: LocalNovuDeps | undefined, apiUrl: string): string {
-  if (!resolveAgentChatNovuDependencies(apiUrl, localNovuDeps).useLocalAliases || !localNovuDeps) {
+function renderNextConfig(
+  scaffoldRoot: string,
+  localNovuDeps: LocalNovuDeps | undefined,
+  sdk: AgentChatNovuDependencies
+): string {
+  if (!sdk.useLocalAliases || !localNovuDeps) {
     return STANDALONE_NEXT_CONFIG;
   }
 

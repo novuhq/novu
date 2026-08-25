@@ -8,7 +8,7 @@ export function AgentChat() {
 
   const {
     messages,
-    pendingActions = [],
+    pendingActions,
     sendMessage,
     sendAction,
     respondToAction,
@@ -23,7 +23,7 @@ export function AgentChat() {
     <ChatPanel
       error={error}
       messages={messages}
-      pendingActions={pendingActions}
+      hasPendingActions={Boolean(pendingActions?.length)}
       isRunning={isRunning}
       isLoading={isLoading}
       typing={typing}

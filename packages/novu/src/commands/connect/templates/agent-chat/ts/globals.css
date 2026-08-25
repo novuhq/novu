@@ -429,6 +429,86 @@
     gap: 6px;
   }
 
+  .tool-list-stack {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .expandable-row {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .expandable-row > summary {
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    align-items: center;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .expandable-row > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .expandable-row[open] > summary .expandable-chevron {
+    transform: rotate(90deg);
+  }
+
+  .decision-card-args[open] > summary .expandable-chevron {
+    transform: rotate(90deg);
+  }
+
+  .expandable-chevron {
+    flex-shrink: 0;
+    color: var(--ink-soft);
+    transition: transform 150ms var(--ease-out);
+  }
+
+  .expandable-body {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+    border: 1px solid var(--stroke);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+
+  .payload-peek {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .payload-peek-label {
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .payload-peek-value {
+    max-height: 112px;
+    overflow: auto;
+    margin: 0;
+    color: var(--ink-subtle);
+    font-size: 12px;
+    line-height: 16px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .part-status-chevron {
+    color: var(--ink-soft);
+  }
+
   .message-card-actions button,
   .button {
     display: inline-flex;
@@ -487,6 +567,7 @@
     font-size: 12px;
   }
 
+  .tool-chip-failed,
   .tool-chip[data-state="failed"],
   .part-status [data-tone="danger"] {
     color: var(--danger);
@@ -535,8 +616,9 @@
   .decision-card {
     display: flex;
     width: 100%;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
     border: 1px solid var(--stroke);
     border-radius: 8px;
     background: var(--surface-weak);
@@ -544,10 +626,103 @@
     animation: message-in 200ms var(--ease-out);
   }
 
-  .decision-card-icon {
+  .decision-card-approval {
+    align-items: stretch;
+  }
+
+  .decision-card-header {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .decision-card-title-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+    color: var(--ink);
+  }
+
+  .decision-card-title-row h2 {
+    min-width: 0;
+    flex: 1;
+    margin: 0;
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.084px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .decision-card-header p {
+    margin: 0;
+    color: var(--ink);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .decision-card-args {
+    min-width: 0;
+  }
+
+  .decision-card-args > summary {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--ink-subtle);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .decision-card-args > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .decision-card-args > summary:hover {
+    color: var(--ink);
+  }
+
+  .decision-card-args .payload-peek {
+    margin-top: 6px;
+  }
+
+  .decision-card-actions {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .decision-card-actions-split {
+    justify-content: space-between;
+  }
+
+  .decision-card-trust,
+  .decision-card-primary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .decision-card-mcp {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .decision-card-mcp-icon {
     display: grid;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
     place-items: center;
     border-radius: 50%;
@@ -556,23 +731,13 @@
     color: var(--ink-soft);
   }
 
-  .decision-card-icon-warning {
-    background: var(--warning-soft);
-    box-shadow: none;
-    color: var(--warning);
-  }
-
-  .decision-card-copy {
+  .decision-card-mcp .decision-card-copy {
     min-width: 0;
     flex: 1;
   }
 
-  .decision-card-copy h2,
-  .decision-card-copy p {
+  .decision-card-mcp .decision-card-copy h2 {
     margin: 0;
-  }
-
-  .decision-card-copy h2 {
     overflow: hidden;
     font-size: 13px;
     font-weight: 600;
@@ -580,50 +745,20 @@
     white-space: nowrap;
   }
 
-  .decision-card-copy p {
-    margin-top: 2px;
+  .decision-card-mcp .decision-card-copy p {
+    margin: 2px 0 0;
     color: var(--ink-soft);
     font-size: 12px;
   }
 
-  .decision-card-copy code {
+  .decision-card-copy h2 code {
     font-size: 12px;
+    font-weight: 600;
   }
 
-  .decision-card-copy details {
-    margin-top: 6px;
+  .decision-card-error {
+    color: var(--danger);
   }
-
-  .decision-card-copy summary {
-    width: fit-content;
-    cursor: pointer;
-    color: var(--ink-soft);
-    font-size: 12px;
-  }
-
-  .decision-card-copy pre {
-    max-height: 140px;
-    overflow: auto;
-    margin: 6px 0 0;
-    border-radius: 8px;
-    background: var(--surface);
-    padding: 8px;
-    font-size: 10px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-  }
-
-  .decision-card-buttons {
-    display: flex;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 6px;
-  }
-
-.decision-card-copy .decision-card-error {
-  color: var(--danger);
-}
 
   .banner-error {
     border: 1px solid var(--danger-line);
@@ -732,19 +867,19 @@
       padding-left: 12px;
     }
 
-    .decision-card {
-      align-items: flex-start;
+    .decision-card-mcp {
       flex-wrap: wrap;
     }
 
-    .decision-card-copy {
-      width: calc(100% - 44px);
+    .decision-card-actions-split {
+      flex-direction: column;
+      align-items: stretch;
     }
 
-    .decision-card-buttons {
+    .decision-card-trust,
+    .decision-card-primary-actions {
       width: 100%;
       justify-content: flex-start;
-      padding-left: 44px;
     }
 
     .message-row time {

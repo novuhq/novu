@@ -1,6 +1,6 @@
 'use client';
 
-import type { AgentConversationTyping, AgentMessage, AgentPendingAction, UseAgentChatResult } from '@novu/react';
+import type { AgentConversationTyping, AgentMessage, UseAgentChatResult } from '@novu/react';
 import { ChatThread } from './chat-thread';
 import { Composer } from './composer';
 
@@ -11,7 +11,7 @@ import { Composer } from './composer';
 export type ChatPanelProps = {
   error?: { message: string };
   messages: AgentMessage[];
-  pendingActions: AgentPendingAction[];
+  hasPendingActions: boolean;
   isRunning: boolean;
   isLoading: boolean;
   typing?: AgentConversationTyping;
@@ -26,7 +26,7 @@ export type ChatPanelProps = {
 export function ChatPanel({
   error,
   messages,
-  pendingActions,
+  hasPendingActions,
   isRunning,
   isLoading,
   typing,
@@ -46,7 +46,7 @@ export function ChatPanel({
         isRunning={isRunning}
         isLoading={isLoading}
         typing={typing}
-        hasPendingActions={pendingActions.length > 0}
+        hasPendingActions={hasPendingActions}
         hasMore={hasMore}
         isFetching={isFetching}
         onFetchMore={onFetchMore}
