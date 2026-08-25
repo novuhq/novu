@@ -37,7 +37,13 @@ type AgentChatPanelProps = {
   addToAppHref?: string;
 };
 
-export function AgentChatPanel({ agent, showAddToAppCallouts = false, addToAppHref }: AgentChatPanelProps) {
+export function AgentChatPanel(props: AgentChatPanelProps) {
+  const { currentEnvironment } = useEnvironment();
+
+  return <AgentChatPanelInner key={`${props.agent.identifier}:${currentEnvironment?._id ?? ''}`} {...props} />;
+}
+
+function AgentChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }: AgentChatPanelProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardAgentChatSubscriberId(currentUser._id) : '';
@@ -203,7 +209,13 @@ function AgentChatSurface({
                 cardActionsDisabled={composerDisabled}
                 onCardAction={(action) => void sendAction(action)}
                 onRespondToAction={(action) => void respondToAction(action)}
-                onRetry={(messageId) => void retryMessage(messageId)}
+                onRetry={(messageId) => {
+                  void retryMessage(messageId).then((result) => {
+                    if (result.data) {
+                      onConversationActivity();
+                    }
+                  });
+                }}
               />
             ))}
             {showTypingRow ? <ChatTypingRow status={typing?.status} /> : null}
