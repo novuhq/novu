@@ -1,0 +1,57 @@
+---
+title: "Emit custom events"
+description: "Send a named payload from a custom code agent handler with ctx.emit. Agent Chat renders it as a data part."
+sidebarTitle: Emit
+---
+
+`ctx.emit({ name, data })` sends a named payload on the current turn. It is not a chat message. It is not a [signal](/agents/custom-code-agent/building-blocks/signals).
+
+Use `ctx.reply()` when the subscriber must see text or a card. Use `ctx.emit()` when your client needs structured data during the turn, for example progress or a machine-readable status.
+
+The call posts at once. It does not wait for `ctx.reply()`. If the bridge has no `eventsUrl`, the call is a no-op.
+
+## Channel support
+
+| Channel | What the subscriber sees |
+| --- | --- |
+| [Agent Chat](/agents/channels/agent-chat) | A `data` part on the in-flight assistant message |
+| Slack, Teams, WhatsApp, Telegram, Email | Nothing in the thread. Novu stores the event on the conversation. |
+
+## Send an event
+
+`name` is a non-empty string. `data` is yours. JSON size must stay at or under 64 KB. Novu drops the event when `name` is empty or `data` is over the limit.
+
+```ts
+onMessage: async (message, ctx) => {
+  await ctx.emit({
+    name: 'order-progress',
+    data: { pct: 70 },
+  });
+
+  await ctx.reply('Updating your order…');
+},
+```
+
+You can call `ctx.emit` more than once in one turn. Each call is a separate event.
+
+## Agent Chat
+
+Agent Chat adds each event to the assistant message as `part.type === 'data'`. The fields are `name` and `data`.
+
+Render the parts you support. Skip the rest. The part stays on the message.
+
+Client walk: [Custom data parts](/agents/channels/agent-chat/chat-ui#custom-data-parts).
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="message-circle" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
+    Send text, markdown, files, or cards to the subscriber.
+  </Card>
+  <Card icon="signal" href="/agents/custom-code-agent/building-blocks/signals" title="Signals">
+    Metadata, workflow triggers, and conversation resolution.
+  </Card>
+  <Card icon="list" href="/agents/channels/agent-chat/chat-ui#custom-data-parts" title="Agent Chat data parts">
+    Render `part.type === 'data'` in your product UI.
+  </Card>
+</Columns>

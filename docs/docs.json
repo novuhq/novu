@@ -493,6 +493,7 @@
                 "pages": [
                   "agents/custom-code-agent/building-blocks/handle-events",
                   "agents/custom-code-agent/building-blocks/reply",
+                  "agents/custom-code-agent/building-blocks/emit",
                   "agents/custom-code-agent/building-blocks/typing-indicator",
                   "agents/custom-code-agent/building-blocks/edit-sent-messages",
                   "agents/custom-code-agent/building-blocks/signals",

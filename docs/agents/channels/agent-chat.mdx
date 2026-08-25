@@ -21,13 +21,7 @@ Full capability matrix: [Channels overview](/agents/channels/overview).
 1. Create an agent and keep it **active**.
 2. In the Novu dashboard, open the agent and add **Agent Chat** as a channel. Novu creates the `novu-agent-chat` integration if it does not exist.
 
-You need:
-
-- Your **application identifier** from [API Keys](https://dashboard.novu.co/api-keys)
-- A [subscriber](/platform/additional-resources/glossary) id for the signed-in person
-- The public **agent identifier** from the agent page in the dashboard
-
-Then embed the chat in your app. For React, follow [Build the UI](/agents/channels/agent-chat/quickstart). For JavaScript, use [`conversation()`](/platform/sdks/javascript#agent-chat).
+Then embed the chat in your app. For React, follow [Quickstart](/agents/channels/agent-chat/quickstart). For JavaScript, use [`conversation()`](/platform/sdks/javascript#agent-chat).
 
 ## Security
 
@@ -82,7 +76,7 @@ useAgentChat({
 ## Related
 
 <Columns cols={2}>
-  <Card href="/agents/channels/agent-chat/quickstart" title="Build the UI" icon="rocket">
+  <Card href="/agents/channels/agent-chat/quickstart" title="Quickstart" icon="rocket">
     Install `@novu/react` and send the first message.
   </Card>
   <Card href="/agents/channels/agent-chat/chat-ui" title="Chat UI" icon="list">
@@ -91,7 +85,7 @@ useAgentChat({
   <Card href="/platform/sdks/react/hooks/use-agent-chat" title="useAgentChat" icon="code">
     Hook props, return value, and callbacks.
   </Card>
-  <Card href="/platform/sdks/javascript#agent-chat" title="JavaScript SDK" icon="js">
+  <Card href="/platform/sdks/javascript#agent-chat" title="JavaScript SDK" icon="code">
     `novu.agentChat.conversation()` in `@novu/js`.
   </Card>
 </Columns>

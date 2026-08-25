@@ -8,41 +8,27 @@ sidebarTitle: Chat UI
   Agent Chat is in closed beta. Contact us at support@novu.co to get access.
 </Note>
 
-Start from [Send a message](/agents/channels/agent-chat/quickstart#send-a-message). This page is the rest of the client.
+Start from [Send a message](/agents/channels/agent-chat/quickstart#send-a-message). This page covers everything after the first message.
 
 `messages` is the ordered timeline. Each message has `role` (`user` or `assistant`) and `parts`.
 
 ## State
 
-Use these fields to drive the UI. Exact types: [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat).
+Use these fields to drive the UI. See [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat) for types.
 
 | Field | What you do |
 | --- | --- |
 | `isLoading` | First history fetch. False when there is no `conversationId`. Show a spinner. |
 | `isRunning` | Agent turn in progress. Disable the composer. `typing` is optional status text. |
-| `status` | Conversation lifecycle: `active` or `resolved`. Same value as `conversationStatus`. The agent sets `resolved` with `ctx.resolve()`. Not a loading flag. Do not use it to disable the composer. |
-| `error` | Last load, send, retry, action, or run error. Show the message. Not `catchUpError`. |
+| `status` | Conversation is `active` or `resolved`. Do not use it to disable the composer. |
+| `error` | Last load, send, retry, action, or run error. Show the message. |
 | `message.status` | `sending`, `sent`, or `failed`. If `failed`, call `retryMessage`. See [Retry](#retry-a-failed-send). |
 
-Reconnect: [Reconnect](#reconnect) (`isRecovering`, `catchUpError`). Older pages: [Older messages](#older-messages) (`pagination`).
-
-A turn is not the conversation. `isRunning` follows the agent run. `status` follows the conversation.
+See [Reconnect](#reconnect) (`isRecovering`, `catchUpError`). See [Older messages](#older-messages) (`pagination`).
 
 ## Parts
 
-Start with `type === 'text'`. Then handle the other part types.
-
-| `type` | What to render |
-| --- | --- |
-| `text` | Visible body. `state` is `streaming` or `done`. |
-| `thinking` | Plan text while the agent reasons. |
-| `tool` | Tool call and result. |
-| `approval` | Gated tool. Use `pendingActions` and `respondToAction`. |
-| `mcp-connection` | MCP connect card. Open `authorizeUrl`. |
-| `card` | Structured Card tree. Draw `part.card`. Button clicks call `sendAction`. See [Cards](#cards). |
-| `data` | Custom payload. `name` plus `data`. See [Custom data parts](#custom-data-parts). |
-| `file` | File attachment metadata. |
-| `source` | Citation (`url` or `document`). |
+Start with `type === 'text'`. Then handle the other part types. See [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat) for part types.
 
 ```tsx
 const { messages } = useAgentChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
@@ -55,8 +41,6 @@ const { messages } = useAgentChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
   </li>
 ))}
 ```
-
-Full field tables: [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat).
 
 ## Thinking
 
@@ -86,7 +70,7 @@ const { messages, isRunning, typing } = useAgentChat({
 )}
 ```
 
-The first envelope of a turn can create an empty assistant message before any text is folded in. Keep that row in the list. Then fill it as parts arrive.
+The first event of a turn can create an empty assistant message before any text arrives. Keep that row in the list. Then fill it as parts arrive.
 
 ## Approvals
 
@@ -153,7 +137,7 @@ Agents create Cards with JSX or `Card({…})`. That authoring API is shared with
 
 The SDK does not type `part.card`. `card` is `Record<string, unknown>`. Read the fields that you support. Skip child types that you do not use.
 
-Draw `title` and the `children` that you support. If the subscriber clicks a button, call `sendAction`. The agent receives the click in `onAction`.
+Render `title` and the `children` that you support. If the subscriber clicks a button, call `sendAction`. The agent receives the click in `onAction`.
 
 ```tsx
 const { messages, sendAction } = useAgentChat({
@@ -210,20 +194,9 @@ Do not call `respondToAction`. That function is for tool approval only.
 
 ### Custom data parts
 
-Call `ctx.emit` in your agent handler. Agent Chat folds that event into a part with `type: 'data'`. The payload is `name` plus `data`. The shape of `data` is yours.
+The agent sends a named payload with [`ctx.emit`](/agents/custom-code-agent/building-blocks/emit). Agent Chat adds it to the in-flight assistant message as `part.type === 'data'`. The fields are `name` and `data`.
 
-```ts
-onMessage: async (message, ctx) => {
-  await ctx.emit({
-    name: 'order-progress',
-    data: { pct: 70 },
-  });
-
-  await ctx.reply('Updating your order…');
-},
-```
-
-The part lands on the in-flight assistant message. Render it in the UI:
+See [Emit custom events](/agents/custom-code-agent/building-blocks/emit) for the handler API, size limit, and other channels.
 
 ```tsx
 const { messages } = useAgentChat({
@@ -297,13 +270,19 @@ const { messages, retryMessage } = useAgentChat({
 Pass `conversationId` so the hook loads history on mount.
 
 ```tsx
-useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-  conversationId, // omit to start a new chat
-});
+function Chat({ conversationId }: { conversationId?: string }) {
+  const { sendMessage } = useAgentChat({
+    agentId: 'YOUR_AGENT_IDENTIFIER',
+    conversationId,
+  });
 
-const { data } = await sendMessage(text);
-// persist data.conversationId and pass it back as conversationId
+  async function onSend(text: string) {
+    const { data } = await sendMessage(text);
+    if (data?.conversationId) {
+      // persist data.conversationId and pass it back as conversationId
+    }
+  }
+}
 ```
 
 Store the `conversationId` that `sendMessage` returns, or the `conversationId` field on the hook result. On the next visit, pass that id back in.
@@ -338,23 +317,6 @@ const { pagination } = useAgentChat({
 ```
 
 Overlapping `fetchMore` calls do not run.
-
-`isLoading` is true until the first history fetch completes. If you omit `conversationId`, `isLoading` is false. There is no history to load yet.
-
-```tsx
-const { isLoading, error } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-  conversationId,
-});
-
-if (isLoading) {
-  return <p>Loading conversation…</p>;
-}
-
-if (error) {
-  return <p>{error.message}</p>;
-}
-```
 
 ## Reconnect
 

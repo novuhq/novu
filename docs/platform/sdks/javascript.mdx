@@ -754,11 +754,11 @@ await subscription.delete();
 
 Two-way in-app chat with an agent. The public API is `novu.agentChat.conversation()`. React apps use [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat), which binds this runtime for you.
 
-Product guide: [Build the Agent Chat UI](/agents/channels/agent-chat/quickstart).
+See [Quickstart](/agents/channels/agent-chat/quickstart).
 
 ### conversation()
 
-`conversation()` returns a stable runtime for one agent thread. Omit `conversationId` to start a new chat. Pass `conversationId` to resume. The runtime loads history and opens the socket. When the chat unmounts, call `dispose()`.
+`conversation()` returns a runtime for one conversation. If you pass `conversationId`, later calls with the same `agentId` and `conversationId` reuse that runtime. If you omit `conversationId`, each call creates a new runtime and a new socket. Keep the returned object. When the chat unmounts, call `dispose()`.
 
 Do not call `novu.agentChat.subscribe()` from UI code. The runtime owns the socket.
 
@@ -817,7 +817,7 @@ conversation.dispose();
 
 | Field | Description |
 | --- | --- |
-| `messages` | Folded timeline. |
+| `messages` | Conversation timeline. |
 | `pendingActions` | Tool approvals and MCP connect items that are still pending. |
 | `conversationId` | Server id after create or resume. |
 | `run.isRunning` / `run.typing` | Agent-turn snapshot. |
@@ -827,7 +827,7 @@ conversation.dispose();
 | `isRecovering` / `catchUpError` | Reconnect catch-up. The runtime reconnects on its own. |
 | `error` | Last load, send, retry, or action error. |
 
-Recipes: [Chat UI](/agents/channels/agent-chat/chat-ui).
+See [Chat UI](/agents/channels/agent-chat/chat-ui).
 
 ## Types
 

@@ -1,6 +1,6 @@
 ---
 title: "Build the Agent Chat UI"
-description: "Install @novu/react, wrap NovuProvider, and use useAgentChat to send, retry, and resume in-app agent conversations."
+description: "Install @novu/react, wrap NovuProvider, and use useAgentChat to send a first in-app agent conversation."
 sidebarTitle: Quickstart
 ---
 
@@ -8,7 +8,7 @@ sidebarTitle: Quickstart
   Agent Chat is in closed beta. Contact us at support@novu.co to get access.
 </Note>
 
-Build a two-way support chat in your React app. You supply the UI. Novu supplies conversation state, delivery, and the live socket.
+Build a two-way agent chat in your React app. You supply the UI. Novu supplies conversation state, delivery, and the live socket.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ Complete [channel setup](/agents/channels/agent-chat#setup) first. Then you need
 - A [subscriber](/platform/additional-resources/glossary) id for the signed-in person
 - The public **agent identifier** from the agent page in the dashboard
 
-HMAC: [Security](/agents/channels/agent-chat#security).
+See [Security](/agents/channels/agent-chat#security) for HMAC.
 
 ## Install
 
@@ -71,6 +71,10 @@ export function App() {
 
 `NovuProvider` authenticates the subscriber. `useAgentChat` selects which agent to talk to.
 
+<Note>
+  Replace `YOUR_*` placeholders with values from [API Keys](https://dashboard.novu.co/api-keys) and [Subscribers](/platform/additional-resources/glossary) in the dashboard.
+</Note>
+
 <Prompt description="Add Novu Agent Chat to my React app" icon="plug" actions={["copy", "cursor"]}>
 # Add Novu Agent Chat to a React app
 
@@ -95,8 +99,6 @@ NEVER:
 </Prompt>
 
 ## Send a message
-
-This example starts a new conversation on the first send.
 
 ```tsx
 'use client';
@@ -153,7 +155,7 @@ export default function App() {
 
 Omit `conversationId` to start a new chat. The first successful send creates the conversation.
 
-Parts, retry, resume, and reconnect: [Chat UI](/agents/channels/agent-chat/chat-ui).
+See [Chat UI](/agents/channels/agent-chat/chat-ui) for parts, retry, resume, and reconnect.
 
 ## Next steps
 
@@ -167,7 +169,7 @@ Parts, retry, resume, and reconnect: [Chat UI](/agents/channels/agent-chat/chat-
   <Card href="/agents/channels/agent-chat" title="Channel setup" icon="plug">
     Link Agent Chat on the agent. Turn on HMAC.
   </Card>
-  <Card href="/platform/sdks/javascript#agent-chat" title="JavaScript SDK" icon="js">
+  <Card href="/platform/sdks/javascript#agent-chat" title="JavaScript SDK" icon="code">
     `novu.agentChat.conversation()` in `@novu/js`.
   </Card>
 </Columns>

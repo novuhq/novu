@@ -10,7 +10,7 @@ Interactive cards include buttons, dropdowns, links, and text inputs. When a use
 
 Use replies when the agent needs to communicate something to the participant in the conversation.
 
-Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/building-blocks/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user.
+Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/building-blocks/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user. Use [`ctx.emit`](/agents/custom-code-agent/building-blocks/emit) when your client needs a named payload during the turn.
 
 The public API is `ctx.reply(content, options?)`. You can also return a string or JSX card from a handler instead of calling `ctx.reply()` directly.
 
@@ -193,6 +193,9 @@ The following table lists the card components you can use in replies:
   <Card icon="signal" href="/agents/custom-code-agent/building-blocks/signals" title="Signals">
     Metadata, workflow triggers, and conversation resolution.
   </Card>
+  <Card icon="radio" href="/agents/custom-code-agent/building-blocks/emit" title="Emit custom events">
+    Send a named payload. Agent Chat renders it as a `data` part.
+  </Card>
   <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
     Build end to end with `@novu/framework/ai-sdk`.
   </Card>
@@ -200,6 +203,6 @@ The following table lists the card components you can use in replies:
     Send replies from your backend without a bridge handler.
   </Card>
   <Card icon="message-circle" href="/agents/channels/agent-chat/chat-ui#cards" title="Agent Chat cards">
-    Draw `part.type === 'card'` in your product UI and call `sendAction`.
+    Render `part.type === 'card'` in your product UI and call `sendAction`.
   </Card>
 </Columns>
