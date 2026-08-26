@@ -844,22 +844,37 @@ describe('AgentChat', () => {
     olderCursor: string | null = null,
     conversationId = 'conv_abcdefghijkl'
   ) {
-    return {
-      events: events.map((event) => ({
-        version: AGENT_EVENT_PROTOCOL_VERSION,
-        conversationId: 'internal',
-        conversationIdentifier: conversationId,
-        agentId: 'agent_1',
-        runId: 'history',
-        turnId: 't1',
+    return historyEventPage(
+      events.map((event) => ({
         sequence: event.sequence,
-        timestamp: '2026-08-07T12:00:00.000Z',
         event: {
           type: 'message' as const,
           role: event.role,
           messageId: event.messageId,
           content: { markdown: event.markdown },
         },
+      })),
+      olderCursor,
+      conversationId
+    );
+  }
+
+  function historyEventPage(
+    events: Array<{ sequence: number; event: Record<string, unknown> }>,
+    olderCursor: string | null = null,
+    conversationId = 'conv_abcdefghijkl'
+  ) {
+    return {
+      events: events.map((item) => ({
+        version: AGENT_EVENT_PROTOCOL_VERSION,
+        conversationId: 'internal',
+        conversationIdentifier: conversationId,
+        agentId: 'agent_1',
+        runId: 'history',
+        turnId: 't1',
+        sequence: item.sequence,
+        timestamp: '2026-08-07T12:00:00.000Z',
+        event: item.event,
       })),
       olderCursor,
     };
@@ -1714,6 +1729,118 @@ describe('AgentChat', () => {
     expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_old0000001', 'msg_new0000001']);
     expect(result.data?.hasMore).toBe(true);
     expect(agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.hasMore).toBe(true);
+  });
+
+  it('fetchMore does not resurrect a message deleted on a newer page', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyEventPage(
+        [
+          {
+            sequence: 2,
+            event: {
+              type: 'message',
+              role: 'user',
+              messageId: 'msg_keep0000001',
+              content: { markdown: 'keep' },
+            },
+          },
+          { sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } },
+        ],
+        'act_page0001'
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
+    expect(
+      agentChat
+        .getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })
+        ?.messages.map((message) => message.id)
+    ).toEqual(['msg_keep0000001']);
+  });
+
+  it('fetchMore applies an edit from a newer page onto the older message', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyEventPage(
+        [
+          {
+            sequence: 2,
+            event: {
+              type: 'message',
+              role: 'user',
+              messageId: 'msg_keep0000001',
+              content: { markdown: 'keep' },
+            },
+          },
+          {
+            sequence: 3,
+            event: {
+              type: 'channel.edit',
+              messageId: 'msg_edit0000001',
+              content: { markdown: 'edited' },
+            },
+          },
+        ],
+        'act_page0001'
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_edit0000001', role: 'user', markdown: 'original' }], null)
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_edit0000001', 'msg_keep0000001']);
+    expect(result.data?.messages[0]).toMatchObject({
+      id: 'msg_edit0000001',
+      parts: [{ type: 'text', text: 'edited', state: 'done' }],
+    });
+  });
+
+  it('fetchMore does not resurrect a message deleted live while it was off-screen', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
+    );
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' }], null)
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
   });
 
   it('fetchMore no-ops when olderCursor is null and does not call getEvents', async () => {
