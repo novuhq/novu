@@ -29,6 +29,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { CreateConversationInteraction } from '../human/usecases/create-conversation-interaction/create-conversation-interaction.usecase';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
@@ -77,6 +78,8 @@ import { AgentEmailActionsController } from './email/agent-email-actions.control
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { HumanConversationInboundInterceptor } from './human-relay/human-conversation-inbound.interceptor';
+import { HumanInteractionInboundService } from './human-relay/human-interaction-inbound.service';
 import { HumanInteractionSettlementService } from './human-relay/human-interaction-settlement.service';
 import { HumanRelayRuntime } from './human-relay/human-relay.runtime';
 import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
@@ -166,7 +169,10 @@ import { USE_CASES } from './usecases';
     BridgeRuntime,
     ManagedRuntime,
     HumanRelayRuntime,
+    HumanConversationInboundInterceptor,
+    HumanInteractionInboundService,
     HumanInteractionSettlementService,
+    CreateConversationInteraction,
     HumanInteractionRepository,
     RuntimeResolver,
     ManagedAgentProviderFactory,
