@@ -1,5 +1,5 @@
 import type { AgentMessage } from '@novu/react';
-import { type ReactNode } from 'react';
+import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
   RiArrowRightSLine,
   RiChat3Fill,
@@ -85,6 +85,74 @@ function formatMessageTime(createdAt: string): string | null {
 const MESSAGE_TIME_CLASS =
   'text-text-soft shrink-0 text-[11px] tabular-nums opacity-0 transition-opacity duration-150 group-hover:opacity-100';
 
+function useIsMultiline(content: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isMultiline, setIsMultiline] = useState(false);
+
+  const measure = useCallback(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const style = getComputedStyle(element);
+    const lineHeight = parseFloat(style.lineHeight);
+    if (!Number.isFinite(lineHeight)) return;
+
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+    const paddingBottom = parseFloat(style.paddingBottom) || 0;
+    const contentHeight = element.scrollHeight - paddingTop - paddingBottom;
+    setIsMultiline(contentHeight > lineHeight + 1);
+  }, []);
+
+  useLayoutEffect(() => {
+    measure();
+
+    const element = ref.current;
+    if (!element) return;
+
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(element);
+
+    return () => resizeObserver.disconnect();
+  }, [content, measure]);
+
+  return { ref, isMultiline };
+}
+
+function UserMessageLine({ text, time, failed }: { text: string; time: string | null; failed?: boolean }) {
+  const { ref, isMultiline } = useIsMultiline(text);
+
+  return (
+    <div className={cn('flex max-w-full justify-end gap-2', isMultiline ? 'items-start' : 'items-center')}>
+      {time ? <span className={cn(MESSAGE_TIME_CLASS, isMultiline && 'mt-2')}>{time}</span> : null}
+      <div
+        ref={ref}
+        className={cn(
+          'bg-bg-weak text-text-strong text-paragraph-sm max-w-[min(30rem,85%)] whitespace-pre-wrap break-words rounded-xl px-3 py-2 leading-5',
+          failed && 'ring-error-light ring-1'
+        )}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function AgentTextLine({ text, time, isStreaming }: { text: string; time: string | null; isStreaming: boolean }) {
+  const { ref, isMultiline } = useIsMultiline(text);
+
+  return (
+    <div className={cn('flex w-full gap-2', isMultiline ? 'items-start' : 'items-center')}>
+      <div ref={ref} className="text-paragraph-sm text-text-strong min-w-0 flex-1 leading-5">
+        <MarkdownText className="text-paragraph-sm leading-5">{text}</MarkdownText>
+        {isStreaming ? (
+          <span className="bg-text-strong ml-0.5 inline-block h-3.5 w-0.5 animate-pulse align-middle" aria-hidden />
+        ) : null}
+      </div>
+      {time ? <span className={cn(MESSAGE_TIME_CLASS, isMultiline && 'mt-2')}>{time}</span> : null}
+    </div>
+  );
+}
+
 export function AgentAvatar({ className }: { className?: string }) {
   return (
     <span
@@ -162,17 +230,7 @@ export function ChatMessageRow({
   if (isUser) {
     return (
       <div className="animate-in fade-in slide-in-from-bottom-1 group flex flex-col items-end gap-1 duration-200">
-        <div className="flex max-w-full items-start justify-end gap-2">
-          {time ? <span className={cn(MESSAGE_TIME_CLASS, 'mt-2')}>{time}</span> : null}
-          <div
-            className={cn(
-              'bg-bg-weak text-text-strong text-paragraph-sm max-w-[min(30rem,85%)] whitespace-pre-wrap break-words rounded-xl px-3 py-2 leading-5',
-              failed && 'ring-error-light ring-1'
-            )}
-          >
-            {text}
-          </div>
-        </div>
+        <UserMessageLine text={text} time={time} failed={failed} />
         {failed ? (
           <span className="text-error-base text-label-xs inline-flex items-center gap-1">
             <RiErrorWarningLine className="size-3" aria-hidden />
@@ -205,15 +263,7 @@ export function ChatMessageRow({
       {showAvatar ? <AgentAvatar className="mt-0.5" /> : null}
       <div className="flex min-w-0 max-w-full flex-1 flex-col items-start gap-1.5">
         {text ? (
-          <div className="flex w-full items-start gap-2">
-            <div className="text-paragraph-sm text-text-strong min-w-0 flex-1 leading-5">
-              <MarkdownText className="text-paragraph-sm leading-5">{text}</MarkdownText>
-              {isStreaming ? (
-                <span className="bg-text-strong ml-0.5 inline-block h-3.5 w-0.5 animate-pulse align-middle" aria-hidden />
-              ) : null}
-            </div>
-            {time ? <span className={cn(MESSAGE_TIME_CLASS, 'mt-2')}>{time}</span> : null}
-          </div>
+          <AgentTextLine text={text} time={time} isStreaming={isStreaming} />
         ) : time ? (
           <span className={MESSAGE_TIME_CLASS}>{time}</span>
         ) : null}
