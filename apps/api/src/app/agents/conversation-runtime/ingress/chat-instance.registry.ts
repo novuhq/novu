@@ -589,7 +589,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
+        rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.rethrowAgentChatInboundError(cached, err, {
@@ -602,7 +602,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), message);
+        rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), message);
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.rethrowAgentChatInboundError(cached, err, {
@@ -671,7 +671,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
         if (event.message) {
-          rehydrateInboundAttachments(cached.chat.getAdapter(cached.config.platform), event.message);
+          rehydrateInboundAttachments(cached.chat.getAdapter(platformAdapterKey(cached.config.platform)), event.message);
         }
 
         await callbacks.onReaction(agentId, cached.config, {
