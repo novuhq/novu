@@ -346,9 +346,14 @@ export class AgentChatStore {
     olderCursor: string | null
   ): ConversationEntry {
     const previous = entry.messages;
+    const pageMaxSequence = envelopes.reduce((max, envelope) => Math.max(max, envelope.sequence), 0);
+    const liveAhead = [...entry.messageMutations.values()].filter(
+      (envelope) => envelope.sequence > pageMaxSequence
+    );
     entry.messageMutations.clear();
     this.#recordMcpConnectionResults(entry, envelopes);
     this.#recordMessageMutations(entry, envelopes);
+    this.#recordMessageMutations(entry, liveAhead);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
     const serverIds = new Set(folded.messages.map((message) => message.id));
     const localOnly = previous.filter((message) => !serverIds.has(message.id));

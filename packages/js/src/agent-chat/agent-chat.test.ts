@@ -1912,7 +1912,7 @@ describe('AgentChat', () => {
     });
 
     getEvents.mockResolvedValueOnce(
-      historyPage([{ sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
+      historyPage([{ sequence: 4, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
     );
     await agentChat.loadConversation({
       agentId: 'agent_1',
@@ -1932,6 +1932,55 @@ describe('AgentChat', () => {
       id: 'msg_edit0000001',
       parts: [{ type: 'text', text: 'original', state: 'done' }],
     });
+  });
+
+  it('reload keeps a live delete that arrived while history GET was in flight', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage(
+        [
+          { sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' },
+          { sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' },
+        ],
+        null
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    let resolveEvents!: (value: ReturnType<typeof historyPage>) => void;
+    getEvents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveEvents = resolve;
+        })
+    );
+
+    const reload = agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+    await waitForGetEventsCalls(2);
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({ sequence: 3, event: { type: 'channel.delete', messageId: 'msg_gone0000001' } })
+    );
+
+    resolveEvents(
+      historyPage(
+        [
+          { sequence: 1, messageId: 'msg_gone0000001', role: 'user', markdown: 'deleted later' },
+          { sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' },
+        ],
+        null
+      )
+    );
+
+    const result = await reload;
+
+    expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
   });
 
   it('fetchMore no-ops when olderCursor is null and does not call getEvents', async () => {
