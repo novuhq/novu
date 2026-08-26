@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_ON } from '@/utils/constants';
 import { authClient } from '../client';
 import { useAuth } from '../index';
 import { buildSsoSignInPath } from '../sso-redirect';
@@ -150,6 +151,10 @@ export function SignUp() {
           </label>
           <Input
             type="text"
+            id="firstName"
+            name="firstName"
+            autoComplete="given-name"
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             value={firstName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
             placeholder="John"
@@ -163,6 +168,10 @@ export function SignUp() {
           </label>
           <Input
             type="text"
+            id="lastName"
+            name="lastName"
+            autoComplete="family-name"
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             value={lastName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
             placeholder="Doe"
@@ -175,6 +184,10 @@ export function SignUp() {
           </label>
           <Input
             type="email"
+            id="email"
+            name="email"
+            autoComplete="email"
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -188,6 +201,10 @@ export function SignUp() {
           </label>
           <Input
             type="password"
+            id="password"
+            name="password"
+            autoComplete="new-password"
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsSubmitted(false);

@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { IS_SELF_HOSTED_EE } from '@/config';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_ON } from '@/utils/constants';
 import { readClerkRedirectUrlParam, resolveSameOriginRedirectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
@@ -110,6 +111,9 @@ export function SignIn() {
           <Input
             type="email"
             id={emailId}
+            name="email"
+            autoComplete="email"
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
@@ -137,6 +141,9 @@ export function SignIn() {
           <Input
             type="password"
             id={passwordId}
+            name="password"
+            autoComplete="current-password"
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="Password"

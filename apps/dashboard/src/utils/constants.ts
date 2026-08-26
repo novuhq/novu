@@ -6,6 +6,13 @@ export const AUTOCOMPLETE_PASSWORD_MANAGERS_OFF = {
   'data-form-type': 'other',
 };
 
+// Spreading this after AUTOCOMPLETE_PASSWORD_MANAGERS_OFF cancels the anti-autofill
+// markers, so browsers and password managers can fill and save the field (auth forms).
+export const AUTOCOMPLETE_PASSWORD_MANAGERS_ON = {
+  'data-1p-ignore': undefined,
+  'data-form-type': undefined,
+} as const;
+
 export const INLINE_CONFIGURABLE_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.DELAY,
   StepTypeEnum.DIGEST,

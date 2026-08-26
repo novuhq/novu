@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ROUTES } from '@/utils/routes';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_ON } from '@/utils/constants';
 import { authClient } from '../client';
 import { buildSsoSignInPath } from '../sso-redirect';
 import { useAuthConfig } from '../use-auth-config';
@@ -77,6 +78,9 @@ export function ForgotPassword() {
           <Input
             type="email"
             id="email"
+            name="email"
+            autoComplete="email"
+            {...AUTOCOMPLETE_PASSWORD_MANAGERS_ON}
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             placeholder="user@example.com"
