@@ -69,6 +69,7 @@ describe('Novu.loadAgentChat', () => {
   test('agentChat throws before loadAgentChat completes', () => {
     const novu = new Novu({ applicationIdentifier, subscriberId });
 
+    expect(novu.isAgentChatLoaded).toBe(false);
     expect(() => novu.agentChat).toThrow('Agent Chat is not loaded');
   });
 
@@ -80,6 +81,7 @@ describe('Novu.loadAgentChat', () => {
 
     expect(agentChat).toBe(namedExportResult);
     expect(agentChat.conversation).toBeDefined();
+    expect(novu.isAgentChatLoaded).toBe(true);
     expect(() => novu.agentChat).not.toThrow();
     expect(novu.agentChat).toBe(agentChat);
   });

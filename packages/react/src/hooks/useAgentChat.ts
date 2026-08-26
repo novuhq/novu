@@ -251,13 +251,15 @@ export const useAgentChat = (props: UseAgentChatProps): UseAgentChatResult => {
   const propsRef = useDataRef(props);
   const [loadState, setLoadState] = useState<AgentChatLoadState>(() => ({
     novu,
-    status: 'loading',
+    status: novu.isAgentChatLoaded ? 'ready' : 'loading',
   }));
 
   useEffect(() => {
     let cancelled = false;
 
-    setLoadState({ novu, status: 'loading' });
+    if (!novu.isAgentChatLoaded) {
+      setLoadState({ novu, status: 'loading' });
+    }
 
     void novu
       .loadAgentChat()

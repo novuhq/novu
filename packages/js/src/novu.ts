@@ -62,6 +62,13 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   }
 
   /**
+   * True after {@link Novu.loadAgentChat} has resolved on this instance.
+   */
+  public get isAgentChatLoaded(): boolean {
+    return this.#agentChat !== undefined;
+  }
+
+  /**
    * Agent Chat runtime. Call {@link Novu.loadAgentChat} before first use.
    * @throws When Agent Chat has not been loaded yet.
    */
