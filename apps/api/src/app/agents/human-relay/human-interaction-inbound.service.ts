@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CacheService, PinoLogger } from '@novu/application-generic';
+import { CacheService, PinoLogger, shortId } from '@novu/application-generic';
 import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionResponse, HumanInteractionStatusEnum } from '@novu/shared';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
@@ -61,7 +61,7 @@ export class HumanInteractionInboundService {
     }
 
     if (parsed.type === 'disambiguation-pick') {
-      const settled = await this.handleDisambiguationPick(turn, interaction, mode);
+      const settled = await this.handleDisambiguationPick(turn, interaction, parsed.answerId, mode);
 
       return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };
     }
@@ -133,7 +133,9 @@ export class HumanInteractionInboundService {
       return { outcome: 'ignored' };
     }
 
-    if (pendingAsks.length === 0) {
+    const addressedAsks = pendingAsks.filter((ask) => ask.subscriberId === turn.subscriber?.subscriberId);
+
+    if (addressedAsks.length === 0) {
       if (mode === 'relay') {
         await this.replyOnThread(turn, 'Nothing is waiting for your reply right now.');
 
@@ -143,18 +145,26 @@ export class HumanInteractionInboundService {
       return { outcome: 'ignored' };
     }
 
-    if (pendingAsks.length === 1) {
-      const settled = await this.settleAskWithText(pendingAsks[0], text, turn, mode);
+    if (addressedAsks.length === 1) {
+      const settled = await this.settleAskWithText(addressedAsks[0], text, turn, mode);
 
       return settled ? { outcome: 'settled', settled } : { outcome: 'consumed' };
     }
 
-    await this.cacheService.set(this.disambiguationCacheKey(turn.conversation._id), JSON.stringify({ text }), {
-      ttl: DISAMBIGUATION_CACHE_TTL_SECONDS,
-    });
+    const subscriberId = turn.subscriber?.subscriberId;
+    if (!subscriberId) {
+      return { outcome: 'ignored' };
+    }
+
+    const answerId = this.resolveDisambiguationAnswerId(turn);
+    await this.cacheService.set(
+      this.disambiguationCacheKey(turn.conversation._id, answerId),
+      JSON.stringify({ text, subscriberId }),
+      { ttl: DISAMBIGUATION_CACHE_TTL_SECONDS }
+    );
 
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
-    await this.outboundGateway.replyOnThreadWithCard(turn.thread, buildDisambiguationCard(pendingAsks), {
+    await this.outboundGateway.replyOnThreadWithCard(turn.thread, buildDisambiguationCard(addressedAsks, answerId), {
       failSoft: true,
       actionTokenBinding: {
         agentId: turn.agentId,
@@ -190,9 +200,19 @@ export class HumanInteractionInboundService {
   private async handleDisambiguationPick(
     turn: ConversationTurn,
     interaction: HumanInteractionEntity,
+    answerId: string | undefined,
     mode: HumanInboundMode
   ): Promise<HumanInteractionEntity | null> {
-    const cacheKey = this.disambiguationCacheKey(turn.conversation._id);
+    if (!answerId) {
+      await this.replyOnThread(
+        turn,
+        'I lost track of that reply — please answer again by replying directly to the question message.'
+      );
+
+      return null;
+    }
+
+    const cacheKey = this.disambiguationCacheKey(turn.conversation._id, answerId);
     const cached = await this.cacheService.get(cacheKey);
 
     if (!cached) {
@@ -204,8 +224,12 @@ export class HumanInteractionInboundService {
       return null;
     }
 
-    const { text } = JSON.parse(cached) as { text: string };
-    await this.cacheService.del(cacheKey);
+    const payload = JSON.parse(cached) as { text?: string; subscriberId?: string };
+    if (!payload.text || payload.subscriberId !== turn.subscriber?.subscriberId) {
+      await this.rejectForeignResponder(turn, interaction);
+
+      return null;
+    }
 
     const current = await this.settlement.expireIfOverdue(interaction);
     if (current.status !== HumanInteractionStatusEnum.PENDING) {
@@ -214,7 +238,12 @@ export class HumanInteractionInboundService {
       return current.status === HumanInteractionStatusEnum.EXPIRED ? current : null;
     }
 
-    return this.settleAskWithText(current, text, turn, mode);
+    const settled = await this.settleAskWithText(current, payload.text, turn, mode);
+    if (settled?.status === HumanInteractionStatusEnum.ANSWERED) {
+      await this.cacheService.del(cacheKey);
+    }
+
+    return settled;
   }
 
   private async settleAskWithText(
@@ -368,8 +397,17 @@ export class HumanInteractionInboundService {
     return results;
   }
 
-  private disambiguationCacheKey(conversationId: string): string {
-    return `human:disamb:${conversationId}`;
+  private resolveDisambiguationAnswerId(turn: ConversationTurn): string {
+    const raw = turn.message?.id?.trim();
+    if (raw) {
+      return raw.replace(/[^A-Za-z0-9_-]/g, '_');
+    }
+
+    return `da_${shortId(12)}`;
+  }
+
+  private disambiguationCacheKey(conversationId: string, answerId: string): string {
+    return `human:disamb:${conversationId}:${answerId}`;
   }
 
   private async replyOnThread(turn: ConversationTurn, markdown: string): Promise<void> {

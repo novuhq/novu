@@ -33,6 +33,7 @@ describe('HumanInteractionInboundService', () => {
       requestId: 'hr_1',
       kind: HumanInteractionKindEnum.ASK,
       status: HumanInteractionStatusEnum.PENDING,
+      prompt: 'First?',
       subscriberId: 'sub-1',
       _environmentId: 'env1',
     };
@@ -68,7 +69,7 @@ describe('HumanInteractionInboundService', () => {
       logger as any
     );
 
-    return { service, humanInteractionRepository, settlement, outboundGateway, pendingAsk };
+    return { service, humanInteractionRepository, settlement, outboundGateway, cacheService, pendingAsk };
   }
 
   it('ignores non-human actions', async () => {
@@ -195,6 +196,76 @@ describe('HumanInteractionInboundService', () => {
     expect(result.outcome).to.equal('settled');
     expect(result.outcome === 'settled' && result.settled.status).to.equal(HumanInteractionStatusEnum.ANSWERED);
     expect(outboundGateway.replyOnThread.called).to.equal(false);
+  });
+
+  it('keeps each ambiguous answer on its own cache key so a later reply cannot overwrite it', async () => {
+    const { service, humanInteractionRepository, cacheService, pendingAsk } = setup();
+    const otherAsk = { ...pendingAsk, _id: 'hi2', identifier: 'hi_2', requestId: 'hr_2', prompt: 'Second?' };
+    humanInteractionRepository.findPendingAsksByConversation.resolves([pendingAsk, otherAsk]);
+
+    await service.tryHandleMessage(
+      makeTurn({ message: { id: 'msg-1', text: 'staging', raw: {} } }) as any,
+      'conversation'
+    );
+    await service.tryHandleMessage(
+      makeTurn({ message: { id: 'msg-2', text: 'production', raw: {} } }) as any,
+      'conversation'
+    );
+
+    expect(cacheService.set.firstCall.args[0]).to.equal('human:disamb:conv1:msg-1');
+    expect(JSON.parse(cacheService.set.firstCall.args[1])).to.deep.equal({
+      text: 'staging',
+      subscriberId: 'sub-1',
+    });
+    expect(cacheService.set.secondCall.args[0]).to.equal('human:disamb:conv1:msg-2');
+    expect(JSON.parse(cacheService.set.secondCall.args[1])).to.deep.equal({
+      text: 'production',
+      subscriberId: 'sub-1',
+    });
+  });
+
+  it('settles a disambiguation pick with the cached answer bound to that click', async () => {
+    const { service, humanInteractionRepository, settlement, cacheService, pendingAsk } = setup();
+    humanInteractionRepository.findByIdentifier.resolves(pendingAsk);
+    cacheService.get.resolves(JSON.stringify({ text: 'staging', subscriberId: 'sub-1' }));
+    settlement.settle.resolves({
+      ...pendingAsk,
+      status: HumanInteractionStatusEnum.ANSWERED,
+      response: { type: 'text', text: 'staging' },
+    });
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:pick:hi_1:msg-1' },
+        message: null,
+      }) as any,
+      'conversation'
+    );
+
+    expect(cacheService.get.firstCall.args[0]).to.equal('human:disamb:conv1:msg-1');
+    expect(settlement.settle.firstCall.args[2].text).to.equal('staging');
+    expect(cacheService.del.firstCall.args[0]).to.equal('human:disamb:conv1:msg-1');
+    expect(result.outcome).to.equal('settled');
+  });
+
+  it('does not persist a cached answer written by someone else', async () => {
+    const { service, humanInteractionRepository, settlement, cacheService, pendingAsk } = setup();
+    humanInteractionRepository.findByIdentifier.resolves(pendingAsk);
+    cacheService.get.resolves(JSON.stringify({ text: 'production', subscriberId: 'other-sub' }));
+
+    const result = await service.tryHandleAction(
+      makeTurn({
+        event: AgentEventEnum.ON_ACTION,
+        action: { id: 'human:pick:hi_1:msg-1' },
+        message: null,
+      }) as any,
+      'conversation'
+    );
+
+    expect(settlement.settle.called).to.equal(false);
+    expect(cacheService.del.called).to.equal(false);
+    expect(result.outcome).to.equal('consumed');
   });
 
   it('sends Got it after settling a relay ask', async () => {
