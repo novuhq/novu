@@ -346,6 +346,7 @@ export class AgentChatStore {
     olderCursor: string | null
   ): ConversationEntry {
     const previous = entry.messages;
+    entry.messageMutations.clear();
     this.#recordMcpConnectionResults(entry, envelopes);
     this.#recordMessageMutations(entry, envelopes);
     const folded = applyEnvelopes(createInitialAgentConversationState(), envelopes);
@@ -465,7 +466,7 @@ export class AgentChatStore {
     const next = applyEnvelope(entry, envelope);
     applyState(entry, {
       ...next,
-      messages: this.#overlayMessages(entry, next.messages),
+      messages: this.#applyMcpConnectionResults(entry, next.messages),
     });
     this.#publish(entry, { kind: 'live', envelope }, messagesAddedSince(previous, entry.messages));
 

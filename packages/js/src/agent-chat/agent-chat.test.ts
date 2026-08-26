@@ -1843,6 +1843,97 @@ describe('AgentChat', () => {
     expect(result.data?.messages.map((message) => message.id)).toEqual(['msg_keep0000001']);
   });
 
+  it('live source after an edit keeps the source part', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_asst0000001', role: 'assistant', markdown: 'original' }], null)
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 2,
+        event: { type: 'channel.edit', messageId: 'msg_asst0000001', content: { markdown: 'edited' } },
+      })
+    );
+    emitter.emit(
+      'agent_chat.agent_event',
+      liveEnvelope({
+        sequence: 3,
+        event: {
+          type: 'source',
+          messageId: 'msg_asst0000001',
+          sourceType: 'url',
+          url: 'https://example.com',
+          title: 'Example',
+        },
+      })
+    );
+
+    expect(
+      agentChat.getConversation({ agentId: 'agent_1', conversationId: 'conv_abcdefghijkl' })?.messages[0]?.parts
+    ).toMatchObject([
+      { type: 'text', text: 'edited', state: 'done' },
+      { type: 'source', sourceType: 'url', url: 'https://example.com', title: 'Example' },
+    ]);
+  });
+
+  it('reload drops a stale edit overlay that is not on the new history page', async () => {
+    getEvents.mockResolvedValueOnce(
+      historyEventPage(
+        [
+          {
+            sequence: 2,
+            event: {
+              type: 'message',
+              role: 'user',
+              messageId: 'msg_keep0000001',
+              content: { markdown: 'keep' },
+            },
+          },
+          {
+            sequence: 3,
+            event: {
+              type: 'channel.edit',
+              messageId: 'msg_edit0000001',
+              content: { markdown: 'edited' },
+            },
+          },
+        ],
+        'act_page0001'
+      )
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 2, messageId: 'msg_keep0000001', role: 'user', markdown: 'keep' }], 'act_page0001')
+    );
+    await agentChat.loadConversation({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    getEvents.mockResolvedValueOnce(
+      historyPage([{ sequence: 1, messageId: 'msg_edit0000001', role: 'user', markdown: 'original' }], null)
+    );
+
+    const result = await agentChat.fetchMore({
+      agentId: 'agent_1',
+      conversationId: 'conv_abcdefghijkl',
+    });
+
+    expect(result.data?.messages[0]).toMatchObject({
+      id: 'msg_edit0000001',
+      parts: [{ type: 'text', text: 'original', state: 'done' }],
+    });
+  });
+
   it('fetchMore no-ops when olderCursor is null and does not call getEvents', async () => {
     getEvents.mockResolvedValue(
       historyPage([{ sequence: 1, messageId: 'msg_only0000001', role: 'user', markdown: 'only page' }], null)
