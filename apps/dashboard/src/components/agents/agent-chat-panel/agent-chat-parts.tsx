@@ -82,6 +82,9 @@ function formatMessageTime(createdAt: string): string | null {
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+const MESSAGE_TIME_CLASS =
+  'text-text-soft shrink-0 text-[11px] tabular-nums opacity-0 transition-opacity duration-150 group-hover:opacity-100';
+
 export function AgentAvatar({ className }: { className?: string }) {
   return (
     <span
@@ -159,12 +162,8 @@ export function ChatMessageRow({
   if (isUser) {
     return (
       <div className="animate-in fade-in slide-in-from-bottom-1 group flex flex-col items-end gap-1 duration-200">
-        <div className="flex max-w-full items-end justify-end gap-2">
-          {time ? (
-            <span className="text-text-soft shrink-0 text-[11px] tabular-nums opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-              {time}
-            </span>
-          ) : null}
+        <div className="flex max-w-full items-start justify-end gap-2">
+          {time ? <span className={cn(MESSAGE_TIME_CLASS, 'mt-2')}>{time}</span> : null}
           <div
             className={cn(
               'bg-bg-weak text-text-strong text-paragraph-sm max-w-[min(30rem,85%)] whitespace-pre-wrap break-words rounded-xl px-3 py-2 leading-5',
@@ -206,12 +205,17 @@ export function ChatMessageRow({
       {showAvatar ? <AgentAvatar className="mt-0.5" /> : null}
       <div className="flex min-w-0 max-w-full flex-1 flex-col items-start gap-1.5">
         {text ? (
-          <div className="text-paragraph-sm text-text-strong w-full leading-5">
-            <MarkdownText className="text-paragraph-sm leading-5">{text}</MarkdownText>
-            {isStreaming ? (
-              <span className="bg-text-strong ml-0.5 inline-block h-3.5 w-0.5 animate-pulse align-middle" aria-hidden />
-            ) : null}
+          <div className="flex w-full items-start gap-2">
+            <div className="text-paragraph-sm text-text-strong min-w-0 flex-1 leading-5">
+              <MarkdownText className="text-paragraph-sm leading-5">{text}</MarkdownText>
+              {isStreaming ? (
+                <span className="bg-text-strong ml-0.5 inline-block h-3.5 w-0.5 animate-pulse align-middle" aria-hidden />
+              ) : null}
+            </div>
+            {time ? <span className={cn(MESSAGE_TIME_CLASS, 'mt-2')}>{time}</span> : null}
           </div>
+        ) : time ? (
+          <span className={MESSAGE_TIME_CLASS}>{time}</span>
         ) : null}
         {visibleCards.map((part, index) => (
           <ChatCardPart
@@ -257,11 +261,6 @@ export function ChatMessageRow({
           />
         ))}
       </div>
-      {time ? (
-        <span className="text-text-soft mt-2 shrink-0 self-start text-[11px] tabular-nums opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-          {time}
-        </span>
-      ) : null}
     </div>
   );
 }
