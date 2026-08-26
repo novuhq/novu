@@ -2,14 +2,7 @@ import { HumanApiClient, unwrap } from './client';
 
 export type InteractionKind = 'ask' | 'approve' | 'choose' | 'tell';
 
-export type InteractionStatus =
-  | 'pending'
-  | 'answered'
-  | 'approved'
-  | 'denied'
-  | 'expired'
-  | 'canceled'
-  | 'delivered';
+export type InteractionStatus = 'pending' | 'answered' | 'approved' | 'denied' | 'expired' | 'canceled' | 'delivered';
 
 export interface Interaction {
   id: string;
@@ -82,11 +75,12 @@ export async function setupHumanRelay(
   input: { subscriberId: string; agentIdentifier?: string; email?: string }
 ): Promise<{ agentId: string; agentIdentifier: string; subscriberId: string }> {
   const res = await client.axios.post<
-    { data?: { agentId: string; agentIdentifier: string; subscriberId: string } } | {
-      agentId: string;
-      agentIdentifier: string;
-      subscriberId: string;
-    }
+    | { data?: { agentId: string; agentIdentifier: string; subscriberId: string } }
+    | {
+        agentId: string;
+        agentIdentifier: string;
+        subscriberId: string;
+      }
   >('/v1/human/setup', input);
 
   return unwrap(res.data);

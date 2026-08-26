@@ -68,6 +68,8 @@ export enum CredentialsKeyEnum {
   Body = 'body',
   /** Tool-webhook routing mode: static (integration URL) or dynamic (per-subscriber endpoints). */
   RoutingMode = 'routingMode',
+  /** Email webhook: how the HMAC secret key value is interpreted when signing webhook calls. */
+  HmacSecretKeyEncoding = 'hmacSecretKeyEncoding',
 }
 
 export type ConfigurationKey = keyof IConfigurations;

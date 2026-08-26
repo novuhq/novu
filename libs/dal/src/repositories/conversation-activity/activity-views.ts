@@ -35,6 +35,7 @@ export const ACTIVITY_KINDS = [
   'run_start',
   'run_finish',
   'run_error',
+  'custom',
 ] as const;
 
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
@@ -62,6 +63,7 @@ export const ACTIVITY_VIEW_MEMBERSHIP: Record<ActivityKind, readonly ActivityVie
   run_start: ['client_events'],
   run_finish: ['client_events'],
   run_error: ['client_events'],
+  custom: ['client_events', 'operator_timeline'],
 };
 
 export function getKindsForView(view: ActivityView): ActivityKind[] {
@@ -140,6 +142,9 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
 
     case 'run_error':
       return { type: ConversationActivityTypeEnum.RUN_ERROR };
+
+    case 'custom':
+      return { type: ConversationActivityTypeEnum.CUSTOM };
   }
 }
 

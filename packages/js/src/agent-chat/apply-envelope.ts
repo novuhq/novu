@@ -225,8 +225,14 @@ function applyEvent(state: AgentConversationState, envelope: AgentEventEnvelope)
     case 'channel.reaction':
     case 'connection.error':
     case 'signal':
-    case 'custom':
+    case 'provider-event':
       return state;
+
+    case 'custom':
+      return withActiveAssistantMessage(state, envelope, (message) => ({
+        ...message,
+        parts: [...message.parts, { type: 'data', name: event.name, data: event.data }],
+      }));
 
     default:
       return state;
@@ -629,7 +635,8 @@ function finalizeOpenStreamingParts(state: AgentConversationState): AgentConvers
 
 export function appendUserMessage(
   state: AgentConversationState,
-  message: Pick<AgentMessage, 'id' | 'parts' | 'createdAt' | 'status'> & Partial<Pick<AgentMessage, 'role'>>
+  message: Pick<AgentMessage, 'id' | 'parts' | 'createdAt' | 'status'> &
+    Partial<Pick<AgentMessage, 'role' | 'idempotencyKey'>>
 ): AgentConversationState {
   const role: AgentMessageRole = message.role ?? 'user';
 
@@ -643,6 +650,7 @@ export function appendUserMessage(
         parts: message.parts,
         createdAt: message.createdAt,
         status: message.status,
+        ...(message.idempotencyKey ? { idempotencyKey: message.idempotencyKey } : {}),
       },
     ],
   };

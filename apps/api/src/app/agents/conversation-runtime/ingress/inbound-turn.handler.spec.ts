@@ -45,6 +45,28 @@ describe('AgentInboundHandler', () => {
     };
   }
 
+  function makeOriginSnapshot(
+    overrides: {
+      body?: string;
+      platformMessageId?: string;
+      payload?: Record<string, unknown>;
+      source?: 'hydrated' | 'existing';
+    } = {}
+  ) {
+    return {
+      data: {
+        notificationId: 'notif1',
+        workflowIdentifier: 'order-alerts',
+        messageId: 'msg1',
+        platformMessageId: overrides.platformMessageId ?? '1777837477.371619',
+        sentAt: '2026-01-01T00:00:00.000Z',
+        body: overrides.body ?? 'Order alerts',
+        payload: overrides.payload ?? {},
+      },
+      source: overrides.source ?? ('hydrated' as const),
+    };
+  }
+
   function makeResolvedSubscriberOverrides(subscriberId = 'sub1', internalSubscriberId = 'subscriber-mongo-1') {
     return {
       subscriberResolve: sinon.stub().resolves(subscriberId),
@@ -99,6 +121,7 @@ describe('AgentInboundHandler', () => {
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
       persistToolApprovalDecision: sinon.stub().resolves({ _id: 'decision-1' }),
+      persistInboundActionAccept: sinon.stub().resolves(undefined),
       findSourceActivity: sinon
         .stub()
         .callsFake(
@@ -210,6 +233,7 @@ describe('AgentInboundHandler', () => {
     };
     const workflowOriginService = {
       resolve: sinon.stub().resolves(null),
+      resolveForTurn: sinon.stub().resolves(null),
       hydrate: sinon.stub().resolves(null),
     };
     const handler = new AgentInboundHandler(
@@ -433,9 +457,11 @@ describe('AgentInboundHandler', () => {
         _notificationId: 'notif1',
         identifier: 'D123:1777837477.371619',
       };
+      const snapshot = makeOriginSnapshot({ body: 'Order shipped' });
 
       conversationService.findByPlatformThread.resolves(null);
       workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+      workflowOriginService.resolveForTurn.resolves(snapshot);
 
       const thread = makeSlackDmThread();
       const message = {
@@ -454,8 +480,8 @@ describe('AgentInboundHandler', () => {
         existingConversation: null,
       });
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
-      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
-      expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution.origin).to.equal(origin);
     });
 
     it('should forward the hydrated origin to a managed dispatch on an existing Telegram conversation', async () => {
@@ -472,6 +498,7 @@ describe('AgentInboundHandler', () => {
         ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
+      const snapshot = makeOriginSnapshot({ platformMessageId: '42' });
 
       conversationService.findByPlatformThread.resolves({
         _id: 'conv1',
@@ -480,7 +507,7 @@ describe('AgentInboundHandler', () => {
         participants: [],
       });
       workflowOriginService.resolve.resolves({ origin: { _id: 'msg1', _notificationId: 'notif1', identifier: '42' } });
-      workflowOriginService.hydrate.resolves('Your order shipped');
+      workflowOriginService.resolveForTurn.resolves(snapshot);
 
       const thread = {
         id: 'telegram:42',
@@ -502,10 +529,67 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
-      expect(managedAgentService.dispatch.firstCall.args[0].workflowOriginContent).to.equal('Your order shipped');
+      expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
     });
 
-    it('should leave workflowOriginContent unset when nothing was hydrated', async () => {
+    it('should read the latest persisted origin on later turns when nothing new hydrates', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const existingConversation = {
+        _id: 'conv1',
+        externalSessionId: 'ses_live',
+        channels: [{ platform: AgentPlatformEnum.TELEGRAM, _integrationId: 'int1', platformThreadId: 'telegram:42' }],
+        participants: [],
+      };
+      const snapshot = makeOriginSnapshot({
+        body: 'Your order shipped',
+        platformMessageId: '42',
+        payload: { orderId: 'ORD-9' },
+        source: 'existing',
+      });
+      const { handler, conversationService, workflowOriginService, managedAgentService } = makeHandler({
+        ...makeResolvedSubscriberOverrides('sub-tg', 'sub-mongo'),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+
+      conversationService.findByPlatformThread.resolves(existingConversation);
+      conversationService.createOrGetConversation.resolves(existingConversation);
+      workflowOriginService.resolve.resolves(null);
+      workflowOriginService.resolveForTurn.resolves(snapshot);
+
+      const thread = {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
+      };
+      const message = {
+        id: 'msg-3',
+        threadId: 'telegram:42',
+        text: 'and the eta?',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0]).to.include({
+        subscriberId: 'sub-tg',
+        resolution: null,
+      });
+      expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
+    });
+
+    it('should leave workflowOrigin unset when nothing was hydrated', async () => {
       const telegramConfig = {
         ...config,
         platform: AgentPlatformEnum.TELEGRAM,
@@ -541,7 +625,7 @@ describe('AgentInboundHandler', () => {
       await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
-      expect(managedAgentService.dispatch.firstCall.args[0].workflowOriginContent).to.equal(undefined);
+      expect(managedAgentService.dispatch.firstCall.args[0].workflowOrigin).to.equal(undefined);
     });
 
     it('should not hydrate when WorkflowOriginService.resolve returns null', async () => {
@@ -559,7 +643,8 @@ describe('AgentInboundHandler', () => {
       );
 
       expect(workflowOriginService.resolve.calledOnce).to.equal(true);
-      expect(workflowOriginService.hydrate.called).to.equal(false);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal(undefined);
     });
 
@@ -1541,6 +1626,44 @@ describe('AgentInboundHandler', () => {
   }
 
   describe('handleAction', () => {
+    it('should persist approval decisions with the client action idempotency key', async () => {
+      const { handler, conversationService } = makeHandler();
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'tool-approval:approve:tc1', value: 'Approve once' } as any,
+        'user1',
+        { idempotencyKey: 'idem_abcdefghijkl' }
+      );
+
+      expect(conversationService.persistToolApprovalDecision.calledOnce).to.equal(true);
+      expect(conversationService.persistToolApprovalDecision.firstCall.args[0].identifier).to.equal(
+        'idem_abcdefghijkl'
+      );
+    });
+
+    it('should persist non-approval actions with the client idempotency key', async () => {
+      const { handler, conversationService } = makeHandler();
+
+      await handler.handleAction(
+        'agent1',
+        config as any,
+        makeActionThread() as any,
+        { id: 'topic-billing', value: 'yes' } as any,
+        'user1',
+        { idempotencyKey: 'idem_abcdefghijkl' }
+      );
+
+      expect(conversationService.persistInboundActionAccept.calledOnce).to.equal(true);
+      expect(conversationService.persistInboundActionAccept.firstCall.args[0]).to.include({
+        identifier: 'idem_abcdefghijkl',
+        actionId: 'topic-billing',
+      });
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+    });
+
     it('should skip bridge dispatch for link-button actions', async () => {
       const { handler, bridgeExecutor } = makeHandler();
       const thread = makeActionThread();
@@ -1589,9 +1712,11 @@ describe('AgentInboundHandler', () => {
         templateIdentifier: 'order-alerts',
         identifier: 'thread1:1777837477.371619',
       };
+      const snapshot = makeOriginSnapshot();
 
       conversationService.findByPlatformThread.resolves(null);
       workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+      workflowOriginService.resolveForTurn.resolves(snapshot);
 
       await handler.handleAction(
         'agent1',
@@ -1601,10 +1726,11 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
-      expect(workflowOriginService.hydrate.firstCall.args[0].origin).to.equal(origin);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution.origin).to.equal(origin);
       // The origin must reach history before the runtime reads the conversation.
-      expect(workflowOriginService.hydrate.calledBefore(bridgeExecutor.execute)).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.calledBefore(bridgeExecutor.execute)).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].workflowOrigin).to.deep.equal(snapshot);
     });
 
     it('should use the clicked Slack message timestamp when resolving an action-only thread', async () => {
@@ -1620,6 +1746,7 @@ describe('AgentInboundHandler', () => {
 
       conversationService.findByPlatformThread.resolves(null);
       workflowOriginService.resolve.resolves({ origin, notificationId: 'notif1' });
+      workflowOriginService.resolveForTurn.resolves(makeOriginSnapshot());
 
       await handler.handleAction(
         'agent1',
@@ -1632,7 +1759,7 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.findByPlatformThread.firstCall.args[4]).to.equal(platformThreadId);
       expect(workflowOriginService.resolve.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
       expect(conversationService.createOrGetConversation.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
-      expect(workflowOriginService.hydrate.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].platformThreadId).to.equal(platformThreadId);
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(platformThreadId);
     });
 
@@ -1647,7 +1774,8 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(workflowOriginService.hydrate.called).to.equal(false);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
     });
 
     it('should still hydrate workflow origin when a link-button click is the first-ever interaction on a seeded thread', async () => {
@@ -1662,6 +1790,7 @@ describe('AgentInboundHandler', () => {
         origin: { _id: 'msg1', _notificationId: 'notif1' },
         notificationId: 'notif1',
       });
+      workflowOriginService.resolveForTurn.resolves(makeOriginSnapshot({ platformMessageId: 'p1' }));
 
       await handler.handleAction(
         'agent1',
@@ -1672,7 +1801,10 @@ describe('AgentInboundHandler', () => {
       );
 
       expect(conversationService.createOrGetConversation.firstCall.args[0].notificationId).to.equal('notif1');
-      expect(workflowOriginService.hydrate.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.include({
+        notificationId: 'notif1',
+      });
     });
 
     it('should still dispatch the action when workflow origin resolve returns null', async () => {
@@ -1691,7 +1823,8 @@ describe('AgentInboundHandler', () => {
         'user1'
       );
 
-      expect(workflowOriginService.hydrate.called).to.equal(false);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
       expect(bridgeExecutor.execute.calledOnce).to.equal(true);
     });
   });
@@ -1753,6 +1886,21 @@ describe('AgentInboundHandler', () => {
       expect(attachmentStorage.storeInbound.firstCall.args[1].platformMessageId).to.equal('source-msg');
       const params = bridgeExecutor.execute.firstCall.args[0];
       expect(params.reaction.sourceMessageStoredAttachments).to.deep.equal(storedAttachments);
+    });
+
+    it('attaches the workflow origin to the ON_REACTION turn', async () => {
+      const snapshot = makeOriginSnapshot();
+      const { handler, bridgeExecutor, workflowOriginService } = makeHandler();
+      workflowOriginService.resolveForTurn.resolves(snapshot);
+
+      await handler.handleReaction('agent1', config as any, makeReactionEvent() as any);
+
+      expect(workflowOriginService.resolve.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.calledOnce).to.equal(true);
+      expect(workflowOriginService.resolveForTurn.firstCall.args[0].resolution).to.equal(null);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.event).to.equal(AgentEventEnum.ON_REACTION);
+      expect(params.workflowOrigin).to.deep.equal(snapshot);
     });
   });
 });

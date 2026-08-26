@@ -151,6 +151,7 @@ describe('AgentChatService', () => {
       agentId: 'agent_1',
       conversationId: 'conv_abcdefghijkl',
       actionId: 'tool-approval:approve:approval_000001',
+      idempotencyKey: 'idem_abcdefghijkl',
     });
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
@@ -162,6 +163,7 @@ describe('AgentChatService', () => {
           agentId: 'agent_1',
           conversationIdentifier: 'conv_abcdefghijkl',
           actionId: 'tool-approval:approve:approval_000001',
+          idempotencyKey: 'idem_abcdefghijkl',
         }),
       })
     );
@@ -185,6 +187,7 @@ describe('AgentChatService', () => {
       actionId: 'topic-billing',
       sourceMessageId: 'act_card0000001',
       value: 'billing',
+      idempotencyKey: 'idem_billing0001',
     });
 
     expect(result).toEqual({ identifier: 'conv_abcdefghijkl' });
@@ -198,6 +201,7 @@ describe('AgentChatService', () => {
           actionId: 'topic-billing',
           sourceMessageId: 'act_card0000001',
           value: 'billing',
+          idempotencyKey: 'idem_billing0001',
         }),
       })
     );

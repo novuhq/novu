@@ -30,6 +30,8 @@ export enum ConversationActivityTypeEnum {
   RUN_FINISH = 'run_finish',
   /** Agent run failed (`richContent.lifecycle` holds message/code). Excluded from model/bridge history. */
   RUN_ERROR = 'run_error',
+  /** App-emitted UI data (`richContent.custom` holds `{ name, data }`). Client events + operator timeline. */
+  CUSTOM = 'custom',
 }
 
 /** Storage types for protocol run lifecycle rows — visibility is governed by activity views. */

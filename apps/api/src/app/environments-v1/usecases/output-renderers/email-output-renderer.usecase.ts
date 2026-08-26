@@ -50,6 +50,13 @@ type TranslationContext = {
   resourceId: string;
 };
 
+interface TranslatableEmailControls {
+  [key: string]: unknown;
+  subject: string;
+  from?: Pick<NonNullable<EmailControlType['from']>, 'name'>;
+  preheader?: string;
+}
+
 export class EmailOutputRendererCommand extends RenderCommand {
   dbWorkflow: NotificationTemplateEntity;
   locale?: string;
@@ -130,17 +137,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const controlMeta = {
       ...(from && { from }),
       ...(replyTo && { replyTo }),
-      ...(preheader && { preheader }),
+      ...(preheader !== undefined && { preheader }),
       ...(useProviderDefaults !== undefined && { useProviderDefaults }),
     };
 
     if (!body || typeof body !== 'string') {
-      /**
-       * Force type mapping in case undefined control.
-       * This passes responsibility to framework to throw type validation exceptions
-       * rather than handling invalid types here.
-       */
-
       return {
         subject: controlSubject as string,
         body: body as string,
@@ -161,29 +162,52 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     const { _environmentId: environmentId, _organizationId: organizationId, _id: workflowId } = dbWorkflow;
 
-    const workflowTranslationContext = await this.createTranslationContext({
-      environmentId,
-      organizationId,
-      resourceId: workflowId,
-      resourceType: LocalizationResourceEnum.WORKFLOW,
-      locale,
-      organization,
-      resourceEntity: dbWorkflow,
-    });
+    const [translatedControls, workflowTranslationContext] = await Promise.all([
+      this.processTranslations({
+        controls: {
+          subject: controlSubject as string,
+          ...(from?.name !== undefined && { from: { name: from.name } }),
+          ...(preheader !== undefined && { preheader }),
+        },
+        variables: fullPayloadForRender,
+        environmentId,
+        organizationId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale,
+        organization,
+        resourceEntity: dbWorkflow,
+      }) as Promise<TranslatableEmailControls>,
+      this.createTranslationContext({
+        environmentId,
+        organizationId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale,
+        organization,
+        resourceEntity: dbWorkflow,
+      }),
+    ]);
 
-    // Step 1: Apply translations to subject (already liquid-interpolated)
-    const translatedSubject = await this.processSubjectTranslations(
-      controlSubject as string,
-      fullPayloadForRender,
-      environmentId,
-      organizationId,
-      workflowId,
-      locale,
-      organization,
-      workflowTranslationContext
-    );
+    const translatedSubject = decodeHTML(this.unescapeJsonString(translatedControls.subject));
+    const translatedFromName =
+      translatedControls.from?.name === undefined
+        ? undefined
+        : decodeHTML(this.unescapeJsonString(translatedControls.from.name));
+    const translatedPreheader =
+      translatedControls.preheader === undefined
+        ? undefined
+        : decodeHTML(this.unescapeJsonString(translatedControls.preheader));
+    const translatedFrom = from ? { ...from, ...(from.name !== undefined && { name: translatedFromName }) } : undefined;
 
-    // Step 2: Process body content (with translations applied before rendering)
+    const translatedControlMeta = {
+      ...(translatedFrom && { from: translatedFrom }),
+      ...(replyTo && { replyTo }),
+      ...(preheader !== undefined && { preheader: translatedPreheader }),
+      ...(useProviderDefaults !== undefined && { useProviderDefaults }),
+    };
+
+    // Process body content with translations applied before rendering
     const renderedHtml = await this.renderWithLayout({
       body,
       stepLayoutId,
@@ -200,17 +224,17 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       workflowTranslationContext,
     });
 
-    // Step 3: Add Novu branding
+    // Add Novu branding
     const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId, organization);
     const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
-    const htmlWithPreheader = injectRenderedPreheader(cleanedHtml, preheader);
+    const htmlWithPreheader = injectRenderedPreheader(cleanedHtml, translatedPreheader);
 
-    // Step 4: Sanitize output if needed
+    // Sanitize output if needed
     if (disableOutputSanitization) {
       return {
         subject: translatedSubject,
         body: htmlWithPreheader,
-        ...controlMeta,
+        ...translatedControlMeta,
       };
     }
 
@@ -219,7 +243,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     return {
       subject: translatedSubject,
       body: sanitizedBody,
-      ...controlMeta,
+      ...translatedControlMeta,
     };
   }
 
@@ -490,38 +514,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
       return processedHtml;
     }
-  }
-
-  private async processSubjectTranslations(
-    subject: string,
-    variables: FullPayloadForRender,
-    environmentId: string,
-    organizationId: string,
-    workflowId?: string,
-    locale?: string,
-    organization?: OrganizationEntity,
-    translationContext?: TranslationContext | null
-  ): Promise<string> {
-    const unescapedVariables = this.deepUnescapeTranslationStrings(variables) as FullPayloadForRender;
-
-    const translatedSubject = translationContext
-      ? await this.processStringWithContext({
-          context: translationContext,
-          content: subject,
-          variables: unescapedVariables,
-        })
-      : await this.processStringTranslations({
-          content: subject,
-          variables: unescapedVariables,
-          environmentId,
-          organizationId,
-          resourceId: workflowId,
-          resourceType: LocalizationResourceEnum.WORKFLOW,
-          locale,
-          organization,
-        });
-
-    return decodeHTML(this.unescapeJsonString(translatedSubject));
   }
 
   private async processTextTranslations({

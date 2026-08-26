@@ -318,8 +318,7 @@ export class AgentConfigResolver {
       providerId: integration.providerId,
       // Human-relay messages are utility traffic between a person and their own
       // agents — never consumer-facing agent chat — so they always ship unbranded.
-      removeNovuBranding:
-        agent.runtime === 'human_relay' ? true : await this.resolveRemoveNovuBranding(organizationId),
+      removeNovuBranding: agent.runtime === 'human_relay' ? true : await this.resolveRemoveNovuBranding(organizationId),
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,

@@ -6,7 +6,7 @@ import {
   HumanInteractionKindEnum,
   HumanInteractionStatusEnum,
 } from '@novu/shared';
-import { toInteractionResponse, type InteractionResponseDto } from '../../dtos/interaction-response.dto';
+import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { HumanDeliveryService } from '../../services/human-delivery.service';
 import { DEFAULT_HUMAN_RELAY_IDENTIFIER } from '../setup-human-relay/setup-human-relay.usecase';
 import { CreateInteractionCommand } from './create-interaction.command';

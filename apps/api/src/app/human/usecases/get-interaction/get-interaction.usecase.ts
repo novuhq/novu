@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { HumanInteractionEntity, HumanInteractionRepository } from '@novu/dal';
 import { HumanInteractionSettlementService } from '../../../agents/human-relay/human-interaction-settlement.service';
-import { toInteractionResponse, type InteractionResponseDto } from '../../dtos/interaction-response.dto';
+import { type InteractionResponseDto, toInteractionResponse } from '../../dtos/interaction-response.dto';
 import { GetInteractionCommand } from './get-interaction.command';
 
 @Injectable()

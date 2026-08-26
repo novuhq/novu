@@ -66,6 +66,34 @@ describe('activity-to-events run lifecycle', () => {
     expect(envelopes.every((envelope) => envelope.runId === 'run-1')).to.equal(true);
   });
 
+  it('maps CUSTOM activities to custom envelopes and skips rows without a name', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.CUSTOM,
+          identifier: 'act_nameless',
+          sequence: 2,
+          richContent: { custom: { data: { pct: 70 } } },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.CUSTOM,
+          identifier: 'custom:run-custom:1',
+          sequence: 1,
+          richContent: { custom: { name: 'order-progress', data: { pct: 70 } } },
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes).to.have.lengthOf(1);
+    expect(envelopes[0].runId).to.equal('run-custom');
+    expect(envelopes[0].event).to.deep.equal({
+      type: 'custom',
+      name: 'order-progress',
+      data: { pct: 70 },
+    });
+  });
+
   it('maps MCP connection activities to protocol events', () => {
     const envelopes = mapNewestFirstEventActivities(
       [
@@ -181,6 +209,37 @@ describe('activity-to-events run lifecycle', () => {
         envelope.event.type === 'tool-approval-request' ? envelope.event.messageId : undefined
       )
     ).to.deep.equal(['approval-activity-1', 'approval-activity-2']);
+  });
+
+  it('drops SIGNAL activities from client events', () => {
+    const envelopes = mapNewestFirstEventActivities(
+      [
+        activity({
+          type: ConversationActivityTypeEnum.SIGNAL,
+          identifier: 'workflow-dispatch-origin:wamid.1',
+          sequence: 2,
+          content: 'Ada replied to the message from order-shipped',
+          signalData: { type: 'workflow_origin', payload: { workflowIdentifier: 'order-shipped' } },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.SIGNAL,
+          identifier: 'sig-1',
+          sequence: 1,
+          content: 'signal',
+          signalData: { type: 'other' },
+        }),
+        activity({
+          type: ConversationActivityTypeEnum.MESSAGE,
+          identifier: 'msg-1',
+          sequence: 0,
+          content: 'hello',
+        }),
+      ],
+      context
+    );
+
+    expect(envelopes).to.have.lengthOf(1);
+    expect(envelopes[0].event.type).to.equal('message');
   });
 
   it('derives trust action ids at emit time for managed MCP approvals', () => {

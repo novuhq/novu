@@ -5,6 +5,8 @@ import { createLocalConversationKey } from './agent-chat-store';
 import type { AgentToolApprovalDecision } from './agent-message.types';
 import { derivePendingActions } from './agent-message.types';
 import type {
+  AgentConversationPaginationSnapshot,
+  AgentConversationPublicationMeta,
   AgentConversationRunSnapshot,
   AgentConversationSessionStatus,
   AgentConversationSnapshot,
@@ -15,19 +17,6 @@ import type {
 import { runtimeCacheKey } from './runtime-cache-key';
 
 const EMPTY_RUN: AgentConversationRunSnapshot = Object.freeze({ isRunning: false });
-
-function cloneSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSnapshot {
-  return {
-    ...snapshot,
-    run: {
-      ...snapshot.run,
-      typing: snapshot.run.typing ? { ...snapshot.run.typing } : undefined,
-    },
-    pagination: { ...snapshot.pagination },
-    messages: structuredClone(snapshot.messages),
-    pendingActions: structuredClone(snapshot.pendingActions),
-  };
-}
 
 function deepFreeze<T>(value: T): T {
   if (value === null || typeof value !== 'object') {
@@ -63,10 +52,26 @@ function createEmptySnapshot(key: string, conversationId?: string): AgentConvers
     status: conversationId ? 'loading' : 'ready',
     run: EMPTY_RUN,
     conversationStatus: 'active',
-    pagination: { hasMore: false },
+    pagination: { hasMore: false, status: 'idle' },
     messages: [],
     pendingActions: [],
+    isRecovering: false,
   });
+}
+
+const SERVER_SNAPSHOT = createEmptySnapshot('ssr');
+
+function cloneSnapshot(snapshot: AgentConversationSnapshot): AgentConversationSnapshot {
+  return {
+    ...snapshot,
+    run: {
+      ...snapshot.run,
+      typing: snapshot.run.typing ? { ...snapshot.run.typing } : undefined,
+    },
+    pagination: { ...snapshot.pagination },
+    messages: structuredClone(snapshot.messages),
+    pendingActions: structuredClone(snapshot.pendingActions),
+  };
 }
 
 function normalizeSendMessageInput(input: SendMessageInput): { text: string; metadata?: Record<string, unknown> } {
@@ -75,6 +80,10 @@ function normalizeSendMessageInput(input: SendMessageInput): { text: string; met
   }
 
   return { text: input.text, metadata: input.metadata };
+}
+
+function storePagination(hasMore: boolean, status: AgentConversationPaginationSnapshot['status'] = 'idle') {
+  return { hasMore, status };
 }
 
 /**
@@ -89,7 +98,7 @@ export class AgentConversationRuntime {
   #agentHash?: string;
   #conversationId?: string;
   #snapshot: AgentConversationSnapshot;
-  #listeners = new Set<(snapshot: AgentConversationSnapshot) => void>();
+  #listeners = new Set<(snapshot: AgentConversationSnapshot, meta?: AgentConversationPublicationMeta) => void>();
   #stopListening?: () => void;
   #disposed = false;
   #registeredConversationKey?: string;
@@ -113,16 +122,23 @@ export class AgentConversationRuntime {
         this.#registerByConversationId(data.conversationId);
       }
 
-      this.#publishFromStore({
-        messages: data.messages,
-        isRunning: data.isRunning,
-        typing: data.typing,
-        status: data.status,
-        hasMore: data.hasMore,
-        conversationId: data.conversationId,
-        sessionStatus:
-          this.#snapshot.status === 'loading' || this.#snapshot.status === 'fetching' ? this.#snapshot.status : 'ready',
-      });
+      this.#publishFromStore(
+        {
+          messages: data.messages,
+          isRunning: data.isRunning,
+          typing: data.typing,
+          status: data.status,
+          pagination: data.pagination,
+          isRecovering: data.isRecovering,
+          catchUpError: data.catchUpError,
+          conversationId: data.conversationId,
+          sessionStatus:
+            this.#snapshot.status === 'loading' || this.#snapshot.status === 'fetching'
+              ? this.#snapshot.status
+              : 'ready',
+        },
+        { change: data.change }
+      );
     });
 
     if (args.conversationId) {
@@ -134,7 +150,13 @@ export class AgentConversationRuntime {
     return this.#snapshot;
   }
 
-  subscribe(listener: (snapshot: AgentConversationSnapshot) => void): () => void {
+  getServerSnapshot(): AgentConversationSnapshot {
+    return SERVER_SNAPSHOT;
+  }
+
+  subscribe(
+    listener: (snapshot: AgentConversationSnapshot, meta?: AgentConversationPublicationMeta) => void
+  ): () => void {
     this.#listeners.add(listener);
     listener(this.#snapshot);
 
@@ -185,15 +207,26 @@ export class AgentConversationRuntime {
     }
 
     if (response.data) {
-      this.#publishFromStore({
-        messages: response.data.messages,
-        isRunning: this.#snapshot.run.isRunning,
-        typing: this.#snapshot.run.typing,
-        status: this.#snapshot.conversationStatus,
-        hasMore: response.data.hasMore,
+      const store = this.#agentChat.getConversation({
+        agentId: this.agentId,
+        key: this.key,
         conversationId: response.data.conversationId,
-        sessionStatus: 'ready',
       });
+
+      this.#publishFromStore(
+        {
+          messages: response.data.messages,
+          isRunning: store?.isRunning ?? this.#snapshot.run.isRunning,
+          typing: store?.typing ?? this.#snapshot.run.typing,
+          status: store?.status ?? this.#snapshot.conversationStatus,
+          pagination: store?.pagination ?? storePagination(response.data.hasMore),
+          isRecovering: store?.isRecovering ?? false,
+          catchUpError: store?.catchUpError,
+          conversationId: response.data.conversationId,
+          sessionStatus: 'ready',
+        },
+        { historyLoaded: true }
+      );
     }
 
     return response;
@@ -230,7 +263,9 @@ export class AgentConversationRuntime {
         isRunning: store?.isRunning ?? this.#snapshot.run.isRunning,
         typing: store?.typing ?? this.#snapshot.run.typing,
         status: store?.status ?? this.#snapshot.conversationStatus,
-        hasMore: response.data.hasMore,
+        pagination: store?.pagination ?? storePagination(response.data.hasMore),
+        isRecovering: store?.isRecovering ?? this.#snapshot.isRecovering,
+        catchUpError: store?.catchUpError,
         conversationId: store?.conversationId ?? this.#conversationId,
         sessionStatus: 'ready',
       });
@@ -309,6 +344,24 @@ export class AgentConversationRuntime {
     return response;
   }
 
+  async retryMessage(
+    messageId: string
+  ): Promise<{ data?: { conversationId: string; messageId: string }; error?: NovuError | AgentChatPlanLimitError }> {
+    const response = await this.#agentChat.retryMessage({
+      agentId: this.agentId,
+      agentHash: this.#agentHash,
+      key: this.key,
+      conversationId: this.#conversationId,
+      messageId,
+    });
+
+    if (response.error) {
+      this.#publishError(response.error);
+    }
+
+    return response;
+  }
+
   cancelRun(): ConversationResult<void> {
     return {
       ok: false,
@@ -358,34 +411,42 @@ export class AgentConversationRuntime {
     });
   }
 
-  #publishFromStore(args: {
-    messages: AgentConversationSnapshot['messages'];
-    isRunning: boolean;
-    typing?: AgentConversationRunSnapshot['typing'];
-    status: AgentConversationSnapshot['conversationStatus'];
-    hasMore: boolean;
-    conversationId?: string;
-    sessionStatus: AgentConversationSessionStatus;
-  }): void {
-    this.#publish({
-      key: this.key,
-      conversationId: args.conversationId ?? this.#conversationId,
-      status: args.sessionStatus,
-      run: {
-        isRunning: args.isRunning,
-        typing: args.typing,
+  #publishFromStore(
+    args: {
+      messages: AgentConversationSnapshot['messages'];
+      isRunning: boolean;
+      typing?: AgentConversationRunSnapshot['typing'];
+      status: AgentConversationSnapshot['conversationStatus'];
+      pagination: AgentConversationPaginationSnapshot;
+      isRecovering: boolean;
+      catchUpError?: NovuError;
+      conversationId?: string;
+      sessionStatus: AgentConversationSessionStatus;
+    },
+    meta?: AgentConversationPublicationMeta
+  ): void {
+    this.#publish(
+      {
+        key: this.key,
+        conversationId: args.conversationId ?? this.#conversationId,
+        status: args.sessionStatus,
+        run: {
+          isRunning: args.isRunning,
+          typing: args.typing,
+        },
+        conversationStatus: args.status,
+        pagination: args.pagination,
+        messages: args.messages,
+        pendingActions: derivePendingActions([...args.messages]),
+        isRecovering: args.isRecovering,
+        catchUpError: args.catchUpError,
+        error: undefined,
       },
-      conversationStatus: args.status,
-      pagination: {
-        hasMore: args.hasMore,
-      },
-      messages: args.messages,
-      pendingActions: derivePendingActions([...args.messages]),
-      error: undefined,
-    });
+      meta
+    );
   }
 
-  #publish(next: AgentConversationSnapshot): void {
+  #publish(next: AgentConversationSnapshot, meta?: AgentConversationPublicationMeta): void {
     if (this.#disposed) {
       return;
     }
@@ -394,7 +455,7 @@ export class AgentConversationRuntime {
     this.#snapshot = frozen;
 
     for (const listener of this.#listeners) {
-      listener(frozen);
+      listener(frozen, meta);
     }
   }
 }

@@ -1,7 +1,7 @@
 ---
 title: "Build the Agent Chat UI"
-description: "Install @novu/react, wrap NovuProvider, and use useAgentChat to send, receive, and resume in-app agent conversations."
-sidebarTitle: Build the UI
+description: "Install @novu/react, wrap NovuProvider, and use useAgentChat to send a first in-app agent conversation."
+sidebarTitle: Quickstart
 ---
 
 <Note>
@@ -18,7 +18,9 @@ Complete [channel setup](/agents/channels/agent-chat#setup) first. Then you need
 - A [subscriber](/platform/additional-resources/glossary) id for the signed-in person
 - The public **agent identifier** from the agent page in the dashboard
 
-## Install and wrap NovuProvider
+See [Security](/agents/channels/agent-chat#security) for HMAC.
+
+## Install
 
 ```package-install
 npm install @novu/react
@@ -69,20 +71,34 @@ export function App() {
 
 `NovuProvider` authenticates the subscriber. `useAgentChat` selects which agent to talk to.
 
+<Note>
+  Replace `YOUR_*` placeholders with values from [API Keys](https://dashboard.novu.co/api-keys) and [Subscribers](/platform/additional-resources/glossary) in the dashboard.
+</Note>
+
 <Prompt description="Add Novu Agent Chat to my React app" icon="plug" actions={["copy", "cursor"]}>
 # Add Novu Agent Chat to a React app
 
 Install `@novu/react`. Wrap the app in `NovuProvider`. Call `useAgentChat` and render your own message list and composer. There is no prebuilt `<AgentChat />` component.
 
-Latest docs: https://docs.novu.co/agents/channels/agent-chat/quickstart
+Canonical example: https://docs.novu.co/agents/channels/agent-chat/quickstart
 
-## Install
+ALWAYS:
 
-```bash
-npm install @novu/react
-```
+- Detect the project's package manager and use it for installation
+- Use `NovuProvider` from `@novu/react` (not a second Novu client)
+- Pass the dashboard agent identifier as `agentId`
+- Disable the composer while `isRunning` or `isLoading` is true
+- Use TypeScript, no comments, no empty props
 
-## Code
+NEVER:
+
+- Invent a `<AgentChat />` component from `@novu/react`. It does not exist.
+- Use `useChat` from `@ai-sdk/react`. Agent Chat uses `useAgentChat`.
+- Compute HMAC hashes in the browser
+- Hardcode real API keys
+</Prompt>
+
+## Send a message
 
 ```tsx
 'use client';
@@ -137,460 +153,23 @@ export default function App() {
 }
 ```
 
-## Rules
-
-ALWAYS:
-
-- Detect the project's package manager and use it for installation
-- Use `NovuProvider` from `@novu/react` (not a second Novu client)
-- Pass the dashboard agent identifier as `agentId`
-- Disable the composer while `isRunning` or `isLoading` is true
-- Use TypeScript, no comments, no empty props
-
-NEVER:
-
-- Invent a `<AgentChat />` component from `@novu/react`. It does not exist.
-- Use `useChat` from `@ai-sdk/react`. Agent Chat uses `useAgentChat`.
-- Compute HMAC hashes in the browser
-- Hardcode real API keys
-</Prompt>
-
-## Send a message
-
 Omit `conversationId` to start a new chat. The first successful send creates the conversation.
 
-<CodeGroup>
-```tsx title="HTML"
-const { sendMessage, isRunning, isLoading } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-});
-
-<form
-  onSubmit={(event) => {
-    event.preventDefault();
-    const input = event.currentTarget.elements.namedItem('text') as HTMLInputElement;
-    void sendMessage(input.value).then(({ data }) => {
-      // data.conversationId — store this to resume later
-    });
-    event.currentTarget.reset();
-  }}
->
-  <input name="text" disabled={isRunning || isLoading} />
-  <button type="submit" disabled={isRunning || isLoading}>
-    Send
-  </button>
-</form>
-```
-
-```tsx title="AI Elements"
-const { sendMessage, isRunning, isLoading } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-});
-
-<PromptInput
-  onSubmit={async (message) => {
-    if (!message.text.trim() || isRunning || isLoading) {
-      return;
-    }
-
-    const { data } = await sendMessage(message.text);
-    // data.conversationId — store this to resume later
-  }}
->
-  <PromptInputBody>
-    <PromptInputTextarea disabled={isRunning || isLoading} placeholder="Message" />
-  </PromptInputBody>
-  <PromptInputFooter>
-    <PromptInputSubmit
-      className="ml-auto"
-      disabled={isRunning || isLoading}
-      status={isRunning ? 'streaming' : 'ready'}
-    />
-  </PromptInputFooter>
-</PromptInput>
-```
-</CodeGroup>
-
-If `isRunning` or `isLoading` is true, disable the composer. The agent is still working on the turn.
-
-## Receive and render parts
-
-`messages` is the ordered timeline. Each message has `role` (`user` or `assistant`) and `parts`.
-
-Start with `type === 'text'`. Then handle the other part types as you need them.
-
-| `type` | What to render |
-| --- | --- |
-| `text` | Visible body. `state` is `streaming` or `done`. |
-| `thinking` | Plan text while the agent reasons. |
-| `tool` | Tool call and result. |
-| `approval` | Gated tool. Use `pendingActions` and `respondToAction`. |
-| `mcp-connection` | MCP connect card. Open `authorizeUrl`. |
-| `card` | Structured Card tree. Draw `part.card`. Button clicks call `sendAction`. See [Cards](#cards). |
-| `file` | File attachment metadata. |
-| `source` | Citation (`url` or `document`). |
-
-<CodeGroup>
-```tsx title="HTML"
-const { messages } = useAgentChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
-
-{messages.map((message) => (
-  <li key={message.id}>
-    {message.parts.map((part, index) =>
-      part.type === 'text' ? <span key={index}>{part.text}</span> : null
-    )}
-  </li>
-))}
-```
-
-```tsx title="AI Elements"
-const { messages } = useAgentChat({ agentId: 'YOUR_AGENT_IDENTIFIER' });
-
-<Conversation>
-  <ConversationContent>
-    {messages.map((message) => (
-      <Message key={message.id} from={message.role}>
-        <MessageContent>
-          {message.parts.map((part, index) =>
-            part.type === 'text' ? <MessageResponse key={index}>{part.text}</MessageResponse> : null
-          )}
-        </MessageContent>
-      </Message>
-    ))}
-  </ConversationContent>
-  <ConversationScrollButton />
-</Conversation>
-```
-</CodeGroup>
-
-Full field tables: [`useAgentChat`](/platform/sdks/react/hooks/use-agent-chat).
-
-## Cards
-
-A Card is a structured reply. It can include a title, text, images, links, and buttons.
-
-When the agent sends a Card, the message includes a part with `type: 'card'`. The data is on `part.card`.
-
-Agents create Cards with JSX or `Card({…})`. That authoring API is shared with Slack and the other ACI channels: [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards). You can also post the JSON with [Send an agent reply](/api-reference/agents/send-an-agent-reply).
-
-The SDK does not type `part.card`. Read the fields that you support. Skip child types that you do not use.
-
-An Order card arrives as this object on `part.card`:
-
-```json
-{
-  "type": "card",
-  "title": "Order #1234",
-  "children": [
-    { "type": "text", "content": "Your order is ready for pickup." },
-    {
-      "type": "actions",
-      "children": [
-        { "type": "button", "id": "ack", "label": "Acknowledge" },
-        { "type": "button", "id": "escalate", "label": "Escalate", "style": "danger" }
-      ]
-    }
-  ]
-}
-```
-
-| Field | What it is |
-| --- | --- |
-| `title` | Optional heading. |
-| `subtitle` | Optional secondary heading. |
-| `imageUrl` | Optional header image. |
-| `children` | Ordered nodes. See the table below. |
-
-| `child.type` | Fields |
-| --- | --- |
-| `text` | `content` |
-| `divider` | None |
-| `image` | `url`, `alt` |
-| `link` | `url`, `label` |
-| `actions` | `children` of `button` |
-| `button` | `id`, `label`, optional `value` and `style` |
-
-Draw `title` and the `children` that you support. If the subscriber clicks a button, call `sendAction`. The agent receives the click in `onAction`.
-
-```tsx
-const { messages, sendAction } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-});
-
-{messages.map((message) =>
-  message.parts.map((part, i) => {
-    if (part.type !== 'card') {
-      return null;
-    }
-
-    const title = typeof part.card.title === 'string' ? part.card.title : null;
-    const children = Array.isArray(part.card.children) ? part.card.children : [];
-
-    return (
-      <article key={i}>
-        {title ? <h3>{title}</h3> : null}
-        {children.map((child, j) => {
-          if (child?.type === 'text') {
-            return <p key={j}>{child.content}</p>;
-          }
-
-          if (child?.type !== 'actions') {
-            return null;
-          }
-
-          return child.children?.map((button) => (
-            <button
-              key={button.id}
-              type="button"
-              onClick={() =>
-                void sendAction({
-                  actionId: button.id,
-                  value: button.value,
-                  sourceMessageId: message.id,
-                })
-              }
-            >
-              {button.label}
-            </button>
-          ));
-        })}
-      </article>
-    );
-  })
-)}
-```
-
-Do not send the button label with `sendMessage`. That call creates a new chat message.
-Do not call `respondToAction`. That function is for tool approval only.
-
-## Thinking and running
-
-While the agent turn is in progress, `isRunning` is true. `typing` is present when the agent is typing. Assistant messages can include `thinking` parts before text arrives.
-
-<CodeGroup>
-```tsx title="HTML"
-const { messages, isRunning, typing } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-});
-
-{isRunning ? <p>{typing?.status ?? 'Working…'}</p> : null}
-
-{messages.map((message) =>
-  message.parts.map((part, index) => {
-    if (part.type === 'thinking') {
-      return <em key={index}>{part.text}</em>;
-    }
-
-    if (part.type === 'text') {
-      return <span key={index}>{part.text}</span>;
-    }
-
-    return null;
-  })
-)}
-```
-
-```tsx title="AI Elements"
-const { messages, isRunning, typing } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-});
-
-{isRunning ? <Shimmer>{typing?.status ?? 'Working…'}</Shimmer> : null}
-
-{messages.map((message) => (
-  <Message key={message.id} from={message.role}>
-    <MessageContent>
-      {message.parts.map((part, index) => {
-        if (part.type === 'thinking') {
-          return (
-            <ChainOfThought key={index} defaultOpen={part.state === 'streaming'}>
-              <ChainOfThoughtContent>
-                <ChainOfThoughtStep
-                  label={part.text}
-                  status={part.state === 'streaming' ? 'active' : 'complete'}
-                />
-              </ChainOfThoughtContent>
-            </ChainOfThought>
-          );
-        }
-
-        if (part.type === 'text') {
-          return <MessageResponse key={index}>{part.text}</MessageResponse>;
-        }
-
-        return null;
-      })}
-    </MessageContent>
-  </Message>
-))}
-```
-</CodeGroup>
-
-The first envelope of a turn can create an empty assistant message before any text is folded in. Keep that row in the list. Then fill it as parts arrive.
-
-## Tool approval and MCP connect
-
-`pendingActions` lists waits that block the turn. Do not mix the two action types.
-
-| `action.type` | What to do |
-| --- | --- |
-| `tool-approval` | Call `respondToAction` with `action.id` and `approved` or `denied`. |
-| `mcp-connection` | Open `action.authorizeUrl` in the browser. Do not call `respondToAction`. |
-
-<CodeGroup>
-```tsx title="HTML"
-const { pendingActions, respondToAction } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-});
-
-{pendingActions.map((action) => {
-  if (action.type === 'tool-approval') {
-    return (
-      <button
-        key={action.id}
-        type="button"
-        onClick={() => void respondToAction({ actionId: action.id, decision: 'approved' })}
-      >
-        Approve {action.toolName}
-      </button>
-    );
-  }
-
-  if (action.type === 'mcp-connection') {
-    return (
-      <a key={action.id} href={action.authorizeUrl} target="_blank" rel="noreferrer">
-        Connect {action.displayName}
-      </a>
-    );
-  }
-
-  return null;
-})}
-```
-
-```tsx title="AI Elements"
-const { pendingActions, respondToAction } = useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-});
-
-{pendingActions.map((action) => {
-  if (action.type === 'tool-approval') {
-    return (
-      <Message key={action.id} from="assistant">
-        <MessageContent>
-          <button
-            type="button"
-            onClick={() => void respondToAction({ actionId: action.id, decision: 'approved' })}
-          >
-            Approve {action.toolName}
-          </button>
-        </MessageContent>
-      </Message>
-    );
-  }
-
-  if (action.type === 'mcp-connection') {
-    return (
-      <Message key={action.id} from="assistant">
-        <MessageContent>
-          <a href={action.authorizeUrl} target="_blank" rel="noreferrer">
-            Connect {action.displayName}
-          </a>
-        </MessageContent>
-      </Message>
-    );
-  }
-
-  return null;
-})}
-```
-</CodeGroup>
-
-Pass `action.id` from `pendingActions`. Do not invent approve or deny ids.
-
-## Resume or start another chat
-
-Pass `conversationId` so the hook loads history on mount.
-
-```tsx
-useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-  conversationId, // omit to start a new chat
-});
-
-const { data } = await sendMessage(text);
-// persist data.conversationId and pass it back as conversationId
-```
-
-Store the `conversationId` that `sendMessage` returns, or the `conversationId` field on the hook result. On the next visit, pass that id back in.
-
-The hook has no list-conversations API. You store the ids that you want to reopen.
-
-To start another chat, remount the component without `conversationId`, or clear the prop.
-
-## Switch agent
-
-`agentId` selects the agent. If the identifier changes, remount with the new `agentId`.
-
-Omit `conversationId` unless that conversation belongs to the new agent. A conversation id from a different agent does not resume.
-
-## Going to production
-
-HMAC is off by default. Turn it on before you ship. Agent Chat can require two hashes. Each hash has its own dashboard toggle.
-
-| Hash | Toggle | Input | Where you pass it |
-| --- | --- | --- | --- |
-| `subscriberHash` | **Novu In-App** integration | `subscriberId` | `NovuProvider` |
-| `agentHash` | **Agent Chat** integration | agent identifier | `useAgentChat` |
-
-Both hashes use the same secret: the environment API secret from [API Keys](https://dashboard.novu.co/api-keys). Compute them on your server. Do not compute them in the browser.
-
-### subscriberHash
-
-`subscriberHash` authenticates the signed-in subscriber. Without it, another person can guess a `subscriberId` and open that subscriber's session, including Agent Chat.
-
-If **Security HMAC encryption** is on for **Novu In-App**, pass `subscriberHash` to `NovuProvider`. The hash is `HMAC-SHA256(secretKey, subscriberId)` as a lowercase hex string.
-
-Generation recipes (Node.js, Python, and more): [Secure your Inbox with HMAC](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption).
-
-### agentHash
-
-`agentHash` authenticates which agent the subscriber can talk to. Without it, a client can send any public agent identifier that is linked to Agent Chat.
-
-If **Security HMAC encryption** is on for **Agent Chat**:
-
-1. Open [Integrations](https://dashboard.novu.co/integrations).
-2. Select the **Agent Chat** integration.
-3. Enable **Security HMAC encryption**.
-4. On your server, compute `HMAC-SHA256(secretKey, agentIdentifier)` as a lowercase hex string.
-5. Pass that value as `agentHash` to `useAgentChat`.
-
-```tsx
-<NovuProvider
-  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-  subscriber="YOUR_SUBSCRIBER_ID"
-  subscriberHash="YOUR_SUBSCRIBER_HASH"
->
-  <Chat />
-</NovuProvider>
-```
-
-```tsx
-useAgentChat({
-  agentId: 'YOUR_AGENT_IDENTIFIER',
-  agentHash: 'YOUR_AGENT_HASH',
-});
-```
-
-If only one toggle is on, pass only that hash. If both toggles are on, pass both hashes.
+See [Chat UI](/agents/channels/agent-chat/chat-ui) for parts, retry, resume, and reconnect.
 
 ## Next steps
 
 <Columns cols={2}>
+  <Card href="/agents/channels/agent-chat/chat-ui" title="Chat UI" icon="list">
+    Parts, retry, resume, cards, approvals, and reconnect.
+  </Card>
   <Card href="/platform/sdks/react/hooks/use-agent-chat" title="useAgentChat reference" icon="code">
     Props, return value, callbacks, and message parts.
   </Card>
   <Card href="/agents/channels/agent-chat" title="Channel setup" icon="plug">
-    Link Agent Chat on the agent.
+    Link Agent Chat on the agent. Turn on HMAC.
+  </Card>
+  <Card href="/platform/sdks/javascript#agent-chat" title="JavaScript SDK" icon="code">
+    `novu.agentChat.conversation()` in `@novu/js`.
   </Card>
 </Columns>

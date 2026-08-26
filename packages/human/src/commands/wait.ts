@@ -1,8 +1,11 @@
 import { getInteraction } from '../api/human';
 import { emitResult } from '../output';
-import { clientFromConfig, handleError, waitForResolution, type InteractOptions } from './interact';
+import { clientFromConfig, handleError, type InteractOptions, waitForResolution } from './interact';
 
-export async function waitCommand(id: string, options: Pick<InteractOptions, 'timeout' | 'json' | 'apiUrl'>): Promise<never> {
+export async function waitCommand(
+  id: string,
+  options: Pick<InteractOptions, 'timeout' | 'json' | 'apiUrl'>
+): Promise<never> {
   try {
     const { client } = clientFromConfig(options.apiUrl);
     const current = await getInteraction(client, id);

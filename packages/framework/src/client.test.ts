@@ -395,6 +395,8 @@ describe('Novu Client', () => {
               return {
                 subject: `body static prefix ${controls.name}`,
                 body: controls.name,
+                from: controls.from,
+                preheader: controls.preheader,
               };
             },
             {
@@ -402,6 +404,13 @@ describe('Novu Client', () => {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{payload.name}}' },
+                  from: {
+                    type: 'object',
+                    properties: { name: { type: 'string' } },
+                    required: ['name'],
+                    additionalProperties: false,
+                  },
+                  preheader: { type: 'string' },
                 },
                 required: [],
                 additionalProperties: false,
@@ -432,8 +441,11 @@ describe('Novu Client', () => {
           lastName: "Smith's",
         },
         state: [],
-        controls: {},
-        context: {},
+        controls: {
+          from: { name: '{{payload.name}} {{subscriber.lastName}}' },
+          preheader: '{{env.name}} {{context.traceId}} {{t.preheader}}',
+        },
+        context: { traceId: 'trace-123' },
         env: testEventEnv,
       };
 
@@ -442,8 +454,10 @@ describe('Novu Client', () => {
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
-      const { subject } = emailExecutionResult.outputs;
+      const { subject, from, preheader } = emailExecutionResult.outputs;
       expect(subject).toBe('body static prefix John');
+      expect(from?.name).toBe("John Smith's");
+      expect(preheader).toBe('Test trace-123 {{t.preheader}}');
     });
 
     it('should render step results in preview', async () => {

@@ -38,6 +38,9 @@ describe('ConversationActivityLedger', () => {
       createSignalActivity: overrides.createSignalActivity ?? sinon.stub().resolves({}),
       findOne: overrides.findOne ?? sinon.stub().resolves(null),
       count: overrides.count ?? sinon.stub().resolves(0),
+      withTransaction:
+        overrides.withTransaction ??
+        sinon.stub().callsFake(async (fn: (session: null) => Promise<unknown>) => fn(null)),
       ...overrides,
     };
   }
@@ -162,8 +165,15 @@ describe('ConversationActivityLedger', () => {
         createAgentActivity: sinon.stub().rejects(duplicateError),
         findOne: sinon.stub().resolves(existingActivity),
       });
+      const conversationRepository = makeConversationRepository();
       const logger = makeLogger();
-      const ledger = makeLedger(activityRepository, undefined, undefined, undefined, logger);
+      const ledger = makeLedger(
+        activityRepository,
+        { mint: sinon.stub().resolves(7) } as unknown as ConversationEventSequenceService,
+        undefined,
+        conversationRepository,
+        logger
+      );
 
       const result = await ledger.persistAgentMessage({
         ...basePersistParams(),
@@ -173,6 +183,7 @@ describe('ConversationActivityLedger', () => {
       expect(result.activity).to.equal(existingActivity);
       expect(result.created).to.equal(false);
       expect(logger.warn.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
     });
 
     it('pairs touchActivity with agent message persist', async () => {
@@ -200,8 +211,14 @@ describe('ConversationActivityLedger', () => {
         organizationId: 'org-1',
         platformMessageId: 'wamid.abc',
         platformThreadId: 'whatsapp:15551234567',
-        messageContent: 'Your order shipped',
-        signalData: { workflowIdentifier: 'order-alerts' },
+        subscriberFirstName: 'Ada',
+        signalData: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-alerts',
+          messageId: 'msg-1',
+          subscriberId: 'sub-1',
+          payload: { orderId: 'ORD-1' },
+        },
       };
     }
 
@@ -232,6 +249,62 @@ describe('ConversationActivityLedger', () => {
       } catch (err) {
         expect((err as Error).message).to.equal('mongo timeout');
       }
+    });
+
+    it('writes a SIGNAL activity without an agent MESSAGE row', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+        createAgentActivity: sinon.stub().resolves({ _id: 'should-not-run' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistWorkflowOriginHydration(makeHydrationParams());
+
+      expect(activityRepository.createSignalActivity.calledOnce).to.equal(true);
+      expect(activityRepository.createAgentActivity.called).to.equal(false);
+      const args = activityRepository.createSignalActivity.firstCall.args[0];
+      expect(args.identifier).to.equal('workflow-dispatch-origin:wamid.abc');
+      expect(args.content).to.equal('Ada replied to the message from order-alerts');
+      expect(args.signalData).to.deep.equal({
+        type: 'workflow_origin',
+        payload: {
+          notificationId: 'notif-1',
+          workflowIdentifier: 'order-alerts',
+          messageId: 'msg-1',
+          subscriberId: 'sub-1',
+          payload: { orderId: 'ORD-1' },
+        },
+      });
+    });
+
+    it('falls back to the subscriber id when no first name is known', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+      });
+      const ledger = makeLedger(activityRepository);
+
+      await ledger.persistWorkflowOriginHydration({ ...makeHydrationParams(), subscriberFirstName: undefined });
+
+      expect(activityRepository.createSignalActivity.firstCall.args[0].content).to.equal(
+        'sub-1 replied to the message from order-alerts'
+      );
+    });
+
+    it('labels an unknown workflow identifier as unknown', async () => {
+      const activityRepository = makeActivityRepository({
+        createSignalActivity: sinon.stub().resolves({ _id: 'signal-1' }),
+      });
+      const ledger = makeLedger(activityRepository);
+      const params = makeHydrationParams();
+
+      await ledger.persistWorkflowOriginHydration({
+        ...params,
+        signalData: { ...params.signalData, workflowIdentifier: undefined },
+      });
+
+      expect(activityRepository.createSignalActivity.firstCall.args[0].content).to.equal(
+        'Ada replied to the message from unknown'
+      );
     });
   });
 
@@ -319,6 +392,55 @@ describe('ConversationActivityLedger', () => {
         },
       });
       expect(publisher.emitPersistedClientEvent.callCount).to.equal(2);
+    });
+  });
+
+  describe('custom activities', () => {
+    it('persists an append-only custom row and publishes it on the durable path', async () => {
+      const activityRepository = makeActivityRepository();
+      const mint = sinon.stub().resolves(12);
+      const publisher = { emitPersistedClientEvent: sinon.stub().resolves(undefined) };
+      const conversationRepository = makeConversationRepository();
+      const ledger = makeLedger(
+        activityRepository,
+        { mint } as unknown as ConversationEventSequenceService,
+        publisher,
+        conversationRepository
+      );
+      const context = {
+        conversationId: 'conv-1',
+        channel: {
+          platform: 'agent_chat',
+          _integrationId: 'integration-a',
+          platformThreadId: 'thread-1',
+        },
+        agentIdentifier: 'agent-a',
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+      };
+
+      await ledger.persistCustom({
+        ...context,
+        identifier: 'custom:run-custom:1',
+        name: 'order-progress',
+        data: { pct: 70 },
+      });
+
+      expect(activityRepository.createAgentActivity.firstCall.args[0]).to.deep.include({
+        type: ConversationActivityTypeEnum.CUSTOM,
+        sequence: 12,
+        content: 'order-progress',
+        richContent: {
+          custom: {
+            name: 'order-progress',
+            data: { pct: 70 },
+          },
+        },
+      });
+      expect(activityRepository.createAgentActivity.firstCall.args[0].identifier).to.equal('custom:run-custom:1');
+      expect(publisher.emitPersistedClientEvent.calledOnce).to.equal(true);
+      expect(conversationRepository.touchActivity.called).to.equal(false);
+      expect(conversationRepository.touchPreview.called).to.equal(false);
     });
   });
 

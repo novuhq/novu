@@ -21,7 +21,9 @@ import {
   ADAPTER_NAME,
   conversationIdFromThreadId,
   isApprovalActionId,
+  isValidActionIdempotencyKey,
   isValidConversationId,
+  isValidMessageId,
   mintActivityId,
   mintConversationId,
   mintMessageId,
@@ -228,10 +230,21 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       conversationId = mintConversationId();
     }
 
-    // Always mint message ids. Client `messageId` idempotency would ack a ghost
-    // turn if checked before durable create; keep server-minted ids for now.
+    // Client `messageId` is the idempotency key when it matches `msg_*`.
     const threadId = this.encodeThreadId({ conversationId });
-    const messageId = mintMessageId();
+    const clientMessageId = typeof body.messageId === 'string' ? body.messageId.trim() : '';
+    if (clientMessageId && !isValidMessageId(clientMessageId)) {
+      return jsonResponse({ message: 'Invalid message id' }, 400);
+    }
+
+    const claim = await this.claimOrRespond(session, clientMessageId, conversationId, 201, {
+      messageId: clientMessageId,
+    });
+    if (claim instanceof Response) {
+      return claim;
+    }
+
+    const messageId = clientMessageId || mintMessageId();
     const message = this.parseMessage({
       id: messageId,
       text: kind.text,
@@ -240,7 +253,15 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       contextKeys: session.contextKeys ?? [],
     });
 
-    await this.chat!.processMessage(this, threadId, message, options);
+    try {
+      await this.chat!.processMessage(this, threadId, message, options);
+    } catch (error) {
+      await this.releaseInboundClaim(session, clientMessageId, conversationId, claim?.claimToken);
+
+      throw error;
+    }
+
+    await this.completeInboundClaim(session, clientMessageId, conversationId, claim?.claimToken, messageId);
 
     // Public conversation identifier stays bare `conv_*`; chat-sdk thread ids are
     // `agent_chat:conv_*` so `chat.thread()` can resolve this adapter by prefix.
@@ -265,6 +286,16 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       return blocked;
     }
 
+    const idempotencyKey = typeof body.idempotencyKey === 'string' ? body.idempotencyKey.trim() : '';
+    if (idempotencyKey && !isValidActionIdempotencyKey(idempotencyKey)) {
+      return jsonResponse({ message: 'Invalid idempotency key' }, 400);
+    }
+
+    const claim = await this.claimOrRespond(session, idempotencyKey, conversationId, 200);
+    if (claim instanceof Response) {
+      return claim;
+    }
+
     const threadId = this.encodeThreadId({ conversationId });
     const user = {
       userId: session.subscriberId,
@@ -274,21 +305,92 @@ export class NovuAgentChatAdapterImpl implements Adapter<AgentChatThreadId, Agen
       isMe: false,
     };
 
-    await this.chat!.processAction(
-      {
-        adapter: this,
-        actionId: kind.actionId,
-        value: kind.value,
-        // Chat ActionEvent requires messageId; headless approvals have no card carrier.
-        messageId: kind.sourceMessageId ?? '',
-        threadId,
-        user,
-        raw: { ...body, contextKeys: session.contextKeys ?? [] },
-      },
-      options
-    );
+    try {
+      await this.chat!.processAction(
+        {
+          adapter: this,
+          actionId: kind.actionId,
+          value: kind.value,
+          // Chat ActionEvent requires messageId; headless approvals have no card carrier.
+          messageId: kind.sourceMessageId ?? '',
+          threadId,
+          user,
+          raw: { ...body, contextKeys: session.contextKeys ?? [] },
+        },
+        options
+      );
+    } catch (error) {
+      await this.releaseInboundClaim(session, idempotencyKey, conversationId, claim?.claimToken);
+
+      throw error;
+    }
+
+    await this.completeInboundClaim(session, idempotencyKey, conversationId, claim?.claimToken);
 
     return jsonResponse({ data: { identifier: conversationId } }, 200);
+  }
+
+  private async claimOrRespond(
+    session: AgentChatSession,
+    key: string,
+    conversationId: string,
+    duplicateStatus: number,
+    extra?: Record<string, string>
+  ): Promise<Response | { claimToken: string } | null> {
+    if (!key || !this.config.claimInbound) {
+      return null;
+    }
+
+    const claim = await this.config.claimInbound({ session, key, conversationId });
+    if (claim.outcome === 'acquired') {
+      return { claimToken: claim.claimToken };
+    }
+
+    if (claim.outcome === 'duplicate') {
+      const messageId = claim.messageId ?? extra?.messageId;
+      return jsonResponse(
+        {
+          data: {
+            identifier: claim.conversationId,
+            ...(messageId ? { messageId } : {}),
+          },
+        },
+        duplicateStatus
+      );
+    }
+
+    if (claim.outcome === 'in_progress') {
+      return jsonResponse({ message: 'Request with this key is currently being processed' }, 409);
+    }
+
+    return jsonResponse({ message: 'Idempotency store unavailable' }, 503);
+  }
+
+  private async releaseInboundClaim(
+    session: AgentChatSession,
+    key: string,
+    conversationId: string,
+    claimToken?: string
+  ): Promise<void> {
+    if (!key || !claimToken || !this.config.releaseInbound) {
+      return;
+    }
+
+    await this.config.releaseInbound({ session, key, conversationId, claimToken });
+  }
+
+  private async completeInboundClaim(
+    session: AgentChatSession,
+    key: string,
+    conversationId: string,
+    claimToken?: string,
+    messageId?: string
+  ): Promise<void> {
+    if (!key || !claimToken || !this.config.completeInbound) {
+      return;
+    }
+
+    await this.config.completeInbound({ session, key, conversationId, claimToken, messageId });
   }
 
   /** Sync plan-limit gate before minting or dispatching. */

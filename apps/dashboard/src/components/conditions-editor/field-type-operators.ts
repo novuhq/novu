@@ -5,6 +5,8 @@ const FIELD_TYPE_OPERATORS: Record<FieldDataType, Operator[]> = {
   string: [
     { name: '=', label: 'equals' },
     { name: '!=', label: 'does not equal' },
+    { name: 'isEmpty', label: 'is empty' },
+    { name: 'isNonEmpty', label: 'is not empty' },
     { name: 'contains', label: 'contains' },
     { name: 'beginsWith', label: 'begins with' },
     { name: 'endsWith', label: 'ends with' },
@@ -87,7 +89,17 @@ export function getOperatorsForFieldType(dataType: FieldDataType): Operator[] {
 }
 
 const RELATIVE_DATE_OPERATORS = ['moreThanXAgo', 'lessThanXAgo', 'withinLast', 'notWithinLast', 'exactlyXAgo'] as const;
+const UNARY_JSON_LOGIC_OPERATORS = ['isEmpty', 'isNonEmpty'] as const;
+const VALUELESS_OPERATORS = ['null', 'notNull', ...UNARY_JSON_LOGIC_OPERATORS] as const;
 
 export function isRelativeDateOperator(operator: string): boolean {
   return RELATIVE_DATE_OPERATORS.includes(operator as any);
+}
+
+export function isUnaryJsonLogicOperator(operator: string): boolean {
+  return UNARY_JSON_LOGIC_OPERATORS.some((candidate) => candidate === operator);
+}
+
+export function isValuelessOperator(operator: string): boolean {
+  return VALUELESS_OPERATORS.some((candidate) => candidate === operator);
 }

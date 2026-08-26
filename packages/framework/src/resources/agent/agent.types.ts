@@ -92,6 +92,18 @@ export interface AgentSubscriber {
   data?: Record<string, unknown>;
 }
 
+/** Workflow-origin notification for this turn. */
+export interface AgentNotification<TPayload extends Record<string, unknown> = Record<string, unknown>> {
+  id: string;
+  /** User-facing workflow slug — same string as `ctx.trigger(workflowId)`. */
+  workflowId: string;
+  messageId: string;
+  platformMessageId: string;
+  sentAt: string;
+  body: string;
+  payload: TPayload;
+}
+
 /**
  * Tool-call details on a tool-related history entry. Which fields are set depends on the
  * entry's `type` (`tool_approval_request`, `tool_approval_decision`, or `tool_result`).
@@ -370,6 +382,11 @@ export interface AgentHandlerContext {
    */
   readonly context: AgentContextPayload | null;
   /**
+   * The Novu notification this turn is replying to (workflow origin), or `null` when the
+   * conversation was not opened from a workflow send.
+   */
+  readonly notification: AgentNotification | null;
+  /**
    * Full conversation history as an ordered array of entries.
    * Map to your LLM's message format before making a model call:
    * `ctx.history.map(h => ({ role: h.role, content: h.content }))`
@@ -630,6 +647,12 @@ export interface AgentBridgeRequest {
    * older API versions that don't send it remain compatible; absent → `ctx.context` is `null`.
    */
   context?: AgentContextPayload | null;
+  /**
+   * The Novu notification this turn is replying to, when the conversation was opened (or
+   * re-attached) from a workflow send. Optional on the wire for backward compatibility;
+   * absent → `ctx.notification` is `null`.
+   */
+  notification?: AgentNotification | null;
   history: AgentHistoryEntry[];
   platform: string;
   platformContext: AgentPlatformContext;

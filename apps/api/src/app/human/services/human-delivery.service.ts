@@ -15,8 +15,8 @@ import {
   ENDPOINT_TYPES,
   HumanChannelViaEnum,
 } from '@novu/shared';
-import { buildPendingContent } from '../../agents/human-relay/human-card.builder';
 import { OutboundGateway } from '../../agents/conversation-runtime/egress/outbound.gateway';
+import { buildPendingContent } from '../../agents/human-relay/human-card.builder';
 
 export interface ResolvedHumanTarget {
   platform: string;
@@ -31,7 +31,9 @@ const VIA_PROVIDER_IDS: Record<HumanChannelViaEnum, readonly string[]> = {
 };
 
 function viaForProviderId(providerId: string): HumanChannelViaEnum | null {
-  for (const [via, providerIds] of Object.entries(VIA_PROVIDER_IDS) as Array<[HumanChannelViaEnum, readonly string[]]>) {
+  for (const [via, providerIds] of Object.entries(VIA_PROVIDER_IDS) as Array<
+    [HumanChannelViaEnum, readonly string[]]
+  >) {
     if (providerIds.includes(providerId)) {
       return via;
     }

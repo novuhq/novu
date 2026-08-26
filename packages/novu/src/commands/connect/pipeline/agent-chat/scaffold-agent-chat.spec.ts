@@ -1,8 +1,14 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { NOVU_STAGING_API_URL } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { assertSafeScaffoldDirectoryName, scaffoldAgentChatProject } from './scaffold-agent-chat';
+import { CloudRegionEnum } from '../../../dev/enums';
+import {
+  assertSafeScaffoldDirectoryName,
+  resolveAgentChatNovuDependencies,
+  scaffoldAgentChatProject,
+} from './scaffold-agent-chat';
 
 describe('assertSafeScaffoldDirectoryName', () => {
   it('accepts a simple directory name', () => {
@@ -35,5 +41,49 @@ describe('scaffoldAgentChatProject', () => {
         apiUrl: 'http://localhost:3000',
       })
     ).rejects.toThrow(/Invalid scaffold directory name/);
+  });
+});
+
+describe('resolveAgentChatNovuDependencies', () => {
+  const localNovuDeps = { reactDir: '/repo/packages/react', jsDir: '/repo/packages/js' };
+
+  it('pins @novu/react and @novu/js to rc on staging, even from a monorepo checkout', () => {
+    expect(resolveAgentChatNovuDependencies(NOVU_STAGING_API_URL, localNovuDeps)).toEqual({
+      react: 'rc',
+      js: 'rc',
+      useLocalAliases: false,
+    });
+  });
+
+  it('uses file: links for a monorepo checkout against a local API only', () => {
+    expect(resolveAgentChatNovuDependencies('http://localhost:3000', localNovuDeps)).toEqual({
+      react: 'file:/repo/packages/react',
+      js: 'file:/repo/packages/js',
+      useLocalAliases: true,
+    });
+  });
+
+  it('uses rc from npm when scaffolding from a monorepo against production API', () => {
+    expect(resolveAgentChatNovuDependencies('https://api.novu.co', localNovuDeps)).toEqual({
+      react: 'rc',
+      js: 'rc',
+      useLocalAliases: false,
+    });
+  });
+
+  it('uses rc @novu/react when there is no local checkout', () => {
+    expect(resolveAgentChatNovuDependencies('https://api.novu.co', undefined)).toEqual({
+      react: 'rc',
+      js: 'rc',
+      useLocalAliases: false,
+    });
+  });
+
+  it('pins rc packages when --staging region is set even with a custom api url', () => {
+    expect(resolveAgentChatNovuDependencies('http://localhost:3000', localNovuDeps, CloudRegionEnum.STAGING)).toEqual({
+      react: 'rc',
+      js: 'rc',
+      useLocalAliases: false,
+    });
   });
 });

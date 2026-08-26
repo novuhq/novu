@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import readline from 'node:readline';
 import pc from 'picocolors';
-import { createHumanApiClient, HumanApiError, type HumanApiClient } from '../api/client';
+import { createHumanApiClient, type HumanApiClient, HumanApiError } from '../api/client';
 import { createInteraction, setupHumanRelay } from '../api/human';
 import {
   addAgentEmailIntegration,
@@ -13,6 +13,7 @@ import {
   generateConnectOauthUrl,
   getSlackSetupLinkStatus,
   hasChannelEndpoint,
+  type IntegrationRecord,
   issueSlackSetupLink,
   issueTelegramMobileLink,
   issueTelegramSubscriberLink,
@@ -20,20 +21,19 @@ import {
   listAgentIntegrations,
   listIntegrations,
   slackQuickSetup,
-  type IntegrationRecord,
 } from '../api/setup';
 import {
+  configPath,
   DEFAULT_API_URL,
   DEFAULT_RELAY_AGENT_IDENTIFIER,
-  configPath,
+  type HumanCliConfig,
   loadConfig,
   saveConfig,
-  type HumanCliConfig,
 } from '../config';
-import { handleError } from './interact';
-import { renderQR } from '../qr';
 import { pollUntil, sleep } from '../poll';
+import { renderQR } from '../qr';
 import { installHumanSkill, resolveSkillHosts } from '../skills/install-skills';
+import { handleError } from './interact';
 
 const CHANNEL_POLL_INTERVAL_MS = 2_000;
 const CHANNEL_POLL_TIMEOUT_MS = 5 * 60_000;
@@ -117,7 +117,7 @@ export async function setupCommand(channelArg: string | undefined, options: Setu
     // 5. Smoke test on the channel that was just linked.
     await createInteraction(client, {
       kind: 'tell',
-      prompt: "You're connected. Agents can now reach you here — try `human approve \"Deploy to production?\"`.",
+      prompt: 'You\'re connected. Agents can now reach you here — try `human approve "Deploy to production?"`.',
       to: subscriberId,
       via: channel,
       agentIdentifier: relay.agentIdentifier,
@@ -308,7 +308,14 @@ async function connectSlack(
     return integration.identifier;
   }
 
-  const authorizeUrl = await buildSlackAuthorizeUrl(client, agentId, agentIdentifier, integration, subscriberId, options);
+  const authorizeUrl = await buildSlackAuthorizeUrl(
+    client,
+    agentId,
+    agentIdentifier,
+    integration,
+    subscriberId,
+    options
+  );
 
   process.stdout.write(
     `\nAuthorize the Slack app in your workspace (opening your browser):\n\n  ${pc.underline(authorizeUrl)}\n\n`
@@ -436,7 +443,9 @@ async function promptAndRunSlackQuickSetup(
     }
   }
 
-  throw new Error('Slack did not accept the App Configuration Token. Generate a fresh one and re-run `human setup slack`.');
+  throw new Error(
+    'Slack did not accept the App Configuration Token. Generate a fresh one and re-run `human setup slack`.'
+  );
 }
 
 /** Wrong-token-type guardrails, mirrored from `novu connect`. */
@@ -530,8 +539,7 @@ async function issueSubscriberLinkWithRetry(
     try {
       return await issueTelegramSubscriberLink(client, integrationIdentifier, subscriberId);
     } catch (err) {
-      const retryable =
-        err instanceof HumanApiError && err.status === 422 && /bot token is missing/i.test(err.message);
+      const retryable = err instanceof HumanApiError && err.status === 422 && /bot token is missing/i.test(err.message);
       if (!retryable || Date.now() >= deadline) throw err;
       await sleep(2_000);
     }
@@ -572,7 +580,9 @@ function openInBrowser(url: string): void {
   const command = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
 
   try {
-    spawn(command, [url], { stdio: 'ignore', detached: true }).on('error', () => undefined).unref();
+    spawn(command, [url], { stdio: 'ignore', detached: true })
+      .on('error', () => undefined)
+      .unref();
   } catch {
     // URL is printed above — the human can click it.
   }

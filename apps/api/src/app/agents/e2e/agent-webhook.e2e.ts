@@ -6,12 +6,15 @@ import {
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
+  MessageRepository,
+  NotificationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
+import { Types } from 'mongoose';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
@@ -386,6 +389,82 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(call.platformContext.threadId).to.equal(threadId);
       expect(call.platformContext.channelId).to.equal('C_TEST');
       expect(call.platformContext.isDM).to.equal(false);
+      expect(call.workflowOrigin, 'no origin seeded on first touch').to.equal(null);
+    });
+
+    it('forwards a re-derived workflow origin on later turns via workflowOrigin', async () => {
+      const subscriberRepository = new SubscriberRepository();
+      const messageRepository = new MessageRepository();
+      const notificationRepository = new NotificationRepository();
+      const subscriber = await subscriberRepository.create({
+        subscriberId: `sub-origin-${Date.now()}`,
+        firstName: 'Origin',
+        lastName: 'Test',
+        email: 'origin@test.com',
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      await seedChannelEndpoint(ctx, 'U_ORIGIN', subscriber.subscriberId);
+
+      const threadId = `T_ORIGIN_${Date.now()}`;
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'first' }));
+      await waitForBridgeCallCount(1);
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
+        threadId
+      );
+      expect(conversation).to.exist;
+
+      const notification = await notificationRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        _subscriberId: subscriber._id,
+        _templateId: new Types.ObjectId().toString(),
+        transactionId: `txn-origin-${Date.now()}`,
+        channels: [ChannelTypeEnum.CHAT],
+        payload: { orderId: 'ORD-42' },
+        to: { subscriberId: subscriber.subscriberId },
+      });
+
+      await messageRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        _subscriberId: subscriber._id,
+        _agentId: ctx.agentId,
+        _notificationId: notification._id,
+        _templateId: notification._templateId,
+        content: 'Your order ORD-42 shipped',
+        templateIdentifier: 'order-shipped',
+        identifier: `C_TEST:1777837477.371619`,
+        channel: ChannelTypeEnum.CHAT,
+        transactionId: notification.transactionId,
+      });
+
+      await conversationRepository.update(
+        {
+          _id: conversation!._id,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
+        { $set: { _notificationId: notification._id } }
+      );
+
+      bridgeCalls = [];
+      await invokeInbound(threadId, mockMessage({ userId: 'U_ORIGIN', text: 'where is my order?' }));
+      await waitForBridgeCallCount(1);
+
+      expect(bridgeCalls[0].workflowOrigin?.data).to.deep.include({
+        workflowIdentifier: 'order-shipped',
+        notificationId: notification._id,
+        payload: { orderId: 'ORD-42' },
+        body: 'Your order ORD-42 shipped',
+      });
+      expect(bridgeCalls[0].workflowOrigin?.source).to.equal('existing');
     });
 
     it('Passes null subscriber in the bridge payload for first-time Slack senders on open custom-code', async () => {

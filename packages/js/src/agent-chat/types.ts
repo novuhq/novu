@@ -53,6 +53,15 @@ export type SendMessageResult = {
   messageId: string;
 };
 
+export type RetryMessageArgs = AgentHashFields & {
+  agentId: string;
+  messageId: string;
+  conversationId?: string;
+  key?: string;
+};
+
+export type RetryMessageResult = SendMessageResult;
+
 export type LoadConversationArgs = {
   agentId: string;
   conversationId: string;
