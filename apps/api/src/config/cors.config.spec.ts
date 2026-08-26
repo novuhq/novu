@@ -101,5 +101,16 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.firstArg).to.be.null;
       expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
     });
+
+    it('agent-chat routes should be wildcarded', () => {
+      const callbackSpy = spy();
+
+      // @ts-expect-error - corsOptionsDelegate is not typed correctly
+      corsOptionsDelegate({ url: '/v1/agent-chat/conversations' }, callbackSpy);
+
+      expect(callbackSpy.calledOnce).to.be.ok;
+      expect(callbackSpy.firstCall.firstArg).to.be.null;
+      expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
+    });
   });
 });
