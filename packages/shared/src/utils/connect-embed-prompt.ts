@@ -238,7 +238,7 @@ Follow these docs (fetch as \`.md\`). **Skip** dashboard "create agent / connect
 Hard rules (also in docs):
 
 - Use **\`${agentId}\`** as the agent identifier everywhere.
-- Use \`hydrateUnreachableAttachmentUrls(toModelMessages(ctx))\`; do not call \`ctx.reply()\` when returning \`generateText()\`.
+- Use \`toModelMessages(ctx)\`; do not call \`ctx.reply()\` when returning \`generateText()\`.
 - Reuse the project's existing AI SDK provider; never hardcode API keys.`;
 }
 
