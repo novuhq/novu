@@ -119,7 +119,7 @@ export function EditorActions({ selectedTranslation, modifiedContent, isReadOnly
 
   return (
     <>
-      <div className="flex flex-col items-start gap-6 self-stretch px-3 pb-3 pt-3">
+      <div className="flex shrink-0 flex-col items-start gap-6 self-stretch px-3 pb-3 pt-3">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-3">
             <FlagCircle locale={selectedLocale} size="md" />

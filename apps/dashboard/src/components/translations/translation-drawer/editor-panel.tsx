@@ -12,9 +12,9 @@ import { EditorActions } from './editor-actions';
 
 export function EditorPanelSkeleton() {
   return (
-    <div className="flex flex-1 flex-col bg-neutral-50">
+    <div className="flex min-h-0 flex-1 flex-col bg-neutral-50">
       {/* EditorActions skeleton - matches exact HTML structure */}
-      <div className="flex flex-col items-start gap-6 self-stretch px-3 pb-3 pt-3">
+      <div className="flex shrink-0 flex-col items-start gap-6 self-stretch px-3 pb-3 pt-3">
         {/* First row: Flag + locale info + Import button */}
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-3">
@@ -38,8 +38,8 @@ export function EditorPanelSkeleton() {
       </div>
 
       {/* JSON Editor skeleton - matches the actual editor */}
-      <div className="flex-1 px-3 pb-3">
-        <div className="relative h-[calc(100%-24px)] rounded-lg border border-neutral-200 bg-white p-4">
+      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+        <div className="relative min-h-0 flex-1 rounded-lg border border-neutral-200 bg-white p-4">
           {/* Line numbers and content like real editor */}
           <div className="flex gap-4">
             <div className="text-neutral-400">
@@ -51,7 +51,7 @@ export function EditorPanelSkeleton() {
           </div>
         </div>
         {/* Footer timestamp */}
-        <div className="mt-2 px-1 h-6 flex items-center">
+        <div className="mt-2 flex h-6 shrink-0 items-center px-1">
           <Skeleton className="h-3 w-60" /> {/* "Last updated at Jul 22, 2025 15:11:30 UTC" */}
         </div>
       </div>
@@ -73,11 +73,10 @@ const BASIC_SETUP = { lineNumbers: true, defaultKeymap: true };
 
 function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnly = false }: JSONEditorProps) {
   return (
-    // 112px is the height of the actions section
-    <div className="min-h-0 flex-1 px-3 pb-3 flex flex-col max-h-[calc(100%-112px)]">
+    <div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
       <div
         className={cn(
-          'relative overflow-hidden w-full rounded-lg border bg-white min-h-0 flex-1',
+          'relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-lg border bg-white',
           error ? 'border-red-300' : 'border-neutral-200',
           isReadOnly && 'bg-neutral-50'
         )}
@@ -90,16 +89,13 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
           basicSetup={BASIC_SETUP}
           placeholder="Enter JSON content..."
           height="100%"
-          className={cn(
-            'flex-1 [&_.cm-scroller]:p-4 [&_div.cm-gutters]:bg-background [&_div.cm-gutters]:-translate-x-[16px] [&_div.cm-gutters]:pl-4 [&_div.cm-gutters]:-ml-4 [&_.cm-editor]:h-full rounded-lg [&_.cm-scroller]:h-full! [&_.cm-scroller]:overflow-auto [&_.cm-content]:max-w-[calc(100%-2rem)]',
-            error ? 'h-[calc(100%-32px)]' : 'h-full'
-          )}
+          className="min-h-0 flex-1 rounded-lg [&_.cm-content]:max-w-[calc(100%-2rem)] [&_.cm-editor]:h-full [&_.cm-scroller]:h-full! [&_.cm-scroller]:overflow-auto [&_.cm-scroller]:p-4 [&_div.cm-gutters]:-ml-4 [&_div.cm-gutters]:-translate-x-[16px] [&_div.cm-gutters]:bg-background [&_div.cm-gutters]:pl-4"
           foldGutter
           multiline
           readOnly={isReadOnly}
         />
         {error && (
-          <div className="px-4 py-2 text-xs text-red-500 h-min">
+          <div className="shrink-0 px-4 py-2 text-xs text-red-500">
             <span className="font-medium">Invalid JSON:</span> {error}
           </div>
         )}
@@ -111,7 +107,7 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
       </div>
 
       {isOutdated && (
-        <div className="mt-3 px-1">
+        <div className="mt-3 shrink-0 px-1">
           <InlineToast
             variant="warning"
             title="Warning:"
@@ -120,7 +116,7 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
         </div>
       )}
 
-      <div className="mt-2 px-1">
+      <div className="mt-2 shrink-0 px-1">
         <TimeDisplayHoverCard date={updatedAt} className="text-2xs text-neutral-400">
           Last updated at {formatTranslationDate(updatedAt, DATE_FORMAT_OPTIONS)}{' '}
           {formatTranslationTime(updatedAt, TIME_FORMAT_OPTIONS)} UTC

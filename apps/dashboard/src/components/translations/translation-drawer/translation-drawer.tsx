@@ -13,7 +13,7 @@ function TranslationDrawerSkeleton() {
   return (
     <div className="flex h-full w-full flex-col">
       {/* Header skeleton */}
-      <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
+      <header className="border-bg-soft flex h-12 w-full shrink-0 flex-row items-center gap-3 border-b px-3 py-4">
         <div className="flex flex-1 items-center gap-2 overflow-hidden text-sm font-medium">
           <Skeleton className="h-4 w-4" /> {/* Translate icon */}
           <Skeleton className="h-4 w-48" /> {/* Resource name */}
@@ -21,13 +21,13 @@ function TranslationDrawerSkeleton() {
       </header>
 
       {/* Main content skeleton */}
-      <div className="flex h-full">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <LocaleListSkeleton />
         <EditorPanelSkeleton />
       </div>
 
       {/* Footer skeleton */}
-      <div className="flex items-center justify-end border-t border-neutral-200 bg-white px-6 py-3">
+      <div className="flex shrink-0 items-center justify-end border-t border-neutral-200 bg-white px-6 py-3">
         <Skeleton className="h-8 w-24" /> {/* Save changes button */}
       </div>
     </div>

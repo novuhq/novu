@@ -85,7 +85,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
         <TranslationHeader resourceName={translationGroup.resourceName} />
 
         {!isDevEnvironment && (
-          <div className="border-b border-neutral-200 px-6 py-3">
+          <div className="shrink-0 border-b border-neutral-200 px-6 py-3">
             <InlineToast
               variant="warning"
               title="View-only mode"
@@ -94,8 +94,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
           </div>
         )}
 
-        {/* 109px is the height of the header and footer */}
-        <div className="flex flex-1 h-[calc(100%-109px)]">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           <LocaleList
             locales={translationGroup.locales}
             selectedLocale={selectedLocale}
@@ -119,7 +118,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
           />
         </div>
 
-        <div className="flex items-center justify-end border-t border-neutral-200 bg-white px-6 py-3">
+        <div className="flex shrink-0 items-center justify-end border-t border-neutral-200 bg-white px-6 py-3">
           <PermissionButton
             permission={PermissionsEnum.WORKFLOW_WRITE}
             variant="secondary"
